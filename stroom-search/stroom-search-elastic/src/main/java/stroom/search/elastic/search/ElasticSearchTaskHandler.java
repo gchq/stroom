@@ -57,6 +57,7 @@ import org.springframework.stereotype.Component;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
@@ -200,13 +201,21 @@ public class ElasticSearchTaskHandler {
                 tracker.incrementHitCount();
 
                 final DocumentContext jsonSearchHit = JsonPath.parse(searchHit.getSourceAsString());
+                final Map<String, Object> mapSearchHit = searchHit.getSourceAsMap();
                 Val[] values = null;
 
                 for (int i = 0; i < fieldNames.length; i++) {
                     final String fieldName = fieldNames[i];
 
                     try {
-                        final Object value = jsonSearchHit.read(fieldName);
+                        Object value;
+                        // Cater for special fields, where we want to avoid using json-path operators like '@'
+                        if (fieldName.equals("@timestamp")) {
+                            value = mapSearchHit.get(fieldName);
+                        } else {
+                            value = jsonSearchHit.read(fieldName);
+                        }
+
                         if (value != null) {
                             if (values == null) {
                                 values = new Val[fieldNames.length];
