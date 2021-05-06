@@ -28,7 +28,6 @@ const ResetPassword: React.FunctionComponent<{
     email: string,
   ) => Promise<string>;
 }> = () => {
-  // TODO : @66 FIX THIS
   // ({
   // isTokenExpired,
   // isTokenInvalid,

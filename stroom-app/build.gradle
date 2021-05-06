@@ -652,11 +652,6 @@ task setupSampleDataApplication(type: JavaExec) {
     args = ['local.yml']
 }
 
-////TODO This specific dep is needed to ensure TestKafkaExternalLoader has the jar available
-////for its test. This is a TODO as stroom-connectors needs a big refactor once we
-////decide what we are doing with plugable client libs and pipeline elements.
-//tasks.test.dependsOn ':stroom-kafka:stroom-kafka-client-impl_0_10_0_1:copyPluginJar'
-
 // Make sure GWT compilation doesn't run before processResources.
 tasks.getByPath(':stroom-app-gwt:gwtClean').mustRunAfter processResources
 tasks.getByPath(':stroom-dashboard-gwt:gwtClean').mustRunAfter processResources

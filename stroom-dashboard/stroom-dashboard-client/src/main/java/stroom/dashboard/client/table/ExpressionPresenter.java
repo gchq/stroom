@@ -271,8 +271,6 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
             } else {
                 if (expression == null) {
                     fieldChangeConsumer.accept(field, field.copy().expression(null).build());
-                    tablePresenter.setDirty(true);
-                    tablePresenter.clearAndRefresh();
                     HidePopupEvent.fire(tablePresenter, this);
                 } else {
                     // Check the validity of the expression.
@@ -281,8 +279,6 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
                             .onSuccess(result -> {
                                 if (result.isOk()) {
                                     fieldChangeConsumer.accept(field, field.copy().expression(expression).build());
-                                    tablePresenter.setDirty(true);
-                                    tablePresenter.clearAndRefresh();
                                     HidePopupEvent.fire(tablePresenter, ExpressionPresenter.this);
                                 } else {
                                     AlertEvent.fireError(tablePresenter, result.getString(), null);

@@ -113,9 +113,6 @@ public class RenameFieldPresenter
                             null);
                 } else {
                     fieldChangeConsumer.accept(field, field.copy().name(newFieldName).build());
-
-                    tablePresenter.setDirty(true);
-                    tablePresenter.redrawHeaders();
                     HidePopupEvent.fire(tablePresenter, RenameFieldPresenter.this);
                 }
             } else {
