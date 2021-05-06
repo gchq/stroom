@@ -29,90 +29,96 @@ GWT_ARGS=(
   "-PgwtCompilerMaxHeap=4G"
 )
 
-echo -e "${GREEN}Clean${NC}"
-./gradlew \
-  "${GRADLE_ARGS[@]}" \
-  clean
+main() {
 
-if [[ "${SKIP_TESTS:-false}" = true ]]; then
-  echo -e "${YELLOW}Skipping tests${NC}"
-  test_args=( "-x" "test" )
-else
-  test_args=( "test" )
-fi
+  echo -e "${GREEN}Clean${NC}"
+  ./gradlew \
+    "${GRADLE_ARGS[@]}" \
+    clean
 
-# Do the gradle build
-# Use custom gwt compile jvm settings to avoid blowing the ram limit in
-# travis. At time of writing a sudo VM in travis has 7.5gb ram.
-# Each work will chew up the maxHeap value and we have to allow for
-# our docker services as well.
-# Don't clean as this is a fresh clone and clean will wipe the cached
-# content pack zips
-echo -e "${GREEN}Do the basic java build${NC}"
-./gradlew \
-  "${GRADLE_ARGS[@]}" \
-  --scan \
-  --stacktrace \
-  -PdumpFailedTestXml=true \
-  -Pversion="${TRAVIS_TAG:-SNAPSHOT}" \
-  build \
-  "${test_args[@]}" \
-  -x shadowJar \
-  -x resolve \
-  -x copyFilesForStroomDockerBuild \
-  -x copyFilesForProxyDockerBuild \
-  -x buildDistribution
+  if [[ "${SKIP_TESTS:-false}" = true ]]; then
+    echo -e "${YELLOW}Skipping tests${NC}"
+    test_args=( "-x" "test" )
+  else
+    test_args=( "test" )
+  fi
 
-echo -e "${GREEN}Do the UI build${NC}"
-./gradlew \
-  "${GRADLE_ARGS[@]}" \
-  --scan \
-  --stacktrace \
-  "${GWT_ARGS[@]}" \
-  stroom-ui:copyYarnBuild \
-  stroom-app-gwt:gwtCompile \
-  stroom-dashboard-gwt:gwtCompile
+  # Do the gradle build
+  # Use custom gwt compile jvm settings to avoid blowing the ram limit in
+  # travis. At time of writing a sudo VM in travis has 7.5gb ram.
+  # Each work will chew up the maxHeap value and we have to allow for
+  # our docker services as well.
+  # Don't clean as this is a fresh clone and clean will wipe the cached
+  # content pack zips
+  echo -e "${GREEN}Do the basic java build${NC}"
+  ./gradlew \
+    "${GRADLE_ARGS[@]}" \
+    --scan \
+    --stacktrace \
+    -PdumpFailedTestXml=true \
+    -Pversion="${TRAVIS_TAG:-SNAPSHOT}" \
+    build \
+    "${test_args[@]}" \
+    -x shadowJar \
+    -x resolve \
+    -x copyFilesForStroomDockerBuild \
+    -x copyFilesForProxyDockerBuild \
+    -x buildDistribution
 
-#echo -e "${GREEN}Do the yarn build${NC}"
-#./gradlew \
-#  "${GRADLE_ARGS[@]}" \
-#  --scan \
-#  --stacktrace \
-#  stroom-ui:copyYarnBuild
-#
-## Compile the application GWT UI
-#echo -e "${GREEN}Do the GWT app compile${NC}"
-#./gradlew \
-#  "${GRADLE_ARGS[@]}" \
-#  --scan \
-#  --stacktrace \
-#  "${GWT_ARGS[@]}" \
-#  stroom-app-gwt:gwtCompile
-#
-## Compile the dashboard GWT UI
-#echo -e "${GREEN}Do the GWT dashboard compile${NC}"
-#./gradlew \
-#  "${GRADLE_ARGS[@]}" \
-#  --scan \
-#  --stacktrace \
-#  "${GWT_ARGS[@]}" \
-#  stroom-dashboard-gwt:gwtCompile
+  echo -e "${GREEN}Do the UI build${NC}"
+  ./gradlew \
+    "${GRADLE_ARGS[@]}" \
+    --scan \
+    --stacktrace \
+    "${GWT_ARGS[@]}" \
+    stroom-ui:copyYarnBuild \
+    stroom-app-gwt:gwtCompile \
+    stroom-dashboard-gwt:gwtCompile
 
-# Make the distribution.
-echo -e "${GREEN}Build the distribution${NC}"
-./gradlew \
-  "${GRADLE_ARGS[@]}" \
-  --scan \
-  --stacktrace \
-  -PdumpFailedTestXml=true \
-  -Pversion="${TRAVIS_TAG:-SNAPSHOT}" \
-  shadowJar \
-  buildDistribution \
-  copyFilesForStroomDockerBuild \
-  copyFilesForProxyDockerBuild \
-  -x test \
-  -x stroom-ui:copyYarnBuild \
-  -x stroom-app-gwt:gwtCompile \
-  -x stroom-dashboard-gwt:gwtCompile
+  #echo -e "${GREEN}Do the yarn build${NC}"
+  #./gradlew \
+  #  "${GRADLE_ARGS[@]}" \
+  #  --scan \
+  #  --stacktrace \
+  #  stroom-ui:copyYarnBuild
+  #
+  ## Compile the application GWT UI
+  #echo -e "${GREEN}Do the GWT app compile${NC}"
+  #./gradlew \
+  #  "${GRADLE_ARGS[@]}" \
+  #  --scan \
+  #  --stacktrace \
+  #  "${GWT_ARGS[@]}" \
+  #  stroom-app-gwt:gwtCompile
+  #
+  ## Compile the dashboard GWT UI
+  #echo -e "${GREEN}Do the GWT dashboard compile${NC}"
+  #./gradlew \
+  #  "${GRADLE_ARGS[@]}" \
+  #  --scan \
+  #  --stacktrace \
+  #  "${GWT_ARGS[@]}" \
+  #  stroom-dashboard-gwt:gwtCompile
 
-echo -e "${GREEN}Done${NC}"
+  # Make the distribution.
+  echo -e "${GREEN}Build the distribution${NC}"
+  ./gradlew \
+    "${GRADLE_ARGS[@]}" \
+    --scan \
+    --stacktrace \
+    -PdumpFailedTestXml=true \
+    -Pversion="${TRAVIS_TAG:-SNAPSHOT}" \
+    shadowJar \
+    buildDistribution \
+    copyFilesForStroomDockerBuild \
+    copyFilesForProxyDockerBuild \
+    -x test \
+    -x stroom-ui:copyYarnBuild \
+    -x stroom-app-gwt:gwtCompile \
+    -x stroom-dashboard-gwt:gwtCompile
+
+  echo -e "${GREEN}Done${NC}"
+}
+
+# Get a time for the whole build
+time main "$@"
