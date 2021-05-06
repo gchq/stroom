@@ -12,17 +12,30 @@
 }
 
 NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+if [ -d "${NVM_DIR}" ]; then
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 
-# Looks in .nvmrc for the version to use, see also version in .travis.yml
-nvm use
+  # Looks in .nvmrc for the version to use, see also version in .travis.yml
+  nvm use
+fi
+
+echo_version() {
+  local cmd="$1"; shift
+  local version
+  if command -v "${cmd}" > /dev/null; then
+    version="$(${cmd} --version)"
+  else
+    version="${RED}NOT INSTALLED${NC}"
+  fi
+  echo -e "${GREEN}${cmd} version: ${YELLOW}${version}${NC}"
+}
 
 echo 
-echo -e "${GREEN}node version: ${YELLOW}$(node --version)${NC}"
-echo -e "${GREEN}nvm version: ${YELLOW}$(nvm --version)${NC}"
-echo -e "${GREEN}npm version: ${YELLOW}$(npm --version)${NC}"
-echo -e "${GREEN}npx version: ${YELLOW}$(npx --version)${NC}"
-echo -e "${GREEN}yarn version: ${YELLOW}$(yarn --version)${NC}"
+echo_version nvm
+echo_version node
+echo_version npm
+echo_version npx
+echo_version yarn
 
 echo -e "\n${GREEN}Running Yarn install${NC}"
 yarn install

@@ -21,5 +21,6 @@ docker run -it --rm \
   --mount "type=bind,src=$(pwd),dst=${dest_dir}" \
   --workdir "${dest_dir}" \
   "${image_tag}" \
+  bash -c './yarnBuild.sh'
   #bash
-  bash -c 'echo $PWD; nvm --version; node --version; npm --version; npx --version; yarn --version; ./yarnBuild.sh'
+  #bash -c 'echo $PWD; nvm --version; node --version; npm --version; npx --version; yarn --version; ./yarnBuild.sh'
