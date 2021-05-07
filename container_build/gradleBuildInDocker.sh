@@ -65,7 +65,8 @@ docker run \
   --volume /var/run/docker.sock:/var/run/docker.sock \
   --name "stroom-builder" \
   "${image_tag}" \
-  bash -c 'pwd; SKIP_TESTS=true ./container_build/gradleBuild.sh'
+  bash -c "pwd; SKIP_TESTS=\"${SKIP_TESTS:-false}\" MAX_WORKERS=\"${MAX_WORKERS:-6}\" ./container_build/gradleBuild.sh"
+
   #bash
   #bash -c 'echo $PWD; nvm --version; node --version; npm --version; npx --version; yarn --version; ./yarnBuild.sh'
 
