@@ -23,21 +23,27 @@ WORKDIR /builder
 ARG USER_ID
 ARG GROUP_ID    
 
+# Pass in the abs path to the repo root on the docker host
+ARG HOST_REPO_DIR    
+
 # Set the user ID into an env var so the entrypoint can see it
 ENV CONTAINER_USER_ID=$USER_ID
+
+ENV HOST_REPO_DIR=$HOST_REPO_DIR
 
 # Set tini as entrypoint
 #ENTRYPOINT ["/sbin/tini", "--", "/builder/docker-entrypoint.sh"]
 
 CMD id
 
-# We need full, non-BusyBox sed
-# jo is a JSON tool for generating json output on the command line.
-# We use it to convert environment vars to JSON. We serve this in 'public'.
+# iputils for non-root ping
+# busybox-extras for telnet
 RUN apk add --no-cache \
       bash \
+      busybox-extras \
       docker-cli \
-      sed \
+      git \
+      iputils \
       su-exec \
       tini \
       && \

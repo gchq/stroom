@@ -44,8 +44,9 @@ task generateApi {
     doLast {
         exec {
             //executable "./generateApi.sh"
-            executable "../container_build/nodeBuildInDocker.sh"
-            args = [ "./generateApi.sh" ]
+            executable "./container_build/nodeBuildInDocker.sh"
+            args = [ "./stroom-ui/generateApi.sh" ]
+            workingDir ".."
         }
     }
 }
@@ -64,8 +65,9 @@ task yarnBuild {
     doLast {
         exec {
             //executable "./yarnBuild.sh"
-            executable "../container_build/nodeBuildInDocker.sh"
-            args = [ "./yarnBuild.sh" ]
+            executable "./container_build/nodeBuildInDocker.sh"
+            args = [ "./stroom-ui/yarnBuild.sh" ]
+            workingDir ".."
         }
     }
 }
