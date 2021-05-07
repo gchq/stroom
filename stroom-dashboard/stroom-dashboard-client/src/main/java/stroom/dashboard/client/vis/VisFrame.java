@@ -67,6 +67,11 @@ public class VisFrame extends Frame implements VisPane {
     }
 
     @Override
+    public void setUiHandlers(final SelectionUiHandlers uiHandlers) {
+        messageSupport.setUiHandlers(uiHandlers);
+    }
+
+    @Override
     public void injectScripts(final List<ScriptDoc> scripts, final VisFunction function) {
         injectScriptsFromURL(scripts, function);
     }

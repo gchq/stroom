@@ -52,6 +52,19 @@ var stroomLink = function(href, target) {
         return url;
     }
 
+    stroom.select = function(selection) {
+        if (stroomParent && stroomFrameId && stroomOrigin) {
+            var obj = {
+              frameId : stroomFrameId,
+              functionName : 'select',
+              selection : selection,
+            };
+
+            var message = JSON.stringify(obj);
+            stroomParent.postMessage(message, stroomOrigin);
+        }
+    };
+
     // Send a message to Stroom to open a link
     // e.g. `stroom.link('type=Dashboard&uuid=<TARGET_DASHBOARD_UUID>&title=title&params=userId%3Duser2', 'DASHBOARD')`
     stroom.link = function(href, target) {
@@ -75,7 +88,7 @@ var stroomLink = function(href, target) {
        url = addUrlParam(url, "uuid", uuid);
        url = addUrlParam(url, "params", params);
        url = addUrlParam(url, "queryOnOpen", queryOnOpen);
-       stroomLink(url, "dashboard");
+       stroom.link(url, "dashboard");
     };
 
     stroom.annotation = function(annotationId, streamId, eventId, title, subject, status, assignedTo, comment) {
@@ -88,7 +101,7 @@ var stroomLink = function(href, target) {
        url = addUrlParam(url, "status", status);
        url = addUrlParam(url, "assignedTo", assignedTo);
        url = addUrlParam(url, "comment", comment);
-       stroomLink(url, "annotation");
+       stroom.link(url, "annotation");
     };
 
     stroom.stepping = function(id, partNo, recordNo) {
@@ -96,7 +109,7 @@ var stroomLink = function(href, target) {
        url = addUrlParam(url, "id", id);
        url = addUrlParam(url, "partNo", partNo);
        url = addUrlParam(url, "recordNo", recordNo);
-       stroomLink(url, "stepping");
+       stroom.link(url, "stepping");
     };
 
     stroom.data = function(id, partNo, recordNo, lineFrom, colFrom, lineTo, colTo) {
@@ -108,7 +121,7 @@ var stroomLink = function(href, target) {
        url = addUrlParam(url, "colFrom", colFrom);
        url = addUrlParam(url, "lineTo", lineTo);
        url = addUrlParam(url, "colTo", colTo);
-       stroomLink(url, "data");
+       stroom.link(url, "data");
     };
 
     this.stroom = stroom;

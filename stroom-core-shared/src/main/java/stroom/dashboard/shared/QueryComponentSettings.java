@@ -25,9 +25,16 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
-@JsonPropertyOrder({"dataSource", "expression", "automate"})
+@JsonPropertyOrder({
+        "dataSource",
+        "expression",
+        "automate",
+        "selectionHandlers"
+})
 @JsonInclude(Include.NON_NULL)
 public class QueryComponentSettings implements ComponentSettings {
 
@@ -37,14 +44,19 @@ public class QueryComponentSettings implements ComponentSettings {
     private final ExpressionOperator expression;
     @JsonProperty("automate")
     private final Automate automate;
+    @JsonProperty("selectionHandlers")
+    private final List<ComponentSelectionHandler> selectionHandlers;
 
+    @SuppressWarnings("checkstyle:LineLength")
     @JsonCreator
     public QueryComponentSettings(@JsonProperty("dataSource") final DocRef dataSource,
                                   @JsonProperty("expression") final ExpressionOperator expression,
-                                  @JsonProperty("automate") final Automate automate) {
+                                  @JsonProperty("automate") final Automate automate,
+                                  @JsonProperty("selectionHandlers") final List<ComponentSelectionHandler> selectionHandlers) {
         this.dataSource = dataSource;
         this.expression = expression;
         this.automate = automate;
+        this.selectionHandlers = selectionHandlers;
     }
 
     public DocRef getDataSource() {
@@ -59,24 +71,28 @@ public class QueryComponentSettings implements ComponentSettings {
         return automate;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
+    public List<ComponentSelectionHandler> getSelectionHandlers() {
+        return selectionHandlers;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof QueryComponentSettings)) {
             return false;
         }
         final QueryComponentSettings that = (QueryComponentSettings) o;
-        return Objects.equals(dataSource, that.dataSource) &&
-                Objects.equals(expression, that.expression) &&
-                Objects.equals(automate, that.automate);
+        return Objects.equals(dataSource, that.dataSource) && Objects.equals(expression,
+                that.expression) && Objects.equals(automate, that.automate) && Objects.equals(
+                selectionHandlers,
+                that.selectionHandlers);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(dataSource, expression, automate);
+        return Objects.hash(dataSource, expression, automate, selectionHandlers);
     }
 
     @Override
@@ -85,8 +101,11 @@ public class QueryComponentSettings implements ComponentSettings {
                 "dataSource=" + dataSource +
                 ", expression=" + expression +
                 ", automate=" + automate +
+                ", componentSelectionListeners=" + selectionHandlers +
                 '}';
     }
+
+    @SuppressWarnings("checkstyle:needbraces")
 
     public static Builder builder() {
         return new Builder();
@@ -101,6 +120,7 @@ public class QueryComponentSettings implements ComponentSettings {
         private DocRef dataSource;
         private ExpressionOperator expression;
         private Automate automate;
+        private List<ComponentSelectionHandler> selectionHandlers;
 
         private Builder() {
         }
@@ -109,6 +129,9 @@ public class QueryComponentSettings implements ComponentSettings {
             this.dataSource = queryComponentSettings.dataSource;
             this.expression = queryComponentSettings.expression;
             this.automate = queryComponentSettings.automate;
+            if (queryComponentSettings.selectionHandlers != null) {
+                this.selectionHandlers = new ArrayList<>(queryComponentSettings.selectionHandlers);
+            }
         }
 
         public Builder dataSource(final DocRef dataSource) {
@@ -126,8 +149,21 @@ public class QueryComponentSettings implements ComponentSettings {
             return this;
         }
 
+        public Builder selectionHandlers(final List<ComponentSelectionHandler> selectionHandlers) {
+            this.selectionHandlers = selectionHandlers;
+            return this;
+        }
+
+        public Builder addSelectionHandler(final ComponentSelectionHandler selectionHandler) {
+            if (this.selectionHandlers == null) {
+                this.selectionHandlers = new ArrayList<>();
+            }
+            this.selectionHandlers.add(selectionHandler);
+            return this;
+        }
+
         public QueryComponentSettings build() {
-            return new QueryComponentSettings(dataSource, expression, automate);
+            return new QueryComponentSettings(dataSource, expression, automate, selectionHandlers);
         }
     }
 }

@@ -37,6 +37,7 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.List;
 import java.util.Set;
 
+@Deprecated
 public class VisPanel extends SimplePanel implements VisPane {
 
     private final Set<String> loadedScripts;
@@ -59,6 +60,10 @@ public class VisPanel extends SimplePanel implements VisPane {
     @Override
     public void injectScripts(final List<ScriptDoc> scripts, final VisFunction function) {
         injectScriptsFromURL(scripts, function);
+    }
+
+    @Override
+    public void setUiHandlers(final SelectionUiHandlers selectionUiHandlers) {
     }
 
     private void injectScriptDirectly(final List<ScriptDoc> scripts, final VisFunction function) {

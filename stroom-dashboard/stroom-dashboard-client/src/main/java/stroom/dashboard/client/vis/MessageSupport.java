@@ -22,17 +22,23 @@ import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.util.client.JSONUtil;
 
 import com.google.gwt.core.client.Callback;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Window;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-public class MessageSupport implements FrameListener, HasHandlers {
+public class MessageSupport implements FrameListener, HasHandlers, HasUiHandlers<SelectionUiHandlers> {
 
     private static final Map<Integer, Callback<String, Exception>> callbacks = new HashMap<>();
     private static int frameIdCounter;
@@ -41,11 +47,18 @@ public class MessageSupport implements FrameListener, HasHandlers {
     private final Element frame;
     private final int frameId;
 
+    private SelectionUiHandlers uiHandlers;
+
     public MessageSupport(final EventBus eventBus, final Element frame) {
         this.eventBus = eventBus;
         this.frame = frame;
         frameIdCounter++;
         frameId = frameIdCounter;
+    }
+
+    @Override
+    public void setUiHandlers(final SelectionUiHandlers uiHandlers) {
+        this.uiHandlers = uiHandlers;
     }
 
     public void bind() {
@@ -71,6 +84,21 @@ public class MessageSupport implements FrameListener, HasHandlers {
         PostMessage.get().postMessage(frame, json, frameId);
     }
 
+    private Map<String, String> toMap(final JSONObject obj) {
+        final Map<String, String> map = new HashMap<>();
+        if (obj != null) {
+            for (final String key : obj.keySet()) {
+                final JSONValue v = obj.get(key);
+                if (v.isString() != null) {
+                    map.put(key, v.isString().stringValue());
+                } else {
+                    map.put(key, v.toString());
+                }
+            }
+        }
+        return map;
+    }
+
     @Override
     public void receiveMessage(final MessageEvent event, final JSONObject message) {
         final Integer callbackId = JSONUtil.getInteger(message.get("callbackId"));
@@ -81,6 +109,23 @@ public class MessageSupport implements FrameListener, HasHandlers {
             final String target = JSONUtil.getString(message.get("target"));
             final Hyperlink hyperlink = Hyperlink.builder().href(href).type(target).build();
             HyperlinkEvent.fire(this, hyperlink);
+
+        } else if ("select".equals(functionName)) {
+            final JSONValue selection = message.get("selection");
+            GWT.log("Received selection from vis: " + selection.toString());
+
+            if (uiHandlers != null) {
+                final List<Map<String, String>> list = new ArrayList<>();
+                final JSONArray array = selection.isArray();
+                if (array != null) {
+                    for (int i = 0; i < array.size(); i++) {
+                        list.add(toMap(array.get(i).isObject()));
+                    }
+                } else {
+                    list.add(toMap(selection.isObject()));
+                }
+                uiHandlers.onSelection(list);
+            }
 
         } else {
             // Test to see if this is a callback message.
@@ -99,7 +144,7 @@ public class MessageSupport implements FrameListener, HasHandlers {
                 if (exception != null) {
                     Window.alert(exception);
                 } else {
-                    Window.alert("Unexpected message - " + message.toString());
+                    Window.alert("Unexpected message - " + message);
                 }
             }
         }

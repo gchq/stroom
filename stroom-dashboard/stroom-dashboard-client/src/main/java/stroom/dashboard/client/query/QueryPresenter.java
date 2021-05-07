@@ -18,8 +18,11 @@ package stroom.dashboard.client.query;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.LocationManager;
+import stroom.dashboard.client.HasSelection;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
+import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
+import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.main.DashboardUUID;
 import stroom.dashboard.client.main.DataSourceFieldsMap;
 import stroom.dashboard.client.main.IndexLoader;
@@ -29,6 +32,7 @@ import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.table.TimeZones;
 import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
+import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardQueryKey;
@@ -53,6 +57,8 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
 import stroom.security.client.api.ClientSecurityContext;
@@ -88,6 +94,9 @@ import com.gwtplatform.mvp.client.View;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.QueryView>
         implements QueryUiHandlers, HasDirtyHandlers, Queryable {
@@ -263,6 +272,93 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                 loadedDataSource(indexLoader.getLoadedDataSourceRef(), indexLoader.getDataSourceFieldsMap())));
 
         registerHandler(downloadQueryButton.addClickHandler(event -> downloadQuery()));
+    }
+
+    @Override
+    public void setComponents(final Components components) {
+        super.setComponents(components);
+        registerHandler(components.addComponentChangeHandler(event -> {
+            if (initialised) {
+                final Component component = event.getComponent();
+                if (component instanceof HasSelection) {
+                    final HasSelection hasSelection = (HasSelection) component;
+                    final List<Map<String, String>> selection = hasSelection.getSelection();
+                    final List<ComponentSelectionHandler> selectionHandlers = getQuerySettings().getSelectionHandlers();
+                    if (selectionHandlers != null) {
+                        final List<ComponentSelectionHandler> matchingHandlers = selectionHandlers
+                                .stream()
+                                .filter(ComponentSelectionHandler::isEnabled)
+                                .filter(selectionHandler -> selectionHandler.getComponentId() == null ||
+                                        selectionHandler.getComponentId().equals(component.getId()))
+                                .collect(Collectors.toList());
+
+                        if (matchingHandlers.size() > 0) {
+                            final Function<ExpressionOperator, ExpressionOperator> decorator = (in) -> {
+                                final ExpressionOperator.Builder innerBuilder = ExpressionOperator
+                                        .builder();
+                                boolean added = false;
+                                for (final ComponentSelectionHandler selectionHandler : matchingHandlers) {
+                                    for (final Map<String, String> params : selection) {
+                                        ExpressionOperator ex = selectionHandler.getExpression();
+                                        ex = ExpressionUtil.replaceExpressionParameters(ex, params);
+                                        innerBuilder.addOperator(ex);
+
+                                        if (!added) {
+                                            added = true;
+                                        } else {
+                                            innerBuilder.op(Op.OR);
+                                        }
+                                    }
+                                }
+
+                                if (added) {
+                                    return ExpressionOperator
+                                            .builder()
+                                            .addOperator(in)
+                                            .addOperator(innerBuilder.build())
+                                            .build();
+                                }
+
+                                return in;
+                            };
+
+//                          this.params = params;
+//                          lastUsedQueryInfo = null;
+
+                            stop();
+                            run(true, true, decorator);
+                        }
+                    }
+                }
+            }
+
+//            if (component instanceof HasAbstractFields) {
+//                final VisPresenter visPresenter = (VisPresenter) component;
+//                final List<Map<String, String>> selection = visPresenter.getCurrentSelection();
+//                String params = "";
+//                if (selection != null) {
+//                    for (final Map<String, String> map : selection) {
+//                        for (final Entry<String, String> entry : map.entrySet()) {
+//                            params += entry.getKey() + "=" + entry.getValue() + " ";
+//                        }
+//                    }
+//                }
+//                onQuery(params, null);
+//            }
+
+//                if (getTextSettings().getTableId() == null) {
+//                    if (component instanceof TablePresenter) {
+//                        currentTablePresenter = (TablePresenter) component;
+//                        update(currentTablePresenter);
+//                    }
+//                } else if (EqualsUtil.isEquals(getTextSettings().getTableId(), event.getComponentId())) {
+//                    if (component instanceof TablePresenter) {
+//                        currentTablePresenter = (TablePresenter) component;
+//                        update(currentTablePresenter);
+//                    }
+//                }
+//            }
+        }));
     }
 
     public void setErrors(final String errors) {
@@ -480,6 +576,12 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
     private void run(final boolean incremental,
                      final boolean storeHistory) {
+        run(incremental, storeHistory, Function.identity());
+    }
+
+    private void run(final boolean incremental,
+                     final boolean storeHistory,
+                     final Function<ExpressionOperator, ExpressionOperator> expressionDecorator) {
         final DocRef dataSourceRef = getQuerySettings().getDataSource();
 
         if (dataSourceRef == null) {
@@ -492,9 +594,10 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
             // Write expression.
             final ExpressionOperator root = expressionPresenter.write();
+            final ExpressionOperator decorated = expressionDecorator.apply(root);
 
             // Start search.
-            searchModel.search(root, params, incremental, storeHistory, lastUsedQueryInfo);
+            searchModel.search(decorated, params, incremental, storeHistory, lastUsedQueryInfo);
         }
     }
 

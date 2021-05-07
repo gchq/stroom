@@ -167,7 +167,8 @@ public final class MappingUtil {
 
         return new stroom.dashboard.shared.QueryComponentSettings(map(value.getDataSource()),
                 map(value.getExpression()),
-                map(value.getAutomate()));
+                map(value.getAutomate()),
+                null);
     }
 
     public static stroom.dashboard.shared.TableComponentSettings map(stroom.legacy.model_6_1.TableComponentSettings value) {

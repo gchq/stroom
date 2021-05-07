@@ -22,10 +22,11 @@ import stroom.visualisation.client.presenter.VisFunction;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.RequiresResize;
+import com.gwtplatform.mvp.client.HasUiHandlers;
 
 import java.util.List;
 
-public interface VisPane extends IsWidget, RequiresResize {
+public interface VisPane extends IsWidget, RequiresResize, HasUiHandlers<SelectionUiHandlers> {
 
     void injectScripts(List<ScriptDoc> scripts, VisFunction function);
 

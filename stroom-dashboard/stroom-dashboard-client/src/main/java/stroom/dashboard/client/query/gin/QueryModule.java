@@ -38,6 +38,10 @@ import stroom.dashboard.client.query.QueryPlugin;
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.query.QueryPresenter.QueryView;
 import stroom.dashboard.client.query.QueryViewImpl;
+import stroom.dashboard.client.query.SelectionHandlerPresenter;
+import stroom.dashboard.client.query.SelectionHandlerViewImpl;
+import stroom.dashboard.client.query.SelectionHandlersPresenter;
+import stroom.dashboard.client.query.SelectionHandlersViewImpl;
 
 import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
 
@@ -54,5 +58,14 @@ public class QueryModule extends AbstractPresenterModule {
         bindPresenterWidget(ProcessorLimitsPresenter.class, ProcessorLimitsView.class, ProcessorLimitsViewImpl.class);
         bindPresenterWidget(BasicQuerySettingsPresenter.class, BasicQuerySettingsView.class,
                 BasicQuerySettingsViewImpl.class);
+
+        bindPresenterWidget(
+                SelectionHandlersPresenter.class,
+                SelectionHandlersPresenter.SelectionHandlersView.class,
+                SelectionHandlersViewImpl.class);
+        bindPresenterWidget(
+                SelectionHandlerPresenter.class,
+                SelectionHandlerPresenter.SelectionHandlerView.class,
+                SelectionHandlerViewImpl.class);
     }
 }
