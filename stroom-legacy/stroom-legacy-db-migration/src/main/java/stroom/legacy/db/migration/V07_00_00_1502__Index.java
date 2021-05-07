@@ -400,7 +400,9 @@ public class V07_00_00_1502__Index extends BaseJavaMigration {
                         }
                         document.setRetentionDayAge(retenDayAge);
                         document.setFields(MappingUtil.map(LegacyXmlSerialiser.getIndexFieldsFromLegacyXml(fields)));
-                        document.setVolumeGroupName(indexUuidToVolumeGroupMap.get(uuid).getName());
+                        Optional.ofNullable(indexUuidToVolumeGroupMap.get(uuid))
+                                .map(VolumeGroup::getName)
+                                .ifPresent(document::setVolumeGroupName);
 
                         final Map<String, byte[]> dataMap = serialiser.write(document);
 
