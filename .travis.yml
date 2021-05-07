@@ -1,8 +1,8 @@
-language: java
+language: bash
 os: linux
-dist: trusty
-group: edge
-jdk: openjdk15
+dist: focal
+# group: edge
+# jdk: openjdk15
 
 env:
   global:
@@ -20,7 +20,7 @@ env:
     - secure: "S2NzvX3h+8F9Dti/hWPWfQaKaSHAvq5YxGI0CpeO702MWXHHu4rBQ/u8mUYKx36hztP80Wt9zvIPbSX1WPYhC3oAlAS7TADZG5YN3nwePnWdn6ZwNphEI3xxHs7YiSVxbb9ejNheJN1mNzg7zy9L81ofl+iZCWtlngtNt7M7/leBYLug75bQ/Hmc26X/orqv/C/dPbngB1eT9Th0AcfYiLpBlRfCEF01H8+Chaf4cuB9E2DDU1KBXOLC5t/Z1kMO329guCBp0MUonNJrvvI4e7cxUs1pB8EQKuWMpjyPoNaB8ikJli7eUPqEyfgYllZ7B3z4p3yKM50yNcbQ6tmhCwUa2AIhRB3Q3hS0fvoi4KISKPXwmA8LcdhgT9SpuUMbLntARgFyTXvJsJbHFKyHQSqd9gUAoDaNr5+HkuKXPRYinaeO0eL1AKX2RAXU/onYVABtODXt6k3uPzYZQ1dENyH5p6AdPUBZkAzTbkA2+0aNUCYRRObV457ilJ74vKrZQG3JQGltDzQWH7riTOLR2ERGnC0T6jVJxepivyTJz+ucULGaFs3f+X/WhhrTH/8xwS7fJPW9dtosISdrnk/2HWrUuMDK2j26xoiVphUu9CfOZmSWDV9bX5WPtbwT/DT+S0Pyyh+p/0yuJ7HyJB1gyhx2kBtoPEZCYXTCwXZuoP8="
     - STROOM_RESOURCES_GIT_REF=4f52db02eb5dfb09c818dcf77d44107b1f2df9ae
 
-before_install:
+# before_install:
 #  - wget https://raw.githubusercontent.com/creationix/nvm/v0.31.0/nvm.sh -O ~/.nvm/nvm.sh
 #  - source ~/.nvm/nvm.sh
 #  - nvm install $NODE_VERSION
@@ -43,24 +43,24 @@ before_install:
 #  - npm --version
 
   # Install NVM
-  - curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.38.0/install.sh | bash
-  - source ~/.nvm/nvm.sh
-  - nvm --version
+  #- curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.38.0/install.sh | bash
+  #- source ~/.nvm/nvm.sh
+  #- nvm --version
 
-  # Install Node, needs to match stroom-ui/.nvmrc
-  - nvm install 15.14.0
-  - nvm use 15.14.0
-  - node --version
+  ## Install Node, needs to match stroom-ui/.nvmrc
+  #- nvm install 15.14.0
+  #- nvm use 15.14.0
+  #- node --version
 
-  # Install NPM
-  - nvm install-latest-npm
-  - npm --version
-  - npx --version
+  ## Install NPM
+  #- nvm install-latest-npm
+  #- npm --version
+  #- npx --version
 
-  # Install Yarn
-  - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.22.10
-  - export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH"
-  - yarn --version
+  ## Install Yarn
+  #- curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.22.10
+  #- export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH"
+  #- yarn --version
 
 install: echo "skip 'gradle assemble' step to speed up build"
 
