@@ -29,9 +29,15 @@ docker run \
   --volume builder-home-dir-vol:/home/node \
   --workdir "${dest_dir}/stroom-ui" \
   "${image_tag}" \
-  bash -c './yarnBuild.sh'
+  bash -c './generateApi.sh'
   #bash
   #bash -c 'echo $PWD; nvm --version; node --version; npm --version; npx --version; yarn --version; ./yarnBuild.sh'
 
+  #--mount "type=bind,src=/home/dev/.npm,dst=/home/node/.npm" \
 
 #  --mount "type=bind,src=$(pwd),dst=${dest_dir}" \
+
+# Generate typescript API from Swagger schema.
+# Latest version of `wagger-typescript-api` 8.0.3 but doesn't seem to work.
+#echo "npx swagger-typescript-api@6.4.2 -p ../stroom-app/src/main/resources/ui/noauth/swagger/stroom.json -o ./src/api -n stroom.ts"
+#npx swagger-typescript-api@6.4.2 -p ../stroom-app/src/main/resources/ui/noauth/swagger/stroom.json -o ./src/api -n stroom.ts
