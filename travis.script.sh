@@ -292,6 +292,8 @@ else
   # Ensure we have a local.yml file as the integration tests will need it
   ./local.yml.sh
 
+  ./container_build/gradleBuild.sh
+
   # Do the gradle build
   # Use custom gwt compile jvm settings to avoid blowing the ram limit in
   # travis. At time of writing a sudo VM in travis has 7.5gb ram.
@@ -299,63 +301,63 @@ else
   # our docker services as well.
   # Don't clean as this is a fresh clone and clean will wipe the cached
   # content pack zips
-  echo -e "${GREEN}Do the basic java build${NC}"
-  ./gradlew \
-    -Dorg.gradle.parallel=false \
-    --scan \
-    --stacktrace \
-    -PdumpFailedTestXml=true \
-    -Pversion="${TRAVIS_TAG}" \
-    build \
-    -x shadowJar \
-    -x resolve \
-    -x copyFilesForStroomDockerBuild \
-    -x copyFilesForProxyDockerBuild \
-    -x buildDistribution \
-    -Dorg.gradle.parallel=false
+  #echo -e "${GREEN}Do the basic java build${NC}"
+  #./gradlew \
+    #-Dorg.gradle.parallel=false \
+    #--scan \
+    #--stacktrace \
+    #-PdumpFailedTestXml=true \
+    #-Pversion="${TRAVIS_TAG}" \
+    #build \
+    #-x shadowJar \
+    #-x resolve \
+    #-x copyFilesForStroomDockerBuild \
+    #-x copyFilesForProxyDockerBuild \
+    #-x buildDistribution \
+    #-Dorg.gradle.parallel=false
 
-  echo -e "${GREEN}Do the yarn build${NC}"
-  ./gradlew \
-    --scan \
-    --stacktrace \
-    stroom-ui:copyYarnBuild
+  #echo -e "${GREEN}Do the yarn build${NC}"
+  #./gradlew \
+    #--scan \
+    #--stacktrace \
+    #stroom-ui:copyYarnBuild
 
-  # Compile the application GWT UI
-  echo -e "${GREEN}Do the GWT app compile${NC}"
-  ./gradlew \
-    --scan \
-    --stacktrace \
-    -PgwtCompilerWorkers=2 \
-    -PgwtCompilerMinHeap=50M \
-    -PgwtCompilerMaxHeap=2G \
-    stroom-app-gwt:gwtCompile
+  ## Compile the application GWT UI
+  #echo -e "${GREEN}Do the GWT app compile${NC}"
+  #./gradlew \
+    #--scan \
+    #--stacktrace \
+    #-PgwtCompilerWorkers=2 \
+    #-PgwtCompilerMinHeap=50M \
+    #-PgwtCompilerMaxHeap=2G \
+    #stroom-app-gwt:gwtCompile
 
-  # Compile the dashboard GWT UI
-  echo -e "${GREEN}Do the GWT dashboard compile${NC}"
-  ./gradlew \
-    --scan \
-    --stacktrace \
-    -PgwtCompilerWorkers=2 \
-    -PgwtCompilerMinHeap=50M \
-    -PgwtCompilerMaxHeap=2G \
-    stroom-dashboard-gwt:gwtCompile
+  ## Compile the dashboard GWT UI
+  #echo -e "${GREEN}Do the GWT dashboard compile${NC}"
+  #./gradlew \
+    #--scan \
+    #--stacktrace \
+    #-PgwtCompilerWorkers=2 \
+    #-PgwtCompilerMinHeap=50M \
+    #-PgwtCompilerMaxHeap=2G \
+    #stroom-dashboard-gwt:gwtCompile
 
-  # Make the distribution.
-  echo -e "${GREEN}Build the distribution${NC}"
-  ./gradlew \
-    --scan \
-    --stacktrace \
-    -PdumpFailedTestXml=true \
-    -Pversion="${TRAVIS_TAG}" \
-    shadowJar \
-    buildDistribution \
-    copyFilesForStroomDockerBuild \
-    copyFilesForProxyDockerBuild \
-    -x test \
-    -x stroom-ui:copyYarnBuild \
-    -x stroom-app-gwt:gwtCompile \
-    -x stroom-dashboard-gwt:gwtCompile \
-    "${extraBuildArgs[@]}"
+  ## Make the distribution.
+  #echo -e "${GREEN}Build the distribution${NC}"
+  #./gradlew \
+    #--scan \
+    #--stacktrace \
+    #-PdumpFailedTestXml=true \
+    #-Pversion="${TRAVIS_TAG}" \
+    #shadowJar \
+    #buildDistribution \
+    #copyFilesForStroomDockerBuild \
+    #copyFilesForProxyDockerBuild \
+    #-x test \
+    #-x stroom-ui:copyYarnBuild \
+    #-x stroom-app-gwt:gwtCompile \
+    #-x stroom-dashboard-gwt:gwtCompile \
+    #"${extraBuildArgs[@]}"
 
 # Disable parallel build execution in travis. Note this is seprate to prallel test execution.
 # -Dorg.gradle.parallel=false \

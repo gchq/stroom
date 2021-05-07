@@ -4,6 +4,9 @@
 
 set -euo pipefail
 
+# Ensure we are in the dir where this script lives
+SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
+
 # Shell Colour constants for use in 'echo -e'
 # e.g.  echo -e "My message ${GREEN}with just this text in green${NC}"
 # shellcheck disable=SC2034
@@ -24,10 +27,17 @@ GRADLE_ARGS=(
   "--console=plain"
 )
 
+#GWT_ARGS=(
+  #"-PgwtCompilerWorkers=5"
+  #"-PgwtCompilerMinHeap=50M"
+  #"-PgwtCompilerMaxHeap=4G"
+#)
+
+# Sized for travis
 GWT_ARGS=(
-  "-PgwtCompilerWorkers=5"
+  "-PgwtCompilerWorkers=2"
   "-PgwtCompilerMinHeap=50M"
-  "-PgwtCompilerMaxHeap=4G"
+  "-PgwtCompilerMaxHeap=2G"
 )
 
 determine_host_address() {
@@ -62,6 +72,8 @@ determine_host_address() {
 }
 
 main() {
+
+  pushd "${SCRIPT_DIR}" > /dev/null
 
   # When we are in a container localhost is no good for connecting to the db
   # so use the ip
@@ -109,8 +121,22 @@ main() {
     --scan \
     --stacktrace \
     "${GWT_ARGS[@]}" \
-    stroom-ui:copyYarnBuild \
-    stroom-app-gwt:gwtCompile \
+    stroom-ui:copyYarnBuild
+
+  echo -e "${GREEN}Do the GWT UI build${NC}"
+  ./gradlew \
+    "${GRADLE_ARGS[@]}" \
+    --scan \
+    --stacktrace \
+    "${GWT_ARGS[@]}" \
+    stroom-app-gwt:gwtCompile
+
+  echo -e "${GREEN}Do the dashboard GWT UI build${NC}"
+  ./gradlew \
+    "${GRADLE_ARGS[@]}" \
+    --scan \
+    --stacktrace \
+    "${GWT_ARGS[@]}" \
     stroom-dashboard-gwt:gwtCompile
 
   #echo -e "${GREEN}Do the yarn build${NC}"
