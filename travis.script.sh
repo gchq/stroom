@@ -292,7 +292,7 @@ else
   # Ensure we have a local.yml file as the integration tests will need it
   ./local.yml.sh
 
-  ./container_build/gradleBuild.sh
+  ./container_build/gradleBuildInDocker.sh
 
   # Do the gradle build
   # Use custom gwt compile jvm settings to avoid blowing the ram limit in
