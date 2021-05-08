@@ -275,24 +275,28 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             } else if (currentArrayString != null) {
                 // An array string has ended
                 currentArrayString = null;
-            } else if (currentObjectArray != null && currentObjectArray.size() > 0) {
-                // We're at the end of an object array, so commit it to the document
-                addFieldToDocument(currentPropertyName, currentObjectArray);
-                currentStringArray = null;
-                currentObjectArray = null;
-                currentObject = null;
-            } else if (currentStringArray != null && currentStringArray.size() > 0) {
-                // End of a string array
-                addFieldToDocument(currentPropertyName, currentStringArray);
-                currentStringArray = null;
-                currentObjectArray = null;
-                currentObject = null;
-            } else if (currentObject != null && currentObject.size() > 0) {
-                // End of plain object
-                addFieldToDocument(currentPropertyName, currentObject);
-                currentStringArray = null;
-                currentObjectArray = null;
-                currentObject = null;
+            } else {
+                if (currentObjectArray != null) {
+                    // We're at the end of an object array, so commit it to the document
+                    if (currentObjectArray.size() > 0) {
+                        addFieldToDocument(currentPropertyName, currentObjectArray);
+                    }
+                    currentObjectArray = null;
+                }
+                if (currentStringArray != null) {
+                    // End of a string array
+                    if (currentStringArray.size() > 0) {
+                        addFieldToDocument(currentPropertyName, currentStringArray);
+                    }
+                    currentStringArray = null;
+                }
+                if (currentObject != null) {
+                    // End of plain object
+                    if (currentObject.size() > 0) {
+                        addFieldToDocument(currentPropertyName, currentObject);
+                    }
+                    currentObject = null;
+                }
             }
         } else if (RECORD_ELEMENT_NAME.equals(localName)) {
             processDocument();
