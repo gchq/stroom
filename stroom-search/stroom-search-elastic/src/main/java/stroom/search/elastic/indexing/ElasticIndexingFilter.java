@@ -213,12 +213,15 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                 if (value == null) {
                     // Node with a name and no value. Treat this as the start of an array.
                     // Could be either a string or object array.
-                    if (currentStringArray != null || currentObjectArray != null) {
+                    if (currentStringArray != null && currentStringArray.size() > 0 ||
+                        currentObjectArray != null && currentObjectArray.size() > 0
+                    ) {
                         throw new SAXException("Cannot nest an array within another array");
                     }
 
                     currentStringArray = new ArrayList<>();
                     currentObjectArray = new ArrayList<>();
+                    currentArrayObject = new HashMap<>();
                     currentObject = new HashMap<>();
                     currentPropertyName = name;
                 } else {
@@ -282,6 +285,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                         addFieldToDocument(currentPropertyName, currentObjectArray);
                     }
                     currentObjectArray = null;
+                    currentArrayObject = null;
                 }
                 if (currentStringArray != null) {
                     // End of a string array
@@ -302,11 +306,12 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             processDocument();
             document = null;
             currentStringArray = null;
+            currentArrayString = null;
             currentObjectArray = null;
             currentArrayObject = null;
-            isBuildingArrayObject = false;
-            currentArrayString = null;
             currentObject = null;
+            isBuildingArrayObject = false;
+            isBuildingObject = false;
 
             // Reset the count of how many fields we have indexed for the
             // current event.
