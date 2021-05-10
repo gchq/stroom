@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2235** : Add CHANGELOG to the release artefacts.
+
 
 ## [v7.0-beta.115] - 2021-05-10
 
