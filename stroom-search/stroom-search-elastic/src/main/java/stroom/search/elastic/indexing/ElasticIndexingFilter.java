@@ -221,7 +221,6 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
                     currentStringArray = new ArrayList<>();
                     currentObjectArray = new ArrayList<>();
-                    currentArrayObject = new HashMap<>();
                     currentObject = new HashMap<>();
                     currentPropertyName = name;
                 } else {
