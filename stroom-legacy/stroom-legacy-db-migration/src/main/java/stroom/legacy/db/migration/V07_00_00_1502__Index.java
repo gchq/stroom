@@ -45,6 +45,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -83,6 +84,7 @@ public class V07_00_00_1502__Index extends BaseJavaMigration {
             final Map<Integer, OldVolume> oldVolumes = getOldVolumes(connection);
 
             // Get a map of index UUIDs to the list of volume ids for each index.
+            // All sets in the map will be non empty
             final Map<String, Set<Integer>> indexUuidToVolumeIdListMap = getVolumesToMigrate(connection);
 
             if (!indexUuidToVolumeIdListMap.isEmpty()) {
@@ -92,17 +94,28 @@ public class V07_00_00_1502__Index extends BaseJavaMigration {
                 // Create sets of unique groups.
                 LOGGER.info("Creating index volume groups");
                 for (final Entry<String, Set<Integer>> entry : indexUuidToVolumeIdListMap.entrySet()) {
-                    // Create a sorted list of the volume ids to ensure uniqueness.
-                    final List<Integer> indexVolumeIds = entry
-                            .getValue()
+                    final String indexUuid = entry.getKey();
+                    final Set<Integer> indexVolIdSet = entry.getValue();
+
+                    // Create a sorted list of the volume ids to ensure comparison as a map key
+                    final List<Integer> sortedIndexVolumeIds = indexVolIdSet
                             .stream()
                             .sorted()
-                            .collect(Collectors.toList());
+                            .collect(Collectors.toUnmodifiableList());
+
+                    if (sortedIndexVolumeIds.isEmpty()) {
+                        throw new RuntimeException("sortedIndexVolumeIds is empty for index uuid " + indexUuid);
+                    }
 
                     // Get or create a new volume group for the volumes.
-                    final VolumeGroup volumeGroup = uniqueIndexVolumesToGroupIdMap
-                            .computeIfAbsent(indexVolumeIds, k -> createVolumeGroup(connection, k));
-                    indexUuidToVolumeGroupMap.put(entry.getKey(), volumeGroup);
+                    final VolumeGroup volumeGroup = uniqueIndexVolumesToGroupIdMap.computeIfAbsent(
+                            sortedIndexVolumeIds,
+                            sortedIndexVolIds2 ->
+                                    createVolumeGroup(connection, sortedIndexVolIds2));
+
+                    Objects.requireNonNull(volumeGroup, "Null volume group");
+
+                    indexUuidToVolumeGroupMap.put(indexUuid, volumeGroup);
                 }
 
                 // Create and attach index volumes to groups.
@@ -143,26 +156,27 @@ public class V07_00_00_1502__Index extends BaseJavaMigration {
                 while (resultSet.next()) {
                     final String indexUuid = resultSet.getString(1);
                     final int volId = resultSet.getInt(2);
-                    indexUuidToVolumeIdListMap.computeIfAbsent(indexUuid, k -> new HashSet<>()).add(volId);
+                    indexUuidToVolumeIdListMap.computeIfAbsent(indexUuid, k -> new HashSet<>())
+                            .add(volId);
                 }
             }
         }
 
         // Add any historic index volumes.
         try (final PreparedStatement preparedStatement = connection.prepareStatement(
-                "SELECT " +
-                        "oiv.IDX_UUID, " +
-                        "ois.FK_VOL_ID " +
+                "SELECT DISTINCT " +
+                        "  oi.UUID, " +
+                        "  ois.FK_VOL_ID " +
                         "FROM " +
                         "OLD_IDX_SHRD ois " +
-                        "JOIN OLD_IDX_VOL oiv ON (oiv.FK_VOL_ID = ois.FK_VOL_ID) " +
-                        "GROUP BY ois.FK_VOL_ID, oiv.IDX_UUID")) {
+                        "JOIN OLD_IDX oi ON (oi.ID = ois.FK_IDX_ID) ")) {
 
             try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
                     final String indexUuid = resultSet.getString(1);
                     final int volId = resultSet.getInt(2);
-                    indexUuidToVolumeIdListMap.computeIfAbsent(indexUuid, k -> new HashSet<>()).add(volId);
+                    indexUuidToVolumeIdListMap.computeIfAbsent(indexUuid, k -> new HashSet<>())
+                            .add(volId);
                 }
             }
         }
@@ -286,6 +300,14 @@ public class V07_00_00_1502__Index extends BaseJavaMigration {
         final int id = currentGroupId.incrementAndGet();
         final String groupName = "Group " + id;
         createGroup(connection, id, groupName);
+
+        LOGGER.info("Created index volume group (id {}, name {}) with old vol ids [{}]",
+                id,
+                groupName,
+                oldVolumeIds.stream()
+                        .map(Object::toString)
+                        .collect(Collectors.joining(",")));
+
         return new VolumeGroup(id, groupName, oldVolumeIds);
     }
 
@@ -295,7 +317,7 @@ public class V07_00_00_1502__Index extends BaseJavaMigration {
         final long now = System.currentTimeMillis();
 
         // Create index volume groups
-        final Map<String, Integer> groupNameToIdMap = new HashMap<>();
+//        final Map<String, Integer> groupNameToIdMap = new HashMap<>();
         final String insertSql = "" +
                 "INSERT INTO index_volume_group (" +
                 " id," +
@@ -317,7 +339,8 @@ public class V07_00_00_1502__Index extends BaseJavaMigration {
             insert.setString(7, name);
             insert.executeUpdate();
         } catch (final SQLException e) {
-            throw new RuntimeException(e.getMessage(), e);
+            throw new RuntimeException("Error creating index vol group with id " + id + ", name " + name +
+                    ": " + e.getMessage(), e);
         }
     }
 
@@ -488,8 +511,16 @@ public class V07_00_00_1502__Index extends BaseJavaMigration {
 
                         // Get target volume id.
                         final OldVolume oldVolume = oldVolumes.get(volumeId);
+                        Objects.requireNonNull(oldVolume,
+                                "oldVolume should not be null for volumeId " + volumeId);
+
                         final VolumeGroup volumeGroup = indexUuidToVolumeGroupMap.get(indexUuid);
+                        Objects.requireNonNull(volumeGroup,
+                                "volumeGroup should not be null for indexUuid " + indexUuid);
+
                         final Integer newVolumeId = volumeGroup.oldToNewVolumeIdMapping.get(volumeId);
+                        Objects.requireNonNull(newVolumeId,
+                                "newVolumeId should not be null for volumeId " + volumeId);
 
                         // Move shard.
                         moveShard(oldVolume.path, oldIndexId, indexUuid);
@@ -511,7 +542,9 @@ public class V07_00_00_1502__Index extends BaseJavaMigration {
                             DbUtil.setLong(insert, 14, partTo);
                             insert.executeUpdate();
                         } catch (final SQLException e) {
-                            throw new RuntimeException(e.getMessage(), e);
+                            throw new RuntimeException("Error creating index shard with id " + id +
+                                    " and uuid " + indexUuid +
+                                    ": " + e.getMessage(), e);
                         }
                     }
                 }

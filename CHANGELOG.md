@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2233** : Fix null volume ID in index shard migration.
+
 
 ## [v7.0-beta.113] - 2021-05-07
 
