@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2233** : Fix typo in SQL.
+
 
 ## [v7.0-beta.114] - 2021-05-10
 

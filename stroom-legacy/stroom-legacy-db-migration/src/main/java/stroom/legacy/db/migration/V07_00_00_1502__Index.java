@@ -163,13 +163,19 @@ public class V07_00_00_1502__Index extends BaseJavaMigration {
         }
 
         // Add any historic index volumes.
-        try (final PreparedStatement preparedStatement = connection.prepareStatement(
+
+        // NOTE ois.FK_IDX_ID is renamed in V07_00_00_017__IDX_SHRD.sql to OLD_IDX_ID
+        // There is no FK constraint on OLD_IDX_ID so it is possible we may ignore shards with no
+        // corresponding idx, but there was an FK in V07_00_00_017__IDX_SHRD.sql so as long as we have
+        // not deleted idxc recs since then we are ok.
+        final String indexShardVolsSql =
                 "SELECT DISTINCT " +
                         "  oi.UUID, " +
                         "  ois.FK_VOL_ID " +
                         "FROM " +
                         "OLD_IDX_SHRD ois " +
-                        "JOIN OLD_IDX oi ON (oi.ID = ois.FK_IDX_ID) ")) {
+                        "JOIN OLD_IDX oi ON (oi.ID = ois.OLD_IDX_ID) ";
+        try (final PreparedStatement preparedStatement = connection.prepareStatement(indexShardVolsSql)) {
 
             try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
