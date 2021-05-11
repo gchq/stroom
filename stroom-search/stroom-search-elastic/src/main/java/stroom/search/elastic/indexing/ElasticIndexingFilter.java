@@ -62,6 +62,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Takes index XML and sends documents to Elasticsearch for indexing
@@ -356,13 +357,11 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                         BulkRequest bulkRequest = new BulkRequest();
 
                         // For each document, create an indexing request and append to the bulk request
-                        documents.forEach(document -> {
-                            final IndexRequest indexRequest = new IndexRequest(indexName)
-                                .opType(OpType.CREATE)
-                                .source(document);
-
-                            bulkRequest.add(indexRequest);
-                        });
+                        bulkRequest.add(
+                                documents.stream().map(document -> new IndexRequest(indexName)
+                                        .opType(OpType.CREATE)
+                                        .source(document)).collect(Collectors.toList())
+                        );
 
                         if (refreshAfterEachBatch) {
                             // Refresh upon completion of the batch index request
