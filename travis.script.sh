@@ -54,6 +54,31 @@ create_file_hash() {
   echo -e "-------------------------------------------------------"
 }
 
+generate_ddl_dump() {
+  mkdir -p "${RELEASE_ARTEFACTS_DIR}"
+
+  # clear down stroom-all-dbs container and volumes
+  docker ps -q -f=name='stroom-all-dbs' | xargs -r docker stop --time 0
+  docker ps -a -q -f=name='stroom-all-dbs' | xargs -r docker rm
+  docker volume ls -q -f=name='bounceit_stroom-all-dbs*' | xargs -r docker volume rm
+
+  # Run the db migration against the empty db to give us a vanilla
+  # schema to dump
+  ./container_build/runInJavaDocker.sh MIGRATE
+
+  docker exec \
+    stroom-all-dbs \
+    mysqldump \
+      -d \
+      -p"my-secret-pw" \
+      stroom \
+    > "${RELEASE_ARTEFACTS_DIR}/database-schema-${TRAVIS_TAG}.sql"
+}
+
+generate_entity_rel_diagram() {
+  ./container_build/runInJavaDocker.sh ERD
+}
+
 # Put all release artefacts in a dir to make it easier to upload them to
 # Github releases. Some of them are needed by the stack builds in
 # stroom-resources
@@ -105,6 +130,9 @@ gather_release_artefacts() {
 
   # Stroom (Headless)
   cp "stroom-headless/build/distributions/stroom-headless-${TRAVIS_TAG}.zip" \
+    "${RELEASE_ARTEFACTS_DIR}"
+
+  cp "./container_build/build/entity_relationships.svg" \
     "${RELEASE_ARTEFACTS_DIR}"
 
   # Now generate hashes for all the zips
@@ -292,7 +320,7 @@ else
   # Ensure we have a local.yml file as the integration tests will need it
   ./local.yml.sh
 
-  ./container_build/gradleBuildInDocker.sh
+  ./container_build/runInJavaDocker.sh GRADLE_BUILD
 
   # Do the gradle build
   # Use custom gwt compile jvm settings to avoid blowing the ram limit in
@@ -435,6 +463,10 @@ else
   # If it is a tagged build copy all the files needed for the github release
   # artefacts
   if [ -n "$TRAVIS_TAG" ]; then
+    generate_ddl_dump
+
+    generate_entity_rel_diagram
+
     gather_release_artefacts
   fi
 fi

@@ -47,6 +47,28 @@ determine_host_address() {
 
 host_ip="$(determine_host_address)"
 
+docker_bash_command=()
+
+if [[ $# -lt 1 ]]; then
+  echo -e "${YELLOW}WARN: No bash command supplied so using 'bash'.${NC}"
+  echo -e "Usage: $0 bash_command"
+  echo -e "e.g:   $0 ./some_path/a_script.sh arg1 arg2"
+  echo -e "Commands are relative to the repo root."
+  docker_bash_command=( "bash" )
+else
+  if [[ $# -eq 1 ]] && [[ "$1" = "ERD" ]]; then
+    docker_bash_command=( "bash" "-c"  "./container_build/runPlantErd.sh" )
+  elif [[ $# -eq 1 ]] && [[ "$1" = "GRADLE_BUILD" ]]; then
+    docker_bash_command=( "bash" "-c"  "SKIP_TESTS=\"${SKIP_TESTS:-false}\" MAX_WORKERS=\"${MAX_WORKERS:-6}\" ./container_build/gradleBuild.sh" )
+  elif [[ $# -eq 1 ]] && [[ "$1" = "MIGRATE" ]]; then
+    # DB is in a sibling container so need to force it to use the IP instead of localhost
+    docker_bash_command=( "bash" "-c"  "export STROOM_JDBC_DRIVER_URL=\"jdbc:mysql://${host_ip}:3307/stroom?useUnicode=yes&characterEncoding=UTF-8\"; java -jar ./stroom-app/build/libs/stroom-app-all.jar migrate ./local.yml" )
+  else
+    docker_bash_command=( "bash" "-c" "$*" )
+  fi
+fi
+
+
 user_id=
 user_id="$(id -u)"
 
@@ -107,9 +129,12 @@ docker run \
   --volume builder-home-dir-vol:/home/builder \
   --group-add "${docker_group_id}" \
   --volume /var/run/docker.sock:/var/run/docker.sock \
+  --read-only \
   --name "stroom-builder" \
   "${image_tag}" \
-  bash -c "./container_build/runPlantErd.sh"
+  "${docker_bash_command[@]}"
+
+  #bash -c "pwd; SKIP_TESTS=\"${SKIP_TESTS:-false}\" MAX_WORKERS=\"${MAX_WORKERS:-6}\" ./container_build/gradleBuild.sh"
 
   #bash
   #bash -c 'echo $PWD; nvm --version; node --version; npm --version; npx --version; yarn --version; ./yarnBuild.sh'

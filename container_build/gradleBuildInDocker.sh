@@ -45,7 +45,6 @@ determine_host_address() {
   echo "$ip"
 }
 
-
 host_ip="$(determine_host_address)"
 
 user_id=
@@ -93,6 +92,7 @@ docker build \
 
 
   #--workdir "${dest_dir}" \
+
 # Mount the whole repo into the container so we can run the build
 # The mount src is on the host file system
 # group-add gives the permission to interact with the docker cli
@@ -105,7 +105,7 @@ docker run \
   --tmpfs /tmp:exec \
   --mount "type=bind,src=${host_abs_repo_dir},dst=${dest_dir}" \
   --volume builder-home-dir-vol:/home/builder \
-  --group-add "$(stat -c '%g' /var/run/docker.sock)" \
+  --group-add "${docker_group_id}" \
   --volume /var/run/docker.sock:/var/run/docker.sock \
   --name "stroom-builder" \
   "${image_tag}" \
