@@ -1,6 +1,7 @@
 package stroom.config.app;
 
 import stroom.activity.impl.db.ActivityConfig;
+import stroom.alert.impl.AlertConfig;
 import stroom.annotation.impl.AnnotationConfig;
 import stroom.bytebuffer.ByteBufferPoolConfig;
 import stroom.cluster.api.ClusterConfig;
@@ -28,6 +29,7 @@ import stroom.lifecycle.impl.LifecycleConfig;
 import stroom.node.impl.NodeConfig;
 import stroom.pipeline.PipelineConfig;
 import stroom.processor.impl.ProcessorConfig;
+import stroom.search.elastic.ElasticConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
 import stroom.searchable.impl.SearchableConfig;
@@ -53,6 +55,9 @@ public class AppConfig extends AbstractConfig {
 
     public static final String PROP_NAME_ACTIVITY = "activity";
     public static final String PROP_NAME_ANNOTATION = "annotation";
+    public static final String PROP_NAME_ALERTING = "alerting";
+    public static final String PROP_NAME_AUTHENTICATION = "authentication";
+    public static final String PROP_NAME_BENCHMARK = "benchmark";
     public static final String PROP_NAME_BYTE_BUFFER_POOL = "byteBufferPool";
     public static final String PROP_NAME_CLUSTER = "cluster";
     public static final String PROP_NAME_CLUSTER_LOCK = "clusterLock";
@@ -64,6 +69,7 @@ public class AppConfig extends AbstractConfig {
     public static final String PROP_NAME_DATA = "data";
     public static final String PROP_NAME_DATA_SOURCE_URL = "dataSourceUrl";
     public static final String PROP_NAME_DOCSTORE = "docstore";
+    public static final String PROP_NAME_ELASTIC = "elastic";
     public static final String PROP_NAME_EXPLORER = "explorer";
     public static final String PROP_NAME_EXPORT = "export";
     public static final String PROP_NAME_FEED = "feed";
@@ -97,6 +103,7 @@ public class AppConfig extends AbstractConfig {
     private boolean haltBootOnConfigValidationFailure = true;
 
     private ActivityConfig activityConfig = new ActivityConfig();
+    private AlertConfig alertConfig = new AlertConfig();
     private AnnotationConfig annotationConfig = new AnnotationConfig();
     private ByteBufferPoolConfig byteBufferPoolConfig = new ByteBufferPoolConfig();
     private ClusterConfig clusterConfig = new ClusterConfig();
@@ -108,6 +115,7 @@ public class AppConfig extends AbstractConfig {
     private DataConfig dataConfig = new DataConfig();
     private DataSourceUrlConfig dataSourceUrlConfig = new DataSourceUrlConfig();
     private DocStoreConfig docStoreConfig = new DocStoreConfig();
+    private ElasticConfig elasticConfig = new ElasticConfig();
     private ExplorerConfig explorerConfig = new ExplorerConfig();
     private ExportConfig exportConfig = new ExportConfig();
     private FeedConfig feedConfig = new FeedConfig();
@@ -162,6 +170,17 @@ public class AppConfig extends AbstractConfig {
     @SuppressWarnings("unused")
     public void setActivityConfig(final ActivityConfig activityConfig) {
         this.activityConfig = activityConfig;
+    }
+
+    @JsonProperty(PROP_NAME_ALERTING)
+    public AlertConfig getAlertConfig() {
+        return alertConfig;
+    }
+
+    @SuppressWarnings("unused")
+    @JsonProperty(PROP_NAME_ALERTING)
+    public void setAlertConfig(final AlertConfig alertConfig) {
+        this.alertConfig = alertConfig;
     }
 
     @JsonProperty(PROP_NAME_ANNOTATION)
@@ -277,6 +296,16 @@ public class AppConfig extends AbstractConfig {
     @SuppressWarnings("unused")
     public void setDocStoreConfig(final DocStoreConfig docStoreConfig) {
         this.docStoreConfig = docStoreConfig;
+    }
+
+    @JsonProperty(PROP_NAME_ELASTIC)
+    public ElasticConfig getElasticConfig() {
+        return elasticConfig;
+    }
+
+    @SuppressWarnings("unused")
+    public void setElasticConfig(final ElasticConfig elasticConfig) {
+        this.elasticConfig = elasticConfig;
     }
 
     @JsonProperty(PROP_NAME_EXPLORER)

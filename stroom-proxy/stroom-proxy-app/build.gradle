@@ -24,6 +24,7 @@ dependencies {
     compile project(':stroom-pipeline')
     compile project(':stroom-proxy:stroom-proxy-remote-api')
     compile project(':stroom-proxy:stroom-proxy-repo')
+    compile project(':stroom-proxy:stroom-proxy-repo-db-jooq')
     compile project(':stroom-receive:stroom-receive-common')
     compile project(':stroom-receive:stroom-receive-rules-impl')
     compile project(':stroom-security:stroom-security-api')
@@ -63,6 +64,7 @@ dependencies {
 
     testCompile libs.assertj_core
     testCompile libs.classgraph
+    testCompile libs.guice_extension
     testCompile libs.guice_grapher
     testCompile libs.jinjava
     testCompile libs.mbknor_jackson_jsonSchema

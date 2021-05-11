@@ -1,7 +1,18 @@
 package stroom.util.cert;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+@JsonPropertyOrder({
+        "keyStorePath",
+        "keyStoreType",
+        "keyStorePassword",
+        "trustStorePath",
+        "trustStoreType",
+        "trustStorePassword",
+        "isHostnameVerificationEnabled",
+        "sslProtocol"
+})
 public class SSLConfig {
 
     private String keyStorePath;

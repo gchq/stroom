@@ -16,6 +16,7 @@ import stroom.query.api.v2.Query;
 import stroom.search.extraction.AnnotationsDecoratorFactory;
 import stroom.search.extraction.ExpressionFilter;
 import stroom.search.extraction.ExtractionReceiver;
+import stroom.search.extraction.ExtractionReceiverImpl;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -149,7 +150,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
 
         // TODO : At present we are just going to do this synchronously but in future we may do asynchronously in
         //  which case we would increment the completion count after providing values.
-        return new ExtractionReceiver(
+        return new ExtractionReceiverImpl(
                 valuesConsumer,
                 receiver.getErrorConsumer(),
                 receiver.getCompletionConsumer(),

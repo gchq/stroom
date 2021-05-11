@@ -25,6 +25,8 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.io.ByteCountOutputStream;
 import stroom.util.io.FileUtil;
+import stroom.util.io.GZipByteCountOutputStream;
+import stroom.util.io.GZipOutputStream;
 import stroom.util.io.PathCreator;
 
 import org.slf4j.Logger;
@@ -36,6 +38,9 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.util.Set;
 import javax.inject.Inject;
 
 /**
@@ -58,6 +63,8 @@ public class FileAppender extends AbstractAppender {
     private final PathCreator pathCreator;
     private ByteCountOutputStream byteCountOutputStream;
     private String[] outputPaths;
+    private boolean useCompression;
+    private String filePermissions;
 
     @Inject
     public FileAppender(final ErrorReceiverProxy errorReceiverProxy,
@@ -88,16 +95,21 @@ public class FileAppender extends AbstractAppender {
             // Make sure we can create this path.
             final Path file = Paths.get(path);
             final Path dir = file.getParent();
+            final Set<PosixFilePermission> permissions = parsePosixFilePermissions(filePermissions);
             if (!Files.isDirectory(dir)) {
                 try {
                     Files.createDirectories(dir);
+
+                    // Set permissions on the created directory
+                    if (permissions != null) {
+                        Files.setPosixFilePermissions(dir, permissions);
+                    }
                 } catch (final IOException e) {
                     throw new ProcessException("Unable to create output dirs: " + FileUtil.getCanonicalPath(dir));
                 }
             }
 
             final Path lockFile = Paths.get(path + LOCK_EXTENSION);
-            final Path outFile = file;
 
             // Make sure we can create both output files without overwriting
             // another file.
@@ -105,21 +117,41 @@ public class FileAppender extends AbstractAppender {
                 throw new ProcessException(
                         "Output file \"" + FileUtil.getCanonicalPath(lockFile) + "\" already exists");
             }
-            if (Files.exists(outFile)) {
+            if (Files.exists(file)) {
                 throw new ProcessException(
-                        "Output file \"" + FileUtil.getCanonicalPath(outFile) + "\" already exists");
+                        "Output file \"" + FileUtil.getCanonicalPath(file) + "\" already exists");
             }
             LOGGER.trace("Creating output stream for path {}", path);
 
             // Get a writer for the new lock file.
-            byteCountOutputStream = new ByteCountOutputStream(
-                    new BufferedOutputStream(Files.newOutputStream(lockFile)));
-            return new LockedOutputStream(byteCountOutputStream, lockFile, outFile);
+            if (useCompression) {
+                byteCountOutputStream =
+                        new GZipByteCountOutputStream(new GZipOutputStream(Files.newOutputStream(lockFile)));
+            } else {
+                byteCountOutputStream =
+                        new ByteCountOutputStream(new BufferedOutputStream(Files.newOutputStream(lockFile)));
+            }
 
-        } catch (final IOException e) {
-            throw e;
+            return new LockedOutputStream(byteCountOutputStream, lockFile, file, permissions);
+
         } catch (final RuntimeException e) {
             throw new IOException(e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Parses a POSIX-style file permission string like "rwxr--r--"
+     */
+    private static Set<PosixFilePermission> parsePosixFilePermissions(final String filePermissions) {
+        if (filePermissions == null || filePermissions.isEmpty()) {
+            return null;
+        }
+
+        try {
+            return PosixFilePermissions.fromString(filePermissions);
+        } catch (IllegalArgumentException e) {
+            LOGGER.debug("Invalid file permissions format: '" + filePermissions + "'");
+            return null;
         }
     }
 
@@ -164,5 +196,19 @@ public class FileAppender extends AbstractAppender {
             displayPriority = 4)
     public void setSplitRecords(final boolean splitRecords) {
         super.setSplitRecords(splitRecords);
+    }
+
+    @PipelineProperty(
+            description = "Apply GZIP compression to output files",
+            defaultValue = "false",
+            displayPriority = 5)
+    public void setUseCompression(final boolean useCompression) {
+        this.useCompression = useCompression;
+    }
+
+    @PipelineProperty(description = "Set file system permissions of finished files (example: 'rwxr--r--')",
+            displayPriority = 6)
+    public void setFilePermissions(final String filePermissions) {
+        this.filePermissions = filePermissions;
     }
 }

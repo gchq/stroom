@@ -290,6 +290,7 @@ else
   echo -e "extraBuildArgs:                [${GREEN}${extraBuildArgs[*]}${NC}]"
 
   # Ensure we have a local.yml file as the integration tests will need it
+  echo "Ensure we have a local.yml file"
   ./local.yml.sh
 
   # Do the gradle build
@@ -311,8 +312,7 @@ else
     -x resolve \
     -x copyFilesForStroomDockerBuild \
     -x copyFilesForProxyDockerBuild \
-    -x buildDistribution \
-    -Dorg.gradle.parallel=false
+    -x buildDistribution
 
   echo -e "${GREEN}Do the yarn build${NC}"
   ./gradlew \

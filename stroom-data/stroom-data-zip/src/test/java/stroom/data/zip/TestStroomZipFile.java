@@ -42,8 +42,8 @@ class TestStroomZipFile {
             assertThat(new HashSet<>(Collections.singleton("test/test.dat")))
                     .isEqualTo(stroomZipFile.getStroomZipNameSet().getBaseNameSet());
 
-            assertThat(stroomZipFile.getInputStream("test/test.dat", StroomZipFileType.Data)).isNotNull();
-            assertThat(stroomZipFile.getInputStream("test/test.dat", StroomZipFileType.Context)).isNull();
+            assertThat(stroomZipFile.getInputStream("test/test.dat", StroomZipFileType.DATA)).isNotNull();
+            assertThat(stroomZipFile.getInputStream("test/test.dat", StroomZipFileType.CONTEXT)).isNull();
 
         } finally {
             CloseableUtil.close(stroomZipFile);
@@ -78,9 +78,9 @@ class TestStroomZipFile {
             assertThat(new HashSet<>(Collections.singleton("request")))
                     .isEqualTo(stroomZipFile.getStroomZipNameSet().getBaseNameSet());
 
-            assertThat(stroomZipFile.getInputStream("request", StroomZipFileType.Data)).isNotNull();
-            assertThat(stroomZipFile.getInputStream("request", StroomZipFileType.Meta)).isNotNull();
-            assertThat(stroomZipFile.getInputStream("request", StroomZipFileType.Context)).isNotNull();
+            assertThat(stroomZipFile.getInputStream("request", StroomZipFileType.DATA)).isNotNull();
+            assertThat(stroomZipFile.getInputStream("request", StroomZipFileType.META)).isNotNull();
+            assertThat(stroomZipFile.getInputStream("request", StroomZipFileType.CONTEXT)).isNotNull();
 
         } finally {
             CloseableUtil.close(stroomZipFile);

@@ -28,10 +28,16 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.util.Set;
 import javax.inject.Inject;
 
 /**
@@ -47,11 +53,15 @@ import javax.inject.Inject;
         icon = ElementIcons.FILES)
 public class RollingFileAppender extends AbstractRollingAppender {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(RollingFileAppender.class);
+
     private final PathCreator pathCreator;
 
     private String[] outputPaths;
     private String fileNamePattern;
     private String rolledFileNamePattern;
+    private boolean useCompression;
+    private String filePermissions;
 
     private String dir;
     private String fileName;
@@ -81,9 +91,15 @@ public class RollingFileAppender extends AbstractRollingAppender {
 
         // Try and create the path.
         final Path parentDir = file.getParent();
+        final Set<PosixFilePermission> permissions = parsePosixFilePermissions(filePermissions);
         if (!Files.isDirectory(parentDir)) {
             try {
                 Files.createDirectories(parentDir);
+
+                // Set permissions on the created directory
+                if (permissions != null) {
+                    Files.setPosixFilePermissions(parentDir, permissions);
+                }
             } catch (final IOException e) {
                 throw new ProcessException("Unable to create output dirs: " + FileUtil.getCanonicalPath(parentDir));
             }
@@ -98,7 +114,10 @@ public class RollingFileAppender extends AbstractRollingAppender {
                 fileName,
                 rolledFileName,
                 parentDir,
-                file);
+                file,
+                useCompression,
+                permissions
+        );
     }
 
     @Override
@@ -108,8 +127,7 @@ public class RollingFileAppender extends AbstractRollingAppender {
             if (key == null) {
                 dir = getRandomOutputPath();
                 dir = pathCreator.replaceContextVars(dir);
-                dir = pathCreator.replaceSystemProperties(dir);
-                dir = pathCreator.makeAbsolute(dir);
+                dir = pathCreator.toAppPath(dir).toString();
 
                 fileName = fileNamePattern;
                 fileName = pathCreator.replaceContextVars(fileName);
@@ -143,6 +161,22 @@ public class RollingFileAppender extends AbstractRollingAppender {
         }
 
         return path;
+    }
+
+    /**
+     * Parses a POSIX-style file permission string like "rwxr--r--"
+     */
+    private static Set<PosixFilePermission> parsePosixFilePermissions(final String filePermissions) {
+        if (filePermissions == null || filePermissions.isEmpty()) {
+            return null;
+        }
+
+        try {
+            return PosixFilePermissions.fromString(filePermissions);
+        } catch (IllegalArgumentException e) {
+            LOGGER.debug("Invalid file permissions format: '" + filePermissions + "'");
+            return null;
+        }
     }
 
     @Override
@@ -204,5 +238,19 @@ public class RollingFileAppender extends AbstractRollingAppender {
             displayPriority = 6)
     public void setRollSize(final String rollSize) {
         super.setRollSize(rollSize);
+    }
+
+    @PipelineProperty(
+            description = "Apply GZIP compression to output files",
+            defaultValue = "false",
+            displayPriority = 7)
+    public void setUseCompression(final boolean useCompression) {
+        this.useCompression = useCompression;
+    }
+
+    @PipelineProperty(description = "Set file system permissions of finished files (example: 'rwxr--r--')",
+            displayPriority = 8)
+    public void setFilePermissions(final String filePermissions) {
+        this.filePermissions = filePermissions;
     }
 }

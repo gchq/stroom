@@ -346,13 +346,13 @@ public final class JooqUtil {
         if (criteria.getMatchString() != null) {
             if (criteria.getMatchStyle() == null) {
                 if (criteria.isCaseInsensitive()) {
-                    valueCondition = Optional.of(field.upper().eq(criteria.getMatchString()));
+                    valueCondition = Optional.of(DSL.upper(field).eq(criteria.getMatchString()));
                 } else {
                     valueCondition = Optional.of(field.eq(criteria.getMatchString()));
                 }
             } else {
                 if (criteria.isCaseInsensitive()) {
-                    valueCondition = Optional.of(field.upper().like(criteria.getMatchString()));
+                    valueCondition = Optional.of(DSL.upper(field).like(criteria.getMatchString()));
                 } else {
                     valueCondition = Optional.of(field.like(criteria.getMatchString()));
                 }

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="530px" preserveAspectRatio="none" style="width:489px;height:530px;" version="1.1" viewBox="0 0 489 530" width="489px" zoomAndPan="magnify"><defs><filter height="300%" id="f1xf81gv9rf2rd" width="300%" x="-1" y="-1"><feGaussianBlur result="blurOut" stdDeviation="2.0"/><feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/><feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3"/><feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/></filter></defs><g><text fill="#000000" font-family="sans-serif" font-size="18" lengthAdjust="spacing" textLength="111" x="182.5" y="16.708">Storing Data</text><!--MD5=[334049d3a1ffeab5811ce8957a01f1ef]
+cluster repo--><rect fill="#FFFFFF" filter="url(#f1xf81gv9rf2rd)" height="170" rx="35" ry="35" style="stroke:#000000;stroke-width:1.5;" width="235" x="242" y="207.9531"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="37" x="341" y="227.9482">repo</text><!--MD5=[5dfe1150c87218a9f0b25c58295c84f7]
+cluster folder--><polygon fill="#FFFFFF" filter="url(#f1xf81gv9rf2rd)" points="282,258.9531,335,258.9531,342,281.25,445,281.25,445,345.9531,282,345.9531,282,258.9531" style="stroke:#000000;stroke-width:1.5;"/><line style="stroke:#000000;stroke-width:1.5;" x1="282" x2="342" y1="281.25" y2="281.25"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="47" x="286" y="273.9482">folder</text><!--MD5=[815249f79c2c08157ac02b3106e03757]
+cluster Database--><path d="M157,419.9531 C157,409.9531 210,409.9531 210,409.9531 C210,409.9531 263,409.9531 263,419.9531 L263,513.9531 C263,523.9531 210,523.9531 210,523.9531 C210,523.9531 157,523.9531 157,513.9531 L157,419.9531 " fill="#FFFFFF" filter="url(#f1xf81gv9rf2rd)" style="stroke:#000000;stroke-width:1.5;"/><path d="M157,419.9531 C157,429.9531 210,429.9531 210,429.9531 C210,429.9531 263,429.9531 263,419.9531 " fill="none" style="stroke:#000000;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="73" x="173.5" y="444.9482">Database</text><!--MD5=[bf3ce7a256daaaf5dbab58753aeb22ee]
+entity zip--><polygon fill="#FFFFFF" filter="url(#f1xf81gv9rf2rd)" points="389,293.9531,389,330.25,429,330.25,429,303.9531,419,293.9531,389,293.9531" style="stroke:#000000;stroke-width:1.5;"/><path d="M419,293.9531 L419,303.9531 L429,303.9531 " fill="#FFFFFF" style="stroke:#000000;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="20" x="399" y="316.9482">zip</text><!--MD5=[c12a1600b6b75d8e137ee7341d68ba4c]
+entity meta--><polygon fill="#FFFFFF" filter="url(#f1xf81gv9rf2rd)" points="298.5,293.9531,298.5,330.25,353.5,330.25,353.5,303.9531,343.5,293.9531,298.5,293.9531" style="stroke:#000000;stroke-width:1.5;"/><path d="M343.5,293.9531 L343.5,303.9531 L353.5,303.9531 " fill="#FFFFFF" style="stroke:#000000;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="35" x="308.5" y="316.9482">meta</text><!--MD5=[fb94403e3d3521d383fd6507b67b3642]
+class source--><rect codeLine="25" fill="#FEFECE" filter="url(#f1xf81gv9rf2rd)" height="48" id="source" style="stroke:#A80036;stroke-width:1.5;" width="75" x="172.5" y="459.9531"/><ellipse cx="187.5" cy="475.9531" fill="#ADD1B2" rx="11" ry="11" style="stroke:#A80036;stroke-width:1.0;"/><path d="M191.6094,481.9531 L183.8906,481.9531 L183.8906,469.5625 L191.6094,469.5625 L191.6094,471.7188 L186.3438,471.7188 L186.3438,474.3906 L191.1094,474.3906 L191.1094,476.5469 L186.3438,476.5469 L186.3438,479.7969 L191.6094,479.7969 L191.6094,481.9531 Z " fill="#000000"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="43" x="201.5" y="480.1074">source</text><line style="stroke:#A80036;stroke-width:1.5;" x1="173.5" x2="246.5" y1="491.9531" y2="491.9531"/><line style="stroke:#A80036;stroke-width:1.5;" x1="173.5" x2="246.5" y1="499.9531" y2="499.9531"/><!--MD5=[43461efb75070d5b99f20b1925d828b0]
+class ProxyRequestHandler--><rect codeLine="4" fill="#FEFECE" filter="url(#f1xf81gv9rf2rd)" height="48" id="ProxyRequestHandler" style="stroke:#A80036;stroke-width:1.5;" width="166" x="112" y="27.9531"/><ellipse cx="127" cy="43.9531" fill="#ADD1B2" rx="11" ry="11" style="stroke:#A80036;stroke-width:1.0;"/><path d="M129.9688,49.5938 Q129.3906,49.8906 128.75,50.0313 Q128.1094,50.1875 127.4063,50.1875 Q124.9063,50.1875 123.5781,48.5469 Q122.2656,46.8906 122.2656,43.7656 Q122.2656,40.6406 123.5781,38.9844 Q124.9063,37.3281 127.4063,37.3281 Q128.1094,37.3281 128.75,37.4844 Q129.4063,37.6406 129.9688,37.9375 L129.9688,40.6563 Q129.3438,40.0781 128.75,39.8125 Q128.1563,39.5313 127.5313,39.5313 Q126.1875,39.5313 125.5,40.6094 Q124.8125,41.6719 124.8125,43.7656 Q124.8125,45.8594 125.5,46.9375 Q126.1875,48 127.5313,48 Q128.1563,48 128.75,47.7344 Q129.3438,47.4531 129.9688,46.875 L129.9688,49.5938 Z " fill="#000000"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="134" x="141" y="48.1074">ProxyRequestHandler</text><line style="stroke:#A80036;stroke-width:1.5;" x1="113" x2="277" y1="59.9531" y2="59.9531"/><line style="stroke:#A80036;stroke-width:1.5;" x1="113" x2="277" y1="67.9531" y2="67.9531"/><!--MD5=[30e2d8deda946a11189666f8d4da17df]
+class ProxyRepo--><rect codeLine="7" fill="#FEFECE" filter="url(#f1xf81gv9rf2rd)" height="48" id="ProxyRepo" style="stroke:#A80036;stroke-width:1.5;" width="97" x="146.5" y="135.9531"/><ellipse cx="161.5" cy="151.9531" fill="#ADD1B2" rx="11" ry="11" style="stroke:#A80036;stroke-width:1.0;"/><path d="M164.4688,157.5938 Q163.8906,157.8906 163.25,158.0313 Q162.6094,158.1875 161.9063,158.1875 Q159.4063,158.1875 158.0781,156.5469 Q156.7656,154.8906 156.7656,151.7656 Q156.7656,148.6406 158.0781,146.9844 Q159.4063,145.3281 161.9063,145.3281 Q162.6094,145.3281 163.25,145.4844 Q163.9063,145.6406 164.4688,145.9375 L164.4688,148.6563 Q163.8438,148.0781 163.25,147.8125 Q162.6563,147.5313 162.0313,147.5313 Q160.6875,147.5313 160,148.6094 Q159.3125,149.6719 159.3125,151.7656 Q159.3125,153.8594 160,154.9375 Q160.6875,156 162.0313,156 Q162.6563,156 163.25,155.7344 Q163.8438,155.4531 164.4688,154.875 L164.4688,157.5938 Z " fill="#000000"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="65" x="175.5" y="156.1074">ProxyRepo</text><line style="stroke:#A80036;stroke-width:1.5;" x1="147.5" x2="242.5" y1="167.9531" y2="167.9531"/><line style="stroke:#A80036;stroke-width:1.5;" x1="147.5" x2="242.5" y1="175.9531" y2="175.9531"/><!--MD5=[17c80345ce122db1d9d72f6005235627]
+class ProxyRepoSources--><rect codeLine="10" fill="#FEFECE" filter="url(#f1xf81gv9rf2rd)" height="48" id="ProxyRepoSources" style="stroke:#A80036;stroke-width:1.5;" width="148" x="67" y="287.9531"/><ellipse cx="82" cy="303.9531" fill="#ADD1B2" rx="11" ry="11" style="stroke:#A80036;stroke-width:1.0;"/><path d="M84.9688,309.5938 Q84.3906,309.8906 83.75,310.0313 Q83.1094,310.1875 82.4063,310.1875 Q79.9063,310.1875 78.5781,308.5469 Q77.2656,306.8906 77.2656,303.7656 Q77.2656,300.6406 78.5781,298.9844 Q79.9063,297.3281 82.4063,297.3281 Q83.1094,297.3281 83.75,297.4844 Q84.4063,297.6406 84.9688,297.9375 L84.9688,300.6563 Q84.3438,300.0781 83.75,299.8125 Q83.1563,299.5313 82.5313,299.5313 Q81.1875,299.5313 80.5,300.6094 Q79.8125,301.6719 79.8125,303.7656 Q79.8125,305.8594 80.5,306.9375 Q81.1875,308 82.5313,308 Q83.1563,308 83.75,307.7344 Q84.3438,307.4531 84.9688,306.875 L84.9688,309.5938 Z " fill="#000000"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="116" x="96" y="308.1074">ProxyRepoSources</text><line style="stroke:#A80036;stroke-width:1.5;" x1="68" x2="214" y1="319.9531" y2="319.9531"/><line style="stroke:#A80036;stroke-width:1.5;" x1="68" x2="214" y1="327.9531" y2="327.9531"/><!--MD5=[a94ef3b8c8e4fd23532822afff4ed5f3]
+class ChangeListener--><rect codeLine="30" fill="#FEFECE" filter="url(#f1xf81gv9rf2rd)" height="48" id="ChangeListener" style="stroke:#A80036;stroke-width:1.5;" width="130" x="7" y="459.9531"/><ellipse cx="22" cy="475.9531" fill="#B4A7E5" rx="11" ry="11" style="stroke:#A80036;stroke-width:1.0;"/><path d="M17.9219,471.7188 L17.9219,469.5625 L25.3125,469.5625 L25.3125,471.7188 L22.8438,471.7188 L22.8438,479.7969 L25.3125,479.7969 L25.3125,481.9531 L17.9219,481.9531 L17.9219,479.7969 L20.3906,479.7969 L20.3906,471.7188 L17.9219,471.7188 Z " fill="#000000"/><text fill="#000000" font-family="sans-serif" font-size="12" font-style="italic" lengthAdjust="spacing" textLength="98" x="36" y="480.1074">ChangeListener</text><line style="stroke:#A80036;stroke-width:1.5;" x1="8" x2="136" y1="491.9531" y2="491.9531"/><line style="stroke:#A80036;stroke-width:1.5;" x1="8" x2="136" y1="499.9531" y2="499.9531"/><!--MD5=[74dbc2d11b45a085a2d234dd096bbe12]
+link ProxyRequestHandler to ProxyRepo--><path codeLine="33" d="M195,75.9531 C195,91.9531 195,113.4031 195,130.4831 " fill="none" id="ProxyRequestHandler-to-ProxyRepo" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="195,135.6331,199,126.6331,195,130.6331,191,126.6331,195,135.6331" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[48f5647f8b5ba421b8466003118b8251]
+link ProxyRepo to repo--><path codeLine="34" d="M227.27,183.9831 C229.45,186.4731 231.41,189.1331 233,191.9531 C236.2338,197.6769 238.9291,203.7938 241.1695,210.1204 C241.4495,210.9112 241.7225,211.7053 241.9885,212.5023 " fill="none" id="ProxyRepo-to-repo" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#FFFFFF" points="241.9885,212.5023,242.6135,192.2635,229.3335,196.6956,241.9885,212.5023" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[dbd87b12790057922deb2ba961a91844]
+link ProxyRepo to ProxyRepoSources--><path codeLine="35" d="M186.68,184.0631 C177.12,210.6331 161.42,254.2431 151.14,282.7731 " fill="none" id="ProxyRepo-to-ProxyRepoSources" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="149.42,287.5731,156.2358,280.4637,151.1161,282.8696,148.7102,277.7499,149.42,287.5731" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[cb090d100bb5cf3b1eeca4e4ff5d28fe]
+link ProxyRepoSources to source--><path codeLine="36" d="M150.45,336.2331 C161.39,363.1931 179.63,408.1231 193.04,441.1731 " fill="none" id="ProxyRepoSources-to-source" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="none" points="199.63,438.7931,200.66,459.9531,186.66,444.0531,199.63,438.7931" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[49d74a1de686f523f054ef3a8a8c5fdf]
+link ProxyRepoSources to ChangeListener--><path codeLine="37" d="M131.55,336.2331 C118.96,367.2631 96.7,422.1031 83.25,455.2231 " fill="none" id="ProxyRepoSources-to-ChangeListener" style="stroke:#A80036;stroke-width:1.0;stroke-dasharray:7.0,7.0;"/><polygon fill="#A80036" points="81.34,459.9531,88.4327,453.1198,83.2215,455.3206,81.0207,450.1094,81.34,459.9531" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[5fbf2626450672765e7c57c3087aadb6]
+@startuml
+
+title Storing Data
+
+class ProxyRequestHandler {
+}
+
+class ProxyRepo {
+}
+
+class ProxyRepoSources {
+}
+
+storage repo {
+    folder folder {
+        file zip {
+        }
+        file meta {
+        }
+    }
+}
+
+
+
+package Database <<Database>> {
+entity source
+}
+
+
+
+interface ChangeListener {
+}
+
+ProxyRequestHandler - -> ProxyRepo
+ProxyRepo - -|> repo
+ProxyRepo - -> ProxyRepoSources
+ProxyRepoSources - -|> source
+ProxyRepoSources ..> ChangeListener
+
+@enduml
+
+PlantUML version 1.2021.00(Sun Jan 10 10:25:05 GMT 2021)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Default Encoding: UTF-8
+Language: en
+Country: GB
+--></g></svg>

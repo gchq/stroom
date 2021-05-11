@@ -22,10 +22,11 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
-import stroom.feed.api.FeedProperties;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
-import stroom.receive.common.StreamTargetStroomStreamHandler;
+import stroom.proxy.repo.ProgressHandler;
+import stroom.receive.common.StreamTargetStreamHandler;
+import stroom.receive.common.StreamTargetStreamHandlers;
 import stroom.receive.common.StroomStreamProcessor;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
@@ -46,6 +47,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.inject.Inject;
@@ -57,9 +59,9 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
     @Inject
     private Store streamStore;
     @Inject
-    private FeedProperties feedProperties;
-    @Inject
     private FsDataStoreMaintenanceService streamMaintenanceService;
+    @Inject
+    private StreamTargetStreamHandlers streamTargetStreamHandlers;
 
     @Test
     void testSimpleSingleFile() throws IOException {
@@ -67,7 +69,7 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
                 FileSystemTestUtil.getUniqueTestString() + "TestFileSystemZipProcessor.zip");
         try {
             final ZipOutputStream zipOut = new ZipOutputStream(Files.newOutputStream(file));
-            zipOut.putNextEntry(new ZipEntry("tom1.dat"));
+            zipOut.putNextEntry(new ZipEntry("test1.dat"));
             zipOut.write("File1\nFile1\n".getBytes());
             zipOut.closeEntry();
             zipOut.close();
@@ -93,7 +95,7 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
                 FileSystemTestUtil.getUniqueTestString() + "TestFileSystemZipProcessor.zip");
         try {
             final ZipOutputStream zipOut = new ZipOutputStream(Files.newOutputStream(file));
-            zipOut.putNextEntry(new ZipEntry("tom1.dat"));
+            zipOut.putNextEntry(new ZipEntry("test1.dat"));
             zipOut.write("File1\nFile1\n".getBytes(StreamUtil.DEFAULT_CHARSET));
             zipOut.closeEntry();
             zipOut.close();
@@ -127,13 +129,13 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
                 FileSystemTestUtil.getUniqueTestString() + "TestFileSystemZipProcessor.zip");
         try {
             final ZipOutputStream zipOut = new ZipOutputStream(Files.newOutputStream(file));
-            zipOut.putNextEntry(new ZipEntry("tom1.dat"));
+            zipOut.putNextEntry(new ZipEntry("test1.dat"));
             zipOut.write("File1\nFile1\n".getBytes(StreamUtil.DEFAULT_CHARSET));
             zipOut.closeEntry();
-            zipOut.putNextEntry(new ZipEntry("tom1.ctx"));
+            zipOut.putNextEntry(new ZipEntry("test1.ctx"));
             zipOut.write("Context1\nContext1\n".getBytes(StreamUtil.DEFAULT_CHARSET));
             zipOut.closeEntry();
-            zipOut.putNextEntry(new ZipEntry("tom1.meta"));
+            zipOut.putNextEntry(new ZipEntry("test1.meta"));
             zipOut.write("Meta11:1\nMeta12:1\n".getBytes(StreamUtil.DEFAULT_CHARSET));
             zipOut.closeEntry();
             zipOut.close();
@@ -254,28 +256,28 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
         final AttributeMap attributeMap = new AttributeMap();
         attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
 
-        final List<StreamTargetStroomStreamHandler> handlerList = StreamTargetStroomStreamHandler
-                .buildSingleHandlerList(
-                        streamStore,
-                        feedProperties,
-                        null,
-                        feedName,
-                        StreamTypeNames.RAW_EVENTS);
+        final AtomicReference<StreamTargetStreamHandler> handlerRef = new AtomicReference<>();
+        streamTargetStreamHandlers.handle(feedName, StreamTypeNames.RAW_EVENTS, attributeMap, handler -> {
+            handlerRef.set((StreamTargetStreamHandler) handler);
 
-        final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap,
-                handlerList,
-                new byte[1000],
-                "DefaultDataFeedRequest-" + attributeMap.get(StandardHeaderArguments.GUID));
-        stroomStreamProcessor.setAppendReceivedPath(false);
+            final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(
+                    attributeMap,
+                    handler,
+                    new ProgressHandler("Test"));
+            stroomStreamProcessor.setAppendReceivedPath(false);
 
-        for (int i = 0; i < processCount; i++) {
-            stroomStreamProcessor.process(Files.newInputStream(file), String.valueOf(i));
-        }
+            for (int i = 0; i < processCount; i++) {
+                try (final InputStream inputStream = Files.newInputStream(file)) {
+                    stroomStreamProcessor.processInputStream(inputStream, String.valueOf(i));
+                } catch (final IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            }
+        });
 
-        stroomStreamProcessor.closeHandlers();
-
+        final StreamTargetStreamHandler streamTargetStreamHandler = handlerRef.get();
         final List<Path> files = streamMaintenanceService
-                .findAllStreamFile(handlerList.get(0).getStreamSet().iterator().next());
+                .findAllStreamFile(streamTargetStreamHandler.getStreamSet().iterator().next());
 
         final HashSet<String> foundFiles = new HashSet<>();
 
@@ -307,27 +309,27 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
 
         // Test boundaries
         try (final Source source = streamStore.openSource(
-                handlerList.get(0).getStreamSet().iterator().next().getId())) {
+                streamTargetStreamHandler.getStreamSet().iterator().next().getId())) {
 
             int index = 0;
             for (final Map<String, String> map : expectedBoundaries) {
                 try (final InputStreamProvider inputStreamProvider = source.get(index)) {
                     index++;
 
-                    map.forEach((key, value) -> {
+                    map.forEach((key, expected) -> {
                         if (key == null) {
                             try (final InputStream inputStream = inputStreamProvider.get()) {
                                 assertThat(inputStream).isNotNull();
-                                assertThat(StreamUtil.streamToString(inputStream, false))
-                                        .isEqualTo(value);
+                                final String actual = StreamUtil.streamToString(inputStream, false);
+                                assertThat(actual).isEqualTo(expected);
                             } catch (final IOException e) {
                                 throw new UncheckedIOException(e);
                             }
                         } else {
                             try (final InputStream inputStream = inputStreamProvider.get(key)) {
                                 assertThat(inputStream).isNotNull();
-                                assertThat(StreamUtil.streamToString(inputStream, false))
-                                        .isEqualTo(value);
+                                final String actual = StreamUtil.streamToString(inputStream, false);
+                                assertThat(actual).isEqualTo(expected);
                             } catch (final IOException e) {
                                 throw new UncheckedIOException(e);
                             }

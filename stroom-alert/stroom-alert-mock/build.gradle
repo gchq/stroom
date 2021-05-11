@@ -1,0 +1,6 @@
+ext.moduleName = 'stroom.alert.mock'
+
+dependencies {
+    compile project(':stroom-alert:stroom-alert-api')
+    compile libs.guice5
+}

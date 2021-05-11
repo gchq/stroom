@@ -22,7 +22,7 @@ import stroom.data.zip.StroomZipNameSet;
 import stroom.docstore.impl.fs.FSPersistenceConfig;
 import stroom.importexport.impl.ImportExportService;
 import stroom.pipeline.filter.SafeXMLFilter;
-import stroom.proxy.repo.StroomZipRepository;
+import stroom.proxy.repo.ProxyRepoFileNames;
 import stroom.task.impl.ExternalShutdownController;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.io.AbstractFileVisitor;
@@ -252,7 +252,7 @@ public class Headless extends AbstractCommandLineTool {
                             @Override
                             public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
                                 try {
-                                    if (file.toString().endsWith(StroomZipRepository.ZIP_EXTENSION)) {
+                                    if (file.toString().endsWith(ProxyRepoFileNames.ZIP_EXTENSION)) {
                                         process(headlessFilter, file);
                                     }
                                 } catch (final RuntimeException e) {
@@ -278,9 +278,9 @@ public class Headless extends AbstractCommandLineTool {
 
             // Process each base file in a consistent order
             for (final String baseName : nameSet.getBaseNameList()) {
-                final InputStream dataStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Data);
-                final InputStream metaStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Meta);
-                final InputStream contextStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Context);
+                final InputStream dataStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.DATA);
+                final InputStream metaStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.META);
+                final InputStream contextStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.CONTEXT);
                 final HeadlessTranslationTaskHandler handler = translationTaskHandlerProvider.get();
                 handler.exec(
                         IgnoreCloseInputStream.wrap(dataStream),

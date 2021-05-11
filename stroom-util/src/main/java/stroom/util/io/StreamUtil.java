@@ -33,6 +33,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Locale;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 /**
@@ -128,7 +129,7 @@ public final class StreamUtil {
             return byteArrayOutputStream;
         } catch (final IOException ioEx) {
             // Wrap it
-            throw new RuntimeException(ioEx);
+            throw new UncheckedIOException(ioEx);
         }
     }
 
@@ -148,10 +149,10 @@ public final class StreamUtil {
                 FileUtil.deleteFile(file);
             }
             Files.createDirectories(file.getParent());
-            Files.write(file, string.getBytes(charset));
+            Files.writeString(file, string, charset);
         } catch (final IOException ioEx) {
             // Wrap it
-            throw new RuntimeException(ioEx);
+            throw new UncheckedIOException(ioEx);
         }
     }
 
@@ -173,7 +174,7 @@ public final class StreamUtil {
 
         } catch (final IOException ioEx) {
             // Wrap it
-            throw new RuntimeException(ioEx);
+            throw new UncheckedIOException(ioEx);
         }
     }
 
@@ -190,7 +191,7 @@ public final class StreamUtil {
             return new String(bytes, charset);
         } catch (final IOException ioEx) {
             // Wrap it
-            throw new RuntimeException(ioEx);
+            throw new UncheckedIOException(ioEx);
         }
     }
 
@@ -202,7 +203,7 @@ public final class StreamUtil {
 //            return new BufferedInputStream(Files.newInputStream(file));
 //        } catch (final IOException ioEx) {
 //            // Wrap it
-//            throw new RuntimeException(ioEx);
+//            throw new UncheckedIOException(ioEx);
 //        }
 //    }
 
@@ -228,7 +229,7 @@ public final class StreamUtil {
             }
         } catch (final IOException ioEx) {
             // Wrap it
-            throw new RuntimeException(ioEx);
+            throw new UncheckedIOException(ioEx);
         }
     }
 
@@ -237,7 +238,6 @@ public final class StreamUtil {
      *
      * @param fromFile the Path to copy (readable, non-null file)
      * @param toFile   the Path to copy to (non-null, parent dir exists)
-     * @throws IOException
      */
     public static void copyFile(final Path fromFile, final Path toFile) throws IOException {
         Files.copy(fromFile, toFile);
@@ -247,18 +247,29 @@ public final class StreamUtil {
      * Take a stream to another stream.
      */
     public static long streamToStream(final InputStream inputStream, final OutputStream outputStream) {
+        return streamToStream(inputStream, outputStream, new byte[BUFFER_SIZE], bytesWritten -> {
+        });
+    }
+
+    /**
+     * Take a stream to another stream.
+     */
+    public static long streamToStream(final InputStream inputStream,
+                                      final OutputStream outputStream,
+                                      final byte[] buffer,
+                                      final Consumer<Long> progressConsumer) {
         long bytesWritten = 0;
         try {
-            final byte[] buffer = new byte[BUFFER_SIZE];
             int len;
             while ((len = inputStream.read(buffer)) != -1) {
                 outputStream.write(buffer, 0, len);
                 bytesWritten += len;
+                progressConsumer.accept((long) len);
             }
             return bytesWritten;
         } catch (final IOException ioEx) {
             // Wrap it
-            throw new RuntimeException(ioEx);
+            throw new UncheckedIOException(ioEx);
         }
     }
 
@@ -292,7 +303,7 @@ public final class StreamUtil {
      * @throws IOException if error
      */
     public static int eagerRead(final InputStream stream, final byte[] buffer) throws IOException {
-        int read = 0;
+        int read;
         int offset = 0;
         int remaining = buffer.length;
         while (remaining > 0 && (read = stream.read(buffer, offset, remaining)) != -1) {

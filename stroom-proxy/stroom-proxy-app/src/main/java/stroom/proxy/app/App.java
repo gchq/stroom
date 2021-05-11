@@ -22,6 +22,7 @@ import stroom.dropwizard.common.HealthChecks;
 import stroom.dropwizard.common.ManagedServices;
 import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
+import stroom.dropwizard.common.StroomConfigurationSourceProvider;
 import stroom.proxy.app.guice.ProxyModule;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.shared.BuildInfo;
@@ -72,10 +73,12 @@ public class App extends Application<Config> {
     @Override
     public void initialize(final Bootstrap<Config> bootstrap) {
         // This allows us to use templating in the YAML configuration.
-        bootstrap.setConfigurationSourceProvider(new SubstitutingSourceProvider(
-                bootstrap.getConfigurationSourceProvider(),
-                new EnvironmentVariableSubstitutor(false)));
-//        bootstrap.addBundle(new AssetsBundle("/ui", ResourcePaths.ROOT_PATH, "index.html", "ui"));
+        bootstrap.setConfigurationSourceProvider(
+                new StroomConfigurationSourceProvider(
+                        new SubstitutingSourceProvider(bootstrap.getConfigurationSourceProvider(),
+                                new EnvironmentVariableSubstitutor(false))
+                )
+        );
     }
 
     @Override

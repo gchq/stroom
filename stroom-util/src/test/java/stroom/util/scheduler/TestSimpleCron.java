@@ -16,12 +16,9 @@
 
 package stroom.util.scheduler;
 
-
 import stroom.util.date.DateUtil;
 
 import org.junit.jupiter.api.Test;
-
-import java.text.ParseException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -31,7 +28,7 @@ class TestSimpleCron {
     private Long currentTime = null;
 
     @Test
-    void testMinRollAny1() throws ParseException {
+    void testMinRollAny1() {
         textNext("* * *", "2010-01-01T04:00:00.000Z", "2010-01-01T04:01:00.000Z");
         textNext("* * *", "2010-01-01T04:04:20.000Z", "2010-01-01T04:05:00.000Z");
         textNext("* * *", "2010-01-01T04:59:20.000Z", "2010-01-01T05:00:00.000Z");
@@ -39,7 +36,7 @@ class TestSimpleCron {
     }
 
     @Test
-    void testMinRollExact1() throws ParseException {
+    void testMinRollExact1() {
         textNext("1,2,3,4,55 * *", "2010-01-01T04:00:00.000Z", "2010-01-01T04:01:00.000Z");
         textNext("1,2,3,4,55 * *", "2010-01-01T04:01:00.000Z", "2010-01-01T04:02:00.000Z");
         textNext("1,2,3,4,55 * *", "2010-01-01T04:02:00.000Z", "2010-01-01T04:03:00.000Z");
@@ -58,21 +55,21 @@ class TestSimpleCron {
     }
 
     @Test
-    void testHourRollAny1() throws ParseException {
+    void testHourRollAny1() {
         textNext("0 * *", "2010-01-01T04:00:00.000Z", "2010-01-01T05:00:00.000Z");
         textNext("0 * *", "2010-01-01T04:30:00.000Z", "2010-01-01T05:00:00.000Z");
         textNext("0 * *", "2010-01-01T04:59:59.000Z", "2010-01-01T05:00:00.000Z");
     }
 
     @Test
-    void testHourRollAny2() throws ParseException {
+    void testHourRollAny2() {
         textNext("3,57 * *", "2010-01-01T04:00:00.000Z", "2010-01-01T04:03:00.000Z");
         textNext("3,57 * *", "2010-01-01T04:03:00.000Z", "2010-01-01T04:57:00.000Z");
         textNext("3,57 * *", "2010-01-01T04:57:00.000Z", "2010-01-01T05:03:00.000Z");
     }
 
     @Test
-    void testHourEveryMinOnHours1Forward() throws ParseException {
+    void testHourEveryMinOnHours1Forward() {
         textNext("* 1,2 *", "2010-01-01T00:00:00.000Z", "2010-01-01T01:00:00.000Z");
         textNext("* 1,2 *", "2010-01-01T01:00:00.000Z", "2010-01-01T01:01:00.000Z");
         textNext("* 1,2 *", "2010-01-01T02:00:00.000Z", "2010-01-01T02:01:00.000Z");
@@ -81,7 +78,7 @@ class TestSimpleCron {
     }
 
     @Test
-    void testHourEveryMinOnHours1Backward() throws ParseException {
+    void testHourEveryMinOnHours1Backward() {
         textLast("* 1,2 *", "2010-01-01T00:00:00.000Z", "2009-12-31T02:59:00.000Z");
         textLast("* 1,2 *", "2010-01-01T01:00:00.000Z", "2009-12-31T02:59:00.000Z");
         textLast("* 1,2 *", "2010-01-01T02:00:00.000Z", "2010-01-01T01:59:00.000Z");
@@ -90,7 +87,7 @@ class TestSimpleCron {
     }
 
     @Test
-    void testWrapBoundaries() throws ParseException {
+    void testWrapBoundaries() {
         textNext("0 0 1,29", "2010-01-01T00:00:00.000Z", "2010-01-29T00:00:00.000Z");
         textLast("0 0 1,29", "2010-01-01T00:00:00.000Z", "2009-12-29T00:00:00.000Z");
         textNext("0 0 1,29", "2009-12-29T00:00:00.000Z", "2010-01-01T00:00:00.000Z");
@@ -104,7 +101,7 @@ class TestSimpleCron {
     }
 
     @Test
-    void testACoupleOfDaysPerMonthTwiceInADay1() throws ParseException {
+    void testACoupleOfDaysPerMonthTwiceInADay1() {
         String startTime = "2010-01-02T00:00:00.000Z";
         startTime = textNext("0 1,2 14,15", startTime, "2010-01-14T01:00:00.000Z");
         startTime = textNext("0 1,2 14,15", startTime, "2010-01-14T02:00:00.000Z");
@@ -114,12 +111,12 @@ class TestSimpleCron {
     }
 
     @Test
-    void testACoupleOfDaysPerMonthTwiceInADay2() throws ParseException {
+    void testACoupleOfDaysPerMonthTwiceInADay2() {
         textNext("0 1,2 14,15", "2010-01-15T02:00:00.000Z", "2010-02-14T01:00:00.000Z");
     }
 
     @Test
-    void testAEveryDayPerMonth1() throws ParseException {
+    void testAEveryDayPerMonth1() {
         String startTime = "2010-01-02T00:00:00.000Z";
         startTime = textNext("0 0 *", startTime, "2010-01-03T00:00:00.000Z");
         startTime = textNext("0 0 *", startTime, "2010-01-04T00:00:00.000Z");
@@ -129,11 +126,47 @@ class TestSimpleCron {
     }
 
     @Test
-    void testOverBSTPeriod1() throws ParseException {
+    void testOverBSTPeriod1() {
         String startTime = "2010-03-26T00:00:00.000Z";
         startTime = textNext("0 0 *", startTime, "2010-03-27T00:00:00.000Z");
         startTime = textNext("0 0 *", startTime, "2010-03-28T00:00:00.000Z");
         textNext("0 0 *", startTime, "2010-03-29T00:00:00.000Z");
+    }
+
+    @Test
+    public void testOnceEveryTenMinutes() {
+        String startTime = "2010-03-26T00:00:00.000Z";
+        startTime = textNext("*/10 * *", startTime, "2010-03-26T00:10:00.000Z");
+        startTime = textNext("*/10 * *", startTime, "2010-03-26T00:20:00.000Z");
+        startTime = textNext("*/10 * *", startTime, "2010-03-26T00:30:00.000Z");
+        startTime = textNext("*/10 * *", startTime, "2010-03-26T00:40:00.000Z");
+        startTime = textNext("*/10 * *", startTime, "2010-03-26T00:50:00.000Z");
+        textNext("*/10 * *", startTime, "2010-03-26T01:00:00.000Z");
+    }
+
+    @Test
+    public void testOnceEveryTenHours() {
+        String startTime = "2010-03-26T00:00:00.000Z";
+        startTime = textNext("0 */10 *", startTime, "2010-03-26T10:00:00.000Z");
+        startTime = textNext("0 */10 *", startTime, "2010-03-26T20:00:00.000Z");
+        startTime = textNext("0 */10 *", startTime, "2010-03-27T00:00:00.000Z");
+        textNext("0 */10 *", startTime, "2010-03-27T10:00:00.000Z");
+    }
+
+    @Test
+    public void testEveryTwoDays() {
+        String startTime = "2010-03-26T00:00:00.000Z";
+        startTime = textNext("0 0 */2", startTime, "2010-03-28T00:00:00.000Z");
+        startTime = textNext("0 0 */2", startTime, "2010-03-30T00:00:00.000Z");
+        textNext("0 0 */2", startTime, "2010-04-02T00:00:00.000Z");
+    }
+
+    @Test
+    public void testEveryHourAtNight() {
+        String startTime = "2010-03-26T00:00:00.000Z";
+        startTime = textNext("0 20-23 *", startTime, "2010-03-26T20:00:00.000Z");
+        startTime = textNext("0 20-23 *", startTime, "2010-03-26T21:00:00.000Z");
+        textNext("0 20-23 *", startTime, "2010-03-26T22:00:00.000Z");
     }
 
     public String textNext(String expression, String start, String end) {
@@ -167,7 +200,7 @@ class TestSimpleCron {
     }
 
     @Test
-    void testUnderLoadTypical() throws ParseException {
+    void testUnderLoadTypical() {
         // Every Day
         SimpleCronScheduler executor = new SimpleCronScheduler(SimpleCron.compile("0 0 *")) {
             @Override

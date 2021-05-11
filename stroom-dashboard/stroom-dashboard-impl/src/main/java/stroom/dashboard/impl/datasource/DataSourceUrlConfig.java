@@ -12,6 +12,7 @@ public class DataSourceUrlConfig extends AbstractConfig {
     // These paths must match the paths in the respective resource classes
     // Not ideal having them defined in two places
     private String index = "/api/stroom-index/v2";
+    private String elasticIndex = "/api/stroom-elastic-index/v2";
     private String solrIndex = "/api/stroom-solr-index/v2";
     private String statisticStore = "/api/sqlstatistics/v2";
     private String searchable = "/api/searchable/v2";
@@ -23,6 +24,15 @@ public class DataSourceUrlConfig extends AbstractConfig {
 
     public void setIndex(final String index) {
         this.index = index;
+    }
+
+    @JsonPropertyDescription("The URL for the Elastic index search service")
+    public String getElasticIndex() {
+        return elasticIndex;
+    }
+
+    public void setElasticIndex(final String elasticIndex) {
+        this.elasticIndex = elasticIndex;
     }
 
     @JsonPropertyDescription("The URL for the Solr index search service")

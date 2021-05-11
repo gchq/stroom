@@ -3,10 +3,12 @@ ext.moduleName = 'stroom.proxy.repo'
 dependencies {
     compile project(':stroom-core-shared')
     compile project(':stroom-data:stroom-data-zip')
+    compile project(':stroom-db-util')
     compile project(':stroom-docstore:stroom-docstore-api')
     compile project(':stroom-docstore:stroom-docstore-impl-fs')
     compile project(':stroom-meta:stroom-meta-api')
     compile project(':stroom-pipeline')
+    compile project(':stroom-proxy:stroom-proxy-repo-db-jooq')
     compile project(':stroom-receive:stroom-receive-common')
 //    compile project(':stroom-receive:stroom-receive-rules-impl')
     compile project(':stroom-security:stroom-security-api')
@@ -26,11 +28,12 @@ dependencies {
     compile libs.jackson_databind
     compile libs.javax_inject
     compile libs.javax_servlet_api
+    compile libs.jooq
     compile libs.slf4j_api
     
     testCompile project(':stroom-test-common')
     testCompile libs.assertj_core
-    
+    testCompile libs.guice_extension
     testCompile libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard

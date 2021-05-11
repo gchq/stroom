@@ -15,7 +15,6 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.statistics.api.MetaStatistics;
-import stroom.proxy.repo.FileSetProcessor;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
 import stroom.test.CommonTestControl;
@@ -74,10 +73,12 @@ public class ManualProxyAggregationTest {
     private ExecutorProvider executorProvider;
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
-    @Inject
-    private Provider<FileSetProcessor> filePackProcessorProvider;
+//    @Inject
+//    private Provider<FileSetProcessor> filePackProcessorProvider;
     @Inject
     private CommonTestControl commonTestControl;
+    @Inject
+    private ProxyAggregationExecutor proxyAggregationExecutor;
 
     private static final int FEED_COUNT = 5;
     private static final int ENTRIES_PER_ZIP = 10;
@@ -276,16 +277,16 @@ public class ManualProxyAggregationTest {
     private void aggregate(final String proxyDir,
                            final int maxAggregation,
                            final long maxStreamSize) {
-        final ProxyAggregationExecutor proxyAggregationExecutor = new ProxyAggregationExecutor(
-                executorProvider,
-                taskContextFactory,
-                filePackProcessorProvider,
-                proxyDir,
-                10,
-                10000,
-                10000,
-                maxAggregation,
-                maxStreamSize);
+//        final ProxyAggregationExecutor proxyAggregationExecutor = new ProxyAggregationExecutor(
+//                executorProvider,
+//                taskContextFactory,
+//                filePackProcessorProvider,
+//                proxyDir,
+//                10,
+//                10000,
+//                10000,
+//                maxAggregation,
+//                maxStreamSize);
         proxyAggregationExecutor.exec();
     }
 

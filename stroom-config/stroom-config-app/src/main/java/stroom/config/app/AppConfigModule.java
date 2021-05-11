@@ -39,7 +39,12 @@ import stroom.pipeline.filter.XmlSchemaConfig;
 import stroom.pipeline.filter.XsltConfig;
 import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.processor.impl.ProcessorConfig;
+import stroom.proxy.repo.AggregatorConfig;
+import stroom.proxy.repo.RepoConfig;
 import stroom.query.common.v2.LmdbConfig;
+import stroom.search.elastic.CryptoConfig;
+import stroom.search.elastic.ElasticConfig;
+import stroom.search.elastic.search.ElasticSearchConfig;
 import stroom.search.extraction.ExtractionConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.impl.shard.IndexShardSearchConfig;
@@ -99,6 +104,8 @@ public class AppConfigModule extends AbstractModule {
         bind(ConfigLocation.class)
                 .toInstance(new ConfigLocation(configHolder.getConfigFile()));
 
+        bind(RepoConfig.class).to(ProxyAggregationConfig.class);
+
         // AppConfig will instantiate all of its child config objects so
         // bind each of these instances so we can inject these objects on their own.
         // This allows gradle modules to know nothing about the other modules.
@@ -114,6 +121,7 @@ public class AppConfigModule extends AbstractModule {
         bindConfig(AppConfig::getActivityConfig,
                 AppConfig::setActivityConfig,
                 stroom.activity.impl.db.ActivityConfig.class);
+        bindConfig(AppConfig::getAlertConfig, AppConfig::setAlertConfig, stroom.alert.impl.AlertConfig.class);
         bindConfig(AppConfig::getAnnotationConfig,
                 AppConfig::setAnnotationConfig,
                 stroom.annotation.impl.AnnotationConfig.class);
@@ -148,6 +156,11 @@ public class AppConfigModule extends AbstractModule {
         });
         bindConfig(AppConfig::getDataSourceUrlConfig, AppConfig::setDataSourceUrlConfig, DataSourceUrlConfig.class);
         bindConfig(AppConfig::getDocStoreConfig, AppConfig::setDocStoreConfig, DocStoreConfig.class);
+        bindConfig(AppConfig::getElasticConfig, AppConfig::setElasticConfig, ElasticConfig.class, elasticConfig ->
+                bindConfig(elasticConfig,
+                        ElasticConfig::getElasticSearchConfig,
+                        ElasticConfig::setElasticSearchConfig,
+                        ElasticSearchConfig.class));
         bindConfig(AppConfig::getExplorerConfig, AppConfig::setExplorerConfig, ExplorerConfig.class);
         bindConfig(AppConfig::getExportConfig, AppConfig::setExportConfig, ExportConfig.class);
         bindConfig(AppConfig::getFeedConfig, AppConfig::setFeedConfig, FeedConfig.class);
@@ -201,7 +214,12 @@ public class AppConfigModule extends AbstractModule {
                 PropertyServiceConfig.class);
         bindConfig(AppConfig::getProxyAggregationConfig,
                 AppConfig::setProxyAggregationConfig,
-                ProxyAggregationConfig.class);
+                ProxyAggregationConfig.class, proxyAggregationConfig -> {
+                    bindConfig(proxyAggregationConfig,
+                            ProxyAggregationConfig::getAggregatorConfig,
+                            ProxyAggregationConfig::setAggregatorConfig,
+                            AggregatorConfig.class);
+                });
         bindConfig(AppConfig::getPublicUri, AppConfig::setPublicUri, PublicUriConfig.class);
         bindConfig(AppConfig::getReceiveDataConfig, AppConfig::setReceiveDataConfig, ReceiveDataConfig.class);
         bindConfig(AppConfig::getRequestLoggingConfig, AppConfig::setRequestLoggingConfig, LoggingConfig.class);
@@ -231,6 +249,10 @@ public class AppConfigModule extends AbstractModule {
                     SecurityConfig::getContentSecurityConfig,
                     SecurityConfig::setContentSecurityConfig,
                     ContentSecurityConfig.class);
+            bindConfig(securityConfig,
+                    SecurityConfig::getCryptoConfig,
+                    SecurityConfig::setCryptoConfig,
+                    CryptoConfig.class);
             bindConfig(securityConfig,
                     SecurityConfig::getAuthorisationConfig,
                     SecurityConfig::setAuthorisationConfig,

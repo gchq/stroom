@@ -27,15 +27,15 @@ class TestStroomZipOutputStream {
             for (int i = 0; i < TEST_SIZE; i++) {
                 uuid = UUID.randomUUID().toString();
                 stream = stroomZipOutputStream.addEntry(
-                        new StroomZipEntry(null, uuid, StroomZipFileType.Meta).getFullName());
+                        StroomZipEntry.create(uuid, StroomZipFileType.META).getFullName());
                 stream.write("Header".getBytes(CharsetConstants.DEFAULT_CHARSET));
                 stream.close();
                 stream = stroomZipOutputStream.addEntry(
-                        new StroomZipEntry(null, uuid, StroomZipFileType.Context).getFullName());
+                        StroomZipEntry.create(uuid, StroomZipFileType.CONTEXT).getFullName());
                 stream.write("Context".getBytes(CharsetConstants.DEFAULT_CHARSET));
                 stream.close();
                 stream = stroomZipOutputStream.addEntry(
-                        new StroomZipEntry(null, uuid, StroomZipFileType.Data).getFullName());
+                        StroomZipEntry.create(uuid, StroomZipFileType.DATA).getFullName());
                 stream.write("Data".getBytes(CharsetConstants.DEFAULT_CHARSET));
                 stream.close();
             }

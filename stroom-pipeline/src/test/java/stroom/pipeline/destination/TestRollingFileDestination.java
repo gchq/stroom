@@ -49,7 +49,9 @@ class TestRollingFileDestination {
                 "test.tmp",
                 "test.log",
                 dir,
-                file);
+                file,
+                false,
+                null);
 
         assertThat(rollingFileDestination.tryFlushAndRoll(false, time)).isFalse();
         assertThat(rollingFileDestination.tryFlushAndRoll(false, time + 60000)).isFalse();
@@ -72,7 +74,9 @@ class TestRollingFileDestination {
                 "test.tmp",
                 "test.log",
                 dir,
-                file);
+                file,
+                false,
+                null);
 
         assertThat(rollingFileDestination.tryFlushAndRoll(false, time)).isFalse();
         assertThat(rollingFileDestination.tryFlushAndRoll(false, time + 60000)).isFalse();

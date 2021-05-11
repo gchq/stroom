@@ -34,7 +34,6 @@ import stroom.meta.shared.Meta;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
-import stroom.util.io.BufferFactory;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogItemProgress;
@@ -65,8 +64,6 @@ public class DataDownloadTaskHandler {
     private final Store streamStore;
     private final MetaService metaService;
     private final SecurityContext securityContext;
-    private final BufferFactory bufferFactory;
-
     private final AtomicLong fileCount = new AtomicLong(0);
     private String lastPossibleFileName;
 
@@ -74,13 +71,11 @@ public class DataDownloadTaskHandler {
     public DataDownloadTaskHandler(final TaskContextFactory taskContextFactory,
                                    final Store streamStore,
                                    final MetaService metaService,
-                                   final SecurityContext securityContext,
-                                   final BufferFactory bufferFactory) {
+                                   final SecurityContext securityContext) {
         this.taskContextFactory = taskContextFactory;
         this.streamStore = streamStore;
         this.metaService = metaService;
         this.securityContext = securityContext;
-        this.bufferFactory = bufferFactory;
     }
 
     public DataDownloadResult downloadData(final FindMetaCriteria criteria,
@@ -190,14 +185,14 @@ public class DataDownloadTaskHandler {
     }
 
     private long downloadStream(final TaskContext taskContext,
-                                final long streamId,
+                                final long metaId,
                                 final StroomZipOutputStream stroomZipOutputStream,
                                 final long startId,
                                 final Long maxParts) throws IOException {
         long id = startId;
 
         // Export Source
-        try (final Source source = streamStore.openSource(streamId)) {
+        try (final Source source = streamStore.openSource(metaId)) {
             id++;
 
             final long count = source.count();
@@ -216,30 +211,29 @@ public class DataDownloadTaskHandler {
                         // Write out the manifest
                         if (index == 0) {
                             try (final OutputStream outputStream = stroomZipOutputStream
-                                    .addEntry(new StroomZipEntry(null,
+                                    .addEntry(StroomZipEntry.create(
                                             basePartName,
-                                            StroomZipFileType.Manifest).getFullName())) {
+                                            StroomZipFileType.MANIFEST).getFullName())) {
                                 AttributeMapUtil.write(source.getAttributes(), outputStream);
                             }
-                        }
-
-                        try (final InputStream dataInputStream = inputStreamProvider.get()) {
-                            streamToStream(dataInputStream,
-                                    stroomZipOutputStream,
-                                    basePartName,
-                                    StroomZipFileType.Data);
                         }
                         try (final InputStream metaInputStream = inputStreamProvider.get(StreamTypeNames.META)) {
                             streamToStream(metaInputStream,
                                     stroomZipOutputStream,
                                     basePartName,
-                                    StroomZipFileType.Meta);
+                                    StroomZipFileType.META);
                         }
                         try (final InputStream contextInputStream = inputStreamProvider.get(StreamTypeNames.CONTEXT)) {
                             streamToStream(contextInputStream,
                                     stroomZipOutputStream,
                                     basePartName,
-                                    StroomZipFileType.Context);
+                                    StroomZipFileType.CONTEXT);
+                        }
+                        try (final InputStream dataInputStream = inputStreamProvider.get()) {
+                            streamToStream(dataInputStream,
+                                    stroomZipOutputStream,
+                                    basePartName,
+                                    StroomZipFileType.DATA);
                         }
                     }
                 }
@@ -253,14 +247,9 @@ public class DataDownloadTaskHandler {
                                 final String basePartName,
                                 final StroomZipFileType fileType) throws IOException {
         if (inputStream != null) {
-            final StroomZipEntry stroomZipEntry = new StroomZipEntry(null, basePartName, fileType);
+            final StroomZipEntry stroomZipEntry = StroomZipEntry.create(basePartName, fileType);
             try (final OutputStream outputStream = zipOutputStream.addEntry(stroomZipEntry.getFullName())) {
-                final byte[] buffer = bufferFactory.create();
-
-                int len;
-                while ((len = StreamUtil.eagerRead(inputStream, buffer)) != -1) {
-                    outputStream.write(buffer, 0, len);
-                }
+                StreamUtil.streamToStream(inputStream, outputStream);
             }
         }
     }
@@ -280,8 +269,8 @@ public class DataDownloadTaskHandler {
                                                            final String format,
                                                            final AttributeMap attributeMap)
             throws IOException {
-        final String filename = StroomFileNameUtil.constructFilename(null, fileCount.incrementAndGet(), format,
-                attributeMap, ZIP_EXTENSION);
+        final String filename = StroomFileNameUtil
+                .constructFilename(null, fileCount.incrementAndGet(), format, attributeMap, ZIP_EXTENSION);
         final Path file = outputDir.resolve(filename);
 
         taskContext.info(() -> FileUtil.getCanonicalPath(file));

@@ -4,31 +4,32 @@ import stroom.util.io.WrappedOutputStream;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.function.Consumer;
 
 class FilterOutputStreamProgressMonitor extends WrappedOutputStream {
 
-    private final StreamProgressMonitor streamProgressMonitor;
+    private final Consumer<Long> progressHandler;
 
-    FilterOutputStreamProgressMonitor(OutputStream outputStream, StreamProgressMonitor streamProgressMonitor) {
+    FilterOutputStreamProgressMonitor(OutputStream outputStream, final Consumer<Long> progressHandler) {
         super(outputStream);
-        this.streamProgressMonitor = streamProgressMonitor;
+        this.progressHandler = progressHandler;
     }
 
     @Override
     public void write(byte[] b) throws IOException {
         super.write(b);
-        streamProgressMonitor.progress(b.length);
+        progressHandler.accept((long) b.length);
     }
 
     @Override
     public void write(byte[] b, int off, int len) throws IOException {
         super.write(b, off, len);
-        streamProgressMonitor.progress(len);
+        progressHandler.accept((long) len);
     }
 
     @Override
     public void write(int b) throws IOException {
         super.write(b);
-        streamProgressMonitor.progress(1);
+        progressHandler.accept(1L);
     }
 }

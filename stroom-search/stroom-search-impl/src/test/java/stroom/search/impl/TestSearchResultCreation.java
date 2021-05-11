@@ -37,6 +37,7 @@ import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.SizesProvider;
 import stroom.search.extraction.ExtractionReceiver;
+import stroom.search.extraction.ExtractionReceiverImpl;
 import stroom.util.io.PathCreator;
 import stroom.util.io.TempDirProvider;
 
@@ -544,7 +545,7 @@ class TestSearchResultCreation {
                 final Consumer<Val[]> valuesConsumer = coprocessor.getValuesConsumer();
                 final Consumer<Throwable> errorConsumer = coprocessor.getErrorConsumer();
                 final Consumer<Long> completionConsumer = coprocessor.getCompletionConsumer();
-                receiver = new ExtractionReceiver(valuesConsumer, errorConsumer, completionConsumer, fieldIndex);
+                receiver = new ExtractionReceiverImpl(valuesConsumer, errorConsumer, completionConsumer, fieldIndex);
             } else {
                 // We assume all coprocessors for the same extraction use the same field index map.
                 // This is only the case at the moment as the CoprocessorsFactory creates field index maps this way.
@@ -558,7 +559,7 @@ class TestSearchResultCreation {
                 final Consumer<Long> completionConsumer = delta ->
                         coprocessorSet.forEach(coprocessor ->
                                 coprocessor.getCompletionConsumer().accept(delta));
-                receiver = new ExtractionReceiver(valuesConsumer, errorConsumer, completionConsumer, fieldIndex);
+                receiver = new ExtractionReceiverImpl(valuesConsumer, errorConsumer, completionConsumer, fieldIndex);
             }
 
             receivers.put(docRef, receiver);

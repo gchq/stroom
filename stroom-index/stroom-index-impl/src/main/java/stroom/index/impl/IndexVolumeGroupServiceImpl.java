@@ -18,7 +18,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.OptionalLong;
 import java.util.stream.Collectors;
@@ -156,9 +155,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                                     if (nodes.size() == paths.size()) {
                                         int i = 0;
                                         for (String path : paths) {
-                                            final Path resolvedPath = Paths.get(
-                                                    pathCreator.makeAbsolute(
-                                                            pathCreator.replaceSystemProperties(path)));
+                                            final Path resolvedPath = pathCreator.toAppPath(path);
 
                                             LOGGER.info("Creating index volume with path {}",
                                                     resolvedPath.toAbsolutePath().normalize());

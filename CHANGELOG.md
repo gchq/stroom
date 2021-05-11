@@ -7,36 +7,35 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2214** Allow file permission override for `FileAppender` and `RollingFileAppender`.
 
-## [v7.0-beta.113] - 2021-05-07
+* Issue **#1820** : Stroom now records `UploadedBy` meta attribute when manually uploading data via the UI.
 
-* Issue **#2229** : Fix migration issue.
-
-
-## [v7.0-beta.112] - 2021-05-06
+* Issue **#190** : Statistics are now recorded when manually uploading data.
 
 * Issue **#2223** : Fixed migration issue.
-
-
-## [v7.0-beta.111] - 2021-05-04
 
 * Change stroom dependencies to use maven central instead of bintray.
 
 * Issue **#2207** : Fixed dashboard column rename issue where column name was not updated visually after rename.
 
-
-## [v7.0-beta.110] - 2021-05-04
-
 * Issue **#2209** : Fixed more property migration issues.
 
 * Issue **#2205** : Improved migration to prevent null DB values being lost.
+
+
+## [v7.1-beta.3] - 2021-04-30
+
+* Rules from dashboards early capability demonstrator / prototype capability.
 
 * Issue **#2172** : Further improvements to search payload transfer and search completion.
 
 * Issue **#2193** : Enable autologger to work for delete with criteria operations.
 
 
-## [v7.0-beta.109] - 2021-04-28
+## [v7.1-beta.2] - 2021-04-28
+
+* Issue **#2201** : Improved Stroom Proxy and aggregation process.
 
 * Issue **#2203** : Fix NPE in index doc partition by migration.
 
@@ -58,13 +57,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2186** : Fix autologger handling of update operations on entities referenced by id alone.
 
-
-## [v7.0-beta.108] - 2021-04-22
-
 * Issue **#2183** : Improve error message when property values cannot be de-serialised. Change property DB migration to add conversion of legacy property values that are now a collection type, e.g. List<String>.
-
-
-## [v7.0-beta.107] - 2021-04-22
 
 * Issue **#2187** : Fixed issue editing a processing filter that has been changed.
 
@@ -80,8 +73,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2176** : Now avoids NPE and produces a proper error when a pipeline cannot be located when loading reference data.
 
-
-## [v7.0-beta.106] - 2021-04-21
+* Issue **#2179** : Extend cron expression syntax. Both `/` (interval) and `-` (range) are now supported.
 
 * Issue **#2172** : To improve search performance local search results are no longer transferred with payloads to a secondary local store.
 
@@ -93,10 +85,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Remove merge artifacts from `scripts.env`.
 
-
-## [v7.0-beta.105] - 2021-04-15
-
 * Issue **#2172** : Changed the way keys and values are packed into LMDB.
+
+* Issue **#2180** : Fix NPE when Stream Appender has no stream type defined.
+
+* Issue **#2167** : Prevent autologger warning for `RestResourceAutoLoggerImpl`.
+
+## [v7.1-beta.1] - 2021-04-13
+
+* Ported Elasticsearch integration from v6, for compatibility with v7.
+
+* Issue **#2034**: Fixed Solr column ordering in dashboard tables.
+
+* Issue **#759** : Add GZIP support for `FileAppender` and `RollingFileAppender`.
 
 
 ## [v7.0-beta.104] - 2021-04-13
@@ -3380,14 +3381,10 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.113...HEAD
-[v7.0-beta.113]: https://github.com/gchq/stroom/compare/v7.0-beta.112...v7.0-beta.113
-[v7.0-beta.112]: https://github.com/gchq/stroom/compare/v7.0-beta.111...v7.0-beta.112
-[v7.0-beta.111]: https://github.com/gchq/stroom/compare/v7.0-beta.110...v7.0-beta.111
-[v7.0-beta.110]: https://github.com/gchq/stroom/compare/v7.0-beta.109...v7.0-beta.110
-[v7.0-beta.109]: https://github.com/gchq/stroom/compare/v7.0-beta.108...v7.0-beta.109
-[v7.0-beta.108]: https://github.com/gchq/stroom/compare/v7.0-beta.107...v7.0-beta.108
-[v7.0-beta.107]: https://github.com/gchq/stroom/compare/v7.0-beta.106...v7.0-beta.107
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.3...HEAD
+[v7.1-beta.3]: https://github.com/gchq/stroom/compare/v7.1-beta.2..v7.1-beta.3
+[v7.1-beta.2]: https://github.com/gchq/stroom/compare/v7.1-beta.1...v7.1-beta.2
+[v7.1-beta.1]: https://github.com/gchq/stroom/compare/v7.0-beta.104...v7.1-beta.1
 [v7.0-beta.106]: https://github.com/gchq/stroom/compare/v7.0-beta.105...v7.0-beta.106
 [v7.0-beta.105]: https://github.com/gchq/stroom/compare/v7.0-beta.104...v7.0-beta.105
 [v7.0-beta.104]: https://github.com/gchq/stroom/compare/v7.0-beta.103...v7.0-beta.104

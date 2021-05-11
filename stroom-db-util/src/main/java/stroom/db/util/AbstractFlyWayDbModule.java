@@ -5,8 +5,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import com.zaxxer.hikari.HikariDataSource;
-import org.flywaydb.core.Flyway;
-import org.flywaydb.core.api.FlywayException;
 
 import javax.sql.DataSource;
 
@@ -18,6 +16,7 @@ public abstract class AbstractFlyWayDbModule<T_CONFIG extends HasDbConfig, T_CON
         extends AbstractDataSourceProviderModule<T_CONFIG, T_CONN_PROV> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractFlyWayDbModule.class);
+
 
     protected abstract String getFlyWayTableName();
 
@@ -31,34 +30,10 @@ public abstract class AbstractFlyWayDbModule<T_CONFIG extends HasDbConfig, T_CON
 
     @Override
     protected void performMigration(final DataSource dataSource) {
-        final Flyway flyway = Flyway.configure()
-                .dataSource(dataSource)
-                .locations(getFlyWayLocation())
-                .table(getFlyWayTableName())
-                .baselineOnMigrate(true)
-                .load();
-
-        int pendingMigrations = flyway.info().pending().length;
-
-        if (pendingMigrations > 0) {
-            try {
-                LOGGER.info("Applying {} Flyway DB migration(s) to {} in table {} from {}",
-                        pendingMigrations,
-                        getModuleName(),
-                        getFlyWayTableName(),
-                        getFlyWayLocation());
-                flyway.migrate();
-                LOGGER.info("Completed Flyway DB migration for {} in table {}",
-                        getModuleName(),
-                        getFlyWayTableName());
-            } catch (FlywayException e) {
-                LOGGER.error("Error migrating {} database", getModuleName(), e);
-                throw e;
-            }
-        } else {
-            LOGGER.info("No pending Flyway DB migration(s) for {} in {}",
-                    getModuleName(),
-                    getFlyWayLocation());
+        // So that tests don't always try and perform migration only do it if the thread local hasn't recorded it as
+        // being done already.
+        if (FlywayUtil.migrationRequired(getModuleName())) {
+            FlywayUtil.migrate(dataSource, getFlyWayLocation(), getFlyWayTableName(), getModuleName());
         }
     }
 }

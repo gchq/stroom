@@ -1,0 +1,16 @@
+@startuml
+
+title Forward Only
+
+actor Supplier
+participant ProxyRequestHandler
+participant ForwardStreamHandlers
+actor Destination
+
+Supplier --> ProxyRequestHandler: HTTP POST
+ProxyRequestHandler -> ForwardStreamHandlers: handle
+ForwardStreamHandlers --> Destination: handle
+ProxyRequestHandler --> Supplier: 200 Response
+
+
+@enduml

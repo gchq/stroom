@@ -55,7 +55,6 @@ class SolrClusterSearchTaskHandler {
     public void exec(final TaskContext taskContext,
                      final CachedSolrIndex cachedSolrIndex,
                      final Query query,
-                     final String[] storedFields,
                      final long now,
                      final String dateTimeLocale,
                      final Coprocessors coprocessors) {
@@ -69,24 +68,13 @@ class SolrClusterSearchTaskHandler {
                         throw new SearchException("Search expression has not been set");
                     }
 
-                    // Get the stored fields that search is hoping to use.
-                    if (storedFields == null || storedFields.length == 0) {
-                        throw new SearchException("No stored fields have been requested");
-                    }
-
                     if (coprocessors.size() > 0) {
                         // Start searching.
-                        search(taskContext, cachedSolrIndex, query, storedFields, now, dateTimeLocale, coprocessors);
+                        search(taskContext, cachedSolrIndex, query, now, dateTimeLocale, coprocessors);
                     }
+
                 } catch (final RuntimeException e) {
-                    try {
-                        coprocessors.getErrorConsumer().accept(e);
-                    } catch (final RuntimeException e2) {
-                        // If we failed to send the result or the source node rejected the result because the
-                        // source task has been terminated then terminate the task.
-                        LOGGER.info(() -> "Terminating search because we were unable to send result");
-                        Thread.currentThread().interrupt();
-                    }
+                    coprocessors.getErrorConsumer().accept(e);
                 } finally {
                     LOGGER.trace(() -> "Search is complete, setting searchComplete to true and " +
                             "counting down searchCompleteLatch");
@@ -100,7 +88,6 @@ class SolrClusterSearchTaskHandler {
     private void search(final TaskContext taskContext,
                         final CachedSolrIndex cachedSolrIndex,
                         final Query query,
-                        final String[] storedFields,
                         final long now,
                         final String dateTimeLocale,
                         final Coprocessors coprocessors) {
@@ -120,7 +107,7 @@ class SolrClusterSearchTaskHandler {
             final ExpressionOperator expression = expressionFilter.copy(query.getExpression());
             final AtomicLong hitCount = new AtomicLong();
             solrSearchFactory.search(cachedSolrIndex,
-                    storedFields,
+                    coprocessors.getFieldIndex(),
                     now,
                     expression,
                     extractionReceiver,
@@ -139,8 +126,8 @@ class SolrClusterSearchTaskHandler {
                                 "found " +
                                 hitCount.get() +
                                 " documents" +
-                                " performed "
-                                + coprocessor.getValuesCount() +
+                                " performed " +
+                                coprocessor.getValuesCount() +
                                 " extractions");
 
                         final boolean complete = coprocessor.getCompletionState()
@@ -153,11 +140,12 @@ class SolrClusterSearchTaskHandler {
             }
 
             LOGGER.debug(() -> "Complete");
+        } catch (final RuntimeException e) {
+            throw SearchException.wrap(e);
         } catch (final InterruptedException e) {
             // Continue to interrupt.
             Thread.currentThread().interrupt();
             LOGGER.debug(e::getMessage, e);
-        } catch (final RuntimeException e) {
             throw SearchException.wrap(e);
         }
     }

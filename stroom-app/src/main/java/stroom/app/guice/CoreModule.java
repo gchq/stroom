@@ -13,6 +13,7 @@ public class CoreModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new stroom.activity.impl.db.ActivityDbModule());
+        install(new stroom.alert.impl.AlertModule());
         install(new stroom.annotation.impl.db.AnnotationDbModule());
         install(new stroom.annotation.pipeline.AnnotationPipelineModule());
         install(new stroom.cache.impl.CacheModule());
@@ -24,6 +25,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.core.db.DbStatusModule());
         install(new stroom.core.entity.event.EntityEventModule());
         install(new stroom.core.query.QueryModule());
+        install(new stroom.core.receive.ProxyAggregationModule());
         install(new stroom.core.receive.ReceiveDataModule());
         install(new stroom.core.servlet.ServletModule());
         install(new stroom.core.sysinfo.SystemInfoModule());
@@ -76,11 +78,13 @@ public class CoreModule extends AbstractModule {
         install(new stroom.pipeline.xsltfunctions.DataStoreXsltFunctionModule());
         install(new stroom.processor.impl.ProcessorModule());
         install(new stroom.processor.impl.db.ProcessorDbModule());
+        install(new stroom.proxy.repo.ProxyRepoDbModule());
         install(new stroom.receive.common.RemoteFeedModule());
         install(new stroom.receive.rules.impl.ReceiveDataRuleSetModule());
         install(new stroom.search.extraction.ExtractionModule());
         install(new stroom.search.impl.SearchModule());
         install(new stroom.search.impl.shard.ShardModule());
+        install(new stroom.search.elastic.ElasticSearchModule());
         install(new stroom.search.solr.SolrSearchModule());
         install(new stroom.searchable.impl.SearchableModule());
         install(new stroom.security.identity.IdentityModule());

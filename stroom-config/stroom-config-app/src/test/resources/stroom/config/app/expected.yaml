@@ -17,6 +17,11 @@ appConfig:
         maxLifetime: "PT30M"
         minimumIdle: 10
         maxPoolSize: 30
+  alerting:
+    timezone: "UTC"
+    rulesFolderList: []
+    reportAllExtractedFieldsEnabled: false
+    additionalFieldsPrefix: "_"
   annotation:
     db:
       connection:
@@ -183,6 +188,7 @@ appConfig:
         expireAfterWrite: null
   dataSourceUrl:
     index: "/api/stroom-index/v2"
+    elasticIndex: "/api/stroom-elastic-index/v2"
     solrIndex: "/api/stroom-solr-index/v2"
     statisticStore: "/api/sqlstatistics/v2"
     searchable: "/api/searchable/v2"
@@ -202,6 +208,23 @@ appConfig:
         maxLifetime: "PT30M"
         minimumIdle: 10
         maxPoolSize: 30
+  elastic:
+    indexClientCache:
+      maximumSize: 100
+      expireAfterAccess: "PT10M"
+      expireAfterWrite: null
+    indexCache:
+      maximumSize: 100
+      expireAfterAccess: null
+      expireAfterWrite: "PT10M"
+    search:
+      maxStoredDataQueueSize: 1000
+      maxBooleanClauseCount: 1024
+      storeSize: "1000000,100,10,1"
+      searchResultCache:
+        maximumSize: 10000
+        expireAfterAccess: "PT10M"
+        expireAfterWrite: null
   explorer:
     db:
       connection:
@@ -442,13 +465,14 @@ appConfig:
         minimumIdle: 10
         maxPoolSize: 30
   proxyAggregation:
-    proxyDir: "proxy_repo"
-    proxyThreads: 10
-    maxFileScan: 100000
-    maxConcurrentMappedFiles: 100000
-    maxFilesPerAggregate: 10000
-    maxUncompressedFileSize: "1G"
-    buffferSize: 8192
+    repoDir: "proxy_repo"
+    dbDir: "proxy_repo_db"
+    aggregator:
+      enabled: true
+      maxItemsPerAggregate: 1000
+      maxUncompressedByteSize: "1.0G"
+      maxAggregateAge: "PT10M"
+      aggregationFrequency: "PT1M"
   publicUri:
     scheme: "https"
     hostname: null
@@ -456,7 +480,6 @@ appConfig:
     pathPrefix: null
   receive:
     receiptPolicyUuid: null
-    bufferSize: 8192
     unknownClassification: "UNKNOWN CLASSIFICATION"
     feedNamePattern: "^[A-Z0-9_-]{3,}$"
   search:
@@ -560,6 +583,8 @@ appConfig:
       contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-eval'\
         \ 'unsafe-inline'; img-src 'self' data:; style-src 'self' 'unsafe-inline';\
         \ frame-ancestors 'self';"
+    crypto:
+      secretEncryptionKey: ""
     identity:
       allowCertificateAuthentication: false
       certificateCnCaptureGroupIndex: 1
@@ -647,11 +672,6 @@ appConfig:
         maximumSize: 10000
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
-      extraction:
-        maxStoredDataQueueSize: 1000
-        maxThreads: 4
-        maxThreadsPerTask: 2
-        maxStreamEventMapSize: 1000000
   statistics:
     sql:
       docRefType: "StatisticStore"

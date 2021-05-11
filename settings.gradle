@@ -24,6 +24,10 @@ include 'stroom-activity:stroom-activity-impl-db'
 include 'stroom-activity:stroom-activity-impl-db-jooq'
 include 'stroom-activity:stroom-activity-mock'
 
+// Alert
+include 'stroom-alert:stroom-alert-api'
+include 'stroom-alert:stroom-alert-impl'
+
 // Annotations project.
 include 'stroom-annotation:stroom-annotation-api'
 include 'stroom-annotation:stroom-annotation-impl'
@@ -196,6 +200,7 @@ include 'stroom-processor:stroom-processor-mock'
 // Proxy
 include 'stroom-proxy:stroom-proxy-app'
 include 'stroom-proxy:stroom-proxy-repo'
+include 'stroom-proxy:stroom-proxy-repo-db-jooq'
 include 'stroom-proxy:stroom-proxy-remote-api'
 
 // Query
@@ -214,8 +219,10 @@ include 'stroom-receive:stroom-receive-common'
 include 'stroom-receive:stroom-receive-rules-impl'
 
 // Search
+include 'stroom-search:elastic-shaded'
 include 'stroom-search:stroom-expression-matcher'
 include 'stroom-search:stroom-search-api'
+include 'stroom-search:stroom-search-elastic'
 include 'stroom-search:stroom-search-extraction'
 include 'stroom-search:stroom-search-impl'
 include 'stroom-search:stroom-search-solr'
@@ -265,3 +272,4 @@ include 'stroom-util-shared'
 
 
 include 'stroom-ssl-test'
+include 'stroom-alert:stroom-alert-mock'

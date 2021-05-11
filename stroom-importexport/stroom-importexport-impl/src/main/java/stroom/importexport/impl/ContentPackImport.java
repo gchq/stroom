@@ -30,7 +30,6 @@ import java.io.UncheckedIOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
@@ -65,14 +64,11 @@ public class ContentPackImport {
         if (isEnabled) {
             LOGGER.info("Configured import dir is '" + config.getImportDirectory() + "'");
             if (config.getImportDirectory() != null) {
-                final String resolvedPath = pathCreator.makeAbsolute(
-                        pathCreator.replaceSystemProperties(
-                                config.getImportDirectory()));
+                final Path resolvedPath = pathCreator.toAppPath(config.getImportDirectory());
                 LOGGER.info("Importing from resolved dir '" + resolvedPath + "'");
 
                 final UserIdentity admin = securityContext.createIdentity(User.ADMIN_USER_NAME);
-                securityContext.asUser(admin, () ->
-                        doImport(Paths.get(resolvedPath)));
+                securityContext.asUser(admin, () -> doImport(resolvedPath));
             } else {
                 LOGGER.warn("Content pack import is enabled but the configured directory is null");
             }

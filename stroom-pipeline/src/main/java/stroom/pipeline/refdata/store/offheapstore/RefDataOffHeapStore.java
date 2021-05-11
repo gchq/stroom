@@ -74,7 +74,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -1022,18 +1021,14 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
     private Path getStoreDir() {
         String storeDirStr = referenceDataConfig.getLocalDir();
-        storeDirStr = pathCreator.replaceSystemProperties(storeDirStr);
-        storeDirStr = pathCreator.makeAbsolute(storeDirStr);
         Path storeDir;
-        if (storeDirStr == null) {
+        if (storeDirStr == null || storeDirStr.isBlank()) {
             LOGGER.info("Off heap store dir is not set, falling back to {}", tempDirProvider.get());
             storeDir = tempDirProvider.get();
             Objects.requireNonNull(storeDir, "Temp dir is not set");
             storeDir = storeDir.resolve(DEFAULT_STORE_SUB_DIR_NAME);
         } else {
-            storeDirStr = pathCreator.replaceSystemProperties(storeDirStr);
-            storeDirStr = pathCreator.makeAbsolute(storeDirStr);
-            storeDir = Paths.get(storeDirStr);
+            storeDir = pathCreator.toAppPath(storeDirStr);
         }
 
         try {

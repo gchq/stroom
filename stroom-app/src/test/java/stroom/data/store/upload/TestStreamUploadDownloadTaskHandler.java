@@ -93,17 +93,17 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
         final StroomZipFile stroomZipFile = new StroomZipFile(file);
         for (int i = 1; i <= entryCount; i++) {
             final String baseName = StroomFileNameUtil.idToString(i);
-            assertThat(stroomZipFile.containsEntry(baseName, StroomZipFileType.Manifest)).isTrue();
-            assertThat(stroomZipFile.containsEntry(baseName, StroomZipFileType.Data)).isTrue();
-            assertThat(stroomZipFile.containsEntry(baseName, StroomZipFileType.Context)).isFalse();
-            assertThat(stroomZipFile.containsEntry(baseName, StroomZipFileType.Meta)).isFalse();
+            assertThat(stroomZipFile.containsEntry(baseName, StroomZipFileType.MANIFEST)).isTrue();
+            assertThat(stroomZipFile.containsEntry(baseName, StroomZipFileType.DATA)).isTrue();
+            assertThat(stroomZipFile.containsEntry(baseName, StroomZipFileType.CONTEXT)).isFalse();
+            assertThat(stroomZipFile.containsEntry(baseName, StroomZipFileType.META)).isFalse();
         }
         stroomZipFile.close();
 
         dataUploadTaskHandler.uploadData("test.zip", file, feedName,
                 StreamTypeNames.RAW_EVENTS, null, null);
 
-        assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(entryCount * 2);
+        assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(entryCount + 1);
     }
 
     @Test
@@ -116,7 +116,7 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
         Files.write(file, "TEST".getBytes());
 
         dataUploadTaskHandler.uploadData("test.dat", file, feedName,
-                StreamTypeNames.RAW_EVENTS, null, "Tom:One\nJames:Two\n");
+                StreamTypeNames.RAW_EVENTS, null, "Foo:One\nBar:Two\n");
 
         assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(1);
     }
@@ -163,13 +163,13 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
         dataDownloadTaskHandler.downloadData(findMetaCriteria, getCurrentTestDir(), format, streamDownloadSettings);
 
         final StroomZipFile stroomZipFile = new StroomZipFile(file);
-        assertThat(stroomZipFile.containsEntry("001_1", StroomZipFileType.Manifest)).isTrue();
-        assertThat(stroomZipFile.containsEntry("001_1", StroomZipFileType.Meta)).isTrue();
-        assertThat(stroomZipFile.containsEntry("001_1", StroomZipFileType.Context)).isTrue();
-        assertThat(stroomZipFile.containsEntry("001_1", StroomZipFileType.Data)).isTrue();
-        assertThat(stroomZipFile.containsEntry("001_2", StroomZipFileType.Meta)).isTrue();
-        assertThat(stroomZipFile.containsEntry("001_2", StroomZipFileType.Context)).isTrue();
-        assertThat(stroomZipFile.containsEntry("001_2", StroomZipFileType.Data)).isTrue();
+        assertThat(stroomZipFile.containsEntry("001_1", StroomZipFileType.MANIFEST)).isTrue();
+        assertThat(stroomZipFile.containsEntry("001_1", StroomZipFileType.META)).isTrue();
+        assertThat(stroomZipFile.containsEntry("001_1", StroomZipFileType.CONTEXT)).isTrue();
+        assertThat(stroomZipFile.containsEntry("001_1", StroomZipFileType.DATA)).isTrue();
+        assertThat(stroomZipFile.containsEntry("001_2", StroomZipFileType.META)).isTrue();
+        assertThat(stroomZipFile.containsEntry("001_2", StroomZipFileType.CONTEXT)).isTrue();
+        assertThat(stroomZipFile.containsEntry("001_2", StroomZipFileType.DATA)).isTrue();
         stroomZipFile.close();
 
         final String extraMeta = "Z:ALL\n";
@@ -186,16 +186,20 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
             try (final Source streamSource = streamStore.openSource(meta.getId())) {
                 for (int i = 1; i <= streamSource.count(); i++) {
                     try (final InputStreamProvider inputStreamProvider = streamSource.get(i - 1)) {
-                        assertThat(StreamUtil.streamToString(inputStreamProvider.get(), false)).isEqualTo("DATA" + i);
+                        assertThat(StreamUtil.streamToString(inputStreamProvider.get(), false))
+                                .isEqualTo("DATA" + i);
                         assertThat(StreamUtil.streamToString(inputStreamProvider.get(StreamTypeNames.CONTEXT),
-                                false)).isEqualTo("CONTEXT" + i);
+                                false))
+                                .isEqualTo("CONTEXT" + i);
 
                         if (originalMeta.equals(meta)) {
                             assertContains(StreamUtil.streamToString(inputStreamProvider.get(StreamTypeNames.META),
-                                    false), "META:" + i, "X:" + i);
+                                    false),
+                                    "META:" + i, "X:" + i);
                         } else {
                             assertContains(StreamUtil.streamToString(inputStreamProvider.get(StreamTypeNames.META),
-                                    false), "Compression:ZIP\n", "META:" + i + "\n", "X:" + i + "\n", "Z:ALL\n");
+                                    false),
+                                    "UploadedBy:admin", "META:" + i + "\n", "X:" + i + "\n", "Z:ALL\n");
                         }
                     }
                 }

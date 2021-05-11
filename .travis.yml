@@ -1,8 +1,11 @@
 language: java
-os: linux
+arch: amd64          # optional, this is default, routes to a full VM
+os: linux            # optional, this is default
 dist: trusty
+#dist: focal          # or bionic | xenial | trusty | precise with xenial as default
 group: edge
 jdk: openjdk15
+
 
 env:
   global:

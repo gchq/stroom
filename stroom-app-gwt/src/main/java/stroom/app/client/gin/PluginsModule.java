@@ -33,7 +33,6 @@ public class PluginsModule extends PluginModule {
 
         bindPlugin(HelpPlugin.class);
         bindPlugin(AboutPlugin.class);
-//        bindPlugin(ElasticPlugin.class);
         bindPlugin(UsersPlugin.class);
         bindPlugin(ApiKeysPlugin.class);
         bindPlugin(TrackersPlugin.class);
