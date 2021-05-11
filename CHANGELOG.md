@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Uplift version of `stroom-logs` content pack selected for download to `3.0-beta.1`
+
 * Issue **#2228** : Stroom Dropwizard and Stroom Proxy Send/Receive log default formats improved.
+
 * Issue **#2235** : Add CHANGELOG to the release artefacts.
 
 
