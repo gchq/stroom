@@ -14,45 +14,82 @@
 # limitations under the License.
 #**********************************************************************
 
+# This is our java build image for building stroom
+# It also contains plantuml for plant uml image generation
+
 FROM adoptopenjdk/openjdk15:jdk-15.0.2_7-alpine as stroom-base-stage
-WORKDIR /builder
+
+# Work from the shared git repo dir
+WORKDIR /builder/shared
 
 # Pass in the uid/gid of the running user so we can use the same user id
 # in the container so that any files created can be read outside the 
 # container.
 ARG USER_ID
 ARG GROUP_ID    
+# The gid of the docker group on the host, needed so we can add our
+# non-root user to it to get access to the docker.sock
+ARG DOCKER_GROUP_ID    
 
 # Pass in the abs path to the repo root on the docker host
+# Needed to allow us to mount it in containers we spawn from here.
 ARG HOST_REPO_DIR    
+
+# The IP/hostname of the docker host so we can comminicate with other containers
+# via the host's address
+# The name DOCKER_HOST is used by docker so don't use that.
+ARG DOCKER_HOST_IP
+
+ARG PLANTUML_VERSION=1.2021.5
 
 # Set the user ID into an env var so the entrypoint can see it
 ENV CONTAINER_USER_ID=$USER_ID
 
 ENV HOST_REPO_DIR=$HOST_REPO_DIR
+ENV DOCKER_HOST_IP=$DOCKER_HOST_IP
+
+ENV LANG en_GB.UTF-8
 
 # Set tini as entrypoint
 #ENTRYPOINT ["/sbin/tini", "--", "/builder/docker-entrypoint.sh"]
 
 CMD id
 
+    #&& #sudo usermod -a -G docker builder
+      #busybox-extras \
+
 # iputils for non-root ping
-# busybox-extras for telnet
+# busybox-extras for telnet for debugging use
+# graphviz, ttf-* for plantuml
+# As this container will be trying to use the docker cli to run/interact with other
+# containers we need to add our non-root user to the docker group i.e. the same gid as
+# on the host, but may have a different name in the container. We need this membership
+# to have access to docker.sock.
 RUN apk add --no-cache \
       bash \
-      busybox-extras \
+      curl \
       docker-cli \
       git \
+      graphviz \
       iputils \
       su-exec \
       tini \
-      && \
-    addgroup -g $GROUP_ID -S builder && \
-    adduser -u $USER_ID -S -s /bin/false -D -G builder builder && \
-    #sudo usermod -a -G docker builder && \
-    mkdir -p /builder/shared && \
-    chown -R $USER_ID:$GROUP_ID /builder && \
-    alias ll='ls -l'
+      ttf-droid \
+      ttf-droid-nonlatin \
+    && curl -Ls https://sourceforge.net/projects/plantuml/files/plantuml.$PLANTUML_VERSION.jar/download -o /builder/plantuml.jar \
+    && alias ll='ls -l' \
+    && apk del curl \
+    && echo "USER_ID: $USER_ID" \
+    && echo "GROUP_ID: $GROUP_ID" \
+    && echo "PLANTUML_VERSION: $PLANTUML_VERSION" \
+    && echo "DOCKER_GROUP_ID: $DOCKER_GROUP_ID" \
+    && docker_group_name="$(cat /etc/group | grep ":${DOCKER_GROUP_ID}:" | awk -F ":" '{ print $1 }')" \
+    && echo "docker_group_name: $docker_group_name" \
+    && addgroup -g $GROUP_ID -S builder \
+    && adduser -u $USER_ID -S -s /bin/false -D -G builder builder \
+    && addgroup builder "${docker_group_name}" \
+    && mkdir -p /builder/shared \
+    && chown -R $USER_ID:$GROUP_ID /builder
 
 COPY --chown=$USER_ID:$GROUP_ID docker-entrypoint.sh /builder/
 

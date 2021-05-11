@@ -45,7 +45,6 @@ determine_host_address() {
   echo "$ip"
 }
 
-
 host_ip="$(determine_host_address)"
 
 user_id=
@@ -93,23 +92,23 @@ docker build \
 
 
   #--workdir "${dest_dir}" \
+
 # Mount the whole repo into the container so we can run the build
 # The mount src is on the host file system
 # group-add gives the permission to interact with the docker cli
 # docker.sock allows use to interact with the docker cli
-# Need :exec on /tmp else LMDB complains with link errors
 docker run \
   --interactive \
   --tty \
   --rm \
-  --tmpfs /tmp:exec \
+  --tmpfs /tmp \
   --mount "type=bind,src=${host_abs_repo_dir},dst=${dest_dir}" \
   --volume builder-home-dir-vol:/home/builder \
-  --group-add "$(stat -c '%g' /var/run/docker.sock)" \
+  --group-add "${docker_group_id}" \
   --volume /var/run/docker.sock:/var/run/docker.sock \
   --name "stroom-builder" \
   "${image_tag}" \
-  bash -c "pwd; SKIP_TESTS=\"${SKIP_TESTS:-false}\" MAX_WORKERS=\"${MAX_WORKERS:-6}\" ./container_build/gradleBuild.sh"
+  bash -c "./container_build/runPlantErd.sh"
 
   #bash
   #bash -c 'echo $PWD; nvm --version; node --version; npm --version; npx --version; yarn --version; ./yarnBuild.sh'

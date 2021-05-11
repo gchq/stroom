@@ -5,7 +5,7 @@
 set -euo pipefail
 
 # Ensure we are in the dir where this script lives
-SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
+#SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
 
 # Shell Colour constants for use in 'echo -e'
 # e.g.  echo -e "My message ${GREEN}with just this text in green${NC}"
@@ -73,11 +73,14 @@ determine_host_address() {
 
 main() {
 
-  pushd "${SCRIPT_DIR}" > /dev/null
+  # We want to run from the repo root
+  local local_repo_root
+  local_repo_root="$(git rev-parse --show-toplevel)"
+  pushd "${local_repo_root}" > /dev/null
 
   # When we are in a container localhost is no good for connecting to the db
   # so use the ip
-  host_ip="$(determine_host_address)"
+  host_ip="${DOCKER_HOST_IP:-$(determine_host_address)}"
   export STROOM_JDBC_DRIVER_HOST="${host_ip}"
   echo -e "${GREEN}Setting STROOM_JDBC_DRIVER_HOST to ${BLUE}${host_ip}${NC}"
 
