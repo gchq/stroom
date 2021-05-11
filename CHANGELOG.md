@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2228** : Stroom Dropwizard and Stroom Proxy Send/Receive log default formats improved.
 * Issue **#2235** : Add CHANGELOG to the release artefacts.
 
 
