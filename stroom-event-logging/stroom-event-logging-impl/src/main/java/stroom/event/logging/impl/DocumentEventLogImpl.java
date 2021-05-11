@@ -36,7 +36,9 @@ import event.logging.ImportEventAction;
 import event.logging.MoveEventAction;
 import event.logging.MultiObject;
 import event.logging.OtherObject;
+import event.logging.ProcessAction;
 import event.logging.ProcessEventAction;
+import event.logging.ProcessType;
 import event.logging.Query;
 import event.logging.ResultPage;
 import event.logging.SearchEventAction;
@@ -553,7 +555,11 @@ public class DocumentEventLogImpl implements DocumentEventLog {
                             .addObjects(createBaseObject(object)).build());
                 }
 
-                final ProcessEventAction action = builder.build();
+                final ProcessEventAction action = builder.withAction(ProcessAction.CALL)
+                        .withType(ProcessType.SERVICE)
+                        .withCommand("Internal Stroom Processing Invoked")
+                        .build();
+
                 eventLoggingService.log(
                         eventTypeId,
                         createEventDescription(descriptionVerb, "Processing", object),

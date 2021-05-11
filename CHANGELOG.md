@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2226** : Ensure that `<Process>` audit events are schema compliant.
+
 * Uplift version of `stroom-logs` content pack selected for download to `3.0-beta.1`
 
 * Issue **#2228** : Stroom Dropwizard and Stroom Proxy Send/Receive log default formats improved.
