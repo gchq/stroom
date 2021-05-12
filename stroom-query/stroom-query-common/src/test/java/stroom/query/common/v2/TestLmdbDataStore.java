@@ -45,6 +45,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestLmdbDataStore extends AbstractDataStoreTest {
+
     private final Sizes defaultMaxResultsSizes = Sizes.create(50);
     private Path tempDir;
 
@@ -61,7 +62,8 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
         final LmdbConfig lmdbConfig = new LmdbConfig();
         final ByteBufferPool byteBufferPool = new ByteBufferPoolImpl4(new ByteBufferPoolConfig());
-        final LmdbEnvironmentFactory lmdbEnvironmentFactory = new LmdbEnvironmentFactory(tempDirProvider, lmdbConfig, pathCreator);
+        final LmdbEnvironmentFactory lmdbEnvironmentFactory =
+                new LmdbEnvironmentFactory(tempDirProvider, lmdbConfig, pathCreator);
 
         return new LmdbDataStore(
                 lmdbEnvironmentFactory,

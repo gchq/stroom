@@ -7,9 +7,37 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2231** : Added visualisation selection behaviour to dashboards.
+
 * Issue **#2232** : Fixed issue where search was getting stuck due to LMDB locking transactions.
 
-* Issue **#2231** : Added visualisation selection behaviour to dashboards.
+* Issue **#2226** : Ensure that `<Process>` audit events are schema compliant.
+
+* Uplift version of `stroom-logs` content pack selected for download to `3.0-beta.1`
+
+* Issue **#2228** : Stroom Dropwizard and Stroom Proxy Send/Receive log default formats improved.
+
+* Issue **#2235** : Add CHANGELOG to the release artefacts.
+
+
+## [v7.0-beta.115] - 2021-05-10
+
+* Issue **#2233** : Fix typo in SQL.
+
+
+## [v7.0-beta.114] - 2021-05-10
+
+* Issue **#2233** : Fix null volume ID in index shard migration.
+
+
+## [v7.0-beta.113] - 2021-05-07
+
+* Issue **#2229** : Fix migration issue.
+
+
+## [v7.0-beta.112] - 2021-05-06
+
+* Issue **#2223** : Fixed migration issue.
 
 
 ## [v7.0-beta.111] - 2021-05-04
@@ -3374,7 +3402,11 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.111...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.115...HEAD
+[v7.0-beta.115]: https://github.com/gchq/stroom/compare/v7.0-beta.114...v7.0-beta.115
+[v7.0-beta.114]: https://github.com/gchq/stroom/compare/v7.0-beta.113...v7.0-beta.114
+[v7.0-beta.113]: https://github.com/gchq/stroom/compare/v7.0-beta.112...v7.0-beta.113
+[v7.0-beta.112]: https://github.com/gchq/stroom/compare/v7.0-beta.111...v7.0-beta.112
 [v7.0-beta.111]: https://github.com/gchq/stroom/compare/v7.0-beta.110...v7.0-beta.111
 [v7.0-beta.110]: https://github.com/gchq/stroom/compare/v7.0-beta.109...v7.0-beta.110
 [v7.0-beta.109]: https://github.com/gchq/stroom/compare/v7.0-beta.108...v7.0-beta.109

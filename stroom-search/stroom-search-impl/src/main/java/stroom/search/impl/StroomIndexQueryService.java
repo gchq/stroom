@@ -14,11 +14,16 @@ import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.SearchResponseCreatorCache;
 import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.security.api.SecurityContext;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
@@ -30,28 +35,40 @@ public class StroomIndexQueryService {
     private final IndexStore indexStore;
     private final SecurityContext securityContext;
     private final TaskContextFactory taskContextFactory;
+    private final ExecutorProvider executorProvider;
 
     @Inject
     public StroomIndexQueryService(final LuceneSearchResponseCreatorManager searchResponseCreatorManager,
                                    final IndexStore indexStore,
                                    final SecurityContext securityContext,
-                                   final TaskContextFactory taskContextFactory) {
+                                   final TaskContextFactory taskContextFactory,
+                                   final ExecutorProvider executorProvider) {
         this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.indexStore = indexStore;
         this.securityContext = securityContext;
         this.taskContextFactory = taskContextFactory;
+        this.executorProvider = executorProvider;
     }
 
     public DataSource getDataSource(final DocRef docRef) {
-        return securityContext.useAsReadResult(taskContextFactory.contextResult("Getting Data Source",
-                taskContext -> {
-                    final IndexDoc index = indexStore.readDocument(docRef);
-                    return new DataSource(IndexDataSourceFieldUtil.getDataSourceFields(index, securityContext));
-                }));
+        return securityContext.useAsReadResult(() -> {
+            final Supplier<DataSource> supplier = taskContextFactory.contextResult("Getting Data Source",
+                    taskContext -> {
+                        final IndexDoc index = indexStore.readDocument(docRef);
+                        return new DataSource(IndexDataSourceFieldUtil.getDataSourceFields(index, securityContext));
+                    });
+            final Executor executor = executorProvider.get();
+            final CompletableFuture<DataSource> completableFuture = CompletableFuture.supplyAsync(supplier, executor);
+            try {
+                return completableFuture.get();
+            } catch (final InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        });
     }
 
     public SearchResponse search(final SearchRequest request) {
-        return taskContextFactory.contextResult("Getting search results",
+        final Supplier<SearchResponse> supplier = taskContextFactory.contextResult("Getting search results",
                 taskContext -> {
                     // if this is the first call for this query key then it will create a searchResponseCreator
                     // (& store) that have a lifespan beyond the scope of this request and then begin the search for
@@ -68,7 +85,14 @@ public class StroomIndexQueryService {
                             getResponseInfoForLogging(request, searchResponse));
 
                     return searchResponse;
-                }).get();
+                });
+        final Executor executor = executorProvider.get();
+        final CompletableFuture<SearchResponse> completableFuture = CompletableFuture.supplyAsync(supplier, executor);
+        try {
+            return completableFuture.get();
+        } catch (final InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 
     private String getResponseInfoForLogging(final SearchRequest request, final SearchResponse searchResponse) {
@@ -111,11 +135,18 @@ public class StroomIndexQueryService {
     }
 
     public Boolean destroy(final QueryKey queryKey) {
-        return taskContextFactory.contextResult("Destroy search",
+        final Supplier<Boolean> supplier = taskContextFactory.contextResult("Destroy search",
                 taskContext -> {
                     taskContext.info(queryKey::getUuid);
                     searchResponseCreatorManager.remove(new SearchResponseCreatorCache.Key(queryKey));
                     return Boolean.TRUE;
-                }).get();
+                });
+        final Executor executor = executorProvider.get();
+        final CompletableFuture<Boolean> completableFuture = CompletableFuture.supplyAsync(supplier, executor);
+        try {
+            return completableFuture.get();
+        } catch (final InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 }

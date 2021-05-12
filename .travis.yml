@@ -47,8 +47,9 @@ before_install:
   - source ~/.nvm/nvm.sh
   - nvm --version
 
-  # Install Node
+  # Install Node, needs to match stroom-ui/.nvmrc
   - nvm install 15.14.0
+  - nvm use 15.14.0
   - node --version
 
   # Install NPM

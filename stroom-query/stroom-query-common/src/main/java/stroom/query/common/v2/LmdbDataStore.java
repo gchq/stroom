@@ -323,6 +323,7 @@ public class LmdbDataStore implements DataStore {
 
                         // Create payload and clear the DB.
                         currentPayload.set(createPayload(writeTxn, dbi));
+                        writeTxn = commit(writeTxn);
 
                     } else if (needsCommit) {
                         final long now = System.currentTimeMillis();
@@ -537,8 +538,6 @@ public class LmdbDataStore implements DataStore {
                     }
                 }
 
-                writeTxn.commit();
-
             } else {
                 dbi.iterate(writeTxn).forEach(kv -> {
                     final ByteBuffer keyBuffer = kv.key();
@@ -551,7 +550,6 @@ public class LmdbDataStore implements DataStore {
                 });
 
                 dbi.drop(writeTxn);
-                writeTxn.commit();
             }
         });
 
