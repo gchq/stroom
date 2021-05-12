@@ -228,7 +228,7 @@ public class ExpressionUtil {
         return result;
     }
 
-    private static ExpressionOperator replaceExpressionParameters(final ExpressionOperator operator,
+    public static ExpressionOperator replaceExpressionParameters(final ExpressionOperator operator,
                                                                   final Map<String, String> paramMap) {
         final ExpressionOperator.Builder builder = ExpressionOperator
                 .builder()

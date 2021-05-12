@@ -26,9 +26,14 @@ public class QuerySettingsPresenter extends SettingsPresenter {
 
     @Inject
     public QuerySettingsPresenter(final EventBus eventBus, final LinkTabsLayoutView view,
-                                  final BasicQuerySettingsPresenter basicSettingsPresenter) {
+                                  final BasicQuerySettingsPresenter basicSettingsPresenter,
+                                  final SelectionHandlersPresenter selectionHandlersPresenter) {
         super(eventBus, view);
+
+        selectionHandlersPresenter.setBasicQuerySettingsPresenter(basicSettingsPresenter);
+
         addTab("Basic", basicSettingsPresenter);
+        addTab("Selection Handlers", selectionHandlersPresenter);
     }
 
     @Override

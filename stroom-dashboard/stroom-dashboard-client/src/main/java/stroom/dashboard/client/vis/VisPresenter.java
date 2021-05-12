@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.vis;
 
+import stroom.dashboard.client.HasSelection;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
@@ -30,6 +31,8 @@ import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.dashboard.shared.VisResultRequest;
+import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.TextField;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -65,10 +68,12 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.LayerContainer;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisView>
-        implements ResultComponent, StatusHandler {
+        implements ResultComponent, StatusHandler, SelectionUiHandlers, HasSelection {
 
     private static final ScriptResource SCRIPT_RESOURCE = GWT.create(ScriptResource.class);
     private static final VisualisationResource VISUALISATION_RESOURCE = GWT.create(VisualisationResource.class);
@@ -97,6 +102,8 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     private Fetch fetch;
     private TablePresenter linkedTablePresenter;
 
+    private List<Map<String, String>> currentSelection;
+
     @Inject
     public VisPresenter(final EventBus eventBus, final VisView view,
                         final Provider<VisSettingsPresenter> settingsPresenterProvider,
@@ -108,6 +115,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
 
         visFrame = new VisFrame(eventBus);
         visPane = visFrame;
+        visFrame.setUiHandlers(this);
         view.setVisPane(visPane);
 
         final Style style = visFrame.getElement().getStyle();
@@ -116,6 +124,12 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
         style.setZIndex(2);
 
         RootPanel.get().add(visFrame);
+    }
+
+    @Override
+    public void onSelection(final List<Map<String, String>> selection) {
+        currentSelection = selection;
+        getComponents().fireComponentChangeEvent(this);
     }
 
     @Override
@@ -653,6 +667,20 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
             }
         }
         return allSettings;
+    }
+
+    @Override
+    public List<AbstractField> getFields() {
+        final List<AbstractField> abstractFields = new ArrayList<>();
+        // TODO : @66 TEMPORARY FIELDS
+        abstractFields.add(new TextField("name", true));
+        abstractFields.add(new TextField("value", true));
+        return abstractFields;
+    }
+
+    @Override
+    public List<Map<String, String>> getSelection() {
+        return currentSelection;
     }
 
     public interface VisView extends View {

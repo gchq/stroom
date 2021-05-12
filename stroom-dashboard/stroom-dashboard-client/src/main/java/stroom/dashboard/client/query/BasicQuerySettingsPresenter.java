@@ -53,7 +53,7 @@ public class BasicQuerySettingsPresenter
 //        dataSourceSelectionPresenter.setSelectionTypes(types);
     }
 
-    private DocRef getDataSource() {
+    DocRef getDataSource() {
         return dataSourceSelectionPresenter.getSelectedEntityReference();
     }
 

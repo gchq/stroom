@@ -24,9 +24,15 @@ import stroom.index.impl.StroomIndexQueryResource;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
+import stroom.task.api.ExecutorProvider;
+import stroom.task.api.TaskContextFactory;
 
 import com.codahale.metrics.annotation.Timed;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.function.Supplier;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -34,28 +40,61 @@ import javax.inject.Provider;
 public class StroomIndexQueryResourceImpl implements StroomIndexQueryResource {
 
     private final Provider<StroomIndexQueryService> stroomIndexQueryServiceProvider;
+    private final ExecutorProvider executorProvider;
+    private final TaskContextFactory taskContextFactory;
 
     @Inject
-    public StroomIndexQueryResourceImpl(final Provider<StroomIndexQueryService> stroomIndexQueryServiceProvider) {
+    public StroomIndexQueryResourceImpl(final Provider<StroomIndexQueryService> stroomIndexQueryServiceProvider,
+                                        final ExecutorProvider executorProvider,
+                                        final TaskContextFactory taskContextFactory) {
         this.stroomIndexQueryServiceProvider = stroomIndexQueryServiceProvider;
+        this.executorProvider = executorProvider;
+        this.taskContextFactory = taskContextFactory;
     }
 
     @Override
     @Timed
     public DataSource getDataSource(final DocRef docRef) {
-        return stroomIndexQueryServiceProvider.get().getDataSource(docRef);
+        final Supplier<DataSource> supplier = taskContextFactory.contextResult("Get Data Source", taskContext ->
+                stroomIndexQueryServiceProvider.get().getDataSource(docRef));
+
+        final Executor executor = executorProvider.get();
+        final CompletableFuture<DataSource> completableFuture = CompletableFuture.supplyAsync(supplier, executor);
+        try {
+            return completableFuture.get();
+        } catch (final InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 
     @Override
     @Timed
     public SearchResponse search(final SearchRequest request) {
-        return stroomIndexQueryServiceProvider.get().search(request);
+        final Supplier<SearchResponse> supplier = taskContextFactory.contextResult("Search", taskContext ->
+                stroomIndexQueryServiceProvider.get().search(request));
+
+        final Executor executor = executorProvider.get();
+        final CompletableFuture<SearchResponse> completableFuture = CompletableFuture.supplyAsync(supplier, executor);
+        try {
+            return completableFuture.get();
+        } catch (final InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 
     @Override
     @Timed
     @AutoLogged(OperationType.UNLOGGED)
     public Boolean destroy(final QueryKey queryKey) {
-        return stroomIndexQueryServiceProvider.get().destroy(queryKey);
+        final Supplier<Boolean> supplier = taskContextFactory.contextResult("Destroy", taskContext ->
+                stroomIndexQueryServiceProvider.get().destroy(queryKey));
+
+        final Executor executor = executorProvider.get();
+        final CompletableFuture<Boolean> completableFuture = CompletableFuture.supplyAsync(supplier, executor);
+        try {
+            return completableFuture.get();
+        } catch (final InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 }

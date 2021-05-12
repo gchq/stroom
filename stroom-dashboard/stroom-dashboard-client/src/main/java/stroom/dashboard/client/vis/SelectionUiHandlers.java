@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,26 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.main;
+package stroom.dashboard.client.vis;
 
-import stroom.datasource.api.v2.AbstractField;
+import com.gwtplatform.mvp.client.UiHandlers;
 
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-public class DataSourceFieldsMap extends HashMap<String, AbstractField> {
+public interface SelectionUiHandlers extends UiHandlers {
 
-    public DataSourceFieldsMap() {
-    }
-
-    public DataSourceFieldsMap(final List<AbstractField> fields) {
-        for (final AbstractField indexField : fields) {
-            put(indexField);
-        }
-    }
-
-    public void put(final AbstractField field) {
-        put(field.getName(), field);
-    }
+    void onSelection(List<Map<String, String>> values);
 }
-

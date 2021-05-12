@@ -22,6 +22,7 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.annotation.shared.EventId;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
+import stroom.dashboard.client.HasSelection;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
@@ -116,7 +117,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 public class TablePresenter extends AbstractComponentPresenter<TableView>
-        implements HasDirtyHandlers, ResultComponent {
+        implements HasDirtyHandlers, ResultComponent, HasSelection {
 
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
     public static final ComponentType TYPE = new ComponentType(1, "table", "Table");
@@ -960,6 +961,32 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 .copy()
                 .requestedRange(new OffsetRange(0L, length))
                 .build();
+    }
+
+    @Override
+    public List<AbstractField> getFields() {
+        final List<AbstractField> abstractFields = new ArrayList<>();
+        final List<Field> fields = getTableSettings().getFields();
+        if (fields != null && fields.size() > 0) {
+            for (final Field field : fields) {
+                abstractFields.add(new TextField(field.getName(), true));
+            }
+        }
+        return abstractFields;
+    }
+
+    @Override
+    public List<Map<String, String>> getSelection() {
+        final List<Map<String, String>> list = new ArrayList<>();
+        final List<Field> fields = getTableSettings().getFields();
+        for (final TableRow tableRow : getSelectedRows()) {
+            final Map<String, String> map = new HashMap<>();
+            for (final Field field : fields) {
+                map.put(field.getName(), tableRow.getText(field.getId()));
+            }
+            list.add(map);
+        }
+        return list;
     }
 
     private void refresh() {
