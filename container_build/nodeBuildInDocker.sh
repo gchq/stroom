@@ -15,7 +15,9 @@ IFS=$'\n\t'
 
 if [ "$#" -ne 1 ]; then
   echo "ERROR: Invalid arguments"
-  echo "Usage: $0 \"path/to/script.sh\""
+  echo "Usage: $0 script_path"
+  echo "e.g:   $0 ./path/to/script.sh"
+  echo "Paths are relative to the repo root."
   exit 1
 fi
 

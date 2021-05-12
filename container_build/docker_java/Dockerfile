@@ -63,8 +63,10 @@ CMD id
 # graphviz, ttf-* for plantuml
 # As this container will be trying to use the docker cli to run/interact with other
 # containers we need to add our non-root user to the docker group i.e. the same gid as
-# on the host, but may have a different name in the container. We need this membership
-# to have access to docker.sock.
+# on the host, but may have a different name or that gid in the container or none at all.
+# If we have the gid then find its name and add the user to it, if not create a group
+# with that gid then add the user.
+# We need this membership to have access to docker.sock.
 RUN apk add --no-cache \
       bash \
       curl \
@@ -83,7 +85,6 @@ RUN apk add --no-cache \
     && echo "GROUP_ID: $GROUP_ID" \
     && echo "PLANTUML_VERSION: $PLANTUML_VERSION" \
     && echo "DOCKER_GROUP_ID: $DOCKER_GROUP_ID" \
-    && cat /etc/group \
     && docker_group_name="$(cat /etc/group | grep ":${DOCKER_GROUP_ID}:" | awk -F ":" '{ print $1 }')" \
     && if [ -z ${docker_group_name} ]; then addgroup -g $DOCKER_GROUP_ID -S docker; fi \
     && if [ -z ${docker_group_name} ]; then docker_group_name="docker"; fi \

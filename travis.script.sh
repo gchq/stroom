@@ -320,6 +320,13 @@ else
   # Ensure we have a local.yml file as the integration tests will need it
   ./local.yml.sh
 
+  echo -e "${GREEN}Running api build${NC}"
+  ./container_build/nodeBuildInDocker.sh ./stroom-ui/generateApi.sh
+
+  echo -e "${GREEN}Running ui build${NC}"
+  ./container_build/nodeBuildInDocker.sh ./stroom-ui/yarnBuild.sh
+
+  echo -e "${GREEN}Running gradle build${NC}"
   ./container_build/runInJavaDocker.sh GRADLE_BUILD
 
   # Do the gradle build
