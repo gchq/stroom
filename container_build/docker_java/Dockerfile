@@ -85,6 +85,8 @@ RUN apk add --no-cache \
     && echo "DOCKER_GROUP_ID: $DOCKER_GROUP_ID" \
     && cat /etc/group \
     && docker_group_name="$(cat /etc/group | grep ":${DOCKER_GROUP_ID}:" | awk -F ":" '{ print $1 }')" \
+    && if [ -z ${docker_group_name} ]; then addgroup -g $DOCKER_GROUP_ID -S docker; fi \
+    && if [ -z ${docker_group_name} ]; then docker_group_name="docker"; fi \
     && echo "docker_group_name: $docker_group_name" \
     && addgroup -g $GROUP_ID -S builder \
     && adduser -u $USER_ID -S -s /bin/false -D -G builder builder \
