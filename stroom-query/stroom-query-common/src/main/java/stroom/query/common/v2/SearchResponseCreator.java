@@ -142,7 +142,7 @@ public class SearchResponseCreator {
                     // Search didn't complete non-incremental search in time so return a timed out error response
                     return createErrorResponse(
                             store,
-                            Collections.singletonList("The search timed out after " + effectiveTimeout.toString()));
+                            Collections.singletonList("The search timed out after " + effectiveTimeout));
                 }
 
             } catch (InterruptedException e) {

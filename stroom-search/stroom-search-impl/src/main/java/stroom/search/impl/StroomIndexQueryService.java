@@ -23,7 +23,8 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 public class StroomIndexQueryService {
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(StroomIndexQueryResource.class);
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomIndexQueryResource.class);
 
     private final SearchResponseCreatorManager searchResponseCreatorManager;
     private final IndexStore indexStore;
@@ -32,9 +33,9 @@ public class StroomIndexQueryService {
 
     @Inject
     public StroomIndexQueryService(final LuceneSearchResponseCreatorManager searchResponseCreatorManager,
-                                        final IndexStore indexStore,
-                                        final SecurityContext securityContext,
-                                        final TaskContextFactory taskContextFactory) {
+                                   final IndexStore indexStore,
+                                   final SecurityContext securityContext,
+                                   final TaskContextFactory taskContextFactory) {
         this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.indexStore = indexStore;
         this.securityContext = securityContext;
@@ -56,14 +57,14 @@ public class StroomIndexQueryService {
                     // (& store) that have a lifespan beyond the scope of this request and then begin the search for
                     // the data If it is not the first call for this query key then it will return the existing
                     // searchResponseCreator with access to whatever data has been found so far
-                    final SearchResponseCreator searchResponseCreator =
-                            searchResponseCreatorManager.get(new SearchResponseCreatorCache.Key(request));
+                    final SearchResponseCreatorCache.Key key = new SearchResponseCreatorCache.Key(request);
+                    final SearchResponseCreator searchResponseCreator = searchResponseCreatorManager.get(key);
 
                     //create a response from the data found so far, this could be complete/incomplete
                     taskContext.info(() -> "Creating search result");
                     SearchResponse searchResponse = searchResponseCreator.create(request);
 
-                    LAMBDA_LOGGER.trace(() ->
+                    LOGGER.trace(() ->
                             getResponseInfoForLogging(request, searchResponse));
 
                     return searchResponse;
