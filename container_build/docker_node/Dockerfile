@@ -34,6 +34,8 @@ ENTRYPOINT ["/sbin/tini", "--", "/builder/docker-entrypoint.sh"]
 
 CMD id
 
+# We don't know if the uid/gid on the host are in used in the container
+# or not so we need to test for it and handle accordingly
 RUN apk add --no-cache \
       bash \
       git \
@@ -42,12 +44,12 @@ RUN apk add --no-cache \
     && echo "USER_ID: $USER_ID" \
     && echo "GROUP_ID: $GROUP_ID" \
     && group_name="$(cat /etc/group | grep ":${GROUP_ID}:" | awk -F ":" '{ print $1 }')" \
-    && if [ -z ${group_name} ]; then echo "Adding group builder"; addgroup -g $GROUP_ID -S builder; fi \
-    && if [ -z ${group_name} ]; then docker_group_name="builder"; fi \
+    && if [ ! -n ${group_name} ]; then echo "Adding group builder"; addgroup -g $GROUP_ID -S builder; fi \
+    && if [ ! -n ${group_name} ]; then docker_group_name="builder"; fi \
     && echo "group_name: $group_name" \
     && user_name="$(getent passwd "$USER_ID" | cut -d: -f1)" \
-    && if [ -z ${user_name} ]; then echo "Adding user builder"; adduser -u $USER_ID -S -s /bin/false -D -G ${group_name} builder; fi \
-    && if [ -z ${user_name} ]; then user_name="builder"; fi \
+    && if [ ! -n ${user_name} ]; then echo "Adding user builder"; adduser -u $USER_ID -S -s /bin/false -D -G ${group_name} builder; fi \
+    && if [ ! -n ${user_name} ]; then user_name="builder"; fi \
     && echo "user_name: $user_name" \
     && mkdir -p /builder/shared \
     && chown -R $USER_ID:$GROUP_ID /builder
