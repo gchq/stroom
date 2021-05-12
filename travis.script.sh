@@ -321,7 +321,8 @@ else
   ./local.yml.sh
 
   echo -e "${GREEN}Running api build${NC}"
-  ./container_build/runInNodeDocker.sh "echo $HOME; ls -l -d /home/; ./stroom-ui/generateApi.sh"
+  # shellcheck disable=SC2016
+  ./container_build/runInNodeDocker.sh 'echo $HOME; ls -ld $HOME; ./stroom-ui/generateApi.sh'
 
   echo -e "${GREEN}Running ui build${NC}"
   ./container_build/runInNodeDocker.sh ./stroom-ui/yarnBuild.sh
