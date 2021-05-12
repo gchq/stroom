@@ -8,10 +8,9 @@ import stroom.query.common.v2.SearchResponseCreatorFactory;
 import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.query.common.v2.Store;
 import stroom.search.impl.shard.IndexShardSearchConfig;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -20,7 +19,7 @@ import javax.inject.Singleton;
 @SuppressWarnings("unused") //Used by DI
 public class LuceneSearchResponseCreatorManager implements SearchResponseCreatorManager, Clearable {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(LuceneSearchResponseCreatorManager.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LuceneSearchResponseCreatorManager.class);
 
     private static final String CACHE_NAME = "Lucene Search Result Creators";
 
@@ -43,7 +42,7 @@ public class LuceneSearchResponseCreatorManager implements SearchResponseCreator
 
     private SearchResponseCreator create(SearchResponseCreatorCache.Key key) {
         try {
-            LOGGER.debug("Creating new store for key {}", key);
+            LOGGER.debug(() -> "Creating new store for key: " + key);
             final Store store = storeFactory.create(key.getSearchRequest());
             return searchResponseCreatorFactory.create(store);
         } catch (final RuntimeException e) {
@@ -54,6 +53,7 @@ public class LuceneSearchResponseCreatorManager implements SearchResponseCreator
 
     private void destroy(final SearchResponseCreatorCache.Key key, final SearchResponseCreator value) {
         if (value != null) {
+            LOGGER.debug(() -> "Destroying key: " + key);
             value.destroy();
         }
     }

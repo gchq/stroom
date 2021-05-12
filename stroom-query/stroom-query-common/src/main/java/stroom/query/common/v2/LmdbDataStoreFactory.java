@@ -9,15 +9,15 @@ import javax.inject.Inject;
 
 public class LmdbDataStoreFactory implements DataStoreFactory {
 
-    private final LmdbEnvironment lmdbEnvironment;
+    private final LmdbEnvironmentFactory lmdbEnvironmentFactory;
     private final ByteBufferPool byteBufferPool;
     private final LmdbConfig lmdbConfig;
 
     @Inject
-    public LmdbDataStoreFactory(final LmdbEnvironment lmdbEnvironment,
+    public LmdbDataStoreFactory(final LmdbEnvironmentFactory lmdbEnvironmentFactory,
                                 final ByteBufferPool byteBufferPool,
                                 final LmdbConfig lmdbConfig) {
-        this.lmdbEnvironment = lmdbEnvironment;
+        this.lmdbEnvironmentFactory = lmdbEnvironmentFactory;
         this.byteBufferPool = byteBufferPool;
         this.lmdbConfig = lmdbConfig;
     }
@@ -38,8 +38,8 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                     storeSize);
         }
 
-        return new LmdbDataStore(
-                lmdbEnvironment,
+        final LmdbDataStore dataStore = new LmdbDataStore(
+                lmdbEnvironmentFactory,
                 lmdbConfig,
                 byteBufferPool,
                 queryKey,
@@ -49,5 +49,6 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                 paramMap,
                 maxResults,
                 storeSize);
+        return dataStore;
     }
 }

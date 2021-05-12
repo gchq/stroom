@@ -50,7 +50,6 @@ import org.lmdbjava.Txn;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -76,9 +75,9 @@ public class LmdbDataStore implements DataStore {
     private static final int MAX_PAYLOAD_SIZE = (int) ByteSizeUnit.GIBIBYTE.longBytes(1);
 
     private static final long COMMIT_FREQUENCY_MS = 1000;
-    private final LmdbEnvironment lmdbEnvironment;
+    private final LmdbEnvironment environment;
     private final LmdbConfig lmdbConfig;
-    private final Dbi<ByteBuffer> lmdbDbi;
+    private final Dbi<ByteBuffer> dbi;
 //    private final ByteBufferPool byteBufferPool;
 
     private final CompiledField[] compiledFields;
@@ -90,7 +89,7 @@ public class LmdbDataStore implements DataStore {
     private final boolean hasSort;
 
     private final AtomicBoolean hasEnoughData = new AtomicBoolean();
-    private final AtomicBoolean dropped = new AtomicBoolean();
+    private final AtomicBoolean shutdown = new AtomicBoolean();
 
     private final AtomicBoolean createPayload = new AtomicBoolean();
     private final AtomicReference<byte[]> currentPayload = new AtomicReference<>();
@@ -103,7 +102,7 @@ public class LmdbDataStore implements DataStore {
 
     private final LmdbKey rootParentRowKey;
 
-    LmdbDataStore(final LmdbEnvironment lmdbEnvironment,
+    LmdbDataStore(final LmdbEnvironmentFactory lmdbEnvironmentFactory,
                   final LmdbConfig lmdbConfig,
                   final ByteBufferPool byteBufferPool,
                   final String queryKey,
@@ -113,7 +112,6 @@ public class LmdbDataStore implements DataStore {
                   final Map<String, String> paramMap,
                   final Sizes maxResults,
                   final Sizes storeSize) {
-        this.lmdbEnvironment = lmdbEnvironment;
         this.lmdbConfig = lmdbConfig;
         this.maxResults = maxResults;
 
@@ -125,7 +123,11 @@ public class LmdbDataStore implements DataStore {
                 .keyBytes(Key.root().getBytes())
                 .build();
 
-        this.lmdbDbi = lmdbEnvironment.openDbi(queryKey, UUID.randomUUID().toString());
+        final String uuid = (queryKey + "_" + componentId + "_" + UUID.randomUUID());
+        // Make safe for the file system.
+        final String dirName = uuid.replaceAll("[^A-Za-z0-9]", "_");
+        this.environment = lmdbEnvironmentFactory.createEnvironment(dirName);
+        this.dbi = environment.openDbi(uuid);
 //        this.byteBufferPool = byteBufferPool;
 
         // Find out if we have any sorting.
@@ -292,20 +294,17 @@ public class LmdbDataStore implements DataStore {
 
     private void transfer() {
         Metrics.measure("Transfer", () -> {
+            Txn<ByteBuffer> writeTxn = environment.txnWrite();
             try {
-                Txn<ByteBuffer> writeTxn = null;
                 boolean needsCommit = false;
                 long lastCommitMs = System.currentTimeMillis();
 
                 while (running.get()) {
                     final QueueItem item = queue.poll(1, TimeUnit.SECONDS);
+
                     if (item != null) {
                         if (item.getRowKey() != null) {
-                            if (writeTxn == null) {
-                                writeTxn = lmdbEnvironment.txnWrite();
-                            }
-
-                            insert(writeTxn, item);
+                            insert(writeTxn, dbi, item);
 
                         } else {
                             // Ensure commit.
@@ -318,25 +317,20 @@ public class LmdbDataStore implements DataStore {
 
                     if (createPayload.get() && currentPayload.get() == null) {
                         // Commit
-                        if (writeTxn != null) {
-                            // Commit
-                            lastCommitMs = System.currentTimeMillis();
-                            needsCommit = false;
-                            commit(writeTxn);
-                            writeTxn = null;
-                        }
+                        lastCommitMs = System.currentTimeMillis();
+                        needsCommit = false;
+                        writeTxn = commit(writeTxn);
 
                         // Create payload and clear the DB.
-                        currentPayload.set(createPayload());
+                        currentPayload.set(createPayload(writeTxn, dbi));
 
-                    } else if (needsCommit && writeTxn != null) {
+                    } else if (needsCommit) {
                         final long now = System.currentTimeMillis();
                         if (lastCommitMs < now - COMMIT_FREQUENCY_MS) {
                             // Commit
                             lastCommitMs = now;
                             needsCommit = false;
-                            commit(writeTxn);
-                            writeTxn = null;
+                            writeTxn = commit(writeTxn);
                         }
                     }
 
@@ -346,24 +340,27 @@ public class LmdbDataStore implements DataStore {
                     }
                 }
 
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
             } catch (final InterruptedException e) {
                 LOGGER.debug(e.getMessage(), e);
                 // Continue to interrupt.
                 Thread.currentThread().interrupt();
             } finally {
-                drop();
+                shutdown(writeTxn);
             }
         });
     }
 
-    private void commit(final Txn<ByteBuffer> writeTxn) {
+    private Txn<ByteBuffer> commit(final Txn<ByteBuffer> txn) {
         Metrics.measure("Commit", () -> {
-            writeTxn.commit();
-            writeTxn.close();
+            txn.commit();
+            txn.close();
         });
+        return environment.txnWrite();
     }
 
-    private void insert(final Txn<ByteBuffer> txn, final QueueItem queueItem) {
+    private void insert(final Txn<ByteBuffer> txn, final Dbi<ByteBuffer> dbi, final QueueItem queueItem) {
         Metrics.measure("Insert", () -> {
             try {
                 LOGGER.trace(() -> "insert");
@@ -374,6 +371,7 @@ public class LmdbDataStore implements DataStore {
                 // Just try to put first.
                 final boolean success = put(
                         txn,
+                        dbi,
                         rowKey.getByteBuffer(),
                         rowValue.getByteBuffer(),
                         PutFlags.MDB_NOOVERWRITE);
@@ -382,7 +380,7 @@ public class LmdbDataStore implements DataStore {
 
                 } else if (rowKey.isGroup()) {
                     // Get the existing entry for this key.
-                    final ByteBuffer existingValueBuffer = lmdbDbi.get(txn, rowKey.getByteBuffer());
+                    final ByteBuffer existingValueBuffer = dbi.get(txn, rowKey.getByteBuffer());
 
                     final int minValueSize = Math.max(MIN_VALUE_SIZE, existingValueBuffer.remaining());
                     try (final UnsafeByteBufferOutput output =
@@ -428,7 +426,7 @@ public class LmdbDataStore implements DataStore {
                         }
 
                         final ByteBuffer newValue = output.getByteBuffer().flip();
-                        final boolean ok = put(txn, rowKey.getByteBuffer(), newValue);
+                        final boolean ok = put(txn, dbi, rowKey.getByteBuffer(), newValue);
                         if (!ok) {
                             throw new RuntimeException("Unable to update");
                         }
@@ -446,11 +444,12 @@ public class LmdbDataStore implements DataStore {
     }
 
     private boolean put(final Txn<ByteBuffer> txn,
+                        final Dbi<ByteBuffer> dbi,
                         final ByteBuffer key,
                         final ByteBuffer val,
                         final PutFlags... flags) {
         try {
-            return lmdbDbi.put(txn, key, val, flags);
+            return dbi.put(txn, key, val, flags);
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
@@ -477,73 +476,82 @@ public class LmdbDataStore implements DataStore {
         });
     }
 
-    private synchronized void drop() {
-        if (!dropped.get()) {
-            try (final Txn<ByteBuffer> writeTxn = lmdbEnvironment.txnWrite()) {
-                LOGGER.info("Dropping: " + new String(lmdbDbi.getName(), StandardCharsets.UTF_8));
-                lmdbDbi.drop(writeTxn, true);
-                writeTxn.commit();
-            } catch (final RuntimeException e) {
-                LOGGER.error(e.getMessage(), e);
-                lmdbEnvironment.list();
+    private synchronized void shutdown(final Txn<ByteBuffer> writeTxn) {
+        if (!shutdown.get()) {
+            try {
+                try {
+                    writeTxn.close();
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e.getMessage(), e);
+                }
+
+                try {
+                    dbi.close();
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e.getMessage(), e);
+                }
+
+                try {
+                    environment.close();
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e.getMessage(), e);
+                }
+
+                try {
+                    environment.delete();
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e.getMessage(), e);
+                }
             } finally {
                 resultCount.set(0);
                 totalResultCount.set(0);
-                dropped.set(true);
-                lmdbEnvironment.list();
+                shutdown.set(true);
             }
         }
     }
 
-    private byte[] createPayload() {
+    private byte[] createPayload(final Txn<ByteBuffer> writeTxn, final Dbi<ByteBuffer> dbi) {
         final PayloadOutput payloadOutput = new PayloadOutput(MIN_PAYLOAD_SIZE, MAX_PAYLOAD_SIZE);
 
         Metrics.measure("createPayload", () -> {
-            try (Txn<ByteBuffer> writeTxn = lmdbEnvironment.txnWrite()) {
-                final long limit = lmdbConfig.getPayloadLimit().getBytes();
-                if (limit > 0) {
-                    final AtomicLong count = new AtomicLong();
-
-                    try (final CursorIterable<ByteBuffer> cursorIterable = lmdbDbi.iterate(writeTxn)) {
-                        final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
-                        while (count.get() < limit && iterator.hasNext()) {
-                            final KeyVal<ByteBuffer> kv = iterator.next();
-                            final ByteBuffer keyBuffer = kv.key();
-                            final ByteBuffer valBuffer = kv.val();
-
-                            // Add to the size of the current payload.
-                            count.addAndGet(keyBuffer.remaining());
-                            count.addAndGet(valBuffer.remaining());
-
-                            payloadOutput.writeInt(keyBuffer.remaining());
-                            payloadOutput.writeByteBuffer(keyBuffer);
-                            payloadOutput.writeInt(valBuffer.remaining());
-                            payloadOutput.writeByteBuffer(valBuffer);
-
-                            lmdbDbi.delete(writeTxn, keyBuffer.flip());
-                        }
-                    }
-
-                    writeTxn.commit();
-
-                } else {
-                    lmdbDbi.iterate(writeTxn).forEach(kv -> {
+            final long limit = lmdbConfig.getPayloadLimit().getBytes();
+            if (limit > 0) {
+                final AtomicLong count = new AtomicLong();
+                try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(writeTxn)) {
+                    final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
+                    while (count.get() < limit && iterator.hasNext()) {
+                        final KeyVal<ByteBuffer> kv = iterator.next();
                         final ByteBuffer keyBuffer = kv.key();
                         final ByteBuffer valBuffer = kv.val();
+
+                        // Add to the size of the current payload.
+                        count.addAndGet(keyBuffer.remaining());
+                        count.addAndGet(valBuffer.remaining());
 
                         payloadOutput.writeInt(keyBuffer.remaining());
                         payloadOutput.writeByteBuffer(keyBuffer);
                         payloadOutput.writeInt(valBuffer.remaining());
                         payloadOutput.writeByteBuffer(valBuffer);
-                    });
 
-                    lmdbDbi.drop(writeTxn);
-                    writeTxn.commit();
+                        dbi.delete(writeTxn, keyBuffer.flip());
+                    }
                 }
 
-            } catch (final RuntimeException e) {
-                LOGGER.error(e.getMessage(), e);
-                throw new RuntimeException("Error clearing DB", e);
+                writeTxn.commit();
+
+            } else {
+                dbi.iterate(writeTxn).forEach(kv -> {
+                    final ByteBuffer keyBuffer = kv.key();
+                    final ByteBuffer valBuffer = kv.val();
+
+                    payloadOutput.writeInt(keyBuffer.remaining());
+                    payloadOutput.writeByteBuffer(keyBuffer);
+                    payloadOutput.writeInt(valBuffer.remaining());
+                    payloadOutput.writeByteBuffer(valBuffer);
+                });
+
+                dbi.drop(writeTxn);
+                writeTxn.commit();
             }
         });
 
@@ -621,8 +629,9 @@ public class LmdbDataStore implements DataStore {
         boolean trimmed = true;
 
         boolean inRange = true;
-        try (final Txn<ByteBuffer> readTxn = lmdbEnvironment.txnRead()) {
-            try (final CursorIterable<ByteBuffer> cursorIterable = lmdbDbi.iterate(readTxn, keyRange)) {
+
+        try (final Txn<ByteBuffer> readTxn = environment.txnRead()) {
+            try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(readTxn, keyRange)) {
                 final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
 
                 while (iterator.hasNext() && inRange && !Thread.currentThread().isInterrupted()) {
