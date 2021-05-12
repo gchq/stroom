@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2232** : Fixed issue where search was getting stuck due to LMDB locking transactions.
+
+* Issue **#2238** : Renamed table `docstore_history` to `docstore_schema_history`.
+
+* Issue **#2226** : Ensure that `<Process>` audit events are schema compliant.
+
+* Uplift version of `stroom-logs` content pack selected for download to `3.0-beta.1`
+
+* Issue **#2228** : Stroom Dropwizard and Stroom Proxy Send/Receive log default formats improved.
+
+* Issue **#2235** : Add CHANGELOG to the release artefacts.
+
+* Issue **#2233** : Fix typo in SQL.
+
+* Issue **#2233** : Fix null volume ID in index shard migration.
+
+* Issue **#2229** : Fix migration issue.
+
 * Issue **#2214** Allow file permission override for `FileAppender` and `RollingFileAppender`.
 
 * Issue **#1820** : Stroom now records `UploadedBy` meta attribute when manually uploading data via the UI.

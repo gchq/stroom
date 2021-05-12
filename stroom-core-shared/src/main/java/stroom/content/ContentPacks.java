@@ -47,7 +47,7 @@ public class ContentPacks {
 
     public static final ContentPack STROOM_LOGS = createStandardContentPack(CONTENT_RELEASES_URL,
             "stroom-logs",
-            "2.0-alpha.5");
+            "3.0-beta.1");
 
     //TEMPLATE_PIPELINES_PACK
 

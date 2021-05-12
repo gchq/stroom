@@ -511,10 +511,9 @@ appConfig:
       localDir: "search_results"
       lmdbSystemLibraryPath: null
       maxPutsBeforeCommit: 0
-      maxReaders: 100
-      maxStoreSize: "50G"
-      maxDbs: 1000
-      purgeAge: "P30D"
+      maxReaders: 10
+      maxStoreSize: "10G"
+      maxDbs: 10
       readAheadEnabled: true
       offHeapResults: true
       payloadLimit: "0B"
