@@ -26,7 +26,7 @@ public class DBPersistenceModule extends AbstractFlyWayDbModule<DocStoreConfig, 
 
     private static final String MODULE = "stroom-docstore";
     private static final String FLYWAY_LOCATIONS = "stroom/docstore/impl/db/migration";
-    private static final String FLYWAY_TABLE = "docstore_history";
+    private static final String FLYWAY_TABLE = "docstore_schema_history";
 
     @Override
     protected void configure() {

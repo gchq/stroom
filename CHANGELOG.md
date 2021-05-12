@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2238** : Renamed table `docstore_history` to `docstore_schema_history`.
+
 * Issue **#2226** : Ensure that `<Process>` audit events are schema compliant.
 
 * Uplift version of `stroom-logs` content pack selected for download to `3.0-beta.1`
