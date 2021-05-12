@@ -83,6 +83,7 @@ RUN apk add --no-cache \
     && echo "GROUP_ID: $GROUP_ID" \
     && echo "PLANTUML_VERSION: $PLANTUML_VERSION" \
     && echo "DOCKER_GROUP_ID: $DOCKER_GROUP_ID" \
+    && cat /etc/group \
     && docker_group_name="$(cat /etc/group | grep ":${DOCKER_GROUP_ID}:" | awk -F ":" '{ print $1 }')" \
     && echo "docker_group_name: $docker_group_name" \
     && addgroup -g $GROUP_ID -S builder \
