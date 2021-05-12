@@ -78,7 +78,8 @@ class TestSearchResultCreation {
         final LmdbConfig lmdbConfig = new LmdbConfig();
         final TempDirProvider tempDirProvider = () -> tempDir;
         final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
-        final LmdbEnvironmentFactory lmdbEnvironmentFactory = new LmdbEnvironmentFactory(tempDirProvider, lmdbConfig, pathCreator);
+        final LmdbEnvironmentFactory lmdbEnvironmentFactory =
+                new LmdbEnvironmentFactory(tempDirProvider, lmdbConfig, pathCreator);
         dataStoreFactory = new LmdbDataStoreFactory(
                 lmdbEnvironmentFactory,
                 new ByteBufferPoolImpl4(new ByteBufferPoolConfig()),
