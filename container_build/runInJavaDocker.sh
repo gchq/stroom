@@ -47,27 +47,40 @@ determine_host_address() {
 
 host_ip="$(determine_host_address)"
 
-docker_bash_command=()
+run_cmd=()
 
-if [[ $# -lt 1 ]]; then
-  echo -e "${YELLOW}WARN: No bash command supplied so using 'bash'.${NC}"
+if [[ $# -ne 1 ]]; then
+  echo -e "${RED}ERROR: Invalid arguments.${NC}"
   echo -e "Usage: $0 bash_command"
-  echo -e "e.g:   $0 ./some_path/a_script.sh arg1 arg2"
+  echo -e "e.g:   $0 \"./some_path/a_script.sh arg1 arg2\""
+  echo -e "or:    $0 bash  # for a bash prompt"
   echo -e "Commands are relative to the repo root."
-  docker_bash_command=( "bash" )
+  echo -e "Commands/scripts with args must be quoted as a whole."
+  exit 1
 else
-  if [[ $# -eq 1 ]] && [[ "$1" = "ERD" ]]; then
-    docker_bash_command=( "bash" "-c"  "./container_build/runPlantErd.sh" )
+  if [[ $# -eq 1 ]] && [[ "$1" = "bash" ]]; then
+    run_cmd=( "bash" )
+  elif [[ $# -eq 1 ]] && [[ "$1" = "ERD" ]]; then
+    run_cmd=( "bash" "-c"  "./container_build/runPlantErd.sh" )
   elif [[ $# -eq 1 ]] && [[ "$1" = "GRADLE_BUILD" ]]; then
-    docker_bash_command=( "bash" "-c"  "SKIP_TESTS=\"${SKIP_TESTS:-false}\" MAX_WORKERS=\"${MAX_WORKERS:-6}\" ./container_build/gradleBuild.sh" )
+    run_cmd=( "bash" "-c"  "SKIP_TESTS=\"${SKIP_TESTS:-false}\" MAX_WORKERS=\"${MAX_WORKERS:-6}\" ./container_build/gradleBuild.sh" )
   elif [[ $# -eq 1 ]] && [[ "$1" = "MIGRATE" ]]; then
     # DB is in a sibling container so need to force it to use the IP instead of localhost
-    docker_bash_command=( "bash" "-c"  "export STROOM_JDBC_DRIVER_URL=\"jdbc:mysql://${host_ip}:3307/stroom?useUnicode=yes&characterEncoding=UTF-8\"; java -jar ./stroom-app/build/libs/stroom-app-all.jar migrate ./local.yml" )
+    run_cmd=( "bash" "-c"  "export STROOM_JDBC_DRIVER_URL=\"jdbc:mysql://${host_ip}:3307/stroom?useUnicode=yes&characterEncoding=UTF-8\"; java -jar ./stroom-app/build/libs/stroom-app-all.jar migrate ./local.yml" )
   else
-    docker_bash_command=( "bash" "-c" "$*" )
+    #echo 'echo "[$@]"' "=> [$@]"
+    #echo 'echo "[$*]"' "=> [$*]"
+    #echo 'echo "[$1]"' "=> [$1]"
+    #echo 'run_cmd=( "bash" "-c" "$1" )'
+    run_cmd=( "bash" "-c" "$1" )
+    #echo 'echo "[${run_cmd[*]}]"' "=> [${run_cmd[*]}]"
+    #echo 'echo "[${run_cmd[@]}]"' "=> [${run_cmd[@]}]"
   fi
 fi
 
+#for item in "${run_cmd[@]}"; do
+  #echo "array item [${item}]"
+#done
 
 user_id=
 user_id="$(id -u)"
@@ -103,6 +116,7 @@ echo -e "${GREEN}Docker group id ${BLUE}${docker_group_id}${NC}"
 # Create a persistent vol for the home dir, idempotent
 docker volume create builder-home-dir-vol
 
+echo -e "${GREEN}Building image ${BLUE}${image_tag}${NC}"
 docker build \
   --tag "${image_tag}" \
   --build-arg "USER_ID=${user_id}" \
@@ -115,14 +129,23 @@ docker build \
 
   #--workdir "${dest_dir}" \
 
+if [ -t 1 ]; then 
+  # In a terminal
+  tty_args=( "--tty" "--interactive" )
+else
+  tty_args=()
+fi
+
 # Mount the whole repo into the container so we can run the build
 # The mount src is on the host file system
 # group-add gives the permission to interact with the docker cli
 # docker.sock allows use to interact with the docker cli
 # Need :exec on /tmp else LMDB complains with link errors
+# shellcheck disable=SC2145
+echo -e "${GREEN}Running image ${BLUE}${image_tag}${NC} with command" \
+  "${BLUE}${run_cmd[@]}${NC}"
 docker run \
-  --interactive \
-  --tty \
+  "${tty_args[@]+"${tty_args[@]}"}" \
   --rm \
   --tmpfs /tmp:exec \
   --mount "type=bind,src=${host_abs_repo_dir},dst=${dest_dir}" \
@@ -132,7 +155,7 @@ docker run \
   --read-only \
   --name "stroom-builder" \
   "${image_tag}" \
-  "${docker_bash_command[@]}"
+  "${run_cmd[@]}"
 
   #bash -c "pwd; SKIP_TESTS=\"${SKIP_TESTS:-false}\" MAX_WORKERS=\"${MAX_WORKERS:-6}\" ./container_build/gradleBuild.sh"
 

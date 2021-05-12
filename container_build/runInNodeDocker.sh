@@ -14,14 +14,22 @@ IFS=$'\n\t'
 }
 
 if [ "$#" -ne 1 ]; then
-  echo "ERROR: Invalid arguments"
-  echo "Usage: $0 script_path"
-  echo "e.g:   $0 ./path/to/script.sh"
-  echo "Paths are relative to the repo root."
+  echo -e "${RED}ERROR: Invalid arguments.${NC}"
+  echo -e "Usage: $0 bash_command"
+  echo -e "e.g:   $0 ./path/to/script.sh arg1 arg2"
+  echo -e "or:    $0 bash  # for a bash prompt"
+  echo -e "Commands are relative to the repo root."
+  echo -e "Commands/scripts with args must be quoted as a whole."
   exit 1
 fi
 
 bash_cmd="$1"
+
+if [ "${bash_cmd}" = "bash" ]; then
+  run_cmd=( "bash" )
+else
+  run_cmd=( "bash" "-c" "${bash_cmd[*]}" )
+fi
 
 user_id=
 user_id="$(id -u)"
@@ -67,16 +75,30 @@ docker build \
   #-tty \
   #--rm \
 
+
+if [ -t 1 ]; then 
+  # In a terminal
+  tty_args=( "--tty" "--interactive" )
+else
+  tty_args=()
+fi
+
 # Mount the whole repo into the container so we can run the build
 # The mount src is on the host file system
-echo -e "${GREEN}Running image ${BLUE}${image_tag}${NC}"
+# "${tty_args[@]+"${tty_args[@]}"}" The + thing is so it does complain
+# of being unbound when set -u is on
+# shellcheck disable=SC2145
+echo -e "${GREEN}Running image ${BLUE}${image_tag}${NC} with command" \
+  "${BLUE}${run_cmd[@]}${NC}"
 docker run \
+  "${tty_args[@]+"${tty_args[@]}"}" \
   --rm \
+  --tmpfs /tmp \
   --mount "type=bind,src=${host_abs_repo_dir},dst=${dest_dir}" \
   --volume builder-home-dir-vol:/home/node \
   --workdir "${dest_dir}" \
   "${image_tag}" \
-  bash -c "${bash_cmd}"
+  "${run_cmd[@]}"
   #bash
   #bash -c 'echo $PWD; nvm --version; node --version; npm --version; npx --version; yarn --version; ./yarnBuild.sh'
 

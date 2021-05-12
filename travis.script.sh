@@ -321,10 +321,10 @@ else
   ./local.yml.sh
 
   echo -e "${GREEN}Running api build${NC}"
-  ./container_build/nodeBuildInDocker.sh ./stroom-ui/generateApi.sh
+  ./container_build/runInNodeDocker.sh ./stroom-ui/generateApi.sh
 
   echo -e "${GREEN}Running ui build${NC}"
-  ./container_build/nodeBuildInDocker.sh ./stroom-ui/yarnBuild.sh
+  ./container_build/runInNodeDocker.sh ./stroom-ui/yarnBuild.sh
 
   echo -e "${GREEN}Running gradle build${NC}"
   ./container_build/runInJavaDocker.sh GRADLE_BUILD
