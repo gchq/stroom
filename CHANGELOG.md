@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2232** : Fixed issue where search was getting stuck due to LMDB locking transactions.
+
 * Issue **#2238** : Renamed table `docstore_history` to `docstore_schema_history`.
 
 * Issue **#2226** : Ensure that `<Process>` audit events are schema compliant.
