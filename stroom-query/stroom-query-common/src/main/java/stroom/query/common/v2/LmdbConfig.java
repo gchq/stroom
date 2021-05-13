@@ -4,7 +4,6 @@ import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.io.ByteSize;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.validation.ValidFilePath;
-import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -19,10 +18,9 @@ public class LmdbConfig extends AbstractConfig {
     private String localDir = "search_results";
     private String lmdbSystemLibraryPath = null;
     private int maxPutsBeforeCommit = 0;
-    private int maxReaders = 100;
-    private ByteSize maxStoreSize = ByteSize.ofGibibytes(50);
-    private int maxDbs = 1000;
-    private StroomDuration purgeAge = StroomDuration.ofDays(30);
+    private int maxReaders = 10;
+    private ByteSize maxStoreSize = ByteSize.ofGibibytes(10);
+    private int maxDbs = 10;
     private boolean isReadAheadEnabled = true;
     private boolean offHeapResults = true;
     private ByteSize payloadLimit = ByteSize.ofMebibytes(0);
@@ -106,18 +104,6 @@ public class LmdbConfig extends AbstractConfig {
         this.maxDbs = maxDbs;
     }
 
-    @JsonPropertyDescription("The time to retain reference data for in the off heap store. The time is taken " +
-            "from the time that the reference stream was last accessed, e.g. a lookup was made against it. " +
-            "In ISO-8601 duration format, e.g. 'P1DT12H'")
-    public StroomDuration getPurgeAge() {
-        return purgeAge;
-    }
-
-    @SuppressWarnings("unused")
-    public void setPurgeAge(final StroomDuration purgeAge) {
-        this.purgeAge = purgeAge;
-    }
-
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("Read ahead means the OS will pre-fetch additional data from the disk in the " +
             "expectation that it will be used at some point. This generally improves performance as more data is " +
@@ -159,7 +145,6 @@ public class LmdbConfig extends AbstractConfig {
                 ", maxPutsBeforeCommit=" + maxPutsBeforeCommit +
                 ", maxReaders=" + maxReaders +
                 ", maxStoreSize='" + maxStoreSize + '\'' +
-                ", purgeAge='" + purgeAge + '\'' +
                 ", isReadAheadEnabled=" + isReadAheadEnabled +
                 '}';
     }

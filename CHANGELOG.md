@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2242** : Fix help link in quick filter tool tips. Now comes from config.
 
+* Issue **#2232** : Fixed issue where search was getting stuck due to LMDB locking transactions.
+
+* Issue **#2238** : Renamed table `docstore_history` to `docstore_schema_history`.
+
+* Issue **#2226** : Ensure that `<Process>` audit events are schema compliant.
+
+* Uplift version of `stroom-logs` content pack selected for download to `3.0-beta.1`
+
+* Issue **#2228** : Stroom Dropwizard and Stroom Proxy Send/Receive log default formats improved.
+
 * Issue **#2235** : Add CHANGELOG to the release artefacts.
 
 

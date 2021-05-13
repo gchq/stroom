@@ -28,9 +28,9 @@
     "name" : "stroom-101",
     "version" : "1.0"
   }, {
-    "url" : "https://github.com/gchq/stroom-content/releases/download/stroom-logs-v2.0-alpha.5/stroom-logs-v2.0-alpha.5.zip",
+    "url" : "https://github.com/gchq/stroom-content/releases/download/stroom-logs-v3.0-beta.1/stroom-logs-v3.0-beta.1.zip",
     "name" : "stroom-logs",
-    "version" : "2.0-alpha.5"
+    "version" : "3.0-beta.1"
   }, {
     "url" : "https://github.com/gchq/stroom-content/releases/download/template-pipelines-v0.3/template-pipelines-v0.3.zip",
     "name" : "template-pipelines",
