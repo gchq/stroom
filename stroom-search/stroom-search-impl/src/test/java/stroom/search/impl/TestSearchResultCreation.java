@@ -39,7 +39,6 @@ import stroom.query.common.v2.SizesProvider;
 import stroom.search.extraction.ExtractionReceiver;
 import stroom.search.extraction.ExtractionReceiverImpl;
 import stroom.util.io.PathCreator;
-import stroom.util.io.TempDirProvider;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -77,10 +76,9 @@ class TestSearchResultCreation {
     @BeforeEach
     void setup(@TempDir final Path tempDir) {
         final LmdbConfig lmdbConfig = new LmdbConfig();
-        final TempDirProvider tempDirProvider = () -> tempDir;
         final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
         final LmdbEnvironmentFactory lmdbEnvironmentFactory =
-                new LmdbEnvironmentFactory(tempDirProvider, lmdbConfig, pathCreator);
+                new LmdbEnvironmentFactory(lmdbConfig, pathCreator);
         dataStoreFactory = new LmdbDataStoreFactory(
                 lmdbEnvironmentFactory,
                 new ByteBufferPoolImpl4(new ByteBufferPoolConfig()),

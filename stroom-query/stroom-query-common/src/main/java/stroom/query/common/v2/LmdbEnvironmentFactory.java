@@ -2,10 +2,8 @@ package stroom.query.common.v2;
 
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
-import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
 
 import org.lmdbjava.Env;
 import org.lmdbjava.EnvFlags;
@@ -14,8 +12,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -27,18 +23,14 @@ public class LmdbEnvironmentFactory {
     // These are dups of org.lmdbjava.Library.LMDB_* but that class is pkg private for some reason.
     private static final String LMDB_EXTRACT_DIR_PROP = "lmdbjava.extract.dir";
     private static final String LMDB_NATIVE_LIB_PROP = "lmdbjava.native.lib";
-    private static final String DEFAULT_STORE_SUB_DIR_NAME = "searchResults";
 
-    private final TempDirProvider tempDirProvider;
     private final LmdbConfig lmdbConfig;
     private final PathCreator pathCreator;
     private final Path dbDir;
 
     @Inject
-    public LmdbEnvironmentFactory(final TempDirProvider tempDirProvider,
-                                  final LmdbConfig lmdbConfig,
+    public LmdbEnvironmentFactory(final LmdbConfig lmdbConfig,
                                   final PathCreator pathCreator) {
-        this.tempDirProvider = tempDirProvider;
         this.lmdbConfig = lmdbConfig;
         this.pathCreator = pathCreator;
         this.dbDir = getStoreDir();
@@ -56,32 +48,21 @@ public class LmdbEnvironmentFactory {
     }
 
     private Path getStoreDir() {
-        String storeDirStr = lmdbConfig.getLocalDir();
-        storeDirStr = pathCreator.replaceSystemProperties(storeDirStr);
-        storeDirStr = pathCreator.makeAbsolute(storeDirStr);
-        Path storeDir;
-        if (storeDirStr == null) {
-            LOGGER.info("Off heap store dir is not set, falling back to {}", tempDirProvider.get());
-            storeDir = tempDirProvider.get();
-            Objects.requireNonNull(storeDir, "Temp dir is not set");
-            storeDir = storeDir.resolve(DEFAULT_STORE_SUB_DIR_NAME);
-        } else {
-            storeDirStr = pathCreator.replaceSystemProperties(storeDirStr);
-            storeDirStr = pathCreator.makeAbsolute(storeDirStr);
-            storeDir = Paths.get(storeDirStr);
-        }
-
+        final Path storeDir = pathCreator.toAppPath(lmdbConfig.getLocalDir());
         try {
             LOGGER.debug("Ensuring directory {}", storeDir);
             Files.createDirectories(storeDir);
         } catch (IOException e) {
-            throw new RuntimeException(LogUtil.message("Error ensuring store directory {} exists", storeDirStr), e);
+            throw new RuntimeException("Error ensuring store directory " +
+                    FileUtil.getCanonicalPath(storeDir) +
+                    " exists", e);
         }
 
         LOGGER.debug("Deleting contents {}", storeDir);
         // Delete contents.
         if (!FileUtil.deleteContents(storeDir)) {
-            throw new RuntimeException(LogUtil.message("Error deleting contents of {}", storeDirStr));
+            throw new RuntimeException("Error deleting contents of " +
+                    FileUtil.getCanonicalPath(storeDir));
         }
 
         return storeDir;

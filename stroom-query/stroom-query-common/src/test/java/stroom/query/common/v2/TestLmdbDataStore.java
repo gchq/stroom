@@ -32,7 +32,6 @@ import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.util.io.PathCreator;
-import stroom.util.io.TempDirProvider;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -58,12 +57,11 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
     DataStore create(final TableSettings tableSettings, final Sizes maxResults, final Sizes storeSize) {
         final FieldIndex fieldIndex = new FieldIndex();
 
-        final TempDirProvider tempDirProvider = () -> tempDir;
         final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
         final LmdbConfig lmdbConfig = new LmdbConfig();
         final ByteBufferPool byteBufferPool = new ByteBufferPoolImpl4(new ByteBufferPoolConfig());
         final LmdbEnvironmentFactory lmdbEnvironmentFactory =
-                new LmdbEnvironmentFactory(tempDirProvider, lmdbConfig, pathCreator);
+                new LmdbEnvironmentFactory(lmdbConfig, pathCreator);
 
         return new LmdbDataStore(
                 lmdbEnvironmentFactory,

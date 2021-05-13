@@ -35,7 +35,6 @@ public class LmdbConfig extends AbstractConfig {
         return localDir;
     }
 
-
     public void setLocalDir(final String localDir) {
         this.localDir = localDir;
     }
