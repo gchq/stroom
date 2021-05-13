@@ -8749,6 +8749,23 @@
         },
         "required" : [ "componentId", "type" ]
       },
+      "ComponentSelectionHandler" : {
+        "type" : "object",
+        "properties" : {
+          "componentId" : {
+            "type" : "string"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "expression" : {
+            "$ref" : "#/components/schemas/ExpressionOperator"
+          },
+          "id" : {
+            "type" : "string"
+          }
+        }
+      },
       "ComponentSettings" : {
         "type" : "object",
         "discriminator" : {
@@ -12757,6 +12774,12 @@
             },
             "expression" : {
               "$ref" : "#/components/schemas/ExpressionOperator"
+            },
+            "selectionHandlers" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/components/schemas/ComponentSelectionHandler"
+              }
             }
           }
         } ]

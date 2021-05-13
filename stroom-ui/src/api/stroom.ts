@@ -350,6 +350,15 @@ export interface ComponentResultRequest {
   type: string;
 }
 
+export interface ComponentSelectionHandler {
+  componentId?: string;
+  enabled?: boolean;
+
+  /** A logical addOperator term in a query expression tree */
+  expression?: ExpressionOperator;
+  id?: string;
+}
+
 export interface ComponentSettings {
   type: string;
 }
@@ -2188,6 +2197,7 @@ export type QueryComponentSettings = ComponentSettings & {
   automate?: Automate;
   dataSource?: DocRef;
   expression?: ExpressionOperator;
+  selectionHandlers?: ComponentSelectionHandler[];
 };
 
 export interface QueryConfig {
