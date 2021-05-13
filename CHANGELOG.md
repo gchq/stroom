@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2155** : Change default quick filter mode to contains with chars anywhere matching now available via `~` prefix.
+
 * Issue **#2242** : Fix help link in quick filter tool tips. Now comes from config.
 
 * Issue **#2232** : Fixed issue where search was getting stuck due to LMDB locking transactions.

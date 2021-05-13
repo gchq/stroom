@@ -59,14 +59,17 @@ public class QuickFilterTooltipUtil {
                     tableBuilder
                             .addHeaderRow("Example input", "Match type")
                             .addRow(TooltipUtil.fixedWidthText("abc"),
-                                    "Characters anywhere (in order) matching (matches 'xxaxxbxxcxx'). (default)")
+                                    "Contains match. (default)")
+                            .addRow(TooltipUtil.fixedWidthText("~abc"),
+                                    "Characters anywhere (in order) matching (matches 'xxaxxbxxcxx').")
                             .addRow(TooltipUtil.fixedWidthText("/abc"),
                                     "Regular expression matching (matches 'xxabcxx').")
                             .addRow(TooltipUtil.fixedWidthText("?ABC"),
                                     "Word boundary matching (matches 'AlphaBravoCharlie').")
                             .addRow(TooltipUtil.fixedWidthText("^abc$"),
                                     "Exact match (matches 'abc'.")
-                            .addRow(TooltipUtil.fixedWidthText("abc$"), "Suffix match (matches 'xxxabc')")
+                            .addRow(TooltipUtil.fixedWidthText("abc$"),
+                                    "Suffix match (matches 'xxxabc')")
                             .addRow(TooltipUtil.fixedWidthText("^abc"),
                                     "Prefix match (matches abcxxx').")
                             .addRow(TooltipUtil.fixedWidthText("!abc"),
@@ -154,7 +157,7 @@ public class QuickFilterTooltipUtil {
                                     "Matches default field(s) with regex 'abc' and Type field with prefix 'err'")
                             .addRow(
                                     TooltipUtil.fixedWidthText("name:abc type:/(error|warn)"),
-                                    "Matches Name field with 'abc' chars anywhere and Type field with " +
+                                    "Matches Name field which contains 'abc' and Type field which matches " +
                                             "regex '(error|warn)'")
                             .addRow(
                                     TooltipUtil.fixedWidthText("name:?ABC type:!/error"),

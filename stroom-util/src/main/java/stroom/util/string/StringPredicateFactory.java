@@ -111,8 +111,13 @@ public class StringPredicateFactory {
                 // No input so get everything
                 predicate = stringUnderTest -> true;
             } else if (modifiedInput.startsWith("/")) {
+                // We must test for this prefix first as you might have '/foobar$' which could be confused
+                // with ends with matching
                 // remove the / marker char from the beginning
                 predicate = createRegexPredicate(modifiedInput.substring(1));
+            } else if (modifiedInput.startsWith("~")) {
+                // remove the ~ marker char from the beginning
+                predicate = createCharsAnywherePredicate(modifiedInput.substring(1));
             } else if (modifiedInput.startsWith("?")) {
                 // remove the ? marker char from the beginning
                 predicate = createWordBoundaryPredicate(modifiedInput.substring(1), separatorCharacterClass);
@@ -126,9 +131,17 @@ public class StringPredicateFactory {
                 // remove the ^ marker char from the beginning
                 predicate = createCaseInsensitiveStartsWithPredicate(modifiedInput.substring(1));
             } else if (modifiedInput.contains(WILDCARD_STR)) {
+                // Think this is for feed name input fields where the user is allowed to enter the feed
+                // name in wild carded form, such that the processor filter will apply to any feeds matching
+                // that wildcarded form at runtime. This predicate makes the suggestion dropdown show the user
+                // what the term would match at that point.
+                // Not ideal as it is complete match and case sens which is inconsistent with the rest and a bit
+                // magic.
                 predicate = createWildCardedPredicate(modifiedInput);
             } else {
-                predicate = createCharsAnywherePredicate(modifiedInput);
+                // Would be nice to use chars anywhere for the default but that needs ranked matches which
+                // we can't do when filtering the trees
+                predicate = createCaseInsensitiveContainsPredicate(modifiedInput);
             }
         }
 
@@ -432,7 +445,6 @@ public class StringPredicateFactory {
         return toNullSafePredicate(false, stringUnderTest ->
                 stringUnderTest.toLowerCase().equalsIgnoreCase(lowerCaseInput));
     }
-
 
     private static boolean isAllLowerCase(final String text) {
         for (int i = 0; i < text.length(); i++) {

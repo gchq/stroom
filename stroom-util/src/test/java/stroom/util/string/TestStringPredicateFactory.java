@@ -24,6 +24,13 @@ class TestStringPredicateFactory {
         // Each test is run in normal ("foorbar") and negated form ("!foorbar")
         tests.addAll(List.of(
 
+                makeTest("Contains",
+                        "map",
+                        List.of("map",
+                                "a map",
+                                "mapping"),
+                        List.of("my son is a plonker")), // contains m a p
+
                 makeTest("Starts with",
                         "^this_",
                         List.of("THIS_IS_MY_FEED",
@@ -69,7 +76,7 @@ class TestStringPredicateFactory {
                         List.of("NOT_THIS_IS_MY_FEED")),
 
                 makeTest("Chars anywhere 1",
-                        "timf",
+                        "~timf",
                         List.of("THIS_IS_MY_FEED",
                                 "this_is_my_feed",
                                 "SO_IS_THIS_IS_MY_FEED",
@@ -79,7 +86,7 @@ class TestStringPredicateFactory {
                         List.of("NOT_THIS_IS_MY_XEED", "fmit", "FMIT")),
 
                 makeTest("Chars anywhere 1 (upper case)",
-                        "TIMF",
+                        "~TIMF",
                         List.of("THIS_IS_MY_FEED",
                                 "this_is_my_feed",
                                 "SO_IS_THIS_IS_MY_FEED",
@@ -89,28 +96,28 @@ class TestStringPredicateFactory {
                         List.of("NOT_THIS_IS_MY_XEED", "fmit", "FMIT")),
 
                 makeTest("Chars anywhere 2",
-                        "t_i_m_f",
+                        "~t_i_m_f",
                         List.of("THIS_IS_MY_FEED",
                                 "this_is_my_feed",
                                 "SO_IS_THIS_IS_MY_FEED"),
                         List.of("NOT_THIS_IS_MY_XEED", "timf")),
 
                 makeTest("Chars anywhere 2 (upper case)",
-                        "T_I_M_F",
+                        "~T_I_M_F",
                         List.of("THIS_IS_MY_FEED",
                                 "this_is_my_feed",
                                 "SO_IS_THIS_IS_MY_FEED"),
                         List.of("NOT_THIS_IS_MY_XEED", "timf")),
 
                 makeTest("Chars anywhere (numbers)",
-                        "99",
+                        "~99",
                         List.of("THIS_IS_FEED_99",
                                 "99_THIS_IS_FEED",
                                 "THIS_IS_99_FEED"),
                         List.of("NOT_THIS_IS_MY_FEED")),
 
                 makeTest("Chars anywhere (special chars)",
-                        "(xml)",
+                        "~(xml)",
                         List.of("Events (XML)",
                                 "Events (XML) too",
                                 "(XML) Events"),
