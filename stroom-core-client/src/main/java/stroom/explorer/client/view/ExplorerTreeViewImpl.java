@@ -20,6 +20,7 @@ import stroom.explorer.client.presenter.ExplorerTreePresenter;
 import stroom.explorer.client.presenter.ExplorerTreeUiHandlers;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.svg.client.SvgPresets;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.button.client.SvgButton;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
@@ -50,15 +51,20 @@ public class ExplorerTreeViewImpl extends ViewWithUiHandlers<ExplorerTreeUiHandl
     SvgButton typeFilter;
 
     @Inject
-    public ExplorerTreeViewImpl(final Binder binder) {
+    public ExplorerTreeViewImpl(final Binder binder,
+                                final UiConfigCache uiConfigCache) {
         newItem = SvgButton.create(SvgPresets.NEW_ITEM);
         deleteItem = SvgButton.create(SvgPresets.DELETE);
         typeFilter = SvgButton.create(SvgPresets.FILTER);
         widget = binder.createAndBindUi(this);
 
-        nameFilter.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
-                "Explorer Quick Filter",
-                ExplorerTreeFilter.FIELD_DEFINITIONS));
+        uiConfigCache.get()
+                .onSuccess(uiConfig ->
+                        nameFilter.registerPopupTextProvider(() ->
+                                QuickFilterTooltipUtil.createTooltip(
+                                        "Explorer Quick Filter",
+                                        ExplorerTreeFilter.FIELD_DEFINITIONS,
+                                        uiConfig.getHelpUrl())));
     }
 
     @Override

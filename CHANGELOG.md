@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2242** : Fix help link in quick filter tool tips. Now comes from config.
+
 * Issue **#2235** : Add CHANGELOG to the release artefacts.
 
 
