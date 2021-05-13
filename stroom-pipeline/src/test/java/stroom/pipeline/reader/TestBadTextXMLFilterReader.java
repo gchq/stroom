@@ -28,21 +28,44 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestBadTextXMLFilterReader {
 
-    static final String m_aTrivialValidXML = ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<TopLevelEntity>"
-            + " <Level1>First level one text</Level1>" + " <Level1>Second level one text</Level1>"
-            + "</TopLevelEntity>");
-    static final String m_aTrivialInValidXML = ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<TopLevelEntity>"
-            + "<Leaf>The leaf contains > and < and & characters</Leaf>" + "<Leaf>bogus <enter> and </exit> tags</Leaf>"
-            + "</TopLevelEntity>");
+    //  Used to replace an unknown, unrecognized, or unrepresentable character
+    private static final char REPLACEMENT_CHARACTER = '\ufffd'; // REPLACEMENT CHARACTER
+    //  High Surrogates
+    private static final char HIGH_SURROGATE = '\uD801'; // INVALID CHARACTER
+    //  Low Surrogates
+    private static final char LOW_SURROGATE = '\uDC01'; // INVALID CHARACTER
 
-    static final String m_aTrivialInValidXMLcorrected = ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-            + "<TopLevelEntity>" + "<Leaf>The leaf contains &gt; and &lt; and &amp; characters</Leaf>"
-            + "<Leaf>bogus &lt;enter&gt; and &lt;/exit&gt; tags</Leaf>" + "</TopLevelEntity>");
-    static final String m_aOddValidXML = ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-            + "<TopLevelEntity  argA=\"String\" argB='String'>" + "<Leaf argC=\"with \"\" characters\">Leaf Text"
-            + "</Leaf>" + "< InvalidTag>< /InvalidTag>" + "<Leaf >Test with space</Leaf>"
-            + "<Leaf>Test with spaces</Leaf   >" + "<text>Unicode \ufffd and surrogatepair \uD801\uDC01 </text>"
-            + "<emptyEntity/>" + "</TopLevelEntity >");
+    private static final String m_aTrivialValidXML = ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
+            "<TopLevelEntity>" +
+            " <Level1>First level one text</Level1>" +
+            " <Level1>Second level one text</Level1>" +
+            "</TopLevelEntity>");
+    private static final String m_aTrivialInValidXML = ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
+            "<TopLevelEntity>" +
+            "<Leaf>The leaf contains > and < and & characters</Leaf>" +
+            "<Leaf>bogus <enter> and </exit> tags</Leaf>" +
+            "</TopLevelEntity>");
+
+    private static final String m_aTrivialInValidXMLcorrected = ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
+            "<TopLevelEntity>" +
+            "<Leaf>The leaf contains &gt; and &lt; and &amp; characters</Leaf>" +
+            "<Leaf>bogus &lt;enter&gt; and &lt;/exit&gt; tags</Leaf>" +
+            "</TopLevelEntity>");
+    private static final String m_aOddValidXML = ("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
+            "<TopLevelEntity  argA=\"String\" argB='String'>" +
+            "<Leaf argC=\"with \"\" characters\">Leaf Text" +
+            "</Leaf>" +
+            "< InvalidTag>< /InvalidTag>" +
+            "<Leaf >Test with space</Leaf>" +
+            "<Leaf>Test with spaces</Leaf   >" +
+            "<text>Unicode " +
+            REPLACEMENT_CHARACTER +
+            " and surrogatepair " +
+            HIGH_SURROGATE +
+            LOW_SURROGATE +
+            " </text>" +
+            "<emptyEntity/>" +
+            "</TopLevelEntity >");
 
     private Reader getReader(final char[] data) {
         return new BadTextXMLFilterReader(new CharArrayReader(data), new String[]{"Leaf"});

@@ -146,6 +146,8 @@ class TestMySQLCharacterSets {
 
     @Test
     void testDelimiter() throws SQLException {
+        final String testString = "a\u00acb\u00acc\u00acd"; // Unicode embedded test string.
+
         try (final Connection connection = getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement(
                     "INSERT INTO CHAR_SET_TEST VALUES (?)")) {
@@ -155,7 +157,7 @@ class TestMySQLCharacterSets {
 
             try (final PreparedStatement preparedStatement = connection.prepareStatement(
                     "INSERT INTO CHAR_SET_TEST VALUES (?)")) {
-                preparedStatement.setString(1, "a\u00acb\u00acc\u00acd");
+                preparedStatement.setString(1, testString);
                 preparedStatement.execute();
             }
 

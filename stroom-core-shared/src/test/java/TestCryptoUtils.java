@@ -6,8 +6,9 @@ import org.junit.jupiter.api.Test;
 import javax.crypto.AEADBadTagException;
 
 public class TestCryptoUtils {
+
     @Test
-    public void TestEncryption() throws Exception {
+    public void testEncryption() throws Exception {
         final String plainText = "test message";
         final String password = "super secret p@ssword";
 
@@ -21,8 +22,7 @@ public class TestCryptoUtils {
         // Try with an incorrect password
         try {
             CryptoUtils.decrypt(encrypted, "wrong password");
-        }
-        catch (AEADBadTagException e) {
+        } catch (AEADBadTagException e) {
             // Successfully caught exception relating to inability to decrypt using the wrong password
         }
     }

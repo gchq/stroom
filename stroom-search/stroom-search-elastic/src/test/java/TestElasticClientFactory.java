@@ -5,8 +5,9 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class TestElasticClientFactory {
+
     @Test
-    public void TestHostFromUrl() {
+    public void testHostFromUrl() {
         // Scheme and hostname
         final String hostName = "elastic.example.com.au";
         String url = "https://" + hostName;

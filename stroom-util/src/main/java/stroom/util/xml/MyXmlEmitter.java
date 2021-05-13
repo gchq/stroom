@@ -17,8 +17,10 @@ import net.sf.saxon.tree.tiny.CompressedWhitespace;
  */
 public class MyXmlEmitter extends XMLEmitter {
 
-    private static final boolean[] IS_SPECIAL_IN_TEXT;         // lookup table for special characters in text
-    private static final boolean[] IS_SPECIAL_IN_ATT;          // lookup table for special characters in attributes
+    private static final boolean[] IS_SPECIAL_IN_TEXT; // lookup table for special characters in text
+    private static final boolean[] IS_SPECIAL_IN_ATT; // lookup table for special characters in attributes
+    private static final char INVALID_CHARACTER_1 = '\ufffe'; // U+FFFE: INVALID CHARACTER
+    private static final char INVALID_CHARACTER_2 = '\uffff'; // U+FFFF: INVALID CHARACTER
 
     static {
         // create look-up table for ASCII characters that need special treatment
@@ -190,7 +192,7 @@ public class MyXmlEmitter extends XMLEmitter {
      */
     private boolean isForbidden(final char c) {
         // surrogates, U+FFFE and U+FFFF are forbidden in XML.
-        return c == '\ufffe' || c == '\uffff';
+        return c == INVALID_CHARACTER_1 || c == INVALID_CHARACTER_2;
     }
 }
 
