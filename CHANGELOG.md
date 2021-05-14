@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Provide more informative error than NPE when failing to fetch streams that are associated with missing meta
+
 * Issue **#2247** : Correct configuration of Autologger for NodeResourceImpl. 
 
 * Update banner to advertise `noauth/datafeed` URL instead of older version.
