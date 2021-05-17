@@ -17,6 +17,7 @@
 package stroom.dashboard.client;
 
 import stroom.dashboard.client.gin.DashboardAppGinjector;
+import stroom.preferences.client.PreferencesManager;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
@@ -36,16 +37,20 @@ public class DashboardApp implements EntryPoint {
         // This is required for Gwt-Platform proxy's generator.
         DelayedBindRegistry.bind(ginjector);
 
-        // Show the application panel.
-        ginjector.getCorePresenter().get().forceReveal();
+        final PreferencesManager preferencesManager = ginjector.getPreferencesManager();
+        preferencesManager.fetch(preferences -> {
+            preferencesManager.updateClassNames(preferences);
 
-        // Start the login manager. This will attempt to auto login with PKI and
-        // will therefore start the rest of the application.
-        ginjector.getLoginManager().fetchUserAndPermissions();
+            // Show the application panel.
+            ginjector.getCorePresenter().get().forceReveal();
 
-        // Remember how places were used in case we want to use URLs and history
-        // at some point.
-        // ginjector.getPlaceManager().revealCurrentPlace();
+            // Start the login manager. This will attempt to auto login with PKI and
+            // will therefore start the rest of the application.
+            ginjector.getLoginManager().fetchUserAndPermissions();
+
+            // Remember how places were used in case we want to use URLs and history
+            // at some point.
+            // ginjector.getPlaceManager().revealCurrentPlace();
+        });
     }
-
 }

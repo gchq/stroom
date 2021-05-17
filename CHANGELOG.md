@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2113** : Added user preferences including theme support.
+
 * Issue **#2231** : Added visualisation selection behaviour to dashboards.
 
 * Issue **#2232** : Fixed issue where search was getting stuck due to LMDB locking transactions.
