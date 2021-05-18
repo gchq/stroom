@@ -7,11 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2249** : Fix bug in data retention impact summary tree expansion.
+
 * Provide more informative error than NPE when failing to fetch streams that are associated with missing meta
 
 * Issue **#2247** : Correct configuration of Autologger for NodeResourceImpl. 
 
 * Update banner to advertise `noauth/datafeed` URL instead of older version.
+
 
 ## [v7.0-beta.116] - 2021-05-13
 
