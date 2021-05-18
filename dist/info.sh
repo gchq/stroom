@@ -88,7 +88,7 @@ main() {
   echo
   info "Data can be POSTed to ${APP_NAME} using the following URL (see README" \
     "for details)"
-  info "${BLUE}https://localhost:<app port>/stroom/datafeed${NC}"
+  info "${BLUE}https://localhost:<app port>/stroom/noauth/datafeed${NC}"
 }
 
 main "$@"
