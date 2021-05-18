@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2249** : Fix bug in data retention impact summary tree expansion.
 
+* Issue **#2246** : Fix incorrect handling of parameters to `data` Stroom expression function.
+
 * Add default sorting by user id in the acounts (users) and tokens screens.
 
 * Issue **#2155** : Change default quick filter mode to use contains matching by default with chars anywhere matching now available via `~` prefix. Change quick filter to always treat space as a term delimiter unless in dbl quotes. Add sorting of results by match quality for chars anywhere and regex matching.

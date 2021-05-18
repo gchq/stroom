@@ -141,8 +141,8 @@ class Data extends AbstractLink {
         }
 
         private void append(final StringBuilder sb, final int index, final String key) {
-            if (index < childGenerators.length) {
-                final Val val = childGenerators[index].eval();
+            if (index <= childGenerators.length) { //Index is zero based
+                final Val val = childGenerators[index - 1].eval();
                 if (val.type().isValue()) {
                     if (sb.length() > 0) {
                         sb.append("&");
