@@ -145,6 +145,7 @@ public class SuggestionsServiceImpl implements SuggestionsService {
                                     userInput,
                                     Stream.concat(metaFeedNames.stream(), docFeedNames.stream())
                                             .parallel())
+                                    .distinct()
                                     .limit(LIMIT)
                                     .collect(Collectors.toList()))
                     .get();
