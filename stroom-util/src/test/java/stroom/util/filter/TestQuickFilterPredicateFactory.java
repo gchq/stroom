@@ -258,8 +258,8 @@ class TestQuickFilterPredicateFactory {
 
         Assertions.assertThat(filteredData)
                 .containsExactly(
-                        "Brown Bear",
-                        "Black Bear");
+                        "Black Bear",
+                        "Brown Bear");
     }
 
     @Test
@@ -278,8 +278,8 @@ class TestQuickFilterPredicateFactory {
         // ea closest together in bEAr, furthest in rEd drAgon
         Assertions.assertThat(filteredData)
                 .containsExactly(
-                        "Brown Bear",
                         "Black Bear",
+                        "Brown Bear",
                         "Red Panda",
                         "Blue Whale",
                         "Red Dragon");
@@ -301,8 +301,8 @@ class TestQuickFilterPredicateFactory {
         // ea closest together in bEAr, furthest in rEd drAgon
         Assertions.assertThat(filteredData)
                 .containsExactly(
-                        "Brown Bear",
                         "Black Bear",
+                        "Brown Bear",
                         "Blue Whale",
                         "Red Dragon",
                         "Red Panda"); // matches on e to 2nd a, i.e. rED PANDA
