@@ -399,10 +399,13 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private void addFieldToDocument(final ElasticIndexField indexField, final String value) {
         try {
             Object val = null;
+            final ElasticIndexFieldType elasticFieldType = indexField.getFieldUse();
 
-            if (indexField.getFieldUse().isNumeric()) {
+            if (elasticFieldType.isNumeric()) {
                 val = Long.parseLong(value);
-            } else if (ElasticIndexFieldType.DATE.equals(indexField.getFieldUse())) {
+            } else if (elasticFieldType.isDecimal()) {
+                val = Float.parseFloat(value);
+            } else if (ElasticIndexFieldType.DATE.equals(elasticFieldType)) {
                 try {
                     val = DateUtil.parseUnknownString(value);
                 } catch (final Exception e) {

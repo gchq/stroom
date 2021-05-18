@@ -192,6 +192,50 @@ public class SearchExpressionQueryBuilder {
                     throw new RuntimeException("Unexpected condition '" + condition.getDisplayValue() + "' for "
                             + indexField.getFieldUse().getDisplayValue() + " field type");
             }
+        } else if (indexField.getFieldUse().isDecimal()) {
+            float valueAsFloat = getDecimal(fieldName, value);
+            switch (condition) {
+                case EQUALS:
+                    return QueryBuilders
+                            .termQuery(fieldName, valueAsFloat);
+                case CONTAINS:
+                case IN:
+                    return QueryBuilders
+                            .termsQuery(fieldName, tokenizeExpression(value));
+                case GREATER_THAN:
+                    return QueryBuilders
+                            .rangeQuery(fieldName)
+                            .gt(valueAsFloat);
+                case GREATER_THAN_OR_EQUAL_TO:
+                    return QueryBuilders
+                            .rangeQuery(fieldName)
+                            .gte(valueAsFloat);
+                case LESS_THAN:
+                    return QueryBuilders
+                            .rangeQuery(fieldName)
+                            .lt(valueAsFloat);
+                case LESS_THAN_OR_EQUAL_TO:
+                    return QueryBuilders
+                            .rangeQuery(fieldName)
+                            .lte(valueAsFloat);
+                case BETWEEN:
+                    final Long[] between = getNumbers(fieldName, value);
+                    if (between.length != 2) {
+                        throw new IllegalArgumentException("Two numbers needed for between query; " + between.length + " provided");
+                    }
+                    if (between[0] >= between[1]) {
+                        throw new IllegalArgumentException("From number must be lower than to number");
+                    }
+                    return QueryBuilders
+                            .rangeQuery(fieldName)
+                            .gte(between[0])
+                            .lte(between[1]);
+                case IN_DICTIONARY:
+                    return buildDictionaryQuery(fieldName, docRef, indexField);
+                default:
+                    throw new RuntimeException("Unexpected condition '" + condition.getDisplayValue() + "' for "
+                            + indexField.getFieldUse().getDisplayValue() + " field type");
+            }
         } else if (ElasticIndexFieldType.DATE.equals(indexField.getFieldUse())) {
             final Long valueAsDate = getDate(fieldName, value);
             switch (condition) {
@@ -300,6 +344,15 @@ public class SearchExpressionQueryBuilder {
     }
 
     /**
+     * Tokenize an expression and convert each item to a numeric `float`
+     */
+    private Float[] getDecimals(final String fieldName, final String expr) {
+        return Arrays.stream(tokenizeExpression(expr))
+                .map(token -> getDecimal(fieldName, token))
+                .toArray(Float[]::new);
+    }
+
+    /**
      * Tokenize an expression and convert each item to a date `long`
      */
     private long[] getDates(final String fieldName, final String expr) {
@@ -328,6 +381,16 @@ public class SearchExpressionQueryBuilder {
         }
     }
 
+    private float getDecimal(final String fieldName, final String value) {
+        try {
+            return Float.parseFloat(value);
+        } catch (final NumberFormatException e) {
+            throw new NumberFormatException(
+                    "Expected a decimal value for field \"" + fieldName + "\" but was given string \"" + value + "\""
+            );
+        }
+    }
+
     /**
      * Loads the specified Dictionary from the doc store.
      * For each line, constructs an AND query for all terms on that line.
@@ -348,16 +411,21 @@ public class SearchExpressionQueryBuilder {
                         QueryBuilders.termQuery(fieldName, number)
                     );
                 }
-            }
-            else if (ElasticIndexFieldType.DATE.equals(indexField.getFieldUse())) {
+            } else if (indexField.getFieldUse().isDecimal()) {
+                final Float[] decimals = getDecimals(fieldName, line);
+                for (final Float decimal : decimals) {
+                    mustQuery.must(
+                            QueryBuilders.termQuery(fieldName, decimal)
+                    );
+                }
+            } else if (ElasticIndexFieldType.DATE.equals(indexField.getFieldUse())) {
                 final long[] dates = getDates(fieldName, line);
                 for (final Long date : dates) {
                     mustQuery.must(
                         QueryBuilders.termQuery(fieldName, date)
                     );
                 }
-            }
-            else {
+            } else {
                 final String[] terms = tokenizeExpression(line);
                 for (final String term : terms) {
                     mustQuery.must(

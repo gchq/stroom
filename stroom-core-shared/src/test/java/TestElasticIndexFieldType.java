@@ -29,7 +29,13 @@ public class TestElasticIndexFieldType {
     public void testIsNumeric() {
         Assert.assertTrue(ElasticIndexFieldType.INTEGER.isNumeric());
         Assert.assertTrue(ElasticIndexFieldType.LONG.isNumeric());
-        Assert.assertTrue(ElasticIndexFieldType.FLOAT.isNumeric());
-        Assert.assertTrue(ElasticIndexFieldType.DOUBLE.isNumeric());
+        Assert.assertFalse(ElasticIndexFieldType.FLOAT.isNumeric());
+        Assert.assertFalse(ElasticIndexFieldType.DOUBLE.isNumeric());
+    }
+
+    @Test
+    public void testIsDecimal() {
+        Assert.assertTrue(ElasticIndexFieldType.FLOAT.isDecimal());
+        Assert.assertTrue(ElasticIndexFieldType.DOUBLE.isDecimal());
     }
 }

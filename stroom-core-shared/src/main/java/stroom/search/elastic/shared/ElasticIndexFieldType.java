@@ -32,14 +32,14 @@ import java.util.Set;
  * @see "https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-types.html"
  */
 public enum ElasticIndexFieldType implements HasDisplayValue {
-    ID(DataSourceFieldType.ID_FIELD, "Id", true, null),
-    BOOLEAN(DataSourceFieldType.BOOLEAN_FIELD, "Boolean", false, new String[]{ "boolean" }),
-    INTEGER(DataSourceFieldType.INTEGER_FIELD, "Integer", true, new String[]{ "integer", "short", "byte" }),
-    LONG(DataSourceFieldType.LONG_FIELD, "Long", true, new String[]{ "long", "unsigned_long" }),
-    FLOAT(DataSourceFieldType.FLOAT_FIELD, "Float", true, new String[]{ "float", "half_float", "scaled_float" }),
-    DOUBLE(DataSourceFieldType.DOUBLE_FIELD, "Double", true, new String[]{ "double" }),
-    DATE(DataSourceFieldType.DATE_FIELD, "Date", false, new String[]{ "date" }),
-    TEXT(DataSourceFieldType.TEXT_FIELD, "Text", false, new String[]{ "text", "keyword", "constant_keyword", "wildcard" });
+    ID(DataSourceFieldType.ID_FIELD, "Id", true, false, null),
+    BOOLEAN(DataSourceFieldType.BOOLEAN_FIELD, "Boolean", false, false, new String[]{ "boolean" }),
+    INTEGER(DataSourceFieldType.INTEGER_FIELD, "Integer", true, false, new String[]{ "integer", "short", "byte" }),
+    LONG(DataSourceFieldType.LONG_FIELD, "Long", true, false, new String[]{ "long", "unsigned_long" }),
+    FLOAT(DataSourceFieldType.FLOAT_FIELD, "Float", false, true, new String[]{ "float", "half_float", "scaled_float" }),
+    DOUBLE(DataSourceFieldType.DOUBLE_FIELD, "Double", true, true, new String[]{ "double" }),
+    DATE(DataSourceFieldType.DATE_FIELD, "Date", false, false, new String[]{ "date" }),
+    TEXT(DataSourceFieldType.TEXT_FIELD, "Text", false, false, new String[]{ "text", "keyword", "constant_keyword", "wildcard" });
 
     private static Map<String, ElasticIndexFieldType> nativeTypeRegistry = new HashMap<>();
 
@@ -58,6 +58,7 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
     private final DataSourceFieldType dataSourceFieldType;
     private final String displayValue;
     private final boolean numeric;
+    private final boolean decimal;
     private final Set<String> nativeTypes;
     private final List<Condition> supportedConditions;
 
@@ -65,11 +66,13 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
             final DataSourceFieldType dataSourceFieldType,
             final String displayValue,
             final boolean numeric,
+            final boolean decimal,
             final String[] nativeTypes
     ) {
         this.dataSourceFieldType = dataSourceFieldType;
         this.displayValue = displayValue;
         this.numeric = numeric;
+        this.decimal = decimal;
         this.nativeTypes = nativeTypes != null ? new HashSet<>(Arrays.asList(nativeTypes)) : null;
 
         this.supportedConditions = getConditions();
@@ -81,6 +84,10 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
 
     public boolean isNumeric() {
         return numeric;
+    }
+
+    public boolean isDecimal() {
+        return decimal;
     }
 
     public Set<String> getNativeTypes() {
