@@ -54,13 +54,13 @@ import javax.xml.bind.annotation.XmlType;
 @XmlType(name = "ExpressionOperator", propOrder = {"op", "children"})
 @XmlAccessorType(XmlAccessType.FIELD)
 @Schema(name = "ExpressionOperator",
-        description = "A logical addOperator term in a query expression tree")
+        description = "A logical operator in a query expression tree")
 public final class ExpressionOperator extends ExpressionItem {
 
     private static final long serialVersionUID = 6602004424564268512L;
 
     @XmlElement(name = "op")
-    @Schema(description = "The logical addOperator type",
+    @Schema(description = "The logical operator type",
             required = true)
     @JsonProperty
     private Op op; // TODO : XML serialisation still requires no-arg constructor and mutable fields

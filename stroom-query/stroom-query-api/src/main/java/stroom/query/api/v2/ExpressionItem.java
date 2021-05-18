@@ -16,12 +16,16 @@
 
 package stroom.query.api.v2;
 
+import stroom.datasource.api.v2.FieldTypes;
+import stroom.datasource.api.v2.IdField;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.io.Serializable;
@@ -45,8 +49,13 @@ import javax.xml.bind.annotation.XmlType;
 @XmlSeeAlso({ExpressionOperator.class, ExpressionTerm.class})
 @XmlAccessorType(XmlAccessType.FIELD)
 @Schema(
-        description = "Base type for an item in an expression tree",
-        subTypes = {ExpressionOperator.class, ExpressionTerm.class})
+        description = "An item in an expression tree",
+        subTypes = {ExpressionOperator.class, ExpressionTerm.class},
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(schema = ExpressionOperator.class, value = "operator"),
+                @DiscriminatorMapping(schema = ExpressionTerm.class, value = "term")
+        })
 public abstract class ExpressionItem implements Serializable {
 
     private static final long serialVersionUID = -8483817637655853635L;

@@ -7731,7 +7731,19 @@
       },
       "AbstractField" : {
         "type" : "object",
+        "description" : "A field in a table",
         "discriminator" : {
+          "mapping" : {
+            "Boolean" : "#/components/schemas/BooleanField",
+            "Date" : "#/components/schemas/DateField",
+            "DocRef" : "#/components/schemas/DocRefField",
+            "Double" : "#/components/schemas/DoubleField",
+            "Float" : "#/components/schemas/FloatField",
+            "Id" : "#/components/schemas/IdField",
+            "Integer" : "#/components/schemas/IntegerField",
+            "Long" : "#/components/schemas/LongField",
+            "Text" : "#/components/schemas/TextField"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -9700,8 +9712,12 @@
       },
       "ExpressionItem" : {
         "type" : "object",
-        "description" : "Base type for an item in an expression tree",
+        "description" : "An item in an expression tree",
         "discriminator" : {
+          "mapping" : {
+            "operator" : "#/components/schemas/ExpressionOperator",
+            "term" : "#/components/schemas/ExpressionTerm"
+          },
           "propertyName" : "type"
         },
         "properties" : {
@@ -9718,7 +9734,7 @@
       },
       "ExpressionOperator" : {
         "type" : "object",
-        "description" : "A logical addOperator term in a query expression tree",
+        "description" : "A logical operator term in a query expression tree",
         "properties" : {
           "children" : {
             "type" : "array",
@@ -9736,11 +9752,9 @@
           },
           "op" : {
             "type" : "string",
-            "description" : "The logical addOperator type",
             "enum" : [ "AND", "OR", "NOT" ]
           }
-        },
-        "required" : [ "op" ]
+        }
       },
       "ExpressionTerm" : {
         "type" : "object",

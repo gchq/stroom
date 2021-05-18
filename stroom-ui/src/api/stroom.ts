@@ -23,6 +23,9 @@ export interface AbstractFetchDataResult {
   type: string;
 }
 
+/**
+ * A field in a table
+ */
 export interface AbstractField {
   conditions?: (
     | "CONTAINS"
@@ -595,7 +598,7 @@ export interface DataRetentionRule {
   creationTime?: number;
   enabled?: boolean;
 
-  /** A logical addOperator term in a query expression tree */
+  /** The root logical operator in the query expression tree */
   expression?: ExpressionOperator;
   forever?: boolean;
   name?: string;
@@ -872,7 +875,7 @@ export interface ExplorerTreeFilter {
 }
 
 export interface ExpressionCriteria {
-  /** A logical addOperator term in a query expression tree */
+  /** The root logical operator in the query expression tree */
   expression?: ExpressionOperator;
   pageRequest?: PageRequest;
   sort?: string;
@@ -880,7 +883,7 @@ export interface ExpressionCriteria {
 }
 
 /**
- * Base type for an item in an expression tree
+ * An item in an expression tree
  */
 export interface ExpressionItem {
   /**
@@ -892,7 +895,7 @@ export interface ExpressionItem {
 }
 
 /**
- * A logical addOperator term in a query expression tree
+ * The root logical operator in the query expression tree
  */
 export interface ExpressionOperator {
   children?: ExpressionItem[];
@@ -907,9 +910,6 @@ export interface ExpressionOperator {
   op: "AND" | "OR" | "NOT";
 }
 
-/**
- * A predicate term in a query expression tree
- */
 export type ExpressionTerm = ExpressionItem & {
   condition?:
     | "CONTAINS"
@@ -1016,7 +1016,7 @@ export interface FetchPipelineXmlResponse {
 export interface FetchProcessorRequest {
   expandedRows?: ProcessorListRow[];
 
-  /** A logical addOperator term in a query expression tree */
+  /** The root logical operator in the query expression tree */
   expression?: ExpressionOperator;
 }
 
@@ -1028,6 +1028,8 @@ export interface FetchPropertyTypesResult {
 export interface FetchSuggestionsRequest {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   dataSource: DocRef;
+
+  /** A field in a table */
   field: AbstractField;
   text?: string;
 }
@@ -1092,7 +1094,7 @@ export interface FindDBTableCriteria {
 }
 
 export interface FindDataRetentionImpactCriteria {
-  /** A logical addOperator term in a query expression tree */
+  /** The root logical operator in the query expression tree */
   expression?: ExpressionOperator;
   pageRequest?: PageRequest;
   sort?: string;
@@ -1137,7 +1139,7 @@ export interface FindIndexShardCriteria {
 }
 
 export interface FindMetaCriteria {
-  /** A logical addOperator term in a query expression tree */
+  /** The root logical operator in the query expression tree */
   expression?: ExpressionOperator;
   fetchRelationships?: boolean;
   pageRequest?: PageRequest;
@@ -2097,7 +2099,7 @@ export interface Query {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   dataSource: DocRef;
 
-  /** A logical addOperator term in a query expression tree */
+  /** The root logical operator in the query expression tree */
   expression: ExpressionOperator;
   params?: Param[];
 }
@@ -2116,7 +2118,7 @@ export interface QueryData {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   dataSource?: DocRef;
 
-  /** A logical addOperator term in a query expression tree */
+  /** The root logical operator in the query expression tree */
   expression?: ExpressionOperator;
   limits?: Limits;
 }
@@ -2165,7 +2167,7 @@ export interface ReceiveDataRule {
   creationTime?: number;
   enabled?: boolean;
 
-  /** A logical addOperator term in a query expression tree */
+  /** The root logical operator in the query expression tree */
   expression?: ExpressionOperator;
   name?: string;
 
@@ -2507,7 +2509,7 @@ export interface Search {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   dataSourceRef?: DocRef;
 
-  /** A logical addOperator term in a query expression tree */
+  /** The root logical operator in the query expression tree */
   expression?: ExpressionOperator;
   incremental?: boolean;
   params?: Param[];
@@ -2699,7 +2701,7 @@ export interface SolrIndexDoc {
   fields?: SolrIndexField[];
   name?: string;
 
-  /** A logical addOperator term in a query expression tree */
+  /** The root logical operator in the query expression tree */
   retentionExpression?: ExpressionOperator;
   solrConnectionConfig?: SolrConnectionConfig;
   solrSynchState?: SolrSynchState;
@@ -3592,8 +3594,8 @@ export class HttpClient<SecurityDataType = unknown> {
       body: typeof body === "undefined" || body === null ? null : payloadFormatter(body),
     }).then(async (response) => {
       const r = response as HttpResponse<T, E>;
-      r.data = (null as unknown) as T;
-      r.error = (null as unknown) as E;
+      r.data = null as unknown as T;
+      r.error = null as unknown as E;
 
       const data = await response[format]()
         .then((data) => {

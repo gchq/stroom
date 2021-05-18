@@ -17,6 +17,8 @@
 package stroom.datasource.api.v2;
 
 import stroom.docref.HasDisplayValue;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -27,6 +29,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.io.Serializable;
 import java.util.List;
@@ -47,6 +51,23 @@ import java.util.Objects;
         @Type(value = TextField.class, name = FieldTypes.TEXT),
         @Type(value = DocRefField.class, name = FieldTypes.DOC_REF)
 })
+@Schema(
+        description = "A field in a table",
+        subTypes = {IdField.class, BooleanField.class, IntegerField.class, LongField.class, FloatField.class,
+                DoubleField.class, DateField.class, TextField.class, DocRefField.class},
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(schema = IdField.class, value = FieldTypes.ID),
+                @DiscriminatorMapping(schema = BooleanField.class, value = FieldTypes.BOOLEAN),
+                @DiscriminatorMapping(schema = IntegerField.class, value = FieldTypes.INTEGER),
+                @DiscriminatorMapping(schema = LongField.class, value = FieldTypes.LONG),
+                @DiscriminatorMapping(schema = FloatField.class, value = FieldTypes.FLOAT),
+                @DiscriminatorMapping(schema = DoubleField.class, value = FieldTypes.DOUBLE),
+                @DiscriminatorMapping(schema = DateField.class, value = FieldTypes.DATE),
+                @DiscriminatorMapping(schema = TextField.class, value = FieldTypes.TEXT),
+                @DiscriminatorMapping(schema = DocRefField.class, value = FieldTypes.DOC_REF)
+        }
+)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public abstract class AbstractField implements Serializable, HasDisplayValue {
     private static final long serialVersionUID = 1272545271946712570L;
