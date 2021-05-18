@@ -137,6 +137,11 @@ public final class CompareUtil {
         return comparator;
     }
 
+    public static <T> Comparator<T> getNullSafeCaseInsensitiveComparator(final Function<T, String> extractor) {
+        return Comparator.nullsFirst(
+                Comparator.comparing(extractor, String.CASE_INSENSITIVE_ORDER));
+    }
+
     /**
      * Creates a null safe case insensitive comparator that can work with stuff like
      * getDocRef().getName()

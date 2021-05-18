@@ -17,6 +17,7 @@
 package stroom.annotation.client;
 
 import stroom.annotation.client.ChooserPresenter.ChooserView;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 
@@ -49,12 +50,17 @@ class ChooserViewImpl extends ViewWithUiHandlers<ChooserUiHandlers> implements C
     private final Widget widget;
 
     @Inject
-    ChooserViewImpl(final Binder binder) {
+    ChooserViewImpl(final Binder binder,
+                    final UiConfigCache uiConfigCache) {
         widget = binder.createAndBindUi(this);
 
         // Only deals in lists of strings so no field defs required.
-        nameFilter.registerPopupTextProvider(() ->
-                QuickFilterTooltipUtil.createTooltip("Choose Item Quick Filter"));
+        uiConfigCache.get()
+                .onSuccess(uiConfig ->
+                        nameFilter.registerPopupTextProvider(() ->
+                                QuickFilterTooltipUtil.createTooltip(
+                                        "Choose Item Quick Filter",
+                                        uiConfig.getHelpUrl())));
     }
 
     @Override

@@ -17,6 +17,12 @@ import java.util.stream.Collectors;
  */
 public class FilterFieldMappers<T_ROW> {
 
+    private static final FilterFieldMappers<String> STRING_FILTER_FIELD_MAPPERS =
+            FilterFieldMappers.of(
+                    FilterFieldMapper.of(
+                            FilterFieldDefinition.defaultField("Value"),
+                            Function.identity()));
+
     private final Map<String, FilterFieldMapper<T_ROW>> map;
     private final List<FilterFieldMapper<T_ROW>> defaultFieldMappers;
 
@@ -48,10 +54,7 @@ public class FilterFieldMappers<T_ROW> {
      * a {@link List<String>}.
      */
     public static FilterFieldMappers<String> singleStringField() {
-        return FilterFieldMappers.of(
-                FilterFieldMapper.of(
-                        FilterFieldDefinition.defaultField("Value"),
-                        Function.identity()));
+        return STRING_FILTER_FIELD_MAPPERS;
     }
 
 
