@@ -12,6 +12,7 @@ import org.junit.jupiter.api.TestFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
@@ -101,7 +102,7 @@ class TestQuickFilterPredicateFactory {
 
     @Test
     void test_oneDefaultField() {
-        doTest("myname",
+        doTest("~myname",
                 List.of(POJO_1,
                         POJO_1_MISSING,
                         POJO_1_NOT_MY_TYPE),
@@ -110,7 +111,7 @@ class TestQuickFilterPredicateFactory {
 
     @Test
     void test_oneDefaultFieldNegated() {
-        doTest("!myname",
+        doTest("!~myname",
                 List.of(POJO_1_BAD_NAME),
                 List.of(POJO_1,
                         POJO_1_MISSING,
@@ -119,7 +120,7 @@ class TestQuickFilterPredicateFactory {
 
     @Test
     void test_qualifyDefaultField() {
-        doTest(" simplestr1:myname ",
+        doTest(" simplestr1:~myname ",
                 List.of(POJO_1,
                         POJO_1_MISSING,
                         POJO_1_NOT_MY_TYPE),
@@ -128,7 +129,7 @@ class TestQuickFilterPredicateFactory {
 
     @Test
     void test_qualifyDefaultFieldNegated() {
-        doTest(" simplestr1:!myname ",
+        doTest(" simplestr1:!~myname ",
                 List.of(POJO_1_BAD_NAME),
                 List.of(POJO_1,
                         POJO_1_MISSING,
@@ -136,10 +137,10 @@ class TestQuickFilterPredicateFactory {
     }
 
     @Test
-    void test_defaultFieldTwice() {
+    void test_defaultFieldTwice_charsAnywhere() {
 
         // Need quotes to treat them as two tokens
-        doTest("\"myname\" \"othername\"",
+        doTest("\"~myname\" \"~othername\"",
                 List.of(POJO_1,
                         POJO_1_MISSING,
                         POJO_1_NOT_MY_TYPE),
@@ -147,9 +148,44 @@ class TestQuickFilterPredicateFactory {
     }
 
     @Test
-    void test_matchSecondDefaultField() {
+    void test_defaultFieldTwice_contains() {
 
-        doTest("/other name",
+        // Need quotes to treat them as two tokens
+        doTest("my name",
+                List.of(POJO_1,
+                        POJO_1_MISSING,
+                        POJO_1_NOT_MY_TYPE),
+                List.of(POJO_1_BAD_NAME));
+    }
+
+    @Test
+    void test_defaultFieldTwice_contains_noMatch() {
+
+        // Need quotes to treat them as two tokens
+        doTest("my nomatch",
+                Collections.emptyList(),
+                List.of(POJO_1,
+                        POJO_1_MISSING,
+                        POJO_1_NOT_MY_TYPE,
+                        POJO_1_BAD_NAME));
+    }
+
+    @Test
+    void test_matchSecondDefaultField_regex() {
+
+        // term needs to be quoted to stop the two words being treated as two tokens ('/other' and 'name')
+        doTest("\"/other name\"",
+                List.of(POJO_1,
+                        POJO_1_MISSING,
+                        POJO_1_NOT_MY_TYPE),
+                List.of(POJO_1_BAD_NAME));
+    }
+
+    @Test
+    void test_matchSecondDefaultField_contains() {
+
+        // term needs to be quoted to stop the two words being treated as two tokens ('/other' and 'name')
+        doTest("\"other name\"",
                 List.of(POJO_1,
                         POJO_1_MISSING,
                         POJO_1_NOT_MY_TYPE),
@@ -163,9 +199,9 @@ class TestQuickFilterPredicateFactory {
                 makeTokenTest("\"",
                         List.of(
                         )),
-                makeTokenTest("a\\\"bc", // escaped dbl quote
+                makeTokenTest("a\\\"bc", // escaped dbl quote '\"'
                         List.of(
-                                MatchToken.of("a\"bc")
+                                MatchToken.of("a\"bc") // 'a"bc'
                         )),
                 makeTokenTest("\"abc", // un-matched dbl quote, should not parse
                         List.of(
@@ -207,6 +243,71 @@ class TestQuickFilterPredicateFactory {
         );
     }
 
+    @Test
+    void testFilterStream_string_contains() {
+        List<String> data = List.of(
+                "Brown Fox",
+                "Red Panda",
+                "Blue Whale",
+                "Brown Bear",
+                "Black Bear",
+                "Red Dragon");
+
+        final List<String> filteredData = QuickFilterPredicateFactory.filterStream("bear", data.stream())
+                .collect(Collectors.toList());
+
+        Assertions.assertThat(filteredData)
+                .containsExactly(
+                        "Brown Bear",
+                        "Black Bear");
+    }
+
+    @Test
+    void testFilterStream_string_charsAnywhere() {
+        List<String> data = List.of(
+                "Brown Fox",
+                "Red Panda",
+                "Blue Whale",
+                "Brown Bear",
+                "Black Bear",
+                "Red Dragon");
+
+        final List<String> filteredData = QuickFilterPredicateFactory.filterStream("~ea", data.stream())
+                .collect(Collectors.toList());
+
+        // ea closest together in bEAr, furthest in rEd drAgon
+        Assertions.assertThat(filteredData)
+                .containsExactly(
+                        "Brown Bear",
+                        "Black Bear",
+                        "Red Panda",
+                        "Blue Whale",
+                        "Red Dragon");
+    }
+
+    @Test
+    void testFilterStream_string_regex() {
+        List<String> data = List.of(
+                "Brown Fox",
+                "Red Panda",
+                "Blue Whale",
+                "Brown Bear",
+                "Black Bear",
+                "Red Dragon");
+
+        final List<String> filteredData = QuickFilterPredicateFactory.filterStream("/e.*a", data.stream())
+                .collect(Collectors.toList());
+
+        // ea closest together in bEAr, furthest in rEd drAgon
+        Assertions.assertThat(filteredData)
+                .containsExactly(
+                        "Brown Bear",
+                        "Black Bear",
+                        "Blue Whale",
+                        "Red Dragon",
+                        "Red Panda"); // matches on e to 2nd a, i.e. rED PANDA
+    }
+
     private DynamicTest makeTokenTest(final String input,
                                       final List<MatchToken> expectedTokens) {
         return DynamicTest.dynamicTest("[" + input + "]", () -> {
@@ -246,6 +347,17 @@ class TestQuickFilterPredicateFactory {
 
         Assertions.assertThat(matched)
                 .containsExactlyInAnyOrderElementsOf(shouldMatch);
+
+        // Now test it as a stream
+
+        final List<Pojo> streamMatched = QuickFilterPredicateFactory.filterStream(
+                input,
+                FIELD_MAPPERS,
+                Stream.concat(shouldMatch.stream(), shouldNotMatch.stream()))
+                .collect(Collectors.toList());
+
+        Assertions.assertThat(matched)
+                .containsExactlyElementsOf(shouldMatch);
     }
 
     private static class Pojo {
@@ -300,4 +412,5 @@ class TestQuickFilterPredicateFactory {
                     '}';
         }
     }
+
 }

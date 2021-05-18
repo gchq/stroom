@@ -26,7 +26,6 @@ import org.mockito.quality.Strictness;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static org.mockito.ArgumentMatchers.eq;
@@ -317,14 +316,14 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                     System.out.println("list called");
                     try {
                         GlobalConfigCriteria criteria = invocation.getArgument(0);
-                        Predicate<ConfigProperty> predicate = QuickFilterPredicateFactory.createFuzzyMatchPredicate(
-                                criteria.getQuickFilterInput(), fieldMappers);
 
-                        return new ListConfigResponse(FULL_PROP_LIST.stream()
+                        return new ListConfigResponse(QuickFilterPredicateFactory.filterStream(
+                                criteria.getQuickFilterInput(),
+                                fieldMappers,
+                                FULL_PROP_LIST.stream())
                                 .peek(configProperty -> {
                                     configProperty.setYamlOverrideValue(node.getNodeName());
                                 })
-                                .filter(predicate)
                                 .collect(Collectors.toList()));
                     } catch (Exception e) {
                         e.printStackTrace(System.err);

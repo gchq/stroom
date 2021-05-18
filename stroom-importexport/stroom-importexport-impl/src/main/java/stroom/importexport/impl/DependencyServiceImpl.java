@@ -24,8 +24,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
@@ -115,16 +113,16 @@ public class DependencyServiceImpl implements DependencyService {
         // Build a map of deps (parent to children)
         final Map<DocRef, Set<DocRef>> allDependencies = buildDependencyMap(parentTaskContext);
 
-        final Comparator<Dependency> sortListComparator = getDependencyComparator(criteria);
+        final Optional<Comparator<Dependency>> optSortListComparator = getDependencyComparator(criteria);
 
-        final Predicate<Dependency> filterPredicate = buildFilterPredicate(criteria);
+//        final Predicate<Dependency> filterPredicate = buildFilterPredicate(criteria);
 
         // Flatten the dependency map
         final List<Dependency> flatDependencies = buildFlatDependencies(
+                criteria,
                 allDependencies,
                 Arrays.stream(ALL_PSEUDO_DOCREFS).collect(Collectors.toSet()),
-                sortListComparator,
-                filterPredicate);
+                optSortListComparator);
 
         return ResultPage.createPageLimitedList(
                 flatDependencies,
@@ -134,24 +132,33 @@ public class DependencyServiceImpl implements DependencyService {
     }
 
 
-    private List<Dependency> buildFlatDependencies(final Map<DocRef, Set<DocRef>> allDependencies,
+    private List<Dependency> buildFlatDependencies(final DependencyCriteria criteria,
+                                                   final Map<DocRef, Set<DocRef>> allDependencies,
                                                    final Set<DocRef> pseudoDocRefs,
-                                                   final Comparator<Dependency> sortListComparator,
-                                                   final Predicate<Dependency> filterPredicate) {
-        return allDependencies.entrySet().stream()
-                .flatMap(entry -> {
-                    final DocRef parentDocRef = entry.getKey();
-                    final Set<DocRef> childDocRefs = entry.getValue();
-                    return childDocRefs.stream()
-                            .map(childDocRef -> new Dependency(
-                                    parentDocRef,
-                                    childDocRef,
-                                    pseudoDocRefs.contains(childDocRef) ||
-                                            allDependencies.containsKey(childDocRef)));
-                })
-                .filter(filterPredicate)
-                .sorted(sortListComparator)
-                .collect(Collectors.toList());
+                                                   final Optional<Comparator<Dependency>> optSortListComparator) {
+        Stream<Dependency> filteredStream = QuickFilterPredicateFactory.filterStream(
+                criteria.getPartialName(),
+                FIELD_MAPPERS,
+                allDependencies.entrySet()
+                        .stream()
+                        .flatMap(entry -> {
+                            final DocRef parentDocRef = entry.getKey();
+                            final Set<DocRef> childDocRefs = entry.getValue();
+                            return childDocRefs.stream()
+                                    .map(childDocRef -> new Dependency(
+                                            parentDocRef,
+                                            childDocRef,
+                                            pseudoDocRefs.contains(childDocRef) ||
+                                                    allDependencies.containsKey(childDocRef)));
+                        }),
+                optSortListComparator.orElse(null));
+
+
+        if (optSortListComparator.isPresent()) {
+            filteredStream = filteredStream.sorted(optSortListComparator.get());
+        }
+
+        return filteredStream.collect(Collectors.toList());
     }
 
     private Map<DocRef, Set<DocRef>> buildDependencyMap(final TaskContext parentTaskContext) {
@@ -183,71 +190,20 @@ public class DependencyServiceImpl implements DependencyService {
                                         .collect(Collectors.toSet())));
     }
 
-    private Predicate<Dependency> buildFilterPredicate(final DependencyCriteria criteria) {
-        return QuickFilterPredicateFactory.createFuzzyMatchPredicate(criteria.getPartialName(), FIELD_MAPPERS);
-
-//        final Predicate<Dependency> filterPredicate;
-//        if (criteria != null && criteria.getPartialName() != null) {
-//            final Predicate<DocRef> docRefPredicate =
-//                    DocRefPredicateFactory.createFuzzyMatchPredicate(
-//                            criteria.getPartialName(),
-//                            MatchMode.NAME_OR_TYPE);
-//
-//            filterPredicate = dep -> {
-//                if (dep == null) {
-//                    return false;
-//                } else {
-//                    // Match on any of {from,to} {name,type}
-//                    return docRefPredicate.test(dep.getFrom())
-//                            || docRefPredicate.test(dep.getTo());
-//                }
-//            };
-//        } else {
-//            filterPredicate = dep -> true;
-//        }
-//        return filterPredicate;
-    }
-
-    private boolean applyPredicate(final Dependency dependency,
-                                   final Function<Dependency, DocRef> docRefExtractor,
-                                   final Function<DocRef, String> valueExtractor,
-                                   final Predicate<String> stringPredicate) {
-        final boolean result;
-        if (dependency != null) {
-            DocRef docRef = docRefExtractor.apply(dependency);
-            if (docRef != null) {
-                String val = valueExtractor.apply(docRef);
-                if (val != null) {
-                    result = stringPredicate.test(val);
-                } else {
-                    // Null val
-                    result = false;
-                }
-            } else {
-                // Null docref
-                result = false;
-            }
-        } else {
-            // Null dep
-            result = false;
-        }
-        return result;
-    }
-
-    private Comparator<Dependency> getDependencyComparator(final DependencyCriteria criteria) {
+    private Optional<Comparator<Dependency>> getDependencyComparator(final DependencyCriteria criteria) {
         // Make the sort comparator base on the criteria sort list
-        final Comparator<Dependency> sortListComparator;
+        final Optional<Comparator<Dependency>> sortListComparator;
         if (criteria != null
                 && criteria.getSortList() != null
                 && !criteria.getSortList().isEmpty()) {
             sortListComparator = buildComparatorFromSortList(criteria);
         } else {
-            sortListComparator = DEFAULT_COMPARATOR;
+            sortListComparator = Optional.empty();
         }
         return sortListComparator;
     }
 
-    private Comparator<Dependency> buildComparatorFromSortList(
+    private Optional<Comparator<Dependency>> buildComparatorFromSortList(
             final DependencyCriteria dependencyCriteria) {
 
         if (dependencyCriteria != null && !dependencyCriteria.getSortList().isEmpty()) {
@@ -265,11 +221,11 @@ public class DependencyServiceImpl implements DependencyService {
                 }
             }
             return compositeComparator != null
-                    ? compositeComparator
-                    : Comparator.comparing(dep -> 0);
+                    ? Optional.of(compositeComparator)
+                    : Optional.empty();
         } else {
             // Unsorted
-            return Comparator.comparing(dep -> 0);
+            return Optional.empty();
         }
     }
 

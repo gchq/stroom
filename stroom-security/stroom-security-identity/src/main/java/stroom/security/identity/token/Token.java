@@ -197,6 +197,13 @@ public class Token implements HasIntegerId {
         this.enabled = enabled;
     }
 
+//    @JsonIgnore
+//    public String getStatus() {
+//        return enabled
+//                ? "Enable"
+//                : "Disabled";
+//    }
+
     //
 //    public static final class TokenBuilder {
 //        private Integer id;

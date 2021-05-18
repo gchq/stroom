@@ -41,7 +41,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -160,15 +159,15 @@ class DocPermissionResourceImpl implements DocPermissionResource {
     @Override
     @AutoLogged(value = OperationType.SEARCH, verb = "Filtering users")
     public List<User> filterUsers(final FilterUsersRequest filterUsersRequest) {
-        // Not ideal calling the back end to filter some users but this is the only way to do the filtering
-        // consistently across the app.
-        final Predicate<User> quickFilterPredicate = QuickFilterPredicateFactory.createFuzzyMatchPredicate(
-                filterUsersRequest.getQuickFilterInput(), UserDao.FILTER_FIELD_MAPPERS);
         if (filterUsersRequest.getUsers() == null) {
             return null;
         } else {
-            return filterUsersRequest.getUsers().stream()
-                    .filter(quickFilterPredicate)
+            // Not ideal calling the back end to filter some users but this is the only way to do the filtering
+            // consistently across the app.
+            return QuickFilterPredicateFactory.filterStream(
+                    filterUsersRequest.getQuickFilterInput(),
+                    UserDao.FILTER_FIELD_MAPPERS,
+                    filterUsersRequest.getUsers().stream())
                     .collect(Collectors.toList());
         }
     }

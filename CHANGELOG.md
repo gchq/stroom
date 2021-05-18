@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **#2155** : Change default quick filter mode to contains with chars anywhere matching now available via `~` prefix.
+* Add default sorting by user id in the acounts (users) and tokens screens.
+
+* Issue **#2155** : Change default quick filter mode to use contains matching by default with chars anywhere matching now available via `~` prefix. Change quick filter to always treat space as a term delimiter unless in dbl quotes. Add sorting of results by match quality for chars anywhere and regex matching.
 
 * Issue **#2242** : Fix help link in quick filter tool tips. Now comes from config.
 
