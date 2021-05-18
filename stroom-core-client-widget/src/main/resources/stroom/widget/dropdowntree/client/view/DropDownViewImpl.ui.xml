@@ -11,8 +11,7 @@
   	display: inline-block;
   	width: 200px;
   	height: 19px;
-  	background-color: white;
-  	border: 1px solid #C5CDE2;
+  	border: solid;
   	cursor: pointer;
   }
   
@@ -34,7 +33,7 @@
   	cursor: pointer;
   }
   </ui:style>
-  <g:FlowPanel ui:field="container" styleName="{style.container}">
+  <g:FlowPanel ui:field="container" styleName="{style.container} stroom-content stroom-border">
     <g:Label ui:field="label" styleName="{style.label}" />
     <g:Image ui:field="button" resource="{res.popup}" styleName="{style.button}" />
   </g:FlowPanel>

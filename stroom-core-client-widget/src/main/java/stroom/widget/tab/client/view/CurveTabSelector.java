@@ -95,20 +95,6 @@ public class CurveTabSelector extends AbstractTabSelector {
     }
 
     public interface Resources extends ClientBundle {
-
-        @Source("tabSelectorLeft.png")
-        ImageResource left();
-
-        @Source("tabSelectorMiddle.png")
-        @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
-        ImageResource middle();
-
-        @Source("tabSelectorRight.png")
-        ImageResource right();
-
-        @Source("arrows.png")
-        ImageResource arrows();
-
         @Source(Style.DEFAULT_CSS)
         Style style();
     }

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@external .*;
 
 .curveTabSelector {
 	position: absolute;
@@ -21,7 +22,6 @@
 	height: 24px;
 	cursor: pointer;
 }
-
 
 .curveTabSelector .background {
 	position: absolute;
@@ -36,23 +36,29 @@
 	opacity: 0.4;
 }
 
-@sprite .curveTabSelector .background .leftBackground {
-	gwt-image: 'left';
+.curveTabSelector .background .leftBackground {
+	background-image: url("images/tabs/tabSelectorLeft.png");
 	position: absolute;
 	left: 0px;
 	top: 0px;
+    width: 10px;
+    height: 18px;
 }
 
-@sprite .curveTabSelector .background .midBackground {
-	gwt-image: 'middle';
+.curveTabSelector .background .midBackground {
+	background-image: url("images/tabs/tabSelectorMiddle.png");
+	background-repeat: repeat-x;
 	width: 100%;
+    height: 18px;
 }
 
-@sprite .curveTabSelector .background .rightBackground {
-	gwt-image: 'right';
+.curveTabSelector .background .rightBackground {
+	background-image: url("images/tabs/tabSelectorRight.png");
 	position: absolute;
 	right: 0px;
 	top: 0px;
+    width: 10px;
+    height: 18px;
 }
 
 .curveTabSelector .foreground {
@@ -61,8 +67,8 @@
 }
 
 /* Content. */
-@sprite .curveTabSelector .foreground .arrows {
-	gwt-image: 'arrows';
+.curveTabSelector .foreground .arrows {
+	background-image: url("images/tabs/arrows.png");
 	position: absolute;
 	left: 8px;
 	top: 4px;
@@ -77,4 +83,26 @@
 	margin-left: 7px;
 	margin-top: 7px;
 	-moz-user-select: none;
+}
+
+
+
+
+
+
+
+.stroom-theme-dark .curveTabSelector .background .leftBackground {
+	background-image: url("images/tabs/tabSelectorLeft-dark.png");
+}
+
+.stroom-theme-dark .curveTabSelector .background .midBackground {
+    background-image: url("images/tabs/tabSelectorMiddle-dark.png");
+}
+
+.stroom-theme-dark .curveTabSelector .background .rightBackground {
+	background-image: url("images/tabs/tabSelectorRight-dark.png");
+}
+
+.stroom-theme-dark .curveTabSelector .foreground .arrows {
+	background-image: url("images/tabs/arrows-dark.png");
 }

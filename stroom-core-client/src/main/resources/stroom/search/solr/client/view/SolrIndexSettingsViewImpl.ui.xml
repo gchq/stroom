@@ -15,8 +15,7 @@
         .retentionExpressionPanel {
         width: 100%;
         height: 100%;
-        border: solid 1px #c5cde2;
-        background-color: white;
+        border: solid;
         }
     </ui:style>
     <view:ResizeSimplePanel styleName="stroom-control-page" width="100%" height="100%">
@@ -83,7 +82,7 @@
                     </g:north>
                     <g:center>
                         <view:ResizeSimplePanel ui:field="retentionExpressionPanel"
-                                                styleName="{style.retentionExpressionPanel}"/>
+                                                styleName="{style.retentionExpressionPanel} stroom-content stroom-border"/>
                     </g:center>
                 </g:DockLayoutPanel>
             </g:center>

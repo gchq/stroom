@@ -4,7 +4,7 @@
   xmlns:layout="urn:import:stroom.widget.layout.client.view">
   <ui:style>
     .outer {
-    	border: solid 1px #c5cde2;
+    	border: solid;
     }
     
     .nameFilter {
@@ -16,7 +16,7 @@
   <g:DockLayoutPanel unit="PX" width="100%" height="100%">
     <g:center>
       <layout:ResizeSimplePanel ui:field="dataGrid"
-        styleName="dataGrid {style.outer}" width="100%" height="100%" />
+        styleName="dataGrid {style.outer} stroom-border" width="100%" height="100%" />
     </g:center>
   </g:DockLayoutPanel>
 </ui:UiBinder>

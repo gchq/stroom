@@ -221,27 +221,6 @@ public class CurveTab extends AbstractTab {
     }
 
     public interface Resources extends ClientBundle {
-
-        @Source("content.png")
-        @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
-        ImageResource content();
-
-        @Source("left.png")
-        ImageResource left();
-
-        @Source("middle.png")
-        @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
-        ImageResource middle();
-
-        @Source("right.png")
-        ImageResource right();
-
-        @Source("close.png")
-        ImageResource close();
-
-        @Source("closeActive.png")
-        ImageResource closeActive();
-
         @Source("CurveTab.css")
         Style style();
     }

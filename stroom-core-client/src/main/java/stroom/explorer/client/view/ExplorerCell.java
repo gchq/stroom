@@ -5,9 +5,6 @@ import stroom.util.client.ImageUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safecss.shared.SafeStyles;
 import com.google.gwt.safecss.shared.SafeStylesUtils;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
@@ -16,29 +13,24 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.safehtml.shared.SafeUri;
 import com.google.gwt.safehtml.shared.UriUtils;
-import com.google.gwt.user.client.ui.AbstractImagePrototype;
 
 public class ExplorerCell extends AbstractCell<ExplorerNode> {
 
     private static Template template;
-    private static Resources resources;
 
     public ExplorerCell() {
         if (template == null) {
             template = GWT.create(Template.class);
-            resources = GWT.create(Resources.class);
-            resources.style().ensureInjected();
         }
     }
 
     public String getExpanderClassName() {
-        return resources.style().expander();
+        return "expanderCell-expander";
     }
 
     @Override
     public void render(final Context context, final ExplorerNode item, final SafeHtmlBuilder sb) {
         if (item != null) {
-            final Style style = resources.style();
 
             int expanderPadding = 4;
 
@@ -50,14 +42,12 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
                         expanderPadding += 13;
                         break;
                     case OPEN:
-                        expanderIcon = template.icon(
-                                resources.style().expanderIcon(),
-                                UriUtils.fromTrustedString(ImageUtil.getImageURL() + "tree-open.svg"));
+                        expanderIcon = template.node(
+                                "explorerCell-expanderIcon explorerCell-treeOpen");
                         break;
                     case CLOSED:
-                        expanderIcon = template.icon(
-                                resources.style().expanderIcon(),
-                                UriUtils.fromTrustedString(ImageUtil.getImageURL() + "tree-closed.svg"));
+                        expanderIcon = template.node(
+                                "explorerCell-expanderIcon explorerCell-treeClosed");
                         break;
                     default:
                         throw new RuntimeException("Unexpected state " + item.getNodeState());
@@ -81,16 +71,16 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
 
             if (expanderIcon != null) {
                 final SafeStyles paddingLeft = SafeStylesUtils.fromTrustedString("padding-left:" + indent + "px;");
-                expanderHtml = template.expander(style.expander(), paddingLeft, expanderIcon);
+                expanderHtml = template.expander("explorerCell-expander", paddingLeft, expanderIcon);
             }
 
             if (item.getIconUrl() != null) {
                 final SafeUri safeUri = UriUtils.fromTrustedString(ImageUtil.getImageURL() + item.getIconUrl());
-                iconHtml = template.icon(style.icon(), safeUri);
+                iconHtml = template.icon("explorerCell-icon", safeUri);
             }
 
             if (item.getDisplayValue() != null) {
-                textHtml = template.text(style.text(), SafeHtmlUtils.fromString(item.getDisplayValue()));
+                textHtml = template.text("explorerCell-text", SafeHtmlUtils.fromString(item.getDisplayValue()));
             }
 
             final SafeHtmlBuilder content = new SafeHtmlBuilder();
@@ -98,39 +88,8 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
             content.append(iconHtml);
             content.append(textHtml);
 
-            sb.append(template.outer(style.outer(), content.toSafeHtml()));
+            sb.append(template.outer("explorerCell-outer", content.toSafeHtml()));
         }
-    }
-
-    private SafeHtml getImageHtml(final ImageResource res) {
-        // Get the HTML for the image.
-        final AbstractImagePrototype proto = AbstractImagePrototype.create(res);
-        final SafeHtml image = SafeHtmlUtils.fromTrustedString(proto.getHTML());
-        return image;
-    }
-
-    public interface Style extends CssResource {
-
-        /**
-         * The path to the default CSS styles used by this resource.
-         */
-        String DEFAULT_CSS = "stroom/explorer/client/view/ExplorerCell.css";
-
-        String outer();
-
-        String expander();
-
-        String expanderIcon();
-
-        String icon();
-
-        String text();
-    }
-
-    interface Resources extends ClientBundle {
-
-        @Source(Style.DEFAULT_CSS)
-        Style style();
     }
 
     interface Template extends SafeHtmlTemplates {
@@ -139,6 +98,9 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
 
         @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
         SafeHtml expander(String iconClass, SafeStyles styles, SafeHtml icon);
+
+        @Template("<div class=\"{0}\" />")
+        SafeHtml node(String iconClass);
 
         @Template("<img class=\"{0}\" src=\"{1}\" />")
         SafeHtml icon(String iconClass, SafeUri iconUrl);

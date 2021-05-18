@@ -21,14 +21,13 @@
         .scroll {
         width: 100%;
         height: 100%;
-        border: 1px solid #c5cde2;
-        background-color: white;
+        border: solid;
         padding: 5px;
         }
     </ui:style>
 
     <!-- Add a focus panel as the root so we can catch all keyboard events. -->
-    <g:MaxScrollPanel styleName="{style.scroll}" ui:field="scrollPanel">
+    <g:MaxScrollPanel styleName="{style.scroll} stroom-content stroom-border" ui:field="scrollPanel">
         <g:HTML ui:field="html"/>
     </g:MaxScrollPanel>
 </ui:UiBinder>

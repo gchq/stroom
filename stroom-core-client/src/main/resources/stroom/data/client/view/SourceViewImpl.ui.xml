@@ -10,7 +10,6 @@
         .layout {
         width: 100%;
         height: 100%;
-        background-color: white;
         }
 
         .buttonPanel {
@@ -46,7 +45,7 @@
         }
     </ui:style>
 
-    <g:DockLayoutPanel unit="PX" styleName="{style.layout}">
+    <g:DockLayoutPanel unit="PX" styleName="{style.layout} stroom-content">
         <g:center>
             <v:ResizeFlowPanel width="100%" height="100%">
                 <v:ResizeSimplePanel ui:field="container"
@@ -60,7 +59,7 @@
             </v:ResizeFlowPanel>
         </g:center>
         <g:north size="20">
-            <g:DockLayoutPanel unit="PX" styleName="{style.layout}">
+            <g:DockLayoutPanel unit="PX" styleName="{style.layout} stroom-content">
                 <g:center>
                     <v:ResizeFlowPanel width="100%" height="100%">
                         <g:Label styleName="{style.titleHeading}">Feed:</g:Label>

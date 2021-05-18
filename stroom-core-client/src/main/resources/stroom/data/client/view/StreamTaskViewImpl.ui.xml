@@ -4,25 +4,23 @@
     .top {
     	width: 100%;
     	height: 100%;
-    	border-bottom: 1px solid #c5cde2;
-    	background: white;
+    	border-bottom: solid;
     }
     
     .middle {
     	width: 100%;
     	height: 100%;
-    	border-top: 1px solid #c5cde2;
-    	border-bottom: 1px solid #c5cde2;
-    	background: white;
+    	border-top: solid;
+    	border-bottom: solid;
     }
   </ui:style>
 
   <g:MySplitLayoutPanel width="100%" height="100%">
     <g:north size="400">
-      <v:ResizeSimplePanel ui:field="streamTaskSummary" styleName="{style.top}" />
+      <v:ResizeSimplePanel ui:field="streamTaskSummary" styleName="{style.top} stroom-content stroom-border" />
     </g:north>
     <g:center>
-      <v:ResizeSimplePanel ui:field="streamTaskList" styleName="{style.middle}" />
+      <v:ResizeSimplePanel ui:field="streamTaskList" styleName="{style.middle} stroom-content stroom-border" />
     </g:center>
   </g:MySplitLayoutPanel>
 </ui:UiBinder>

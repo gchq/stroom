@@ -6,23 +6,20 @@
     .top {
     	width: 100%;
     	height: 100%;
-    	border-bottom: 1px solid #c5cde2;
-    	background: white;
+    	border-bottom: solid;
     }
     
     .middle {
     	width: 100%;
     	height: 100%;
-    	border-top: 1px solid #c5cde2;
-    	border-bottom: 1px solid #c5cde2;
-    	background: white;
+    	border-top: solid;
+    	border-bottom: solid;
     }
     
     .bottom {
     	width: 100%;
     	height: 100%;
-    	background-color: white;
-    	border-top: 1px solid #c5cde2;
+    	border-top: solid;
     }
     .statusIcon {
         padding-top: 10px;
@@ -32,18 +29,18 @@
   <g:MySplitLayoutPanel width="100%" height="100%">
     <g:north size="200">
       <v:ResizeSimplePanel ui:field="streamList"
-        styleName="{style.top}" />
+        styleName="{style.top} stroom-content stroom-border" />
     </g:north>
     <g:center>
       <g:MySplitLayoutPanel width="100%" height="100%">
           <g:north size="150">
           <v:ResizeSimplePanel ui:field="streamRelationList"
-            styleName="{style.middle}">
+            styleName="{style.middle} stroom-content stroom-border">
           </v:ResizeSimplePanel>
         </g:north>
         <g:center>
           <v:ResizeSimplePanel ui:field="data"
-            styleName="{style.bottom}" />
+            styleName="{style.bottom} stroom-content stroom-border" />
         </g:center>
       </g:MySplitLayoutPanel>
     </g:center>

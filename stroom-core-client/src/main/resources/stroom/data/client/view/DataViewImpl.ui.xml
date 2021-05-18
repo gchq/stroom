@@ -10,7 +10,6 @@
 		.layout {
 		width: 100%;
 		height: 100%;
-		background-color: white;
 		}
 
 		.tabBarOuter {
@@ -62,7 +61,7 @@
 		}
 	</ui:style>
 
-	<g:DockLayoutPanel unit="PX" styleName="{style.layout}">
+	<g:DockLayoutPanel unit="PX" styleName="{style.layout} stroom-content">
 		<g:center>
 			<tab:LayerContainerImpl ui:field="layerContainer"
 				width="100%" height="100%" />

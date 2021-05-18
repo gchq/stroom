@@ -5,8 +5,7 @@
 		.sp {
 			width: 100%;
 			height: 100%;
-			border: solid 1px #c5cde2;
-			background-color: white;
+			border: solid;
 		}
 		
 		.cellList {
@@ -17,10 +16,10 @@
 
 	<g:MySplitLayoutPanel width="100%" height="100%">
 		<g:south size="120">
-			<g:ScrollPanel ui:field="bottom" styleName="{style.sp}" />
+			<g:ScrollPanel ui:field="bottom" styleName="{style.sp} stroom-content stroom-border" />
 		</g:south>
 		<g:center>
-			<g:ScrollPanel ui:field="top" styleName="{style.sp}">
+			<g:ScrollPanel ui:field="top" styleName="{style.sp} stroom-content stroom-border">
 				<l:CustomCellList ui:field="cellList" styleName="{style.cellList}" />
 			</g:ScrollPanel>
 		</g:center>

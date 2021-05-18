@@ -11,13 +11,13 @@
         .nameFilter {
         width: 100%;
         border: none !important;
-        border-bottom: 1px solid #C5CDE2 !important;
+        border-bottom: solid !important;
         }
     </ui:style>
 
     <g:DockLayoutPanel unit="PX" styleName="itemCheckList {style.max}">
         <g:north size="19">
-            <v:QuickFilter ui:field="nameFilter" addStyleNames="{style.nameFilter}"/>
+            <v:QuickFilter ui:field="nameFilter" addStyleNames="{style.nameFilter} stroom-border"/>
         </g:north>
         <g:center>
             <g:MaxScrollPanel>

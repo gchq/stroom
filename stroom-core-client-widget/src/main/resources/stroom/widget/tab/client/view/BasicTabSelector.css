@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@external .*;
 
 .basicTabSelector {
 	position: absolute;
@@ -24,8 +25,8 @@
 	cursor: pointer;
 }
 
-@sprite .basicTabSelector .arrows {
-	gwt-image: 'arrows';
+.basicTabSelector .arrows {
+	background-image: url("images/tabs/arrows.png");
 	position: absolute;
 	width: 8px;
 	height: 5px;
@@ -37,4 +38,8 @@
 	margin-left: 7px;
 	margin-top: 7px;
 	-moz-user-select: none;
+}
+
+.stroom-theme-dark .basicTabSelector .arrows {
+	background-image: url("images/tabs/arrows-dark.png");
 }

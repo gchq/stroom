@@ -23,14 +23,10 @@
         white-space: nowrap;
         }
 
-        .scrollPanel {
-        background: white;
-        }
-
         .bar {
         position: relative;
         padding: 0px 2px;
-        border-bottom: 1px solid #c5cde2;
+        border-bottom: solid;
         }
 
         .bar div {
@@ -39,17 +35,15 @@
         }
 
         .top {
-        border-bottom: 1px solid #c5cde2;
-        background-color: white;
+        border-bottom: solid;
         }
 
         .middle {
-        border-top: 1px solid #c5cde2;
+        border-top: solid;
         }
 
         .bottom {
-        border-top: 1px solid #c5cde2;
-        background-color: white;
+        border-top: solid;
         }
 
         .list {
@@ -75,7 +69,7 @@
 
     <g:DockLayoutPanel unit="PX" addStyleNames="{style.layout}">
         <g:north size="19">
-            <g:FlowPanel styleName="{style.bar}">
+            <g:FlowPanel styleName="{style.bar} stroom-border">
                 <g:FlowPanel styleName="{style.buttons}">
                     <v:SvgButton ui:field="add"/>
                     <v:SvgButton ui:field="remove"/>
@@ -89,15 +83,15 @@
         <g:center>
             <g:MySplitLayoutPanel vSplits="0.4">
                 <g:north size="200">
-                    <g:MaxScrollPanel ui:field="treeContainer" addStyleNames="{style.top}"/>
+                    <g:MaxScrollPanel ui:field="treeContainer" addStyleNames="{style.top} stroom-content stroom-border"/>
                 </g:north>
                 <g:center>
-                    <g:MySplitLayoutPanel vSplits="0.5" styleName="{style.middle}">
+                    <g:MySplitLayoutPanel vSplits="0.5" styleName="{style.middle} stroom-border">
                         <g:north size="200">
-                            <view:ResizeSimplePanel ui:field="properties" styleName="{style.top}"/>
+                            <view:ResizeSimplePanel ui:field="properties" styleName="{style.top} stroom-content stroom-border"/>
                         </g:north>
                         <g:center>
-                            <view:ResizeSimplePanel ui:field="pipelineReferences" styleName="{style.bottom}"/>
+                            <view:ResizeSimplePanel ui:field="pipelineReferences" styleName="{style.bottom} stroom-content stroom-border"/>
                         </g:center>
                     </g:MySplitLayoutPanel>
                 </g:center>

@@ -679,10 +679,6 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
 
         String dataGridHeaderBackground();
 
-        String dataGridHeaderSelected();
-
-        String dataGridResizableCell();
-
         String dataGridCellWrapText();
 
         String dataGridCellVerticalTop();

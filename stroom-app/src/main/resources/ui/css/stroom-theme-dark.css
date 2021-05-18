@@ -17,16 +17,20 @@
 /** 
  * Colours used for this dark theme
  *
- * Content Background Colour: #262626
+ * Content Background Colour: #1a1d21
  * Text Colour: #e6e1dc
  * Panel Background Colour: #444444
  */
 .stroom-theme-dark body {
-	color: #e6e1dc;	
+	color: #e6e1dc;
+}
+
+.stroom-theme-dark .stroom-body {
+	background-color: #19171d !important;
 }
 
 .stroom-theme-dark .stroom-content, .stroom-theme-dark input {
-	background-color: #262626;	
+	background-color: #1a1d21;
 }
 
 .stroom-theme-dark .stroom-content-container {
@@ -38,10 +42,31 @@
 	padding: 0px;
 	border: 1px solid #555;
 	background-image: none;
-	background-color: #262626;
+	background-color: #1a1d21;
 }
 
 .stroom-theme-dark .stroom-border {
 	border-color: #555;	
 	border-width: 1px;
+}
+
+/*
+.stroom-theme-dark input[type="text"] {
+    border: solid 1px #555 !important;
+}
+*/
+
+.stroom-theme-dark .gwt-TextBox,.gwt-PasswordTextBox,.gwt-ListBox,.gwt-TextArea,.gwt-DateBox,.stroom-DropDownTree,input[type="text"],input[type="checkbox"] {
+	border-color: #555;
+	background-color: #000;
+}
+
+.stroom-theme-dark .dataGridSelectedRow,.cellTableSelectedRow {
+    background: #1164a3 !important;
+	background-color: #1164a3 !important;
+	color: #fff !important;
+}
+
+.stroom-theme-dark .com-google-gwt-user-client-ui-CustomScrollPanel-Style-customScrollPanelCorner {
+  background: #000;
 }

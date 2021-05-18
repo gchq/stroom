@@ -25,9 +25,6 @@ import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.DOM;
@@ -43,7 +40,6 @@ public class TickBox extends Composite
         implements HasValue<TickBoxState>, HasValueChangeHandlers<TickBoxState>, HasBooleanValue {
 
     private static volatile Binder binder;
-    private static volatile Resources resources;
     @UiField
     FlowPanel layout;
     @UiField
@@ -65,8 +61,6 @@ public class TickBox extends Composite
             synchronized (TickBox.class) {
                 if (binder == null) {
                     binder = GWT.create(Binder.class);
-                    resources = GWT.create(Resources.class);
-                    resources.style().ensureInjected();
                 }
             }
         }
@@ -78,7 +72,7 @@ public class TickBox extends Composite
 
         if (text != null) {
             lblText = new Label(text, false);
-            lblText.setStyleName(resources.style().text());
+            lblText.setStyleName("tickBox-text");
             layout.add(lblText);
         }
     }
@@ -141,23 +135,23 @@ public class TickBox extends Composite
         switch (state) {
             case TICK:
                 if (enabled) {
-                    image.setResource(resources.tick());
+                    image.getElement().setClassName("tickBox-tick");
                 } else {
-                    image.setResource(resources.tickDisabled());
+                    image.getElement().setClassName("tickBox-tickDisabled");
                 }
                 break;
             case HALF_TICK:
                 if (enabled) {
-                    image.setResource(resources.halfTick());
+                    image.getElement().setClassName("tickBox-halfTick");
                 } else {
-                    image.setResource(resources.halfTickDisabled());
+                    image.getElement().setClassName("tickBox-halfTickDisabled");
                 }
                 break;
             case UNTICK:
                 if (enabled) {
-                    image.setResource(resources.untick());
+                    image.getElement().setClassName("tickBox-untick");
                 } else {
-                    image.setResource(resources.untickDisabled());
+                    image.getElement().setClassName("tickBox-untickDisabled");
                 }
                 break;
         }
@@ -189,7 +183,7 @@ public class TickBox extends Composite
         if (text != null) {
             if (lblText == null) {
                 lblText = new Label(text, false);
-                lblText.setStyleName(resources.style().text());
+                lblText.setStyleName("tickBox-text");
                 layout.add(lblText);
             } else {
                 lblText.setText(text);
@@ -208,32 +202,5 @@ public class TickBox extends Composite
 
     public interface Binder extends UiBinder<Widget, TickBox> {
 
-    }
-
-    public interface Style extends CssResource {
-
-        String outer();
-
-        String tickBox();
-
-        String text();
-    }
-
-    public interface Resources extends ClientBundle {
-
-        ImageResource tick();
-
-        ImageResource halfTick();
-
-        ImageResource untick();
-
-        ImageResource tickDisabled();
-
-        ImageResource halfTickDisabled();
-
-        ImageResource untickDisabled();
-
-        @Source("tickbox.css")
-        Style style();
     }
 }

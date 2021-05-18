@@ -7,13 +7,9 @@
     	width: 100%;
     	height: 100%;
     }
-    
-    .white {
-    	background-color: white;
-    }
   </ui:style>
 
-  <g:SimplePanel styleName='{style.max} {style.white}'>
+  <g:SimplePanel styleName='{style.max} stroom-content'>
     <c:CellTable ui:field='cellTable' addStyleNames='{style.max}' pageSize='100' />
   </g:SimplePanel>
 </ui:UiBinder>

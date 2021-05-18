@@ -3,10 +3,9 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:tab="urn:import:stroom.widget.tab.client.view">
   <ui:style>
     .bar {
-    	border-bottom: 1px solid #c5cde2;
+    	border-bottom: solid;
     	width: 100%;
     	height: 100%;
-        background-color: white;
     }
     
     .left {
@@ -20,14 +19,13 @@
     }
     
     .treeContainer {
-    	border-bottom: 1px solid #c5cde2;
-    	background-color: white;
+    	border-bottom: solid;
     	width: 100%;
     	height: 100%;
     }
     
     .layerContainer {
-    	border-top: 1px solid #c5cde2;
+    	border-top: solid;
     	width: 100%;
     	height: 100%;
     }
@@ -43,7 +41,7 @@
   </ui:style>
   <g:DockLayoutPanel unit="PX" width="100%" height="100%">
     <g:north size="19">
-      <g:SimplePanel styleName="{style.bar}">
+      <g:SimplePanel styleName="{style.bar} stroom-content stroom-border">
         <g:Grid width="100%" height="100%">
           <g:row>
             <g:customCell styleName="{style.left}">
@@ -60,11 +58,11 @@
       <g:MySplitLayoutPanel ui:field="bottomLayout">
         <g:north size="31">
           <g:ScrollPanel ui:field="treeContainer"
-            addStyleNames="{style.treeContainer}" />
+            addStyleNames="{style.treeContainer} stroom-content stroom-border" />
         </g:north>
         <g:center>
           <tab:LayerContainerImpl ui:field="layerContainer"
-            addStyleNames="{style.layerContainer}" />
+            addStyleNames="{style.layerContainer} stroom-border" />
         </g:center>
       </g:MySplitLayoutPanel>
     </g:center>

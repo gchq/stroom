@@ -14,7 +14,15 @@
  * limitations under the License.
  */
 
-.outer {
+.tickBoxCell-outer {
+ 	display: inline-block;
+ 	padding: 0px;
+ 	margin: 0px;
+ 	margin-right: 2px;
+ 	font-size: 0px;
+ }
+
+.tickBoxCell {
 	display: inline-block;
 	width: 13px;
 	height: 16px;
@@ -25,5 +33,16 @@
 	font-size: 0px;
 	overflow: hidden;
 	position: relative;
+	vertical-align: top;
+}
+
+.tickBoxCell-margin {
+	width: 13px;
+	height: 13px;
+	padding: 0px;
+	margin: 0px;
+	margin-top: 1px;
+	margin-bottom: 1px;
+	font-size: 0px;
 	vertical-align: top;
 }

@@ -3409,6 +3409,14 @@ export interface UserAndPermissions {
   userId?: string;
 }
 
+export interface UserPreferences {
+  /** The string formatting to apply to a date value */
+  dateTimeFormat?: DateTimeFormatSettings;
+  font?: string;
+  fontSize?: string;
+  theme?: string;
+}
+
 export interface ValidateExpressionResult {
   ok?: boolean;
   string?: string;
@@ -6699,6 +6707,43 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       this.request<any, PipelineDoc>({
         path: `/pipeline/v1/${uuid}`,
         method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+  };
+  preferences = {
+    /**
+     * No description
+     *
+     * @tags Preferences
+     * @name FetchUserPreferences
+     * @summary Fetch user preferences.
+     * @request GET:/preferences/v1
+     * @secure
+     */
+    fetchUserPreferences: (params: RequestParams = {}) =>
+      this.request<any, UserPreferences>({
+        path: `/preferences/v1`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Preferences
+     * @name UpdateUserPreferences
+     * @summary Update user preferences
+     * @request POST:/preferences/v1
+     * @secure
+     */
+    updateUserPreferences: (data: UserPreferences, params: RequestParams = {}) =>
+      this.request<any, number>({
+        path: `/preferences/v1`,
+        method: "POST",
         body: data,
         secure: true,
         type: ContentType.Json,

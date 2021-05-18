@@ -11,17 +11,6 @@
         vertical-align: top;
         white-space: nowrap;
         }
-
-        .retentionExpressionPanel {
-        width: 100%;
-        height: 100%;
-        border: solid 1px #c5cde2;
-        background-color: white;
-        }
-
-        input[type="text"] {
-        border: solid 1px #c5cde2;
-        }
     </ui:style>
     <view:ResizeSimplePanel styleName="stroom-control-page" width="100%" height="100%">
         <g:DockLayoutPanel unit="PX" width="100%" height="100%">

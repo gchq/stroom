@@ -20,7 +20,6 @@ import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.DOM;
 
 public class BasicTabSelector extends AbstractTabSelector {
@@ -65,9 +64,6 @@ public class BasicTabSelector extends AbstractTabSelector {
     }
 
     public interface Resources extends ClientBundle {
-
-        @Source("arrows.png")
-        ImageResource arrows();
 
         @Source("BasicTabSelector.css")
         Style style();

@@ -10,8 +10,7 @@
         .scrollPanel {
         width: 100%;
         height: 100%;
-        background: white;
-        border: 1px solid #C5CDE2 !important;
+        border: solid !important;
         }
 
         .cascade {
@@ -38,7 +37,7 @@
                             <g:Label ui:field="permissionsLabel" text="Permissions:" width="100%"/>
                         </g:north>
                         <g:center>
-                            <g:ScrollPanel ui:field="permissions" styleName="{style.scrollPanel}"/>
+                            <g:ScrollPanel ui:field="permissions" styleName="{style.scrollPanel} stroom-content stroom-border"/>
                         </g:center>
                     </g:DockLayoutPanel>
                 </g:north>
@@ -48,7 +47,7 @@
                             <g:Label ui:field="createPermissionsLabel" text="Create Permissions:" width="100%"/>
                         </g:north>
                         <g:center>
-                            <g:ScrollPanel ui:field="createPermissions" styleName="{style.scrollPanel}"/>
+                            <g:ScrollPanel ui:field="createPermissions" styleName="{style.scrollPanel} stroom-content stroom-border"/>
                         </g:center>
                     </g:DockLayoutPanel>
                 </g:center>

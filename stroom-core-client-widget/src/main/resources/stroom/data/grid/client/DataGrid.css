@@ -13,6 +13,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+@external .*;
+
 @def selectionBorderWidth 0px ;
 .dataGridWidget {
 	
@@ -60,12 +62,12 @@
 	border-bottom: #dddddd solid 1px;
 }
 
-.dataGridHeader * {
-	font-weight: 500;
+.stroom-theme-dark .dataGridHeader {
+	border-bottom: #444 solid 1px;
 }
 
-@sprite .dataGridHeaderSelected {
-	gwt-image: 'headerHighlight';
+.dataGridHeader * {
+	font-weight: 500;
 }
 
 .dataGridCell {
@@ -249,4 +251,8 @@
 	opacity: 0;
 	z-index: 10;
 	cursor: default;
+}
+
+.stroom-theme-dark .dataGridEvenRow {
+    background-color: #000;
 }

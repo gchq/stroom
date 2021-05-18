@@ -57,3 +57,7 @@ body {
 	border-color: #c5cde2;
 	border-width: 1px;
 }
+
+input[type="text"] {
+    border: solid 1px #c5cde2;
+}

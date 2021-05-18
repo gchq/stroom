@@ -31,7 +31,6 @@ import com.google.gwt.event.dom.client.MouseUpEvent;
 import com.google.gwt.event.dom.client.MouseUpHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.DOM;
@@ -336,9 +335,6 @@ public class ResizableDialog extends AbstractPopupPanel {
     }
 
     public interface Resources extends ClientBundle {
-
-        @Source("resizeBottomRight.png")
-        ImageResource resizeBottomRight();
 
         @Source(Style.DEFAULT_STYLE)
         Style style();

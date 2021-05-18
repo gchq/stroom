@@ -13,6 +13,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+@external .*;
+
 @def selectionBorderWidth 0px;
 .cellTableWidget {
   
@@ -134,4 +136,12 @@ background-color: #DFEAF8;
 .cellTableLoading {
   text-align: right;
   padding: 5px;
+}
+
+.stroom-theme-dark .cellTableEvenRow {
+  background: #1a1d21;
+}
+
+.stroom-theme-dark .cellTableOddRow {
+  background: #1a1d21;
 }

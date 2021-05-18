@@ -6,15 +6,13 @@
     .north {
     	width: 100%;
     	height: 100%;
-    	border-bottom: 1px solid #c5cde2;
-    	background-color: white;
+    	border-bottom: solid;
     }
     
     .south {
     	width: 100%;
     	height: 100%;
-    	border-top: 1px solid #c5cde2;
-    	background-color: white;
+    	border-top: solid;
     }
     
     .details {
@@ -25,10 +23,10 @@
   <g:MySplitLayoutPanel vSplits="0.5" width="100%" height="100%">
     <g:north size="200">
       <view:ResizeSimplePanel ui:field="processorList"
-        addStyleNames="{style.north}" />
+        addStyleNames="{style.north} stroom-content stroom-border" />
     </g:north>
     <g:center>
-      <g:MaxScrollPanel addStyleNames="{style.south}">
+      <g:MaxScrollPanel addStyleNames="{style.south} stroom-content stroom-border">
         <g:SimplePanel ui:field="details" />
       </g:MaxScrollPanel>
     </g:center>

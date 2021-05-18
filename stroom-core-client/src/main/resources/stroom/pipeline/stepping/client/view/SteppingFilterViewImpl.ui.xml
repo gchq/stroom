@@ -3,7 +3,7 @@
   xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:v="urn:import:stroom.widget.button.client">
   <ui:style>
     .outer {
-    border: solid 1px #c5cde2;
+    border: solid;
     width: 100%;
     height: 100%;
     }
@@ -35,7 +35,7 @@
           </g:FlowPanel>
         </g:west>
         <g:center>
-          <g:SimplePanel ui:field="xPathList" addStyleNames="{style.outer}" />
+          <g:SimplePanel ui:field="xPathList" addStyleNames="{style.outer} stroom-border" />
         </g:center>
       </g:DockLayoutPanel>
     </g:center>

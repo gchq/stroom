@@ -6,14 +6,13 @@
         .layout {
         width: 100%;
         height: 100%;
-        background-color: white;
         }
 
         .synchState {
         padding: 5px;
         }
     </ui:style>
-    <g:DockLayoutPanel unit="PX" styleName="{style.layout}">
+    <g:DockLayoutPanel unit="PX" styleName="{style.layout} stroom-content">
         <g:south size="200">
             <g:MaxScrollPanel>
                 <g:HTML ui:field="synchState" styleName="{style.synchState}"/>

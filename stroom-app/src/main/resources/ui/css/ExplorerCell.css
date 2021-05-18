@@ -1,0 +1,60 @@
+.explorerCell-outer {
+    display: inline-block;
+    white-space: nowrap;
+    vertical-align: top;
+}
+
+.explorerCell-outer * {
+    display: inline-block;
+    white-space: nowrap;
+    vertical-align: top;
+}
+
+.explorerCell-expander {
+    padding-top: 1px;
+}
+
+.explorerCell-expanderIcon {
+    width: 14px;
+    height: 14px;
+}
+
+.explorerCell-icon {
+    padding-left: 3px;
+    padding-top: 1px;
+    width: 16px;
+    height: 16px;
+}
+
+.explorerCell-text {
+    padding-left: 3px;
+    padding-right: 2px;
+    padding-top: 2px;
+}
+
+.explorerCell-treeOpen {
+    background-image: url("../images/tree-open.svg");
+    background-size: 100%;
+}
+
+.explorerCell-treeClosed {
+    background-image: url("../images/tree-closed.svg");
+    background-size: 100%;
+}
+
+.explorerCell-treeLeaf {
+    background-image: url("../images/tree-leaf.svg");
+    background-size: 100%;
+}
+
+.stroom-theme-dark .explorerCell-treeOpen {
+    background-image: url("../images/tree-open-dark.svg");
+}
+
+.stroom-theme-dark .explorerCell-treeClosed {
+    background-image: url("../images/tree-closed-dark.svg");
+}
+
+.stroom-theme-dark .explorerCell-treeLeaf {
+    background-image: url("../images/tree-leaf-dark.svg");
+}

@@ -5,11 +5,10 @@
 		.layout {
 			width: 400px;
 			height: 200px;
-			background-color: white;
-			border: 1px solid #c5cde2;
+			border: solid;
 		}
 	</ui:style>
-	<g:SimplePanel styleName="{style.layout}">
+	<g:SimplePanel styleName="{style.layout} stroom-content stroom-border">
 		<g:MaxScrollPanel>
 			<g:FlowPanel ui:field="taskList" />
 		</g:MaxScrollPanel>

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@external .*;
 
 .curveTab {
 	position: absolute;
@@ -46,23 +47,29 @@
 	opacity: 1;
 }
 
-@sprite .curveTab .leftBackground {
-	gwt-image: 'left';
+.curveTab .leftBackground {
+	background-image: url("images/tabs/left.png");
 	position: absolute;
 	left: 0px;
 	top: 0px;
+    width: 5px;
+    height: 25px;
 }
 
-@sprite .curveTab .midBackground {
-	gwt-image: 'middle';
+.curveTab .midBackground {
+	background-image: url("images/tabs/middle.png");
+	background-repeat: repeat-x;
 	width: 100%;
+	height: 25px;
 }
 
-@sprite .curveTab .rightBackground {
-	gwt-image: 'right';
+.curveTab .rightBackground {
+	background-image: url("images/tabs/right.png");
 	position: absolute;
 	right: 0px;
 	top: 0px;
+    width: 15px;
+    height: 25px;
 }
 
 /* Tab content */
@@ -98,11 +105,16 @@
 	white-space: nowrap;
 	padding: 6px 32px 0px 26px;
 	-moz-user-select: none;
+	opacity: 0.8;
+}
+
+.curveTab.selected .text {
+	opacity: 1;
 }
 
 /* Close button */
-@sprite .curveTab  .close {
-	gwt-image: 'close';
+.curveTab  .close {
+	background-image: url("images/tabs/close.png");
 	position: absolute;
 	right: 15px;
 	top: 8px;
@@ -110,11 +122,31 @@
 	cursor: pointer;
 }
 
-@sprite .curveTab  .closeActive	{
-	gwt-image: 'closeActive';
+.curveTab  .closeActive	{
+	background-image: url("images/tabs/closeActive.png");
 	position: absolute;
 	right: 15px;
 	top: 8px;
 	-moz-user-select: none;
 	cursor: pointer;
 }
+
+
+
+
+.stroom-theme-dark .curveTab .leftBackground {
+	background-image: url("images/tabs/left-dark.png");
+}
+
+.stroom-theme-dark .curveTab .midBackground {
+	background-image: url("images/tabs/middle-dark.png");
+}
+
+.stroom-theme-dark .curveTab .rightBackground {
+	background-image: url("images/tabs/right-dark.png");
+}
+
+.stroom-theme-dark .curveTab  .close {
+	background-image: url("images/tabs/close-dark.png");
+}
+
