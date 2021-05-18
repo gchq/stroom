@@ -25,6 +25,8 @@ import java.sql.Connection;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -386,17 +388,22 @@ public final class JooqUtil {
     }
 
     public static Collection<OrderField<?>> getOrderFields(final Map<String, Field<?>> fieldMap,
-                                                           final BaseCriteria criteria) {
-        if (criteria.getSortList() == null) {
-            return Collections.emptyList();
+                                                           final BaseCriteria criteria,
+                                                           final OrderField<?>... defaultSortFields) {
+        if (criteria.getSortList() == null || criteria.getSortList().isEmpty()) {
+            if (defaultSortFields != null && defaultSortFields.length > 0) {
+                return new ArrayList<>(Arrays.asList(defaultSortFields));
+            } else {
+                return Collections.emptyList();
+            }
+        } else {
+            return criteria.getSortList()
+                    .stream()
+                    .map(s -> getOrderField(fieldMap, s))
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .collect(Collectors.toList());
         }
-
-        return criteria.getSortList()
-                .stream()
-                .map(s -> getOrderField(fieldMap, s))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .collect(Collectors.toList());
     }
 
     private static Optional<OrderField<?>> getOrderField(final Map<String, Field<?>> fieldMap,

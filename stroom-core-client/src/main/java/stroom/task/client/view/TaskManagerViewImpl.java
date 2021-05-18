@@ -19,6 +19,7 @@ package stroom.task.client.view;
 import stroom.task.client.presenter.TaskManagerPresenter;
 import stroom.task.client.presenter.TaskManagerUiHandlers;
 import stroom.task.shared.FindTaskProgressCriteria;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 
@@ -42,16 +43,20 @@ public class TaskManagerViewImpl extends ViewWithUiHandlers<TaskManagerUiHandler
     SimplePanel listContainer;
 
     @Inject
-    public TaskManagerViewImpl(final Binder binder) {
+    public TaskManagerViewImpl(final Binder binder, final UiConfigCache uiConfigCache) {
         widget = binder.createAndBindUi(this);
-        nameFilter.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
-                "Server Tasks Quick Filter",
-                builder -> builder
-                        .addLine("Matched tasks are displayed in black, un-matched but related tasks are " +
-                                "displayed in grey.")
-                        .addLine("All relations of a matched task will be included in the results.")
-                        .addBreak(),
-                FindTaskProgressCriteria.FIELD_DEFINITIONS));
+
+        uiConfigCache.get()
+                .onSuccess(uiConfig ->
+                        nameFilter.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
+                                "Server Tasks Quick Filter",
+                                builder -> builder
+                                        .addLine("Matched tasks are displayed in black, un-matched but related " +
+                                                "tasks are displayed in grey.")
+                                        .addLine("All relations of a matched task will be included in the results.")
+                                        .addBreak(),
+                                FindTaskProgressCriteria.FIELD_DEFINITIONS,
+                                uiConfig.getHelpUrl())));
     }
 
     @Override

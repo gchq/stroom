@@ -5,6 +5,7 @@ import stroom.importexport.client.presenter.DependenciesTabPresenter.Dependencie
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -25,15 +26,19 @@ public class DependenciesTabPresenter
     @Inject
     public DependenciesTabPresenter(final EventBus eventBus,
                                     final DependenciesTabView view,
-                                    final DependenciesPresenter dependenciesPresenter) {
+                                    final DependenciesPresenter dependenciesPresenter,
+                                    final UiConfigCache uiConfigCache) {
         super(eventBus, view);
         this.dependenciesPresenter = dependenciesPresenter;
         view.setUiHandlers(this);
         setInSlot(LIST, dependenciesPresenter);
 
-        view.setHelpTooltipText(QuickFilterTooltipUtil.createTooltip(
-                "Dependencies Quick Filter Syntax",
-                DependencyCriteria.FIELD_DEFINITIONS));
+        uiConfigCache.get()
+                .onSuccess(uiConfig ->
+                        view.setHelpTooltipText(QuickFilterTooltipUtil.createTooltip(
+                                "Dependencies Quick Filter Syntax",
+                                DependencyCriteria.FIELD_DEFINITIONS,
+                                uiConfig.getHelpUrl())));
     }
 
     @Override
