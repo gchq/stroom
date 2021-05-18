@@ -37,7 +37,7 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
     INTEGER(DataSourceFieldType.INTEGER_FIELD, "Integer", true, false, new String[]{ "integer", "short", "byte" }),
     LONG(DataSourceFieldType.LONG_FIELD, "Long", true, false, new String[]{ "long", "unsigned_long" }),
     FLOAT(DataSourceFieldType.FLOAT_FIELD, "Float", false, true, new String[]{ "float", "half_float", "scaled_float" }),
-    DOUBLE(DataSourceFieldType.DOUBLE_FIELD, "Double", true, true, new String[]{ "double" }),
+    DOUBLE(DataSourceFieldType.DOUBLE_FIELD, "Double", false, true, new String[]{ "double" }),
     DATE(DataSourceFieldType.DATE_FIELD, "Date", false, false, new String[]{ "date" }),
     TEXT(DataSourceFieldType.TEXT_FIELD, "Text", false, false, new String[]{ "text", "keyword", "constant_keyword", "wildcard" });
 
