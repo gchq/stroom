@@ -53,11 +53,12 @@ public class CellTableViewImpl<R> extends ViewImpl implements CellTableView<R> {
     }
 
     public CellTableViewImpl(final boolean supportsSelection) {
-        this(supportsSelection, GWT.create(BasicResources.class), "basicCellTable");
+        this(supportsSelection, "basicCellTable");
     }
 
-    public CellTableViewImpl(final boolean supportsSelection, final Resources resources, final String className) {
-        cellTable = new CellTable<>(DataGridViewImpl.DEFAULT_LIST_PAGE_SIZE, resources);
+    public CellTableViewImpl(final boolean supportsSelection, final String className) {
+        final BasicResources basicResources = GWT.create(BasicResources.class);
+        cellTable = new CellTable<>(DataGridViewImpl.DEFAULT_LIST_PAGE_SIZE, basicResources);
         cellTable.setWidth("100%");
         cellTable.getElement().setClassName(className);
 
@@ -213,51 +214,5 @@ public class CellTableViewImpl<R> extends ViewImpl implements CellTableView<R> {
         @Override
         @Source(BasicStyle.DEFAULT_CSS)
         BasicStyle cellTableStyle();
-    }
-
-    @ImportedWithPrefix("gwt-CellTable")
-    public interface DefaultStyle extends Style {
-
-        String DEFAULT_CSS = "stroom/data/table/client/DefaultCellTable.css";
-    }
-
-    public interface DefaultResources extends Resources {
-
-        @Override
-        @Source(DefaultStyle.DEFAULT_CSS)
-        DefaultStyle cellTableStyle();
-    }
-
-    @ImportedWithPrefix("gwt-CellTable")
-    public interface DisabledStyle extends Style {
-
-        String DEFAULT_CSS = "stroom/data/table/client/DisabledCellTable.css";
-    }
-
-    public interface DisabledResources extends Resources {
-
-        @Override
-        @Source(DisabledStyle.DEFAULT_CSS)
-        DisabledStyle cellTableStyle();
-    }
-
-    @ImportedWithPrefix("gwt-CellTable")
-    public interface HoverStyle extends Style {
-
-        String DEFAULT_CSS = "stroom/data/table/client/HoverCellTable.css";
-    }
-
-    public interface HoverResources extends Resources {
-
-        @Override
-        @Source(HoverStyle.DEFAULT_CSS)
-        HoverStyle cellTableStyle();
-    }
-
-    public interface MenuResources extends Resources {
-
-        @Override
-        @Source("MenuCellTable.css")
-        Style cellTableStyle();
     }
 }

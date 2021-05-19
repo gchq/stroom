@@ -19,11 +19,9 @@ package stroom.dashboard.client.main;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.data.table.client.CellTableView;
 import stroom.data.table.client.CellTableViewImpl;
-import stroom.data.table.client.CellTableViewImpl.HoverResources;
 import stroom.widget.util.client.MySingleSelectionModel;
 
 import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.SelectionChangeEvent.Handler;
@@ -41,8 +39,7 @@ public class ComponentAddPresenter extends MyPresenterWidget<CellTableView<Compo
 
     @Inject
     public ComponentAddPresenter(final EventBus eventBus) {
-        super(eventBus, new CellTableViewImpl<>(true, GWT.create(HoverResources.class),
-                "hoverCellTable"));
+        super(eventBus, new CellTableViewImpl<>(true, "hoverCellTable"));
         // // Icon.
         // final Column<ElementType, ImageResource> iconColumn = new
         // Column<ElementType, ImageResource>(

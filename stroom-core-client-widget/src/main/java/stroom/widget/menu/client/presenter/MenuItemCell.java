@@ -16,7 +16,6 @@
 
 package stroom.widget.menu.client.presenter;
 
-import stroom.data.table.client.CellTableViewImpl.MenuResources;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgIcon;
 import stroom.widget.tab.client.presenter.ImageIcon;
@@ -42,7 +41,6 @@ import com.google.gwt.user.client.ui.Image;
 
 public class MenuItemCell extends AbstractCell<Item> {
 
-    private static final MenuResources MENU_RESOURCES = GWT.create(MenuResources.class);
     private final MenuPresenter menuPresenter;
 
     public MenuItemCell(final MenuPresenter menuPresenter) {
@@ -68,17 +66,17 @@ public class MenuItemCell extends AbstractCell<Item> {
                     if (menuItem.isEnabled()) {
                         menuPresenter.onMouseOver(menuItem, element);
                         if (menuPresenter.isHover(menuItem)) {
-                            element.addClassName(MENU_RESOURCES.cellTableStyle().cellTableHoveredRow());
+                            element.addClassName("cellTableHoveredRow");
                         }
                     } else {
-                        element.removeClassName(MENU_RESOURCES.cellTableStyle().cellTableHoveredRow());
+                        element.removeClassName("cellTableHoveredRow");
                     }
 
                 } else if (BrowserEvents.MOUSEOUT.equals(eventType)) {
                     final CommandMenuItem menuItem = (CommandMenuItem) value;
                     menuPresenter.onMouseOut(menuItem, element);
                     if (!menuPresenter.isHover(menuItem)) {
-                        element.removeClassName(MENU_RESOURCES.cellTableStyle().cellTableHoveredRow());
+                        element.removeClassName("cellTableHoveredRow");
                     }
 
                 } else if (BrowserEvents.CLICK.equals(eventType)
@@ -93,11 +91,11 @@ public class MenuItemCell extends AbstractCell<Item> {
                 final MenuItem menuItem = (MenuItem) value;
 
                 if (BrowserEvents.MOUSEOVER.equals(eventType)) {
-                    element.addClassName(MENU_RESOURCES.cellTableStyle().cellTableHoveredRow());
+                    element.addClassName("cellTableHoveredRow");
                     menuPresenter.onMouseOver(menuItem, element);
 
                 } else if (BrowserEvents.MOUSEOUT.equals(eventType)) {
-                    element.removeClassName(MENU_RESOURCES.cellTableStyle().cellTableHoveredRow());
+                    element.removeClassName("cellTableHoveredRow");
 
                 } else if (BrowserEvents.CLICK.equals(eventType)
                         && ((event.getButton() & NativeEvent.BUTTON_LEFT) != 0)) {

@@ -1,0 +1,53 @@
+/* Material Design Lite */
+/* @import ../mdl/material.min.css" /> */
+/* <script type="text/javascript" src='../mdl/material.min.js'></script> */
+
+/* Font Awesome */
+@import url("font-awesome.css");
+
+/* Roboto Font */
+@import url("roboto.css");
+
+/* Roboto Monospace Font */
+@import url("Roboto_Mono.css");
+
+/* Standard GWT CSS plus Stroom modifications */
+@import url("standard.css");
+@import url("standard_mod.css");
+
+@import url("webkit-scrollbar.css");
+@import url("firefox-scrollbar.css");
+@import url("stroom-control.css");
+@import url("stroom-button.css");
+@import url("fa-button.css");
+@import url("stroom-annotation.css");
+@import url("stroom-dashboard.css");
+@import url("stroom.css");
+/*@import url("../dynamic.css");*/
+@import url("editor.css");
+@import url("TabLayout.css");
+@import url("tickbox.css");
+@import url("tickboxcell.css");
+@import url("ticklist.css");
+@import url("ExplorerCell.css");
+@import url("SimplePopup.css");
+@import url("Dialog.css");
+@import url("ResizableDialog.css");
+@import url("PopupSupport.css");
+/*@import url("../xsdbrowser/xsdbrowser.css");*/
+
+@import url("celltable/BasicCellTable.css");
+@import url("celltable/DefaultCellTable.css");
+@import url("celltable/DisabledCellTable.css");
+@import url("celltable/HoverCellTable.css");
+@import url("celltable/MenuCellTable.css");
+
+/* Themes */
+@import url("stroom-theme-standard.css");
+/*     @import url("stroom-theme-transitions.css" type="text/css" /> */
+@import url("stroom-theme-dark.css");
+
+/* Material Design Spinner
+@import url("spinner.min.css");
+@import url("spinner.custom.css");
+*/
