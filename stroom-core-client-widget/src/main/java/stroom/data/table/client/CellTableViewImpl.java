@@ -57,11 +57,10 @@ public class CellTableViewImpl<R> extends ViewImpl implements CellTableView<R> {
     }
 
     public CellTableViewImpl(final boolean supportsSelection, final String className) {
-        final BasicResources basicResources = GWT.create(BasicResources.class);
-        cellTable = new CellTable<>(DataGridViewImpl.DEFAULT_LIST_PAGE_SIZE, basicResources);
+        final Resources resources = GWT.create(DefaultResources.class);
+        cellTable = new CellTable<>(DataGridViewImpl.DEFAULT_LIST_PAGE_SIZE, resources);
         cellTable.setWidth("100%");
         cellTable.getElement().setClassName(className);
-
         cellTable.setLoadingIndicator(null);
 
         setSupportsSelection(supportsSelection);
@@ -204,15 +203,15 @@ public class CellTableViewImpl<R> extends ViewImpl implements CellTableView<R> {
     }
 
     @ImportedWithPrefix("gwt-CellTable")
-    public interface BasicStyle extends Style {
+    public interface DefaultStyle extends Style {
 
-        String DEFAULT_CSS = "stroom/data/table/client/BasicCellTable.css";
+        String DEFAULT_CSS = "stroom/data/table/client/DefaultCellTable.css";
     }
 
-    public interface BasicResources extends Resources {
+    public interface DefaultResources extends Resources {
 
         @Override
-        @Source(BasicStyle.DEFAULT_CSS)
-        BasicStyle cellTableStyle();
+        @Source(DefaultStyle.DEFAULT_CSS)
+        DefaultStyle cellTableStyle();
     }
 }

@@ -13,7 +13,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-@def selectionBorderWidth 0px;
 .cellTableWidget {
   
 }
@@ -28,13 +27,13 @@
 
 .cellTableFooter {
 	display: none;
-  border-top: 1px solid #C5CDE2;
+  border-top: 1px solid var(--border-color);
   padding: 0px;
   padding-left: 2px;
   padding-right: 2px;
   text-align: left;
   
-background-color: #DFEAF8;
+  background-color: var(--app-background-color);
   color: black;
   overflow: hidden;
   white-space: nowrap;
@@ -42,12 +41,12 @@ background-color: #DFEAF8;
 }
 
 .cellTableHeader {
-  border-bottom: 1px solid #C5CDE2;
+  border-bottom: 1px solid var(--border-color);
   padding: 0px;
   padding-left: 2px;
   padding-right: 2px;
   text-align: left;
-  background-color: #DFEAF8;
+  background-color: var(--app-background-color);
   color: black;
   overflow: hidden;
   white-space: nowrap;
@@ -85,7 +84,7 @@ background-color: #DFEAF8;
 }
 
 .cellTableSortableHeader:hover {
-  color: black;
+  color: var(--selected-row-text-color);
 }
 
 .cellTableSortedHeaderAscending {
@@ -97,20 +96,21 @@ background-color: #DFEAF8;
 }
 
 .cellTableEvenRow {
-  background: #ffffff;
+  background: var(--even-row-background-color);
 }
 
 .cellTableEvenRowCell {
 }
 
 .cellTableOddRow {
-  background: #f0f0ff;
+  background: var(--odd-row-background-color);
 }
 
 .cellTableOddRowCell {
 }
 
 .cellTableHoveredRow {
+  background: var(--hovered-row-background-color);
 }
 
 .cellTableHoveredRowCell {
@@ -123,7 +123,10 @@ background-color: #DFEAF8;
 }
 
 .cellTableSelectedRow {
-  background: #bbdefb none repeat scroll 0 0;
+  height: auto;
+  overflow: auto;
+  background: var(--selected-row-background-color) none repeat scroll 0 0 !important;
+  color: var(--selected-row-text-color) !important;
 }
 
 .cellTableSelectedRowCell {

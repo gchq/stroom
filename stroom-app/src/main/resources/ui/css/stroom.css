@@ -26,14 +26,20 @@
     --input-background-color: #fff;
     --input-border-color: #c5cde2;
 
-    --even-row-color: #ebebeb;
-    --selected-row-color: #1164a3;
-    --hovered-row-color: #bbdefb;
+    --even-row-background-color: #ebebeb;
+    --odd-row-background-color: #ebebeb;
+    --hovered-row-background-color: #bbdefb;
+    --selected-row-background-color: #bbdefb;
+    --selected-row-text-color: #000;
 
     --dialog-background-image: linear-gradient(rgb(248, 250, 253) 21px,	rgb(223, 234, 248) 60px);
     --dialog-background-color: rgb(223, 234, 248);
 
-    --content-background-color: #f5f5f5;
+    --main-background-color: #f5f5f5;
+    --main-border-color: #404e60;
+
+    --tooltip-background-color: #ffd;
+    --tooltip-text-color: #000;
 }
 
 
@@ -45,7 +51,7 @@ html,body {
 	height: 100%;
 	overflow: hidden;
 	background: white;
-	color: black;
+	color: var(--text-color);
 	direction: ltr;
 	
 	-webkit-user-select: none;
@@ -407,6 +413,13 @@ td {
 	
 }
 
+.stroom-main-content-container {
+	height: 100%;
+	padding: 0px;
+	border: 1px solid var(--main-border-color);
+    background-color: var(--main-background-color);
+}
+
 /* DATA GRID */
 .dataGrid-Layout {
 	width: 100%;
@@ -574,10 +587,29 @@ td {
 	margin: 0px;
 	padding: 1px;
 	padding-left: 4px;
+	outline: none !important;
+}
+
+.gwt-TextArea,
+.gwt-TextBox,
+.gwt-PasswordTextBox,
+.gwt-ListBox,
+.gwt-DateBox,
+.stroom-DropDownTree,
+input,
+input[type="text"],
+input[type="checkbox"] {
 	border: solid 1px var(--input-border-color);
 	background-color: var(--input-background-color);
-	_background-color: var(--input-background-color);
-	outline: none !important;
+	color: var(--text-color);
+}
+
+.com-google-gwt-user-client-ui-CustomScrollPanel-Style-customScrollPanelCorner {
+  background: (--input-background-color);
+}
+
+.stroom-content {
+	background-color: var(--page-background-color);
 }
 
 .gwt-ListBox {
@@ -689,6 +721,32 @@ td {
     overflow: auto;
 }
 
+/**
+* BORDERS
+*/
+.stroom-border {
+	border: 1px solid var(--border-color);
+}
+
+.stroom-border-top {
+	border-top: 1px solid var(--border-color);
+}
+
+.stroom-border-bottom {
+	border-bottom: 1px solid var(--border-color);
+}
+
+.stroom-border-left {
+    border-left: 1px solid var(--border-color);
+}
+
+.stroom-border-right {
+    border-right: 1px solid var(--border-color);
+}
+
+/**
+* LAYOUT
+*/
 .max {
     width: 100%;
     height: 100%;

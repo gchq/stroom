@@ -13,131 +13,20 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-@def selectionBorderWidth 0px;
-.hoveredCellTable .cellTableWidget {
-  
-}
-
-.hoveredCellTable .cellTableFirstColumn {
-  
-}
-
-.hoveredCellTable .cellTableLastColumn {
-  
-}
-
-.hoveredCellTable .cellTableFooter {
-	display: none;
-  border-top: 1px solid #C5CDE2;
-  padding: 0px;
-  padding-left: 2px;
-  padding-right: 2px;
-  text-align: left;
-  
-  background-color: #DFEAF8;
-  color: black;
-  overflow: hidden;
-  white-space: nowrap;
-  font-weight: normal;
-}
-
-.hoveredCellTable .cellTableHeader {
-  border-bottom: 1px solid #C5CDE2;
-  padding: 0px;
-  padding-left: 2px;
-  padding-right: 2px;
-  text-align: left;
-  background-color: #DFEAF8;
-  color: black;
-  overflow: hidden;
-  white-space: nowrap;
-  font-weight: normal;
-}
-
 .hoveredCellTable .cellTableCell {
   padding: 2px;
-  padding-left: 2px;
-  padding-right: 2px;
-  overflow: hidden;
-  vertical-align: middle;
-}
-
-.hoveredCellTable .cellTableFirstColumnFooter {
-  
-}
-
-.hoveredCellTable .cellTableFirstColumnHeader {
-  
-}
-
-.hoveredCellTable .cellTableLastColumnFooter {
-  
-}
-
-.hoveredCellTable .cellTableLastColumnHeader {
-  
-}
-
-.hoveredCellTable .cellTableSortableHeader {
-  cursor: pointer;
-  cursor: hand;
-  text-decoration: underline;
-}
-
-.hoveredCellTable .cellTableSortableHeader:hover {
-  color: black;
-}
-
-.hoveredCellTable .cellTableSortedHeaderAscending {
-
-}
-
-.hoveredCellTable .cellTableSortedHeaderDescending {
-
-}
-
-.hoveredCellTable .cellTableEvenRow {
-  background: #ffffff;
-}
-
-.hoveredCellTable .cellTableEvenRowCell {
 }
 
 .hoveredCellTable .cellTableOddRow {
-  background: #ffffff;
-}
-
-.hoveredCellTable .cellTableOddRowCell {
+  background: var(--even-row-background-color);
 }
 
 .hoveredCellTable .cellTableHoveredRow {
-  background: var(--hovered-row-color) none repeat scroll 0 0;
-}
-
-.hoveredCellTable .cellTableHoveredRowCell {
-}
-
-.hoveredCellTable .cellTableKeyboardSelectedRow {
-}
-
-.hoveredCellTable .cellTableKeyboardSelectedRowCell {
+  background: var(--hovered-row-background-color) none repeat scroll 0 0;
 }
 
 .hoveredCellTable .cellTableSelectedRow {
-  background: #bbdefb none repeat scroll 0 0;
+  background: var(--selected-row-background-color) none repeat scroll 0 0 !important;
   height: auto;
   overflow: auto;
-}
-
-.hoveredCellTable .cellTableSelectedRowCell {
-}
-
-/**
- * The keyboard selected cell is visible over selection.
- */
-.hoveredCellTable .cellTableKeyboardSelectedCell {
-}
-
-.hoveredCellTable .cellTableLoading {
-  margin: 30px;
 }

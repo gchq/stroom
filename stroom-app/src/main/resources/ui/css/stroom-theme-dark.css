@@ -24,78 +24,28 @@
 .stroom-theme-dark {
     --text-color: #e6e1dc;
     --text-color-disabled: #666;
-    --app-background-color: #19171d;
+    --app-background-color: #000;/*#19171d;*/
     --page-background-color: #1a1d21;
     --border-color: #555;
     --input-background-color: #000;
     --input-border-color: #555;
 
-    --even-row-color: #000;
-    --selected-row-color: #1164a3;
-    --hovered-row-color: #27242c;
+    --even-row-background-color: #080808;
+    --odd-row-background-color: #1a1d21;
+    --hovered-row-background-color: #27242c;
+    --selected-row-background-color: #1164a3;
+    --selected-row-text-color: #fff;
 
     --dialog-background-image: none;
     --dialog-background-color: #1a1d21;
 
-    --content-background-color: #19171d;
-}
+    --main-background-color: #19171d;
+    --main-border-color: #555;
 
-.stroom-theme-dark body {
-	color: var(--text-color);
+    --tooltip-background-color: #3c3f41;
+    --tooltip-text-color: #fff;
 }
 
 .stroom-theme-dark .stroom-body {
 	background-color: var(--app-background-color) !important;
-}
-
-.stroom-theme-dark .stroom-content { /*}, .stroom-theme-dark input {*/
-	background-color: var(--page-background-color);
-}
-
-/**
-.stroom-theme-dark .stroom-content-container {
-	background-color: #000;	
-}
-*/
-.stroom-theme-dark .stroom-main-content-container {
-	height: 100%;
-	padding: 0px;
-	border: 1px solid #555;
-	background-image: none;
-	background-color: var(--page-background-color);
-}
-/*
-.stroom-theme-dark .stroom-border {
-	border-color: var(--border-color);
-	border-width: 1px;
-}
-*/
-/*
-.stroom-theme-dark input[type="text"] {
-    border: solid 1px #555 !important;
-}
-*/
-
-.stroom-theme-dark .gwt-TextArea,
-.stroom-theme-dark .gwt-TextBox,
-.stroom-theme-dark .gwt-PasswordTextBox,
-.stroom-theme-dark .gwt-ListBox,
-.stroom-theme-dark .gwt-DateBox,
-.stroom-theme-dark .stroom-DropDownTree,
-.stroom-theme-dark input[type="text"],
-.stroom-theme-dark input[type="checkbox"] {
-	border-color: var(--border-color);
-	background-color: var(--input-background-color);
-	color: var(--text-color);
-}
-
-.stroom-theme-dark .dataGridSelectedRow,
-.stroom-theme-dark .cellTableSelectedRow {
-    background: var(--selected-row-color) !important;
-	background-color: var(--selected-row-color) !important;
-	color: #fff !important;
-}
-
-.stroom-theme-dark .com-google-gwt-user-client-ui-CustomScrollPanel-Style-customScrollPanelCorner {
-  background: (--input-background-color);
 }

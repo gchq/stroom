@@ -21,7 +21,7 @@
 	overflow: hidden;
 }
 
-.textBox {
+.quickFilter-textBox {
 	position: relative;
 	left: 20px;
 	top: 0px;
@@ -32,7 +32,7 @@
 	cursor: text;
 }
 
-.label {
+.quickFilter-label {
 	position: absolute;
 	left: 20px;
 	top: 2px;
@@ -42,21 +42,22 @@
 	cursor: text;
 }
 
-.clear {
+.quickFilter-clear {
 	position: absolute;
 	right: 1px;
 	top: 0px;
 }
 
-.infoButton {
+.quickFilter-infoButton {
 	position: absolute;
 	left: 0px;
 	/*top: -1px; */
 	top: 0px;
 }
 
-.tooltip {
-	background-color: #ffd;
+.quickFilter-tooltip {
+	background-color: var(--tooltip-background-color);
+	color: var(--tooltip-text-color);
 	padding: 1px 3px;
 	-moz-user-focus: initial;
 	-moz-user-input: initial;
@@ -77,6 +78,6 @@
 }
 
 /* Style any tables in the tooltip */
-.tooltip th, .tooltip td {
+.quickFilter-tooltip th, .quickFilter-tooltip td {
     padding-right: 1em;
 }
