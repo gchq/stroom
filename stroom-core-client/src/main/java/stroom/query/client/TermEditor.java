@@ -27,15 +27,12 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.customdatebox.client.MyDateBox;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.InputEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
@@ -51,8 +48,6 @@ public class TermEditor extends Composite {
 
     private static final int WIDE_VALUE = 400;
     private static final int NARROW_VALUE = 175;
-
-    private static Resources resources;
 
     private final FlowPanel layout;
     private final ItemListBox<AbstractField> fieldListBox;
@@ -78,11 +73,6 @@ public class TermEditor extends Composite {
     private final AsyncSuggestOracle suggestOracle = new AsyncSuggestOracle();
 
     public TermEditor(final EntityDropDownPresenter docRefPresenter) {
-        if (resources == null) {
-            resources = GWT.create(Resources.class);
-            resources.style().ensureInjected();
-        }
-
         this.docRefPresenter = docRefPresenter;
         if (docRefPresenter != null) {
             docRefWidget = docRefPresenter.getWidget();
@@ -127,7 +117,7 @@ public class TermEditor extends Composite {
         layout.add(docRefWidget);
 
         layout.setVisible(false);
-        layout.setStyleName(resources.style().layout());
+        layout.setStyleName("termEditor-layout");
         initWidget(layout);
     }
 
@@ -589,12 +579,12 @@ public class TermEditor extends Composite {
 
     private Label createLabel(final String text) {
         final Label label = new Label(text, false);
-        label.addStyleName(resources.style().label());
+        label.addStyleName("termEditor-label");
         return label;
     }
 
     private void fixStyle(final Widget widget, final int width) {
-        widget.addStyleName(resources.style().item());
+        widget.addStyleName("termEditor-item");
         widget.getElement().getStyle().setWidth(width, Unit.PX);
     }
 
@@ -608,20 +598,5 @@ public class TermEditor extends Composite {
 
     public void setUiHandlers(final ExpressionUiHandlers uiHandlers) {
         this.uiHandlers = uiHandlers;
-    }
-
-    public interface Style extends CssResource {
-
-        String layout();
-
-        String item();
-
-        String label();
-    }
-
-    public interface Resources extends ClientBundle {
-
-        @Source("TermEditor.css")
-        Style style();
     }
 }

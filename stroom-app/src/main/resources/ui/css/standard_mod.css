@@ -407,7 +407,7 @@ border: 1px solid var(--input-border-color);
 }
 .gwt-SuggestBoxPopup {
   margin-left: 0px;
-  background-color: white;
+  background-color: var(--input-background-color);
   box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.5);
   margin-left: -2px;
   margin-top: 1px;
@@ -415,14 +415,15 @@ border: 1px solid var(--input-border-color);
 }
 .gwt-SuggestBoxPopup .item {
   padding: 2px 3px;
-  color: #424242;
+  color: var(--text-color);
   cursor: default;
 }
 .gwt-SuggestBoxPopup .item-selected {
-  background: #b7d6f6;
+  background: var(--selected-row-background-color);
+  color: var(--selected-row-text-color);
 }
 .gwt-SuggestBoxPopup .suggestPopupContent {
-  background: white;
+  background: var(--input-background-color);
 }
 .gwt-SuggestBoxPopup .suggestPopupTopCenter {
 background: none;

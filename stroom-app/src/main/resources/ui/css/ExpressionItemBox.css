@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-.background {
+.expressionItemBox-background {
 	position: absolute;
 	left: -100000;
 	top: -100000;
@@ -25,7 +25,7 @@
 	min-width: 50px;
 }
 
-.selectable {
+.expressionItemBox-selectable {
 	transition: box-shadow .3s, border .3s, background-color .3s;
 	-webkit-transition: box-shadow .3s, border .3s, background-color .3s;
 	-moz-transition: box-shadow .3s, border .3s, background-color .3s;
@@ -33,52 +33,52 @@
 	cursor: pointer;
 }
 
-.background.selectable:hover {
+.expressionItemBox-background.expressionItemBox-selectable:hover {
 	border: 1px solid rgba(0,0,0,.2);
-	background-color: #f7fbff;
+	background-color: var(--expression-item-box-background-color-hover);
 	box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;
 }
 
-.background.selectable.backgroundSelected {
+.expressionItemBox-background.expressionItemBox-selectable.expressionItemBox-backgroundSelected {
 	border: 1px solid rgba(0,0,0,.2);
-	background-color: #bbdefb;
+	background-color: var(--expression-item-box-background-color-selected);
 	box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;
 }
 
-.background.selectable.backgroundSelectedDisabled {
+.expressionItemBox-background.expressionItemBox-selectable.expressionItemBox-backgroundSelectedDisabled {
 	border: 1px solid rgba(0,0,0,.2);
-	background-color: #ccc;
+	background-color: var(--expression-item-box-background-color-disabled);
 	box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;
 }
 
-.background.selectable.backgroundSelected:hover {
+.expressionItemBox-background.expressionItemBox-selectable.expressionItemBox-backgroundSelected:hover {
 	border: 1px solid rgba(0,0,0,.2);
-	background-color: #bbdefb;
+	background-color: var(--expression-item-box-background-color-selected);
 	box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;
 }
 
-.background.selectable.backgroundSelectedDisabled:hover {
+.expressionItemBox-background.expressionItemBox-selectable.expressionItemBox-backgroundSelectedDisabled:hover {
 	border: 1px solid rgba(0,0,0,.2);
-	background-color: #ccc;
+	background-color: var(--expression-item-box-background-color-disabled);
 	box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;
 }
 
-.background.selectable.hotspot {
+.expressionItemBox-background.expressionItemBox-selectable.expressionItemBox-hotspot {
 	border: 1px solid rgba(0,0,0,.2);
-	background-color: rgba(255,0,0,.3);
+	background-color: var(--expression-item-box-background-color-hotspot);
 	box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;
 }
 
-.image {
+.expressionItemBox-image {
 	position: absolute;
 	left: 3px;
 	top: 1px;
 }
 
-.label {
+.expressionItemBox-label {
 	padding: 2px 5px 2px 5px;
 }
 
-.labelDisabled {
+.expressionItemBox-labelDisabled {
 	color: #999;
 }

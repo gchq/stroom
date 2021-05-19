@@ -18,9 +18,7 @@ package stroom.query.client;
 
 import stroom.item.client.ItemListBox;
 import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.client.TermEditor.Resources;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Composite;
@@ -29,7 +27,6 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class OperatorEditor extends Composite {
 
-    private static Resources resources;
     private final FlowPanel layout;
     private final ItemListBox<Op> listBox;
     private Operator operator;
@@ -38,11 +35,6 @@ public class OperatorEditor extends Composite {
     private ExpressionUiHandlers uiHandlers;
 
     public OperatorEditor() {
-        if (resources == null) {
-            resources = GWT.create(Resources.class);
-            resources.style().ensureInjected();
-        }
-
         listBox = new ItemListBox<>();
         listBox.addItems(Op.values());
 
@@ -59,7 +51,7 @@ public class OperatorEditor extends Composite {
         layout.add(listBox);
 
         layout.setVisible(false);
-        layout.setStyleName(resources.style().layout());
+        layout.setStyleName("termEditor-layout");
         initWidget(layout);
     }
 
@@ -100,7 +92,7 @@ public class OperatorEditor extends Composite {
     }
 
     private void fixStyle(final Widget widget, final int width) {
-        widget.addStyleName(resources.style().item());
+        widget.addStyleName("termEditor-item");
         widget.getElement().getStyle().setWidth(width, Unit.PX);
     }
 }

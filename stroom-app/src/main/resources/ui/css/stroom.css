@@ -57,6 +57,11 @@
     --button-border-color-hover: #918e8c;
     --button-text-color-disabled: #888;
     --button-border-color-disabled-hover: #aaa;
+
+    --expression-item-box-background-color-selected: #bbdefb;
+    --expression-item-box-background-color-hover: #f7fbff;
+    --expression-item-box-background-color-disabled: #ccc;
+    --expression-item-box-background-color-hotspot: rgba(255,0,0,.3);
 }
 
 
@@ -616,6 +621,8 @@ td {
 .gwt-ListBox,
 .gwt-DateBox,
 .stroom-DropDownTree,
+select option,
+input,
 input[type="text"],
 input[type="checkbox"] {
 	border: solid 1px var(--input-border-color);
@@ -628,6 +635,7 @@ input[type="checkbox"] {
 	color: var(--text-color);
 }
 
+.gwt-SuggestBoxPopup .suggestPopupContent,
 .com-google-gwt-user-client-ui-CustomScrollPanel-Style-customScrollPanelCorner {
   background: (--input-background-color);
 }

@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-.layout {
+.termEditor-layout {
 	margin: 1px;
 	margin-top: 0px;
 	white-space: nowrap;
 }
 
-.item {
+.termEditor-item {
 	display: inline-block;
 	margin: 0px;
 	overflow: hidden;
@@ -30,7 +30,7 @@
 	vertical-align: top;
 }
 
-.label {
+.termEditor-label {
 	display: inline-block;
 	margin: 0px;
 	overflow: hidden;

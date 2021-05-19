@@ -61,6 +61,11 @@
     --button-border-color-hover: #666;
     --button-text-color-disabled: #888;
     --button-border-color-disabled-hover: #000;
+
+    --expression-item-box-background-color-selected: #454545;
+    --expression-item-box-background-color-hover: #555555;
+    --expression-item-box-background-color-disabled: #ccc;
+    --expression-item-box-background-color-hotspot: rgba(255,0,0,.3);
 }
 
 .stroom-theme-dark .stroom-body {
