@@ -86,10 +86,6 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
         return numeric;
     }
 
-    public boolean isDecimal() {
-        return decimal;
-    }
-
     public Set<String> getNativeTypes() {
         return nativeTypes;
     }

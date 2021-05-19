@@ -403,8 +403,10 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
             if (elasticFieldType.isNumeric()) {
                 val = Long.parseLong(value);
-            } else if (elasticFieldType.isDecimal()) {
+            } else if (elasticFieldType.equals(ElasticIndexFieldType.FLOAT)) {
                 val = Float.parseFloat(value);
+            } else if (elasticFieldType.equals(ElasticIndexFieldType.DOUBLE)) {
+                val = Double.parseDouble(value);
             } else if (ElasticIndexFieldType.DATE.equals(elasticFieldType)) {
                 try {
                     val = DateUtil.parseUnknownString(value);
