@@ -27,7 +27,7 @@
 	position: relative;
 	width: 100%;
 	height: 100%;
-	border: 1px solid rgb(60, 60, 60);
+	border: 1px solid var(--dialog-titlebar-border-color);
 	border-radius: 6px;
 	background-image: var(--dialog-background-image);
 	background-color: var(--dialog-background-color);
@@ -48,10 +48,9 @@
 	top: 0px;
 	width: 100%;
 	height: 21px;
-	background-image: linear-gradient(rgb(96, 161, 240), rgb(74, 144, 228)
-		8px);
-	background-color: rgb(74, 144, 228);
-	border-bottom: 1px solid rgb(60, 60, 60);
+	background-image: var(--dialog-titlebar-background-image);
+	background-color: var(--dialog-titlebar-background-color);
+	border-bottom: 1px solid var(--dialog-titlebar-border-color);
 }
 
 .dialog-titleText {

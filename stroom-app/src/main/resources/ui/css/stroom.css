@@ -26,12 +26,16 @@
     --input-background-color: #fff;
     --input-border-color: #c5cde2;
 
+    --header-border-color: #dddddd;
     --even-row-background-color: #ebebeb;
     --odd-row-background-color: #ebebeb;
     --hovered-row-background-color: #bbdefb;
     --selected-row-background-color: #bbdefb;
     --selected-row-text-color: #000;
 
+    --dialog-titlebar-background-image: linear-gradient(rgb(96, 161, 240), rgb(74, 144, 228) 8px);
+    --dialog-titlebar-background-color: rgb(74, 144, 228);
+    --dialog-titlebar-border-color: rgb(60, 60, 60);
     --dialog-background-image: linear-gradient(rgb(248, 250, 253) 21px,	rgb(223, 234, 248) 60px);
     --dialog-background-color: rgb(223, 234, 248);
 
@@ -40,7 +44,23 @@
 
     --tooltip-background-color: #ffd;
     --tooltip-text-color: #000;
+
+    --button-background-image: linear-gradient(#ffffff 0px, #fbfbfa 10px, #f6f5f5 0px, #e9e7e6);
+    --button-background-color: #f6f5f5;
+    --button-border-color: #918e8c;
+    --button-text-color: #000;
+    --button-background-image-active: linear-gradient(#c8c9cb 0px, #c8cacd 10px, #c2c6c8 0px, #b5b7ba);
+    --button-background-color-active: #c2c6c8;
+    --button-border-color-active: #5b7aa1;
+    --button-background-image-hover: linear-gradient(#ffffff 0px, #ffffff 10px, #fafafa 0px, #edeceb);
+    --button-background-color-hover: #fafafa;
+    --button-border-color-hover: #918e8c;
+    --button-text-color-disabled: #888;
+    --button-border-color-disabled-hover: #aaa;
 }
+
+
+
 
 
 /** 
@@ -596,10 +616,14 @@ td {
 .gwt-ListBox,
 .gwt-DateBox,
 .stroom-DropDownTree,
-input,
 input[type="text"],
 input[type="checkbox"] {
 	border: solid 1px var(--input-border-color);
+	background-color: var(--input-background-color);
+	color: var(--text-color);
+}
+
+.info-page {
 	background-color: var(--input-background-color);
 	color: var(--text-color);
 }

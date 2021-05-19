@@ -30,12 +30,16 @@
     --input-background-color: #000;
     --input-border-color: #555;
 
+    --header-border-color: #333;
     --even-row-background-color: #080808;
     --odd-row-background-color: #1a1d21;
     --hovered-row-background-color: #27242c;
     --selected-row-background-color: #1164a3;
     --selected-row-text-color: #fff;
 
+    --dialog-titlebar-background-image: none;
+    --dialog-titlebar-background-color: #19171d;
+    --dialog-titlebar-border-color: #19171d;
     --dialog-background-image: none;
     --dialog-background-color: #1a1d21;
 
@@ -44,6 +48,19 @@
 
     --tooltip-background-color: #3c3f41;
     --tooltip-text-color: #fff;
+
+    --button-background-image: none;
+    --button-background-color: #454545;
+    --button-border-color: #2f2f2f;
+    --button-text-color: #fff;
+    --button-background-image-active: none;
+    --button-background-color-active: #555555;
+    --button-border-color-active: #444;
+    --button-background-image-hover: none;
+    --button-background-color-hover: #505050;
+    --button-border-color-hover: #666;
+    --button-text-color-disabled: #888;
+    --button-border-color-disabled-hover: #000;
 }
 
 .stroom-theme-dark .stroom-body {

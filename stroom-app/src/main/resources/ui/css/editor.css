@@ -16,7 +16,8 @@
 }
 
 .editor .ace_tooltip {
-    background-color: #ffd;
+    background-color: var(--tooltip-background-color);
+    color: var(--tooltip-text-color);
     background-image: none;
     border: none;
     border-radius: 0px;

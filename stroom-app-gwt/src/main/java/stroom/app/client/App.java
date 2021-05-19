@@ -17,6 +17,7 @@
 package stroom.app.client;
 
 import stroom.app.client.gin.AppGinjector;
+import stroom.editor.client.presenter.EditorPresenter;
 import stroom.preferences.client.PreferencesManager;
 
 import com.google.gwt.core.client.EntryPoint;
@@ -40,6 +41,9 @@ public class App implements EntryPoint {
         final PreferencesManager preferencesManager = ginjector.getPreferencesManager();
         preferencesManager.fetch(preferences -> {
             preferencesManager.updateClassNames(preferences);
+
+            // Set the initial theme for the ACE editor.
+            EditorPresenter.changeTheme(preferences.getTheme());
 
             // Show the application panel.
             ginjector.getCorePresenter().get().forceReveal();

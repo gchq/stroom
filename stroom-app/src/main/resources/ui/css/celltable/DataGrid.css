@@ -56,11 +56,7 @@
     height : auto;
 	cursor: default;
 
-	border-bottom: #dddddd solid 1px;
-}
-
-.stroom-theme-dark .dataGridHeader {
-	border-bottom: #444 solid 1px;
+	border-bottom: solid 1px var(--header-border-color);
 }
 
 .dataGridHeader * {

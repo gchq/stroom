@@ -17,6 +17,7 @@
 
 package stroom.preferences.client;
 
+import stroom.editor.client.presenter.ChangeThemeEvent;
 import stroom.preferences.client.PreferencesPresenter.PreferencesView;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -25,6 +26,7 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -63,7 +65,10 @@ public final class PreferencesPresenter
 
     @Override
     public void onChange() {
-        preferencesManager.updateClassNames(write());
+        final UserPreferences userPreferences = write();
+        preferencesManager.updateClassNames(userPreferences);
+        final HasHandlers handlers = event -> getEventBus().fireEvent(event);
+        ChangeThemeEvent.fire(handlers, userPreferences.getTheme());
     }
 
     public void show() {
