@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2254** : Change `data` expression function to accept a first param for what to text to show
+
 * Issue **#2249** : Fix bug in data retention impact summary tree expansion.
 
 * Issue **#2246** : Fix incorrect handling of parameters to `data` Stroom expression function.

@@ -124,15 +124,15 @@ class Data extends AbstractLink {
         public Val eval() {
             final StringBuilder sb = new StringBuilder();
 
-            append(sb, 0, ARG_ID);
-            append(sb, 1, ARG_PART_NO);
-            append(sb, 2, ARG_RECORD_NO);
-            append(sb, 3, ARG_LINE_FROM);
-            append(sb, 4, ARG_COL_FROM);
-            append(sb, 5, ARG_LINE_TO);
-            append(sb, 6, ARG_COL_TO);
-            append(sb, 7, ARG_VIEW_TYPE);
-            append(sb, 8, ARG_DISPLAY_TYPE);
+            append(sb, 1, ARG_ID);
+            append(sb, 2, ARG_PART_NO);
+            append(sb, 3, ARG_RECORD_NO);
+            append(sb, 4, ARG_LINE_FROM);
+            append(sb, 5, ARG_COL_FROM);
+            append(sb, 6, ARG_LINE_TO);
+            append(sb, 7, ARG_COL_TO);
+            append(sb, 8, ARG_VIEW_TYPE);
+            append(sb, 9, ARG_DISPLAY_TYPE);
 
             return makeLink(
                     getEscapedString(childGenerators[0].eval()),
