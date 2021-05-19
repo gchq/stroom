@@ -15,10 +15,14 @@
  */
 
 .tickList {
-	background-color: white;
-    border: 1px solid #c5cde2;
+	background-color: var(--input-background-color);
+    border: 1px solid var(--input-border-color);
 }
 
 .tickList .tickBox {
 	margin: 4px;
+}
+
+.tickList .cellTableEvenRow, .tickList .cellTableOddRow {
+    background: var(--input-background-color);
 }

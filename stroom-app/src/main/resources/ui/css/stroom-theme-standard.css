@@ -26,11 +26,11 @@ body {
 }
 
 .stroom-content, input {
-	background-color: #fff;
+	background-color: var(--input-background-color);
 }
 
 .stroom-content-container {
-    background-color: #f5f5f5;
+    background-color: var(--content-background-color);
 }
 
 .stroom-main-content-container {
@@ -50,14 +50,29 @@ body {
 	        background-image: linear-gradient(rgb(244, 248, 253) 0px, rgb(222, 234, 248) 36px);
             background-color: rgb(223, 234, 248);
   */
-            background-color: #f5f5f5;
+            background-color: var(--content-background-color);
 }
 
 .stroom-border {
-	border-color: #c5cde2;
-	border-width: 1px;
+	border: 1px solid var(--border-color);
+}
+
+.stroom-border-top {
+	border-top: 1px solid var(--border-color);
+}
+
+.stroom-border-bottom {
+	border-bottom: 1px solid var(--border-color);
+}
+
+.stroom-border-left {
+    border-left: 1px solid var(--border-color);
+}
+
+.stroom-border-right {
+    border-right: 1px solid var(--border-color);
 }
 
 input[type="text"] {
-    border: solid 1px #c5cde2;
+    border: solid 1px var(--border-color);
 }

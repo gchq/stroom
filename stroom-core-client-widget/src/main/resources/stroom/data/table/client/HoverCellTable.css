@@ -13,20 +13,22 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+@external .*;
+
 @def selectionBorderWidth 0px;
-.cellTableWidget {
+.hoveredCellTable .cellTableWidget {
   
 }
 
-.cellTableFirstColumn {
+.hoveredCellTable .cellTableFirstColumn {
   
 }
 
-.cellTableLastColumn {
+.hoveredCellTable .cellTableLastColumn {
   
 }
 
-.cellTableFooter {
+.hoveredCellTable .cellTableFooter {
 	display: none;
   border-top: 1px solid #C5CDE2;
   padding: 0px;
@@ -34,14 +36,14 @@
   padding-right: 2px;
   text-align: left;
   
-background-color: #DFEAF8;
+  background-color: #DFEAF8;
   color: black;
   overflow: hidden;
   white-space: nowrap;
   font-weight: normal;
 }
 
-.cellTableHeader {
+.hoveredCellTable .cellTableHeader {
   border-bottom: 1px solid #C5CDE2;
   padding: 0px;
   padding-left: 2px;
@@ -54,7 +56,7 @@ background-color: #DFEAF8;
   font-weight: normal;
 }
 
-.cellTableCell {
+.hoveredCellTable .cellTableCell {
   padding: 2px;
   padding-left: 2px;
   padding-right: 2px;
@@ -62,82 +64,82 @@ background-color: #DFEAF8;
   vertical-align: middle;
 }
 
-.cellTableFirstColumnFooter {
+.hoveredCellTable .cellTableFirstColumnFooter {
   
 }
 
-.cellTableFirstColumnHeader {
+.hoveredCellTable .cellTableFirstColumnHeader {
   
 }
 
-.cellTableLastColumnFooter {
+.hoveredCellTable .cellTableLastColumnFooter {
   
 }
 
-.cellTableLastColumnHeader {
+.hoveredCellTable .cellTableLastColumnHeader {
   
 }
 
-.cellTableSortableHeader {
+.hoveredCellTable .cellTableSortableHeader {
   cursor: pointer;
   cursor: hand;
   text-decoration: underline;
 }
 
-.cellTableSortableHeader:hover {
+.hoveredCellTable .cellTableSortableHeader:hover {
   color: black;
 }
 
-.cellTableSortedHeaderAscending {
+.hoveredCellTable .cellTableSortedHeaderAscending {
 
 }
 
-.cellTableSortedHeaderDescending {
+.hoveredCellTable .cellTableSortedHeaderDescending {
 
 }
 
-.cellTableEvenRow {
+.hoveredCellTable .cellTableEvenRow {
   background: #ffffff;
 }
 
-.cellTableEvenRowCell {
+.hoveredCellTable .cellTableEvenRowCell {
 }
 
-.cellTableOddRow {
+.hoveredCellTable .cellTableOddRow {
   background: #ffffff;
 }
 
-.cellTableOddRowCell {
+.hoveredCellTable .cellTableOddRowCell {
 }
 
-.cellTableHoveredRow {
-  background: #bbdefb none repeat scroll 0 0;
+.hoveredCellTable .cellTableHoveredRow {
+  background: var(--hovered-row-color) none repeat scroll 0 0;
 }
 
-.cellTableHoveredRowCell {
+.hoveredCellTable .cellTableHoveredRowCell {
 }
 
-.cellTableKeyboardSelectedRow {
+.hoveredCellTable .cellTableKeyboardSelectedRow {
 }
 
-.cellTableKeyboardSelectedRowCell {
+.hoveredCellTable .cellTableKeyboardSelectedRowCell {
 }
 
-.cellTableSelectedRow {
+.hoveredCellTable .cellTableSelectedRow {
   background: #bbdefb none repeat scroll 0 0;
   height: auto;
   overflow: auto;
 }
 
-.cellTableSelectedRowCell {
+.hoveredCellTable .cellTableSelectedRowCell {
 }
 
 /**
  * The keyboard selected cell is visible over selection.
  */
-.cellTableKeyboardSelectedCell {
+.hoveredCellTable .cellTableKeyboardSelectedCell {
 }
 
-.cellTableLoading {
+.hoveredCellTable .cellTableLoading {
   margin: 30px;
 }

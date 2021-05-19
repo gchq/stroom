@@ -3,25 +3,18 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:v="urn:import:stroom.widget.dropdowntree.client.view">
     <ui:style>
-        .max {
-        width: 100%;
-        height: 100%;
-        }
-
         .nameFilter {
         width: 100%;
-        border: none !important;
-        border-bottom: solid !important;
         }
     </ui:style>
 
-    <g:DockLayoutPanel unit="PX" styleName="itemCheckList {style.max}">
+    <g:DockLayoutPanel unit="PX" styleName="itemCheckList max">
         <g:north size="19">
-            <v:QuickFilter ui:field="nameFilter" addStyleNames="{style.nameFilter} stroom-border"/>
+            <v:QuickFilter ui:field="nameFilter" addStyleNames="{style.nameFilter} stroom-border-bottom"/>
         </g:north>
         <g:center>
             <g:MaxScrollPanel>
-                <g:SimplePanel ui:field="treeContainer" addStyleNames="{style.max}"/>
+                <g:SimplePanel ui:field="treeContainer" addStyleNames="max"/>
             </g:MaxScrollPanel>
         </g:center>
     </g:DockLayoutPanel>

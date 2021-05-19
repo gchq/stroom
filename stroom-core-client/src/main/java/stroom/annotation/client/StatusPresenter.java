@@ -40,7 +40,8 @@ public class StatusPresenter extends MyPresenterWidget<CellTableView<String>> {
 
     @Inject
     public StatusPresenter(final EventBus eventBus) {
-        super(eventBus, new CellTableViewImpl<>(true, GWT.create(HoverResources.class)));
+        super(eventBus, new CellTableViewImpl<>(true, GWT.create(HoverResources.class),
+                "hoverCellTable"));
 //        this.eventBus = eventBus;
 
 //        // Checked.

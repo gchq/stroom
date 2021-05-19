@@ -21,7 +21,6 @@
         .scroll {
         width: 100%;
         height: 100%;
-        border: solid;
         padding: 5px;
         }
     </ui:style>

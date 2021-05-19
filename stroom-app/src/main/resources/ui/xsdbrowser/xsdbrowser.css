@@ -40,30 +40,30 @@
 
 .xsdBrowser .display {
 	border: none;
-	border-right: 1px solid #c5cde2;
-	border-top: 1px solid #c5cde2;
+	border-right: 1px solid var(--border-color);
+	border-top: 1px solid var(--border-color);
 }
 
 .xsdBrowser .documentation {
-	border-left: 1px solid #c5cde2;
-	border-top: 1px solid #c5cde2;
-	border-bottom: 1px solid #c5cde2;
+	border-left: 1px solid var(--border-color);
+	border-top: 1px solid var(--border-color);
+	border-bottom: 1px solid var(--border-color);
 	overflow: auto;
 	background-color: white;
 	padding: 5px;
 }
 
 .xsdBrowser .constraints {
-	background-color: white;
-	border-left: 1px solid #c5cde2;
-	border-top: 1px solid #c5cde2;
+	background-color: var(--input-background-color);
+	border-left: 1px solid var(--border-color);
+	border-top: 1px solid var(--border-color);
 }
 
 .xsdBrowser .container {
 	width: 100%;
 	height: 100%;
-	background-color: white;
-	border: 1px solid #c5cde2;
+	background-color: var(--input-background-color);
+	border: 1px solid var(--border-color);
 }
 
 .xsdBrowser .content {

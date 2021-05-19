@@ -3,12 +3,6 @@
 	xmlns:g="urn:import:com.google.gwt.user.client.ui" 
     xmlns:tab="urn:import:stroom.widget.tab.client.view">
 	<ui:style>
-		.bar {
-			border-bottom-style: solid;
-			width: 100%;
-			height: 100%;
-		}
-		
 		.left {
 			position: relative;
 			width: 0;
@@ -35,7 +29,7 @@
 	</ui:style>
 	<g:DockLayoutPanel unit="PX" width="100%" height="100%">
 		<g:north size="19">
-			<g:SimplePanel styleName="{style.bar} stroom-content stroom-border">
+			<g:SimplePanel styleName="max stroom-content stroom-border-bottom">
 				<g:Grid width="100%" height="100%">
 					<g:row>
 						<g:customCell styleName="{style.left}">

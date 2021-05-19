@@ -150,7 +150,7 @@
 }
 
 .dataGridEvenRow {
-    background-color: #ebebeb;
+    background-color: var(--even-row-color);
 }
 
 .dataGridEvenRowCell {
@@ -251,8 +251,4 @@
 	opacity: 0;
 	z-index: 10;
 	cursor: default;
-}
-
-.stroom-theme-dark .dataGridEvenRow {
-    background-color: #000;
 }

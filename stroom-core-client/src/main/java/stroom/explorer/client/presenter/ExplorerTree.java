@@ -350,9 +350,9 @@ public class ExplorerTree extends AbstractExplorerTree {
                             final String className = element.getClassName();
 
                             // Expander
-                            if ((className != null && className.equals(expanderClassName))
+                            if ((className != null && className.contains(expanderClassName))
                                     || (element.getParentElement().getClassName() != null
-                                    && element.getParentElement().getClassName().equals(expanderClassName))) {
+                                    && element.getParentElement().getClassName().contains(expanderClassName))) {
                                 super.onCellPreview(event);
 
                                 treeModel.toggleOpenState(selectedItem);

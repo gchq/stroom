@@ -5,7 +5,6 @@
         width: 500px;
         height: 288px;
         margin: -5px -5px 0px;
-        border-bottom: solid;
         }
 
         .stroom-body {
@@ -30,7 +29,7 @@
         bottom: 5px;
         }
     </ui:style>
-    <g:DockLayoutPanel unit="PX" styleName="{style.layout} stroom-border">
+    <g:DockLayoutPanel unit="PX" styleName="{style.layout} stroom-border-bottom">
         <g:north size="30">
             <g:FlowPanel styleName="stroom-body {style.stroom-body} stroom-content">
                 <g:HTMLPanel>

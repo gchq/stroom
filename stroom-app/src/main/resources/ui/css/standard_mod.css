@@ -213,14 +213,14 @@ body,table td,select {
 
 .gwt-PushButton-up-hovering {
 	border: 1px outset;
-	border-color: #c5cde2 #69e #69e #7af;
+	border-color: var(--input-border-color) #69e #69e #7af;
 	cursor: pointer;
 	cursor: hand;
 }
 
 .gwt-PushButton-down-hovering {
 	border: 1px inset;
-	border-color: #c5cde2 #69e #69e #7af;
+	border-color: var(--input-border-color) #69e #69e #7af;
 	cursor: pointer;
 	cursor: hand;
 }
@@ -230,7 +230,7 @@ body,table td,select {
 }
 
 .gwt-TabBar .gwt-TabBarFirst-wrapper {
-	border-left: 1px solid #c5cde2;
+	border-left: 1px solid var(--border-color);
 }
 
 .gwt-TabBar .gwt-TabBarFirst {
@@ -253,15 +253,15 @@ body,table td,select {
 	color: black;
 	text-align: center;
 	background: none;
-	border-right: 1px solid #c5cde2;
-	border-top: 1px solid #c5cde2;
+	border-right: 1px solid var(--border-color);
+	border-top: 1px solid var(--border-color);
 }
 
 .gwt-TabBar .gwt-TabBarItem-selected {
 	cursor: default;
 	background: #dfeaf8 url(../images/header.png) repeat-x;
-	border-right: 1px solid #c5cde2;
-	border-top: 1px solid #c5cde2;
+	border-right: 1px solid var(--border-color);
+	border-top: 1px solid var(--border-color);
 }
 
 .gwt-TabBar .gwt-TabBarItem-disabled {
@@ -274,7 +274,7 @@ body,table td,select {
 }
 
 .gwt-TabPanelBottom {
-	border: 1px solid #c5cde2;
+	border: 1px solid var(--border-color);
 	padding: 0px;
 	overflow: hidden;
 	position: relative;
@@ -282,7 +282,7 @@ body,table td,select {
 
 .gwt-ToggleButton-up-hovering {
 	border: 1px outset;
-	border-color: #c5cde2 #69e #69e #7af;
+	border-color: var(--input-border-color) #69e #69e #7af;
 	cursor: pointer;
 	cursor: hand;
 }
@@ -290,7 +290,7 @@ body,table td,select {
 .gwt-ToggleButton-down-hovering {
 	background-position: 0 -513px;
 	border: 1px inset;
-	border-color: #c5cde2 #69e #69e #7af;
+	border-color: var(--input-border-color) #69e #69e #7af;
 	cursor: pointer;
 	cursor: hand;
 }
@@ -309,7 +309,7 @@ body,table td,select {
 	width: 200px;
 	margin: 0px;
 	padding: 1px;
-	border: solid 1px #c5cde2;
+	border: solid 1px var(--input-border-color);
 	background-color: white;
 	_background-color: white;
 	outline: none !important;
@@ -388,7 +388,7 @@ td.datePickerYear {
 
 .gwt-ValueSpinner .textBox {
 	text-align: right;
-	border: 1px solid #c5cde2;
+	border: 1px solid var(--input-border-color);
 }
 
 .gwt-SplitLayoutPanel-HDragger {
@@ -403,7 +403,7 @@ td.datePickerYear {
 
 .gwt-SplitLayoutPanel-EAST,.gwt-SplitLayoutPanel-WEST,.gwt-SplitLayoutPanel-NORTH,.gwt-SplitLayoutPanel-SOUTH,.gwt-SplitLayoutPanel-CENTER
 	{
-	border: 1px solid #c5cde2;
+	border: 1px solid var(--border-color);
 }
 
 
@@ -413,7 +413,7 @@ td.datePickerYear {
 .gwt-SuggestBox {
 padding: 1px;
 margin: 0px;
-border: 1px solid #c5cde2;
+border: 1px solid var(--input-border-color);
 }
 .gwt-SuggestBoxPopup {
   margin-left: 0px;

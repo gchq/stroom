@@ -25,7 +25,7 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
     }
 
     public String getExpanderClassName() {
-        return "expanderCell-expander";
+        return "explorerCell-expanderIcon";
     }
 
     @Override

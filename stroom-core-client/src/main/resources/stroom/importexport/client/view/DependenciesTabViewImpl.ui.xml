@@ -3,10 +3,6 @@
   xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:view="urn:import:stroom.widget.dropdowntree.client.view"
   xmlns:layout="urn:import:stroom.widget.layout.client.view">
   <ui:style>
-    .outer {
-    	border: solid;
-    }
-    
     .quickFilter {
     	width: 100%;
     	border-bottom: none !important;
@@ -20,7 +16,7 @@
     </g:north>
     <g:center>
       <layout:ResizeSimplePanel ui:field="dataGrid"
-        styleName="dataGrid {style.outer} stroom-border" width="100%" height="100%" />
+        styleName="max dataGrid stroom-border" />
     </g:center>
   </g:DockLayoutPanel>
 </ui:UiBinder>

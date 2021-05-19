@@ -8,13 +8,11 @@
         .eventList {
         width: 100%;
         height: 100%;
-        border: solid;
         }
 
         .data {
         width: 100%;
         height: 100%;
-        border: solid;
         margin-left: 3px;
         }
     </ui:style>

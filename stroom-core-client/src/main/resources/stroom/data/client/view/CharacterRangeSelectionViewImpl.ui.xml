@@ -4,10 +4,6 @@
              xmlns:v="urn:import:stroom.widget.valuespinner.client"
              xmlns:lci="urn:import:stroom.widget.linecolinput.client">
     <ui:style>
-        .max {
-        width:100%;
-        height:100%;
-        }
         .lineColInput {
         width: 120px;
         }
@@ -52,7 +48,7 @@
         </g:FlowPanel>
 
         <!-- Char location ranges -->
-        <g:Grid styleName="stroom-control-grid {style.max}">
+        <g:Grid styleName="stroom-control-grid max">
             <g:row styleName="{style.headingRow}">
                 <g:cell>&nbsp;</g:cell>
                 <g:cell>From</g:cell>

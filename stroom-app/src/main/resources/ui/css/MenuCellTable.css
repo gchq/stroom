@@ -13,22 +13,22 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-@external .*;
+.menuCellTable {
+}
 
-@def selectionBorderWidth 0px;
-.disabledCellTable .cellTableWidget {
+.menuCellTable .cellTableWidget {
   
 }
 
-.disabledCellTable .cellTableFirstColumn {
+.menuCellTable .cellTableFirstColumn {
   
 }
 
-.disabledCellTable .cellTableLastColumn {
+.menuCellTable .cellTableLastColumn {
   
 }
 
-.disabledCellTable .cellTableFooter {
+.menuCellTable .cellTableFooter {
 	display: none;
   border-top: 1px solid #C5CDE2;
   padding: 0px;
@@ -43,7 +43,7 @@
   font-weight: normal;
 }
 
-.disabledCellTable .cellTableHeader {
+.menuCellTable .cellTableHeader {
   border-bottom: 1px solid #C5CDE2;
   padding: 0px;
   padding-left: 2px;
@@ -56,84 +56,88 @@
   font-weight: normal;
 }
 
-.disabledCellTable .cellTableCell {
+.menuCellTable .cellTableCell {
   padding: 0px;
-  padding-left: 2px;
-  padding-right: 2px;
   overflow: hidden;
   vertical-align: middle;
 }
 
-.disabledCellTable .cellTableFirstColumnFooter {
+.menuCellTable .cellTableFirstColumnFooter {
   
 }
 
-.disabledCellTable .cellTableFirstColumnHeader {
+.menuCellTable .cellTableFirstColumnHeader {
   
 }
 
-.disabledCellTable .cellTableLastColumnFooter {
+.menuCellTable .cellTableLastColumnFooter {
   
 }
 
-.disabledCellTable .cellTableLastColumnHeader {
+.menuCellTable .cellTableLastColumnHeader {
   
 }
 
-.disabledCellTable .cellTableSortableHeader {
+.menuCellTable .cellTableSortableHeader {
   cursor: pointer;
   cursor: hand;
   text-decoration: underline;
 }
 
-.disabledCellTable .cellTableSortableHeader:hover {
+.menuCellTable .cellTableSortableHeader:hover {
   color: black;
 }
 
-.disabledCellTable .cellTableSortedHeaderAscending {
+.menuCellTable .cellTableSortedHeaderAscending {
 
 }
 
-.disabledCellTable .cellTableSortedHeaderDescending {
+.menuCellTable .cellTableSortedHeaderDescending {
 
 }
 
-.disabledCellTable .cellTableEvenRow {
+.menuCellTable .cellTableEvenRow {
+  background: #ffffff;
 }
 
-.disabledCellTable .cellTableEvenRowCell {
+.menuCellTable .cellTableEvenRowCell {
 }
 
-.disabledCellTable .cellTableOddRow {
+.menuCellTable .cellTableOddRow {
+  background: #ffffff;
 }
 
-.disabledCellTable .cellTableOddRowCell {
+.menuCellTable .cellTableOddRowCell {
 }
 
-.disabledCellTable .cellTableHoveredRow {
+.menuCellTable .cellTableHoveredRow {
+  background: var(--hovered-row-color) none repeat scroll 0 0 !important;
 }
 
-.disabledCellTable .cellTableHoveredRowCell {
+.menuCellTable .cellTableHoveredRowCell {
 }
 
-.disabledCellTable .cellTableKeyboardSelectedRow {
+.menuCellTable .cellTableKeyboardSelectedRow {
 }
 
-.disabledCellTable .cellTableKeyboardSelectedRowCell {
+.menuCellTable .cellTableKeyboardSelectedRowCell {
 }
 
-.disabledCellTable .cellTableSelectedRow {
+.menuCellTable .cellTableSelectedRow {
+  background: #bbdefb none repeat scroll 0 0;
+  height: auto;
+  overflow: auto;
 }
 
-.disabledCellTable .cellTableSelectedRowCell {
+.menuCellTable .cellTableSelectedRowCell {
 }
 
 /**
  * The keyboard selected cell is visible over selection.
  */
-.disabledCellTable .cellTableKeyboardSelectedCell {
+.menuCellTable .cellTableKeyboardSelectedCell {
 }
 
-.disabledCellTable .cellTableLoading {
+.menuCellTable .cellTableLoading {
   margin: 30px;
 }

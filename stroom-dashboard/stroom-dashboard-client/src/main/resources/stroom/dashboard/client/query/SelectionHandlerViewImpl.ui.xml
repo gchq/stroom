@@ -5,15 +5,7 @@
              xmlns:i="urn:import:stroom.item.client"
 >
     <ui:style>
-        .top {
-        width: 100%;
-        height: 100%;
-        border: solid;
-        }
-
         .bottom {
-        width: 100%;
-        height: 100%;
         padding-top: 5px;
         }
 
@@ -29,7 +21,7 @@
 
     <g:DockLayoutPanel unit="PX" width="100%" height="100%">
         <g:north size="52">
-            <g:SimplePanel styleName="{style.bottom}">
+            <g:SimplePanel styleName="{style.bottom} max">
                 <g:Grid ui:field="grid" styleName="stroom-control-grid" width="100%">
                     <g:row>
                         <g:cell>Component:</g:cell>
@@ -47,7 +39,7 @@
             </g:SimplePanel>
         </g:north>
         <g:center>
-            <g:SimplePanel ui:field="expression" styleName="{style.top} stroom-content stroom-border"/>
+            <g:SimplePanel ui:field="expression" styleName="max stroom-content stroom-border"/>
         </g:center>
     </g:DockLayoutPanel>
 </ui:UiBinder>

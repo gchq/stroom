@@ -22,8 +22,10 @@ import com.google.gwt.user.client.ui.ScrollPanel;
 
 public class ScrollableCellTableViewImpl<R> extends CellTableViewImpl<R> implements ScrollableCellTableView<R> {
 
-    public ScrollableCellTableViewImpl(final boolean supportsSelection, final Resources resources) {
-        super(supportsSelection, resources);
+    public ScrollableCellTableViewImpl(final boolean supportsSelection,
+                                       final Resources resources,
+                                       final String className) {
+        super(supportsSelection, resources, className);
 
         final CellTable<R> cellTable = getCellTable();
         cellTable.getElement().getStyle().setProperty("minWidth", "200px");
@@ -36,10 +38,11 @@ public class ScrollableCellTableViewImpl<R> extends CellTableViewImpl<R> impleme
 
     public ScrollableCellTableViewImpl(final boolean supportsSelection,
                                        final Resources resources,
+                                       final String className,
                                        final int minWidth,
                                        final int maxWidth,
                                        final int maxHeight) {
-        super(supportsSelection, resources);
+        super(supportsSelection, resources, className);
 
         final CellTable<R> cellTable = getCellTable();
         cellTable.getElement().getStyle().setProperty("minWidth", minWidth + "px");

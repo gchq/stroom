@@ -21,52 +21,81 @@
  * Text Colour: #e6e1dc
  * Panel Background Colour: #444444
  */
+.stroom-theme-dark {
+    --text-color: #e6e1dc;
+    --text-color-disabled: #666;
+    --app-background-color: #19171d;
+    --page-background-color: #1a1d21;
+    --border-color: #555;
+    --input-background-color: #000;
+    --input-border-color: #555;
+
+    --even-row-color: #000;
+    --selected-row-color: #1164a3;
+    --hovered-row-color: #27242c;
+
+    --dialog-background-image: none;
+    --dialog-background-color: #1a1d21;
+
+    --content-background-color: #19171d;
+}
+
 .stroom-theme-dark body {
-	color: #e6e1dc;
+	color: var(--text-color);
 }
 
 .stroom-theme-dark .stroom-body {
-	background-color: #19171d !important;
+	background-color: var(--app-background-color) !important;
 }
 
-.stroom-theme-dark .stroom-content, .stroom-theme-dark input {
-	background-color: #1a1d21;
+.stroom-theme-dark .stroom-content { /*}, .stroom-theme-dark input {*/
+	background-color: var(--page-background-color);
 }
 
+/**
 .stroom-theme-dark .stroom-content-container {
 	background-color: #000;	
 }
-
+*/
 .stroom-theme-dark .stroom-main-content-container {
 	height: 100%;
 	padding: 0px;
 	border: 1px solid #555;
 	background-image: none;
-	background-color: #1a1d21;
+	background-color: var(--page-background-color);
 }
-
+/*
 .stroom-theme-dark .stroom-border {
-	border-color: #555;	
+	border-color: var(--border-color);
 	border-width: 1px;
 }
-
+*/
 /*
 .stroom-theme-dark input[type="text"] {
     border: solid 1px #555 !important;
 }
 */
 
-.stroom-theme-dark .gwt-TextBox,.gwt-PasswordTextBox,.gwt-ListBox,.gwt-TextArea,.gwt-DateBox,.stroom-DropDownTree,input[type="text"],input[type="checkbox"] {
-	border-color: #555;
-	background-color: #000;
+.stroom-theme-dark .gwt-TextArea,
+.stroom-theme-dark .gwt-TextBox,
+.stroom-theme-dark .gwt-PasswordTextBox,
+.stroom-theme-dark .gwt-ListBox,
+.stroom-theme-dark .gwt-DateBox,
+.stroom-theme-dark .stroom-DropDownTree,
+.stroom-theme-dark input[type="text"],
+.stroom-theme-dark input[type="checkbox"] {
+	border-color: var(--border-color);
+	background-color: var(--input-background-color);
+	color: var(--text-color);
 }
 
-.stroom-theme-dark .dataGridSelectedRow,.cellTableSelectedRow {
-    background: #1164a3 !important;
-	background-color: #1164a3 !important;
+.stroom-theme-dark .dataGridSelectedRow,
+.stroom-theme-dark .cellTableSelectedRow {
+    background: var(--selected-row-color) !important;
+	background-color: var(--selected-row-color) !important;
 	color: #fff !important;
 }
 
 .stroom-theme-dark .com-google-gwt-user-client-ui-CustomScrollPanel-Style-customScrollPanelCorner {
-  background: #000;
+  background: (--input-background-color);
 }

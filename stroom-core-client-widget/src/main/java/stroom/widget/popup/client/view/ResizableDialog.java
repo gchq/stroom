@@ -45,7 +45,6 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 
 public class ResizableDialog extends AbstractPopupPanel {
 
-    private static final Resources RESOURCES = GWT.create(Resources.class);
     private static final Binder binder = GWT.create(Binder.class);
 
     private final PopupUiHandlers popupUiHandlers;
@@ -99,11 +98,10 @@ public class ResizableDialog extends AbstractPopupPanel {
     private ResizableDialog(final PopupUiHandlers popupUiHandlers, final boolean autoHide, final boolean modal,
                             final PopupSize popupSize) {
         super(autoHide, modal);
-        RESOURCES.style().ensureInjected();
         this.popupUiHandlers = popupUiHandlers;
         this.popupSize = popupSize;
 
-        setStyleName(RESOURCES.style().popup());
+        setStyleName("resizableDialog-popup");
 
         setWidget(binder.createAndBindUi(this));
 
@@ -313,31 +311,6 @@ public class ResizableDialog extends AbstractPopupPanel {
 
     public interface Binder extends UiBinder<Widget, ResizableDialog> {
 
-    }
-
-    public interface Style extends CssResource {
-
-        String DEFAULT_STYLE = "ResizableDialog.css";
-
-        String popup();
-
-        String container();
-
-        String background();
-
-        String content();
-
-        String titleBar();
-
-        String titleText();
-
-        String resizeHandle();
-    }
-
-    public interface Resources extends ClientBundle {
-
-        @Source(Style.DEFAULT_STYLE)
-        Style style();
     }
 
     private class MouseHandler implements MouseDownHandler, MouseUpHandler, MouseMoveHandler {

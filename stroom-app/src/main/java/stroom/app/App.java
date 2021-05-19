@@ -149,7 +149,7 @@ public class App extends Application<Config> {
         );
 
         // Add the GWT UI assets.
-        bootstrap.addBundle(new AssetsBundle(
+        bootstrap.addBundle(new DynamicAssetsBundle(
                 "/ui",
                 ResourcePaths.ROOT_PATH,
                 "index.html",

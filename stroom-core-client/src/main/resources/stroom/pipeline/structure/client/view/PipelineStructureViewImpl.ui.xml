@@ -26,24 +26,11 @@
         .bar {
         position: relative;
         padding: 0px 2px;
-        border-bottom: solid;
         }
 
         .bar div {
         display: inline-block;
         white-space: nowrap;
-        }
-
-        .top {
-        border-bottom: solid;
-        }
-
-        .middle {
-        border-top: solid;
-        }
-
-        .bottom {
-        border-top: solid;
         }
 
         .list {
@@ -69,7 +56,7 @@
 
     <g:DockLayoutPanel unit="PX" addStyleNames="{style.layout}">
         <g:north size="19">
-            <g:FlowPanel styleName="{style.bar} stroom-border">
+            <g:FlowPanel styleName="{style.bar} stroom-border-bottom">
                 <g:FlowPanel styleName="{style.buttons}">
                     <v:SvgButton ui:field="add"/>
                     <v:SvgButton ui:field="remove"/>
@@ -83,15 +70,15 @@
         <g:center>
             <g:MySplitLayoutPanel vSplits="0.4">
                 <g:north size="200">
-                    <g:MaxScrollPanel ui:field="treeContainer" addStyleNames="{style.top} stroom-content stroom-border"/>
+                    <g:MaxScrollPanel ui:field="treeContainer" addStyleNames="stroom-content stroom-border-bottom"/>
                 </g:north>
                 <g:center>
-                    <g:MySplitLayoutPanel vSplits="0.5" styleName="{style.middle} stroom-border">
+                    <g:MySplitLayoutPanel vSplits="0.5" styleName="stroom-border-top">
                         <g:north size="200">
-                            <view:ResizeSimplePanel ui:field="properties" styleName="{style.top} stroom-content stroom-border"/>
+                            <view:ResizeSimplePanel ui:field="properties" styleName="stroom-content stroom-border-bottom"/>
                         </g:north>
                         <g:center>
-                            <view:ResizeSimplePanel ui:field="pipelineReferences" styleName="{style.bottom} stroom-content stroom-border"/>
+                            <view:ResizeSimplePanel ui:field="pipelineReferences" styleName="stroom-content stroom-border-top"/>
                         </g:center>
                     </g:MySplitLayoutPanel>
                 </g:center>

@@ -47,7 +47,7 @@ public class PermissionsListPresenter
     @Inject
     public PermissionsListPresenter(final EventBus eventBus) {
         super(eventBus, new CellTableViewImpl<>(
-                false, GWT.create(CellTableViewImpl.BasicResources.class)));
+                false));
 
         final boolean updateable = true;
         final TickBoxCell.Appearance appearance = updateable

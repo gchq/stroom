@@ -7,7 +7,6 @@
 		.nameFilter {
 			width: 100%;
 			border: none !important;
-			border-bottom: solid !important;
 		}
 		
 		.scrollPanel {
@@ -16,7 +15,7 @@
 	</ui:style>
 	<g:DockLayoutPanel unit="PX" width="100%" height="100%">
 		<g:north size="19">
-			<v:QuickFilter ui:field="nameFilter" addStyleNames="{style.nameFilter} stroom-border" />
+			<v:QuickFilter ui:field="nameFilter" addStyleNames="{style.nameFilter} stroom-border-bottom" />
 		</g:north>
 		<g:center>
 			<g:MaxScrollPanel styleName="{style.scrollPanel}" ui:field="scrollPanel" />

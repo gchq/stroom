@@ -50,7 +50,8 @@ public class ChooserPresenter extends MyPresenterWidget<ChooserView> implements 
 
         view.setUiHandlers(this);
 
-        table = new CellTableViewImpl<>(true, GWT.create(HoverResources.class));
+        table = new CellTableViewImpl<>(true, GWT.create(HoverResources.class),
+                "hoverCellTable");
         view.setBottomView(table);
 
         // Text.

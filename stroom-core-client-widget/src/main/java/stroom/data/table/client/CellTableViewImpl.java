@@ -53,12 +53,13 @@ public class CellTableViewImpl<R> extends ViewImpl implements CellTableView<R> {
     }
 
     public CellTableViewImpl(final boolean supportsSelection) {
-        this(supportsSelection, GWT.create(BasicResources.class));
+        this(supportsSelection, GWT.create(BasicResources.class), "basicCellTable");
     }
 
-    public CellTableViewImpl(final boolean supportsSelection, final Resources resources) {
+    public CellTableViewImpl(final boolean supportsSelection, final Resources resources, final String className) {
         cellTable = new CellTable<>(DataGridViewImpl.DEFAULT_LIST_PAGE_SIZE, resources);
         cellTable.setWidth("100%");
+        cellTable.getElement().setClassName(className);
 
         cellTable.setLoadingIndicator(null);
 

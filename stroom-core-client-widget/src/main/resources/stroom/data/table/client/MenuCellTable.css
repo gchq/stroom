@@ -13,20 +13,22 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+@external .*;
+
 @def selectionBorderWidth 0px;
-.cellTableWidget {
+.menuCellTable .cellTableWidget {
   
 }
 
-.cellTableFirstColumn {
+.menuCellTable .cellTableFirstColumn {
   
 }
 
-.cellTableLastColumn {
+.menuCellTable .cellTableLastColumn {
   
 }
 
-.cellTableFooter {
+.menuCellTable .cellTableFooter {
 	display: none;
   border-top: 1px solid #C5CDE2;
   padding: 0px;
@@ -34,14 +36,14 @@
   padding-right: 2px;
   text-align: left;
   
-background-color: #DFEAF8;
+  background-color: #DFEAF8;
   color: black;
   overflow: hidden;
   white-space: nowrap;
   font-weight: normal;
 }
 
-.cellTableHeader {
+.menuCellTable .cellTableHeader {
   border-bottom: 1px solid #C5CDE2;
   padding: 0px;
   padding-left: 2px;
@@ -54,88 +56,89 @@ background-color: #DFEAF8;
   font-weight: normal;
 }
 
-.cellTableCell {
+.menuCellTable .cellTableCell {
   padding: 0px;
   overflow: hidden;
   vertical-align: middle;
 }
 
-.cellTableFirstColumnFooter {
+.menuCellTable .cellTableFirstColumnFooter {
   
 }
 
-.cellTableFirstColumnHeader {
+.menuCellTable .cellTableFirstColumnHeader {
   
 }
 
-.cellTableLastColumnFooter {
+.menuCellTable .cellTableLastColumnFooter {
   
 }
 
-.cellTableLastColumnHeader {
+.menuCellTable .cellTableLastColumnHeader {
   
 }
 
-.cellTableSortableHeader {
+.menuCellTable .cellTableSortableHeader {
   cursor: pointer;
   cursor: hand;
   text-decoration: underline;
 }
 
-.cellTableSortableHeader:hover {
+.menuCellTable .cellTableSortableHeader:hover {
   color: black;
 }
 
-.cellTableSortedHeaderAscending {
+.menuCellTable .cellTableSortedHeaderAscending {
 
 }
 
-.cellTableSortedHeaderDescending {
+.menuCellTable .cellTableSortedHeaderDescending {
 
 }
 
-.cellTableEvenRow {
+.menuCellTable .cellTableEvenRow {
   background: #ffffff;
 }
 
-.cellTableEvenRowCell {
+.menuCellTable .cellTableEvenRowCell {
 }
 
-.cellTableOddRow {
+.menuCellTable .cellTableOddRow {
   background: #ffffff;
 }
 
-.cellTableOddRowCell {
+.menuCellTable .cellTableOddRowCell {
 }
 
-.cellTableHoveredRow {
-  background: #bbdefb none repeat scroll 0 0 !important;
+
+.menuCellTable .cellTableHoveredRow {
+  /**background: red none repeat scroll 0 0 !important;*/
 }
 
-.cellTableHoveredRowCell {
+.menuCellTable .cellTableHoveredRowCell {
 }
 
-.cellTableKeyboardSelectedRow {
+.menuCellTable .cellTableKeyboardSelectedRow {
 }
 
-.cellTableKeyboardSelectedRowCell {
+.menuCellTable .cellTableKeyboardSelectedRowCell {
 }
 
-.cellTableSelectedRow {
+.menuCellTable .cellTableSelectedRow {
   background: #bbdefb none repeat scroll 0 0;
   height: auto;
   overflow: auto;
 }
 
-.cellTableSelectedRowCell {
+.menuCellTable .cellTableSelectedRowCell {
 }
 
 /**
  * The keyboard selected cell is visible over selection.
  */
-.cellTableKeyboardSelectedCell {
+.menuCellTable .cellTableKeyboardSelectedCell {
 }
 
-.cellTableLoading {
+.menuCellTable .cellTableLoading {
   margin: 30px;
 }

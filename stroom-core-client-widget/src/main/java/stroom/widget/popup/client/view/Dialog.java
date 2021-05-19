@@ -29,8 +29,6 @@ import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseMoveHandler;
 import com.google.gwt.event.dom.client.MouseUpEvent;
 import com.google.gwt.event.dom.client.MouseUpHandler;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.DOM;
@@ -44,7 +42,6 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 
 public class Dialog extends AbstractPopupPanel {
 
-    private static final Resources RESOURCES = GWT.create(Resources.class);
     private static final Binder binder = GWT.create(Binder.class);
     private final int clientLeft;
     private final int clientTop;
@@ -91,10 +88,9 @@ public class Dialog extends AbstractPopupPanel {
      */
     public Dialog(final PopupUiHandlers popupUiHandlers, final boolean autoHide, final boolean modal) {
         super(autoHide, modal);
-        RESOURCES.style().ensureInjected();
         this.popupUiHandlers = popupUiHandlers;
 
-        setStyleName(RESOURCES.style().popup());
+        setStyleName("dialog-popup");
         setWidget(binder.createAndBindUi(this));
 
         windowWidth = Window.getClientWidth();
@@ -248,29 +244,6 @@ public class Dialog extends AbstractPopupPanel {
 
     public interface Binder extends UiBinder<Widget, Dialog> {
 
-    }
-
-    public interface Style extends CssResource {
-
-        String DEFAULT_STYLE = "Dialog.css";
-
-        String popup();
-
-        String container();
-
-        String background();
-
-        String content();
-
-        String titleBar();
-
-        String titleText();
-    }
-
-    public interface Resources extends ClientBundle {
-
-        @Source(Style.DEFAULT_STYLE)
-        Style style();
     }
 
     private class MouseHandler implements MouseDownHandler, MouseUpHandler, MouseMoveHandler {

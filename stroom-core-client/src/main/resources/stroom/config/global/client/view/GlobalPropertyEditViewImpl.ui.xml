@@ -4,10 +4,6 @@
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
     <ui:style>
-        .max {
-            width:100%;
-            height:100%;
-        }
         .textArea {
             width:100%;
             height:80px;
@@ -18,7 +14,7 @@
         }
     </ui:style>
 
-    <g:Grid ui:field="grid" styleName="stroom-control-grid {style.max}">
+    <g:Grid ui:field="grid" styleName="stroom-control-grid max">
         <g:row>
             <g:cell>Name:</g:cell>
             <g:customCell>

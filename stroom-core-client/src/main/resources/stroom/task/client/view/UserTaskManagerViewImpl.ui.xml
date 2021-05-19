@@ -5,7 +5,6 @@
 		.layout {
 			width: 400px;
 			height: 200px;
-			border: solid;
 		}
 	</ui:style>
 	<g:SimplePanel styleName="{style.layout} stroom-content stroom-border">

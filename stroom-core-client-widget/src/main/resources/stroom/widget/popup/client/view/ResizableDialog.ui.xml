@@ -2,16 +2,13 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
 	xmlns:g="urn:import:com.google.gwt.user.client.ui">
 
-	<ui:with field="res"
-		type="stroom.widget.popup.client.view.ResizableDialog.Resources" />
-
-	<g:FlowPanel styleName="{res.style.container}">
-		<g:FlowPanel styleName="{res.style.background}">
-			<g:SimplePanel ui:field="content" styleName="{res.style.content}" />
-			<g:SimplePanel styleName="{res.style.titleBar}">
-				<g:Label ui:field="titleText" styleName="{res.style.titleText}">Caption</g:Label>
+	<g:FlowPanel styleName="resizableDialog-container">
+		<g:FlowPanel styleName="resizableDialog-background">
+			<g:SimplePanel ui:field="content" styleName="resizableDialog-content" />
+			<g:SimplePanel styleName="resizableDialog-titleBar">
+				<g:Label ui:field="titleText" styleName="resizableDialog-titleText">Caption</g:Label>
 			</g:SimplePanel>
 		</g:FlowPanel>
-		<g:SimplePanel ui:field="resizeHandle" styleName="{res.style.resizeHandle}" />
+		<g:SimplePanel ui:field="resizeHandle" styleName="resizableDialog-resizeHandle" />
 	</g:FlowPanel>
 </ui:UiBinder> 

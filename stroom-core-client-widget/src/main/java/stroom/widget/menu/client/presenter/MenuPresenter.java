@@ -47,6 +47,7 @@ public abstract class MenuPresenter extends MyPresenterWidget<CellTableView<Item
         super(eventBus, new ScrollableCellTableViewImpl<>(
                 false,
                 MENU_RESOURCES,
+                "menuCellTable",
                 50,
                 600,
                 600));

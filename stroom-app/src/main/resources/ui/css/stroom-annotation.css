@@ -19,8 +19,8 @@
     flex-flow: column;
     width: 100%;
     height: 100%;
-    background-color: white;
-    border: 1px solid #C5CDE2;
+    background-color: var(--input-background-color);
+    border: 1px solid var(--input-border-color);
     padding: 10px;
 }
 
@@ -74,7 +74,7 @@
 }
 
 .annotationTextBox:focus {
-    border-color: #C5CDE2;
+    border-color: var(--input-border-color);
     opacity: 1 !important;
  }
 
@@ -150,7 +150,7 @@
 
 .annotationComment {
     flex-grow: 1;
-    border: 1px solid #C5CDE2;
+    border: 1px solid var(--border-color);
     border-radius: 5px;
     padding: 5px;
 }
@@ -205,7 +205,7 @@
     flex-direction: row;
     width: 100%;
     padding-bottom: 10px;
-    border-left: 1px solid #C5CDE2;
+    border-left: 1px solid var(--border-color);
 }
 
 .annotationHistoryLineMargin {
@@ -216,14 +216,14 @@
 }
 
 .annotationHistoryLineMarker {
-    border-top: 1px solid #C5CDE2;
+    border-top: 1px solid var(--border-color);
     width: 100%;
     height: 1px;
 }
 
 .annotationHistoryCommentBorder {
     flex-grow: 1;
-    border: 1px solid #C5CDE2;
+    border: 1px solid var(--border-color);
     border-radius: 5px;
 }
 
@@ -232,7 +232,7 @@
     padding :5px;
     white-space: pre-wrap;
     word-break: break-word;
-    border-bottom: 1px solid #C5CDE2;
+    border-bottom: 1px solid var(--border-color);
     background-color: #eee;
 }
 

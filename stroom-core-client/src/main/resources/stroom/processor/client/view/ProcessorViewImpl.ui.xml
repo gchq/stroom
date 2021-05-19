@@ -3,18 +3,6 @@
   xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:view="urn:import:stroom.widget.layout.client.view">
 
   <ui:style>
-    .north {
-    	width: 100%;
-    	height: 100%;
-    	border-bottom: solid;
-    }
-    
-    .south {
-    	width: 100%;
-    	height: 100%;
-    	border-top: solid;
-    }
-    
     .details {
     	padding: 5px;
     }
@@ -23,10 +11,10 @@
   <g:MySplitLayoutPanel vSplits="0.5" width="100%" height="100%">
     <g:north size="200">
       <view:ResizeSimplePanel ui:field="processorList"
-        addStyleNames="{style.north} stroom-content stroom-border" />
+        addStyleNames="max stroom-content stroom-border-bottom" />
     </g:north>
     <g:center>
-      <g:MaxScrollPanel addStyleNames="{style.south} stroom-content stroom-border">
+      <g:MaxScrollPanel addStyleNames="max stroom-content stroom-border-top">
         <g:SimplePanel ui:field="details" />
       </g:MaxScrollPanel>
     </g:center>
