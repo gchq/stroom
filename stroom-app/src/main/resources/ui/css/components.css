@@ -538,3 +538,34 @@
 .entityTreeView-scrollPanel {
     background: var(--input-background-color);
 }
+
+
+.dropDownView-container {
+    position: relative;
+    display: inline-block;
+    width: 200px;
+    height: 19px;
+    cursor: pointer;
+}
+
+.dropDownView-label {
+    position: absolute;
+    left: 4px;
+    right: 20px;
+    top: 1px;
+    bottom: 1px;
+    overflow: hidden;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.dropDownView-button {
+    position: absolute;
+    background-image: url("../images/popup.png");
+    bottom: 4px;
+    right: 4px;
+    width: 11px;
+    height: 3px;
+    cursor: pointer;
+    border: none;
+}
