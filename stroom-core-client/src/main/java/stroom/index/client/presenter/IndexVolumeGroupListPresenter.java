@@ -25,7 +25,6 @@ import stroom.dispatch.client.RestFactory;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.IndexVolumeGroupResource;
-import stroom.util.client.BorderUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.util.client.MultiSelectionModel;
 
@@ -50,7 +49,7 @@ public class IndexVolumeGroupListPresenter extends MyPresenterWidget<DataGridVie
         super(eventBus, new DataGridViewImpl<>(true, true));
 
         // Add a border to the list.
-        BorderUtil.addBorder(getWidget().getElement());
+        getWidget().getElement().addClassName("stroom-border");
 
         initTableColumns();
 

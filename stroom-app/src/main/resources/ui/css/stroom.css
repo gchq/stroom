@@ -28,7 +28,7 @@
 
     --header-border-color: #dddddd;
     --even-row-background-color: #ebebeb;
-    --odd-row-background-color: #ebebeb;
+    --odd-row-background-color: #fff;
     --hovered-row-background-color: #bbdefb;
     --selected-row-background-color: #bbdefb;
     --selected-row-text-color: #000;
@@ -38,14 +38,15 @@
     --dialog-titlebar-border-color: rgb(60, 60, 60);
     --dialog-background-image: linear-gradient(rgb(248, 250, 253) 21px,	rgb(223, 234, 248) 60px);
     --dialog-background-color: rgb(223, 234, 248);
+    --dialog-border-color: rgb(60, 60, 60);
 
-    --main-background-color: #f5f5f5;
+    --main-background-color: #fff;
     --main-border-color: #404e60;
 
     --tooltip-background-color: #ffd;
     --tooltip-text-color: #000;
 
-    --button-background-image: linear-gradient(#ffffff 0px, #fbfbfa 10px, #f6f5f5 0px, #e9e7e6);
+    --button-background-image: none; /*linear-gradient(#ffffff 0px, #fbfbfa 10px, #f6f5f5 0px, #e9e7e6); */
     --button-background-color: #f6f5f5;
     --button-border-color: #918e8c;
     --button-text-color: #000;
@@ -212,6 +213,7 @@ td {
 	left: 50%;
 	height: 50px;
 	font-size: 13px;
+	color: #000;
 }
 
 #loadingBox {
@@ -624,15 +626,19 @@ td {
 select option,
 input,
 input[type="text"],
-input[type="checkbox"] {
+input[type="checkbox"],
+input[type="file"] {
 	border: solid 1px var(--input-border-color);
 	background-color: var(--input-background-color);
 	color: var(--text-color);
 }
 
 .info-page {
-	background-color: var(--input-background-color);
+	background-color: var(--main-background-color);
 	color: var(--text-color);
+	padding: 5px;
+	padding-top: 0;
+	white-space: nowrap;
 }
 
 .gwt-SuggestBoxPopup .suggestPopupContent,

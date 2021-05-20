@@ -45,7 +45,7 @@ public class PreferencesPlugin extends Plugin {
         event.getMenuItems().addMenuItem(MenuKeys.MAIN_MENU,
                 new KeyedParentMenuItem(4, "User", event.getMenuItems(), MenuKeys.USER_MENU));
         event.getMenuItems().addMenuItem(MenuKeys.USER_MENU,
-                new IconMenuItem(1, SvgPresets.LOGOUT, SvgPresets.LOGOUT, "Preferences", null, true, () ->
+                new IconMenuItem(1, SvgPresets.SETTINGS_BLUE, SvgPresets.SETTINGS_BLUE, "Preferences", null, true, () ->
                         preferencesPresenterProvider.get().show()));
     }
 }

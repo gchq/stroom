@@ -32,13 +32,10 @@ import stroom.widget.tab.client.view.LinkTab;
 import stroom.widget.tab.client.view.LinkTabBar;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -56,7 +53,6 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
     private static final int DRAG_ZONE = 20;
     private static final int MIN_COMPONENT_WIDTH = 50;
     private static final int SPLIT_SIZE = 4;
-    private static Resources resources;
     private static Glass marker;
     private static Glass glass;
     private final FlowPanel panel;
@@ -83,16 +79,11 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
     private TabVisibility tabVisibility = TabVisibility.SHOW_ALL;
 
     public FlexLayout() {
-        if (resources == null) {
-            resources = GWT.create(Resources.class);
-            resources.style().ensureInjected();
-        }
-
         if (glass == null) {
-            glass = new Glass(resources.style().glass(), resources.style().glassVisible());
+            glass = new Glass("flexLayout-glass", "flexLayout-glassVisible");
         }
         if (marker == null) {
-            marker = new Glass(resources.style().marker(), resources.style().markerVisible());
+            marker = new Glass("flexLayout-marker", "flexLayout-markerVisible");
         }
 
         panel = new FlowPanel();
@@ -162,15 +153,15 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
             final Splitter splitter = getTargetSplitter(target);
             if (splitter != null) {
                 if (!splitter.equals(selectedSplitter)) {
-                    splitter.getElement().addClassName(resources.style().splitterVisible());
+                    splitter.getElement().addClassName("flexLayout-splitterVisible");
 
                     if (selectedSplitter != null) {
-                        selectedSplitter.getElement().removeClassName(resources.style().splitterVisible());
+                        selectedSplitter.getElement().removeClassName("flexLayout-splitterVisible");
                     }
                 }
             } else {
                 if (selectedSplitter != null) {
-                    selectedSplitter.getElement().removeClassName(resources.style().splitterVisible());
+                    selectedSplitter.getElement().removeClassName("flexLayout-splitterVisible");
                 }
             }
             selectedSplitter = splitter;
@@ -221,7 +212,7 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
             capture();
             event.preventDefault();
             targetElement = element.getParentElement();
-            targetElement.addClassName(resources.style().selected());
+            targetElement.addClassName("flexLayout-selected");
         }
     }
 
@@ -310,7 +301,7 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
         mouseDown = false;
 
         if (targetElement != null) {
-            targetElement.removeClassName(resources.style().selected());
+            targetElement.removeClassName("flexLayout-selected");
             targetElement = null;
         }
     }
@@ -1217,7 +1208,7 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
                 final SplitInfo splitInfo = (SplitInfo) key;
                 Splitter splitter = splitToWidgetMap.get(splitInfo);
                 if (splitter == null) {
-                    splitter = new Splitter(resources, splitInfo);
+                    splitter = new Splitter(splitInfo);
                     splitToWidgetMap.put(splitInfo, splitter);
                 }
                 setPositionAndSize(splitter.getElement(), entry.getValue());
@@ -1286,33 +1277,6 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
         TOP,
         BOTTOM,
         CENTER
-    }
-
-    public interface Style extends CssResource {
-
-        String glass();
-
-        String glassVisible();
-
-        String marker();
-
-        String markerVisible();
-
-        String splitter();
-
-        String splitterVisible();
-
-        String splitterDown();
-
-        String splitterAcross();
-
-        String selected();
-    }
-
-    public interface Resources extends ClientBundle {
-
-        @Source("FlexLayout.css")
-        Style style();
     }
 
     private static class MouseTarget {

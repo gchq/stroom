@@ -25,7 +25,6 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
-import stroom.util.client.BorderUtil;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -58,7 +57,7 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGrid
         super(eventBus, new DataGridViewImpl<>(true, false));
 
         // Add a border to the list.
-        BorderUtil.addBorder(getWidget().getElement());
+        getWidget().getElement().addClassName("stroom-border");
 
         initTableColumns();
     }

@@ -20,7 +20,6 @@ import stroom.dashboard.client.vis.VisPresenter.VisView;
 import stroom.widget.layout.client.view.ResizeFlowPanel;
 import stroom.widget.spinner.client.SpinnerSmall;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Label;
@@ -32,7 +31,6 @@ import com.gwtplatform.mvp.client.ViewImpl;
 
 public class VisViewImpl extends ViewImpl implements VisView {
 
-    private static VisResources resources;
     private final ResizeFlowPanel widget;
     private final SimplePanel visContainer;
     private final SpinnerSmall spinnerSmall;
@@ -43,35 +41,19 @@ public class VisViewImpl extends ViewImpl implements VisView {
 
     @Inject
     public VisViewImpl() {
-        if (resources == null) {
-            resources = GWT.create(VisResources.class);
-            final VisStyle style = resources.style();
-            style.ensureInjected();
-
-            // final JSONObject obj = new JSONObject();
-            // obj.put("vis", new JSONString(style.vis()));
-            // obj.put("text", new JSONString(style.text()));
-            // obj.put("line", new JSONString(style.line()));
-            // obj.put("area", new JSONString(style.area()));
-            // obj.put("axis", new JSONString(style.axis()));
-            // obj.put("series", new JSONString(style.series()));
-            //
-            // styles = obj.getJavaScriptObject();
-        }
-
         message = new Label("", false);
-        message.setStyleName(resources.style().messageInner());
+        message.setStyleName("dashboardVis-messageInner");
 
         messagePanel = new SimplePanel();
-        messagePanel.setStyleName(resources.style().messageOuter());
+        messagePanel.setStyleName("dashboardVis-messageOuter");
         messagePanel.add(message);
         messagePanel.setVisible(false);
 
         visContainer = new SimplePanel();
-        visContainer.setStyleName(resources.style().innerLayout());
+        visContainer.setStyleName("dashboardVis-innerLayout");
 
         spinnerSmall = new SpinnerSmall();
-        spinnerSmall.setStyleName(resources.style().smallSpinner());
+        spinnerSmall.setStyleName("dashboardVis-smallSpinner");
         spinnerSmall.setVisible(false);
 
         widget = new ResizeFlowPanel() {
@@ -98,7 +80,7 @@ public class VisViewImpl extends ViewImpl implements VisView {
                 }
             }
         };
-        widget.setStyleName(resources.style().outerLayout());
+        widget.setStyleName("dashboardVis-outerLayout");
         widget.add(visContainer);
         widget.add(spinnerSmall);
         widget.add(messagePanel);

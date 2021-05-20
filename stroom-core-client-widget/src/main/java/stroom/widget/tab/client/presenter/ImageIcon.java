@@ -29,20 +29,6 @@ public class ImageIcon implements Icon {
         this.image = image;
     }
 
-    public static ImageIcon create(final Image image) {
-        if (image == null) {
-            return null;
-        }
-        return new ImageIcon(image);
-    }
-
-    public static ImageIcon create(final ImageResource imageResource) {
-        if (imageResource == null) {
-            return null;
-        }
-        return new ImageIcon(new Image(imageResource));
-    }
-
     public static ImageIcon create(final String url) {
         if (url == null) {
             return null;

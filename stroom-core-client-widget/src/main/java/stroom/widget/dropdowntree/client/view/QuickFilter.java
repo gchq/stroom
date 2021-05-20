@@ -54,7 +54,7 @@ public class QuickFilter extends FlowPanel
     private Supplier<SafeHtml> popupTextSupplier;
 
     public QuickFilter() {
-        setStyleName("quickFilter stroom-border stroom-content");
+        setStyleName("quickFilter");
         textBox.setStyleName("quickFilter-textBox");
         label.setStyleName("quickFilter-label");
 
@@ -64,10 +64,10 @@ public class QuickFilter extends FlowPanel
         helpButton = SvgButton.create(SvgPresets.HELP.title("Quick Filter Syntax Help"));
         helpButton.addStyleName("quickFilter-infoButton");
 
-        add(helpButton);
         add(textBox);
         add(label);
         add(clearButton);
+        add(helpButton);
 
         label.addClickHandler(event -> {
             label.setVisible(false);

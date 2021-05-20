@@ -26,9 +26,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.CssResource.ImportedWithPrefix;
 import com.google.gwt.safecss.shared.SafeStyles;
 import com.google.gwt.safecss.shared.SafeStylesUtils;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
@@ -130,36 +127,6 @@ public class MenuItemCell extends AbstractCell<Item> {
         }
     }
 
-    @ImportedWithPrefix("stroom-menu")
-    public interface Style extends CssResource {
-
-        String DEFAULT_CSS = "MenuItem.css";
-
-        String separator();
-
-        String outer();
-
-        String highlight();
-
-        String icon();
-
-//        String face();
-
-        String disabled();
-
-        String text();
-
-        String simpleText();
-
-        String shortcut();
-    }
-
-    public interface Resources extends ClientBundle {
-
-        @Source(Style.DEFAULT_CSS)
-        Style style();
-    }
-
     public interface Appearance<I extends Item> {
 
         void render(MenuItemCell cell, Context context, I value, SafeHtmlBuilder sb);
@@ -168,17 +135,14 @@ public class MenuItemCell extends AbstractCell<Item> {
     public static class SeparatorAppearance implements Appearance<Separator> {
 
         private static final Template TEMPLATE = GWT.create(Template.class);
-        private static final Resources RESOURCES = GWT.create(Resources.class);
 
         public SeparatorAppearance() {
-            // Make sure the CSS is injected.
-            RESOURCES.style().ensureInjected();
         }
 
         @Override
         public void render(final MenuItemCell cell, final Context context, final Separator value,
                            final SafeHtmlBuilder sb) {
-            sb.append(TEMPLATE.separator(RESOURCES.style().separator()));
+            sb.append(TEMPLATE.separator("menuItem-separator"));
         }
 
         public interface Template extends SafeHtmlTemplates {
@@ -204,14 +168,10 @@ public class MenuItemCell extends AbstractCell<Item> {
         private static final Template TEMPLATE = GWT.create(Template.class);
         private static final SafeStyles NORMAL = SafeStylesUtils.fromTrustedString("cursor:pointer;");
         private static final SafeStyles DISABLED = SafeStylesUtils.fromTrustedString("cursor:default;color:grey;");
-        private static final Resources RESOURCES = GWT.create(Resources.class);
         private final MenuPresenter menuPresenter;
 
         public IconMenuItemAppearance(final MenuPresenter menuPresenter) {
             this.menuPresenter = menuPresenter;
-
-            // Make sure the CSS is injected.
-            RESOURCES.style().ensureInjected();
         }
 
         @Override
@@ -235,44 +195,44 @@ public class MenuItemCell extends AbstractCell<Item> {
                         final ImageIcon imageIcon = (ImageIcon) enabledIcon;
                         final Image image = imageIcon.getImage();
                         if (image != null) {
-                            inner.append(TEMPLATE.inner(RESOURCES.style().icon(),
+                            inner.append(TEMPLATE.inner("menuItem-icon",
                                     SafeHtmlUtils.fromTrustedString(image.getElement().getString())));
                         }
                     } else if (enabledIcon != null && enabledIcon instanceof SvgIcon) {
                         final SvgIcon glyphIcon = (SvgIcon) enabledIcon;
-                        inner.append(TEMPLATE.icon(RESOURCES.style().icon(), UriUtils.fromString(glyphIcon.getUrl())));
+                        inner.append(TEMPLATE.icon("menuItem-icon", UriUtils.fromString(glyphIcon.getUrl())));
                     } else {
-                        inner.append(TEMPLATE.inner(RESOURCES.style().icon(), SafeHtmlUtils.EMPTY_SAFE_HTML));
+                        inner.append(TEMPLATE.inner("menuItem-icon", SafeHtmlUtils.EMPTY_SAFE_HTML));
                     }
                 } else {
                     if (disabledIcon != null && disabledIcon instanceof ImageIcon) {
                         final ImageIcon imageIcon = (ImageIcon) disabledIcon;
                         final Image image = imageIcon.getImage();
                         if (image != null) {
-                            inner.append(TEMPLATE.inner(RESOURCES.style().icon(),
+                            inner.append(TEMPLATE.inner("menuItem-icon",
                                     SafeHtmlUtils.fromTrustedString(image.getElement().getString())));
                         }
                     } else if (enabledIcon != null && enabledIcon instanceof SvgIcon) {
                         final SvgIcon glyphIcon = (SvgIcon) enabledIcon;
-                        inner.append(TEMPLATE.icon(RESOURCES.style().icon() + " " + RESOURCES.style().disabled(),
+                        inner.append(TEMPLATE.icon("menuItem-icon menuItem-disabled",
                                 UriUtils.fromString(glyphIcon.getUrl())));
                     } else {
-                        inner.append(TEMPLATE.inner(RESOURCES.style().icon(), SafeHtmlUtils.EMPTY_SAFE_HTML));
+                        inner.append(TEMPLATE.inner("menuItem-icon", SafeHtmlUtils.EMPTY_SAFE_HTML));
                     }
                 }
 
                 inner.append(
-                        TEMPLATE.inner(RESOURCES.style().text(), SafeHtmlUtils.fromTrustedString(value.getText())));
+                        TEMPLATE.inner("menuItem-text", SafeHtmlUtils.fromTrustedString(value.getText())));
 
                 if (value.getShortcut() != null) {
-                    inner.append(TEMPLATE.inner(RESOURCES.style().shortcut(),
+                    inner.append(TEMPLATE.inner("menuItem-shortcut",
                             SafeHtmlUtils.fromTrustedString(value.getShortcut())));
                 }
 
                 if (menuPresenter.isHighlighted(value)) {
-                    sb.append(TEMPLATE.outer(RESOURCES.style().highlight(), styles, inner.toSafeHtml()));
+                    sb.append(TEMPLATE.outer("menuItem-highlight", styles, inner.toSafeHtml()));
                 } else {
-                    sb.append(TEMPLATE.outer(RESOURCES.style().outer(), styles, inner.toSafeHtml()));
+                    sb.append(TEMPLATE.outer("menuItem-outer", styles, inner.toSafeHtml()));
                 }
             }
         }
@@ -298,14 +258,10 @@ public class MenuItemCell extends AbstractCell<Item> {
         private static final Template TEMPLATE = GWT.create(Template.class);
         private static final SafeStyles NORMAL = SafeStylesUtils.fromTrustedString("cursor:pointer;");
         private static final SafeStyles DISABLED = SafeStylesUtils.fromTrustedString("cursor:default;color:grey;");
-        private static final Resources RESOURCES = GWT.create(Resources.class);
         private final MenuPresenter menuPresenter;
 
         public SimpleMenuItemAppearance(final MenuPresenter menuPresenter) {
             this.menuPresenter = menuPresenter;
-
-            // Make sure the CSS is injected.
-            RESOURCES.style().ensureInjected();
         }
 
         @Override
@@ -324,18 +280,18 @@ public class MenuItemCell extends AbstractCell<Item> {
 
                 inner.append(
                         TEMPLATE.inner(
-                                RESOURCES.style().simpleText(),
+                                "menuItem-simpleText",
                                 SafeHtmlUtils.fromTrustedString(value.getText())));
 
                 if (value.getShortcut() != null) {
-                    inner.append(TEMPLATE.inner(RESOURCES.style().shortcut(),
+                    inner.append(TEMPLATE.inner("menuItem-shortcut",
                             SafeHtmlUtils.fromTrustedString(value.getShortcut())));
                 }
 
                 if (menuPresenter.isHighlighted(value)) {
-                    sb.append(TEMPLATE.outer(RESOURCES.style().highlight(), styles, inner.toSafeHtml()));
+                    sb.append(TEMPLATE.outer("menuItem-highlight", styles, inner.toSafeHtml()));
                 } else {
-                    sb.append(TEMPLATE.outer(RESOURCES.style().outer(), styles, inner.toSafeHtml()));
+                    sb.append(TEMPLATE.outer("menuItem-outer", styles, inner.toSafeHtml()));
                 }
             }
         }
@@ -363,14 +319,10 @@ public class MenuItemCell extends AbstractCell<Item> {
                         "color:#212121;" +
                         "background:linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0.1));" +
                         "border: 1px solid gray;");
-        private static final Resources RESOURCES = GWT.create(Resources.class);
         private final MenuPresenter menuPresenter;
 
         public InfoMenuItemAppearance(final MenuPresenter menuPresenter) {
             this.menuPresenter = menuPresenter;
-
-            // Make sure the CSS is injected.
-            RESOURCES.style().ensureInjected();
         }
 
         @Override
@@ -384,11 +336,11 @@ public class MenuItemCell extends AbstractCell<Item> {
                 final SafeHtmlBuilder inner = new SafeHtmlBuilder();
 
                 inner.append(TEMPLATE.inner(
-                        RESOURCES.style().simpleText(),
+                        "menuItem-simpleText",
                         value.getSafeHtml()));
 
                 sb.append(TEMPLATE.outer(
-                        RESOURCES.style().outer(),
+                        "menuItem-outer",
                         styles,
                         inner.toSafeHtml()));
             }

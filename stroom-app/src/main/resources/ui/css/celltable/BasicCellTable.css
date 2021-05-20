@@ -14,9 +14,13 @@
  * the License.
  */
 .basicCellTable .cellTableEvenRow {
-  background: var(--even-row-background-color);
+    background: none;
 }
 
-.basicCellTable .cellTableOddRow {
-  background: var(--even-row-background-color);
+.basicCellTable.cellTableOddRow {
+    background: none;
+}
+
+.basicCellTable .cellTableHoveredRow {
+  background: var(--hovered-row-background-color);
 }

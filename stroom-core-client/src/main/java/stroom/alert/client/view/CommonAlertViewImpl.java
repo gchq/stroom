@@ -24,10 +24,6 @@ import com.google.gwt.dom.client.IFrameElement;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.CssResource.ImportedWithPrefix;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.HTML;
@@ -35,6 +31,7 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Hyperlink;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.RichTextArea;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -46,19 +43,14 @@ public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
 
     private final HorizontalPanel widget = new HorizontalPanel();
     private final VerticalPanel messageArea = new VerticalPanel();
-    private final Image image = new Image();
+    private final SimplePanel image = new SimplePanel();
     private final HTML message = new HTML();
     private final Hyperlink showHideDetail = new Hyperlink();
     private final RichTextArea detail = new RichTextArea();
-    private final Resources resources;
     private boolean detailVisible = false;
 
     @Inject
-    public CommonAlertViewImpl(final Resources resources) {
-        this.resources = resources;
-
-        resources.style().ensureInjected();
-
+    public CommonAlertViewImpl() {
         widget.add(image);
         widget.add(messageArea);
 
@@ -67,10 +59,10 @@ public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
         messageArea.add(detail);
         detail.setEnabled(false);
 
-        widget.addStyleName(resources.style().table());
-        message.addStyleName(resources.style().message());
-        showHideDetail.addStyleName(resources.style().showHide());
-        detail.addStyleName(resources.style().detail());
+        widget.addStyleName("alert-table");
+        message.addStyleName("alert-message");
+        showHideDetail.addStyleName("alert-showHide");
+        detail.addStyleName("alert-detail");
 
         detail.addInitializeHandler(event -> {
             final Element e = detail.getElement();
@@ -101,25 +93,25 @@ public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
 
     @Override
     public void setQuestion(final SafeHtml text) {
-        image.setResource(resources.question());
+        image.getElement().setClassName("alert-icon-question");
         setHTML(text);
     }
 
     @Override
     public void setInfo(final SafeHtml text) {
-        image.setResource(resources.info());
-        setHTML(text);
-    }
-
-    @Override
-    public void setError(final SafeHtml text) {
-        image.setResource(resources.error());
+        image.getElement().setClassName("alert-icon-info");
         setHTML(text);
     }
 
     @Override
     public void setWarn(final SafeHtml text) {
-        image.setResource(resources.warn());
+        image.getElement().setClassName("alert-icon-warning");
+        setHTML(text);
+    }
+
+    @Override
+    public void setError(final SafeHtml text) {
+        image.getElement().setClassName("alert-icon-error");
         setHTML(text);
     }
 
@@ -157,33 +149,5 @@ public class CommonAlertViewImpl extends ViewImpl implements CommonAlertView {
             showHideDetail.setText("Show Detail");
             setDetailVisible(false);
         }
-    }
-
-    @ImportedWithPrefix("stroom-alert")
-    public interface Style extends CssResource {
-
-        String DEFAULT_CSS = "alert.css";
-
-        String table();
-
-        String message();
-
-        String showHide();
-
-        String detail();
-    }
-
-    public interface Resources extends ClientBundle {
-
-        ImageResource info();
-
-        ImageResource warn();
-
-        ImageResource error();
-
-        ImageResource question();
-
-        @Source(Style.DEFAULT_CSS)
-        Style style();
     }
 }

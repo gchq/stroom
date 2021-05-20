@@ -13,19 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-@def OPACITY_DURATION 350ms;
+@external .*;
 
 .nativeHorizontalScrollbar {
-/*   opacity: 0.7; */
-/*   filter: literal("alpha(opacity = 70)"); */
-/*   -webkit-transition: opacity OPACITY_DURATION; */
-/*   -moz-transition: opacity OPACITY_DURATION; */
-/*   -o-transition: opacity OPACITY_DURATION; */
-/*   transition: opacity OPACITY_DURATION; */
 }
 
 .nativeHorizontalScrollbar:hover {
-/*   opacity: 1.0; */
-/*   filter: literal("alpha(opacity = 100)"); */
 }

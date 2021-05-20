@@ -35,7 +35,6 @@ import com.gwtplatform.mvp.client.ViewImpl;
 
 public class DashboardLayoutViewImpl extends ViewImpl implements DashboardLayoutView {
 
-    private static Resources resources;
     private final Widget widget;
 
     @UiField
@@ -43,11 +42,6 @@ public class DashboardLayoutViewImpl extends ViewImpl implements DashboardLayout
 
     @Inject
     public DashboardLayoutViewImpl(final Binder binder) {
-        if (resources == null) {
-            resources = GWT.create(Resources.class);
-            resources.style().ensureInjected();
-        }
-
         widget = binder.createAndBindUi(this);
     }
 
@@ -98,18 +92,5 @@ public class DashboardLayoutViewImpl extends ViewImpl implements DashboardLayout
 
     public interface Binder extends UiBinder<Widget, DashboardLayoutViewImpl> {
 
-    }
-
-    public interface Style extends CssResource {
-
-        String outerPanel();
-
-        String layout();
-    }
-
-    public interface Resources extends ClientBundle {
-
-        @Source("dashboard.css")
-        Style style();
     }
 }

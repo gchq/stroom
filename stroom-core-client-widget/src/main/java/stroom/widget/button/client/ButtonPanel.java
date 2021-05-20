@@ -18,27 +18,15 @@ package stroom.widget.button.client;
 
 import stroom.svg.client.SvgPreset;
 
-import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.client.Style.Display;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.FlowPanel;
 
 public class ButtonPanel extends FlowPanel {
 
-    private static volatile Resources resources;
     private boolean vertical;
 
     public ButtonPanel() {
-        if (resources == null) {
-            synchronized (ButtonPanel.class) {
-                if (resources == null) {
-                    resources = GWT.create(Resources.class);
-                    resources.style().ensureInjected();
-                }
-            }
-        }
-        setStyleName(resources.style().layout());
+        setStyleName("buttonPanel-layout");
     }
 
     public ButtonView addButton(final SvgPreset preset) {
@@ -96,14 +84,4 @@ public class ButtonPanel extends FlowPanel {
 //        return button;
 //    }
 
-    public interface Style extends CssResource {
-
-        String layout();
-    }
-
-    public interface Resources extends ClientBundle {
-
-        @Source("ButtonPanel.css")
-        Style style();
-    }
 }

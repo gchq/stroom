@@ -24,8 +24,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safecss.shared.SafeStyles;
 import com.google.gwt.safecss.shared.SafeStylesUtils;
@@ -44,16 +42,13 @@ import java.util.Set;
 public class ExpanderCell extends AbstractCell<Expander> {
 
     private static final Set<String> ENABLED_EVENTS = new HashSet<>(Arrays.asList("click", "keydown"));
-    private static volatile Resources resources;
     private static volatile Template template;
 
     public ExpanderCell() {
         super(ENABLED_EVENTS);
-        if (resources == null) {
+        if (template == null) {
             synchronized (ExpanderCell.class) {
-                if (resources == null) {
-                    resources = GWT.create(Resources.class);
-                    resources.style().ensureInjected();
+                if (template == null) {
                     template = GWT.create(Template.class);
                 }
             }
@@ -95,24 +90,24 @@ public class ExpanderCell extends AbstractCell<Expander> {
 
             if (value.isLeaf()) {
                 icon = template.icon(
-                        resources.style().expanderIcon(),
+                        "expanderCell-expanderIcon",
                         UriUtils.fromTrustedString(
                                 "images/tree-leaf.svg"));
 //                icon = getImageHtml(resources.leaf());
             } else if (value.isExpanded()) {
                 icon = template.icon(
-                        resources.style().expanderIcon(),
+                        "expanderCell-expanderIcon",
                         UriUtils.fromTrustedString(
                                 "images/tree-open.svg"));
 //                icon = getImageHtml(resources.open());
-                className = resources.style().active();
+                className = "expanderCell-active";
             } else {
                 icon = template.icon(
-                        resources.style().expanderIcon(),
+                        "expanderCell-expanderIcon",
                         UriUtils.fromTrustedString(
                                 "images/tree-closed.svg"));
 //                icon = getImageHtml(resources.closed());
-                className = resources.style().active();
+                className = "expanderCell-active";
             }
 
             sb.append(template.outerDiv(className, style, icon));
@@ -127,19 +122,6 @@ public class ExpanderCell extends AbstractCell<Expander> {
         final AbstractImagePrototype proto = AbstractImagePrototype.create(res);
         final SafeHtml image = SafeHtmlUtils.fromTrustedString(proto.getHTML());
         return image;
-    }
-
-    interface Resources extends ClientBundle {
-
-        @Source("expander.css")
-        Style style();
-    }
-
-    interface Style extends CssResource {
-
-        String expanderIcon();
-
-        String active();
     }
 
     interface Template extends SafeHtmlTemplates {

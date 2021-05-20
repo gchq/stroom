@@ -25,8 +25,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.safecss.shared.SafeStyles;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safecss.shared.SafeStylesUtils;
@@ -39,7 +37,6 @@ import com.google.gwt.safehtml.shared.UriUtils;
 
 public class SvgCell extends AbstractCell<SvgPreset> {
 
-    private static Resources resources;
     private static Template template;
 
     private final boolean isButton;
@@ -54,10 +51,6 @@ public class SvgCell extends AbstractCell<SvgPreset> {
                 : null);
         this.isButton = isButton;
 
-        if (resources == null) {
-            resources = GWT.create(Resources.class);
-            resources.style().ensureInjected();
-        }
         if (template == null) {
             template = GWT.create(Template.class);
         }
@@ -107,11 +100,11 @@ public class SvgCell extends AbstractCell<SvgPreset> {
             builder.append(SafeStylesUtils.forHeight(value.getHeight(), Unit.PX));
 
             String className = isButton
-                    ? resources.style().button()
-                    : resources.style().icon();
+                    ? "svgCell-button"
+                    : "svgCell-icon";
 
             if (!value.isEnabled()) {
-                className += " " + resources.style().disabled();
+                className += " " + "svgCell-disabled";
             }
 
             if (value.getTitle() != null && !value.getTitle().isEmpty()) {
@@ -127,25 +120,6 @@ public class SvgCell extends AbstractCell<SvgPreset> {
                         UriUtils.fromString(value.getUrl())));
             }
         }
-    }
-
-    public interface Style extends CssResource {
-
-        String DEFAULT_CSS = "SvgCell.css";
-
-        String icon();
-
-        String button();
-
-        String face();
-
-        String disabled();
-    }
-
-    public interface Resources extends ClientBundle {
-
-        @Source(Style.DEFAULT_CSS)
-        Style style();
     }
 
     interface Template extends SafeHtmlTemplates {

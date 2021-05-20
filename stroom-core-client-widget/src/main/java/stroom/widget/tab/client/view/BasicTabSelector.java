@@ -16,32 +16,23 @@
 
 package stroom.widget.tab.client.view;
 
-import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.DOM;
 
 public class BasicTabSelector extends AbstractTabSelector {
 
-    private static Resources resources;
     private final Element text;
     private final Element element;
 
     public BasicTabSelector() {
-        if (resources == null) {
-            resources = GWT.create(Resources.class);
-            resources.style().ensureInjected();
-        }
-
         final Element arrows = DOM.createDiv();
-        arrows.setClassName(resources.style().arrows());
+        arrows.setClassName("basicTabSelector-arrows");
 
         text = DOM.createDiv();
-        text.setClassName(resources.style().text());
+        text.setClassName("basicTabSelector-text");
 
         element = DOM.createDiv();
-        element.setClassName(resources.style().basicTabSelector());
+        element.setClassName("basicTabSelector");
 
         element.appendChild(arrows);
         element.appendChild(text);
@@ -52,20 +43,5 @@ public class BasicTabSelector extends AbstractTabSelector {
     @Override
     public void setText(final String text) {
         this.text.setInnerText(text);
-    }
-
-    public interface Style extends CssResource {
-
-        String basicTabSelector();
-
-        String arrows();
-
-        String text();
-    }
-
-    public interface Resources extends ClientBundle {
-
-        @Source("BasicTabSelector.css")
-        Style style();
     }
 }

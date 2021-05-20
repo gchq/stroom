@@ -20,7 +20,6 @@ import stroom.dashboard.client.table.TablePresenter.TableView;
 import stroom.widget.layout.client.view.ResizeFlowPanel;
 import stroom.widget.spinner.client.SpinnerSmall;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
@@ -31,7 +30,6 @@ import com.gwtplatform.mvp.client.ViewImpl;
 public class TableViewImpl extends ViewImpl
         implements TableView {
 
-    private static TableResources resources;
     private final Widget widget;
     private final SpinnerSmall spinnerSmall;
 
@@ -40,16 +38,10 @@ public class TableViewImpl extends ViewImpl
 
     @Inject
     public TableViewImpl(final Binder binder) {
-        if (resources == null) {
-            resources = GWT.create(TableResources.class);
-            final TableStyle style = resources.style();
-            style.ensureInjected();
-        }
-
         widget = binder.createAndBindUi(this);
 
         spinnerSmall = new SpinnerSmall();
-        spinnerSmall.setStyleName(resources.style().smallSpinner());
+        spinnerSmall.setStyleName("dashboardTable-smallSpinner");
         spinnerSmall.setVisible(false);
 
         layout.add(spinnerSmall);

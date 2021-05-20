@@ -47,8 +47,10 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
@@ -77,7 +79,6 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     private static final IndicatorPopup indicatorPopup = new IndicatorPopup();
     private static final boolean SHOW_INDICATORS_DEFAULT = false;
     private static volatile Binder binder;
-    private static volatile Resources resources;
     private final Action formatAction;
     private final Option stylesOption;
     private final Option lineNumbersOption;
@@ -99,9 +100,9 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     @UiField
     FlowPanel filterButtons;
     @UiField
-    Image filterInactive;
+    Button filterInactive;
     @UiField
-    Image filterActive;
+    Button filterActive;
 
     private IndicatorLines indicators;
     private AceEditorMode mode = AceEditorMode.XML;
@@ -112,8 +113,6 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     public EditorViewImpl() {
         if (binder == null) {
             binder = GWT.create(Binder.class);
-            resources = GWT.create(Resources.class);
-            resources.style().ensureInjected();
         }
 
         layout = new DockLayoutPanel(Unit.PX) {
@@ -541,28 +540,6 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
         doLayout();
     }
 
-    /**
-     * Declare styles.
-     */
-    public interface Style extends CssResource {
-
-        String filterButtons();
-
-        String filterButton();
-    }
-
-    /**
-     * Bundle for the indicator icons and styles.
-     */
-    public interface Resources extends ClientBundle {
-
-        ImageResource filterActive();
-
-        ImageResource filterInactive();
-
-        @Source("codeeditor.css")
-        Style style();
-    }
 
     public interface Binder extends UiBinder<DockLayoutPanel, EditorViewImpl> {
 

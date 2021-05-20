@@ -1,19 +1,15 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
 >
-
-	<ui:with field="res"
-		type="stroom.widget.tab.client.view.CurveTabSelector.Resources" />
-
-	<div class="{res.style.curveTabSelector}">
-		<div class="{res.style.background}">
-			<div class="{res.style.leftBackground}" />
-			<div class="{res.style.midBackground}" />
-			<div class="{res.style.rightBackground}" />
-		</div>
-		<div class="{res.style.foreground}">
-			<div class="{res.style.arrows}" />
-			<div ui:field="text" class="{res.style.text}" />
-		</div>
-	</div>
+    <div class="curveTabSelector">
+        <div class="curveTabSelector-background">
+            <div class="curveTabSelector-leftBackground"/>
+            <div class="curveTabSelector-midBackground"/>
+            <div class="curveTabSelector-rightBackground"/>
+        </div>
+        <div class="curveTabSelector-foreground">
+            <div class="curveTabSelector-arrows"/>
+            <div ui:field="text" class="curveTabSelector-text"/>
+        </div>
+    </div>
 </ui:UiBinder> 

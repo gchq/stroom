@@ -29,8 +29,10 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
@@ -43,7 +45,7 @@ public class TickBox extends Composite
     @UiField
     FlowPanel layout;
     @UiField
-    Image image;
+    Button image;
     Label lblText;
     private TickBoxState state = TickBoxState.TICK;
     private boolean enabled = true;
@@ -135,23 +137,23 @@ public class TickBox extends Composite
         switch (state) {
             case TICK:
                 if (enabled) {
-                    image.getElement().setClassName("tickBox-tick");
+                    image.getElement().setClassName("flatButton tickBox-tick");
                 } else {
-                    image.getElement().setClassName("tickBox-tickDisabled");
+                    image.getElement().setClassName("flatButton tickBox-tickDisabled");
                 }
                 break;
             case HALF_TICK:
                 if (enabled) {
-                    image.getElement().setClassName("tickBox-halfTick");
+                    image.getElement().setClassName("flatButton tickBox-halfTick");
                 } else {
-                    image.getElement().setClassName("tickBox-halfTickDisabled");
+                    image.getElement().setClassName("flatButton tickBox-halfTickDisabled");
                 }
                 break;
             case UNTICK:
                 if (enabled) {
-                    image.getElement().setClassName("tickBox-untick");
+                    image.getElement().setClassName("flatButton tickBox-untick");
                 } else {
-                    image.getElement().setClassName("tickBox-untickDisabled");
+                    image.getElement().setClassName("flatButton tickBox-untickDisabled");
                 }
                 break;
         }

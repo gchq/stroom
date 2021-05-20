@@ -14,11 +14,18 @@
  * the License.
  */
 .menuCellTable .cellTableCell {
-  padding: 0px;
-  overflow: hidden;
-  vertical-align: middle;
+    padding-left: 0px;
+    padding-right: 0px;
 }
 
-.menuCellTable .cellTableOddRow {
-  background: var(--even-row-background-color);
+.menuCellTable .cellTableEvenRow {
+    background: none;
+}
+
+.menuCellTable.cellTableOddRow {
+    background: none;
+}
+
+.menuCellTable .cellTableHoveredRow {
+  background: var(--hovered-row-background-color);
 }

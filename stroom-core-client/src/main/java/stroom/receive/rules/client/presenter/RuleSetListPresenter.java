@@ -22,7 +22,6 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.receive.rules.shared.ReceiveDataRule;
 import stroom.svg.client.SvgPreset;
-import stroom.util.client.BorderUtil;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -44,7 +43,7 @@ public class RuleSetListPresenter extends MyPresenterWidget<DataGridView<Receive
         super(eventBus, new DataGridViewImpl<>(true, false));
 
         // Add a border to the list.
-        BorderUtil.addBorder(getWidget().getElement());
+        getWidget().getElement().addClassName("stroom-border");
 
         initTableColumns();
     }

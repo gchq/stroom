@@ -18,9 +18,6 @@ package stroom.widget.tooltip.client.view;
 
 import stroom.widget.tooltip.client.presenter.TooltipPresenter.TooltipView;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
@@ -28,17 +25,11 @@ import com.gwtplatform.mvp.client.ViewImpl;
 
 public class TooltipViewImpl extends ViewImpl implements TooltipView {
 
-    private static Resources resources;
     private final HTML content;
 
     public TooltipViewImpl() {
-        if (resources == null) {
-            resources = GWT.create(Resources.class);
-            resources.style().ensureInjected();
-        }
-
         content = new HTML();
-        content.setStyleName(resources.style().tooltip());
+        content.setStyleName("tooltip");
     }
 
     @Override
@@ -54,16 +45,5 @@ public class TooltipViewImpl extends ViewImpl implements TooltipView {
     @Override
     public void setText(final String text) {
         content.setText(text);
-    }
-
-    public interface Style extends CssResource {
-
-        String tooltip();
-    }
-
-    public interface Resources extends ClientBundle {
-
-        @Source("Tooltip.css")
-        Style style();
     }
 }

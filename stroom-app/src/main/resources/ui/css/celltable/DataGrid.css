@@ -150,6 +150,7 @@
 }
 
 .dataGridOddRow {
+    background-color: var(--odd-row-background-color);
 }
 
 .dataGridOddRowCell {

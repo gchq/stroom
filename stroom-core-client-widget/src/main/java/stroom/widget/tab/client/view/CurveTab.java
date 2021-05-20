@@ -36,7 +36,6 @@ public class CurveTab extends AbstractTab {
 
     private static final int MAX_TEXT_LENGTH = 50;
 
-    private static Resources resources;
     private final Element element;
     private final Element background;
     private final Element leftBackground;
@@ -50,28 +49,23 @@ public class CurveTab extends AbstractTab {
     public CurveTab(final Icon icon, final String text, final boolean allowClose) {
         this.allowClose = allowClose;
 
-        if (resources == null) {
-            resources = GWT.create(Resources.class);
-            resources.style().ensureInjected();
-        }
-
         element = DOM.createDiv();
-        element.setClassName(resources.style().curveTab());
+        element.setClassName("curveTab");
 
         background = DOM.createDiv();
-        background.setClassName(resources.style().background());
+        background.setClassName("curveTab-background");
         element.appendChild(background);
 
         leftBackground = DOM.createDiv();
-        leftBackground.setClassName(resources.style().leftBackground());
+        leftBackground.setClassName("curveTab-leftBackground");
         background.appendChild(leftBackground);
 
         midBackground = DOM.createDiv();
-        midBackground.setClassName(resources.style().midBackground());
+        midBackground.setClassName("curveTab-midBackground");
         background.appendChild(midBackground);
 
         rightBackground = DOM.createDiv();
-        rightBackground.setClassName(resources.style().rightBackground());
+        rightBackground.setClassName("curveTab-rightBackground");
         background.appendChild(rightBackground);
 
         if (icon != null) {
@@ -79,7 +73,7 @@ public class CurveTab extends AbstractTab {
                 final ImageIcon imageIcon = (ImageIcon) icon;
                 final Image image = imageIcon.getImage();
                 if (image != null) {
-                    image.getElement().addClassName(resources.style().icon());
+                    image.getElement().addClassName("curveTab-icon");
                     element.appendChild(image.getElement());
                 }
 //            } else if (icon instanceof SvgIcon) {
@@ -100,7 +94,7 @@ public class CurveTab extends AbstractTab {
                 final SvgIcon svgIcon = (SvgIcon) icon;
 
                 final Image image = new Image(svgIcon.getUrl());
-                image.addStyleName(resources.style().icon());
+                image.addStyleName("curveTab-icon");
 
 
 //                final SafeHtml safeHtml = SafeHtmlUtils.fromTrustedString("<div class=\""
@@ -127,7 +121,7 @@ public class CurveTab extends AbstractTab {
         }
 
         label = DOM.createDiv();
-        label.setClassName(resources.style().text());
+        label.setClassName("curveTab-text");
 
         if (text.length() > MAX_TEXT_LENGTH) {
             label.setInnerText(text.substring(0, MAX_TEXT_LENGTH) + "...");
@@ -139,7 +133,7 @@ public class CurveTab extends AbstractTab {
         element.appendChild(label);
 
         close = DOM.createDiv();
-        close.setClassName(resources.style().close());
+        close.setClassName("curveTab-close");
         element.appendChild(close);
 
         setElement(element);
@@ -153,9 +147,9 @@ public class CurveTab extends AbstractTab {
     @Override
     public void setSelected(final boolean selected) {
         if (selected) {
-            element.addClassName(resources.style().selected());
+            element.addClassName("curveTab-selected");
         } else {
-            element.removeClassName(resources.style().selected());
+            element.removeClassName("curveTab-selected");
         }
     }
 
@@ -163,9 +157,9 @@ public class CurveTab extends AbstractTab {
     public void setCloseActive(final boolean active) {
         if (allowClose) {
             if (active) {
-                close.addClassName(resources.style().closeActive());
+                close.addClassName("curveTab-closeActive");
             } else {
-                close.removeClassName(resources.style().closeActive());
+                close.removeClassName("curveTab-closeActive");
             }
         }
     }
@@ -182,46 +176,14 @@ public class CurveTab extends AbstractTab {
     @Override
     protected void setHover(final boolean hover) {
         if (hover) {
-            element.addClassName(resources.style().hover());
+            element.addClassName("curveTab-hover");
         } else {
-            element.removeClassName(resources.style().hover());
+            element.removeClassName("curveTab-hover");
         }
     }
 
     @Override
     protected Element getCloseElement() {
         return close;
-    }
-
-    public interface Style extends CssResource {
-
-        String curveTab();
-
-        String hover();
-
-        String selected();
-
-        String background();
-
-        String leftBackground();
-
-        String midBackground();
-
-        String rightBackground();
-
-        String icon();
-
-        String face();
-
-        String text();
-
-        String close();
-
-        String closeActive();
-    }
-
-    public interface Resources extends ClientBundle {
-        @Source("CurveTab.css")
-        Style style();
     }
 }

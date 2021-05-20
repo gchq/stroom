@@ -47,7 +47,6 @@ import stroom.pipeline.structure.client.view.PipelineImageUtil;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
-import stroom.util.client.BorderUtil;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
@@ -511,7 +510,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
             xmlEditor.getIndicatorsOption().setAvailable(false);
             xmlEditor.getIndicatorsOption().setOn(false);
             xmlEditor.getStylesOption().setOn(true);
-            BorderUtil.addBorder(xmlEditor.getView().asWidget().getElement());
+            xmlEditor.getView().asWidget().getElement().addClassName("stroom-border");
 
             final PopupSize popupSize = new PopupSize(600, 400, true);
             final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {

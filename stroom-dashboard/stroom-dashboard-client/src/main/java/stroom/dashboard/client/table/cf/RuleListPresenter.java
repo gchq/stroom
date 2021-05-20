@@ -25,7 +25,6 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.query.api.v2.ConditionalFormattingRule;
 import stroom.svg.client.SvgPreset;
-import stroom.util.client.BorderUtil;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
 
@@ -44,7 +43,7 @@ public class RuleListPresenter extends MyPresenterWidget<DataGridView<Conditiona
         super(eventBus, new DataGridViewImpl<>(true, false));
 
         // Add a border to the list.
-        BorderUtil.addBorder(getWidget().getElement());
+        getWidget().getElement().addClassName("stroom-border");
 
         initTableColumns();
     }

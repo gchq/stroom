@@ -18,25 +18,16 @@ package stroom.widget.tab.client.view;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.resources.client.ImageResource.ImageOptions;
-import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 
 public class CurveTabSelector extends AbstractTabSelector {
 
     private static final Binder binder = GWT.create(Binder.class);
-    private static final Resources resources = GWT.create(Resources.class);
     @UiField
     DivElement text;
 
     public CurveTabSelector() {
-        final Style style = resources.style();
-        style.ensureInjected();
-
         final DivElement element = binder.createAndBindUi(this);
         setElement(element);
     }
@@ -44,9 +35,9 @@ public class CurveTabSelector extends AbstractTabSelector {
     @Override
     protected void setHover(final boolean hover) {
         if (hover) {
-            getElement().addClassName(resources.style().hover());
+            getElement().addClassName("curveTabSelector-hover");
         } else {
-            getElement().removeClassName(resources.style().hover());
+            getElement().removeClassName("curveTabSelector-hover");
         }
     }
 
@@ -57,45 +48,5 @@ public class CurveTabSelector extends AbstractTabSelector {
 
     interface Binder extends UiBinder<DivElement, CurveTabSelector> {
 
-    }
-
-    public interface Style extends CssResource {
-
-        String DEFAULT_CSS = "CurveTabSelector.css";
-
-        /**
-         * Containers.
-         */
-        String curveTabSelector();
-
-        /**
-         * Backgrounds.
-         */
-        String background();
-
-        String leftBackground();
-
-        String midBackground();
-
-        String rightBackground();
-
-        /**
-         * Over behaviour
-         */
-        String hover();
-
-        /**
-         * Content
-         */
-        String foreground();
-
-        String arrows();
-
-        String text();
-    }
-
-    public interface Resources extends ClientBundle {
-        @Source(Style.DEFAULT_CSS)
-        Style style();
     }
 }

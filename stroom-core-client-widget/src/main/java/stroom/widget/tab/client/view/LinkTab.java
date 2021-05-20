@@ -16,41 +16,32 @@
 
 package stroom.widget.tab.client.view;
 
-import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.DOM;
 
 public class LinkTab extends AbstractTab {
 
-    private static Resources resources;
     private final Element element;
     private final Element background;
     private final Element label;
     private final Element hotspot;
 
     public LinkTab(final String text) {
-        if (resources == null) {
-            resources = GWT.create(Resources.class);
-            resources.style().ensureInjected();
-        }
-
         element = DOM.createDiv();
-        element.setClassName(resources.style().linkTab());
+        element.setClassName("linkTab");
 
         background = DOM.createDiv();
-        background.setClassName(resources.style().background());
+        background.setClassName("linkTab-background");
         background.setInnerText(text);
         element.appendChild(background);
 
         label = DOM.createDiv();
-        label.setClassName(resources.style().label());
+        label.setClassName("linkTab-label");
         label.setInnerText(text);
         element.appendChild(label);
 
         hotspot = DOM.createDiv();
-        hotspot.setClassName(resources.style().hotspot());
+        hotspot.setClassName("linkTab-hotspot");
         element.appendChild(hotspot);
 
         setElement(element);
@@ -63,17 +54,17 @@ public class LinkTab extends AbstractTab {
     @Override
     public void setSelected(final boolean selected) {
         if (selected) {
-            element.addClassName(resources.style().selected());
+            element.addClassName("linkTab-selected");
         } else {
-            element.removeClassName(resources.style().selected());
+            element.removeClassName("linkTab-selected");
         }
     }
 
     public void setHighlight(final boolean highlight) {
         if (highlight) {
-            hotspot.addClassName(resources.style().hotspotVisible());
+            hotspot.addClassName("linkTab-hotspotVisible");
         } else {
-            hotspot.removeClassName(resources.style().hotspotVisible());
+            hotspot.removeClassName("linkTab-hotspotVisible");
         }
     }
 
@@ -85,26 +76,5 @@ public class LinkTab extends AbstractTab {
     public void setText(final String text) {
         background.setInnerText(text);
         label.setInnerText(text);
-    }
-
-    public interface Style extends CssResource {
-
-        String linkTab();
-
-        String selected();
-
-        String background();
-
-        String label();
-
-        String hotspot();
-
-        String hotspotVisible();
-    }
-
-    public interface Resources extends ClientBundle {
-
-        @Source("LinkTab.css")
-        Style style();
     }
 }

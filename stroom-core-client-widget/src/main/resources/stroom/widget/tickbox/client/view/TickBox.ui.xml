@@ -3,7 +3,7 @@
   xmlns:g="urn:import:com.google.gwt.user.client.ui">
 
   <g:FlowPanel ui:field="layout" styleName="tickBox">
-    <g:Image ui:field="image" />
+    <g:Button ui:field="image" />
   </g:FlowPanel>
 
 </ui:UiBinder>

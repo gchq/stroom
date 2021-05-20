@@ -26,38 +26,18 @@ import com.google.gwt.user.client.ui.Composite;
 
 public class SmallSpinner extends Composite {
 
-    private static Resources resources;
-
     public SmallSpinner() {
-        if (resources == null) {
-            resources = GWT.create(Resources.class);
-            resources.style().ensureInjected();
-        }
-
         final SvgButton button = SvgButton.create(SvgPresets.SPINNER);
         initWidget(button);
 
-        getElement().setClassName(resources.style().smallSpinner());
+        getElement().setClassName("smallSpinner");
     }
 
     public void setSpinning(final boolean spinning) {
         if (spinning) {
-            getElement().addClassName(resources.style().spinning());
+            getElement().addClassName("smallSpinner-spinning");
         } else {
-            getElement().removeClassName(resources.style().spinning());
+            getElement().removeClassName("smallSpinner-spinning");
         }
-    }
-
-    public interface Style extends CssResource {
-
-        String smallSpinner();
-
-        String spinning();
-    }
-
-    public interface Resources extends ClientBundle {
-
-        @Source("SmallSpinner.css")
-        Style style();
     }
 }
