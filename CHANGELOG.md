@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v7.0-beta.117] - 2021-05-20
+
 * Issue **#2241** : Change add icon on data retention screen to add above selected. Add action icon and menu to retention rule table. Restyle rule edit screen.
 
 * Issue **#2254** : Change `data` expression function to accept a first param for what to text to show.
@@ -3427,7 +3430,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.116...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.117...HEAD
+[v7.0-beta.117]: https://github.com/gchq/stroom/compare/v7.0-beta.116...v7.0-beta.117
 [v7.0-beta.116]: https://github.com/gchq/stroom/compare/v7.0-beta.115...v7.0-beta.116
 [v7.0-beta.115]: https://github.com/gchq/stroom/compare/v7.0-beta.114...v7.0-beta.115
 [v7.0-beta.114]: https://github.com/gchq/stroom/compare/v7.0-beta.113...v7.0-beta.114
