@@ -93,10 +93,8 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
     private MultiSelectionModel<R> selectionModel;
     // Required for multiple selection using shift and control key modifiers.
     private R multiSelectStart;
-    //    private R hoveredRow;
     private final Widget widget;
     private HeadingListener headingListener;
-    //    private RowHoverListener<R> rowHoverListener;
     private HandlerRegistration handlerRegistration;
     private ResizeHandle<R> resizeHandle;
     private MoveHandle<R> moveHandle;
@@ -204,7 +202,6 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
             dataGrid.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
 
             dataGrid.getRowContainer().getStyle().setCursor(Cursor.POINTER);
-//            dataGrid.addCellPreviewHandler(this::onCellPreview);
         } else {
             selectionModel = null;
             dataGrid.getRowContainer().getStyle().setCursor(Cursor.DEFAULT);
@@ -212,63 +209,6 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
 
         return dataGrid;
     }
-
-//    private boolean hasAncestorTag(final Element element,
-//                                   final String tagName,
-//                                   final int maxGenerations) {
-//        boolean isFound = false;
-//        int generationCounter = 0;
-//
-//        Element currentElement = element;
-//
-//        while (++generationCounter <= maxGenerations) {
-//            Element ancestorElement = currentElement.getParentElement();
-//
-//            if (ancestorElement != null) {
-//                if (tagName.equalsIgnoreCase(ancestorElement.getTagName())) {
-//                    isFound = true;
-//                    break;
-//                } else {
-//                    currentElement = ancestorElement;
-//                }
-//            } else {
-//                break;
-//            }
-//        }
-//        return isFound;
-//    }
-//
-//    private void onCellPreview(final CellPreviewEvent<R> event) {
-//        final NativeEvent nativeEvent = event.getNativeEvent();
-//        final String type = nativeEvent.getType();
-//
-//        if ("mousemove".equals(type)) {
-//            final R row = event.getValue();
-//            if (row != null && !row.equals(this.hoveredRow)) {
-//                if (rowHoverListener != null) {
-//                    rowHoverListener.onRowHoverChange(this.hoveredRow, row);
-//                }
-//                this.hoveredRow = row;
-//                GWT.log("mousemove Row: " + row);
-//            }
-//        } else if ("mouseout".equals(type)) {
-////                String parentTag = null;
-////                String grandParentTag = null;
-////                Element target = event.getNativeEvent().getEventTarget().cast();
-//            Element relatedTarget = event.getNativeEvent().getRelatedEventTarget().cast();
-//
-////                if (hasAncestorTag(target, "tr", 3)
-////                        && !hasAncestorTag(relatedTarget, "tr", 3)) {
-//            if (!hasAncestorTag(relatedTarget, "tr", 3)) {
-//                GWT.log("mouseout Row: " + this.hoveredRow + " => null");
-//                if (rowHoverListener != null) {
-//                    final R row = event.getValue();
-//                    rowHoverListener.onRowHoverChange(this.hoveredRow, null);
-//                }
-//                hoveredRow = null;
-//            }
-//        }
-//    }
 
     @Override
     public void onPreviewNativeEvent(final NativePreviewEvent nativePreviewEvent) {
@@ -663,11 +603,6 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
         this.headingListener = headingListener;
     }
 
-//    @Override
-//    public void setRowHoverListener(final RowHoverListener<R> rowHoverListener) {
-//        this.rowHoverListener = rowHoverListener;
-//    }
-
     @Override
     public void setRefreshing(final boolean refreshing) {
         if (pager != null) {
@@ -778,11 +713,6 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
         boolean isBusy();
     }
 
-//    public interface RowHoverListener<R> {
-//
-//        void onRowHoverChange(final R previousRow, final R newRow);
-//    }
-
     public interface DefaultResources extends Resources {
 
         String DEFAULT_CSS = "stroom/data/grid/client/DataGrid.css";
@@ -856,31 +786,6 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
 
     private class MySelectionEventManager extends AbstractCellTable.CellTableKeyboardSelectionHandler<R> {
 
-//        R row = null;
-//
-//        private boolean hasAncestorTag(final Element element, final String tagName, final int maxGenerations) {
-//            boolean isFound = false;
-//            int generationCounter = 0;
-//
-//            Element currentElement = element;
-//
-//            while (++generationCounter <= maxGenerations) {
-//                Element ancestorElement = currentElement.getParentElement();
-//
-//                if (ancestorElement != null) {
-//                    if (tagName.equalsIgnoreCase(ancestorElement.getTagName())) {
-//                        isFound = true;
-//                        break;
-//                    } else {
-//                        currentElement = ancestorElement;
-//                    }
-//                } else {
-//                    break;
-//                }
-//            }
-//            return isFound;
-//        }
-
         MySelectionEventManager(AbstractCellTable<R> table) {
             super(table);
         }
@@ -889,88 +794,6 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
         public void onCellPreview(CellPreviewEvent<R> event) {
             final NativeEvent nativeEvent = event.getNativeEvent();
             final String type = nativeEvent.getType();
-
-////            if ("mouseenter".equals(type)) {
-////
-////            }
-//
-////            GWT.log("Type: " + type);
-//            if ("mousemove".equals(type)) {
-////            if ("mouseenter".equals(type)) {
-//
-////                String parentTag = null;
-////                Element target = event.getNativeEvent().getEventTarget().cast();
-////                final Element rowElement = getRowElement(target, 5);
-////                GWT.log("mousemove target: " + rowElement.getTagName());
-//
-////                if (rowElement != null && !rowElement.equals(this.rowElement)) {
-////                    final R row = event.getValue();
-////                    this.row = row;
-////                    GWT.log("mousemove Row: " + row);
-////                }
-////                if (hasAncestorTag(target, "tr", 3)) {
-//                final R row = event.getValue();
-//                if (row != null && !row.equals(this.row)) {
-//                    this.row = row;
-//                    GWT.log("mousemove Row: " + row);
-//                }
-////                }
-//
-////                if (target.getParentElement() != null) {
-////                    parentTag = target.getParentElement().getTagName();
-////                }
-////                if ("tr".equalsIgnoreCase(parentTag)) {
-////                    final R row = event.getValue();
-////                    if (row != null && !row.equals(this.row)) {
-////                        this.row = row;
-////                        GWT.log("mousemove Row: " + row);
-////                    }
-////                }
-//            }
-//            if ("mouseout".equals(type)) {
-////                String parentTag = null;
-////                String grandParentTag = null;
-////                Element target = event.getNativeEvent().getEventTarget().cast();
-//                Element relatedTarget = event.getNativeEvent().getRelatedEventTarget().cast();
-//
-////                if (hasAncestorTag(target, "tr", 3)
-////                        && !hasAncestorTag(relatedTarget, "tr", 3)) {
-//                if (!hasAncestorTag(relatedTarget, "tr", 3)) {
-//                    GWT.log("mouseout Row: " + this.row + " => null");
-//                    row = null;
-//                }
-//
-////                final R row = event.getValue();
-////                GWT.log("mouseout target: " + target.getTagName()
-////                        + " rel target: " + relatedTarget.getTagName()
-////                        + " row: " + row);
-////                if (row != null && row.equals(this.row)) {
-////                    GWT.log("mouseout Row: " + this.row + " => null");
-////                    this.row = null;
-////                } else if (row != null && !row.equals(this.row)) {
-////                    GWT.log("mouseout Row: " + this.row + " => " + row);
-////                    this.row = row;
-////                }
-//
-////                if (hasAncestorTag(target, "tr", 5)
-////                        && hasAncestorTag(relatedTarget, "tr", 5)
-////                        && row != null && row.equals(this.row)) {
-////                    // In same tr, do nothing
-////                } else {
-////                    GWT.log("mouseout Row: " + this.row);
-////                    this.row = null;
-////                }
-////                if (target.getParentElement() != null) {
-////                    parentTag = target.getParentElement().getTagName();
-////                    if (target.getParentElement().getParentElement() != null) {
-////                        grandParentTag = target.getParentElement().getParentElement().getTagName();
-////                    }
-////                }
-////                GWT.log("mouseout target: " + target.getTagName() + " parent: " + parentTag + " grandparent: " + grandParentTag);
-////                if ("tr".equalsIgnoreCase(parentTag) || "tr".equalsIgnoreCase(grandParentTag)) {
-////                    this.row = null;
-////                }
-//            }
 
             if ("mousedown".equals(type)) {
                 // Find out if the cell consumes this event because if it does then we won't use it to select the row.

@@ -193,8 +193,6 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
         addListSelectionHandler();
         addEnabledClickHandler();
 
-//        listPresenter.setAddRuleAboveHandler(this::addNewRule);
-//        listPresenter.setParentPresenter(this);
         listPresenter.setActionMenuItemProvider(this::buildActionMenuItems);
 
         super.onBind();

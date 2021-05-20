@@ -68,8 +68,6 @@ public interface DataGridView<R> extends View, HasRows {
 
     void setHeadingListener(HeadingListener headingListener);
 
-//    void setRowHoverListener(RowHoverListener<R> rowHoverListener);
-
     HandlerRegistration addHyperlinkHandler(HyperlinkEvent.Handler handler);
 
     void setRefreshing(boolean refreshing);

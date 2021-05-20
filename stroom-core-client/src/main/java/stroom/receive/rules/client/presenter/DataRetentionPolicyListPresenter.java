@@ -52,10 +52,7 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGrid
 
     private BiConsumer<DataRetentionRule, Boolean> enabledStateHandler;
     private final Provider<ActionMenuPresenter> actionMenuPresenterProvider;
-    //    private Consumer<Integer> ruleNumberConsumer;
-//    private DataRetentionPolicyPresenter dataRetentionPolicyPresenter;
     private Function<DataRetentionRule, List<Item>> actionMenuItemProvider;
-//    private Map<Integer, SvgPreset> ruleNoToSvgPresetMap = new HashMap<>();
 
     @Inject
     public DataRetentionPolicyListPresenter(final EventBus eventBus,
@@ -67,23 +64,6 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGrid
         BorderUtil.addBorder(getWidget().getElement());
 
         initTableColumns();
-
-//        getView().setRowHoverListener((previousRow, newRow) -> {
-//
-//            if (previousRow != null) {
-//                SvgPreset svgPreset = ruleNoToSvgPresetMap.get(previousRow.getRuleNumber());
-//                final TableCellElement item = getView().getRowElement(previousRow.getRuleNumber() - 1)
-//                        .getCells()
-//                        .getItem(5);
-//                item.ge
-//            }
-//            if (newRow != null) {
-//                final TableCellElement item = getView().getRowElement(newRow.getRuleNumber() - 1)
-//                        .getCells()
-//                        .getItem(5);
-//                item.getStyle().setVisibility(Visibility.VISIBLE);
-//            }
-//        });
     }
 
     /**
@@ -96,14 +76,8 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGrid
         addColumn("Name", 200, DataRetentionRule::getName);
         addColumn("Retention", 90, DataRetentionRule::getAgeString);
         addColumn("Expression", 500, row -> row.getExpression().toString());
-//        addButtonColumn("", 20, SvgPresets.ELLIPSES_HORIZONTAL.title("Add new rule above this one")
-//                .enabled(true));
         addActionButtonColumn("", 20);
         getView().addEndColumn(new EndColumn<>());
-//        for (int i = 0; i < getView().getRowCount(); i++) {
-//
-//        }
-
     }
 
     private void addColumn(final String name,
@@ -214,14 +188,6 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGrid
     public void setEnabledStateHandler(final BiConsumer<DataRetentionRule, Boolean> enabledStateHandler) {
         this.enabledStateHandler = enabledStateHandler;
     }
-
-//    public void setAddRuleAboveHandler(final Consumer<Integer> ruleNumberConsumer) {
-//        this.ruleNumberConsumer = ruleNumberConsumer;
-//    }
-//
-//    public void setParentPresenter(final DataRetentionPolicyPresenter dataRetentionPolicyPresenter) {
-//        this.dataRetentionPolicyPresenter = dataRetentionPolicyPresenter;
-//    }
 
     public void setActionMenuItemProvider(final Function<DataRetentionRule, List<Item>> actionMenuItemProvider) {
         this.actionMenuItemProvider = actionMenuItemProvider;
