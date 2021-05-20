@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **#2254** : Change `data` expression function to accept a first param for what to text to show
+* Issue **#2241** : Change add icon on data retention screen to add above selected. Add action icon and menu to retention rule table. Restyle rule edit screen.
+
+* Issue **#2254** : Change `data` expression function to accept a first param for what to text to show.
 
 * Issue **#2249** : Fix bug in data retention impact summary tree expansion.
 
