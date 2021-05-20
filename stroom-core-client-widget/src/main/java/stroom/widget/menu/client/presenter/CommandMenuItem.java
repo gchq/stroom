@@ -25,7 +25,10 @@ public abstract class CommandMenuItem extends MenuItem {
     private boolean enabled;
 
     public CommandMenuItem(final int priority,
-                           final String text, final String shortcut, final boolean enabled, final Command command) {
+                           final String text,
+                           final String shortcut,
+                           final boolean enabled,
+                           final Command command) {
         super(priority, text);
         this.shortcut = shortcut;
         this.enabled = enabled;

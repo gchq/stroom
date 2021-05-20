@@ -27,4 +27,55 @@ public class SimpleMenuItem extends CommandMenuItem {
                           final Command command) {
         super(priority, text, shortcut, enabled, command);
     }
+
+    public static Builder builder(final int priority) {
+        return new Builder(priority);
+    }
+
+    public static class Builder {
+
+        private final int priority;
+        private String text = null;
+        private String shortcut = null;
+        private Command command = null;
+        private boolean enabled = true;
+
+        Builder(final int priority) {
+            this.priority = priority;
+        }
+
+        public Builder withText(final String text) {
+            this.text = text;
+            return this;
+        }
+
+        public Builder withShortcut(final String shortcut) {
+            this.shortcut = shortcut;
+            return this;
+        }
+
+        public Builder withCommand(final Command command) {
+            this.command = command;
+            return this;
+        }
+
+        public Builder withEnabledState(final boolean enabled) {
+            this.enabled = enabled;
+            return this;
+        }
+
+        public Builder disabled() {
+            this.enabled = false;
+            return this;
+        }
+
+        public Item build() {
+            return new SimpleMenuItem(
+                    priority,
+                    text,
+                    shortcut,
+                    enabled,
+                    command);
+        }
+    }
 }
