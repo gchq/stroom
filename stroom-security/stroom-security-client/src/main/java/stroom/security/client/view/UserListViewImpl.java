@@ -19,6 +19,7 @@ package stroom.security.client.view;
 import stroom.security.client.presenter.UserListUiHandlers;
 import stroom.security.client.presenter.UserListView;
 import stroom.security.shared.FindUserCriteria;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
@@ -42,14 +43,19 @@ public class UserListViewImpl extends ViewWithUiHandlers<UserListUiHandlers> imp
     private final Widget widget;
 
     @Inject
-    public UserListViewImpl(final EventBus eventBus, final Binder binder) {
+    public UserListViewImpl(final EventBus eventBus,
+                            final Binder binder,
+                            final UiConfigCache uiConfigCache) {
         widget = binder.createAndBindUi(this);
 
         // Not easy to determine if we are dealing in users or groups at this point so just
         // call it Quick Filter
-        nameFilter.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
-                "Quick Filter",
-                FindUserCriteria.FILTER_FIELD_DEFINITIONS));
+        uiConfigCache.get()
+                .onSuccess(uiConfig ->
+                        nameFilter.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
+                                "Quick Filter",
+                                FindUserCriteria.FILTER_FIELD_DEFINITIONS,
+                                uiConfig.getHelpUrl())));
     }
 
     @Override

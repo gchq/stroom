@@ -11,7 +11,7 @@ import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
-import stroom.util.string.StringPredicateFactory;
+import stroom.util.filter.QuickFilterPredicateFactory;
 
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -91,22 +91,21 @@ public class SuggestionsServiceImpl implements SuggestionsService {
     @NotNull
     private List<String> createPipelineList(final String userInput) {
         final List<String> result;
-        result = pipelineStore.list().stream()
-                .map(DocRef::getName)
-                .filter(StringPredicateFactory.createFuzzyMatchPredicate(userInput))
-                .sorted()
+        final Stream<String> stream = pipelineStore.list().stream()
+                .map(DocRef::getName);
+        result = QuickFilterPredicateFactory.filterStream(userInput, stream)
                 .limit(LIMIT)
                 .collect(Collectors.toList());
+
         return result;
     }
 
     @NotNull
     private List<String> createStatusList(final String userInput) {
         final List<String> result;
-        result = Arrays.stream(Status.values())
-                .map(Status::getDisplayValue)
-                .filter(StringPredicateFactory.createFuzzyMatchPredicate(userInput))
-                .sorted()
+        Stream<String> stream = Arrays.stream(Status.values())
+                .map(Status::getDisplayValue);
+        result = QuickFilterPredicateFactory.filterStream(userInput, stream)
                 .limit(LIMIT)
                 .collect(Collectors.toList());
         return result;
@@ -127,8 +126,8 @@ public class SuggestionsServiceImpl implements SuggestionsService {
         final CompletableFuture<Set<String>> metaFeedsFuture = CompletableFuture.supplyAsync(
                 taskContextFactory.contextResult(
                         "Get meta feed names",
-                        taskContext -> metaService.getFeeds())
-        );
+                        taskContext -> metaService.getFeeds()));
+
         final CompletableFuture<List<String>> docFeedsFuture = CompletableFuture.supplyAsync(
                 taskContextFactory.contextResult(
                         "Get doc feed names",
@@ -142,10 +141,10 @@ public class SuggestionsServiceImpl implements SuggestionsService {
             // Make async calls to get the two lists then combine
             return metaFeedsFuture
                     .thenCombine(docFeedsFuture, (metaFeedNames, docFeedNames) ->
-                            Stream.concat(metaFeedNames.stream(), docFeedNames.stream())
-                                    .parallel()
-                                    .filter(StringPredicateFactory.createFuzzyMatchPredicate(userInput))
-                                    .sorted()
+                            QuickFilterPredicateFactory.filterStream(
+                                    userInput,
+                                    Stream.concat(metaFeedNames.stream(), docFeedNames.stream())
+                                            .parallel())
                                     .distinct()
                                     .limit(LIMIT)
                                     .collect(Collectors.toList()))
@@ -163,10 +162,8 @@ public class SuggestionsServiceImpl implements SuggestionsService {
         // TODO this seems pretty inefficient as each call hits the db to get ALL feeds
         //   then limits/filters in java.  Needs to work off a cached feed name list
 
-        return metaService.getTypes()
-                .parallelStream()
-                .filter(StringPredicateFactory.createFuzzyMatchPredicate(userInput))
-                .sorted()
+        return QuickFilterPredicateFactory.filterStream(
+                userInput, metaService.getTypes().parallelStream())
                 .limit(LIMIT)
                 .collect(Collectors.toList());
     }

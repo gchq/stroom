@@ -19,6 +19,7 @@ package stroom.explorer.client.view;
 import stroom.explorer.client.presenter.EntityTreePresenter;
 import stroom.explorer.client.presenter.EntityTreeUiHandlers;
 import stroom.explorer.shared.ExplorerTreeFilter;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 
@@ -41,13 +42,17 @@ public class EntityTreeViewImpl extends ViewWithUiHandlers<EntityTreeUiHandlers>
     MaxScrollPanel scrollPanel;
 
     @Inject
-    public EntityTreeViewImpl(final Binder binder) {
+    public EntityTreeViewImpl(final Binder binder,
+                              final UiConfigCache uiConfigCache) {
         widget = binder.createAndBindUi(this);
 
         // Same field defs as the Explorer Tree
-        nameFilter.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
-                "Choose Item Quick Filter",
-                ExplorerTreeFilter.FIELD_DEFINITIONS));
+        uiConfigCache.get()
+                .onSuccess(uiConfig ->
+                        nameFilter.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
+                                "Choose Item Quick Filter",
+                                ExplorerTreeFilter.FIELD_DEFINITIONS,
+                                uiConfig.getHelpUrl())));
     }
 
     @Override

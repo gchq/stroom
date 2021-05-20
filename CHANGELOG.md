@@ -7,11 +7,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2254** : Change `data` expression function to accept a first param for what to text to show
+
+* Issue **#2249** : Fix bug in data retention impact summary tree expansion.
+
+* Issue **#2246** : Fix incorrect handling of parameters to `data` Stroom expression function.
+
+* Add default sorting by user id in the acounts (users) and tokens screens.
+
+* Issue **#2155** : Change default quick filter mode to use contains matching by default with chars anywhere matching now available via `~` prefix. Change quick filter to always treat space as a term delimiter unless in dbl quotes. Add sorting of results by match quality for chars anywhere and regex matching.
+
+* Issue **#2242** : Fix help link in quick filter tool tips. Now comes from config.
+
 * Provide more informative error than NPE when failing to fetch streams that are associated with missing meta
 
 * Issue **#2247** : Correct configuration of Autologger for NodeResourceImpl. 
 
 * Update banner to advertise `noauth/datafeed` URL instead of older version.
+
 
 ## [v7.0-beta.116] - 2021-05-13
 

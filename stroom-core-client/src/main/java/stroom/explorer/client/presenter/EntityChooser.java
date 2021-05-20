@@ -18,6 +18,7 @@ package stroom.explorer.client.presenter;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.util.client.SelectionType;
 
 import com.google.inject.Inject;
@@ -26,9 +27,11 @@ import com.google.web.bindery.event.shared.EventBus;
 public class EntityChooser extends ExplorerDropDownTreePresenter {
 
     @Inject
-    EntityChooser(final EventBus eventBus, final DropDownTreeView view,
-                  final RestFactory restFactory) {
-        super(eventBus, view, restFactory);
+    EntityChooser(final EventBus eventBus,
+                  final DropDownTreeView view,
+                  final RestFactory restFactory,
+                  final UiConfigCache uiConfigCache) {
+        super(eventBus, view, restFactory, uiConfigCache);
         setIncludeNullSelection(false);
     }
 

@@ -37,6 +37,7 @@ import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.CompareUtil;
 import stroom.util.shared.PageResponse;
 
 import com.google.common.base.Strings;
@@ -51,13 +52,13 @@ import org.jooq.impl.DSL;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -130,6 +131,10 @@ class AccountDaoImpl implements AccountDao {
                 return record;
             };
 
+    protected static final String FIELD_NAME_USER_ID = "userId";
+    protected static final String FIELD_NAME_EMAIL = "email";
+    protected static final String FIELD_NAME_STATUS = "status";
+    protected static final String FIELD_NAME_LAST_LOGIN_MS = "lastLoginMs";
     private static final Map<String, Field<?>> FIELD_MAP = Map.ofEntries(
             entry("id", ACCOUNT.ID),
             entry("version", ACCOUNT.VERSION),
@@ -137,14 +142,14 @@ class AccountDaoImpl implements AccountDao {
             entry("updateTimeMs", ACCOUNT.UPDATE_TIME_MS),
             entry("createUser", ACCOUNT.CREATE_USER),
             entry("updateUser", ACCOUNT.UPDATE_USER),
-            entry("userId", ACCOUNT.USER_ID),
-            entry("email", ACCOUNT.EMAIL),
+            entry(FIELD_NAME_USER_ID, ACCOUNT.USER_ID),
+            entry(FIELD_NAME_EMAIL, ACCOUNT.EMAIL),
             entry("firstName", ACCOUNT.FIRST_NAME),
             entry("lastName", ACCOUNT.LAST_NAME),
             entry("comments", ACCOUNT.COMMENTS),
             entry("loginCount", ACCOUNT.LOGIN_COUNT),
             entry("loginFailures", ACCOUNT.LOGIN_FAILURES),
-            entry("lastLoginMs", ACCOUNT.LAST_LOGIN_MS),
+            entry(FIELD_NAME_LAST_LOGIN_MS, ACCOUNT.LAST_LOGIN_MS),
             entry("reactivatedMs", ACCOUNT.REACTIVATED_MS),
             entry("forcePasswordChange", ACCOUNT.FORCE_PASSWORD_CHANGE),
             entry("neverExpires", ACCOUNT.NEVER_EXPIRES),
@@ -152,7 +157,7 @@ class AccountDaoImpl implements AccountDao {
             entry("inactive", ACCOUNT.INACTIVE),
             entry("locked", ACCOUNT.LOCKED),
             entry("processingAccount", ACCOUNT.PROCESSING_ACCOUNT),
-            entry("status", ACCOUNT_STATUS));
+            entry(FIELD_NAME_STATUS, ACCOUNT_STATUS));
 
     private static final FilterFieldMappers<Account> FIELD_MAPPERS = FilterFieldMappers.of(
             FilterFieldMapper.of(
@@ -163,15 +168,23 @@ class AccountDaoImpl implements AccountDao {
                     Account::getEmail),
             FilterFieldMapper.of(
                     AccountResource.FIELD_DEF_STATUS,
-                    account -> account.isEnabled()
-                            ? "Enabled"
-                            : "Disabled"),
+                    Account::getStatus),
             FilterFieldMapper.of(
                     AccountResource.FIELD_DEF_FIRST_NAME,
                     Account::getFirstName),
             FilterFieldMapper.of(
                     AccountResource.FIELD_DEF_LAST_NAME,
                     Account::getLastName));
+
+    private static final Map<String, Comparator<Account>> FIELD_COMPARATORS = Map.of(
+            FIELD_NAME_USER_ID,
+            CompareUtil.getNullSafeCaseInsensitiveComparator(Account::getUserId),
+            FIELD_NAME_EMAIL,
+            CompareUtil.getNullSafeCaseInsensitiveComparator(Account::getEmail),
+            FIELD_NAME_STATUS,
+            CompareUtil.getNullSafeCaseInsensitiveComparator(Account::getStatus),
+            FIELD_NAME_LAST_LOGIN_MS,
+            Comparator.nullsFirst(Comparator.comparingLong(Account::getLastLoginMs)));
 
     private final IdentityConfig config;
     private final IdentityDbConnProvider identityDbConnProvider;
@@ -209,7 +222,8 @@ class AccountDaoImpl implements AccountDao {
     public AccountResultPage search(final SearchAccountRequest request) {
         final Condition condition = createCondition(request);
 
-        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, request);
+        // Sort on user_id if no sort supplied
+        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, request, ACCOUNT.USER_ID);
 
         return JooqUtil.contextResult(identityDbConnProvider, context -> {
             if (request.getQuickFilter() == null || request.getQuickFilter().length() == 0) {
@@ -270,23 +284,33 @@ class AccountDaoImpl implements AccountDao {
                 return new AccountResultPage(list, pageResponse);
 
             } else {
-                // Create the predicate for the current filter value
-                final Predicate<Account> fuzzyMatchPredicate = QuickFilterPredicateFactory.createFuzzyMatchPredicate(
-                        request.getQuickFilter(), FIELD_MAPPERS);
-
                 try (final Stream<AccountRecord> stream = context
                         .selectFrom(ACCOUNT)
                         .where(condition)
                         .orderBy(orderFields)
                         .stream()) {
 
-                    return stream
-                            .map(RECORD_TO_ACCOUNT_MAPPER)
-                            .filter(fuzzyMatchPredicate)
+                    final Comparator<Account> comparator = buildComparator(request).orElse(null);
+
+                    return QuickFilterPredicateFactory.filterStream(
+                            request.getQuickFilter(),
+                            FIELD_MAPPERS,
+                            stream.map(RECORD_TO_ACCOUNT_MAPPER),
+                            comparator)
                             .collect(AccountResultPage.collector(request.getPageRequest(), AccountResultPage::new));
                 }
             }
         });
+    }
+
+    private Optional<Comparator<Account>> buildComparator(final SearchAccountRequest searchAccountRequest) {
+        if (searchAccountRequest != null
+                && searchAccountRequest.getSortList() != null
+                && !searchAccountRequest.getSortList().isEmpty()) {
+            return Optional.of(CompareUtil.buildCriteriaComparator(FIELD_COMPARATORS, searchAccountRequest));
+        } else {
+            return Optional.empty();
+        }
     }
 
     @Override

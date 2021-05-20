@@ -338,6 +338,9 @@ class TaskManagerImpl implements TaskManager {
             fuzzyMatchPredicate = taskProgress -> true;
         }
 
+        // TODO @AT We can't sort server side as the UI is collating results from multiple nodes
+        //  this means we would need to return the MatchInfo back to the client for it to use in its
+        //  sort
         final List<TaskProgress> taskProgressList = taskRegistry.list().stream()
                 .filter(taskContext -> {
                     // Only add this task progress if it matches the supplied criteria.
