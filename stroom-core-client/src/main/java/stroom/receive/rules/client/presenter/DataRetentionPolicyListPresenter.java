@@ -16,7 +16,7 @@
 
 package stroom.receive.rules.client.presenter;
 
-import stroom.cell.info.client.SvgCell;
+import stroom.cell.info.client.ActionCell;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.grid.client.DataGridView;
@@ -24,9 +24,9 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.svg.client.SvgPreset;
-import stroom.svg.client.SvgPresets;
 import stroom.util.client.BorderUtil;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
@@ -39,28 +39,51 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGridView<DataRetentionRule>> {
 
     private BiConsumer<DataRetentionRule, Boolean> enabledStateHandler;
-    private Consumer<Integer> ruleNumberConsumer;
+    private final Provider<ActionMenuPresenter> actionMenuPresenterProvider;
+    //    private Consumer<Integer> ruleNumberConsumer;
+//    private DataRetentionPolicyPresenter dataRetentionPolicyPresenter;
+    private Function<DataRetentionRule, List<Item>> actionMenuItemProvider;
+//    private Map<Integer, SvgPreset> ruleNoToSvgPresetMap = new HashMap<>();
 
     @Inject
-    public DataRetentionPolicyListPresenter(final EventBus eventBus) {
+    public DataRetentionPolicyListPresenter(final EventBus eventBus,
+                                            final Provider<ActionMenuPresenter> actionMenuPresenterProvider) {
         super(eventBus, new DataGridViewImpl<>(true, false));
+        this.actionMenuPresenterProvider = actionMenuPresenterProvider;
 
         // Add a border to the list.
         BorderUtil.addBorder(getWidget().getElement());
 
         initTableColumns();
+
+//        getView().setRowHoverListener((previousRow, newRow) -> {
+//
+//            if (previousRow != null) {
+//                SvgPreset svgPreset = ruleNoToSvgPresetMap.get(previousRow.getRuleNumber());
+//                final TableCellElement item = getView().getRowElement(previousRow.getRuleNumber() - 1)
+//                        .getCells()
+//                        .getItem(5);
+//                item.ge
+//            }
+//            if (newRow != null) {
+//                final TableCellElement item = getView().getRowElement(newRow.getRuleNumber() - 1)
+//                        .getCells()
+//                        .getItem(5);
+//                item.getStyle().setVisibility(Visibility.VISIBLE);
+//            }
+//        });
     }
 
     /**
@@ -73,8 +96,14 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGrid
         addColumn("Name", 200, DataRetentionRule::getName);
         addColumn("Retention", 90, DataRetentionRule::getAgeString);
         addColumn("Expression", 500, row -> row.getExpression().toString());
-        addButtonColumn("", 20, SvgPresets.INSERT_ABOVE.title("Add new rule above this one"));
+//        addButtonColumn("", 20, SvgPresets.ELLIPSES_HORIZONTAL.title("Add new rule above this one")
+//                .enabled(true));
+        addActionButtonColumn("", 20);
         getView().addEndColumn(new EndColumn<>());
+//        for (int i = 0; i < getView().getRowCount(); i++) {
+//
+//        }
+
     }
 
     private void addColumn(final String name,
@@ -91,32 +120,39 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGrid
         getView().addResizableColumn(expressionColumn, name, width);
     }
 
-    private void addButtonColumn(final String name,
-                                 final int width,
-                                 final SvgPreset svgPreset) {
-        final Column<DataRetentionRule, SvgPreset> expressionColumn = new Column<DataRetentionRule, SvgPreset>(
-                new SvgCell(true)) {
+    private void addActionButtonColumn(final String name,
+                                       final int width) {
 
-            @Override
-            public SvgPreset getValue(final DataRetentionRule object) {
-                return svgPreset;
-            }
+        final ActionCell<DataRetentionRule> actionCell = new stroom.cell.info.client.ActionCell<>(this::showActionMenu);
 
-            @Override
-            public void onBrowserEvent(final Context context,
-                                       final Element elem,
-                                       final DataRetentionRule rule,
-                                       final NativeEvent event) {
-                super.onBrowserEvent(context, elem, rule, event);
+        final Column<DataRetentionRule, DataRetentionRule> expressionColumn =
+                new Column<DataRetentionRule, DataRetentionRule>(actionCell) {
 
-                GWT.log("Rule " + rule.getRuleNumber() + " clicked");
-                if (ruleNumberConsumer != null) {
-                    // We want a rule above this one, so -1
-                    ruleNumberConsumer.accept(rule.getRuleNumber() - 1);
-                }
-            }
-        };
+                    @Override
+                    public DataRetentionRule getValue(final DataRetentionRule row) {
+                        return row;
+                    }
+
+                    @Override
+                    public void onBrowserEvent(final Context context,
+                                               final Element elem,
+                                               final DataRetentionRule rule,
+                                               final NativeEvent event) {
+                        super.onBrowserEvent(context, elem, rule, event);
+                        GWT.log("Rule " + rule.getRuleNumber() + " clicked, event " + event.getType());
+                    }
+                };
         getView().addResizableColumn(expressionColumn, name, width);
+    }
+
+    private void showActionMenu(final DataRetentionRule row, final NativeEvent event) {
+
+        List<Item> items = actionMenuItemProvider.apply(row);
+        actionMenuPresenterProvider.get().show(
+                DataRetentionPolicyListPresenter.this,
+                items,
+                event.getClientX(),
+                event.getClientY());
     }
 
     private void addTickBoxColumn(final String name,
@@ -164,6 +200,7 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGrid
     public void setData(final List<DataRetentionRule> data) {
         getView().setRowData(0, data);
         getView().setRowCount(data.size());
+
     }
 
     public MultiSelectionModel<DataRetentionRule> getSelectionModel() {
@@ -178,7 +215,15 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGrid
         this.enabledStateHandler = enabledStateHandler;
     }
 
-    public void setAddRuleAboveHandler(final Consumer<Integer> ruleNumberConsumer) {
-        this.ruleNumberConsumer = ruleNumberConsumer;
+//    public void setAddRuleAboveHandler(final Consumer<Integer> ruleNumberConsumer) {
+//        this.ruleNumberConsumer = ruleNumberConsumer;
+//    }
+//
+//    public void setParentPresenter(final DataRetentionPolicyPresenter dataRetentionPolicyPresenter) {
+//        this.dataRetentionPolicyPresenter = dataRetentionPolicyPresenter;
+//    }
+
+    public void setActionMenuItemProvider(final Function<DataRetentionRule, List<Item>> actionMenuItemProvider) {
+        this.actionMenuItemProvider = actionMenuItemProvider;
     }
 }
