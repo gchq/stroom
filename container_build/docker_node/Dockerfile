@@ -44,13 +44,17 @@ RUN apk add --no-cache \
     && echo "USER_ID: [$USER_ID]" \
     && echo "GROUP_ID: [$GROUP_ID]" \
     && group_name="$(cat /etc/group | grep ":${GROUP_ID}:" | awk -F ":" '{ print $1 }')" \
-    && echo "group_name: [$group_name"] \
+    && echo "group_name from /etc/group: [$group_name"] \
+    && if [ -n "${group_name}" ]; then echo "Found group ${group_name} with id ${GROUP_ID}"; fi \
+    && if [ ! -n "${group_name}" ]; then echo "Creating group ${group_name} with id ${GROUP_ID}"; fi \
     && if [ ! -n "${group_name}" ]; then addgroup -g "$GROUP_ID" -S builder; fi \
-    && echo "group_name: [$group_name"] \
-    && if [ ! -n "${group_name}" ]; then docker_group_name="builder"; fi \
+    && echo "group_name after addgroup: [$group_name"] \
+    && if [ ! -n "${group_name}" ]; then group_name="builder"; fi \
     && echo "group_name: [$group_name"] \
     && user_name="$(getent passwd "$USER_ID" | cut -d: -f1)" \
     && echo "user_name: [$user_name]" \
+    && if [ -n "${group_name}" ]; then echo "Found user ${user_name} with id ${USER_ID}"; fi \
+    && if [ ! -n "${user_name}" ]; then echo "Creating user ${user_name} with id ${USER_ID}"; fi \
     && if [ ! -n "${user_name}" ]; then adduser -u "$USER_ID" -S -s /bin/false -D -G "${group_name}" builder; fi \
     && echo "user_name: [$user_name]" \
     && if [ ! -n "${user_name}" ]; then user_name="builder"; fi \
