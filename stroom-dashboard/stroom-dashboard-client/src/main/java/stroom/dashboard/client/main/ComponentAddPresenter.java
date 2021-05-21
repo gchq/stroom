@@ -40,22 +40,6 @@ public class ComponentAddPresenter extends MyPresenterWidget<CellTableView<Compo
     @Inject
     public ComponentAddPresenter(final EventBus eventBus) {
         super(eventBus, new CellTableViewImpl<>(true, "hoverCellTable"));
-        // // Icon.
-        // final Column<ElementType, ImageResource> iconColumn = new
-        // Column<ElementType, ImageResource>(
-        // new FACell()) {
-        // @Override
-        // public ImageResource getValue(final ElementType elementType) {
-        // final IconProvider provider =
-        // iconProviders.getProvider(elementType.getType());
-        // if (provider != null) {
-        // return provider.getIcon();
-        // }
-        //
-        // return null;
-        // }
-        // };
-        // getView().addColumn(iconColumn);
 
         // Text.
         final Column<ComponentType, String> textColumn = new Column<ComponentType, String>(new TextCell()) {

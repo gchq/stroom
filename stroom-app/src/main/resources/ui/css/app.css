@@ -62,8 +62,7 @@
 @import url("codeeditor.css");
 @import url("components.css");
 @import url("dashboard.css");
-
-@import url("../xsdbrowser/xsdbrowser.css");
+@import url("xsdbrowser.css");
 
 @import url("celltable/BasicCellTable.css");
 @import url("celltable/DefaultCellTable.css");

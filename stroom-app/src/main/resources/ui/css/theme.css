@@ -68,6 +68,10 @@
     --code-editor-fatal-border-color: #444444;
     --code-editor-fatal-background-color: #000000;
     --code-editor-highlight-background-color: yellow;
+
+    --xsdbrowser-title-background-color: #888;
+    --xsdbrowser-title-background-color-selected: rgb(74, 144, 228);
+    --xsdbrowser-box-background-color: white;
 }
 
 .stroom-theme-dark {
@@ -137,6 +141,10 @@
     --code-editor-fatal-border-color: #c5cde2;
     --code-editor-fatal-background-color: #000000;
     --code-editor-highlight-background-color: #1164a3;
+
+    --xsdbrowser-title-background-color: #555;
+    --xsdbrowser-title-background-color-selected: #1164a3;
+    --xsdbrowser-box-background-color: #19171d;
 }
 
 .stroom-theme-dark .stroom-body {

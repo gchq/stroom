@@ -20,7 +20,6 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.dom.client.HasMouseOutHandlers;
 import com.google.gwt.event.dom.client.HasMouseOverHandlers;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -33,8 +32,8 @@ public class MenuItemPresenter extends MyPresenterWidget<MenuItemPresenter.MenuI
 
     public MenuItemPresenter(final EventBus eventBus,
                              final MenuItemView view,
-                             final ImageResource enabledImage,
-                             final ImageResource disabledImage,
+                             final String enabledImageClassName,
+                             final String disabledImageClassName,
                              final String html,
                              final String shortcut,
                              final boolean enabled) {
@@ -43,8 +42,8 @@ public class MenuItemPresenter extends MyPresenterWidget<MenuItemPresenter.MenuI
         this.enabled = enabled;
 
         view.setHTML(html);
-        view.setEnabledImage(enabledImage);
-        view.setDisabledImage(disabledImage);
+        view.setEnabledImage(enabledImageClassName);
+        view.setDisabledImage(disabledImageClassName);
         view.setShortcut(shortcut);
         view.setEnabled(enabled);
     }
@@ -76,9 +75,9 @@ public class MenuItemPresenter extends MyPresenterWidget<MenuItemPresenter.MenuI
 
         void setHTML(String html);
 
-        void setEnabledImage(ImageResource resource);
+        void setEnabledImage(String className);
 
-        void setDisabledImage(ImageResource resource);
+        void setDisabledImage(String className);
 
         void setShortcut(String shortcut);
 

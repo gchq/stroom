@@ -26,7 +26,6 @@ import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseOverHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Event;
@@ -60,12 +59,12 @@ public class MenubarItem extends ViewImpl implements MenuItemView {
     }
 
     @Override
-    public void setEnabledImage(final ImageResource resource) {
+    public void setEnabledImage(final String resource) {
         // Not relevant
     }
 
     @Override
-    public void setDisabledImage(final ImageResource resource) {
+    public void setDisabledImage(final String resource) {
         // Not relevant
     }
 

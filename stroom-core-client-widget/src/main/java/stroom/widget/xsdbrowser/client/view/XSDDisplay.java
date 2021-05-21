@@ -19,12 +19,8 @@ package stroom.widget.xsdbrowser.client.view;
 import stroom.widget.xsdbrowser.client.view.XSDNode.XSDAttribute;
 import stroom.widget.xsdbrowser.client.view.XSDNode.XSDType;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Position;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Grid;
@@ -32,10 +28,10 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MaxScrollPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -45,7 +41,6 @@ import java.util.Map;
 
 public class XSDDisplay extends Composite {
 
-    private static final Resources resources = GWT.create(Resources.class);
     private final FlowPanel contentPanel = new FlowPanel();
     private final Map<XSDNode, Integer> rowMap = new HashMap<>();
     XSDModel model;
@@ -109,7 +104,7 @@ public class XSDDisplay extends Composite {
         midPanel.setSpacing(5);
 
         midPanel.add(new XSDDisplayBox(
-                resources.xsdTitleElements(),
+                "xsdBrowser-xsdTitleElements",
                 "Elements",
                 getNodeListDisplay(
                         null,
@@ -127,7 +122,7 @@ public class XSDDisplay extends Composite {
                 "100%"));
 
         midPanel.add(new XSDDisplayBox(
-                resources.xsdTitleTypes(),
+                "xsdBrowser-xsdTitleTypes",
                 "Types",
                 getNodeListDisplay(
                         null,
@@ -153,7 +148,7 @@ public class XSDDisplay extends Composite {
             title = title + targetNamespace;
         }
         final XSDDisplayBox box = new XSDDisplayBox(
-                resources.xsdTitleSchema(), title, midPanel, map, model, node, null,
+                "xsdBrowser-xsdTitleSchema", title, midPanel, map, model, node, null,
                 null);
 
         return box;
@@ -169,7 +164,7 @@ public class XSDDisplay extends Composite {
         final VerticalPanel right = new VerticalPanel();
 
         left.add(new XSDDisplayBox(
-                resources.xsdTitleElement(),
+                "xsdBrowser-xsdTitleElement",
                 node.getName(),
                 null,
                 map,
@@ -232,7 +227,7 @@ public class XSDDisplay extends Composite {
             if (title != null) {
                 if (node.getType() == XSDType.SIMPLE_TYPE) {
                     return new XSDDisplayBox(
-                            resources.xsdTitleSimpleType(),
+                            "xsdBrowser-xsdTitleSimpleType",
                             title,
                             null,
                             map,
@@ -243,7 +238,7 @@ public class XSDDisplay extends Composite {
                 }
 
                 return new XSDDisplayBox(
-                        resources.xsdTitleComplexType(),
+                        "xsdBrowser-xsdTitleComplexType",
                         title,
                         getNodeListDisplay(
                                 layoutColumn,
@@ -411,8 +406,8 @@ public class XSDDisplay extends Composite {
                             final XSDDisplayBox typeBox = getTypeBox(layoutColumn, map, baseNode);
 
                             layoutColumn.add(typeBox);
-                            final Image superArrow = AbstractImagePrototype.create(resources.superArrowSelect())
-                                    .createImage();
+                            final SimplePanel superArrow = new SimplePanel();
+                            superArrow.getElement().setClassName("xsdBrowser-superArrowSelect");
                             layoutColumn.add(superArrow);
                             superArrow.getElement().getParentElement().setAttribute(
                                     "textAlign",
@@ -511,16 +506,15 @@ public class XSDDisplay extends Composite {
                 layout.setWidget(row, col, getImage(type));
             }
 
-            layout.setWidget(
-                    row,
-                    col + 1,
-                    AbstractImagePrototype.create(resources.xsdTree03()).createImage());
+            final SimplePanel panel = new SimplePanel();
+            panel.getElement().setClassName("xsdBrowser-xsdTree03");
+            layout.setWidget(row, col + 1, panel);
 
         } else {
             // Otherwise add the element.
             XSDNode refNode = null;
 
-            Image image = null;
+            Widget image = null;
             XSDNodeLabel lblName = null;
             Label lblOccurrence = null;
             Label lblType = null;
@@ -575,7 +569,7 @@ public class XSDDisplay extends Composite {
             // Add line images to get back to the structure level.
             if (node.getParent() != null && node.getParent().getType().isStructural()) {
                 for (int i = col; i < colCount - 6; i++) {
-                    layout.setWidget(row, i, AbstractImagePrototype.create(resources.xsdTree03()).createImage());
+                    layout.setWidget(row, i, image("xsdBrowser-xsdTree03"));
                 }
             }
 
@@ -585,16 +579,24 @@ public class XSDDisplay extends Composite {
             while (pos >= 0 && parent != null && parent.getType().isStructuralOrElement()) {
                 if (node == parent || rowMap.get(parent) == row) {
                     if (parent.isFirstChild() && parent.isLastChild()) {
-                        layout.setWidget(row, pos, AbstractImagePrototype.create(resources.xsdTree03()).createImage());
+                        layout.setWidget(row,
+                                pos,
+                                image("xsdBrowser-xsdTree03"));
                     } else if (parent.isFirstChild()) {
-                        layout.setWidget(row, pos, AbstractImagePrototype.create(resources.xsdTree06()).createImage());
+                        layout.setWidget(row,
+                                pos,
+                                image("xsdBrowser-xsdTree06"));
                     } else if (parent.isLastChild()) {
-                        layout.setWidget(row, pos, AbstractImagePrototype.create(resources.xsdTree09()).createImage());
+                        layout.setWidget(row,
+                                pos,
+                                image("xsdBrowser-xsdTree09"));
                     } else {
-                        layout.setWidget(row, pos, AbstractImagePrototype.create(resources.xsdTree05()).createImage());
+                        layout.setWidget(row,
+                                pos,
+                                image("xsdBrowser-xsdTree05"));
                     }
                 } else if (!parent.isLastChild()) {
-                    layout.setWidget(row, pos, AbstractImagePrototype.create(resources.xsdTree02()).createImage());
+                    layout.setWidget(row, pos, image("xsdBrowser-xsdTree02"));
                 }
 
                 parent = parent.getParent();
@@ -620,6 +622,12 @@ public class XSDDisplay extends Composite {
         }
     }
 
+    private Widget image(final String className) {
+        final SimplePanel panel = new SimplePanel();
+        panel.getElement().setClassName(className);
+        return panel;
+    }
+
     private void addSeparator(final Grid layout) {
         // Add a row with a black border at the bottom.
         setRowStyle(layout, layout.getRowCount() - 1, "borderBottom", "1px solid black");
@@ -633,122 +641,57 @@ public class XSDDisplay extends Composite {
         }
     }
 
-    private Image getImage(final XSDType type) {
-        ImageResource resource = null;
+    private Widget getImage(final XSDType type) {
+        String className = null;
         String title = null;
 
         switch (type) {
             case ALL:
-                resource = resources.xsdAll();
+                className = "xsdBrowser-xsdAll";
                 title = "All";
                 break;
             case ANY:
-                resource = resources.xsdAny();
+                className = "xsdBrowser-xsdAny";
                 break;
             case ATTRIBUTE:
-                resource = resources.xsdAttribute();
+                className = "xsdBrowser-xsdAttribute";
                 break;
             case CHOICE:
-                resource = resources.xsdChoice();
+                className = "xsdBrowser-xsdChoice";
                 title = "Choice";
                 break;
             case COMPLEX_TYPE:
-                resource = resources.xsdComplexType();
+                className = "xsdBrowser-xsdComplexType";
                 break;
             case ELEMENT:
-                resource = resources.xsdElement();
+                className = "xsdBrowser-xsdElement";
                 break;
             case ELEMENT_REF:
-                resource = resources.xsdElementRef();
+                className = "xsdBrowser-xsdElementRef";
                 break;
             case SCHEMA:
-                resource = resources.xsdTitleSchema();
+                className = "xsdBrowser-xsdTitleSchema";
                 break;
             case SEQUENCE:
-                resource = resources.xsdSequence();
+                className = "xsdBrowser-xsdSequence";
                 title = "Sequence";
                 break;
             case SIMPLE_TYPE:
-                resource = resources.xsdSimpleType();
+                className = "xsdBrowser-xsdSimpleType";
                 break;
             default:
                 break;
         }
 
-        if (resource != null) {
-            final Image img = new Image(resource);
+        if (className != null) {
+            final Widget image = image(className);
             if (title != null) {
-                img.setTitle(title);
+                image.setTitle(title);
             }
 
-            return img;
+            return image;
         }
 
         return null;
-    }
-
-    public interface Resources extends ClientBundle {
-
-        ImageResource superArrow();
-
-        ImageResource superArrowSelect();
-
-        ImageResource xsdAll();
-
-        ImageResource xsdAny();
-
-        ImageResource xsdAttribute();
-
-        ImageResource xsdChoice();
-
-        ImageResource xsdComplexType();
-
-        ImageResource xsdElement();
-
-        ImageResource xsdElementRef();
-
-        ImageResource xsdSequence();
-
-        ImageResource xsdSimpleType();
-
-        ImageResource xsdTitleAttributes();
-
-        ImageResource xsdTitleComplexType();
-
-        ImageResource xsdTitleDirectives();
-
-        ImageResource xsdTitleElement();
-
-        ImageResource xsdTitleElements();
-
-        ImageResource xsdTitleGroups();
-
-        ImageResource xsdTitleSchema();
-
-        ImageResource xsdTitleSimpleType();
-
-        ImageResource xsdTitleTypes();
-
-        ImageResource xsdTree01();
-
-        ImageResource xsdTree02();
-
-        ImageResource xsdTree03();
-
-        ImageResource xsdTree04();
-
-        ImageResource xsdTree05();
-
-        ImageResource xsdTree06();
-
-        ImageResource xsdTree07();
-
-        ImageResource xsdTree08();
-
-        ImageResource xsdTree09();
-
-        ImageResource xsdTree10();
-
-        ImageResource xsdTree11();
     }
 }
