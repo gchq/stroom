@@ -84,7 +84,7 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
             if (event.isAttached()) {
                 if (!started) {
                     // Can only be started once attached
-                    editor.startEditor();
+                    editor.startEditor(theme.getName());
                     editor.setShowPrintMargin(false);
                     editor.setUseSoftTabs(true);
                     editor.setTabSize(2);
