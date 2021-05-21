@@ -67,9 +67,9 @@ public class XSDNodeLabel extends Composite implements SelectableItem {
         final Element tr = td.getParentElement();
 
         if (selected) {
-            tr.getStyle().setBackgroundColor("#bbdefb");
+            tr.addClassName("nodeLabelSelected");
         } else {
-            tr.getStyle().setBackgroundColor("white");
+            tr.removeClassName("nodeLabelSelected");
         }
     }
 }

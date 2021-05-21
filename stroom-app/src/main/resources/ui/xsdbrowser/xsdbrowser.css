@@ -49,7 +49,7 @@
 	border-top: 1px solid var(--border-color);
 	border-bottom: 1px solid var(--border-color);
 	overflow: auto;
-	background-color: white;
+	background-color: var(--input-background-color);
 	padding: 5px;
 }
 
@@ -74,28 +74,28 @@
 .xsdBrowser .box {
 	width: 100%;
 	height: 100%;
-	border: 1px solid black;
+	border: 1px solid var(--main-border-color);
 }
 
 .xsdBrowser .boxTitle {
 	width: 100%;
-	background: #2196F3;
+	background: var(--dialog-titlebar-background-color);
 	padding: 2px;
-	border: 1px solid #2196F3;
+	border: 1px solid var(--dialog-titlebar-background-color);
 }
 
 .xsdBrowser .boxTitle-selected {
 	width: 100%;
-	background: #2962FF;
+	background: var(--dialog-titlebar-background-color);
 	padding: 2px;
-	border: 1px solid #2962FF;
+	border: 1px solid var(--dialog-titlebar-background-color);
 }
 
 .xsdBrowser .boxTitle-noContent {
 }
 
 .xsdBrowser .outerBox {
-	border: 1px solid white;
+	border: 1px solid var(--input-background-color);
 }
 
 .xsdBrowser .restrictionType {
@@ -131,6 +131,11 @@
 	cursor: pointer;
 	white-space: nowrap;
 	text-align: left;
+}
+
+.xsdBrowser .nodeLabelSelected {
+  background: var(--selected-row-background-color) none repeat scroll 0 0 !important;
+  color: var(--selected-row-text-color) !important;
 }
 
 .xsdBrowser .occuranceLabel {
