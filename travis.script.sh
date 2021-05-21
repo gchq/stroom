@@ -57,7 +57,7 @@ create_file_hash() {
 generate_ddl_dump() {
   mkdir -p "${RELEASE_ARTEFACTS_DIR}"
 
-  # clear down stroom-all-dbs container and volumes
+  # clear down stroom-all-dbs container and volumes so we have a blank slate
   docker ps -q -f=name='stroom-all-dbs' | xargs -r docker stop --time 0
   docker ps -a -q -f=name='stroom-all-dbs' | xargs -r docker rm
   docker volume ls -q -f=name='bounceit_stroom-all-dbs*' | xargs -r docker volume rm
@@ -66,6 +66,7 @@ generate_ddl_dump() {
   # schema to dump
   ./container_build/runInJavaDocker.sh MIGRATE
 
+  # Produce the dump file
   docker exec \
     stroom-all-dbs \
     mysqldump \
@@ -76,6 +77,8 @@ generate_ddl_dump() {
 }
 
 generate_entity_rel_diagram() {
+  # Needs the stroom-all-dbs container to be running and populated with a vanilla
+  # database schema for us to generate an ERD from
   ./container_build/runInJavaDocker.sh ERD
 }
 
@@ -322,12 +325,12 @@ else
   # Ensure we have a local.yml file as the integration tests will need it
   ./local.yml.sh
 
-  echo -e "${GREEN}Running api build${NC}"
-  # shellcheck disable=SC2016
-  ./container_build/runInNodeDocker.sh 'echo $HOME; ls -ld $HOME; ./stroom-ui/generateApi.sh'
+  #echo -e "${GREEN}Running api build${NC}"
+  ## shellcheck disable=SC2016
+  #./container_build/runInNodeDocker.sh 'echo $HOME; ls -ld $HOME; ./stroom-ui/generateApi.sh'
 
-  echo -e "${GREEN}Running ui build${NC}"
-  ./container_build/runInNodeDocker.sh ./stroom-ui/yarnBuild.sh
+  #echo -e "${GREEN}Running ui build${NC}"
+  #./container_build/runInNodeDocker.sh ./stroom-ui/yarnBuild.sh
 
   echo -e "${GREEN}Running gradle build${NC}"
   ./container_build/runInJavaDocker.sh GRADLE_BUILD

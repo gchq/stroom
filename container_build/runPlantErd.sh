@@ -46,6 +46,33 @@ IFS=$'\n\t'
   #echo "$ip"
 #}
 
+run_java_build() {
+
+  echo -e "${GREEN}Running java build to create app jar file${NC}"
+
+  # Don't need any ui stuff, just the app fat jar
+  ./gradlew \
+    --no-daemon \
+    shadowJar \
+    -x test \
+    -x gwtCompile \
+    -x copyYarnBuild
+
+  echo -e "${GREEN}Java build complete${NC}"
+}
+
+run_db_migration() {
+  echo -e "${GREEN}Running database migration${NC}"
+
+  export STROOM_JDBC_DRIVER_URL="jdbc:mysql://${host_ip}:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
+  java \
+    -jar \
+    ./stroom-app/build/libs/stroom-app-all.jar \
+    migrate \
+    ./local.yml
+  echo -e "${GREEN}Migration complete${NC}"
+}
+
 main() {
   local image_tag="erd-builder"
 
@@ -82,6 +109,13 @@ main() {
   local build_dir="container_build/build"
   local builder_dir="/builder"
   local puml_output_file="${build_dir}/entity_relationships.puml"
+  local app_jar_file="stroom-app/build/libs/stroom-app-all.jar"
+
+  if [ ! -f "${app_jar_file}" ]; then
+    run_java_build
+  fi
+
+  run_db_migration
 
   # Pass in the host ip so the container can see my
   echo -e "${GREEN}Building image ${BLUE}${image_tag}${NC}"
@@ -113,6 +147,11 @@ main() {
 
   ls -l "${puml_output_file}"
 
+  if [ ! -s "${puml_output_file}" ]; then
+    echo -e "${RED}ERROR${NC}: Generated file ${puml_output_file} is empty.\nIs the DB empty?${NC}"
+    exit 1
+  fi
+
   echo -e "${GREEN}Generating images from ${BLUE}${puml_output_file}${NC}"
 
   local output_formats=(
@@ -129,7 +168,9 @@ main() {
       "-t${output_format}"
   done
 
+  echo -e "${GREEN}Generated files:${NC}"
   ls -l "${build_dir}/"
+  echo -e "${GREEN}Generation complete${NC}"
 }
 
 main "$@"

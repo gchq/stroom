@@ -81,19 +81,44 @@ RUN apk add --no-cache \
     && curl -Ls https://sourceforge.net/projects/plantuml/files/plantuml.$PLANTUML_VERSION.jar/download -o /builder/plantuml.jar \
     && alias ll='ls -l' \
     && apk del curl \
-    && echo "USER_ID: $USER_ID" \
-    && echo "GROUP_ID: $GROUP_ID" \
-    && echo "PLANTUML_VERSION: $PLANTUML_VERSION" \
-    && echo "DOCKER_GROUP_ID: $DOCKER_GROUP_ID" \
+    && echo "USER_ID: [$USER_ID]" \
+    && echo "GROUP_ID: [$GROUP_ID]" \
+    && echo "PLANTUML_VERSION: [$PLANTUML_VERSION]" \
+    && echo "DOCKER_GROUP_ID: [$DOCKER_GROUP_ID]" \
+    && echo \
+    && echo "Ensuring group exists for group id [${GROUP_ID}]" \
+    && group_name="$(cat /etc/group | grep ":${GROUP_ID}:" | awk -F ":" '{ print $1 }')" \
+    && echo "group_name from /etc/group: [$group_name"] \
+    && if [ -n "${group_name}" ]; then echo "Found group [${group_name}] with id ${GROUP_ID}"; fi \
+    && if [ ! -n "${group_name}" ]; then echo "Creating group [builder] with id ${GROUP_ID}"; fi \
+    && if [ ! -n "${group_name}" ]; then addgroup -g "$GROUP_ID" -S builder; fi \
+    && if [ ! -n "${group_name}" ]; then group_name="builder"; fi \
+    && echo "group_name: [$group_name"] \
+    && echo \
+    && echo "Ensuring user exists for user id [${USER_ID}]" \
+    && user_name="$(getent passwd "$USER_ID" | cut -d: -f1)" \
+    && echo "user_name from passwd with id ${USER_ID}: [$user_name]" \
+    && if [ -n "${user_name}" ]; then echo "Found user [${user_name}] with id ${USER_ID}"; fi \
+    && if [ ! -n "${user_name}" ]; then echo "Creating user [builder] with id ${USER_ID}"; fi \
+    && if [ ! -n "${user_name}" ]; then adduser -u "$USER_ID" -S -s /bin/false -D -G "${group_name}" builder; fi \
+    && if [ ! -n "${user_name}" ]; then user_name="builder"; fi \
+    && echo "user_name: [$user_name]" \
+    && echo \
+    && echo "Ensuring group exists for docker group id [${DOCKER_GROUP_ID}]" \
     && docker_group_name="$(cat /etc/group | grep ":${DOCKER_GROUP_ID}:" | awk -F ":" '{ print $1 }')" \
-    && if [ ! -n ${docker_group_name} ]; then addgroup -g $DOCKER_GROUP_ID -S docker; fi \
-    && if [ ! -n ${docker_group_name} ]; then docker_group_name="docker"; fi \
+    && if [ -n "${docker_group_name}" ]; then echo "Found group [${docker_group_name}] with docker group id ${DOCKER_GROUP_ID}"; fi \
+    && if [ ! -n "${docker_group_name}" ]; then echo "Creating group [docker] with id ${DOCKER_GROUP_ID}"; fi \
+    && if [ ! -n "${docker_group_name}" ]; then addgroup -g $DOCKER_GROUP_ID -S docker; fi \
+    && if [ ! -n "${docker_group_name}" ]; then docker_group_name="docker"; fi \
     && echo "docker_group_name: $docker_group_name" \
-    && addgroup -g $GROUP_ID -S builder \
-    && adduser -u $USER_ID -S -s /bin/false -D -G builder builder \
+    && echo "Adding user [builder] to docker group [${docker_group_name}]" \
     && addgroup builder "${docker_group_name}" \
     && mkdir -p /builder/shared \
     && chown -R $USER_ID:$GROUP_ID /builder
+
+
+    #&& addgroup -g $GROUP_ID -S builder \
+    #&& adduser -u $USER_ID -S -s /bin/false -D -G builder builder \
 
 COPY --chown=$USER_ID:$GROUP_ID docker-entrypoint.sh /builder/
 

@@ -66,7 +66,7 @@ else
     run_cmd=( "bash" "-c"  "SKIP_TESTS=\"${SKIP_TESTS:-false}\" MAX_WORKERS=\"${MAX_WORKERS:-6}\" ./container_build/gradleBuild.sh" )
   elif [[ $# -eq 1 ]] && [[ "$1" = "MIGRATE" ]]; then
     # DB is in a sibling container so need to force it to use the IP instead of localhost
-    run_cmd=( "bash" "-c"  "export STROOM_JDBC_DRIVER_URL=\"jdbc:mysql://${host_ip}:3307/stroom?useUnicode=yes&characterEncoding=UTF-8\"; java -jar ./stroom-app/build/libs/stroom-app-all.jar migrate ./local.yml" )
+    run_cmd=( "bash" "-c"  "pwd; export STROOM_JDBC_DRIVER_URL=\"jdbc:mysql://${host_ip}:3307/stroom?useUnicode=yes&characterEncoding=UTF-8\"; java -jar ./stroom-app/build/libs/stroom-app-all.jar migrate ./local.yml" )
   else
     #echo 'echo "[$@]"' "=> [$@]"
     #echo 'echo "[$*]"' "=> [$*]"
