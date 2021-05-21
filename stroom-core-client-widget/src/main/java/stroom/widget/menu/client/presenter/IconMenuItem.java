@@ -17,6 +17,7 @@
 package stroom.widget.menu.client.presenter;
 
 import stroom.svg.client.Icon;
+import stroom.svg.client.SvgPreset;
 
 import com.google.gwt.user.client.Command;
 
@@ -88,5 +89,77 @@ public class IconMenuItem extends CommandMenuItem {
 
     public Icon getDisabledIcon() {
         return disabledIcon;
+    }
+
+    public static Builder builder(final int priority) {
+        return new Builder(priority);
+    }
+
+    public static class Builder {
+
+        private final int priority;
+        private String text = null;
+        private String shortcut = null;
+        private Command command = null;
+        private boolean enabled = true;
+        private Icon enabledIcon = null;
+        private Icon disabledIcon = null;
+
+
+        Builder(final int priority) {
+            this.priority = priority;
+        }
+
+        public Builder withText(final String text) {
+            this.text = text;
+            return this;
+        }
+
+        public Builder withShortcut(final String shortcut) {
+            this.shortcut = shortcut;
+            return this;
+        }
+
+        public Builder withCommand(final Command command) {
+            this.command = command;
+            return this;
+        }
+
+        public Builder withEnabledState(final boolean enabled) {
+            this.enabled = enabled;
+            return this;
+        }
+
+        public Builder disabled() {
+            this.enabled = false;
+            return this;
+        }
+
+        public Builder withIcon(final Icon icon) {
+            this.enabledIcon = icon;
+            return this;
+        }
+
+        public Builder withDisabledIcon(final Icon icon) {
+            this.disabledIcon = icon;
+            return this;
+        }
+
+        public Item build() {
+//            if (enabledIcon != null && disabledIcon == null) {
+//                disabledIcon = enabledIcon;
+//            }
+            if (text == null && enabledIcon != null && enabledIcon instanceof SvgPreset) {
+                text = ((SvgPreset) enabledIcon).getTitle();
+            }
+            return new IconMenuItem(
+                    priority,
+                    enabledIcon,
+                    disabledIcon,
+                    text,
+                    shortcut,
+                    enabled,
+                    command);
+        }
     }
 }

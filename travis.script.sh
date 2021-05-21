@@ -97,6 +97,8 @@ gather_release_artefacts() {
   # config so stroom-resources can use it.
 
   # Stroom
+  cp "CHANGELOG.md" "${RELEASE_ARTEFACTS_DIR}"
+
   cp "${docker_build_dir}/config.yml" \
     "${RELEASE_ARTEFACTS_DIR}/stroom-app-config-${TRAVIS_TAG}.yml"
 

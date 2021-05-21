@@ -32,6 +32,7 @@ import javax.inject.Provider;
 
 @AutoLogged
 public class StroomIndexQueryResourceImpl implements StroomIndexQueryResource {
+
     private final Provider<StroomIndexQueryService> stroomIndexQueryServiceProvider;
 
     @Inject

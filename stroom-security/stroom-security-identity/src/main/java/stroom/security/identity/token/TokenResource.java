@@ -48,9 +48,7 @@ import javax.ws.rs.core.MediaType;
 public interface TokenResource extends RestResource, FetchWithIntegerId<Token> {
 
     FilterFieldDefinition FIELD_DEF_USER_ID = FilterFieldDefinition.defaultField("User Id");
-    FilterFieldDefinition FIELD_DEF_USER_EMAIL = FilterFieldDefinition.qualifiedField("User Email");
     FilterFieldDefinition FIELD_DEF_STATUS = FilterFieldDefinition.qualifiedField("Status");
-    FilterFieldDefinition FIELD_DEF_COMMENTS = FilterFieldDefinition.qualifiedField("Comments");
 
     @GET
     @Path("/")

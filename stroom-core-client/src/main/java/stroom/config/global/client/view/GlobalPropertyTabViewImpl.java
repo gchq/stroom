@@ -3,6 +3,7 @@ package stroom.config.global.client.view;
 import stroom.config.global.client.presenter.GlobalPropertyTabPresenter;
 import stroom.config.global.client.presenter.ManageGlobalPropertyUiHandlers;
 import stroom.config.global.shared.GlobalConfigResource;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
@@ -28,12 +29,18 @@ public class GlobalPropertyTabViewImpl
     private final Widget widget;
 
     @Inject
-    GlobalPropertyTabViewImpl(final EventBus eventBus, final Binder binder) {
+    GlobalPropertyTabViewImpl(final EventBus eventBus,
+                              final Binder binder,
+                              final UiConfigCache uiConfigCache) {
         widget = binder.createAndBindUi(this);
 
-        nameFilter.registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip(
-                "Properties Quick Filter",
-                GlobalConfigResource.FIELD_DEFINITIONS));
+        uiConfigCache.get()
+                .onSuccess(uiConfig ->
+                        nameFilter.registerPopupTextProvider(() ->
+                                QuickFilterTooltipUtil.createTooltip(
+                                        "Properties Quick Filter",
+                                        GlobalConfigResource.FIELD_DEFINITIONS,
+                                        uiConfig.getHelpUrl())));
     }
 
     @Override

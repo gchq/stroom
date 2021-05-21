@@ -165,6 +165,11 @@ public class DataFetcher {
 
         return securityContext.useAsReadResult(() -> {
             final Source source = streamStore.openSource(id, true);
+
+            if (source == null) {
+                throw new RuntimeException(LogUtil.message("Error opening stream {} - meta not found.", id));
+            }
+
             try {
                 final InputStreamProvider inputStreamProvider = source.get(partNo);
 

@@ -8,6 +8,61 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 
+## [v7.0-beta.117] - 2021-05-20
+
+* Issue **#2241** : Change add icon on data retention screen to add above selected. Add action icon and menu to retention rule table. Restyle rule edit screen.
+
+* Issue **#2254** : Change `data` expression function to accept a first param for what to text to show.
+
+* Issue **#2249** : Fix bug in data retention impact summary tree expansion.
+
+* Issue **#2246** : Fix incorrect handling of parameters to `data` Stroom expression function.
+
+* Add default sorting by user id in the acounts (users) and tokens screens.
+
+* Issue **#2155** : Change default quick filter mode to use contains matching by default with chars anywhere matching now available via `~` prefix. Change quick filter to always treat space as a term delimiter unless in dbl quotes. Add sorting of results by match quality for chars anywhere and regex matching.
+
+* Issue **#2242** : Fix help link in quick filter tool tips. Now comes from config.
+
+* Provide more informative error than NPE when failing to fetch streams that are associated with missing meta
+
+* Issue **#2247** : Correct configuration of Autologger for NodeResourceImpl. 
+
+* Update banner to advertise `noauth/datafeed` URL instead of older version.
+
+
+## [v7.0-beta.116] - 2021-05-13
+
+* Issue **#2243** : Remove unwanted charset commands from migration script.
+
+* Issue **#2232** : Fixed issue where search was getting stuck due to LMDB locking transactions.
+
+* Issue **#2238** : Renamed table `docstore_history` to `docstore_schema_history`.
+
+* Issue **#2226** : Ensure that `<Process>` audit events are schema compliant.
+
+* Uplift version of `stroom-logs` content pack selected for download to `3.0-beta.1`
+
+* Issue **#2228** : Stroom Dropwizard and Stroom Proxy Send/Receive log default formats improved.
+
+* Issue **#2235** : Add CHANGELOG to the release artefacts.
+
+
+## [v7.0-beta.115] - 2021-05-10
+
+* Issue **#2233** : Fix typo in SQL.
+
+
+## [v7.0-beta.114] - 2021-05-10
+
+* Issue **#2233** : Fix null volume ID in index shard migration.
+
+
+## [v7.0-beta.113] - 2021-05-07
+
+* Issue **#2229** : Fix migration issue.
+
+
 ## [v7.0-beta.112] - 2021-05-06
 
 * Issue **#2223** : Fixed migration issue.
@@ -3375,7 +3430,12 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.112...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.117...HEAD
+[v7.0-beta.117]: https://github.com/gchq/stroom/compare/v7.0-beta.116...v7.0-beta.117
+[v7.0-beta.116]: https://github.com/gchq/stroom/compare/v7.0-beta.115...v7.0-beta.116
+[v7.0-beta.115]: https://github.com/gchq/stroom/compare/v7.0-beta.114...v7.0-beta.115
+[v7.0-beta.114]: https://github.com/gchq/stroom/compare/v7.0-beta.113...v7.0-beta.114
+[v7.0-beta.113]: https://github.com/gchq/stroom/compare/v7.0-beta.112...v7.0-beta.113
 [v7.0-beta.112]: https://github.com/gchq/stroom/compare/v7.0-beta.111...v7.0-beta.112
 [v7.0-beta.111]: https://github.com/gchq/stroom/compare/v7.0-beta.110...v7.0-beta.111
 [v7.0-beta.110]: https://github.com/gchq/stroom/compare/v7.0-beta.109...v7.0-beta.110
