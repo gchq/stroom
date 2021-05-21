@@ -106,7 +106,7 @@
 	overflow: hidden;
 
 	border-radius: 2px;
-	background-color: rgb(255, 255, 255);
+	background-color: var(--page-background-color);
 }
 
 .tabLayout .tabLayout-barOuter {
