@@ -84,18 +84,6 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
         }
     }
 
-
-//    public ImageButtonView addButtonLeft(final String title, final ImageResource enabledImage,
-//                                         final ImageResource disabledImage) {
-//        if (leftButtons == null) {
-//            leftButtons = new ButtonPanel();
-//            addWidgetLeft(leftButtons);
-//        }
-//
-//        final ImageButtonView button = leftButtons.add(title, enabledImage, disabledImage, true);
-//        return button;
-//    }
-
     public ButtonView addButtonLeft(final SvgPreset preset) {
         if (leftButtons == null) {
             leftButtons = new ButtonPanel();
@@ -105,18 +93,6 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
 
         return leftButtons.addButton(preset);
     }
-
-//    public ImageButtonView addButtonRight(final String title, final ImageResource enabledImage,
-//                                          final ImageResource disabledImage) {
-//        if (rightButtons == null) {
-//            rightButtons = new ButtonPanel();
-//            leftButtons.getElement().getStyle().setPaddingRight(1, Style.Unit.PX);
-//            addWidgetLeft(rightButtons);
-//        }
-//
-//        final ImageButtonView button = rightButtons.add(title, enabledImage, disabledImage, true);
-//        return button;
-//    }
 
     public void addTab(final TabData tab) {
         getView().getTabBar().addTab(tab);

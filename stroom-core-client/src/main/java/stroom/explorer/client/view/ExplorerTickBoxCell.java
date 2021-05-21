@@ -8,7 +8,6 @@ import stroom.util.client.ImageUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safecss.shared.SafeStyles;
 import com.google.gwt.safecss.shared.SafeStylesUtils;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
@@ -17,7 +16,6 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.safehtml.shared.SafeUri;
 import com.google.gwt.safehtml.shared.UriUtils;
-import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.view.client.SelectionModel;
 
 public class ExplorerTickBoxCell extends AbstractCell<ExplorerNode> {
@@ -105,13 +103,6 @@ public class ExplorerTickBoxCell extends AbstractCell<ExplorerNode> {
 
             sb.append(template.outer("explorerTickBoxCell-outer", content.toSafeHtml()));
         }
-    }
-
-    private SafeHtml getImageHtml(final ImageResource res) {
-        // Get the HTML for the image.
-        final AbstractImagePrototype proto = AbstractImagePrototype.create(res);
-        final SafeHtml image = SafeHtmlUtils.fromTrustedString(proto.getHTML());
-        return image;
     }
 
     private TickBoxState getValue(final ExplorerNode item) {

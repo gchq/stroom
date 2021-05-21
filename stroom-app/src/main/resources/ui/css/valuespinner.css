@@ -35,6 +35,34 @@
 	font-size: 0px;
 }
 
-.valueSpinner .arrows img {
+.valueSpinner .arrows button {
 	display: block;
+    width: 15px;
+    height: 8px;
+    border: none !important;
+    border-radius: 0 !important;
+}
+
+.valueSpinner-arrowUp {
+    background-image: url("../images/valuespinner/arrowUp.png") !important;
+}
+
+.valueSpinner-arrowUpHover {
+    background-image: url("../images/valuespinner/arrowUpHover.png") !important;
+}
+
+.valueSpinner-arrowUpPressed {
+    background-image: url("../images/valuespinner/arrowUpPressed.png") !important;
+}
+
+.valueSpinner-arrowDown {
+    background-image: url("../images/valuespinner/arrowDown.png") !important;
+}
+
+.valueSpinner-arrowDownHover {
+    background-image: url("../images/valuespinner/arrowDownHover.png") !important;
+}
+
+.valueSpinner-arrowDownPressed {
+    background-image: url("../images/valuespinner/arrowDownPressed.png") !important;
 }

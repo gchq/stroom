@@ -24,7 +24,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safecss.shared.SafeStyles;
 import com.google.gwt.safecss.shared.SafeStylesUtils;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
@@ -33,7 +32,6 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.safehtml.shared.SafeUri;
 import com.google.gwt.safehtml.shared.UriUtils;
-import com.google.gwt.user.client.ui.AbstractImagePrototype;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -115,13 +113,6 @@ public class ExpanderCell extends AbstractCell<Expander> {
         } else {
             sb.append(SafeHtmlUtils.fromSafeConstant("<br/>"));
         }
-    }
-
-    private SafeHtml getImageHtml(final ImageResource res) {
-        // Get the HTML for the image.
-        final AbstractImagePrototype proto = AbstractImagePrototype.create(res);
-        final SafeHtml image = SafeHtmlUtils.fromTrustedString(proto.getHTML());
-        return image;
     }
 
     interface Template extends SafeHtmlTemplates {

@@ -40,9 +40,6 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.resources.client.ImageResource.ImageOptions;
-import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -535,12 +532,6 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
         dataGrid.setRowData(start, values);
     }
 
-//    @Override
-//    public ImageButtonView addButton(final String title, final ImageResource enabledImage,
-//                                     final ImageResource disabledImage, final boolean enabled) {
-//        return buttonPanel.add(title, enabledImage, disabledImage, enabled);
-//    }
-
     @Override
     public ButtonView addButton(final SvgPreset preset) {
         return buttonPanel.addButton(preset);
@@ -719,15 +710,6 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
         @Override
         @Source(DEFAULT_CSS)
         DefaultStyle dataGridStyle();
-
-        /**
-         * The background image applied to headers and footers.
-         */
-        @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
-        ImageResource header();
-
-        @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
-        ImageResource headerHighlight();
     }
 
     public static class ColSettings {

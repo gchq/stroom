@@ -19,7 +19,6 @@ package stroom.task.client.view;
 import stroom.task.client.presenter.UserTaskPresenter.UserTaskView;
 import stroom.task.client.presenter.UserTaskUiHandlers;
 import stroom.task.shared.TaskProgress;
-import stroom.widget.button.client.ImageButton;
 
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;

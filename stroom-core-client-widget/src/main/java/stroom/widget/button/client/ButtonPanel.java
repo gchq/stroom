@@ -59,29 +59,7 @@ public class ButtonPanel extends FlowPanel {
         return button;
     }
 
-//    public ImageButtonView add(
-//    final String title, final ImageResource enabledImage, final ImageResource disabledImage,
-//            final boolean enabled) {
-//        final ImageButton button = createButton(title, enabledImage, disabledImage, enabled);
-//        add(button);
-//        return button;
-//    }
-
     public void setVertical(final boolean vertical) {
         this.vertical = vertical;
     }
-
-//    private ImageButton createButton(final String title, final ImageResource enabledImage,
-//            final ImageResource disabledImage, final boolean enabled) {
-//        final ImageButton button = new ImageButton();
-//        button.setTitle(title);
-//        button.setEnabledImage(enabledImage);
-//        button.setDisabledImage(disabledImage);
-//        button.setEnabled(enabled);
-//        if (vertical) {
-//            button.getElement().getStyle().setDisplay(Display.BLOCK);
-//        }
-//        return button;
-//    }
-
 }
