@@ -33,8 +33,8 @@ public class ArrowConnectorRenderer<T> implements ConnectorRenderer<T> {
 
     public ArrowConnectorRenderer(final Context2d ctx) {
         this.ctx = ctx;
-        lineColor = CssColor.make("black");
-        headColor = CssColor.make("black");
+        lineColor = CssColor.make("grey");
+        headColor = CssColor.make("grey");
     }
 
     @Override
