@@ -34,7 +34,8 @@
 .codeEditor-indicatorPopup {
 	border: 1px solid black;
 	padding: 0px 2px;
-	background-color: #ffffdd;
+	background-color: var(--tooltip-background-color);
+	color: var(--tooltip-text-color);
 	z-index: 10;
 }
 
@@ -47,8 +48,8 @@
 	padding: 0px;
 	margin: 0px;
 	overflow: hidden;
-	background-color: #efefef;
-	border-left: solid 1px #a1a1a1;
+	background-color: var(--code-editor-right-bar-background-color);
+	border-left: solid 1px var(--code-editor-border-color);
 
 	-moz-user-focus: ignore;
 	-moz-user-input: disabled;
@@ -64,7 +65,7 @@
 .codeEditor-summaryContainer {
 	width: 12px;
 	height: 13px;
-	border-bottom: 1px solid #a1a1a1;
+	border-bottom: 1px solid var(--code-editor-border-color);
 
 	-moz-user-focus: ignore;
 	-moz-user-input: disabled;
@@ -127,35 +128,39 @@
 }
 
 .codeEditor-info {
-	border: 1px solid #3676c6;
-	background-color: #378cff;
+	border: 1px solid var(--code-editor-info-border-color);
+	background-color: var(--code-editor-info-background-color);
 }
 
 .codeEditor-warning {
-	border: 1px solid #dd9942;
-	background-color: #ffde81;
+	border: 1px solid var(--code-editor-warning-border-color);
+	background-color: var(--code-editor-warning-background-color);
 }
 
 .codeEditor-error {
-	border: 1px solid #660000;
-	background-color: #ff3a37;
+	border: 1px solid var(--code-editor-error-border-color);
+	background-color: var(--code-editor-error-background-color);
 	opacity: 0.75;
 }
 
 .codeEditor-fatal {
-	border: 1px solid #444444;
-	background-color: #000000;
+	border: 1px solid var(--code-editor-fatal-border-color);
+	background-color: var(--code-editor-fatal-background-color);
 	opacity: 0.75;
 }
 
 .codeEditor-filterActive {
 	background-image: url("../images/filterActive.png");
+    background-color: transparent;
+    border: none;
 	width: 10px;
 	height: 10px;
 }
 
 .codeEditor-filterInactive {
 	background-image: url("../images/filterInactive.png");
+    background-color: transparent;
+    border: none;
 	width: 10px;
 	height: 10px;
 }

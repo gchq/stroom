@@ -1,6 +1,7 @@
 /* Material Design Lite */
 /* @import ../mdl/material.min.css" /> */
 /* <script type="text/javascript" src='../mdl/material.min.js'></script> */
+@import url("theme.css");
 
 /* Font Awesome */
 @import url("font-awesome.css");
@@ -70,10 +71,6 @@
 @import url("celltable/ExplorerTree.css");
 @import url("celltable/HoverCellTable.css");
 @import url("celltable/MenuCellTable.css");
-
-/* Themes */
-/*     @import url("stroom-theme-transitions.css"); */
-@import url("stroom-theme-dark.css");
 
 /* Material Design Spinner */
 @import url("spinner.min.css");

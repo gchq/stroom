@@ -12,7 +12,7 @@
 
 .editor .hl {
     position: absolute;
-	background-color: yellow;
+	background-color: var(--code-editor-highlight-background-color);
 }
 
 .editor .ace_tooltip {
@@ -51,6 +51,12 @@
 
 .editor .ace_gutter-cell.stroom_fatal_error {
     background-image: url(../images/fatal.svg);
+    background-size: 14px 14px;
+    background-position-x: 3px;
+}
+
+.stroom-theme-dark .editor .ace_gutter-cell.stroom_fatal_error {
+    background-image: url(../images/fatal-dark.svg);
     background-size: 14px 14px;
     background-position-x: 3px;
 }
