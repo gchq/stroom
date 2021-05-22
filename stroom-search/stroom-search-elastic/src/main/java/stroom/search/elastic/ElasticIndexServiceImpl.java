@@ -28,6 +28,7 @@ import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.indices.GetFieldMappingsRequest;
 import org.elasticsearch.client.indices.GetFieldMappingsResponse;
@@ -35,10 +36,14 @@ import org.elasticsearch.client.indices.GetFieldMappingsResponse.FieldMappingMet
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -87,8 +92,8 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
 
                 try {
                     final String fieldName = field.getValue().fullName();
-                    final ElasticIndexFieldType elasticFieldType = ElasticIndexFieldType.fromNativeType(fieldName,
-                            nativeType);
+                    final ElasticIndexFieldType elasticFieldType =
+                            ElasticIndexFieldType.fromNativeType(field.getValue().fullName(), nativeType);
 
                     return elasticFieldType.toDataSourceField(fieldName, true);
                 } catch (IllegalArgumentException e) {
@@ -98,7 +103,7 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
             } else {
                 LOGGER.debug(() ->
                         "Mapping properties for field '" + field.getKey() +
-                        "' were in an unrecognised format. Field ignored.");
+                                "' were in an unrecognised format. Field ignored.");
                 return null;
             }
         })
@@ -116,30 +121,34 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
         final Map<String, FieldMappingMetadata> fieldMappings = getFieldMappings(index);
         final Map<String, ElasticIndexField> fieldsMap = new HashMap<>();
 
-        fieldMappings.forEach((key, value) -> {
-            final Object properties = value.sourceAsMap().get(key);
+        fieldMappings.forEach((key, fieldMeta) -> {
+            final Optional<Entry<String, Object>> firstFieldEntry =
+                    fieldMeta.sourceAsMap().entrySet().stream().findFirst();
+            if (firstFieldEntry.isPresent()) {
+                final Object properties = firstFieldEntry.get().getValue();
+                if (properties instanceof Map) {
+                    try {
+                        @SuppressWarnings("unchecked") // Need to get at the nested properties, which is always a map
+                        final Map<String, Object> propertiesMap = (Map<String, Object>) properties;
+                        final String fieldName = fieldMeta.fullName();
+                        final String fieldType = (String) propertiesMap.get("type");
+                        final boolean sourceFieldEnabled = sourceFieldIsEnabled(fieldMappings);
+                        final boolean stored = fieldIsStored(key, fieldMeta);
 
-            if (properties instanceof Map) {
-                try {
-                    @SuppressWarnings("unchecked") // Need to get at the nested properties, which is always a map
-                    final Map<String, Object> propertiesMap = (Map<String, Object>) properties;
-                    final String fieldName = value.fullName();
-                    final String fieldType = (String) propertiesMap.get("type");
-                    final boolean sourceFieldEnabled = sourceFieldIsEnabled(fieldMappings);
-                    final boolean stored = fieldIsStored(key, value);
-
-                    fieldsMap.put(fieldName, new ElasticIndexField(
-                            ElasticIndexFieldType.fromNativeType(fieldName, fieldType),
-                            fieldName,
-                            fieldType,
-                            sourceFieldEnabled || stored,
-                            true));
-                } catch (Exception e) {
-                    LOGGER.error(e::getMessage, e);
+                        fieldsMap.put(fieldName, new ElasticIndexField(
+                                ElasticIndexFieldType.fromNativeType(fieldName, fieldType),
+                                fieldName,
+                                fieldType,
+                                sourceFieldEnabled || stored,
+                                true));
+                    } catch (Exception e) {
+                        LOGGER.error(e::getMessage, e);
+                    }
+                } else {
+                    LOGGER.debug(() ->
+                            "Mapping properties for field '" + key +
+                            "' were in an unrecognised format. Field ignored.");
                 }
-            } else {
-                LOGGER.debug(() ->
-                        "Mapping properties for field '" + key + "' were in an unrecognised format. Field ignored.");
             }
         });
 
@@ -203,6 +212,7 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
             return elasticClientCache.contextResult(elasticCluster.getConnection(), elasticClient -> {
                 final String indexName = elasticIndex.getIndexName();
                 final GetFieldMappingsRequest request = new GetFieldMappingsRequest();
+                request.indicesOptions(IndicesOptions.lenientExpand());
                 request.indices(indexName);
                 request.fields("*");
 
@@ -211,16 +221,39 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
                             request, RequestOptions.DEFAULT);
                     final Map<String, Map<String, FieldMappingMetadata>> allMappings = response.mappings();
 
-                    return allMappings.get(indexName);
+                    // Flatten the mappings, which are keyed by index, into a deduplicated list
+                    final TreeMap<String, FieldMappingMetadata> mappings = new TreeMap<>(new Comparator<String>() {
+                        @Override
+                        public int compare(final String o1, final String o2) {
+                            if (Objects.equals(o1, o2)) {
+                                return 0;
+                            }
+                            if (o2 == null) {
+                                return 1;
+                            }
+
+                            return o1.compareToIgnoreCase(o2);
+                        }
+                    });
+
+                    allMappings.values().forEach(indexMappings -> {
+                        indexMappings.forEach((fieldName, mapping) -> {
+                            if (!mappings.containsKey(fieldName)) {
+                                mappings.put(fieldName, mapping);
+                            }
+                        });
+                    });
+
+                    return mappings;
                 } catch (final IOException e) {
                     LOGGER.error(e::getMessage, e);
                 }
 
-                return new HashMap<>();
+                return new TreeMap<>();
             });
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
-            return new HashMap<>();
+            return new TreeMap<>();
         }
     }
 }
