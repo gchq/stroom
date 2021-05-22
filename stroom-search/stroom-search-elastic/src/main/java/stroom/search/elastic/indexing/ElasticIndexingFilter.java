@@ -30,8 +30,6 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.search.elastic.ElasticClientCache;
 import stroom.search.elastic.ElasticClusterStore;
-import stroom.search.elastic.ElasticIndexCache;
-import stroom.search.elastic.ElasticIndexService;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticConnectionConfig;
 import stroom.util.logging.LambdaLogger;
@@ -77,7 +75,6 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private final ErrorReceiverProxy errorReceiverProxy;
     private final ElasticClientCache elasticClientCache;
     private final ElasticClusterStore elasticClusterStore;
-    private final ElasticIndexService elasticIndexService;
 
     private DocRef clusterRef;
     private String indexName;
@@ -103,16 +100,13 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     ElasticIndexingFilter(
             final LocationFactoryProxy locationFactory,
             final ErrorReceiverProxy errorReceiverProxy,
-            final ElasticIndexCache elasticIndexCache,
             final ElasticClientCache elasticClientCache,
-            final ElasticClusterStore elasticClusterStore,
-            final ElasticIndexService elasticIndexService
+            final ElasticClusterStore elasticClusterStore
     ) {
         this.locationFactory = locationFactory;
         this.errorReceiverProxy = errorReceiverProxy;
         this.elasticClientCache = elasticClientCache;
         this.elasticClusterStore = elasticClusterStore;
-        this.elasticIndexService = elasticIndexService;
     }
 
     /**
