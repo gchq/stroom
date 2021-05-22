@@ -36,7 +36,6 @@ import org.elasticsearch.client.indices.GetFieldMappingsResponse.FieldMappingMet
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -222,27 +221,22 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
                     final Map<String, Map<String, FieldMappingMetadata>> allMappings = response.mappings();
 
                     // Flatten the mappings, which are keyed by index, into a deduplicated list
-                    final TreeMap<String, FieldMappingMetadata> mappings = new TreeMap<>(new Comparator<String>() {
-                        @Override
-                        public int compare(final String o1, final String o2) {
-                            if (Objects.equals(o1, o2)) {
-                                return 0;
-                            }
-                            if (o2 == null) {
-                                return 1;
-                            }
-
-                            return o1.compareToIgnoreCase(o2);
+                    final TreeMap<String, FieldMappingMetadata> mappings = new TreeMap<>((o1, o2) -> {
+                        if (Objects.equals(o1, o2)) {
+                            return 0;
                         }
+                        if (o2 == null) {
+                            return 1;
+                        }
+
+                        return o1.compareToIgnoreCase(o2);
                     });
 
-                    allMappings.values().forEach(indexMappings -> {
-                        indexMappings.forEach((fieldName, mapping) -> {
-                            if (!mappings.containsKey(fieldName)) {
-                                mappings.put(fieldName, mapping);
-                            }
-                        });
-                    });
+                    allMappings.values().forEach(indexMappings -> indexMappings.forEach((fieldName, mapping) -> {
+                        if (!mappings.containsKey(fieldName)) {
+                            mappings.put(fieldName, mapping);
+                        }
+                    }));
 
                     return mappings;
                 } catch (final IOException e) {
