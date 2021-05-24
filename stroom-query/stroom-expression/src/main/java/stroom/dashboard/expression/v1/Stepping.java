@@ -27,6 +27,10 @@ package stroom.dashboard.expression.v1;
                         description = "Produces a hyperlink for opening a stepping tab for the requested stream.",
                         args = {
                                 @FunctionArg(
+                                        name = "text",
+                                        description = "The link text to display.",
+                                        argType = ValString.class),
+                                @FunctionArg(
                                         name = Stepping.ARG_ID,
                                         description = "The ID of the stream to step.",
                                         argType = ValLong.class)
@@ -35,6 +39,10 @@ package stroom.dashboard.expression.v1;
                         description = "Produces a hyperlink for opening a stepping tab for the requested stream and " +
                                 "part number.",
                         args = {
+                                @FunctionArg(
+                                        name = "text",
+                                        description = "The link text to display.",
+                                        argType = ValString.class),
                                 @FunctionArg(
                                         name = Stepping.ARG_ID,
                                         description = "The ID of the stream to step.",
@@ -51,6 +59,10 @@ package stroom.dashboard.expression.v1;
                         description = "Produces a hyperlink for opening a stepping tab for the requested stream, " +
                                 "part number and record number.",
                         args = {
+                                @FunctionArg(
+                                        name = "text",
+                                        description = "The link text to display.",
+                                        argType = ValString.class),
                                 @FunctionArg(
                                         name = Stepping.ARG_ID,
                                         description = "The ID of the stream to step.",

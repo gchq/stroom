@@ -26,6 +26,10 @@ package stroom.dashboard.expression.v1;
                 returnDescription = "A hyperlink that will open a popup or tab showing the required data.",
                 args = {
                         @FunctionArg(
+                                name = "text",
+                                description = "The link text to display.",
+                                argType = ValString.class),
+                        @FunctionArg(
                                 name = Data.ARG_ID,
                                 description = "The ID of the stream.",
                                 argType = ValLong.class),

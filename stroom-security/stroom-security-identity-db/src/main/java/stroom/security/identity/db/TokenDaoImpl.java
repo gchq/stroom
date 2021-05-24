@@ -35,6 +35,7 @@ import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.CompareUtil;
 import stroom.util.shared.PageResponse;
 
 import org.jooq.Condition;
@@ -45,12 +46,12 @@ import org.jooq.Record1;
 import org.jooq.Record12;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -129,16 +130,23 @@ class TokenDaoImpl implements TokenDao {
                     TokenResource.FIELD_DEF_USER_ID,
                     Token::getUserId),
             FilterFieldMapper.of(
-                    TokenResource.FIELD_DEF_USER_EMAIL,
-                    Token::getUserEmail),
-            FilterFieldMapper.of(
                     TokenResource.FIELD_DEF_STATUS,
                     token -> token.isEnabled()
                             ? "Enabled"
+                            : "Disabled"));
+
+    private static final Map<String, Comparator<Token>> FIELD_COMPARATORS = Map.of(
+            TokenResource.FIELD_DEF_USER_ID.getDisplayName(),
+            CompareUtil.getNullSafeCaseInsensitiveComparator(Token::getUserId),
+            TokenResource.FIELD_DEF_STATUS.getDisplayName(),
+            CompareUtil.getNullSafeCaseInsensitiveComparator(token ->
+                    token.isEnabled()
+                            ? "Enabled"
                             : "Disabled"),
-            FilterFieldMapper.of(
-                    TokenResource.FIELD_DEF_COMMENTS,
-                    Token::getComments));
+            "expiresOnMs",
+            Comparator.nullsFirst(Comparator.comparingLong(Token::getExpiresOnMs)),
+            "createTimeMs",
+            Comparator.nullsFirst(Comparator.comparingLong(Token::getCreateTimeMs)));
 
     private final IdentityDbConnProvider identityDbConnProvider;
     private final TokenTypeDao tokenTypeDao;
@@ -166,7 +174,10 @@ class TokenDaoImpl implements TokenDao {
     public TokenResultPage search(final SearchTokenRequest request) {
         final Condition condition = createCondition(request);
 
-        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, request);
+        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(
+                FIELD_MAP,
+                request,
+                stroom.security.identity.db.jooq.tables.Account.ACCOUNT.USER_ID);
 
         return JooqUtil.contextResult(identityDbConnProvider, context -> {
             if (request.getQuickFilter() == null || request.getQuickFilter().length() == 0) {
@@ -225,10 +236,6 @@ class TokenDaoImpl implements TokenDao {
                 return new TokenResultPage(list, pageResponse);
 
             } else {
-                // Create the predicate for the current filter value
-                final Predicate<Token> fuzzyMatchPredicate = QuickFilterPredicateFactory.createFuzzyMatchPredicate(
-                        request.getQuickFilter(), FIELD_MAPPERS);
-
                 try (final Stream<Record12<Integer, Integer, Long, Long, String, String,
                         String, String, String, Long, String, Boolean>> stream = context
                         .select(
@@ -252,16 +259,29 @@ class TokenDaoImpl implements TokenDao {
                                 .on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_ACCOUNT_ID
                                         .eq(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID)))
                         .where(condition)
-                        .orderBy(orderFields)
                         .stream()) {
 
-                    return stream
-                            .map(RECORD_TO_TOKEN_MAPPER)
-                            .filter(fuzzyMatchPredicate)
-                            .collect(ResultPageFactory.collector(request.getPageRequest(), TokenResultPage::new));
+                    final Comparator<Token> comparator = buildComparator(request).orElse(null);
+
+                    return QuickFilterPredicateFactory.filterStream(
+                            request.getQuickFilter(),
+                            FIELD_MAPPERS,
+                            stream.map(RECORD_TO_TOKEN_MAPPER),
+                            comparator
+                    ).collect(ResultPageFactory.collector(request.getPageRequest(), TokenResultPage::new));
                 }
             }
         });
+    }
+
+    private Optional<Comparator<Token>> buildComparator(final SearchTokenRequest searchTokenRequest) {
+        if (searchTokenRequest != null
+                && searchTokenRequest.getSortList() != null
+                && !searchTokenRequest.getSortList().isEmpty()) {
+            return Optional.of(CompareUtil.buildCriteriaComparator(FIELD_COMPARATORS, searchTokenRequest));
+        } else {
+            return Optional.empty();
+        }
     }
 
     @Override

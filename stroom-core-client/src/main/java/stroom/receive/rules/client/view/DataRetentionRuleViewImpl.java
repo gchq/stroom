@@ -28,6 +28,7 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
@@ -67,6 +68,15 @@ public class DataRetentionRuleViewImpl extends ViewImpl implements DataRetention
         timeUnit.addItem(TimeUnit.WEEKS);
         timeUnit.addItem(TimeUnit.MONTHS);
         timeUnit.addItem(TimeUnit.YEARS);
+
+        // TODO @AT There must be a better way of setting the focus than having to use a timer
+        new Timer() {
+            @Override
+            public void run() {
+                name.setFocus(true);
+                name.setTabIndex(0);
+            }
+        }.schedule(100);
     }
 
     @Override
