@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2261** : Fix missing node name in index and fs volume stats.
+
 
 ## [v7.0-beta.117] - 2021-05-20
 
