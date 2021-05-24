@@ -30,6 +30,9 @@ import java.util.Objects;
 public class PageRequest implements Serializable, Copyable<PageRequest> {
 
     public static final int DEFAULT_PAGE_SIZE = 100;
+
+    private static final PageRequest ALL_RESULTS = new PageRequest(0, Integer.MAX_VALUE);
+
     /**
      * Offset from the start 0 is no offset.
      */
@@ -50,6 +53,10 @@ public class PageRequest implements Serializable, Copyable<PageRequest> {
                        @JsonProperty("length") final Integer length) {
         this.offset = offset;
         this.length = length;
+    }
+
+    public static PageRequest allResults() {
+        return ALL_RESULTS;
     }
 
     public Integer getOffset() {

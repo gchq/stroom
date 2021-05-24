@@ -23,6 +23,8 @@ import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
 import stroom.explorer.shared.PermissionInheritance;
+import stroom.explorer.shared.QuickFindCriteria;
+import stroom.explorer.shared.QuickFindResults;
 import stroom.util.shared.Clearable;
 
 import java.util.List;
@@ -30,6 +32,8 @@ import java.util.List;
 public interface ExplorerService extends Clearable {
 
     FetchExplorerNodeResult getData(FindExplorerNodeCriteria criteria);
+
+    QuickFindResults listItems(final QuickFindCriteria quickFindCriteria);
 
     DocRef create(String docType,
                   String docName,

@@ -114,4 +114,12 @@ public interface ExplorerResource extends RestResource, DirectRestService {
             operationId = "fetchExplorerNodes")
     FetchExplorerNodeResult fetchExplorerNodes(
             @Parameter(description = "request", required = true) FindExplorerNodeCriteria request);
+
+    @POST
+    @Path("/listQuickFindResults")
+    @Operation(
+            summary = "List quick find results",
+            operationId = "listQuickFindResults")
+    QuickFindResults listQuickFindResults(
+            @Parameter(description = "quickFilter", required = true) QuickFindCriteria quickFindCriteria);
 }

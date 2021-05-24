@@ -37,6 +37,8 @@ import stroom.explorer.shared.ExplorerServiceMoveRequest;
 import stroom.explorer.shared.ExplorerServiceRenameRequest;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
+import stroom.explorer.shared.QuickFindCriteria;
+import stroom.explorer.shared.QuickFindResults;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -70,9 +72,9 @@ class ExplorerResourceImpl implements ExplorerResource {
     @Override
     public DocRef create(final ExplorerServiceCreateRequest request) {
         return explorerServiceProvider.get().create(request.getDocType(),
-                    request.getDocName(),
-                    request.getDestinationFolderRef(),
-                    request.getPermissionInheritance());
+                request.getDocName(),
+                request.getDestinationFolderRef(),
+                request.getPermissionInheritance());
     }
 
     @Override
@@ -136,4 +138,10 @@ class ExplorerResourceImpl implements ExplorerResource {
     public FetchExplorerNodeResult fetchExplorerNodes(final FindExplorerNodeCriteria request) {
         return explorerServiceProvider.get().getData(request);
     }
+
+    @Override
+    public QuickFindResults listQuickFindResults(final QuickFindCriteria quickFindCriteria) {
+        return explorerServiceProvider.get().listItems(quickFindCriteria);
+    }
+
 }

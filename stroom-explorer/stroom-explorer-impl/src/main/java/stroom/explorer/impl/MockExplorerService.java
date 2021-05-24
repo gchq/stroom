@@ -24,6 +24,8 @@ import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
 import stroom.explorer.shared.PermissionInheritance;
+import stroom.explorer.shared.QuickFindCriteria;
+import stroom.explorer.shared.QuickFindResults;
 
 import java.util.List;
 
@@ -31,6 +33,11 @@ class MockExplorerService implements ExplorerService {
 
     @Override
     public FetchExplorerNodeResult getData(final FindExplorerNodeCriteria criteria) {
+        return null;
+    }
+
+    @Override
+    public QuickFindResults listItems(final QuickFindCriteria quickFindCriteria) {
         return null;
     }
 

@@ -27,6 +27,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 @JsonInclude(Include.NON_NULL)
 public class ExplorerNode implements HasDisplayValue {
@@ -144,6 +145,21 @@ public class ExplorerNode implements HasDisplayValue {
 
     public List<ExplorerNode> getChildren() {
         return children;
+    }
+
+    /**
+     * @return A stream containing this node and all descendant nodes, lazily evaluated
+     */
+    public Stream<ExplorerNode> stream() {
+        if (children != null && !children.isEmpty()) {
+            // branch
+            return Stream.concat(
+                    Stream.of(this),
+                    children.stream().flatMap(ExplorerNode::stream));
+        } else {
+            // leaf
+            return Stream.of(this);
+        }
     }
 
     public void setChildren(final List<ExplorerNode> children) {
