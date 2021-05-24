@@ -293,6 +293,15 @@
 .svgIcon-document-AnnotationsIndex {
   background-image: url("../images/document/AnnotationsIndex.svg");
 }
+.stroom-theme-dark .svgIcon-document-AnnotationsIndex {
+  background-image: url("../images/document/AnnotationsIndex-dark.svg");
+}
+.svgIcon-document-Dashboard {
+  background-image: url("../images/document/Dashboard.svg");
+}
+.svgIcon-document-Dictionary {
+  background-image: url("../images/document/Dictionary.svg");
+}
 .svgIcon-document-ElasticCluster {
   background-image: url("../images/document/ElasticCluster.svg");
 }
@@ -310,6 +319,9 @@
 }
 .svgIcon-document-KafkaConfig {
   background-image: url("../images/document/KafkaConfig.svg");
+}
+.stroom-theme-dark .svgIcon-document-KafkaConfig {
+  background-image: url("../images/document/KafkaConfig-dark.svg");
 }
 .svgIcon-document-Pipeline {
   background-image: url("../images/document/Pipeline.svg");
@@ -341,14 +353,23 @@
 .svgIcon-document-TextConverter {
   background-image: url("../images/document/TextConverter.svg");
 }
+.stroom-theme-dark .svgIcon-document-TextConverter {
+  background-image: url("../images/document/TextConverter-dark.svg");
+}
 .svgIcon-document-Visualisation {
   background-image: url("../images/document/Visualisation.svg");
 }
 .svgIcon-document-XMLSchema {
   background-image: url("../images/document/XMLSchema.svg");
 }
+.stroom-theme-dark .svgIcon-document-XMLSchema {
+  background-image: url("../images/document/XMLSchema-dark.svg");
+}
 .svgIcon-document-XSLT {
   background-image: url("../images/document/XSLT.svg");
+}
+.stroom-theme-dark .svgIcon-document-XSLT {
+  background-image: url("../images/document/XSLT-dark.svg");
 }
 
 .svgIcon-pipeline {
