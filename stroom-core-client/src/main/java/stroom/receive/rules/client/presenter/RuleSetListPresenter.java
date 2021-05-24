@@ -21,7 +21,7 @@ import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.receive.rules.shared.ReceiveDataRule;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -96,7 +96,7 @@ public class RuleSetListPresenter extends MyPresenterWidget<DataGridView<Receive
         return getView().getSelectionModel();
     }
 
-    public ButtonView add(final SvgPreset preset) {
+    public ButtonView add(final Preset preset) {
         return getView().addButton(preset);
     }
 

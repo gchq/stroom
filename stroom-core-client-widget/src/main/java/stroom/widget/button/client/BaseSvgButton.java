@@ -16,7 +16,7 @@
 
 package stroom.widget.button.client;
 
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -29,7 +29,6 @@ import com.google.gwt.user.client.ui.ButtonBase;
 abstract class BaseSvgButton extends ButtonBase implements ButtonView {
 
     private final Element face;
-    private final SvgPreset preset;
     /**
      * If <code>true</code>, this widget is capturing with the mouse held down.
      */
@@ -44,9 +43,8 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
      */
     private boolean allowClickPropagation;
 
-    BaseSvgButton(final SvgPreset preset) {
+    BaseSvgButton(final Preset preset) {
         super(Document.get().createDivElement());
-        this.preset = preset;
 
         sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.FOCUSEVENTS | Event.KEYEVENTS);
         getElement().getStyle().setDisplay(Display.INLINE_BLOCK);
@@ -63,8 +61,8 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
         setEnabled(preset.isEnabled());
     }
 
-    void setSvgPreset(final SvgPreset svgPreset) {
-        face.setInnerHTML("<img class=\"icon\" src=\"" + svgPreset.getUrl() + "\" />");
+    void setSvgPreset(final Preset svgPreset) {
+        face.setInnerHTML(svgPreset.asWidget().asWidget().getElement().getInnerHTML());
 
 //        setWidth(preset.getWidth() + "px");
 //        setHeight(preset.getHeight() + "px");

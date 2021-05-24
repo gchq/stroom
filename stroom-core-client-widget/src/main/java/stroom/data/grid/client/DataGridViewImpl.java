@@ -19,7 +19,7 @@ package stroom.data.grid.client;
 import stroom.data.pager.client.Pager;
 import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToggleButtonView;
@@ -533,13 +533,13 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
     }
 
     @Override
-    public ButtonView addButton(final SvgPreset preset) {
+    public ButtonView addButton(final Preset preset) {
         return buttonPanel.addButton(preset);
     }
 
     @Override
-    public ToggleButtonView addToggleButton(final SvgPreset primaryPreset,
-                                            final SvgPreset secondaryPreset) {
+    public ToggleButtonView addToggleButton(final Preset primaryPreset,
+                                            final Preset secondaryPreset) {
         return buttonPanel.addToggleButton(primaryPreset, secondaryPreset);
     }
 

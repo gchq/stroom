@@ -33,8 +33,6 @@ import stroom.document.client.event.HasDirtyHandlers;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.svg.client.Icon;
-import stroom.svg.client.SvgIcon;
-import stroom.util.client.ImageUtil;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -137,7 +135,7 @@ public class SteppingContentTabPresenter extends ContentTabPresenter<Classificat
 
     @Override
     public Icon getIcon() {
-        return new SvgIcon(ImageUtil.getImageURL() + "stepping.svg", 18, 18);
+        return new Icon("svgIcon-stepping");
     }
 
     @Override

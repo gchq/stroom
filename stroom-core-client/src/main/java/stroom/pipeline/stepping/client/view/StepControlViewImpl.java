@@ -18,7 +18,7 @@ package stroom.pipeline.stepping.client.view;
 
 import stroom.pipeline.stepping.client.presenter.StepControlPresenter.StepControlView;
 import stroom.pipeline.stepping.client.presenter.StepControlUIHandlers;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.SvgButton;
 
@@ -57,7 +57,7 @@ public class StepControlViewImpl extends ViewWithUiHandlers<StepControlUIHandler
         widget = binder.createAndBindUi(this);
     }
 
-    private SvgButton createButton(final SvgPreset svgIcon, final String title) {
+    private SvgButton createButton(final Preset svgIcon, final String title) {
         final SvgButton button = SvgButton.create(svgIcon);
         button.setTitle(title);
         final Style style = button.getElement().getStyle();

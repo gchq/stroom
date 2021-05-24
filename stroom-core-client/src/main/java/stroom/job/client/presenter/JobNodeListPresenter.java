@@ -35,7 +35,7 @@ import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
 import stroom.job.shared.JobNodeInfo;
 import stroom.job.shared.JobNodeResource;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.ModelStringUtil;
@@ -116,7 +116,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
         // Help
         getView().addColumn(new InfoHelpLinkColumn<JobNode>() {
             @Override
-            public SvgPreset getValue(final JobNode row) {
+            public Preset getValue(final JobNode row) {
                 if (row != null) {
                     return SvgPresets.HELP;
                 }

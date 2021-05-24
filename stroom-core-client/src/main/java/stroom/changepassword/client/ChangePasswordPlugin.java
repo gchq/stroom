@@ -4,7 +4,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -35,7 +35,7 @@ public class ChangePasswordPlugin extends Plugin {
         clientPropertyCache.get()
                 .onSuccess(result -> {
                     final IconMenuItem changePasswordMenuItem;
-                    final SvgPreset icon = SvgPresets.PASSWORD;
+                    final Preset icon = SvgPresets.PASSWORD;
                     final String changePasswordUiUrl = result.getUrl().getChangepassword();
                     if (changePasswordUiUrl != null && changePasswordUiUrl.trim().length() > 0) {
                         changePasswordMenuItem = new IconMenuItem(5, icon, null, "Change password", null, true, () -> {

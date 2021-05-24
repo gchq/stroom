@@ -3,7 +3,7 @@ package stroom.data.client.view;
 import stroom.data.client.presenter.CharacterNavigatorPresenter.CharacterNavigatorView;
 import stroom.data.client.presenter.SourcePresenter.SourceView;
 import stroom.data.client.presenter.TextPresenter.TextView;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
@@ -105,7 +105,7 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
     }
 
     @Override
-    public ButtonView addButton(final SvgPreset preset) {
+    public ButtonView addButton(final Preset preset) {
         return buttonPanel.addButton(preset);
     }
 

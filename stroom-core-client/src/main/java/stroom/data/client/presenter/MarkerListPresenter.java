@@ -22,7 +22,7 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.pipeline.shared.FetchMarkerResult;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Expander;
 import stroom.util.shared.Marker;
@@ -97,9 +97,9 @@ public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>>
     }
 
     private void addSeverityColumn() {
-        getView().addColumn(new Column<Marker, SvgPreset>(new SvgCell()) {
+        getView().addColumn(new Column<Marker, Preset>(new SvgCell()) {
             @Override
-            public SvgPreset getValue(final Marker marker) {
+            public Preset getValue(final Marker marker) {
                 switch (marker.getSeverity()) {
                     case FATAL_ERROR:
                         return SvgPresets.FATAL.title("Fatal Error");

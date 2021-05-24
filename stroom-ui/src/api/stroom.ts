@@ -739,7 +739,7 @@ export interface DocumentPermissions {
 
 export interface DocumentType {
   displayType?: string;
-  iconUrl?: string;
+  iconClassName?: string;
 
   /** @format int32 */
   priority?: number;
@@ -906,7 +906,7 @@ export interface ExplorerNode {
 
   /** @format int32 */
   depth?: number;
-  iconUrl?: string;
+  iconClassName?: string;
   name?: string;
   nodeState?: "OPEN" | "CLOSED" | "LEAF";
   tags?: string;

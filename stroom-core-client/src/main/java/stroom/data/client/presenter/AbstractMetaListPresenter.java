@@ -57,7 +57,7 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.PageRequest;
@@ -298,7 +298,7 @@ public abstract class AbstractMetaListPresenter
         });
     }
 
-    protected SvgPreset getInfoCellState(final MetaRow metaRow) {
+    protected Preset getInfoCellState(final MetaRow metaRow) {
         // Should only show unlocked ones by default
         final Status status = metaRow.getMeta().getStatus();
         if (Status.UNLOCKED.equals(status)) {
@@ -833,7 +833,7 @@ public abstract class AbstractMetaListPresenter
         return addHandlerToSource(DataSelectionEvent.getType(), handler);
     }
 
-    public ButtonView add(final SvgPreset preset) {
+    public ButtonView add(final Preset preset) {
         return getView().addButton(preset);
     }
 

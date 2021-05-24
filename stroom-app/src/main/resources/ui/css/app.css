@@ -63,6 +63,7 @@
 @import url("components.css");
 @import url("dashboard.css");
 @import url("xsdbrowser.css");
+@import url("svg-icon.css");
 
 @import url("celltable/BasicCellTable.css");
 @import url("celltable/DefaultCellTable.css");

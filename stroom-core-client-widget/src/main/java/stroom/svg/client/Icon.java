@@ -16,6 +16,25 @@
 
 package stroom.svg.client;
 
-public interface Icon {
+import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.Widget;
 
+public class Icon {
+
+    private final String className;
+
+    public Icon(final String className) {
+        this.className = className;
+    }
+
+    public String getClassName() {
+        return className;
+    }
+
+    public Widget asWidget() {
+        final SimplePanel panel = new SimplePanel();
+        panel.getElement().addClassName("svgIcon");
+        panel.getElement().addClassName(className);
+        return panel;
+    }
 }

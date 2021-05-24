@@ -4,7 +4,6 @@ import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.explorer.client.presenter.TickBoxSelectionModel;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.util.client.ImageUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
@@ -14,8 +13,6 @@ import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.safehtml.shared.SafeUri;
-import com.google.gwt.safehtml.shared.UriUtils;
 import com.google.gwt.view.client.SelectionModel;
 
 public class ExplorerTickBoxCell extends AbstractCell<ExplorerNode> {
@@ -57,19 +54,18 @@ public class ExplorerTickBoxCell extends AbstractCell<ExplorerNode> {
                         expanderPadding += 13;
                         break;
                     case OPEN:
-                        expanderIcon = template.icon("explorerTickBoxCell-expanderIcon",
-                                UriUtils.fromTrustedString(ImageUtil.getImageURL() + "tree-open.svg"));
+                        expanderIcon =
+                                template.icon("svgIcon  explorerCell-treeOpen");
                         break;
                     case CLOSED:
-                        expanderIcon = template.icon("explorerTickBoxCell-expanderIcon",
-                                UriUtils.fromTrustedString(ImageUtil.getImageURL() + "tree-closed.svg"));
+                        expanderIcon =
+                                template.icon("svgIcon explorerCell-treeClosed");
                         break;
                     default:
                         throw new RuntimeException("Unexpected state " + item.getNodeState());
                 }
             } else {
-                expanderIcon = template.icon("explorerTickBoxCell-expanderIcon",
-                        UriUtils.fromTrustedString(ImageUtil.getImageURL() + "tree-leaf.svg"));
+                expanderIcon = template.icon("svgIcon explorerCell-treeLeaf");
             }
 
             int indent = item.getDepth();
@@ -81,9 +77,9 @@ public class ExplorerTickBoxCell extends AbstractCell<ExplorerNode> {
 //            final SafeHtml indentHtml = template.indent(style.indent(), indent);
 
             final SafeStyles paddingLeft = SafeStylesUtils.fromTrustedString("padding-left:" + indent + "px;");
-            final SafeHtml expanderHtml = template.expander("explorerTickBoxCell-expander", paddingLeft, expanderIcon);
-            final SafeUri safeUri = UriUtils.fromTrustedString(ImageUtil.getImageURL() + item.getIconUrl());
-            final SafeHtml iconHtml = template.icon("explorerTickBoxCell-icon", safeUri);
+            final SafeHtml expanderHtml =
+                    template.expander("explorerTickBoxCell-expander", paddingLeft, expanderIcon);
+            final SafeHtml iconHtml = template.icon("explorerTickBoxCell-icon " + item.getIconClassName());
             final SafeHtml textHtml = template.text("explorerTickBoxCell-text",
                     SafeHtmlUtils.fromString(item.getDisplayValue()));
 
@@ -121,8 +117,6 @@ public class ExplorerTickBoxCell extends AbstractCell<ExplorerNode> {
     }
 
     interface Template extends SafeHtmlTemplates {
-//        @Template("<div class=\"{0}\" style=\"width:{1}px\"></div>")
-//        SafeHtml indent(String indentClass, int indent);
 
         @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
         SafeHtml expander(String iconClass, SafeStyles styles, SafeHtml icon);
@@ -130,8 +124,8 @@ public class ExplorerTickBoxCell extends AbstractCell<ExplorerNode> {
         @Template("<div class=\"{0}\">{1}</div>")
         SafeHtml tickBox(String iconClass, SafeHtml icon);
 
-        @Template("<img class=\"{0}\" src=\"{1}\" />")
-        SafeHtml icon(String iconClass, SafeUri iconUrl);
+        @Template("<div class=\"{0}\" />")
+        SafeHtml icon(String iconClass);
 
         @Template("<div class=\"{0}\">{1}</div>")
         SafeHtml text(String textClass, SafeHtml text);

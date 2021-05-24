@@ -23,7 +23,7 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.retention.shared.DataRetentionRule;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
@@ -92,12 +92,12 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGrid
 
     private void addButtonColumn(final String name,
                                  final int width,
-                                 final SvgPreset svgPreset) {
-        final Column<DataRetentionRule, SvgPreset> expressionColumn = new Column<DataRetentionRule, SvgPreset>(
+                                 final Preset svgPreset) {
+        final Column<DataRetentionRule, Preset> expressionColumn = new Column<DataRetentionRule, Preset>(
                 new SvgCell(true)) {
 
             @Override
-            public SvgPreset getValue(final DataRetentionRule object) {
+            public Preset getValue(final DataRetentionRule object) {
                 return svgPreset;
             }
 
@@ -169,7 +169,7 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGrid
         return getView().getSelectionModel();
     }
 
-    public ButtonView add(final SvgPreset preset) {
+    public ButtonView add(final Preset preset) {
         return getView().addButton(preset);
     }
 

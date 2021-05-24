@@ -44,10 +44,8 @@ import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.explorer.shared.DocumentType;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.Icon;
-import stroom.svg.client.SvgIcon;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
-import stroom.util.client.ImageUtil;
 import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.RandomId;
 import stroom.widget.button.client.ButtonPanel;
@@ -147,7 +145,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         }
     }
 
-    private ButtonView addButtonLeft(final SvgPreset preset) {
+    private ButtonView addButtonLeft(final Preset preset) {
         if (leftButtons == null) {
             leftButtons = new ButtonPanel();
             leftButtons.getElement().getStyle().setPaddingLeft(1, Style.Unit.PX);
@@ -467,7 +465,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
     @Override
     public Icon getIcon() {
-        return new SvgIcon(ImageUtil.getImageURL() + DocumentType.DOC_IMAGE_URL + getType() + ".svg", 18, 18);
+        return new Icon(DocumentType.DOC_IMAGE_CLASS_NAME + getType());
     }
 
     @Override

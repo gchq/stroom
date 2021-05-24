@@ -1,7 +1,6 @@
 package stroom.explorer.client.view;
 
 import stroom.explorer.shared.ExplorerNode;
-import stroom.util.client.ImageUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
@@ -11,8 +10,6 @@ import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.safehtml.shared.SafeUri;
-import com.google.gwt.safehtml.shared.UriUtils;
 
 public class ExplorerCell extends AbstractCell<ExplorerNode> {
 
@@ -42,12 +39,12 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
                         expanderPadding += 13;
                         break;
                     case OPEN:
-                        expanderIcon = template.node(
-                                "explorerCell-expanderIcon explorerCell-treeOpen");
+                        expanderIcon = template.icon(
+                                "svgIcon explorerCell-expanderIcon explorerCell-treeOpen");
                         break;
                     case CLOSED:
-                        expanderIcon = template.node(
-                                "explorerCell-expanderIcon explorerCell-treeClosed");
+                        expanderIcon = template.icon(
+                                "svgIcon explorerCell-expanderIcon explorerCell-treeClosed");
                         break;
                     default:
                         throw new RuntimeException("Unexpected state " + item.getNodeState());
@@ -74,9 +71,8 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
                 expanderHtml = template.expander("explorerCell-expander", paddingLeft, expanderIcon);
             }
 
-            if (item.getIconUrl() != null) {
-                final SafeUri safeUri = UriUtils.fromTrustedString(ImageUtil.getImageURL() + item.getIconUrl());
-                iconHtml = template.icon("explorerCell-icon", safeUri);
+            if (item.getIconClassName() != null) {
+                iconHtml = template.icon("explorerCell-icon " + item.getIconClassName());
             }
 
             if (item.getDisplayValue() != null) {
@@ -99,11 +95,8 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
         @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
         SafeHtml expander(String iconClass, SafeStyles styles, SafeHtml icon);
 
-        @Template("<div class=\"{0}\" />")
-        SafeHtml node(String iconClass);
-
-        @Template("<img class=\"{0}\" src=\"{1}\" />")
-        SafeHtml icon(String iconClass, SafeUri iconUrl);
+        @Template("<div class=\"{0}\"></div>")
+        SafeHtml icon(String iconClass);
 
         @Template("<div class=\"{0}\">{1}</div>")
         SafeHtml text(String textClass, SafeHtml text);

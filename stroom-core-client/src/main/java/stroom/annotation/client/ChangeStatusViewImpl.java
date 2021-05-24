@@ -17,7 +17,7 @@
 package stroom.annotation.client;
 
 import stroom.annotation.client.ChangeStatusPresenter.ChangeStatusView;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.widget.button.client.SvgButton;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -31,7 +31,7 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class ChangeStatusViewImpl extends ViewWithUiHandlers<ChangeStatusUiHandlers> implements ChangeStatusView {
 
-    private static final SvgPreset CHANGE_STATUS = new SvgPreset("images/tree-open.svg", "Change Status", true);
+    private static final Preset CHANGE_STATUS = new Preset("images/tree-open.svg", "Change Status", true);
 
     private final Widget widget;
 

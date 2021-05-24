@@ -24,7 +24,7 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.query.api.v2.ConditionalFormattingRule;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
 
@@ -130,7 +130,7 @@ public class RuleListPresenter extends MyPresenterWidget<DataGridView<Conditiona
         return getView().getSelectionModel();
     }
 
-    public ButtonView add(final SvgPreset preset) {
+    public ButtonView add(final Preset preset) {
         return getView().addButton(preset);
     }
 }

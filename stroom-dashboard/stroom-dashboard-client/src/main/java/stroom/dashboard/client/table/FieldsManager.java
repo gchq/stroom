@@ -22,6 +22,7 @@ import stroom.data.grid.client.DataGridViewImpl.HeadingListener;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
+import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
@@ -33,7 +34,6 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.VerticalLocation;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import stroom.widget.tab.client.presenter.ImageIcon;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -406,7 +406,7 @@ public class FieldsManager implements HeadingListener {
 
     private Item createExpressionMenu(final Field field, final Set<Item> highlights) {
         final Item item = new IconMenuItem(1,
-                ImageIcon.create("fields-expression"),
+                new Icon("fields-expression"),
                 null,
                 "Expression",
                 null,
@@ -429,19 +429,19 @@ public class FieldsManager implements HeadingListener {
                 createSortOption(field,
                         highlights,
                         0,
-                        "images/dashboard/sortaz.png",
+                        "fields-sortaz",
                         "Sort A to Z",
                         SortDirection.ASCENDING));
         menuItems.add(
                 createSortOption(field,
                         highlights,
                         1,
-                        "images/dashboard/sortza.png",
+                        "fields-sortza",
                         "Sort Z to A",
                         SortDirection.DESCENDING));
         menuItems.add(createSortOption(field, highlights, 2, null, "Unsorted", null));
         final Item item = new IconParentMenuItem(2,
-                ImageIcon.create("images/dashboard/sortaz.png"),
+                new Icon("fields-sortaz"),
                 null,
                 "Sort",
                 null,
@@ -454,9 +454,9 @@ public class FieldsManager implements HeadingListener {
     }
 
     private Item createSortOption(final Field field, final Set<Item> highlights, final int pos,
-                                  final String url, final String text, final SortDirection sortDirection) {
+                                  final String className, final String text, final SortDirection sortDirection) {
         final Item item = new IconMenuItem(pos,
-                ImageIcon.create(url),
+                new Icon(className),
                 null,
                 text,
                 null,
@@ -474,7 +474,7 @@ public class FieldsManager implements HeadingListener {
         for (int i = 0; i < maxGroup; i++) {
             final int group = i;
             final Item item = new IconMenuItem(i,
-                    ImageIcon.create("fields-group"),
+                    new Icon("fields-group"),
                     null,
                     "Level " + (i + 1),
                     null,
@@ -491,7 +491,7 @@ public class FieldsManager implements HeadingListener {
         // next group.
         if (addNextGroup(maxGroup, field)) {
             final Item item = new IconMenuItem(maxGroup,
-                    ImageIcon.create("fields-group"),
+                    new Icon("fields-group"),
                     null,
                     "Level " + (maxGroup + 1),
                     null,
@@ -504,7 +504,7 @@ public class FieldsManager implements HeadingListener {
         menuItems.add(item);
 
         final Item parentItem = new IconParentMenuItem(3,
-                ImageIcon.create("fields-group"),
+                new Icon("fields-group"),
                 null,
                 "Group",
                 null,
@@ -595,7 +595,7 @@ public class FieldsManager implements HeadingListener {
 
     private Item createFormatMenu(final Field field, final Set<Item> highlights) {
         final Item item = new IconMenuItem(5,
-                ImageIcon.create("fields-format"),
+                new Icon("fields-format"),
                 null,
                 "Format",
                 null,

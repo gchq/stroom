@@ -16,7 +16,7 @@
 
 package stroom.widget.button.client;
 
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -29,20 +29,20 @@ public class ButtonPanel extends FlowPanel {
         setStyleName("buttonPanel-layout");
     }
 
-    public ButtonView addButton(final SvgPreset preset) {
+    public ButtonView addButton(final Preset preset) {
         final SvgButton button = createButton(preset);
         add(button);
         return button;
     }
 
-    public ToggleButtonView addToggleButton(final SvgPreset primaryPreset,
-                                            final SvgPreset secondaryPreset) {
+    public ToggleButtonView addToggleButton(final Preset primaryPreset,
+                                            final Preset secondaryPreset) {
         final SvgToggleButton button = createToggleButton(primaryPreset, secondaryPreset);
         add(button);
         return button;
     }
 
-    private SvgButton createButton(final SvgPreset preset) {
+    private SvgButton createButton(final Preset preset) {
         final SvgButton button = SvgButton.create(preset);
         if (vertical) {
             button.getElement().getStyle().setDisplay(Display.BLOCK);
@@ -50,8 +50,8 @@ public class ButtonPanel extends FlowPanel {
         return button;
     }
 
-    private SvgToggleButton createToggleButton(final SvgPreset primaryPreset,
-                                               final SvgPreset secondaryPreset) {
+    private SvgToggleButton createToggleButton(final Preset primaryPreset,
+                                               final Preset secondaryPreset) {
         final SvgToggleButton button = SvgToggleButton.create(primaryPreset, secondaryPreset);
         if (vertical) {
             button.getElement().getStyle().setDisplay(Display.BLOCK);

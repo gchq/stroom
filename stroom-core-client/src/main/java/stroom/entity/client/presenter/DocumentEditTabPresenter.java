@@ -28,11 +28,10 @@ import stroom.document.client.event.WriteDocumentEvent;
 import stroom.explorer.shared.DocumentType;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.Icon;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
-import stroom.util.client.ImageUtil;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.tab.client.presenter.TabData;
@@ -84,7 +83,7 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
         }
     }
 
-    public ButtonView addButtonLeft(final SvgPreset preset) {
+    public ButtonView addButtonLeft(final Preset preset) {
         if (leftButtons == null) {
             leftButtons = new ButtonPanel();
 //            leftButtons.getElement().getStyle().setPaddingLeft(1, Style.Unit.PX);
@@ -170,7 +169,7 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
 
     @Override
     public Icon getIcon() {
-        return new SvgPreset(ImageUtil.getImageURL() + DocumentType.DOC_IMAGE_URL + getType() + ".svg", null, true);
+        return new Preset(DocumentType.DOC_IMAGE_CLASS_NAME + getType(), null, true);
     }
 
     @Override

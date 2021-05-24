@@ -16,23 +16,15 @@
 
 package stroom.svg.client;
 
-public class SvgPreset extends SvgIcon {
+public class Preset extends Icon {
 
     private final String title;
     private final boolean enabled;
 
-    public SvgPreset(final String url,
-                     final String title,
-                     final boolean enabled) {
-        this(url, 16, 16, title, enabled);
-    }
-
-    public SvgPreset(final String url,
-                     final int width,
-                     final int height,
-                     final String title,
-                     final boolean enabled) {
-        super(url, width, height);
+    public Preset(final String className,
+                  final String title,
+                  final boolean enabled) {
+        super(className);
         this.title = title;
         this.enabled = enabled;
     }
@@ -49,19 +41,19 @@ public class SvgPreset extends SvgIcon {
         return title != null && !title.isEmpty();
     }
 
-    public SvgPreset withoutTitle() {
-        return new SvgPreset(getUrl(), getWidth(), getHeight(), null, isEnabled());
+    public Preset withoutTitle() {
+        return new Preset(getClassName(), null, isEnabled());
     }
 
-    public SvgPreset title(final String title) {
-        return new SvgPreset(getUrl(), getWidth(), getHeight(), title, isEnabled());
+    public Preset title(final String title) {
+        return new Preset(getClassName(), title, isEnabled());
     }
 
-    public SvgPreset enabled(final boolean enabled) {
-        return new SvgPreset(getUrl(), getWidth(), getHeight(), getTitle(), enabled);
+    public Preset enabled(final boolean enabled) {
+        return new Preset(getClassName(), getTitle(), enabled);
     }
 
-    public SvgPreset with(final String title, final boolean enabled) {
-        return new SvgPreset(getUrl(), getWidth(), getHeight(), title, enabled);
+    public Preset with(final String title, final boolean enabled) {
+        return new Preset(getClassName(), title, enabled);
     }
 }

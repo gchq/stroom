@@ -238,7 +238,7 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                                 r.getUuid(),
                                 r.getName(),
                                 r.getTags());
-                        explorerNode.setIconUrl(iconUrlProvider.apply(r.getType()));
+                        explorerNode.setIconClassName(iconUrlProvider.apply(r.getType()));
                         return explorerNode;
                     })));
 

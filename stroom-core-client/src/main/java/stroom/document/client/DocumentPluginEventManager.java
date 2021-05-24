@@ -65,10 +65,9 @@ import stroom.explorer.shared.ExplorerServiceRenameRequest;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.svg.client.SvgIcon;
+import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.util.client.ImageUtil;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -667,7 +666,7 @@ public class DocumentPluginEventManager extends Plugin {
 
                 final Item item = new IconMenuItem(
                         documentType.getPriority(),
-                        new SvgIcon(ImageUtil.getImageURL() + documentType.getIconUrl(), 18, 18),
+                        new Icon(documentType.getIconClassName()),
                         null,
                         documentType.getDisplayType(), null, true, () ->
                         ShowCreateDocumentDialogEvent.fire(

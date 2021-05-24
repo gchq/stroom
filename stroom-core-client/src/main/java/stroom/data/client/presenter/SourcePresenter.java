@@ -17,7 +17,7 @@ import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.SourceConfig;
 import stroom.util.shared.Count;
@@ -665,7 +665,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
 
         void setNavigatorView(final CharacterNavigatorView characterNavigatorView);
 
-        ButtonView addButton(final SvgPreset preset);
+        ButtonView addButton(final Preset preset);
 
         void setTitle(final String feedName,
                       final long id,

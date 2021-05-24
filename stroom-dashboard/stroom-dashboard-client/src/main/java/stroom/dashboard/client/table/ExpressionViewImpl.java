@@ -18,7 +18,7 @@ package stroom.dashboard.client.table;
 
 import stroom.dashboard.client.table.ExpressionPresenter.ExpressionView;
 import stroom.editor.client.presenter.EditorView;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
@@ -54,7 +54,7 @@ public class ExpressionViewImpl extends ViewWithUiHandlers<ExpressionUiHandlers>
     }
 
     @Override
-    public ButtonView addButton(final SvgPreset preset) {
+    public ButtonView addButton(final Preset preset) {
         return buttonPanel.addButton(preset);
     }
 

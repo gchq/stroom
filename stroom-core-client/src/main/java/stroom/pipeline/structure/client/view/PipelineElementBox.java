@@ -17,18 +17,18 @@
 package stroom.pipeline.structure.client.view;
 
 import stroom.pipeline.shared.data.PipelineElement;
-import stroom.svg.client.SvgIcon;
+import stroom.svg.client.Icon;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.Widget;
 
 public class PipelineElementBox extends Box<PipelineElement> {
 
     private final PipelineElement pipelineElement;
 
-    public PipelineElementBox(final PipelineElement pipelineElement, final SvgIcon icon) {
+    public PipelineElementBox(final PipelineElement pipelineElement, final Icon icon) {
         this.pipelineElement = pipelineElement;
 
         final FlowPanel background = new FlowPanel();
@@ -39,7 +39,7 @@ public class PipelineElementBox extends Box<PipelineElement> {
         background.add(label);
 
         if (icon != null) {
-            final Image image = new Image(icon.getUrl());
+            final Widget image = icon.asWidget();
             image.addStyleName("pipelineElementBox-image");
             background.add(image);
             label.getElement().getStyle().setPaddingLeft(25, Unit.PX);

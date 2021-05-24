@@ -17,8 +17,6 @@
 package stroom.widget.menu.client.presenter;
 
 import stroom.svg.client.Icon;
-import stroom.svg.client.SvgIcon;
-import stroom.widget.tab.client.presenter.ImageIcon;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.ValueUpdater;
@@ -33,8 +31,6 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.safehtml.shared.SafeUri;
-import com.google.gwt.safehtml.shared.UriUtils;
-import com.google.gwt.user.client.ui.Image;
 
 public class MenuItemCell extends AbstractCell<Item> {
 
@@ -191,31 +187,16 @@ public class MenuItemCell extends AbstractCell<Item> {
                 final Icon disabledIcon = value.getDisabledIcon();
 
                 if (value.isEnabled()) {
-                    if (enabledIcon != null && enabledIcon instanceof ImageIcon) {
-                        final ImageIcon imageIcon = (ImageIcon) enabledIcon;
-                        final Image image = imageIcon.getImage();
-                        if (image != null) {
-                            inner.append(TEMPLATE.inner("menuItem-icon",
-                                    SafeHtmlUtils.fromTrustedString(image.getElement().getString())));
-                        }
-                    } else if (enabledIcon != null && enabledIcon instanceof SvgIcon) {
-                        final SvgIcon glyphIcon = (SvgIcon) enabledIcon;
-                        inner.append(TEMPLATE.icon("menuItem-icon", UriUtils.fromString(glyphIcon.getUrl())));
+                    if (enabledIcon != null) {
+                        inner.append(TEMPLATE.inner("menuItem-icon",
+                                SafeHtmlUtils.fromTrustedString(enabledIcon.asWidget().getElement().getString())));
                     } else {
                         inner.append(TEMPLATE.inner("menuItem-icon", SafeHtmlUtils.EMPTY_SAFE_HTML));
                     }
                 } else {
-                    if (disabledIcon != null && disabledIcon instanceof ImageIcon) {
-                        final ImageIcon imageIcon = (ImageIcon) disabledIcon;
-                        final Image image = imageIcon.getImage();
-                        if (image != null) {
-                            inner.append(TEMPLATE.inner("menuItem-icon",
-                                    SafeHtmlUtils.fromTrustedString(image.getElement().getString())));
-                        }
-                    } else if (enabledIcon != null && enabledIcon instanceof SvgIcon) {
-                        final SvgIcon glyphIcon = (SvgIcon) enabledIcon;
-                        inner.append(TEMPLATE.icon("menuItem-icon menuItem-disabled",
-                                UriUtils.fromString(glyphIcon.getUrl())));
+                    if (disabledIcon != null) {
+                        inner.append(TEMPLATE.inner("menuItem-icon",
+                                SafeHtmlUtils.fromTrustedString(disabledIcon.asWidget().getElement().getString())));
                     } else {
                         inner.append(TEMPLATE.inner("menuItem-icon", SafeHtmlUtils.EMPTY_SAFE_HTML));
                     }
@@ -319,10 +300,8 @@ public class MenuItemCell extends AbstractCell<Item> {
                         "color:#212121;" +
                         "background:linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0.1));" +
                         "border: 1px solid gray;");
-        private final MenuPresenter menuPresenter;
 
         public InfoMenuItemAppearance(final MenuPresenter menuPresenter) {
-            this.menuPresenter = menuPresenter;
         }
 
         @Override

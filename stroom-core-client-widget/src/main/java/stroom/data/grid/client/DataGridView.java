@@ -18,7 +18,7 @@ package stroom.data.grid.client;
 
 import stroom.data.grid.client.DataGridViewImpl.HeadingListener;
 import stroom.hyperlink.client.HyperlinkEvent;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToggleButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -53,10 +53,10 @@ public interface DataGridView<R> extends View, HasRows {
 
     void setColumnWidth(Column<R, ?> column, int width, Unit unit);
 
-    ButtonView addButton(SvgPreset preset);
+    ButtonView addButton(Preset preset);
 
-    ToggleButtonView addToggleButton(final SvgPreset primaryPreset,
-                                     final SvgPreset secondaryPreset);
+    ToggleButtonView addToggleButton(final Preset primaryPreset,
+                                     final Preset secondaryPreset);
 
     HandlerRegistration addColumnSortHandler(ColumnSortEvent.Handler handler);
 

@@ -17,24 +17,18 @@
 package stroom.widget.tab.client.view;
 
 import stroom.svg.client.Icon;
-import stroom.svg.client.SvgIcon;
-import stroom.widget.tab.client.presenter.ImageIcon;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.Widget;
 
 public class CurveTab extends AbstractTab {
 
     private static final int MAX_TEXT_LENGTH = 50;
 
     private final Element element;
-    private final Element background;
-    private final Element leftBackground;
-    private final Element midBackground;
-    private final Element rightBackground;
     //    private final Element icon;
     private final Element label;
     private final Element close;
@@ -46,72 +40,26 @@ public class CurveTab extends AbstractTab {
         element = DOM.createDiv();
         element.setClassName("curveTab");
 
-        background = DOM.createDiv();
+        final Element background = DOM.createDiv();
         background.setClassName("curveTab-background");
         element.appendChild(background);
 
-        leftBackground = DOM.createDiv();
+        final Element leftBackground = DOM.createDiv();
         leftBackground.setClassName("curveTab-leftBackground");
         background.appendChild(leftBackground);
 
-        midBackground = DOM.createDiv();
+        final Element midBackground = DOM.createDiv();
         midBackground.setClassName("curveTab-midBackground");
         background.appendChild(midBackground);
 
-        rightBackground = DOM.createDiv();
+        final Element rightBackground = DOM.createDiv();
         rightBackground.setClassName("curveTab-rightBackground");
         background.appendChild(rightBackground);
 
         if (icon != null) {
-            if (icon instanceof ImageIcon) {
-                final ImageIcon imageIcon = (ImageIcon) icon;
-                final Image image = imageIcon.getImage();
-                if (image != null) {
-                    image.getElement().addClassName("curveTab-icon");
-                    element.appendChild(image.getElement());
-                }
-//            } else if (icon instanceof SvgIcon) {
-//                final SvgIcon glyphIcon = (SvgIcon) icon;
-//                final SafeHtml safeHtml = SafeHtmlUtils.fromTrustedString("<div class=\""
-//                        + resources.style().icon()
-//                        + "\"><div class=\""
-//                        + resources.style().face()
-//                        + "\" style=\"color:"
-//                        + glyphIcon.getColourSet()
-//                        + "\"><i class=\""
-//                        + glyphIcon.getGlyph()
-//                        + "\"></i></div></div>");
-//                final HTML html = new HTML(safeHtml);
-//                final Element elem = html.getElement();
-//                element.appendChild(elem);
-            } else if (icon instanceof SvgIcon) {
-                final SvgIcon svgIcon = (SvgIcon) icon;
-
-                final Image image = new Image(svgIcon.getUrl());
-                image.addStyleName("curveTab-icon");
-
-
-//                final SafeHtml safeHtml = SafeHtmlUtils.fromTrustedString("<div class=\""
-//                        + resources.style().icon()
-//                        + "\"></div>");
-//                final HTML html = new HTML(safeHtml);
-//
-//                if (svgIcon.getUrl() != null) {
-//                    ResourceCache.get(svgIcon.getUrl(), data -> {
-//                        html.setHTML("<div class=\"" +
-//                                resources.style().icon() +
-//                                "\">" +
-//                                data +
-//                                "</div>");
-//                        final Element svg = getElement().getElementsByTagName("svg").getItem(0).cast();
-//                        svg.setAttribute("width", "18");
-//                        svg.setAttribute("height", "18");
-//                    });
-//                }
-
-                final Element elem = image.getElement();
-                element.appendChild(elem);
-            }
+            final Widget iconWidget = icon.asWidget();
+            iconWidget.getElement().addClassName("curveTab-icon");
+            element.appendChild(iconWidget.getElement());
         }
 
         label = DOM.createDiv();

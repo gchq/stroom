@@ -34,17 +34,14 @@
 
 .explorerCell-treeOpen {
     background-image: url("../images/tree-open.svg");
-    background-size: 100%;
 }
 
 .explorerCell-treeClosed {
     background-image: url("../images/tree-closed.svg");
-    background-size: 100%;
 }
 
 .explorerCell-treeLeaf {
     background-image: url("../images/tree-leaf.svg");
-    background-size: 100%;
 }
 
 .stroom-theme-dark .explorerCell-treeOpen {

@@ -16,7 +16,7 @@
 
 package stroom.cell.info.client;
 
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.ValueUpdater;
@@ -24,18 +24,14 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.safecss.shared.SafeStyles;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
-import com.google.gwt.safecss.shared.SafeStylesUtils;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.safehtml.shared.SafeUri;
-import com.google.gwt.safehtml.shared.UriUtils;
 
-public class SvgCell extends AbstractCell<SvgPreset> {
+public class SvgCell extends AbstractCell<Preset> {
 
     private static Template template;
 
@@ -59,9 +55,9 @@ public class SvgCell extends AbstractCell<SvgPreset> {
     @Override
     public void onBrowserEvent(final Context context,
                                final Element parent,
-                               final SvgPreset value,
+                               final Preset value,
                                final NativeEvent event,
-                               final ValueUpdater<SvgPreset> valueUpdater) {
+                               final ValueUpdater<Preset> valueUpdater) {
         if (isButton) {
             super.onBrowserEvent(context, parent, value, event, valueUpdater);
             if ("click".equals(event.getType())) {
@@ -80,9 +76,9 @@ public class SvgCell extends AbstractCell<SvgPreset> {
     @Override
     protected void onEnterKeyDown(final Context context,
                                   final Element parent,
-                                  final SvgPreset value,
+                                  final Preset value,
                                   final NativeEvent event,
-                                  final ValueUpdater<SvgPreset> valueUpdater) {
+                                  final ValueUpdater<Preset> valueUpdater) {
         if (isButton) {
             if (valueUpdater != null) {
                 valueUpdater.update(value);
@@ -91,13 +87,11 @@ public class SvgCell extends AbstractCell<SvgPreset> {
     }
 
     @Override
-    public void render(final Context context, final SvgPreset value, final SafeHtmlBuilder sb) {
+    public void render(final Context context, final Preset value, final SafeHtmlBuilder sb) {
         if (value == null) {
             sb.append(SafeHtmlUtils.EMPTY_SAFE_HTML);
         } else {
             final SafeStylesBuilder builder = new SafeStylesBuilder();
-            builder.append(SafeStylesUtils.forWidth(value.getWidth(), Unit.PX));
-            builder.append(SafeStylesUtils.forHeight(value.getHeight(), Unit.PX));
 
             String className = isButton
                     ? "svgCell-button"
@@ -107,27 +101,27 @@ public class SvgCell extends AbstractCell<SvgPreset> {
                 className += " " + "svgCell-disabled";
             }
 
+            className += " " + value.getClassName();
+
             if (value.getTitle() != null && !value.getTitle().isEmpty()) {
                 sb.append(template.icon(
                         className,
                         builder.toSafeStyles(),
-                        UriUtils.fromString(value.getUrl()),
                         value.getTitle()));
             } else {
                 sb.append(template.icon(
                         className,
-                        builder.toSafeStyles(),
-                        UriUtils.fromString(value.getUrl())));
+                        builder.toSafeStyles()));
             }
         }
     }
 
     interface Template extends SafeHtmlTemplates {
 
-        @Template("<img class=\"{0}\" style=\"{1}\" src=\"{2}\"/>")
-        SafeHtml icon(String className, SafeStyles style, SafeUri url);
+        @Template("<div class=\"{0}\" style=\"{1}\"/>")
+        SafeHtml icon(String className, SafeStyles style);
 
-        @Template("<img class=\"{0}\" style=\"{1}\" src=\"{2}\" title=\"{3}\"/>")
-        SafeHtml icon(String className, SafeStyles style, SafeUri url, String title);
+        @Template("<div class=\"{0}\" style=\"{1}\" title=\"{2}\"/>")
+        SafeHtml icon(String className, SafeStyles style, String title);
     }
 }

@@ -7,7 +7,7 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.docref.HasDisplayValue;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.Expander;
 import stroom.util.shared.TreeAction;
@@ -122,9 +122,9 @@ public class DataGridUtil {
     /**
      * Non-clickable SVG icon column
      */
-    public static <T_ROW> Column<T_ROW, SvgPreset> svgStatusColumn(
-            final Function<T_ROW, SvgPreset> cellValueExtractor) {
-        final Column<T_ROW, SvgPreset> column = column(cellValueExtractor, () -> new SvgCell(false));
+    public static <T_ROW> Column<T_ROW, Preset> svgStatusColumn(
+            final Function<T_ROW, Preset> cellValueExtractor) {
+        final Column<T_ROW, Preset> column = column(cellValueExtractor, () -> new SvgCell(false));
         column.setCellStyleNames("statusIcon");
         return column;
     }
@@ -234,7 +234,7 @@ public class DataGridUtil {
 
     public static <T_VIEW extends DataGridView<T_ROW>, T_ROW> void addStatusIconColumn(
             final T_VIEW view,
-            final Function<T_ROW, SvgPreset> statusIconExtractor) {
+            final Function<T_ROW, Preset> statusIconExtractor) {
 
         view.addColumn(
                 svgStatusColumn(statusIconExtractor),
@@ -325,9 +325,9 @@ public class DataGridUtil {
 //        return new ColumnBuilder<>(stringExtractor, SafeHtmlUtils::fromString, SafeHtmlCell::new);
 //    }
 
-    public static <T_ROW> ColumnBuilder<T_ROW, SvgPreset, SvgPreset, Cell<SvgPreset>> svgPresetColumnBuilder(
+    public static <T_ROW> ColumnBuilder<T_ROW, Preset, Preset, Cell<Preset>> svgPresetColumnBuilder(
             final boolean isButton,
-            final Function<T_ROW, SvgPreset> cellExtractor) {
+            final Function<T_ROW, Preset> cellExtractor) {
 
         return new ColumnBuilder<>(
                 cellExtractor, Function.identity(),

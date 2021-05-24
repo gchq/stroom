@@ -25,7 +25,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.EditorView;
 import stroom.query.api.v2.Field;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.EqualsUtil;
@@ -380,7 +380,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
 
         void setEditor(final EditorView editor);
 
-        ButtonView addButton(final SvgPreset preset);
+        ButtonView addButton(final Preset preset);
     }
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

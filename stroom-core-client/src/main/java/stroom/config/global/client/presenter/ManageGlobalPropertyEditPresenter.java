@@ -25,7 +25,7 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeCache;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.button.client.ButtonView;
@@ -590,10 +590,10 @@ public final class ManageGlobalPropertyEditPresenter
 
         void setEditable(boolean edit);
 
-        ButtonView addYamlValueWarningIcon(SvgPreset preset);
+        ButtonView addYamlValueWarningIcon(Preset preset);
 
-        ButtonView addEffectiveValueIcon(SvgPreset preset);
+        ButtonView addEffectiveValueIcon(Preset preset);
 
-        ButtonView addDataTypeHelpIcon(SvgPreset preset);
+        ButtonView addDataTypeHelpIcon(Preset preset);
     }
 }

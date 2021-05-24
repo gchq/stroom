@@ -125,7 +125,7 @@ class ExplorerTreeModel {
     }
 
     TreeModel createModel() {
-        final TreeModel treeModel = explorerTreeDao.createModel(this::getIconUrl);
+        final TreeModel treeModel = explorerTreeDao.createModel(this::getIconClassName);
 
         // Sort children.
         treeModel.values().forEach(this::sort);
@@ -133,13 +133,13 @@ class ExplorerTreeModel {
         return treeModel;
     }
 
-    private String getIconUrl(final String type) {
+    private String getIconClassName(final String type) {
         final DocumentType documentType = explorerActionHandlers.getType(type);
         if (documentType == null) {
             return null;
         }
 
-        return documentType.getIconUrl();
+        return documentType.getIconClassName();
     }
 
     private void sort(final List<ExplorerNode> list) {

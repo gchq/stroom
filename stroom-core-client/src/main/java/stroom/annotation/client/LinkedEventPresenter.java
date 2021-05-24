@@ -13,7 +13,7 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.pipeline.shared.SourceLocation;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -209,7 +209,7 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
 
     public interface LinkedEventView extends View {
 
-        ButtonView addButton(SvgPreset preset);
+        ButtonView addButton(Preset preset);
 
         void setEventListView(View view);
 

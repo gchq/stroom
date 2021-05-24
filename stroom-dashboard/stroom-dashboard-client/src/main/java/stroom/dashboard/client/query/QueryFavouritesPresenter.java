@@ -28,7 +28,7 @@ import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
 import stroom.query.client.ExpressionTreePresenter;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
@@ -302,6 +302,6 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
 
         void setExpressionView(View view);
 
-        ButtonView addButton(SvgPreset preset);
+        ButtonView addButton(Preset preset);
     }
 }

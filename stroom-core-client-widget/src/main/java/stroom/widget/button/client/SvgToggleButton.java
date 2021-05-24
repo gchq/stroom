@@ -16,7 +16,7 @@
 
 package stroom.widget.button.client;
 
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.MouseDownHandler;
@@ -24,12 +24,12 @@ import com.google.gwt.event.shared.HandlerRegistration;
 
 public class SvgToggleButton extends BaseSvgButton implements ToggleButtonView {
 
-    private final SvgPreset onPreset;
-    private final SvgPreset offPreset;
+    private final Preset onPreset;
+    private final Preset offPreset;
     private boolean isOn = false;
 
-    private SvgToggleButton(final SvgPreset onPreset,
-                            final SvgPreset offPreset) {
+    private SvgToggleButton(final Preset onPreset,
+                            final Preset offPreset) {
         super(offPreset);
         this.onPreset = onPreset;
         this.offPreset = offPreset;
@@ -43,14 +43,14 @@ public class SvgToggleButton extends BaseSvgButton implements ToggleButtonView {
      * @param onPreset  The face to display when in the ON state, e.g. an OFF icon
      * @param offPreset The face to display when in the OFF state, e.g. an ON icon
      */
-    public static SvgToggleButton create(final SvgPreset onPreset,
-                                         final SvgPreset offPreset) {
+    public static SvgToggleButton create(final Preset onPreset,
+                                         final Preset offPreset) {
         return new SvgToggleButton(onPreset, offPreset);
     }
 
     public void setState(final boolean isOn) {
         if (this.isOn != isOn) {
-            final SvgPreset newState = isOn
+            final Preset newState = isOn
                     ? onPreset
                     : offPreset;
             this.isOn = isOn;

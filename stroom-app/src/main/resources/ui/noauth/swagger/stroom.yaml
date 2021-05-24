@@ -6664,7 +6664,7 @@ components:
       properties:
         displayType:
           type: string
-        iconUrl:
+        iconClassName:
           type: string
         priority:
           type: integer
@@ -6927,7 +6927,7 @@ components:
         depth:
           type: integer
           format: int32
-        iconUrl:
+        iconClassName:
           type: string
         name:
           type: string

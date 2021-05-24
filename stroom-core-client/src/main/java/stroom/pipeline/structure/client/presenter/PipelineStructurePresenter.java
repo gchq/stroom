@@ -43,7 +43,6 @@ import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.shared.data.PipelinePropertyType;
-import stroom.pipeline.structure.client.view.PipelineImageUtil;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
@@ -381,7 +380,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                     for (final PipelineElementType pipelineElementType : entry.getValue()) {
                         if (StructureValidationUtil.isValidChildType(parentType, pipelineElementType, childCount)) {
                             final String type = pipelineElementType.getType();
-                            final Icon icon = PipelineImageUtil.getIcon(pipelineElementType);
+                            final Icon icon = new Icon(pipelineElementType.getIcon());
                             final Item item = new IconMenuItem(j++, icon, null, type, null, true,
                                     new AddPipelineElementCommand(pipelineElementType));
                             children.add(item);
@@ -428,7 +427,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                     final Category category = pipelineElementType.getCategory();
 
                     final List<Item> items = categoryMenuItems.computeIfAbsent(category, k -> new ArrayList<>());
-                    final Icon icon = PipelineImageUtil.getIcon(pipelineElementType);
+                    final Icon icon = new Icon(pipelineElementType.getIcon());
 
                     final Item item = new IconMenuItem(pos++, icon, null, element.getId(), null, true,
                             new RestorePipelineElementCommand(element));
