@@ -30,7 +30,7 @@ public class PipelineElementBoxFactory {
     }
 
     public PipelineElementBox create(final PipelineElement pipelineElement) {
-        final Icon icon = new Icon(pipelineElement.getElementType().getIcon());
+        final Icon icon = Icon.create(pipelineElement.getElementType().getIcon());
         if (icon != null) {
             return new PipelineElementBox(pipelineElement, icon);
         } else {

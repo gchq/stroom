@@ -465,7 +465,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
     @Override
     public Icon getIcon() {
-        return new Icon(DocumentType.DOC_IMAGE_CLASS_NAME + getType());
+        return Icon.create(DocumentType.DOC_IMAGE_CLASS_NAME + getType());
     }
 
     @Override

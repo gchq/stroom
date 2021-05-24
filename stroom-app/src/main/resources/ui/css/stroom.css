@@ -589,7 +589,7 @@ input[type="file"] {
 
 .gwt-SuggestBoxPopup .suggestPopupContent,
 .com-google-gwt-user-client-ui-CustomScrollPanel-Style-customScrollPanelCorner {
-  background: (--input-background-color);
+  background: var(--input-background-color) !important;
 }
 
 .stroom-content {

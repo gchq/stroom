@@ -144,6 +144,14 @@
 
 .tabLayout .tabLayout-settingsButton {
 	color: #ddd;
+    background-image: url("../images/settings-grey.svg");
+    background-size: 100%;
+    width: 16px;
+    height: 16px;
+}
+
+.stroom-theme-dark .tabLayout .tabLayout-settingsButton {
+    background-image: url("../images/settings-grey-dark.svg");
 }
 
 .tabLayout .tabLayout-settingsButton:hover {
@@ -152,6 +160,14 @@
 
 .tabLayout .tabLayout-closeButton {
 	color: #ddd;
+	background-image: url("../images/close-grey.svg");
+	background-size: 100%;
+	width: 16px;
+	height: 16px;
+}
+
+.stroom-theme-dark .tabLayout .tabLayout-closeButton {
+	background-image: url("../images/close-grey-dark.svg");
 }
 
 .tabLayout .tabLayout-closeButton:hover {

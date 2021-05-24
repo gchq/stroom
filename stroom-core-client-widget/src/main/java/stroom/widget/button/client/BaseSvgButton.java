@@ -62,7 +62,7 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
     }
 
     void setSvgPreset(final Preset svgPreset) {
-        face.setInnerHTML(svgPreset.asWidget().asWidget().getElement().getInnerHTML());
+        face.addClassName(svgPreset.getClassName());//svgPreset.asWidget().asWidget().getElement().getInnerHTML());
 
 //        setWidth(preset.getWidth() + "px");
 //        setHeight(preset.getHeight() + "px");

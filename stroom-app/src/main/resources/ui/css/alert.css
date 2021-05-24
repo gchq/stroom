@@ -42,6 +42,7 @@
 }
 
 .alert-icon-question {
+    display: inline-block;
     background-image: url("../images/question.svg");
     background-size: 100%;
     width: 32px;
@@ -49,6 +50,7 @@
 }
 
 .alert-icon-info {
+    display: inline-block;
     background-image: url("../images/info.svg");
     background-size: 100%;
     width: 32px;
@@ -56,6 +58,7 @@
 }
 
 .alert-icon-warning {
+    display: inline-block;
     background-image: url("../images/warning.svg");
     background-size: 100%;
     width: 32px;
@@ -63,6 +66,7 @@
 }
 
 .alert-icon-error {
+    display: inline-block;
     background-image: url("../images/error.svg");
     background-size: 100%;
     width: 32px;

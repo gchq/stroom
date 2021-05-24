@@ -42,18 +42,18 @@ public class Preset extends Icon {
     }
 
     public Preset withoutTitle() {
-        return new Preset(getClassName(), null, isEnabled());
+        return new Preset(className, null, isEnabled());
     }
 
     public Preset title(final String title) {
-        return new Preset(getClassName(), title, isEnabled());
+        return new Preset(className, title, isEnabled());
     }
 
     public Preset enabled(final boolean enabled) {
-        return new Preset(getClassName(), getTitle(), enabled);
+        return new Preset(className, getTitle(), enabled);
     }
 
     public Preset with(final String title, final boolean enabled) {
-        return new Preset(getClassName(), title, enabled);
+        return new Preset(className, title, enabled);
     }
 }

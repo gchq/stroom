@@ -666,7 +666,7 @@ public class DocumentPluginEventManager extends Plugin {
 
                 final Item item = new IconMenuItem(
                         documentType.getPriority(),
-                        new Icon(documentType.getIconClassName()),
+                        Icon.create(documentType.getIconClassName()),
                         null,
                         documentType.getDisplayType(), null, true, () ->
                         ShowCreateDocumentDialogEvent.fire(

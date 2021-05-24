@@ -13,19 +13,19 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-.hoveredCellTable .cellTableCell {
+.hoverCellTable .cellTableCell {
   padding: 2px;
 }
 
-.hoveredCellTable .cellTableOddRow {
-  background: var(--even-row-background-color);
+.hoverCellTable .cellTableEvenRow {
+  background: var(--odd-row-background-color);
 }
 
-.hoveredCellTable .cellTableHoveredRow {
+.hoverCellTable .cellTableHoveredRow {
   background: var(--hovered-row-background-color) none repeat scroll 0 0;
 }
 
-.hoveredCellTable .cellTableSelectedRow {
+.hoverCellTable .cellTableSelectedRow {
   background: var(--selected-row-background-color) none repeat scroll 0 0 !important;
   height: auto;
   overflow: auto;

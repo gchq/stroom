@@ -380,7 +380,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                     for (final PipelineElementType pipelineElementType : entry.getValue()) {
                         if (StructureValidationUtil.isValidChildType(parentType, pipelineElementType, childCount)) {
                             final String type = pipelineElementType.getType();
-                            final Icon icon = new Icon(pipelineElementType.getIcon());
+                            final Icon icon = Icon.create(pipelineElementType.getIcon());
                             final Item item = new IconMenuItem(j++, icon, null, type, null, true,
                                     new AddPipelineElementCommand(pipelineElementType));
                             children.add(item);
@@ -427,7 +427,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                     final Category category = pipelineElementType.getCategory();
 
                     final List<Item> items = categoryMenuItems.computeIfAbsent(category, k -> new ArrayList<>());
-                    final Icon icon = new Icon(pipelineElementType.getIcon());
+                    final Icon icon = Icon.create(pipelineElementType.getIcon());
 
                     final Item item = new IconMenuItem(pos++, icon, null, element.getId(), null, true,
                             new RestorePipelineElementCommand(element));

@@ -66,7 +66,7 @@ public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.Welco
 
     @Override
     public Icon getIcon() {
-        return new Icon("svgIcon-document svgIcon-oo");
+        return Icon.create("svgIcon-document svgIcon-oo");
     }
 
     @Override

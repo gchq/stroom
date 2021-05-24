@@ -1,4 +1,5 @@
 .svgIcon {
+  display: inline-block;
   background-size: 100%;
   width: 16px;
   height: 16px;

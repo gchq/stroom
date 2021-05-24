@@ -406,7 +406,7 @@ public class FieldsManager implements HeadingListener {
 
     private Item createExpressionMenu(final Field field, final Set<Item> highlights) {
         final Item item = new IconMenuItem(1,
-                new Icon("fields-expression"),
+                Icon.create("fields-expression"),
                 null,
                 "Expression",
                 null,
@@ -441,7 +441,7 @@ public class FieldsManager implements HeadingListener {
                         SortDirection.DESCENDING));
         menuItems.add(createSortOption(field, highlights, 2, null, "Unsorted", null));
         final Item item = new IconParentMenuItem(2,
-                new Icon("fields-sortaz"),
+                Icon.create("fields-sortaz"),
                 null,
                 "Sort",
                 null,
@@ -456,7 +456,7 @@ public class FieldsManager implements HeadingListener {
     private Item createSortOption(final Field field, final Set<Item> highlights, final int pos,
                                   final String className, final String text, final SortDirection sortDirection) {
         final Item item = new IconMenuItem(pos,
-                new Icon(className),
+                Icon.create(className),
                 null,
                 text,
                 null,
@@ -474,7 +474,7 @@ public class FieldsManager implements HeadingListener {
         for (int i = 0; i < maxGroup; i++) {
             final int group = i;
             final Item item = new IconMenuItem(i,
-                    new Icon("fields-group"),
+                    Icon.create("fields-group"),
                     null,
                     "Level " + (i + 1),
                     null,
@@ -491,7 +491,7 @@ public class FieldsManager implements HeadingListener {
         // next group.
         if (addNextGroup(maxGroup, field)) {
             final Item item = new IconMenuItem(maxGroup,
-                    new Icon("fields-group"),
+                    Icon.create("fields-group"),
                     null,
                     "Level " + (maxGroup + 1),
                     null,
@@ -504,7 +504,7 @@ public class FieldsManager implements HeadingListener {
         menuItems.add(item);
 
         final Item parentItem = new IconParentMenuItem(3,
-                new Icon("fields-group"),
+                Icon.create("fields-group"),
                 null,
                 "Group",
                 null,
@@ -595,7 +595,7 @@ public class FieldsManager implements HeadingListener {
 
     private Item createFormatMenu(final Field field, final Set<Item> highlights) {
         final Item item = new IconMenuItem(5,
-                new Icon("fields-format"),
+                Icon.create("fields-format"),
                 null,
                 "Format",
                 null,

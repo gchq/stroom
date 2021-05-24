@@ -72,7 +72,7 @@
 .menuItem-highlight {
 	width: 100%;
 	padding: 4px;
-	background-color: yellow;
+	background-color: var(--code-editor-highlight-background-color);
 }
 
 .menuItem-icon {

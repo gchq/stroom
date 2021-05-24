@@ -21,14 +21,21 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class Icon {
 
-    private final String className;
+    protected final String className;
 
-    public Icon(final String className) {
+    protected Icon(final String className) {
         this.className = className;
     }
 
+    public static Icon create(final String className) {
+        if (className == null) {
+            return null;
+        }
+        return new Icon(className);
+    }
+
     public String getClassName() {
-        return className;
+        return "svgIcon " + className;
     }
 
     public Widget asWidget() {

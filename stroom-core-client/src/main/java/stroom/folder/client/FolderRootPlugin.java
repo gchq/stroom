@@ -106,7 +106,7 @@ public class FolderRootPlugin extends Plugin implements TabData {
 
     @Override
     public Icon getIcon() {
-        return new Icon(DocumentType.DOC_IMAGE_CLASS_NAME + ExplorerConstants.SYSTEM);
+        return Icon.create(DocumentType.DOC_IMAGE_CLASS_NAME + ExplorerConstants.SYSTEM);
     }
 
     @Override
