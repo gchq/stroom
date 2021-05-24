@@ -70,6 +70,14 @@ public class FilterFieldMappers<T_ROW> {
         return map.get(fieldQualifier);
     }
 
+    public boolean hasField(final String fieldQualifier) {
+        if (fieldQualifier == null) {
+            return false;
+        } else {
+            return map.containsKey(fieldQualifier);
+        }
+    }
+
     public Set<String> getFieldQualifiers() {
         return map.keySet();
     }

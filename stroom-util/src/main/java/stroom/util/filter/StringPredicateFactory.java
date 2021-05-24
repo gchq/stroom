@@ -43,10 +43,13 @@ public class StringPredicateFactory {
             "((?<=[a-z])(?=[A-Z])|(?<=[0-9])(?=[A-Z])|(?<=[a-zA-Z])(?=[0-9])| |\\.)");
     private static final Pattern CAMEL_CASE_ABBREVIATIONS_PATTERN = Pattern.compile("([A-Z]+)([A-Z][a-z0-9])");
 
+    // If you change any of these then you also need to change the finding-things.md doc in stroom-docs
+    // and the tool tip help in QuickFilterTooltipUtil
     public static final String REGEX_PREFIX = "/";
     public static final String CHARS_ANYWHERE_PREFIX = "~";
+    public static final String EXACT_MATCH_PREFIX = "=";
     public static final String STARTS_WITH_PREFIX = "^";
-    public static final String ENDS_WITH_SUFFIX = "$";
+    public static final String ENDS_WITH_PREFIX = "$";
     public static final String WORD_BOUNDARY_PREFIX = "?";
     public static final String WILDCARD_STR = "*";
 
@@ -154,12 +157,12 @@ public class StringPredicateFactory {
             } else if (modifiedInput.startsWith(WORD_BOUNDARY_PREFIX)) {
                 // remove the ? marker char from the beginning
                 predicate = createWordBoundaryPredicate(modifiedInput.substring(1), separatorCharacterClass);
-            } else if (modifiedInput.startsWith(STARTS_WITH_PREFIX) && modifiedInput.endsWith(ENDS_WITH_SUFFIX)) {
-                predicate = createCaseInsensitiveExactMatchPredicate(modifiedInput);
-            } else if (modifiedInput.endsWith(ENDS_WITH_SUFFIX)) {
-                // remove the $ marker char from the end
-                predicate = createCaseInsensitiveEndsWithPredicate(modifiedInput.substring(0,
-                        modifiedInput.length() - 1));
+                // remove the = marker char from the beginning
+            } else if (modifiedInput.startsWith(EXACT_MATCH_PREFIX)) {
+                predicate = createCaseInsensitiveExactMatchPredicate(modifiedInput.substring(1));
+            } else if (modifiedInput.startsWith(ENDS_WITH_PREFIX)) {
+                // remove the $ marker char from the beginning
+                predicate = createCaseInsensitiveEndsWithPredicate(modifiedInput.substring(1));
             } else if (modifiedInput.startsWith(STARTS_WITH_PREFIX)) {
                 // remove the ^ marker char from the beginning
                 predicate = createCaseInsensitiveStartsWithPredicate(modifiedInput.substring(1));
@@ -225,7 +228,8 @@ public class StringPredicateFactory {
             return String.CASE_INSENSITIVE_ORDER;
         } else if (userInput.startsWith(REGEX_PREFIX)
                 || userInput.startsWith(STARTS_WITH_PREFIX)
-                || userInput.endsWith(ENDS_WITH_SUFFIX)
+                || userInput.startsWith(ENDS_WITH_PREFIX)
+                || userInput.startsWith(EXACT_MATCH_PREFIX)
                 || userInput.startsWith(WORD_BOUNDARY_PREFIX)
                 || userInput.startsWith(NOT_OPERATOR_STR)) {
             return String.CASE_INSENSITIVE_ORDER;
@@ -258,7 +262,7 @@ public class StringPredicateFactory {
     }
 
     private static String stripPrefixesAndSuffixes(final String userInput) {
-        if (userInput.startsWith(STARTS_WITH_PREFIX) && userInput.endsWith(ENDS_WITH_SUFFIX)) {
+        if (userInput.startsWith(STARTS_WITH_PREFIX) && userInput.endsWith(ENDS_WITH_PREFIX)) {
             return userInput.substring(1, userInput.length() - 1);
         } else {
             for (final String prefix : ALL_PREFIXES) {
@@ -765,8 +769,7 @@ public class StringPredicateFactory {
     @NotNull
     private static Predicate<String> createCaseInsensitiveExactMatchPredicate(final String userInput) {
         LOGGER.trace("Creating case insensitive exact match predicate");
-        final String lowerCaseInput = userInput.substring(1)
-                .substring(0, userInput.length() - 2);
+        final String lowerCaseInput = userInput.toLowerCase();
         return toNullSafePredicate(false, stringUnderTest ->
                 stringUnderTest.toLowerCase().equalsIgnoreCase(lowerCaseInput));
     }
