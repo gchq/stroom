@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2267** : Change prefixes used for quick filter for consistency.
+
+* Issue **#2265** : Fix exception when filtering with qualifier but no term, e.g. `name:`.
+
+* Issue **#2266** : Improve quick filter tooltip text.
+
 * Issue **#2261** : Fix missing node name in index and fs volume stats.
 
 
