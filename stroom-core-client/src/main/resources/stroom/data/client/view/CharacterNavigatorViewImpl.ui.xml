@@ -2,48 +2,15 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:btn="urn:import:stroom.widget.button.client">
-    <ui:style>
-        .characterNavigator {
-        position: relative;
-        text-align: right;
-        }
-
-        .label {
-        display: inline-block;
-        margin: 0px;
-        margin-top: 2px;
-        cursor: pointer;
-        padding-left: 0.75em;
-        padding-right: 0.75em;
-        }
-
-        .label:hover {
-        text-decoration: underline;
-        }
-
-        .button {
-        padding: 1px;
-        text-align: center;
-        }
-
-<!--        .progressBarPanel {-->
-<!--        display: inline-block;-->
-<!--        width: 150px;-->
-<!--        height: 10px;-->
-<!--        padding-right: 0.75em;-->
-<!--        vertical-align: text-top;-->
-<!--        }-->
-    </ui:style>
-
-    <g:FlowPanel styleName="{style.characterNavigator}">
+    <g:FlowPanel styleName="characterNavigator">
 
         <g:Label ui:field="lblLines"
-                 styleName="{style.label}"/>
+                 styleName="characterNavigator-label"/>
         <g:Label ui:field="lblCharacters"
-                 styleName="{style.label}"/>
+                 styleName="characterNavigator-label"/>
 
 <!--        <g:SimplePanel ui:field="progressBarPanel"-->
-<!--                       styleName="{style.progressBarPanel}"/>-->
+<!--                       styleName="characterNavigator-progressBarPanel"/>-->
 
         <btn:SvgButton ui:field="showHeadCharactersBtn"/>
         <btn:SvgButton ui:field="advanceCharactersBackwardBtn"/>

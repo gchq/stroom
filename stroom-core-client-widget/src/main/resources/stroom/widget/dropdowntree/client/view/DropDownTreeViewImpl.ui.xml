@@ -2,15 +2,9 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:v="urn:import:stroom.widget.dropdowntree.client.view">
-    <ui:style>
-        .nameFilter {
-        width: 100%;
-        }
-    </ui:style>
-
     <g:DockLayoutPanel unit="PX" styleName="itemCheckList max">
         <g:north size="19">
-            <v:QuickFilter ui:field="nameFilter" addStyleNames="{style.nameFilter} stroom-border-bottom"/>
+            <v:QuickFilter ui:field="nameFilter" addStyleNames="dropDownTreeViewImpl-nameFilter stroom-border-bottom"/>
         </g:north>
         <g:center>
             <g:MaxScrollPanel>

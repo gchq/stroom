@@ -4,24 +4,9 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:i="urn:import:stroom.item.client"
 >
-    <ui:style>
-        .bottom {
-        padding-top: 5px;
-        }
-
-        .name {
-        display: inline-block;
-        }
-
-        .optional {
-        display: inline-block;
-        margin-left: 5px;
-        }
-    </ui:style>
-
     <g:DockLayoutPanel unit="PX" width="100%" height="100%">
         <g:north size="52">
-            <g:SimplePanel styleName="{style.bottom} max">
+            <g:SimplePanel styleName="selectionHandlerViewImpl-bottom max">
                 <g:Grid ui:field="grid" styleName="stroom-control-grid" width="100%">
                     <g:row>
                         <g:cell>Component:</g:cell>

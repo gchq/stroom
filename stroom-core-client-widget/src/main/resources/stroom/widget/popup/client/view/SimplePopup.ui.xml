@@ -3,7 +3,7 @@
         xmlns:ui="urn:ui:com.google.gwt.uibinder"
         xmlns:g="urn:import:com.google.gwt.user.client.ui">
 
-    <g:SimplePanel styleName="simplePopup-container}">
+    <g:SimplePanel styleName="simplePopup-container">
         <g:SimplePanel styleName="simplePopup-background">
             <g:SimplePanel ui:field="content" width="100%" height="100%" styleName="simplePopup-content"/>
         </g:SimplePanel>

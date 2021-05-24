@@ -1,13 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
 	xmlns:g="urn:import:com.google.gwt.user.client.ui">
-	<ui:style>
-		.layout {
-			width: 400px;
-			height: 200px;
-		}
-	</ui:style>
-	<g:SimplePanel styleName="{style.layout} stroom-content stroom-border">
+	<g:SimplePanel styleName="userTaskManagerViewImpl-layout stroom-content stroom-border">
 		<g:MaxScrollPanel>
 			<g:FlowPanel ui:field="taskList" />
 		</g:MaxScrollPanel>

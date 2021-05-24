@@ -5,84 +5,28 @@
 			 xmlns:pager="urn:import:stroom.data.pager.client"
 			 xmlns:tab="urn:import:stroom.widget.tab.client.view"
 			 xmlns:btn="urn:import:stroom.widget.button.client">
-
-	<ui:style>
-		.layout {
-		width: 100%;
-		height: 100%;
-		}
-
-		.tabBarOuter {
-		position: absolute;
-		left: 0px;
-		top: 1px;
-		width: 300px;
-		height: 24px;
-		padding-left: 10px;
-		padding-right: 3px;
-		padding-top: 1px;
-		}
-
-		.tabBarInner {
-		position: relative;
-		width: 100%;
-		height: 100%;
-		}
-
-		.rightPanel {
-		width: max-content;
-		float: right;
-		padding-right: 0.25em;
-		padding-top: 1px;
-		}
-
-		.navigatorContainer {
-		float: left;
-		}
-
-		.progressBarPanel {
-		width: 100%;
-		height: 6px;
-		padding-right: 0.25em;
-		padding-left: 0.25em;
-		}
-
-		.sourceLinkLabel {
-		margin: 0px;
-		margin-top: 2px;
-		cursor: pointer;
-		padding-left: 0.75em;
-		padding-right: 0.75em;
-		float: left;
-		}
-
-		.sourceLinkLabel:hover {
-		text-decoration: underline;
-		}
-	</ui:style>
-
-	<g:DockLayoutPanel unit="PX" styleName="{style.layout} stroom-content">
+	<g:DockLayoutPanel unit="PX" styleName="max stroom-content">
 		<g:center>
 			<tab:LayerContainerImpl ui:field="layerContainer"
 				width="100%" height="100%" />
 		</g:center>
 		<g:north size="20">
 			<g:FlowPanel width="100%" height="100%">
-				<v:ResizeFlowPanel styleName="{style.tabBarOuter}">
+				<v:ResizeFlowPanel styleName="dataViewImpl-tabBarOuter">
 					<tab:LinkTabBar ui:field="tabBar"
-									addStyleNames="{style.tabBarInner}" />
+									addStyleNames="max dataViewImpl-tabBarInner" />
 				</v:ResizeFlowPanel>
-				<g:FlowPanel styleName="{style.rightPanel}">
+				<g:FlowPanel styleName="dataViewImpl-rightPanel">
 					<v:ResizeSimplePanel ui:field="navigatorContainer"
-										 styleName="{style.navigatorContainer}"/>
+										 styleName="dataViewImpl-navigatorContainer"/>
 					<g:Label ui:field="sourceLinkLabel"
-							 styleName="{style.sourceLinkLabel}"/>
+							 styleName="dataViewImpl-sourceLinkLabel"/>
 				</g:FlowPanel>
 			</g:FlowPanel>
 		</g:north>
 		<g:north size="8">
 			<g:SimplePanel ui:field="progressBarPanel"
-						   styleName="{style.progressBarPanel}"/>
+						   styleName="dataViewImpl-progressBarPanel"/>
 		</g:north>
 	</g:DockLayoutPanel>
 </ui:UiBinder>
