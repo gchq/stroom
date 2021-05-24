@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.editor.client.view;
+package stroom.receive.rules.client.presenter;
 
 import stroom.editor.client.presenter.Action;
-import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.Option;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -27,6 +26,7 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
@@ -36,30 +36,33 @@ import java.util.List;
 /**
  * A context menu for the XML editor.
  */
-public class EditorMenuPresenter {
+public class ActionMenuPresenter {
 
     private final MenuListPresenter menuListPresenter;
-    private final boolean showFormatOption = true;
-    private EditorPresenter xmlEditorPresenter;
+    private HasHandlers hasHandlers;
 
     @Inject
-    public EditorMenuPresenter(final MenuListPresenter menuListPresenter) {
+    public ActionMenuPresenter(final MenuListPresenter menuListPresenter) {
         this.menuListPresenter = menuListPresenter;
 
     }
 
-    public void show(final EditorPresenter xmlEditorPresenter, final int x, final int y) {
-        this.xmlEditorPresenter = xmlEditorPresenter;
-        HidePopupEvent.fire(xmlEditorPresenter, menuListPresenter);
-        updateText();
-        final PopupPosition popupPosition = new PopupPosition(x, y);
-        ShowPopupEvent.fire(xmlEditorPresenter, menuListPresenter, PopupType.POPUP, popupPosition, null);
+    public void show(final HasHandlers hasHandlers,
+                     final List<Item> items,
+                     final int x,
+                     final int y) {
+        this.hasHandlers = hasHandlers;
+        HidePopupEvent.fire(hasHandlers, menuListPresenter);
+        menuListPresenter.setData(items);
+//        updateText();
+        final PopupPosition popupPosition = new PopupPosition(x + 10, y);
+        ShowPopupEvent.fire(hasHandlers, menuListPresenter, PopupType.POPUP, popupPosition, null);
     }
 
     public void hide() {
-        if (xmlEditorPresenter != null) {
-            HidePopupEvent.fire(xmlEditorPresenter, menuListPresenter);
-            xmlEditorPresenter = null;
+        if (hasHandlers != null) {
+            HidePopupEvent.fire(hasHandlers, menuListPresenter);
+            hasHandlers = null;
         }
     }
 
@@ -68,32 +71,31 @@ public class EditorMenuPresenter {
      * editor settings.
      */
     private void updateText() {
-        // TODO @AT Consider using MenuBuilder.builder() instead
         int position = 0;
         final List<Item> menuItems = new ArrayList<>();
-        addMenuItem(position++, menuItems, xmlEditorPresenter.getStylesOption());
-        addMenuItem(position++, menuItems, xmlEditorPresenter.getIndicatorsOption());
-        addMenuItem(position++, menuItems, xmlEditorPresenter.getLineNumbersOption());
-        addMenuItem(position++, menuItems, xmlEditorPresenter.getLineWrapOption());
-        addMenuItem(position++, menuItems, xmlEditorPresenter.getShowInvisiblesOption());
-        addMenuItem(position++, menuItems, xmlEditorPresenter.getHighlightActiveLineOption());
-        addMenuItem(position++, menuItems, xmlEditorPresenter.getUseVimBindingsOption());
-        addMenuItem(position++, menuItems, xmlEditorPresenter.getBasicAutoCompletionOption());
-        addMenuItem(position++, menuItems, xmlEditorPresenter.getSnippetsOption());
-        addMenuItem(position++, menuItems, xmlEditorPresenter.getLiveAutoCompletionOption());
+//        addMenuItem(position++, menuItems, xmlEditorPresenter.getStylesOption());
+//        addMenuItem(position++, menuItems, xmlEditorPresenter.getIndicatorsOption());
+//        addMenuItem(position++, menuItems, xmlEditorPresenter.getLineNumbersOption());
+//        addMenuItem(position++, menuItems, xmlEditorPresenter.getLineWrapOption());
+//        addMenuItem(position++, menuItems, xmlEditorPresenter.getShowInvisiblesOption());
+//        addMenuItem(position++, menuItems, xmlEditorPresenter.getHighlightActiveLineOption());
+//        addMenuItem(position++, menuItems, xmlEditorPresenter.getUseVimBindingsOption());
+//        addMenuItem(position++, menuItems, xmlEditorPresenter.getBasicAutoCompletionOption());
+//        addMenuItem(position++, menuItems, xmlEditorPresenter.getSnippetsOption());
+//        addMenuItem(position++, menuItems, xmlEditorPresenter.getLiveAutoCompletionOption());
+//
+//        addMenuItem(position++, menuItems, xmlEditorPresenter.getFormatAction());
 
-        addMenuItem(position++, menuItems, xmlEditorPresenter.getFormatAction());
-
-        if (xmlEditorPresenter.isShowFilterSettings()) {
-            String title;
-            if (xmlEditorPresenter.isInput()) {
-                title = "Filter Input";
-            } else {
-                title = "Filter Output";
-            }
-
-            menuItems.add(createItem(title, () -> xmlEditorPresenter.changeFilterSettings(), position++));
-        }
+//        if (xmlEditorPresenter.isShowFilterSettings()) {
+//            String title;
+//            if (xmlEditorPresenter.isInput()) {
+//                title = "Filter Input";
+//            } else {
+//                title = "Filter Output";
+//            }
+//
+//            menuItems.add(createItem(title, () -> xmlEditorPresenter.changeFilterSettings(), position++));
+//        }
 
         menuListPresenter.setData(menuItems);
     }
@@ -115,4 +117,9 @@ public class EditorMenuPresenter {
         return new IconMenuItem(position, text, null, true, command);
     }
 
+
+//    public static interface ActionMenuItemsProvider<R> {
+//
+//        List<Item> supplyItems(final R row);
+//    }
 }

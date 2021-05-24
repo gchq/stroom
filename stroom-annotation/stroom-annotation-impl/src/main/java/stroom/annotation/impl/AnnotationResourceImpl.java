@@ -26,13 +26,11 @@ import stroom.annotation.shared.SetStatusRequest;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
-import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import java.util.List;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -41,8 +39,6 @@ import javax.inject.Provider;
 class AnnotationResourceImpl implements AnnotationResource {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnnotationResourceImpl.class);
-
-    private static final FilterFieldMappers<String> FILTER_FIELD_MAPPERS = FilterFieldMappers.singleStringField();
 
     private final Provider<AnnotationService> annotationService;
     private final Provider<DocumentEventLog> documentEventLog;
@@ -140,11 +136,7 @@ class AnnotationResourceImpl implements AnnotationResource {
         if (allValues == null || allValues.isEmpty()) {
             return allValues;
         } else {
-            final Predicate<String> quickFilterPredicate = QuickFilterPredicateFactory.createFuzzyMatchPredicate(
-                    quickFilterInput, FILTER_FIELD_MAPPERS);
-
-            return allValues.stream()
-                    .filter(quickFilterPredicate)
+            return QuickFilterPredicateFactory.filterStream(quickFilterInput, allValues.stream())
                     .collect(Collectors.toList());
         }
     }

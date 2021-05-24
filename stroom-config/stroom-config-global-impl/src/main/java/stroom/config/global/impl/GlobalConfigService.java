@@ -50,7 +50,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Predicate;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -169,27 +168,26 @@ public class GlobalConfigService {
             //   update the config props.
             updateConfigFromDb();
 
-            final Predicate<ConfigProperty> quickFilterPredicate =
-                    QuickFilterPredicateFactory.createFuzzyMatchPredicate(
-                            criteria.getQuickFilterInput(),
-                            FIELD_MAPPERS);
-
             final PageRequest pageRequest = criteria.getPageRequest() != null
                     ? criteria.getPageRequest()
                     : new PageRequest(0, Integer.MAX_VALUE);
 
-            return configMapper.getGlobalProperties().stream()
-                    .sorted(buildComparator(criteria))
-                    .filter(quickFilterPredicate)
+            final Optional<Comparator<ConfigProperty>> optConfigPropertyComparator = buildComparator(criteria);
+
+            return QuickFilterPredicateFactory.filterStream(
+                    criteria.getQuickFilterInput(),
+                    FIELD_MAPPERS,
+                    configMapper.getGlobalProperties().stream(),
+                    optConfigPropertyComparator.orElse(null))
                     .collect(ListConfigResponse.collector(pageRequest, ListConfigResponse::new));
         });
     }
 
-    private Comparator<ConfigProperty> buildComparator(final GlobalConfigCriteria criteria) {
+    private Optional<Comparator<ConfigProperty>> buildComparator(final GlobalConfigCriteria criteria) {
         if (criteria != null && criteria.getSortList() != null && !criteria.getSortList().isEmpty()) {
-            return CompareUtil.buildCriteriaComparator(FIELD_COMPARATORS, criteria);
+            return Optional.of(CompareUtil.buildCriteriaComparator(FIELD_COMPARATORS, criteria));
         } else {
-            return Comparator.comparing(ConfigProperty::getNameAsString, String::compareToIgnoreCase);
+            return Optional.empty();
         }
     }
 

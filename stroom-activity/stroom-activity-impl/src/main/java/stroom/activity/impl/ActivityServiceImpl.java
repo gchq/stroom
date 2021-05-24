@@ -37,7 +37,6 @@ import com.google.common.base.Strings;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
@@ -122,12 +121,10 @@ public class ActivityServiceImpl implements ActivityService {
 
                 final List<FilterFieldDefinition> fieldDefinitions = buildFieldDefinitions(allActivities);
 
-                final Predicate<Activity> filterPredicate = buildActivityPredicate(
-                        filter,
-                        fieldDefinitions);
+                final FilterFieldMappers<Activity> fieldMappers = buildFieldMappers(fieldDefinitions);
 
-                filteredActivities = allActivities.stream()
-                        .filter(filterPredicate)
+                filteredActivities = QuickFilterPredicateFactory.filterStream(
+                        filter, fieldMappers, allActivities.stream())
                         .collect(Collectors.toList());
             } else {
                 filteredActivities = allActivities;
@@ -219,11 +216,7 @@ public class ActivityServiceImpl implements ActivityService {
         return new ActivityValidationResult(valid, String.join("\n", messages));
     }
 
-    private Predicate<Activity> buildActivityPredicate(final String filterInput,
-                                                       final List<FilterFieldDefinition> fieldDefinitions) {
-
-        LOGGER.debug("Building predicate for input [{}]", filterInput);
-
+    private FilterFieldMappers<Activity> buildFieldMappers(final List<FilterFieldDefinition> fieldDefinitions) {
         // Extracting the value out of the json details is not very efficient.  May be better to use
         // something like jsoniter on the raw json.
         final FilterFieldMappers<Activity> fieldMappers = FilterFieldMappers.of(fieldDefinitions.stream()
@@ -243,7 +236,6 @@ public class ActivityServiceImpl implements ActivityService {
                             return value;
                         }))
                 .collect(Collectors.toList()));
-
-        return QuickFilterPredicateFactory.createFuzzyMatchPredicate(filterInput, fieldMappers);
+        return fieldMappers;
     }
 }

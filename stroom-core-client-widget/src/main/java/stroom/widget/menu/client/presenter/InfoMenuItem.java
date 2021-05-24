@@ -18,4 +18,52 @@ public class InfoMenuItem extends CommandMenuItem {
     public SafeHtml getSafeHtml() {
         return safeHtml;
     }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+
+        private SafeHtml safeHtml = null;
+        private String shortcut = null;
+        private Command command = null;
+        private boolean enabled = true;
+
+        Builder() {
+        }
+
+        public Builder withSafeHtml(final SafeHtml safeHtml) {
+            this.safeHtml = safeHtml;
+            return this;
+        }
+
+        public Builder withShortcut(final String shortcut) {
+            this.shortcut = shortcut;
+            return this;
+        }
+
+        public Builder withCommand(final Command command) {
+            this.command = command;
+            return this;
+        }
+
+        public Builder withEnabledState(final boolean enabled) {
+            this.enabled = enabled;
+            return this;
+        }
+
+        public Builder disabled() {
+            this.enabled = false;
+            return this;
+        }
+
+        public Item build() {
+            return new InfoMenuItem(
+                    safeHtml,
+                    shortcut,
+                    enabled,
+                    command);
+        }
+    }
 }

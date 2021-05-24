@@ -1,21 +1,37 @@
 package stroom.util.filter;
 
-import stroom.util.string.StringPredicateFactory;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.util.filter.StringPredicateFactory.MatchInfo;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.annotation.Nullable;
 
+/**
+ * Provides mechanisms for filtering data based on a quick filter terms, e.g.
+ * 'foo bar type:feed'.
+ * Multiple terms can be used delimited with spaces. Terms can be qualified with the name of the
+ * field. If not qualified then the default field(s) are used. Terms can be prefixed/suffixed with special
+ * characters that will change the match mode, e.g. regex, negation.
+ * <p>
+ * To see how it works in action run QuickFilterTestBed#main()
+ */
 public class QuickFilterPredicateFactory {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(QuickFilterPredicateFactory.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(QuickFilterPredicateFactory.class);
 
     private static final char QUALIFIER_DELIMITER_CHAR = ':';
     private static final char SPLIT_CHAR = ' ';
@@ -29,11 +45,22 @@ public class QuickFilterPredicateFactory {
     private static final Pattern QUALIFIER_DELIMITER_PATTERN = Pattern.compile(QUALIFIER_DELIMITER_STR);
 
     /**
+     * {@link QuickFilterPredicateFactory#filterStream} should be preferred over this method
+     * as it incorporates sorting of the results by match quality. This method can be used in
+     * situations where sorting of the results is not applicable (e.g. in the explorer tree)
+     * and just the predicate is required.
+     * <p>
      * Creates a match predicate based on userInput. userInput may be a single match string
      * e.g. 'event', or a set of optionally qualified match strings, e.g. 'event type:pipe'.
      * See the test for valid examples.
      * <p>
-     * Where multiple fields are used in the filter they are combined using OR.
+     * Where multiple fields are used in the filter they are combined using AND. Where the
+     * field mappers define multiple fields as the default then these default fields will
+     * be combined with an OR.
+     * Space is used as a delimiter for query terms, so 'foo bar type:xslt' is the same as
+     * 'name contains foo AND name contains bar AND type contains xslt'.
+     * If you want space to be treated as a space then surround with quotes, e.g.
+     * '"foo bar"' means 'name contains "foo bar"'.
      * <p>
      * This class delegates the matching of each field to {@link StringPredicateFactory}.
      */
@@ -43,34 +70,267 @@ public class QuickFilterPredicateFactory {
 
         // user input like 'vent type:pipe' or just 'vent'
 
+        // If the default field mapper is two fields, field1 & field2 then "bad stuff" is really
+        // (field1:bad OR field2:bad) AND (field1:stuff OR field2:stuff)
+
         final Predicate<T> predicate;
-        if (userInput == null || userInput.isEmpty()) {
+        if (userInput == null || userInput.isBlank()) {
             LOGGER.trace("Null/empty input");
+            // blank input so include everything
             predicate = obj -> true;
-        } else if (userInput.contains(":") || userInput.contains("\"")) {
-            LOGGER.trace("Found at least one qualified field or quoted values");
+        } else {
             // We have some qualified fields so parse them
-            final List<MatchToken> matchTokens = extractMatchTokens(userInput.trim());
+            final List<MatchToken> matchTokens = extractMatchTokens(userInput);
             LOGGER.trace("Parsed matchTokens {}", matchTokens);
 
             if (!matchTokens.isEmpty()) {
                 predicate = buildCompoundPredicate(matchTokens, fieldMappers);
             } else {
-                // Couldn't parse so nothing should match
+                // Couldn't parse (user may be part way through typing) so nothing should match
                 predicate = obj -> false;
             }
-        } else {
-            LOGGER.trace("Doing default field only matching");
-            // Matching on the default field
-            final Collection<FilterFieldMapper<T>> defaultFieldMapper = getDefaultFieldMappers(fieldMappers);
-            LOGGER.trace("defaultFieldMapper {}", defaultFieldMapper);
-
-            predicate = createDefaultPredicate(userInput, fieldMappers);
         }
 
         return predicate;
     }
 
+    /**
+     * When you have a stream of strings that you want to filter
+     */
+    public static Stream<String> filterStream(final String userInput,
+                                              final Stream<String> stream) {
+        // This method is preferable to using StringPredicateFactory directly as it means we
+        // can cope with multiple ANDed terms, e.g. 'foo bar' which means
+        // 'value contains foo AND value contains bar'
+
+        return filterStream(userInput, FilterFieldMappers.singleStringField(), stream, null);
+    }
+
+    /**
+     * When you have a stream of strings that you want to filter
+     */
+    public static Stream<String> filterStream(final String userInput,
+                                              final Stream<String> stream,
+                                              final Comparator<String> comparator) {
+        // This method is preferable to using StringPredicateFactory directly as it means we
+        // can cope with multiple ANDed terms, e.g. 'foo bar' which means
+        // 'value contains foo AND value contains bar'
+
+        return filterStream(userInput, FilterFieldMappers.singleStringField(), stream, comparator);
+    }
+
+    public static <T> Stream<T> filterStream(final String userInput,
+                                             final FilterFieldMappers<T> fieldMappers,
+                                             final Stream<T> stream) {
+        return filterStream(userInput, fieldMappers, stream, null);
+    }
+
+    /**
+     * Filters a {@link Stream} of T using
+     *
+     * @param userInput
+     * @param fieldMappers
+     * @param stream
+     * @param comparator   A caller supplied comparator to sort the stream. If null then
+     *                     the results may be first sorted according to match quality then
+     *                     by the default fields.
+     * @param <T>
+     * @return
+     */
+    public static <T> Stream<T> filterStream(final String userInput,
+                                             final FilterFieldMappers<T> fieldMappers,
+                                             final Stream<T> stream,
+                                             final Comparator<T> comparator) {
+
+        final Stream<T> outputStream;
+        if (userInput == null || userInput.isBlank()) {
+            // no terms so nothing to filter out or filtered results to sort
+            LOGGER.trace("Null/empty input");
+            if (comparator != null) {
+                outputStream = stream.sorted(comparator);
+            } else {
+                outputStream = stream;
+            }
+        } else {
+            final List<MatchToken> matchTokens = extractMatchTokens(userInput);
+            LOGGER.trace("Parsed matchTokens {}", matchTokens);
+
+            final Map<MatchToken, Function<T, MatchInfo>> matchInfoEvaluators;
+            if (comparator == null) {
+                // For each match token we need a func to give us the match info for an filtered item
+                // The func will need to check the match quality of one or more fields of the item
+                // and return the aggregate
+                matchInfoEvaluators = buildMatchInfoEvaluators(fieldMappers, matchTokens);
+            } else {
+                // Caller supplied comparator so not ranking so no need to populate
+                matchInfoEvaluators = Collections.emptyMap();
+            }
+
+            if (!matchTokens.isEmpty()) {
+                final Predicate<T> predicate = buildCompoundPredicate(matchTokens, fieldMappers);
+
+                final Comparator<FilterMatch<T>> effectiveComparator;
+                if (comparator == null) {
+                    // First sort by match quality
+                    Comparator<FilterMatch<T>> matchQualityComparator = Comparator.nullsLast(FilterMatch::comparator);
+
+                    // Then sort by the default field(s), which ensures if the mode used doesn't rank results
+                    // we still get a sensible result order
+                    for (final FilterFieldMapper<T> defaultFieldMapper : fieldMappers.getDefaultFieldMappers()) {
+                        matchQualityComparator = matchQualityComparator.thenComparing(filterMatch ->
+                                        defaultFieldMapper.extractFieldValue(filterMatch.filteredItem),
+                                Comparator.nullsLast(String::compareToIgnoreCase));
+                    }
+
+                    effectiveComparator = Comparator.nullsLast(matchQualityComparator);
+                } else {
+                    // Use the caller's supplied comparator
+                    effectiveComparator = Comparator.comparing(FilterMatch::getFilteredItem, comparator);
+                }
+
+                final Consumer<FilterMatch<T>> peekFunc = LOGGER.isTraceEnabled()
+                        ? filterMatch -> LOGGER.trace(filterMatch.toString())
+                        : filterMatch -> {
+                            // do nowt
+                        };
+
+                // Filter the items using the user's filter term(s)
+                // Determine the quality of the match for each filtered item
+                // Sort each item on the match quality
+                // TODO @AT Really we should determine the match info as part of the predicate
+                //  as the current approach is not the most efficient
+                outputStream = stream
+                        .filter(predicate)
+                        .map((T filteredItem) -> {
+                            final MatchInfo matchInfo;
+                            if (comparator == null) {
+                                matchInfo = calculateAggregateMatchInfo(
+                                        filteredItem,
+                                        matchInfoEvaluators);
+                                LOGGER.trace(() ->
+                                        LogUtil.message("Item {}, match info {}", filteredItem, matchInfo));
+                            } else {
+                                matchInfo = MatchInfo.noMatchInfo();
+                            }
+                            return FilterMatch.of(filteredItem, matchInfo);
+                        })
+                        .sorted(effectiveComparator)
+                        .peek(peekFunc)
+                        .map(FilterMatch::getFilteredItem);
+            } else {
+                // Couldn't parse (user may be part way through typing) so nothing should match
+                outputStream = stream.limit(0);
+            }
+        }
+        return outputStream;
+    }
+
+    private static <T> Map<MatchToken, Function<T, MatchInfo>> buildMatchInfoEvaluators(
+            final FilterFieldMappers<T> fieldMappers,
+            final List<MatchToken> matchTokens) {
+
+        final Map<MatchToken, Function<T, MatchInfo>> matchInfoEvaluators;
+        matchInfoEvaluators = matchTokens.stream()
+                .collect(Collectors.toMap(
+                        Function.identity(),
+                        matchToken -> {
+                            final Collection<FilterFieldMapper<T>> mappers = matchToken.isQualified()
+                                    ? List.of(fieldMappers.get(matchToken.qualifier))
+                                    : fieldMappers.getDefaultFieldMappers();
+
+                            final Function<String, MatchInfo> matchInfoEvaluator = StringPredicateFactory
+                                    .createMatchInfoEvaluator(matchToken.matchInput);
+
+                            // if mappers is >1 then we are dealing with default fields so need to pick the
+                            // best match
+                            return (T filteredItem) ->
+                                    mappers.stream()
+                                            .map(mapper -> {
+                                                final String fieldValue = mapper.extractFieldValue(
+                                                        filteredItem);
+                                                return matchInfoEvaluator.apply(fieldValue);
+                                            })
+                                            .filter(MatchInfo::hasMatchInfo)
+                                            .reduce(MatchInfo::bestMatch)
+                                            .orElse(MatchInfo.noMatchInfo());
+                        }));
+        return matchInfoEvaluators;
+    }
+
+//    private static <T> Comparator<T> createMatchComparator(final List<MatchToken> matchTokens,
+//                                                           final FilterFieldMappers<T> fieldMappers) {
+//        final Comparator<T> comparator;
+//        if (matchTokens.isEmpty()) {
+//            LOGGER.trace("Null/empty input, no sorting");
+//            comparator = (o1, o2) -> 0;
+//        } else if (matchTokens.size() == 1) {
+//            // Only one field so can compare on the
+//            comparator = createComparator(matchTokens.get(0), fieldMappers);
+//        } else {
+//            // TODO @AT How do we compare a match on multiple fields?
+//            //  Could add up all match lengths and match positions and compare on the aggregates.
+//            comparator = (o1, o2) -> 0;
+//        }
+//        return comparator;
+//    }
+
+//    public static <T> Comparator<T> createComparator(final MatchToken matchToken,
+//                                                     final FilterFieldMappers<T> fieldMappers) {
+//
+//        final Function<String, MatchInfo> matchInfoEvaluator =
+//                StringPredicateFactory.createMatchInfoEvaluator(matchToken.matchInput);
+//
+//        final Collection<FilterFieldMapper<T>> filterFieldMapperCollection = matchToken.isQualified()
+//                ? List.of(fieldMappers.get(matchToken.qualifier))
+//                : fieldMappers.getDefaultFieldMappers();
+//
+//        return (T obj1, T obj2) -> {
+//
+//            final Optional<MatchInfo> optMatchInfo1 = calculateAggregateMatchInfo(
+//                    obj1,
+//                    filterFieldMapperCollection,
+//                    matchInfoEvaluator);
+//            final Optional<MatchInfo> optMatchInfo2 = calculateAggregateMatchInfo(
+//                    obj2,
+//                    filterFieldMapperCollection,
+//                    matchInfoEvaluator);
+//
+//            if (optMatchInfo1.isEmpty() && optMatchInfo2.isEmpty()) {
+//                return 0;
+//            } else if (optMatchInfo1.isEmpty()) {
+//                return -1;
+//            } else if (optMatchInfo2.isEmpty()) {
+//                return 1;
+//            } else {
+//                return optMatchInfo1.get()
+//                        .compareTo(optMatchInfo2.get());
+//            }
+//        };
+//    }
+
+    private static <T> MatchInfo calculateAggregateMatchInfo(
+            final T filteredItem,
+            final Map<MatchToken, Function<T, MatchInfo>> matchInfoEvaluators) {
+
+        return matchInfoEvaluators.keySet().stream()
+                .map(matchToken ->
+                        matchInfoEvaluators.get(matchToken).apply(filteredItem))
+                .filter(MatchInfo::hasMatchInfo)
+                .reduce(MatchInfo::addScores)
+                .orElse(MatchInfo.noMatchInfo());
+    }
+
+//    private static <T> Optional<MatchInfo> calculateAggregateMatchInfo(
+//            final T object,
+//            final Collection<FilterFieldMapper<T>> mappers,
+//            final Function<String, MatchInfo> matchInfoEvaluator) {
+//
+//        return mappers.stream()
+//                .map(mapper -> mapper.extractFieldValue(object))
+//                .map(matchInfoEvaluator)
+//                .filter(MatchInfo::wasFound)
+//                .reduce(MatchInfo::aggregate);
+//    }
 
     private static <T> Predicate<T> createDefaultPredicate(final String input,
                                                            final FilterFieldMappers<T> fieldMappers) {
@@ -92,7 +352,7 @@ public class QuickFilterPredicateFactory {
         LOGGER.trace("Creating fuzzy match predicate for input [{}], fieldMapper {}", input, fieldMapper);
         return StringPredicateFactory.createFuzzyMatchPredicate(
                 input,
-                fieldMapper.getNullSafeStringValueExtractor());
+                fieldMapper::extractFieldValue);
     }
 
     private static <T> Predicate<T> createOrPredicate(final String input,
@@ -132,31 +392,35 @@ public class QuickFilterPredicateFactory {
     }
 
     static List<MatchToken> extractMatchTokens(final String userInput) {
-        final List<String> tokens = splitInput(userInput);
+        if (userInput == null || userInput.isBlank()) {
+            return Collections.emptyList();
+        } else {
+            final List<String> tokens = splitInput(userInput);
 
-        return tokens.stream()
-                .map(token -> {
-                    try {
-                        if (token.contains(QUALIFIER_DELIMITER_STR)) {
-                            final String[] parts = QUALIFIER_DELIMITER_PATTERN.split(token);
-                            if (token.endsWith(QUALIFIER_DELIMITER_STR)) {
-                                return new MatchToken(parts[0], "");
-                            } else if (token.startsWith(QUALIFIER_DELIMITER_STR)) {
-                                throw new RuntimeException("Invalid token " + token);
+            return tokens.stream()
+                    .map(token -> {
+                        try {
+                            if (token.contains(QUALIFIER_DELIMITER_STR)) {
+                                final String[] parts = QUALIFIER_DELIMITER_PATTERN.split(token);
+                                if (token.endsWith(QUALIFIER_DELIMITER_STR)) {
+                                    return new MatchToken(parts[0], "");
+                                } else if (token.startsWith(QUALIFIER_DELIMITER_STR)) {
+                                    throw new RuntimeException("Invalid token " + token);
+                                } else {
+                                    return new MatchToken(parts[0], parts[1]);
+                                }
                             } else {
-                                return new MatchToken(parts[0], parts[1]);
+                                return new MatchToken(null, token);
                             }
-                        } else {
-                            return new MatchToken(null, token);
+                        } catch (Exception e) {
+                            // Probably due to the user not having finished typing yet
+                            LOGGER.trace("Unable to split [{}], due to {}", token, e.getMessage(), e);
+                            return null;
                         }
-                    } catch (Exception e) {
-                        // Probably due to the user not having finished typing yet
-                        LOGGER.trace("Unable to split [{}], due to {}", token, e.getMessage(), e);
-                        return null;
-                    }
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+        }
     }
 
     /**
@@ -237,7 +501,7 @@ public class QuickFilterPredicateFactory {
 
         for (final MatchToken matchToken : matchTokens) {
 
-            if (!matchToken.matchInput.isBlank()) {
+            if (!matchToken.isTermBlank()) {
                 if (!matchToken.isQualified()) {
                     final Predicate<T> unqualifiedPredicate = createDefaultPredicate(matchToken.matchInput,
                             fieldMappers);
@@ -271,6 +535,11 @@ public class QuickFilterPredicateFactory {
         return compoundPredicate;
     }
 
+    /**
+     * Chains predicates together using an AND. predicate2 will be tested after predicate1.
+     *
+     * @return A single predicate representing predicate1 AND predicate2.
+     */
     private static <T> Predicate<T> andPredicates(final Predicate<T> predicate1,
                                                   final Predicate<T> predicate2) {
         if (predicate1 == null && predicate2 == null) {
@@ -284,6 +553,11 @@ public class QuickFilterPredicateFactory {
         }
     }
 
+    /**
+     * Chains predicates together using an OR. predicate2 will be tested after predicate1.
+     *
+     * @return A single predicate representing predicate1 OR predicate2.
+     */
     private static <T> Predicate<T> orPredicates(final Predicate<T> predicate1,
                                                  final Predicate<T> predicate2) {
         if (predicate1 == null && predicate2 == null) {
@@ -297,13 +571,13 @@ public class QuickFilterPredicateFactory {
         }
     }
 
-
-    public static class MatchToken {
+    // pkg private for testing
+    static class MatchToken {
 
         private final String qualifier;
         private final String matchInput;
 
-        private MatchToken(final String qualifier, final String input) {
+        private MatchToken(@Nullable final String qualifier, final String input) {
             this.qualifier = qualifier;
             this.matchInput = Objects.requireNonNull(input);
         }
@@ -318,6 +592,10 @@ public class QuickFilterPredicateFactory {
 
         private boolean isQualified() {
             return qualifier != null;
+        }
+
+        private boolean isTermBlank() {
+            return matchInput.isBlank();
         }
 
         @Override
@@ -344,6 +622,54 @@ public class QuickFilterPredicateFactory {
         @Override
         public int hashCode() {
             return Objects.hash(qualifier, matchInput);
+        }
+    }
+
+    private static class FilterMatch<T> {
+
+        final T filteredItem;
+        final MatchInfo matchInfo;
+
+        private FilterMatch(final T filteredItem, final MatchInfo matchInfo) {
+            this.filteredItem = Objects.requireNonNull(filteredItem);
+            this.matchInfo = Objects.requireNonNull(matchInfo);
+        }
+
+        private static <T> FilterMatch<T> of(final T filteredItem, final MatchInfo matchInfo) {
+            return new FilterMatch<>(filteredItem, matchInfo);
+        }
+
+        public T getFilteredItem() {
+            return filteredItem;
+        }
+
+        public MatchInfo getMatchInfo() {
+            return matchInfo;
+        }
+
+        private boolean hasMatchInfo() {
+            return matchInfo != null && matchInfo.hasMatchInfo();
+        }
+
+        public static <T> int comparator(final FilterMatch<T> filterMatch1,
+                                         final FilterMatch<T> filterMatch2) {
+            if (!filterMatch1.hasMatchInfo() && !filterMatch2.hasMatchInfo()) {
+                return 0;
+            } else if (!filterMatch1.hasMatchInfo()) {
+                return -1;
+            } else if (!filterMatch2.hasMatchInfo()) {
+                return 1;
+            } else {
+                return filterMatch1.matchInfo.compareTo(filterMatch2.matchInfo);
+            }
+        }
+
+        @Override
+        public String toString() {
+            return "FilterMatch{" +
+                    "filteredItem=" + filteredItem +
+                    ", matchInfo=" + matchInfo +
+                    '}';
         }
     }
 }
