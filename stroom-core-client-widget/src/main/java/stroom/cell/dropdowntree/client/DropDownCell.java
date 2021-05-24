@@ -163,7 +163,12 @@ public abstract class DropDownCell<E> extends AbstractEditableCell<E, E> {
 
     public interface Template extends SafeHtmlTemplates {
 
-        @Template("<div class=\"{0}\"><div class=\"{1}\" title=\"{3}\">{3}</div><div class=\"{2}\"><div class=\"{4}\"></div></div></div>")
+        @Template("<div class=\"{0}\">" +
+                "<div class=\"{1}\" title=\"{3}\">{3}</div>" +
+                "<div class=\"{2}\">" +
+                "<div class=\"{4}\"></div>" +
+                "</div>" +
+                "</div>")
         SafeHtml input(String outerStyle, String labelStyle, String buttonStyle, String value, String icon);
     }
 }
