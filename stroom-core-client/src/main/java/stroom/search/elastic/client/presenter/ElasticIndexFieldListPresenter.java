@@ -22,14 +22,12 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.HasDocumentRead;
+import stroom.search.elastic.client.presenter.ElasticIndexFieldListPresenter.ElasticIndexFieldListView;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
-import stroom.search.elastic.shared.ElasticIndexResource;
-import stroom.search.solr.shared.SolrIndexResource;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 
 import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -42,8 +40,6 @@ import java.util.function.Function;
 
 public class ElasticIndexFieldListPresenter extends MyPresenterWidget<ElasticIndexFieldListView>
         implements HasDocumentRead<ElasticIndexDoc> {
-
-    private static final SolrIndexResource ELASTIC_INDEX_RESOURCE = GWT.create(ElasticIndexResource.class);
 
     private final DataGridView<ElasticIndexField> dataGridView;
     private List<ElasticIndexField> fields;
