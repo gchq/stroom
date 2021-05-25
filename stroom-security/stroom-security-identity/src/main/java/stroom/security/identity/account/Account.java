@@ -21,6 +21,7 @@ package stroom.security.identity.account;
 import stroom.util.shared.HasIntegerId;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -285,6 +286,19 @@ public class Account implements HasIntegerId {
 
     public void setProcessingAccount(final boolean processingAccount) {
         this.processingAccount = processingAccount;
+    }
+
+    @JsonIgnore
+    public String getStatus() {
+        if (locked) {
+            return "Locked";
+        } else if (inactive) {
+            return "Inactive";
+        } else if (enabled) {
+            return "Enabled";
+        } else {
+            return "Disabled";
+        }
     }
 
     @Override

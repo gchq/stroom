@@ -23,6 +23,8 @@ public final class SvgPresets {
 
     public static final SvgPreset ABOUT = enabled("oo.svg", "About");
     public static final SvgPreset ADD = enabled("add.svg", "Add");
+    public static final SvgPreset ADD_ABOVE = enabled("add-above.svg", "Add above");
+    public static final SvgPreset ADD_BELOW = enabled("add-below.svg", "Add below");
     public static final SvgPreset ALERT = enabled("alert.svg", "Alert");
     public static final SvgPreset ANNOTATE = disabled("edit.svg", "Annotate");
     public static final SvgPreset ANNOTATIONS = enabled("document/AnnotationsIndex.svg", "Annotations");
@@ -37,6 +39,9 @@ public final class SvgPresets {
     public static final SvgPreset DOWN = disabled("down.svg", "Down");
     public static final SvgPreset DOWNLOAD = disabled("download.svg", "Download");
     public static final SvgPreset EDIT = disabled("edit.svg", "Edit");
+    public static final SvgPreset ELASTIC_SEARCH = enabled("document/ElasticIndex.svg", "Elastic Search");
+    public static final SvgPreset ELLIPSES_HORIZONTAL = enabled("ellipses-horizontal.svg", "Actions...");
+    public static final SvgPreset ELLIPSES_VERTICAL = enabled("ellipses-vertical.svg", "Actions...");
     public static final SvgPreset ERROR = enabled("error.svg", "Error");
     public static final SvgPreset EXPLORER = enabled("explorer.svg", "Explorer");
     public static final SvgPreset FATAL = enabled("fatal.svg", "Fatal");
@@ -44,8 +49,8 @@ public final class SvgPresets {
     public static final SvgPreset FEED = enabled("feed.svg", "Feed");
     public static final SvgPreset FIELD = enabled("field.svg", "Field");
     public static final SvgPreset FILE = enabled("file.svg", "File");
-    public static final SvgPreset FILE_RAW = enabled("file-raw.svg", "Raw File");
     public static final SvgPreset FILE_FORMATTED = enabled("file-formatted.svg", "Formatted File");
+    public static final SvgPreset FILE_RAW = enabled("file-raw.svg", "Raw File");
     public static final SvgPreset FILTER = enabled("filter.svg", "Filter");
     public static final SvgPreset FOLDER = enabled("folder.svg", "Folder");
     public static final SvgPreset FOLDER_TREE = enabled("folder-tree.svg", "Folder Tree");
@@ -57,8 +62,6 @@ public final class SvgPresets {
     public static final SvgPreset INFO = enabled("info.svg", "Info");
     public static final SvgPreset INFO_DELETED = enabled("info-deleted.svg", "Info (Deleted)");
     public static final SvgPreset INFO_WARNING = enabled("info-warning.svg", "Info (Warning)");
-    public static final SvgPreset INSERT_ABOVE = enabled("insert-above.svg", "Insert above");
-    public static final SvgPreset INSERT_BELOW = enabled("insert-below.svg", "Insert below");
     public static final SvgPreset JOBS = enabled("jobs.svg", "Jobs");
     public static final SvgPreset KEY = enabled("key.svg", "API Keys");
     public static final SvgPreset LINK = enabled("dependencies.svg", "Dependencies");

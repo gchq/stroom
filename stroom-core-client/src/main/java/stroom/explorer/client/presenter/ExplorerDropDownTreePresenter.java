@@ -26,6 +26,7 @@ import stroom.docref.DocRef;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerTreeFilter;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.dropdowntree.client.presenter.DropDownTreePresenter;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -45,7 +46,8 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
     @Inject
     ExplorerDropDownTreePresenter(final EventBus eventBus,
                                   final DropDownTreeView view,
-                                  final RestFactory restFactory) {
+                                  final RestFactory restFactory,
+                                  final UiConfigCache uiConfigCache) {
         super(eventBus, view);
 
         explorerTree = new ExtendedExplorerTree(this, restFactory);
@@ -54,9 +56,12 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
         // Add views.
         view.setCellTree(explorerTree);
 
-        view.setQuickFilterTooltipSupplier(() -> QuickFilterTooltipUtil.createTooltip(
-                "Choose Item Quick Filter",
-                ExplorerTreeFilter.FIELD_DEFINITIONS));
+        uiConfigCache.get()
+                .onSuccess(uiConfig ->
+                        view.setQuickFilterTooltipSupplier(() -> QuickFilterTooltipUtil.createTooltip(
+                                "Choose Item Quick Filter",
+                                ExplorerTreeFilter.FIELD_DEFINITIONS,
+                                uiConfig.getHelpUrl())));
     }
 
     protected void setIncludeNullSelection(final boolean includeNullSelection) {
