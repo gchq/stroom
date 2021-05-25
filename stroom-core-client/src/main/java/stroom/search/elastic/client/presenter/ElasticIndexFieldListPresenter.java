@@ -63,7 +63,7 @@ public class ElasticIndexFieldListPresenter extends MyPresenterWidget<ElasticInd
     }
 
     private void addColumns() {
-        addStringColumn("Name", 150, ElasticIndexField::getFieldName);
+        addStringColumn("Name", 200, ElasticIndexField::getFieldName);
         addStringColumn("Use", row -> row.getFieldUse().getDisplayValue());
         addStringColumn("Type", ElasticIndexField::getFieldType);
         addBooleanColumn("Stored", ElasticIndexField::isStored);
