@@ -11,6 +11,12 @@
 .svgIcon-add {
   background-image: url("../images/add.svg");
 }
+.svgIcon-add-above {
+  background-image: url("../images/add-above.svg");
+}
+.svgIcon-add-below {
+  background-image: url("../images/add-below.svg");
+}
 .svgIcon-alert {
   background-image: url("../images/alert.svg");
 }
@@ -49,6 +55,12 @@
 }
 .svgIcon-edit {
   background-image: url("../images/edit.svg");
+}
+.svgIcon-ellipses-horizontal {
+  background-image: url("../images/ellipses-horizontal.svg");
+}
+.svgIcon-ellipses-vertical {
+  background-image: url("../images/ellipses-vertical.svg");
 }
 .svgIcon-error {
   background-image: url("../images/error.svg");

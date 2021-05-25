@@ -164,21 +164,26 @@ public class ManageActivityPresenter extends
     }
 
     private void updateQuickFilterTooltipContentSupplier() {
-        final Rest<List<FilterFieldDefinition>> rest = restFactory.create();
-        // Separate to aid type inference
-        rest
-                .onSuccess(fieldDefinitions -> {
-                    quickFilterTooltipSupplier = () -> QuickFilterTooltipUtil.createTooltip(
-                            "Choose Activity Quick Filter",
-                            fieldDefinitions);
-                })
-                .onFailure(throwable -> {
-                    // Just use the basic tooltip content
-                    quickFilterTooltipSupplier = () -> QuickFilterTooltipUtil.createTooltip(
-                            "Choose Activity Quick Filter");
-                })
-                .call(ACTIVITY_RESOURCE)
-                .listFieldDefinitions();
+        uiConfigCache.get().onSuccess(uiConfig -> {
+            final String helpUrl = uiConfig.getHelpUrl();
+            final Rest<List<FilterFieldDefinition>> rest = restFactory.create();
+            // Separate to aid type inference
+            rest
+                    .onSuccess(fieldDefinitions -> {
+                        quickFilterTooltipSupplier = () -> QuickFilterTooltipUtil.createTooltip(
+                                "Choose Activity Quick Filter",
+                                fieldDefinitions,
+                                helpUrl);
+                    })
+                    .onFailure(throwable -> {
+                        // Just use the basic tooltip content
+                        quickFilterTooltipSupplier = () -> QuickFilterTooltipUtil.createTooltip(
+                                "Choose Activity Quick Filter",
+                                helpUrl);
+                    })
+                    .call(ACTIVITY_RESOURCE)
+                    .listFieldDefinitions();
+        });
     }
 
     public void show(final Consumer<Activity> consumer) {

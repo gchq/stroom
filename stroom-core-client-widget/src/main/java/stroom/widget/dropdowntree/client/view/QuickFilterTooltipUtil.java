@@ -14,19 +14,24 @@ import java.util.stream.Collectors;
 
 public class QuickFilterTooltipUtil {
 
-    public static SafeHtml createTooltip(final String header) {
-        return createTooltip(header, Collections.emptyList());
+    protected static final String FINDING_THINGS_HELP_PAGE = "/user-guide/finding-things/finding-things.html";
+
+    public static SafeHtml createTooltip(final String header,
+                                         final String helpUrlBase) {
+        return createTooltip(header, Collections.emptyList(), helpUrlBase);
     }
 
     public static SafeHtml createTooltip(final String header,
-                                         final List<FilterFieldDefinition> fieldDefinitions) {
+                                         final List<FilterFieldDefinition> fieldDefinitions,
+                                         final String helpUrlBase) {
 
-        return createTooltip(header, null, fieldDefinitions);
+        return createTooltip(header, null, fieldDefinitions, helpUrlBase);
     }
 
     public static SafeHtml createTooltip(final String header,
                                          final Consumer<Builder> preambleBuilder,
-                                         final List<FilterFieldDefinition> fieldDefinitions) {
+                                         final List<FilterFieldDefinition> fieldDefinitions,
+                                         final String helpUrlBase) {
 
         final String defaultFieldNames = getDefaultFieldNamesInfo(fieldDefinitions);
 
@@ -54,14 +59,17 @@ public class QuickFilterTooltipUtil {
                     tableBuilder
                             .addHeaderRow("Example input", "Match type")
                             .addRow(TooltipUtil.fixedWidthText("abc"),
-                                    "Characters anywhere (in order) matching (matches 'xxaxxbxxcxx'). (default)")
+                                    "Contains match. (default)")
+                            .addRow(TooltipUtil.fixedWidthText("~abc"),
+                                    "Characters anywhere (in order) matching (matches 'xxaxxbxxcxx').")
                             .addRow(TooltipUtil.fixedWidthText("/abc"),
                                     "Regular expression matching (matches 'xxabcxx').")
                             .addRow(TooltipUtil.fixedWidthText("?ABC"),
                                     "Word boundary matching (matches 'AlphaBravoCharlie').")
                             .addRow(TooltipUtil.fixedWidthText("^abc$"),
                                     "Exact match (matches 'abc'.")
-                            .addRow(TooltipUtil.fixedWidthText("abc$"), "Suffix match (matches 'xxxabc')")
+                            .addRow(TooltipUtil.fixedWidthText("abc$"),
+                                    "Suffix match (matches 'xxxabc')")
                             .addRow(TooltipUtil.fixedWidthText("^abc"),
                                     "Prefix match (matches abcxxx').")
                             .addRow(TooltipUtil.fixedWidthText("!abc"),
@@ -84,7 +92,7 @@ public class QuickFilterTooltipUtil {
                 .addBreak()
                 .appendWithoutBreak("For more information see the ")
                 .appendLinkWithoutBreak(
-                        "https://gchq.github.io/stroom-docs/user-guide/finding-things/finding-things.html",
+                        helpUrlBase + FINDING_THINGS_HELP_PAGE,
                         "Help Documentation")
                 .appendWithoutBreak(".");
 
@@ -149,7 +157,7 @@ public class QuickFilterTooltipUtil {
                                     "Matches default field(s) with regex 'abc' and Type field with prefix 'err'")
                             .addRow(
                                     TooltipUtil.fixedWidthText("name:abc type:/(error|warn)"),
-                                    "Matches Name field with 'abc' chars anywhere and Type field with " +
+                                    "Matches Name field which contains 'abc' and Type field which matches " +
                                             "regex '(error|warn)'")
                             .addRow(
                                     TooltipUtil.fixedWidthText("name:?ABC type:!/error"),

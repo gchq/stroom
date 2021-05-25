@@ -773,7 +773,6 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
             final NativeEvent nativeEvent = event.getNativeEvent();
             final String type = nativeEvent.getType();
 
-
             if ("mousedown".equals(type)) {
                 // Find out if the cell consumes this event because if it does then we won't use it to select the row.
                 boolean consumed = false;

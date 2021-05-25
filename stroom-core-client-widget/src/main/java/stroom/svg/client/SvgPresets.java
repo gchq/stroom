@@ -21,6 +21,8 @@ public final class SvgPresets {
 
     public static final Preset ABOUT = enabled("svgIcon-oo", "About");
     public static final Preset ADD = enabled("svgIcon-add", "Add");
+    public static final Preset ADD_ABOVE = enabled("svgIcon-add-above", "Add above");
+    public static final Preset ADD_BELOW = enabled("svgIcon-add-below", "Add below");
     public static final Preset ALERT = enabled("svgIcon-alert", "Alert");
     public static final Preset ANNOTATE = disabled("svgIcon-edit", "Annotate");
     public static final Preset CLEAR = disabled("svgIcon-clear", "Clear");
@@ -34,6 +36,8 @@ public final class SvgPresets {
     public static final Preset DOWN = disabled("svgIcon-down", "Down");
     public static final Preset DOWNLOAD = disabled("svgIcon-download", "Download");
     public static final Preset EDIT = disabled("svgIcon-edit", "Edit");
+    public static final Preset ELLIPSES_HORIZONTAL = enabled("svgIcon-ellipses-horizontal", "Actions...");
+    public static final Preset ELLIPSES_VERTICAL = enabled("svgIcon-ellipses-vertical", "Actions...");
     public static final Preset ERROR = enabled("svgIcon-error", "Error");
     public static final Preset EXPLORER = enabled("svgIcon-explorer", "Explorer");
     public static final Preset FATAL = enabled("svgIcon-fatal", "Fatal");
