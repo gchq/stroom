@@ -79,7 +79,7 @@ public class ElasticIndexFieldListPresenter extends MyPresenterWidget<ElasticInd
                                  final int width,
                                  final Function<ElasticIndexField, String> function
     ) {
-        dataGridView.addResizableColumn(new Column<>(new TextCell()) {
+        dataGridView.addResizableColumn(new Column<ElasticIndexField, String>(new TextCell()) {
             @Override
             public String getValue(final ElasticIndexField row) {
                 return function.apply(row);
@@ -88,7 +88,7 @@ public class ElasticIndexFieldListPresenter extends MyPresenterWidget<ElasticInd
     }
 
     private void addBooleanColumn(final String name, final Function<ElasticIndexField, Boolean> function) {
-        dataGridView.addResizableColumn(new Column<>(new TextCell()) {
+        dataGridView.addResizableColumn(new Column<ElasticIndexField, String>(new TextCell()) {
             @Override
             public String getValue(final ElasticIndexField row) {
                 return getYesNoString(function.apply(row));
