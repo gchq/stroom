@@ -1798,6 +1798,26 @@ paths:
       summary: Get document info
       tags:
       - Explorer (v2)
+  /explorer/v2/listQuickFindResults:
+    post:
+      operationId: listQuickFindResults
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuickFindCriteria'
+        description: quickFilter
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuickFindResults'
+          description: default response
+      summary: List quick find results
+      tags:
+      - Explorer (v2)
   /explorer/v2/move:
     put:
       operationId: moveExplorerItems
@@ -6929,6 +6949,13 @@ components:
           uniqueItems: true
         explorerNode:
           $ref: '#/components/schemas/ExplorerNode'
+    ExplorerPathPart:
+      type: object
+      properties:
+        name:
+          type: string
+        uuid:
+          type: string
     ExplorerServiceCopyRequest:
       type: object
       properties:
@@ -9017,6 +9044,44 @@ components:
           example: 7740bcd0-a49e-4c22-8540-044f85770716
       required:
       - uuid
+    QuickFindCriteria:
+      type: object
+      properties:
+        pageRequest:
+          $ref: '#/components/schemas/PageRequest'
+        quickFilterInput:
+          type: string
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriteriaFieldSort'
+    QuickFindResult:
+      type: object
+      properties:
+        explorerPathParts:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExplorerPathPart'
+        iconUrl:
+          type: string
+        name:
+          type: string
+        pathStr:
+          type: string
+        type:
+          type: string
+        uuid:
+          type: string
+    QuickFindResults:
+      type: object
+      properties:
+        quickFindResults:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuickFindResult'
     RangeInteger:
       type: object
       properties:

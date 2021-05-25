@@ -19,12 +19,16 @@ public class QuickFindResults {
         return quickFindResults;
     }
 
+    public int size() {
+        return quickFindResults.size();
+    }
+
     @Override
     public String toString() {
         return "QuickFindResults{" +
                 "quickFindResults=" + quickFindResults +
                 '}';
     }
-   
+
 
 }

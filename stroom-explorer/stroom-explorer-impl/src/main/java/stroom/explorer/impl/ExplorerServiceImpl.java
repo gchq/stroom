@@ -42,12 +42,12 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.filter.FilterFieldDefinition;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -59,8 +59,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
@@ -70,12 +70,20 @@ import javax.inject.Singleton;
 @Singleton
 class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearable {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ExplorerServiceImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExplorerServiceImpl.class);
 
-    private static final FilterFieldMappers<DocRef> FIELD_MAPPERS = FilterFieldMappers.of(
+    private static final FilterFieldMappers<DocRef> EXPLORER_TREE_FIELD_MAPPERS = FilterFieldMappers.of(
             FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_NAME, DocRef::getName),
             FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_TYPE, DocRef::getType),
             FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_UUID, DocRef::getUuid));
+
+    private static final FilterFieldMappers<QuickFindResult> QUICK_FIND_FIELD_MAPPERS = FilterFieldMappers.of(
+            FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_NAME, QuickFindResult::getName),
+            FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_UUID, QuickFindResult::getUuid),
+            FilterFieldMapper.of(FilterFieldDefinition.qualifiedField("Path"), QuickFindResult::getPathStr),
+            FilterFieldMapper.of(ExplorerTreeFilter.FIELD_DEF_TYPE, QuickFindResult::getType));
+
+    private static final int DEFAULT_QUICK_FIND_LIMIT = 100;
 
     private final ExplorerNodeService explorerNodeService;
     private final ExplorerTreeModel explorerTreeModel;
@@ -119,7 +127,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             final TreeModel filteredModel = new TreeModel();
             // Create the predicate for the current filter value
             final Predicate<DocRef> fuzzyMatchPredicate = QuickFilterPredicateFactory.createFuzzyMatchPredicate(
-                    filter.getNameFilter(), FIELD_MAPPERS);
+                    filter.getNameFilter(), EXPLORER_TREE_FIELD_MAPPERS);
 
             addDescendants(
                     null,
@@ -173,78 +181,97 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     @Override
     public QuickFindResults listItems(final QuickFindCriteria quickFindCriteria) {
         // Get the master tree model.
+//        LOGGER.info("Listing items for user input [{}]", quickFindCriteria.getQuickFilterInput());
+
         final TreeModel masterTreeModel = explorerTreeModel.getModel();
 
         final Predicate<ExplorerNode> securityPredicate = node ->
                 checkSecurity(node, Set.of(DocumentPermissionNames.USE, DocumentPermissionNames.READ));
 
-        final FilterFieldMappers<QuickFindResult> filterFieldMappers = FilterFieldMappers.of(
-                FilterFieldMapper.of(FilterFieldDefinition.defaultField("Name"), QuickFindResult::getName),
-                FilterFieldMapper.of(FilterFieldDefinition.qualifiedField("UUID"), QuickFindResult::getUuid),
-                FilterFieldMapper.of(FilterFieldDefinition.qualifiedField("Path"), QuickFindResult::getPathStr));
 
-        // TODO @AT Change to use the stream method
-        final Predicate<QuickFindResult> fuzzyMatchPredicate = QuickFilterPredicateFactory.createFuzzyMatchPredicate(
-                quickFindCriteria.getQuickFilterInput(),
-                filterFieldMappers);
+        final int limit = quickFindCriteria.getPageRequest() != null
+                && quickFindCriteria.getPageRequest().getLength() != null
+                ? quickFindCriteria.getPageRequest().getLength()
+                : DEFAULT_QUICK_FIND_LIMIT;
 
-        final Stream<QuickFindResult> nodeStream = buildExplorerTreeNodeStream(
-                Stream.of(),
-                () ->
-                        masterTreeModel.getChildren(null),
+        final List<ExplorerNode> rootNodes = masterTreeModel.getChildren(null);
+        if (rootNodes.size() > 1) {
+            throw new RuntimeException(LogUtil.message(
+                    "More than one root nodes, {}",
+                    rootNodes.stream()
+                            .map(ExplorerNode::getName)
+                            .collect(Collectors.joining(","))));
+        }
+
+        final ExplorerNode rootNode = rootNodes.get(0);
+        final LongAdder nodeCounter = new LongAdder();
+        final Stream<QuickFindResult> resultStream = buildExplorerTreeNodeStream(
+                masterTreeModel,
+                rootNode,
                 Collections.emptyList(),
                 securityPredicate)
-                .filter(fuzzyMatchPredicate)
-                .limit(quickFindCriteria.getPageRequest().getLength());
+                .peek(result -> nodeCounter.increment());
 
-        return new QuickFindResults(nodeStream.collect(Collectors.toList()));
+        return LOGGER.logDurationIfInfoEnabled(
+                () -> {
+                    final List<QuickFindResult> filteredStream = QuickFilterPredicateFactory.filterStream(
+                            quickFindCriteria.getQuickFilterInput(),
+                            QUICK_FIND_FIELD_MAPPERS,
+                            resultStream)
+                            .limit(limit)
+                            .collect(Collectors.toList());
+                    final QuickFindResults quickFindResults = new QuickFindResults(filteredStream);
 
-//        masterTreeModel.getChildren(null)
-//                .stream()
-//                .flatMap(ExplorerNode::stream)
-//                .filter(node -> checkSecurity(node,
-//                Set.of(DocumentPermissionNames.USE, DocumentPermissionNames.READ)))
-//                .limit(30)
-//                .collect(Collectors.toList());
+                    LOGGER.info("Inspected {} nodes, returned {}", nodeCounter.longValue(), quickFindResults.size());
+
+                    return quickFindResults;
+                },
+                () -> LogUtil.message("Filtered tree for filter input '{}'", quickFindCriteria.getQuickFilterInput()));
 
     }
 
-    private Stream<QuickFindResult> buildExplorerTreeNodeStream(final Stream<QuickFindResult> resultStream,
-                                                                final Supplier<List<ExplorerNode>> childNodeSupplier,
+    private Stream<QuickFindResult> buildExplorerTreeNodeStream(final TreeModel treeModel,
+                                                                final ExplorerNode node,
                                                                 final List<ExplorerPathPart> parentPathParts,
                                                                 final Predicate<ExplorerNode> securityPredicate) {
 
-        Stream<QuickFindResult> outputStream = resultStream;
-        final List<ExplorerNode> childNodes = childNodeSupplier.get();
+//        LOGGER.info(() ->
+//                "Inspecting node /"
+//                        + parentPathParts.stream()
+//                        .map(ExplorerPathPart::getName)
+//                        .collect(Collectors.joining("/"))
+//                        + "/" + node.getName());
 
+        final QuickFindResult quickFindResult = new QuickFindResult(
+                node.getType(),
+                node.getUuid(),
+                node.getName(),
+                node.getIconUrl(),
+                parentPathParts);
 
-        if (childNodes != null && !childNodes.isEmpty()) {
-            for (final ExplorerNode childNode : childNodes) {
-                if (securityPredicate.test(childNode)) {
-                    if (childNode.getChildren() != null && !childNode.getChildren().isEmpty()) {
-                        // branch
+        final List<ExplorerPathPart> pathParts = new ArrayList<>(parentPathParts);
+        pathParts.add(new ExplorerPathPart(node.getUuid(), node.getName()));
 
-                        // this child is a folder so add its part to the list of parts
-                        final List<ExplorerPathPart> childPathParts = new ArrayList<>(parentPathParts);
-                        childPathParts.add(new ExplorerPathPart(childNode.getUuid(), childNode.getName()));
-
-                        outputStream = Stream.concat(
-                                outputStream,
-                                buildExplorerTreeNodeStream(
-                                        outputStream, childNode::getChildren, childPathParts, securityPredicate));
-                    } else {
-                        // leaf
-                        QuickFindResult quickFindResult = new QuickFindResult(
-                                childNode.getType(),
-                                childNode.getUuid(),
-                                childNode.getName(),
-                                childNode.getIconUrl(),
-                                parentPathParts);
-
-                        outputStream = Stream.concat(outputStream, Stream.of(quickFindResult));
-                    }
-                }
+        final Stream<QuickFindResult> outputStream;
+        if (securityPredicate.test(node)) {
+            final List<ExplorerNode> childNodes = treeModel.getChildren(node);
+            if (childNodes != null && !childNodes.isEmpty()) {
+                // has children so is a branch
+                outputStream = Stream.concat(
+                        Stream.of(quickFindResult),
+                        childNodes.stream()
+                                .flatMap(explorerNode -> buildExplorerTreeNodeStream(
+                                        treeModel,
+                                        explorerNode,
+                                        pathParts,
+                                        securityPredicate)));
+            } else {
+                // no children so is a leaf
+//                LOGGER.info("path {}", leafQuickFindResult.getPathStr());
+                outputStream = Stream.of(quickFindResult);
             }
+        } else {
+            outputStream = Stream.empty();
         }
         return outputStream;
     }

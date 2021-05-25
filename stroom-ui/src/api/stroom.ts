@@ -921,6 +921,11 @@ export interface ExplorerNodePermissions {
   explorerNode?: ExplorerNode;
 }
 
+export interface ExplorerPathPart {
+  name?: string;
+  uuid?: string;
+}
+
 export interface ExplorerServiceCopyRequest {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   destinationFolderRef?: DocRef;
@@ -2222,6 +2227,26 @@ export interface QueryKey {
    * @example 7740bcd0-a49e-4c22-8540-044f85770716
    */
   uuid: string;
+}
+
+export interface QuickFindCriteria {
+  pageRequest?: PageRequest;
+  quickFilterInput?: string;
+  sort?: string;
+  sortList?: CriteriaFieldSort[];
+}
+
+export interface QuickFindResult {
+  explorerPathParts?: ExplorerPathPart[];
+  iconUrl?: string;
+  name?: string;
+  pathStr?: string;
+  type?: string;
+  uuid?: string;
+}
+
+export interface QuickFindResults {
+  quickFindResults?: QuickFindResult[];
 }
 
 export interface RangeInteger {
@@ -5360,6 +5385,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     fetchExplorerItemInfo: (data: DocRef, params: RequestParams = {}) =>
       this.request<any, DocRefInfo>({
         path: `/explorer/v2/info`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Explorer (v2)
+     * @name ListQuickFindResults
+     * @summary List quick find results
+     * @request POST:/explorer/v2/listQuickFindResults
+     * @secure
+     */
+    listQuickFindResults: (data: QuickFindCriteria, params: RequestParams = {}) =>
+      this.request<any, QuickFindResults>({
+        path: `/explorer/v2/listQuickFindResults`,
         method: "POST",
         body: data,
         secure: true,
