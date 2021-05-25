@@ -51,11 +51,11 @@ public class ElasticIndexPresenter extends DocumentEditTabPresenter<LinkTabPanel
             }
         });
 
-        tabContentProvider.add(FIELDS, indexFieldListPresenter);
         tabContentProvider.add(SETTINGS, indexSettingsPresenter);
-        addTab(FIELDS);
+        tabContentProvider.add(FIELDS, indexFieldListPresenter);
         addTab(SETTINGS);
-        selectTab(FIELDS);
+        addTab(FIELDS);
+        selectTab(SETTINGS);
     }
 
     @Override
