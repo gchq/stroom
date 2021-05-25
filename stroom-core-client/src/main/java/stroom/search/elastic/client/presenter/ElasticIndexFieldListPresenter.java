@@ -40,8 +40,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-public class ElasticIndexFieldListPresenter
-        extends MyPresenterWidget<ElasticIndexFieldListPresenter.ElasticIndexFieldListView>
+public class ElasticIndexFieldListPresenter extends MyPresenterWidget<ElasticIndexFieldListView>
         implements HasDocumentRead<ElasticIndexDoc> {
 
     private static final SolrIndexResource ELASTIC_INDEX_RESOURCE = GWT.create(ElasticIndexResource.class);
@@ -129,11 +128,10 @@ public class ElasticIndexFieldListPresenter
             fields = index.getFields();
 
             final StringBuilder sb = new StringBuilder();
-            String now = ClientDateUtil.toISOString(System.currentTimeMillis());
             sb
-                .append("Field list updated at: ")
-                .append(now)
-                .append("<br />Field count: " + fields.size());
+                    .append("Field list updated at: ")
+                    .append(ClientDateUtil.toISOString(System.currentTimeMillis()))
+                    .append("<br />Field count: ").append(fields.size());
 
             getView().setStatusMessage(sb.toString());
         }
