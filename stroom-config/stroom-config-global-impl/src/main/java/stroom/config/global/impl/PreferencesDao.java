@@ -2,9 +2,11 @@ package stroom.config.global.impl;
 
 import stroom.ui.config.shared.UserPreferences;
 
+import java.util.Optional;
+
 public interface PreferencesDao {
 
-    UserPreferences fetch(String userId);
+    Optional<UserPreferences> fetch(String userId);
 
     int update(String userId, UserPreferences userPreferences);
 

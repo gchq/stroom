@@ -33,5 +33,19 @@ public interface PreferencesResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Update user preferences",
             operationId = "updateUserPreferences")
-    int update(UserPreferences userPreferences);
+    boolean update(UserPreferences userPreferences);
+
+    @POST
+    @Path("setDefaultUserPreferences")
+    @Operation(
+            summary = "Sets the default preferences for all users",
+            operationId = "setDefaultUserPreferences")
+    UserPreferences setDefaultUserPreferences(UserPreferences userPreferences);
+
+    @POST
+    @Path("resetToDefaultUserPreferences")
+    @Operation(
+            summary = "Resets preferences to the defaults",
+            operationId = "resetToDefaultUserPreferences")
+    UserPreferences resetToDefaultUserPreferences();
 }

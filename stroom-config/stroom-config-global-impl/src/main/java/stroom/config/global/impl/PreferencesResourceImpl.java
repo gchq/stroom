@@ -26,7 +26,18 @@ public class PreferencesResourceImpl implements PreferencesResource {
     }
 
     @Override
-    public int update(final UserPreferences userPreferences) {
-        return preferencesServiceProvider.get().update(userPreferences);
+    public boolean update(final UserPreferences userPreferences) {
+        return preferencesServiceProvider.get().update(userPreferences) > 0;
+    }
+
+    @Override
+    public UserPreferences setDefaultUserPreferences(final UserPreferences userPreferences) {
+        return preferencesServiceProvider.get().setDefaultUserPreferences(userPreferences);
+    }
+
+    @Override
+    public UserPreferences resetToDefaultUserPreferences() {
+        preferencesServiceProvider.get().delete();
+        return preferencesServiceProvider.get().fetch();
     }
 }

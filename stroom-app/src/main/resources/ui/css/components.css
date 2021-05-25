@@ -1621,4 +1621,12 @@
     border: 1px solid var(--dialog-border-color);
 }
 
+.preferencesViewImpl-buttons {
+}
+
+.preferencesViewImpl-buttons button {
+    width: 250px;
+    margin-right: 5px;
+}
+
 

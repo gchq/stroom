@@ -6741,8 +6741,44 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     updateUserPreferences: (data: UserPreferences, params: RequestParams = {}) =>
-      this.request<any, number>({
+      this.request<any, boolean>({
         path: `/preferences/v1`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Preferences
+     * @name ResetToDefaultUserPreferences
+     * @summary Resets preferences to the defaults
+     * @request POST:/preferences/v1/resetToDefaultUserPreferences
+     * @secure
+     */
+    resetToDefaultUserPreferences: (params: RequestParams = {}) =>
+      this.request<any, UserPreferences>({
+        path: `/preferences/v1/resetToDefaultUserPreferences`,
+        method: "POST",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Preferences
+     * @name SetDefaultUserPreferences
+     * @summary Sets the default preferences for all users
+     * @request POST:/preferences/v1/setDefaultUserPreferences
+     * @secure
+     */
+    setDefaultUserPreferences: (data: UserPreferences, params: RequestParams = {}) =>
+      this.request<any, UserPreferences>({
+        path: `/preferences/v1/setDefaultUserPreferences`,
         method: "POST",
         body: data,
         secure: true,

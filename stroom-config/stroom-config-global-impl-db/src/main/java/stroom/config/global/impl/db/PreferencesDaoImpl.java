@@ -30,7 +30,7 @@ class PreferencesDaoImpl implements PreferencesDao {
     }
 
     @Override
-    public UserPreferences fetch(final String userId) {
+    public Optional<UserPreferences> fetch(final String userId) {
         final Optional<String> optionalDat = JooqUtil.contextResult(connProvider, context ->
                 context
                         .select(PREFERENCES.DAT)
@@ -39,16 +39,15 @@ class PreferencesDaoImpl implements PreferencesDao {
                         .fetchOptional()
                         .map(r -> r.get(PREFERENCES.DAT)));
 
-        if (optionalDat.isPresent()) {
+        return optionalDat.map(string -> {
             final ObjectMapper mapper = createMapper(true);
             try {
-                return mapper.readValue(optionalDat.get(), UserPreferences.class);
+                return mapper.readValue(string, UserPreferences.class);
             } catch (final IOException e) {
                 LOGGER.error(e.getMessage(), e);
             }
-        }
-
-        return UserPreferences.builder().build();
+            return null;
+        });
     }
 
     @Override

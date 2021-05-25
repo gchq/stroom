@@ -17,9 +17,11 @@
 
 package stroom.preferences.client;
 
+import stroom.alert.client.event.ConfirmEvent;
 import stroom.editor.client.presenter.ChangeThemeEvent;
-import stroom.editor.client.presenter.CurrentTheme;
 import stroom.preferences.client.PreferencesPresenter.PreferencesView;
+import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.shared.PermissionNames;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -36,6 +38,7 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public final class PreferencesPresenter
         extends MyPresenterWidget<PreferencesView>
@@ -51,13 +54,14 @@ public final class PreferencesPresenter
             final EventBus eventBus,
             final PreferencesView view,
             final PreferencesManager preferencesManager,
-            final CurrentTheme currentTheme) {
+            final ClientSecurityContext clientSecurityContext) {
 
         super(eventBus, view);
         themes.add("Light");
         themes.add("Dark");
 
         view.setUiHandlers(this);
+        view.setAsDefaultVisible(clientSecurityContext.hasAppPermission(PermissionNames.MANAGE_PROPERTIES_PERMISSION));
         this.preferencesManager = preferencesManager;
     }
 
@@ -73,6 +77,29 @@ public final class PreferencesPresenter
         ChangeThemeEvent.fire(handlers, userPreferences.getTheme());
     }
 
+    @Override
+    public void onSetAsDefault() {
+        ConfirmEvent.fire(this,
+                "Are you sure you want to set the current preferences for all users?",
+                (ok) -> {
+                    if (ok) {
+                        final UserPreferences userPreferences = write();
+                        preferencesManager.setDefaultUserPreferences(userPreferences, this::reset);
+                    }
+                });
+    }
+
+    @Override
+    public void onRevertToDefault() {
+        preferencesManager.resetToDefaultUserPreferences(this::reset);
+    }
+
+    private void reset(final UserPreferences userPreferences) {
+        originalPreferences = userPreferences;
+        read(userPreferences);
+        preferencesManager.updateClassNames(userPreferences);
+    }
+
     public void show() {
         final String caption = "User Preferences";
         final PopupType popupType = PopupType.OK_CANCEL_DIALOG;
@@ -81,8 +108,12 @@ public final class PreferencesPresenter
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
                     final UserPreferences userPreferences = write();
-                    preferencesManager.update(userPreferences, (result) -> hide());
                     preferencesManager.updateClassNames(userPreferences);
+                    if (!Objects.equals(userPreferences, originalPreferences)) {
+                        preferencesManager.update(userPreferences, (result) -> hide());
+                    } else {
+                        hide();
+                    }
                 } else {
                     preferencesManager.updateClassNames(originalPreferences);
                     hide();
@@ -95,6 +126,7 @@ public final class PreferencesPresenter
         };
 
         preferencesManager.fetch(userPreferences -> {
+            originalPreferences = userPreferences;
             read(userPreferences);
             ShowPopupEvent.fire(
                     PreferencesPresenter.this,
@@ -122,7 +154,6 @@ public final class PreferencesPresenter
 
 
     private void read(final UserPreferences userPreferences) {
-        this.originalPreferences = userPreferences;
         getView().setThemes(themes);
         getView().setTheme(userPreferences.getTheme());
     }
@@ -140,5 +171,7 @@ public final class PreferencesPresenter
         void setTheme(String theme);
 
         void setThemes(List<String> themes);
+
+        void setAsDefaultVisible(boolean visible);
     }
 }

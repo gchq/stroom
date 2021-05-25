@@ -24,9 +24,6 @@ import stroom.dashboard.shared.DashboardConfig.TabVisibility;
 import stroom.dashboard.shared.LayoutConfig;
 import stroom.dashboard.shared.TabConfig;
 
-import com.google.gwt.core.shared.GWT;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;

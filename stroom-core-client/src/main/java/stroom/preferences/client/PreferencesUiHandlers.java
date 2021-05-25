@@ -21,4 +21,8 @@ import com.gwtplatform.mvp.client.UiHandlers;
 public interface PreferencesUiHandlers extends UiHandlers {
 
     void onChange();
+
+    void onSetAsDefault();
+
+    void onRevertToDefault();
 }

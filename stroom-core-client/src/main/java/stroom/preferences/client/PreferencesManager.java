@@ -34,12 +34,30 @@ public class PreferencesManager {
                 .fetch();
     }
 
-    public void update(final UserPreferences userPreferences, final Consumer<UserPreferences> consumer) {
-        final Rest<UserPreferences> rest = restFactory.create();
+    public void update(final UserPreferences userPreferences,
+                       final Consumer<Boolean> consumer) {
+        final Rest<Boolean> rest = restFactory.create();
         rest
                 .onSuccess(consumer)
                 .call(PREFERENCES_RESOURCE)
                 .update(userPreferences);
+    }
+
+    public void setDefaultUserPreferences(final UserPreferences userPreferences,
+                                          final Consumer<UserPreferences> consumer) {
+        final Rest<UserPreferences> rest = restFactory.create();
+        rest
+                .onSuccess(consumer)
+                .call(PREFERENCES_RESOURCE)
+                .setDefaultUserPreferences(userPreferences);
+    }
+
+    public void resetToDefaultUserPreferences(final Consumer<UserPreferences> consumer) {
+        final Rest<UserPreferences> rest = restFactory.create();
+        rest
+                .onSuccess(consumer)
+                .call(PREFERENCES_RESOURCE)
+                .resetToDefaultUserPreferences();
     }
 
     public void updateClassNames(final UserPreferences userPreferences) {

@@ -19,8 +19,11 @@ package stroom.preferences.client;
 import stroom.item.client.StringListBox;
 import stroom.preferences.client.PreferencesPresenter.PreferencesView;
 
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
@@ -35,6 +38,10 @@ public final class PreferencesViewImpl
 
     @UiField
     StringListBox theme;
+    @UiField
+    Button setAsDefault;
+    @UiField
+    Button revertToDefault;
 
     @Inject
     public PreferencesViewImpl(final Binder binder) {
@@ -66,6 +73,25 @@ public final class PreferencesViewImpl
     public void setThemes(final List<String> themes) {
         this.theme.clear();
         this.theme.addItems(themes);
+    }
+
+    @Override
+    public void setAsDefaultVisible(final boolean visible) {
+        setAsDefault.setVisible(visible);
+    }
+
+    @UiHandler("setAsDefault")
+    void onClickSetAsDefault(final ClickEvent event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onSetAsDefault();
+        }
+    }
+
+    @UiHandler("revertToDefault")
+    void onClickRevertToDefault(final ClickEvent event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onRevertToDefault();
+        }
     }
 
     public interface Binder extends UiBinder<Widget, PreferencesViewImpl> {

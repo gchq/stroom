@@ -3295,10 +3295,40 @@ paths:
           content:
             application/json:
               schema:
-                type: integer
-                format: int32
+                type: boolean
           description: default response
       summary: Update user preferences
+      tags:
+      - Preferences
+  /preferences/v1/resetToDefaultUserPreferences:
+    post:
+      operationId: resetToDefaultUserPreferences
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPreferences'
+          description: default response
+      summary: Resets preferences to the defaults
+      tags:
+      - Preferences
+  /preferences/v1/setDefaultUserPreferences:
+    post:
+      operationId: setDefaultUserPreferences
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPreferences'
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPreferences'
+          description: default response
+      summary: Sets the default preferences for all users
       tags:
       - Preferences
   /processor/v1/{id}:
