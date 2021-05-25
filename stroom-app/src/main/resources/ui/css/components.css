@@ -1277,7 +1277,8 @@
 }
 
 .expressionViewImpl-editorContainer {
-    padding-top: 2px;
+    border: 1px solid var(--input-border-color);
+    background-color: var(--input-background-color);
 }
 
 .expressionViewImpl-completionLabel {
