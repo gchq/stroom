@@ -106,6 +106,7 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -343,6 +344,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     addFields.add(fieldBuilder.build());
                 }
             }
+            addFields.sort(Comparator.comparing(Field::getName, String.CASE_INSENSITIVE_ORDER));
 
             final Field count = Field.builder()
                     .name("Count")
