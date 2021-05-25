@@ -570,6 +570,7 @@ td {
 .stroom-DropDownTree,
 .stroom-input,
 select option,
+textarea,
 input,
 input[type="text"],
 input[type="checkbox"],

@@ -294,13 +294,6 @@ public class MenuItemCell extends AbstractCell<Item> {
 
         private static final Template TEMPLATE = GWT.create(Template.class);
 
-        // Styled to look like the Ace Editor auto completion popups
-        private static final SafeStyles NORMAL = SafeStylesUtils.fromTrustedString(
-                "cursor:default;" +
-                        "color:#212121;" +
-                        "background:linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0.1));" +
-                        "border: 1px solid gray;");
-
         public InfoMenuItemAppearance(final MenuPresenter menuPresenter) {
         }
 
@@ -310,8 +303,6 @@ public class MenuItemCell extends AbstractCell<Item> {
                            final InfoMenuItem value,
                            final SafeHtmlBuilder sb) {
             if (value.getSafeHtml() != null) {
-                SafeStyles styles = NORMAL;
-
                 final SafeHtmlBuilder inner = new SafeHtmlBuilder();
 
                 inner.append(TEMPLATE.inner(
@@ -319,16 +310,15 @@ public class MenuItemCell extends AbstractCell<Item> {
                         value.getSafeHtml()));
 
                 sb.append(TEMPLATE.outer(
-                        "menuItem-outer",
-                        styles,
+                        "menuItem-outer infoMenuItem",
                         inner.toSafeHtml()));
             }
         }
 
         public interface Template extends SafeHtmlTemplates {
 
-            @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
-            SafeHtml outer(String className, SafeStyles styles, SafeHtml inner);
+            @Template("<div class=\"{0}\">{1}</div>")
+            SafeHtml outer(String className, SafeHtml inner);
 
             @Template("<div class=\"{0}\">{1}</div>")
             SafeHtml inner(String className, SafeHtml icon);

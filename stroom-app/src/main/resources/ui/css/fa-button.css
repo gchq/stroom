@@ -25,6 +25,7 @@
 	padding: 1px;
 	cursor: default;
 	text-decoration: none;
+	vertical-align: bottom;
 }
 
 .fa-button .face {

@@ -1608,3 +1608,16 @@
     margin-top: 2px;
 }
 
+.infoMenuItem {
+    cursor:default;
+    color:#212121;
+    background:linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0.1));
+    border: 1px solid gray;
+}
+
+.stroom-theme-dark .infoMenuItem {
+	color: var(--text-color);
+    border: 1px solid var(--dialog-border-color);
+}
+
+

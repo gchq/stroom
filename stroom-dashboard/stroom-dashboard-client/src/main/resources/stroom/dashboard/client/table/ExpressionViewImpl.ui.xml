@@ -7,7 +7,8 @@
         <g:center>
             <v:ResizeFlowPanel addStyleNames="max expressionViewImpl-resizePanel">
 
-                <g:FlowPanel styleName="max">
+                <g:FlowPanel width="100%"
+                             height="18px">
                     <btn:ButtonPanel styleName="expressionViewImpl-btnPanel" ui:field="buttonPanel"/>
 
                     <g:FlowPanel styleName="expressionViewImpl-labelPanel">

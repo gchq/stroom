@@ -254,6 +254,7 @@
 
 .fields-field * {
     text-decoration: inherit;
+    vertical-align: middle;
 }
 
 .fields-field:hover {
@@ -273,7 +274,7 @@
 
 .fields-fieldText {
 	height: 16px;
-	border: 1px solid #c5cde2;
+	border: 1px solid var(--border-color);
 }
 
 .fields-sortOrder {
@@ -283,44 +284,61 @@
 	text-decoration: none;
 }
 
-.fields-buttons {
-	position: absolute;
-	background-color: white;
-}
-
-.fields-button {
-	width: 16px;
-	height: 16px;
-}
-
 .fields-expression {
 	background-image: url("../images/dashboard/expression.png");
+}
+
+.stroom-theme-dark .fields-expression {
+	background-image: url("../images/dashboard/expression-dark.png");
 }
 
 .fields-filter {
 	background-image: url("../images/dashboard/filter.png");
 }
 
+.stroom-theme-dark .fields-filter {
+    background-image: url("../images/dashboard/filter-dark.png");
+}
+
 .fields-format {
 	background-image: url("../images/dashboard/format.png");
+}
+
+.stroom-theme-dark .fields-format {
+	background-image: url("../images/dashboard/format-dark.png");
 }
 
 .fields-group {
 	background-image: url("../images/dashboard/group.png");
 }
 
+.stroom-theme-dark .fields-group {
+	background-image: url("../images/dashboard/group-dark.png");
+}
+
 .fields-sortaz {
 	background-image: url("../images/dashboard/sortaz.png");
+}
+
+.stroom-theme-dark .fields-sortaz {
+	background-image: url("../images/dashboard/sortaz-dark.png");
 }
 
 .fields-sortza {
 	background-image: url("../images/dashboard/sortza.png");
 }
 
+.stroom-theme-dark .fields-sortza {
+	background-image: url("../images/dashboard/sortza-dark.png");
+}
+
 .fields-sortoff {
 	background-image: url("../images/dashboard/sortoff.png");
 }
 
+.stroom-theme-dark .fields-sortoff {
+	background-image: url("../images/dashboard/sortoff-dark.png");
+}
 
 .dashboardTable-smallSpinner {
 	position: absolute;

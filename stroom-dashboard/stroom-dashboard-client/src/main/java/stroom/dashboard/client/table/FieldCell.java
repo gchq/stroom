@@ -58,7 +58,7 @@ public class FieldCell extends CompositeCell<Field> {
                 if (field.getGroup() == null) {
                     return null;
                 } else {
-                    return SafeHtmlUtils.fromTrustedString("<div class=\"fields-group\"></div>");
+                    return SafeHtmlUtils.fromTrustedString("<div class=\"svgIcon fields-group\"></div>");
                 }
             }
         };
@@ -85,9 +85,9 @@ public class FieldCell extends CompositeCell<Field> {
                 if (field.getSort() == null) {
                     return null;
                 } else if (Sort.SortDirection.ASCENDING == field.getSort().getDirection()) {
-                    return SafeHtmlUtils.fromTrustedString("<div class=\"fields-gsortaz\"></div>");
+                    return SafeHtmlUtils.fromTrustedString("<div class=\"svgIcon fields-gsortaz\"></div>");
                 } else {
-                    return SafeHtmlUtils.fromTrustedString("<div class=\"fields-sortza\"></div>");
+                    return SafeHtmlUtils.fromTrustedString("<div class=\"svgIcon fields-sortza\"></div>");
                 }
             }
         };
@@ -116,7 +116,7 @@ public class FieldCell extends CompositeCell<Field> {
                 if (filter != null) {
                     if ((filter.getIncludes() != null && filter.getIncludes().trim().length() > 0) ||
                             (filter.getExcludes() != null && filter.getExcludes().trim().length() > 0)) {
-                        return SafeHtmlUtils.fromTrustedString("<div class=\"fields-filter\"></div>");
+                        return SafeHtmlUtils.fromTrustedString("<div class=\"svgIcon fields-filter\"></div>");
                     }
                 }
 
