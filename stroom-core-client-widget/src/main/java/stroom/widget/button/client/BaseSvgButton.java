@@ -62,10 +62,7 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
     }
 
     void setSvgPreset(final Preset svgPreset) {
-        face.addClassName(svgPreset.getClassName());//svgPreset.asWidget().asWidget().getElement().getInnerHTML());
-
-//        setWidth(preset.getWidth() + "px");
-//        setHeight(preset.getHeight() + "px");
+        face.addClassName(svgPreset.getClassName());
 
         // Add the button tool-tip
         if (svgPreset.hasTitle()) {
@@ -84,19 +81,6 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
             face.addClassName("face--disabled");
         }
     }
-
-//    private void setIcon(final String url) {
-//        ResourceCache.get(url, data -> {
-//            if (data != null) {
-//                getElement().setInnerHTML(data);
-//                final Element svg = getElement().getElementsByTagName("svg").getItem(0).cast();
-////                svg.setAttribute("style", "fill:" + colourSet.getEnabled());
-//                svg.setAttribute("width", String.valueOf(preset.getWidth()));
-//                svg.setAttribute("height", String.valueOf(preset.getHeight()));
-//                svg.setTitle(getElement().getTitle());
-//            }
-//        });
-//    }
 
     @Override
     public void onBrowserEvent(final Event event) {
@@ -240,27 +224,21 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
 
     private void setHovering(final boolean hovering) {
         if (isEnabled()) {
-//            if (hovering) {
-//                getElement().getStyle().setColor(colourSet.getHover());
-//            } else {
-//                getElement().getStyle().setColor(colourSet.getEnabled());
-//            }
+            if (hovering) {
+                face.addClassName("face--hovering");
+            } else {
+                face.removeClassName("face--hovering");
+            }
         }
-
-        // if (hovering && hoverColor != null) {
-        // face.getStyle().setBackgroundColor(hoverColor);
-        // } else if (color != null) {
-        // face.getStyle().setBackgroundColor(color);
-        // }
     }
 
     @Override
     public void setVisible(final boolean visible) {
         super.setVisible(visible);
-        if (!visible) {
-//            if (isEnabled()) {
-//            getElement().getStyle().setColor(colourSet.getEnabled());
-//            }
+        if (visible) {
+            face.removeClassName("face--invisible");
+        } else {
+            face.addClassName("face--invisible");
         }
     }
 }
