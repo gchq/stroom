@@ -45,8 +45,8 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
     BOOLEAN(FieldTypes.BOOLEAN, "Boolean", false, new String[]{ "boolean" }),
     INTEGER(FieldTypes.INTEGER, "Integer", true, new String[]{ "integer", "short", "byte" }),
     LONG(FieldTypes.LONG, "Long", true, new String[]{ "long", "unsigned_long" }),
-    FLOAT(FieldTypes.FLOAT, "Float", true, new String[]{ "float", "half_float", "scaled_float" }),
-    DOUBLE(FieldTypes.DOUBLE, "Double", true, new String[]{ "double" }),
+    FLOAT(FieldTypes.FLOAT, "Float", false, new String[]{ "float", "half_float", "scaled_float" }),
+    DOUBLE(FieldTypes.DOUBLE, "Double", false, new String[]{ "double" }),
     DATE(FieldTypes.DATE, "Date", false, new String[]{ "date" }),
     TEXT(FieldTypes.TEXT, "Text", false, new String[]{ "text", "keyword", "constant_keyword", "wildcard" });
 

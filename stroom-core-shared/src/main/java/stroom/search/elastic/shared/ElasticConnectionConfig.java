@@ -1,7 +1,6 @@
 package stroom.search.elastic.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -17,7 +16,7 @@ import java.util.Objects;
         "caCertificate",
         "useAuthentication",
         "apiKeyId",
-        "apiKeySecretEncrypted",
+        "apiKeySecret",
         "socketTimeoutMillis"})
 @JsonInclude(Include.NON_NULL)
 public class ElasticConnectionConfig implements Serializable {
@@ -37,17 +36,8 @@ public class ElasticConnectionConfig implements Serializable {
     @JsonProperty
     private String apiKeyId;
 
-    /**
-     * Plain-text API key (not serialised)
-     */
-    @JsonIgnore
+    @JsonProperty
     private String apiKeySecret;
-
-    /**
-     * This is the field that is actually serialised and is an encrypted version of member variable `apiKeySecret`
-     */
-    @JsonProperty("apiKeySecretEncrypted")
-    private String apiKeySecretEncrypted;
 
     /**
      * Socket timeout duration. Any Elasticsearch requests are expected to complete within this interval,
@@ -64,13 +54,13 @@ public class ElasticConnectionConfig implements Serializable {
                                    @JsonProperty("caCertificate") final String caCertificate,
                                    @JsonProperty("useAuthentication") final boolean useAuthentication,
                                    @JsonProperty("apiKeyId") final String apiKeyId,
-                                   @JsonProperty("apiKeySecretEncrypted") final String apiKeySecretEncrypted,
+                                   @JsonProperty("apiKeySecret") final String apiKeySecret,
                                    @JsonProperty("socketTimeoutMillis") final int socketTimeoutMillis) {
         this.connectionUrls = connectionUrls;
         this.caCertificate = caCertificate;
         this.useAuthentication = useAuthentication;
         this.apiKeyId = apiKeyId;
-        this.apiKeySecretEncrypted = apiKeySecretEncrypted;
+        this.apiKeySecret = apiKeySecret;
         this.socketTimeoutMillis = socketTimeoutMillis;
     }
 
@@ -106,22 +96,12 @@ public class ElasticConnectionConfig implements Serializable {
         this.apiKeyId = apiKeyId;
     }
 
-    @JsonIgnore
     public String getApiKeySecret() {
         return apiKeySecret;
     }
 
-    @JsonIgnore
     public void setApiKeySecret(final String apiKeySecret) {
         this.apiKeySecret = apiKeySecret;
-    }
-
-    public String getApiKeySecretEncrypted() {
-        return apiKeySecretEncrypted;
-    }
-
-    public void setApiKeySecretEncrypted(final String apiKeySecretEncrypted) {
-        this.apiKeySecretEncrypted = apiKeySecretEncrypted;
     }
 
     public int getSocketTimeoutMillis() {

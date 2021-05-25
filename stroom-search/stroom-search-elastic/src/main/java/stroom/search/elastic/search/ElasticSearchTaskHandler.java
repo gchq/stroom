@@ -36,6 +36,8 @@ import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import com.jayway.jsonpath.DocumentContext;
+import com.jayway.jsonpath.JsonPath;
 import org.elasticsearch.action.search.ClearScrollRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
@@ -196,12 +198,20 @@ public class ElasticSearchTaskHandler {
             for (final SearchHit searchHit : searchHits) {
                 tracker.incrementHitCount();
 
-                final Map<String, Object> sourceMap = searchHit.getSourceAsMap();
+                final DocumentContext jsonSearchHit = JsonPath.parse(searchHit.getSourceAsString());
+                final Map<String, Object> mapSearchHit = searchHit.getSourceAsMap();
                 Val[] values = null;
+
                 for (final String fieldName : fieldIndex.getFieldNames()) {
-                    // Get the ordinal of the field, so values can be mapped by the values receiver
                     final Integer insertAt = fieldIndex.getPos(fieldName);
-                    final Object fieldValue = sourceMap.get(fieldName);
+                    Object fieldValue;
+
+                    // Cater for special fields, where we want to avoid using json-path operators like '@'
+                    if (fieldName.equals("@timestamp")) {
+                        fieldValue = mapSearchHit.get(fieldName);
+                    } else {
+                        fieldValue = jsonSearchHit.read(fieldName);
+                    }
 
                     if (fieldValue != null) {
                         if (values == null) {

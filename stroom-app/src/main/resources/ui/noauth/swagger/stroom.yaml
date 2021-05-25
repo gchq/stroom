@@ -6727,7 +6727,7 @@ components:
       properties:
         apiKeyId:
           type: string
-        apiKeySecretEncrypted:
+        apiKeySecret:
           type: string
         caCertificate:
           type: string

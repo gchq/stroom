@@ -73,7 +73,7 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
     public DataSource getDataSource(final DocRef docRef) {
         return securityContext.useAsReadResult(() -> {
             final ElasticIndexDoc index = elasticIndexStore.readDocument(docRef);
-            return new DataSource(index.getDataSourceFields());
+            return new DataSource(getDataSourceFields(index));
         });
     }
 
@@ -82,29 +82,36 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
         final Map<String, FieldMappingMetadata> fieldMappings = getFieldMappings(index);
 
         return fieldMappings.entrySet().stream().map(field -> {
-            final Object properties = field.getValue().sourceAsMap().get(field.getKey());
+            final String fieldName = field.getKey();
+            final FieldMappingMetadata fieldMeta = field.getValue();
+            final Optional<Entry<String, Object>> firstFieldEntry =
+                    fieldMeta.sourceAsMap().entrySet().stream().findFirst();
 
-            if (properties instanceof Map) {
-                @SuppressWarnings("unchecked") // Need to get at the nested properties, which is always a map
-                final Map<String, Object> propertiesMap = (Map<String, Object>) properties;
-                final String nativeType = (String) propertiesMap.get("type");
+            if (firstFieldEntry.isPresent()) {
+                final Object properties = firstFieldEntry.get().getValue();
+                final String fullName = fieldMeta.fullName();
+                if (properties instanceof Map) {
+                    @SuppressWarnings("unchecked") // Need to get at the nested properties, which is always a map
+                    final Map<String, Object> propertiesMap = (Map<String, Object>) properties;
+                    final String nativeType = (String) propertiesMap.get("type");
 
-                try {
-                    final String fieldName = field.getValue().fullName();
-                    final ElasticIndexFieldType elasticFieldType =
-                            ElasticIndexFieldType.fromNativeType(field.getValue().fullName(), nativeType);
+                    try {
+                        final ElasticIndexFieldType elasticFieldType =
+                                ElasticIndexFieldType.fromNativeType(fullName, nativeType);
 
-                    return elasticFieldType.toDataSourceField(fieldName, true);
-                } catch (IllegalArgumentException e) {
-                    LOGGER.warn(e::getMessage);
+                        return elasticFieldType.toDataSourceField(fieldName, true);
+                    } catch (IllegalArgumentException e) {
+                        LOGGER.warn(e::getMessage);
+                        return null;
+                    }
+                } else {
+                    LOGGER.debug(() ->
+                            "Mapping properties for field '" + field.getKey() +
+                                    "' were in an unrecognised format. Field ignored.");
                     return null;
                 }
-            } else {
-                LOGGER.debug(() ->
-                        "Mapping properties for field '" + field.getKey() +
-                                "' were in an unrecognised format. Field ignored.");
-                return null;
             }
+            return null;
         })
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
