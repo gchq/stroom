@@ -18,6 +18,7 @@
 package stroom.preferences.client;
 
 import stroom.editor.client.presenter.ChangeThemeEvent;
+import stroom.editor.client.presenter.CurrentTheme;
 import stroom.preferences.client.PreferencesPresenter.PreferencesView;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -49,7 +50,8 @@ public final class PreferencesPresenter
     public PreferencesPresenter(
             final EventBus eventBus,
             final PreferencesView view,
-            final PreferencesManager preferencesManager) {
+            final PreferencesManager preferencesManager,
+            final CurrentTheme currentTheme) {
 
         super(eventBus, view);
         themes.add("Light");

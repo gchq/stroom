@@ -3,6 +3,7 @@ package stroom.preferences.client;
 import stroom.config.global.shared.PreferencesResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
+import stroom.editor.client.presenter.CurrentTheme;
 import stroom.ui.config.shared.UserPreferences;
 
 import com.google.gwt.core.client.GWT;
@@ -16,10 +17,13 @@ public class PreferencesManager {
 
     private static final PreferencesResource PREFERENCES_RESOURCE = GWT.create(PreferencesResource.class);
     private final RestFactory restFactory;
+    private final CurrentTheme currentTheme;
 
     @Inject
-    public PreferencesManager(final RestFactory restFactory) {
+    public PreferencesManager(final RestFactory restFactory,
+                              final CurrentTheme currentTheme) {
         this.restFactory = restFactory;
+        this.currentTheme = currentTheme;
     }
 
     public void fetch(final Consumer<UserPreferences> consumer) {
@@ -39,7 +43,8 @@ public class PreferencesManager {
     }
 
     public void updateClassNames(final UserPreferences userPreferences) {
+        currentTheme.setTheme(userPreferences.getTheme());
         final com.google.gwt.dom.client.Element element = RootPanel.getBodyElement().getParentElement();
-        element.setClassName("stroom " + "stroom-theme-" + userPreferences.getTheme().toLowerCase(Locale.ROOT));
+        element.setClassName("stroom " + "stroom-theme-" + currentTheme.getTheme().toLowerCase(Locale.ROOT));
     }
 }

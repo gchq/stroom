@@ -13,6 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@import url("theme.css");
+
+/* Font Awesome */
+@import url("font-awesome.css");
+
+/* Roboto Font */
+@import url("roboto.css");
+
+@import url("webkit-scrollbar.css");
 
 html, body {
 	width: 100%;
@@ -28,6 +37,8 @@ html, body {
 .vis {
 	margin: 0px;
 	padding: 0px;
+	width: 100%;
+	height: 100%;
 }
 
 .vis-text {

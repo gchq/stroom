@@ -46,8 +46,6 @@ public class EditorPresenter
         implements HasFormatHandlers, HasChangeFilterHandlers, HasText, EditorUiHandlers,
         HasValueChangeHandlers<String> {
 
-    public static AceEditorTheme theme = AceEditorTheme.CHROME;
-
     private final EditorMenuPresenter contextMenu;
     private final DelegatingAceCompleter delegatingAceCompleter;
 
@@ -58,12 +56,13 @@ public class EditorPresenter
     public EditorPresenter(final EventBus eventBus,
                            final EditorView view,
                            final EditorMenuPresenter contextMenu,
-                           final DelegatingAceCompleter delegatingAceCompleter) {
+                           final DelegatingAceCompleter delegatingAceCompleter,
+                           final CurrentTheme currentTheme) {
         super(eventBus, view);
         this.contextMenu = contextMenu;
         this.delegatingAceCompleter = delegatingAceCompleter;
         view.setUiHandlers(this);
-        view.setTheme(theme);
+        view.setTheme(getTheme(currentTheme.getTheme()));
 
         registerHandler(view.addMouseDownHandler(event -> contextMenu.hide()));
         registerHandler(view.addContextMenuHandler(event ->
@@ -73,19 +72,16 @@ public class EditorPresenter
                 eventBus.fireEvent(event);
             }
         }));
-        registerHandler(eventBus.addHandler(ChangeThemeEvent.getType(), event -> {
-            changeTheme(event.getTheme());
-            view.setTheme(theme);
-        }));
+        registerHandler(eventBus.addHandler(ChangeThemeEvent.getType(), event ->
+                view.setTheme(getTheme(event.getTheme()))));
     }
 
-    public static void changeTheme(final String themeName) {
-        if (themeName.toLowerCase(Locale.ROOT).contains("dark")) {
-            theme = AceEditorTheme.CHAOS;
+    private AceEditorTheme getTheme(final String themeName) {
+        if (themeName != null && themeName.toLowerCase(Locale.ROOT).contains("dark")) {
+            return AceEditorTheme.CHAOS;
 //            theme = AceEditorTheme.TERMINAL;
-        } else {
-            theme = AceEditorTheme.CHROME;
         }
+        return AceEditorTheme.CHROME;
     }
 
     public String getEditorId() {

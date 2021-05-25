@@ -157,6 +157,17 @@ public class VisFrame extends Frame implements VisPane {
     }
 
     @Override
+    public void setClassName(final String className) {
+        final JSONArray params = new JSONArray();
+        params.set(0, new JSONString(className));
+
+        final JSONObject message = new JSONObject();
+        message.put("functionName", new JSONString("visualisationManager.setClassName"));
+        message.put("params", params);
+        messageSupport.postMessage(message);
+    }
+
+    @Override
     public void start() {
         final JSONObject message = new JSONObject();
         message.put("functionName", new JSONString("visualisationManager.start"));
@@ -171,9 +182,10 @@ public class VisFrame extends Frame implements VisPane {
     }
 
     @Override
-    public void setVisType(final String visType) {
+    public void setVisType(final String visType, final String className) {
         final JSONArray params = new JSONArray();
         params.set(0, new JSONString(visType));
+        params.set(1, new JSONString(className));
 
         final JSONObject message = new JSONObject();
         message.put("functionName", new JSONString("visualisationManager.setVisType"));

@@ -72,6 +72,17 @@
     --xsdbrowser-title-background-color: #888;
     --xsdbrowser-title-background-color-selected: rgb(74, 144, 228);
     --xsdbrowser-box-background-color: white;
+
+    --vis-axis-color: rgba(0,0,0,0.54);
+    --vis-text-color: rgba(0,0,0,0.87);
+    --vis-text-color-faint: rgba(0,0,0,0.12);
+    --vis-icon-color: rgba(0,0,0,0.38);
+    --vis-icon-color-hover: rgba(0,0,0,0.87);
+    --vis-barchart-element-stroke: #fff;
+    --vis-marker-stroke: #000;
+    --vis-series-label-background-color: rgba(255,255,255,0.87);
+    --vis-tip-background-color: rgba(30, 30, 30, 0.8);
+    --vis-tip-text-color: #bbb;
 }
 
 .stroom-theme-dark {
@@ -145,6 +156,17 @@
     --xsdbrowser-title-background-color: #555;
     --xsdbrowser-title-background-color-selected: #1164a3;
     --xsdbrowser-box-background-color: #19171d;
+
+    --vis-axis-color: rgba(255,255,255,0.54);
+    --vis-text-color: rgba(255,255,255,0.87);
+    --vis-text-color-faint: rgba(255,255,255,0.12);
+    --vis-icon-color: rgba(255,255,255,0.38);
+    --vis-icon-color-hover: rgba(255,255,255,0.87);
+    --vis-barchart-element-stroke: #000;
+    --vis-marker-stroke: #fff;
+    --vis-series-label-background-color: rgba(0,0,0,0.87);
+    --vis-tip-background-color: rgba(30, 30, 30, 0.8);
+    --vis-tip-text-color: #bbb;
 }
 
 .stroom-theme-dark .stroom-body {
