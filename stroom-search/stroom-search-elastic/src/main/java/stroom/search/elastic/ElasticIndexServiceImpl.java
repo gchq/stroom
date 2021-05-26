@@ -18,6 +18,7 @@
 package stroom.search.elastic;
 
 import stroom.datasource.api.v2.DataSourceField;
+import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.search.elastic.shared.ElasticCluster;
 import stroom.search.elastic.shared.ElasticIndex;
@@ -26,6 +27,7 @@ import stroom.search.elastic.shared.ElasticIndexFieldType;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import org.elasticsearch.action.support.IndicesOptions;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.indices.GetFieldMappingsRequest;
 import org.elasticsearch.client.indices.GetFieldMappingsResponse;
@@ -36,12 +38,14 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 @Component
@@ -66,12 +70,13 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
 
         return fieldMappings.entrySet().stream()
                 .map(field -> {
+                    final String fieldName = field.getKey();
                     final FieldMappingMetadata fieldMeta = field.getValue();
                     final Optional<Entry<String, Object>> firstFieldEntry = fieldMeta.sourceAsMap().entrySet().stream().findFirst();
 
                     if (firstFieldEntry.isPresent()) {
                         final Object properties = firstFieldEntry.get().getValue();
-                        final String fieldName = fieldMeta.fullName();
+                        final String fullName = fieldMeta.fullName();
 
                         if (properties instanceof Map) {
                             @SuppressWarnings("unchecked") // Need to get at the nested properties, which is always a map
@@ -79,10 +84,10 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
                             final String nativeType = (String) propertiesMap.get("type");
 
                             try {
-                                final ElasticIndexFieldType elasticFieldType = ElasticIndexFieldType.fromNativeType(fieldName, nativeType);
+                                final ElasticIndexFieldType elasticFieldType = ElasticIndexFieldType.fromNativeType(fullName, nativeType);
                                 return new DataSourceField.Builder()
                                         .type(elasticFieldType.getDataSourceFieldType())
-                                        .name(fieldName)
+                                        .name(fullName)
                                         .queryable(true)
                                         .addConditions(elasticFieldType.getSupportedConditions().toArray(new Condition[0]))
                                         .build();
@@ -138,8 +143,7 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
                     catch (Exception e) {
                         LOGGER.error(e::getMessage, e);
                     }
-                }
-                else {
+                } else {
                     LOGGER.debug(() -> "Mapping properties for field '" + key + "' were in an unrecognised format. Field ignored.");
                 }
             }
@@ -207,6 +211,7 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
             return elasticClientCache.contextResult(elasticCluster.getConnectionConfig(), elasticClient -> {
                 final String indexName = elasticIndex.getIndexName();
                 final GetFieldMappingsRequest request = new GetFieldMappingsRequest();
+                request.indicesOptions(IndicesOptions.lenientExpand());
                 request.indices(indexName);
                 request.fields("*");
 
@@ -214,17 +219,40 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
                     final GetFieldMappingsResponse response = elasticClient.indices().getFieldMapping(request, RequestOptions.DEFAULT);
                     final Map<String, Map<String, FieldMappingMetadata>> allMappings = response.mappings();
 
-                    return allMappings.get(indexName);
+                    // Flatten the mappings, which are keyed by index, into a deduplicated list
+                    final TreeMap<String, FieldMappingMetadata> mappings = new TreeMap<>(new Comparator<String>() {
+                        @Override
+                        public int compare(final String o1, final String o2) {
+                            if (Objects.equals(o1, o2)) {
+                                return 0;
+                            }
+                            if (o2 == null) {
+                                return 1;
+                            }
+
+                            return o1.compareToIgnoreCase(o2);
+                        }
+                    });
+
+                    allMappings.values().forEach(indexMappings -> {
+                        indexMappings.forEach((fieldName, mapping) -> {
+                            if (!mappings.containsKey(fieldName)) {
+                                mappings.put(fieldName, mapping);
+                            }
+                        });
+                    });
+
+                    return mappings;
                 }
                 catch (final IOException e) {
                     LOGGER.error(e::getMessage, e);
                 }
 
-                return new HashMap<>();
+                return new TreeMap<>();
             });
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
-            return new HashMap<>();
+            return new TreeMap<>();
         }
     }
 }

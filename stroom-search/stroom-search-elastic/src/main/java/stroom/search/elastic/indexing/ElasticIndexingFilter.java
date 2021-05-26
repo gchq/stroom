@@ -30,14 +30,8 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.query.api.v2.DocRef;
 import stroom.search.elastic.ElasticClientCache;
 import stroom.search.elastic.ElasticClusterStore;
-import stroom.search.elastic.ElasticIndexCache;
-import stroom.search.elastic.ElasticIndexService;
 import stroom.search.elastic.shared.ElasticCluster;
 import stroom.search.elastic.shared.ElasticConnectionConfig;
-import stroom.search.elastic.shared.ElasticIndex;
-import stroom.search.elastic.shared.ElasticIndexField;
-import stroom.search.elastic.shared.ElasticIndexFieldType;
-import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
@@ -81,14 +75,11 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
     private final LocationFactoryProxy locationFactory;
     private final ErrorReceiverProxy errorReceiverProxy;
-    private final ElasticIndexCache elasticIndexCache;
     private final ElasticClientCache elasticClientCache;
     private final ElasticClusterStore elasticClusterStore;
-    private final ElasticIndexService elasticIndexService;
 
-    private Map<String, ElasticIndexField> fieldsMap;
-    private ElasticIndex elasticIndex;
-    private DocRef indexRef;
+    private DocRef clusterRef;
+    private String indexName;
     private Collection<Map<String, Object>> currentDocuments = new ArrayList<>();
     private Map<String, Object> document = new HashMap<>();
     private List<String> currentStringArray;
@@ -110,17 +101,13 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     @Inject
     ElasticIndexingFilter(final LocationFactoryProxy locationFactory,
                           final ErrorReceiverProxy errorReceiverProxy,
-                          final ElasticIndexCache elasticIndexCache,
                           final ElasticClientCache elasticClientCache,
-                          final ElasticClusterStore elasticClusterStore,
-                          final ElasticIndexService elasticIndexService
+                          final ElasticClusterStore elasticClusterStore
     ) {
         this.locationFactory = locationFactory;
         this.errorReceiverProxy = errorReceiverProxy;
-        this.elasticIndexCache = elasticIndexCache;
         this.elasticClientCache = elasticClientCache;
         this.elasticClusterStore = elasticClusterStore;
-        this.elasticIndexService = elasticIndexService;
     }
 
     /**
@@ -129,21 +116,18 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     @Override
     public void startProcessing() {
         try {
-            if (indexRef == null) {
-                log(Severity.FATAL_ERROR, "Index has not been set", null);
-                throw new LoggedException("Index has not been set");
+            if (clusterRef == null) {
+                log(Severity.FATAL_ERROR, "Elasticsearch cluster ref has not been set", null);
+                throw new LoggedException("Elasticsearch cluster ref has not been set");
+            }
+
+            if (indexName == null || indexName.isEmpty()) {
+                log(Severity.FATAL_ERROR, "Index name has not been set", null);
+                throw new LoggedException("Index name has not been set");
             }
 
             // Get the index and index fields from the cache.
-            elasticIndex = elasticIndexCache.get(indexRef);
-            if (elasticIndex == null) {
-                log(Severity.FATAL_ERROR, "Unable to load index", null);
-                throw new LoggedException("Unable to load index");
-            }
-
-            fieldsMap = elasticIndexService.getFieldsMap(elasticIndex);
-
-            final ElasticCluster elasticCluster = elasticClusterStore.readDocument(elasticIndex.getClusterRef());
+            final ElasticCluster elasticCluster = elasticClusterStore.readDocument(clusterRef);
             final ElasticConnectionConfig connectionConfig = elasticCluster.getConnectionConfig();
 
             elasticClientCache.context(connectionConfig, elasticClient -> {
@@ -236,22 +220,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                     } else {
                         // This is a simple property, not part of an array
                         if (name.length() > 0 && value.length() > 0) {
-                            // See if we can get this field.
-                            final ElasticIndexField indexField = fieldsMap.get(name);
-                            if (indexField != null) {
-                                // Index the current content if we are to store or index
-                                // this field.
-                                if (indexField.isIndexed() || indexField.isStored()) {
-                                    addFieldToDocument(indexField, value);
-                                }
-                            } else {
-                                final String msg = "No explicit field mapping exists for field: '" + name + "'";
-                                LOGGER.debug(() -> msg);
-
-                                // Add the field to the document by name, so it's available for dynamic property mappings
-                                // and included in the document `_source` field
-                                addFieldToDocument(name, value);
-                            }
+                            addFieldToDocument(name, value);
                         }
                     }
                 }
@@ -347,8 +316,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
      */
     private void addDocuments(final Collection<Map<String, Object>> documents) {
         if (docsIndexed > 0) {
-            final String indexName = elasticIndex.getIndexName();
-            final ElasticCluster elasticCluster = elasticClusterStore.readDocument(elasticIndex.getClusterRef());
+            final ElasticCluster elasticCluster = elasticClusterStore.readDocument(clusterRef);
 
             elasticClientCache.context(elasticCluster.getConnectionConfig(), elasticClient -> {
                 try {
@@ -392,49 +360,6 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     }
 
     /**
-     * Adds a field and value to the current document
-     * @param indexField Represents the field mapping
-     * @param value String-based value
-     */
-    private void addFieldToDocument(final ElasticIndexField indexField, final String value) {
-        try {
-            Object val = null;
-            final ElasticIndexFieldType elasticFieldType = indexField.getFieldUse();
-
-            if (elasticFieldType.isNumeric()) {
-                val = Long.parseLong(value);
-            } else if (elasticFieldType.equals(ElasticIndexFieldType.FLOAT)) {
-                val = Float.parseFloat(value);
-            } else if (elasticFieldType.equals(ElasticIndexFieldType.DOUBLE)) {
-                val = Double.parseDouble(value);
-            } else if (ElasticIndexFieldType.DATE.equals(elasticFieldType)) {
-                try {
-                    val = DateUtil.parseUnknownString(value);
-                } catch (final Exception e) {
-                    LOGGER.trace(e::getMessage, e);
-                }
-            } else {
-                val = value;
-            }
-
-            // Add the current field to the document if it is not null.
-            if (val != null) {
-                LOGGER.debug(() -> "processIndexContent() - Adding to index indexName=" +
-                    indexRef.getName() +
-                    " name=" +
-                    indexField.getFieldName() +
-                    " value=" +
-                    value);
-
-                fieldsIndexed++;
-                document.put(indexField.getFieldName(), val);
-            }
-        } catch (final RuntimeException e) {
-            log(Severity.ERROR, e.getMessage(), e);
-        }
-    }
-
-    /**
      * Adds a field and value to the document, where an existing mapping is not defined.
      * If Elasticsearch index dynamic properties are defined, a field mapping will be created if the field name matches
      * the defined pattern. Regardless, the field will be added to the document's `_source`.
@@ -442,7 +367,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private void addFieldToDocument(final String fieldName, final Object value) {
         if (!document.containsKey(fieldName)) {
             LOGGER.debug(() -> "processIndexContent() - Adding to index indexName=" +
-                indexRef.getName() +
+                indexName +
                 " name=" +
                 fieldName +
                 " value=" +
@@ -457,10 +382,15 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
         }
     }
 
-    @PipelineProperty(description = "The index to send records to")
-    @PipelinePropertyDocRef(types = ElasticIndex.ENTITY_TYPE)
-    public void setIndex(final DocRef indexRef) {
-        this.indexRef = indexRef;
+    @PipelineProperty(description = "Target Elasticsearch cluster")
+    @PipelinePropertyDocRef(types = ElasticCluster.ENTITY_TYPE)
+    public void setCluster(final DocRef clusterRef) {
+        this.clusterRef = clusterRef;
+    }
+
+    @PipelineProperty(description = "Name of the index to send records to")
+    public void setIndex(final String indexName) {
+        this.indexName = indexName;
     }
 
     @PipelineProperty(description = "How many documents to send to the index in a single post", defaultValue = "10000")

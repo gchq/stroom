@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2224** : Support indexing properties as JSON objects with Elasticsearch.
 
+* Issue **#2256** : Support searching against Elasticsearch index name patterns.
+
+* Issue **#2257** : Allow Elasticsearch indexing to proceed in the absence of an existing index.
+
 
 ## [v6.2-beta.2] - 2021-04-21
 
