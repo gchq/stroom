@@ -24,6 +24,7 @@ import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
+import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.util.shared.Message;
@@ -90,7 +91,7 @@ public class XmlSchemaStoreImpl implements XmlSchemaStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(13, XmlSchemaDoc.DOCUMENT_TYPE, "XML Schema");
+        return new DocumentType(DocumentTypeGroup.TRANSFORMATION, XmlSchemaDoc.DOCUMENT_TYPE, "XML Schema");
     }
 
     ////////////////////////////////////////////////////////////////////////

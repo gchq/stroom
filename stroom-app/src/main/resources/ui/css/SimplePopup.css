@@ -27,11 +27,16 @@
 .simplePopup-background {
 	background: white;
 	box-shadow: 0 0 5px 1px rgba(0,0,0,0.5);
+	border-radius: 3px;
 }
 
 .simplePopup-content {
 	display: table;
-	padding: 0px;
+	padding: 2px 0 2px 0;
+}
+
+.simplePopup-content td.cellTableCell div.menuItem-outer {
+	padding: 5px 30px 5px 10px;
 }
 
 .stroom-theme-dark .simplePopup-background {

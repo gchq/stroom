@@ -29,6 +29,7 @@ import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
+import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.security.api.SecurityContext;
@@ -103,7 +104,8 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(100, DataRetentionRules.DOCUMENT_TYPE, "Data Retention Rules");
+        return new DocumentType(DocumentTypeGroup.CONFIGURATION, DataRetentionRules.DOCUMENT_TYPE,
+                "Data Retention Rules");
     }
 
     ////////////////////////////////////////////////////////////////////////

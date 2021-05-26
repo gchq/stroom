@@ -24,6 +24,7 @@ import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
+import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.search.elastic.shared.ElasticClusterDoc;
@@ -85,7 +86,7 @@ public class ElasticClusterStoreImpl implements ElasticClusterStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(11, ElasticClusterDoc.DOCUMENT_TYPE, "Elastic Cluster");
+        return new DocumentType(DocumentTypeGroup.INDEXING, ElasticClusterDoc.DOCUMENT_TYPE, "Elastic Cluster");
     }
 
     ////////////////////////////////////////////////////////////////////////

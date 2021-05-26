@@ -739,10 +739,8 @@ export interface DocumentPermissions {
 
 export interface DocumentType {
   displayType?: string;
+  group?: "STRUCTURE" | "DATA_PROCESSING" | "TRANSFORMATION" | "SEARCH" | "INDEXING" | "CONFIGURATION" | "SYSTEM";
   iconClassName?: string;
-
-  /** @format int32 */
-  priority?: number;
   type?: string;
 }
 

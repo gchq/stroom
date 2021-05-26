@@ -5,6 +5,7 @@ import stroom.docref.DocRefInfo;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.explorer.shared.DocumentType;
+import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
@@ -73,7 +74,8 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(0, SystemExplorerActionHandler.SYSTEM, SystemExplorerActionHandler.SYSTEM);
+        return new DocumentType(DocumentTypeGroup.SYSTEM, SystemExplorerActionHandler.SYSTEM,
+                SystemExplorerActionHandler.SYSTEM);
     }
 
     ////////////////////////////////////////////////////////////////////////

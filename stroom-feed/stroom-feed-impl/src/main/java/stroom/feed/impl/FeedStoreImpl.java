@@ -24,6 +24,7 @@ import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
+import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.shared.ImportState;
@@ -112,7 +113,7 @@ public class FeedStoreImpl implements FeedStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(3, FeedDoc.DOCUMENT_TYPE, FeedDoc.DOCUMENT_TYPE);
+        return new DocumentType(DocumentTypeGroup.DATA_PROCESSING, FeedDoc.DOCUMENT_TYPE, FeedDoc.DOCUMENT_TYPE);
     }
 
     ////////////////////////////////////////////////////////////////////////

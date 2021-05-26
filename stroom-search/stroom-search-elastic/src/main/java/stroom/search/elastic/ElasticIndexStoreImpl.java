@@ -24,6 +24,7 @@ import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
+import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.search.elastic.shared.ElasticIndexDoc;
@@ -88,7 +89,7 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(11, ElasticIndexDoc.DOCUMENT_TYPE, "Elastic Index");
+        return new DocumentType(DocumentTypeGroup.INDEXING, ElasticIndexDoc.DOCUMENT_TYPE, "Elastic Index");
     }
 
     ////////////////////////////////////////////////////////////////////////

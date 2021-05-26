@@ -25,6 +25,7 @@ import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
+import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.script.shared.FetchLinkedScriptRequest;
@@ -93,7 +94,7 @@ class ScriptStoreImpl implements ScriptStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(99, ScriptDoc.DOCUMENT_TYPE, ScriptDoc.DOCUMENT_TYPE);
+        return new DocumentType(DocumentTypeGroup.CONFIGURATION, ScriptDoc.DOCUMENT_TYPE, ScriptDoc.DOCUMENT_TYPE);
     }
 
     ////////////////////////////////////////////////////////////////////////

@@ -160,7 +160,7 @@ class ExplorerTreeModel {
             return Integer.MAX_VALUE;
         }
 
-        return documentType.getPriority();
+        return documentType.getGroup().getPriority();
     }
 
     private synchronized void setCurrentModel(final TreeModel treeModel) {

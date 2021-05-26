@@ -23,6 +23,7 @@ import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
+import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.kafka.shared.KafkaConfigDoc;
@@ -103,7 +104,8 @@ class KafkaConfigStoreImpl implements KafkaConfigStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(15, KafkaConfigDoc.DOCUMENT_TYPE, "Kafka Configuration");
+        return new DocumentType(DocumentTypeGroup.CONFIGURATION, KafkaConfigDoc.DOCUMENT_TYPE,
+                "Kafka Configuration");
     }
 
     ////////////////////////////////////////////////////////////////////////

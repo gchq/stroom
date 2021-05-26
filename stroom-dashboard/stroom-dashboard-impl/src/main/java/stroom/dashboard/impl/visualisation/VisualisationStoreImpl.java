@@ -25,6 +25,7 @@ import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
+import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.util.shared.Message;
@@ -85,7 +86,8 @@ class VisualisationStoreImpl implements VisualisationStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(9, VisualisationDoc.DOCUMENT_TYPE, VisualisationDoc.DOCUMENT_TYPE);
+        return new DocumentType(DocumentTypeGroup.SEARCH, VisualisationDoc.DOCUMENT_TYPE,
+                VisualisationDoc.DOCUMENT_TYPE);
     }
 
     ////////////////////////////////////////////////////////////////////////

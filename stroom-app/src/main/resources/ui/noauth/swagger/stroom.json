@@ -9717,12 +9717,12 @@
           "displayType" : {
             "type" : "string"
           },
+          "group" : {
+            "type" : "string",
+            "enum" : [ "STRUCTURE", "DATA_PROCESSING", "TRANSFORMATION", "SEARCH", "INDEXING", "CONFIGURATION", "SYSTEM" ]
+          },
           "iconClassName" : {
             "type" : "string"
-          },
-          "priority" : {
-            "type" : "integer",
-            "format" : "int32"
           },
           "type" : {
             "type" : "string"

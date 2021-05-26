@@ -17,6 +17,7 @@
 package stroom.widget.menu.client.presenter;
 
 import stroom.svg.client.Icon;
+import stroom.widget.menu.client.presenter.MenuItemCell.SeparatorAppearance.Template;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.ValueUpdater;
@@ -119,6 +120,8 @@ public class MenuItemCell extends AbstractCell<Item> {
                 new MenuItemAppearance().render(this, context, (MenuItem) value, sb);
             } else if (value instanceof Separator) {
                 new SeparatorAppearance().render(this, context, (Separator) value, sb);
+            } else if (value instanceof GroupHeading) {
+                new GroupHeadingAppearance().render(this, context, (GroupHeading) value, sb);
             }
         }
     }
@@ -142,9 +145,28 @@ public class MenuItemCell extends AbstractCell<Item> {
         }
 
         public interface Template extends SafeHtmlTemplates {
-
             @Template("<div class=\"{0}\"></div>")
             SafeHtml separator(String className);
+        }
+    }
+
+    public static class GroupHeadingAppearance implements Appearance<GroupHeading> {
+
+        private static final Template TEMPLATE = GWT.create(Template.class);
+
+        public GroupHeadingAppearance() {
+        }
+
+        @Override
+        public void render(final MenuItemCell cell, final Context context, final GroupHeading value,
+                           final SafeHtmlBuilder sb) {
+            sb.append(TEMPLATE.groupHeading("menuItem-groupHeading",
+                    SafeHtmlUtils.fromTrustedString(value.getGroupName())));
+        }
+
+        public interface Template extends SafeHtmlTemplates {
+            @Template("<div class=\"{0}\">{1}</div>")
+            SafeHtml groupHeading(String className, SafeHtml groupName);
         }
     }
 

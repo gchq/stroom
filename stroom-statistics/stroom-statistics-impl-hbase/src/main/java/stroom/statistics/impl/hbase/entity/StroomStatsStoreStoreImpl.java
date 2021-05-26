@@ -24,6 +24,7 @@ import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
+import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
@@ -83,7 +84,7 @@ class StroomStatsStoreStoreImpl implements StroomStatsStoreStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(12, StroomStatsStoreDoc.DOCUMENT_TYPE, "Stroom-Stats Store");
+        return new DocumentType(DocumentTypeGroup.INDEXING, StroomStatsStoreDoc.DOCUMENT_TYPE, "Stroom-Stats Store");
     }
 
     ////////////////////////////////////////////////////////////////////////

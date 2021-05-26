@@ -53,6 +53,7 @@ import stroom.explorer.client.event.ShowNewMenuEvent;
 import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
+import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNodePermissions;
@@ -68,6 +69,7 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.widget.menu.client.presenter.GroupHeading;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -93,8 +95,10 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -653,38 +657,57 @@ public class DocumentPluginEventManager extends Plugin {
                                           final ExplorerNodePermissions documentPermissions,
                                           final DocumentTypes documentTypes) {
         final List<Item> children = new ArrayList<>();
+        final List<DocumentType> availableTypes = documentTypes.getNonSystemTypes().stream()
+                .filter(documentPermissions::hasCreatePermission)
+                .collect(Collectors.toList());
 
-        for (final DocumentType documentType : documentTypes.getNonSystemTypes()) {
-            if (documentPermissions.hasCreatePermission(documentType)) {
-                final Consumer<DocRef> newDocumentConsumer = docRef -> {
-                    // Open the document in the content pane.
-                    final DocumentPlugin<?> plugin = documentPluginRegistry.get(docRef.getType());
-                    if (plugin != null) {
-                        plugin.open(docRef, true);
-                    }
-                };
-
-                final Item item = new IconMenuItem(
-                        documentType.getPriority(),
-                        Icon.create(documentType.getIconClassName()),
-                        null,
-                        documentType.getDisplayType(), null, true, () ->
-                        ShowCreateDocumentDialogEvent.fire(
-                                DocumentPluginEventManager.this,
-                                explorerNode,
-                                documentType.getType(),
-                                documentType.getDisplayType(),
-                                true,
-                                newDocumentConsumer));
-                children.add(item);
-
-                if (DocumentTypes.isFolder(documentType.getType())) {
-                    children.add(new Separator(documentType.getPriority()));
-                }
+        // Group all document types
+        final Map<DocumentTypeGroup, ArrayList<DocumentType>> groupedTypes = new HashMap<>();
+        for (DocumentType documentType : availableTypes) {
+            final DocumentTypeGroup typeGroup = documentType.getGroup();
+            if (!groupedTypes.containsKey(typeGroup)) {
+                groupedTypes.put(typeGroup, new ArrayList<>());
             }
+            groupedTypes.get(typeGroup).add(documentType);
+        }
+
+        // Add each type group as a sorted list of menu items
+        for (DocumentTypeGroup group : groupedTypes.keySet()) {
+            children.add(new GroupHeading(group.getPriority(), group.getName()));
+            children.addAll(groupedTypes.get(group).stream()
+                    .sorted(Comparator.comparing(DocumentType::getDisplayType))
+                    .map(t -> createIconMenuItemFromDocumentType(t, explorerNode))
+                    .collect(Collectors.toList()));
         }
 
         return children;
+    }
+
+    private IconMenuItem createIconMenuItemFromDocumentType(
+            final DocumentType documentType,
+            final ExplorerNode explorerNode
+    ) {
+        final Consumer<DocRef> newDocumentConsumer = docRef -> {
+            // Open the document in the content pane.
+            final DocumentPlugin<?> plugin = documentPluginRegistry.get(docRef.getType());
+            if (plugin != null) {
+                plugin.open(docRef, true);
+            }
+        };
+
+        return new IconMenuItem(
+                1,
+                Icon.create(documentType.getIconClassName()),
+                null,
+                documentType.getDisplayType(), null, true, () ->
+                ShowCreateDocumentDialogEvent.fire(
+                        DocumentPluginEventManager.this,
+                        explorerNode,
+                        documentType.getType(),
+                        documentType.getDisplayType(),
+                        true,
+                        newDocumentConsumer)
+        );
     }
 
     private void addModifyMenuItems(final List<Item> menuItems,

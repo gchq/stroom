@@ -24,6 +24,7 @@ import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
+import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.search.solr.shared.SolrIndexDoc;
@@ -117,7 +118,7 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(11, SolrIndexDoc.DOCUMENT_TYPE, "Solr Index");
+        return new DocumentType(DocumentTypeGroup.INDEXING, SolrIndexDoc.DOCUMENT_TYPE, "Solr Index");
     }
 
     ////////////////////////////////////////////////////////////////////////

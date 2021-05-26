@@ -33,6 +33,7 @@ import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
+import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.util.shared.Message;
@@ -122,7 +123,7 @@ class DashboardStoreImpl implements DashboardStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(7, DashboardDoc.DOCUMENT_TYPE, DashboardDoc.DOCUMENT_TYPE);
+        return new DocumentType(DocumentTypeGroup.SEARCH, DashboardDoc.DOCUMENT_TYPE, DashboardDoc.DOCUMENT_TYPE);
     }
 
     ////////////////////////////////////////////////////////////////////////

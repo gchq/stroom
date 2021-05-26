@@ -24,6 +24,7 @@ import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
+import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.pipeline.shared.TextConverterDoc;
@@ -83,7 +84,7 @@ class TextConverterStoreImpl implements TextConverterStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(4, TextConverterDoc.DOCUMENT_TYPE, "Text Converter");
+        return new DocumentType(DocumentTypeGroup.TRANSFORMATION, TextConverterDoc.DOCUMENT_TYPE, "Text Converter");
     }
 
     ////////////////////////////////////////////////////////////////////////

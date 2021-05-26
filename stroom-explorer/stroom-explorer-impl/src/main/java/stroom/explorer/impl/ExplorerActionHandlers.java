@@ -84,7 +84,7 @@ class ExplorerActionHandlers {
 
             final List<DocumentType> list = allTypes.values().stream()
                     .filter(type -> !DocumentTypes.isSystem(type.getType()))
-                    .sorted(Comparator.comparingInt(DocumentType::getPriority))
+                    .sorted(Comparator.comparingInt(t -> t.getGroup().getPriority()))
                     .collect(Collectors.toList());
             this.documentTypes = new ArrayList<>(list);
         }

@@ -24,6 +24,7 @@ import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.data.table.client.CellTableView;
 import stroom.data.table.client.CellTableViewImpl;
 import stroom.explorer.shared.DocumentType;
+import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.explorer.shared.DocumentTypes;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
@@ -53,7 +54,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<CellTableView<Documen
     private static final String SELECT_ALL_OR_NONE_TEXT = "All/none";
     private static final String SELECT_ALL_OR_NONE_ICON = "document/SelectAllOrNone.svg";
     private static final DocumentType SELECT_ALL_OR_NONE_DOCUMENT_TYPE = new DocumentType(
-            1, SELECT_ALL_OR_NONE_TEXT, SELECT_ALL_OR_NONE_TEXT, SELECT_ALL_OR_NONE_ICON);
+            DocumentTypeGroup.SYSTEM, SELECT_ALL_OR_NONE_TEXT, SELECT_ALL_OR_NONE_TEXT, SELECT_ALL_OR_NONE_ICON);
 
     @Inject
     public TypeFilterPresenter(final EventBus eventBus) {
