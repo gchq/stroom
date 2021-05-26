@@ -414,7 +414,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                 }
             }
         }
-        fields.sort(Comparator.comparing(AbstractField::getName));
+        fields.sort(Comparator.comparing(AbstractField::getName, String.CASE_INSENSITIVE_ORDER));
         expressionPresenter.init(restFactory, dataSourceRef, fields);
 
         final EqualsBuilder builder = new EqualsBuilder();
