@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Uplift send_to_stroom.sh script to v3.1.0
 
+* Issue **#2263** : Removed unnecessary JWS algorithm constraints.
+
+* Issue **#2240** : Indexes now show empty selection for volume group until one is selected.
+
+* Issue **#2248** : Migrated dashboard tables now maintain hidden column status.
+
+* Issue **#2280** : Remove trailing comma in some log events. 
+
 
 ## [v7.0-beta.118] - 2021-05-24
 
