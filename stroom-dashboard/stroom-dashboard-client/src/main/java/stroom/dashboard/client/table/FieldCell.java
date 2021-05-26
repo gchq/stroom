@@ -85,7 +85,7 @@ public class FieldCell extends CompositeCell<Field> {
                 if (field.getSort() == null) {
                     return null;
                 } else if (Sort.SortDirection.ASCENDING == field.getSort().getDirection()) {
-                    return SafeHtmlUtils.fromTrustedString("<div class=\"svgIcon fields-gsortaz\"></div>");
+                    return SafeHtmlUtils.fromTrustedString("<div class=\"svgIcon fields-sortaz\"></div>");
                 } else {
                     return SafeHtmlUtils.fromTrustedString("<div class=\"svgIcon fields-sortza\"></div>");
                 }

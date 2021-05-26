@@ -73,6 +73,7 @@
 	width: 100%;
 	padding: 4px;
 	background-color: var(--code-editor-highlight-background-color);
+	color: var(--selected-row-text-color);
 }
 
 .menuItem-icon {
