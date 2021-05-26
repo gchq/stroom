@@ -3,6 +3,7 @@ import stroom.search.elastic.shared.ElasticIndexFieldType;
 
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -38,7 +39,7 @@ public class TestElasticIndexFieldType {
     public void testIsNumeric() {
         assertTrue(ElasticIndexFieldType.INTEGER.isNumeric());
         assertTrue(ElasticIndexFieldType.LONG.isNumeric());
-        assertTrue(ElasticIndexFieldType.FLOAT.isNumeric());
-        assertTrue(ElasticIndexFieldType.DOUBLE.isNumeric());
+        assertFalse(ElasticIndexFieldType.FLOAT.isNumeric());
+        assertFalse(ElasticIndexFieldType.DOUBLE.isNumeric());
     }
 }

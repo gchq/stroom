@@ -22,14 +22,12 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.HasDocumentRead;
+import stroom.search.elastic.client.presenter.ElasticIndexFieldListPresenter.ElasticIndexFieldListView;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
-import stroom.search.elastic.shared.ElasticIndexResource;
-import stroom.search.solr.shared.SolrIndexResource;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 
 import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -40,11 +38,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-public class ElasticIndexFieldListPresenter
-        extends MyPresenterWidget<ElasticIndexFieldListPresenter.ElasticIndexFieldListView>
+public class ElasticIndexFieldListPresenter extends MyPresenterWidget<ElasticIndexFieldListView>
         implements HasDocumentRead<ElasticIndexDoc> {
-
-    private static final SolrIndexResource ELASTIC_INDEX_RESOURCE = GWT.create(ElasticIndexResource.class);
 
     private final DataGridView<ElasticIndexField> dataGridView;
     private List<ElasticIndexField> fields;
@@ -68,7 +63,7 @@ public class ElasticIndexFieldListPresenter
     }
 
     private void addColumns() {
-        addStringColumn("Name", 150, ElasticIndexField::getFieldName);
+        addStringColumn("Name", 200, ElasticIndexField::getFieldName);
         addStringColumn("Use", row -> row.getFieldUse().getDisplayValue());
         addStringColumn("Type", ElasticIndexField::getFieldType);
         addBooleanColumn("Stored", ElasticIndexField::isStored);
@@ -129,11 +124,10 @@ public class ElasticIndexFieldListPresenter
             fields = index.getFields();
 
             final StringBuilder sb = new StringBuilder();
-            String now = ClientDateUtil.toISOString(System.currentTimeMillis());
             sb
-                .append("Field list updated at: ")
-                .append(now)
-                .append("<br />Field count: " + fields.size());
+                    .append("Field list updated at: ")
+                    .append(ClientDateUtil.toISOString(System.currentTimeMillis()))
+                    .append("<br />Field count: ").append(fields.size());
 
             getView().setStatusMessage(sb.toString());
         }

@@ -800,7 +800,7 @@ export interface ElasticClusterTestResponse {
 
 export interface ElasticConnectionConfig {
   apiKeyId?: string;
-  apiKeySecretEncrypted?: string;
+  apiKeySecret?: string;
   caCertificate?: string;
   connectionUrls?: string[];
 
@@ -3692,8 +3692,8 @@ export class HttpClient<SecurityDataType = unknown> {
       body: typeof body === "undefined" || body === null ? null : payloadFormatter(body),
     }).then(async (response) => {
       const r = response as HttpResponse<T, E>;
-      r.data = (null as unknown) as T;
-      r.error = (null as unknown) as E;
+      r.data = null as unknown as T;
+      r.error = null as unknown as E;
 
       const data = await response[format]()
         .then((data) => {

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2224** : Support indexing properties as JSON objects with Elasticsearch.
+
+* Issue **#2256** : Support searching against Elasticsearch index name patterns.
+
+* Issue **#2257** : Allow Elasticsearch indexing to proceed in the absence of an existing index.
+
 * Issue **#2113** : Added user preferences including theme support.
 
 * Issue **#2241** : Change add icon on data retention screen to add above selected. Add action icon and menu to retention rule table. Restyle rule edit screen.
@@ -178,8 +184,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v7.0-beta.100] - 2021-04-02
 
+* Issue **#2179** : Extend cron expression syntax. Both `/` (interval) and `-` (range) are now supported.
+
 * Issue **#1598** : Audit logging uplifted throughout codebase.
 
+* Issue **#2214** : Allow file permission override for `FileAppender` and `RollingFileAppender`.
+
+* Issue **#2215** : Support arrays of strings and objects in Elastic indexing and search.
+  
 * Issue **#1613** : Added event logging to UserResourceImpl.
 
 

@@ -19,7 +19,7 @@
                         </g:customCell>
                     </g:row>
                     <g:row>
-                        <g:cell>Index:</g:cell>
+                        <g:cell>Index name or pattern:</g:cell>
                         <g:customCell>
                             <g:TextBox ui:field="indexName" width="400px"/>
                         </g:customCell>

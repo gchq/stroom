@@ -39,10 +39,12 @@ public class ElasticIndexPresenter extends DocumentEditTabPresenter<LinkTabPanel
     private final TabContentProvider<ElasticIndexDoc> tabContentProvider = new TabContentProvider<>();
 
     @Inject
-    public ElasticIndexPresenter(final EventBus eventBus, final LinkTabPanelView view,
-                                 final Provider<ElasticIndexSettingsPresenter> indexSettingsPresenter,
-                                 final Provider<ElasticIndexFieldListPresenter> indexFieldListPresenter,
-                                 final ClientSecurityContext securityContext) {
+    public ElasticIndexPresenter(
+            final EventBus eventBus, final LinkTabPanelView view,
+            final Provider<ElasticIndexSettingsPresenter> indexSettingsPresenter,
+            final Provider<ElasticIndexFieldListPresenter> indexFieldListPresenter,
+            final ClientSecurityContext securityContext
+    ) {
         super(eventBus, view, securityContext);
 
         tabContentProvider.setDirtyHandler(event -> {
@@ -51,11 +53,11 @@ public class ElasticIndexPresenter extends DocumentEditTabPresenter<LinkTabPanel
             }
         });
 
-        tabContentProvider.add(FIELDS, indexFieldListPresenter);
         tabContentProvider.add(SETTINGS, indexSettingsPresenter);
-        addTab(FIELDS);
+        tabContentProvider.add(FIELDS, indexFieldListPresenter);
         addTab(SETTINGS);
-        selectTab(FIELDS);
+        addTab(FIELDS);
+        selectTab(SETTINGS);
     }
 
     @Override
