@@ -39,6 +39,9 @@ import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskWrapper;
 
+import com.jayway.jsonpath.DocumentContext;
+import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.JsonPathException;
 import org.elasticsearch.action.search.ClearScrollRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
@@ -54,6 +57,7 @@ import org.springframework.stereotype.Component;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
@@ -196,29 +200,43 @@ public class ElasticSearchTaskHandler {
             for (final SearchHit searchHit : searchHits) {
                 tracker.incrementHitCount();
 
+                final DocumentContext jsonSearchHit = JsonPath.parse(searchHit.getSourceAsString());
+                final Map<String, Object> mapSearchHit = searchHit.getSourceAsMap();
                 Val[] values = null;
+
                 for (int i = 0; i < fieldNames.length; i++) {
                     final String fieldName = fieldNames[i];
-                    final Object value = searchHit.getSourceAsMap().get(fieldName);
 
-                    if (value != null) {
-                        if (values == null) {
-                            values = new Val[fieldNames.length];
-                        }
-
-                        if (value instanceof Long) {
-                            values[i] = ValLong.create((Long) value);
-                        } else if (value instanceof Integer) {
-                            values[i] = ValInteger.create((Integer) value);
-                        } else if (value instanceof Double) {
-                            values[i] = ValDouble.create((Double) value);
-                        } else if (value instanceof Float) {
-                            values[i] = ValDouble.create((Float) value);
-                        } else if (value instanceof Boolean) {
-                            values[i] = ValBoolean.create((Boolean) value);
+                    try {
+                        Object value;
+                        // Cater for special fields, where we want to avoid using json-path operators like '@'
+                        if (fieldName.equals("@timestamp")) {
+                            value = mapSearchHit.get(fieldName);
                         } else {
-                            values[i] = ValString.create(value.toString());
+                            value = jsonSearchHit.read(fieldName);
                         }
+
+                        if (value != null) {
+                            if (values == null) {
+                                values = new Val[fieldNames.length];
+                            }
+
+                            if (value instanceof Long) {
+                                values[i] = ValLong.create((Long) value);
+                            } else if (value instanceof Integer) {
+                                values[i] = ValInteger.create((Integer) value);
+                            } else if (value instanceof Double) {
+                                values[i] = ValDouble.create((Double) value);
+                            } else if (value instanceof Float) {
+                                values[i] = ValDouble.create((Float) value);
+                            } else if (value instanceof Boolean) {
+                                values[i] = ValBoolean.create((Boolean) value);
+                            } else {
+                                values[i] = ValString.create(value.toString());
+                            }
+                        }
+                    } catch (JsonPathException e) {
+                        // Field not found. Ignore, as it was probably a system field
                     }
                 }
 

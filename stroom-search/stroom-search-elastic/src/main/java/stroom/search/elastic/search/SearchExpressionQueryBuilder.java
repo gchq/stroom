@@ -36,7 +36,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Convert our query objects to an Elasticsearch Query DSL query.
@@ -148,96 +152,17 @@ public class SearchExpressionQueryBuilder {
         }
 
         // Create a query based on the field type and condition.
+        final ElasticIndexFieldType elasticFieldType = indexField.getFieldUse();
         if (indexField.getFieldUse().isNumeric()) {
-            long valueAsNum = getNumber(fieldName, value);
-            switch (condition) {
-                case EQUALS:
-                    return QueryBuilders
-                            .termQuery(fieldName, valueAsNum);
-                case CONTAINS:
-                case IN:
-                    return QueryBuilders
-                            .termsQuery(fieldName, tokenizeExpression(value));
-                case GREATER_THAN:
-                    return QueryBuilders
-                            .rangeQuery(fieldName)
-                            .gt(valueAsNum);
-                case GREATER_THAN_OR_EQUAL_TO:
-                    return QueryBuilders
-                            .rangeQuery(fieldName)
-                            .gte(valueAsNum);
-                case LESS_THAN:
-                    return QueryBuilders
-                            .rangeQuery(fieldName)
-                            .lt(valueAsNum);
-                case LESS_THAN_OR_EQUAL_TO:
-                    return QueryBuilders
-                            .rangeQuery(fieldName)
-                            .lte(valueAsNum);
-                case BETWEEN:
-                    final Long[] between = getNumbers(fieldName, value);
-                    if (between.length != 2) {
-                        throw new IllegalArgumentException("Two numbers needed for between query; " + between.length + " provided");
-                    }
-                    if (between[0] >= between[1]) {
-                        throw new IllegalArgumentException("From number must be lower than to number");
-                    }
-                    return QueryBuilders
-                            .rangeQuery(fieldName)
-                            .gte(between[0])
-                            .lte(between[1]);
-                case IN_DICTIONARY:
-                    return buildDictionaryQuery(fieldName, docRef, indexField);
-                default:
-                    throw new RuntimeException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                            + indexField.getFieldUse().getDisplayValue() + " field type");
-            }
-        } else if (ElasticIndexFieldType.DATE.equals(indexField.getFieldUse())) {
-            final Long valueAsDate = getDate(fieldName, value);
-            switch (condition) {
-                case EQUALS:
-                    return QueryBuilders
-                            .termQuery(fieldName, valueAsDate);
-                case CONTAINS:
-                case IN:
-                    final long[] dates = getDates(fieldName, value);
-                    return QueryBuilders
-                            .termsQuery(fieldName, dates);
-                case GREATER_THAN:
-                    return QueryBuilders
-                            .rangeQuery(fieldName)
-                            .gt(valueAsDate);
-                case GREATER_THAN_OR_EQUAL_TO:
-                    return QueryBuilders
-                            .rangeQuery(fieldName)
-                            .gte(valueAsDate);
-                case LESS_THAN:
-                    return QueryBuilders
-                            .rangeQuery(fieldName)
-                            .lt(valueAsDate);
-                case LESS_THAN_OR_EQUAL_TO:
-                    return QueryBuilders
-                            .rangeQuery(fieldName)
-                            .lte(valueAsDate);
-                case BETWEEN:
-                    final long[] between = getDates(fieldName, value);
-                    if (between.length != 2) {
-                        throw new IllegalArgumentException("Two dates needed for between query; " + between.length + " provided");
-                    }
-                    if (between[0] >= between[1]) {
-                        throw new IllegalArgumentException("From date must occur before to date");
-                    }
-                    return QueryBuilders
-                            .rangeQuery(fieldName)
-                            .gte(between[0])
-                            .lte(between[1]);
-                case IN_DICTIONARY:
-                    return buildDictionaryQuery(fieldName, docRef, indexField);
-                default:
-                    throw new RuntimeException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                            + indexField.getFieldUse().getDisplayValue() + " field type");
-            }
+            return buildNumericQuery(condition, indexField, fieldName, value, this::getNumber, docRef);
+        } else if (elasticFieldType.equals(ElasticIndexFieldType.FLOAT)) {
+            return buildNumericQuery(condition, indexField, fieldName, value, this::getFloat, docRef);
+        } else if (elasticFieldType.equals(ElasticIndexFieldType.DOUBLE)) {
+            return buildNumericQuery(condition, indexField, fieldName, value, this::getDouble, docRef);
+        } else if (elasticFieldType.equals(ElasticIndexFieldType.DATE)) {
+            return buildNumericQuery(condition, indexField, fieldName, value, this::getDate, docRef);
         } else {
+            // A string-based term
             switch (condition) {
                 case EQUALS:
                     return QueryBuilders
@@ -250,12 +175,9 @@ public class SearchExpressionQueryBuilder {
 
                     // All terms must match
                     BoolQueryBuilder mustQuery = QueryBuilders.boolQuery();
-                    String[] terms = tokenizeExpression(value);
-                    for (final String term : terms) {
-                        mustQuery.must(
-                            QueryBuilders.termQuery(fieldName, term)
-                        );
-                    }
+                    tokenizeExpression(value).forEach(term -> {
+                        mustQuery.must(QueryBuilders.termQuery(fieldName, term));
+                    });
                     return mustQuery;
                 case IN:
                     // One or more terms must match
@@ -273,42 +195,81 @@ public class SearchExpressionQueryBuilder {
         }
     }
 
+    private <T extends Number> QueryBuilder buildNumericQuery(
+            final ExpressionTerm.Condition condition, final ElasticIndexField indexField, final String fieldName,
+            final String fieldValue, BiFunction<String, String, T> valueParser, final DocRef docRef
+    ) {
+        T numericValue;
+        List<T> numericValues;
+
+        switch (condition) {
+            case EQUALS:
+                numericValue = valueParser.apply(fieldName, fieldValue);
+                return QueryBuilders
+                        .termQuery(fieldName, numericValue);
+            case CONTAINS:
+            case IN:
+                numericValues = tokenizeExpression(fieldValue)
+                        .map(val -> valueParser.apply(fieldName, val))
+                        .collect(Collectors.toList());
+                return QueryBuilders
+                        .termsQuery(fieldName, numericValues);
+            case GREATER_THAN:
+                numericValue = valueParser.apply(fieldName, fieldValue);
+                return QueryBuilders
+                        .rangeQuery(fieldName)
+                        .gt(numericValue);
+            case GREATER_THAN_OR_EQUAL_TO:
+                numericValue = valueParser.apply(fieldName, fieldValue);
+                return QueryBuilders
+                        .rangeQuery(fieldName)
+                        .gte(numericValue);
+            case LESS_THAN:
+                numericValue = valueParser.apply(fieldName, fieldValue);
+                return QueryBuilders
+                        .rangeQuery(fieldName)
+                        .lt(numericValue);
+            case LESS_THAN_OR_EQUAL_TO:
+                numericValue = valueParser.apply(fieldName, fieldValue);
+                return QueryBuilders
+                        .rangeQuery(fieldName)
+                        .lte(numericValue);
+            case BETWEEN:
+                numericValues = tokenizeExpression(fieldValue)
+                        .map(val -> valueParser.apply(fieldName, val))
+                        .collect(Collectors.toList());
+                if (numericValues.size() != 2) {
+                    throw new IllegalArgumentException("Two values needed for between query; " + numericValues.size() + " provided");
+                }
+                return QueryBuilders
+                        .rangeQuery(fieldName)
+                        .gte(numericValues.get(0))
+                        .lte(numericValues.get(1));
+            case IN_DICTIONARY:
+                return buildDictionaryQuery(fieldName, docRef, indexField);
+            default:
+                throw new RuntimeException("Unexpected condition '" + condition.getDisplayValue() + "' for " +
+                        indexField.getFieldUse().getDisplayValue() + " field type");
+        }
+    }
+
     /**
      * Split an expression into is component terms. Useful for extracting terms for use with "in" or "contains" conditions
      * @param expression - Example: "1,2, 3"
-     * @return - Array of terms. Example: [ "1", "2", "3" ]
+     * @return - Stream of terms. Example: [ "1", "2", "3" ]
      */
-    private String[] tokenizeExpression(final String expression) {
+    private Stream<String> tokenizeExpression(final String expression) {
         if (expression != null) {
             return Arrays.stream(expression.split(DELIMITER))
                 .map(String::trim)
-                .filter(token -> !token.isEmpty())
-                .toArray(String[]::new);
+                .filter(token -> !token.isEmpty());
         }
         else {
-            return new String[]{ };
+            return Stream.empty();
         }
     }
 
-    /**
-     * Tokenize an expression and convert each item to a numeric `long`
-     */
-    private Long[] getNumbers(final String fieldName, final String expr) {
-        return Arrays.stream(tokenizeExpression(expr))
-            .map(token -> getNumber(fieldName, token))
-            .toArray(Long[]::new);
-    }
-
-    /**
-     * Tokenize an expression and convert each item to a date `long`
-     */
-    private long[] getDates(final String fieldName, final String expr) {
-        return Arrays.stream(tokenizeExpression(expr))
-            .mapToLong(token -> getDate(fieldName, token))
-            .toArray();
-    }
-
-    private long getDate(final String fieldName, final String value) {
+    private Long getDate(final String fieldName, final String value) {
         try {
             // Empty optional will be caught below
             return DateExpressionParser.parse(value, timeZoneId, nowEpochMilli).get().toInstant().toEpochMilli();
@@ -318,12 +279,32 @@ public class SearchExpressionQueryBuilder {
         }
     }
 
-    private long getNumber(final String fieldName, final String value) {
+    private Long getNumber(final String fieldName, final String value) {
         try {
             return Long.parseLong(value);
         } catch (final NumberFormatException e) {
             throw new NumberFormatException(
                     "Expected a numeric value for field \"" + fieldName + "\" but was given string \"" + value + "\""
+            );
+        }
+    }
+
+    private Float getFloat(final String fieldName, final String value) {
+        try {
+            return Float.parseFloat(value);
+        } catch (final NumberFormatException e) {
+            throw new NumberFormatException(
+                    "Expected a decimal (float) value for field \"" + fieldName + "\" but was given string \"" + value + "\""
+            );
+        }
+    }
+
+    private Double getDouble(final String fieldName, final String value) {
+        try {
+            return Double.parseDouble(value);
+        } catch (final NumberFormatException e) {
+            throw new NumberFormatException(
+                    "Expected a decimal (double) value for field \"" + fieldName + "\" but was given string \"" + value + "\""
             );
         }
     }
@@ -340,30 +321,27 @@ public class SearchExpressionQueryBuilder {
 
         for (final String line : lines) {
             BoolQueryBuilder mustQuery = QueryBuilders.boolQuery();
+            final ElasticIndexFieldType elasticFieldType = indexField.getFieldUse();
 
-            if (indexField.getFieldUse().isNumeric()) {
-                final Long[] numbers = getNumbers(fieldName, line);
-                for (final Long number : numbers) {
-                    mustQuery.must(
-                        QueryBuilders.termQuery(fieldName, number)
-                    );
-                }
-            }
-            else if (ElasticIndexFieldType.DATE.equals(indexField.getFieldUse())) {
-                final long[] dates = getDates(fieldName, line);
-                for (final Long date : dates) {
-                    mustQuery.must(
-                        QueryBuilders.termQuery(fieldName, date)
-                    );
-                }
-            }
-            else {
-                final String[] terms = tokenizeExpression(line);
-                for (final String term : terms) {
-                    mustQuery.must(
-                        QueryBuilders.termQuery(fieldName, term)
-                    );
-                }
+            if (elasticFieldType.isNumeric()) {
+                tokenizeExpression(line)
+                        .map(val -> getNumber(fieldName, val))
+                        .forEach(number -> mustQuery.must(QueryBuilders.termQuery(fieldName, number)));
+            } else if (elasticFieldType.equals(ElasticIndexFieldType.FLOAT)) {
+                tokenizeExpression(line)
+                        .map(val -> getFloat(fieldName, val))
+                        .forEach(number -> mustQuery.must(QueryBuilders.termQuery(fieldName, number)));
+            } else if (elasticFieldType.equals(ElasticIndexFieldType.DOUBLE)) {
+                tokenizeExpression(line)
+                        .map(val -> getDouble(fieldName, val))
+                        .forEach(number -> mustQuery.must(QueryBuilders.termQuery(fieldName, number)));
+            } else if (ElasticIndexFieldType.DATE.equals(indexField.getFieldUse())) {
+                tokenizeExpression(line)
+                        .map(val -> getDate(fieldName, val))
+                        .forEach(number -> mustQuery.must(QueryBuilders.termQuery(fieldName, number)));
+            } else {
+                tokenizeExpression(line)
+                        .forEach(term -> mustQuery.must(QueryBuilders.termQuery(fieldName, term)));
             }
 
             builder.should(mustQuery);

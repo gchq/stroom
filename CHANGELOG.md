@@ -9,14 +9,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2176** : Now avoids NPE and produces a proper error when a pipeline cannot be located when loading reference data.
 
+* Issue **#2224** : Support indexing properties as JSON objects with Elasticsearch.
+
 
 ## [v6.2-beta.2] - 2021-04-21
 
-* Issue **#2179** Extend cron expression syntax. Both `/` (interval) and `-` (range) are now supported.
+* Issue **#2179** : Extend cron expression syntax. Both `/` (interval) and `-` (range) are now supported.
 
-* Issue **#2214** Allow file permission override for `FileAppender` and `RollingFileAppender`.
+* Issue **#2214** : Allow file permission override for `FileAppender` and `RollingFileAppender`.
 
-* Issue **#2215** Support arrays of strings and objects in Elastic indexing and search.
+* Issue **#2215** : Support arrays of strings and objects in Elastic indexing and search.
 
 
 ## [v6.2-beta.1] - 2021-04-02
