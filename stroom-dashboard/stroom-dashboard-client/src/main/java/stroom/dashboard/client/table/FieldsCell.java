@@ -16,8 +16,6 @@
 
 package stroom.dashboard.client.table;
 
-import stroom.dashboard.client.table.FieldsManager.Style;
-
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
@@ -38,7 +36,6 @@ public class FieldsCell extends AbstractCell<Boolean> {
 
     @Override
     public void render(final Context context, final Boolean value, final SafeHtmlBuilder sb) {
-        final Style style = fieldsManager.getResources().style();
     }
 
     interface Template extends SafeHtmlTemplates {

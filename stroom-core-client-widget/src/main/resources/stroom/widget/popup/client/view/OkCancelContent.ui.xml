@@ -1,27 +1,14 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
 	xmlns:g="urn:import:com.google.gwt.user.client.ui">
-
-	<ui:style>
-	.layout {
-		width: 100%;
-		text-align: right;
-		padding-top: 5px;
-	}
-	
-	.cancel {
-		margin-left: 5px;
-	}
-	</ui:style>
-
 	<g:VerticalPanel>
 		<g:cell>
 			<g:SimplePanel ui:field="content" />
 		</g:cell>
 		<g:cell>
-			<g:FlowPanel styleName="{style.layout}">
+			<g:FlowPanel styleName="okCancelContent-layout">
 				<g:Button ui:field="ok" text="OK" />
-				<g:Button ui:field="cancel" styleName="gwt-Button {style.cancel}"
+				<g:Button ui:field="cancel" styleName="gwt-Button okCancelContent-cancel"
 					text="Cancel" />
 			</g:FlowPanel>
 		</g:cell>

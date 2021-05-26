@@ -27,21 +27,21 @@ public class StartButton extends FabButton {
     public void searchMode() {
         addStyleName("stroom-dashboard-query-play");
         removeStyleName("stroom-dashboard-query-pause");
-        setIcon("images/play.svg");
+        setIconClassName("stroom-dashboard-query-play-icon");
         setTitle("Execute Query");
     }
 
     public void pauseMode() {
         addStyleName("stroom-dashboard-query-pause");
         removeStyleName("stroom-dashboard-query-play");
-        setIcon("images/pause.svg");
+        setIconClassName("stroom-dashboard-query-pause-icon");
         setTitle("Pause Query");
     }
 
     public void resumeMode() {
         addStyleName("stroom-dashboard-query-play");
         removeStyleName("stroom-dashboard-query-pause");
-        setIcon("images/play.svg");
+        setIconClassName("stroom-dashboard-query-play-icon");
         setTitle("Resume Query");
     }
 }

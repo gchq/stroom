@@ -26,7 +26,7 @@ import stroom.document.client.event.HasDirtyHandlers;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -232,7 +232,7 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
 
     public interface EditExpressionView extends View {
 
-        ButtonView addButton(SvgPreset preset);
+        ButtonView addButton(Preset preset);
 
         void setExpressionView(View view);
     }

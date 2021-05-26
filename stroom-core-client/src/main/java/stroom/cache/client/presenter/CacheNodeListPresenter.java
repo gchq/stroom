@@ -28,7 +28,7 @@ import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeCache;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -137,7 +137,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
         // Info column.
         final InfoColumn<CacheInfo> infoColumn = new InfoColumn<CacheInfo>() {
             @Override
-            public SvgPreset getValue(final CacheInfo object) {
+            public Preset getValue(final CacheInfo object) {
                 return SvgPresets.INFO;
             }
 

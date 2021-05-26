@@ -26,7 +26,7 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -102,7 +102,7 @@ public class ActivityListPresenter
         dataProvider.addDataDisplay(getView().getDataDisplay());
     }
 
-    public ButtonView addButton(final SvgPreset preset) {
+    public ButtonView addButton(final Preset preset) {
         return getView().addButton(preset);
     }
 

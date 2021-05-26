@@ -24,23 +24,16 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.CssResource.ImportedWithPrefix;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.user.client.ui.AbstractImagePrototype;
 
 import static com.google.gwt.dom.client.BrowserEvents.CLICK;
 import static com.google.gwt.dom.client.BrowserEvents.KEYDOWN;
 
 public abstract class DropDownCell<E> extends AbstractEditableCell<E, E> {
 
-    private static volatile Resources resources;
     private static volatile Template template;
-    private static volatile SafeHtml button;
     private Object lastKey;
     private Element lastParent;
     private int lastIndex;
@@ -51,13 +44,10 @@ public abstract class DropDownCell<E> extends AbstractEditableCell<E, E> {
     public DropDownCell() {
         super(CLICK, KEYDOWN);
 
-        if (resources == null) {
+        if (template == null) {
             synchronized (DropDownCell.class) {
-                if (resources == null) {
-                    resources = GWT.create(Resources.class);
-                    resources.styles().ensureInjected();
+                if (template == null) {
                     template = GWT.create(Template.class);
-                    button = AbstractImagePrototype.create(resources.popup()).getSafeHtml();
                 }
             }
         }
@@ -141,11 +131,11 @@ public abstract class DropDownCell<E> extends AbstractEditableCell<E, E> {
         }
 
         if (displayValue != null) {
-            sb.append(template.input(resources.styles().dropDownTree(), resources.styles().label(),
-                    resources.styles().button(), displayValue.getDisplayValue(), button));
+            sb.append(template.input("dropDownTree", "dropDownTree-label",
+                    "dropDownTree-button", displayValue.getDisplayValue(), "dropDownTree-icon"));
         } else {
-            sb.append(template.input(resources.styles().dropDownTree(), resources.styles().label(),
-                    resources.styles().button(), getUnselectedText(), button));
+            sb.append(template.input("dropDownTree", "dropDownTree-label",
+                    "dropDownTree-button", getUnselectedText(), "dropDownTree-icon"));
         }
     }
 
@@ -171,27 +161,14 @@ public abstract class DropDownCell<E> extends AbstractEditableCell<E, E> {
 
     protected abstract void showPopup(E value);
 
-    @ImportedWithPrefix("dropDownTreeCell")
-    public interface Styles extends CssResource {
-
-        String dropDownTree();
-
-        String label();
-
-        String button();
-    }
-
-    public interface Resources extends ClientBundle {
-
-        ImageResource popup();
-
-        @Source("dropdowntree.css")
-        Styles styles();
-    }
-
     public interface Template extends SafeHtmlTemplates {
 
-        @Template("<div class=\"{0}\"><div class=\"{1}\" title=\"{3}\">{3}</div><div class=\"{2}\">{4}</div></div>")
-        SafeHtml input(String outerStyle, String labelStyle, String buttonStyle, String value, SafeHtml icon);
+        @Template("<div class=\"{0}\">" +
+                "<div class=\"{1}\" title=\"{3}\">{3}</div>" +
+                "<div class=\"{2}\">" +
+                "<div class=\"{4}\"></div>" +
+                "</div>" +
+                "</div>")
+        SafeHtml input(String outerStyle, String labelStyle, String buttonStyle, String value, String icon);
     }
 }

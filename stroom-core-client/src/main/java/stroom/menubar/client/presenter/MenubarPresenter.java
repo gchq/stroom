@@ -42,7 +42,6 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.DomEvent;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -81,7 +80,13 @@ public class MenubarPresenter extends MyPresenter<MenubarPresenter.MenubarView, 
             final MenuItem menuItem = (MenuItem) item;
 
             // Create the presenter for the menu item.
-            final MenuItemPresenter presenter = addItem(null, null, menuItem.getText(), null, true, null);
+            final MenuItemPresenter presenter =
+                    addItem(null,
+                            null,
+                            menuItem.getText(),
+                            null,
+                            true,
+                            null);
             registerHandler(presenter.getView().addClickHandler(event -> showPopup(menuItem, event)));
             registerHandler(presenter.getView().addMouseOverHandler(event -> {
                 if (currentMenu != null) {
@@ -91,15 +96,16 @@ public class MenubarPresenter extends MyPresenter<MenubarPresenter.MenubarView, 
         }
     }
 
-    protected MenuItemPresenter addItem(final ImageResource enabledImage,
-                                        final ImageResource disabledImage,
+    protected MenuItemPresenter addItem(final String enabledImageClassName,
+                                        final String disabledImageClassName,
                                         final String text,
                                         final String shortcut,
                                         final boolean enabled,
                                         final Command command) {
         final MenuItemView display = menubarItemProvider.get();
-        final MenuItemPresenter presenter = new MenuItemPresenter(getEventBus(), display, enabledImage, disabledImage,
-                text, shortcut, enabled);
+        final MenuItemPresenter presenter =
+                new MenuItemPresenter(getEventBus(), display, enabledImageClassName, disabledImageClassName,
+                        text, shortcut, enabled);
         if (command != null) {
             presenter.addClickHandler(event -> {
                 if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {

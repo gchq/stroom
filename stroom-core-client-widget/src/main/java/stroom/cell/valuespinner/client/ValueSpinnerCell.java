@@ -26,27 +26,19 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.NodeList;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.user.client.ui.AbstractImagePrototype;
-import com.google.gwt.user.client.ui.AbstractImagePrototype.ImagePrototypeElement;
 
 public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerCell.ViewData>
         implements HasSpinnerConstraints {
 
     private static volatile Template template;
-    private static volatile AbstractImagePrototype arrowDown;
-    private static volatile AbstractImagePrototype arrowDownHover;
-    private static volatile AbstractImagePrototype arrowDownPressed;
-    private static volatile AbstractImagePrototype arrowUp;
-    private static volatile AbstractImagePrototype arrowUpHover;
-    private static volatile AbstractImagePrototype arrowUpPressed;
-    private static volatile SafeHtml arrowUpHtml;
-    private static volatile SafeHtml arrowDownHtml;
+    private static final SafeHtml arrowUpHtml =
+            SafeHtmlUtils.fromTrustedString("<button class=\"valueSpinner-arrowUp\"></button>");
+    private static final SafeHtml arrowDownHtml =
+            SafeHtmlUtils.fromTrustedString("<button class=\"valueSpinner-arrowDown\"></button>");
     private static volatile Spinner spinner;
     private long min = 0;
     private long max = 100;
@@ -74,24 +66,6 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
 
         if (template == null) {
             template = GWT.create(Template.class);
-        }
-
-        if (arrowDown == null) {
-            synchronized (ValueSpinnerCell.class) {
-                if (arrowDown == null) {
-                    final Resources resources = GWT.create(Resources.class);
-
-                    arrowDown = AbstractImagePrototype.create(resources.arrowDown());
-                    arrowDownHover = AbstractImagePrototype.create(resources.arrowDownHover());
-                    arrowDownPressed = AbstractImagePrototype.create(resources.arrowDownPressed());
-                    arrowUp = AbstractImagePrototype.create(resources.arrowUp());
-                    arrowUpHover = AbstractImagePrototype.create(resources.arrowUpHover());
-                    arrowUpPressed = AbstractImagePrototype.create(resources.arrowUpPressed());
-
-                    arrowUpHtml = arrowUp.getSafeHtml();
-                    arrowDownHtml = arrowDown.getSafeHtml();
-                }
-            }
         }
     }
 
@@ -150,27 +124,27 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
             vd.setCurrentValue(input.getValue());
 
         } else {
-            final NodeList<Element> nodes = parent.getElementsByTagName("img");
-            ImagePrototypeElement upArrow = null;
-            ImagePrototypeElement downArrow = null;
+            final NodeList<Element> nodes = parent.getElementsByTagName("button");
+            Element upArrow = null;
+            Element downArrow = null;
             if (nodes != null && nodes.getLength() > 1) {
                 upArrow = nodes.getItem(0).cast();
                 downArrow = nodes.getItem(1).cast();
 
                 if (upArrow.isOrHasChild(target)) {
                     if ("mouseover".equals(eventType)) {
-                        arrowUpHover.applyTo(upArrow);
+                        upArrow.setClassName("valueSpinner-arrowUpHover");
 
                     } else if ("mouseout".equals(eventType)) {
-                        arrowUp.applyTo(upArrow);
+                        upArrow.setClassName("valueSpinner-arrowUp");
                         stopSpinning(context, parent, value, valueUpdater);
 
                     } else if ("mouseup".equals(eventType)) {
-                        arrowUpHover.applyTo(upArrow);
+                        upArrow.setClassName("valueSpinner-arrowUpHover");
                         stopSpinning(context, parent, value, valueUpdater);
 
                     } else if ("mousedown".equals(eventType)) {
-                        arrowUpPressed.applyTo(upArrow);
+                        upArrow.setClassName("valueSpinner-arrowUpPressed");
                         ensureSpinner();
 
                         // Get the object that we are going to use to apply
@@ -190,18 +164,18 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
                     }
                 } else if (downArrow.isOrHasChild(target)) {
                     if ("mouseover".equals(eventType)) {
-                        arrowDownHover.applyTo(downArrow);
+                        downArrow.setClassName("valueSpinner-arrowDownHover");
 
                     } else if ("mouseout".equals(eventType)) {
-                        arrowDown.applyTo(downArrow);
+                        downArrow.setClassName("valueSpinner-arrowDown");
                         stopSpinning(context, parent, value, valueUpdater);
 
                     } else if ("mouseup".equals(eventType)) {
-                        arrowDownHover.applyTo(downArrow);
+                        downArrow.setClassName("valueSpinner-arrowDownHover");
                         stopSpinning(context, parent, value, valueUpdater);
 
                     } else if ("mousedown".equals(eventType)) {
-                        arrowDownPressed.applyTo(downArrow);
+                        downArrow.setClassName("valueSpinner-arrowDownPressed");
                         ensureSpinner();
 
                         // Get the object that we are going to use to apply
@@ -412,21 +386,6 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
     @Override
     public int getMaxStep() {
         return maxStep;
-    }
-
-    interface Resources extends ClientBundle {
-
-        ImageResource arrowDown();
-
-        ImageResource arrowDownHover();
-
-        ImageResource arrowDownPressed();
-
-        ImageResource arrowUp();
-
-        ImageResource arrowUpHover();
-
-        ImageResource arrowUpPressed();
     }
 
     interface Template extends SafeHtmlTemplates {

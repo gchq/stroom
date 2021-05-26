@@ -20,7 +20,6 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.store.impl.fs.shared.FsVolume;
-import stroom.util.client.BorderUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.cell.client.TextCell;
@@ -38,7 +37,7 @@ public class FSVolumeListPresenter extends MyPresenterWidget<DataGridView<FsVolu
         super(eventBus, new DataGridViewImpl<>(true, true));
 
         // Add a border to the list.
-        BorderUtil.addBorder(getWidget().getElement());
+        getWidget().getElement().addClassName("stroom-border");
 
         initTableColumns();
     }

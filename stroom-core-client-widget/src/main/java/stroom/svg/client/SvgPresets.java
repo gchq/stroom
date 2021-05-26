@@ -19,122 +19,120 @@ package stroom.svg.client;
 
 public final class SvgPresets {
 
-    private static final String IMAGES_PATH = "images/";
+    public static final Preset ABOUT = enabled("svgIcon-oo", "About");
+    public static final Preset ADD = enabled("svgIcon-add", "Add");
+    public static final Preset ADD_ABOVE = enabled("svgIcon-add-above", "Add above");
+    public static final Preset ADD_BELOW = enabled("svgIcon-add-below", "Add below");
+    public static final Preset ALERT = enabled("svgIcon-alert", "Alert");
+    public static final Preset ANNOTATE = disabled("svgIcon-edit", "Annotate");
+    public static final Preset CLEAR = disabled("svgIcon-clear", "Clear");
+    public static final Preset CLOSE = disabled("svgIcon-close", "Close");
+    public static final Preset COPY = disabled("svgIcon-copy", "Copy");
+    public static final Preset DATABASE = enabled("svgIcon-database", "Database");
+    public static final Preset DELETE = disabled("svgIcon-delete", "Delete");
+    public static final Preset DELETED = disabled("svgIcon-deleted", "Deleted");
+    public static final Preset DEPENDENCIES = enabled("svgIcon-dependencies", "Dependencies");
+    public static final Preset DISABLE = disabled("svgIcon-disable", "Disable");
+    public static final Preset DOWN = disabled("svgIcon-down", "Down");
+    public static final Preset DOWNLOAD = disabled("svgIcon-download", "Download");
+    public static final Preset EDIT = disabled("svgIcon-edit", "Edit");
+    public static final Preset ELLIPSES_HORIZONTAL = enabled("svgIcon-ellipses-horizontal", "Actions...");
+    public static final Preset ELLIPSES_VERTICAL = enabled("svgIcon-ellipses-vertical", "Actions...");
+    public static final Preset ERROR = enabled("svgIcon-error", "Error");
+    public static final Preset EXPLORER = enabled("svgIcon-explorer", "Explorer");
+    public static final Preset FATAL = enabled("svgIcon-fatal", "Fatal");
+    public static final Preset FAVOURITES = disabled("svgIcon-favourites", "Favourites");
+    public static final Preset FEED = enabled("svgIcon-feed", "Feed");
+    public static final Preset FIELD = enabled("svgIcon-field", "Field");
+    public static final Preset FILE = enabled("svgIcon-file", "File");
+    public static final Preset FILE_RAW = enabled("svgIcon-file-raw", "Raw File");
+    public static final Preset FILE_FORMATTED = enabled("svgIcon-file-formatted", "Formatted File");
+    public static final Preset FILTER = enabled("svgIcon-filter", "Filter");
+    public static final Preset FOLDER = enabled("svgIcon-folder", "Folder");
+    public static final Preset FOLDER_TREE = enabled("svgIcon-folder-tree", "Folder Tree");
+    public static final Preset FORMAT = enabled("svgIcon-format", "Format & Indent");
+    public static final Preset FUNCTION = enabled("svgIcon-function", "Function");
+    public static final Preset GENERATE = enabled("svgIcon-generate", "Auto-generate roll-up permutations");
+    public static final Preset HELP = enabled("svgIcon-help", "Help");
+    public static final Preset HISTORY = disabled("svgIcon-history", "History");
+    public static final Preset INFO = enabled("svgIcon-info", "Info");
+    public static final Preset INFO_DELETED = enabled("svgIcon-info-deleted", "Info (Deleted)");
+    public static final Preset INFO_WARNING = enabled("svgIcon-info-warning", "Info (Warning)");
+    public static final Preset INSERT_ABOVE = enabled("svgIcon-insert-above", "Insert above");
+    public static final Preset INSERT_BELOW = enabled("svgIcon-insert-below", "Insert below");
+    public static final Preset JOBS = enabled("svgIcon-jobs", "Jobs");
+    public static final Preset KEY = enabled("svgIcon-key", "API Keys");
+    public static final Preset LINK = enabled("svgIcon-dependencies", "Dependencies");
+    public static final Preset LOGOUT = enabled("svgIcon-logout", "Logout");
+    public static final Preset MONITORING = enabled("svgIcon-monitoring", "Monitor");
+    public static final Preset MOVE = disabled("svgIcon-move", "Move");
+    public static final Preset NEW_ITEM = enabled("svgIcon-add", "New");
+    public static final Preset NODES = enabled("svgIcon-nodes", "Nodes");
+    public static final Preset OPEN = disabled("svgIcon-edit", "Open");
+    public static final Preset OPERATOR = enabled("svgIcon-operator", "Add Operator");
+    public static final Preset PASSWORD = enabled("svgIcon-password", "Change Password");
+    public static final Preset PROCESS = disabled("svgIcon-process", "Process");
+    public static final Preset PROPERTIES = enabled("svgIcon-properties", "Properties");
+    public static final Preset RAW = disabled("svgIcon-raw", "Raw");
+    public static final Preset REMOVE = disabled("svgIcon-remove", "Remove");
+    public static final Preset RULESET = enabled("svgIcon-ruleset", "Rule Set");
+    public static final Preset RUN = enabled("svgIcon-play-green", "Run");
+    public static final Preset STOP = enabled("svgIcon-stop-red", "Stop");
+    public static final Preset SAVE = disabled("svgIcon-save", "Save");
+    public static final Preset SAVE_AS = disabled("svgIcon-saveas", "Save As");
+    public static final Preset SETTINGS = enabled("svgIcon-settings", "Settings");
+    public static final Preset SETTINGS_BLUE = enabled("svgIcon-settings-blue", "Settings");
+    public static final Preset SHARD_CLOSE = disabled("svgIcon-shard-close", "Close Selected Shards");
+    public static final Preset SHARD_FLUSH = disabled("svgIcon-shard-flush", "Flush Selected Shards");
+    public static final Preset SPINNER = enabled("svgIcon-spinner", null);
+    public static final Preset TABLE = enabled("svgIcon-table", "Table");
+    public static final Preset TABLE_NESTED = enabled("svgIcon-table-nested", "Nested Table");
+    public static final Preset UNDO = disabled("svgIcon-undo", "Undo");
+    public static final Preset UP = disabled("svgIcon-up", "Up");
+    public static final Preset UPLOAD = enabled("svgIcon-upload", "Upload");
+    public static final Preset USER = enabled("svgIcon-user", "User");
+    public static final Preset USER_DISABLED = enabled("svgIcon-user-disabled", "User");
+    public static final Preset USER_GROUP = enabled("svgIcon-users", "User Group");
+    public static final Preset USER_GROUP_DISABLED = enabled("svgIcon-users-disabled", "User Group");
+    public static final Preset VOLUMES = enabled("svgIcon-volumes", "Volumes");
 
-    public static final SvgPreset ABOUT = enabled("oo.svg", "About");
-    public static final SvgPreset ADD = enabled("add.svg", "Add");
-    public static final SvgPreset ADD_ABOVE = enabled("add-above.svg", "Add above");
-    public static final SvgPreset ADD_BELOW = enabled("add-below.svg", "Add below");
-    public static final SvgPreset ALERT = enabled("alert.svg", "Alert");
-    public static final SvgPreset ANNOTATE = disabled("edit.svg", "Annotate");
-    public static final SvgPreset ANNOTATIONS = enabled("document/AnnotationsIndex.svg", "Annotations");
-    public static final SvgPreset CLEAR = disabled("clear.svg", "Clear");
-    public static final SvgPreset CLOSE = disabled("close.svg", "Close");
-    public static final SvgPreset COPY = disabled("copy.svg", "Copy");
-    public static final SvgPreset DATABASE = enabled("database.svg", "Database");
-    public static final SvgPreset DELETE = disabled("delete.svg", "Delete");
-    public static final SvgPreset DELETED = disabled("deleted.svg", "Deleted");
-    public static final SvgPreset DEPENDENCIES = enabled("dependencies.svg", "Dependencies");
-    public static final SvgPreset DISABLE = disabled("disable.svg", "Disable");
-    public static final SvgPreset DOWN = disabled("down.svg", "Down");
-    public static final SvgPreset DOWNLOAD = disabled("download.svg", "Download");
-    public static final SvgPreset EDIT = disabled("edit.svg", "Edit");
-    public static final SvgPreset ELASTIC_SEARCH = enabled("document/ElasticIndex.svg", "Elastic Search");
-    public static final SvgPreset ELLIPSES_HORIZONTAL = enabled("ellipses-horizontal.svg", "Actions...");
-    public static final SvgPreset ELLIPSES_VERTICAL = enabled("ellipses-vertical.svg", "Actions...");
-    public static final SvgPreset ERROR = enabled("error.svg", "Error");
-    public static final SvgPreset EXPLORER = enabled("explorer.svg", "Explorer");
-    public static final SvgPreset FATAL = enabled("fatal.svg", "Fatal");
-    public static final SvgPreset FAVOURITES = disabled("favourites.svg", "Favourites");
-    public static final SvgPreset FEED = enabled("feed.svg", "Feed");
-    public static final SvgPreset FIELD = enabled("field.svg", "Field");
-    public static final SvgPreset FILE = enabled("file.svg", "File");
-    public static final SvgPreset FILE_FORMATTED = enabled("file-formatted.svg", "Formatted File");
-    public static final SvgPreset FILE_RAW = enabled("file-raw.svg", "Raw File");
-    public static final SvgPreset FILTER = enabled("filter.svg", "Filter");
-    public static final SvgPreset FOLDER = enabled("folder.svg", "Folder");
-    public static final SvgPreset FOLDER_TREE = enabled("folder-tree.svg", "Folder Tree");
-    public static final SvgPreset FORMAT = enabled("format.svg", "Format & Indent");
-    public static final SvgPreset FUNCTION = enabled("function.svg", "Function");
-    public static final SvgPreset GENERATE = enabled("generate.svg", "Auto-generate roll-up permutations");
-    public static final SvgPreset HELP = enabled("help.svg", "Help");
-    public static final SvgPreset HISTORY = disabled("history.svg", "History");
-    public static final SvgPreset INFO = enabled("info.svg", "Info");
-    public static final SvgPreset INFO_DELETED = enabled("info-deleted.svg", "Info (Deleted)");
-    public static final SvgPreset INFO_WARNING = enabled("info-warning.svg", "Info (Warning)");
-    public static final SvgPreset JOBS = enabled("jobs.svg", "Jobs");
-    public static final SvgPreset KEY = enabled("key.svg", "API Keys");
-    public static final SvgPreset LINK = enabled("dependencies.svg", "Dependencies");
-    public static final SvgPreset LOGOUT = enabled("logout.svg", "Logout");
-    public static final SvgPreset MONITORING = enabled("monitoring.svg", "Monitor");
-    public static final SvgPreset MOVE = disabled("move.svg", "Move");
-    public static final SvgPreset NEW_ITEM = enabled("add.svg", "New");
-    public static final SvgPreset NODES = enabled("nodes.svg", "Nodes");
-    public static final SvgPreset OPEN = disabled("edit.svg", "Open");
-    public static final SvgPreset OPERATOR = enabled("operator.svg", "Add Operator");
-    public static final SvgPreset PASSWORD = enabled("password.svg", "Change Password");
-    public static final SvgPreset PROCESS = disabled("process.svg", "Process");
-    public static final SvgPreset PROPERTIES = enabled("properties.svg", "Properties");
-    public static final SvgPreset RAW = disabled("raw.svg", "Raw");
-    public static final SvgPreset REMOVE = disabled("remove.svg", "Remove");
-    public static final SvgPreset RULESET = enabled("ruleset.svg", "Rule Set");
-    public static final SvgPreset RUN = enabled("play-green.svg", "Run");
-    public static final SvgPreset STOP = enabled("stop-red.svg", "Stop");
-    public static final SvgPreset SAVE = disabled("save.svg", "Save");
-    public static final SvgPreset SAVE_AS = disabled("saveas.svg", "Save As");
-    public static final SvgPreset SETTINGS = enabled("settings.svg", "Settings");
-    public static final SvgPreset SETTINGS_BLUE = enabled("settings-blue.svg", "Settings");
-    public static final SvgPreset SHARD_CLOSE = disabled("shard-close.svg", "Close Selected Shards");
-    public static final SvgPreset SHARD_FLUSH = disabled("shard-flush.svg", "Flush Selected Shards");
-    public static final SvgPreset SPINNER = enabled("spinner.svg", null);
-    public static final SvgPreset TABLE = enabled("table.svg", "Table");
-    public static final SvgPreset TABLE_NESTED = enabled("table-nested.svg", "Nested Table");
-    public static final SvgPreset UNDO = disabled("undo.svg", "Undo");
-    public static final SvgPreset UP = disabled("up.svg", "Up");
-    public static final SvgPreset UPLOAD = enabled("upload.svg", "Upload");
-    public static final SvgPreset USER = enabled("user.svg", "User");
-    public static final SvgPreset USER_DISABLED = enabled("user-disabled.svg", "User");
-    public static final SvgPreset USER_GROUP = enabled("users.svg", "User Group");
-    public static final SvgPreset USER_GROUP_DISABLED = enabled("users-disabled.svg", "User Group");
-    public static final SvgPreset VOLUMES = enabled("volumes.svg", "Volumes");
+    public static final Preset COLLAPSE_UP = enabled("svgIcon-collapse-up", "Collapse");
+    public static final Preset EXPAND_DOWN = enabled("svgIcon-expand-down", "Expand");
 
-    public static final SvgPreset COLLAPSE_UP = enabled("collapse-up.svg", "Collapse");
-    public static final SvgPreset EXPAND_DOWN = enabled("expand-down.svg", "Expand");
+    public static final Preset UNLOCKED_GREEN = enabled("svgIcon-unlocked-green", "Unlocked");
+    public static final Preset LOCKED_AMBER = enabled("svgIcon-locked-amber", "Locked");
 
-    public static final SvgPreset UNLOCKED_GREEN = enabled("unlocked-green.svg", "Unlocked");
-    public static final SvgPreset LOCKED_AMBER = enabled("locked-amber.svg", "Locked");
+    public static final Preset UNLOCK_AMBER = enabled("svgIcon-unlock-amber", "Unlock");
+    public static final Preset LOCK_GREEN = enabled("svgIcon-lock-green", "Lock");
 
-    public static final SvgPreset UNLOCK_AMBER = enabled("unlock-amber.svg", "Unlock");
-    public static final SvgPreset LOCK_GREEN = enabled("lock-green.svg", "Lock");
+    public static final Preset FAST_BACKWARD_BLUE = disabled("svgIcon-fast-backward", "First");
+    public static final Preset STEP_BACKWARD_BLUE = disabled("svgIcon-step-backward", "Backward");
+    public static final Preset STEP_FORWARD_BLUE = disabled("svgIcon-step-forward", "Forward");
+    public static final Preset FAST_FORWARD_BLUE = disabled("svgIcon-fast-forward", "Last");
+    public static final Preset REFRESH_BLUE = enabled("svgIcon-refresh", "Refresh");
 
-    public static final SvgPreset FAST_BACKWARD_BLUE = disabled("fast-backward.svg", "First");
-    public static final SvgPreset STEP_BACKWARD_BLUE = disabled("step-backward.svg", "Backward");
-    public static final SvgPreset STEP_FORWARD_BLUE = disabled("step-forward.svg", "Forward");
-    public static final SvgPreset FAST_FORWARD_BLUE = disabled("fast-forward.svg", "Last");
-    public static final SvgPreset REFRESH_BLUE = enabled("refresh.svg", "Refresh");
+    public static final Preset FAST_BACKWARD_GREEN = disabled("svgIcon-fast-backward-green", "First");
+    public static final Preset STEP_BACKWARD_GREEN = disabled("svgIcon-step-backward-green", "Backward");
+    public static final Preset STEP_FORWARD_GREEN = disabled("svgIcon-step-forward-green", "Forward");
+    public static final Preset FAST_FORWARD_GREEN = disabled("svgIcon-fast-forward-green", "Last");
+    public static final Preset REFRESH_GREEN = enabled("svgIcon-refresh-green", "Refresh");
 
-    public static final SvgPreset FAST_BACKWARD_GREEN = disabled("fast-backward-green.svg", "First");
-    public static final SvgPreset STEP_BACKWARD_GREEN = disabled("step-backward-green.svg", "Backward");
-    public static final SvgPreset STEP_FORWARD_GREEN = disabled("step-forward-green.svg", "Forward");
-    public static final SvgPreset FAST_FORWARD_GREEN = disabled("fast-forward-green.svg", "Last");
-    public static final SvgPreset REFRESH_GREEN = enabled("refresh-green.svg", "Refresh");
-
-    public static final SvgPreset SHOW = enabled("show.svg", "Show");
-    public static final SvgPreset HIDE = enabled("hide.svg", "Hide");
+    public static final Preset SHOW = enabled("svgIcon-show", "Show");
+    public static final Preset HIDE = enabled("svgIcon-hide", "Hide");
 
     private SvgPresets() {
         // Utility class.
     }
 
-    public static SvgPreset of(final SvgPreset svgPreset, final String title, final boolean enabled) {
+    public static Preset of(final Preset svgPreset, final String title, final boolean enabled) {
         return svgPreset.with(title, enabled);
     }
 
-    private static SvgPreset enabled(final String url, final String title) {
-        return new SvgPreset(IMAGES_PATH + url, title, true);
+    private static Preset enabled(final String className, final String title) {
+        return new Preset(className, title, true);
     }
 
-    private static SvgPreset disabled(final String url, final String title) {
-        return new SvgPreset(IMAGES_PATH + url, title, false);
+    private static Preset disabled(final String className, final String title) {
+        return new Preset(className, title, false);
     }
 }

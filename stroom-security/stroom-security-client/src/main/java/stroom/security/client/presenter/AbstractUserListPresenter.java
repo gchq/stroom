@@ -21,7 +21,7 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.security.shared.User;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -43,9 +43,9 @@ public abstract class AbstractUserListPresenter extends MyPresenterWidget<UserLi
         userListView.setUiHandlers(this);
 
         // Icon
-        dataGridView.addColumn(new Column<User, SvgPreset>(new SvgCell()) {
+        dataGridView.addColumn(new Column<User, Preset>(new SvgCell()) {
             @Override
-            public SvgPreset getValue(final User userRef) {
+            public Preset getValue(final User userRef) {
                 if (userRef.isEnabled()) {
                     if (!userRef.isGroup()) {
                         return SvgPresets.USER;
@@ -73,12 +73,7 @@ public abstract class AbstractUserListPresenter extends MyPresenterWidget<UserLi
         dataGridView.addEndColumn(new EndColumn<>());
     }
 
-//    public ImageButtonView addButton(final String title, final ImageResource enabledImage,
-//                                     final ImageResource disabledImage, final boolean enabled) {
-//        return dataGridView.addButton(title, enabledImage, disabledImage, enabled);
-//    }
-
-    public ButtonView addButton(final SvgPreset preset) {
+    public ButtonView addButton(final Preset preset) {
         return dataGridView.addButton(preset);
     }
 

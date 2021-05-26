@@ -43,11 +43,9 @@ import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.shared.data.PipelinePropertyType;
-import stroom.pipeline.structure.client.view.PipelineImageUtil;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
-import stroom.util.client.BorderUtil;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
@@ -382,7 +380,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                     for (final PipelineElementType pipelineElementType : entry.getValue()) {
                         if (StructureValidationUtil.isValidChildType(parentType, pipelineElementType, childCount)) {
                             final String type = pipelineElementType.getType();
-                            final Icon icon = PipelineImageUtil.getIcon(pipelineElementType);
+                            final Icon icon = Icon.create(pipelineElementType.getIcon());
                             final Item item = new IconMenuItem(j++, icon, null, type, null, true,
                                     new AddPipelineElementCommand(pipelineElementType));
                             children.add(item);
@@ -429,7 +427,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                     final Category category = pipelineElementType.getCategory();
 
                     final List<Item> items = categoryMenuItems.computeIfAbsent(category, k -> new ArrayList<>());
-                    final Icon icon = PipelineImageUtil.getIcon(pipelineElementType);
+                    final Icon icon = Icon.create(pipelineElementType.getIcon());
 
                     final Item item = new IconMenuItem(pos++, icon, null, element.getId(), null, true,
                             new RestorePipelineElementCommand(element));
@@ -511,7 +509,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
             xmlEditor.getIndicatorsOption().setAvailable(false);
             xmlEditor.getIndicatorsOption().setOn(false);
             xmlEditor.getStylesOption().setOn(true);
-            BorderUtil.addBorder(xmlEditor.getView().asWidget().getElement());
+            xmlEditor.getView().asWidget().getElement().addClassName("stroom-border");
 
             final PopupSize popupSize = new PopupSize(600, 400, true);
             final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {

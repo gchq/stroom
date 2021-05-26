@@ -17,39 +17,30 @@
 package stroom.pipeline.structure.client.view;
 
 import stroom.pipeline.shared.data.PipelineElement;
-import stroom.svg.client.SvgIcon;
+import stroom.svg.client.Icon;
 
-import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.Widget;
 
 public class PipelineElementBox extends Box<PipelineElement> {
 
-    private static Resources resources;
     private final PipelineElement pipelineElement;
 
-    public PipelineElementBox(final PipelineElement pipelineElement, final SvgIcon icon) {
+    public PipelineElementBox(final PipelineElement pipelineElement, final Icon icon) {
         this.pipelineElement = pipelineElement;
 
-        if (resources == null) {
-            resources = GWT.create(Resources.class);
-            resources.style().ensureInjected();
-        }
-
         final FlowPanel background = new FlowPanel();
-        background.setStyleName(resources.style().background());
+        background.setStyleName("pipelineElementBox-background");
 
         final Label label = new Label(pipelineElement.getId(), false);
-        label.addStyleName(resources.style().label());
+        label.addStyleName("pipelineElementBox-label");
         background.add(label);
 
         if (icon != null) {
-            final Image image = new Image(icon.getUrl());
-            image.addStyleName(resources.style().image());
+            final Widget image = icon.asWidget();
+            image.addStyleName("pipelineElementBox-image");
             background.add(image);
             label.getElement().getStyle().setPaddingLeft(25, Unit.PX);
         }
@@ -60,44 +51,23 @@ public class PipelineElementBox extends Box<PipelineElement> {
     @Override
     public void setSelected(final boolean selected) {
         if (selected) {
-            getElement().addClassName(resources.style().backgroundSelected());
+            getElement().addClassName("pipelineElementBox-backgroundSelected");
         } else {
-            getElement().removeClassName(resources.style().backgroundSelected());
+            getElement().removeClassName("pipelineElementBox-backgroundSelected");
         }
     }
 
     @Override
     public void showHotspot(final boolean show) {
         if (show) {
-            getElement().addClassName(resources.style().hotspot());
+            getElement().addClassName("pipelineElementBox-hotspot");
         } else {
-            getElement().removeClassName(resources.style().hotspot());
+            getElement().removeClassName("pipelineElementBox-hotspot");
         }
     }
 
     @Override
     public PipelineElement getItem() {
         return pipelineElement;
-    }
-
-    public interface Style extends CssResource {
-
-        String DEFAULT = "PipelineElementBox.css";
-
-        String background();
-
-        String backgroundSelected();
-
-        String hotspot();
-
-        String image();
-
-        String label();
-    }
-
-    public interface Resources extends ClientBundle {
-
-        @Source(Style.DEFAULT)
-        Style style();
     }
 }

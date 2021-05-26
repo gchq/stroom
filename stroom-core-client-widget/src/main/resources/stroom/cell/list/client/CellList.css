@@ -13,29 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@external .*;
 
 .cellListWidget {
-	
 }
 
 .cellListEvenItem {
-	cursor: pointer;
-	background: #ffffff;
-	zoom: 1;
 }
 
 .cellListOddItem {
-	cursor: pointer;
-	background: #f0f0ff;
-	zoom: 1;
 }
 
 .cellListKeyboardSelectedItem {
 }
 
  .cellListSelectedItem {
-	background: #bbdefb none repeat scroll 0 0;
-	color: black;
-	height: auto;
-	overflow: visible;
 }

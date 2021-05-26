@@ -5,5 +5,4 @@
   <inherits name='com.google.gwt.user.User' />
 
   <source path="client" />
-  <stylesheet src="spinner.css" />
 </module>

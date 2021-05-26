@@ -1,0 +1,143 @@
+/*
+ * Copyright 2010 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+.cellTableWidget {
+  
+}
+
+.cellTableFirstColumn {
+  
+}
+
+.cellTableLastColumn {
+  
+}
+
+.cellTableFooter {
+	display: none;
+  border-top: 1px solid var(--border-color);
+  padding: 0px;
+  padding-left: 2px;
+  padding-right: 2px;
+  text-align: left;
+  
+  background-color: var(--app-background-color);
+  color: black;
+  overflow: hidden;
+  white-space: nowrap;
+  font-weight: normal;
+}
+
+.cellTableHeader {
+  border-bottom: 1px solid var(--border-color);
+  padding: 0px;
+  padding-left: 2px;
+  padding-right: 2px;
+  text-align: left;
+  background-color: var(--app-background-color);
+  color: black;
+  overflow: hidden;
+  white-space: nowrap;
+  font-weight: normal;
+}
+
+.cellTableCell {
+  padding: 0px;
+  padding-left: 2px;
+  padding-right: 2px;
+  overflow: hidden;
+  vertical-align: middle;
+}
+
+.cellTableFirstColumnFooter {
+  
+}
+
+.cellTableFirstColumnHeader {
+  
+}
+
+.cellTableLastColumnFooter {
+  
+}
+
+.cellTableLastColumnHeader {
+  
+}
+
+.cellTableSortableHeader {
+  cursor: pointer;
+  cursor: hand;
+  text-decoration: underline;
+}
+
+.cellTableSortableHeader:hover {
+  color: var(--selected-row-text-color);
+}
+
+.cellTableSortedHeaderAscending {
+
+}
+
+.cellTableSortedHeaderDescending {
+
+}
+
+.cellTableEvenRow {
+  background: var(--even-row-background-color);
+}
+
+.cellTableEvenRowCell {
+}
+
+.cellTableOddRow {
+  background: var(--odd-row-background-color);
+}
+
+.cellTableOddRowCell {
+}
+
+.cellTableHoveredRow {
+  background: var(--hovered-row-background-color);
+}
+
+.cellTableHoveredRowCell {
+}
+
+.cellTableKeyboardSelectedRow {
+}
+
+.cellTableKeyboardSelectedRowCell {
+}
+
+.cellTableSelectedRow {
+  height: auto;
+  overflow: auto;
+  background: var(--selected-row-background-color) none repeat scroll 0 0 !important;
+  color: var(--selected-row-text-color) !important;
+}
+
+.cellTableSelectedRowCell {
+}
+
+/**
+ * The keyboard selected cell is visible over selection.
+ */
+.cellTableKeyboardSelectedCell {
+}
+
+.cellTableLoading {
+  margin: 30px;
+}

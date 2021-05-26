@@ -16,9 +16,6 @@
 
 package stroom.editor.client.view;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.PopupPanel;
 
@@ -27,24 +24,14 @@ import com.google.gwt.user.client.ui.PopupPanel;
  */
 public class IndicatorPopup extends PopupPanel {
 
-    private static volatile Resources resources;
     private final HTML content;
 
     public IndicatorPopup() {
-        if (resources == null) {
-            synchronized (IndicatorPopup.class) {
-                if (resources == null) {
-                    resources = GWT.create(Resources.class);
-                    resources.style().ensureInjected();
-                }
-            }
-        }
-
         content = new HTML();
 
         setModal(false);
         setAutoHideEnabled(true);
-        setStyleName(resources.style().indicatorPopup());
+        setStyleName("codeEditor-indicatorPopup");
 
         setWidget(content);
     }
@@ -61,16 +48,5 @@ public class IndicatorPopup extends PopupPanel {
      */
     public void setText(final String text) {
         content.setText(text);
-    }
-
-    public interface Style extends CssResource {
-
-        String indicatorPopup();
-    }
-
-    public interface Resources extends ClientBundle {
-
-        @Source("indicatorpopup.css")
-        Style style();
     }
 }

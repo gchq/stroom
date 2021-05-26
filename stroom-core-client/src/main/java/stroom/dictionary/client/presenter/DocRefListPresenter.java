@@ -20,7 +20,6 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.docref.DocRef;
-import stroom.util.client.BorderUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.cell.client.TextCell;
@@ -42,7 +41,7 @@ public class DocRefListPresenter extends MyPresenterWidget<DataGridView<DocRef>>
 //        getView().setSelectionModel(selectionModel);
 
         // Add a border to the list.
-        BorderUtil.addBorder(getWidget().getElement());
+        getWidget().getElement().addClassName("stroom-border");
 
         initTableColumns();
     }

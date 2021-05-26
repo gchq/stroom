@@ -29,10 +29,9 @@ import stroom.explorer.shared.ExplorerResource;
 import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
-import stroom.util.client.ImageUtil;
 import stroom.util.shared.ResultPage;
 
 import com.google.gwt.core.client.GWT;
@@ -62,7 +61,7 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
     private final RestDataProvider<Dependency, ResultPage<Dependency>> dataProvider;
 
     // Holds all the doc type icons
-    private Map<String, SvgPreset> typeToSvgMap = new HashMap<>();
+    private Map<String, Preset> typeToSvgMap = new HashMap<>();
 
     @Inject
     public DependenciesPresenter(final EventBus eventBus, final RestFactory restFactory) {
@@ -175,8 +174,8 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
                                 .collect(Collectors.toMap(
                                         DocumentType::getType,
                                         documentType ->
-                                                new SvgPreset(
-                                                        ImageUtil.getImageURL() + documentType.getIconUrl(),
+                                                new Preset(
+                                                        documentType.getIconClassName(),
                                                         documentType.getDisplayType(),
                                                         true))))
                 .call(EXPLORER_RESOURCE)
@@ -211,9 +210,9 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
         return builder.toSafeHtml();
     }
 
-    private SvgPreset getDocTypeIcon(final DocRef docRef) {
+    private Preset getDocTypeIcon(final DocRef docRef) {
         if (docRef != null && docRef.getType() != null && !docRef.getType().isEmpty()) {
-            final SvgPreset svgPreset = typeToSvgMap.get(docRef.getType());
+            final Preset svgPreset = typeToSvgMap.get(docRef.getType());
             if (svgPreset != null) {
                 return svgPreset;
             } else {

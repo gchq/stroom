@@ -16,6 +16,7 @@
 
 package stroom.explorer.client.presenter;
 
+import stroom.data.table.client.CellTableViewImpl.DefaultResources;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.event.ShowExplorerMenuEvent;
 import stroom.explorer.client.view.ExplorerTickBoxCell;
@@ -31,9 +32,9 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.cellview.client.AbstractCellTable;
 import com.google.gwt.user.cellview.client.CellTable;
+import com.google.gwt.user.cellview.client.CellTable.Resources;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -63,9 +64,9 @@ public class ExplorerTickBoxTree extends AbstractExplorerTree {
         expanderClassName = explorerCell.getExpanderClassName();
         tickBoxClassName = explorerCell.getTickBoxClassName();
 
-        final ExplorerTreeResources resources = GWT.create(ExplorerTreeResources.class);
+        final Resources resources = GWT.create(DefaultResources.class);
         cellTable = new CellTable<>(Integer.MAX_VALUE, resources);
-        cellTable.setWidth("100%");
+        cellTable.getElement().setClassName("explorerTree");
         cellTable.addColumn(new Column<ExplorerNode, ExplorerNode>(explorerCell) {
             @Override
             public ExplorerNode getValue(ExplorerNode object) {
@@ -283,19 +284,6 @@ public class ExplorerTickBoxTree extends AbstractExplorerTree {
 
     public void setFocus(final boolean focused) {
         cellTable.setFocus(focused);
-    }
-
-    @CssResource.ImportedWithPrefix("gwt-CellTable")
-    public interface ExplorerTreeStyle extends CellTable.Style {
-
-        String DEFAULT_CSS = "stroom/explorer/client/view/ExplorerTree.css";
-    }
-
-    public interface ExplorerTreeResources extends CellTable.Resources {
-
-        @Override
-        @Source(ExplorerTreeStyle.DEFAULT_CSS)
-        ExplorerTreeStyle cellTableStyle();
     }
 
     private class MySelectionEventManager extends AbstractCellTable.CellTableKeyboardSelectionHandler<ExplorerNode> {

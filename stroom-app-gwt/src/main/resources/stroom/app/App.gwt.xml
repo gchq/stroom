@@ -80,6 +80,7 @@
     <inherits name="stroom.trackers.Trackers" />
     <inherits name="stroom.hyperlink.Hyperlink" />
     <inherits name="stroom.iframe.IFrame" />
+    <inherits name="stroom.preferences.Preferences" />
 
     <!-- Additional -->
     <inherits name="stroom.folder.Folder" />

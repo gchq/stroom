@@ -29,11 +29,10 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.client.Icon;
-import stroom.svg.client.SvgIcon;
-import stroom.util.client.ImageUtil;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.util.client.SelectionType;
 
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -107,7 +106,7 @@ public class FolderRootPlugin extends Plugin implements TabData {
 
     @Override
     public Icon getIcon() {
-        return new SvgIcon(ImageUtil.getImageURL() + DocumentType.DOC_IMAGE_URL + ExplorerConstants.SYSTEM, 18, 18);
+        return Icon.create(DocumentType.DOC_IMAGE_CLASS_NAME + ExplorerConstants.SYSTEM);
     }
 
     @Override

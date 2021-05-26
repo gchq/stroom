@@ -23,8 +23,8 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.retention.shared.DataRetentionRule;
-import stroom.svg.client.SvgPreset;
-import stroom.util.client.BorderUtil;
+import stroom.svg.client.Preset;
+import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
@@ -61,7 +61,7 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGrid
         this.actionMenuPresenterProvider = actionMenuPresenterProvider;
 
         // Add a border to the list.
-        BorderUtil.addBorder(getWidget().getElement());
+        getWidget().getElement().addClassName("stroom-border");
 
         initTableColumns();
     }
@@ -181,7 +181,7 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGrid
         return getView().getSelectionModel();
     }
 
-    public ButtonView add(final SvgPreset preset) {
+    public ButtonView add(final Preset preset) {
         return getView().addButton(preset);
     }
 

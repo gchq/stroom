@@ -21,12 +21,10 @@ import stroom.widget.dropdowntree.client.presenter.DropDownUiHandlers;
 
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.MouseDownEvent;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -41,10 +39,10 @@ public class DropDownViewImpl extends ViewWithUiHandlers<DropDownUiHandlers>
     @UiField
     Label label;
     @UiField
-    Image button;
+    Button button;
 
     @Inject
-    public DropDownViewImpl(final Binder binder, final Resources resources) {
+    public DropDownViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         widget.addDomHandler(event -> {
             showPopup(event);
@@ -73,10 +71,5 @@ public class DropDownViewImpl extends ViewWithUiHandlers<DropDownUiHandlers>
 
     public interface Binder extends UiBinder<Widget, DropDownViewImpl> {
 
-    }
-
-    public interface Resources extends ClientBundle {
-
-        ImageResource popup();
     }
 }

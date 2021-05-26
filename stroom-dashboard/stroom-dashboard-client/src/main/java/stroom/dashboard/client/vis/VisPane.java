@@ -28,6 +28,8 @@ import java.util.List;
 
 public interface VisPane extends IsWidget, RequiresResize, HasUiHandlers<SelectionUiHandlers> {
 
+    void setClassName(String className);
+
     void injectScripts(List<ScriptDoc> scripts, VisFunction function);
 
     void start();
@@ -36,5 +38,5 @@ public interface VisPane extends IsWidget, RequiresResize, HasUiHandlers<Selecti
 
     void setData(JavaScriptObject context, JavaScriptObject settings, JavaScriptObject data);
 
-    void setVisType(String visType);
+    void setVisType(String visType, String className);
 }

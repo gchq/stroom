@@ -64,7 +64,7 @@ import stroom.query.client.ExpressionUiHandlers;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.EqualsBuilder;
@@ -821,7 +821,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
     public interface QueryView extends View, HasUiHandlers<QueryUiHandlers> {
 
-        ButtonView addButton(SvgPreset preset);
+        ButtonView addButton(Preset preset);
 
         void setExpressionView(View view);
 

@@ -17,31 +17,18 @@
 package stroom.widget.tab.client.view;
 
 import stroom.svg.client.Icon;
-import stroom.svg.client.SvgIcon;
-import stroom.widget.tab.client.presenter.ImageIcon;
 
-import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.resources.client.ImageResource.ImageOptions;
-import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.Widget;
 
 public class CurveTab extends AbstractTab {
 
     private static final int MAX_TEXT_LENGTH = 50;
 
-    private static Resources resources;
     private final Element element;
-    private final Element background;
-    private final Element leftBackground;
-    private final Element midBackground;
-    private final Element rightBackground;
     //    private final Element icon;
     private final Element label;
     private final Element close;
@@ -50,84 +37,33 @@ public class CurveTab extends AbstractTab {
     public CurveTab(final Icon icon, final String text, final boolean allowClose) {
         this.allowClose = allowClose;
 
-        if (resources == null) {
-            resources = GWT.create(Resources.class);
-            resources.style().ensureInjected();
-        }
-
         element = DOM.createDiv();
-        element.setClassName(resources.style().curveTab());
+        element.setClassName("curveTab");
 
-        background = DOM.createDiv();
-        background.setClassName(resources.style().background());
+        final Element background = DOM.createDiv();
+        background.setClassName("curveTab-background");
         element.appendChild(background);
 
-        leftBackground = DOM.createDiv();
-        leftBackground.setClassName(resources.style().leftBackground());
+        final Element leftBackground = DOM.createDiv();
+        leftBackground.setClassName("curveTab-leftBackground");
         background.appendChild(leftBackground);
 
-        midBackground = DOM.createDiv();
-        midBackground.setClassName(resources.style().midBackground());
+        final Element midBackground = DOM.createDiv();
+        midBackground.setClassName("curveTab-midBackground");
         background.appendChild(midBackground);
 
-        rightBackground = DOM.createDiv();
-        rightBackground.setClassName(resources.style().rightBackground());
+        final Element rightBackground = DOM.createDiv();
+        rightBackground.setClassName("curveTab-rightBackground");
         background.appendChild(rightBackground);
 
         if (icon != null) {
-            if (icon instanceof ImageIcon) {
-                final ImageIcon imageIcon = (ImageIcon) icon;
-                final Image image = imageIcon.getImage();
-                if (image != null) {
-                    image.getElement().addClassName(resources.style().icon());
-                    element.appendChild(image.getElement());
-                }
-//            } else if (icon instanceof SvgIcon) {
-//                final SvgIcon glyphIcon = (SvgIcon) icon;
-//                final SafeHtml safeHtml = SafeHtmlUtils.fromTrustedString("<div class=\""
-//                        + resources.style().icon()
-//                        + "\"><div class=\""
-//                        + resources.style().face()
-//                        + "\" style=\"color:"
-//                        + glyphIcon.getColourSet()
-//                        + "\"><i class=\""
-//                        + glyphIcon.getGlyph()
-//                        + "\"></i></div></div>");
-//                final HTML html = new HTML(safeHtml);
-//                final Element elem = html.getElement();
-//                element.appendChild(elem);
-            } else if (icon instanceof SvgIcon) {
-                final SvgIcon svgIcon = (SvgIcon) icon;
-
-                final Image image = new Image(svgIcon.getUrl());
-                image.addStyleName(resources.style().icon());
-
-
-//                final SafeHtml safeHtml = SafeHtmlUtils.fromTrustedString("<div class=\""
-//                        + resources.style().icon()
-//                        + "\"></div>");
-//                final HTML html = new HTML(safeHtml);
-//
-//                if (svgIcon.getUrl() != null) {
-//                    ResourceCache.get(svgIcon.getUrl(), data -> {
-//                        html.setHTML("<div class=\"" +
-//                                resources.style().icon() +
-//                                "\">" +
-//                                data +
-//                                "</div>");
-//                        final Element svg = getElement().getElementsByTagName("svg").getItem(0).cast();
-//                        svg.setAttribute("width", "18");
-//                        svg.setAttribute("height", "18");
-//                    });
-//                }
-
-                final Element elem = image.getElement();
-                element.appendChild(elem);
-            }
+            final Widget iconWidget = icon.asWidget();
+            iconWidget.getElement().addClassName("curveTab-icon");
+            element.appendChild(iconWidget.getElement());
         }
 
         label = DOM.createDiv();
-        label.setClassName(resources.style().text());
+        label.setClassName("curveTab-text");
 
         if (text.length() > MAX_TEXT_LENGTH) {
             label.setInnerText(text.substring(0, MAX_TEXT_LENGTH) + "...");
@@ -139,7 +75,7 @@ public class CurveTab extends AbstractTab {
         element.appendChild(label);
 
         close = DOM.createDiv();
-        close.setClassName(resources.style().close());
+        close.setClassName("curveTab-close");
         element.appendChild(close);
 
         setElement(element);
@@ -153,9 +89,9 @@ public class CurveTab extends AbstractTab {
     @Override
     public void setSelected(final boolean selected) {
         if (selected) {
-            element.addClassName(resources.style().selected());
+            element.addClassName("curveTab-selected");
         } else {
-            element.removeClassName(resources.style().selected());
+            element.removeClassName("curveTab-selected");
         }
     }
 
@@ -163,9 +99,9 @@ public class CurveTab extends AbstractTab {
     public void setCloseActive(final boolean active) {
         if (allowClose) {
             if (active) {
-                close.addClassName(resources.style().closeActive());
+                close.addClassName("curveTab-closeActive");
             } else {
-                close.removeClassName(resources.style().closeActive());
+                close.removeClassName("curveTab-closeActive");
             }
         }
     }
@@ -182,67 +118,14 @@ public class CurveTab extends AbstractTab {
     @Override
     protected void setHover(final boolean hover) {
         if (hover) {
-            element.addClassName(resources.style().hover());
+            element.addClassName("curveTab-hover");
         } else {
-            element.removeClassName(resources.style().hover());
+            element.removeClassName("curveTab-hover");
         }
     }
 
     @Override
     protected Element getCloseElement() {
         return close;
-    }
-
-    public interface Style extends CssResource {
-
-        String curveTab();
-
-        String hover();
-
-        String selected();
-
-        String background();
-
-        String leftBackground();
-
-        String midBackground();
-
-        String rightBackground();
-
-        String icon();
-
-        String face();
-
-        String text();
-
-        String close();
-
-        String closeActive();
-    }
-
-    public interface Resources extends ClientBundle {
-
-        @Source("content.png")
-        @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
-        ImageResource content();
-
-        @Source("left.png")
-        ImageResource left();
-
-        @Source("middle.png")
-        @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
-        ImageResource middle();
-
-        @Source("right.png")
-        ImageResource right();
-
-        @Source("close.png")
-        ImageResource close();
-
-        @Source("closeActive.png")
-        ImageResource closeActive();
-
-        @Source("CurveTab.css")
-        Style style();
     }
 }

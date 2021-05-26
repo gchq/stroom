@@ -26,7 +26,6 @@ import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
-import stroom.util.client.BorderUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.customdatebox.client.ClientDateUtil;
@@ -52,7 +51,7 @@ public class FSVolumeStatusListPresenter extends MyPresenterWidget<DataGridView<
         super(eventBus, new DataGridViewImpl<>(true, true));
 
         // Add a border to the list.
-        BorderUtil.addBorder(getWidget().getElement());
+        getWidget().getElement().addClassName("stroom-border");
 
         initTableColumns();
 

@@ -2,50 +2,25 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:btn="urn:import:stroom.widget.button.client">
-    <ui:style>
-        .dataNavigator {
-        position: relative;
-        text-align: right;
-        }
+    <g:FlowPanel styleName="dataNavigator">
 
-        .label {
-        display: inline-block;
-        margin: 0px;
-        margin-top: 2px;
-        cursor: pointer;
-        padding-left: 0.75em;
-        padding-right: 0.75em;
-        }
-
-        .label:hover {
-        text-decoration: underline;
-        }
-
-        .button {
-        padding: 1px;
-        text-align: center;
-        }
-    </ui:style>
-
-    <g:FlowPanel styleName="{style.dataNavigator}">
-
-        <g:Label ui:field="lblParts" styleName="{style.label}"/>
+        <g:Label ui:field="lblParts" styleName="dataNavigator-label"/>
         <btn:SvgButton ui:field="firstPart"/>
         <btn:SvgButton ui:field="prevPart"/>
         <btn:SvgButton ui:field="nextPart"/>
         <btn:SvgButton ui:field="lastPart"/>
 
-        <g:Label ui:field="lblSegments" styleName="{style.label}"/>
+        <g:Label ui:field="lblSegments" styleName="dataNavigator-label"/>
         <btn:SvgButton ui:field="firstSegment"/>
         <btn:SvgButton ui:field="prevSegment"/>
         <btn:SvgButton ui:field="nextSegment"/>
         <btn:SvgButton ui:field="lastSegment"/>
 
-        <g:Label ui:field="lblCharacters" styleName="{style.label}"/>
+        <g:Label ui:field="lblCharacters" styleName="dataNavigator-label"/>
         <btn:SvgButton ui:field="showHeadCharactersBtn"/>
         <btn:SvgButton ui:field="advanceCharactersBackwardBtn"/>
         <btn:SvgButton ui:field="advanceCharactersForwardBtn"/>
 
-        <btn:SvgButton ui:field="refresh" />
+        <btn:SvgButton ui:field="refresh"/>
     </g:FlowPanel>
 </ui:UiBinder>

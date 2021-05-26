@@ -3,6 +3,7 @@ package stroom.config.global.impl.db;
 import stroom.config.app.PropertyServiceConfig;
 import stroom.config.global.impl.ConfigPropertyDao;
 import stroom.config.global.impl.GlobalConfigModule;
+import stroom.config.global.impl.PreferencesDao;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 
@@ -20,6 +21,7 @@ public class GlobalConfigDbModule extends AbstractFlyWayDbModule<PropertyService
         install(new GlobalConfigModule());
 
         bind(ConfigPropertyDao.class).to(ConfigPropertyDaoImpl.class);
+        bind(PreferencesDao.class).to(PreferencesDaoImpl.class);
     }
 
     @Override

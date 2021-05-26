@@ -56,40 +56,38 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
         initWidget(panel);
 
         final FlowPanel contentOuter = new FlowPanel();
-        contentOuter.setStyleName("contentOuter");
+        contentOuter.setStyleName("tabLayout-contentOuter");
         panel.add(contentOuter);
 
         final FlowPanel contentInner = new FlowPanel();
-        contentInner.setStyleName("contentInner" + " " + StroomStyleNames.STROOM_CONTENT);
+        contentInner.setStyleName("tabLayout-contentInner" + " " + StroomStyleNames.STROOM_CONTENT);
         contentOuter.add(contentInner);
 
         final FlowPanel barOuter = new FlowPanel();
-        barOuter.setStyleName("barOuter");
+        barOuter.setStyleName("tabLayout-barOuter");
         contentInner.add(barOuter);
 
         tabBar = new LinkTabBar();
-        tabBar.addStyleName("barInner");
+        tabBar.addStyleName("tabLayout-barInner");
         barOuter.add(tabBar);
 
         final FlowPanel buttons = new FlowPanel();
-        buttons.setStyleName("buttons");
+        buttons.setStyleName("tabLayout-buttons");
         contentInner.add(buttons);
 
         settings = new Button();
-        settings.setStyleName("fa-button");
-        settings.setHTML("<img src=\"images/settings-grey.svg\" class=\"face settingsButton\" />");
+        settings.setStyleName("fa-button face tabLayout-settingsButton");
         settings.setTitle("Settings");
         buttons.add(settings);
 
         close = new Button();
-        close.setStyleName("fa-button");
-        close.setHTML("<img src=\"images/close-grey.svg\" class=\"face closeButton\" />");
+        close.setStyleName("fa-button face tabLayout-closeButton");
         close.setTitle("Close");
         buttons.add(close);
 
         final LayerContainerImpl layerContainerImpl = new LayerContainerImpl();
         layerContainerImpl.setFade(true);
-        layerContainerImpl.setStyleName("content");
+        layerContainerImpl.setStyleName("tabLayout-content");
         contentInner.add(layerContainerImpl);
 
         layerContainer = layerContainerImpl;

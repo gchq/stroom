@@ -16,15 +16,15 @@
 
 package stroom.widget.button.client;
 
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 
 public class SvgButton extends BaseSvgButton implements ButtonView {
 
-    private SvgButton(final SvgPreset preset) {
+    private SvgButton(final Preset preset) {
         super(preset);
     }
 
-    public static SvgButton create(final SvgPreset preset) {
+    public static SvgButton create(final Preset preset) {
         final SvgButton button = new SvgButton(preset);
         return button;
     }

@@ -675,7 +675,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             }
         };
 
-        final FieldHeader fieldHeader = new FieldHeader(fieldsManager, field);
+        final FieldHeader fieldHeader = new FieldHeader(field);
         dataGrid.addResizableColumn(column, fieldHeader, field.getWidth());
         existingColumns.add(column);
     }

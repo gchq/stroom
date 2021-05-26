@@ -26,7 +26,7 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeCache;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.PageRequest;
 import stroom.widget.button.client.ButtonView;
@@ -340,7 +340,7 @@ public class ManageGlobalPropertyListPresenter
         DataGridUtil.addColumnSortHandler(getView(), criteria, this::refresh);
     }
 
-    public ButtonView addButton(final SvgPreset preset) {
+    public ButtonView addButton(final Preset preset) {
         return getView().addButton(preset);
     }
 

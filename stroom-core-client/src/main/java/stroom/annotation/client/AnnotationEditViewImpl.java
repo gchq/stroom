@@ -17,7 +17,7 @@
 package stroom.annotation.client;
 
 import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.widget.button.client.SvgButton;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 
@@ -44,11 +44,11 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
 
     }
 
-    private static final SvgPreset CHANGE_STATUS = new SvgPreset("images/tree-open.svg", "Change Status", true);
-    private static final SvgPreset CHANGE_ASSIGNED_TO = new SvgPreset("images/tree-open.svg",
+    private static final Preset CHANGE_STATUS = new Preset("images/tree-open.svg", "Change Status", true);
+    private static final Preset CHANGE_ASSIGNED_TO = new Preset("images/tree-open.svg",
             "Change Assigned To",
             true);
-    private static final SvgPreset CHOOSE_COMMENT = new SvgPreset("images/tree-open.svg", "Choose Comment", true);
+    private static final Preset CHOOSE_COMMENT = new Preset("images/tree-open.svg", "Choose Comment", true);
 
     @UiField
     TextBox titleTextBox;

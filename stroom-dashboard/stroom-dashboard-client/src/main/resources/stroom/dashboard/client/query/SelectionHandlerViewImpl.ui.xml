@@ -4,33 +4,9 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:i="urn:import:stroom.item.client"
 >
-    <ui:style>
-        .top {
-        width: 100%;
-        height: 100%;
-        background: white;
-        border: 1px solid #c5cde2;
-        }
-
-        .bottom {
-        width: 100%;
-        height: 100%;
-        padding-top: 5px;
-        }
-
-        .name {
-        display: inline-block;
-        }
-
-        .optional {
-        display: inline-block;
-        margin-left: 5px;
-        }
-    </ui:style>
-
     <g:DockLayoutPanel unit="PX" width="100%" height="100%">
         <g:north size="52">
-            <g:SimplePanel styleName="{style.bottom}">
+            <g:SimplePanel styleName="selectionHandlerViewImpl-bottom max">
                 <g:Grid ui:field="grid" styleName="stroom-control-grid" width="100%">
                     <g:row>
                         <g:cell>Component:</g:cell>
@@ -48,7 +24,7 @@
             </g:SimplePanel>
         </g:north>
         <g:center>
-            <g:SimplePanel ui:field="expression" styleName="{style.top}"/>
+            <g:SimplePanel ui:field="expression" styleName="max stroom-content stroom-border"/>
         </g:center>
     </g:DockLayoutPanel>
 </ui:UiBinder>

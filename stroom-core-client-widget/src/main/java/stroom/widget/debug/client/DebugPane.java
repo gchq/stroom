@@ -29,6 +29,7 @@ public class DebugPane {
             synchronized (DebugPane.class) {
                 if (debug == null) {
                     debug = DOM.createDiv();
+                    debug.addClassName("stroom-input");
                     debug.getStyle().setProperty("position", "absolute");
                     debug.getStyle().setProperty("bottom", "0px");
                     debug.getStyle().setProperty("left", "0px");
@@ -39,7 +40,6 @@ public class DebugPane {
                     debug.getStyle().setProperty("border", "2px");
                     debug.getStyle().setProperty("borderStyle", "solid");
                     debug.getStyle().setProperty("borderColor", "red");
-                    debug.getStyle().setProperty("color", "black");
                     debug.getStyle().setProperty("zIndex", "200");
 
                     // We need to set the background color or mouse events will
@@ -48,7 +48,7 @@ public class DebugPane {
                     // iframe, the
                     // iframe will capture the event and the slider will stop
                     // moving.
-                    debug.getStyle().setProperty("background", "white");
+
 
                     RootPanel.getBodyElement().appendChild(debug);
                 }

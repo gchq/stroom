@@ -50,7 +50,7 @@ import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ProcessorListRowResultPage;
 import stroom.processor.shared.ProcessorResource;
 import stroom.processor.shared.ProcessorRow;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
@@ -271,10 +271,10 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
     }
 
     private void addIconColumn() {
-        getView().addColumn(new Column<ProcessorListRow, SvgPreset>(new SvgCell()) {
+        getView().addColumn(new Column<ProcessorListRow, Preset>(new SvgCell()) {
             @Override
-            public SvgPreset getValue(final ProcessorListRow row) {
-                SvgPreset icon = null;
+            public Preset getValue(final ProcessorListRow row) {
+                Preset icon = null;
                 if (row instanceof ProcessorFilterRow) {
                     icon = SvgPresets.FILTER.enabled(true);
                 } else if (row instanceof ProcessorRow) {

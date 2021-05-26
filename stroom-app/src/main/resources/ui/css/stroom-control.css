@@ -79,5 +79,5 @@
 }
 
 .stroom .stroom-control-border {
-    border: solid 1px #c5cde2;
+    border: solid 1px var(--input-border-color);
 }

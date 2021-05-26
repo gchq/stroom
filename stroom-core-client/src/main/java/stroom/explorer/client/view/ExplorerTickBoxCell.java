@@ -4,28 +4,20 @@ import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.explorer.client.presenter.TickBoxSelectionModel;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.util.client.ImageUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safecss.shared.SafeStyles;
 import com.google.gwt.safecss.shared.SafeStylesUtils;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.safehtml.shared.SafeUri;
-import com.google.gwt.safehtml.shared.UriUtils;
-import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.view.client.SelectionModel;
 
 public class ExplorerTickBoxCell extends AbstractCell<ExplorerNode> {
 
     private static Template template;
-    private static Resources resources;
     private final SelectionModel<ExplorerNode> selectionModel;
     private TickBoxCell tickBoxCell;
 
@@ -38,24 +30,20 @@ public class ExplorerTickBoxCell extends AbstractCell<ExplorerNode> {
 
         if (template == null) {
             template = GWT.create(Template.class);
-            resources = GWT.create(Resources.class);
-            resources.style().ensureInjected();
         }
     }
 
     public String getExpanderClassName() {
-        return resources.style().expander();
+        return "explorerTickBoxCell-expander";
     }
 
     public String getTickBoxClassName() {
-        return resources.style().tickBox();
+        return "explorerTickBoxCell-tickBox";
     }
 
     @Override
     public void render(final Context context, final ExplorerNode item, final SafeHtmlBuilder sb) {
         if (item != null) {
-            final Style style = resources.style();
-
             int expanderPadding = 4;
 
             SafeHtml expanderIcon = null;
@@ -66,19 +54,18 @@ public class ExplorerTickBoxCell extends AbstractCell<ExplorerNode> {
                         expanderPadding += 13;
                         break;
                     case OPEN:
-                        expanderIcon = template.icon(resources.style().expanderIcon(),
-                                UriUtils.fromTrustedString(ImageUtil.getImageURL() + "tree-open.svg"));
+                        expanderIcon =
+                                template.icon("svgIcon  explorerCell-treeOpen");
                         break;
                     case CLOSED:
-                        expanderIcon = template.icon(resources.style().expanderIcon(),
-                                UriUtils.fromTrustedString(ImageUtil.getImageURL() + "tree-closed.svg"));
+                        expanderIcon =
+                                template.icon("svgIcon explorerCell-treeClosed");
                         break;
                     default:
                         throw new RuntimeException("Unexpected state " + item.getNodeState());
                 }
             } else {
-                expanderIcon = template.icon(resources.style().expanderIcon(),
-                        UriUtils.fromTrustedString(ImageUtil.getImageURL() + "tree-leaf.svg"));
+                expanderIcon = template.icon("svgIcon explorerCell-treeLeaf");
             }
 
             int indent = item.getDepth();
@@ -90,10 +77,11 @@ public class ExplorerTickBoxCell extends AbstractCell<ExplorerNode> {
 //            final SafeHtml indentHtml = template.indent(style.indent(), indent);
 
             final SafeStyles paddingLeft = SafeStylesUtils.fromTrustedString("padding-left:" + indent + "px;");
-            final SafeHtml expanderHtml = template.expander(style.expander(), paddingLeft, expanderIcon);
-            final SafeUri safeUri = UriUtils.fromTrustedString(ImageUtil.getImageURL() + item.getIconUrl());
-            final SafeHtml iconHtml = template.icon(style.icon(), safeUri);
-            final SafeHtml textHtml = template.text(style.text(), SafeHtmlUtils.fromString(item.getDisplayValue()));
+            final SafeHtml expanderHtml =
+                    template.expander("explorerTickBoxCell-expander", paddingLeft, expanderIcon);
+            final SafeHtml iconHtml = template.icon("explorerTickBoxCell-icon " + item.getIconClassName());
+            final SafeHtml textHtml = template.text("explorerTickBoxCell-text",
+                    SafeHtmlUtils.fromString(item.getDisplayValue()));
 
             final SafeHtmlBuilder content = new SafeHtmlBuilder();
             content.append(expanderHtml);
@@ -102,22 +90,15 @@ public class ExplorerTickBoxCell extends AbstractCell<ExplorerNode> {
                 final SafeHtmlBuilder tb = new SafeHtmlBuilder();
                 tickBoxCell.render(context, getValue(item), tb);
 
-                final SafeHtml tickBoxHtml = template.tickBox(style.tickBox(), tb.toSafeHtml());
+                final SafeHtml tickBoxHtml = template.tickBox("explorerTickBoxCell-tickBox", tb.toSafeHtml());
                 content.append(tickBoxHtml);
             }
 
             content.append(iconHtml);
             content.append(textHtml);
 
-            sb.append(template.outer(style.outer(), content.toSafeHtml()));
+            sb.append(template.outer("explorerTickBoxCell-outer", content.toSafeHtml()));
         }
-    }
-
-    private SafeHtml getImageHtml(final ImageResource res) {
-        // Get the HTML for the image.
-        final AbstractImagePrototype proto = AbstractImagePrototype.create(res);
-        final SafeHtml image = SafeHtmlUtils.fromTrustedString(proto.getHTML());
-        return image;
     }
 
     private TickBoxState getValue(final ExplorerNode item) {
@@ -135,35 +116,7 @@ public class ExplorerTickBoxCell extends AbstractCell<ExplorerNode> {
         }
     }
 
-    public interface Style extends CssResource {
-
-        /**
-         * The path to the default CSS styles used by this resource.
-         */
-        String DEFAULT_CSS = "stroom/explorer/client/view/ExplorerTickBoxCell.css";
-
-        String outer();
-
-        String expander();
-
-        String expanderIcon();
-
-        String tickBox();
-
-        String icon();
-
-        String text();
-    }
-
-    interface Resources extends ClientBundle {
-
-        @Source(Style.DEFAULT_CSS)
-        Style style();
-    }
-
     interface Template extends SafeHtmlTemplates {
-//        @Template("<div class=\"{0}\" style=\"width:{1}px\"></div>")
-//        SafeHtml indent(String indentClass, int indent);
 
         @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
         SafeHtml expander(String iconClass, SafeStyles styles, SafeHtml icon);
@@ -171,8 +124,8 @@ public class ExplorerTickBoxCell extends AbstractCell<ExplorerNode> {
         @Template("<div class=\"{0}\">{1}</div>")
         SafeHtml tickBox(String iconClass, SafeHtml icon);
 
-        @Template("<img class=\"{0}\" src=\"{1}\" />")
-        SafeHtml icon(String iconClass, SafeUri iconUrl);
+        @Template("<div class=\"{0}\"></div>")
+        SafeHtml icon(String iconClass);
 
         @Template("<div class=\"{0}\">{1}</div>")
         SafeHtml text(String textClass, SafeHtml text);

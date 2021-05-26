@@ -1,0 +1,78 @@
+/* Material Design Lite */
+/* @import ../mdl/material.min.css" /> */
+/* <script type="text/javascript" src='../mdl/material.min.js'></script> */
+@import url("theme.css");
+
+/* Font Awesome */
+@import url("font-awesome.css");
+
+/* Roboto Font */
+@import url("roboto.css");
+
+/* Roboto Monospace Font */
+@import url("Roboto_Mono.css");
+
+/* Standard GWT CSS plus Stroom modifications */
+@import url("standard.css");
+@import url("standard_mod.css");
+
+@import url("webkit-scrollbar.css");
+@import url("firefox-scrollbar.css");
+@import url("stroom-control.css");
+@import url("stroom-button.css");
+@import url("fa-button.css");
+@import url("stroom-annotation.css");
+@import url("stroom-dashboard.css");
+@import url("stroom.css");
+@import url("../dynamic.css");
+@import url("editor.css");
+@import url("tickbox.css");
+@import url("tickboxcell.css");
+@import url("ticklist.css");
+@import url("ExplorerCell.css");
+@import url("SimplePopup.css");
+@import url("Dialog.css");
+@import url("ResizableDialog.css");
+@import url("PopupSupport.css");
+
+
+
+@import url("celltable/BasicCellTable.css");
+@import url("celltable/DefaultCellTable.css");
+@import url("celltable/DisabledCellTable.css");
+@import url("celltable/HoverCellTable.css");
+@import url("celltable/MenuCellTable.css");
+@import url("celltable/DataGrid.css");
+@import url("QuickFilter.css");
+@import url("ExpressionItemBox.css");
+@import url("ExplorerTickBoxCell.css");
+@import url("TermEditor.css");
+@import url("alert.css");
+@import url("spinner.css");
+@import url("menubar.css");
+@import url("PipelineElementBox.css");
+@import url("valuespinner.css");
+@import url("imagebutton.css");
+@import url("linecolinput.css");
+@import url("dropdowntree.css");
+@import url("ExpanderCell.css");
+@import url("SvgCell.css");
+@import url("CellList.css");
+@import url("SmallSpinner.css");
+@import url("codeeditor.css");
+@import url("components.css");
+@import url("dashboard.css");
+@import url("xsdbrowser.css");
+@import url("svg-icon.css");
+
+@import url("celltable/BasicCellTable.css");
+@import url("celltable/DefaultCellTable.css");
+@import url("celltable/DisabledCellTable.css");
+@import url("celltable/ExplorerTree.css");
+@import url("celltable/HoverCellTable.css");
+@import url("celltable/MenuCellTable.css");
+
+/* Material Design Spinner */
+@import url("spinner.min.css");
+@import url("spinner.custom.css");
+

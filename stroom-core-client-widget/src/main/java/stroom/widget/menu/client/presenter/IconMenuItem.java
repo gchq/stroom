@@ -17,7 +17,7 @@
 package stroom.widget.menu.client.presenter;
 
 import stroom.svg.client.Icon;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 
 import com.google.gwt.user.client.Command;
 
@@ -31,57 +31,14 @@ public class IconMenuItem extends CommandMenuItem {
         super(priority, text, shortcut, enabled, command);
         this.enabledIcon = enabledIcon;
         this.disabledIcon = disabledIcon;
-//
-//        if (enabledImage != null) {
-//            this.enabledImage = new Image(enabledImage);
-//        } else {
-//            this.enabledImage = null;
-//        }
-//        if (disabledImage != null) {
-//            this.disabledImage = new Image(disabledImage);
-//        } else {
-//            this.disabledImage = null;
-//        }
     }
 
-    //
-//    public IconMenuItem(final int priority, final String enabledImageUrl, final String disabledImageUrl,
-//                        final String text, final String shortcut, final boolean enabled, final Command command) {
-//        super(priority, text, shortcut, enabled, command);
-//        if (enabledImageUrl != null) {
-//            this.enabledImage = new Image(enabledImageUrl);
-//        } else {
-//            this.enabledImage = null;
-//        }
-//        if (disabledImageUrl != null) {
-//            this.disabledImage = new Image(disabledImageUrl);
-//        } else {
-//            this.disabledImage = null;
-//        }
-//    }
-//
-//    public IconMenuItem(final int priority, final Image enabledImage, final Image disabledImage, final String text,
-//                        final String shortcut, final boolean enabled, final Command command) {
-//        super(priority, text, shortcut, enabled, command);
-//        this.enabledImage = enabledImage;
-//        this.disabledImage = disabledImage;
-//    }
-//
     public IconMenuItem(final int priority, final String text, final String shortcut, final boolean enabled,
                         final Command command) {
         super(priority, text, shortcut, enabled, command);
         this.enabledIcon = null;
         this.disabledIcon = null;
     }
-//
-//    public Image getEnabledImage() {
-//        return enabledImage;
-//    }
-//
-//    public Image getDisabledImage() {
-//        return disabledImage;
-//    }
-
 
     public Icon getEnabledIcon() {
         return enabledIcon;
@@ -146,11 +103,8 @@ public class IconMenuItem extends CommandMenuItem {
         }
 
         public Item build() {
-//            if (enabledIcon != null && disabledIcon == null) {
-//                disabledIcon = enabledIcon;
-//            }
-            if (text == null && enabledIcon != null && enabledIcon instanceof SvgPreset) {
-                text = ((SvgPreset) enabledIcon).getTitle();
+            if (text == null && enabledIcon != null && enabledIcon instanceof Preset) {
+                text = ((Preset) enabledIcon).getTitle();
             }
             return new IconMenuItem(
                     priority,

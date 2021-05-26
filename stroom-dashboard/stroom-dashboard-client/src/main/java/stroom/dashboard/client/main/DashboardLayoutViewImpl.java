@@ -24,9 +24,6 @@ import stroom.dashboard.shared.DashboardConfig.TabVisibility;
 import stroom.dashboard.shared.LayoutConfig;
 import stroom.dashboard.shared.TabConfig;
 
-import com.google.gwt.core.shared.GWT;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
@@ -35,7 +32,6 @@ import com.gwtplatform.mvp.client.ViewImpl;
 
 public class DashboardLayoutViewImpl extends ViewImpl implements DashboardLayoutView {
 
-    private static Resources resources;
     private final Widget widget;
 
     @UiField
@@ -43,11 +39,6 @@ public class DashboardLayoutViewImpl extends ViewImpl implements DashboardLayout
 
     @Inject
     public DashboardLayoutViewImpl(final Binder binder) {
-        if (resources == null) {
-            resources = GWT.create(Resources.class);
-            resources.style().ensureInjected();
-        }
-
         widget = binder.createAndBindUi(this);
     }
 
@@ -98,18 +89,5 @@ public class DashboardLayoutViewImpl extends ViewImpl implements DashboardLayout
 
     public interface Binder extends UiBinder<Widget, DashboardLayoutViewImpl> {
 
-    }
-
-    public interface Style extends CssResource {
-
-        String outerPanel();
-
-        String layout();
-    }
-
-    public interface Resources extends ClientBundle {
-
-        @Source("dashboard.css")
-        Style style();
     }
 }

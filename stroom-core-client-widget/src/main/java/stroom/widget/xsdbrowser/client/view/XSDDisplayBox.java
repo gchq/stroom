@@ -16,7 +16,6 @@
 
 package stroom.widget.xsdbrowser.client.view;
 
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.ScrollPanel;
@@ -30,11 +29,11 @@ public class XSDDisplayBox extends Composite implements SelectableItem {
     private final VerticalPanel outerBox;
     private boolean selected;
 
-    public XSDDisplayBox(final ImageResource image, final String title, final Widget content,
+    public XSDDisplayBox(final String imageClassName, final String title, final Widget content,
                          final SelectionMap selectionMap, final XSDModel model, final XSDNode node, final String width,
                          final String height) {
         selectionMap.addSelectionItem(node, this);
-        boxTitle = new XSDDisplayBoxTitle(image, title, model, node);
+        boxTitle = new XSDDisplayBoxTitle(imageClassName, title, model, node);
         boxTitle.setStylePrimaryName("boxTitle");
 
         layout = new VerticalPanel();

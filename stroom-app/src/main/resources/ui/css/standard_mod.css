@@ -24,6 +24,23 @@ body,table td,select {
 	box-sizing: border-box;
 }
 
+.dataGridWidget button {
+	margin: 0;
+	padding: 2px 4px;
+	text-decoration: none;
+	cursor: pointer;
+	cursor: hand;
+
+	border-radius: 6px;
+	box-shadow: 0 0 1px rgba(0, 0, 0, 0.3);
+	white-space: nowrap;
+
+	background-image: var(--button-background-image);
+	background-color: var(--button-background-color);
+	border: 1px solid var(--button-border-color);
+	color: var(--button-text-color);
+}
+
 .gwt-Button {
 	margin: 0;
 	padding: 2px 4px;
@@ -31,50 +48,40 @@ body,table td,select {
 	text-decoration: none;
 	cursor: pointer;
 	cursor: hand;
-	
-/* 	background-image: linear-gradient(#60a1f0, #4a90e4 8px); */
-/* 	background: #4a90e4; */
-/* 	border-radius: 5px; */
-/* 	border: 1px outset #ccc; */
-/* 	white-space: nowrap; */
-	
-/* 	border: 1px solid #aaa; */
-	border: 1px solid #918e8c;
+
 	border-radius: 6px;
-/* 	background-image: none; */
-/* 	background-color: #f8fafd; */
 	box-shadow: 0 0 1px rgba(0, 0, 0, 0.3);
 	white-space: nowrap;
 	
-	
-	background-image: linear-gradient(#ffffff 0px, #fbfbfa 10px, #f6f5f5 0px, #e9e7e6);
-	background-color: #f6f5f5;
-	border-color: #918e8c;
+	background-image: var(--button-background-image);
+	background-color: var(--button-background-color);
+	border: 1px solid var(--button-border-color);
+	color: var(--button-text-color);
 }
 .gwt-Button:active {
 	border: 1px solid #5b7aa1 !important;
 /* 	border-color: #4a90e4 !important; */
 /* 	background-color: white !important; */
 	
-	background-image: linear-gradient(#c8c9cb 0px, #c8cacd 10px, #c2c6c8 0px, #b5b7ba) !important;
-	background-color: #c2c6c8 !important;
-	border-color: #5b7aa1 !important;
+	background-image: var(--button-background-image-active) !important;
+	background-color: var(--button-background-color-active) !important;
+	border-color: var(--button-border-color-active) !important;
 }
 .gwt-Button:hover {
 /* 	border-color: #aaa; */
 /* 	background-color: white; */
 	box-shadow: 0 0 1px rgba(0, 0, 0, 0.5);
 	
-	background-image: linear-gradient(#ffffff 0px, #ffffff 10px, #fafafa 0px, #edeceb);
-	background-color: #fafafa;
-	border-color: #918e8c;
+	background-image: var(--button-background-image-hover);
+	background-color: var(--button-background-color-hover);
+	border-color: var(--button-border-color-hover);
 }
 .gwt-Button[disabled] {
   cursor: default;
-  color: #888;
+  color: var(--button-text-color-disabled);
 }
 .gwt-Button[disabled]:hover {
-	border: 1px solid #aaa;
+	border: 1px solid var(--button-border-color-disabled-hover);
 }
 
 .gwt-CheckBox {
@@ -213,14 +220,14 @@ body,table td,select {
 
 .gwt-PushButton-up-hovering {
 	border: 1px outset;
-	border-color: #c5cde2 #69e #69e #7af;
+	border-color: var(--input-border-color) #69e #69e #7af;
 	cursor: pointer;
 	cursor: hand;
 }
 
 .gwt-PushButton-down-hovering {
 	border: 1px inset;
-	border-color: #c5cde2 #69e #69e #7af;
+	border-color: var(--input-border-color) #69e #69e #7af;
 	cursor: pointer;
 	cursor: hand;
 }
@@ -230,7 +237,7 @@ body,table td,select {
 }
 
 .gwt-TabBar .gwt-TabBarFirst-wrapper {
-	border-left: 1px solid #c5cde2;
+	border-left: 1px solid var(--border-color);
 }
 
 .gwt-TabBar .gwt-TabBarFirst {
@@ -253,15 +260,15 @@ body,table td,select {
 	color: black;
 	text-align: center;
 	background: none;
-	border-right: 1px solid #c5cde2;
-	border-top: 1px solid #c5cde2;
+	border-right: 1px solid var(--border-color);
+	border-top: 1px solid var(--border-color);
 }
 
 .gwt-TabBar .gwt-TabBarItem-selected {
 	cursor: default;
 	background: #dfeaf8 url(../images/header.png) repeat-x;
-	border-right: 1px solid #c5cde2;
-	border-top: 1px solid #c5cde2;
+	border-right: 1px solid var(--border-color);
+	border-top: 1px solid var(--border-color);
 }
 
 .gwt-TabBar .gwt-TabBarItem-disabled {
@@ -274,7 +281,7 @@ body,table td,select {
 }
 
 .gwt-TabPanelBottom {
-	border: 1px solid #c5cde2;
+	border: 1px solid var(--border-color);
 	padding: 0px;
 	overflow: hidden;
 	position: relative;
@@ -282,7 +289,7 @@ body,table td,select {
 
 .gwt-ToggleButton-up-hovering {
 	border: 1px outset;
-	border-color: #c5cde2 #69e #69e #7af;
+	border-color: var(--input-border-color) #69e #69e #7af;
 	cursor: pointer;
 	cursor: hand;
 }
@@ -290,7 +297,7 @@ body,table td,select {
 .gwt-ToggleButton-down-hovering {
 	background-position: 0 -513px;
 	border: 1px inset;
-	border-color: #c5cde2 #69e #69e #7af;
+	border-color: var(--input-border-color) #69e #69e #7af;
 	cursor: pointer;
 	cursor: hand;
 }
@@ -309,7 +316,7 @@ body,table td,select {
 	width: 200px;
 	margin: 0px;
 	padding: 1px;
-	border: solid 1px #c5cde2;
+	border: solid 1px var(--input-border-color);
 	background-color: white;
 	_background-color: white;
 	outline: none !important;
@@ -388,7 +395,7 @@ td.datePickerYear {
 
 .gwt-ValueSpinner .textBox {
 	text-align: right;
-	border: 1px solid #c5cde2;
+	border: 1px solid var(--input-border-color);
 }
 
 .gwt-SplitLayoutPanel-HDragger {
@@ -403,7 +410,7 @@ td.datePickerYear {
 
 .gwt-SplitLayoutPanel-EAST,.gwt-SplitLayoutPanel-WEST,.gwt-SplitLayoutPanel-NORTH,.gwt-SplitLayoutPanel-SOUTH,.gwt-SplitLayoutPanel-CENTER
 	{
-	border: 1px solid #c5cde2;
+	border: 1px solid var(--border-color);
 }
 
 
@@ -413,11 +420,11 @@ td.datePickerYear {
 .gwt-SuggestBox {
 padding: 1px;
 margin: 0px;
-border: 1px solid #c5cde2;
+border: 1px solid var(--input-border-color);
 }
 .gwt-SuggestBoxPopup {
   margin-left: 0px;
-  background-color: white;
+  background-color: var(--input-background-color);
   box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.5);
   margin-left: -2px;
   margin-top: 1px;
@@ -425,14 +432,15 @@ border: 1px solid #c5cde2;
 }
 .gwt-SuggestBoxPopup .item {
   padding: 2px 3px;
-  color: #424242;
+  color: var(--text-color);
   cursor: default;
 }
 .gwt-SuggestBoxPopup .item-selected {
-  background: #b7d6f6;
+  background: var(--selected-row-background-color);
+  color: var(--selected-row-text-color);
 }
 .gwt-SuggestBoxPopup .suggestPopupContent {
-  background: white;
+  background: var(--input-background-color);
 }
 .gwt-SuggestBoxPopup .suggestPopupTopCenter {
 background: none;

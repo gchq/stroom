@@ -29,9 +29,8 @@ public class HtmlViewImpl extends ViewImpl implements HtmlView {
 
     public HtmlViewImpl() {
         this.scrollPanel = new ScrollPanel();
-        scrollPanel.setWidth("100%");
-        scrollPanel.setHeight("100%");
-        scrollPanel.getElement().getStyle().setBackgroundColor("white");
+        scrollPanel.getElement().addClassName("max");
+        scrollPanel.getElement().addClassName("info-page");
     }
 
     @Override

@@ -18,8 +18,6 @@ package stroom.explorer.client.view;
 
 import stroom.explorer.client.presenter.EntityCheckTreePresenter.EntityCheckTreeView;
 
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.MaxScrollPanel;
@@ -50,10 +48,5 @@ public class EntityCheckTreeViewImpl extends ViewImpl implements EntityCheckTree
 
     public interface Binder extends UiBinder<Widget, EntityCheckTreeViewImpl> {
 
-    }
-
-    public interface Resources extends ClientBundle {
-
-        ImageResource filter();
     }
 }

@@ -43,7 +43,7 @@ import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.pipeline.structure.client.presenter.PipelineTreePresenter;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
@@ -150,7 +150,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         registerHandler(saveButton.addClickHandler(event -> save()));
     }
 
-    private ButtonView addButtonLeft(final SvgPreset preset) {
+    private ButtonView addButtonLeft(final Preset preset) {
         if (leftButtons == null) {
             leftButtons = new ButtonPanel();
             getView().addWidgetLeft(leftButtons);

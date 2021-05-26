@@ -25,12 +25,13 @@
 	padding: 1px;
 	cursor: default;
 	text-decoration: none;
+	vertical-align: bottom;
 }
 
 .fa-button .face {
 	border: none;
 	outline: none;
-	background: none;
+	background-color: transparent;
 	cursor: pointer;
 	text-decoration: none;
 	width: 16px;

@@ -4,5 +4,4 @@
   <inherits name='com.google.gwt.user.User' />
   <source path="client" />
   <source path="shared" />
-  <stylesheet src="valuespinner.css" />
 </module>

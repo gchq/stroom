@@ -26,7 +26,6 @@ import stroom.dispatch.client.RestFactory;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeResource;
-import stroom.util.client.BorderUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.customdatebox.client.ClientDateUtil;
@@ -56,7 +55,7 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<DataGridVi
         this.restFactory = restFactory;
 
         // Add a border to the list.
-        BorderUtil.addBorder(getWidget().getElement());
+        getWidget().getElement().addClassName("stroom-border");
 
         initTableColumns();
     }

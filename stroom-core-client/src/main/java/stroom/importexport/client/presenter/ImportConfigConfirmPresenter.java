@@ -32,7 +32,7 @@ import stroom.importexport.client.event.ImportConfigConfirmEvent;
 import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.ImportConfigRequest;
 import stroom.importexport.shared.ImportState;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Message;
 import stroom.util.shared.ResourceKey;
@@ -280,7 +280,7 @@ public class ImportConfigConfirmPresenter extends
         // Info column.
         final InfoColumn<ImportState> infoColumn = new InfoColumn<ImportState>() {
             @Override
-            public SvgPreset getValue(final ImportState object) {
+            public Preset getValue(final ImportState object) {
                 if (object.getMessageList().size() > 0 || object.getUpdatedFieldList().size() > 0) {
                     final Severity severity = object.getSeverity();
                     switch (severity) {

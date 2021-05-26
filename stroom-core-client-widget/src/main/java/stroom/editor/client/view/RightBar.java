@@ -34,7 +34,6 @@ public class RightBar extends Composite {
     private static final int SUMMARY_CONTAINER_HEIGHT = 13;
     private static final int OVERVIEW_WIDTH = 13;
     private static final IndicatorPopup indicatorPopup = new IndicatorPopup();
-    private static volatile Resources resources;
     private IndicatorLines indicators;
     private int width;
     private Editor editor;
@@ -42,13 +41,8 @@ public class RightBar extends Composite {
     public RightBar() {
         sinkEvents(Event.ONMOUSEDOWN);
 
-        if (resources == null) {
-            resources = GWT.create(Resources.class);
-            resources.style().ensureInjected();
-        }
-
         final SimplePanel simplePanel = new SimplePanel();
-        simplePanel.setStyleName(resources.style().rightBar());
+        simplePanel.setStyleName("codeEditor-rightBar");
 
         initWidget(simplePanel);
     }
@@ -65,7 +59,7 @@ public class RightBar extends Composite {
                 && indicators != null) {
             final String className = target.getClassName();
             if (className != null) {
-                if (className.toUpperCase().contains(resources.style().marker().toUpperCase())) {
+                if (className.toUpperCase().contains("codeEditor-marker".toUpperCase())) {
                     // This is a marker box.
                     final String lineNo = target.getAttribute("lineno");
                     if (lineNo != null) {
@@ -73,7 +67,7 @@ public class RightBar extends Composite {
                         editor.gotoLine(line);
                     }
 
-                } else if (className.toUpperCase().contains(resources.style().summary().toUpperCase())) {
+                } else if (className.toUpperCase().contains("codeEditor-summary".toUpperCase())) {
                     // This is a summary box.
                     final Element parent = target.getParentElement().cast();
                     final int x = parent.getAbsoluteLeft();
@@ -101,24 +95,24 @@ public class RightBar extends Composite {
                 if (maxSeverity != null) {
                     // Add the top summary marker.
                     sb.append("<div class=\"");
-                    sb.append(resources.style().summaryContainer());
+                    sb.append("codeEditor-summaryContainer");
                     sb.append("\">");
 
                     sb.append("<div class=\"");
-                    sb.append(resources.style().summary());
+                    sb.append("codeEditor-summary");
                     sb.append(" ");
                     switch (maxSeverity) {
                         case FATAL_ERROR:
-                            sb.append(resources.style().fatal());
+                            sb.append("codeEditor-fatal");
                             break;
                         case ERROR:
-                            sb.append(resources.style().error());
+                            sb.append("codeEditor-error");
                             break;
                         case WARNING:
-                            sb.append(resources.style().warning());
+                            sb.append("codeEditor-warning");
                             break;
                         default:
-                            sb.append(resources.style().info());
+                            sb.append("codeEditor-info");
                             break;
                     }
                     sb.append("\">");
@@ -165,20 +159,20 @@ public class RightBar extends Composite {
                                     sb.append("<div lineno=\"");
                                     sb.append(lineNo);
                                     sb.append("\" class=\"");
-                                    sb.append(resources.style().marker());
+                                    sb.append("codeEditor-marker");
                                     sb.append(" ");
                                     switch (severity) {
                                         case FATAL_ERROR:
-                                            sb.append(resources.style().fatal());
+                                            sb.append("codeEditor-fatal");
                                             break;
                                         case ERROR:
-                                            sb.append(resources.style().error());
+                                            sb.append("codeEditor-error");
                                             break;
                                         case WARNING:
-                                            sb.append(resources.style().warning());
+                                            sb.append("codeEditor-warning");
                                             break;
                                         default:
-                                            sb.append(resources.style().info());
+                                            sb.append("codeEditor-info");
                                             break;
                                     }
                                     sb.append("\" style=\"top:");
@@ -283,30 +277,5 @@ public class RightBar extends Composite {
 
     public void setEditor(final Editor editor) {
         this.editor = editor;
-    }
-
-    public interface Style extends CssResource {
-
-        String rightBar();
-
-        String summaryContainer();
-
-        String summary();
-
-        String marker();
-
-        String info();
-
-        String warning();
-
-        String error();
-
-        String fatal();
-    }
-
-    public interface Resources extends ClientBundle {
-
-        @Source("rightbar.css")
-        Style style();
     }
 }

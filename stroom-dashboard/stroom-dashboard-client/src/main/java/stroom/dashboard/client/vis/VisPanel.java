@@ -49,12 +49,17 @@ public class VisPanel extends SimplePanel implements VisPane {
     }
 
     @Override
-    public void setVisType(final String visType) {
+    public void setVisType(final String visType, final String className) {
         vis = null;
         vis = create(visType);
         final Element visElement = getVisElement(vis);
         final Wrapper wrapper = new Wrapper(visElement);
         setWidget(wrapper);
+    }
+
+    @Override
+    public void setClassName(final String className) {
+
     }
 
     @Override
