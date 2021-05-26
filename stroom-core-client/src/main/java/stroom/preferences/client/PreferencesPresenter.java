@@ -36,7 +36,6 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -47,22 +46,17 @@ public final class PreferencesPresenter
     private final PreferencesManager preferencesManager;
     private UserPreferences originalPreferences;
 
-    private final List<String> themes = new ArrayList<>();
-
     @Inject
     public PreferencesPresenter(
             final EventBus eventBus,
             final PreferencesView view,
             final PreferencesManager preferencesManager,
             final ClientSecurityContext clientSecurityContext) {
-
         super(eventBus, view);
-        themes.add("Light");
-        themes.add("Dark");
+        this.preferencesManager = preferencesManager;
 
         view.setUiHandlers(this);
         view.setAsDefaultVisible(clientSecurityContext.hasAppPermission(PermissionNames.MANAGE_PROPERTIES_PERMISSION));
-        this.preferencesManager = preferencesManager;
     }
 
     @Override
@@ -154,7 +148,7 @@ public final class PreferencesPresenter
 
 
     private void read(final UserPreferences userPreferences) {
-        getView().setThemes(themes);
+        getView().setThemes(preferencesManager.getThemes());
         getView().setTheme(userPreferences.getTheme());
     }
 

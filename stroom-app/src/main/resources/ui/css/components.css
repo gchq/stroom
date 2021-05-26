@@ -287,6 +287,18 @@
 	background-image: url("../images/tabs/closeActive.png");
 }
 
+.stroom-theme-dark2 .curveTab .curveTab-leftBackground {
+	background-image: url("../images/tabs/left-dark2.png");
+}
+
+.stroom-theme-dark2 .curveTab .curveTab-midBackground {
+	background-image: url("../images/tabs/middle-dark2.png");
+}
+
+.stroom-theme-dark2 .curveTab .curveTab-rightBackground {
+	background-image: url("../images/tabs/right-dark2.png");
+}
+
 
 .curveTabSelector {
 	position: absolute;
@@ -307,6 +319,14 @@
 
 .curveTabSelector-hover .curveTabSelector-background {
 	opacity: 0.4;
+}
+
+.stroom-theme-dark .curveTabSelector .curveTabSelector-background {
+	opacity: 0.8;
+}
+
+.stroom-theme-dark .curveTabSelector-hover .curveTabSelector-background {
+	opacity: 1;
 }
 
 .curveTabSelector .curveTabSelector-background .curveTabSelector-leftBackground {
@@ -378,6 +398,18 @@
 
 .stroom-theme-dark .curveTabSelector .curveTabSelector-foreground .curveTabSelector-arrows {
 	background-image: url("../images/tabs/arrows-dark.png");
+}
+
+.stroom-theme-dark2 .curveTabSelector .curveTabSelector-background .curveTabSelector-leftBackground {
+	background-image: url("../images/tabs/tabSelectorLeft-dark2.png");
+}
+
+.stroom-theme-dark2 .curveTabSelector .curveTabSelector-background .curveTabSelector-midBackground {
+    background-image: url("../images/tabs/tabSelectorMiddle-dark2.png");
+}
+
+.stroom-theme-dark2 .curveTabSelector .curveTabSelector-background .curveTabSelector-rightBackground {
+	background-image: url("../images/tabs/tabSelectorRight-dark2.png");
 }
 
 

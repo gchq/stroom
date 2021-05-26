@@ -75,3 +75,7 @@
 .stroom-theme-dark .resizableDialog-resizeHandle {
 	background-image: url("../images/dialog/resizeBottomRight-dark.png");
 }
+
+.stroom-theme-dark2 .resizableDialog-resizeHandle {
+	background-image: url("../images/dialog/resizeBottomRight-dark2.png");
+}
