@@ -228,24 +228,24 @@ public class TableComponentSettings extends ComponentSettings {
                 ", modelVersion='" + modelVersion + '\'' +
                 '}';
     }
-
-    public TableComponentSettings copy() {
-        List<Field> fieldsCopy = null;
-        if (fields != null) {
-            fieldsCopy = new ArrayList<>(fields.size());
-            for (final Field field : fields) {
-                fieldsCopy.add(field.copy());
-            }
-        }
-
-        int[] maxResultCopy = null;
-        if (maxResults != null) {
-            maxResultCopy = new int[maxResults.length];
-            for (int i = 0; i < maxResults.length; i++) {
-                maxResultCopy[i] = maxResults[i];
-            }
-        }
-
-        return new TableComponentSettings(queryId, fieldsCopy, extractValues, extractionPipeline, maxResultCopy, showDetail);
-    }
+//
+//    public TableComponentSettings copy() {
+//        List<Field> fieldsCopy = null;
+//        if (fields != null) {
+//            fieldsCopy = new ArrayList<>(fields.size());
+//            for (final Field field : fields) {
+//                fieldsCopy.add(field.copy());
+//            }
+//        }
+//
+//        int[] maxResultCopy = null;
+//        if (maxResults != null) {
+//            maxResultCopy = new int[maxResults.length];
+//            for (int i = 0; i < maxResults.length; i++) {
+//                maxResultCopy[i] = maxResults[i];
+//            }
+//        }
+//
+//        return new TableComponentSettings(queryId, fieldsCopy, extractValues, extractionPipeline, maxResultCopy, showDetail);
+//    }
 }

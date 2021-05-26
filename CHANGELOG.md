@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2248** : Migrated dashboard tables now maintain hidden column status.
+
 
 ## [v7.0-beta.118] - 2021-05-24
 
