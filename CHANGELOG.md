@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Uplift send_to_stroom.sh script to v3.1.0
+
 
 ## [v7.0-beta.118] - 2021-05-24
 
