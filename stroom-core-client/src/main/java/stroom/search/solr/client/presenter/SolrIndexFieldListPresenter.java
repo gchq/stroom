@@ -335,7 +335,9 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
                      final SolrIndexDoc index) {
         this.index = index;
         if (index != null) {
-            fields = index.getFields();
+            fields = index.getFields().stream()
+                    .sorted(Comparator.comparing(SolrIndexField::getFieldName, String.CASE_INSENSITIVE_ORDER))
+                    .collect(Collectors.toList());
 
             final SolrSynchState state = index.getSolrSynchState();
             final StringBuilder sb = new StringBuilder();
