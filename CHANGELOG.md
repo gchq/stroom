@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2240** : Indexes now show empty selection for volume group until one is selected.
+
 * Issue **#2248** : Migrated dashboard tables now maintain hidden column status.
 
 * Issue **#2280** : Remove trailing comma in some log events. 
