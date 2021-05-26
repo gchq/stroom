@@ -35,8 +35,10 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class ElasticIndexFieldListPresenter extends MyPresenterWidget<ElasticIndexFieldListView>
         implements HasDocumentRead<ElasticIndexDoc> {
@@ -121,7 +123,9 @@ public class ElasticIndexFieldListPresenter extends MyPresenterWidget<ElasticInd
     public void read(final DocRef docRef, final ElasticIndexDoc index) {
 
         if (index != null) {
-            fields = index.getFields();
+            fields = index.getFields().stream()
+                    .sorted(Comparator.comparing(ElasticIndexField::getFieldName, String.CASE_INSENSITIVE_ORDER))
+                    .collect(Collectors.toList());
 
             final StringBuilder sb = new StringBuilder();
             sb
