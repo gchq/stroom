@@ -19,7 +19,9 @@ package stroom.main.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.content.client.event.RefreshCurrentContentTabEvent;
 import stroom.core.client.KeyboardInterceptor;
+import stroom.core.client.KeyboardInterceptor.KeyTest;
 import stroom.core.client.presenter.CorePresenter;
+import stroom.quickfind.client.presenter.QuickFindPresenter;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 import stroom.task.client.event.OpenTaskManagerEvent;
@@ -36,6 +38,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenter;
 import com.gwtplatform.mvp.client.View;
@@ -53,6 +56,15 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
     public static final Type<RevealContentHandler<?>> EXPLORER = new Type<>();
     @ContentSlot
     public static final Type<RevealContentHandler<?>> CONTENT = new Type<>();
+
+
+    private static final KeyTest FORWARD_SLASH_KEY_TEST = event ->
+            event.getCtrlKey()
+                    && event.getKeyCode() == 191
+                    && !event.getAltKey()
+                    && !event.getShiftKey()
+                    && !event.getMetaKey();
+
     private final Timer refreshTimer;
     private boolean click;
 
@@ -61,11 +73,30 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
                          final MainView view,
                          final MainProxy proxy,
                          final KeyboardInterceptor keyboardInterceptor,
-                         final UiConfigCache clientPropertyCache) {
+                         final UiConfigCache clientPropertyCache,
+                         final Provider<QuickFindPresenter> quickFindPresenterProvider) {
         super(eventBus, view, proxy);
 
         // Handle key presses.
         keyboardInterceptor.register(view.asWidget());
+
+        keyboardInterceptor.addKeyTest(FORWARD_SLASH_KEY_TEST, () -> {
+            // TODO @AT Open quick finder
+            quickFindPresenterProvider.get().show();
+
+//            final PopupType popupType = PopupType.OK_CANCEL_DIALOG;
+//            ShowPopupEvent.fire(
+//                    MainPresenter.this,
+//                    quickFindPresenterProvider.get(),
+//                    popupType,
+//                    new PopupSize(500, 500),
+//                    "Quick Finder",
+//                    MainPresenter.this);
+//
+//            ConfirmEvent.fire(MainPresenter.this, "You pressed /", result -> {
+//
+//            });
+        });
 
         addRegisteredHandler(TaskStartEvent.getType(), event -> {
             // DebugPane.debug("taskStart:" + event.getTaskCount());

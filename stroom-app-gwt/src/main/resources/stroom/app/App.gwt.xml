@@ -80,6 +80,7 @@
     <inherits name="stroom.trackers.Trackers" />
     <inherits name="stroom.hyperlink.Hyperlink" />
     <inherits name="stroom.iframe.IFrame" />
+    <inherits name="stroom.quickfind.QuickFind" />
 
     <!-- Additional -->
     <inherits name="stroom.folder.Folder" />
@@ -114,6 +115,7 @@
     <inherits name="stroom.importexport.ImportExport" />
     <inherits name="stroom.job.Job" />
     <inherits name="stroom.monitoring.Monitoring" />
+    <inherits name="stroom.index.Index"/>
     <inherits name="stroom.index.Index"/>
     <!--
     <inherits name="stroom.nstat.store.monitoring.StatsMonitoring" />

@@ -128,6 +128,7 @@ public class AppModule extends AbstractPresenterModule {
 
         bind(MenuItems.class).in(Singleton.class);
 
+
         // Widgets
         // bindPresenterWidget(CurveTabPresenter.class, CurveTabView.class,
         // CurveTabLayoutViewImpl.class);

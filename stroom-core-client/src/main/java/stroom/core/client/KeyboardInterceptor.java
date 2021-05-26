@@ -16,6 +16,7 @@
 
 package stroom.core.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.user.client.Command;
@@ -46,6 +47,18 @@ public class KeyboardInterceptor {
 
     private void handleKeyEvent(final NativeEvent event) {
         boolean handled = false;
+
+        GWT.log(
+                (event.getAltKey()
+                        ? "alt "
+                        : "") +
+                        (event.getCtrlKey()
+                                ? "ctrl "
+                                : "") +
+                        (event.getShiftKey()
+                                ? "shift "
+                                : "") +
+                        event.getKeyCode() + " " + ((char) event.getKeyCode()));
 
         for (final Entry<KeyTest, Command> entry : keyTests.entrySet()) {
             if (entry.getKey().match(event)) {
