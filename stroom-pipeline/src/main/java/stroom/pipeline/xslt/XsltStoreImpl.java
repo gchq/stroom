@@ -83,7 +83,7 @@ class XsltStoreImpl implements XsltStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(5, XsltDoc.DOCUMENT_TYPE, XsltDoc.DOCUMENT_TYPE);
+        return new DocumentType(5, XsltDoc.DOCUMENT_TYPE, "XSL Translation");
     }
 
     ////////////////////////////////////////////////////////////////////////

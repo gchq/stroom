@@ -88,7 +88,7 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(11, ElasticIndexDoc.DOCUMENT_TYPE, ElasticIndexDoc.DOCUMENT_TYPE);
+        return new DocumentType(11, ElasticIndexDoc.DOCUMENT_TYPE, "Elastic Index");
     }
 
     ////////////////////////////////////////////////////////////////////////
