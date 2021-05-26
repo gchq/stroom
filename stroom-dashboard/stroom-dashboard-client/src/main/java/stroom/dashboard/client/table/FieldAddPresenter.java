@@ -17,13 +17,11 @@
 package stroom.dashboard.client.table;
 
 import stroom.data.table.client.CellTableView;
-import stroom.data.table.client.CellTableViewImpl.HoverResources;
 import stroom.data.table.client.ScrollableCellTableViewImpl;
 import stroom.query.api.v2.Field;
 import stroom.widget.util.client.MySingleSelectionModel;
 
 import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.SelectionChangeEvent.Handler;
@@ -35,11 +33,12 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import java.util.List;
 
 public class FieldAddPresenter extends MyPresenterWidget<CellTableView<Field>> implements HasSelectionChangedHandlers {
+
     private final MySingleSelectionModel<Field> selectionModel = new MySingleSelectionModel<>();
 
     @Inject
     public FieldAddPresenter(final EventBus eventBus) {
-        super(eventBus, new ScrollableCellTableViewImpl<>(true, GWT.create(HoverResources.class)));
+        super(eventBus, new ScrollableCellTableViewImpl<>(true, "hoverCellTable"));
         final Column<Field, String> textColumn = new Column<Field, String>(new TextCell()) {
             @Override
             public String getValue(final Field field) {

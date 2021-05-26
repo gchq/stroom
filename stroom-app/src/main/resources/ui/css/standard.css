@@ -35,7 +35,7 @@ body {
   direction: ltr;
 }
 a, a:visited, a:hover {
-  color: #0000AA;
+  color: var(--link-text-color);
 }
 
 /**

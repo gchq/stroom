@@ -24,18 +24,12 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safecss.shared.SafeStyles;
 import com.google.gwt.safecss.shared.SafeStylesUtils;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.safehtml.shared.SafeUri;
-import com.google.gwt.safehtml.shared.UriUtils;
-import com.google.gwt.user.client.ui.AbstractImagePrototype;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -44,16 +38,13 @@ import java.util.Set;
 public class ExpanderCell extends AbstractCell<Expander> {
 
     private static final Set<String> ENABLED_EVENTS = new HashSet<>(Arrays.asList("click", "keydown"));
-    private static volatile Resources resources;
     private static volatile Template template;
 
     public ExpanderCell() {
         super(ENABLED_EVENTS);
-        if (resources == null) {
+        if (template == null) {
             synchronized (ExpanderCell.class) {
-                if (resources == null) {
-                    resources = GWT.create(Resources.class);
-                    resources.style().ensureInjected();
+                if (template == null) {
                     template = GWT.create(Template.class);
                 }
             }
@@ -94,25 +85,13 @@ public class ExpanderCell extends AbstractCell<Expander> {
             SafeHtml icon = null;
 
             if (value.isLeaf()) {
-                icon = template.icon(
-                        resources.style().expanderIcon(),
-                        UriUtils.fromTrustedString(
-                                "images/tree-leaf.svg"));
-//                icon = getImageHtml(resources.leaf());
+                icon = template.icon("expanderCell-expanderIcon explorerCell-treeLeaf");
             } else if (value.isExpanded()) {
-                icon = template.icon(
-                        resources.style().expanderIcon(),
-                        UriUtils.fromTrustedString(
-                                "images/tree-open.svg"));
-//                icon = getImageHtml(resources.open());
-                className = resources.style().active();
+                icon = template.icon("expanderCell-expanderIcon explorerCell-treeOpen");
+                className = "expanderCell-active";
             } else {
-                icon = template.icon(
-                        resources.style().expanderIcon(),
-                        UriUtils.fromTrustedString(
-                                "images/tree-closed.svg"));
-//                icon = getImageHtml(resources.closed());
-                className = resources.style().active();
+                icon = template.icon("expanderCell-expanderIcon explorerCell-treeClosed");
+                className = "expanderCell-active";
             }
 
             sb.append(template.outerDiv(className, style, icon));
@@ -122,32 +101,12 @@ public class ExpanderCell extends AbstractCell<Expander> {
         }
     }
 
-    private SafeHtml getImageHtml(final ImageResource res) {
-        // Get the HTML for the image.
-        final AbstractImagePrototype proto = AbstractImagePrototype.create(res);
-        final SafeHtml image = SafeHtmlUtils.fromTrustedString(proto.getHTML());
-        return image;
-    }
-
-    interface Resources extends ClientBundle {
-
-        @Source("expander.css")
-        Style style();
-    }
-
-    interface Style extends CssResource {
-
-        String expanderIcon();
-
-        String active();
-    }
-
     interface Template extends SafeHtmlTemplates {
 
         @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
         SafeHtml outerDiv(String className, SafeStyles style, SafeHtml icon);
 
-        @Template("<img class=\"{0}\" src=\"{1}\" />")
-        SafeHtml icon(String iconClass, SafeUri iconUrl);
+        @Template("<div class=\"{0}\"></div>")
+        SafeHtml icon(String iconClass);
     }
 }

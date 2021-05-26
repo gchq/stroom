@@ -30,16 +30,16 @@ public class Splitter extends Widget {
     private final SplitInfo splitInfo;
     private final Element element;
 
-    public Splitter(final FlexLayout.Resources resources, final SplitInfo splitInfo) {
+    public Splitter(final SplitInfo splitInfo) {
         this.splitInfo = splitInfo;
 
         element = DOM.createDiv();
-        element.setClassName(resources.style().splitter());
+        element.setClassName("flexLayout-splitter");
 
         if (splitInfo.layoutData.getDimension() == Direction.ACROSS.getDimension()) {
-            element.addClassName(resources.style().splitterAcross());
+            element.addClassName("flexLayout-splitterAcross");
         } else {
-            element.addClassName(resources.style().splitterDown());
+            element.addClassName("flexLayout-splitterDown");
         }
 
         setElement(element);

@@ -33,7 +33,7 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.meta.shared.MetaFields;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ButtonView;
@@ -412,7 +412,7 @@ public class DataRetentionImpactPresenter
         DataGridUtil.addColumnSortHandler(getView(), criteria, this::refreshVisibleData);
     }
 
-    public ButtonView addButton(final SvgPreset preset) {
+    public ButtonView addButton(final Preset preset) {
         return getView().addButton(preset);
     }
 

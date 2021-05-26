@@ -3,65 +3,23 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:v="urn:import:stroom.widget.layout.client.view"
              xmlns:btn="urn:import:stroom.widget.button.client">
-  <ui:style>
-  .button {
-      float: left;
-  }
-
-<!--  .buttonPanel {-->
-<!--      display: inline-block;-->
-<!--      width: 24px;-->
-<!--  }-->
-
-  .resizePanel {
-      display: block;
-  }
-
-  .editorContainer {
-  	width: 100%;
-    height: 100%;
-    padding-top: 2px;
-    background-color: white;
-
-  }
-  .completionLabel {
-      float: left;
-  }
-
-  .labelPanel {
-      float: right;
-  }
-
-  .topPanel {
-  }
-
-  .btnPanel {
-      float: left;
-  }
-  </ui:style>
     <g:DockLayoutPanel unit="PX" width="100%" height="100%">
         <g:center>
-            <v:ResizeFlowPanel
-                    width="100%"
-                    height="100%"
-                    addStyleNames="{style.resizePanel}" >
-
-                <g:FlowPanel
-                        width="100%"
-                        height="18px"
-                        styleName="{style.topPanel}">
-                    <btn:ButtonPanel styleName="{style.btnPanel}" ui:field="buttonPanel" />
-
-                    <g:FlowPanel styleName="{style.labelPanel}">
-                        <g:HTML styleName="{style.completionLabel}"><code>ctrl-space</code> for auto-completion</g:HTML>
-                    </g:FlowPanel>
-                </g:FlowPanel>
-
+            <v:ResizeFlowPanel addStyleNames="max expressionViewImpl-resizePanel">
                 <v:ResizeSimplePanel ui:field="editorContainer"
-                                     width="100%"
-                                     height="100%"
-                                     addStyleNames="{style.editorContainer}"/>
+                                     addStyleNames="max expressionViewImpl-editorContainer"/>
             </v:ResizeFlowPanel>
         </g:center>
+        <g:north size="20">
+            <g:FlowPanel addStyleNames="max">
+                <btn:ButtonPanel styleName="expressionViewImpl-btnPanel" ui:field="buttonPanel"/>
+                <g:FlowPanel styleName="expressionViewImpl-labelPanel">
+                    <g:HTML styleName="expressionViewImpl-completionLabel">
+                        <code>ctrl-space</code>
+                        for auto-completion
+                    </g:HTML>
+                </g:FlowPanel>
+            </g:FlowPanel>
+        </g:north>
     </g:DockLayoutPanel>
 </ui:UiBinder>

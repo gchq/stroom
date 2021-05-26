@@ -20,8 +20,6 @@ import stroom.task.client.presenter.UserTaskPresenter.UserTaskView;
 import stroom.task.shared.TaskProgress;
 import stroom.util.shared.ModelStringUtil;
 
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -59,10 +57,5 @@ public class UserTaskPresenter extends MyPresenterWidget<UserTaskView> {
         HasText getTaskStatus();
 
         void setTerminateVisible(boolean visible);
-    }
-
-    public interface Resources extends ClientBundle {
-
-        ImageResource terminate();
     }
 }

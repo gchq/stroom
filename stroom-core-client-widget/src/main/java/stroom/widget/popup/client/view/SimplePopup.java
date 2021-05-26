@@ -19,8 +19,6 @@ package stroom.widget.popup.client.view;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -28,7 +26,6 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class SimplePopup extends AbstractPopupPanel {
 
-    private static final Resources RESOURCES = GWT.create(Resources.class);
     private static final Binder binder = GWT.create(Binder.class);
     private final PopupUiHandlers popupUiHandlers;
     @UiField
@@ -66,10 +63,9 @@ public class SimplePopup extends AbstractPopupPanel {
      */
     public SimplePopup(final PopupUiHandlers popupUiHandlers, final boolean autoHide, final boolean modal) {
         super(autoHide, modal);
-        RESOURCES.style().ensureInjected();
         this.popupUiHandlers = popupUiHandlers;
 
-        setStyleName(RESOURCES.style().popup());
+        setStyleName("simplePopup-popup");
         setWidget(binder.createAndBindUi(this));
     }
 
@@ -104,24 +100,5 @@ public class SimplePopup extends AbstractPopupPanel {
 
     public interface Binder extends UiBinder<Widget, SimplePopup> {
 
-    }
-
-    public interface Style extends CssResource {
-
-        String DEFAULT_STYLE = "SimplePopup.css";
-
-        String popup();
-
-        String container();
-
-        String background();
-
-        String content();
-    }
-
-    public interface Resources extends ClientBundle {
-
-        @Source(Style.DEFAULT_STYLE)
-        Style style();
     }
 }

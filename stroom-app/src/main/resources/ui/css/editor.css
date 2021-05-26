@@ -12,11 +12,12 @@
 
 .editor .hl {
     position: absolute;
-	background-color: yellow;
+	background-color: var(--code-editor-highlight-background-color);
 }
 
 .editor .ace_tooltip {
-    background-color: #ffd;
+    background-color: var(--tooltip-background-color);
+    color: var(--tooltip-text-color);
     background-image: none;
     border: none;
     border-radius: 0px;
@@ -50,6 +51,12 @@
 
 .editor .ace_gutter-cell.stroom_fatal_error {
     background-image: url(../images/fatal.svg);
+    background-size: 14px 14px;
+    background-position-x: 3px;
+}
+
+.stroom-theme-dark .editor .ace_gutter-cell.stroom_fatal_error {
+    background-image: url(../images/fatal-dark.svg);
     background-size: 14px 14px;
     background-position-x: 3px;
 }

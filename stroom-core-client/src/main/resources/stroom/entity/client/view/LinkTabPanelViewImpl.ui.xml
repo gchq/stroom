@@ -2,51 +2,19 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
 	xmlns:g="urn:import:com.google.gwt.user.client.ui" 
     xmlns:tab="urn:import:stroom.widget.tab.client.view">
-	<ui:style>
-		.bar {
-			border-bottom-style: solid;
-			width: 100%;
-			height: 100%;
-			background-color: white;
-		}
-		
-		.left {
-			position: relative;
-			width: 0;
-		}
-		
-		.middle {
-			position: relative;
-			width: 100%;
-		}
-		
-		.right {
-			position: relative;
-			width: 0;
-		}
-		
-		.leftInner {
-			padding-right: 10px;
-		}
-		
-		.rightInner {
-			position: absolute;
-			right: 0px;
-		}
-	</ui:style>
 	<g:DockLayoutPanel unit="PX" width="100%" height="100%">
 		<g:north size="19">
-			<g:SimplePanel styleName="{style.bar} stroom-border">
+			<g:SimplePanel styleName="max stroom-content stroom-border-bottom">
 				<g:Grid width="100%" height="100%">
 					<g:row>
-						<g:customCell styleName="{style.left}">
-							<g:FlowPanel ui:field="left" styleName="{style.leftInner}" />
+						<g:customCell styleName="linkTabPanelViewImpl-left">
+							<g:FlowPanel ui:field="left" styleName="linkTabPanelViewImpl-leftInner" />
 						</g:customCell>
-						<g:customCell styleName="{style.middle}">
+						<g:customCell styleName="linkTabPanelViewImpl-middle">
 							<g:ResizeLayoutPanel><tab:LinkTabBar ui:field="tabBar" /></g:ResizeLayoutPanel>
 						</g:customCell>
-						<g:customCell styleName="{style.right}">
-							<g:FlowPanel ui:field="right" styleName="{style.rightInner}" />
+						<g:customCell styleName="linkTabPanelViewImpl-right">
+							<g:FlowPanel ui:field="right" styleName="linkTabPanelViewImpl-rightInner" />
 						</g:customCell>
 					</g:row>
 				</g:Grid>

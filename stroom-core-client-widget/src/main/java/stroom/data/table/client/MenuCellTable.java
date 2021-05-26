@@ -17,6 +17,7 @@
 package stroom.data.table.client;
 
 import stroom.data.grid.client.DataGridViewImpl;
+import stroom.data.table.client.CellTableViewImpl.DefaultResources;
 import stroom.widget.util.client.MySingleSelectionModel;
 
 import com.google.gwt.core.client.GWT;
@@ -24,11 +25,9 @@ import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.resources.client.CssResource.ImportedWithPrefix;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.CellTable.Resources;
-import com.google.gwt.user.cellview.client.CellTable.Style;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.Composite;
@@ -51,12 +50,14 @@ public class MenuCellTable<R> extends Composite {
     }
 
     public MenuCellTable(final boolean supportsSelection) {
-        this(supportsSelection, GWT.create(BasicResources.class));
+        this(supportsSelection, "basicCellTable");
     }
 
-    public MenuCellTable(final boolean supportsSelection, final Resources resources) {
+    public MenuCellTable(final boolean supportsSelection, final String className) {
+        final Resources resources = GWT.create(DefaultResources.class);
         cellTable = new CellTable<>(DataGridViewImpl.DEFAULT_LIST_PAGE_SIZE, resources);
         cellTable.setWidth("100%");
+        cellTable.getElement().setClassName(className);
         cellTable.setLoadingIndicator(null);
 
         setSupportsSelection(supportsSelection);
@@ -164,64 +165,5 @@ public class MenuCellTable<R> extends Composite {
 
     public void setSkipRowHoverCheck(final boolean skipRowHoverCheck) {
         cellTable.setSkipRowHoverCheck(skipRowHoverCheck);
-    }
-
-    @ImportedWithPrefix("gwt-CellTable")
-    public interface BasicStyle extends Style {
-
-        String DEFAULT_CSS = "stroom/data/table/client/BasicCellTable.css";
-    }
-
-    public interface BasicResources extends Resources {
-
-        @Override
-        @Source(BasicStyle.DEFAULT_CSS)
-        BasicStyle cellTableStyle();
-    }
-
-    @ImportedWithPrefix("gwt-CellTable")
-    public interface DefaultStyle extends Style {
-
-        String DEFAULT_CSS = "stroom/data/table/client/DefaultCellTable.css";
-    }
-
-    public interface DefaultResources extends Resources {
-
-        @Override
-        @Source(DefaultStyle.DEFAULT_CSS)
-        DefaultStyle cellTableStyle();
-    }
-
-    @ImportedWithPrefix("gwt-CellTable")
-    public interface DisabledStyle extends Style {
-
-        String DEFAULT_CSS = "stroom/data/table/client/DisabledCellTable.css";
-    }
-
-    public interface DisabledResources extends Resources {
-
-        @Override
-        @Source(DisabledStyle.DEFAULT_CSS)
-        DisabledStyle cellTableStyle();
-    }
-
-    @ImportedWithPrefix("gwt-CellTable")
-    public interface HoverStyle extends Style {
-
-        String DEFAULT_CSS = "stroom/data/table/client/HoverCellTable.css";
-    }
-
-    public interface HoverResources extends Resources {
-
-        @Override
-        @Source(HoverStyle.DEFAULT_CSS)
-        HoverStyle cellTableStyle();
-    }
-
-    public interface MenuResources extends Resources {
-
-        @Override
-        @Source("MenuCellTable.css")
-        Style cellTableStyle();
     }
 }

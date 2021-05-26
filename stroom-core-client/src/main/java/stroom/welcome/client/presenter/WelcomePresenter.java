@@ -22,7 +22,6 @@ import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.svg.client.Icon;
-import stroom.svg.client.SvgIcon;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.SessionInfo;
@@ -67,7 +66,7 @@ public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.Welco
 
     @Override
     public Icon getIcon() {
-        return new SvgIcon("images/oo.svg", 18, 18);
+        return Icon.create("svgIcon-document svgIcon-oo");
     }
 
     @Override

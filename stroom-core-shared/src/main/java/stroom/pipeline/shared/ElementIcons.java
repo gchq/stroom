@@ -18,28 +18,28 @@ package stroom.pipeline.shared;
 
 public final class ElementIcons {
 
-    public static final String FILE = "file.svg";
-    public static final String FILES = "files.svg";
-    public static final String HADOOP = "hadoop-elephant-logo.svg";
-    public static final String ELASTIC_INDEX = "ElasticIndex.svg";
-    public static final String ID = "id.svg";
-    public static final String INDEX = "index.svg";
-    public static final String JSON = "json.svg";
-    public static final String KAFKA = "apache_kafka-icon.svg";
-    public static final String RECORD_COUNT = "recordCount.svg";
-    public static final String RECORD_OUTPUT = "recordOutput.svg";
-    public static final String REFERENCE_DATA = "referenceData.svg";
-    public static final String SEARCH = "search.svg";
-    public static final String XML_SEARCH = "xmlSearch.svg";
-    public static final String SOLR = "solr.svg";
-    public static final String SPLIT = "split.svg";
-    public static final String STATISTICS = "statistics.svg";
-    public static final String STREAM = "stream.svg";
-    public static final String STROOM_STATS = "StroomStatsStore.svg";
-    public static final String TEXT = "text.svg";
-    public static final String XML = "xml.svg";
-    public static final String XSD = "xsd.svg";
-    public static final String XSLT = "xslt.svg";
+    public static final String FILE = "svgIcon-pipeline-file";
+    public static final String FILES = "svgIcon-pipeline-files";
+    public static final String HADOOP = "svgIcon-pipeline-hadoop-elephant-logo";
+    public static final String ELASTIC_INDEX = "svgIcon-pipeline-ElasticIndex";
+    public static final String ID = "svgIcon-pipeline-id";
+    public static final String INDEX = "svgIcon-pipeline-index";
+    public static final String JSON = "svgIcon-pipeline-json";
+    public static final String KAFKA = "svgIcon-pipeline-apache_kafka-icon";
+    public static final String RECORD_COUNT = "svgIcon-pipeline-recordCount";
+    public static final String RECORD_OUTPUT = "svgIcon-pipeline-recordOutput";
+    public static final String REFERENCE_DATA = "svgIcon-pipeline-referenceData";
+    public static final String SEARCH = "svgIcon-pipeline-search";
+    public static final String XML_SEARCH = "svgIcon-pipeline-xmlSearch";
+    public static final String SOLR = "svgIcon-pipeline-solr";
+    public static final String SPLIT = "svgIcon-pipeline-split";
+    public static final String STATISTICS = "svgIcon-pipeline-statistics";
+    public static final String STREAM = "svgIcon-pipeline-stream";
+    public static final String STROOM_STATS = "svgIcon-pipeline-StroomStatsStore";
+    public static final String TEXT = "svgIcon-pipeline-text";
+    public static final String XML = "svgIcon-pipeline-xml";
+    public static final String XSD = "svgIcon-pipeline-xsd";
+    public static final String XSLT = "svgIcon-pipeline-xslt";
 
     private ElementIcons() {
         // Constants only.

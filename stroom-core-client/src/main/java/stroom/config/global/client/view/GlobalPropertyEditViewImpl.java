@@ -18,7 +18,7 @@ package stroom.config.global.client.view;
 
 import stroom.config.global.client.presenter.ManageGlobalPropertyEditPresenter.GlobalPropertyEditView;
 import stroom.config.global.client.presenter.ManageGlobalPropertyEditUiHandlers;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.tickbox.client.view.TickBox;
@@ -209,17 +209,17 @@ public final class GlobalPropertyEditViewImpl
     }
 
     @Override
-    public ButtonView addYamlValueWarningIcon(final SvgPreset preset) {
+    public ButtonView addYamlValueWarningIcon(final Preset preset) {
         return yamlValueButtonPanel.addButton(preset);
     }
 
     @Override
-    public ButtonView addEffectiveValueIcon(final SvgPreset preset) {
+    public ButtonView addEffectiveValueIcon(final Preset preset) {
         return effectiveValueButtonPanel.addButton(preset);
     }
 
     @Override
-    public ButtonView addDataTypeHelpIcon(final SvgPreset preset) {
+    public ButtonView addDataTypeHelpIcon(final Preset preset) {
         return dataTypeButtonPanel.addButton(preset);
     }
 

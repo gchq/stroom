@@ -126,7 +126,7 @@ class SecurityFilter implements Filter {
         final String servletPath = request.getServletPath().toLowerCase();
         final String fullPath = request.getRequestURI().toLowerCase();
 
-        if (request.getMethod().toUpperCase().equals(HttpMethod.OPTIONS) ||
+        if (request.getMethod().equalsIgnoreCase(HttpMethod.OPTIONS) ||
                 (!isApiRequest(servletPath) && isStaticResource(request))) {
             // We need to allow CORS preflight requests
             LOGGER.debug("Passing on to next filter");

@@ -2,9 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:v="urn:import:stroom.widget.layout.client.view"
              xmlns:view="urn:import:stroom.dashboard.client.flexlayout">
 
-<ui:with field="res" type="stroom.dashboard.client.main.DashboardLayoutViewImpl.Resources" />
-
-  <v:ResizeSimplePanel styleName="{res.style.outerPanel}">
-    <view:FlexLayout ui:field="layout" styleName="{res.style.layout}" />
-  </v:ResizeSimplePanel>
+    <v:ResizeSimplePanel styleName="dashboard-outerPanel">
+        <view:FlexLayout ui:field="layout" styleName="dashboard-layout"/>
+    </v:ResizeSimplePanel>
 </ui:UiBinder>

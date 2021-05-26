@@ -184,8 +184,8 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                         explorerNodeService.getRoot()
                                 .ifPresent(node -> {
                                     Optional.ofNullable(explorerActionHandlers.getType(ExplorerConstants.SYSTEM))
-                                            .map(DocumentType::getIconUrl)
-                                            .ifPresent(node::setIconUrl);
+                                            .map(DocumentType::getIconClassName)
+                                            .ifPresent(node::setIconClassName);
                                     node.setChildren(new ArrayList<>());
                                     result.getRootNodes().add(node);
                                 });
@@ -202,7 +202,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
 
                         node.setNodeState(NodeState.LEAF);
                         node.setDepth(1);
-                        node.setIconUrl(DocumentType.DOC_IMAGE_URL + "searchable.svg");
+                        node.setIconClassName(DocumentType.DOC_IMAGE_CLASS_NAME + "searchable");
 
                         if (hasRoot) {
                             ExplorerNode rootNode = result.getRootNodes().get(0);

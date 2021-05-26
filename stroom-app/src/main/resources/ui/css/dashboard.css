@@ -1,0 +1,402 @@
+/*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.dashboard-outerPanel {
+	width: 100%;
+	height: 100%;
+	padding: 0px 3px 3px 0px;
+
+	user-select: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+}
+
+.dashboard-layout {
+	position: relative;
+	width: 100%;
+	height: 100%;
+}
+
+.flexLayout-glass {
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	margin: 0px;
+	padding: 0px;
+	border-width: 0px;
+	/* We need to set the background color or mouse events will go right */
+	/* through the glassElem. If the layout contains an iframe, the */
+	/* iframe will capture the event and the slider will stop moving. */
+	background-color: white;
+	opacity: 0;
+	z-index: 10;
+}
+
+.flexLayout-glassVisible {
+}
+
+.flexLayout-marker {
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	margin: 0px;
+	padding: 0px;
+	border-width: 1px;
+	border-color: black;
+	border-style: solid;
+	background-color: blue;
+	opacity: 0.3;
+	z-index: 5;
+}
+
+.flexLayout-markerVisible {
+}
+
+.flexLayout-splitter {
+	position: absolute;
+	margin: 0px;
+	padding: 0px;
+	opacity: 0;
+}
+
+.flexLayout-splitterVisible {
+	opacity: 0.3 !important;
+}
+
+.flexLayout-splitterDown {
+	cursor: row-resize;
+}
+
+.flexLayout-splitterAcross {
+	cursor: col-resize;
+}
+
+.flexLayout-selected {
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.tabLayout {
+}
+
+.tabLayout .tabLayout-contentOuter {
+	width: 100%;
+	height: 100%;
+	padding-top: 4px;
+	padding-left: 4px;
+}
+
+.tabLayout .tabLayout-contentInner {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+
+	border-radius: 2px;
+	background-color: var(--page-background-color);
+}
+
+.tabLayout .tabLayout-barOuter {
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	width: 100%;
+	height: 24px;
+	padding: 0 48px 0 0;
+	cursor: default;
+	overflow: hidden;
+	z-index: 5;
+}
+
+.tabLayout .tabLayout-barInner {
+	position: relative;
+	padding-top: 2px;
+	width: 100%;
+	height: 100%;
+}
+
+.tabLayout .tabLayout-buttons {
+	position: absolute;
+	right: 0px;
+	top: 0px;
+	padding: 1px;
+	z-index: 5;
+}
+
+.tabLayout .tabLayout-content {
+	position: relative;
+	width: 100%;
+	height: 100%;
+}
+
+.tabLayout .tabLayout-settingsButton {
+	color: #ddd;
+    background-image: url("../images/settings-grey.svg");
+    background-size: 100%;
+    width: 16px;
+    height: 16px;
+}
+
+.stroom-theme-dark .tabLayout .tabLayout-settingsButton {
+    background-image: url("../images/settings-grey-dark.svg");
+}
+
+.tabLayout .tabLayout-settingsButton:hover {
+    color: #9E9E9E;
+}
+
+.tabLayout .tabLayout-closeButton {
+	color: #ddd;
+	background-image: url("../images/close-grey.svg");
+	background-size: 100%;
+	width: 16px;
+	height: 16px;
+}
+
+.stroom-theme-dark .tabLayout .tabLayout-closeButton {
+	background-image: url("../images/close-grey-dark.svg");
+}
+
+.tabLayout .tabLayout-closeButton:hover {
+    color: #D32F2F;
+}
+
+.queryCell-outer {
+	padding: 5px;
+}
+
+.queryCell-time {
+	white-space: nowrap;
+	color: gray;
+	padding-right: 10px;
+}
+
+.queryCell-expression {
+	white-space: nowrap;
+}
+
+.fieldGroupList {
+	background-color: white;
+	border: 1px solid #4d5055;
+	box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.5);
+	border-radius: 4px;
+	overflow: hidden;
+	z-index: 2000;
+}
+
+.fieldGroupList-heading {
+	font-weight: 500;
+	padding: 2px;
+	padding-left: 4px;
+	padding-right: 4px;
+	color: white;
+	background-color: #4a90e4;
+	background-image: linear-gradient(#60a1f0, #4a90e4);
+	border-bottom: 1px solid #303240;
+}
+
+.fieldGroupList-group {
+	font-weight: 500;
+	padding: 2px;
+	padding-left: 4px;
+	padding-right: 4px;
+}
+
+.fieldGroupList-noGroup {
+	padding: 2px;
+	padding-left: 4px;
+	padding-right: 4px;
+}
+
+.fieldGroupList-selected {
+	background-color: #bbdefb;
+}
+
+.fieldGroupList-highlight {
+	background-color: yellow;
+}
+
+.fields-labels {
+	padding-left: 40px;
+}
+
+.fields-label {
+	height: 18px;
+	font-weight: 500;
+}
+
+.fields-row {
+	height: 18px;
+}
+
+.fields-field {
+	padding: 0px;
+	cursor: pointer;
+	opacity: 0.9;
+    transition: opacity 0.5s linear;
+    -webkit-transition: opacity 0.5s linear;
+    -moz-transition: opacity 0.5s linear;
+    -o-transition: opacity 0.5s linear;
+}
+
+.fields-field * {
+    text-decoration: inherit;
+    vertical-align: middle;
+}
+
+.fields-field:hover {
+    opacity: 1;
+    text-decoration: underline;
+}
+
+.fields-fieldLabel {
+	display: inline-block;
+	height: 16px;
+	padding: 0px;
+	padding-right: 5px;
+	cursor: pointer;
+	font-weight: 500;
+    text-decoration: inherit;
+}
+
+.fields-fieldText {
+	height: 16px;
+	border: 1px solid var(--border-color);
+}
+
+.fields-sortOrder {
+	display: inline-block;
+	font-size: 8px;
+	vertical-align: top;
+	text-decoration: none;
+}
+
+.fields-expression {
+	background-image: url("../images/dashboard/expression.png");
+}
+
+.stroom-theme-dark .fields-expression {
+	background-image: url("../images/dashboard/expression-dark.png");
+}
+
+.fields-filter {
+	background-image: url("../images/dashboard/filter.png");
+}
+
+.stroom-theme-dark .fields-filter {
+    background-image: url("../images/dashboard/filter-dark.png");
+}
+
+.fields-format {
+	background-image: url("../images/dashboard/format.png");
+}
+
+.stroom-theme-dark .fields-format {
+	background-image: url("../images/dashboard/format-dark.png");
+}
+
+.fields-group {
+	background-image: url("../images/dashboard/group.png");
+}
+
+.stroom-theme-dark .fields-group {
+	background-image: url("../images/dashboard/group-dark.png");
+}
+
+.fields-sortaz {
+	background-image: url("../images/dashboard/sortaz.png");
+}
+
+.stroom-theme-dark .fields-sortaz {
+	background-image: url("../images/dashboard/sortaz-dark.png");
+}
+
+.fields-sortza {
+	background-image: url("../images/dashboard/sortza.png");
+}
+
+.stroom-theme-dark .fields-sortza {
+	background-image: url("../images/dashboard/sortza-dark.png");
+}
+
+.fields-sortoff {
+	background-image: url("../images/dashboard/sortoff.png");
+}
+
+.stroom-theme-dark .fields-sortoff {
+	background-image: url("../images/dashboard/sortoff-dark.png");
+}
+
+.dashboardTable-smallSpinner {
+	position: absolute;
+	right: 2px;
+	bottom: 0px;
+	z-index: 5;
+}
+
+.dashboardVis-outerLayout {
+	position: absolute;
+	left: 0px;
+	right: 0px;
+	top: 0px;
+	bottom: 0px;
+	width: 100%;
+	height: 100%;
+}
+
+.dashboardVis-innerLayout {
+	position: absolute;
+	left: 0px;
+	right: 0px;
+	top: 0px;
+	bottom: 0px;
+	width: 100%;
+	height: 100%;
+}
+
+.dashboardVis-smallSpinner {
+	position: absolute;
+	right: 2px;
+	bottom: 0px;
+	z-index: 5;
+}
+
+.dashboardVis-messageOuter {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	height: 30px;
+	z-index: 5;
+}
+
+.dashboardVis-messageInner {
+	position: relative;
+	left: -50%;
+	top: -50%;
+
+	padding: 5px 10px;
+
+	background-color: white;
+/* 	border: 1px solid #404e60; */
+	box-shadow: rgba(0, 0, 0, 0.2) 0 2px 4px, rgba(0, 0, 0, 0.4) 0 0 3px;
+/* 	box-shadow: 1px 1px 8px rgba(0,0,0,0.6), -1px -1px 8px rgba(0,0,0,0.6); */
+	border-radius: 5px;
+
+	color: white;
+	background-color: #1f77b4;
+}
+
+

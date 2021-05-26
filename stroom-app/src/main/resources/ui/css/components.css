@@ -1,0 +1,1663 @@
+.flatButton {
+    border: none;
+    background: none;
+}
+
+.itemSelectionViewImpl-panelChild {
+}
+
+.itemSelectionViewImpl-countLabel {
+    padding-left: 6px;
+}
+
+.itemSelectionViewImpl-flowPanel {
+    display: flex;
+}
+
+.ruleView-bottom {
+    padding-top: 5px;
+}
+/*
+.ruleView-name {
+    display: inline-block;
+}
+
+.ruleView-optional {
+    display: inline-block;
+    margin-left: 5px;
+}
+*/
+.elasticFieldListView-statusMessage {
+    padding: 5px;
+}
+
+.buttonPanel-layout {
+	white-space: nowrap;
+}
+
+.contextMenu-layout {
+	cursor: pointer;
+}
+
+.contextMenu-selected {
+    background: #93c2f1;
+}
+
+.contextMenu-text {
+	margin: 1px;
+	padding: 2px;
+	background: transparent;
+	cursor: pointer;
+}
+
+.contextMenu-separator {
+	width: 100%;
+	height: 1px;
+	background-color: black;
+}
+
+.menuItem-separator {
+    margin-left: 4px;
+    margin-right: 4px;
+	border-top: 1px solid black;
+	cursor: default;
+}
+
+.menuItem-outer {
+    position: relative;
+	width: 100%;
+	padding: 4px;
+}
+
+.menuItem-highlight {
+	width: 100%;
+	padding: 4px;
+	background-color: var(--code-editor-highlight-background-color);
+	color: var(--selected-row-text-color);
+}
+
+.menuItem-icon {
+    position: absolute;
+	display: inline-block;
+	width: 18px;
+	height: 18px;
+	vertical-align: top;
+	cursor: pointer;
+}
+
+.menuItem-disabled {
+	cursor: default;
+	color: #000;
+	opacity: 0.3;
+}
+
+.menuItem-text {
+	display: inline-block;
+	vertical-align: top;
+	padding-top: 1px;
+	margin-left: 24px;
+	margin-right: 5px;
+}
+
+.menuItem-simpleText {
+	display: inline-block;
+	vertical-align: top;
+	padding-top: 1px;
+	margin-left: 5px;
+	margin-right: 5px;
+}
+
+.menuItem-shortcut {
+	display: inline-block;
+	vertical-align: top;
+	padding-top: 1px;
+	float: right;
+	padding-left: 15px;
+}
+
+
+.basicTabSelector {
+	position: absolute;
+	display: inline-block;
+	height: 20px;
+	vertical-align: top;
+	padding-left: 2px;
+	padding-top: 2px;
+	cursor: pointer;
+}
+
+.basicTabSelector-arrows {
+	background-image: url("../images/tabs/arrows.png");
+	position: absolute;
+	width: 8px;
+	height: 5px;
+}
+
+.basicTabSelector-text {
+	font-size: 7px;
+	white-space: nowrap;
+	margin-left: 7px;
+	margin-top: 7px;
+	-moz-user-select: none;
+}
+
+.stroom-theme-dark .basicTabSelector-arrows {
+	background-image: url("../images/tabs/arrows-dark.png");
+}
+
+.curveTabBar {
+}
+
+.curveTab {
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	cursor: pointer;
+}
+
+.curveTab-selected {
+	z-index: 1;
+}
+
+.curveTab .curveTab-background {
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	opacity: 0.6;
+	height: 24px;
+	width: 100%;
+	padding-left: 5px;
+	padding-right: 15px;
+	overflow: hidden;
+}
+
+.curveTab-hover .curveTab-background {
+	opacity: 0.7;
+}
+
+.curveTab-selected .curveTab-background {
+	height: 25px;
+	opacity: 1;
+}
+
+.curveTab .curveTab-leftBackground {
+	background-image: url("../images/tabs/left.png");
+	position: absolute;
+	left: 0px;
+	top: 0px;
+    width: 5px;
+    height: 25px;
+}
+
+.curveTab .curveTab-midBackground {
+	background-image: url("../images/tabs/middle.png");
+	background-repeat: repeat-x;
+	width: 100%;
+	height: 25px;
+}
+
+.curveTab .curveTab-rightBackground {
+	background-image: url("../images/tabs/right.png");
+	position: absolute;
+	right: 0px;
+	top: 0px;
+    width: 15px;
+    height: 25px;
+}
+
+/* Tab content */
+.curveTab .curveTab-icon {
+	position: absolute;
+	top: 0px;
+	left: 5px;
+	width: 18px;
+	height: 18px;
+	margin-top: 5px;
+	-moz-user-select: none;
+}
+
+.curveTab .curveTab-face {
+	border: none;
+	outline: none;
+	background: none;
+	cursor: pointer;
+	text-decoration: none;
+	min-width: 16px;
+	min-height: 16px;
+	margin: auto;
+	padding: 0;
+	overflow: hidden;
+	position: relative;
+	color: #5398ff;
+	font-size: 16px;
+	opacity: 1;
+}
+
+.curveTab .curveTab-text {
+	position: relative;
+	white-space: nowrap;
+	padding: 6px 32px 0px 26px;
+	-moz-user-select: none;
+	opacity: 0.8;
+}
+
+.curveTab-selected .curveTab-text {
+	opacity: 1;
+}
+
+/* Close button */
+.curveTab .curveTab-close {
+	background-image: url("../images/tabs/close.png");
+	position: absolute;
+	right: 15px;
+	top: 8px;
+	width: 12px;
+	height: 12px;
+	-moz-user-select: none;
+	cursor: pointer;
+}
+
+.curveTab .curveTab-closeActive	{
+	background-image: url("../images/tabs/closeActive.png");
+	position: absolute;
+	right: 15px;
+	top: 8px;
+	width: 12px;
+    height: 12px;
+	-moz-user-select: none;
+	cursor: pointer;
+}
+
+.stroom-theme-dark .curveTab .curveTab-leftBackground {
+	background-image: url("../images/tabs/left-dark.png");
+}
+
+.stroom-theme-dark .curveTab .curveTab-midBackground {
+	background-image: url("../images/tabs/middle-dark.png");
+}
+
+.stroom-theme-dark .curveTab .curveTab-rightBackground {
+	background-image: url("../images/tabs/right-dark.png");
+}
+
+.stroom-theme-dark .curveTab .curveTab-close {
+	background-image: url("../images/tabs/close-dark.png");
+}
+
+.stroom-theme-dark .curveTab .curveTab-closeActive {
+	background-image: url("../images/tabs/closeActive.png");
+}
+
+.stroom-theme-dark2 .curveTab .curveTab-leftBackground {
+	background-image: url("../images/tabs/left-dark2.png");
+}
+
+.stroom-theme-dark2 .curveTab .curveTab-midBackground {
+	background-image: url("../images/tabs/middle-dark2.png");
+}
+
+.stroom-theme-dark2 .curveTab .curveTab-rightBackground {
+	background-image: url("../images/tabs/right-dark2.png");
+}
+
+
+.curveTabSelector {
+	position: absolute;
+	left: 0px;
+	top: 4px;
+	height: 24px;
+	cursor: pointer;
+}
+
+.curveTabSelector .curveTabSelector-background {
+	position: absolute;
+	opacity: 0.3;
+	height: 24px;
+	width: 100%;
+	padding-left: 10px;
+	padding-right: 10px;
+}
+
+.curveTabSelector-hover .curveTabSelector-background {
+	opacity: 0.4;
+}
+
+.stroom-theme-dark .curveTabSelector .curveTabSelector-background {
+	opacity: 0.8;
+}
+
+.stroom-theme-dark .curveTabSelector-hover .curveTabSelector-background {
+	opacity: 1;
+}
+
+.curveTabSelector .curveTabSelector-background .curveTabSelector-leftBackground {
+	background-image: url("../images/tabs/tabSelectorLeft.png");
+	position: absolute;
+	left: 0px;
+	top: 0px;
+    width: 10px;
+    height: 18px;
+}
+
+.curveTabSelector .curveTabSelector-background .curveTabSelector-midBackground {
+	background-image: url("../images/tabs/tabSelectorMiddle.png");
+	background-repeat: repeat-x;
+	width: 100%;
+    height: 18px;
+}
+
+.curveTabSelector .curveTabSelector-background .curveTabSelector-rightBackground {
+	background-image: url("../images/tabs/tabSelectorRight.png");
+	position: absolute;
+	right: 0px;
+	top: 0px;
+    width: 10px;
+    height: 18px;
+}
+
+.curveTabSelector .curveTabSelector-foreground {
+	margin-left: 10px;
+	margin-right: 10px;
+}
+
+/* Content. */
+.curveTabSelector .curveTabSelector-foreground .curveTabSelector-arrows {
+	background-image: url("../images/tabs/arrows.png");
+	position: absolute;
+	left: 8px;
+	top: 4px;
+	width: 8px;
+	height: 5px;
+}
+
+.curveTabSelector .curveTabSelector-foreground .curveTabSelector-text {
+	position: relative;
+	font-size: 7px;
+	white-space: nowrap;
+	margin-left: 7px;
+	margin-top: 7px;
+	-moz-user-select: none;
+}
+
+
+
+
+
+
+
+.stroom-theme-dark .curveTabSelector .curveTabSelector-background .curveTabSelector-leftBackground {
+	background-image: url("../images/tabs/tabSelectorLeft-dark.png");
+}
+
+.stroom-theme-dark .curveTabSelector .curveTabSelector-background .curveTabSelector-midBackground {
+    background-image: url("../images/tabs/tabSelectorMiddle-dark.png");
+}
+
+.stroom-theme-dark .curveTabSelector .curveTabSelector-background .curveTabSelector-rightBackground {
+	background-image: url("../images/tabs/tabSelectorRight-dark.png");
+}
+
+.stroom-theme-dark .curveTabSelector .curveTabSelector-foreground .curveTabSelector-arrows {
+	background-image: url("../images/tabs/arrows-dark.png");
+}
+
+.stroom-theme-dark2 .curveTabSelector .curveTabSelector-background .curveTabSelector-leftBackground {
+	background-image: url("../images/tabs/tabSelectorLeft-dark2.png");
+}
+
+.stroom-theme-dark2 .curveTabSelector .curveTabSelector-background .curveTabSelector-midBackground {
+    background-image: url("../images/tabs/tabSelectorMiddle-dark2.png");
+}
+
+.stroom-theme-dark2 .curveTabSelector .curveTabSelector-background .curveTabSelector-rightBackground {
+	background-image: url("../images/tabs/tabSelectorRight-dark2.png");
+}
+
+
+.layerContainer-container {
+	position: relative;
+	width: 100%;
+	height: 100%;
+}
+
+.layerContainer-layer {
+	position: absolute !important;
+	left: 0 !important;
+	top: 0 !important;
+}
+
+
+.linkTabBar {
+	white-space: nowrap;
+	padding-top: 1px;
+}
+
+.linkTabBar .linkTabBar-separator {
+	position: absolute;
+	top: 2px;
+	padding-left: 5px;
+	padding-right: 5px;
+}
+
+
+.linkTab {
+	position: absolute;
+	left: 0px;
+	top: 2px;
+	cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.5s linear;
+    -webkit-transition: opacity 0.5s linear;
+    -moz-transition: opacity 0.5s linear;
+    -o-transition: opacity 0.5s linear;
+}
+
+.linkTab-selected {
+    opacity: 1;
+}
+
+.linkTab:hover {
+    opacity: 1;
+    text-decoration: underline;
+}
+
+.linkTab-background {
+	cursor: pointer;
+	white-space: nowrap;
+	font-weight: 500;
+	opacity: 0;
+}
+
+.linkTab-label {
+	position: absolute;
+	left: 0px;
+	top: 0px;
+	width: 100%;
+	cursor: pointer;
+	text-decoration: inherit;
+	white-space: nowrap;
+}
+
+.linkTab-selected .linkTab-label {
+	font-weight: 500;
+}
+
+.linkTab .linkTab-hotspot {
+	position: absolute;
+	left: 0px;
+	right: 0px;
+	top: 0px;
+	bottom: 0px;
+	margin: 0px;
+	padding: 0px;
+	border-width: 1px;
+	border-color: black;
+	border-style: solid;
+	background-color: red;
+	opacity: 0;
+
+	transition: opacity .2s;
+	-webkit-transition: opacity .2s;
+	-moz-transition: opacity .2s;
+	-o-transition: opacity .2s;
+
+	cursor: pointer;
+}
+
+.linkTab .linkTab-hotspotVisible {
+	opacity: .3 !important;
+}
+
+.tooltip {
+	background-color: var(--tooltip-background-color);
+	padding: 1px 3px;
+	-moz-user-focus: initial;
+	-moz-user-input: initial;
+	-webkit-user-focus: initial;
+	-webkit-user-input: initial;
+	user-focus: initial;
+	user-input: initial;
+
+  	-webkit-user-select: text;
+  	-moz-user-select: text;
+  	user-select: text;
+
+  	max-width: 500px;
+  	max-height: 500px;
+  	overflow: auto;
+}
+
+.tooltip table {
+    white-space: pre;
+    table-layout: fixed;
+}
+
+.info-layout {
+	width: 100%;
+	height: 100%;
+	border: 1px solid var(--border-color);
+	background: var(--input-background-color);
+	color: var(--text-color);
+	white-space: pre;
+}
+
+.userTaskView-layout {
+    position: relative;
+    width: 100%;
+    padding: 2px;
+    border: 1px solid grey;
+}
+
+.userTaskView-terminate {
+    vertical-align: middle;
+    padding: 3px;
+    padding-bottom: 0px;
+    background-image: url("../images/terminate.png");
+    width: 11px;
+    height: 11px;
+}
+
+.entityTreeView-nameFilter {
+    width: 100%;
+    border: none !important;
+    background: var(--input-background-color);
+}
+
+.entityTreeView-nameFilter input[type="text"] {
+    border: none !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+.entityTreeView-scrollPanel {
+    background: var(--input-background-color);
+}
+
+
+.dropDownView-container {
+    position: relative;
+    display: inline-block;
+    width: 200px;
+    height: 19px;
+    cursor: pointer;
+}
+
+.dropDownView-label {
+    position: absolute;
+    left: 4px;
+    right: 20px;
+    top: 1px;
+    bottom: 1px;
+    overflow: hidden;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.dropDownView-button {
+    position: absolute;
+    background-image: url("../images/popup.png");
+    bottom: 4px;
+    right: 4px;
+    width: 11px;
+    height: 3px;
+    cursor: pointer;
+    border: none;
+}
+
+.curveTabLayoutViewImpl-layout {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.curveTabLayoutViewImpl-layerContainerOuter {
+    position: absolute;
+    left: 0px;
+    right: 0px;
+    top:
+    24px;
+    bottom: 0px;
+}
+
+.curveTabLayoutViewImpl-tabBarOuter {
+    position: absolute;
+    left: 0px;
+    right:
+    0px;
+    top:
+    0px;
+    height: 25px;
+}
+
+.documentPermissionsViewImpl-cascade {
+    margin-top: 5px;
+}
+
+.documentPermissionsViewImpl-copyPermissionsFromParentButton {
+    width: 259px;
+}
+
+.globalPropertyTabViewImpl-nameFilter {
+    width: 100%;
+    border-bottom: none !important;
+}
+
+.pipelineStructureViewImpl-buttons {
+    vertical-align: top;
+}
+
+.pipelineStructureViewImpl-label {
+    margin-top: 2px;
+    vertical-align: top;
+    white-space: nowrap;
+}
+
+.pipelineStructureViewImpl-bar {
+    position: relative;
+    padding: 0px 2px;
+}
+
+.pipelineStructureViewImpl-bar div {
+    display: inline-block;
+    white-space: nowrap;
+}
+
+
+.pipelineStructureViewImpl-label {
+    margin: 0px;
+    margin-top: 2px;
+    margin-left: 10px;
+    margin-right: 5px;
+    vertical-align: top;
+}
+
+.pipelineStructureViewImpl-viewSource {
+    position: absolute;
+    right: 4px;
+    top: 2px;
+    text-decoration: underline;
+}
+
+.sourceViewImpl-buttonPanel {
+    float: right;
+    padding-right: 0.25em;
+}
+
+.sourceViewImpl-characterNavigator {
+    float: right;
+    text-align: right;
+}
+
+.sourceViewImpl-titleText {
+    display: inline-block;
+    padding-top: 3px;
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+}
+
+.sourceViewImpl-titleHeading {
+    display: inline-block;
+    padding-top: 3px;
+    padding-left: 0.5em;
+    font-weight: 500;
+}
+
+.sourceViewImpl-progressBarPanel {
+    display: inline-block;
+    width: 100%;
+    height: 6px;
+    padding-right: 0.25em;
+    padding-left: 0.25em;
+}
+
+.editExpressionViewImpl-expressionTree {
+    width: 100%;
+    height: 100%;
+    padding-left: 5px;
+}
+
+.pager-paging {
+    position: relative;
+    width: 250px;
+    text-align: right;
+}
+
+.pager-label {
+    display: inline-block;
+    margin: 0px;
+    margin-top: 2px;
+    cursor: pointer;
+}
+
+.pager-textBox {
+    display: inline-block;
+    width: 30px;
+    height: 14px;
+    padding: 0px;
+    margin: 0px;
+    margin-top: 2px;
+    border: none;
+}
+
+.pager-space {
+    display: inline;
+    width: 8px;
+}
+
+.pager-button {
+    padding: 1px;
+    text-align: center;
+}
+
+.dashboardMainViewImpl-root {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.dashboardMainViewImpl-contentPanel {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-image: linear-gradient(rgb(244, 248, 253) 0px, rgb(222, 234, 248) 36px);
+    background-color: rgb(223, 234, 248);
+}
+
+.ruleViewImpl-bottom {
+    padding-top: 5px;
+}
+
+.ruleViewImpl-name {
+    display: inline-block;
+}
+
+.ruleViewImpl-optional {
+    display: inline-block;
+    margin-left: 5px;
+}
+
+.spinnerWhite-color {
+     border-color: white;
+}
+
+.spinnerWhite-size {
+      width: 32px;
+      height: 32px;
+}
+
+.spinnerWhite-circle {
+}
+
+.smallSpinner-color {
+    border-color: rgb(2,121,223);
+}
+
+.smallSpinner-size {
+    width: 16px;
+    height: 16px;
+}
+
+.smallSpinner-circle {
+    border-width: 2px;
+}
+
+.linkEventViewImpl-data {
+    margin-left: 3px;
+}
+
+.queryViewImpl-expressionTree {
+    padding-left: 5px;
+}
+
+.copyDocumentViewImpl-label {
+    margin-top: 2px;
+}
+
+.copyDocumentViewImpl-foldersOuter {
+    margin-bottom: 5px;
+}
+
+.selectionHandlerViewImpl-bottom {
+    padding-top: 5px;
+}
+
+.dataViewImpl-tabBarOuter {
+    position: absolute;
+    left: 0px;
+    top: 1px;
+    width: 300px;
+    height: 24px;
+    padding-left: 10px;
+    padding-right: 3px;
+    padding-top: 1px;
+}
+
+.dataViewImpl-tabBarInner {
+    position: relative;
+}
+
+.dataViewImpl-rightPanel {
+    width: max-content;
+    float: right;
+    padding-right: 0.25em;
+    padding-top: 1px;
+}
+
+.dataViewImpl-navigatorContainer {
+    float: left;
+}
+
+.dataViewImpl-progressBarPanel {
+    width: 100%;
+    height: 6px;
+    padding-right: 0.25em;
+    padding-left: 0.25em;
+}
+
+.dataViewImpl-sourceLinkLabel {
+    margin: 0px;
+    margin-top: 2px;
+    cursor: pointer;
+    padding-left: 0.75em;
+    padding-right: 0.75em;
+    float: left;
+}
+
+.dataViewImpl-sourceLinkLabel:hover {
+    text-decoration: underline;
+}
+
+.classificationLabel {
+    font-weight: 500;
+    text-align: center;
+    vertical-align: middle;
+    background-color: #888888;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.queryHistoryViewImpl-cellList {
+    position: absolute;
+    min-width: 100%;
+}
+
+.dataRetentionRuleViewImpl-bottom {
+    padding-top: 5px;
+}
+
+.dataRetentionRuleViewImpl-name {
+    display: inline-block;
+}
+
+.dataRetentionRuleViewImpl-optional {
+    display: inline-block;
+    margin-left: 5px;
+}
+
+.resizableAcceptRejectContent-buttons {
+    width: 100%;
+    text-align: right;
+    padding-top: 5px;
+}
+
+.resizableAcceptRejectContent-button {
+    margin: 0;
+    padding: 2px 4px;
+    width: 100px;
+    text-decoration: none;
+    cursor: pointer;
+    cursor: hand;
+    border: 1px solid #918e8c;
+    border-radius: 6px;
+    box-shadow: 0 0 1px rgba(0, 0, 0, 0.3);
+    white-space: nowrap;
+    background-color: #2962ff;
+    border-color: #2979ff;
+    color: white;
+}
+.resizableAcceptRejectContent-button:active {
+    border: 1px solid #5b7aa1 !important;
+    background-color: #2979ff !important;
+}
+.resizableAcceptRejectContent-button:hover {
+    border: 1px solid #5b7aa1 !important;
+    background-color: #2979ff !important;
+}
+.resizableAcceptRejectContent-button[disabled] {
+    cursor: default;
+    background-color: #bdbdbd;
+    color: #fafafa;
+}
+.resizableAcceptRejectContent-button[disabled]:hover {
+    cursor: default;
+    background-color: #bdbdbd;
+    color: #fafafa;
+}
+
+
+.resizableAcceptRejectContent-accept {
+    background-color: #388e3c;
+    border-color: #2e7d32;
+}
+.resizableAcceptRejectContent-accept:active {
+    background-color: #43a047 !important;
+    border-color: #388e3c !important;
+}
+.resizableAcceptRejectContent-accept:hover {
+    background-color: #43a047 !important;
+    border-color: #388e3c !important;
+}
+.resizableAcceptRejectContent-accept[disabled] {
+    border: 1px solid #bdbdbd !important;
+    box-shadow: none !important;
+    background-color: #bdbdbd !important;
+    color: #fafafa !important;
+}
+.resizableAcceptRejectContent-accept[disabled]:hover {
+    border: 1px solid #bdbdbd !important;
+    box-shadow: none !important;
+    background-color: #bdbdbd !important;
+    color: #fafafa !important;
+}
+
+.resizableAcceptRejectContent-reject {
+    margin-left: 5px;
+    background-color: #d50000;
+    border-color: #b71c1c;
+}
+.resizableAcceptRejectContent-reject:active {
+    background-color: #e53935 !important;
+    border-color: #d50000 !important;
+}
+.resizableAcceptRejectContent-reject:hover {
+    background-color: #e53935 !important;
+    border-color: #d50000 !important;
+}
+.resizableAcceptRejectContent-reject[disabled] {
+    border: 1px solid #bdbdbd !important;
+    box-shadow: none !important;
+    background-color: #bdbdbd !important;
+    color: #fafafa !important;
+}
+.resizableAcceptRejectContent-reject[disabled]:hover {
+    border: 1px solid #bdbdbd !important;
+    box-shadow: none !important;
+    background-color: #bdbdbd !important;
+    color: #fafafa !important;
+}
+
+.dataNavigator {
+    position: relative;
+    text-align: right;
+}
+
+.dataNavigator-label {
+    display: inline-block;
+    margin: 0px;
+    margin-top: 2px;
+    cursor: pointer;
+    padding-left: 0.75em;
+    padding-right: 0.75em;
+}
+
+.dataNavigator-label:hover {
+    text-decoration: underline;
+}
+
+.dataNavigator-button {
+    padding: 1px;
+    text-align: center;
+}
+
+.aboutViewImpl-layout {
+    width: 500px;
+    height: 288px;
+    margin: -5px -5px 0px;
+}
+
+.aboutViewImpl-stroom-body {
+    position: relative;
+    width: 500px;
+    height: 30px;
+}
+
+.aboutViewImpl-stroom-background {
+    position: absolute;
+    width: 500px;
+    height: 30px;
+}
+
+.aboutViewImpl-body {
+    padding: 5px;
+}
+
+.aboutViewImpl-buildInfo {
+    position: absolute;
+    right: 5px;
+    bottom: 5px;
+}
+
+.characterRangeSelectionViewImpl-lineColInput {
+    width: 120px;
+}
+.characterRangeSelectionViewImpl-offsetSpinner {
+    width: 120px;
+}
+.characterRangeSelectionViewImpl-charSpinner {
+    width: 120px;
+}
+.characterRangeSelectionViewImpl tr.headingRow>td {
+    font-weight: bold !important;
+}
+.characterRangeSelectionViewImpl tr.paddedRow {
+    height: 30px;
+}
+.characterRangeSelectionViewImpl-paddedCol {
+    padding-left: 10px;
+}
+.characterRangeSelectionViewImpl-panelChild {
+}
+.characterRangeSelectionViewImpl-countLabel {
+    padding-left: 6px;
+}
+.characterRangeSelectionViewImpl-flowPanel {
+    display: flex;
+}
+.characterRangeSelectionViewImpl-flowPanel .lineColInput{
+    width: 120px !important;
+}
+.characterRangeSelectionViewImpl-cell {
+    padding-top: 4px;
+}
+.characterRangeSelectionViewImpl-infoLine {
+    padding-bottom: 12px;
+}
+
+.dashboardViewImpl-dashboard {
+    overflow: hidden;
+}
+
+.dashboardViewImpl-bar {
+    position: absolute;
+    left: 0px;
+    right: 0px;
+    top: 0px;
+    height: 21px;
+}
+
+.dashboardViewImpl-content {
+    position: absolute;
+    left: 0px;
+    right: 0px;
+    top: 21px;
+    bottom: 0px;
+}
+
+.dashboardViewImpl-left {
+    position: relative;
+    width: 0;
+}
+
+.dashboardViewImpl-middle {
+    position: relative;
+    width: 100%;
+}
+
+.dashboardViewImpl-paramsContainer {
+    width: 100%;
+    padding: 2px;
+}
+
+.dashboardViewImpl-params {
+    width: 100%;
+    border: 1px solid #ddd;
+}
+
+.dashboardViewImpl-right {
+    position: relative;
+    width: 0;
+}
+
+.dashboardViewImpl-leftInner {
+    padding: 3px;
+}
+
+.dashboardViewImpl-rightInner {
+    position: absolute;
+    right: 0px;
+}
+
+.subStreamNavigator {
+    position: relative;
+    text-align: right;
+}
+
+.subStreamNavigator-label {
+    display: inline-block;
+    margin: 0px;
+    margin-top: 2px;
+    cursor: pointer;
+    padding-left: 0.75em;
+    padding-right: 0.75em;
+}
+
+.subStreamNavigator-label:hover {
+    text-decoration: underline;
+}
+
+.subStreamNavigator-button {
+    padding: 1px;
+    text-align: center;
+}
+
+.acceptRejectContent-layout {
+    width: 100%;
+    text-align: right;
+    padding-top: 5px;
+}
+
+.acceptRejectContent-button {
+    margin: 0;
+    padding: 3px 5px;
+    text-decoration: none;
+    font-size: small;
+    cursor: pointer;
+    cursor: hand;
+    background: blue;
+    color: white;
+    border: 1px outset #ccc;
+}
+
+.acceptRejectContent-button:active {
+    border: 1px inset #ccc;
+}
+
+.acceptRejectContent-button:hover {
+    border-color: #9cf #69e #69e #7af;
+}
+
+.acceptRejectContent-button[disabled] {
+    cursor: default;
+    background-color: grey;
+    color: white;
+}
+
+.acceptRejectContent-button[disabled]:hover {
+    cursor: default;
+    background-color: grey;
+    color: white;
+}
+
+.acceptRejectContent-accept {
+    background-color: green;
+}
+
+.acceptRejectContent-reject {
+    margin-left: 5px;
+    background-color: red;
+}
+
+.itemNavigator {
+}
+
+.itemNavigator-label {
+    margin: 0px;
+    margin-top: 2px;
+    cursor: pointer;
+    padding-left: 0.75em;
+    padding-right: 0.75em;
+    display: flex;
+    float: left;
+}
+
+.itemNavigator-label:hover {
+    text-decoration: underline;
+}
+
+.itemNavigator-button {
+    padding: 1px;
+    text-align: center;
+    display: flex;
+    float: left;
+}
+
+.globalPropertyEditViewImpl-textArea {
+    width:100%;
+    height:80px;
+}
+.globalPropertyEditViewImpl-textAreaReducedHeight {
+    width:100%;
+    height:50px;
+}
+
+.linkTabPanelViewImpl-left {
+    position: relative;
+    width: 0;
+}
+
+.linkTabPanelViewImpl-middle {
+    position: relative;
+    width: 100%;
+}
+
+.linkTabPanelViewImpl-right {
+    position: relative;
+    width: 0;
+}
+
+.linkTabPanelViewImpl-leftInner {
+    padding-right: 10px;
+}
+
+.linkTabPanelViewImpl-rightInner {
+    position: absolute;
+    right: 0px;
+}
+
+.queryFavouritesViewImpl-cellList {
+    position: absolute;
+    min-width: 100%;
+}
+
+.okCancelContent-layout {
+    width: 100%;
+    text-align: right;
+    padding-top: 5px;
+}
+
+.okCancelContent-cancel {
+    margin-left: 5px;
+}
+
+.filterViewImpl-row {
+    position: relative;
+    width: 100%;
+    height: 50%;
+}
+
+.filterViewImpl-container {
+    position: absolute;
+    left: 0px;
+    right: 0px;
+    top: 16px;
+    bottom: 0px;
+}
+
+.filterViewImpl-label {
+    width: 100%;
+    white-space: nowrap;
+    padding-top: 2px;
+}
+
+.editExpressionViewImpl-expressionTree {
+    padding-left: 5px;
+}
+
+.resizableCloseContent-buttons {
+    width: 100%;
+    text-align: right;
+    padding-top: 5px;
+}
+
+.expressionViewImpl-button {
+    float: left;
+}
+
+.expressionViewImpl-resizePanel {
+    display: block;
+}
+
+.expressionViewImpl-editorContainer {
+    border: 1px solid var(--input-border-color);
+    background-color: var(--input-background-color);
+}
+
+.expressionViewImpl-completionLabel {
+    float: left;
+}
+
+.expressionViewImpl-labelPanel {
+    float: right;
+}
+
+.expressionViewImpl-btnPanel {
+    float: left;
+}
+
+
+.characterNavigator {
+    position: relative;
+    text-align: right;
+}
+
+.characterNavigator-label {
+    display: inline-block;
+    margin: 0px;
+    margin-top: 2px;
+    cursor: pointer;
+    padding-left: 0.75em;
+    padding-right: 0.75em;
+}
+
+.characterNavigator-label:hover {
+    text-decoration: underline;
+}
+
+.characterNavigator-button {
+    padding: 1px;
+    text-align: center;
+}
+
+.resizableOkCancelContent-buttons {
+    width: 100%;
+    text-align: right;
+    padding-top: 5px;
+}
+
+.resizableOkCancelContent-cancel {
+    margin-left: 5px;
+}
+
+.userListViewImpl-nameFilter {
+    width: 100%;
+    border-bottom: none !important;
+}
+
+.createDocumentViewImpl-label {
+    margin-top: 2px;
+}
+
+.createDocumentViewImpl-foldersOuter {
+    margin-bottom: 5px;
+}
+
+.closeContent-layout {
+    width: 100%;
+    text-align: right;
+    padding-top: 5px;
+}
+
+.mainViewImpl-max {
+    position: absolute;
+    left: 0px;
+    right: 0px;
+    top: 0px;
+    bottom: 0px;
+    overflow: hidden;
+}
+
+.mainViewImpl-banner {
+    position: absolute;
+    left: 0px;
+    right: 0px;
+    top: 0px;
+    height: 20px;
+    overflow: hidden;
+    text-align: center;
+    font-weight: 500;
+    background-color: yellow;
+    border: 1px solid black;
+    padding: 1px;
+}
+
+.mainViewImpl-topPanel {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 14px;
+}
+
+.mainViewImpl-bottomPanel {
+    position: absolute;
+    left: 1px;
+    right: 1px;
+    top: 14px;
+    bottom: 1px;
+    overflow: hidden;
+}
+
+.mainViewImpl-contentPanel {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.mainViewImpl-spinner {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 32px;
+    height: 32px;
+    z-index: 1;
+}
+
+.userTaskManagerViewImpl-layout {
+    width: 400px;
+    height: 200px;
+}
+
+.progressViewImpl-progressBarContainer {
+    position: relative;
+}
+
+.progressViewImpl-progressBarOuter {
+    position: absolute;
+    background-color: var(--input-background-color);
+    width: 100%;
+    height: 6px;
+    border-style: solid;
+    border-width: 1px;
+    border-color: var(--input-border-color);
+}
+
+.progressViewImpl-progressBarInner {
+    position: absolute;
+    background-color: #1e88e5;
+    height: 4px;
+}
+
+.moveDocumentViewImpl-label {
+    margin-top: 2px;
+}
+
+.moveDocumentViewImpl-foldersOuter {
+    margin-bottom: 5px;
+}
+
+.solrIndexFieldListViewImpl-synchState {
+    padding: 5px;
+}
+
+.taskManangerViewImpl-nameFilter {
+    width: 100%;
+}
+
+.solrIndexSettingsViewImpl-label {
+    width: 110px;
+    margin-top: 2px;
+    vertical-align: top;
+    white-space: nowrap;
+}
+
+.elasticIndexSettingsViewImpl-label {
+    width: 110px;
+    margin-top: 2px;
+    vertical-align: top;
+    white-space: nowrap;
+}
+
+.dataRetentionViewImpl-tabBarOuter {
+    position: absolute;
+    left: 0px;
+    top: 1px;
+    width: 100%;
+    height: 24px;
+    padding-left: 10px;
+    padding-right: 3px;
+    padding-top: 1px;
+}
+
+.dataRetentionViewImpl-tabBarInner {
+    position: relative;
+}
+
+.steppingViewImpl-left {
+    position: relative;
+    width: 0px;
+}
+
+.steppingViewImpl-right {
+    position: relative;
+    width: 100%;
+}
+
+.steppingViewImpl-leftInner {
+    padding-right: 10px;
+}
+
+.steppingViewImpl-rightInner {
+    position: absolute;
+    right: 0px;
+}
+
+.importConfigViewImpl-label {
+    float: left;
+    width: 100px;
+    clear: left;
+}
+
+.dropDownTreeViewImpl-nameFilter {
+    width: 100%;
+}
+
+.welcomeViewImpl-body {
+    padding: 5px !important;
+}
+
+.welcomeViewImpl-buildInfo {
+    position: absolute;
+    right: 5px;
+    bottom: 5px;
+}
+
+.manageActivityViewImpl-nameFilter {
+    width: 100%;
+    border-bottom: none !important;
+}
+
+.splashViewImpl-scroll {
+    padding: 5px;
+}
+
+.explorerTreeViewImpl-bar div {
+    display: inline-block;
+    white-space: nowrap;
+}
+
+.explorerTreeViewImpl-nameFilter {
+    width: 100%;
+    border: none !important;
+}
+
+.explorerTreeViewImpl-buttonContainer {
+    margin-left: 2px;
+}
+
+.stepControlViewImpl-layout {
+    display: inline-block;
+}
+
+.chooserViewImpl-container {
+    display: flex;
+    flex-flow: column;
+}
+
+.chooserViewImpl-top {
+    flex-shrink: 0;
+    margin: 5px;
+}
+
+.chooserViewImpl-bottom {
+    flex-grow: 1;
+    max-height: 400px;
+    max-width: 390px;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.chooserViewImpl-nameFilter {
+}
+
+.chooserViewImpl-clearSelection {
+    display: none;
+    color: #0366d6;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 6px 8px;
+}
+
+.stepLocationViewImpl-layout {
+    display: inline-block;
+    white-space: nowrap;
+    position: absolute;
+    right: 100px;
+    top: 2px;
+    white-space: nowrap;
+}
+
+.stepLocationViewImpl-html {
+    display: inline-block;
+}
+
+.stepLocationViewImpl-label {
+    display: inline-block;
+    cursor: pointer;
+}
+
+.stepLocationViewImpl-textBox {
+    display: inline-block;
+    width: 30px;
+    height: 14px;
+    padding: 0px;
+    margin: 0px;
+    border: none;
+}
+
+.dictionarySettingsViewImpl-label {
+    width: 110px;
+    margin-top: 2px;
+    vertical-align: top;
+    white-space: nowrap;
+}
+
+.dependenciesTabViewImpl-quickFilter {
+    width: 100%;
+    border-bottom: none !important;
+}
+
+.exportConfigViewImpl-label {
+    margin-top: 2px;
+}
+
+.infoMenuItem {
+    cursor:default;
+    color:#212121;
+    background:linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0.1));
+    border: 1px solid gray;
+}
+
+.stroom-theme-dark .infoMenuItem {
+	color: var(--text-color);
+    border: 1px solid var(--dialog-border-color);
+}
+
+.preferencesViewImpl-buttons {
+}
+
+.preferencesViewImpl-buttons button {
+    width: 250px;
+    margin-right: 5px;
+}

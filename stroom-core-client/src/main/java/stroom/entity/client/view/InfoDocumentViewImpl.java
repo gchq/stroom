@@ -18,8 +18,6 @@ package stroom.entity.client.view;
 
 import stroom.entity.client.presenter.InfoDocumentPresenter;
 
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -30,11 +28,10 @@ public class InfoDocumentViewImpl extends ViewImpl implements InfoDocumentPresen
     private final TextArea widget;
 
     @Inject
-    public InfoDocumentViewImpl(final Resources resources) {
-        resources.style().ensureInjected();
+    public InfoDocumentViewImpl() {
         widget = new TextArea();
         widget.setReadOnly(true);
-        widget.setStyleName(resources.style().layout());
+        widget.setStyleName("info-layout");
     }
 
     @Override
@@ -45,18 +42,5 @@ public class InfoDocumentViewImpl extends ViewImpl implements InfoDocumentPresen
     @Override
     public void setInfo(final String string) {
         widget.setText(string);
-    }
-
-    public interface Style extends CssResource {
-
-        String DEFAULT_STYLE = "Info.css";
-
-        String layout();
-    }
-
-    public interface Resources extends ClientBundle {
-
-        @Source(Style.DEFAULT_STYLE)
-        Style style();
     }
 }

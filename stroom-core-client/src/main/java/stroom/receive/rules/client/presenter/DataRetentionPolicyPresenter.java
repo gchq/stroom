@@ -25,7 +25,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.receive.rules.client.presenter.DataRetentionPolicyPresenter.DataRetentionPolicyView;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.Item;
@@ -63,15 +63,15 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
             "Default Retain All Forever Rule",
             true,
             ExpressionOperator.builder().build());
-    private static final SvgPreset DELETE_RULE_SVG_PRESET = SvgPresets.DELETE.title("Delete rule");
-    protected static final SvgPreset ADD_ABOVE_SVG_PRESET = SvgPresets.ADD_ABOVE.title(
+    private static final Preset DELETE_RULE_SVG_PRESET = SvgPresets.DELETE.title("Delete rule");
+    protected static final Preset ADD_ABOVE_SVG_PRESET = SvgPresets.ADD_ABOVE.title(
             "Add new rule above the selected one");
-    protected static final SvgPreset ADD_BELOW_SVG_PRESET = SvgPresets.ADD_BELOW.title(
+    protected static final Preset ADD_BELOW_SVG_PRESET = SvgPresets.ADD_BELOW.title(
             "Add new rule below the selected one");
-    protected static final SvgPreset COPY_RULE_SVG_PRESET = SvgPresets.COPY.title("Copy rule");
-    protected static final SvgPreset EDIT_RULE_SVG_PRESET = SvgPresets.EDIT.title("Edit rule");
-    protected static final SvgPreset MOVE_RULE_UP_SVG_PRESET = SvgPresets.UP.title("Move Rule up");
-    protected static final SvgPreset MOVE_RULE_DOWN_SVG_PRESET = SvgPresets.DOWN.title("Move rule down");
+    protected static final Preset COPY_RULE_SVG_PRESET = SvgPresets.COPY.title("Copy rule");
+    protected static final Preset EDIT_RULE_SVG_PRESET = SvgPresets.EDIT.title("Edit rule");
+    protected static final Preset MOVE_RULE_UP_SVG_PRESET = SvgPresets.UP.title("Move Rule up");
+    protected static final Preset MOVE_RULE_DOWN_SVG_PRESET = SvgPresets.DOWN.title("Move rule down");
 
     private final DataRetentionPolicyListPresenter listPresenter;
     private final ExpressionTreePresenter expressionPresenter;

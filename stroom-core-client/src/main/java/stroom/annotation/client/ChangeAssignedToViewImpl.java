@@ -17,7 +17,7 @@
 package stroom.annotation.client;
 
 import stroom.annotation.client.ChangeAssignedToPresenter.ChangeAssignedToView;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.widget.button.client.SvgButton;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -32,7 +32,7 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 public class ChangeAssignedToViewImpl extends ViewWithUiHandlers<ChangeAssignedToUiHandlers>
         implements ChangeAssignedToView {
 
-    private static final SvgPreset CHANGE_ASSIGNED_TO = new SvgPreset("images/tree-open.svg",
+    private static final Preset CHANGE_ASSIGNED_TO = new Preset("images/tree-open.svg",
             "Change Assigned To",
             true);
 

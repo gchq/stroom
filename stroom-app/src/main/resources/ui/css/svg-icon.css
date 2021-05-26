@@ -1,0 +1,488 @@
+.svgIcon {
+  display: inline-block;
+  background-size: 100%;
+  width: 16px;
+  height: 16px;
+}
+
+.svgIcon-oo {
+  background-image: url("../images/oo.svg");
+}
+.svgIcon-add {
+  background-image: url("../images/add.svg");
+}
+.svgIcon-add-above {
+  background-image: url("../images/add-above.svg");
+}
+.svgIcon-add-below {
+  background-image: url("../images/add-below.svg");
+}
+.svgIcon-alert {
+  background-image: url("../images/alert.svg");
+}
+.svgIcon-edit {
+  background-image: url("../images/edit.svg");
+}
+.svgIcon-clear {
+  background-image: url("../images/clear.svg");
+}
+.svgIcon-close {
+  background-image: url("../images/close.svg");
+}
+.svgIcon-copy {
+  background-image: url("../images/copy.svg");
+}
+.svgIcon-database {
+  background-image: url("../images/database.svg");
+}
+.svgIcon-delete {
+  background-image: url("../images/delete.svg");
+}
+.svgIcon-deleted {
+  background-image: url("../images/deleted.svg");
+}
+.svgIcon-dependencies {
+  background-image: url("../images/dependencies.svg");
+}
+.svgIcon-disable {
+  background-image: url("../images/disable.svg");
+}
+.svgIcon-down {
+  background-image: url("../images/down.svg");
+}
+.svgIcon-download {
+  background-image: url("../images/download.svg");
+}
+.svgIcon-edit {
+  background-image: url("../images/edit.svg");
+}
+.svgIcon-ellipses-horizontal {
+  background-image: url("../images/ellipses-horizontal.svg");
+}
+.svgIcon-ellipses-vertical {
+  background-image: url("../images/ellipses-vertical.svg");
+}
+.svgIcon-error {
+  background-image: url("../images/error.svg");
+}
+.svgIcon-explorer {
+  background-image: url("../images/explorer.svg");
+}
+.svgIcon-fatal {
+  background-image: url("../images/fatal.svg");
+}
+.svgIcon-favourites {
+  background-image: url("../images/favourites.svg");
+}
+.svgIcon-feed {
+  background-image: url("../images/feed.svg");
+}
+.svgIcon-field {
+  background-image: url("../images/field.svg");
+}
+.svgIcon-file {
+  background-image: url("../images/file.svg");
+}
+.svgIcon-file-raw {
+  background-image: url("../images/file-raw.svg");
+}
+.svgIcon-file-formatted {
+  background-image: url("../images/file-formatted.svg");
+}
+.svgIcon-filter {
+  background-image: url("../images/filter.svg");
+}
+.svgIcon-folder {
+  background-image: url("../images/folder.svg");
+}
+.svgIcon-folder-tree {
+  background-image: url("../images/folder-tree.svg");
+}
+.svgIcon-format {
+  background-image: url("../images/format.svg");
+}
+.svgIcon-function {
+  background-image: url("../images/function.svg");
+}
+.svgIcon-generate {
+  background-image: url("../images/generate.svg");
+}
+.svgIcon-help {
+  background-image: url("../images/help.svg");
+}
+.svgIcon-history {
+  background-image: url("../images/history.svg");
+}
+.svgIcon-info {
+  background-image: url("../images/info.svg");
+}
+.svgIcon-info-deleted {
+  background-image: url("../images/info-deleted.svg");
+}
+.svgIcon-info-warning {
+  background-image: url("../images/info-warning.svg");
+}
+.svgIcon-insert-above {
+  background-image: url("../images/insert-above.svg");
+}
+.svgIcon-insert-below {
+  background-image: url("../images/insert-below.svg");
+}
+.svgIcon-jobs {
+  background-image: url("../images/jobs.svg");
+}
+.svgIcon-key {
+  background-image: url("../images/key.svg");
+}
+.svgIcon-dependencies {
+  background-image: url("../images/dependencies.svg");
+}
+.svgIcon-logout {
+  background-image: url("../images/logout.svg");
+}
+.svgIcon-monitoring {
+  background-image: url("../images/monitoring.svg");
+}
+.svgIcon-move {
+  background-image: url("../images/move.svg");
+}
+.svgIcon-add {
+  background-image: url("../images/add.svg");
+}
+.svgIcon-nodes {
+  background-image: url("../images/nodes.svg");
+}
+.svgIcon-edit {
+  background-image: url("../images/edit.svg");
+}
+.svgIcon-operator {
+  background-image: url("../images/operator.svg");
+}
+.svgIcon-password {
+  background-image: url("../images/password.svg");
+}
+.svgIcon-process {
+  background-image: url("../images/process.svg");
+}
+.svgIcon-properties {
+  background-image: url("../images/properties.svg");
+}
+.svgIcon-raw {
+  background-image: url("../images/raw.svg");
+}
+.svgIcon-remove {
+  background-image: url("../images/remove.svg");
+}
+.svgIcon-ruleset {
+  background-image: url("../images/ruleset.svg");
+}
+.svgIcon-play-green {
+  background-image: url("../images/play-green.svg");
+}
+.svgIcon-stop-red {
+  background-image: url("../images/stop-red.svg");
+}
+.svgIcon-save {
+  background-image: url("../images/save.svg");
+}
+.svgIcon-saveas {
+  background-image: url("../images/saveas.svg");
+}
+.svgIcon-settings {
+  background-image: url("../images/settings.svg");
+}
+.svgIcon-settings-blue {
+  background-image: url("../images/settings-blue.svg");
+}
+.svgIcon-shard-close {
+  background-image: url("../images/shard-close.svg");
+}
+.svgIcon-shard-flush {
+  background-image: url("../images/shard-flush.svg");
+}
+.svgIcon-spinner {
+  background-image: url("../images/spinner.svg");
+}
+.svgIcon-table {
+  background-image: url("../images/table.svg");
+}
+.svgIcon-table-nested {
+  background-image: url("../images/table-nested.svg");
+}
+.svgIcon-undo {
+  background-image: url("../images/undo.svg");
+}
+.svgIcon-up {
+  background-image: url("../images/up.svg");
+}
+.svgIcon-upload {
+  background-image: url("../images/upload.svg");
+}
+.svgIcon-user {
+  background-image: url("../images/user.svg");
+}
+.svgIcon-user-disabled {
+  background-image: url("../images/user-disabled.svg");
+}
+.svgIcon-users {
+  background-image: url("../images/users.svg");
+}
+.svgIcon-users-disabled {
+  background-image: url("../images/users-disabled.svg");
+}
+.svgIcon-volumes {
+  background-image: url("../images/volumes.svg");
+}
+.svgIcon-collapse-up {
+  background-image: url("../images/collapse-up.svg");
+}
+.svgIcon-expand-down {
+  background-image: url("../images/expand-down.svg");
+}
+.svgIcon-unlocked-green {
+  background-image: url("../images/unlocked-green.svg");
+}
+.svgIcon-locked-amber {
+  background-image: url("../images/locked-amber.svg");
+}
+.svgIcon-unlock-amber {
+  background-image: url("../images/unlock-amber.svg");
+}
+.svgIcon-lock-green {
+  background-image: url("../images/lock-green.svg");
+}
+.svgIcon-stepping {
+  background-image: url("../images/stepping-circle.svg");
+  background-size: 100%;
+  width: 18px;
+  height: 18px;
+}
+.svgIcon-fast-backward {
+  background-image: url("../images/fast-backward.svg");
+}
+.svgIcon-step-backward {
+  background-image: url("../images/step-backward.svg");
+}
+.svgIcon-step-forward {
+  background-image: url("../images/step-forward.svg");
+}
+.svgIcon-fast-forward {
+  background-image: url("../images/fast-forward.svg");
+}
+.svgIcon-refresh {
+  background-image: url("../images/refresh.svg");
+}
+.svgIcon-fast-backward-green {
+  background-image: url("../images/fast-backward-green.svg");
+}
+.svgIcon-step-backward-green {
+  background-image: url("../images/step-backward-green.svg");
+}
+.svgIcon-step-forward-green {
+  background-image: url("../images/step-forward-green.svg");
+}
+.svgIcon-fast-forward-green {
+  background-image: url("../images/fast-forward-green.svg");
+}
+.svgIcon-refresh-green {
+  background-image: url("../images/refresh-green.svg");
+}
+.svgIcon-show {
+  background-image: url("../images/show.svg");
+}
+.svgIcon-hide {
+  background-image: url("../images/hide.svg");
+}
+
+.svgIcon-document {
+  background-size: 100%;
+  width: 18px;
+  height: 18px;
+}
+
+.svgIcon-document-AnalyticOutputStore {
+  background-image: url("../images/document/AnalyticOutputStore.svg");
+}
+.svgIcon-document-AnnotationsIndex {
+  background-image: url("../images/document/AnnotationsIndex.svg");
+}
+.stroom-theme-dark .svgIcon-document-AnnotationsIndex {
+  background-image: url("../images/document/AnnotationsIndex-dark.svg");
+}
+.svgIcon-document-Dashboard {
+  background-image: url("../images/document/Dashboard.svg");
+}
+.svgIcon-document-Dictionary {
+  background-image: url("../images/document/Dictionary.svg");
+}
+.svgIcon-document-ElasticCluster {
+  background-image: url("../images/document/ElasticCluster.svg");
+}
+.svgIcon-document-ElasticIndex {
+  background-image: url("../images/document/ElasticIndex.svg");
+}
+.svgIcon-document-Feed {
+  background-image: url("../images/document/Feed.svg");
+}
+.svgIcon-document-Folder {
+  background-image: url("../images/document/Folder.svg");
+}
+.svgIcon-document-Index {
+  background-image: url("../images/document/Index.svg");
+}
+.svgIcon-document-KafkaConfig {
+  background-image: url("../images/document/KafkaConfig.svg");
+}
+.stroom-theme-dark .svgIcon-document-KafkaConfig {
+  background-image: url("../images/document/KafkaConfig-dark.svg");
+}
+.svgIcon-document-Pipeline {
+  background-image: url("../images/document/Pipeline.svg");
+}
+.svgIcon-document-ReceiveDataRuleSet {
+  background-image: url("../images/document/ReceiveDataRuleSet.svg");
+}
+.svgIcon-document-Script {
+  background-image: url("../images/document/Script.svg");
+}
+.svgIcon-document-searchable {
+  background-image: url("../images/document/searchable.svg");
+}
+.svgIcon-document-SelectAllOrNone {
+  background-image: url("../images/document/SelectAllOrNone.svg");
+}
+.svgIcon-document-SolrIndex {
+  background-image: url("../images/document/SolrIndex.svg");
+}
+.svgIcon-document-StatisticStore {
+  background-image: url("../images/document/StatisticStore.svg");
+}
+.svgIcon-document-StroomStatsStore {
+  background-image: url("../images/document/StroomStatsStore.svg");
+}
+.svgIcon-document-System {
+  background-image: url("../images/document/System.svg");
+}
+.svgIcon-document-TextConverter {
+  background-image: url("../images/document/TextConverter.svg");
+}
+.stroom-theme-dark .svgIcon-document-TextConverter {
+  background-image: url("../images/document/TextConverter-dark.svg");
+}
+.svgIcon-document-Visualisation {
+  background-image: url("../images/document/Visualisation.svg");
+}
+.svgIcon-document-XMLSchema {
+  background-image: url("../images/document/XMLSchema.svg");
+}
+.stroom-theme-dark .svgIcon-document-XMLSchema {
+  background-image: url("../images/document/XMLSchema-dark.svg");
+}
+.svgIcon-document-XSLT {
+  background-image: url("../images/document/XSLT.svg");
+}
+.stroom-theme-dark .svgIcon-document-XSLT {
+  background-image: url("../images/document/XSLT-dark.svg");
+}
+
+.svgIcon-pipeline {
+}
+.svgIcon-pipeline-analyticOutput {
+  background-image: url("../images/pipeline/analyticOutput.svg");
+}
+.svgIcon-pipeline-apache_kafka-icon {
+  background-image: url("../images/pipeline/kafka.svg");
+}
+.stroom-theme-dark .svgIcon-pipeline-apache_kafka-icon {
+  background-image: url("../images/pipeline/kafka-dark.svg");
+}
+.svgIcon-pipeline-ElasticIndex {
+  background-image: url("../images/pipeline/ElasticIndex.svg");
+}
+.svgIcon-pipeline-file {
+  background-image: url("../images/pipeline/file.svg");
+}
+.svgIcon-pipeline-files {
+  background-image: url("../images/pipeline/files.svg");
+}
+.svgIcon-pipeline-hadoop-elephant-logo {
+  background-image: url("../images/pipeline/hadoop-elephant-logo.svg");
+}
+.svgIcon-pipeline-id {
+  background-image: url("../images/pipeline/id.svg");
+}
+.stroom-theme-dark .svgIcon-pipeline-id {
+  background-image: url("../images/pipeline/id-dark.svg");
+}
+.svgIcon-pipeline-index {
+  background-image: url("../images/pipeline/index.svg");
+}
+.svgIcon-pipeline-json {
+  background-image: url("../images/pipeline/json.svg");
+}
+.svgIcon-pipeline-kafka {
+  background-image: url("../images/pipeline/kafka.svg");
+}
+.stroom-theme-dark .svgIcon-pipeline-kafka {
+  background-image: url("../images/pipeline/kafka-dark.svg");
+}
+.svgIcon-pipeline-recordCount {
+  background-image: url("../images/pipeline/recordCount.svg");
+}
+.svgIcon-pipeline-recordOutput {
+  background-image: url("../images/pipeline/recordOutput.svg");
+}
+.svgIcon-pipeline-referenceData {
+  background-image: url("../images/pipeline/referenceData.svg");
+}
+.stroom-theme-dark .svgIcon-pipeline-referenceData {
+  background-image: url("../images/pipeline/referenceData-dark.svg");
+}
+.svgIcon-pipeline-search {
+  background-image: url("../images/pipeline/search.svg");
+}
+.svgIcon-pipeline-solr {
+  background-image: url("../images/pipeline/solr.svg");
+}
+.svgIcon-pipeline-split {
+  background-image: url("../images/pipeline/split.svg");
+}
+.svgIcon-pipeline-statistics {
+  background-image: url("../images/pipeline/statistics.svg");
+}
+.svgIcon-pipeline-stream {
+  background-image: url("../images/pipeline/stream.svg");
+}
+.svgIcon-pipeline-stroomStats {
+  background-image: url("../images/pipeline/stroomStats.svg");
+}
+.svgIcon-pipeline-StroomStatsStore {
+  background-image: url("../images/pipeline/StroomStatsStore.svg");
+}
+.svgIcon-pipeline-text {
+  background-image: url("../images/pipeline/text.svg");
+}
+.stroom-theme-dark .svgIcon-pipeline-text {
+  background-image: url("../images/pipeline/text-dark.svg");
+}
+.svgIcon-pipeline-xml {
+  background-image: url("../images/pipeline/xml.svg");
+}
+.stroom-theme-dark .svgIcon-pipeline-xml {
+  background-image: url("../images/pipeline/xml-dark.svg");
+}
+.svgIcon-pipeline-xmlSearch {
+  background-image: url("../images/pipeline/xmlSearch.svg");
+}
+.svgIcon-pipeline-xsd {
+  background-image: url("../images/pipeline/xsd.svg");
+}
+.stroom-theme-dark .svgIcon-pipeline-xsd {
+  background-image: url("../images/pipeline/xsd-dark.svg");
+}
+.svgIcon-pipeline-xslt {
+  background-image: url("../images/pipeline/xslt.svg");
+}
+.stroom-theme-dark .svgIcon-pipeline-xslt {
+  background-image: url("../images/pipeline/xslt-dark.svg");
+}

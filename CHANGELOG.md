@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2257** : Allow Elasticsearch indexing to proceed in the absence of an existing index.
 
+* Issue **#2113** : Added user preferences including theme support.
+
 * Issue **#2241** : Change add icon on data retention screen to add above selected. Add action icon and menu to retention rule table. Restyle rule edit screen.
 
 * Issue **#2254** : Change `data` expression function to accept a first param for what to text to show.

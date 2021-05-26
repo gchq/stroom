@@ -19,10 +19,8 @@ package stroom.annotation.client;
 import stroom.annotation.client.ChooserPresenter.ChooserView;
 import stroom.data.table.client.CellTableView;
 import stroom.data.table.client.CellTableViewImpl;
-import stroom.data.table.client.CellTableViewImpl.HoverResources;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.Column;
@@ -50,7 +48,7 @@ public class ChooserPresenter extends MyPresenterWidget<ChooserView> implements 
 
         view.setUiHandlers(this);
 
-        table = new CellTableViewImpl<>(true, GWT.create(HoverResources.class));
+        table = new CellTableViewImpl<>(true, "hoverCellTable");
         view.setBottomView(table);
 
         // Text.

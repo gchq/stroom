@@ -3270,6 +3270,67 @@ paths:
       summary: Update a pipeline doc
       tags:
       - Pipelines
+  /preferences/v1:
+    get:
+      operationId: fetchUserPreferences
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPreferences'
+          description: default response
+      summary: Fetch user preferences.
+      tags:
+      - Preferences
+    post:
+      operationId: updateUserPreferences
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPreferences'
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Update user preferences
+      tags:
+      - Preferences
+  /preferences/v1/resetToDefaultUserPreferences:
+    post:
+      operationId: resetToDefaultUserPreferences
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPreferences'
+          description: default response
+      summary: Resets preferences to the defaults
+      tags:
+      - Preferences
+  /preferences/v1/setDefaultUserPreferences:
+    post:
+      operationId: setDefaultUserPreferences
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPreferences'
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPreferences'
+          description: default response
+      summary: Sets the default preferences for all users
+      tags:
+      - Preferences
   /processor/v1/{id}:
     delete:
       operationId: deleteProcessor
@@ -6633,7 +6694,7 @@ components:
       properties:
         displayType:
           type: string
-        iconUrl:
+        iconClassName:
           type: string
         priority:
           type: integer
@@ -6896,7 +6957,7 @@ components:
         depth:
           type: integer
           format: int32
-        iconUrl:
+        iconClassName:
           type: string
         name:
           type: string
@@ -10945,6 +11006,17 @@ components:
             type: string
           uniqueItems: true
         userId:
+          type: string
+    UserPreferences:
+      type: object
+      properties:
+        dateTimeFormat:
+          $ref: '#/components/schemas/DateTimeFormatSettings'
+        font:
+          type: string
+        fontSize:
+          type: string
+        theme:
           type: string
     ValidateExpressionResult:
       type: object

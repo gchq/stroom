@@ -57,6 +57,8 @@ import stroom.monitoring.client.gin.MonitoringGinjector;
 import stroom.monitoring.client.gin.MonitoringModule;
 import stroom.pipeline.client.gin.PipelineGinjector;
 import stroom.pipeline.client.gin.PipelineModule;
+import stroom.preferences.client.gin.PreferencesGinjector;
+import stroom.preferences.client.gin.PreferencesModule;
 import stroom.query.client.QueryModule;
 import stroom.receive.rules.client.gin.PolicyModule;
 import stroom.script.client.gin.ScriptGinjector;
@@ -112,6 +114,7 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         PluginsModule.class,
         PolicyModule.class,
         PopupModule.class,
+        PreferencesModule.class,
         QueryModule.class,
         ScriptModule.class,
         SecurityModule.class,
@@ -144,6 +147,7 @@ public interface AppGinjector extends
         PipelineGinjector,
         PluginsGinjector,
         PopupGinjector,
+        PreferencesGinjector,
         ScriptGinjector,
         SecurityGinjector,
         ElasticClusterGinjector,

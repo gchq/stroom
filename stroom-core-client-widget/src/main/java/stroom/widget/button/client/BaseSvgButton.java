@@ -16,7 +16,7 @@
 
 package stroom.widget.button.client;
 
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -29,7 +29,6 @@ import com.google.gwt.user.client.ui.ButtonBase;
 abstract class BaseSvgButton extends ButtonBase implements ButtonView {
 
     private final Element face;
-    private final SvgPreset preset;
     /**
      * If <code>true</code>, this widget is capturing with the mouse held down.
      */
@@ -44,9 +43,8 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
      */
     private boolean allowClickPropagation;
 
-    BaseSvgButton(final SvgPreset preset) {
+    BaseSvgButton(final Preset preset) {
         super(Document.get().createDivElement());
-        this.preset = preset;
 
         sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.FOCUSEVENTS | Event.KEYEVENTS);
         getElement().getStyle().setDisplay(Display.INLINE_BLOCK);
@@ -63,11 +61,8 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
         setEnabled(preset.isEnabled());
     }
 
-    void setSvgPreset(final SvgPreset svgPreset) {
-        face.setInnerHTML("<img class=\"icon\" src=\"" + svgPreset.getUrl() + "\" />");
-
-//        setWidth(preset.getWidth() + "px");
-//        setHeight(preset.getHeight() + "px");
+    void setSvgPreset(final Preset svgPreset) {
+        face.addClassName(svgPreset.getClassName());
 
         // Add the button tool-tip
         if (svgPreset.hasTitle()) {
@@ -86,19 +81,6 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
             face.addClassName("face--disabled");
         }
     }
-
-//    private void setIcon(final String url) {
-//        ResourceCache.get(url, data -> {
-//            if (data != null) {
-//                getElement().setInnerHTML(data);
-//                final Element svg = getElement().getElementsByTagName("svg").getItem(0).cast();
-////                svg.setAttribute("style", "fill:" + colourSet.getEnabled());
-//                svg.setAttribute("width", String.valueOf(preset.getWidth()));
-//                svg.setAttribute("height", String.valueOf(preset.getHeight()));
-//                svg.setTitle(getElement().getTitle());
-//            }
-//        });
-//    }
 
     @Override
     public void onBrowserEvent(final Event event) {
@@ -242,27 +224,21 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
 
     private void setHovering(final boolean hovering) {
         if (isEnabled()) {
-//            if (hovering) {
-//                getElement().getStyle().setColor(colourSet.getHover());
-//            } else {
-//                getElement().getStyle().setColor(colourSet.getEnabled());
-//            }
+            if (hovering) {
+                face.addClassName("face--hovering");
+            } else {
+                face.removeClassName("face--hovering");
+            }
         }
-
-        // if (hovering && hoverColor != null) {
-        // face.getStyle().setBackgroundColor(hoverColor);
-        // } else if (color != null) {
-        // face.getStyle().setBackgroundColor(color);
-        // }
     }
 
     @Override
     public void setVisible(final boolean visible) {
         super.setVisible(visible);
-        if (!visible) {
-//            if (isEnabled()) {
-//            getElement().getStyle().setColor(colourSet.getEnabled());
-//            }
+        if (visible) {
+            face.removeClassName("face--invisible");
+        } else {
+            face.addClassName("face--invisible");
         }
     }
 }

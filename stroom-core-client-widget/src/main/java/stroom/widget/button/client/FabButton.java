@@ -62,8 +62,8 @@ public class FabButton extends ButtonBase {
         }
     }
 
-    public void setIcon(final String icon) {
-        face.setInnerHTML("<img src=\"" + icon + "\"/>");
+    public void setIconClassName(final String iconClassName) {
+        face.setInnerHTML("<div class=\"" + iconClassName + "\"></div>");
     }
 
     @Override

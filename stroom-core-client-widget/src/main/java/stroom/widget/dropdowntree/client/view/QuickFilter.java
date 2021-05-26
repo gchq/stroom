@@ -20,7 +20,6 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.SvgButton;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
-import com.google.gwt.core.shared.GWT;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -28,9 +27,6 @@ import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.SimpleEventBus;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.CssResource.ImportedWithPrefix;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTMLPanel;
@@ -45,8 +41,6 @@ import java.util.function.Supplier;
 public class QuickFilter extends FlowPanel
         implements HasText, HasValueChangeHandlers<String> {
 
-    private static final Resources RESOURCES = GWT.create(Resources.class);
-
     private static final SafeHtml DEFAULT_POPUP_TEXT = TooltipUtil.builder()
             .addHeading("Quick Filter")
             .addLine("Field values containing the characters input will be included.")
@@ -60,22 +54,20 @@ public class QuickFilter extends FlowPanel
     private Supplier<SafeHtml> popupTextSupplier;
 
     public QuickFilter() {
-        RESOURCES.style().ensureInjected();
-
-        setStyleName(RESOURCES.style().quickFilter() + " stroom-border stroom-content");
-        textBox.setStyleName(RESOURCES.style().textBox());
-        label.setStyleName(RESOURCES.style().label());
+        setStyleName("quickFilter");
+        textBox.setStyleName("quickFilter-textBox");
+        label.setStyleName("quickFilter-label");
 
         clearButton = SvgButton.create(SvgPresets.CLEAR.title("Clear Filter"));
-        clearButton.addStyleName(RESOURCES.style().clear());
+        clearButton.addStyleName("quickFilter-clear");
 
         helpButton = SvgButton.create(SvgPresets.HELP.title("Quick Filter Syntax Help"));
-        helpButton.addStyleName(RESOURCES.style().infoButton());
+        helpButton.addStyleName("quickFilter-infoButton");
 
-        add(helpButton);
         add(textBox);
         add(label);
         add(clearButton);
+        add(helpButton);
 
         label.addClickHandler(event -> {
             label.setVisible(false);
@@ -98,7 +90,7 @@ public class QuickFilter extends FlowPanel
                 .orElse(DEFAULT_POPUP_TEXT);
 
         final HelpPopup popup = new HelpPopup(popupText);
-        popup.setStyleName(RESOURCES.style().tooltip());
+        popup.setStyleName("quickFilter-tooltip");
         popup.setPopupPositionAndShow((offsetWidth, offsetHeight) -> {
 
             // Position it below the filter
@@ -170,30 +162,6 @@ public class QuickFilter extends FlowPanel
     @Override
     public void fireEvent(final GwtEvent<?> event) {
         eventBus.fireEvent(event);
-    }
-
-    @ImportedWithPrefix("stroom-quickfilter")
-    public interface Style extends CssResource {
-
-        String DEFAULT_CSS = "QuickFilter.css";
-
-        String quickFilter();
-
-        String textBox();
-
-        String label();
-
-        String clear();
-
-        String infoButton();
-
-        String tooltip();
-    }
-
-    public interface Resources extends ClientBundle {
-
-        @Source(Style.DEFAULT_CSS)
-        Style style();
     }
 
     private static class HelpPopup extends PopupPanel {

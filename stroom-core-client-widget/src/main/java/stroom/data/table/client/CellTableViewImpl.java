@@ -53,13 +53,14 @@ public class CellTableViewImpl<R> extends ViewImpl implements CellTableView<R> {
     }
 
     public CellTableViewImpl(final boolean supportsSelection) {
-        this(supportsSelection, GWT.create(BasicResources.class));
+        this(supportsSelection, "basicCellTable");
     }
 
-    public CellTableViewImpl(final boolean supportsSelection, final Resources resources) {
+    public CellTableViewImpl(final boolean supportsSelection, final String className) {
+        final Resources resources = GWT.create(DefaultResources.class);
         cellTable = new CellTable<>(DataGridViewImpl.DEFAULT_LIST_PAGE_SIZE, resources);
         cellTable.setWidth("100%");
-
+        cellTable.getElement().setClassName(className);
         cellTable.setLoadingIndicator(null);
 
         setSupportsSelection(supportsSelection);
@@ -202,19 +203,6 @@ public class CellTableViewImpl<R> extends ViewImpl implements CellTableView<R> {
     }
 
     @ImportedWithPrefix("gwt-CellTable")
-    public interface BasicStyle extends Style {
-
-        String DEFAULT_CSS = "stroom/data/table/client/BasicCellTable.css";
-    }
-
-    public interface BasicResources extends Resources {
-
-        @Override
-        @Source(BasicStyle.DEFAULT_CSS)
-        BasicStyle cellTableStyle();
-    }
-
-    @ImportedWithPrefix("gwt-CellTable")
     public interface DefaultStyle extends Style {
 
         String DEFAULT_CSS = "stroom/data/table/client/DefaultCellTable.css";
@@ -225,38 +213,5 @@ public class CellTableViewImpl<R> extends ViewImpl implements CellTableView<R> {
         @Override
         @Source(DefaultStyle.DEFAULT_CSS)
         DefaultStyle cellTableStyle();
-    }
-
-    @ImportedWithPrefix("gwt-CellTable")
-    public interface DisabledStyle extends Style {
-
-        String DEFAULT_CSS = "stroom/data/table/client/DisabledCellTable.css";
-    }
-
-    public interface DisabledResources extends Resources {
-
-        @Override
-        @Source(DisabledStyle.DEFAULT_CSS)
-        DisabledStyle cellTableStyle();
-    }
-
-    @ImportedWithPrefix("gwt-CellTable")
-    public interface HoverStyle extends Style {
-
-        String DEFAULT_CSS = "stroom/data/table/client/HoverCellTable.css";
-    }
-
-    public interface HoverResources extends Resources {
-
-        @Override
-        @Source(HoverStyle.DEFAULT_CSS)
-        HoverStyle cellTableStyle();
-    }
-
-    public interface MenuResources extends Resources {
-
-        @Override
-        @Source("MenuCellTable.css")
-        Style cellTableStyle();
     }
 }

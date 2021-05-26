@@ -21,8 +21,6 @@ import stroom.widget.customdatebox.client.ClientDateUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -30,15 +28,12 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 public class QueryCell extends AbstractCell<StoredQuery> {
 
     private static Template template;
-    private static Resources resources;
 
     public QueryCell() {
         if (template == null) {
             synchronized (QueryCell.class) {
                 if (template == null) {
                     template = GWT.create(Template.class);
-                    resources = GWT.create(Resources.class);
-                    resources.style().ensureInjected();
                 }
             }
         }
@@ -48,30 +43,15 @@ public class QueryCell extends AbstractCell<StoredQuery> {
     public void render(final Context context, final StoredQuery value, final SafeHtmlBuilder sb) {
         if (value != null) {
             if (value.isFavourite()) {
-                sb.append(template.favouritesLayout(resources.style().outer(), resources.style().expression(),
+                sb.append(template.favouritesLayout("queryCell-outer", "queryCell-expression",
                         value.getName()));
 
             } else {
                 final String time = ClientDateUtil.toISOString(value.getCreateTimeMs());
-                sb.append(template.historyLayout(resources.style().outer(), resources.style().time(), time,
-                        resources.style().expression(), value.getQuery().getExpression().toString()));
+                sb.append(template.historyLayout("queryCell-outer", "queryCell-time", time,
+                        "queryCell-expression", value.getQuery().getExpression().toString()));
             }
         }
-    }
-
-    public interface Style extends CssResource {
-
-        String outer();
-
-        String time();
-
-        String expression();
-    }
-
-    public interface Resources extends ClientBundle {
-
-        @Source("querycell.css")
-        Style style();
     }
 
     public interface Template extends SafeHtmlTemplates {

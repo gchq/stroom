@@ -38,6 +38,7 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Function;
 
 public class EditorPresenter
@@ -55,11 +56,13 @@ public class EditorPresenter
     public EditorPresenter(final EventBus eventBus,
                            final EditorView view,
                            final EditorMenuPresenter contextMenu,
-                           final DelegatingAceCompleter delegatingAceCompleter) {
+                           final DelegatingAceCompleter delegatingAceCompleter,
+                           final CurrentTheme currentTheme) {
         super(eventBus, view);
         this.contextMenu = contextMenu;
         this.delegatingAceCompleter = delegatingAceCompleter;
         view.setUiHandlers(this);
+        view.setTheme(getTheme(currentTheme.getTheme()));
 
         registerHandler(view.addMouseDownHandler(event -> contextMenu.hide()));
         registerHandler(view.addContextMenuHandler(event ->
@@ -69,6 +72,16 @@ public class EditorPresenter
                 eventBus.fireEvent(event);
             }
         }));
+        registerHandler(eventBus.addHandler(ChangeThemeEvent.getType(), event ->
+                view.setTheme(getTheme(event.getTheme()))));
+    }
+
+    private AceEditorTheme getTheme(final String themeName) {
+        if (themeName != null && themeName.toLowerCase(Locale.ROOT).contains("dark")) {
+            return AceEditorTheme.CHAOS;
+//            theme = AceEditorTheme.TERMINAL;
+        }
+        return AceEditorTheme.CHROME;
     }
 
     public String getEditorId() {

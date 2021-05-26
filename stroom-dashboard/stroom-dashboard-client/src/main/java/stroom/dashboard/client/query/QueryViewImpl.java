@@ -18,7 +18,7 @@ package stroom.dashboard.client.query;
 
 import stroom.dashboard.client.main.SearchModel.Mode;
 import stroom.dashboard.client.query.QueryPresenter.QueryView;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.FabButton;
@@ -65,7 +65,7 @@ public class QueryViewImpl extends ViewWithUiHandlers<QueryUiHandlers>
     }
 
     @Override
-    public ButtonView addButton(final SvgPreset preset) {
+    public ButtonView addButton(final Preset preset) {
         return buttonPanel.addButton(preset);
     }
 

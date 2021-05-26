@@ -18,7 +18,7 @@
 package stroom.data.client.view;
 
 import stroom.data.client.presenter.EditExpressionPresenter.EditExpressionView;
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
@@ -57,7 +57,7 @@ public class EditExpressionViewImpl extends ViewImpl implements EditExpressionVi
     }
 
     @Override
-    public ButtonView addButton(final SvgPreset preset) {
+    public ButtonView addButton(final Preset preset) {
         return buttonPanel.addButton(preset);
     }
 

@@ -739,7 +739,7 @@ export interface DocumentPermissions {
 
 export interface DocumentType {
   displayType?: string;
-  iconUrl?: string;
+  iconClassName?: string;
 
   /** @format int32 */
   priority?: number;
@@ -906,7 +906,7 @@ export interface ExplorerNode {
 
   /** @format int32 */
   depth?: number;
-  iconUrl?: string;
+  iconClassName?: string;
   name?: string;
   nodeState?: "OPEN" | "CLOSED" | "LEAF";
   tags?: string;
@@ -3407,6 +3407,14 @@ export interface User {
 export interface UserAndPermissions {
   permissions?: string[];
   userId?: string;
+}
+
+export interface UserPreferences {
+  /** The string formatting to apply to a date value */
+  dateTimeFormat?: DateTimeFormatSettings;
+  font?: string;
+  fontSize?: string;
+  theme?: string;
 }
 
 export interface ValidateExpressionResult {
@@ -6699,6 +6707,79 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       this.request<any, PipelineDoc>({
         path: `/pipeline/v1/${uuid}`,
         method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+  };
+  preferences = {
+    /**
+     * No description
+     *
+     * @tags Preferences
+     * @name FetchUserPreferences
+     * @summary Fetch user preferences.
+     * @request GET:/preferences/v1
+     * @secure
+     */
+    fetchUserPreferences: (params: RequestParams = {}) =>
+      this.request<any, UserPreferences>({
+        path: `/preferences/v1`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Preferences
+     * @name UpdateUserPreferences
+     * @summary Update user preferences
+     * @request POST:/preferences/v1
+     * @secure
+     */
+    updateUserPreferences: (data: UserPreferences, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/preferences/v1`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Preferences
+     * @name ResetToDefaultUserPreferences
+     * @summary Resets preferences to the defaults
+     * @request POST:/preferences/v1/resetToDefaultUserPreferences
+     * @secure
+     */
+    resetToDefaultUserPreferences: (params: RequestParams = {}) =>
+      this.request<any, UserPreferences>({
+        path: `/preferences/v1/resetToDefaultUserPreferences`,
+        method: "POST",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Preferences
+     * @name SetDefaultUserPreferences
+     * @summary Sets the default preferences for all users
+     * @request POST:/preferences/v1/setDefaultUserPreferences
+     * @secure
+     */
+    setDefaultUserPreferences: (data: UserPreferences, params: RequestParams = {}) =>
+      this.request<any, UserPreferences>({
+        path: `/preferences/v1/setDefaultUserPreferences`,
+        method: "POST",
         body: data,
         secure: true,
         type: ContentType.Json,

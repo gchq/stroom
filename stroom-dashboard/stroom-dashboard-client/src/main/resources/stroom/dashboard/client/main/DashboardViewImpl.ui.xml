@@ -2,82 +2,24 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:v="urn:import:stroom.widget.layout.client.view">
-    <ui:style>
-        .dashboard {
-        background-color: #f5f5f5;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-        }
-
-        .bar {
-        position: absolute;
-        left: 0px;
-        right: 0px;
-        top: 0px;
-        height: 21px;
-        }
-
-        .content {
-        position: absolute;
-        left: 0px;
-        right: 0px;
-        top: 21px;
-        bottom: 0px;
-        }
-
-        .left {
-        position: relative;
-        width: 0;
-        }
-
-        .middle {
-        position: relative;
-        width: 100%;
-        }
-
-        .paramsContainer {
-        width: 100%;
-        padding: 2px;
-        }
-
-        .params {
-        width: 100%;
-        border: 1px solid #ddd;
-        }
-
-        .right {
-        position: relative;
-        width: 0;
-        }
-
-        .leftInner {
-        padding: 3px;
-        }
-
-        .rightInner {
-        position: absolute;
-        right: 0px;
-        }
-    </ui:style>
-    <v:ResizeFlowPanel styleName="{style.dashboard}">
-        <g:SimplePanel styleName="{style.bar} stroom-content-container">
+    <v:ResizeFlowPanel styleName="max dashboardViewImpl-dashboard">
+        <g:SimplePanel styleName="dashboardViewImpl-bar stroom-content-container">
             <g:Grid width="100%" height="100%">
                 <g:row>
-                    <g:customCell styleName="{style.left}">
-                        <g:FlowPanel ui:field="left" styleName="{style.leftInner}"/>
+                    <g:customCell styleName="dashboardViewImpl-left">
+                        <g:FlowPanel ui:field="left" styleName="dashboardViewImpl-leftInner"/>
                     </g:customCell>
-                    <g:customCell styleName="{style.middle}">
-                        <g:FlowPanel styleName="{style.paramsContainer}">
-                            <g:TextBox ui:field="params" styleName="{style.params}"/>
+                    <g:customCell styleName="dashboardViewImpl-middle">
+                        <g:FlowPanel styleName="dashboardViewImpl-paramsContainer">
+                            <g:TextBox ui:field="params" styleName="dashboardViewImpl-params"/>
                         </g:FlowPanel>
                     </g:customCell>
-                    <g:customCell styleName="{style.right}">
-                        <g:FlowPanel ui:field="right" styleName="{style.rightInner}"/>
+                    <g:customCell styleName="dashboardViewImpl-right">
+                        <g:FlowPanel ui:field="right" styleName="dashboardViewImpl-rightInner"/>
                     </g:customCell>
                 </g:row>
             </g:Grid>
         </g:SimplePanel>
-        <v:ResizeSimplePanel ui:field="content" styleName="{style.content} stroom-content-container"/>
+        <v:ResizeSimplePanel ui:field="content" styleName="dashboardViewImpl-content stroom-content-container"/>
     </v:ResizeFlowPanel>
 </ui:UiBinder>

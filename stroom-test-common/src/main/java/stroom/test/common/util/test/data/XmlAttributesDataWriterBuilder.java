@@ -62,7 +62,7 @@ public class XmlAttributesDataWriterBuilder extends AbstractXmlDataWriterBuilder
     @Override
     protected final String buildRecordFormatString(final List<Field> fields) {
         final String fieldsPart = fields.stream()
-                .map(field -> "<" + fieldValueElementName + " name=\"" + field.getName() + "\" value=\"%s\" />")
+                .map(field -> "<" + fieldValueElementName + " name=\"" + field.getName() + "\" value=\"%s\"></div>")
                 .collect(Collectors.joining());
 
         return "<" + recordElementName + ">"

@@ -16,9 +16,6 @@
 
 package stroom.widget.tab.client.view;
 
-import com.google.gwt.core.shared.GWT;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -35,7 +32,6 @@ import java.util.Set;
 
 public class LayerContainerImpl extends Composite implements LayerContainer, RequiresResize, ProvidesResize {
 
-    private static Resources resources;
     private final FlowPanel panel;
     private final Set<Layer> layers = new HashSet<>();
     private boolean fade;
@@ -43,13 +39,8 @@ public class LayerContainerImpl extends Composite implements LayerContainer, Req
     private Layer selectedLayer;
 
     public LayerContainerImpl() {
-        if (resources == null) {
-            resources = GWT.create(Resources.class);
-            resources.style().ensureInjected();
-        }
-
         panel = new FlowPanel();
-        panel.setStyleName(resources.style().container());
+        panel.setStyleName("layerContainer-container");
 
         initWidget(panel);
     }
@@ -125,21 +116,8 @@ public class LayerContainerImpl extends Composite implements LayerContainer, Req
     public void add(final IsWidget isWidget) {
         final Widget widget = isWidget.asWidget();
 
-        widget.addStyleName(resources.style().layer());
+        widget.addStyleName("layerContainer-layer");
         panel.add(widget);
-    }
-
-    public interface Style extends CssResource {
-
-        String container();
-
-        String layer();
-    }
-
-    public interface Resources extends ClientBundle {
-
-        @Source("LayerContainer.css")
-        Style style();
     }
 
     private static class TransitionTimer extends Timer {

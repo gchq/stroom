@@ -23,8 +23,7 @@ import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
-import stroom.svg.client.SvgPreset;
-import stroom.util.client.BorderUtil;
+import stroom.svg.client.Preset;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
 
@@ -44,7 +43,7 @@ public class SelectionHandlerListPresenter
         super(eventBus, new DataGridViewImpl<>(true, false));
 
         // Add a border to the list.
-        BorderUtil.addBorder(getWidget().getElement());
+        getWidget().getElement().addClassName("stroom-border");
 
         initTableColumns();
     }
@@ -103,7 +102,7 @@ public class SelectionHandlerListPresenter
         return getView().getSelectionModel();
     }
 
-    public ButtonView add(final SvgPreset preset) {
+    public ButtonView add(final Preset preset) {
         return getView().addButton(preset);
     }
 }

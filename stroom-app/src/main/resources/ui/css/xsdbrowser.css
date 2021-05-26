@@ -1,0 +1,352 @@
+/*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.xsdBrowser * {
+	-moz-user-focus: ignore;
+	-moz-user-input: disabled;
+	-moz-user-select: none;
+	-webkit-user-focus: ignore;
+	-webkit-user-input: disabled;
+	-webkit-user-select: none;
+	user-focus: ignore;
+	user-input: disabled;
+	user-select: none;
+	cursor: default;
+}
+
+.xsdBrowser .bar {
+	
+}
+
+.xsdBrowser .link {
+	display: inline-block;
+	cursor: pointer;
+	padding: 2px 5px;
+	text-decoration: underline;
+}
+
+.xsdBrowser .display {
+	border: none;
+	border-right: 1px solid var(--border-color);
+	border-top: 1px solid var(--border-color);
+}
+
+.xsdBrowser .documentation {
+	border-left: 1px solid var(--border-color);
+	border-top: 1px solid var(--border-color);
+	border-bottom: 1px solid var(--border-color);
+	overflow: auto;
+	background-color: var(--input-background-color);
+	padding: 5px;
+}
+
+.xsdBrowser .constraints {
+	background-color: var(--input-background-color);
+	border-left: 1px solid var(--border-color);
+	border-top: 1px solid var(--border-color);
+}
+
+.xsdBrowser .container {
+	width: 100%;
+	height: 100%;
+	background-color: var(--input-background-color);
+	border: 1px solid var(--border-color);
+}
+
+.xsdBrowser .content {
+	position: absolute;
+	padding: 20px;
+}
+
+.xsdBrowser .box {
+	width: 100%;
+	height: 100%;
+	border: 1px solid var(--main-border-color);
+}
+
+.xsdBrowser .boxTitle {
+	width: 100%;
+	background: var(--xsdbrowser-title-background-color);
+	padding: 2px;
+	border: 1px solid var(--xsdbrowser-title-background-color);
+}
+
+.xsdBrowser .boxTitle-selected {
+	width: 100%;
+	background: var(--xsdbrowser-title-background-color-selected);
+	padding: 2px;
+	border: 1px solid var(--xsdbrowser-title-background-color-selected);
+}
+
+.xsdBrowser .boxTitle-noContent {
+}
+
+.xsdBrowser .outerBox {
+	border: 1px solid var(--input-background-color);
+	background-color: var(--xsdbrowser-box-background-color);
+}
+
+.xsdBrowser .restrictionType {
+	font-weight: 500;
+}
+
+.xsdBrowser .padding {
+	padding: 5px;
+}
+
+.xsdBrowser .midPanel {
+	border-spacing: 5px;
+}
+
+.xsdBrowser .displayTypeBox {
+	margin-bottom: 20px;
+}
+
+.xsdBrowser .nodeTypeBox {
+	margin-bottom: 40px;
+}
+
+.xsdBrowser .marginRight {
+	margin-right: 5px;
+}
+
+.xsdBrowser .marginLeft {
+	margin-left: 5px;
+}
+
+.xsdBrowser .nodeLabel {
+	margin-right: 5px;
+	cursor: pointer;
+	white-space: nowrap;
+	text-align: left;
+}
+
+.xsdBrowser .nodeLabelSelected {
+  background: var(--selected-row-background-color) none repeat scroll 0 0 !important;
+  color: var(--selected-row-text-color) !important;
+}
+
+.xsdBrowser .occuranceLabel {
+	position: absolute;
+	left: 16px;
+	top: 9px;
+	font-size: 8px;
+	color: var(--link-text-color);
+}
+
+.xsdBrowser .xsdBrowser-superArrow {
+  background-image: url("../images/xsdbrowser/superArrow.png");
+  width: 13px;
+  height: 60px;
+}
+
+.xsdBrowser .xsdBrowser-superArrowSelect {
+  background-image: url("../images/xsdbrowser/superArrowSelect.png");
+  width: 13px;
+  height: 60px;
+}
+
+.stroom-theme-dark .xsdBrowser .xsdBrowser-superArrowSelect {
+  background-image: url("../images/xsdbrowser/superArrowSelect-dark.png");
+  width: 13px;
+  height: 60px;
+}
+
+.xsdBrowser .xsdBrowser-xsdAll {
+  background-image: url("../images/xsdbrowser/xsdAll.png");
+  width: 15px;
+  height: 20px;
+}
+
+.xsdBrowser .xsdBrowser-xsdAny {
+  background-image: url("../images/xsdbrowser/xsdAny.png");
+  width: 20px;
+  height: 20px;
+}
+
+.xsdBrowser .xsdBrowser-xsdAttribute {
+  background-image: url("../images/xsdbrowser/xsdAttribute.png");
+  width: 20px;
+  height: 20px;
+}
+
+.xsdBrowser .xsdBrowser-xsdBrowser-Title {
+  background-image: url("../images/xsdbrowser/xsdBrowser-Title.png");
+  width: 32px;
+  height: 500px;
+}
+
+.xsdBrowser .xsdBrowser-xsdBrowser-Title-selected {
+  background-image: url("../images/xsdbrowser/xsdBrowser-Title-selected.png");
+  width: 32px;
+  height: 500px;
+}
+
+.xsdBrowser .xsdBrowser-xsdChoice {
+  background-image: url("../images/xsdbrowser/xsdChoice.png");
+  width: 15px;
+  height: 20px;
+}
+
+.xsdBrowser .xsdBrowser-xsdComplexType {
+  background-image: url("../images/xsdbrowser/xsdComplexType.png");
+  width: 20px;
+  height: 20px;
+}
+
+.xsdBrowser .xsdBrowser-xsdElement {
+  background-image: url("../images/xsdbrowser/xsdElement.png");
+  width: 20px;
+  height: 20px;
+}
+
+.xsdBrowser .xsdBrowser-xsdElementRef {
+  background-image: url("../images/xsdbrowser/xsdElementRef.png");
+  width: 20px;
+  height: 20px;
+}
+
+.xsdBrowser .xsdBrowser-xsdSequence {
+  background-image: url("../images/xsdbrowser/xsdSequence.png");
+  width: 15px;
+  height: 20px;
+}
+
+.xsdBrowser .xsdBrowser-xsdSimpleType {
+  background-image: url("../images/xsdbrowser/xsdSimpleType.png");
+  width: 20px;
+  height: 20px;
+}
+
+.xsdBrowser .xsdBrowser-xsdTitleAttributes {
+  background-image: url("../images/xsdbrowser/xsdTitleAttributes.png");
+  width: 16px;
+  height: 16px;
+}
+
+.xsdBrowser .xsdBrowser-xsdTitleComplexType {
+  background-image: url("../images/xsdbrowser/xsdTitleComplexType.png");
+  width: 16px;
+  height: 16px;
+}
+
+.xsdBrowser .xsdBrowser-xsdTitleDirectives {
+  background-image: url("../images/xsdbrowser/xsdTitleDirectives.png");
+  width: 16px;
+  height: 16px;
+}
+
+.xsdBrowser .xsdBrowser-xsdTitleElement {
+  background-image: url("../images/xsdbrowser/xsdTitleElement.png");
+  width: 16px;
+  height: 16px;
+}
+
+.xsdBrowser .xsdBrowser-xsdTitleElements {
+  background-image: url("../images/xsdbrowser/xsdTitleElements.png");
+  width: 16px;
+  height: 16px;
+}
+
+.xsdBrowser .xsdBrowser-xsdTitleGroups {
+  background-image: url("../images/xsdbrowser/xsdTitleGroups.png");
+  width: 16px;
+  height: 16px;
+}
+
+.xsdBrowser .xsdBrowser-xsdTitleSchema {
+  background-image: url("../images/xsdbrowser/xsdTitleSchema.png");
+  width: 16px;
+  height: 16px;
+}
+
+.xsdBrowser .xsdBrowser-xsdTitleSimpleType {
+  background-image: url("../images/xsdbrowser/xsdTitleSimpleType.png");
+  width: 16px;
+  height: 16px;
+}
+
+.xsdBrowser .xsdBrowser-xsdTitleTypes {
+  background-image: url("../images/xsdbrowser/xsdTitleTypes.png");
+  width: 16px;
+  height: 16px;
+}
+
+.xsdBrowser .xsdBrowser-xsdTree01 {
+  background-image: url("../images/xsdbrowser/xsdTree01.png");
+  width: 15px;
+  height: 20px;
+}
+
+.xsdBrowser .xsdBrowser-xsdTree02 {
+  background-image: url("../images/xsdbrowser/xsdTree02.png");
+  width: 15px;
+  height: 20px;
+}
+
+.xsdBrowser .xsdBrowser-xsdTree03 {
+  background-image: url("../images/xsdbrowser/xsdTree03.png");
+  width: 15px;
+  height: 20px;
+}
+
+.xsdBrowser .xsdBrowser-xsdTree04 {
+  background-image: url("../images/xsdbrowser/xsdTree04.png");
+  width: 15px;
+  height: 20px;
+}
+
+.xsdBrowser .xsdBrowser-xsdTree05 {
+  background-image: url("../images/xsdbrowser/xsdTree05.png");
+  width: 15px;
+  height: 20px;
+}
+
+.xsdBrowser .xsdBrowser-xsdTree06 {
+  background-image: url("../images/xsdbrowser/xsdTree06.png");
+  width: 15px;
+  height: 20px;
+}
+
+.xsdBrowser .xsdBrowser-xsdTree07 {
+  background-image: url("../images/xsdbrowser/xsdTree07.png");
+  width: 15px;
+  height: 20px;
+}
+
+.xsdBrowser .xsdBrowser-xsdTree08 {
+  background-image: url("../images/xsdbrowser/xsdTree08.png");
+  width: 15px;
+  height: 20px;
+}
+
+.xsdBrowser .xsdBrowser-xsdTree09 {
+  background-image: url("../images/xsdbrowser/xsdTree09.png");
+  width: 15px;
+  height: 20px;
+}
+
+.xsdBrowser .xsdBrowser-xsdTree10 {
+  background-image: url("../images/xsdbrowser/xsdTree10.png");
+  width: 15px;
+  height: 20px;
+}
+
+.xsdBrowser .xsdBrowser-xsdTree11 {
+  background-image: url("../images/xsdbrowser/xsdTree11.png");
+  width: 15px;
+  height: 20px;
+}

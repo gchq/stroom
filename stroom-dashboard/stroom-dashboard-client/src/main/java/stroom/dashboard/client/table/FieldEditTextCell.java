@@ -105,7 +105,7 @@ public class FieldEditTextCell extends AbstractEditableCell<String, FieldEditTex
                 // Do not use the renderer in edit mode because the value of a
                 // text input element is always treated as text. SafeHtml isn't
                 // valid in the context of the value attribute.
-                sb.append(template.input(fieldsManager.getResources().style().fieldText(), text));
+                sb.append(template.input("fields-fieldText", text));
                 return;
             } else {
                 // The user pressed enter, but view data still exists.
@@ -114,7 +114,7 @@ public class FieldEditTextCell extends AbstractEditableCell<String, FieldEditTex
         }
 
         if (toRender != null && toRender.trim().length() > 0) {
-            sb.append(template.div(fieldsManager.getResources().style().fieldLabel(), toRender));
+            sb.append(template.div("fields-fieldLabel", toRender));
         } else {
             // Render a blank space to force the rendered element to have a
             // height. Otherwise it is not clickable.

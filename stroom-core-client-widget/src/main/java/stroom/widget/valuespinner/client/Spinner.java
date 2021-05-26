@@ -16,7 +16,6 @@
 
 package stroom.widget.valuespinner.client;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.event.dom.client.MouseOutHandler;
@@ -25,10 +24,8 @@ import com.google.gwt.event.dom.client.MouseUpHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.event.shared.SimpleEventBus;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -39,9 +36,8 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 public class Spinner implements HasHandlers {
 
     private static final int INITIAL_SPEED = 7;
-    private static final SpinnerResources images = GWT.create(SpinnerResources.class);
-    private final Image decrementArrow = new Image();
-    private final Image incrementArrow = new Image();
+    private final Button decrementArrow = new Button();
+    private final Button incrementArrow = new Button();
     private final EventBus eventBus = new SimpleEventBus();
     private final boolean constrained = true;
     private int step = 1;
@@ -85,13 +81,13 @@ public class Spinner implements HasHandlers {
         @Override
         public void onMouseDown(final MouseDownEvent event) {
             if (enabled) {
-                final Image sender = (Image) event.getSource();
+                final Widget sender = (Widget) event.getSource();
                 if (sender == incrementArrow) {
-                    sender.setResource(images.arrowUpPressed());
+                    sender.getElement().setClassName("valueSpinner-arrowUpPressed");
                     increment = true;
                     increase();
                 } else {
-                    sender.setResource(images.arrowDownPressed());
+                    sender.getElement().setClassName("valueSpinner-arrowDownPressed");
                     increment = false;
                     decrease();
                 }
@@ -101,11 +97,11 @@ public class Spinner implements HasHandlers {
     };
     private final MouseOverHandler mouseOverHandler = event -> {
         if (enabled) {
-            final Image sender = (Image) event.getSource();
+            final Widget sender = (Widget) event.getSource();
             if (sender == incrementArrow) {
-                sender.setResource(images.arrowUpHover());
+                sender.getElement().setClassName("valueSpinner-arrowUpHover");
             } else {
-                sender.setResource(images.arrowDownHover());
+                sender.getElement().setClassName("valueSpinner-arrowDownHover");
             }
         }
     };
@@ -126,12 +122,12 @@ public class Spinner implements HasHandlers {
         incrementArrow.addMouseDownHandler(mouseDownHandler);
         incrementArrow.addMouseOverHandler(mouseOverHandler);
         incrementArrow.addMouseOutHandler(mouseOutHandler);
-        incrementArrow.setResource(images.arrowUp());
+        incrementArrow.getElement().setClassName("valueSpinner-arrowUp");
         decrementArrow.addMouseUpHandler(mouseUpHandler);
         decrementArrow.addMouseDownHandler(mouseDownHandler);
         decrementArrow.addMouseOverHandler(mouseOverHandler);
         decrementArrow.addMouseOutHandler(mouseOutHandler);
-        decrementArrow.setResource(images.arrowDown());
+        decrementArrow.getElement().setClassName("valueSpinner-arrowDown");
 
         SpinnerEvent.fire(this, value);
     }
@@ -143,14 +139,14 @@ public class Spinner implements HasHandlers {
     /**
      * @return the image representing the decreasing arrow
      */
-    public Image getDecrementArrow() {
+    public Button getDecrementArrow() {
         return decrementArrow;
     }
 
     /**
      * @return the image representing the increasing arrow
      */
-    public Image getIncrementArrow() {
+    public Button getIncrementArrow() {
         return incrementArrow;
     }
 
@@ -241,11 +237,11 @@ public class Spinner implements HasHandlers {
     public void setEnabled(final boolean enabled) {
         this.enabled = enabled;
         if (enabled) {
-            incrementArrow.setResource(images.arrowUp());
-            decrementArrow.setResource(images.arrowDown());
+            incrementArrow.getElement().setClassName("valueSpinner-arrowUp");
+            decrementArrow.getElement().setClassName("valueSpinner-arrowDown");
         } else {
-            incrementArrow.setResource(images.arrowUpDisabled());
-            decrementArrow.setResource(images.arrowDownDisabled());
+            incrementArrow.getElement().setClassName("valueSpinner-arrowUpDisabled");
+            decrementArrow.getElement().setClassName("valueSpinner-arrowDownDisabled");
         }
         if (!enabled) {
             timer.cancel();
@@ -298,9 +294,9 @@ public class Spinner implements HasHandlers {
     private void cancelTimer(final Widget sender) {
         step = minStep;
         if (sender == incrementArrow) {
-            ((Image) sender).setResource(images.arrowUp());
+            sender.getElement().setClassName("valueSpinner-arrowUp");
         } else {
-            ((Image) sender).setResource(images.arrowDown());
+            sender.getElement().setClassName("valueSpinner-arrowDown");
         }
         timer.cancel();
     }
@@ -308,27 +304,5 @@ public class Spinner implements HasHandlers {
     @Override
     public void fireEvent(final GwtEvent<?> event) {
         eventBus.fireEvent(event);
-    }
-
-    /**
-     * Default resources for spinning arrows.
-     */
-    public interface SpinnerResources extends ClientBundle {
-
-        ImageResource arrowDown();
-
-        ImageResource arrowDownDisabled();
-
-        ImageResource arrowDownHover();
-
-        ImageResource arrowDownPressed();
-
-        ImageResource arrowUp();
-
-        ImageResource arrowUpDisabled();
-
-        ImageResource arrowUpHover();
-
-        ImageResource arrowUpPressed();
     }
 }

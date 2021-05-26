@@ -28,8 +28,7 @@ import stroom.processor.client.presenter.ProcessorPresenter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.client.Icon;
-import stroom.svg.client.SvgPreset;
-import stroom.util.client.ImageUtil;
+import stroom.svg.client.Preset;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -101,6 +100,6 @@ public class FolderRootPresenter extends LinkTabPanelPresenter implements TabDat
 
     @Override
     public Icon getIcon() {
-        return new SvgPreset(ImageUtil.getImageURL() + DocumentType.DOC_IMAGE_URL + getLabel() + ".svg", null, true);
+        return new Preset(DocumentType.DOC_IMAGE_CLASS_NAME + getLabel(), null, true);
     }
 }

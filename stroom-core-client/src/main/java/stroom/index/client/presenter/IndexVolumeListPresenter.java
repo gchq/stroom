@@ -20,7 +20,6 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.index.shared.IndexVolume;
-import stroom.util.client.BorderUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.cell.client.TextCell;
@@ -38,7 +37,7 @@ public class IndexVolumeListPresenter extends MyPresenterWidget<DataGridView<Ind
         super(eventBus, new DataGridViewImpl<>(true, true));
 
         // Add a border to the list.
-        BorderUtil.addBorder(getWidget().getElement());
+        getWidget().getElement().addClassName("stroom-border");
 
         initTableColumns();
     }

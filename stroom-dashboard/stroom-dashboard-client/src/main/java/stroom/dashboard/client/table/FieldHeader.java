@@ -24,8 +24,8 @@ public class FieldHeader extends Header<Field> {
 
     private final Field field;
 
-    public FieldHeader(final FieldsManager fieldsManager, final Field field) {
-        super(FieldCell.create(fieldsManager));
+    public FieldHeader(final Field field) {
+        super(FieldCell.create());
         this.field = field;
     }
 

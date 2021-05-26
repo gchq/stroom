@@ -25,7 +25,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonInclude(Include.NON_NULL)
 public class DocumentType {
 
-    public static final String DOC_IMAGE_URL = "document/";
+    public static final String DOC_IMAGE_CLASS_NAME = "svgIcon-document svgIcon-document-";
 
     @JsonProperty
     private final int priority;
@@ -34,24 +34,24 @@ public class DocumentType {
     @JsonProperty
     private final String displayType;
     @JsonProperty
-    private final String iconUrl;
+    private final String iconClassName;
 
     public DocumentType(final int priority, final String type, final String displayType) {
         this.priority = priority;
         this.type = type;
         this.displayType = displayType;
-        this.iconUrl = getIconUrl(type);
+        this.iconClassName = getIconClassName(type);
     }
 
     @JsonCreator
     public DocumentType(@JsonProperty("priority") final int priority,
                         @JsonProperty("type") final String type,
                         @JsonProperty("displayType") final String displayType,
-                        @JsonProperty("iconUrl") final String iconUrl) {
+                        @JsonProperty("iconClassName") final String iconClassName) {
         this.priority = priority;
         this.type = type;
         this.displayType = displayType;
-        this.iconUrl = iconUrl;
+        this.iconClassName = iconClassName;
     }
 
     public int getPriority() {
@@ -66,12 +66,12 @@ public class DocumentType {
         return type;
     }
 
-    public String getIconUrl() {
-        return iconUrl;
+    public String getIconClassName() {
+        return iconClassName;
     }
 
-    private String getIconUrl(final String type) {
-        return DocumentType.DOC_IMAGE_URL + type + ".svg";
+    private String getIconClassName(final String type) {
+        return DOC_IMAGE_CLASS_NAME + type;
     }
 
     @SuppressWarnings("checkstyle:needbraces")

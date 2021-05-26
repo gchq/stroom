@@ -16,45 +16,33 @@
 
 package stroom.widget.button.client;
 
-import stroom.svg.client.SvgPreset;
+import stroom.svg.client.Preset;
 
-import com.google.gwt.core.shared.GWT;
 import com.google.gwt.dom.client.Style.Display;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.FlowPanel;
 
 public class ButtonPanel extends FlowPanel {
 
-    private static volatile Resources resources;
     private boolean vertical;
 
     public ButtonPanel() {
-        if (resources == null) {
-            synchronized (ButtonPanel.class) {
-                if (resources == null) {
-                    resources = GWT.create(Resources.class);
-                    resources.style().ensureInjected();
-                }
-            }
-        }
-        setStyleName(resources.style().layout());
+        setStyleName("buttonPanel-layout");
     }
 
-    public ButtonView addButton(final SvgPreset preset) {
+    public ButtonView addButton(final Preset preset) {
         final SvgButton button = createButton(preset);
         add(button);
         return button;
     }
 
-    public ToggleButtonView addToggleButton(final SvgPreset primaryPreset,
-                                            final SvgPreset secondaryPreset) {
+    public ToggleButtonView addToggleButton(final Preset primaryPreset,
+                                            final Preset secondaryPreset) {
         final SvgToggleButton button = createToggleButton(primaryPreset, secondaryPreset);
         add(button);
         return button;
     }
 
-    private SvgButton createButton(final SvgPreset preset) {
+    private SvgButton createButton(final Preset preset) {
         final SvgButton button = SvgButton.create(preset);
         if (vertical) {
             button.getElement().getStyle().setDisplay(Display.BLOCK);
@@ -62,8 +50,8 @@ public class ButtonPanel extends FlowPanel {
         return button;
     }
 
-    private SvgToggleButton createToggleButton(final SvgPreset primaryPreset,
-                                               final SvgPreset secondaryPreset) {
+    private SvgToggleButton createToggleButton(final Preset primaryPreset,
+                                               final Preset secondaryPreset) {
         final SvgToggleButton button = SvgToggleButton.create(primaryPreset, secondaryPreset);
         if (vertical) {
             button.getElement().getStyle().setDisplay(Display.BLOCK);
@@ -71,39 +59,7 @@ public class ButtonPanel extends FlowPanel {
         return button;
     }
 
-//    public ImageButtonView add(
-//    final String title, final ImageResource enabledImage, final ImageResource disabledImage,
-//            final boolean enabled) {
-//        final ImageButton button = createButton(title, enabledImage, disabledImage, enabled);
-//        add(button);
-//        return button;
-//    }
-
     public void setVertical(final boolean vertical) {
         this.vertical = vertical;
-    }
-
-//    private ImageButton createButton(final String title, final ImageResource enabledImage,
-//            final ImageResource disabledImage, final boolean enabled) {
-//        final ImageButton button = new ImageButton();
-//        button.setTitle(title);
-//        button.setEnabledImage(enabledImage);
-//        button.setDisabledImage(disabledImage);
-//        button.setEnabled(enabled);
-//        if (vertical) {
-//            button.getElement().getStyle().setDisplay(Display.BLOCK);
-//        }
-//        return button;
-//    }
-
-    public interface Style extends CssResource {
-
-        String layout();
-    }
-
-    public interface Resources extends ClientBundle {
-
-        @Source("ButtonPanel.css")
-        Style style();
     }
 }

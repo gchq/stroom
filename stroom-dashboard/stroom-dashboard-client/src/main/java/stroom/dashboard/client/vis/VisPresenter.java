@@ -36,6 +36,8 @@ import stroom.datasource.api.v2.TextField;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.editor.client.presenter.ChangeThemeEvent;
+import stroom.editor.client.presenter.CurrentTheme;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.api.v2.VisResult;
@@ -70,6 +72,7 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
@@ -85,6 +88,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     private final VisFunctionCache visFunctionCache;
     private final ScriptCache scriptCache;
     private final RestFactory restFactory;
+    private final CurrentTheme currentTheme;
     private final VisPane visPane;
     private final VisFrame visFrame;
 
@@ -109,11 +113,13 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     @Inject
     public VisPresenter(final EventBus eventBus, final VisView view,
                         final Provider<VisSettingsPresenter> settingsPresenterProvider,
-                        final RestFactory restFactory) {
+                        final RestFactory restFactory,
+                        final CurrentTheme currentTheme) {
         super(eventBus, view, settingsPresenterProvider);
         this.visFunctionCache = new VisFunctionCache(eventBus);
         this.scriptCache = new ScriptCache(eventBus);
         this.restFactory = restFactory;
+        this.currentTheme = currentTheme;
 
         visFrame = new VisFrame(eventBus);
         visPane = visFrame;
@@ -196,6 +202,16 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
         visFunctionCache.bind();
         scriptCache.bind();
         visFrame.bind();
+
+        registerHandler(getEventBus().addHandler(ChangeThemeEvent.getType(), event ->
+                visFrame.setClassName(getClassName(event.getTheme()))));
+    }
+
+    private String getClassName(final String theme) {
+        if (theme != null && theme.toLowerCase(Locale.ROOT).contains("dark")) {
+            return "vis stroom-theme-dark";
+        }
+        return "vis";
     }
 
     @Override
@@ -465,7 +481,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
                 try {
                     if (loadedFunction == null || !loadedFunction.equals(function)) {
                         loadedFunction = function;
-                        visPane.setVisType(function.getFunctionName());
+                        visPane.setVisType(function.getFunctionName(), getClassName(currentTheme.getTheme()));
                     }
 
                     if (currentData != null) {
@@ -588,10 +604,6 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
         // Update the current settings JSON and refresh the visualisation.
         currentSettings = getJSONSettings();
         refreshVisualisation();
-
-        // if (currentSearchModel != null) {
-        // currentSearchModel.destroy();
-        // }
     }
 
     private void refreshVisualisation() {

@@ -20,16 +20,12 @@ import stroom.pipeline.structure.client.view.Box;
 import stroom.widget.htree.client.treelayout.TreeLayout;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 
-import com.google.gwt.core.shared.GWT;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ExpressionItemBox extends Box<Item> {
 
-    private static Resources resources;
     private final SimplePanel background = new SimplePanel();
     private final TreeLayout<Item> treeLayout;
     private final Item expressionItem;
@@ -41,15 +37,10 @@ public class ExpressionItemBox extends Box<Item> {
         this.treeLayout = treeLayout;
         this.expressionItem = expressionItem;
 
-        if (resources == null) {
-            resources = GWT.create(Resources.class);
-            resources.style().ensureInjected();
-        }
-
         if (allowSelection) {
-            background.setStyleName(resources.style().background() + " " + resources.style().selectable());
+            background.setStyleName("expressionItemBox-background expressionItemBox-selectable");
         } else {
-            background.setStyleName(resources.style().background());
+            background.setStyleName("expressionItemBox-background");
         }
 
         initWidget(background);
@@ -69,9 +60,9 @@ public class ExpressionItemBox extends Box<Item> {
     @Override
     public void showHotspot(final boolean show) {
         if (show) {
-            getElement().addClassName(resources.style().hotspot());
+            getElement().addClassName("expressionItemBox-hotspot");
         } else {
-            getElement().removeClassName(resources.style().hotspot());
+            getElement().removeClassName("expressionItemBox-hotspot");
         }
     }
 
@@ -79,23 +70,23 @@ public class ExpressionItemBox extends Box<Item> {
         final boolean enabled = isEnabled();
 
         if (innerWidget != null && innerWidget instanceof Label) {
-            innerWidget.addStyleName(resources.style().label());
+            innerWidget.addStyleName("expressionItemBox-label");
             if (enabled) {
-                innerWidget.removeStyleName(resources.style().labelDisabled());
+                innerWidget.removeStyleName("expressionItemBox-labelDisabled");
             } else {
-                innerWidget.addStyleName(resources.style().labelDisabled());
+                innerWidget.addStyleName("expressionItemBox-labelDisabled");
             }
         }
 
         if (selected) {
             if (enabled) {
-                getElement().addClassName(resources.style().backgroundSelected());
+                getElement().addClassName("expressionItemBox-backgroundSelected");
             } else {
-                getElement().addClassName(resources.style().backgroundSelectedDisabled());
+                getElement().addClassName("expressionItemBox-backgroundSelectedDisabled");
             }
         } else {
-            getElement().removeClassName(resources.style().backgroundSelected());
-            getElement().removeClassName(resources.style().backgroundSelectedDisabled());
+            getElement().removeClassName("expressionItemBox-backgroundSelected");
+            getElement().removeClassName("expressionItemBox-backgroundSelectedDisabled");
         }
     }
 
@@ -117,32 +108,5 @@ public class ExpressionItemBox extends Box<Item> {
     @Override
     public Item getItem() {
         return expressionItem;
-    }
-
-    public interface Style extends CssResource {
-
-        String DEFAULT = "ExpressionItemBox.css";
-
-        String background();
-
-        String selectable();
-
-        String backgroundSelected();
-
-        String backgroundSelectedDisabled();
-
-        String hotspot();
-
-        String image();
-
-        String label();
-
-        String labelDisabled();
-    }
-
-    public interface Resources extends ClientBundle {
-
-        @Source(Style.DEFAULT)
-        Style style();
     }
 }

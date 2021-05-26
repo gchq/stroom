@@ -17,7 +17,7 @@
 /* Scrollbar */
 ::-webkit-scrollbar {
 	width: 12px;
-    background: #fff;
+    background: var(--scrollbar-background-color);
 }
 
 ::-webkit-scrollbar:horizontal {
@@ -30,16 +30,16 @@
 
 /* Corner */
 ::-webkit-scrollbar-corner {
-    background: #fff;
+    background: var(--scrollbar-corner-background-color);
 }
 
 /* Thumb */
 ::-webkit-scrollbar-thumb {
 	border-radius: 12px;
-	border: 4px solid rgba(255,255,255,0);
+	border: 4px solid var(--scrollbar-thumb-border-color);
 	background-clip: content-box;
 
-	background-color: rgba(0,0,0,0.3);
+	background-color: var(--scrollbar-thumb-background-color);
 	transition: background-color .5s;
 	-webkit-transition: background-color .5s;
 	-moz-transition: background-color .5s;
@@ -53,10 +53,10 @@
 	min-height: 0px;
 }
 ::-webkit-scrollbar-thumb:hover {
-	background-color: rgba(0,0,0,.5);
+	background-color: var(--scrollbar-thumb-background-color-hover);
 }
 ::-webkit-scrollbar-thumb:active {
-	background-color: rgba(0,0,0,.8);
+	background-color: var(--scrollbar-thumb-background-color-active);
 }
 
 /* Button */
@@ -64,7 +64,6 @@
 	width: 0;
 	height: 0;
 }
-
 
 .gwt-TextArea-readonly::-webkit-scrollbar {
 	/* Use transparent background so it looks better with non-white readonly text areas */
@@ -75,3 +74,14 @@
 	/* Use transparent background so it looks better with non-white readonly text areas */
 	background: rgb(0,0,0,0);
 }
+/*
+.stroom-theme-dark .gwt-TextArea-readonly::-webkit-scrollbar {
+	* Use transparent background so it looks better with non-white readonly text areas *
+	background: var(--scrollbar-background-color);
+}
+
+.stroom-theme-dark .gwt-TextArea-readonly::-webkit-scrollbar-corner {
+	* Use transparent background so it looks better with non-white readonly text areas *
+	background: var(--scrollbar-corner-background-color);
+}
+*/
