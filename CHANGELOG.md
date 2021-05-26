@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2280** : Remove trailing comma in some log events. 
+
 
 ## [v7.0-beta.118] - 2021-05-24
 
