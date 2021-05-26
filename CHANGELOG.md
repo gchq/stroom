@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2248** : Migrated dashboard tables now maintain hidden column status.
 
+* Issue **#2280** : Remove trailing comma in some log events. 
+
 
 ## [v7.0-beta.118] - 2021-05-24
 
