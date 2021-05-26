@@ -9,21 +9,32 @@ import stroom.ui.config.shared.UserPreferences;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.RootPanel;
 
-import java.util.Locale;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
+@Singleton
 public class PreferencesManager {
 
     private static final PreferencesResource PREFERENCES_RESOURCE = GWT.create(PreferencesResource.class);
     private final RestFactory restFactory;
     private final CurrentTheme currentTheme;
 
+    private static final Map<String, String> themeMap = new HashMap<>();
+
     @Inject
     public PreferencesManager(final RestFactory restFactory,
                               final CurrentTheme currentTheme) {
         this.restFactory = restFactory;
         this.currentTheme = currentTheme;
+
+        themeMap.put("Light", "stroom stroom-theme-light");
+        themeMap.put("Dark", "stroom stroom-theme-dark");
+        themeMap.put("Dark 2", "stroom stroom-theme-dark stroom-theme-dark2");
     }
 
     public void fetch(final Consumer<UserPreferences> consumer) {
@@ -63,6 +74,11 @@ public class PreferencesManager {
     public void updateClassNames(final UserPreferences userPreferences) {
         currentTheme.setTheme(userPreferences.getTheme());
         final com.google.gwt.dom.client.Element element = RootPanel.getBodyElement().getParentElement();
-        element.setClassName("stroom " + "stroom-theme-" + currentTheme.getTheme().toLowerCase(Locale.ROOT));
+        final String className = themeMap.get(currentTheme.getTheme());
+        element.setClassName(className);
+    }
+
+    public List<String> getThemes() {
+        return themeMap.keySet().stream().sorted().collect(Collectors.toList());
     }
 }

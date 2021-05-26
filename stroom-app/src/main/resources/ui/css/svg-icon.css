@@ -391,7 +391,10 @@
   background-image: url("../images/pipeline/analyticOutput.svg");
 }
 .svgIcon-pipeline-apache_kafka-icon {
-  background-image: url("../images/pipeline/apache_kafka-icon.svg");
+  background-image: url("../images/pipeline/kafka.svg");
+}
+.stroom-theme-dark .svgIcon-pipeline-apache_kafka-icon {
+  background-image: url("../images/pipeline/kafka-dark.svg");
 }
 .svgIcon-pipeline-ElasticIndex {
   background-image: url("../images/pipeline/ElasticIndex.svg");
@@ -408,6 +411,9 @@
 .svgIcon-pipeline-id {
   background-image: url("../images/pipeline/id.svg");
 }
+.stroom-theme-dark .svgIcon-pipeline-id {
+  background-image: url("../images/pipeline/id-dark.svg");
+}
 .svgIcon-pipeline-index {
   background-image: url("../images/pipeline/index.svg");
 }
@@ -417,6 +423,9 @@
 .svgIcon-pipeline-kafka {
   background-image: url("../images/pipeline/kafka.svg");
 }
+.stroom-theme-dark .svgIcon-pipeline-kafka {
+  background-image: url("../images/pipeline/kafka-dark.svg");
+}
 .svgIcon-pipeline-recordCount {
   background-image: url("../images/pipeline/recordCount.svg");
 }
@@ -425,6 +434,9 @@
 }
 .svgIcon-pipeline-referenceData {
   background-image: url("../images/pipeline/referenceData.svg");
+}
+.stroom-theme-dark .svgIcon-pipeline-referenceData {
+  background-image: url("../images/pipeline/referenceData-dark.svg");
 }
 .svgIcon-pipeline-search {
   background-image: url("../images/pipeline/search.svg");
@@ -450,8 +462,14 @@
 .svgIcon-pipeline-text {
   background-image: url("../images/pipeline/text.svg");
 }
+.stroom-theme-dark .svgIcon-pipeline-text {
+  background-image: url("../images/pipeline/text-dark.svg");
+}
 .svgIcon-pipeline-xml {
   background-image: url("../images/pipeline/xml.svg");
+}
+.stroom-theme-dark .svgIcon-pipeline-xml {
+  background-image: url("../images/pipeline/xml-dark.svg");
 }
 .svgIcon-pipeline-xmlSearch {
   background-image: url("../images/pipeline/xmlSearch.svg");
@@ -459,7 +477,12 @@
 .svgIcon-pipeline-xsd {
   background-image: url("../images/pipeline/xsd.svg");
 }
+.stroom-theme-dark .svgIcon-pipeline-xsd {
+  background-image: url("../images/pipeline/xsd-dark.svg");
+}
 .svgIcon-pipeline-xslt {
   background-image: url("../images/pipeline/xslt.svg");
 }
-
+.stroom-theme-dark .svgIcon-pipeline-xslt {
+  background-image: url("../images/pipeline/xslt-dark.svg");
+}

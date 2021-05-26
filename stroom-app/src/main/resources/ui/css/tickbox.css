@@ -105,3 +105,32 @@
 .stroom-theme-dark .tickBox .tickBox-untickDisabled {
     background-image: url("../images/tickbox/untickDisabled-dark.png");
 }
+
+
+.stroom-theme-dark2 .tickBox .tickBox-tick {
+    background-image: url("../images/tickbox/tick-dark2.png");
+}
+
+.stroom-theme-dark2 .tickBox .tickBox-tickNB {
+    background-image: url("../images/tickbox/tickNB-dark2.png");
+}
+
+.stroom-theme-dark2 .tickBox .tickBox-halfTick {
+    background-image: url("../images/tickbox/halfTick-dark2.png");
+}
+
+.stroom-theme-dark2 .tickBox .tickBox-halfTickNB {
+    background-image: url("../images/tickbox/halfTickNB-dark2.png");
+}
+
+.stroom-theme-dark2 .tickBox .tickBox-halfTickDisabled {
+    background-image: url("../images/tickbox/halfTickDisabled-dark2.png");
+}
+
+.stroom-theme-dark2 .tickBox .tickBox-untick {
+    background-image: url("../images/tickbox/untick-dark2.png");
+}
+
+.stroom-theme-dark2 .tickBox .tickBox-untickDisabled {
+    background-image: url("../images/tickbox/untickDisabled-dark2.png");
+}
