@@ -157,7 +157,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<CellTableView<Documen
             public SafeHtml getValue(final DocumentType documentType) {
                 return SafeHtmlUtils.fromTrustedString("<div style=\"width:16px;height:16px;padding:2px\" class=\"" +
                         documentType.getIconClassName() +
-                        "\"/>");
+                        "\"></div>");
             }
         };
     }

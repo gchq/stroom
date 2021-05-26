@@ -18,10 +18,12 @@
         </g:DockLayoutPanel>
         <g:FlowPanel styleName="stroom-dashboard-query-buttons">
             <b:FabButton ui:field="stop"
-                         addStyleNames="stroom-dashboard-query-stop" icon="images/stop.svg"
+                         addStyleNames="stroom-dashboard-query-stop"
+                         iconClassName="stroom-dashboard-query-stop-icon"
                          title="Stop Query" enabled="false"/>
             <search:StartButton ui:field="start"
-                                addStyleNames="stroom-dashboard-query-play" icon="images/play.svg"
+                                addStyleNames="stroom-dashboard-query-play"
+                                iconClassName="stroom-dashboard-query-play-icon"
                                 title="Execute Query" enabled="false"/>
         </g:FlowPanel>
     </r:ResizeFlowPanel>

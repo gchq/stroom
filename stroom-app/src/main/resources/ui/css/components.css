@@ -1412,12 +1412,12 @@
 
 .progressViewImpl-progressBarOuter {
     position: absolute;
-    background-color: #EEEEEE;
+    background-color: var(--input-background-color);
     width: 100%;
     height: 6px;
     border-style: solid;
     border-width: 1px;
-    border-color: #9E9E9E;
+    border-color: var(--input-border-color);
 }
 
 .progressViewImpl-progressBarInner {
@@ -1628,5 +1628,3 @@
     width: 250px;
     margin-right: 5px;
 }
-
-

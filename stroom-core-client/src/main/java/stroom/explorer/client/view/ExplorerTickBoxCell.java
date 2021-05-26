@@ -124,7 +124,7 @@ public class ExplorerTickBoxCell extends AbstractCell<ExplorerNode> {
         @Template("<div class=\"{0}\">{1}</div>")
         SafeHtml tickBox(String iconClass, SafeHtml icon);
 
-        @Template("<div class=\"{0}\" />")
+        @Template("<div class=\"{0}\"></div>")
         SafeHtml icon(String iconClass);
 
         @Template("<div class=\"{0}\">{1}</div>")

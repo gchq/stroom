@@ -201,9 +201,12 @@ td {
 	z-index: 5;
 }
 
-.stroom-pipeline-stepping-button img {
-	width: 40px;
-	height: 40px;
+.stroom-pipeline-stepping-button-icon {
+    background-image: url("../images/stepping.svg");
+    background-size: 100%;
+    width: 46px;
+    height: 46px;
+    margin-left: 2px;
 }
 
 .stroom-pipeline-stepping-button .face {

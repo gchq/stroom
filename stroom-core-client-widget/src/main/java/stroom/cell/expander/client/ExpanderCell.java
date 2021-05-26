@@ -30,8 +30,6 @@ import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.safehtml.shared.SafeUri;
-import com.google.gwt.safehtml.shared.UriUtils;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -87,24 +85,12 @@ public class ExpanderCell extends AbstractCell<Expander> {
             SafeHtml icon = null;
 
             if (value.isLeaf()) {
-                icon = template.icon(
-                        "expanderCell-expanderIcon",
-                        UriUtils.fromTrustedString(
-                                "images/tree-leaf.svg"));
-//                icon = getImageHtml(resources.leaf());
+                icon = template.icon("expanderCell-expanderIcon explorerCell-treeLeaf");
             } else if (value.isExpanded()) {
-                icon = template.icon(
-                        "expanderCell-expanderIcon",
-                        UriUtils.fromTrustedString(
-                                "images/tree-open.svg"));
-//                icon = getImageHtml(resources.open());
+                icon = template.icon("expanderCell-expanderIcon explorerCell-treeOpen");
                 className = "expanderCell-active";
             } else {
-                icon = template.icon(
-                        "expanderCell-expanderIcon",
-                        UriUtils.fromTrustedString(
-                                "images/tree-closed.svg"));
-//                icon = getImageHtml(resources.closed());
+                icon = template.icon("expanderCell-expanderIcon explorerCell-treeClosed");
                 className = "expanderCell-active";
             }
 
@@ -120,7 +106,7 @@ public class ExpanderCell extends AbstractCell<Expander> {
         @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
         SafeHtml outerDiv(String className, SafeStyles style, SafeHtml icon);
 
-        @Template("<img class=\"{0}\" src=\"{1}\" />")
-        SafeHtml icon(String iconClass, SafeUri iconUrl);
+        @Template("<div class=\"{0}\"></div>")
+        SafeHtml icon(String iconClass);
     }
 }

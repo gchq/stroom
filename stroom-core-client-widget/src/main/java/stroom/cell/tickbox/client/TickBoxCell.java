@@ -196,9 +196,9 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
 
         public DefaultAppearance() {
             template = GWT.create(Template.class);
-            imgTick = SafeHtmlUtils.fromTrustedString("<div class=\"tickBox-tick\" />");
-            imgHalfTick = SafeHtmlUtils.fromTrustedString("<div class=\"tickBox-halfTick\" />");
-            imgUntick = SafeHtmlUtils.fromTrustedString("<div class=\"tickBox-untick\" />");
+            imgTick = SafeHtmlUtils.fromTrustedString("<div class=\"tickBox-tick\"></div>");
+            imgHalfTick = SafeHtmlUtils.fromTrustedString("<div class=\"tickBox-halfTick\"></div>");
+            imgUntick = SafeHtmlUtils.fromTrustedString("<div class=\"tickBox-untick\"></div>");
         }
 
         @Override
@@ -267,9 +267,9 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
 
         public NoBorderAppearance() {
             template = GWT.create(Template.class);
-            imgTick = SafeHtmlUtils.fromTrustedString("<div class=\"tickBox-tickNB\" />");
-            imgHalfTick = SafeHtmlUtils.fromTrustedString("<div class=\"tickBox-halfTickNB\" />");
-            imgUntick = SafeHtmlUtils.fromTrustedString("<div class=\"tickBox-untickNB\" />");
+            imgTick = SafeHtmlUtils.fromTrustedString("<div class=\"tickBox-tickNB\"></div>");
+            imgHalfTick = SafeHtmlUtils.fromTrustedString("<div class=\"tickBox-halfTickNB\"></div>");
+            imgUntick = SafeHtmlUtils.fromTrustedString("<div class=\"tickBox-untickNB\"></div>");
         }
 
         @Override
@@ -338,9 +338,9 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
 
         public MarginAppearance() {
             template = GWT.create(Template.class);
-            imgTick = SafeHtmlUtils.fromTrustedString("<div class=\"tickBox-tick\" />");
-            imgHalfTick = SafeHtmlUtils.fromTrustedString("<div class=\"tickBox-halfTick\" />");
-            imgUntick = SafeHtmlUtils.fromTrustedString("<div class=\"tickBox-untick\" />");
+            imgTick = SafeHtmlUtils.fromTrustedString("<div class=\"tickBox-tick\"></div>");
+            imgHalfTick = SafeHtmlUtils.fromTrustedString("<div class=\"tickBox-halfTick\"></div>");
+            imgUntick = SafeHtmlUtils.fromTrustedString("<div class=\"tickBox-untick\"></div>");
         }
 
         @Override

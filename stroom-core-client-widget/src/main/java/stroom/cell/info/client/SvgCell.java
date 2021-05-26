@@ -118,10 +118,10 @@ public class SvgCell extends AbstractCell<Preset> {
 
     interface Template extends SafeHtmlTemplates {
 
-        @Template("<div class=\"{0}\" style=\"{1}\"/>")
+        @Template("<div class=\"{0}\" style=\"{1}\"></div>")
         SafeHtml icon(String className, SafeStyles style);
 
-        @Template("<div class=\"{0}\" style=\"{1}\" title=\"{2}\"/>")
+        @Template("<div class=\"{0}\" style=\"{1}\" title=\"{2}\"></div>")
         SafeHtml icon(String className, SafeStyles style, String title);
     }
 }
