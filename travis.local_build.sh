@@ -100,11 +100,10 @@ main() {
     "${TRAVIS_BUILD_DIR}"
 
   echo -e "${GREEN}Running ${BLUE}travis.before_script.sh${NC}"
-  ./travis.before_script.sh
-
+  ${TRAVIS_BUILD_DIR}/travis.before_script.sh
 
   echo -e "${GREEN}Running ${BLUE}travis.script.sh${NC}"
-  ./travis.script.sh
+  ${TRAVIS_BUILD_DIR}/travis.script.sh
 
   echo -e "${GREEN}Done local travis build${NC}"
 }

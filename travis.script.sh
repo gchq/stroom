@@ -70,7 +70,6 @@ generate_ddl_dump() {
 
   ./bounceIt.sh \
     'up -d --build' \
-    -d \
     -e \
     -y \
     -x \

@@ -58,7 +58,6 @@ echo -e "JAVA_OPTS: [${GREEN}$JAVA_OPTS${NC}]"
 echo -e "${GREEN}Start all the services we need to run the integration tests in stroom${NC}"
 ./bounceIt.sh \
   'up -d --build' \
-  -d \
   -e \
   -y \
   -x \
