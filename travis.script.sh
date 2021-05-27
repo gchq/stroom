@@ -70,7 +70,6 @@ generate_ddl_dump() {
 
   ./bounceIt.sh \
     'up -d --build' \
-    -e \
     -y \
     -x \
     stroom-all-dbs
