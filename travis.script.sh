@@ -22,6 +22,9 @@ LATEST_SUFFIX="-LATEST"
 CURRENT_STROOM_RELEASE_BRANCH="6.0"
 doDockerBuild=false
 RELEASE_ARTEFACTS_DIR="${TRAVIS_BUILD_DIR}/release_artefacts"
+RELEASE_MANIFEST="${RELEASE_ARTEFACTS_DIR}/release-artefacts.txt"
+DDL_DUMP_DIR="${TRAVIS_BUILD_DIR}/build"
+DDL_DUMP_FILE="${DDL_DUMP_DIR}/stroom-database-schema-${TRAVIS_TAG}.sql"
 
 # Shell Colour constants for use in 'echo -e'
 # e.g.  echo -e "My message ${GREEN}with just this text in green${NC}"
@@ -55,17 +58,33 @@ create_file_hash() {
 }
 
 generate_ddl_dump() {
-  mkdir -p "${RELEASE_ARTEFACTS_DIR}"
+  mkdir -p "${DDL_DUMP_DIR}"
 
   # clear down stroom-all-dbs container and volumes so we have a blank slate
+  echo -e "${GREEN}Clearing down stroom-all-dbs${NC}"
   docker ps -q -f=name='stroom-all-dbs' | xargs -r docker stop --time 0
   docker ps -a -q -f=name='stroom-all-dbs' | xargs -r docker rm
   docker volume ls -q -f=name='bounceit_stroom-all-dbs*' | xargs -r docker volume rm
 
+  # Start up the DB
+  echo -e "${GREEN}Starting up stroom-all-dbs${NC}"
+  pushd stroom-resources/bin > /dev/null
+  ./stroom-resources/bin/bounceIt.sh \
+    'up -d --build' \
+    -d \
+    -e \
+    -y \
+    -x \
+    stroom-all-dbs
+  popd
+
   # Run the db migration against the empty db to give us a vanilla
   # schema to dump
+  # Assumes the app jar has been built already
+  echo -e "${GREEN}Running DB migration on empty DB${NC}"
   ./container_build/runInJavaDocker.sh MIGRATE
 
+  echo -e "${GREEN}Dumping the database DDL${NC}"
   # Produce the dump file
   docker exec \
     stroom-all-dbs \
@@ -73,13 +92,36 @@ generate_ddl_dump() {
       -d \
       -p"my-secret-pw" \
       stroom \
-    > "${RELEASE_ARTEFACTS_DIR}/database-schema-${TRAVIS_TAG}.sql"
+    > "${DDL_DUMP_FILE}"
 }
 
 generate_entity_rel_diagram() {
   # Needs the stroom-all-dbs container to be running and populated with a vanilla
   # database schema for us to generate an ERD from
   ./container_build/runInJavaDocker.sh ERD
+}
+
+copy_release_artefact() {
+  local source="$1"; shift
+  local dest="$1"; shift
+  local description="$1"; shift
+
+  echo -e "${GREEN}Copying release artefact ${BLUE}${source}${NC}"
+
+  mkdir -p "${RELEASE_ARTEFACTS_DIR}"
+
+  cp "${source}" "${dest}"
+
+  local filename
+  if [[ -f "${dest}" ]]; then
+    filename="$(basename "${dest}")"
+  else
+    filename="$(basename "${source}")"
+  fi
+
+  # Add an entry to a manifest file for the release artefacts
+  echo "${filename} - ${description}" \
+    >> "${RELEASE_MANIFEST}"
 }
 
 # Put all release artefacts in a dir to make it easier to upload them to
@@ -100,70 +142,81 @@ gather_release_artefacts() {
   # config so stroom-resources can use it.
 
   # Stroom
-  cp "CHANGELOG.md" "${RELEASE_ARTEFACTS_DIR}"
+  copy_release_artefact "CHANGELOG.md" "${RELEASE_ARTEFACTS_DIR}"
 
-  cp "${docker_build_dir}/config.yml" \
-    "${RELEASE_ARTEFACTS_DIR}/stroom-app-config-${TRAVIS_TAG}.yml"
+  copy_release_artefact \
+    "${docker_build_dir}/config.yml" \
+    "${RELEASE_ARTEFACTS_DIR}/stroom-app-config-${TRAVIS_TAG}.yml" \
+    "Basic configuration file for stroom"
 
-  cp "${release_config_dir}/config-defaults.yml" \
-    "${RELEASE_ARTEFACTS_DIR}/stroom-app-config-defaults-${TRAVIS_TAG}.yml"
+  copy_release_artefact \
+    "${release_config_dir}/config-defaults.yml" \
+    "${RELEASE_ARTEFACTS_DIR}/stroom-app-config-defaults-${TRAVIS_TAG}.yml" \
+    "A complete version of Stroom's configuration with all its default values"
 
-  cp "${release_config_dir}/config-schema.yml" \
-    "${RELEASE_ARTEFACTS_DIR}/stroom-app-config-schema-${TRAVIS_TAG}.yml"
+  copy_release_artefact \
+    "${release_config_dir}/config-schema.yml" \
+    "${RELEASE_ARTEFACTS_DIR}/stroom-app-config-schema-${TRAVIS_TAG}.yml" \
+    "The schema for Stroom's configuration file"
 
-  cp "stroom-app/build/distributions/stroom-app-${TRAVIS_TAG}.zip" \
-    "${RELEASE_ARTEFACTS_DIR}"
+  copy_release_artefact \
+    "stroom-app/build/distributions/stroom-app-${TRAVIS_TAG}.zip" \
+    "${RELEASE_ARTEFACTS_DIR}" \
+    "The archive containing the Stroom application distribution"
 
-  cp "stroom-app/src/main/resources/ui/noauth/swagger/stroom.json" \
-    "${RELEASE_ARTEFACTS_DIR}"
+  copy_release_artefact \
+    "stroom-app/src/main/resources/ui/noauth/swagger/stroom.json" \
+    "${RELEASE_ARTEFACTS_DIR}" \
+    "The Swagger spec (in json form) for Stroom's API."
 
-  cp "stroom-app/src/main/resources/ui/noauth/swagger/stroom.yaml" \
-    "${RELEASE_ARTEFACTS_DIR}"
+  copy_release_artefact \
+    "stroom-app/src/main/resources/ui/noauth/swagger/stroom.yaml" \
+    "${RELEASE_ARTEFACTS_DIR}" \
+    "The Swagger spec (in yaml form) for Stroom's API."
 
   # Stroom-Proxy
-  cp "${proxy_docker_build_dir}/config.yml" \
-    "${RELEASE_ARTEFACTS_DIR}/stroom-proxy-app-config-${TRAVIS_TAG}.yml"
+  copy_release_artefact \
+    "${proxy_docker_build_dir}/config.yml" \
+    "${RELEASE_ARTEFACTS_DIR}/stroom-proxy-app-config-${TRAVIS_TAG}.yml" \
+    "Basic configuration file for stroom-proxy"
 
-  cp "${proxy_release_config_dir}/config-defaults.yml" \
-    "${RELEASE_ARTEFACTS_DIR}/stroom-proxy-app-config-defaults-${TRAVIS_TAG}.yml"
+  copy_release_artefact \
+    "${proxy_release_config_dir}/config-defaults.yml" \
+    "${RELEASE_ARTEFACTS_DIR}/stroom-proxy-app-config-defaults-${TRAVIS_TAG}.yml" \
+    "A complete version of Stroom-Proxy's configuration with all its default values"
 
-  cp "${proxy_release_config_dir}/config-schema.yml" \
-    "${RELEASE_ARTEFACTS_DIR}/stroom-proxy-app-config-schema-${TRAVIS_TAG}.yml"
+  copy_release_artefact \
+    "${proxy_release_config_dir}/config-schema.yml" \
+    "${RELEASE_ARTEFACTS_DIR}/stroom-proxy-app-config-schema-${TRAVIS_TAG}.yml" \
+    "The schema for Stroom-Proxy's configuration file"
 
-  cp "stroom-proxy/stroom-proxy-app/build/distributions/stroom-proxy-app-${TRAVIS_TAG}.zip" \
-    "${RELEASE_ARTEFACTS_DIR}"
+  copy_release_artefact \
+    "stroom-proxy/stroom-proxy-app/build/distributions/stroom-proxy-app-${TRAVIS_TAG}.zip" \
+    "${RELEASE_ARTEFACTS_DIR}" \
+    "The archive containing the Stroom-Proxy application distribution"
 
   # Stroom (Headless)
-  cp "stroom-headless/build/distributions/stroom-headless-${TRAVIS_TAG}.zip" \
-    "${RELEASE_ARTEFACTS_DIR}"
+  copy_release_artefact \
+    "stroom-headless/build/distributions/stroom-headless-${TRAVIS_TAG}.zip" \
+    "${RELEASE_ARTEFACTS_DIR}" \
+    "The archive containing the Stroom-Headless application distribution"
 
-  cp "./container_build/build/entity_relationships.svg" \
-    "${RELEASE_ARTEFACTS_DIR}"
+  # Entity relationship diagram for the DB
+  copy_release_artefact \
+    "./container_build/build/entity_relationships.svg" \
+    "${RELEASE_ARTEFACTS_DIR}" \
+    "An entity relationship diagram for the Stroom database"
+
+  # DB DDL SQL
+  copy_release_artefact \
+    "${DDL_DUMP_FILE}" \
+    "${RELEASE_ARTEFACTS_DIR}" \
+    "The Stroom database schema SQL"
 
   # Now generate hashes for all the zips
   for file in "${RELEASE_ARTEFACTS_DIR}"/*.zip; do
     create_file_hash "${file}"
   done
-}
-
-createGitTag() {
-  local -r tagName=$1
-  
-  git config --global user.email "builds@travis-ci.com"
-  git config --global user.name "Travis CI"
-
-  echo -e "Tagging commit [${GREEN}${TRAVIS_COMMIT}${NC}] with" \
-    "tag [${GREEN}${tagName}${NC}]"
-  git tag \
-    -a \
-    "${tagName}" \
-    "${TRAVIS_COMMIT}" \
-    -m "Automated Travis build $TRAVIS_BUILD_NUMBER" >/dev/null 2>&1
-  # TAGPERM is a travis encrypted github token, see 'env' section in .travis.yml
-  git push \
-    -q \
-    "https://${TAGPERM}@github.com/${GITHUB_REPO}" \
-    "${tagName}" >/dev/null 2>&1
 }
 
 isCronBuildRequired() {
@@ -269,184 +322,93 @@ echo -e "TRAVIS_EVENT_TYPE:             [${GREEN}${TRAVIS_EVENT_TYPE}${NC}]"
 echo -e "STROOM_VERSION:                [${GREEN}${STROOM_VERSION}${NC}]"
 echo -e "CURRENT_STROOM_RELEASE_BRANCH: [${GREEN}${CURRENT_STROOM_RELEASE_BRANCH}${NC}]"
 
-if [ "$TRAVIS_EVENT_TYPE" = "cron" ]; then
-  echo "This is a cron build so just tag the commit if we need to and exit"
+# Normal commit/PR/tag build
+extraBuildArgs=()
 
-  if isCronBuildRequired; then
-    echo "The release build will happen when travis picks up the tagged commit"
-    # This is a cron triggered build so tag as -DAILY and push a tag to git
-    DATE_ONLY="$(date +%Y%m%d)"
-    gitTag="${STROOM_VERSION}-${DATE_ONLY}-${CRON_TAG_SUFFIX}"
+if [ -n "$TRAVIS_TAG" ]; then
+  doDockerBuild=true
 
-    createGitTag "${gitTag}"
-  fi
-else
-  # Normal commit/PR/tag build
-  extraBuildArgs=()
+  # This is a tagged commit, so create a docker image with that tag
+  VERSION_FIXED_TAG="${TRAVIS_TAG}"
 
-  if [ -n "$TRAVIS_TAG" ]; then
-    doDockerBuild=true
-
-    # This is a tagged commit, so create a docker image with that tag
-    VERSION_FIXED_TAG="${TRAVIS_TAG}"
-
-    # Extract the major version part for a floating tag
-    majorVer=$(echo "${TRAVIS_TAG}" | grep -oP "^v[0-9]+")
-    if [ -n "${majorVer}" ]; then
-      MAJOR_VER_FLOATING_TAG="${majorVer}${LATEST_SUFFIX}"
-    fi
-
-    # Extract the minor version part for a floating tag
-    minorVer=$(echo "${TRAVIS_TAG}" | grep -oP "^v[0-9]+\.[0-9]+")
-    if [ -n "${minorVer}" ]; then
-      MINOR_VER_FLOATING_TAG="${minorVer}${LATEST_SUFFIX}"
-    fi
-
-    if [[ "$TRAVIS_BRANCH" =~ ${RELEASE_VERSION_REGEX} ]]; then
-      echo "This is a release version so add gradle arg for publishing" \
-        "libs to Maven Central"
-      # TODO need to add in the sonatype build args when we have decided 
-      # what we are publishing from stroom
-      #extraBuildArgs+=("bintrayUpload")
-    fi
-  elif [[ "$TRAVIS_BRANCH" =~ $BRANCH_WHITELIST_REGEX ]]; then
-    # This is a branch we want to create a floating snapshot docker image for
-    SNAPSHOT_FLOATING_TAG="${STROOM_VERSION}-SNAPSHOT"
-    doDockerBuild=true
+  # Extract the major version part for a floating tag
+  majorVer=$(echo "${TRAVIS_TAG}" | grep -oP "^v[0-9]+")
+  if [ -n "${majorVer}" ]; then
+    MAJOR_VER_FLOATING_TAG="${majorVer}${LATEST_SUFFIX}"
   fi
 
-  echo -e "VERSION FIXED DOCKER TAG:      [${GREEN}${VERSION_FIXED_TAG}${NC}]"
-  echo -e "SNAPSHOT FLOATING DOCKER TAG:  [${GREEN}${SNAPSHOT_FLOATING_TAG}${NC}]"
-  echo -e "MAJOR VER FLOATING DOCKER TAG: [${GREEN}${MAJOR_VER_FLOATING_TAG}${NC}]"
-  echo -e "MINOR VER FLOATING DOCKER TAG: [${GREEN}${MINOR_VER_FLOATING_TAG}${NC}]"
-  echo -e "doDockerBuild:                 [${GREEN}${doDockerBuild}${NC}]"
-  echo -e "extraBuildArgs:                [${GREEN}${extraBuildArgs[*]}${NC}]"
-
-  # Ensure we have a local.yml file as the integration tests will need it
-  ./local.yml.sh
-
-  #echo -e "${GREEN}Running api build${NC}"
-  ## shellcheck disable=SC2016
-  #./container_build/runInNodeDocker.sh 'echo $HOME; ls -ld $HOME; ./stroom-ui/generateApi.sh'
-
-  #echo -e "${GREEN}Running ui build${NC}"
-  #./container_build/runInNodeDocker.sh ./stroom-ui/yarnBuild.sh
-
-  echo -e "${GREEN}Running gradle build${NC}"
-  ./container_build/runInJavaDocker.sh GRADLE_BUILD
-
-  # Do the gradle build
-  # Use custom gwt compile jvm settings to avoid blowing the ram limit in
-  # travis. At time of writing a sudo VM in travis has 7.5gb ram.
-  # Each work will chew up the maxHeap value and we have to allow for
-  # our docker services as well.
-  # Don't clean as this is a fresh clone and clean will wipe the cached
-  # content pack zips
-  #echo -e "${GREEN}Do the basic java build${NC}"
-  #./gradlew \
-    #-Dorg.gradle.parallel=false \
-    #--scan \
-    #--stacktrace \
-    #-PdumpFailedTestXml=true \
-    #-Pversion="${TRAVIS_TAG}" \
-    #build \
-    #-x shadowJar \
-    #-x resolve \
-    #-x copyFilesForStroomDockerBuild \
-    #-x copyFilesForProxyDockerBuild \
-    #-x buildDistribution \
-    #-Dorg.gradle.parallel=false
-
-  #echo -e "${GREEN}Do the yarn build${NC}"
-  #./gradlew \
-    #--scan \
-    #--stacktrace \
-    #stroom-ui:copyYarnBuild
-
-  ## Compile the application GWT UI
-  #echo -e "${GREEN}Do the GWT app compile${NC}"
-  #./gradlew \
-    #--scan \
-    #--stacktrace \
-    #-PgwtCompilerWorkers=2 \
-    #-PgwtCompilerMinHeap=50M \
-    #-PgwtCompilerMaxHeap=2G \
-    #stroom-app-gwt:gwtCompile
-
-  ## Compile the dashboard GWT UI
-  #echo -e "${GREEN}Do the GWT dashboard compile${NC}"
-  #./gradlew \
-    #--scan \
-    #--stacktrace \
-    #-PgwtCompilerWorkers=2 \
-    #-PgwtCompilerMinHeap=50M \
-    #-PgwtCompilerMaxHeap=2G \
-    #stroom-dashboard-gwt:gwtCompile
-
-  ## Make the distribution.
-  #echo -e "${GREEN}Build the distribution${NC}"
-  #./gradlew \
-    #--scan \
-    #--stacktrace \
-    #-PdumpFailedTestXml=true \
-    #-Pversion="${TRAVIS_TAG}" \
-    #shadowJar \
-    #buildDistribution \
-    #copyFilesForStroomDockerBuild \
-    #copyFilesForProxyDockerBuild \
-    #-x test \
-    #-x stroom-ui:copyYarnBuild \
-    #-x stroom-app-gwt:gwtCompile \
-    #-x stroom-dashboard-gwt:gwtCompile \
-    #"${extraBuildArgs[@]}"
-
-# Disable parallel build execution in travis. Note this is seprate to prallel test execution.
-# -Dorg.gradle.parallel=false \
-
-# IF WE WANT TO SKIP SOME PARTS OF THE BUILD INCLUDE THESE LINES
-#      -x gwtCompile \
-#      -x copyYarnBuild \
-#      -x test \
-
-# IF YOU WANT TO RUN A SPECIFIC TEST ADD LINES LIKE THIS
-#       --info \
-#      :stroom-app:test --tests "stroom.pipeline.task.TestFullTranslationTask" \
-
-
-  # Don't do a docker build for pull requests
-  if [ "$doDockerBuild" = true ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then
-    # TODO - the major and minor floating tags assume that the release
-    # builds are all done in strict sequence If say the build for v6.0.1 is
-    # re-run after the build for v6.0.2 has run then v6.0-LATEST will point
-    # to v6.0.1 which is incorrect, hopefully this course of events is
-    # unlikely to happen
-    allDockerTags=( \
-      "${VERSION_FIXED_TAG}" \
-      "${SNAPSHOT_FLOATING_TAG}" \
-      "${MAJOR_VER_FLOATING_TAG}" \
-      "${MINOR_VER_FLOATING_TAG}" \
-    )
-
-    echo -e "Logging in to Docker"
-    # The username and password are configured in the travis gui
-    echo "$DOCKER_PASSWORD" \
-      | docker login -u "$DOCKER_USERNAME" --password-stdin >/dev/null 2>&1
-
-    # build and release stroom image to dockerhub
-    releaseToDockerHub \
-      "${STROOM_DOCKER_REPO}" \
-      "${STROOM_DOCKER_CONTEXT_ROOT}" \
-      "${allDockerTags[@]}"
-
-    # build and release stroom-proxy image to dockerhub
-    releaseToDockerHub \
-      "${STROOM_PROXY_DOCKER_REPO}" \
-      "${STROOM_PROXY_DOCKER_CONTEXT_ROOT}" \
-      "${allDockerTags[@]}"
-
-    echo -e "Logging out of Docker"
-    docker logout >/dev/null 2>&1
+  # Extract the minor version part for a floating tag
+  minorVer=$(echo "${TRAVIS_TAG}" | grep -oP "^v[0-9]+\.[0-9]+")
+  if [ -n "${minorVer}" ]; then
+    MINOR_VER_FLOATING_TAG="${minorVer}${LATEST_SUFFIX}"
   fi
+
+  if [[ "$TRAVIS_BRANCH" =~ ${RELEASE_VERSION_REGEX} ]]; then
+    echo "This is a release version so add gradle arg for publishing" \
+      "libs to Maven Central"
+    # TODO need to add in the sonatype build args when we have decided 
+    # what we are publishing from stroom
+    #extraBuildArgs+=("bintrayUpload")
+  fi
+elif [[ "$TRAVIS_BRANCH" =~ $BRANCH_WHITELIST_REGEX ]]; then
+  # This is a branch we want to create a floating snapshot docker image for
+  SNAPSHOT_FLOATING_TAG="${STROOM_VERSION}-SNAPSHOT"
+  doDockerBuild=true
+fi
+
+echo -e "VERSION FIXED DOCKER TAG:      [${GREEN}${VERSION_FIXED_TAG}${NC}]"
+echo -e "SNAPSHOT FLOATING DOCKER TAG:  [${GREEN}${SNAPSHOT_FLOATING_TAG}${NC}]"
+echo -e "MAJOR VER FLOATING DOCKER TAG: [${GREEN}${MAJOR_VER_FLOATING_TAG}${NC}]"
+echo -e "MINOR VER FLOATING DOCKER TAG: [${GREEN}${MINOR_VER_FLOATING_TAG}${NC}]"
+echo -e "doDockerBuild:                 [${GREEN}${doDockerBuild}${NC}]"
+echo -e "extraBuildArgs:                [${GREEN}${extraBuildArgs[*]}${NC}]"
+
+# Ensure we have a local.yml file as the integration tests will need it
+./local.yml.sh
+
+#echo -e "${GREEN}Running api build${NC}"
+## shellcheck disable=SC2016
+#./container_build/runInNodeDocker.sh 'echo $HOME; ls -ld $HOME; ./stroom-ui/generateApi.sh'
+
+#echo -e "${GREEN}Running ui build${NC}"
+#./container_build/runInNodeDocker.sh ./stroom-ui/yarnBuild.sh
+
+echo -e "${GREEN}Running gradle build${NC}"
+./container_build/runInJavaDocker.sh GRADLE_BUILD
+
+# Don't do a docker build for pull requests
+if [ "$doDockerBuild" = true ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then
+  # TODO - the major and minor floating tags assume that the release
+  # builds are all done in strict sequence If say the build for v6.0.1 is
+  # re-run after the build for v6.0.2 has run then v6.0-LATEST will point
+  # to v6.0.1 which is incorrect, hopefully this course of events is
+  # unlikely to happen
+  allDockerTags=( \
+    "${VERSION_FIXED_TAG}" \
+    "${SNAPSHOT_FLOATING_TAG}" \
+    "${MAJOR_VER_FLOATING_TAG}" \
+    "${MINOR_VER_FLOATING_TAG}" \
+  )
+
+  echo -e "Logging in to Docker"
+  # The username and password are configured in the travis gui
+  echo "$DOCKER_PASSWORD" \
+    | docker login -u "$DOCKER_USERNAME" --password-stdin >/dev/null 2>&1
+
+  # build and release stroom image to dockerhub
+  releaseToDockerHub \
+    "${STROOM_DOCKER_REPO}" \
+    "${STROOM_DOCKER_CONTEXT_ROOT}" \
+    "${allDockerTags[@]}"
+
+  # build and release stroom-proxy image to dockerhub
+  releaseToDockerHub \
+    "${STROOM_PROXY_DOCKER_REPO}" \
+    "${STROOM_PROXY_DOCKER_CONTEXT_ROOT}" \
+    "${allDockerTags[@]}"
+
+  echo -e "Logging out of Docker"
+  docker logout >/dev/null 2>&1
 
   # Deploy the generated swagger specs and swagger UI (obtained from github)
   # to gh-pages

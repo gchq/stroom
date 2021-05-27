@@ -1,8 +1,6 @@
 language: bash
 os: linux
 dist: focal
-# group: edge
-# jdk: openjdk15
 
 env:
   global:
@@ -12,55 +10,13 @@ env:
     # generate a token at https://github.com/settings/tokens and encrypt it
     # with `travis encrypt -r gchq/stroom TAGPERM=<github personal access token>`
     # also see: https://docs.travis-ci.com/user/encryption-keys/#Usage
-    # and: https://docs.travis-ci.com/user/best-practices-security/
     - secure: "ttqWVHpz7iSdBlfDvybP61JPXHM76fdMUydy65a617wSJ7nX166hd9mgR0Bciwn5dZjCOVNcbjPnrZhjFq5QqkFyCzhm9lf8CakCf4oHccUXIufXxTfGUDxu/NVQqY2QMvCceawaeHKdnhHYFTDJWM++iHi3FE+FyHB3GN8PP4oiZnd54DwXS3w/4Sh+TFLFJ7wDGmIumr5J2lxv8ZOfie6DVEhGxYVQR2ZrQQp1h0EZVE7J7QUOW3ZTrTEHdxDZbOswLgn1GnT+DqLTr7y6YpuwkUvzGJ78uoyl8yWnVp/gZZWPwv/EbbjqrUS+xFKUNEOXIH3G5fnI3UJNpBBk8yXpi4ZA5rST1OSSK7q6ZWsgUCiQ/sVGukr4DEm9ym4NJRaqI9DQ8TkllP4W57zJ/TXN1cUeBEYjDH2R3a3iN5fczLyPyIFefovSW7VCFWTFwd0ZCdltVwU4gNkA/M39uX9NZPP75FgyF/trot6LL1YeS4wZWKs7g7NQ10vgJY0sPEWVoVOCZqjgUbN5t34LO76LD2kRkmx+zRPnmFYyWLmTIUl8xrywMsXVO3k6rhcWB54y4tQinKwUCcFeYzifwnwUhtUeduwNx0bkFnaSIDI2dXqz3i/EwcuJT9C4xxavkyNgGQYfuBRBnkGN6yMx4Cb1QNS3QQuopXyBDVT4xEI="
+      # and: https://docs.travis-ci.com/user/best-practices-security/
     #travis encrypt -r gchq/stroom GH_USER_AND_TOKEN="*****"
     #where ***** is '<github username>:<github personal access token>'
     #Required for curling the gh api to get the latest release sha
     - secure: "S2NzvX3h+8F9Dti/hWPWfQaKaSHAvq5YxGI0CpeO702MWXHHu4rBQ/u8mUYKx36hztP80Wt9zvIPbSX1WPYhC3oAlAS7TADZG5YN3nwePnWdn6ZwNphEI3xxHs7YiSVxbb9ejNheJN1mNzg7zy9L81ofl+iZCWtlngtNt7M7/leBYLug75bQ/Hmc26X/orqv/C/dPbngB1eT9Th0AcfYiLpBlRfCEF01H8+Chaf4cuB9E2DDU1KBXOLC5t/Z1kMO329guCBp0MUonNJrvvI4e7cxUs1pB8EQKuWMpjyPoNaB8ikJli7eUPqEyfgYllZ7B3z4p3yKM50yNcbQ6tmhCwUa2AIhRB3Q3hS0fvoi4KISKPXwmA8LcdhgT9SpuUMbLntARgFyTXvJsJbHFKyHQSqd9gUAoDaNr5+HkuKXPRYinaeO0eL1AKX2RAXU/onYVABtODXt6k3uPzYZQ1dENyH5p6AdPUBZkAzTbkA2+0aNUCYRRObV457ilJ74vKrZQG3JQGltDzQWH7riTOLR2ERGnC0T6jVJxepivyTJz+ucULGaFs3f+X/WhhrTH/8xwS7fJPW9dtosISdrnk/2HWrUuMDK2j26xoiVphUu9CfOZmSWDV9bX5WPtbwT/DT+S0Pyyh+p/0yuJ7HyJB1gyhx2kBtoPEZCYXTCwXZuoP8="
     - STROOM_RESOURCES_GIT_REF=4f52db02eb5dfb09c818dcf77d44107b1f2df9ae
-
-# before_install:
-#  - wget https://raw.githubusercontent.com/creationix/nvm/v0.31.0/nvm.sh -O ~/.nvm/nvm.sh
-#  - source ~/.nvm/nvm.sh
-#  - nvm install $NODE_VERSION
-#  - node --version
-#  - yarn --version
-
-  # Repo for Yarn
-#  - sudo apt-key adv --fetch-keys http://dl.yarnpkg.com/debian/pubkey.gpg
-#  - echo "deb http://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
-#  - sudo apt-get update -qq
-#  - sudo apt-get install -y -qq yarn=1.22.4-1
-#
-#  # Install Node
-#  - curl -sL https://deb.nodesource.com/setup_13.x | sudo -E bash -
-#  - sudo apt-get install -y nodejs
-#  - node --version
-#
-#  # Install NPM
-#  - curl -L https://www.npmjs.com/install.sh | sh
-#  - npm --version
-
-  # Install NVM
-  #- curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.38.0/install.sh | bash
-  #- source ~/.nvm/nvm.sh
-  #- nvm --version
-
-  ## Install Node, needs to match stroom-ui/.nvmrc
-  #- nvm install 15.14.0
-  #- nvm use 15.14.0
-  #- node --version
-
-  ## Install NPM
-  #- nvm install-latest-npm
-  #- npm --version
-  #- npx --version
-
-  ## Install Yarn
-  #- curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.22.10
-  #- export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH"
-  #- yarn --version
 
 install: echo "skip 'gradle assemble' step to speed up build"
 
