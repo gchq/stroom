@@ -69,6 +69,8 @@ main() {
   # IMPORTANT - Stops us trying to push builds to dockerhub
   export LOCAL_BUILD=true
 
+  local stroom_clone_branch="7.0-ui-build-container"
+
   if [[ -d "${TRAVIS_BUILD_DIR}" ]]; then
     if [[ "${runWithNonEmptyBuildDir}" = true ]]; then
       echo -e "${YELLOW}WARNING:${NC} TRAVIS_BUILD_DIR ${BLUE}${TRAVIS_BUILD_DIR}${NC}" \
@@ -89,7 +91,7 @@ main() {
   # Don't need any history
   git clone \
     --depth=1 \
-    --branch "${TRAVIS_BRANCH}" \
+    --branch "${stroom_clone_branch}" \
     --single-branch \
     https://github.com/gchq/stroom.git \
     "${TRAVIS_BUILD_DIR}"

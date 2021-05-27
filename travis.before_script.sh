@@ -15,6 +15,7 @@ set -e
 }
 
 echo -e "LOCAL_BUILD:                   [${GREEN}${LOCAL_BUILD}${NC}]"
+echo -e "STROOM_RESOURCES_GIT_REF       [${GREEN}${STROOM_RESOURCES_GIT_REF}${NC}]"
 
 if [[ ! -n "LOCAL_BUILD" ]]; then
 
