@@ -8,12 +8,8 @@ public class DataPreviewKey {
 
     private final long metaId;
 
-    public DataPreviewKey(final long metaId) {
-        this.metaId = metaId;
-    }
-
     public DataPreviewKey(SourceLocation sourceLocation) {
-        this.metaId = sourceLocation.getId();
+        this.metaId = sourceLocation.getMetaId();
     }
 
     public long getMetaId() {

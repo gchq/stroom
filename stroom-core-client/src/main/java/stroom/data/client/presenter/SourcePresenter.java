@@ -320,13 +320,13 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     private void fetchSource(final SourceLocation sourceLocation,
                              final SourceConfig sourceConfig) {
 
-
-        final FetchDataRequest request = new FetchDataRequest(sourceLocation.getId(), builder -> builder
-                .withPartNo(sourceLocation.getPartNo())
-                .withSegmentNumber(sourceLocation.getSegmentNo())
+        final SourceLocation.Builder builder = SourceLocation.builder(sourceLocation.getMetaId())
+                .withPartIndex(sourceLocation.getPartIndex())
+                .withRecordIndex(sourceLocation.getRecordIndex())
                 .withDataRange(sourceLocation.getDataRange())
                 .withHighlight(sourceLocation.getHighlight())
-                .withChildStreamType(sourceLocation.getChildType()));
+                .withChildStreamType(sourceLocation.getChildType());
+        final FetchDataRequest request = new FetchDataRequest(builder.build());
 
         final Rest<AbstractFetchDataResult> rest = restFactory.create();
 
@@ -498,9 +498,9 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
         final SourceLocation sourceLocation = fetchDataResult.getSourceLocation();
         getView().setTitle(
                 fetchDataResult.getFeedName(),
-                sourceLocation.getId(),
-                sourceLocation.getPartNo(),
-                sourceLocation.getSegmentNo(),
+                sourceLocation.getMetaId(),
+                sourceLocation.getPartIndex(),
+                sourceLocation.getRecordIndex(),
                 streamType);
     }
 
@@ -553,13 +553,12 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
     public void beginStepping() {
         BeginPipelineSteppingEvent.fire(
                 this,
-                receivedSourceLocation.getId(),
                 null,
                 receivedSourceLocation.getOptChildType().orElse(null),
                 new StepLocation(
-                        receivedSourceLocation.getId(),
-                        receivedSourceLocation.getPartNo(),
-                        receivedSourceLocation.getSegmentNo()),
+                        receivedSourceLocation.getMetaId(),
+                        receivedSourceLocation.getPartIndex(),
+                        receivedSourceLocation.getRecordIndex()),
                 null);
     }
 

@@ -27,7 +27,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalLong;
 import java.util.function.Consumer;
 
 /**
@@ -39,19 +38,13 @@ public class SourceLocation {
     public static final int MAX_ERRORS_PER_PAGE = 100;
 
     @JsonProperty
-    private final long id; // The meta ID
+    private final long metaId; // The meta ID
     @JsonProperty
     private final String childType; // null for actual data, else non null (e.g. context/meta)
     @JsonProperty
-    private final long partNo; // For multipart data only, aka streamNo, 0 for non multi-part data, zero based
-    // TODO @AT Change to an OffsetRange to support error segments
-    // TODO @AT This was a bad name choice. In segmented data the header and footer occupy the first and
-    //  last segments technically the first rec is at seg 1 (zero based). Probably should have called it
-    //  recordNo like in the stepper to avoid the confusion. Here we treat it like the record no, ignoring the
-    //  header segment.
+    private final long partIndex; // For multipart data only, 0 for non multi-part data, zero based
     @JsonProperty
-    private final long segmentNo; // optional for segmented data only (segment aka record), zero based
-    //    private final OffsetRange segmentNoRange;
+    private final long recordIndex; // optional for data where records are split into separate segments only, zero based
     @JsonProperty
     private final DataRange dataRange; // The optional specified range of the character data which may be a subset
     @JsonProperty
@@ -60,38 +53,38 @@ public class SourceLocation {
     private final boolean truncateToWholeLines;
 
     @JsonCreator
-    public SourceLocation(@JsonProperty("id") final long id,
+    public SourceLocation(@JsonProperty("metaId") final long metaId,
                           @JsonProperty("childType") final String childType,
-                          @JsonProperty("partNo") final long partNo,
-                          @JsonProperty("segmentNo") final long segmentNo,
+                          @JsonProperty("partIndex") final long partIndex,
+                          @JsonProperty("recordIndex") final long recordIndex,
                           @JsonProperty("dataRange") final DataRange dataRange,
                           @JsonProperty("highlight") final TextRange highlight,
                           @JsonProperty("truncateToWholeLines") final boolean truncateToWholeLines) {
-        this.id = id;
+        this.metaId = metaId;
         this.childType = childType;
-        this.partNo = partNo;
-        this.segmentNo = segmentNo;
+        this.partIndex = partIndex;
+        this.recordIndex = recordIndex;
         this.dataRange = dataRange;
         this.highlight = highlight;
         this.truncateToWholeLines = truncateToWholeLines;
     }
 
     private SourceLocation(final Builder builder) {
-        id = builder.id;
-        partNo = builder.partNo;
+        metaId = builder.metaId;
+        partIndex = builder.partIndex;
         childType = builder.childType;
-        segmentNo = builder.segmentNo;
+        recordIndex = builder.recordIndex;
         dataRange = builder.dataRange;
         highlight = builder.highlight;
         truncateToWholeLines = builder.truncateToWholeLines;
     }
 
-    public static Builder builder(final long id) {
-        return new Builder(id);
+    public static Builder builder(final long metaId) {
+        return new Builder(metaId);
     }
 
-    public long getId() {
-        return id;
+    public long getMetaId() {
+        return metaId;
     }
 
     /**
@@ -107,23 +100,18 @@ public class SourceLocation {
     }
 
     /**
-     * @return Part number in the stream (aka streamNo), zero based. Non multi-part streams would have
+     * @return Part index in the stream, zero based. Non multi-part streams would have
      * a single part with number zero.
      */
-    public long getPartNo() {
-        return partNo;
+    public long getPartIndex() {
+        return partIndex;
     }
 
     /**
-     * @return The segment number (AKA record number), zero based
+     * @return The record number (AKA segment number), zero based
      */
-    public long getSegmentNo() {
-        return segmentNo;
-    }
-
-    @JsonIgnore
-    public OptionalLong getOptSegmentNo() {
-        return OptionalLong.of(segmentNo);
+    public long getRecordIndex() {
+        return recordIndex;
     }
 
     /**
@@ -158,8 +146,8 @@ public class SourceLocation {
         if (other == null) {
             return false;
         } else {
-            return this.id == other.id
-                    && this.partNo == other.partNo
+            return this.metaId == other.metaId
+                    && this.partIndex == other.partIndex
                     && Objects.equals(this.childType, other.childType);
         }
     }
@@ -169,7 +157,7 @@ public class SourceLocation {
             return false;
         } else {
             return this.isSameSource(other)
-                    && this.segmentNo == other.segmentNo
+                    && this.recordIndex == other.recordIndex
                     && Objects.equals(this.dataRange, other.dataRange);
         }
     }
@@ -180,7 +168,7 @@ public class SourceLocation {
     @JsonIgnore
     public String getIdentifierString() {
         // Convert to one-based
-        return id + ":" + (partNo + 1) + ":" + (segmentNo + 1);
+        return metaId + ":" + (partIndex + 1) + ":" + (recordIndex + 1);
     }
 
     @Override
@@ -192,9 +180,9 @@ public class SourceLocation {
             return false;
         }
         final SourceLocation that = (SourceLocation) o;
-        return id == that.id &&
-                partNo == that.partNo &&
-                segmentNo == that.segmentNo &&
+        return metaId == that.metaId &&
+                partIndex == that.partIndex &&
+                recordIndex == that.recordIndex &&
                 truncateToWholeLines == that.truncateToWholeLines &&
                 Objects.equals(childType, that.childType) &&
                 Objects.equals(dataRange, that.dataRange) &&
@@ -203,16 +191,16 @@ public class SourceLocation {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, childType, partNo, segmentNo, dataRange, highlight, truncateToWholeLines);
+        return Objects.hash(metaId, childType, partIndex, recordIndex, dataRange, highlight, truncateToWholeLines);
     }
 
     @Override
     public String toString() {
         return "SourceLocation{" +
-                "id=" + id +
+                "metaId=" + metaId +
                 ", childType='" + childType + '\'' +
-                ", partNo=" + partNo +
-                ", segmentNo=" + segmentNo +
+                ", partIndex=" + partIndex +
+                ", recordIndex=" + recordIndex +
                 ", dataRange=" + dataRange +
                 ", highlight=" + highlight +
                 ", truncateToWholeLines=" + truncateToWholeLines +
@@ -229,26 +217,26 @@ public class SourceLocation {
 
     public static final class Builder {
 
-        private long id;
-        private long partNo = 0; // Non multipart data has segment no of zero by default, zero based
+        private long metaId;
+        private long partIndex; // Non multipart data has part no of zero by default, zero based
         private String childType;
-        private long segmentNo = 0; // Non-segmented data has no segment no., zero based
+        private long recordIndex; // Non-segmented data has no record no., zero based
         private DataRange dataRange;
         private TextRange highlight;
         private boolean truncateToWholeLines = false;
 
-        private Builder(final long id) {
-            this.id = id;
+        private Builder(final long metaId) {
+            this.metaId = metaId;
         }
 
         private Builder() {
         }
 
         private Builder(final SourceLocation currentSourceLocation) {
-            this.id = currentSourceLocation.id;
-            this.partNo = currentSourceLocation.partNo;
+            this.metaId = currentSourceLocation.metaId;
+            this.partIndex = currentSourceLocation.partIndex;
             this.childType = currentSourceLocation.childType;
-            this.segmentNo = currentSourceLocation.segmentNo;
+            this.recordIndex = currentSourceLocation.recordIndex;
             this.dataRange = currentSourceLocation.dataRange;
             this.highlight = currentSourceLocation.highlight;
             this.truncateToWholeLines = currentSourceLocation.truncateToWholeLines;
@@ -257,9 +245,9 @@ public class SourceLocation {
         /**
          * Zero based
          */
-        public Builder withPartNo(final Long partNo) {
-            if (partNo != null) {
-                this.partNo = partNo;
+        public Builder withPartIndex(final Long partIndex) {
+            if (partIndex != null) {
+                this.partIndex = partIndex;
             }
             return this;
         }
@@ -272,9 +260,9 @@ public class SourceLocation {
         /**
          * Zero based
          */
-        public Builder withSegmentNumber(final Long segmentNo) {
-            if (segmentNo != null) {
-                this.segmentNo = segmentNo;
+        public Builder withRecordIndex(final Long recordIndex) {
+            if (recordIndex != null) {
+                this.recordIndex = recordIndex;
             }
             return this;
         }

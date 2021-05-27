@@ -25,22 +25,22 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class Rec {
 
     @JsonProperty
-    private final long streamId;
+    private final long metaId;
     @JsonProperty
-    private final long recordNo;
+    private final long recordIndex;
 
     @JsonCreator
-    public Rec(@JsonProperty("streamId") final long streamId,
-               @JsonProperty("recordNo") final long recordNo) {
-        this.streamId = streamId;
-        this.recordNo = recordNo;
+    public Rec(@JsonProperty("metaId") final long metaId,
+               @JsonProperty("recordIndex") final long recordIndex) {
+        this.metaId = metaId;
+        this.recordIndex = recordIndex;
     }
 
-    public long getStreamId() {
-        return streamId;
+    public long getMetaId() {
+        return metaId;
     }
 
-    public long getRecordNo() {
-        return recordNo;
+    public long getRecordIndex() {
+        return recordIndex;
     }
 }

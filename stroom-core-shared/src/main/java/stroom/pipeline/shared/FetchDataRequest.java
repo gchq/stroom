@@ -24,15 +24,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.function.Consumer;
-
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FetchDataRequest {
 
     @JsonProperty
     private SourceLocation sourceLocation;
     @JsonProperty
-    private long segmentCount = 1;
+    private long recordCount = 1;
     @JsonProperty
     private DocRef pipeline;
     @JsonProperty
@@ -75,21 +73,15 @@ public class FetchDataRequest {
         this.sourceLocation = sourceLocation;
     }
 
-    public FetchDataRequest(final long metaId, final Consumer<SourceLocation.Builder> sourceLocationBuilder) {
-        final SourceLocation.Builder builder = SourceLocation.builder(metaId);
-        sourceLocationBuilder.accept(builder);
-        this.sourceLocation = builder.build();
-    }
-
     @JsonCreator
     public FetchDataRequest(@JsonProperty("sourceLocation") final SourceLocation sourceLocation,
-                            @JsonProperty("segmentCount") final long segmentCount,
+                            @JsonProperty("recordCount") final long recordCount,
                             @JsonProperty("pipeline") final DocRef pipeline,
                             @JsonProperty("showAsHtml") final boolean showAsHtml,
                             @JsonProperty("markerMode") final boolean markerMode,
                             @JsonProperty("expandedSeverities") final Severity[] expandedSeverities) {
         this.sourceLocation = sourceLocation;
-        this.segmentCount = segmentCount;
+        this.recordCount = recordCount;
         this.pipeline = pipeline;
         this.showAsHtml = showAsHtml;
         this.markerMode = markerMode;
@@ -104,12 +96,12 @@ public class FetchDataRequest {
         this.sourceLocation = sourceLocation;
     }
 
-    public long getSegmentCount() {
-        return segmentCount;
+    public long getRecordCount() {
+        return recordCount;
     }
 
-    public void setSegmentCount(final long segmentCount) {
-        this.segmentCount = segmentCount;
+    public void setRecordCount(final long recordCount) {
+        this.recordCount = recordCount;
     }
 
     public boolean isShowAsHtml() {

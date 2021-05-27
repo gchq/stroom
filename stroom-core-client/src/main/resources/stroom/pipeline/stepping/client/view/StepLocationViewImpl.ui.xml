@@ -33,11 +33,11 @@
 
 	<g:FlowPanel styleName="{style.layout}">
 	    <g:HTML styleName="{style.html}">[</g:HTML>
-		<g:HTML ui:field="lblStreamId" styleName="{style.label}">&nbsp;-&nbsp;</g:HTML>
-		<g:TextBox ui:field="txtStreamId" styleName="{style.textBox}" visible="false" />
+		<g:HTML ui:field="lblMetaId" styleName="{style.label}">&nbsp;-&nbsp;</g:HTML>
+		<g:TextBox ui:field="txtMetaId" styleName="{style.textBox}" visible="false" />
 		<g:HTML styleName="{style.html}">:</g:HTML>
-		<g:HTML ui:field="lblStreamNo" styleName="{style.label}">&nbsp;-&nbsp;</g:HTML>
-		<g:TextBox ui:field="txtStreamNo" styleName="{style.textBox}" visible="false" />
+		<g:HTML ui:field="lblPartNo" styleName="{style.label}">&nbsp;-&nbsp;</g:HTML>
+		<g:TextBox ui:field="txtPartNo" styleName="{style.textBox}" visible="false" />
 		<g:HTML styleName="{style.html}">:</g:HTML>
 		<g:HTML ui:field="lblRecordNo" styleName="{style.label}">&nbsp;-&nbsp;</g:HTML>
 		<g:TextBox ui:field="txtRecordNo" styleName="{style.textBox}" visible="false" />

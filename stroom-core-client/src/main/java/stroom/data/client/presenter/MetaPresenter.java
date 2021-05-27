@@ -586,7 +586,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
     }
 
     @Override
-    public void beginStepping(final long streamId, final String childStreamType) {
+    public void beginStepping(final StepLocation stepLocation, final String childStreamType) {
         // Try and get a pipeline id to use as a starting point for
         // stepping.
         DocRef pipelineRef = null;
@@ -602,17 +602,16 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
             // If the top list has a raw stream selected or isn't a child of
             // the selected stream then this isn't the child stream we are
             // looking for.
-            if (childMeta.getParentMetaId() != null && childMeta.getParentMetaId().equals(streamId)) {
+            if (childMeta.getParentMetaId() != null && childMeta.getParentMetaId().equals(stepLocation.getMetaId())) {
                 childStreamId = childMeta.getId();
             }
         }
 
         BeginPipelineSteppingEvent.fire(
                 this,
-                streamId,
                 childStreamId,
                 childStreamType,
-                new StepLocation(streamId, 1, 0),
+                stepLocation,
                 pipelineRef);
     }
 

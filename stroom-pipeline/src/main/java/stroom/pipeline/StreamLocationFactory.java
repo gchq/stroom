@@ -20,23 +20,23 @@ import stroom.util.shared.Location;
 import stroom.util.shared.StreamLocation;
 
 public class StreamLocationFactory implements LocationFactory {
-    private long streamNo = 1;
+    private long partIndex = 0;
 
     @Override
     public Location create(final int lineNo, final int colNo) {
-        return new StreamLocation(streamNo, lineNo, colNo);
+        return new StreamLocation(partIndex, lineNo, colNo);
     }
 
     @Override
     public Location create() {
-        return new StreamLocation(streamNo, -1, -1);
+        return new StreamLocation(partIndex, -1, -1);
     }
 
-    public long getStreamNo() {
-        return streamNo;
+    public long getPartIndex() {
+        return partIndex;
     }
 
-    public void setStreamNo(final long streamNo) {
-        this.streamNo = streamNo;
+    public void setPartIndex(final long partIndex) {
+        this.partIndex = partIndex;
     }
 }

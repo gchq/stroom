@@ -131,7 +131,7 @@ public class DataFetcher {
     private Long pageTotal = 0L;
 //    private boolean pageTotalIsExact = false;
 
-    private Long segmentNumber;
+    private Long recordIndex;
 
     DataFetcher(final Store streamStore,
                 final FeedProperties feedProperties,
@@ -185,9 +185,9 @@ public class DataFetcher {
 
     public AbstractFetchDataResult getData(final FetchDataRequest fetchDataRequest) {
         LOGGER.debug(() -> LogUtil.message("getData called for {}:{}:{}",
-                fetchDataRequest.getSourceLocation().getId(),
-                fetchDataRequest.getSourceLocation().getPartNo(),
-                fetchDataRequest.getSourceLocation().getSegmentNo()));
+                fetchDataRequest.getSourceLocation().getMetaId(),
+                fetchDataRequest.getSourceLocation().getPartIndex(),
+                fetchDataRequest.getSourceLocation().getRecordIndex()));
 
         // Allow users with 'Use' permission to read data, pipelines and XSLT.
         return securityContext.useAsReadResult(() -> {
@@ -200,7 +200,7 @@ public class DataFetcher {
 
             // Get the stream source.
             try (final Source source = streamStore.openSource(
-                    fetchDataRequest.getSourceLocation().getId(),
+                    fetchDataRequest.getSourceLocation().getMetaId(),
                     true)) {
 
                 // If we have no stream then let the client know it has been
@@ -219,7 +219,7 @@ public class DataFetcher {
                 streamTypeName = meta.getTypeName();
 
 //                if (sourceLocation.getPartNo() < 0 || sourceLocation.getSegmentNo() < 0) {
-                if (sourceLocation.getPartNo() < 0) {
+                if (sourceLocation.getPartIndex() < 0) {
                     // Handle cases during stepping when we have not yet stepped
                     return createEmptyResult(
                             fetchDataRequest,
@@ -229,15 +229,15 @@ public class DataFetcher {
                             "## No data ##");
                 }
 
-                long partNo = fetchDataRequest.getSourceLocation().getPartNo();
+                long partIndex = fetchDataRequest.getSourceLocation().getPartIndex();
                 partCount = source.count();
 
                 // Prevent user going past last part
-                if (partNo >= partCount) {
-                    partNo = partCount - 1;
+                if (partIndex >= partCount) {
+                    partIndex = partCount - 1;
                 }
 
-                try (final InputStreamProvider inputStreamProvider = source.get(partNo)) {
+                try (final InputStreamProvider inputStreamProvider = source.get(partIndex)) {
                     // Find out which child stream types are available.
                     availableChildStreamTypes = getAvailableChildStreamTypes(inputStreamProvider);
 
@@ -249,7 +249,7 @@ public class DataFetcher {
                         final boolean isSegmented = segmentInputStream.count() > 1;
 
                         // segment no doesn't matter for non-segmented data
-                        if (isSegmented && sourceLocation.getSegmentNo() < 0) {
+                        if (isSegmented && sourceLocation.getRecordIndex() < 0) {
                             // Handle cases during stepping when we have not yet stepped
                             return createEmptyResult(
                                     fetchDataRequest,
@@ -347,7 +347,7 @@ public class DataFetcher {
         markersList = new MarkerListCreator().createFullList(reader, expandedSeverities);
 
         // Create a list just for the request.
-        long pageOffset = sourceLocation.getOptSegmentNo().orElse(0);
+        long pageOffset = sourceLocation.getRecordIndex();
         if (pageOffset >= markersList.size()) {
             pageOffset = markersList.size() - 1;
         }
@@ -361,7 +361,7 @@ public class DataFetcher {
 
         final String classification = feedProperties.getDisplayClassification(feedName);
         final OffsetRange itemRange = new OffsetRange(
-                sourceLocation.getSegmentNo(),
+                sourceLocation.getRecordIndex(),
                 (long) resultList.size());
         final Count<Long> totalItemCount = new Count<>(totalResults, true);
         final Count<Long> totalCharCount = new Count<>(0L, true);
@@ -521,18 +521,16 @@ public class DataFetcher {
 //        pageTotalIsExact = true;
 
         // Make sure we can't exceed the page total.
-        segmentNumber = sourceLocation.getOptSegmentNo()
-                .orElse(0);
-
-        if (segmentNumber >= pageTotal) {
-            segmentNumber = pageTotal - 1;
+        recordIndex = sourceLocation.getRecordIndex();
+        if (recordIndex >= pageTotal) {
+            recordIndex = pageTotal - 1;
         }
 
         // Include start root element.
         segmentInputStream.include(0);
 
         // Include the requested segment, add one to allow for start root elm
-        segmentInputStream.include(segmentNumber + 1);
+        segmentInputStream.include(recordIndex + 1);
 
         // Include end root element.
         segmentInputStream.include(segmentInputStream.count() - 1);
@@ -546,7 +544,7 @@ public class DataFetcher {
                 segmentInputStream.size());
 
         // Override the page items range/total as we are dealing in segments/records
-        rawResult.setItemRange(new OffsetRange(segmentNumber, 1L));
+        rawResult.setItemRange(new OffsetRange(recordIndex, 1L));
         rawResult.setTotalItemCount(Count.of(segmentInputStream.count() - 2, true));
         return rawResult;
     }
@@ -563,7 +561,7 @@ public class DataFetcher {
 
 
         // Non-segmented data exists within parts so set the item info
-        rawResult.setItemRange(new OffsetRange(sourceLocation.getPartNo(), 1L));
+        rawResult.setItemRange(new OffsetRange(sourceLocation.getPartIndex(), 1L));
         rawResult.setTotalItemCount(Count.of(partCount, true));
         return rawResult;
     }
@@ -801,15 +799,15 @@ public class DataFetcher {
 
         // Define the range that we are actually returning, which may be bigger or smaller than requested
         // e.g. if we have continued to the end of the line or we have hit a char limit
-        final SourceLocation.Builder builder = SourceLocation.builder(sourceLocation.getId())
-                .withPartNo(sourceLocation.getPartNo())
+        final SourceLocation.Builder builder = SourceLocation.builder(sourceLocation.getMetaId())
+                .withPartIndex(sourceLocation.getPartIndex())
                 .withChildStreamType(sourceLocation.getOptChildType()
                         .orElse(null))
                 .withHighlight(highlight) // pass the requested highlight back
                 .withDataRange(actualDataRange);
 
-        if (segmentNumber != null) {
-            builder.withSegmentNumber(segmentNumber);
+        if (recordIndex != null) {
+            builder.withRecordIndex(recordIndex);
         }
 
         final SourceLocation resultLocation = builder.build();

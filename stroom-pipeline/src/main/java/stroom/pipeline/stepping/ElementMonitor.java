@@ -58,8 +58,8 @@ public class ElementMonitor {
         return steppingFilter != null && steppingFilter.isFilterApplied();
     }
 
-    public boolean filterMatches(final long currentRecordNo) {
-        return steppingFilter != null && steppingFilter.filterMatches(currentRecordNo);
+    public boolean filterMatches(final long currentRecordIndex) {
+        return steppingFilter != null && steppingFilter.filterMatches(currentRecordIndex);
     }
 
     public void clear(final TextRange highlight) {

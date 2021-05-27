@@ -38,13 +38,13 @@ public class StepLocationViewImpl extends ViewWithUiHandlers<StepLocationUIHandl
     private static final String EMPTY = "&nbsp;-&nbsp;";
     private final Widget widget;
     @UiField
-    HTML lblStreamId;
+    HTML lblMetaId;
     @UiField
-    TextBox txtStreamId;
+    TextBox txtMetaId;
     @UiField
-    HTML lblStreamNo;
+    HTML lblPartNo;
     @UiField
-    TextBox txtStreamNo;
+    TextBox txtPartNo;
     @UiField
     HTML lblRecordNo;
     @UiField
@@ -62,16 +62,16 @@ public class StepLocationViewImpl extends ViewWithUiHandlers<StepLocationUIHandl
         return widget;
     }
 
-    @UiHandler("lblStreamId")
-    public void onClickStreamId(final ClickEvent event) {
+    @UiHandler("lblMetaId")
+    public void onClickMetaId(final ClickEvent event) {
         setEditing(true);
-        txtStreamId.setFocus(true);
+        txtMetaId.setFocus(true);
     }
 
-    @UiHandler("lblStreamNo")
-    public void onClickStreamNo(final ClickEvent event) {
+    @UiHandler("lblPartNo")
+    public void onClickPartNo(final ClickEvent event) {
         setEditing(true);
-        txtStreamNo.setFocus(true);
+        txtPartNo.setFocus(true);
     }
 
     @UiHandler("lblRecordNo")
@@ -80,15 +80,15 @@ public class StepLocationViewImpl extends ViewWithUiHandlers<StepLocationUIHandl
         txtRecordNo.setFocus(true);
     }
 
-    @UiHandler("txtStreamId")
-    void onKeyDownStreamId(final KeyDownEvent event) {
+    @UiHandler("txtMetaId")
+    void onKeyDownMetaId(final KeyDownEvent event) {
         if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
             setEditing(false);
         }
     }
 
-    @UiHandler("txtStreamNo")
-    void onKeyDownStreamNo(final KeyDownEvent event) {
+    @UiHandler("txtPartNo")
+    void onKeyDownPartNo(final KeyDownEvent event) {
         if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
             setEditing(false);
         }
@@ -104,19 +104,19 @@ public class StepLocationViewImpl extends ViewWithUiHandlers<StepLocationUIHandl
     public void setEditing(final boolean editing) {
         this.editing = editing;
         if (editing) {
-            final Long streamId = getLong(lblStreamId);
-            final Long streamNo = getLong(lblStreamNo);
+            final Long metaId = getLong(lblMetaId);
+            final Long partNo = getLong(lblPartNo);
             final Long recordNo = getLong(lblRecordNo);
 
-            if (streamId != null) {
-                txtStreamId.setText(streamId.toString());
+            if (metaId != null) {
+                txtMetaId.setText(metaId.toString());
             } else {
-                txtStreamId.setText("");
+                txtMetaId.setText("");
             }
-            if (streamNo != null) {
-                txtStreamNo.setText(streamNo.toString());
+            if (partNo != null) {
+                txtPartNo.setText(partNo.toString());
             } else {
-                txtStreamNo.setText("");
+                txtPartNo.setText("");
             }
             if (recordNo != null) {
                 txtRecordNo.setText(recordNo.toString());
@@ -124,33 +124,35 @@ public class StepLocationViewImpl extends ViewWithUiHandlers<StepLocationUIHandl
                 txtRecordNo.setText("");
             }
 
-            txtStreamId.setVisible(true);
-            txtStreamNo.setVisible(true);
+            txtMetaId.setVisible(true);
+            txtPartNo.setVisible(true);
             txtRecordNo.setVisible(true);
-            lblStreamId.setVisible(false);
-            lblStreamNo.setVisible(false);
+            lblMetaId.setVisible(false);
+            lblPartNo.setVisible(false);
             lblRecordNo.setVisible(false);
         } else {
             fireMoveEvent();
 
-            lblStreamId.setVisible(true);
-            lblStreamNo.setVisible(true);
+            lblMetaId.setVisible(true);
+            lblPartNo.setVisible(true);
             lblRecordNo.setVisible(true);
-            txtStreamId.setVisible(false);
-            txtStreamNo.setVisible(false);
+            txtMetaId.setVisible(false);
+            txtPartNo.setVisible(false);
             txtRecordNo.setVisible(false);
         }
     }
 
     private void fireMoveEvent() {
-        final Long streamId = getLong(txtStreamId);
-        final Long streamNo = getLong(txtStreamNo);
+        final Long metaId = getLong(txtMetaId);
+        final Long partNo = getLong(txtPartNo);
         final Long recordNo = getLong(txtRecordNo);
 
-        if (streamId != null && streamNo != null && recordNo != null) {
+        if (metaId != null && partNo != null && recordNo != null) {
             // Fire location change.
             if (getUiHandlers() != null) {
-                final StepLocation newLocation = new StepLocation(streamId, streamNo, recordNo);
+                // Convert 1 based part and record numbers used for display into 0 based part index and record index.
+                final StepLocation newLocation =
+                        new StepLocation(metaId, partNo - 1, recordNo - 1);
                 getUiHandlers().changeLocation(newLocation);
             }
         } else {
@@ -168,13 +170,14 @@ public class StepLocationViewImpl extends ViewWithUiHandlers<StepLocationUIHandl
         }
 
         if (stepLocation == null) {
-            lblStreamId.setHTML(EMPTY);
-            lblStreamNo.setHTML(EMPTY);
+            lblMetaId.setHTML(EMPTY);
+            lblPartNo.setHTML(EMPTY);
             lblRecordNo.setHTML(EMPTY);
         } else {
-            lblStreamId.setHTML(Long.toString(stepLocation.getId()));
-            lblStreamNo.setHTML(Long.toString(stepLocation.getPartNo()));
-            lblRecordNo.setHTML(Long.toString(stepLocation.getRecordNo()));
+            lblMetaId.setHTML(Long.toString(stepLocation.getMetaId()));
+            // Convert 0 based part index and record index into 1 based part and record numbers used for display.
+            lblPartNo.setHTML(Long.toString(stepLocation.getPartIndex() + 1));
+            lblRecordNo.setHTML(Long.toString(stepLocation.getRecordIndex() + 1));
         }
     }
 

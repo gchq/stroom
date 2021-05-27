@@ -25,12 +25,12 @@ public class SAXRecordDetector extends AbstractXMLFilter implements RecordDetect
 
     private SteppingController controller;
 
-    private long currentStepNo;
+    private long currentStepIndex = -1;
 
     @Override
     public void startStream() {
         if (controller != null) {
-            currentStepNo = 0;
+            currentStepIndex = -1;
             controller.resetSourceLocation();
         }
         super.startStream();
@@ -38,7 +38,7 @@ public class SAXRecordDetector extends AbstractXMLFilter implements RecordDetect
 
     @Override
     public void startDocument() throws SAXException {
-        currentStepNo++;
+        currentStepIndex++;
         super.startDocument();
     }
 
@@ -47,7 +47,7 @@ public class SAXRecordDetector extends AbstractXMLFilter implements RecordDetect
         super.endDocument();
 
         // Tell the controller that this is the end of a record.
-        if (controller != null && controller.endRecord(currentStepNo)) {
+        if (controller != null && controller.endRecord(currentStepIndex)) {
             throw new ExitSteppingException();
         }
     }

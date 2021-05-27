@@ -65,10 +65,10 @@ public class ExtendedPathCreator extends PathCreator {
             path = replace(path, "streamId", () -> metaHolder.get().getMeta().getId(), 0);
         }
         if (metaHolder != null) {
-            path = replace(path, "partNo", () -> String.valueOf(metaHolder.get().getStreamNo()));
+            path = replace(path, "partNo", () -> String.valueOf(metaHolder.get().getPartNo()));
 
             // TODO : DEPRECATED ALIAS FOR PART NO.
-            path = replace(path, "streamNo", () -> String.valueOf(metaHolder.get().getStreamNo()));
+            path = replace(path, "streamNo", () -> String.valueOf(metaHolder.get().getPartNo()));
         }
         if (searchIdHolder != null && searchIdHolder.get().getSearchId() != null) {
             path = replace(path, "searchId", () -> searchIdHolder.get().getSearchId());

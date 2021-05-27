@@ -27,7 +27,7 @@ public class MetaHolder implements Holder {
 
     private Meta meta;
     private String childDataType;
-    private long streamNo;
+    private long partIndex;
 
     public Meta getMeta() {
         return meta;
@@ -58,14 +58,15 @@ public class MetaHolder implements Holder {
     /**
      * One based
      */
-    public long getStreamNo() {
-        return streamNo;
+    public long getPartNo() {
+        return partIndex + 1;
     }
 
-    /**
-     * One based
-     */
-    public void setStreamNo(final long streamNo) {
-        this.streamNo = streamNo;
+    public long getPartIndex() {
+        return partIndex;
+    }
+
+    public void setPartIndex(final long partIndex) {
+        this.partIndex = partIndex;
     }
 }
