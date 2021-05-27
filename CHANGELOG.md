@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Uplift send_to_stroom.sh script to v3.1.0
+
+* Issue **#2263** : Removed unnecessary JWS algorithm constraints.
+
+* Issue **#2240** : Indexes now show empty selection for volume group until one is selected.
+
+* Issue **#2248** : Migrated dashboard tables now maintain hidden column status.
+
+* Issue **#2280** : Remove trailing comma in some log events. 
+
+
+## [v7.0-beta.118] - 2021-05-24
+
+* Issue **#2267** : Change prefixes used for quick filter for consistency.
+
+* Issue **#2265** : Fix exception when filtering with qualifier but no term, e.g. `name:`.
+
+* Issue **#2266** : Improve quick filter tooltip text.
+
+* Issue **#2261** : Fix missing node name in index and fs volume stats.
+
 
 ## [v7.0-beta.117] - 2021-05-20
 
@@ -3430,7 +3451,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.117...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.118...HEAD
+[v7.0-beta.118]: https://github.com/gchq/stroom/compare/v7.0-beta.117...v7.0-beta.118
 [v7.0-beta.117]: https://github.com/gchq/stroom/compare/v7.0-beta.116...v7.0-beta.117
 [v7.0-beta.116]: https://github.com/gchq/stroom/compare/v7.0-beta.115...v7.0-beta.116
 [v7.0-beta.115]: https://github.com/gchq/stroom/compare/v7.0-beta.114...v7.0-beta.115

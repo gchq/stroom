@@ -1,8 +1,5 @@
 package stroom.util.filter;
 
-import io.github.classgraph.ClassGraph;
-import io.github.classgraph.ClassInfo;
-import io.github.classgraph.ScanResult;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
@@ -14,8 +11,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Scanner;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -54,7 +49,7 @@ class TestStringPredicateFactory {
                         List.of("NOT_THIS_IS_MY_FEED")),
 
                 makeFuzzyMatchTest("Ends with",
-                        "feed$",
+                        "$feed",
                         List.of("THIS_IS_MY_FEED",
                                 "this_is_my_feed",
                                 "SO_IS_THIS_IS_MY_FEED",
@@ -62,7 +57,7 @@ class TestStringPredicateFactory {
                         List.of("THIS_IS_MY_FEED_NOT")),
 
                 makeFuzzyMatchTest("Ends with (dollar)",
-                        "feed$$",
+                        "$feed$",
                         List.of("THIS_IS_MY_FEED$",
                                 "this_is_my_feed$",
                                 "SO_IS_THIS_IS_MY_FEED$",
@@ -70,13 +65,13 @@ class TestStringPredicateFactory {
                         List.of("THIS_IS_MY_FEED_NOT")),
 
                 makeFuzzyMatchTest("Exact match",
-                        "^this_is_my_feed$",
+                        "=this_is_my_feed",
                         List.of("THIS_IS_MY_FEED",
                                 "this_is_my_feed"),
                         List.of("NOT_THIS_IS_MY_FEED", "NOT_THIS_IS_MY_FEED_NOT", "THIS_IS_MY_FEED_NOT")),
 
                 makeFuzzyMatchTest("Exact match (caret, dollar)",
-                        "^^this_is_my_feed$$",
+                        "=^this_is_my_feed$",
                         List.of("^THIS_IS_MY_FEED$",
                                 "^this_is_my_feed$"),
                         List.of("NOT_THIS_IS_MY_FEED")),
@@ -370,38 +365,38 @@ class TestStringPredicateFactory {
                 doComparatorTest(userInput, expectedOrderedValues));
     }
 
-    public static void main(String[] args) {
-
-        List<String> classNames;
-        try (ScanResult result = new ClassGraph()
-                .whitelistPackages("stroom")
-                .enableClassInfo()
-                .ignoreClassVisibility()
-                .scan()) {
-
-            classNames = result.getAllClasses().stream()
-                    .map(ClassInfo::getName)
-                    .collect(Collectors.toList());
-        }
-
-        final Scanner scanner = new Scanner(System.in);
-        do {
-            System.out.println("Enter your search term:");
-            final String userInput = scanner.nextLine();
-            final Predicate<String> fuzzyMatchPredicate = StringPredicateFactory.createFuzzyMatchPredicate(userInput);
-            final Comparator<String> comparator = StringPredicateFactory.createMatchComparator(userInput);
-
-            final List<String> fullList = classNames.stream()
-                    .filter(fuzzyMatchPredicate)
-                    .sorted(comparator)
-                    .collect(Collectors.toList());
-
-            final String outputStr = fullList.stream()
-                    .limit(20)
-                    .collect(Collectors.joining("\n"));
-
-            System.out.println("Results [" + fullList.size() + "]:\n" + outputStr);
-        } while (scanner.hasNext());
-    }
+//    public static void main(String[] args) {
+//
+//        List<String> classNames;
+//        try (ScanResult result = new ClassGraph()
+//                .whitelistPackages("stroom")
+//                .enableClassInfo()
+//                .ignoreClassVisibility()
+//                .scan()) {
+//
+//            classNames = result.getAllClasses().stream()
+//                    .map(ClassInfo::getName)
+//                    .collect(Collectors.toList());
+//        }
+//
+//        final Scanner scanner = new Scanner(System.in);
+//        do {
+//            System.out.println("Enter your search term:");
+//            final String userInput = scanner.nextLine();
+//            final Predicate<String> fuzzyMatchPredicate = StringPredicateFactory.createFuzzyMatchPredicate(userInput);
+//            final Comparator<String> comparator = StringPredicateFactory.createMatchComparator(userInput);
+//
+//            final List<String> fullList = classNames.stream()
+//                    .filter(fuzzyMatchPredicate)
+//                    .sorted(comparator)
+//                    .collect(Collectors.toList());
+//
+//            final String outputStr = fullList.stream()
+//                    .limit(20)
+//                    .collect(Collectors.joining("\n"));
+//
+//            System.out.println("Results [" + fullList.size() + "]:\n" + outputStr);
+//        } while (scanner.hasNext());
+//    }
 
 }

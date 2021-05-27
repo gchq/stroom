@@ -4,9 +4,7 @@ import stroom.security.impl.exception.AuthenticationException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import org.jose4j.jwa.AlgorithmConstraints;
 import org.jose4j.jwk.JsonWebKeySet;
-import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
@@ -103,10 +101,10 @@ class StandardJwtContextFactory implements JwtContextFactory {
                 .setVerificationKeyResolver(verificationKeyResolver)
                 .setExpectedAudience(openIdConfig.getClientId())
                 .setRelaxVerificationKeyValidation() // relaxes key length requirement
-                .setJwsAlgorithmConstraints(// only allow the expected signature algorithm(s) in the given context
-                        new AlgorithmConstraints(
-                                AlgorithmConstraints.ConstraintType.WHITELIST, // which is only RS256 here
-                                AlgorithmIdentifiers.RSA_USING_SHA256))
+//                .setJwsAlgorithmConstraints(// only allow the expected signature algorithm(s) in the given context
+//                        new AlgorithmConstraints(
+//                                AlgorithmConstraints.ConstraintType.WHITELIST, // which is only RS256 here
+//                                AlgorithmIdentifiers.RSA_USING_SHA256))
                 .setExpectedIssuer(openIdConfig.getIssuer());
         return builder.build();
     }

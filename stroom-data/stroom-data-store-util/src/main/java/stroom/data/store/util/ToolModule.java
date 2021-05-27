@@ -20,6 +20,7 @@ import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.docrefinfo.mock.MockDocRefInfoModule;
+import stroom.node.mock.MockNodeServiceModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.statistics.mock.MockInternalStatisticsModule;
 import stroom.task.mock.MockTaskModule;
@@ -53,6 +54,7 @@ public class ToolModule extends AbstractModule {
         install(new MockDocRefInfoModule());
         install(new MockWordListProviderModule());
         install(new MockTaskModule());
+        install(new MockNodeServiceModule());
 
         // Not using all the DB modules so just bind to an empty anonymous class
         bind(ForceLegacyMigration.class).toInstance(new ForceLegacyMigration() {

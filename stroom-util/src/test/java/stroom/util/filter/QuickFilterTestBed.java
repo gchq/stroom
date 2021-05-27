@@ -46,6 +46,8 @@ public class QuickFilterTestBed {
         final Scanner scanner = new Scanner(System.in);
         do {
             System.out.println("Enter your search term:");
+            System.out.println("Valid field qualifiers: "
+                    + filterFieldMappers.getFieldQualifiers().stream().sorted().collect(Collectors.toList()));
             final String userInput = scanner.nextLine();
 
             final List<ClassInfo> filteredClassInfoList = QuickFilterPredicateFactory.filterStream(

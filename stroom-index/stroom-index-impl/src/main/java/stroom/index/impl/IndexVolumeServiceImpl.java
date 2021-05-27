@@ -192,6 +192,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable {
                     .put("Id", String.valueOf(volume.getId()))
                     .put("Path", volume.getPath())
                     .put("Type", type)
+                    .put("Node", nodeInfo.getThisNodeName())
                     .build();
 
             InternalStatisticEvent event = InternalStatisticEvent.createValueStat(

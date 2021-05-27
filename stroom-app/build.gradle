@@ -47,7 +47,7 @@ def uiDir = project.file('src/main/resources/ui')
 //def restResourceClassNames = []
 //def jarName = 'stroom-app.jar'
 def fatJarName = 'stroom-app-all.jar'
-def sendToStroomScriptVersion = 'send-to-stroom-v3.0'
+def sendToStroomScriptVersion = 'send-to-stroom-v3.1.0'
 def releaseBuildDir = "${projectDir}/build/release"
 def configDefaultsFile = "${releaseBuildDir}/config/config-defaults.yml"
 def configSchemaFile = "${releaseBuildDir}/config/config-schema.yml"
@@ -540,13 +540,13 @@ task copySupportingFiles(type: Copy) {
 
 task downloadSend(type: Download) {
     dependsOn copySupportingFiles
-    src "http://raw.githubusercontent.com/gchq/stroom-clients/${sendToStroomScriptVersion}/bash/send_to_stroom.sh"
+    src "https://github.com/gchq/stroom-clients/releases/download/${sendToStroomScriptVersion}/send_to_stroom.sh"
     dest "${releaseBuildDir}/bin/"
 }
 
 task downloadSendArgs(type: Download) {
     dependsOn copySupportingFiles
-    src "https://raw.githubusercontent.com/gchq/stroom-clients/${sendToStroomScriptVersion}/bash/send_to_stroom_args.sh"
+    src "https://github.com/gchq/stroom-clients/releases/download/${sendToStroomScriptVersion}/send_to_stroom_args.sh"
     dest "${releaseBuildDir}/bin/"
 }
 
