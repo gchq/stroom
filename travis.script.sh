@@ -356,7 +356,8 @@ docker_login
 # into the docker container
 export BUILD_VERSION="${STROOM_VERSION}"
 
-echo -e "${GREEN}Running all gradle builds${NC}"
+echo -e "${GREEN}Running all gradle builds with build version" \
+  "${BLUE}${BUILD_VERSION}${NC}"
 ./container_build/runInJavaDocker.sh GRADLE_BUILD
 
 # Don't do a docker build for pull requests
