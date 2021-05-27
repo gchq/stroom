@@ -109,7 +109,7 @@ main() {
     --scan \
     --stacktrace \
     -PdumpFailedTestXml=true \
-    -Pversion="${TRAVIS_TAG:-SNAPSHOT}" \
+    -Pversion="${BUILD_VERSION:-SNAPSHOT}" \
     build \
     "${test_args[@]}" \
     -x shadowJar \
@@ -168,13 +168,15 @@ main() {
   #  stroom-dashboard-gwt:gwtCompile
 
   # Make the distribution.
-  echo -e "${GREEN}Build the distribution${NC}"
+  echo -e "${GREEN}Build the distribution with version" \
+    "${BLUE}${BUILD_VERSION:-SNAPSHOT}${NC}"
+
   ./gradlew \
     "${GRADLE_ARGS[@]}" \
     --scan \
     --stacktrace \
     -PdumpFailedTestXml=true \
-    -Pversion="${TRAVIS_TAG:-SNAPSHOT}" \
+    -Pversion="${BUILD_VERSION:-SNAPSHOT}" \
     shadowJar \
     buildDistribution \
     copyFilesForStroomDockerBuild \

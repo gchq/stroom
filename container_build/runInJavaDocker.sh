@@ -161,6 +161,7 @@ docker run \
   --volume /var/run/docker.sock:/var/run/docker.sock \
   --read-only \
   --name "stroom-builder" \
+  --env "BUILD_VERSION=${BUILD_VERSION:-SNAPSHOT}"
   "${image_tag}" \
   "${run_cmd[@]}"
 

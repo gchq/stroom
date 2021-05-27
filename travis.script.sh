@@ -352,6 +352,10 @@ pushd "${TRAVIS_BUILD_DIR}" > /dev/null
 # Login to docker so we have authenticated pulls that are not rate limited
 docker_login
 
+# Make this available to the gradle build which will get passed through
+# into the docker container
+export BUILD_VERSION="${STROOM_VERSION}"
+
 echo -e "${GREEN}Running all gradle builds${NC}"
 ./container_build/runInJavaDocker.sh GRADLE_BUILD
 
