@@ -65,7 +65,9 @@ generate_ddl_dump() {
 
   # Start up the DB
   echo -e "${GREEN}Starting up stroom-all-dbs${NC}"
-  pushd stroom-resources/bin > /dev/null
+
+  pushd "${TRAVIS_BUILD_DIR}/stroom-resources/bin" > /dev/null
+
   ./stroom-resources/bin/bounceIt.sh \
     'up -d --build' \
     -d \
@@ -73,7 +75,8 @@ generate_ddl_dump() {
     -y \
     -x \
     stroom-all-dbs
-  popd
+
+  popd > /dev/null
 
   # Run the db migration against the empty db to give us a vanilla
   # schema to dump
@@ -346,7 +349,7 @@ echo -e "extraBuildArgs:                [${GREEN}${extraBuildArgs[*]}${NC}]"
 # Login to docker so we have authenticated pulls that are not rate limited
 docker_login
 
-echo -e "${GREEN}Running gradle build${NC}"
+echo -e "${GREEN}Running all gradle builds${NC}"
 ./container_build/runInJavaDocker.sh GRADLE_BUILD
 
 # Don't do a docker build for pull requests
@@ -375,14 +378,13 @@ if [ "$doDockerBuild" = true ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then
     "${STROOM_PROXY_DOCKER_CONTEXT_ROOT}" \
     "${allDockerTags[@]}"
 
-
   echo -e "Logging out of Docker"
   docker logout >/dev/null 2>&1
 
   # Deploy the generated swagger specs and swagger UI (obtained from github)
   # to gh-pages
   if [ "$TRAVIS_BRANCH" = "${CURRENT_STROOM_RELEASE_BRANCH}" ]; then
-    echo "Deploying swagger-ui to gh-pages"
+    echo "Copying swagger-ui to gh-pages dir"
     ghPagesDir=$TRAVIS_BUILD_DIR/gh-pages
     swaggerUiCloneDir=$TRAVIS_BUILD_DIR/swagger-ui
     mkdir -p "${ghPagesDir}"
@@ -391,10 +393,14 @@ if [ "$doDockerBuild" = true ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then
       "${TRAVIS_BUILD_DIR}"/stroom-app/src/main/resources/ui/swagger/swagger.* \
       "${ghPagesDir}/"
     # clone swagger-ui repo so we can get the ui html/js/etc
+
     git clone \
       --depth 1 \
+      --branch "${SWAGGER_UI_GIT_TAG}" \
+      --single-branch \
       https://github.com/swagger-api/swagger-ui.git \
       "${swaggerUiCloneDir}"
+
     # copy the bits of swagger-ui that we need
     cp -r "${swaggerUiCloneDir}"/dist/* "${ghPagesDir}"/
     # repalce the default swagger spec url in swagger UI

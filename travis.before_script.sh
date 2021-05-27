@@ -15,7 +15,7 @@ set -e
 }
 
 echo -e "LOCAL_BUILD:                   [${GREEN}${LOCAL_BUILD}${NC}]"
-echo -e "STROOM_RESOURCES_GIT_REF       [${GREEN}${STROOM_RESOURCES_GIT_REF}${NC}]"
+echo -e "STROOM_RESOURCES_GIT_TAG       [${GREEN}${STROOM_RESOURCES_GIT_TAG}${NC}]"
 
 if [[ ! -n "LOCAL_BUILD" ]]; then
 
@@ -42,16 +42,14 @@ else
   echo -e "${YELLOW}LOCAL_BUILD set so skipping compose install${NC}"
 fi
 
-echo -e "${GREEN}Clone our stroom-resources repo ${BLUE}${STROOM_RESOURCES_GIT_REF}${NC}"
+echo -e "${GREEN}Clone our stroom-resources repo ${BLUE}${STROOM_RESOURCES_GIT_TAG}${NC}"
 git clone \
   --depth=1 \
-  --branch "${STROOM_RESOURCES_GIT_REF}" \
+  --branch "${STROOM_RESOURCES_GIT_TAG}" \
   --single-branch \
   https://github.com/gchq/stroom-resources.git
 
 pushd stroom-resources/bin
-
-#git checkout "${STROOM_RESOURCES_GIT_REF}"
 
 # Increase the size of the heap
 export JAVA_OPTS=-Xmx1024m
@@ -60,7 +58,6 @@ echo -e "JAVA_OPTS: [${GREEN}$JAVA_OPTS${NC}]"
 echo -e "${GREEN}Start all the services we need to run the integration tests in stroom${NC}"
 ./bounceIt.sh \
   'up -d --build' \
-  -d \
   -e \
   -y \
   -x \

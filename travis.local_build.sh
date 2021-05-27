@@ -68,6 +68,7 @@ main() {
 
   # IMPORTANT - Stops us trying to push builds to dockerhub
   export LOCAL_BUILD=true
+  export STROOM_RESOURCES_GIT_TAG
 
   local stroom_clone_branch="7.0-ui-build-container"
 
@@ -84,6 +85,7 @@ main() {
 
   mkdir -p "${TRAVIS_BUILD_DIR}"
 
+  # Make sure we start in the travis build dir
   pushd "${TRAVIS_BUILD_DIR}" > /dev/null
 
   echo -e "${GREEN}Cloning strrom repo into ${TRAVIS_BUILD_DIR}${NC}"
@@ -99,6 +101,11 @@ main() {
   echo -e "${GREEN}Running ${BLUE}travis.before_script.sh${NC}"
   ./travis.before_script.sh
 
+
+  echo -e "${GREEN}Running ${BLUE}travis.script.sh${NC}"
+  ./travis.script.sh
+
+  echo -e "${GREEN}Done local travis build${NC}"
 }
 
 main "$@"
