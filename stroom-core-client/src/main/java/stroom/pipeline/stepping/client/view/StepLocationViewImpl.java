@@ -150,6 +150,7 @@ public class StepLocationViewImpl extends ViewWithUiHandlers<StepLocationUIHandl
         if (metaId != null && partNo != null && recordNo != null) {
             // Fire location change.
             if (getUiHandlers() != null) {
+                // Convert 1 based part and record numbers used for display into 0 based part index and record index.
                 final StepLocation newLocation =
                         new StepLocation(metaId, partNo - 1, recordNo - 1);
                 getUiHandlers().changeLocation(newLocation);
@@ -174,6 +175,7 @@ public class StepLocationViewImpl extends ViewWithUiHandlers<StepLocationUIHandl
             lblRecordNo.setHTML(EMPTY);
         } else {
             lblMetaId.setHTML(Long.toString(stepLocation.getMetaId()));
+            // Convert 0 based part index and record index into 1 based part and record numbers used for display.
             lblPartNo.setHTML(Long.toString(stepLocation.getPartIndex() + 1));
             lblRecordNo.setHTML(Long.toString(stepLocation.getRecordIndex() + 1));
         }
