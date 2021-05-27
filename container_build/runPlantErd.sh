@@ -105,13 +105,19 @@ main() {
   echo -e "${GREEN}Group ID ${BLUE}${group_id}${NC}"
   echo -e "${GREEN}Host repo root dir ${BLUE}${host_abs_repo_dir}${NC}"
 
-  mkdir -p ./build
   local build_dir="container_build/build"
   local builder_dir="/builder"
   local puml_output_file="${build_dir}/entity_relationships.puml"
   local app_jar_file="stroom-app/build/libs/stroom-app-all.jar"
 
-  if [ ! -f "${app_jar_file}" ]; then
+  mkdir -p "${build_dir}"
+
+  if [ -f "${app_jar_file}" ]; then
+    echo -e "${GREEN}Found stroom app jar file ${BLUE}${app_jar_file}${GREEN}" \
+      "so won't run java build${NC}"
+  else
+    echo -e "${GREEN}Could not find stroom app jar file" \
+      "${BLUE}${app_jar_file}${GREEN} so run java build${NC}"
     run_java_build
   fi
 
