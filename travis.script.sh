@@ -68,7 +68,7 @@ generate_ddl_dump() {
 
   pushd "${TRAVIS_BUILD_DIR}/stroom-resources/bin" > /dev/null
 
-  ./stroom-resources/bin/bounceIt.sh \
+  ./bounceIt.sh \
     'up -d --build' \
     -d \
     -e \
@@ -82,7 +82,7 @@ generate_ddl_dump() {
   # schema to dump
   # Assumes the app jar has been built already
   echo -e "${GREEN}Running DB migration on empty DB${NC}"
-  ./container_build/runInJavaDocker.sh MIGRATE
+  "${TRAVIS_BUILD_DIR}/container_build/runInJavaDocker.sh" MIGRATE
 
   echo -e "${GREEN}Dumping the database DDL${NC}"
   # Produce the dump file
@@ -98,7 +98,7 @@ generate_ddl_dump() {
 generate_entity_rel_diagram() {
   # Needs the stroom-all-dbs container to be running and populated with a vanilla
   # database schema for us to generate an ERD from
-  ./container_build/runInJavaDocker.sh ERD
+  "${TRAVIS_BUILD_DIR}/container_build/runInJavaDocker.sh" ERD
 }
 
 copy_release_artefact() {
@@ -203,7 +203,7 @@ gather_release_artefacts() {
 
   # Entity relationship diagram for the DB
   copy_release_artefact \
-    "./container_build/build/entity_relationships.svg" \
+    "${TRAVIS_BUILD_DIR}/container_build/build/entity_relationships.svg" \
     "${RELEASE_ARTEFACTS_DIR}" \
     "An entity relationship diagram for the Stroom database"
 
@@ -335,6 +335,8 @@ echo -e "MAJOR VER FLOATING DOCKER TAG: [${GREEN}${MAJOR_VER_FLOATING_TAG}${NC}]
 echo -e "MINOR VER FLOATING DOCKER TAG: [${GREEN}${MINOR_VER_FLOATING_TAG}${NC}]"
 echo -e "doDockerBuild:                 [${GREEN}${doDockerBuild}${NC}]"
 echo -e "extraBuildArgs:                [${GREEN}${extraBuildArgs[*]}${NC}]"
+
+pushd "${TRAVIS_BUILD_DIR}" > /dev/null
 
 # Ensure we have a local.yml file as the integration tests will need it
 ./local.yml.sh
