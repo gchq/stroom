@@ -7,7 +7,7 @@ dependencies {
     implementation libs.elasticsearch_rest_high_level_client
     implementation libs.elasticsearch_rest_client
     implementation libs.elasticsearch
-    implementation libs.elasticsearch
+    implementation libs.elasticsearch_core
     implementation libs.httpcore
     implementation libs.http_client
 }
