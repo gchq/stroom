@@ -63,7 +63,7 @@ main() {
     TRAVIS_EVENT_TYPE="push"
     TRAVIS_PULL_REQUEST="false"
     TRAVIS_TAG="v7.0-dummy" # Gets parsed and needs to be set to trigger aspects of the build
-    STROOM_RESOURCES_GIT_REF="stroom-stacks-v7.0-beta.118"
+    STROOM_RESOURCES_GIT_TAG="stroom-stacks-v7.0-beta.118"
   }
 
   # IMPORTANT - Stops us trying to push builds to dockerhub
