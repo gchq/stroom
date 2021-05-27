@@ -140,7 +140,10 @@ gather_release_artefacts() {
   # config so stroom-resources can use it.
 
   # Stroom
-  copy_release_artefact "CHANGELOG.md" "${RELEASE_ARTEFACTS_DIR}"
+  copy_release_artefact \
+    "CHANGELOG.md" \
+    "${RELEASE_ARTEFACTS_DIR}" \
+    "Change log for this release"
 
   copy_release_artefact \
     "${docker_build_dir}/config.yml" \
