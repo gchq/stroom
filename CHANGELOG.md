@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2285** : SaveAs now provides the current name as the initial value for the new name.
+
 * Issue **#2275** : Stepping from data popup now takes you to the correct record.
 
 * Uplift send_to_stroom.sh script to v3.1.0
