@@ -16,7 +16,9 @@
 
 package stroom.data.client.presenter;
 
+import stroom.pipeline.shared.stepping.StepLocation;
+
 public interface BeginSteppingHandler {
 
-    void beginStepping(long streamId, String childStreamType);
+    void beginStepping(StepLocation stepLocation, String childStreamType);
 }

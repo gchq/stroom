@@ -61,7 +61,7 @@ public class RefStreamDefinitionSerde extends AbstractKryoSerde<RefStreamDefinit
         // with the same RefStreamDefinition TODO why do we need to do this scan?
 
         output.writeLong(refStreamDefinition.getStreamId(), true);
-        output.writeLong(refStreamDefinition.getStreamNo(), true);
+        output.writeLong(refStreamDefinition.getPartIndex(), true);
     }
 
     @Override
@@ -70,13 +70,13 @@ public class RefStreamDefinitionSerde extends AbstractKryoSerde<RefStreamDefinit
         final String pipelineUuid = variableLengthUUIDKryoSerializer.read(input);
         final String pipelineVersion = variableLengthUUIDKryoSerializer.read(input);
         final long streamId = input.readLong(true);
-        final long streamNo = input.readLong(true);
+        final long partIndex = input.readLong(true);
 
         return new RefStreamDefinition(
                 pipelineUuid,
                 pipelineVersion,
                 streamId,
-                streamNo);
+                partIndex);
     }
 
     @Override

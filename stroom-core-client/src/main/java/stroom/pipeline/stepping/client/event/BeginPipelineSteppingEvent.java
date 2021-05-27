@@ -26,18 +26,15 @@ import com.google.gwt.event.shared.HasHandlers;
 public class BeginPipelineSteppingEvent extends GwtEvent<BeginPipelineSteppingEvent.Handler> {
 
     private static Type<Handler> TYPE;
-    private final long streamId;
     private final Long childStreamId;
     private final String childStreamType;
     private final StepLocation stepLocation;
     private final DocRef pipelineRef;
 
-    private BeginPipelineSteppingEvent(final long streamId,
-                                       final Long childStreamId,
+    private BeginPipelineSteppingEvent(final Long childStreamId,
                                        final String childStreamType,
                                        final StepLocation stepLocation,
                                        final DocRef pipelineRef) {
-        this.streamId = streamId;
         this.childStreamId = childStreamId;
         this.childStreamType = childStreamType;
         this.stepLocation = stepLocation;
@@ -45,12 +42,11 @@ public class BeginPipelineSteppingEvent extends GwtEvent<BeginPipelineSteppingEv
     }
 
     public static void fire(final HasHandlers source,
-                            final long streamId,
                             final Long childStreamId,
                             final String childStreamType,
                             final StepLocation stepLocation,
                             final DocRef pipelineRef) {
-        source.fireEvent(new BeginPipelineSteppingEvent(streamId,
+        source.fireEvent(new BeginPipelineSteppingEvent(
                 childStreamId,
                 childStreamType,
                 stepLocation,
@@ -72,10 +68,6 @@ public class BeginPipelineSteppingEvent extends GwtEvent<BeginPipelineSteppingEv
     @Override
     protected void dispatch(final Handler handler) {
         handler.onBegin(this);
-    }
-
-    public long getStreamId() {
-        return streamId;
     }
 
     public Long getChildStreamId() {

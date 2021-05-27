@@ -80,9 +80,9 @@ class Source extends StroomExtensionFunctionCall {
 
         contentHandler.startDocument();
         startElement(contentHandler, "source");
-        data(contentHandler, "id", location.getId());
-        data(contentHandler, "partNo", location.getPartNo());
-        data(contentHandler, "recordNo", location.getSegmentNo());
+        data(contentHandler, "id", location.getMetaId());
+        data(contentHandler, "partNo", location.getPartIndex() + 1);
+        data(contentHandler, "recordNo", location.getRecordIndex() + 1);
         data(contentHandler, "lineFrom", location.getHighlight().getFrom().getLineNo());
         data(contentHandler, "colFrom", location.getHighlight().getFrom().getColNo());
         data(contentHandler, "lineTo", location.getHighlight().getTo().getLineNo());

@@ -111,8 +111,7 @@ public class SteppingController {
     }
 
     public void setStepLocation(final StepLocation stepLocation) {
-        LOGGER.debug(() -> LogUtil.message("setStepLocation {}:{}:{}",
-                stepLocation.getId(), stepLocation.getPartNo(), stepLocation.getRecordNo()));
+        LOGGER.debug(() -> "setStepLocation " + stepLocation.toString());
         this.stepLocation = stepLocation;
     }
 
@@ -134,9 +133,9 @@ public class SteppingController {
      *
      * @return True if the step detector should terminate stepping.
      */
-    public boolean endRecord(final long currentRecordNo) {
+    public boolean endRecord(final long currentRecordIndex) {
         // Get the current stream number.
-        final long currentStreamNo = metaHolder.getStreamNo();
+        final long currentStreamIndex = metaHolder.getPartIndex();
 
         if (Thread.currentThread().isInterrupted()) {
             return true;
@@ -145,10 +144,16 @@ public class SteppingController {
         // Update the progress monitor.
         if (getTaskContext() != null) {
             getTaskContext().info(() ->
-                    "Stepping {" + streamInfo + "} [" + currentStreamNo + ":" + currentRecordNo + "]");
+                    "Stepping {" +
+                            streamInfo +
+                            "} [" +
+                            (currentStreamIndex + 1) +
+                            ":" +
+                            (currentRecordIndex + 1) +
+                            "]");
         }
 
-        LOGGER.debug("endRecord() strm {} rec {}", currentStreamNo, currentRecordNo);
+        LOGGER.debug("endRecord() stream index {} record index {}", currentStreamIndex, currentRecordIndex);
 
         // Figure out what the highlighted portion of the input stream should be.
         TextRange highlight = DEFAULT_TEXT_RANGE;
@@ -159,7 +164,7 @@ public class SteppingController {
         // First we need to check that the record is ok WRT the location of the
         // record, i.e. is it after the last record found if stepping forward
         // etc.
-        if (isRecordPositionOk(currentRecordNo)) {
+        if (isRecordPositionOk(currentRecordIndex)) {
             // Now that we have found an appropriate record to return lets check
             // to see if it matches any filters.
             boolean allMatch = true;
@@ -170,7 +175,7 @@ public class SteppingController {
             if (!StepType.REFRESH.equals(request.getStepType())) {
                 for (final ElementMonitor monitor : monitors) {
                     if (monitor.isFilterApplied()) {
-                        if (monitor.filterMatches(currentRecordNo)) {
+                        if (monitor.filterMatches(currentRecordIndex)) {
                             filterMatch = true;
                         } else {
                             allMatch = false;
@@ -187,8 +192,8 @@ public class SteppingController {
                 // against.
                 foundLocation = new StepLocation(
                         metaHolder.getMeta().getId(),
-                        currentStreamNo,
-                        currentRecordNo);
+                        currentStreamIndex,
+                        currentRecordIndex);
 
                 // Create step data for the current step.
                 final StepData stepData = createStepData(highlight);
@@ -211,8 +216,8 @@ public class SteppingController {
         // previous record number.
         return StepType.BACKWARD.equals(request.getStepType())
                 && stepLocation != null
-                && currentStreamNo == stepLocation.getPartNo()
-                && currentRecordNo >= stepLocation.getRecordNo() - 1;
+                && currentStreamIndex == stepLocation.getPartIndex()
+                && currentRecordIndex >= stepLocation.getRecordIndex() - 1;
     }
 
     StepData createStepData(final TextRange textRange) {
@@ -224,21 +229,21 @@ public class SteppingController {
             // At this point stepLocation is the location prior to the found record.
             // Also recordNo is one based, segmentNo is zero based.
             // So a prior stepLocation.recordNo == 0 equates to a current segment no of 0
-            sourceLocation = SourceLocation.builder(foundLocation.getId())
+            sourceLocation = SourceLocation.builder(foundLocation.getMetaId())
                     .withChildStreamType(metaHolder.getChildDataType())
-                    .withPartNo(foundLocation.getPartNo() - 1) // convert to zero based
-                    .withSegmentNumber(foundLocation.getRecordNo() - 1) // no -1, see comment above
+                    .withPartIndex(foundLocation.getPartIndex())
+                    .withRecordIndex(foundLocation.getRecordIndex())
                     .withDataRange(DataRange.fromLocation(DefaultLocation.of(1, 1)))
                     .withHighlight(textRange)
                     .build();
 
             LOGGER.debug(() -> LogUtil.message("creating stepData {}:{}:{} from foundLocation {}:{}:{}",
-                    sourceLocation.getId(),
-                    sourceLocation.getPartNo(),
-                    sourceLocation.getSegmentNo(),
-                    foundLocation.getId(),
-                    foundLocation.getPartNo(),
-                    foundLocation.getRecordNo()));
+                    sourceLocation.getMetaId(),
+                    sourceLocation.getPartIndex(),
+                    sourceLocation.getRecordIndex(),
+                    foundLocation.getMetaId(),
+                    foundLocation.getPartIndex(),
+                    foundLocation.getRecordIndex()));
         } else {
             sourceLocation = null;
         }
@@ -282,9 +287,9 @@ public class SteppingController {
      * Used to decide if we have found a record that is in the appropriate
      * location, e.g. after the last returned record when stepping forward.
      */
-    private boolean isRecordPositionOk(final long currentRecordNo) {
+    private boolean isRecordPositionOk(final long currentRecordIndex) {
         // final PipelineStepTask request = controller.getRequest();
-        final long currentStreamNo = metaHolder.getStreamNo();
+        final long currentStreamIndex = metaHolder.getPartIndex();
 
         // If we aren't using a step location as a reference point to look
         // before or after then the location will always be ok.
@@ -301,20 +306,20 @@ public class SteppingController {
         final StepType stepType = request.getStepType();
         if (StepType.FIRST.equals(stepType) || StepType.LAST.equals(stepType)) {
             return true;
-        } else if (StepType.FORWARD.equals(stepType) && currentStreamNo > stepLocation.getPartNo()) {
+        } else if (StepType.FORWARD.equals(stepType) && currentStreamIndex > stepLocation.getPartIndex()) {
             return true;
-        } else if (StepType.BACKWARD.equals(stepType) && currentStreamNo < stepLocation.getPartNo()) {
+        } else if (StepType.BACKWARD.equals(stepType) && currentStreamIndex < stepLocation.getPartIndex()) {
             return true;
         }
 
         // If the stream number is the same as the one requested then we can
         // test the record number.
-        if (currentStreamNo == stepLocation.getPartNo()) {
-            if (StepType.REFRESH.equals(stepType) && currentRecordNo == stepLocation.getRecordNo()) {
+        if (currentStreamIndex == stepLocation.getPartIndex()) {
+            if (StepType.REFRESH.equals(stepType) && currentRecordIndex == stepLocation.getRecordIndex()) {
                 return true;
-            } else if (StepType.FORWARD.equals(stepType) && currentRecordNo > stepLocation.getRecordNo()) {
+            } else if (StepType.FORWARD.equals(stepType) && currentRecordIndex > stepLocation.getRecordIndex()) {
                 return true;
-            } else if (StepType.BACKWARD.equals(stepType) && currentRecordNo < stepLocation.getRecordNo()) {
+            } else if (StepType.BACKWARD.equals(stepType) && currentRecordIndex < stepLocation.getRecordIndex()) {
                 return true;
             }
         }

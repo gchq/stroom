@@ -79,7 +79,8 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
                     .onSuccess(result ->
                             choosePipeline(result, event.getStepLocation(), event.getChildStreamType()))
                     .call(STEPPING_RESOURCE)
-                    .getPipelineForStepping(new GetPipelineForMetaRequest(event.getStreamId(),
+                    .getPipelineForStepping(new GetPipelineForMetaRequest(
+                            event.getStepLocation().getMetaId(),
                             event.getChildStreamId()));
         }
     }
@@ -94,7 +95,7 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
         chooser.addDataSelectionHandler(event -> {
             final DocRef pipeline = chooser.getSelectedEntityReference();
             if (pipeline != null) {
-                final FindMetaCriteria findMetaCriteria = FindMetaCriteria.createFromId(stepLocation.getId());
+                final FindMetaCriteria findMetaCriteria = FindMetaCriteria.createFromId(stepLocation.getMetaId());
                 final Rest<ResultPage<MetaRow>> rest = restFactory.create();
                 rest
                         .onSuccess(result -> {

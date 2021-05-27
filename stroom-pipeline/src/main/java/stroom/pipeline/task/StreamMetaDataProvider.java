@@ -47,9 +47,9 @@ public class StreamMetaDataProvider implements MetaDataProvider {
     private final MetaHolder metaHolder;
     private final PipelineStore pipelineStore;
 
-    private Map<String, String> parentData = new ConcurrentHashMap<>();
+    private final Map<String, String> parentData = new ConcurrentHashMap<>();
     private AttributeMap metaData;
-    private long lastMetaStreamNo;
+    private long lastMetaStreamIndex = -1;
 
     public StreamMetaDataProvider(final MetaHolder metaHolder,
                                   final PipelineStore pipelineStore) {
@@ -82,9 +82,9 @@ public class StreamMetaDataProvider implements MetaDataProvider {
     public AttributeMap getMetaData() {
         try {
             // Determine if we need to read the Meta meta.
-            if (metaData == null || lastMetaStreamNo != metaHolder.getStreamNo()) {
+            if (metaData == null || lastMetaStreamIndex != metaHolder.getPartIndex()) {
                 metaData = new AttributeMap();
-                lastMetaStreamNo = metaHolder.getStreamNo();
+                lastMetaStreamIndex = metaHolder.getPartIndex();
 
                 // Setup meta data.
                 final InputStreamProvider provider = metaHolder.getInputStreamProvider();

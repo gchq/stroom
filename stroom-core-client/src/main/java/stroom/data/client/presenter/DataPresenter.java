@@ -32,6 +32,7 @@ import stroom.pipeline.shared.FetchDataRequest;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.FetchMarkerResult;
 import stroom.pipeline.shared.SourceLocation;
+import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.ui.config.client.UiConfigCache;
@@ -147,8 +148,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private AceEditorMode editorMode = AceEditorMode.XML;
     private List<Marker> markers;
     private List<TextRange> highlights;
-    private Long highlightId;
-    private Long highlightPartNo;
+    private Long highlightMetaId;
+    private Long highlightPartIndex;
     private String highlightChildDataType;
     private boolean playButtonVisible;
     private ClassificationUiHandlers classificationUiHandlers;
@@ -210,15 +211,15 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         progressPresenter.setVisible(false);
     }
 
-    private void setCurrentSegmentNo(final long segmentNo) {
+    private void setCurrentRecordIndex(final long recordIndex) {
         this.currentSourceLocation = currentSourceLocation.copy()
-                .withSegmentNumber(segmentNo)
+                .withRecordIndex(recordIndex)
                 .build();
     }
 
-    public void setCurrentPartNo(final long currentPartNo) {
+    public void setCurrentPartIndex(final long currentPartIndex) {
         this.currentSourceLocation = currentSourceLocation.copy()
-                .withPartNo(currentPartNo)
+                .withPartIndex(currentPartIndex)
                 .build();
     }
 
@@ -417,7 +418,10 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     @Override
     public void beginStepping() {
         if (beginSteppingHandler != null && getCurrentMetaId() != null) {
-            beginSteppingHandler.beginStepping(getCurrentMetaId(), getCurrentChildStreamType());
+            final StepLocation stepLocation = new StepLocation(getCurrentMetaId(),
+                    getCurrentPartIndex(),
+                    getCurrentRecordIndex());
+            beginSteppingHandler.beginStepping(stepLocation, getCurrentChildStreamType());
         }
     }
 
@@ -441,8 +445,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             this.highlights.add(sourceLocation.getHighlight());
         }
 
-        this.highlightId = sourceLocation.getId();
-        this.highlightPartNo = sourceLocation.getPartNo();
+        this.highlightMetaId = sourceLocation.getMetaId();
+        this.highlightPartIndex = sourceLocation.getPartIndex();
         this.highlightChildDataType = sourceLocation.getChildType();
 
         // Update the stream source.
@@ -505,8 +509,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                                     itemNavigatorPresenter.setRefreshing(false))
                             .call(DATA_RESOURCE)
                             .getChildStreamTypes(
-                                    currentSourceLocation.getId(),
-                                    currentSourceLocation.getPartNo());
+                                    currentSourceLocation.getMetaId(),
+                                    currentSourceLocation.getPartIndex());
                 }
             }
         }
@@ -517,7 +521,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                         final Set<String> availableChildStreamTypes) {
         if (INFO_PSEUDO_STREAM_TYPE.equals(effectiveChildStreamType)) {
             updateAvailableAndSelectedTabs(streamTypeName, availableChildStreamTypes);
-            refreshMetaInfoPresenterContent(currentSourceLocation.getId());
+            refreshMetaInfoPresenterContent(currentSourceLocation.getMetaId());
             refreshProgressBar(false);
         } else {
             // Tabs will be updated by updateFromResource
@@ -571,18 +575,16 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 //            GWT.log("Using data range " + dataRange.toString());
 
             // TODO @AT Do we need to pass the highlight?
-            final FetchDataRequest request = new FetchDataRequest(currentSourceLocation.getId(), builder -> {
-                builder
-                        .withPartNo(currentSourceLocation.getPartNo())
-                        .withSegmentNumber(currentSourceLocation.getSegmentNo())
-                        .withDataRange(dataRange)
-                        .withChildStreamType(currentSourceLocation.getChildType());
+            final SourceLocation.Builder builder = SourceLocation.builder(currentSourceLocation.getMetaId())
+                    .withPartIndex(currentSourceLocation.getPartIndex())
+                    .withRecordIndex(currentSourceLocation.getRecordIndex())
+                    .withDataRange(dataRange)
+                    .withChildStreamType(currentSourceLocation.getChildType());
+            if (highlights != null && !highlights.isEmpty()) {
+                builder.withHighlight(highlights.get(0));
+            }
 
-                if (highlights != null && !highlights.isEmpty()) {
-                    builder.withHighlight(highlights.get(0));
-                }
-            });
-
+            final FetchDataRequest request = new FetchDataRequest(builder.build());
             request.setMarkerMode(StreamTypeNames.ERROR.equals(currentStreamType)
                     && isInErrorMarkerMode());
             request.setExpandedSeverities(expandedSeverities);
@@ -596,15 +598,15 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
             final Long lastId = Optional.ofNullable(lastResult)
                     .flatMap(result -> Optional.ofNullable(result.getSourceLocation()))
-                    .map(SourceLocation::getId)
+                    .map(SourceLocation::getMetaId)
                     .orElse(null);
             final Long lastPartNo = Optional.ofNullable(lastResult)
                     .flatMap(result -> Optional.ofNullable(result.getSourceLocation()))
-                    .map(SourceLocation::getPartNo)
+                    .map(SourceLocation::getPartIndex)
                     .orElse(null);
 
             return Objects.equals(getCurrentMetaId(), lastId)
-                    && Objects.equals(getCurrentPartNo(), lastPartNo);
+                    && Objects.equals(getCurrentPartIndex(), lastPartNo);
         } else {
             return false;
         }
@@ -678,8 +680,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 // Record: a of b   Characters: x to y of z
                 navigatorData.updateStateForOneItemPerPage(
                         result.getTotalItemCount(),
-                        this::setCurrentSegmentNo,
-                        this::getCurrentSegmentNo,
+                        this::setCurrentRecordIndex,
+                        this::getCurrentRecordIndex,
                         RECORD_PAGER_UNIT);
             } else {
                 // non-segmented
@@ -687,8 +689,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 // OR                Characters: x to y of z
                 navigatorData.updateStateForOneItemPerPage(
                         result.getTotalItemCount(),
-                        this::setCurrentPartNo,
-                        this::getCurrentPartNo,
+                        this::setCurrentPartIndex,
+                        this::getCurrentPartIndex,
                         PART_PAGER_UNIT);
             }
         }
@@ -710,11 +712,11 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     }
 
     long getCurrentErrorsPageOffset() {
-        return getCurrentSegmentNo() / SourceLocation.MAX_ERRORS_PER_PAGE;
+        return getCurrentRecordIndex() / SourceLocation.MAX_ERRORS_PER_PAGE;
     }
 
     void setCurrentErrorsPageOffset(final long pageOffset) {
-        setCurrentSegmentNo(pageOffset * SourceLocation.MAX_ERRORS_PER_PAGE);
+        setCurrentRecordIndex(pageOffset * SourceLocation.MAX_ERRORS_PER_PAGE);
     }
 
     private void setPageResponse(final AbstractFetchDataResult result,
@@ -877,7 +879,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         refreshTextPresenterContent();
 
         refreshMetaInfoPresenterContent(result != null
-                ? result.getSourceLocation().getId()
+                ? result.getSourceLocation().getMetaId()
                 : null);
 
         itemNavigatorPresenter.refreshNavigator();
@@ -903,18 +905,18 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     }
 
     private void refreshHighlights(final AbstractFetchDataResult result) {
-        int partNo = 0;
+        int partIndex = 0;
 
         if (result != null) {
-            partNo = (int) (result.getSourceLocation().getPartNo());
+            partIndex = (int) (result.getSourceLocation().getPartIndex());
         }
 
         // Make sure we have a highlight section to add and that the stream id
         // matches that of the current page, and that the stream number matches
         // the stream number of the current page.
         if (highlights != null
-                && Objects.equals(getCurrentMetaId(), highlightId)
-                && partNo == highlightPartNo
+                && Objects.equals(getCurrentMetaId(), highlightMetaId)
+                && partIndex == highlightPartIndex
                 && result != null
                 && EqualsUtil.isEquals(result.getStreamTypeName(), highlightChildDataType)) {
             // Set the content to be displayed in the source view with a
@@ -1015,7 +1017,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
     private Long getCurrentMetaId() {
         return currentSourceLocation != null
-                ? currentSourceLocation.getId()
+                ? currentSourceLocation.getMetaId()
                 : null;
     }
 
@@ -1025,15 +1027,15 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 : null;
     }
 
-    private long getCurrentPartNo() {
+    private long getCurrentPartIndex() {
         return currentSourceLocation != null
-                ? currentSourceLocation.getPartNo()
+                ? currentSourceLocation.getPartIndex()
                 : 0;
     }
 
-    private long getCurrentSegmentNo() {
+    private long getCurrentRecordIndex() {
         return currentSourceLocation != null
-                ? currentSourceLocation.getSegmentNo()
+                ? currentSourceLocation.getRecordIndex()
                 : 0;
     }
 

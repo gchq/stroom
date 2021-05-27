@@ -245,8 +245,8 @@ public class ReferenceData {
                 mapName,
                 keyName));
 
-        // Get nested stream.
-        final long streamNo = metaHolder.getStreamNo();
+        // Get nested stream part.
+        final long partIndex = metaHolder.getPartIndex();
 
         LAMBDA_LOGGER.trace(() -> LogUtil.message("StreamId {}, parentStreamId {}",
                 metaHolder.getMeta().getId(),
@@ -257,7 +257,7 @@ public class ReferenceData {
                 pipelineReference.getPipeline(),
                 getPipelineVersion(pipelineReference),
                 metaHolder.getMeta().getId(),
-                streamNo);
+                partIndex);
 
         result.addEffectiveStream(refStreamDefinition);
 

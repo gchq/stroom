@@ -61,16 +61,12 @@ public class ClassificationWrappedDataPresenter
     }
 
     @Override
-    public void beginStepping(final long streamId, final String childStreamType) {
+    public void beginStepping(final StepLocation stepLocation, final String childStreamType) {
         BeginPipelineSteppingEvent.fire(
                 this,
-                streamId,
                 null,
                 childStreamType,
-                new StepLocation(
-                        streamId,
-                        sourceLocation.getPartNo(),
-                        sourceLocation.getSegmentNo()),
+                stepLocation,
                 null);
     }
 }

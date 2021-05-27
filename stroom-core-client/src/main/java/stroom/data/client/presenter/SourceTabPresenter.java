@@ -43,8 +43,8 @@ public class SourceTabPresenter extends ContentTabPresenter<SourceTabView> {
                 .orElse("");
         return sourceKey != null
                 ? ("Stream " + sourceKey.getMetaId()
-                + " : " + (sourceKey.getPartNo() + 1) // to one based
-                + " : " + (sourceKey.getSegmentNo().orElse(0L) + 1) // to one based
+                + " : " + (sourceKey.getPartIndex() + 1) // to one based
+                + " : " + (sourceKey.getRecordIndex().orElse(0L) + 1) // to one based
                 + type)
                 : "Source Data";
     }

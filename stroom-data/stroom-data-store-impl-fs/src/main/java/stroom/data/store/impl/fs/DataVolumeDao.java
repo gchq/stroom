@@ -17,7 +17,7 @@ public interface DataVolumeDao {
 
     interface DataVolume {
 
-        long getStreamId();
+        long getMetaId();
 
         String getVolumePath();
     }
