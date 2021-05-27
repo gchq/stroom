@@ -43,13 +43,8 @@ public class SourceLocation {
     private final String childType; // null for actual data, else non null (e.g. context/meta)
     @JsonProperty
     private final long partIndex; // For multipart data only, 0 for non multi-part data, zero based
-    // TODO @AT Change to an OffsetRange to support error segments
-    // TODO @AT This was a bad name choice. In segmented data the header and footer occupy the first and
-    //  last segments technically the first rec is at seg 1 (zero based). Probably should have called it
-    //  recordNo like in the stepper to avoid the confusion. Here we treat it like the record no, ignoring the
-    //  header segment.
     @JsonProperty
-    private final long recordIndex; // optional for segmented data only (segment aka record), zero based
+    private final long recordIndex; // optional for data where records are split into separate segments only, zero based
     @JsonProperty
     private final DataRange dataRange; // The optional specified range of the character data which may be a subset
     @JsonProperty
@@ -113,7 +108,7 @@ public class SourceLocation {
     }
 
     /**
-     * @return The segment number (AKA record number), zero based
+     * @return The record number (AKA segment number), zero based
      */
     public long getRecordIndex() {
         return recordIndex;
@@ -223,9 +218,9 @@ public class SourceLocation {
     public static final class Builder {
 
         private long metaId;
-        private long partIndex; // Non multipart data has segment no of zero by default, zero based
+        private long partIndex; // Non multipart data has part no of zero by default, zero based
         private String childType;
-        private long recordIndex; // Non-segmented data has no segment no., zero based
+        private long recordIndex; // Non-segmented data has no record no., zero based
         private DataRange dataRange;
         private TextRange highlight;
         private boolean truncateToWholeLines = false;
