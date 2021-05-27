@@ -116,6 +116,13 @@ echo -e "${GREEN}Docker group id ${BLUE}${docker_group_id}${NC}"
 # Create a persistent vol for the home dir, idempotent
 docker volume create builder-home-dir-vol
 
+# TODO consider pushing the built image to dockerhub so we can
+# reuse it for better performance.  See here
+# https://github.com/i3/i3/blob/42f5a6ce479968a8f95dd5a827524865094d6a5c/.travis.yml
+# https://github.com/i3/i3/blob/42f5a6ce479968a8f95dd5a827524865094d6a5c/travis/ha.sh
+# for an example of how to hash the build context so we can pull or push
+# depending on whether there is already an image for the hash.
+
 echo -e "${GREEN}Building image ${BLUE}${image_tag}${NC}"
 docker build \
   --tag "${image_tag}" \
