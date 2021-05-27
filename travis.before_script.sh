@@ -14,19 +14,12 @@ set -e
   NC='\033[0m' # No Colour
 }
 
-sudo bash -c "echo '127.0.0.1 kafka' >> /etc/hosts"
-sudo bash -c "echo '127.0.0.1 hbase' >> /etc/hosts"
-sudo bash -c "echo '127.0.0.1 stroom-auth-service' >> /etc/hosts"
+echo -e "LOCAL_BUILD:                   [${GREEN}${LOCAL_BUILD}${NC}]"
 
-echo -e "TRAVIS_EVENT_TYPE:   [${GREEN}${TRAVIS_EVENT_TYPE}${NC}]"
+if [[ ! -n "LOCAL_BUILD" ]]; then
 
-if [ "$TRAVIS_EVENT_TYPE" = "cron" ]; then
-  echo "Cron build so don't set up gradle plugins or docker containers"
-
-else
-  # Increase the size of the heap
-  export JAVA_OPTS=-Xmx1024m
-  echo -e "JAVA_OPTS: [${GREEN}$JAVA_OPTS${NC}]"
+  sudo bash -c "echo '127.0.0.1 kafka' >> /etc/hosts"
+  sudo bash -c "echo '127.0.0.1 hbase' >> /etc/hosts"
 
   # Do docker login here so all pulls are authenticated and thus are
   # not hit by the un-authenticated rate-limit
@@ -44,18 +37,43 @@ else
   curl -L "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" > docker-compose
   chmod +x docker-compose
   sudo mv docker-compose /usr/local/bin
+else
+  echo -e "${YELLOW}LOCAL_BUILD set so skipping compose install${NC}"
+fi
 
-  echo -e "${GREEN}Clone our stroom-resources repo ${BLUE}${STROOM_RESOURCES_GIT_REF}${NC}"
-  git clone https://github.com/gchq/stroom-resources.git
-  pushd stroom-resources/bin
-  git checkout "${STROOM_RESOURCES_GIT_REF}"
+echo -e "${GREEN}Clone our stroom-resources repo ${BLUE}${STROOM_RESOURCES_GIT_REF}${NC}"
+git clone \
+  --depth=1 \
+  --branch "${STROOM_RESOURCES_GIT_REF}" \
+  --single-branch \
+  https://github.com/gchq/stroom-resources.git
 
-  echo -e "${GREEN}Start all the services we need to run the integration tests in stroom${NC}"
-  ./bounceIt.sh 'up -d --build' -d -e -y -x stroom-all-dbs kafka zookeeper
-  popd
+pushd stroom-resources/bin
 
+#git checkout "${STROOM_RESOURCES_GIT_REF}"
+
+# Increase the size of the heap
+export JAVA_OPTS=-Xmx1024m
+echo -e "JAVA_OPTS: [${GREEN}$JAVA_OPTS${NC}]"
+
+echo -e "${GREEN}Start all the services we need to run the integration tests in stroom${NC}"
+./bounceIt.sh \
+  'up -d --build' \
+  -d \
+  -e \
+  -y \
+  -x \
+  stroom-all-dbs \
+  kafka \
+  zookeeper
+
+popd
+
+if [[ ! -n "LOCAL_BUILD" ]]; then
   echo -e "Logging out of Docker"
   docker logout >/dev/null 2>&1
+else
+  echo -e "${YELLOW}LOCAL_BUILD set so skipping docker logout${NC}"
 fi
 
 echo -e "${GREEN}Finished running ${BLUE}before_script${NC}"

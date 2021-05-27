@@ -1,12 +1,10 @@
-#!/bin/bash
+#!/bin/bash=""
 
 # exit script on any error
-set -e
+set -eo pipefail
 
 STROOM_DOCKER_REPO="gchq/stroom"
 STROOM_PROXY_DOCKER_REPO="gchq/stroom-proxy"
-GITHUB_REPO="gchq/stroom"
-GITHUB_API_URL="https://api.github.com/repos/gchq/stroom/releases"
 STROOM_DOCKER_CONTEXT_ROOT="stroom-app/docker/."
 STROOM_PROXY_DOCKER_CONTEXT_ROOT="stroom-proxy/stroom-proxy-app/docker/."
 VERSION_FIXED_TAG=""
@@ -16,7 +14,6 @@ MINOR_VER_FLOATING_TAG=""
 # This is a whitelist of branches to produce docker builds for
 BRANCH_WHITELIST_REGEX='(^dev$|^master$|^[0-9]+\.[0-9]+$)'
 RELEASE_VERSION_REGEX='^v[0-9]+\.[0-9]+.*$'
-CRON_TAG_SUFFIX="DAILY"
 LATEST_SUFFIX="-LATEST"
 # This is the branch containing the current release of stroom
 CURRENT_STROOM_RELEASE_BRANCH="6.0"
@@ -219,48 +216,6 @@ gather_release_artefacts() {
   done
 }
 
-isCronBuildRequired() {
-  # GH_USER_AND_TOKEN is set in env section of .travis.yml
-  local authArgs=()
-  if [ -n "${GH_USER_AND_TOKEN}" ]; then
-    echo "Using authentication with curl"
-    authArgs+=("--user" "${GH_USER_AND_TOKEN}")
-  fi
-  # query the github api for the latest cron release tag name
-  # redirect stderr to dev/null to protect api token
-  local latestTagName
-  latestTagName=$(curl -s "${authArgs[@]}" ${GITHUB_API_URL} | \
-    jq -r "[.[] | select(.tag_name | test(\"${TRAVIS_BRANCH}.*${CRON_TAG_SUFFIX}\"))][0].tag_name" \
-    2>/dev/null)
-  echo -e "Latest release ${CRON_TAG_SUFFIX}" \
-    "tag: [${GREEN}${latestTagName}${NC}]"
-
-  if [ "${latestTagName}x" != "x" ]; then 
-    # Get the commit sha that this tag applies to (not the commit of the tag itself)
-    local shaForTag
-    shaForTag=$(git rev-list -n 1 "${latestTagName}")
-    echo -e "SHA hash for tag ${latestTagName}: [${GREEN}${shaForTag}${NC}]"
-    if [ "${shaForTag}x" = "x" ]; then
-      echo -e "${RED}Unable to get sha for tag ${BLUE}${latestTagName}${NC}"
-      exit 1
-    else
-      if [ "${shaForTag}x" = "${TRAVIS_COMMIT}x" ]; then
-        echo -e "${RED}The commit of the build matches the latest" \
-          "${CRON_TAG_SUFFIX} release.${NC}"
-        echo -e "${RED}Git will not be tagged and no release will be" \
-          "made.${NC}"
-        # The latest release has the same commit sha as the commit travis is building
-        # so don't bother creating a new tag as we don't want a new release
-        false
-      fi
-    fi
-  else
-    # no release found so return true so a build happens
-    true
-  fi
-  return
-}
-
 # args: dockerRepo contextRoot tag1VersionPart tag2VersionPart ... tagNVersionPart
 releaseToDockerHub() {
   # echo "releaseToDockerHub called with args [$@]"
@@ -294,11 +249,26 @@ releaseToDockerHub() {
     --build-arg GIT_TAG="${TRAVIS_TAG:-${SNAPSHOT_FLOATING_TAG}}" \
     "${contextRoot}"
 
-  echo -e "Pushing the docker image to ${GREEN}${dockerRepo}${NC} with" \
-    "tags: ${GREEN}${allTagArgs[*]}${NC}"
-  docker push "${dockerRepo}" >/dev/null 2>&1
+  if [[ ! -n "LOCAL_BUILD" ]]; then
+    echo -e "Pushing the docker image to ${GREEN}${dockerRepo}${NC} with" \
+      "tags: ${GREEN}${allTagArgs[*]}${NC}"
+    docker push "${dockerRepo}" >/dev/null 2>&1
+  else
+    echo -e "${YELLOW}LOCAL_BUILD set so skipping docker push${NC}"
+  fi
 
   echo -e "Completed Docker release"
+}
+
+docker_login() {
+  echo -e "Logging in to Docker"
+  # The username and password are configured in the travis gui
+  if [[ ! -n "LOCAL_BUILD" ]]; then
+    echo "$DOCKER_PASSWORD" \
+      | docker login -u "$DOCKER_USERNAME" --password-stdin >/dev/null 2>&1
+  else
+    echo -e "${YELLOW}LOCAL_BUILD set so skipping docker login${NC}"
+  fi
 }
 
 # establish what version of stroom we are building
@@ -373,6 +343,9 @@ echo -e "extraBuildArgs:                [${GREEN}${extraBuildArgs[*]}${NC}]"
 #echo -e "${GREEN}Running ui build${NC}"
 #./container_build/runInNodeDocker.sh ./stroom-ui/yarnBuild.sh
 
+# Login to docker so we have authenticated pulls that are not rate limited
+docker_login
+
 echo -e "${GREEN}Running gradle build${NC}"
 ./container_build/runInJavaDocker.sh GRADLE_BUILD
 
@@ -390,11 +363,6 @@ if [ "$doDockerBuild" = true ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then
     "${MINOR_VER_FLOATING_TAG}" \
   )
 
-  echo -e "Logging in to Docker"
-  # The username and password are configured in the travis gui
-  echo "$DOCKER_PASSWORD" \
-    | docker login -u "$DOCKER_USERNAME" --password-stdin >/dev/null 2>&1
-
   # build and release stroom image to dockerhub
   releaseToDockerHub \
     "${STROOM_DOCKER_REPO}" \
@@ -406,6 +374,7 @@ if [ "$doDockerBuild" = true ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then
     "${STROOM_PROXY_DOCKER_REPO}" \
     "${STROOM_PROXY_DOCKER_CONTEXT_ROOT}" \
     "${allDockerTags[@]}"
+
 
   echo -e "Logging out of Docker"
   docker logout >/dev/null 2>&1
