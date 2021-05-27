@@ -56,19 +56,20 @@ main() {
 
   # shellcheck disable=SC2034
   {
-    TRAVIS_BRANCH="7.0" # Needs to be a proper brach as we git clone this
-    TRAVIS_BUILD_DIR="/tmp/travis_build"
-    TRAVIS_BUILD_NUMBER="12345"
-    TRAVIS_COMMIT="dummy_commit_hash"
-    TRAVIS_EVENT_TYPE="push"
-    TRAVIS_PULL_REQUEST="false"
-    TRAVIS_TAG="v7.0-dummy" # Gets parsed and needs to be set to trigger aspects of the build
-    STROOM_RESOURCES_GIT_TAG="stroom-stacks-v7.0-beta.118"
+    export TRAVIS_BRANCH="7.0" # Needs to be a proper brach as we git clone this
+    export TRAVIS_BUILD_DIR="/tmp/travis_build"
+    export TRAVIS_BUILD_NUMBER="12345"
+    export TRAVIS_COMMIT="dummy_commit_hash"
+    export TRAVIS_EVENT_TYPE="push"
+    export TRAVIS_PULL_REQUEST="false"
+    export TRAVIS_TAG="v7.0-dummy" # Gets parsed and needs to be set to trigger aspects of the build
+    export STROOM_RESOURCES_GIT_TAG="stroom-stacks-v7.0-beta.118"
+    export SKIP_TESTS="${SKIP_TESTS:-false}"
+    export MAX_WORKERS="${MAX_WORKERS:-6}"
   }
 
   # IMPORTANT - Stops us trying to push builds to dockerhub
   export LOCAL_BUILD=true
-  export STROOM_RESOURCES_GIT_TAG
 
   local stroom_clone_branch="7.0-ui-build-container"
 

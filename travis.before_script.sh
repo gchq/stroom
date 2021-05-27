@@ -62,9 +62,10 @@ echo -e "${GREEN}Start all the services we need to run the integration tests in 
   -e \
   -y \
   -x \
-  stroom-all-dbs \
-  kafka \
-  zookeeper
+  stroom-all-dbs
+
+  #kafka \
+  #zookeeper
 
 popd
 
