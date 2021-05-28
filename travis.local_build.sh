@@ -137,9 +137,6 @@ main() {
   #./container_build/runInJavaDocker.sh \
     #"./travis.before_script.sh && ./travis.script.sh"
 
-  #echo -e "${GREEN}Running ${BLUE}travis.before_script.sh${NC}"
-  #${TRAVIS_BUILD_DIR}/travis.before_script.sh
-
   echo -e "${GREEN}Running ${BLUE}travis.script.sh${NC}"
   ${TRAVIS_BUILD_DIR}/travis.script.sh
 
