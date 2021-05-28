@@ -76,6 +76,10 @@ main() {
     export MAX_WORKERS="${MAX_WORKERS:-6}"
   }
 
+  if [[ ! -n "${TRAVIS_TAG}" ]]; then
+    echo -e "${YELLOW}WARNING:${NC} TRAVIS_TAG unset so won't run release parts of build${NC}"
+  fi
+
   if [[ -d "${TRAVIS_BUILD_DIR}" ]]; then
     if [[ "${runWithNonEmptyBuildDir}" = true ]]; then
       echo -e "${YELLOW}WARNING:${NC} TRAVIS_BUILD_DIR ${BLUE}${TRAVIS_BUILD_DIR}${NC}" \
