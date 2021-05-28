@@ -17,7 +17,7 @@
 # This is our java build image for building stroom
 # It also contains plantuml for plant uml image generation
 
-FROM adoptopenjdk/openjdk15:jdk-15.0.2_7-alpine as stroom-base-stage
+FROM adoptopenjdk/openjdk15:jdk-15.0.2_7-alpine
 
 # Work from the shared git repo dir
 WORKDIR /builder/shared
@@ -44,22 +44,15 @@ ARG PLANTUML_VERSION=1.2021.5
 
 # Set the user ID into an env var so the entrypoint can see it
 ENV CONTAINER_USER_ID=$USER_ID
-
-ENV HOST_REPO_DIR=$HOST_REPO_DIR
-ENV DOCKER_HOST_IP=$DOCKER_HOST_IP
-
-ENV LANG en_GB.UTF-8
+    HOST_REPO_DIR=$HOST_REPO_DIR
+    DOCKER_HOST_IP=$DOCKER_HOST_IP
+    LANG en_GB.UTF-8
 
 # Set tini as entrypoint
 #ENTRYPOINT ["/sbin/tini", "--", "/builder/docker-entrypoint.sh"]
 
 CMD id
 
-    #&& #sudo usermod -a -G docker builder
-      #busybox-extras \
-
-# iputils for non-root ping
-# busybox-extras for telnet for debugging use
 # graphviz, ttf-* for plantuml
 # As this container will be trying to use the docker cli to run/interact with other
 # containers we need to add our non-root user to the docker group i.e. the same gid as
@@ -73,7 +66,6 @@ RUN apk add --no-cache \
       docker-cli \
       git \
       graphviz \
-      iputils \
       su-exec \
       tini \
       ttf-droid \
@@ -115,10 +107,6 @@ RUN apk add --no-cache \
     && addgroup builder "${docker_group_name}" \
     && mkdir -p /builder/shared \
     && chown -R $USER_ID:$GROUP_ID /builder
-
-
-    #&& addgroup -g $GROUP_ID -S builder \
-    #&& adduser -u $USER_ID -S -s /bin/false -D -G builder builder \
 
 COPY --chown=$USER_ID:$GROUP_ID docker-entrypoint.sh /builder/
 

@@ -204,7 +204,7 @@ gather_release_artefacts() {
 
   # Entity relationship diagram for the DB
   copy_release_artefact \
-    "${TRAVIS_BUILD_DIR}/container_build/build/entity_relationships.svg" \
+    "${TRAVIS_BUILD_DIR}/container_build/build/entity-relationships-${TRAVIS_TAG}.svg" \
     "${RELEASE_ARTEFACTS_DIR}" \
     "An entity relationship diagram for the Stroom database"
 
@@ -358,6 +358,9 @@ export BUILD_VERSION="${STROOM_VERSION}"
 
 echo -e "${GREEN}Running all gradle builds with build version" \
   "${BLUE}${BUILD_VERSION}${NC}"
+
+# MAX_WORKERS env var should be set in travis settings to controll max
+# gradle/gwt workers
 ./container_build/runInJavaDocker.sh GRADLE_BUILD
 
 # Don't do a docker build for pull requests

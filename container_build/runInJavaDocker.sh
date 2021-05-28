@@ -68,19 +68,9 @@ else
     # DB is in a sibling container so need to force it to use the IP instead of localhost
     run_cmd=( "bash" "-c"  "pwd; export STROOM_JDBC_DRIVER_URL=\"jdbc:mysql://${host_ip}:3307/stroom?useUnicode=yes&characterEncoding=UTF-8\"; java -jar ./stroom-app/build/libs/stroom-app-all.jar migrate ./local.yml" )
   else
-    #echo 'echo "[$@]"' "=> [$@]"
-    #echo 'echo "[$*]"' "=> [$*]"
-    #echo 'echo "[$1]"' "=> [$1]"
-    #echo 'run_cmd=( "bash" "-c" "$1" )'
     run_cmd=( "bash" "-c" "$1" )
-    #echo 'echo "[${run_cmd[*]}]"' "=> [${run_cmd[*]}]"
-    #echo 'echo "[${run_cmd[@]}]"' "=> [${run_cmd[@]}]"
   fi
 fi
-
-#for item in "${run_cmd[@]}"; do
-  #echo "array item [${item}]"
-#done
 
 user_id=
 user_id="$(id -u)"

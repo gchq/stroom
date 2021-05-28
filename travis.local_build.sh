@@ -54,24 +54,27 @@ main() {
 
   setup_echo_colours
 
+  # IMPORTANT - Stops us trying to push builds to dockerhub
+  export LOCAL_BUILD=true
+
+  local stroom_clone_branch
+  # get the current branch
+  stroom_clone_branch="$(git rev-parse --abbrev-ref HEAD)"
+
   # shellcheck disable=SC2034
   {
-    export TRAVIS_BRANCH="7.0" # Needs to be a proper brach as we git clone this
+    export TRAVIS_BRANCH="${stroom_clone_branch}" # Needs to be a proper brach as we git clone this
     export TRAVIS_BUILD_DIR="/tmp/travis_build"
-    export TRAVIS_BUILD_NUMBER="12345"
-    export TRAVIS_COMMIT="dummy_commit_hash"
-    export TRAVIS_EVENT_TYPE="push"
-    export TRAVIS_PULL_REQUEST="false"
-    export TRAVIS_TAG="v7.0-dummy" # Gets parsed and needs to be set to trigger aspects of the build
+    export TRAVIS_BUILD_NUMBER="12345" # Only echoed
+    export TRAVIS_COMMIT="dummy_commit_hash" # Only echoed
+    export TRAVIS_EVENT_TYPE="push" # Only echoed
+    export TRAVIS_PULL_REQUEST="false" # ensures we do docker builds
+    # To run with no tag use TRAVIS_TAG= ./travis.local_build.sh
+    export TRAVIS_TAG="${TRAVIS_TAG=v7.0-dummy}" # Gets parsed and needs to be set to trigger aspects of the build
     export STROOM_RESOURCES_GIT_TAG="stroom-stacks-v7.0-beta.118"
     export SKIP_TESTS="${SKIP_TESTS:-false}"
     export MAX_WORKERS="${MAX_WORKERS:-6}"
   }
-
-  # IMPORTANT - Stops us trying to push builds to dockerhub
-  export LOCAL_BUILD=true
-
-  local stroom_clone_branch="7.0-ui-build-container"
 
   if [[ -d "${TRAVIS_BUILD_DIR}" ]]; then
     if [[ "${runWithNonEmptyBuildDir}" = true ]]; then
@@ -89,9 +92,11 @@ main() {
   # Make sure we start in the travis build dir
   pushd "${TRAVIS_BUILD_DIR}" > /dev/null
 
-  echo -e "${GREEN}Cloning strrom repo into ${TRAVIS_BUILD_DIR}${NC}"
+  echo -e "${GREEN}Cloning branch ${BLUE}${stroom_clone_branch}${NC}" \
+    "into ${TRAVIS_BUILD_DIR}${NC}"
 
-  # Don't need any history
+  # Clone stroom like travis would
+  # Speed up clone with no depth and one branch
   git clone \
     --depth=1 \
     --branch "${stroom_clone_branch}" \

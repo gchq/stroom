@@ -35,7 +35,7 @@ GRADLE_ARGS=(
 
 # Sized for travis
 GWT_ARGS=(
-  "-PgwtCompilerWorkers=2"
+  "-PgwtCompilerWorkers=${MAX_WORKERS:-6}"
   "-PgwtCompilerMinHeap=50M"
   "-PgwtCompilerMaxHeap=2G"
 )

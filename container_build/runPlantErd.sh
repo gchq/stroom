@@ -104,10 +104,12 @@ main() {
   echo -e "${GREEN}User ID ${BLUE}${user_id}${NC}"
   echo -e "${GREEN}Group ID ${BLUE}${group_id}${NC}"
   echo -e "${GREEN}Host repo root dir ${BLUE}${host_abs_repo_dir}${NC}"
+  echo -e "${GREEN}Build version ${BLUE}${BUILD_VERSION}${NC}"
 
   local build_dir="container_build/build"
   local builder_dir="/builder"
-  local puml_output_file="${build_dir}/entity_relationships.puml"
+  local puml_output_file="${build_dir}/entity-relationships-${BUILD_VERSION:-SNAPSHOT}.puml"
+  # The app-all jar is not versioned even if you pass -Pversion to gradle
   local app_jar_file="stroom-app/build/libs/stroom-app-all.jar"
 
   mkdir -p "${build_dir}"
