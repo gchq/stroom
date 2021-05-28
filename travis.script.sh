@@ -66,6 +66,7 @@ stop_and_clear_down_stroom_all_dbs() {
 }
 
 start_stroom_all_dbs() {
+
   if [[ ! -d "${STROOM_RESOURCES_DIR}" ]]; then
     echo -e "${GREEN}Clone our stroom-resources repo ${BLUE}${STROOM_RESOURCES_GIT_TAG}${NC}"
 
