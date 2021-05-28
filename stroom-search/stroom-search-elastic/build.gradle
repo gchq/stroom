@@ -27,3 +27,5 @@ dependencies {
 
     testImplementation project(':stroom-test-common')
 }
+
+tasks.compileJava.dependsOn ":stroom-search:elastic-shaded:shadowJar"
