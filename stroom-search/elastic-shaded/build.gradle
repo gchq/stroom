@@ -18,6 +18,12 @@ shadowJar {
     relocate 'org.apache.lucene', 'elastic.org.apache.lucene'
 
     mergeServiceFiles()
+
+    artifacts {
+        shadow(tasks.shadowJar.archivePath) {
+            builtBy shadowJar
+        }
+    }
 }
 
 tasks.build.dependsOn shadowJar
