@@ -3,6 +3,7 @@ package stroom.index.impl;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeGroup;
+import stroom.node.api.NodeInfo;
 import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
@@ -23,7 +24,9 @@ import java.util.List;
 import java.util.OptionalLong;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
+@Singleton
 public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexVolumeGroupServiceImpl.class);
@@ -33,6 +36,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
     private final VolumeConfig volumeConfig;
     private final ProcessingUserIdentityProvider processingUserIdentityProvider;
     private final PathCreator pathCreator;
+    private final NodeInfo nodeInfo;
 
     private volatile boolean createdDefaultVolumes;
     private volatile boolean creatingDefaultVolumes;
@@ -43,13 +47,15 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                                        final SecurityContext securityContext,
                                        final VolumeConfig volumeConfig,
                                        final ProcessingUserIdentityProvider processingUserIdentityProvider,
-                                       final PathCreator pathCreator) {
+                                       final PathCreator pathCreator,
+                                       final NodeInfo nodeInfo) {
         this.indexVolumeGroupDao = indexVolumeGroupDao;
         this.indexVolumeDao = indexVolumeDao;
         this.securityContext = securityContext;
         this.volumeConfig = volumeConfig;
         this.processingUserIdentityProvider = processingUserIdentityProvider;
         this.pathCreator = pathCreator;
+        this.nodeInfo = nodeInfo;
     }
 
     @Override
@@ -134,67 +140,61 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                 securityContext.insecure(() -> {
                     final boolean isEnabled = volumeConfig.isCreateDefaultIndexVolumesOnStart();
                     if (isEnabled) {
-                        final List<String> allVolGroups = getNames();
+                        if (volumeConfig.getDefaultIndexVolumeGroupName() != null) {
+                            final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
+                            final String processingUserId = processingUserIdentityProvider.get().getId();
+                            final String groupName = volumeConfig.getDefaultIndexVolumeGroupName();
+                            indexVolumeGroup.setName(groupName);
+                            AuditUtil.stamp(processingUserId, indexVolumeGroup);
 
-                        if (allVolGroups == null || allVolGroups.size() == 0) {
-                            if (volumeConfig.getDefaultIndexVolumeGroupName() != null) {
-                                final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
-                                final String processingUserId = processingUserIdentityProvider.get().getId();
-                                final String groupName = volumeConfig.getDefaultIndexVolumeGroupName();
-                                indexVolumeGroup.setName(groupName);
-                                AuditUtil.stamp(processingUserId, indexVolumeGroup);
+                            LOGGER.info("Creating default index volume group [{}]", groupName);
+                            final IndexVolumeGroup newGroup = indexVolumeGroupDao.getOrCreate(indexVolumeGroup);
 
-                                LOGGER.info("Creating default index volume group [{}]", groupName);
-                                IndexVolumeGroup newGroup = indexVolumeGroupDao.getOrCreate(indexVolumeGroup);
+                            // Now create associated volumes within the group
+                            if (volumeConfig.getDefaultIndexVolumeGroupPaths() != null) {
+                                final String nodeName = nodeInfo.getThisNodeName();
 
-                                //Now create associated volumes within the group
-                                if (volumeConfig.getDefaultIndexVolumeGroupPaths() != null &&
-                                        volumeConfig.getDefaultIndexVolumeGroupNodes() != null) {
-
+                                // See if we have already created a volume for this node.
+                                final List<IndexVolume> existingVolumesInGroup =
+                                        indexVolumeDao.getVolumesInGroup(groupName);
+                                final boolean exists = existingVolumesInGroup
+                                        .stream()
+                                        .map(IndexVolume::getNodeName)
+                                        .anyMatch(name -> name.equals(nodeName));
+                                if (!exists) {
                                     final List<String> paths = volumeConfig.getDefaultIndexVolumeGroupPaths();
-                                    final List<String> nodes = volumeConfig.getDefaultIndexVolumeGroupNodes();
-                                    if (nodes.size() == paths.size()) {
-                                        int i = 0;
-                                        for (String path : paths) {
-                                            final Path resolvedPath = Paths.get(
-                                                    pathCreator.makeAbsolute(
-                                                            pathCreator.replaceSystemProperties(path)));
+                                    for (String path : paths) {
+                                        final Path resolvedPath = Paths.get(
+                                                pathCreator.makeAbsolute(
+                                                        pathCreator.replaceSystemProperties(path)));
 
-                                            LOGGER.info("Creating index volume with path {}",
-                                                    resolvedPath.toAbsolutePath().normalize());
+                                        LOGGER.info("Creating index volume with path {}",
+                                                resolvedPath.toAbsolutePath().normalize());
 
-                                            final OptionalLong byteLimitOption = getDefaultVolumeLimit(
-                                                    resolvedPath.toString());
+                                        final OptionalLong byteLimitOption = getDefaultVolumeLimit(
+                                                resolvedPath.toString());
 
-                                            final IndexVolume indexVolume = new IndexVolume();
-                                            indexVolume.setIndexVolumeGroupId(newGroup.getId());
-                                            indexVolume.setBytesLimit(byteLimitOption.orElse(0L));
-                                            indexVolume.setNodeName(nodes.get(i++));
-                                            indexVolume.setPath(resolvedPath.toString());
-                                            indexVolume.setCreateTimeMs(System.currentTimeMillis());
-                                            indexVolume.setUpdateTimeMs(System.currentTimeMillis());
-                                            indexVolume.setCreateUser(processingUserId);
-                                            indexVolume.setUpdateUser(processingUserId);
+                                        final IndexVolume indexVolume = new IndexVolume();
+                                        indexVolume.setIndexVolumeGroupId(newGroup.getId());
+                                        indexVolume.setBytesLimit(byteLimitOption.orElse(0L));
+                                        indexVolume.setNodeName(nodeName);
+                                        indexVolume.setPath(resolvedPath.toString());
+                                        indexVolume.setCreateTimeMs(System.currentTimeMillis());
+                                        indexVolume.setUpdateTimeMs(System.currentTimeMillis());
+                                        indexVolume.setCreateUser(processingUserId);
+                                        indexVolume.setUpdateUser(processingUserId);
 
-                                            indexVolumeDao.create(indexVolume);
-                                        }
-                                    } else {
-                                        LOGGER.error(() -> "Unable to create default index volume group. " +
-                                                "Properties defaultVolumeGroupPaths defaultVolumeGroupNodes " +
-                                                "and defaultVolumeGroupLimit must both contain the same number of " +
-                                                "comma-delimited elements.");
+                                        indexVolumeDao.create(indexVolume);
                                     }
-                                } else {
-                                    LOGGER.warn(() -> "Unable to create default index volume group. " +
-                                            "Properties defaultVolumeGroupPaths defaultVolumeGroupNodes " +
-                                            "and defaultVolumeGroupLimit must all be defined.");
                                 }
                             } else {
-                                LOGGER.warn(() -> "Unable to create default index " +
-                                        "Property defaultVolumeGroupName must be defined.");
+                                LOGGER.warn(() -> "Unable to create default index volume group. " +
+                                        "Properties defaultVolumeGroupPaths defaultVolumeGroupNodes " +
+                                        "and defaultVolumeGroupLimit must all be defined.");
                             }
                         } else {
-                            LOGGER.info(() -> "Existing index volumes exist, won't create default index group");
+                            LOGGER.warn(() -> "Unable to create default index " +
+                                    "Property defaultVolumeGroupName must be defined.");
                         }
                     } else {
                         LOGGER.info(() -> "Creation of default index group is currently disabled");

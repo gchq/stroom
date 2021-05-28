@@ -16,7 +16,6 @@ public class VolumeConfig extends AbstractConfig {
     private boolean createDefaultIndexVolumesOnStart = true;
     private String defaultIndexVolumeGroupName = "Default Volume Group";
     private List<String> defaultIndexVolumeGroupPaths = List.of("volumes/default_index_volume");
-    private List<String> defaultIndexVolumeGroupNodes = List.of("node1a");
     private double defaultIndexVolumeFilesystemUtilisation = 0.9;
 
     @JsonPropertyDescription("How should volumes be selected for use? Possible volume selectors " +
@@ -67,19 +66,6 @@ public class VolumeConfig extends AbstractConfig {
         this.defaultIndexVolumeGroupPaths = defaultIndexVolumeGroupPaths;
     }
 
-    @JsonPropertyDescription("The nodes associated with the paths that are created if " +
-            "the default index is created on application start." +
-            "N.B. It is possible to have multiple paths per node and/or the same path repeated on multiple nodes but " +
-            "there must always be the same number of elements in this list as in property " +
-            "defaultIndexVolumeGroupNodes.")
-    public List<String> getDefaultIndexVolumeGroupNodes() {
-        return defaultIndexVolumeGroupNodes;
-    }
-
-    public void setDefaultIndexVolumeGroupNodes(final List<String> defaultIndexVolumeGroupNodes) {
-        this.defaultIndexVolumeGroupNodes = defaultIndexVolumeGroupNodes;
-    }
-
     @JsonPropertyDescription("Fraction of the filesystem beyond which the system will stop writing to the " +
             "default index volumes that may be created on application start.")
     public double getDefaultIndexVolumeFilesystemUtilisation() {
@@ -97,7 +83,6 @@ public class VolumeConfig extends AbstractConfig {
                 ", createDefaultIndexVolumesOnStart=" + createDefaultIndexVolumesOnStart +
                 ", defaultIndexVolumeGroupName=" + "\"" + defaultIndexVolumeGroupName + "\"" +
                 ", defaultIndexVolumeFilesystemUtilisation=" + defaultIndexVolumeFilesystemUtilisation +
-                ", defaultIndexVolumeGroupNodes=" + "\"" + defaultIndexVolumeGroupNodes + "\"" +
                 ", defaultIndexVolumeGroupPaths=" + "\"" + defaultIndexVolumeGroupPaths + "\"" +
                 '}';
     }
