@@ -7,7 +7,7 @@
 # It comes with some pre-baked commands such as ERD and GRADLE_BUILD
 
 # Script 
-set -euo pipefail
+set -eo pipefail
 IFS=$'\n\t'
 
 # Shell Colour constants for use in 'echo -e'
