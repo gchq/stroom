@@ -371,27 +371,20 @@ echo -e "extraBuildArgs:                [${GREEN}${extraBuildArgs[*]}${NC}]"
 
 pushd "${TRAVIS_BUILD_DIR}" > /dev/null
 
+# Login to docker so we have authenticated pulls that are not rate limited
+docker_login
+
 start_stroom_all_dbs
 
 # Ensure we have a local.yml file as the integration tests will need it
 ./local.yml.sh
 
-#echo -e "${GREEN}Running api build${NC}"
-## shellcheck disable=SC2016
-#./container_build/runInNodeDocker.sh 'echo $HOME; ls -ld $HOME; ./stroom-ui/generateApi.sh'
-
-#echo -e "${GREEN}Running ui build${NC}"
-#./container_build/runInNodeDocker.sh ./stroom-ui/yarnBuild.sh
-
-# Login to docker so we have authenticated pulls that are not rate limited
-docker_login
+echo -e "${GREEN}Running all gradle builds with build version" \
+  "${BLUE}${BUILD_VERSION}${NC}"
 
 # Make this available to the gradle build which will get passed through
 # into the docker container
 export BUILD_VERSION="${STROOM_VERSION}"
-
-echo -e "${GREEN}Running all gradle builds with build version" \
-  "${BLUE}${BUILD_VERSION}${NC}"
 
 # MAX_WORKERS env var should be set in travis settings to controll max
 # gradle/gwt workers
