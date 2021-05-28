@@ -46,7 +46,7 @@ ARG PLANTUML_VERSION=1.2021.5
 ENV CONTAINER_USER_ID=$USER_ID \
     HOST_REPO_DIR=$HOST_REPO_DIR \
     DOCKER_HOST_IP=$DOCKER_HOST_IP \
-    LANG en_GB.UTF-8
+    LANG=en_GB.UTF-8
 
 # Set tini as entrypoint
 #ENTRYPOINT ["/sbin/tini", "--", "/builder/docker-entrypoint.sh"]
