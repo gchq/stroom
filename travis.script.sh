@@ -324,6 +324,8 @@ echo -e "TRAVIS_PULL_REQUEST:           [${GREEN}${TRAVIS_PULL_REQUEST}${NC}]"
 echo -e "TRAVIS_EVENT_TYPE:             [${GREEN}${TRAVIS_EVENT_TYPE}${NC}]"
 echo -e "STROOM_VERSION:                [${GREEN}${STROOM_VERSION}${NC}]"
 echo -e "CURRENT_STROOM_RELEASE_BRANCH: [${GREEN}${CURRENT_STROOM_RELEASE_BRANCH}${NC}]"
+echo -e "docker version:                [${GREEN}$(docker --version)${NC}]"
+echo -e "docker-compose version:        [${GREEN}$(docker-compose --version)${NC}]"
 
 # Normal commit/PR/tag build
 extraBuildArgs=()

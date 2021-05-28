@@ -7,8 +7,6 @@ services:
 
 env:
   global:
-#    - NODE_VERSION="13.12.0"
-    - DOCKER_COMPOSE_VERSION=1.22.0
     # $TAGPERM environment variable
     # generate a token at https://github.com/settings/tokens and encrypt it
     # with `travis encrypt -r gchq/stroom TAGPERM=<github personal access token>`
