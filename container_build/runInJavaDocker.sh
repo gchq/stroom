@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+
+# Script 
 set -euo pipefail
 IFS=$'\n\t'
 
@@ -53,12 +55,16 @@ if [[ $# -ne 1 ]]; then
   echo -e "${RED}ERROR: Invalid arguments.${NC}"
   echo -e "Usage: $0 bash_command"
   echo -e "e.g:   $0 \"./some_path/a_script.sh arg1 arg2\""
-  echo -e "or:    $0 bash  # for a bash prompt"
+  echo -e "or:    $0 bash  # for a bash prompt in the container"
+  echo -e "or:    $0 ERD  # To run the entity relationship diagram build"
+  echo -e "or:    $0 GRADLE_BUILD  # To run the full gradle build"
+  echo -e "or:    $0 MIGRATE  # To run the db migration"
   echo -e "Commands are relative to the repo root."
   echo -e "Commands/scripts with args must be quoted as a whole."
   exit 1
 else
   if [[ $# -eq 1 ]] && [[ "$1" = "bash" ]]; then
+
     run_cmd=( "bash" )
   elif [[ $# -eq 1 ]] && [[ "$1" = "ERD" ]]; then
     run_cmd=( "bash" "-c"  "./container_build/runPlantErd.sh" )
@@ -78,7 +84,7 @@ user_id="$(id -u)"
 group_id=
 group_id="$(id -g)"
 
-image_tag="stroom-builder"
+image_tag="java-build-env"
 
 # This path may be on the host or in the container depending
 # on where this script is called from
@@ -150,7 +156,7 @@ docker run \
   --group-add "${docker_group_id}" \
   --volume /var/run/docker.sock:/var/run/docker.sock \
   --read-only \
-  --name "stroom-builder" \
+  --name "java-build-env" \
   --env "BUILD_VERSION=${BUILD_VERSION:-SNAPSHOT}" \
   "${image_tag}" \
   "${run_cmd[@]}"

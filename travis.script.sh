@@ -16,7 +16,9 @@ BRANCH_WHITELIST_REGEX='(^dev$|^master$|^[0-9]+\.[0-9]+$)'
 RELEASE_VERSION_REGEX='^v[0-9]+\.[0-9]+.*$'
 LATEST_SUFFIX="-LATEST"
 # This is the branch containing the current release of stroom
-CURRENT_STROOM_RELEASE_BRANCH="6.0"
+# It is used to test which releases we push the swagger ui to ghpages for
+# As 7 is still in beta, this is currently 6.1
+CURRENT_STROOM_RELEASE_BRANCH="6.1"
 doDockerBuild=false
 RELEASE_ARTEFACTS_DIR="${TRAVIS_BUILD_DIR}/release_artefacts"
 RELEASE_MANIFEST="${RELEASE_ARTEFACTS_DIR}/release-artefacts.txt"

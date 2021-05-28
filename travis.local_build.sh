@@ -1,5 +1,18 @@
 #!/usr/bin/env bash
 
+# This script aims to mimic the travis build on a local machine, with
+# the exception of releasing artefacts to github and pushing to dockerhub.
+# It does the following:
+# - sets up various env vars that the build scripts expect
+# - creates a build dir in /tmp
+# - clones the stroom repo on your current branch into the build dir
+# - runs the travis.before_script.sh script
+# - runs the travis.script.sh script
+#
+# This script and the two travis scripts run on this host but all parts
+# of the build that need anything more than bash and standard shell tools
+# are executed in docker containers.
+
 set -eo pipefail
 
 setup_echo_colours() {

@@ -13,39 +13,6 @@ IFS=$'\n\t'
   NC='\033[0m' # No Colour
 }
 
-#SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
-
-#determine_host_address() {
-  #if [ "$(uname)" == "Darwin" ]; then
-    ## Code required to find IP address is different in MacOS
-    #ip=$(ifconfig | grep "inet " | grep -Fv 127.0.0.1 | awk 'NR==1{print $2}')
-  #else
-    #local ip_binary
-    ## If ip is not on the path (as seems to be the case with ansible) then
-    ## try using /sbin instead.
-    #if command -v ip > /dev/null; then
-      #ip_binary="ip"
-    #elif command -v /sbin/ip > /dev/null; then
-      #ip_binary="/sbin/ip"
-    #else
-      #echo
-      #echo -e "${RED}ERROR${NC} Unable to locate ${BLUE}ip${NC} command." >&2
-      #exit 1
-    #fi
-    #ip=$( \
-      #"${ip_binary}" route get 1 \
-      #| awk 'match($0,"src [0-9\\.]+") {print substr($0,RSTART+4,RLENGTH-4)}')
-  #fi
-
-  #if [[ ! "${ip}" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
-    #echo
-    #echo -e "${RED}ERROR${NC} Unable to determine IP address. [${GREEN}${ip}${NC}] is not valid.${NC}" >&2
-    #exit 1
-  #fi
-
-  #echo "$ip"
-#}
-
 run_java_build() {
 
   echo -e "${GREEN}Running java build to create app jar file${NC}"
@@ -64,6 +31,7 @@ run_java_build() {
 run_db_migration() {
   echo -e "${GREEN}Running database migration${NC}"
 
+  # DB is in a sibling container so need to force it to use the IP instead of localhost
   export STROOM_JDBC_DRIVER_URL="jdbc:mysql://${host_ip}:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
   java \
     -jar \
@@ -132,13 +100,13 @@ main() {
     --build-arg "DOCKER_HOST=${host_ip}" \
     "${local_repo_root}/container_build/docker_puml_erd"
 
-  # The image will dump the puml to stdout
-  # Use sed to add the puml header/footer and strip unwanted table blocks
   echo -e "${GREEN}Running image ${BLUE}${image_tag}${NC}"
 
   # For this to work stroom-all-dbs must be running in docker and 
   # the migration must have been run to populate it with the tables
 
+  # The image will dump the puml to stdout
+  # Use sed to add the puml header/footer and strip unwanted table blocks
   docker run \
     --rm \
     --tmpfs /tmp \
