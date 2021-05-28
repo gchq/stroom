@@ -17,7 +17,7 @@ set -e
 echo -e "LOCAL_BUILD:                   [${GREEN}${LOCAL_BUILD}${NC}]"
 echo -e "STROOM_RESOURCES_GIT_TAG       [${GREEN}${STROOM_RESOURCES_GIT_TAG}${NC}]"
 
-if [[ ! -n "LOCAL_BUILD" ]]; then
+if [[ ! -n "${LOCAL_BUILD}" ]]; then
 
   sudo bash -c "echo '127.0.0.1 kafka' >> /etc/hosts"
   sudo bash -c "echo '127.0.0.1 hbase' >> /etc/hosts"

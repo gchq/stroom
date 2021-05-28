@@ -253,7 +253,7 @@ releaseToDockerHub() {
     --build-arg GIT_TAG="${TRAVIS_TAG:-${SNAPSHOT_FLOATING_TAG}}" \
     "${contextRoot}"
 
-  if [[ ! -n "LOCAL_BUILD" ]]; then
+  if [[ ! -n "${LOCAL_BUILD}" ]]; then
     echo -e "Pushing the docker image to ${GREEN}${dockerRepo}${NC} with" \
       "tags: ${GREEN}${allTagArgs[*]}${NC}"
     docker push "${dockerRepo}" >/dev/null 2>&1
@@ -267,7 +267,7 @@ releaseToDockerHub() {
 docker_login() {
   echo -e "Logging in to Docker"
   # The username and password are configured in the travis gui
-  if [[ ! -n "LOCAL_BUILD" ]]; then
+  if [[ ! -n "${LOCAL_BUILD}" ]]; then
     echo "$DOCKER_PASSWORD" \
       | docker login -u "$DOCKER_USERNAME" --password-stdin >/dev/null 2>&1
   else
