@@ -53,6 +53,26 @@ determine_host_address() {
   echo "$ip"
 }
 
+docker_login() {
+  # The username and password are configured in the travis gui
+  if [[ ! -n "${LOCAL_BUILD}" ]]; then
+    # Docker login stores the creds in a file so check it to
+    # see if we are already logged in
+    local dockerConfigFile="${HOME}/.docker/config.json"
+    if [[ -f "${dockerConfigFile}" ]] \
+      && grep -q "index.docker.io" "${dockerConfigFile}"; then
+
+      echo -e "Already logged into docker"
+    else
+      echo -e "Logging in to Docker"
+      echo "$DOCKER_PASSWORD" \
+        | docker login -u "$DOCKER_USERNAME" --password-stdin >/dev/null 2>&1
+    fi
+  else
+    echo -e "${YELLOW}LOCAL_BUILD set so skipping docker login${NC}"
+  fi
+}
+
 # We may be inside a container so the host ip may have been passed in
 host_ip="${DOCKER_HOST_IP:-$(determine_host_address)}"
 
@@ -120,8 +140,9 @@ echo -e "${GREEN}Docker group id ${BLUE}${docker_group_id}${NC}"
 # Create a persistent vol for the home dir, idempotent
 docker volume create builder-home-dir-vol
 
-echo "Docker login state" \
-  "[$(grep -c "index.docker.io" "${HOME}/.docker/config.json")]"
+# So we are not rate limited, login before doing the build as this
+# will pull images
+docker_login
 
 # TODO consider pushing the built image to dockerhub so we can
 # reuse it for better performance.  See here
@@ -155,6 +176,8 @@ fi
 # group-add gives the permission to interact with the docker cli
 # docker.sock allows use to interact with the docker cli
 # Need :exec on /tmp else LMDB complains with link errors
+# Need to pass in docker creds in case the container needs to do authenticated
+# pulls/pushes with dockerhub
 # shellcheck disable=SC2145
 echo -e "${GREEN}Running image ${BLUE}${image_tag}${NC} with command" \
   "${BLUE}${run_cmd[@]}${NC}"
@@ -169,6 +192,8 @@ docker run \
   --read-only \
   --name "java-build-env" \
   --env "BUILD_VERSION=${BUILD_VERSION:-SNAPSHOT}" \
+  --env "DOCKER_USERNAME=${DOCKER_USERNAME}" \
+  --env "DOCKER_PASSWORD=${DOCKER_PASSWORD}" \
   "${image_tag}" \
   "${run_cmd[@]}"
 

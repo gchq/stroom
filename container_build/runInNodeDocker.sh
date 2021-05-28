@@ -13,6 +13,26 @@ IFS=$'\n\t'
   NC='\033[0m' # No Colour
 }
 
+docker_login() {
+  # The username and password are configured in the travis gui
+  if [[ ! -n "${LOCAL_BUILD}" ]]; then
+    # Docker login stores the creds in a file so check it to
+    # see if we are already logged in
+    local dockerConfigFile="${HOME}/.docker/config.json"
+    if [[ -f "${dockerConfigFile}" ]] \
+      && grep -q "index.docker.io" "${dockerConfigFile}"; then
+
+      echo -e "Already logged into docker"
+    else
+      echo -e "Logging in to Docker"
+      echo "$DOCKER_PASSWORD" \
+        | docker login -u "$DOCKER_USERNAME" --password-stdin >/dev/null 2>&1
+    fi
+  else
+    echo -e "${YELLOW}LOCAL_BUILD set so skipping docker login${NC}"
+  fi
+}
+
 if [ "$#" -ne 1 ]; then
   echo -e "${RED}ERROR: Invalid arguments.${NC}"
   echo -e "Usage: $0 bash_command"
@@ -62,15 +82,16 @@ echo -e "${GREEN}Host repo root dir ${BLUE}${host_abs_repo_dir}${NC}"
 # Create a persistent vol for the home dir, idempotent
 docker volume create builder-home-dir-vol
 
+# So we are not rate limited, login before doing the build as this
+# will pull images
+docker_login
+
 # TODO consider pushing the built image to dockerhub so we can
 # reuse it for better performance.  See here
 # https://github.com/i3/i3/blob/42f5a6ce479968a8f95dd5a827524865094d6a5c/.travis.yml
 # https://github.com/i3/i3/blob/42f5a6ce479968a8f95dd5a827524865094d6a5c/travis/ha.sh
 # for an example of how to hash the build context so we can pull or push
 # depending on whether there is already an image for the hash.
-
-echo "Docker login state" \
-  "[$(grep -c "index.docker.io" "${HOME}/.docker/config.json")]"
 
 # Pass in the location of the repo root on the docker host
 # which may have been passed down to us or we have determined
@@ -98,6 +119,8 @@ fi
 # The mount src is on the host file system
 # "${tty_args[@]+"${tty_args[@]}"}" The + thing is so it does complain
 # of being unbound when set -u is on
+# Need to pass in docker creds in case the container needs to do authenticated
+# pulls/pushes with dockerhub
 # shellcheck disable=SC2145
 echo -e "${GREEN}Running image ${BLUE}${image_tag}${NC} with command" \
   "${BLUE}${run_cmd[@]}${NC}"
@@ -108,6 +131,10 @@ docker run \
   --mount "type=bind,src=${host_abs_repo_dir},dst=${dest_dir}" \
   --volume builder-home-dir-vol:/home/node \
   --workdir "${dest_dir}" \
+  --name "node-build-env" \
+  --env "BUILD_VERSION=${BUILD_VERSION:-SNAPSHOT}" \
+  --env "DOCKER_USERNAME=${DOCKER_USERNAME}" \
+  --env "DOCKER_PASSWORD=${DOCKER_PASSWORD}" \
   "${image_tag}" \
   "${run_cmd[@]}"
   #bash

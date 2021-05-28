@@ -70,7 +70,10 @@ RUN apk add --no-cache \
       tini \
       ttf-droid \
       ttf-droid-nonlatin \
-    && curl -Ls https://sourceforge.net/projects/plantuml/files/plantuml.$PLANTUML_VERSION.jar/download -o /builder/plantuml.jar \
+    && curl \
+      -Ls \
+      https://sourceforge.net/projects/plantuml/files/plantuml.$PLANTUML_VERSION.jar/download \
+      -o /builder/plantuml.jar \
     && alias ll='ls -l' \
     && apk del curl \
     && echo "USER_ID: [$USER_ID]" \

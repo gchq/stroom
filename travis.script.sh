@@ -292,9 +292,18 @@ releaseToDockerHub() {
 docker_login() {
   # The username and password are configured in the travis gui
   if [[ ! -n "${LOCAL_BUILD}" ]]; then
-    echo -e "Logging in to Docker"
-    echo "$DOCKER_PASSWORD" \
-      | docker login -u "$DOCKER_USERNAME" --password-stdin >/dev/null 2>&1
+    # Docker login stores the creds in a file so check it to
+    # see if we are already logged in
+    local dockerConfigFile="${HOME}/.docker/config.json"
+    if [[ -f "${dockerConfigFile}" ]] \
+      && grep -q "index.docker.io" "${dockerConfigFile}"; then
+
+      echo -e "Already logged into docker"
+    else
+      echo -e "Logging in to Docker"
+      echo "$DOCKER_PASSWORD" \
+        | docker login -u "$DOCKER_USERNAME" --password-stdin >/dev/null 2>&1
+    fi
   else
     echo -e "${YELLOW}LOCAL_BUILD set so skipping docker login${NC}"
   fi
