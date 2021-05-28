@@ -51,17 +51,17 @@ deploy:
       tags: true
 
 #clean out gradle caches as per travis docs
-before_cache:
-  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
-  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+#before_cache:
+  #- rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  #- rm -fr $HOME/.gradle/caches/*/plugin-resolution/
 
 # Cache dependencies to speed up the build
 cache:
   directories:
     - .autoconf
-    - $HOME/.m2
-    - $HOME/.gradle/caches/
-    - $HOME/.gradle/wrapper/
-      # They are all versioned so no need to re-download them
-    - $TRAVIS_BUILD_DIR/build/contentPackDownload
+    #- $HOME/.m2
+    #- $HOME/.gradle/caches/
+    #- $HOME/.gradle/wrapper/
+      ## They are all versioned so no need to re-download them
+    #- $TRAVIS_BUILD_DIR/build/contentPackDownload
 
