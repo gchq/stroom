@@ -141,7 +141,7 @@ gather_release_artefacts() {
 
   # Stroom
   copy_release_artefact \
-    "CHANGELOG.md" \
+    "${TRAVIS_BUILD_DIR}/CHANGELOG.md" \
     "${RELEASE_ARTEFACTS_DIR}" \
     "Change log for this release"
 
@@ -161,17 +161,17 @@ gather_release_artefacts() {
     "The schema for Stroom's configuration file"
 
   copy_release_artefact \
-    "stroom-app/build/distributions/stroom-app-${TRAVIS_TAG}.zip" \
+    "${TRAVIS_BUILD_DIR}/stroom-app/build/distributions/stroom-app-${TRAVIS_TAG}.zip" \
     "${RELEASE_ARTEFACTS_DIR}" \
     "The archive containing the Stroom application distribution"
 
   copy_release_artefact \
-    "stroom-app/src/main/resources/ui/noauth/swagger/stroom.json" \
+    "${TRAVIS_BUILD_DIR}/stroom-app/src/main/resources/ui/noauth/swagger/stroom.json" \
     "${RELEASE_ARTEFACTS_DIR}" \
     "The Swagger spec (in json form) for Stroom's API."
 
   copy_release_artefact \
-    "stroom-app/src/main/resources/ui/noauth/swagger/stroom.yaml" \
+    "${TRAVIS_BUILD_DIR}/stroom-app/src/main/resources/ui/noauth/swagger/stroom.yaml" \
     "${RELEASE_ARTEFACTS_DIR}" \
     "The Swagger spec (in yaml form) for Stroom's API."
 
@@ -192,13 +192,13 @@ gather_release_artefacts() {
     "The schema for Stroom-Proxy's configuration file"
 
   copy_release_artefact \
-    "stroom-proxy/stroom-proxy-app/build/distributions/stroom-proxy-app-${TRAVIS_TAG}.zip" \
+    "${TRAVIS_BUILD_DIR}/stroom-proxy/stroom-proxy-app/build/distributions/stroom-proxy-app-${TRAVIS_TAG}.zip" \
     "${RELEASE_ARTEFACTS_DIR}" \
     "The archive containing the Stroom-Proxy application distribution"
 
   # Stroom (Headless)
   copy_release_artefact \
-    "stroom-headless/build/distributions/stroom-headless-${TRAVIS_TAG}.zip" \
+    "${TRAVIS_BUILD_DIR}/stroom-headless/build/distributions/stroom-headless-${TRAVIS_TAG}.zip" \
     "${RELEASE_ARTEFACTS_DIR}" \
     "The archive containing the Stroom-Headless application distribution"
 
