@@ -12,6 +12,7 @@ import stroom.iframe.client.presenter.IFrameContentPresenter;
 import stroom.iframe.client.presenter.IFramePresenter;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.stepping.StepLocation;
+import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.TextRange;
@@ -227,6 +228,7 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                 this,
                 null,
                 null,
+                StepType.REFRESH,
                 new StepLocation(id, partIndex, recordIndex),
                 null);
     }

@@ -30,6 +30,7 @@ import stroom.meta.shared.MetaRow;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.stepping.GetPipelineForMetaRequest;
 import stroom.pipeline.shared.stepping.StepLocation;
+import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.pipeline.stepping.client.presenter.SteppingContentTabPresenter;
@@ -69,6 +70,7 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
     public void onBegin(final BeginPipelineSteppingEvent event) {
         if (event.getPipelineRef() != null) {
             choosePipeline(event.getPipelineRef(),
+                    event.getStepType(),
                     event.getStepLocation(),
                     event.getChildStreamType());
         } else {
@@ -77,7 +79,11 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
             final Rest<DocRef> rest = restFactory.create();
             rest
                     .onSuccess(result ->
-                            choosePipeline(result, event.getStepLocation(), event.getChildStreamType()))
+                            choosePipeline(
+                                    result,
+                                    event.getStepType(),
+                                    event.getStepLocation(),
+                                    event.getChildStreamType()))
                     .call(STEPPING_RESOURCE)
                     .getPipelineForStepping(new GetPipelineForMetaRequest(
                             event.getStepLocation().getMetaId(),
@@ -86,6 +92,7 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
     }
 
     private void choosePipeline(final DocRef initialPipelineRef,
+                                final StepType stepType,
                                 final StepLocation stepLocation,
                                 final String childStreamType) {
         final EntityChooser chooser = pipelineSelection.get();
@@ -101,7 +108,7 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
                         .onSuccess(result -> {
                             if (result != null && result.size() == 1) {
                                 final MetaRow row = result.getFirst();
-                                openEditor(pipeline, stepLocation, row.getMeta(), childStreamType);
+                                openEditor(pipeline, stepType, stepLocation, row.getMeta(), childStreamType);
                             }
                         })
                         .call(META_RESOURCE).findMetaRow(findMetaCriteria);
@@ -116,11 +123,12 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
     }
 
     private void openEditor(final DocRef pipeline,
+                            final StepType stepType,
                             final StepLocation stepLocation,
                             final Meta meta,
                             final String childStreamType) {
         final SteppingContentTabPresenter editor = editorProvider.get();
-        editor.read(pipeline, stepLocation, meta, childStreamType);
+        editor.read(pipeline, stepType, stepLocation, meta, childStreamType);
         contentManager.open(editor, editor, editor);
     }
 }

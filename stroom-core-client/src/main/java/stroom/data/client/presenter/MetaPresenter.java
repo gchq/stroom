@@ -31,6 +31,7 @@ import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.stepping.StepLocation;
+import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
@@ -586,7 +587,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
     }
 
     @Override
-    public void beginStepping(final StepLocation stepLocation, final String childStreamType) {
+    public void beginStepping(final StepType stepType, final StepLocation stepLocation, final String childStreamType) {
         // Try and get a pipeline id to use as a starting point for
         // stepping.
         DocRef pipelineRef = null;
@@ -611,6 +612,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
                 this,
                 childStreamId,
                 childStreamType,
+                stepType,
                 stepLocation,
                 pipelineRef);
     }

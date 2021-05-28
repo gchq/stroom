@@ -44,7 +44,7 @@ public class StepLocation {
     private final long recordIndex;
 
     /**
-     * @param metaId          The stream ID
+     * @param metaId      The meta ID
      * @param partIndex   Zero based
      * @param recordIndex Zero based
      */
@@ -58,11 +58,15 @@ public class StepLocation {
     }
 
     public static StepLocation first(final long metaId) {
-        return new StepLocation(metaId, 0, 0);
+        return first(metaId, 0);
+    }
+
+    public static StepLocation first(final long metaId, final long partIndex) {
+        return new StepLocation(metaId, partIndex, -1);
     }
 
     public static StepLocation last(final long metaId) {
-        return new StepLocation(metaId, MAX_PART_INDEX, MAX_RECORD_INDEX);
+        return last(metaId, MAX_PART_INDEX);
     }
 
     public static StepLocation last(final long metaId, final long partIndex) {

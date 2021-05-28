@@ -14,6 +14,7 @@ import stroom.pipeline.shared.FetchDataRequest;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.stepping.StepLocation;
+import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
@@ -555,6 +556,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements Te
                 this,
                 null,
                 receivedSourceLocation.getOptChildType().orElse(null),
+                StepType.REFRESH,
                 new StepLocation(
                         receivedSourceLocation.getMetaId(),
                         receivedSourceLocation.getPartIndex(),

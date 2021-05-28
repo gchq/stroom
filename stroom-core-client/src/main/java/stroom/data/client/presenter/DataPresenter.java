@@ -33,6 +33,7 @@ import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.FetchMarkerResult;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.stepping.StepLocation;
+import stroom.pipeline.shared.stepping.StepType;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.ui.config.client.UiConfigCache;
@@ -421,7 +422,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             final StepLocation stepLocation = new StepLocation(getCurrentMetaId(),
                     getCurrentPartIndex(),
                     getCurrentRecordIndex());
-            beginSteppingHandler.beginStepping(stepLocation, getCurrentChildStreamType());
+            beginSteppingHandler.beginStepping(StepType.REFRESH, stepLocation, getCurrentChildStreamType());
         }
     }
 

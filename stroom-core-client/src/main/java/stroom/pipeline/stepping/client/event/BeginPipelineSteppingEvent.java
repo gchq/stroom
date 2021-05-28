@@ -18,6 +18,7 @@ package stroom.pipeline.stepping.client.event;
 
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.stepping.StepLocation;
+import stroom.pipeline.shared.stepping.StepType;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -28,15 +29,18 @@ public class BeginPipelineSteppingEvent extends GwtEvent<BeginPipelineSteppingEv
     private static Type<Handler> TYPE;
     private final Long childStreamId;
     private final String childStreamType;
+    private final StepType stepType;
     private final StepLocation stepLocation;
     private final DocRef pipelineRef;
 
     private BeginPipelineSteppingEvent(final Long childStreamId,
                                        final String childStreamType,
+                                       final StepType stepType,
                                        final StepLocation stepLocation,
                                        final DocRef pipelineRef) {
         this.childStreamId = childStreamId;
         this.childStreamType = childStreamType;
+        this.stepType = stepType;
         this.stepLocation = stepLocation;
         this.pipelineRef = pipelineRef;
     }
@@ -44,11 +48,13 @@ public class BeginPipelineSteppingEvent extends GwtEvent<BeginPipelineSteppingEv
     public static void fire(final HasHandlers source,
                             final Long childStreamId,
                             final String childStreamType,
+                            final StepType stepType,
                             final StepLocation stepLocation,
                             final DocRef pipelineRef) {
         source.fireEvent(new BeginPipelineSteppingEvent(
                 childStreamId,
                 childStreamType,
+                stepType,
                 stepLocation,
                 pipelineRef));
     }
@@ -76,6 +82,10 @@ public class BeginPipelineSteppingEvent extends GwtEvent<BeginPipelineSteppingEv
 
     public String getChildStreamType() {
         return childStreamType;
+    }
+
+    public StepType getStepType() {
+        return stepType;
     }
 
     public StepLocation getStepLocation() {

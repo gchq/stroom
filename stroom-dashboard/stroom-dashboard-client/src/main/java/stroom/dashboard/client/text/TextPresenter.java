@@ -40,6 +40,7 @@ import stroom.pipeline.shared.FetchDataRequest;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.stepping.StepLocation;
+import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.query.api.v2.Field;
 import stroom.security.client.api.ClientSecurityContext;
@@ -655,6 +656,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                     this,
                     null,
                     null,
+                    StepType.REFRESH,
                     stepLocation,
                     null);
         } else {

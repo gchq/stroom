@@ -586,13 +586,13 @@ class SteppingRequestHandler {
                         // number, otherwise decrement the stream number.
                         if (StepType.FIRST.equals(stepType)) {
                             partIndex++;
-                            currentLocation = new StepLocation(meta.getId(), partIndex, -1);
+                            currentLocation = StepLocation.first(meta.getId(), partIndex);
                         } else if (StepType.BACKWARD.equals(stepType)) {
                             partIndex--;
                             currentLocation = StepLocation.last(meta.getId(), partIndex);
                         } else if (StepType.FORWARD.equals(stepType)) {
                             partIndex++;
-                            currentLocation = new StepLocation(meta.getId(), partIndex, -1);
+                            currentLocation = StepLocation.first(meta.getId(), partIndex);
                         } else if (StepType.LAST.equals(stepType)) {
                             partIndex--;
                             currentLocation = StepLocation.last(meta.getId(), partIndex);
