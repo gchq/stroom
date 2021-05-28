@@ -54,6 +54,7 @@ host_abs_repo_dir="${HOST_REPO_DIR:-$local_repo_root}"
 
 dest_dir="/builder/shared"
 
+echo -e "${GREEN}HOME ${BLUE}${HOME}${NC}"
 echo -e "${GREEN}User ID ${BLUE}${user_id}${NC}"
 echo -e "${GREEN}Group ID ${BLUE}${group_id}${NC}"
 echo -e "${GREEN}Host repo root dir ${BLUE}${host_abs_repo_dir}${NC}"
@@ -67,6 +68,9 @@ docker volume create builder-home-dir-vol
 # https://github.com/i3/i3/blob/42f5a6ce479968a8f95dd5a827524865094d6a5c/travis/ha.sh
 # for an example of how to hash the build context so we can pull or push
 # depending on whether there is already an image for the hash.
+
+echo "Docker login state" \
+  "[$(grep -c "index.docker.io" "${HOME}/.docker/config.json")]"
 
 # Pass in the location of the repo root on the docker host
 # which may have been passed down to us or we have determined

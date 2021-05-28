@@ -290,13 +290,23 @@ releaseToDockerHub() {
 }
 
 docker_login() {
-  echo -e "Logging in to Docker"
   # The username and password are configured in the travis gui
   if [[ ! -n "${LOCAL_BUILD}" ]]; then
+    echo -e "Logging in to Docker"
     echo "$DOCKER_PASSWORD" \
       | docker login -u "$DOCKER_USERNAME" --password-stdin >/dev/null 2>&1
   else
     echo -e "${YELLOW}LOCAL_BUILD set so skipping docker login${NC}"
+  fi
+}
+
+docker_logout() {
+  # The username and password are configured in the travis gui
+  if [[ ! -n "${LOCAL_BUILD}" ]]; then
+    echo -e "Logging out of Docker"
+    docker logout >/dev/null 2>&1
+  else
+    echo -e "${YELLOW}LOCAL_BUILD set so skipping docker logout${NC}"
   fi
 }
 
@@ -416,8 +426,6 @@ if [ "$doDockerBuild" = true ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then
     "${STROOM_PROXY_DOCKER_CONTEXT_ROOT}" \
     "${allDockerTags[@]}"
 
-  echo -e "Logging out of Docker"
-  docker logout >/dev/null 2>&1
 
   # Deploy the generated swagger specs and swagger UI (obtained from github)
   # to gh-pages
@@ -458,6 +466,8 @@ if [ "$doDockerBuild" = true ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then
     gather_release_artefacts
   fi
 fi
+
+docker_logout
 
 exit 0
 

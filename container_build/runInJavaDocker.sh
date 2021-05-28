@@ -110,6 +110,7 @@ dest_dir="/builder/shared"
 
 docker_group_id="$(stat -c '%g' /var/run/docker.sock)"
 
+echo -e "${GREEN}HOME ${BLUE}${HOME}${NC}"
 echo -e "${GREEN}Host IP ${BLUE}${host_ip}${NC}"
 echo -e "${GREEN}User ID ${BLUE}${user_id}${NC}"
 echo -e "${GREEN}Group ID ${BLUE}${group_id}${NC}"
@@ -118,6 +119,9 @@ echo -e "${GREEN}Docker group id ${BLUE}${docker_group_id}${NC}"
 
 # Create a persistent vol for the home dir, idempotent
 docker volume create builder-home-dir-vol
+
+echo "Docker login state" \
+  "[$(grep -c "index.docker.io" "${HOME}/.docker/config.json")]"
 
 # TODO consider pushing the built image to dockerhub so we can
 # reuse it for better performance.  See here
