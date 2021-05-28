@@ -2,6 +2,9 @@ language: bash
 os: linux
 dist: focal
 
+services:
+  - docker # Gives us docker and compose
+
 env:
   global:
 #    - NODE_VERSION="13.12.0"
@@ -19,9 +22,9 @@ env:
     - STROOM_RESOURCES_GIT_TAG=stroom-stacks-v7.0-beta.118
     - SWAGGER_UI_GIT_TAG=v3.49.0
 
-install: echo "skip 'gradle assemble' step to speed up build"
+#install: echo "skip 'gradle assemble' step to speed up build"
 
-before_script: ./travis.before_script.sh
+#before_script: ./travis.before_script.sh
 
 script: ./travis.script.sh
 

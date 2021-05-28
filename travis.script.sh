@@ -20,6 +20,7 @@ LATEST_SUFFIX="-LATEST"
 # As 7 is still in beta, this is currently 6.1
 CURRENT_STROOM_RELEASE_BRANCH="6.1"
 doDockerBuild=false
+STROOM_RESOURCES_DIR="${TRAVIS_BUILD_DIR}/stroom-resources" 
 RELEASE_ARTEFACTS_DIR="${TRAVIS_BUILD_DIR}/release_artefacts"
 RELEASE_MANIFEST="${RELEASE_ARTEFACTS_DIR}/release-artefacts.txt"
 DDL_DUMP_DIR="${TRAVIS_BUILD_DIR}/build"
@@ -56,20 +57,33 @@ create_file_hash() {
   echo -e "-------------------------------------------------------"
 }
 
-generate_ddl_dump() {
-  mkdir -p "${DDL_DUMP_DIR}"
-
+stop_and_clear_down_stroom_all_dbs() {
   # clear down stroom-all-dbs container and volumes so we have a blank slate
   echo -e "${GREEN}Clearing down stroom-all-dbs${NC}"
   docker ps -q -f=name='stroom-all-dbs' | xargs -r docker stop --time 0
   docker ps -a -q -f=name='stroom-all-dbs' | xargs -r docker rm
   docker volume ls -q -f=name='bounceit_stroom-all-dbs*' | xargs -r docker volume rm
+}
 
-  # Start up the DB
-  echo -e "${GREEN}Starting up stroom-all-dbs${NC}"
+start_stroom_all_dbs() {
+  if [[ ! -d "${STROOM_RESOURCES_DIR}" ]]; then
+    echo -e "${GREEN}Clone our stroom-resources repo ${BLUE}${STROOM_RESOURCES_GIT_TAG}${NC}"
 
-  pushd "${TRAVIS_BUILD_DIR}/stroom-resources/bin" > /dev/null
+    git clone \
+      --depth=1 \
+      --branch "${STROOM_RESOURCES_GIT_TAG}" \
+      --single-branch \
+      https://github.com/gchq/stroom-resources.git \
+      "${STROOM_RESOURCES_DIR}"
+  fi
 
+  pushd stroom-resources/bin > /dev/null
+
+  # Increase the size of the heap
+  #export JAVA_OPTS=-Xmx1024m
+  #echo -e "JAVA_OPTS: [${GREEN}$JAVA_OPTS${NC}]"
+
+  echo -e "${GREEN}Starting stroom-all-dbs in the background${NC}"
   ./bounceIt.sh \
     'up -d --build' \
     -y \
@@ -77,6 +91,14 @@ generate_ddl_dump() {
     stroom-all-dbs
 
   popd > /dev/null
+}
+
+generate_ddl_dump() {
+  mkdir -p "${DDL_DUMP_DIR}"
+
+  stop_and_clear_down_stroom_all_dbs
+
+  start_stroom_all_dbs
 
   # Run the db migration against the empty db to give us a vanilla
   # schema to dump
@@ -277,6 +299,11 @@ docker_login() {
   fi
 }
 
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Script proper starts here
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 # establish what version of stroom we are building
 if [ -n "$TRAVIS_TAG" ]; then
   # Tagged commit so use that as our stroom version, e.g. v6.0.0
@@ -340,6 +367,8 @@ echo -e "doDockerBuild:                 [${GREEN}${doDockerBuild}${NC}]"
 echo -e "extraBuildArgs:                [${GREEN}${extraBuildArgs[*]}${NC}]"
 
 pushd "${TRAVIS_BUILD_DIR}" > /dev/null
+
+start_stroom_all_dbs
 
 # Ensure we have a local.yml file as the integration tests will need it
 ./local.yml.sh
