@@ -438,8 +438,8 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                             }
 
                             metaHolder.setInputStreamProvider(inputStreamProvider);
-                            metaHolder.setStreamNo(index + 1);
-                            streamLocationFactory.setStreamNo(index + 1);
+                            metaHolder.setPartIndex(index);
+                            streamLocationFactory.setPartIndex(index);
 
                             // Process the boundary.
                             try {

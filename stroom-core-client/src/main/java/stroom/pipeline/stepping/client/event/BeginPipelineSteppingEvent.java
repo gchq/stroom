@@ -18,6 +18,7 @@ package stroom.pipeline.stepping.client.event;
 
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.stepping.StepLocation;
+import stroom.pipeline.shared.stepping.StepType;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -26,33 +27,34 @@ import com.google.gwt.event.shared.HasHandlers;
 public class BeginPipelineSteppingEvent extends GwtEvent<BeginPipelineSteppingEvent.Handler> {
 
     private static Type<Handler> TYPE;
-    private final long streamId;
     private final Long childStreamId;
     private final String childStreamType;
+    private final StepType stepType;
     private final StepLocation stepLocation;
     private final DocRef pipelineRef;
 
-    private BeginPipelineSteppingEvent(final long streamId,
-                                       final Long childStreamId,
+    private BeginPipelineSteppingEvent(final Long childStreamId,
                                        final String childStreamType,
+                                       final StepType stepType,
                                        final StepLocation stepLocation,
                                        final DocRef pipelineRef) {
-        this.streamId = streamId;
         this.childStreamId = childStreamId;
         this.childStreamType = childStreamType;
+        this.stepType = stepType;
         this.stepLocation = stepLocation;
         this.pipelineRef = pipelineRef;
     }
 
     public static void fire(final HasHandlers source,
-                            final long streamId,
                             final Long childStreamId,
                             final String childStreamType,
+                            final StepType stepType,
                             final StepLocation stepLocation,
                             final DocRef pipelineRef) {
-        source.fireEvent(new BeginPipelineSteppingEvent(streamId,
+        source.fireEvent(new BeginPipelineSteppingEvent(
                 childStreamId,
                 childStreamType,
+                stepType,
                 stepLocation,
                 pipelineRef));
     }
@@ -74,16 +76,16 @@ public class BeginPipelineSteppingEvent extends GwtEvent<BeginPipelineSteppingEv
         handler.onBegin(this);
     }
 
-    public long getStreamId() {
-        return streamId;
-    }
-
     public Long getChildStreamId() {
         return childStreamId;
     }
 
     public String getChildStreamType() {
         return childStreamType;
+    }
+
+    public StepType getStepType() {
+        return stepType;
     }
 
     public StepLocation getStepLocation() {

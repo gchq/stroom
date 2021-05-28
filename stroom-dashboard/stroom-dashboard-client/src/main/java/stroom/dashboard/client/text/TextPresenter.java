@@ -40,6 +40,7 @@ import stroom.pipeline.shared.FetchDataRequest;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.stepping.StepLocation;
+import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.query.api.v2.Field;
 import stroom.security.client.api.ClientSecurityContext;
@@ -81,8 +82,8 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
     private List<FetchDataRequest> fetchDataQueue;
     private Timer delayedFetchDataTimer;
     private Long currentStreamId;
-    private Long currentPartNo;
-    private Long currentRecordNo;
+    private Long currentPartIndex;
+    private Long currentRecordIndex;
     private Set<String> currentHighlightStrings;
     private boolean playButtonVisible;
 
@@ -288,8 +289,8 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 
         } else {
             currentStreamId = null;
-            currentPartNo = null;
-            currentRecordNo = null;
+            currentPartIndex = null;
+            currentRecordIndex = null;
             currentHighlightStrings = null;
 
             if (tablePresenter != null) {
@@ -306,8 +307,8 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                     // Just use the first row.
                     final TableRow selected = selection.get(0);
                     currentStreamId = getLong(streamIdField, selected);
-                    currentPartNo = getLong(partNoField, selected);
-                    currentRecordNo = getLong(recordNoField, selected);
+                    currentPartIndex = convertToIndex(getLong(partNoField, selected));
+                    currentRecordIndex = convertToIndex(getLong(recordNoField, selected));
                     final Long currentLineFrom = getLong(lineFromField, selected);
                     final Long currentColFrom = getLong(colFromField, selected);
                     final Long currentLineTo = getLong(lineToField, selected);
@@ -327,7 +328,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                         //                                                               be used rather than record no.
                         message = "No record number field is configured";
 
-                    } else if (getTextSettings().getRecordNoField() != null && currentRecordNo == null) {
+                    } else if (getTextSettings().getRecordNoField() != null && currentRecordIndex == null) {
                         message = "No record number field found in selection";
 
                     } else {
@@ -347,12 +348,12 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                         }
 
                         final SourceLocation sourceLocation = SourceLocation.builder(currentStreamId)
-                                .withPartNo(currentPartNo != null
-                                        ? currentPartNo - 1
-                                        : 0) // make zero based
-                                .withSegmentNumber(currentRecordNo != null
-                                        ? currentRecordNo - 1
-                                        : 0) // make zero based
+                                .withPartIndex(currentPartIndex != null
+                                        ? currentPartIndex
+                                        : 0)
+                                .withRecordIndex(currentRecordIndex != null
+                                        ? currentRecordIndex
+                                        : 0)
                                 .withDataRange(dataRange)
                                 .withHighlight(highlight)
                                 .build();
@@ -489,6 +490,13 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 //        }
 //        return null;
 //    }
+
+    private Long convertToIndex(final Long no) {
+        if (no != null) {
+            return no - 1;
+        }
+        return null;
+    }
 
     private Long getLong(final Field field, final TableRow row) {
         if (field != null && row != null) {
@@ -637,18 +645,18 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
         if (currentStreamId != null) {
             final StepLocation stepLocation = new StepLocation(
                     currentStreamId,
-                    currentPartNo != null
-                            ? currentPartNo
-                            : 1,
-                    currentRecordNo != null
-                            ? currentRecordNo
-                            : -1);
+                    currentPartIndex != null
+                            ? currentPartIndex
+                            : 0,
+                    currentRecordIndex != null
+                            ? currentRecordIndex
+                            : 0);
 
             BeginPipelineSteppingEvent.fire(
                     this,
-                    currentStreamId,
                     null,
                     null,
+                    StepType.REFRESH,
                     stepLocation,
                     null);
         } else {

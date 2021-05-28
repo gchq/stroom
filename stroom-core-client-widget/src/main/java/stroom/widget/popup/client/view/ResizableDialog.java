@@ -186,6 +186,8 @@ public class ResizableDialog extends AbstractPopupPanel {
      * @see #continueDragging
      */
     private void beginDragging(final MouseDownEvent event) {
+        getDragGlass().show();
+
         dragging = true;
         if (isCaptionEvent(event.getNativeEvent())) {
             dragType = DragType.MOVE;
@@ -267,6 +269,8 @@ public class ResizableDialog extends AbstractPopupPanel {
         dragging = false;
         dragType = null;
         DOM.releaseCapture(getElement());
+
+        getDragGlass().hide();
     }
 
     @Override

@@ -203,12 +203,12 @@ class ReferenceDataLoadTaskHandler {
 
                 try {
                     // Loop over the stream boundaries and process each sequentially.
-                    // Typically ref data will only have a single streamNo so if there are
+                    // Typically ref data will only have a single partIndex so if there are
                     // multiple then overrideExisting may be needed.
                     final long count = source.count();
                     for (long index = 0; index < count && !Thread.currentThread().isInterrupted(); index++) {
-                        metaHolder.setStreamNo(index + 1);
-                        streamLocationFactory.setStreamNo(index + 1);
+                        metaHolder.setPartIndex(index);
+                        streamLocationFactory.setPartIndex(index);
 
                         try (final InputStreamProvider inputStreamProvider = source.get(index)) {
                             // Get the stream providers.

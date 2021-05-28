@@ -211,7 +211,7 @@ body,table td,select {
   background-color: #000;
   opacity: 0.4;
   filter: alpha(opacity=40);
-  z-index: 10;
+  z-index: 100;
 }
 
 .gwt-DialogBox {

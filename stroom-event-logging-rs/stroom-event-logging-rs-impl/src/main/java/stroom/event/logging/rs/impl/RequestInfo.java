@@ -321,6 +321,10 @@ class RequestInfo {
         }
 
         public void addParams(MultivaluedMap<String, String> origParms) {
+            if (origParms == null || origParms.size() == 0) {
+                return;
+            }
+
             name = name.length() > 0
                     ? name + ", "
                     : "" +

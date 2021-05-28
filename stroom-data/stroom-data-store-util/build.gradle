@@ -19,6 +19,7 @@ dependencies {
     compile project(':stroom-meta:stroom-meta-impl')
     compile project(':stroom-meta:stroom-meta-impl-db')
     compile project(':stroom-node:stroom-node-impl')
+    compile project(':stroom-node:stroom-node-mock')
     compile project(':stroom-security:stroom-security-mock')
     compile project(':stroom-statistics:stroom-statistics-mock')
     compile project(':stroom-task:stroom-task-mock')

@@ -18,6 +18,7 @@ package stroom.data.client.presenter;
 
 import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.stepping.StepLocation;
+import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 
 import com.google.inject.Inject;
@@ -61,16 +62,13 @@ public class ClassificationWrappedDataPresenter
     }
 
     @Override
-    public void beginStepping(final long streamId, final String childStreamType) {
+    public void beginStepping(final StepType stepType, final StepLocation stepLocation, final String childStreamType) {
         BeginPipelineSteppingEvent.fire(
                 this,
-                streamId,
                 null,
                 childStreamType,
-                new StepLocation(
-                        streamId,
-                        sourceLocation.getPartNo(),
-                        sourceLocation.getSegmentNo()),
+                stepType,
+                stepLocation,
                 null);
     }
 }

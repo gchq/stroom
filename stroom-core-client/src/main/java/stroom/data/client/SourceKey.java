@@ -8,24 +8,24 @@ import java.util.Optional;
 public class SourceKey {
 
     private final long metaId;
-    private final long partNo;
-    private final Long segmentNo;
+    private final long partIndex;
+    private final Long recordIndex;
     private final String childStreamType;
 
     public SourceKey(final long metaId,
-                     final long partNo,
-                     final Long segmentNo,
+                     final long partIndex,
+                     final Long recordIndex,
                      final String childStreamType) {
         this.metaId = metaId;
-        this.partNo = partNo;
-        this.segmentNo = segmentNo;
+        this.partIndex = partIndex;
+        this.recordIndex = recordIndex;
         this.childStreamType = childStreamType;
     }
 
     public SourceKey(SourceLocation sourceLocation) {
-        this.metaId = sourceLocation.getId();
-        this.partNo = sourceLocation.getPartNo();
-        this.segmentNo = sourceLocation.getSegmentNo();
+        this.metaId = sourceLocation.getMetaId();
+        this.partIndex = sourceLocation.getPartIndex();
+        this.recordIndex = sourceLocation.getRecordIndex();
         this.childStreamType = sourceLocation.getChildType();
     }
 
@@ -38,14 +38,14 @@ public class SourceKey {
     }
 
     /**
-     * @return The part number, zero based. 0 for single-part segmented streams.
+     * @return The part index, zero based. 0 for single-part segmented streams.
      */
-    public long getPartNo() {
-        return partNo;
+    public long getPartIndex() {
+        return partIndex;
     }
 
-    public Optional<Long> getSegmentNo() {
-        return Optional.ofNullable(segmentNo);
+    public Optional<Long> getRecordIndex() {
+        return Optional.ofNullable(recordIndex);
     }
 
     @SuppressWarnings("checkstyle:needbraces")
@@ -59,21 +59,21 @@ public class SourceKey {
         }
         final SourceKey sourceKey = (SourceKey) o;
         return metaId == sourceKey.metaId &&
-                partNo == sourceKey.partNo &&
-                Objects.equals(segmentNo, sourceKey.segmentNo) &&
+                partIndex == sourceKey.partIndex &&
+                Objects.equals(recordIndex, sourceKey.recordIndex) &&
                 Objects.equals(childStreamType, sourceKey.childStreamType);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(metaId, partNo, segmentNo, childStreamType);
+        return Objects.hash(metaId, partIndex, recordIndex, childStreamType);
     }
 
     @Override
     public String toString() {
         return metaId + ":"
-                + partNo + ":"
-                + getSegmentNo().orElse(0L) + " - "
+                + partIndex + ":"
+                + getRecordIndex().orElse(0L) + " - "
                 + childStreamType;
     }
 }

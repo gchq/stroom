@@ -45,7 +45,7 @@ public class LocationHolder implements Holder {
     private Locator locator;
     private int maxSize = 1;
     private boolean storeLocations = true;
-    private long recordNo;
+    private long recordIndex;
     private Location currentStartLocation;
     private Location currentEndLocation;
     private Location markedStartLocation;
@@ -84,7 +84,7 @@ public class LocationHolder implements Holder {
     }
 
     public void reset() {
-        recordNo = 0;
+        recordIndex = -1;
         currentStartLocation = new DefaultLocation(1, 1);
         currentEndLocation = new DefaultLocation(1, 1);
         markedStartLocation = new DefaultLocation(1, 1);
@@ -168,11 +168,11 @@ public class LocationHolder implements Holder {
 
             LOGGER.trace("Storing range: {}", highlight);
 
-            recordNo++;
+            recordIndex++;
             final SourceLocation sourceLocation = SourceLocation.builder(metaHolder.getMeta().getId())
                     .withChildStreamType(metaHolder.getChildDataType())
-                    .withPartNo(metaHolder.getStreamNo())
-                    .withSegmentNumber(recordNo)
+                    .withPartIndex(metaHolder.getPartIndex())
+                    .withRecordIndex(recordIndex)
                     .withDataRange(dataRange)
                     .withHighlight(highlight)
                     .build();

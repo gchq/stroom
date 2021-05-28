@@ -32,6 +32,7 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.shared.stepping.StepLocation;
+import stroom.pipeline.shared.stepping.StepType;
 import stroom.svg.client.Icon;
 
 import com.google.inject.Inject;
@@ -93,12 +94,13 @@ public class SteppingContentTabPresenter extends ContentTabPresenter<Classificat
     }
 
     public void read(final DocRef pipeline,
+                     final StepType stepType,
                      final StepLocation stepLocation,
                      final Meta meta,
                      final String childStreamType) {
         reading = true;
         this.pipeline = pipeline;
-        steppingPresenter.read(pipeline, stepLocation, meta, childStreamType);
+        steppingPresenter.read(pipeline, stepType, stepLocation, meta, childStreamType);
         reading = false;
     }
 

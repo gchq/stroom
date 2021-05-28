@@ -10422,7 +10422,7 @@
           "pipeline" : {
             "$ref" : "#/components/schemas/DocRef"
           },
-          "segmentCount" : {
+          "recordCount" : {
             "type" : "integer",
             "format" : "int64"
           },
@@ -12948,11 +12948,11 @@
       "Rec" : {
         "type" : "object",
         "properties" : {
-          "recordNo" : {
+          "metaId" : {
             "type" : "integer",
             "format" : "int64"
           },
-          "streamId" : {
+          "recordIndex" : {
             "type" : "integer",
             "format" : "int64"
           }
@@ -13104,6 +13104,10 @@
       "RefStreamDefinition" : {
         "type" : "object",
         "properties" : {
+          "partIndex" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
           "pipelineDocRef" : {
             "$ref" : "#/components/schemas/DocRef"
           },
@@ -13111,10 +13115,6 @@
             "type" : "string"
           },
           "streamId" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "streamNo" : {
             "type" : "integer",
             "format" : "int64"
           }
@@ -14267,15 +14267,15 @@
           "highlight" : {
             "$ref" : "#/components/schemas/TextRange"
           },
-          "id" : {
+          "metaId" : {
             "type" : "integer",
             "format" : "int64"
           },
-          "partNo" : {
+          "partIndex" : {
             "type" : "integer",
             "format" : "int64"
           },
-          "segmentNo" : {
+          "recordIndex" : {
             "type" : "integer",
             "format" : "int64"
           },
@@ -14427,15 +14427,15 @@
       "StepLocation" : {
         "type" : "object",
         "properties" : {
-          "id" : {
+          "metaId" : {
             "type" : "integer",
             "format" : "int64"
           },
-          "partNo" : {
+          "partIndex" : {
             "type" : "integer",
             "format" : "int64"
           },
-          "recordNo" : {
+          "recordIndex" : {
             "type" : "integer",
             "format" : "int64"
           }
@@ -14564,7 +14564,7 @@
         }, {
           "type" : "object",
           "properties" : {
-            "streamNo" : {
+            "partIndex" : {
               "type" : "integer",
               "format" : "int64"
             }

@@ -198,7 +198,7 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
 
                 final List<DataVolume> matches = dataVolumeService.find(criteria).getValues();
                 for (final DataVolume streamVolume : matches) {
-                    final Meta meta = streamMap.get(streamVolume.getStreamId());
+                    final Meta meta = streamMap.get(streamVolume.getMetaId());
                     if (meta != null) {
                         streamsKeyedByBaseName.put(fileSystemStreamPathHelper.getBaseName(meta), streamVolume);
                     }
@@ -387,7 +387,7 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
                         LOGGER.debug("processDirectory() - {}/{} belongs to stream {}",
                                 directory,
                                 file,
-                                dataVolume.getStreamId()
+                                dataVolume.getMetaId()
                         );
                     }
                 }

@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -63,6 +64,35 @@ class TestQuickFilterPredicateFactory {
             "NotMyType",
             "1f91063b-b653-4501-9479-70de65827877");
 
+    @Test
+    void test_malformed1() {
+        doTest("name uuid:", // uuid: ignored
+                List.of(POJO_1,
+                        POJO_1_MISSING,
+                        POJO_1_BAD_NAME,
+                        POJO_1_NOT_MY_TYPE),
+                List.of());
+    }
+
+    @Test
+    void test_malformed2() {
+        doTest("notfound uuid:", // uuid: ignored
+                List.of(),
+                List.of(POJO_1,
+                        POJO_1_MISSING,
+                        POJO_1_BAD_NAME,
+                        POJO_1_NOT_MY_TYPE));
+    }
+
+    @Test
+    void test_malformed3() {
+        doTest("name unknownfield:",
+                List.of(),
+                List.of(POJO_1,
+                        POJO_1_MISSING,
+                        POJO_1_BAD_NAME,
+                        POJO_1_NOT_MY_TYPE));
+    }
 
     @Test
     void test_uuidExactMatch() {
@@ -93,7 +123,7 @@ class TestQuickFilterPredicateFactory {
 
     @Test
     void test_threeFields() {
-        doTest("status:ok \"my name\" type:^mytype$",
+        doTest("status:ok \"my name\" type:=mytype",
                 List.of(POJO_1),
                 List.of(POJO_1_MISSING,
                         POJO_1_BAD_NAME,
@@ -198,48 +228,58 @@ class TestQuickFilterPredicateFactory {
         return List.of(
                 makeTokenTest("\"",
                         List.of(
-                        )),
+                        ),
+                        List.of()),
                 makeTokenTest("a\\\"bc", // escaped dbl quote '\"'
                         List.of(
                                 MatchToken.of("a\"bc") // 'a"bc'
-                        )),
+                        ),
+                        List.of()),
                 makeTokenTest("\"abc", // un-matched dbl quote, should not parse
                         List.of(
-                        )),
+                        ),
+                        List.of()),
                 makeTokenTest(" a b c ",
                         List.of(
                                 MatchToken.of("a"),
                                 MatchToken.of("b"),
                                 MatchToken.of("c")
-                        )),
+                        ),
+                        List.of()),
                 makeTokenTest(" \"a b c\"  \"d e f\" ",
                         List.of(
                                 MatchToken.of("a b c"),
                                 MatchToken.of("d e f")
-                        )),
+                        ),
+                        List.of()),
                 makeTokenTest("foo:bar",
                         List.of(
                                 MatchToken.of("foo", "bar")
-                        )),
-                makeTokenTest("foo:", // treat qualified match as empty str to give us an always true predicate
+                        ),
+                        List.of("foo")),
+                makeTokenTest("foo:", // Ignore empty qualified token
                         List.of(
-                                MatchToken.of("foo", "")
-                        )),
+//                                MatchToken.of("foo", "")
+                        ),
+                        List.of("foo")),
                 makeTokenTest("colour:red size:big",
                         List.of(
                                 MatchToken.of("colour", "red"),
                                 MatchToken.of("size", "big")
-                        )),
+                        ),
+                        List.of("colour", "size")),
                 makeTokenTest("\"colour:red\"        \"size:big\"",
                         List.of(
                                 MatchToken.of("colour", "red"),
                                 MatchToken.of("size", "big")
-                        )),
+                        ),
+                        List.of("colour", "size")),
                 makeTokenTest("\"colour:red\"        big",
                         List.of(
                                 MatchToken.of("colour", "red"),
                                 MatchToken.of("big")
-                        ))
+                        ),
+                        List.of("colour"))
         );
     }
 
@@ -309,9 +349,14 @@ class TestQuickFilterPredicateFactory {
     }
 
     private DynamicTest makeTokenTest(final String input,
-                                      final List<MatchToken> expectedTokens) {
+                                      final List<MatchToken> expectedTokens,
+                                      final List<String> validQualifiers) {
+        final FilterFieldMappers<String> fieldMappers = FilterFieldMappers.of(validQualifiers.stream()
+                .map(str ->
+                        FilterFieldMapper.of(FilterFieldDefinition.qualifiedField(str), Function.identity()))
+                .collect(Collectors.toList()));
         return DynamicTest.dynamicTest("[" + input + "]", () -> {
-            final List<MatchToken> matchTokens = QuickFilterPredicateFactory.extractMatchTokens(input);
+            final List<MatchToken> matchTokens = QuickFilterPredicateFactory.extractMatchTokens(input, fieldMappers);
 
             LOGGER.info("Result: {}", matchTokens);
             Assertions.assertThat(matchTokens)

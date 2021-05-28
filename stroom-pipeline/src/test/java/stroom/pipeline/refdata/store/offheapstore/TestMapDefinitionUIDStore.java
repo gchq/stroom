@@ -226,7 +226,7 @@ class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
 
         String uuidStr = UUID.randomUUID().toString();
         String versionUuidStr = UUID.randomUUID().toString();
-        // each one is different by the streamNo
+        // each one is different by the partIndex
         final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                 uuidStr,
                 versionUuidStr,
@@ -248,7 +248,7 @@ class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
 
         String uuidStr = UUID.randomUUID().toString();
         String versionUuidStr = UUID.randomUUID().toString();
-        // each one is different by the streamNo
+        // each one is different by the partIndex
         final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                 uuidStr,
                 versionUuidStr,

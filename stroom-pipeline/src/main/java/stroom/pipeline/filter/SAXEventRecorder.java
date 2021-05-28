@@ -135,8 +135,8 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
      */
     @Override
     @SuppressWarnings("unchecked")
-    public boolean filterMatches(final long recordNo) {
-        final long streamId = metaHolder.getMeta().getId();
+    public boolean filterMatches(final long recordIndex) {
+        final long metaId = metaHolder.getMeta().getId();
 
         // If we are skipping to a severity then perform check on severity.
         if (settings.getSkipToSeverity() != null) {
@@ -242,12 +242,13 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
                                         // We did so see if this is the same record.
                                         // If it is then we can return this record
                                         // again.
-                                        if (record.getStreamId() == streamId && record.getRecordNo() == recordNo) {
+                                        if (record.getMetaId() == metaId &&
+                                                record.getRecordIndex() == recordIndex) {
                                             return true;
                                         }
 
                                     } else {
-                                        record = new Rec(streamId, recordNo);
+                                        record = new Rec(metaId, recordIndex);
                                         xPathFilter.addUniqueValue(value, record);
                                         return true;
                                     }

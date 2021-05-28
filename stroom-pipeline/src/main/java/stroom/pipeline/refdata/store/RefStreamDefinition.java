@@ -32,7 +32,7 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class RefStreamDefinition {
 
-    private static final int DEFAULT_STREAM_NO = 0;
+    private static final int DEFAULT_PART_INDEX = 0;
 
     // TODO consider getting rid of DocRef and just storing the uuid
     @JsonProperty
@@ -42,7 +42,7 @@ public class RefStreamDefinition {
     @JsonProperty
     private final long streamId;
     @JsonProperty
-    private final long streamNo;
+    private final long partIndex;
     @JsonIgnore
     private final int hashCode;
 
@@ -56,27 +56,27 @@ public class RefStreamDefinition {
     public RefStreamDefinition(final String pipelineUuid,
                                final String pipelineVersion,
                                final long streamId,
-                               final long streamNo) {
-        this(new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineUuid), pipelineVersion, streamId, streamNo);
+                               final long partIndex) {
+        this(new DocRef(PipelineDoc.DOCUMENT_TYPE, pipelineUuid), pipelineVersion, streamId, partIndex);
     }
 
     public RefStreamDefinition(final DocRef pipelineDocRef,
                                final String pipelineVersion,
                                final long streamId) {
-        this(pipelineDocRef, pipelineVersion, streamId, DEFAULT_STREAM_NO);
+        this(pipelineDocRef, pipelineVersion, streamId, DEFAULT_PART_INDEX);
     }
 
     @JsonCreator
     public RefStreamDefinition(@JsonProperty("pipelineDocRef") final DocRef pipelineDocRef,
                                @JsonProperty("pipelineVersion") final String pipelineVersion,
                                @JsonProperty("streamId") final long streamId,
-                               @JsonProperty("streamNo") final long streamNo) {
+                               @JsonProperty("partIndex") final long partIndex) {
         this.pipelineDocRef = pipelineDocRef;
         this.pipelineVersion = pipelineVersion;
         this.streamId = streamId;
-        this.streamNo = streamNo;
+        this.partIndex = partIndex;
         // pre compute the hash
-        this.hashCode = Objects.hash(pipelineDocRef, pipelineVersion, streamId, streamNo);
+        this.hashCode = Objects.hash(pipelineDocRef, pipelineVersion, streamId, partIndex);
     }
 
     public DocRef getPipelineDocRef() {
@@ -91,8 +91,8 @@ public class RefStreamDefinition {
         return streamId;
     }
 
-    public long getStreamNo() {
-        return streamNo;
+    public long getPartIndex() {
+        return partIndex;
     }
 
     @Override
@@ -101,7 +101,7 @@ public class RefStreamDefinition {
                 "pipelineDocRef=" + pipelineDocRef +
                 ", pipelineVersion='" + pipelineVersion + '\'' +
                 ", streamId=" + streamId +
-                ", streamNo=" + streamNo +
+                ", partIndex=" + partIndex +
                 '}';
     }
 
@@ -113,7 +113,7 @@ public class RefStreamDefinition {
         final RefStreamDefinition that = (RefStreamDefinition) o;
         return Objects.equals(pipelineVersion, that.pipelineVersion) &&
                 streamId == that.streamId &&
-                streamNo == that.streamNo &&
+                partIndex == that.partIndex &&
                 Objects.equals(pipelineDocRef, that.pipelineDocRef);
     }
 

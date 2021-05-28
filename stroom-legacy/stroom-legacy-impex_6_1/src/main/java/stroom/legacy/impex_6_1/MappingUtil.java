@@ -320,9 +320,9 @@ public final class MappingUtil {
                 map(value.getFilter()),
                 map(value.getFormat()),
                 value.getGroup(),
-                200,
-                true,
-                false);
+                value.getWidth(),
+                value.isVisible(),
+                value.isSpecial());
     }
 
     public static stroom.query.api.v2.Sort map(stroom.legacy.model_6_1.Sort value) {
