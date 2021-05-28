@@ -87,6 +87,18 @@ main() {
     fi
   fi
 
+  local stroom_all_dbs_container_id
+  stroom_all_dbs_container_id="$( \
+    docker ps \
+      --quiet \
+      --filter "name=stroom-all-dbs")"
+
+  if [[ -n "${stroom_all_dbs_container_id}" ]]; then
+      echo -e "${RED}ERROR:${NC} stroom-all-dbs container exists." \
+        "Delete it and its volumes before running this script"
+      exit 1
+  fi
+
   mkdir -p "${TRAVIS_BUILD_DIR}"
 
   # Make sure we start in the travis build dir
