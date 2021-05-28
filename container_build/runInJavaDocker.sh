@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+# This script is used to run commands inside a docker container that
+# has been set up as a java build environment. It will bind mount
+# the root of the git repo you are currently in into the container, so
+# your pwd must be somewhere inside the desired repo.
+# It comes with some pre-baked commands such as ERD and GRADLE_BUILD
+
 # Script 
 set -euo pipefail
 IFS=$'\n\t'
@@ -47,7 +53,8 @@ determine_host_address() {
   echo "$ip"
 }
 
-host_ip="$(determine_host_address)"
+# We may be inside a container so the host ip may have been passed in
+host_ip="${DOCKER_HOST_IP:-$(determine_host_address)}"
 
 run_cmd=()
 
