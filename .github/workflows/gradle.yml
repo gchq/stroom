@@ -90,7 +90,7 @@ jobs:
 
       - name: Release to GitHub
         id: create_release
-        if: ${{ startsWith(env.BUILD_TAG, "v") }}
+        if: ${{ startsWith(env.BUILD_TAG, 'v') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
