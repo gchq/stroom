@@ -45,10 +45,14 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Debug
+      env:
+        BUILD_DIR: 
       run: |
         echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
         echo "GITHUB_REF: $GITHUB_REF"
         echo "GITHUB_SHA: $GITHUB_SHA"
+        echo "docker version: $(docker --version)"
+        echo "docker-compose version: $(docker-compose --version)"
 
     #- name: Run build
       #run: 
