@@ -28,9 +28,7 @@ env:
 
 #install: echo "skip 'gradle assemble' step to speed up build"
 
-#before_script: ./travis.before_script.sh
-
-script: ./travis.script.sh
+script: ./ci_build.sh
 
 deploy:
   # Deploy the swagger-ui content and swagger specs to gh-pages
