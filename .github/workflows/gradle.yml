@@ -14,8 +14,9 @@ jobs:
     env:
       # Static env vars
 
-      # The version of stroom-resources used for running the DB
-      STROOM_RESOURCES_GIT_TAG: stroom-stacks-v7.0-beta.118
+      # Github runners limited to 2 cores, 7Gb RAM
+      # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources
+      MAX_WORKERS="3"
 
     steps:
 
