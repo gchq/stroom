@@ -76,29 +76,27 @@ main() {
 
   # shellcheck disable=SC2034
   {
-    export TRAVIS_BRANCH="${stroom_clone_branch}" # Needs to be a proper brach as we git clone this
-    export TRAVIS_BUILD_DIR="/tmp/travis_build"
-    export TRAVIS_BUILD_NUMBER="12345" # Only echoed
-    export TRAVIS_COMMIT="dummy_commit_hash" # Only echoed
-    export TRAVIS_EVENT_TYPE="push" # Only echoed
-    export TRAVIS_PULL_REQUEST="false" # ensures we do docker builds
-    # To run with no tag use TRAVIS_TAG= ./travis.local_build.sh
-    export TRAVIS_TAG="${TRAVIS_TAG=v7.0-dummy}" # Gets parsed and needs to be set to trigger aspects of the build
+    export BUILD_BRANCH="${stroom_clone_branch}" # Needs to be a proper brach as we git clone this
+    export BUILD_DIR="/tmp/travis_build"
+    export BUILD_COMMIT="dummy_commit_hash" # Uses in docker imagge
+    export BUILD_IS_PULL_REQUEST="false" # ensures we do docker builds
+    # To run with no tag use BUILD_TAG= ./travis.local_build.sh
+    export BUILD_TAG="${BUILD_TAG=v7.0-dummy}" # Gets parsed and needs to be set to trigger aspects of the build
     export STROOM_RESOURCES_GIT_TAG="stroom-stacks-v7.0-beta.118"
     export SKIP_TESTS="${SKIP_TESTS:-false}"
     export MAX_WORKERS="${MAX_WORKERS:-6}"
   }
 
-  if [[ ! -n "${TRAVIS_TAG}" ]]; then
-    echo -e "${YELLOW}WARNING:${NC} TRAVIS_TAG unset so won't run release parts of build${NC}"
+  if [[ ! -n "${BUILD_TAG}" ]]; then
+    echo -e "${YELLOW}WARNING:${NC} BUILD_TAG unset so won't run release parts of build${NC}"
   fi
 
-  if [[ -d "${TRAVIS_BUILD_DIR}" ]]; then
+  if [[ -d "${BUILD_DIR}" ]]; then
     if [[ "${runWithNonEmptyBuildDir}" = true ]]; then
-      echo -e "${YELLOW}WARNING:${NC} TRAVIS_BUILD_DIR ${BLUE}${TRAVIS_BUILD_DIR}${NC}" \
+      echo -e "${YELLOW}WARNING:${NC} BUILD_DIR ${BLUE}${BUILD_DIR}${NC}" \
         "already exists, running anyway${NC}"
     else
-      echo -e "${RED}ERROR:${NC} TRAVIS_BUILD_DIR ${BLUE}${TRAVIS_BUILD_DIR}${NC}" \
+      echo -e "${RED}ERROR:${NC} BUILD_DIR ${BLUE}${BUILD_DIR}${NC}" \
         "already exists, delete or use 'force' argument${NC}"
       exit 1
     fi
@@ -116,13 +114,13 @@ main() {
       exit 1
   fi
 
-  mkdir -p "${TRAVIS_BUILD_DIR}"
+  mkdir -p "${BUILD_DIR}"
 
   # Make sure we start in the travis build dir
-  pushd "${TRAVIS_BUILD_DIR}" > /dev/null
+  pushd "${BUILD_DIR}" > /dev/null
 
   echo -e "${GREEN}Cloning branch ${BLUE}${stroom_clone_branch}${NC}" \
-    "into ${TRAVIS_BUILD_DIR}${NC}"
+    "into ${BUILD_DIR}${NC}"
 
   # Clone stroom like travis would
   # Speed up clone with no depth and one branch
@@ -131,14 +129,14 @@ main() {
     --branch "${stroom_clone_branch}" \
     --single-branch \
     https://github.com/gchq/stroom.git \
-    "${TRAVIS_BUILD_DIR}"
+    "${BUILD_DIR}"
 
   # This is in the newly cloned repo
   #./container_build/runInJavaDocker.sh \
     #"./travis.before_script.sh && ./travis.script.sh"
 
   echo -e "${GREEN}Running ${BLUE}travis.script.sh${NC}"
-  ${TRAVIS_BUILD_DIR}/travis.script.sh
+  ${BUILD_DIR}/travis.script.sh
 
   echo -e "${GREEN}Done local travis build${NC}"
 }

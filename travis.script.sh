@@ -20,11 +20,11 @@ LATEST_SUFFIX="-LATEST"
 # As 7 is still in beta, this is currently 6.1
 CURRENT_STROOM_RELEASE_BRANCH="6.1"
 doDockerBuild=false
-STROOM_RESOURCES_DIR="${TRAVIS_BUILD_DIR}/stroom-resources" 
-RELEASE_ARTEFACTS_DIR="${TRAVIS_BUILD_DIR}/release_artefacts"
+STROOM_RESOURCES_DIR="${BUILD_DIR}/stroom-resources" 
+RELEASE_ARTEFACTS_DIR="${BUILD_DIR}/release_artefacts"
 RELEASE_MANIFEST="${RELEASE_ARTEFACTS_DIR}/release-artefacts.txt"
-DDL_DUMP_DIR="${TRAVIS_BUILD_DIR}/build"
-DDL_DUMP_FILE="${DDL_DUMP_DIR}/stroom-database-schema-${TRAVIS_TAG}.sql"
+DDL_DUMP_DIR="${BUILD_DIR}/build"
+DDL_DUMP_FILE="${DDL_DUMP_DIR}/stroom-database-schema-${BUILD_TAG}.sql"
 
 # Shell Colour constants for use in 'echo -e'
 # e.g.  echo -e "My message ${GREEN}with just this text in green${NC}"
@@ -105,7 +105,7 @@ generate_ddl_dump() {
   # schema to dump
   # Assumes the app jar has been built already
   echo -e "${GREEN}Running DB migration on empty DB${NC}"
-  "${TRAVIS_BUILD_DIR}/container_build/runInJavaDocker.sh" MIGRATE
+  "${BUILD_DIR}/container_build/runInJavaDocker.sh" MIGRATE
 
   echo -e "${GREEN}Dumping the database DDL${NC}"
   # Produce the dump file
@@ -121,7 +121,7 @@ generate_ddl_dump() {
 generate_entity_rel_diagram() {
   # Needs the stroom-all-dbs container to be running and populated with a vanilla
   # database schema for us to generate an ERD from
-  "${TRAVIS_BUILD_DIR}/container_build/runInJavaDocker.sh" ERD
+  "${BUILD_DIR}/container_build/runInJavaDocker.sh" ERD
 }
 
 copy_release_artefact() {
@@ -153,11 +153,11 @@ copy_release_artefact() {
 gather_release_artefacts() {
   mkdir -p "${RELEASE_ARTEFACTS_DIR}"
 
-  local -r release_config_dir="${TRAVIS_BUILD_DIR}/stroom-app/build/release/config"
-  local -r proxy_release_config_dir="${TRAVIS_BUILD_DIR}/stroom-proxy/stroom-proxy-app/build/release/config"
+  local -r release_config_dir="${BUILD_DIR}/stroom-app/build/release/config"
+  local -r proxy_release_config_dir="${BUILD_DIR}/stroom-proxy/stroom-proxy-app/build/release/config"
 
-  local -r docker_build_dir="${TRAVIS_BUILD_DIR}/stroom-app/docker/build"
-  local -r proxy_docker_build_dir="${TRAVIS_BUILD_DIR}/stroom-proxy/stroom-proxy-app/docker/build"
+  local -r docker_build_dir="${BUILD_DIR}/stroom-app/docker/build"
+  local -r proxy_docker_build_dir="${BUILD_DIR}/stroom-proxy/stroom-proxy-app/docker/build"
 
   echo "Copying release artefacts to ${RELEASE_ARTEFACTS_DIR}"
 
@@ -166,70 +166,70 @@ gather_release_artefacts() {
 
   # Stroom
   copy_release_artefact \
-    "${TRAVIS_BUILD_DIR}/CHANGELOG.md" \
+    "${BUILD_DIR}/CHANGELOG.md" \
     "${RELEASE_ARTEFACTS_DIR}" \
     "Change log for this release"
 
   copy_release_artefact \
     "${docker_build_dir}/config.yml" \
-    "${RELEASE_ARTEFACTS_DIR}/stroom-app-config-${TRAVIS_TAG}.yml" \
+    "${RELEASE_ARTEFACTS_DIR}/stroom-app-config-${BUILD_TAG}.yml" \
     "Basic configuration file for stroom"
 
   copy_release_artefact \
     "${release_config_dir}/config-defaults.yml" \
-    "${RELEASE_ARTEFACTS_DIR}/stroom-app-config-defaults-${TRAVIS_TAG}.yml" \
+    "${RELEASE_ARTEFACTS_DIR}/stroom-app-config-defaults-${BUILD_TAG}.yml" \
     "A complete version of Stroom's configuration with all its default values"
 
   copy_release_artefact \
     "${release_config_dir}/config-schema.yml" \
-    "${RELEASE_ARTEFACTS_DIR}/stroom-app-config-schema-${TRAVIS_TAG}.yml" \
+    "${RELEASE_ARTEFACTS_DIR}/stroom-app-config-schema-${BUILD_TAG}.yml" \
     "The schema for Stroom's configuration file"
 
   copy_release_artefact \
-    "${TRAVIS_BUILD_DIR}/stroom-app/build/distributions/stroom-app-${TRAVIS_TAG}.zip" \
+    "${BUILD_DIR}/stroom-app/build/distributions/stroom-app-${BUILD_TAG}.zip" \
     "${RELEASE_ARTEFACTS_DIR}" \
     "The archive containing the Stroom application distribution"
 
   copy_release_artefact \
-    "${TRAVIS_BUILD_DIR}/stroom-app/src/main/resources/ui/noauth/swagger/stroom.json" \
+    "${BUILD_DIR}/stroom-app/src/main/resources/ui/noauth/swagger/stroom.json" \
     "${RELEASE_ARTEFACTS_DIR}" \
     "The Swagger spec (in json form) for Stroom's API."
 
   copy_release_artefact \
-    "${TRAVIS_BUILD_DIR}/stroom-app/src/main/resources/ui/noauth/swagger/stroom.yaml" \
+    "${BUILD_DIR}/stroom-app/src/main/resources/ui/noauth/swagger/stroom.yaml" \
     "${RELEASE_ARTEFACTS_DIR}" \
     "The Swagger spec (in yaml form) for Stroom's API."
 
   # Stroom-Proxy
   copy_release_artefact \
     "${proxy_docker_build_dir}/config.yml" \
-    "${RELEASE_ARTEFACTS_DIR}/stroom-proxy-app-config-${TRAVIS_TAG}.yml" \
+    "${RELEASE_ARTEFACTS_DIR}/stroom-proxy-app-config-${BUILD_TAG}.yml" \
     "Basic configuration file for stroom-proxy"
 
   copy_release_artefact \
     "${proxy_release_config_dir}/config-defaults.yml" \
-    "${RELEASE_ARTEFACTS_DIR}/stroom-proxy-app-config-defaults-${TRAVIS_TAG}.yml" \
+    "${RELEASE_ARTEFACTS_DIR}/stroom-proxy-app-config-defaults-${BUILD_TAG}.yml" \
     "A complete version of Stroom-Proxy's configuration with all its default values"
 
   copy_release_artefact \
     "${proxy_release_config_dir}/config-schema.yml" \
-    "${RELEASE_ARTEFACTS_DIR}/stroom-proxy-app-config-schema-${TRAVIS_TAG}.yml" \
+    "${RELEASE_ARTEFACTS_DIR}/stroom-proxy-app-config-schema-${BUILD_TAG}.yml" \
     "The schema for Stroom-Proxy's configuration file"
 
   copy_release_artefact \
-    "${TRAVIS_BUILD_DIR}/stroom-proxy/stroom-proxy-app/build/distributions/stroom-proxy-app-${TRAVIS_TAG}.zip" \
+    "${BUILD_DIR}/stroom-proxy/stroom-proxy-app/build/distributions/stroom-proxy-app-${BUILD_TAG}.zip" \
     "${RELEASE_ARTEFACTS_DIR}" \
     "The archive containing the Stroom-Proxy application distribution"
 
   # Stroom (Headless)
   copy_release_artefact \
-    "${TRAVIS_BUILD_DIR}/stroom-headless/build/distributions/stroom-headless-${TRAVIS_TAG}.zip" \
+    "${BUILD_DIR}/stroom-headless/build/distributions/stroom-headless-${BUILD_TAG}.zip" \
     "${RELEASE_ARTEFACTS_DIR}" \
     "The archive containing the Stroom-Headless application distribution"
 
   # Entity relationship diagram for the DB
   copy_release_artefact \
-    "${TRAVIS_BUILD_DIR}/container_build/build/entity-relationships-${TRAVIS_TAG}.svg" \
+    "${BUILD_DIR}/container_build/build/entity-relationships-${BUILD_TAG}.svg" \
     "${RELEASE_ARTEFACTS_DIR}" \
     "An entity relationship diagram for the Stroom database"
 
@@ -271,11 +271,11 @@ releaseToDockerHub() {
   echo -e "Building a docker image with tags: ${GREEN}${allTagArgs[*]}${NC}"
   echo -e "dockerRepo:  [${GREEN}${dockerRepo}${NC}]"
   echo -e "contextRoot: [${GREEN}${contextRoot}${NC}]"
-  # If we have a TRAVIS_TAG (git tag) then use that, else use the floating tag
+  # If we have a BUILD_TAG (git tag) then use that, else use the floating tag
   docker build \
     "${allTagArgs[@]}" \
-    --build-arg GIT_COMMIT="${TRAVIS_COMMIT}" \
-    --build-arg GIT_TAG="${TRAVIS_TAG:-${SNAPSHOT_FLOATING_TAG}}" \
+    --build-arg GIT_COMMIT="${BUILD_COMMIT}" \
+    --build-arg GIT_TAG="${BUILD_TAG:-${SNAPSHOT_FLOATING_TAG}}" \
     "${contextRoot}"
 
   if [[ ! -n "${LOCAL_BUILD}" ]]; then
@@ -325,23 +325,21 @@ docker_logout() {
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # establish what version of stroom we are building
-if [ -n "$TRAVIS_TAG" ]; then
+if [ -n "$BUILD_TAG" ]; then
   # Tagged commit so use that as our stroom version, e.g. v6.0.0
-  STROOM_VERSION="${TRAVIS_TAG}"
+  STROOM_VERSION="${BUILD_TAG}"
 else
   # No tag so use the branch name as the version, e.g. dev
-  STROOM_VERSION="${TRAVIS_BRANCH}"
+  STROOM_VERSION="${BUILD_BRANCH}"
 fi
 
-# Dump all the travis env vars to the console for debugging
+# Dump all the env vars to the console for debugging
 echo -e "HOME:                          [${GREEN}${HOME}${NC}]"
-echo -e "TRAVIS_BUILD_DIR:              [${GREEN}${TRAVIS_BUILD_DIR}${NC}]"
-echo -e "TRAVIS_BUILD_NUMBER:           [${GREEN}${TRAVIS_BUILD_NUMBER}${NC}]"
-echo -e "TRAVIS_COMMIT:                 [${GREEN}${TRAVIS_COMMIT}${NC}]"
-echo -e "TRAVIS_BRANCH:                 [${GREEN}${TRAVIS_BRANCH}${NC}]"
-echo -e "TRAVIS_TAG:                    [${GREEN}${TRAVIS_TAG}${NC}]"
-echo -e "TRAVIS_PULL_REQUEST:           [${GREEN}${TRAVIS_PULL_REQUEST}${NC}]"
-echo -e "TRAVIS_EVENT_TYPE:             [${GREEN}${TRAVIS_EVENT_TYPE}${NC}]"
+echo -e "BUILD_DIR:                     [${GREEN}${BUILD_DIR}${NC}]"
+echo -e "BUILD_COMMIT:                  [${GREEN}${BUILD_COMMIT}${NC}]"
+echo -e "BUILD_BRANCH:                  [${GREEN}${BUILD_BRANCH}${NC}]"
+echo -e "BUILD_TAG:                     [${GREEN}${BUILD_TAG}${NC}]"
+echo -e "BUILD_IS_PULL_REQUEST:         [${GREEN}${BUILD_IS_PULL_REQUEST}${NC}]"
 echo -e "STROOM_VERSION:                [${GREEN}${STROOM_VERSION}${NC}]"
 echo -e "CURRENT_STROOM_RELEASE_BRANCH: [${GREEN}${CURRENT_STROOM_RELEASE_BRANCH}${NC}]"
 echo -e "docker version:                [${GREEN}$(docker --version)${NC}]"
@@ -350,32 +348,32 @@ echo -e "docker-compose version:        [${GREEN}$(docker-compose --version)${NC
 # Normal commit/PR/tag build
 extraBuildArgs=()
 
-if [ -n "$TRAVIS_TAG" ]; then
+if [ -n "$BUILD_TAG" ]; then
   doDockerBuild=true
 
   # This is a tagged commit, so create a docker image with that tag
-  VERSION_FIXED_TAG="${TRAVIS_TAG}"
+  VERSION_FIXED_TAG="${BUILD_TAG}"
 
   # Extract the major version part for a floating tag
-  majorVer=$(echo "${TRAVIS_TAG}" | grep -oP "^v[0-9]+")
+  majorVer=$(echo "${BUILD_TAG}" | grep -oP "^v[0-9]+")
   if [ -n "${majorVer}" ]; then
     MAJOR_VER_FLOATING_TAG="${majorVer}${LATEST_SUFFIX}"
   fi
 
   # Extract the minor version part for a floating tag
-  minorVer=$(echo "${TRAVIS_TAG}" | grep -oP "^v[0-9]+\.[0-9]+")
+  minorVer=$(echo "${BUILD_TAG}" | grep -oP "^v[0-9]+\.[0-9]+")
   if [ -n "${minorVer}" ]; then
     MINOR_VER_FLOATING_TAG="${minorVer}${LATEST_SUFFIX}"
   fi
 
-  if [[ "$TRAVIS_BRANCH" =~ ${RELEASE_VERSION_REGEX} ]]; then
+  if [[ "$BUILD_TAG" =~ ${RELEASE_VERSION_REGEX} ]]; then
     echo "This is a release version so add gradle arg for publishing" \
       "libs to Maven Central"
     # TODO need to add in the sonatype build args when we have decided 
     # what we are publishing from stroom
     #extraBuildArgs+=("bintrayUpload")
   fi
-elif [[ "$TRAVIS_BRANCH" =~ $BRANCH_WHITELIST_REGEX ]]; then
+elif [[ "$BUILD_BRANCH" =~ $BRANCH_WHITELIST_REGEX ]]; then
   # This is a branch we want to create a floating snapshot docker image for
   SNAPSHOT_FLOATING_TAG="${STROOM_VERSION}-SNAPSHOT"
   doDockerBuild=true
@@ -388,7 +386,7 @@ echo -e "MINOR VER FLOATING DOCKER TAG: [${GREEN}${MINOR_VER_FLOATING_TAG}${NC}]
 echo -e "doDockerBuild:                 [${GREEN}${doDockerBuild}${NC}]"
 echo -e "extraBuildArgs:                [${GREEN}${extraBuildArgs[*]}${NC}]"
 
-pushd "${TRAVIS_BUILD_DIR}" > /dev/null
+pushd "${BUILD_DIR}" > /dev/null
 
 # Login to docker so we have authenticated pulls that are not rate limited
 docker_login
@@ -410,7 +408,7 @@ export BUILD_VERSION="${STROOM_VERSION}"
 ./container_build/runInJavaDocker.sh GRADLE_BUILD
 
 # Don't do a docker build for pull requests
-if [ "$doDockerBuild" = true ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then
+if [ "$doDockerBuild" = true ] && [ "$BUILD_IS_PULL_REQUEST" = "false" ] ; then
   # TODO - the major and minor floating tags assume that the release
   # builds are all done in strict sequence If say the build for v6.0.1 is
   # re-run after the build for v6.0.2 has run then v6.0-LATEST will point
@@ -438,14 +436,14 @@ if [ "$doDockerBuild" = true ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then
 
   # Deploy the generated swagger specs and swagger UI (obtained from github)
   # to gh-pages
-  if [ "$TRAVIS_BRANCH" = "${CURRENT_STROOM_RELEASE_BRANCH}" ]; then
+  if [ "$BUILD_BRANCH" = "${CURRENT_STROOM_RELEASE_BRANCH}" ]; then
     echo "Copying swagger-ui to gh-pages dir"
-    ghPagesDir=$TRAVIS_BUILD_DIR/gh-pages
-    swaggerUiCloneDir=$TRAVIS_BUILD_DIR/swagger-ui
+    ghPagesDir=$BUILD_DIR/gh-pages
+    swaggerUiCloneDir=$BUILD_DIR/swagger-ui
     mkdir -p "${ghPagesDir}"
     # copy our generated swagger specs to gh-pages
     cp \
-      "${TRAVIS_BUILD_DIR}"/stroom-app/src/main/resources/ui/swagger/swagger.* \
+      "${BUILD_DIR}"/stroom-app/src/main/resources/ui/swagger/swagger.* \
       "${ghPagesDir}/"
     # clone swagger-ui repo so we can get the ui html/js/etc
 
@@ -467,7 +465,7 @@ if [ "$doDockerBuild" = true ] && [ "$TRAVIS_PULL_REQUEST" = "false" ] ; then
 
   # If it is a tagged build copy all the files needed for the github release
   # artefacts
-  if [ -n "$TRAVIS_TAG" ]; then
+  if [ -n "$BUILD_TAG" ]; then
     generate_ddl_dump
 
     generate_entity_rel_diagram
