@@ -5,6 +5,9 @@ on:
     #branches: [ master ]
   pull_request:
     #branches: [ master ]
+env:
+  BUILD_DIR: ${GITHUB_WORKSPACE}
+  BUILD_TAG: ${GITHUB_WORKSPACE##*/}
 
 jobs:
   build:
@@ -44,15 +47,15 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Debug
-      env:
-        BUILD_DIR: 
+    - name: Build Environment Info
       run: |
         echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
         echo "GITHUB_REF: $GITHUB_REF"
         echo "GITHUB_SHA: $GITHUB_SHA"
         echo "docker version: $(docker --version)"
         echo "docker-compose version: $(docker-compose --version)"
+        echo "BUILD_DIR: $BUILD_DIR"
+        echo "BUILD_TAG: $BUILD_TAG"
 
     #- name: Run build
       #run: 
