@@ -46,7 +46,7 @@ public class ProxyRepositoryManager implements HasHealthCheck {
     @Inject
     public ProxyRepositoryManager(final TempDirProvider tempDirProvider,
                                   final ProxyRepositoryConfig proxyRepositoryConfig) {
-        this(getPath(tempDirProvider.get(), proxyRepositoryConfig.getDir()),
+        this(getPath(tempDirProvider.get(), proxyRepositoryConfig.getRepoDir()),
                 getFormat(proxyRepositoryConfig.getFormat()),
                 createScheduler(proxyRepositoryConfig.getRollCron()));
     }

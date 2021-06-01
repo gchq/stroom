@@ -79,7 +79,7 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
             this.destinations = Collections.emptyList();
         }
 
-        if (proxyRepositoryConfig.isStoringEnabled() && Strings.isNullOrEmpty(proxyRepositoryConfig.getDir())) {
+        if (proxyRepositoryConfig.isStoringEnabled() && Strings.isNullOrEmpty(proxyRepositoryConfig.getRepoDir())) {
             throw new RuntimeException("Storing is enabled but no repo directory have been provided in 'repoDir'");
         }
     }
@@ -102,7 +102,7 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
 
     private boolean isConfiguredToStore() {
         return proxyRepositoryConfig.isStoringEnabled()
-                && !Strings.isNullOrEmpty(proxyRepositoryConfig.getDir());
+                && !Strings.isNullOrEmpty(proxyRepositoryConfig.getRepoDir());
     }
 
     private void add(final List<StreamHandler> handlers) {

@@ -21,7 +21,7 @@ public class ProxyRepositoryStreamHandlerFactory implements StreamHandlerFactory
         this.proxyRepositoryConfig = proxyRepositoryConfig;
         this.proxyRepositoryStreamHandlerProvider = proxyRepositoryStreamHandlerProvider;
 
-        if (proxyRepositoryConfig.isStoringEnabled() && Strings.isNullOrEmpty(proxyRepositoryConfig.getDir())) {
+        if (proxyRepositoryConfig.isStoringEnabled() && Strings.isNullOrEmpty(proxyRepositoryConfig.getRepoDir())) {
             throw new RuntimeException("Storing is enabled but no repo directory have been provided in 'repoDir'");
         }
     }
@@ -42,6 +42,6 @@ public class ProxyRepositoryStreamHandlerFactory implements StreamHandlerFactory
 
     private boolean isConfiguredToStore() {
         return proxyRepositoryConfig.isStoringEnabled()
-                && !Strings.isNullOrEmpty(proxyRepositoryConfig.getDir());
+                && !Strings.isNullOrEmpty(proxyRepositoryConfig.getRepoDir());
     }
 }
