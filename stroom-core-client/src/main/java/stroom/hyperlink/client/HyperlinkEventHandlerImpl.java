@@ -12,6 +12,7 @@ import stroom.iframe.client.presenter.IFrameContentPresenter;
 import stroom.iframe.client.presenter.IFramePresenter;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.stepping.StepLocation;
+import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.TextRange;
@@ -163,8 +164,8 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
 
     private void openData(final String href) {
         final long id = getParam(href, "id", -1);
-        final long partNo = getParam(href, "partNo", 1) - 1; // convert to zero based
-        final long recordNo = getParam(href, "recordNo", 1) - 1; // convert to zero based
+        final long partIndex = getParam(href, "partNo", 1) - 1; // convert to zero based
+        final long recordIndex = getParam(href, "recordNo", 1) - 1; // convert to zero based
         final int lineFrom = (int) getParam(href, "lineFrom", -1);
         final int colFrom = (int) getParam(href, "colFrom", -1);
         final int lineTo = (int) getParam(href, "lineTo", -1);
@@ -181,8 +182,8 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                 DisplayMode.DIALOG);
 
         final SourceLocation.Builder builder = SourceLocation.builder(id)
-                .withPartNo(partNo)
-                .withSegmentNumber(recordNo);
+                .withPartIndex(partIndex)
+                .withRecordIndex(recordIndex);
 
         // In preview mode we only want to see the range requested, non-preview
         // we want to see it all but with the selected range highlighted
@@ -221,14 +222,14 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
 
     private void openStepping(final String href) {
         final long id = getParam(href, "id", -1);
-        final long partNo = getParam(href, "partNo", 1);
-        final long recordNo = getParam(href, "recordNo", 1);
+        final long partIndex = getParam(href, "partNo", 1) - 1; // convert to zero based
+        final long recordIndex = getParam(href, "recordNo", 1) - 1; // convert to zero based
         BeginPipelineSteppingEvent.fire(
                 this,
-                id,
                 null,
                 null,
-                new StepLocation(id, partNo, recordNo),
+                StepType.REFRESH,
+                new StepLocation(id, partIndex, recordIndex),
                 null);
     }
 

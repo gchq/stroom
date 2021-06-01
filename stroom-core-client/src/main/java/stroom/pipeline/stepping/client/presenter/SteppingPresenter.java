@@ -263,6 +263,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     }
 
     public void read(final DocRef pipeline,
+                     final StepType stepType,
                      final StepLocation stepLocation,
                      final Meta meta,
                      final String childStreamType) {
@@ -275,8 +276,8 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         // the right data.
         final SourceLocation sourceLocation = SourceLocation.builder(meta.getId())
                 .withChildStreamType(childStreamType)
-                .withPartNo(0L)
-                .withSegmentNumber(-1L)
+                .withPartIndex(stepLocation.getPartIndex())
+                .withRecordIndex(Math.max(stepLocation.getRecordIndex(), 0))
                 .build();
         sourcePresenter.setSourceLocation(sourceLocation);
 
@@ -314,11 +315,11 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                         AlertEvent.fireError(SteppingPresenter.this, e.getMessage(), null);
                     }
 
-                    if (stepLocation != null && stepLocation.getRecordNo() > 0) {
-                        step(StepType.REFRESH, new StepLocation(
+                    if (stepType != null) {
+                        step(stepType, new StepLocation(
                                 meta.getId(),
-                                stepLocation.getPartNo(),
-                                stepLocation.getRecordNo()));
+                                stepLocation.getPartIndex(),
+                                stepLocation.getRecordIndex()));
                     }
                 })
                 .call(PIPELINE_RESOURCE)

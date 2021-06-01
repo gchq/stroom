@@ -51,20 +51,20 @@ class TestDataRetentionRules {
 
     @Test
     void testSubList() {
-        List<Integer> streamIdDeleteList = new ArrayList<>();
+        List<Integer> metaIdDeleteList = new ArrayList<>();
         for (int i = 0; i < 100; i++) {
-            streamIdDeleteList.add(i);
+            metaIdDeleteList.add(i);
         }
 
         final int batchSize = 10;
-        while (streamIdDeleteList.size() >= batchSize) {
-            final List<Integer> batch = new ArrayList<>(streamIdDeleteList.subList(0, batchSize));
-            streamIdDeleteList = new ArrayList<>(streamIdDeleteList.subList(batchSize, streamIdDeleteList.size()));
+        while (metaIdDeleteList.size() >= batchSize) {
+            final List<Integer> batch = new ArrayList<>(metaIdDeleteList.subList(0, batchSize));
+            metaIdDeleteList = new ArrayList<>(metaIdDeleteList.subList(batchSize, metaIdDeleteList.size()));
 
             assertThat(batch.size()).isEqualTo(10);
         }
 
-        assertThat(streamIdDeleteList.size()).isEqualTo(0);
+        assertThat(metaIdDeleteList.size()).isEqualTo(0);
     }
 
     private DataRetentionRule createRule(final int num,

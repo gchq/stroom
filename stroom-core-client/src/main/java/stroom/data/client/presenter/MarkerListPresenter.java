@@ -177,8 +177,8 @@ public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>>
                     final StoredError storedError = (StoredError) marker;
                     if (storedError.getLocation() != null && storedError.getLocation() instanceof StreamLocation) {
                         final StreamLocation streamLocation = (StreamLocation) storedError.getLocation();
-                        if (streamLocation.getStreamNo() >= 0) {
-                            return String.valueOf(streamLocation.getStreamNo());
+                        if (streamLocation.getPartIndex() > -1) {
+                            return String.valueOf(streamLocation.getPartIndex() + 1);
                         }
                     }
                 }

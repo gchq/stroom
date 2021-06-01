@@ -665,3 +665,16 @@ td {
     height: 100%;
     overflow: auto;
 }
+
+.popupPanel-dragGlass {
+    position: absolute;
+    left: 0;
+    top: 0;
+	background-color: transparent;
+	visibility: hidden;
+	z-index: 5;
+}
+
+.popupPanel-dragGlassVisible {
+	visibility: visible;
+}

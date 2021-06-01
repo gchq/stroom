@@ -84,16 +84,13 @@ public class DataDisplaySupport {
             dataPresenter.fetchData(sourceLocation);
             presenter = dataPresenter;
             caption = "Stream "
-                    + sourceLocation.getId();
+                    + sourceLocation.getMetaId();
         } else {
             final ClassificationWrappedSourcePresenter sourcePresenter = sourcePresenterProvider.get();
             sourcePresenter.setSourceLocationUsingHighlight(sourceLocation);
             presenter = sourcePresenter;
             // Convert to one based for UI;
-            caption = "Stream "
-                    + sourceLocation.getId() + ":"
-                    + (sourceLocation.getPartNo() + 1) + ":"
-                    + (sourceLocation.getSegmentNo() + 1);
+            caption = "Stream " + sourceLocation.getIdentifierString();
         }
 
         final PopupSize popupSize = new PopupSize(

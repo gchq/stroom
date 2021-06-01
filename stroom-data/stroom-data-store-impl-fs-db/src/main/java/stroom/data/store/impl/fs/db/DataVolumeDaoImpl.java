@@ -78,18 +78,18 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
 
     class DataVolumeImpl implements DataVolume {
 
-        private final long streamId;
+        private final long metaId;
         private final String volumePath;
 
-        DataVolumeImpl(final long streamId,
+        DataVolumeImpl(final long metaId,
                        final String volumePath) {
-            this.streamId = streamId;
+            this.metaId = metaId;
             this.volumePath = volumePath;
         }
 
         @Override
-        public long getStreamId() {
-            return streamId;
+        public long getMetaId() {
+            return metaId;
         }
 
         @Override

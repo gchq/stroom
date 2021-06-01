@@ -29,65 +29,66 @@ public class StepLocation {
 
     // It seems javascript can't handle longs above 2^53 so use a max val
     // that is as big as it can handle.
-    private static final long MAX_PART_NO = (long) (Math.pow(2, 53) - 1);
-    private static final long MAX_RECORD_NO = MAX_PART_NO;
+    private static final long MAX_PART_INDEX = (long) (Math.pow(2, 53) - 1);
+    private static final long MAX_RECORD_INDEX = MAX_PART_INDEX;
 
     @JsonProperty
-    private final long id;
+    private final long metaId;
 
-    // One based
+    // Zero based
     @JsonProperty
-    private final long partNo;
+    private final long partIndex;
 
-    // One based
+    // Zero based
     @JsonProperty
-    private final long recordNo;
+    private final long recordIndex;
 
     /**
-     * @param id       The stream ID
-     * @param partNo   One based
-     * @param recordNo One based
+     * @param metaId      The meta ID
+     * @param partIndex   Zero based
+     * @param recordIndex Zero based
      */
     @JsonCreator
-    public StepLocation(@JsonProperty("id") final long id,
-                        @JsonProperty("partNo") final long partNo,
-                        @JsonProperty("recordNo") final long recordNo) {
-        this.id = id;
-        this.partNo = partNo;
-        this.recordNo = recordNo;
+    public StepLocation(@JsonProperty("metaId") final long metaId,
+                        @JsonProperty("partIndex") final long partIndex,
+                        @JsonProperty("recordIndex") final long recordIndex) {
+        this.metaId = metaId;
+        this.partIndex = partIndex;
+        this.recordIndex = recordIndex;
     }
 
-    public StepLocation copyWithNewRecordNo(final long newRecordNo) {
-        return new StepLocation(id, partNo, newRecordNo);
+    public static StepLocation first(final long metaId) {
+        return first(metaId, 0);
     }
 
-    public static StepLocation last(final long id) {
-        return new StepLocation(id, MAX_PART_NO, MAX_RECORD_NO);
+    public static StepLocation first(final long metaId, final long partIndex) {
+        return new StepLocation(metaId, partIndex, -1);
     }
 
-    /**
-     * @param partNo One based
-     */
-    public static StepLocation last(final long id, final long partNo) {
-        return new StepLocation(id, partNo, MAX_RECORD_NO);
+    public static StepLocation last(final long metaId) {
+        return last(metaId, MAX_PART_INDEX);
     }
 
-    public long getId() {
-        return id;
+    public static StepLocation last(final long metaId, final long partIndex) {
+        return new StepLocation(metaId, partIndex, MAX_RECORD_INDEX);
     }
 
-    /**
-     * One based
-     */
-    public long getPartNo() {
-        return partNo;
+    public long getMetaId() {
+        return metaId;
     }
 
     /**
-     * One based
+     * Zero based
      */
-    public long getRecordNo() {
-        return recordNo;
+    public long getPartIndex() {
+        return partIndex;
+    }
+
+    /**
+     * Zero based
+     */
+    public long getRecordIndex() {
+        return recordIndex;
     }
 
     @SuppressWarnings("checkstyle:needbraces")
@@ -100,19 +101,19 @@ public class StepLocation {
             return false;
         }
         final StepLocation that = (StepLocation) o;
-        return id == that.id &&
-                partNo == that.partNo &&
-                recordNo == that.recordNo;
+        return metaId == that.metaId &&
+                partIndex == that.partIndex &&
+                recordIndex == that.recordIndex;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, partNo, recordNo);
+        return Objects.hash(metaId, partIndex, recordIndex);
     }
 
     @JsonIgnore
     public String getEventId() {
-        return id + ":" + partNo + ":" + recordNo;
+        return metaId + ":" + (partIndex + 1) + ":" + (recordIndex + 1);
     }
 
     @Override

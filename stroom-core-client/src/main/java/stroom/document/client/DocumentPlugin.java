@@ -222,9 +222,10 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
             // Ask the user to create a new document.
             ShowCreateDocumentDialogEvent.fire(
                     DocumentPlugin.this,
+                    "Save '" + docRef.getName() + "' as",
                     ExplorerNode.create(docRef),
                     docRef.getType(),
-                    docRef.getType(),
+                    docRef.getName(),
                     true,
                     newDocumentConsumer);
         }

@@ -191,8 +191,8 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
         final EventId selected = eventList.getSelectionModel().getSelected();
         if (selected != null) {
             final SourceLocation sourceLocation = SourceLocation.builder(selected.getStreamId())
-                    .withPartNo(1L)
-                    .withSegmentNumber(selected.getEventId() - 1) // EventId obj is one based, segmentNo is 0 based
+                    .withPartIndex(0L)
+                    .withRecordIndex(selected.getEventId() - 1) // EventId obj is one based, segment index is 0 based
                     .build();
 
             dataPresenter.fetchData(sourceLocation);

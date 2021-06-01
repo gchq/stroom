@@ -102,14 +102,14 @@ public class SegmentInputStreamProvider {
         }
     }
 
-    private long entryByteOffsetStart(final RASegmentInputStream segmentInputStream, final long streamNo)
+    private long entryByteOffsetStart(final RASegmentInputStream segmentInputStream, final long partIndex)
             throws IOException {
-        return segmentInputStream.byteOffset(streamNo);
+        return segmentInputStream.byteOffset(partIndex);
     }
 
-    private long entryByteOffsetEnd(final RASegmentInputStream segmentInputStream, final long streamNo)
+    private long entryByteOffsetEnd(final RASegmentInputStream segmentInputStream, final long partIndex)
             throws IOException {
-        long offset = segmentInputStream.byteOffset(streamNo + 1);
+        long offset = segmentInputStream.byteOffset(partIndex + 1);
         if (offset == -1) {
             offset = ((SeekableInputStream) getData()).getSize();
         }

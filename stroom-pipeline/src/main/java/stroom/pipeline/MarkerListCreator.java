@@ -120,7 +120,7 @@ public class MarkerListCreator {
     private void addMarker(final String line, final Severity severity, final Map<Severity, List<StoredError>> markers) {
         final List<StoredError> markerList = markers.computeIfAbsent(severity, k -> new ArrayList<>());
         if (markerList.size() < FetchMarkerResult.MAX_MARKERS) {
-            int streamNo = -1;
+            int partIndex = -1;
             int lineNo = -1;
             int colNo = -1;
             String elementId = null;
@@ -142,7 +142,7 @@ public class MarkerListCreator {
                             lineNo = Integer.parseInt(parts[0]);
                             colNo = Integer.parseInt(parts[1]);
                         } else if (parts.length == 3) {
-                            streamNo = Integer.parseInt(parts[0]);
+                            partIndex = Integer.parseInt(parts[0]) - 1;
                             lineNo = Integer.parseInt(parts[1]);
                             colNo = Integer.parseInt(parts[2]);
                         }
@@ -157,7 +157,7 @@ public class MarkerListCreator {
                 }
             }
 
-            final StoredError storedError = new StoredError(severity, new StreamLocation(streamNo, lineNo, colNo),
+            final StoredError storedError = new StoredError(severity, new StreamLocation(partIndex, lineNo, colNo),
                     elementId, message);
             markerList.add(storedError);
         }

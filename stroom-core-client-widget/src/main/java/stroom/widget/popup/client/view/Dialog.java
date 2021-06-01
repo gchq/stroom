@@ -180,6 +180,8 @@ public class Dialog extends AbstractPopupPanel {
      * @see #continueDragging
      */
     protected void beginDragging(final MouseDownEvent event) {
+        getDragGlass().show();
+
         dragging = true;
         DOM.setCapture(getElement());
         dragStartX = event.getX();
@@ -222,6 +224,8 @@ public class Dialog extends AbstractPopupPanel {
     protected void endDragging(final MouseUpEvent event) {
         dragging = false;
         DOM.releaseCapture(getElement());
+
+        getDragGlass().hide();
     }
 
     @Override

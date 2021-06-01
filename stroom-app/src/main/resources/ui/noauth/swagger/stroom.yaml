@@ -6842,7 +6842,7 @@ components:
           type: boolean
         pipeline:
           $ref: '#/components/schemas/DocRef'
-        segmentCount:
+        recordCount:
           type: integer
           format: int64
         showAsHtml:
@@ -8710,10 +8710,10 @@ components:
     Rec:
       type: object
       properties:
-        recordNo:
+        metaId:
           type: integer
           format: int64
-        streamId:
+        recordIndex:
           type: integer
           format: int64
     ReceiveDataRule:
@@ -8826,14 +8826,14 @@ components:
     RefStreamDefinition:
       type: object
       properties:
+        partIndex:
+          type: integer
+          format: int64
         pipelineDocRef:
           $ref: '#/components/schemas/DocRef'
         pipelineVersion:
           type: string
         streamId:
-          type: integer
-          format: int64
-        streamNo:
           type: integer
           format: int64
     ReferenceLoader:
@@ -9709,13 +9709,13 @@ components:
           $ref: '#/components/schemas/DataRange'
         highlight:
           $ref: '#/components/schemas/TextRange'
-        id:
+        metaId:
           type: integer
           format: int64
-        partNo:
+        partIndex:
           type: integer
           format: int64
-        segmentNo:
+        recordIndex:
           type: integer
           format: int64
         truncateToWholeLines:
@@ -9822,13 +9822,13 @@ components:
     StepLocation:
       type: object
       properties:
-        id:
+        metaId:
           type: integer
           format: int64
-        partNo:
+        partIndex:
           type: integer
           format: int64
-        recordNo:
+        recordIndex:
           type: integer
           format: int64
     SteppingFilterSettings:
@@ -9926,7 +9926,7 @@ components:
       - $ref: '#/components/schemas/Location'
       - type: object
         properties:
-          streamNo:
+          partIndex:
             type: integer
             format: int64
     StringCriteria:

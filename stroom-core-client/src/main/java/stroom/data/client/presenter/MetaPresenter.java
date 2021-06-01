@@ -31,6 +31,7 @@ import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.stepping.StepLocation;
+import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
@@ -586,7 +587,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
     }
 
     @Override
-    public void beginStepping(final long streamId, final String childStreamType) {
+    public void beginStepping(final StepType stepType, final StepLocation stepLocation, final String childStreamType) {
         // Try and get a pipeline id to use as a starting point for
         // stepping.
         DocRef pipelineRef = null;
@@ -602,17 +603,17 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
             // If the top list has a raw stream selected or isn't a child of
             // the selected stream then this isn't the child stream we are
             // looking for.
-            if (childMeta.getParentMetaId() != null && childMeta.getParentMetaId().equals(streamId)) {
+            if (childMeta.getParentMetaId() != null && childMeta.getParentMetaId().equals(stepLocation.getMetaId())) {
                 childStreamId = childMeta.getId();
             }
         }
 
         BeginPipelineSteppingEvent.fire(
                 this,
-                streamId,
                 childStreamId,
                 childStreamType,
-                new StepLocation(streamId, 1, 0),
+                stepType,
+                stepLocation,
                 pipelineRef);
     }
 

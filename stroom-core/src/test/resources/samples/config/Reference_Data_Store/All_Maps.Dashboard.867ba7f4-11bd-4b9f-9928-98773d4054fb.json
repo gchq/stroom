@@ -30,8 +30,8 @@
         "special" : false
       }, {
         "id" : "table-IIO1T|XGYIT",
-        "name" : "Sub-Stream Number",
-        "expression" : "${Sub-Stream Number}",
+        "name" : "Part Number",
+        "expression" : "${Part Number}",
         "format" : {
           "type" : "NUMBER"
         },

@@ -551,10 +551,10 @@ class TestDS3 extends StroomUnitTest {
 
                     try (ZipInputStream zipInputStream = new ZipInputStream(Files.newInputStream(input))) {
                         ZipEntry entry = zipInputStream.getNextEntry();
-                        long streamNo = 0;
+                        long partIndex = -1;
                         while (entry != null) {
-                            streamNo++;
-                            locationFactory.setStreamNo(streamNo);
+                            partIndex++;
+                            locationFactory.setPartIndex(partIndex);
 
                             try {
                                 if (entry.getName().endsWith(".dat")) {

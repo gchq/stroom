@@ -95,8 +95,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
             "Processing State", false);
     private static final AbstractField STREAM_ID_FIELD = new IdField(
             "Stream ID", false);
-    private static final AbstractField STREAM_NO_FIELD = new LongField(
-            "Sub-Stream Number", false);
+    private static final AbstractField PART_NO_FIELD = new LongField(
+            "Part Number", false);
     private static final AbstractField PIPELINE_VERSION_FIELD = new TextField(
             "Pipeline Version", false);
 
@@ -111,7 +111,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
             PIPELINE_FIELD,
             PROCESSING_STATE_FIELD,
             STREAM_ID_FIELD,
-            STREAM_NO_FIELD,
+            PART_NO_FIELD,
             PIPELINE_VERSION_FIELD);
 
     private static final DataSource DATA_SOURCE = new DataSource(FIELDS);
@@ -168,8 +168,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                     refStoreEntry.getRefDataProcessingInfo().getProcessingState().getDisplayName()),
             Map.entry(STREAM_ID_FIELD.getName(), refStoreEntry ->
                     refStoreEntry.getMapDefinition().getRefStreamDefinition().getStreamId()),
-            Map.entry(STREAM_NO_FIELD.getName(), refStoreEntry ->
-                    refStoreEntry.getMapDefinition().getRefStreamDefinition().getStreamNo()),
+            Map.entry(PART_NO_FIELD.getName(), refStoreEntry ->
+                    refStoreEntry.getMapDefinition().getRefStreamDefinition().getPartIndex() + 1),
             Map.entry(PIPELINE_VERSION_FIELD.getName(), refStoreEntry ->
                     refStoreEntry.getMapDefinition().getRefStreamDefinition().getPipelineVersion()));
 

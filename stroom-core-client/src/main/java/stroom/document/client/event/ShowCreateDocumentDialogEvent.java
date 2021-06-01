@@ -29,32 +29,43 @@ import java.util.function.Consumer;
 public class ShowCreateDocumentDialogEvent extends GwtEvent<ShowCreateDocumentDialogEvent.Handler> {
 
     private static Type<Handler> TYPE;
+
+    private final String dialogCaption;
     private final ExplorerNode selected;
     private final String docType;
-    private final String docDisplayType;
+    private final String initialDocName;
     private final boolean allowNullFolder;
     private final Consumer<DocRef> newDocConsumer;
 
-    private ShowCreateDocumentDialogEvent(final ExplorerNode selected,
+    private ShowCreateDocumentDialogEvent(final String dialogCaption,
+                                          final ExplorerNode selected,
                                           final String docType,
-                                          final String docDisplayType,
+                                          final String initialDocName,
                                           final boolean allowNullFolder,
                                           final Consumer<DocRef> newDocConsumer) {
+        this.dialogCaption = dialogCaption;
         this.selected = selected;
         this.docType = docType;
-        this.docDisplayType = docDisplayType;
+        this.initialDocName = initialDocName;
         this.allowNullFolder = allowNullFolder;
         this.newDocConsumer = newDocConsumer;
     }
 
     public static void fire(final HasHandlers handlers,
+                            final String dialogCaption,
                             final ExplorerNode selected,
                             final String docType,
-                            final String docDisplayType,
+                            final String initialDocName,
                             final boolean allowNullFolder,
                             final Consumer<DocRef> newDocConsumer) {
         handlers.fireEvent(
-                new ShowCreateDocumentDialogEvent(selected, docType, docDisplayType, allowNullFolder, newDocConsumer));
+                new ShowCreateDocumentDialogEvent(
+                        dialogCaption,
+                        selected,
+                        docType,
+                        initialDocName,
+                        allowNullFolder,
+                        newDocConsumer));
     }
 
     public static Type<Handler> getType() {
@@ -74,6 +85,10 @@ public class ShowCreateDocumentDialogEvent extends GwtEvent<ShowCreateDocumentDi
         handler.onCreate(this);
     }
 
+    public String getDialogCaption() {
+        return dialogCaption;
+    }
+
     public ExplorerNode getSelected() {
         return selected;
     }
@@ -82,8 +97,8 @@ public class ShowCreateDocumentDialogEvent extends GwtEvent<ShowCreateDocumentDi
         return docType;
     }
 
-    public String getDocDisplayType() {
-        return docDisplayType;
+    public String getInitialDocName() {
+        return initialDocName;
     }
 
     public boolean isAllowNullFolder() {

@@ -104,7 +104,7 @@ public class MapDefinition {
                 "pipelineDocRef=" + refStreamDefinition.getPipelineDocRef() +
                 ", pipelineVer=" + refStreamDefinition.getPipelineVersion() +
                 ", streamId=" + refStreamDefinition.getStreamId() +
-                ", streamNo=" + refStreamDefinition.getStreamNo() +
+                ", partIndex=" + refStreamDefinition.getPartIndex() +
                 ", mapName='" + mapName + '\'' +
                 '}';
     }

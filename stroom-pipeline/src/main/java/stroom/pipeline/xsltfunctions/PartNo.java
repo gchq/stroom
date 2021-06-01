@@ -40,7 +40,7 @@ class PartNo extends StroomExtensionFunctionCall {
         String result = null;
 
         try {
-            result = String.valueOf(metaHolder.getStreamNo());
+            result = String.valueOf(metaHolder.getPartNo());
         } catch (final Exception e) {
             log(context, Severity.ERROR, e.getMessage(), e);
         }
