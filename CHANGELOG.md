@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2260** : The UI no longer caches node status. 
+
 * Issue **#2260** : Removed default node config for default index volume group creation.
 
 * Issue **#1828** : Added glass element to ensure mouse capture is maintained when dragging or resizing dialogs over dashboard visualisations.

@@ -28,12 +28,10 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.table.client.Refreshable;
-import stroom.dispatch.client.Rest;
-import stroom.dispatch.client.RestFactory;
+import stroom.node.client.NodeManager;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.FetchNodeStatusResponse;
 import stroom.node.shared.Node;
-import stroom.node.shared.NodeResource;
 import stroom.node.shared.NodeStatusResult;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
@@ -48,7 +46,6 @@ import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
 import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -60,16 +57,14 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Consumer;
 
 public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<NodeStatusResult>>
         implements Refreshable {
 
-    private static final NodeResource NODE_RESOURCE = GWT.create(NodeResource.class);
     private static final NumberFormat THOUSANDS_FORMATTER = NumberFormat.getFormat("#,###");
 
-    private final RestFactory restFactory;
+    private final NodeManager nodeManager;
     private final TooltipPresenter tooltipPresenter;
     private final RestDataProvider<NodeStatusResult, FetchNodeStatusResponse> dataProvider;
 
@@ -77,22 +72,17 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
 
     @Inject
     public NodeMonitoringPresenter(final EventBus eventBus,
-                                   final RestFactory restFactory,
+                                   final NodeManager nodeManager,
                                    final TooltipPresenter tooltipPresenter) {
         super(eventBus, new DataGridViewImpl<>(true));
-        this.restFactory = restFactory;
+        this.nodeManager = nodeManager;
         this.tooltipPresenter = tooltipPresenter;
         initTableColumns();
         dataProvider = new RestDataProvider<NodeStatusResult, FetchNodeStatusResponse>(eventBus) {
             @Override
             protected void exec(final Consumer<FetchNodeStatusResponse> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
-                final Rest<FetchNodeStatusResponse> rest = restFactory.create();
-                rest
-                        .onSuccess(dataConsumer)
-                        .onFailure(throwableConsumer)
-                        .call(NODE_RESOURCE)
-                        .find();
+                nodeManager.fetchNodeStatus(dataConsumer, throwableConsumer);
             }
 
             @Override
@@ -100,14 +90,15 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                 // Ping each node.
                 data.getValues().forEach(row -> {
                     final String nodeName = row.getNode().getName();
-                    final Rest<Long> rest = restFactory.create();
-                    rest.onSuccess(ping -> {
-                        latestPing.put(nodeName, new PingResult(ping, null));
-                        super.changeData(data);
-                    }).onFailure(throwable -> {
-                        latestPing.put(nodeName, new PingResult(null, throwable.getMessage()));
-                        super.changeData(data);
-                    }).call(NODE_RESOURCE).ping(nodeName);
+                    nodeManager.ping(nodeName,
+                            ping -> {
+                                latestPing.put(nodeName, new PingResult(ping, null));
+                                super.changeData(data);
+                            },
+                            throwable -> {
+                                latestPing.put(nodeName, new PingResult(null, throwable.getMessage()));
+                                super.changeData(data);
+                            });
                 });
                 super.changeData(data);
             }
@@ -123,16 +114,13 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
         final InfoColumn<NodeStatusResult> infoColumn = new InfoColumn<NodeStatusResult>() {
             @Override
             protected void showInfo(final NodeStatusResult row, final int x, final int y) {
-                final Rest<ClusterNodeInfo> rest = restFactory.create();
-                rest
-                        .onSuccess(result -> showNodeInfoResult(row.getNode(), result, x, y))
-                        .onFailure(caught -> showNodeInfoError(caught, x, y))
-                        .call(NODE_RESOURCE)
-                        .info(row.getNode().getName());
+                nodeManager.info(
+                        row.getNode().getName(),
+                        result -> showNodeInfoResult(row.getNode(), result, x, y),
+                        caught -> showNodeInfoError(caught, x, y));
             }
         };
         getView().addColumn(infoColumn, "<br/>", 20);
-
 
         // Name.
         final Column<NodeStatusResult, String> nameColumn = new Column<NodeStatusResult, String>(new TextCell()) {
@@ -239,13 +227,11 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                 return new EditableInteger(row.getNode().getPriority());
             }
         };
-        priorityColumn.setFieldUpdater((index, row, value) -> {
-            final Rest<Node> rest = restFactory.create();
-            rest
-                    .onSuccess(result -> refresh())
-                    .call(NODE_RESOURCE)
-                    .setPriority(row.getNode().getName(), value.intValue());
-        });
+        priorityColumn.setFieldUpdater((index, row, value) ->
+                nodeManager.setPriority(
+                        row.getNode().getName(),
+                        value.intValue(),
+                        result -> refresh()));
         getView().addColumn(priorityColumn, "Priority", 55);
 
         // Enabled
@@ -260,13 +246,11 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
             }
         };
         enabledColumn.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-        enabledColumn.setFieldUpdater((index, row, value) -> {
-            final Rest<Node> rest = restFactory.create();
-            rest
-                    .onSuccess(result -> refresh())
-                    .call(NODE_RESOURCE)
-                    .setEnabled(row.getNode().getName(), value.toBoolean());
-        });
+        enabledColumn.setFieldUpdater((index, row, value) ->
+                nodeManager.setEnabled(
+                        row.getNode().getName(),
+                        value.toBoolean(),
+                        result -> refresh()));
 
         getView().addColumn(enabledColumn, "Enabled", 60);
 

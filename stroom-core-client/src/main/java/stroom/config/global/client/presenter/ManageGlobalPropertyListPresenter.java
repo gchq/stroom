@@ -25,7 +25,7 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
-import stroom.node.client.NodeCache;
+import stroom.node.client.NodeManager;
 import stroom.svg.client.SvgPreset;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.PageRequest;
@@ -66,7 +66,7 @@ public class ManageGlobalPropertyListPresenter
 
     private final ListDataProvider<ConfigPropertyRow> dataProvider;
     private final RestFactory restFactory;
-    private final NodeCache nodeCache;
+    private final NodeManager nodeManager;
     private final Set<String> unreachableNodes = new HashSet<>();
 
     // propName => (node => effectiveValue)
@@ -102,10 +102,10 @@ public class ManageGlobalPropertyListPresenter
     @Inject
     public ManageGlobalPropertyListPresenter(final EventBus eventBus,
                                              final RestFactory restFactory,
-                                             final NodeCache nodeCache) {
+                                             final NodeManager nodeManager) {
         super(eventBus, new DataGridViewImpl<>(true));
         this.restFactory = restFactory;
-        this.nodeCache = nodeCache;
+        this.nodeManager = nodeManager;
 
         initColumns();
 
@@ -148,7 +148,7 @@ public class ManageGlobalPropertyListPresenter
     private void refreshPropertiesForAllNodes() {
         // Only care about enable nodes
         unreachableNodes.clear();
-        nodeCache.listEnabledNodes(
+        nodeManager.listEnabledNodes(
                 nodeNames ->
                         nodeNames.forEach(this::refreshPropertiesForNode),
                 throwable ->

@@ -34,7 +34,7 @@ import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.presenter.TreeRowHandler;
-import stroom.node.client.NodeCache;
+import stroom.node.client.NodeManager;
 import stroom.svg.client.SvgPresets;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.FindTaskProgressCriteria;
@@ -86,7 +86,7 @@ public class TaskManagerListPresenter
     private final Set<TaskProgress> requestedTerminateTaskProgress = new HashSet<>();
     private final TooltipPresenter tooltipPresenter;
     private final RestFactory restFactory;
-    private final NodeCache nodeCache;
+    private final NodeManager nodeManager;
     private final NameFilterTimer timer = new NameFilterTimer();
     private final Map<String, List<TaskProgress>> responseMap = new HashMap<>();
     private final RestDataProvider<TaskProgress, TaskProgressResponse> dataProvider;
@@ -102,11 +102,11 @@ public class TaskManagerListPresenter
     public TaskManagerListPresenter(final EventBus eventBus,
                                     final TooltipPresenter tooltipPresenter,
                                     final RestFactory restFactory,
-                                    final NodeCache nodeCache) {
+                                    final NodeManager nodeManager) {
         super(eventBus, new DataGridViewImpl<>(false, 1000));
         this.tooltipPresenter = tooltipPresenter;
         this.restFactory = restFactory;
-        this.nodeCache = nodeCache;
+        this.nodeManager = nodeManager;
         this.criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, true, false);
 
         final ButtonView terminateButton = getView().addButton(SvgPresets.DELETE.with("Terminate Task", true));
@@ -319,7 +319,7 @@ public class TaskManagerListPresenter
 
     public void fetchNodes(final Consumer<TaskProgressResponse> dataConsumer,
                            final Consumer<Throwable> throwableConsumer) {
-        nodeCache.listAllNodes(
+        nodeManager.listAllNodes(
                 nodeNames -> fetchTasksForNodes(dataConsumer, throwableConsumer, nodeNames),
                 throwableConsumer);
     }
