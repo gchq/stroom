@@ -28,6 +28,7 @@ body,table td,select {
 	margin: 0;
 	padding: 2px 4px;
 	width: 100px;
+	height: 21px;
 	text-decoration: none;
 	cursor: pointer;
 	cursor: hand;
