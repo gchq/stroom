@@ -71,10 +71,12 @@ jobs:
         echo "HOME:                     [$HOME]"
 
     - name: Run full build
+      env:
+        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       run: |
         pushd "${BUILD_DIR}" > /dev/null
         echo -e "${GREEN}Running ${BLUE}ci_build.sh${NC}"
         ./ci_build.sh
         echo -e "${GREEN}Finished running build script${NC}"
-
 
