@@ -33,7 +33,7 @@ jobs:
 
             if [[ ${GITHUB_REF} =~ ^refs/tags/ ]]; then
               # strip off the 'refs/tags/' bit
-              tag=${GITHUB_REF#refs/tags/}"
+              tag="${GITHUB_REF#refs/tags/}"
               echo "BUILD_TAG=${tag}"
               if [[ ${tag} =~ .*(beta|alpha).* ]]; then 
                 echo "BUILD_IS_PRERELEASE=true"
