@@ -6,14 +6,14 @@ on:
   pull_request:
     #branches: [ master ]
 
-env:
-  # Static env vars
-
-  # The version of stroom-resources used for running the DB
-  STROOM_RESOURCES_GIT_TAG:stroom-stacks-v7.0-beta.118
-
 jobs:
   build:
+
+    env:
+      # Static env vars
+
+      # The version of stroom-resources used for running the DB
+      STROOM_RESOURCES_GIT_TAG:stroom-stacks-v7.0-beta.118
 
     runs-on: ubuntu-latest
 
