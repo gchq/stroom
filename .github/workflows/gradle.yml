@@ -16,7 +16,7 @@ jobs:
 
       # Github runners limited to 2 cores, 7Gb RAM
       # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources
-      MAX_WORKERS="3"
+      MAX_WORKERS: 3
 
     steps:
 
@@ -73,8 +73,8 @@ jobs:
     - name: Run full build
       run: |
         pushd "${BUILD_DIR}" > /dev/null
-        echo -e "${GREEN}Running ${BLUE}travis.script.sh${NC}"
-        ./travis.script.sh
+        echo -e "${GREEN}Running ${BLUE}ci_build.sh${NC}"
+        ./ci_build.sh
         echo -e "${GREEN}Finished running build script${NC}"
 
 

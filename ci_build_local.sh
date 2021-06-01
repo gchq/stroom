@@ -6,10 +6,9 @@
 # - sets up various env vars that the build scripts expect
 # - creates a build dir in /tmp
 # - clones the stroom repo on your current branch into the build dir
-# - runs the travis.before_script.sh script
-# - runs the travis.script.sh script
+# - runs the ci_build.sh script
 #
-# This script and the two travis scripts run on this host but all parts
+# This script and the ci_build script run on this host but all parts
 # of the build that need anything more than bash and standard shell tools
 # are executed in docker containers.
 
@@ -130,12 +129,8 @@ main() {
     https://github.com/gchq/stroom.git \
     "${BUILD_DIR}"
 
-  # This is in the newly cloned repo
-  #./container_build/runInJavaDocker.sh \
-    #"./travis.before_script.sh && ./travis.script.sh"
-
-  echo -e "${GREEN}Running ${BLUE}travis.script.sh${NC}"
-  ${BUILD_DIR}/travis.script.sh
+  echo -e "${GREEN}Running ${BLUE}ci_build.sh${NC}"
+  ${BUILD_DIR}/ci_build.sh
 
   echo -e "${GREEN}Done local travis build${NC}"
 }
