@@ -15,7 +15,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: set Environment Variables
+
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set Environment Variables
       id: set_env_var
       run: |
         VERSION="SNAPSHOT"
@@ -25,8 +29,12 @@ jobs:
         # Set variables in github's env file which are then read into each subsequent step
         {
           echo "BUILD_DIR=${GITHUB_WORKSPACE}"
-          echo "BUILD_TAG=${GITHUB_REF#refs/tags/}"
-          echo "BUILD_BRANCH=${GITHUB_REF#refs/heads/}"
+          if [[ ${GITHUB_REF} =~ ^refs/tags/ ]]; then
+            echo "BUILD_TAG=${GITHUB_REF#refs/tags/}"
+          fi
+          if [[ ${GITHUB_REF} =~ ^refs/heads/ ]]; then
+            echo "BUILD_BRANCH=${GITHUB_REF#refs/heads/}"
+          fi
         } >> $GITHUB_ENV
 
 
@@ -50,19 +58,17 @@ jobs:
     #          echo "::set-output name=RELEASEBODY::${RELEASEBODY}"
     #          echo "::set-env name=body::${RELEASEBODY}"
 
-    - name: Checkout code
-      uses: actions/checkout@v2
 
     - name: Build Environment Info
       run: |
-        echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
-        echo "GITHUB_REF: $GITHUB_REF"
-        echo "GITHUB_SHA: $GITHUB_SHA"
-        echo "docker version: $(docker --version)"
-        echo "docker-compose version: $(docker-compose --version)"
-        echo "BUILD_DIR: $BUILD_DIR"
-        echo "BUILD_TAG: $BUILD_TAG"
-        echo "BUILD_BRANCH: $BUILD_BRANCH"
+        echo "docker version:           [$(docker --version)]"
+        echo "docker-compose version:   [$(docker-compose --version)]"
+        echo "GITHUB_WORKSPACE:         [$GITHUB_WORKSPACE]"
+        echo "GITHUB_REF:               [$GITHUB_REF]"
+        echo "GITHUB_SHA:               [$GITHUB_SHA]"
+        echo "BUILD_DIR:                [$BUILD_DIR]"
+        echo "BUILD_TAG:                [$BUILD_TAG]"
+        echo "BUILD_BRANCH:             [$BUILD_BRANCH]"
 
     #- name: Run build
       #run: 
