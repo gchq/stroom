@@ -95,6 +95,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Use Github's hub CLI to create our release
+          # See https://github.com/github/hub
           set -x
           args=()
           for asset_file in $BUILD_DIR/release_artefacts/*; do
@@ -106,6 +107,7 @@ jobs:
           fi
           echo "Creating release with assets"
           # hub release create "${args[@]}" -m "$BUILD_TAG" "$BUILD_TAG"
+          # Assuming the release text will come from the tag?
           hub release create "${args[@]}" "$BUILD_TAG"
           echo "Release created"
 
