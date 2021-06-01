@@ -95,14 +95,33 @@ else
 
     run_cmd=( "bash" )
   elif [[ $# -eq 1 ]] && [[ "$1" = "ERD" ]]; then
-    run_cmd=( "bash" "-c"  "./container_build/runPlantErd.sh" )
+    # Generate an entity relationship diagram from an existing DB
+    run_cmd=( \
+      "bash" \
+      "-c"  \
+      "./container_build/runPlantErd.sh" \
+    )
   elif [[ $# -eq 1 ]] && [[ "$1" = "GRADLE_BUILD" ]]; then
-    run_cmd=( "bash" "-c"  "SKIP_TESTS=\"${SKIP_TESTS:-false}\" MAX_WORKERS=\"${MAX_WORKERS:-6}\" ./container_build/gradleBuild.sh" )
+    # Run the full CI gradle build
+    run_cmd=( \
+      "bash" \
+      "-c"  \
+      "SKIP_TESTS=\"${SKIP_TESTS:-false}\" MAX_WORKERS=\"${MAX_WORKERS:-6}\" GWT_MIN_HEAP=\"${GWT_MIN_HEAP:-50M}\" GWT_MIN_HEAP=\"${GWT_MAX_HEAP:-2G}\" ./container_build/gradleBuild.sh" \
+    )
   elif [[ $# -eq 1 ]] && [[ "$1" = "MIGRATE" ]]; then
+    # Run the db migration against a running db instance
     # DB is in a sibling container so need to force it to use the IP instead of localhost
-    run_cmd=( "bash" "-c"  "pwd; export STROOM_JDBC_DRIVER_URL=\"jdbc:mysql://${host_ip}:3307/stroom?useUnicode=yes&characterEncoding=UTF-8\"; java -jar ./stroom-app/build/libs/stroom-app-all.jar migrate ./local.yml" )
+    run_cmd=( \
+      "bash" \
+      "-c"  \
+      "pwd; export STROOM_JDBC_DRIVER_URL=\"jdbc:mysql://${host_ip}:3307/stroom?useUnicode=yes&characterEncoding=UTF-8\"; java -jar ./stroom-app/build/libs/stroom-app-all.jar migrate ./local.yml" \
+    )
   else
-    run_cmd=( "bash" "-c" "$1" )
+    run_cmd=( \
+      "bash" \
+      "-c" \
+      "$1" \
+    )
   fi
 fi
 

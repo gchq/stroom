@@ -27,17 +27,10 @@ GRADLE_ARGS=(
   "--console=plain"
 )
 
-#GWT_ARGS=(
-  #"-PgwtCompilerWorkers=5"
-  #"-PgwtCompilerMinHeap=50M"
-  #"-PgwtCompilerMaxHeap=4G"
-#)
-
-# Sized for travis
 GWT_ARGS=(
   "-PgwtCompilerWorkers=${MAX_WORKERS:-6}"
-  "-PgwtCompilerMinHeap=50M"
-  "-PgwtCompilerMaxHeap=2G"
+  "-PgwtCompilerMinHeap=${GWT_MIN_HEAP:-50M}"
+  "-PgwtCompilerMaxHeap=${GWT_MAX_HEAP:-2G}"
 )
 
 determine_host_address() {
@@ -123,7 +116,6 @@ main() {
     "${GRADLE_ARGS[@]}" \
     --scan \
     --stacktrace \
-    "${GWT_ARGS[@]}" \
     stroom-ui:copyYarnBuild
 
   echo -e "${GREEN}Do the GWT UI build${NC}"
@@ -141,31 +133,6 @@ main() {
     --stacktrace \
     "${GWT_ARGS[@]}" \
     stroom-dashboard-gwt:gwtCompile
-
-  #echo -e "${GREEN}Do the yarn build${NC}"
-  #./gradlew \
-  #  "${GRADLE_ARGS[@]}" \
-  #  --scan \
-  #  --stacktrace \
-  #  stroom-ui:copyYarnBuild
-  #
-  ## Compile the application GWT UI
-  #echo -e "${GREEN}Do the GWT app compile${NC}"
-  #./gradlew \
-  #  "${GRADLE_ARGS[@]}" \
-  #  --scan \
-  #  --stacktrace \
-  #  "${GWT_ARGS[@]}" \
-  #  stroom-app-gwt:gwtCompile
-  #
-  ## Compile the dashboard GWT UI
-  #echo -e "${GREEN}Do the GWT dashboard compile${NC}"
-  #./gradlew \
-  #  "${GRADLE_ARGS[@]}" \
-  #  --scan \
-  #  --stacktrace \
-  #  "${GWT_ARGS[@]}" \
-  #  stroom-dashboard-gwt:gwtCompile
 
   # Make the distribution.
   echo -e "${GREEN}Build the distribution with version" \
