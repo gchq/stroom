@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **#2260** : The UI no longer caches node status. 
+* Issue **#2241** : Made Firefox and Chrome drop downs look the same.
+
+* Issue **#2260** : The UI no longer caches node status.
 
 * Issue **#2260** : Removed default node config for default index volume group creation.
 
