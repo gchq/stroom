@@ -19,6 +19,8 @@ LATEST_SUFFIX="-LATEST"
 # It is used to test which releases we push the swagger ui to ghpages for
 # As 7 is still in beta, this is currently 6.1
 CURRENT_STROOM_RELEASE_BRANCH="6.1"
+# The version of stroom-resources used for running the DB
+STROOM_RESOURCES_GIT_TAG="stroom-stacks-v7.0-beta.118"
 doDockerBuild=false
 STROOM_RESOURCES_DIR="${BUILD_DIR}/stroom-resources" 
 RELEASE_ARTEFACTS_DIR="${BUILD_DIR}/release_artefacts"
@@ -342,8 +344,10 @@ echo -e "BUILD_TAG:                     [${GREEN}${BUILD_TAG}${NC}]"
 echo -e "BUILD_IS_PULL_REQUEST:         [${GREEN}${BUILD_IS_PULL_REQUEST}${NC}]"
 echo -e "BUILD_VERSION:                 [${GREEN}${BUILD_VERSION}${NC}]"
 echo -e "CURRENT_STROOM_RELEASE_BRANCH: [${GREEN}${CURRENT_STROOM_RELEASE_BRANCH}${NC}]"
+echo -e "STROOM_RESOURCES_GIT_TAG:      [${GREEN}${STROOM_RESOURCES_GIT_TAG}${NC}]"
 echo -e "docker version:                [${GREEN}$(docker --version)${NC}]"
 echo -e "docker-compose version:        [${GREEN}$(docker-compose --version)${NC}]"
+echo -e "git version:                   [${GREEN}$(git --version)${NC}]"
 
 # Normal commit/PR/tag build
 extraBuildArgs=()

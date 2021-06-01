@@ -82,7 +82,6 @@ main() {
     export BUILD_IS_PULL_REQUEST="false" # ensures we do docker builds
     # To run with no tag use BUILD_TAG= ./travis.local_build.sh
     export BUILD_TAG="${BUILD_TAG=v7.0-dummy}" # Gets parsed and needs to be set to trigger aspects of the build
-    export STROOM_RESOURCES_GIT_TAG="stroom-stacks-v7.0-beta.118"
     export SKIP_TESTS="${SKIP_TESTS:-false}"
     export MAX_WORKERS="${MAX_WORKERS:-6}"
   }

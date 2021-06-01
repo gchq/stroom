@@ -69,11 +69,11 @@ jobs:
         echo "PWD:                      [$PWD]"
         echo "HOME:                     [$HOME]"
 
-    #- name: Run full build
-      #run: |
-        #pushd "${BUILD_DIR}" > /dev/null
-        #echo -e "${GREEN}Running ${BLUE}travis.script.sh${NC}"
-        #./travis.script.sh
-        #echo -e "${GREEN}Finished running build script${NC}"
+    - name: Run full build
+      run: |
+        pushd "${BUILD_DIR}" > /dev/null
+        echo -e "${GREEN}Running ${BLUE}travis.script.sh${NC}"
+        ./travis.script.sh
+        echo -e "${GREEN}Finished running build script${NC}"
 
 
