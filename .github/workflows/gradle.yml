@@ -6,6 +6,12 @@ on:
   pull_request:
     #branches: [ master ]
 
+env:
+  # Static env vars
+
+  # The version of stroom-resources used for running the DB
+  STROOM_RESOURCES_GIT_TAG:stroom-stacks-v7.0-beta.118
+
 jobs:
   build:
 
@@ -42,9 +48,6 @@ jobs:
           else
             echo "BUILD_IS_PULL_REQUEST=false"
           fi
-
-          # The version of stroom-resources used for running the DB
-          echo "STROOM_RESOURCES_GIT_TAG=stroom-stacks-v7.0-beta.118"
         } >> $GITHUB_ENV
 
         echo "git branch: [$(git rev-parse --abbrev-ref HEAD)]"

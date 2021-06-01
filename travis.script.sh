@@ -327,10 +327,10 @@ docker_logout() {
 # establish what version of stroom we are building
 if [ -n "$BUILD_TAG" ]; then
   # Tagged commit so use that as our stroom version, e.g. v6.0.0
-  STROOM_VERSION="${BUILD_TAG}"
+  BUILD_VERSION="${BUILD_TAG}"
 else
   # No tag so use the branch name as the version, e.g. dev
-  STROOM_VERSION="${BUILD_BRANCH}"
+  BUILD_VERSION="${BUILD_BRANCH}"
 fi
 
 # Dump all the env vars to the console for debugging
@@ -340,7 +340,7 @@ echo -e "BUILD_COMMIT:                  [${GREEN}${BUILD_COMMIT}${NC}]"
 echo -e "BUILD_BRANCH:                  [${GREEN}${BUILD_BRANCH}${NC}]"
 echo -e "BUILD_TAG:                     [${GREEN}${BUILD_TAG}${NC}]"
 echo -e "BUILD_IS_PULL_REQUEST:         [${GREEN}${BUILD_IS_PULL_REQUEST}${NC}]"
-echo -e "STROOM_VERSION:                [${GREEN}${STROOM_VERSION}${NC}]"
+echo -e "BUILD_VERSION:                 [${GREEN}${BUILD_VERSION}${NC}]"
 echo -e "CURRENT_STROOM_RELEASE_BRANCH: [${GREEN}${CURRENT_STROOM_RELEASE_BRANCH}${NC}]"
 echo -e "docker version:                [${GREEN}$(docker --version)${NC}]"
 echo -e "docker-compose version:        [${GREEN}$(docker-compose --version)${NC}]"
@@ -374,8 +374,9 @@ if [ -n "$BUILD_TAG" ]; then
     #extraBuildArgs+=("bintrayUpload")
   fi
 elif [[ "$BUILD_BRANCH" =~ $BRANCH_WHITELIST_REGEX ]]; then
+  # Not done for tagged builds
   # This is a branch we want to create a floating snapshot docker image for
-  SNAPSHOT_FLOATING_TAG="${STROOM_VERSION}-SNAPSHOT"
+  SNAPSHOT_FLOATING_TAG="${BUILD_VERSION}-SNAPSHOT"
   doDockerBuild=true
 fi
 
@@ -401,7 +402,7 @@ echo -e "${GREEN}Running all gradle builds with build version" \
 
 # Make this available to the gradle build which will get passed through
 # into the docker container
-export BUILD_VERSION="${STROOM_VERSION}"
+export BUILD_VERSION
 
 # MAX_WORKERS env var should be set in travis settings to controll max
 # gradle/gwt workers
