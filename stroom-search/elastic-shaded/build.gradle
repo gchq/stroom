@@ -26,7 +26,6 @@ task elasticShadowJar(type: ShadowJar) {
     configurations = [project.configurations.runtimeClasspath]
     zip64 true
     relocate 'org.apache.lucene', 'shadow.org.apache.lucene'
-    relocate 'org.apache.commons', 'shadow.org.apache.commons'
 
     mergeServiceFiles()
 }
