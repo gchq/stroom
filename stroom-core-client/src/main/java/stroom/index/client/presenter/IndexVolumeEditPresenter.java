@@ -25,7 +25,7 @@ import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolume.VolumeUseState;
 import stroom.index.shared.IndexVolumeResource;
 import stroom.item.client.ItemListBox;
-import stroom.node.client.NodeCache;
+import stroom.node.client.NodeManager;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -50,7 +50,7 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
 
 
     private final RestFactory restFactory;
-    private final NodeCache nodeCache;
+    private final NodeManager nodeManager;
 
     private IndexVolume volume;
 
@@ -58,14 +58,14 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
     public IndexVolumeEditPresenter(final EventBus eventBus,
                                     final IndexVolumeEditView view,
                                     final RestFactory restFactory,
-                                    final NodeCache nodeCache) {
+                                    final NodeManager nodeManager) {
         super(eventBus, view);
         this.restFactory = restFactory;
-        this.nodeCache = nodeCache;
+        this.nodeManager = nodeManager;
     }
 
     void show(final IndexVolume volume, final String caption, final Consumer<IndexVolume> consumer) {
-        nodeCache.listEnabledNodes(
+        nodeManager.listEnabledNodes(
                 nodeNames -> {
                     read(nodeNames, volume);
 

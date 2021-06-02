@@ -559,6 +559,16 @@ td {
 
 .gwt-ListBox {
 	padding: 0px;
+
+	/* Hide drop down arrow on Firefox */
+    -moz-appearance: none;
+    text-indent: 0.01px;
+    text-overflow: '';
+
+    /* Make Chrome and Firefox look the same */
+    -webkit-appearance: none;
+    background: transparent url("../images/drop-down.svg") no-repeat center right;
+    background-size: 12px;
 }
 
 .gwt-TextArea {

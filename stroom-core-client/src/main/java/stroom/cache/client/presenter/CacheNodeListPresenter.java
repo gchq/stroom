@@ -27,7 +27,7 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
-import stroom.node.client.NodeCache;
+import stroom.node.client.NodeManager;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -61,7 +61,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
 
     private final RestFactory restFactory;
     private final TooltipPresenter tooltipPresenter;
-    private final NodeCache nodeCache;
+    private final NodeManager nodeManager;
 
     private final Map<String, List<CacheInfo>> responseMap = new HashMap<>();
 
@@ -72,11 +72,11 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
     public CacheNodeListPresenter(final EventBus eventBus,
                                   final RestFactory restFactory,
                                   final TooltipPresenter tooltipPresenter,
-                                  final NodeCache nodeCache) {
+                                  final NodeManager nodeManager) {
         super(eventBus, new DataGridViewImpl<>(false));
         this.restFactory = restFactory;
         this.tooltipPresenter = tooltipPresenter;
-        this.nodeCache = nodeCache;
+        this.nodeManager = nodeManager;
 
         // Info.
         addInfoColumn();
@@ -180,9 +180,8 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
                     @Override
                     protected void exec(final Consumer<CacheInfoResponse> dataConsumer,
                                         final Consumer<Throwable> throwableConsumer) {
-                        nodeCache.listAllNodes(nodeNames -> {
-                            fetchTasksForNodes(dataConsumer, throwableConsumer, nodeNames);
-                        }, throwableConsumer);
+                        nodeManager.listAllNodes(nodeNames ->
+                                fetchTasksForNodes(dataConsumer, throwableConsumer, nodeNames), throwableConsumer);
                     }
                 };
                 dataProvider.addDataDisplay(getView().getDataDisplay());
