@@ -319,17 +319,17 @@ docker_login() {
   if [[ ! -n "${LOCAL_BUILD}" ]]; then
     # Docker login stores the creds in a file so check it to
     # see if we are already logged in
-    local dockerConfigFile="${HOME}/.docker/config.json"
-    if [[ -f "${dockerConfigFile}" ]] \
-      && grep -q "index.docker.io" "${dockerConfigFile}"; then
+    #local dockerConfigFile="${HOME}/.docker/config.json"
+    #if [[ -f "${dockerConfigFile}" ]] \
+      #&& grep -q "index.docker.io" "${dockerConfigFile}"; then
 
-      echo -e "Already logged into docker"
-    else
+      #echo -e "Already logged into docker"
+    #else
       echo -e "Logging in to Docker (if this fails, have you provided the docker creds)"
       echo "$DOCKER_PASSWORD" \
         | docker login -u "$DOCKER_USERNAME" --password-stdin >/dev/null 2>&1
       echo -e "Successfully logged in to docker"
-    fi
+    #fi
   else
     echo -e "${YELLOW}LOCAL_BUILD set so skipping docker login${NC}"
   fi
@@ -402,6 +402,7 @@ echo -e "BUILD_IS_PULL_REQUEST:         [${GREEN}${BUILD_IS_PULL_REQUEST}${NC}]"
 echo -e "BUILD_VERSION:                 [${GREEN}${BUILD_VERSION}${NC}]"
 echo -e "CURRENT_STROOM_RELEASE_BRANCH: [${GREEN}${CURRENT_STROOM_RELEASE_BRANCH}${NC}]"
 echo -e "STROOM_RESOURCES_GIT_TAG:      [${GREEN}${STROOM_RESOURCES_GIT_TAG}${NC}]"
+echo -e "LOCAL_BUILD:                   [${GREEN}${LOCAL_BUILD}${NC}]"
 echo -e "docker version:                [${GREEN}$(docker --version)${NC}]"
 echo -e "docker-compose version:        [${GREEN}$(docker-compose --version)${NC}]"
 echo -e "git version:                   [${GREEN}$(git --version)${NC}]"

@@ -58,17 +58,17 @@ docker_login() {
   if [[ ! -n "${LOCAL_BUILD}" ]]; then
     # Docker login stores the creds in a file so check it to
     # see if we are already logged in
-    local dockerConfigFile="${HOME}/.docker/config.json"
-    if [[ -f "${dockerConfigFile}" ]] \
-      && grep -q "index.docker.io" "${dockerConfigFile}"; then
+    #local dockerConfigFile="${HOME}/.docker/config.json"
+    #if [[ -f "${dockerConfigFile}" ]] \
+      #&& grep -q "index.docker.io" "${dockerConfigFile}"; then
 
-      echo -e "Already logged into docker"
-    else
+      #echo -e "Already logged into docker"
+    #else
       echo -e "Logging in to Docker (if this fails, have you provided the docker creds)"
       echo "$DOCKER_PASSWORD" \
         | docker login -u "$DOCKER_USERNAME" --password-stdin >/dev/null 2>&1
       echo -e "Successfully logged in to docker"
-    fi
+    #fi
   else
     echo -e "${YELLOW}LOCAL_BUILD set so skipping docker login${NC}"
   fi
