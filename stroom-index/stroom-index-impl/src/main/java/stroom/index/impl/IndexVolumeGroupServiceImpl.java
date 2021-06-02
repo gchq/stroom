@@ -163,7 +163,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
                                 if (!exists) {
                                     final List<String> paths = volumeConfig.getDefaultIndexVolumeGroupPaths();
                                     for (String path : paths) {
-                                            final Path resolvedPath = pathCreator.toAppPath(path);
+                                        final Path resolvedPath = pathCreator.toAppPath(path);
 
                                         LOGGER.info("Creating index volume with path {}",
                                                 resolvedPath.toAbsolutePath().normalize());
