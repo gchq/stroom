@@ -6,6 +6,7 @@ import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
 import stroom.data.store.impl.fs.shared.FsVolumeState;
 import stroom.docref.DocRef;
+import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.statistics.api.InternalStatisticEvent;
@@ -83,6 +84,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     private final Provider<EntityEventBus> entityEventBusProvider;
     private final PathCreator pathCreator;
     private final AtomicReference<VolumeList> currentVolumeList = new AtomicReference<>();
+    private final NodeInfo nodeInfo;
 
     private volatile boolean createdDefaultVolumes;
     private volatile boolean creatingDefaultVolumes;
@@ -95,7 +97,8 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                            final InternalStatisticsReceiver statisticsReceiver,
                            final ClusterLockService clusterLockService,
                            final Provider<EntityEventBus> entityEventBusProvider,
-                           final PathCreator pathCreator) {
+                           final PathCreator pathCreator,
+                           final NodeInfo nodeInfo) {
         this.fsVolumeDao = fsVolumeDao;
         this.fileSystemVolumeStateDao = fileSystemVolumeStateDao;
         this.securityContext = securityContext;
@@ -104,6 +107,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         this.clusterLockService = clusterLockService;
         this.entityEventBusProvider = entityEventBusProvider;
         this.pathCreator = pathCreator;
+        this.nodeInfo = nodeInfo;
     }
 
     private static void registerVolumeSelector(final FsVolumeSelector volumeSelector) {
@@ -378,6 +382,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                     .put("Id", String.valueOf(volume.getId()))
                     .put("Path", volume.getPath())
                     .put("Type", type)
+                    .put("Node", nodeInfo.getThisNodeName())
                     .build();
 
             InternalStatisticEvent event = InternalStatisticEvent.createValueStat(

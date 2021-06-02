@@ -104,7 +104,12 @@ public class IndexSettingsPresenter extends DocumentSettingsPresenter<IndexSetti
         index.setPartitionBy(getView().getPartitionBy());
         index.setPartitionSize(getView().getPartitionSize());
         index.setRetentionDayAge(getView().getRetentionAge().getSelectedItem().getDays());
-        index.setVolumeGroupName(getView().getVolumeGroups().getSelected());
+
+        String volumeGroupName = getView().getVolumeGroups().getSelected();
+        if (volumeGroupName != null && volumeGroupName.length() == 0) {
+            volumeGroupName = null;
+        }
+        index.setVolumeGroupName(volumeGroupName);
     }
 
     private void updateRetentionAge(final SupportedRetentionAge selected) {
@@ -125,6 +130,7 @@ public class IndexSettingsPresenter extends DocumentSettingsPresenter<IndexSetti
 
                     StringListBox listBox = getView().getVolumeGroups();
                     listBox.clear();
+                    listBox.addItem("");
                     listBox.addItems(volumeGroupNames);
                     if (selected != null && !selected.isEmpty()) {
                         listBox.setSelected(selected);

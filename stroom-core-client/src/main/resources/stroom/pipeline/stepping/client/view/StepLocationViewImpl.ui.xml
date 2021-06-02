@@ -3,11 +3,11 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
     <g:FlowPanel styleName="stepLocationViewImpl-layout">
         <g:HTML styleName="stepLocationViewImpl-html">[</g:HTML>
-        <g:HTML ui:field="lblStreamId" styleName="stepLocationViewImpl-label">&nbsp;-&nbsp;</g:HTML>
-        <g:TextBox ui:field="txtStreamId" styleName="stepLocationViewImpl-textBox" visible="false"/>
+        <g:HTML ui:field="lblMetaId" styleName="stepLocationViewImpl-label">&nbsp;-&nbsp;</g:HTML>
+        <g:TextBox ui:field="txtMetaId" styleName="stepLocationViewImpl-textBox" visible="false"/>
         <g:HTML styleName="stepLocationViewImpl-html">:</g:HTML>
-        <g:HTML ui:field="lblStreamNo" styleName="stepLocationViewImpl-label">&nbsp;-&nbsp;</g:HTML>
-        <g:TextBox ui:field="txtStreamNo" styleName="stepLocationViewImpl-textBox" visible="false"/>
+        <g:HTML ui:field="lblPartNo" styleName="stepLocationViewImpl-label">&nbsp;-&nbsp;</g:HTML>
+        <g:TextBox ui:field="txtPartNo" styleName="stepLocationViewImpl-textBox" visible="false"/>
         <g:HTML styleName="stepLocationViewImpl-html">:</g:HTML>
         <g:HTML ui:field="lblRecordNo" styleName="stepLocationViewImpl-label">&nbsp;-&nbsp;</g:HTML>
         <g:TextBox ui:field="txtRecordNo" styleName="stepLocationViewImpl-textBox" visible="false"/>

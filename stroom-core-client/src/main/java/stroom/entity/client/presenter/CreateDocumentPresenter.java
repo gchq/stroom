@@ -52,6 +52,7 @@ public class CreateDocumentPresenter
     private final EntityTreePresenter entityTreePresenter;
     private String docType;
     private String caption;
+    private String name = "";
     private boolean allowNullFolder;
     private Consumer<DocRef> newDocConsumer;
 
@@ -77,31 +78,15 @@ public class CreateDocumentPresenter
         newDocConsumer = event.getNewDocConsumer();
 
         entityTreePresenter.setSelectedItem(null);
-
-//        if (event.getCurrentParents() != null && event.getCurrentParents().size() > 0) {
-//            ExplorerNode folder = null;
-//            for (final ExplorerNode parent : event.getCurrentParents()) {
-//                if (folder == null && parent != null && parent instanceof EntityData
-//                        && Folder.DOCUMENT_TYPE.equals(parent.getType())) {
-//                    folder = parent;
-//                }
-//            }
-//
-//            if (folder != null) {
-//                entityTreePresenter.getSelectionModel().setSelected(folder, true);
-//            }
-//
-//            entityTreePresenter.reset(new HashSet<>(event.getCurrentParents()), 1);
-//        } else {
-//            entityTreePresenter.reset(null, 1);
-//        }
-
         entityTreePresenter.setSelectedItem(event.getSelected());
         entityTreePresenter.getModel().reset();
         entityTreePresenter.getModel().setEnsureVisible(event.getSelected());
         entityTreePresenter.getModel().refresh();
 
-        caption = "New " + event.getDocDisplayType();
+        caption = event.getDialogCaption();
+        if (event.getInitialDocName() != null) {
+            name = event.getInitialDocName();
+        }
         allowNullFolder = event.isAllowNullFolder();
 
         forceReveal();
@@ -109,7 +94,7 @@ public class CreateDocumentPresenter
 
     @Override
     protected void revealInParent() {
-        getView().setName("");
+        getView().setName(name);
         getView().setPermissionInheritance(PermissionInheritance.DESTINATION);
 
         final PopupSize popupSize = new PopupSize(350, 400, 350, 350, 2000, 2000, true);

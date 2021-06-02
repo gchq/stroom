@@ -16,11 +16,20 @@
 
 package stroom.widget.popup.client.view;
 
+import stroom.data.grid.client.Glass;
+
 import com.google.gwt.user.client.ui.PopupPanel;
 
 public abstract class AbstractPopupPanel extends PopupPanel implements Popup {
+    private final Glass dragGlass = new Glass(
+            "popupPanel-dragGlass",
+            "popupPanel-dragGlassVisible");
 
     public AbstractPopupPanel(final boolean autoHide, final boolean modal) {
         super(autoHide, modal);
+    }
+
+    public Glass getDragGlass() {
+        return dragGlass;
     }
 }

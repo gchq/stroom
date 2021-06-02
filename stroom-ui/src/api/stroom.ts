@@ -1063,7 +1063,7 @@ export interface FetchDataRequest {
   pipeline?: DocRef;
 
   /** @format int64 */
-  segmentCount?: number;
+  recordCount?: number;
   showAsHtml?: boolean;
   sourceLocation?: SourceLocation;
 }
@@ -2242,10 +2242,10 @@ export interface RangeLong {
 
 export interface Rec {
   /** @format int64 */
-  recordNo?: number;
+  metaId?: number;
 
   /** @format int64 */
-  streamId?: number;
+  recordIndex?: number;
 }
 
 export interface ReceiveDataRule {
@@ -2315,15 +2315,15 @@ export interface RefStoreEntry {
 }
 
 export interface RefStreamDefinition {
+  /** @format int64 */
+  partIndex?: number;
+
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   pipelineDocRef?: DocRef;
   pipelineVersion?: string;
 
   /** @format int64 */
   streamId?: number;
-
-  /** @format int64 */
-  streamNo?: number;
 }
 
 export interface ReferenceLoader {
@@ -2901,13 +2901,13 @@ export interface SourceLocation {
   highlight?: TextRange;
 
   /** @format int64 */
-  id?: number;
+  metaId?: number;
 
   /** @format int64 */
-  partNo?: number;
+  partIndex?: number;
 
   /** @format int64 */
-  segmentNo?: number;
+  recordIndex?: number;
   truncateToWholeLines?: boolean;
 }
 
@@ -2965,13 +2965,13 @@ export interface StatisticsDataSourceFieldChangeRequest {
 
 export interface StepLocation {
   /** @format int64 */
-  id?: number;
+  metaId?: number;
 
   /** @format int64 */
-  partNo?: number;
+  partIndex?: number;
 
   /** @format int64 */
-  recordNo?: number;
+  recordIndex?: number;
 }
 
 export interface SteppingFilterSettings {
@@ -3023,7 +3023,7 @@ export interface StoredQuery {
   version?: number;
 }
 
-export type StreamLocation = Location & { streamNo?: number };
+export type StreamLocation = Location & { partIndex?: number };
 
 export interface StringCriteria {
   caseInsensitive?: boolean;
@@ -3690,8 +3690,8 @@ export class HttpClient<SecurityDataType = unknown> {
       body: typeof body === "undefined" || body === null ? null : payloadFormatter(body),
     }).then(async (response) => {
       const r = response as HttpResponse<T, E>;
-      r.data = null as unknown as T;
-      r.error = null as unknown as E;
+      r.data = (null as unknown) as T;
+      r.error = (null as unknown) as E;
 
       const data = await response[format]()
         .then((data) => {

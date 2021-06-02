@@ -45,6 +45,7 @@ body,table td,select {
 	margin: 0;
 	padding: 2px 4px;
 	width: 100px;
+	height: 21px;
 	text-decoration: none;
 	cursor: pointer;
 	cursor: hand;
@@ -211,7 +212,7 @@ body,table td,select {
   background-color: #000;
   opacity: 0.4;
   filter: alpha(opacity=40);
-  z-index: 10;
+  z-index: 100;
 }
 
 .gwt-DialogBox {

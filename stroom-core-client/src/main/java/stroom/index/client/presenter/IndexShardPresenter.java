@@ -36,7 +36,7 @@ import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexResource;
 import stroom.index.shared.IndexShard;
-import stroom.node.client.NodeCache;
+import stroom.node.client.NodeManager;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
@@ -71,7 +71,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
 
     private final TooltipPresenter tooltipPresenter;
     private final RestFactory restFactory;
-    private final NodeCache nodeCache;
+    private final NodeManager nodeManager;
     private final ClientSecurityContext securityContext;
     private RestDataProvider<IndexShard, ResultPage<IndexShard>> dataProvider;
     private ResultPage<IndexShard> resultList = null;
@@ -88,12 +88,12 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     public IndexShardPresenter(final EventBus eventBus,
                                final TooltipPresenter tooltipPresenter,
                                final RestFactory restFactory,
-                               final NodeCache nodeCache,
+                               final NodeManager nodeManager,
                                final ClientSecurityContext securityContext) {
         super(eventBus, new DataGridViewImpl<>(false));
         this.tooltipPresenter = tooltipPresenter;
         this.restFactory = restFactory;
-        this.nodeCache = nodeCache;
+        this.nodeManager = nodeManager;
         this.securityContext = securityContext;
 
         if (securityContext.hasAppPermission(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION)) {
@@ -506,7 +506,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     }
 
     private void doFlush() {
-        nodeCache.listEnabledNodes(nodeNames -> nodeNames.forEach(nodeName -> {
+        nodeManager.listEnabledNodes(nodeNames -> nodeNames.forEach(nodeName -> {
             final Rest<Boolean> rest = restFactory.create();
             rest
                     .onSuccess(result -> refresh())
@@ -521,7 +521,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     }
 
     private void doDelete() {
-        nodeCache.listEnabledNodes(nodeNames -> nodeNames.forEach(nodeName -> {
+        nodeManager.listEnabledNodes(nodeNames -> nodeNames.forEach(nodeName -> {
             final Rest<Boolean> rest = restFactory.create();
             rest
                     .onSuccess(result -> refresh())

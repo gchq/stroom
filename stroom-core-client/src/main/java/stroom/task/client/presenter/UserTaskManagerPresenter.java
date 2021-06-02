@@ -19,7 +19,7 @@ package stroom.task.client.presenter;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
-import stroom.node.client.NodeCache;
+import stroom.node.client.NodeManager;
 import stroom.task.client.event.OpenTaskManagerEvent;
 import stroom.task.client.event.OpenUserTaskManagerHandler;
 import stroom.task.client.presenter.UserTaskManagerPresenter.UserTaskManagerProxy;
@@ -63,7 +63,7 @@ public class UserTaskManagerPresenter
 
     private final Provider<UserTaskPresenter> taskPresenterProvider;
     private final RestFactory restFactory;
-    private final NodeCache nodeCache;
+    private final NodeManager nodeManager;
     private final Map<TaskProgress, UserTaskPresenter> taskPresenterMap = new HashMap<>();
     private final Map<TaskId, TaskProgress> idMap = new HashMap<>();
     private final Set<TaskId> requestTaskKillSet = new HashSet<>();
@@ -83,11 +83,11 @@ public class UserTaskManagerPresenter
                                     final UserTaskManagerProxy proxy,
                                     final Provider<UserTaskPresenter> taskPresenterProvider,
                                     final RestFactory restFactory,
-                                    final NodeCache nodeCache) {
+                                    final NodeManager nodeManager) {
         super(eventBus, view, proxy);
         this.taskPresenterProvider = taskPresenterProvider;
         this.restFactory = restFactory;
-        this.nodeCache = nodeCache;
+        this.nodeManager = nodeManager;
 
         refreshTimer = new Timer() {
             @Override
@@ -124,7 +124,7 @@ public class UserTaskManagerPresenter
 
     private void refreshTaskStatus() {
         // Stop this refreshing more than once before the call returns.
-        nodeCache.listAllNodes(
+        nodeManager.listAllNodes(
                 this::refresh,
                 throwable -> {
                 });

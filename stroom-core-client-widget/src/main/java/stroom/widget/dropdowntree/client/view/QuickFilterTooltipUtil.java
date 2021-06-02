@@ -39,12 +39,13 @@ public class QuickFilterTooltipUtil {
                 (defaultFieldNames != null
                         ? defaultFieldNames + " "
                         : "") +
-                "with the characters input appearing anywhere (in order) in the matches.";
+                "where the values contain the text input.";
         // All this help content needs to match what happens in QuickFilterPredicateFactory
         final Builder builder = TooltipUtil.builder()
                 .addHeading(header)
                 .addBreak()
-                .addLine(description);
+                .addLine(description)
+                .addLine("Space is used to separate multiple terms, unless quoted, see examples.");
 
         // Add the supplied pre-amble
         if (preambleBuilder != null) {
@@ -59,28 +60,40 @@ public class QuickFilterTooltipUtil {
                     tableBuilder
                             .addHeaderRow("Example input", "Match type")
                             .addRow(TooltipUtil.fixedWidthText("abc"),
-                                    "Contains match. (default)")
+                                    "Default contains matching. (matches 'xxabcxx').")
                             .addRow(TooltipUtil.fixedWidthText("~abc"),
                                     "Characters anywhere (in order) matching (matches 'xxaxxbxxcxx').")
-                            .addRow(TooltipUtil.fixedWidthText("/abc"),
-                                    "Regular expression matching (matches 'xxabcxx').")
+                            .addRow(TooltipUtil.fixedWidthText("/ab.c"),
+                                    "Regular expression matching (matches 'xxabxcxx').")
                             .addRow(TooltipUtil.fixedWidthText("?ABC"),
                                     "Word boundary matching (matches 'AlphaBravoCharlie').")
-                            .addRow(TooltipUtil.fixedWidthText("^abc$"),
-                                    "Exact match (matches 'abc'.")
-                            .addRow(TooltipUtil.fixedWidthText("abc$"),
+                            .addRow(TooltipUtil.fixedWidthText("=abc"),
+                                    "Exact match (matches 'abc').")
+                            .addRow(TooltipUtil.fixedWidthText("$abc"),
                                     "Suffix match (matches 'xxxabc')")
                             .addRow(TooltipUtil.fixedWidthText("^abc"),
                                     "Prefix match (matches abcxxx').")
                             .addRow(TooltipUtil.fixedWidthText("!abc"),
-                                    "Negated match (matches 'xxx').");
+                                    "Negated match (does not match values containing 'abc'). " +
+                                            "Can be used with other match types, e.g. '!=abc'.");
 
                     if (fieldDefinitions != null && !fieldDefinitions.isEmpty()) {
-                        tableBuilder
-                                .addBlankRow()
-                                .addRow(
-                                        TooltipUtil.fixedWidthText("myfield:abc"),
-                                        "Named field matching (using above match types)");
+                        final List<String> qualifiedFields = fieldDefinitions.stream()
+                                .filter(filterFieldDefinition -> !filterFieldDefinition.isDefaultField())
+                                .map(FilterFieldDefinition::getFilterQualifier)
+                                .sorted()
+                                .collect(Collectors.toList());
+
+                        if (!qualifiedFields.isEmpty()) {
+                            tableBuilder
+                                    .addBlankRow()
+                                    .addRow(
+                                            TooltipUtil.fixedWidthText(""
+                                                    + qualifiedFields.get(0)
+                                                    + ":abc"),
+                                            "Named field matching (using above match types on field '"
+                                                    + qualifiedFields.get(0) + "').");
+                        }
                     }
 
                     return tableBuilder.build();
@@ -147,23 +160,55 @@ public class QuickFilterTooltipUtil {
     }
 
     private static void addFieldExamples(final List<FilterFieldDefinition> fieldDefinitions, final Builder builder) {
-        if (fieldDefinitions != null && !fieldDefinitions.isEmpty()) {
-            builder
-                    .addBreak()
-                    .addHeading("Examples:")
-                    .addTwoColTable(tableBuilder -> tableBuilder
+
+        builder
+                .addBreak()
+                .addHeading("Examples:")
+                .addTwoColTable(tableBuilder -> {
+                    tableBuilder
                             .addRow(
-                                    TooltipUtil.fixedWidthText("/abc type:^err"),
-                                    "Matches default field(s) with regex 'abc' and Type field with prefix 'err'")
-                            .addRow(
-                                    TooltipUtil.fixedWidthText("name:abc type:/(error|warn)"),
-                                    "Matches Name field which contains 'abc' and Type field which matches " +
-                                            "regex '(error|warn)'")
-                            .addRow(
-                                    TooltipUtil.fixedWidthText("name:?ABC type:!/error"),
-                                    "Matches Name field with word first letters A, B, C and Type field that " +
-                                            "doesn't match regex 'error'")
-                            .build());
-        }
+                                    TooltipUtil.fixedWidthText("abc \"d ef\""),
+                                    "Matches default field(s) with values containing 'abc' AND 'd ef'.");
+
+
+                    if (fieldDefinitions != null && !fieldDefinitions.isEmpty()) {
+
+                        final List<String> qualifiers = fieldDefinitions.stream()
+                                .filter(filterFieldDefinition -> !filterFieldDefinition.isDefaultField())
+                                .map(FilterFieldDefinition::getFilterQualifier)
+                                .sorted()
+                                .collect(Collectors.toList());
+
+                        if (qualifiers.size() == 1) {
+
+                            tableBuilder
+                                    .addRow(
+                                            TooltipUtil.fixedWidthText("/abc " + qualifiers.get(0) + ":^def"),
+                                            "Matches default field(s) with regex 'abc' " +
+                                                    "and " + qualifiers.get(0) + " field values that start with 'def'");
+                        } else if (qualifiers.size() > 1) {
+                            tableBuilder
+                                    .addRow(
+                                            TooltipUtil.fixedWidthText("/abc " + qualifiers.get(0) + ":^def"),
+                                            "Matches default field(s) with regex 'abc' " +
+                                                    "and " + qualifiers.get(0) + " field values that start with 'def'")
+                                    .addRow(
+                                            TooltipUtil.fixedWidthText(
+                                                    "\"" + qualifiers.get(0) + ":ab c\" "
+                                                            + qualifiers.get(1) + ":/(def|xyz)"),
+                                            "Matches " + qualifiers.get(0) + " field values which contain 'ab c' and "
+                                                    + qualifiers.get(1) + " field values which matches " +
+                                                    "regex '(def|xyz)'")
+                                    .addRow(
+                                            TooltipUtil.fixedWidthText("" + qualifiers.get(0) + ":?ABC "
+                                                    + qualifiers.get(1) + ":!/def"),
+                                            "Matches " + qualifiers.get(0)
+                                                    + " field values with word first letters A, B, C " +
+                                                    "and " + qualifiers.get(1) + " field values that " +
+                                                    "don't match regex 'def'");
+                        }
+                    }
+                    return tableBuilder.build();
+                });
     }
 }

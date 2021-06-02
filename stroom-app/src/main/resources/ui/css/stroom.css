@@ -602,6 +602,16 @@ input[type="file"] {
 
 .gwt-ListBox {
 	padding: 0px;
+
+	/* Hide drop down arrow on Firefox */
+    -moz-appearance: none;
+    text-indent: 0.01px;
+    text-overflow: '';
+
+    /* Make Chrome and Firefox look the same */
+    -webkit-appearance: none;
+    background: transparent url("../images/drop-down.svg") no-repeat center right;
+    background-size: 12px;
 }
 
 .gwt-TextArea {
@@ -738,4 +748,17 @@ input[type="file"] {
 .max {
     width: 100%;
     height: 100%;
+}
+
+.popupPanel-dragGlass {
+    position: absolute;
+    left: 0;
+    top: 0;
+	background-color: transparent;
+	visibility: hidden;
+	z-index: 5;
+}
+
+.popupPanel-dragGlassVisible {
+	visibility: visible;
 }

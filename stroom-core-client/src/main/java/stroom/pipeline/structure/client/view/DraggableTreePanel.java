@@ -86,12 +86,11 @@ public abstract class DraggableTreePanel<E> extends Composite implements HasCont
         reset();
 
         final Element element = event.getEventTarget().cast();
-        final String tagName = element.getTagName();
 
         // select and input elements steal focus and stop us receiving mouse up
         // events so ignore mouse down events on these so that we don't start
         // dragging items due to not catching the mouse up event.
-        if (!"SELECT".equalsIgnoreCase(tagName) && !"INPUT".equalsIgnoreCase(tagName)) {
+        if (validEvent(element)) {
             // Only allow the possibility of dragging if the mouse button is the
             // left button.
             if ((event.getButton() & NativeEvent.BUTTON_LEFT) != 0) {
@@ -112,9 +111,9 @@ public abstract class DraggableTreePanel<E> extends Composite implements HasCont
                     Event.setCapture(getElement());
                 }
             }
-
-            mouseDownElement = element;
         }
+
+        mouseDownElement = element;
     }
 
     private void onMouseUp(final Event event) {
@@ -132,12 +131,14 @@ public abstract class DraggableTreePanel<E> extends Composite implements HasCont
             // If the target is the same as the item on mouse down then select
             // the item.
             final Element element = event.getEventTarget().cast();
-            if (element == mouseDownElement) {
-                final Box<E> target = treePanel.getTargetBox(event, true);
-                if (target != null) {
-                    setSelected(target.getItem());
-                } else {
-                    setSelected(null);
+            if (validEvent(element)) {
+                if (element == mouseDownElement) {
+                    final Box<E> target = treePanel.getTargetBox(event, true);
+                    if (target != null) {
+                        setSelected(target.getItem());
+                    } else {
+                        setSelected(null);
+                    }
                 }
             }
         }
@@ -151,6 +152,17 @@ public abstract class DraggableTreePanel<E> extends Composite implements HasCont
         if ((event.getButton() & NativeEvent.BUTTON_RIGHT) != 0) {
             onContextMenu(event);
         }
+    }
+
+    private boolean validEvent(final Element element) {
+        final String tagName = element.getTagName();
+
+        // select and input elements steal focus and stop us receiving mouse up
+        // events so ignore mouse down events on these so that we don't start
+        // dragging items due to not catching the mouse up event.
+        return !"SELECT".equalsIgnoreCase(tagName) &&
+                !"OPTION".equalsIgnoreCase(tagName) &&
+                !"INPUT".equalsIgnoreCase(tagName);
     }
 
     private void onMouseMove(final Event event) {

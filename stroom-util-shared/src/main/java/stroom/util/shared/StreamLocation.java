@@ -25,32 +25,32 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.Comparator;
 import java.util.Objects;
 
-@JsonPropertyOrder({"streamNo", "lineNo", "colNo"})
+@JsonPropertyOrder({"partIndex", "lineNo", "colNo"})
 @JsonInclude(Include.NON_NULL)
 public class StreamLocation implements Location {
 
     private static final Comparator<StreamLocation> STREAM_LINE_COL_COMPARATOR = Comparator
-            .comparingLong(StreamLocation::getStreamNo)
+            .comparingLong(StreamLocation::getPartIndex)
             .thenComparing(LINE_COL_COMPARATOR);
 
     @JsonProperty
-    private final long streamNo;
+    private final long partIndex;
     @JsonProperty
     private final int lineNo;
     @JsonProperty
     private final int colNo;
 
     @JsonCreator
-    public StreamLocation(@JsonProperty("streamNo") final long streamNo,
+    public StreamLocation(@JsonProperty("partIndex") final long partIndex,
                           @JsonProperty("lineNo") final int lineNo,
                           @JsonProperty("colNo") final int colNo) {
-        this.streamNo = streamNo;
+        this.partIndex = partIndex;
         this.lineNo = lineNo;
         this.colNo = colNo;
     }
 
-    public long getStreamNo() {
-        return streamNo;
+    public long getPartIndex() {
+        return partIndex;
     }
 
     @Override
@@ -73,14 +73,14 @@ public class StreamLocation implements Location {
             return false;
         }
         final StreamLocation that = (StreamLocation) o;
-        return streamNo == that.streamNo &&
+        return partIndex == that.partIndex &&
                 lineNo == that.lineNo &&
                 colNo == that.colNo;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(streamNo, lineNo, colNo);
+        return Objects.hash(partIndex, lineNo, colNo);
     }
 
     @Override
@@ -98,7 +98,7 @@ public class StreamLocation implements Location {
 
     @Override
     public String toString() {
-        return streamNo +
+        return (partIndex + 1) +
                 ":" +
                 lineNo +
                 ":" +

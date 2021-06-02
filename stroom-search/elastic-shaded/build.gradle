@@ -1,23 +1,39 @@
 ext.moduleName = 'elastic.shaded'
 
-apply plugin: 'com.github.johnrengelman.shadow'
-apply plugin: 'java'
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
+apply plugin: 'java-library'
+
+configurations {
+    shadow {
+        canBeConsumed = true
+        canBeResolved = false
+        transitive = false
+    }
+}
 
 dependencies {
     implementation libs.elasticsearch_rest_high_level_client
     implementation libs.elasticsearch_rest_client
     implementation libs.elasticsearch
-    implementation libs.elasticsearch
+    implementation libs.elasticsearch_core
     implementation libs.httpcore
     implementation libs.http_client
 }
 
-shadowJar {
+task elasticShadowJar(type: ShadowJar) {
+    archiveClassifier = 'all'
+    configurations = [project.configurations.runtimeClasspath]
     zip64 true
-
-    relocate 'org.apache.lucene', 'elastic.org.apache.lucene'
+    relocate 'org.apache.lucene', 'shadow.org.apache.lucene'
 
     mergeServiceFiles()
 }
 
-tasks.build.dependsOn shadowJar
+artifacts {
+    shadow(elasticShadowJar.archiveFile) {
+        builtBy(elasticShadowJar)
+    }
+}
+
+tasks.build.dependsOn elasticShadowJar

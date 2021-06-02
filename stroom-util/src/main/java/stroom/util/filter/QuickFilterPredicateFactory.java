@@ -80,7 +80,7 @@ public class QuickFilterPredicateFactory {
             predicate = obj -> true;
         } else {
             // We have some qualified fields so parse them
-            final List<MatchToken> matchTokens = extractMatchTokens(userInput);
+            final List<MatchToken> matchTokens = extractMatchTokens(userInput, fieldMappers);
             LOGGER.trace("Parsed matchTokens {}", matchTokens);
 
             if (!matchTokens.isEmpty()) {
@@ -152,7 +152,7 @@ public class QuickFilterPredicateFactory {
                 outputStream = stream;
             }
         } else {
-            final List<MatchToken> matchTokens = extractMatchTokens(userInput);
+            final List<MatchToken> matchTokens = extractMatchTokens(userInput, fieldMappers);
             LOGGER.trace("Parsed matchTokens {}", matchTokens);
 
             final Map<MatchToken, Function<T, MatchInfo>> matchInfoEvaluators;
@@ -391,35 +391,57 @@ public class QuickFilterPredicateFactory {
         return defaultFieldMappers;
     }
 
-    static List<MatchToken> extractMatchTokens(final String userInput) {
+    static List<MatchToken> extractMatchTokens(final String userInput, final FilterFieldMappers<?> filterFieldMappers) {
         if (userInput == null || userInput.isBlank()) {
             return Collections.emptyList();
         } else {
-            final List<String> tokens = splitInput(userInput);
+            final List<String> parts = splitInput(userInput);
 
-            return tokens.stream()
-                    .map(token -> {
+            final List<MatchToken> tokens = parts.stream()
+                    .map(part -> {
                         try {
-                            if (token.contains(QUALIFIER_DELIMITER_STR)) {
-                                final String[] parts = QUALIFIER_DELIMITER_PATTERN.split(token);
-                                if (token.endsWith(QUALIFIER_DELIMITER_STR)) {
-                                    return new MatchToken(parts[0], "");
-                                } else if (token.startsWith(QUALIFIER_DELIMITER_STR)) {
-                                    throw new RuntimeException("Invalid token " + token);
+                            if (part.contains(QUALIFIER_DELIMITER_STR)) {
+                                final String[] subParts = QUALIFIER_DELIMITER_PATTERN.split(part);
+                                if (part.endsWith(QUALIFIER_DELIMITER_STR)) {
+                                    return new MatchToken(subParts[0], "");
+                                } else if (part.startsWith(QUALIFIER_DELIMITER_STR)) {
+                                    throw new RuntimeException("Invalid token " + part);
                                 } else {
-                                    return new MatchToken(parts[0], parts[1]);
+                                    return new MatchToken(subParts[0], subParts[1]);
                                 }
                             } else {
-                                return new MatchToken(null, token);
+                                return new MatchToken(null, part);
                             }
                         } catch (Exception e) {
                             // Probably due to the user not having finished typing yet
-                            LOGGER.trace("Unable to split [{}], due to {}", token, e.getMessage(), e);
+                            LOGGER.trace("Unable to split [{}], due to {}", part, e.getMessage(), e);
                             return null;
                         }
                     })
-                    .filter(Objects::nonNull)
                     .collect(Collectors.toList());
+
+            final boolean badInput = tokens.stream()
+                    .anyMatch(token -> {
+                        if (token == null) {
+                            LOGGER.trace("Null token");
+                            return true;
+                        } else if (token.isQualified() && !filterFieldMappers.hasField(token.qualifier)) {
+                            LOGGER.trace(() -> "Unknown qualifier '" + token.qualifier
+                                    + "'. Valid qualifiers: " + filterFieldMappers.getFieldQualifiers());
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    });
+
+            if (badInput) {
+                // Found some bad input so return no tokens
+                return Collections.emptyList();
+            } else {
+                return tokens.stream()
+                        .filter(token -> !token.isTermBlank()) // no point doing anything with 'name:'
+                        .collect(Collectors.toList());
+            }
         }
     }
 
@@ -503,7 +525,8 @@ public class QuickFilterPredicateFactory {
 
             if (!matchToken.isTermBlank()) {
                 if (!matchToken.isQualified()) {
-                    final Predicate<T> unqualifiedPredicate = createDefaultPredicate(matchToken.matchInput,
+                    final Predicate<T> unqualifiedPredicate = createDefaultPredicate(
+                            matchToken.matchInput,
                             fieldMappers);
                     compoundPredicate = andPredicates(compoundPredicate, unqualifiedPredicate);
                 } else {

@@ -702,9 +702,10 @@ public class DocumentPluginEventManager extends Plugin {
                 documentType.getDisplayType(), null, true, () ->
                 ShowCreateDocumentDialogEvent.fire(
                         DocumentPluginEventManager.this,
+                                "New " + documentType.getDisplayType(),
                         explorerNode,
                         documentType.getType(),
-                        documentType.getDisplayType(),
+                                "",
                         true,
                         newDocumentConsumer)
         );

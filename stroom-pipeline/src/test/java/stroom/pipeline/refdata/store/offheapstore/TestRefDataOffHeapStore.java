@@ -1077,7 +1077,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
      * @param keyValueMapCount          Number of KeyValue type maps to create per {@link RefStreamDefinition}
      * @param rangeValueMapCount        Number of RangeValue type maps to create per {@link RefStreamDefinition}
      * @param entryCount                Number of map entries to create per map
-     * @param refStreamDefinitionOffset The offset from zero for the refStreamDefinition streamNo
+     * @param refStreamDefinitionOffset The offset from zero for the refStreamDefinition partIndex
      * @return The created {@link RefStreamDefinition} objects
      */
     private List<RefStreamDefinition> loadBulkData(

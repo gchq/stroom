@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2241** : Changing field or operator in the query expression editor no longer deselects the selected row. 
+
+* Issue **#2241** : Made Firefox and Chrome drop downs look the same.
+
+* Issue **#2260** : The UI no longer caches node status.
+
+* Issue **#2260** : Removed default node config for default index volume group creation.
+
+* Issue **#1828** : Added glass element to ensure mouse capture is maintained when dragging or resizing dialogs over dashboard visualisations.
+
+* Issue **#2285** : SaveAs now provides the current name as the initial value for the new name.
+
+* Issue **#2275** : Stepping from data popup now takes you to the correct record.
+
+* Uplift send_to_stroom.sh script to v3.1.0
+
+* Issue **#2263** : Removed unnecessary JWS algorithm constraints.
+
+* Issue **#2240** : Indexes now show empty selection for volume group until one is selected.
+
+* Issue **#2248** : Migrated dashboard tables now maintain hidden column status.
+
+* Issue **#2280** : Remove trailing comma in some log events.
+
+* Issue **#2267** : Change prefixes used for quick filter for consistency.
+
+* Issue **#2265** : Fix exception when filtering with qualifier but no term, e.g. `name:`.
+
+* Issue **#2266** : Improve quick filter tooltip text.
+
+* Issue **#2261** : Fix missing node name in index and fs volume stats.
+
 * Issue **#2224** : Support indexing properties as JSON objects with Elasticsearch.
 
 * Issue **#2256** : Support searching against Elasticsearch index name patterns.
