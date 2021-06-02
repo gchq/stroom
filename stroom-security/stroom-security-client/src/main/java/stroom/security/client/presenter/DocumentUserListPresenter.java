@@ -36,7 +36,6 @@ public class DocumentUserListPresenter extends AbstractUserListPresenter {
     private static final DocPermissionResource DOC_PERMISSION_RESOURCE = GWT.create(DocPermissionResource.class);
 
     private List<User> userList;
-    private List<User> filteredUserList;
 
     private String filter;
     private final RestFactory restFactory;
@@ -48,19 +47,6 @@ public class DocumentUserListPresenter extends AbstractUserListPresenter {
         super(eventBus, userListView);
         this.restFactory = restFactory;
     }
-
-//    @Override
-//    protected void onBind() {
-//        super.onBind();
-//        registerHandler(getDataGridView().addDoubleClickHandler(new DoubleClickEvent.Handler() {
-//            @Override
-//            public void onDoubleClick(DoubleClickEvent event) {
-//                if (findUserCriteria != null && findUserCriteria.getRelatedUser() == null) {
-//                    HidePopupEvent.fire(DocumentUserListPresenter.this, DocumentUserListPresenter.this, false, true);
-//                }
-//            }
-//        }));
-//    }
 
     @Override
     public void changeNameFilter(String name) {

@@ -18,7 +18,9 @@ package stroom.security.identity.account;
 
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.security.api.ProcessingUserIdentityProvider;
+import stroom.security.shared.UserNameProvider;
 import stroom.util.RunnableWrapper;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
@@ -34,6 +36,9 @@ public final class AccountModule extends AbstractModule {
 
         bind(AccountService.class).to(AccountServiceImpl.class);
         bind(ProcessingUserIdentityProvider.class).to(ProcessingUserIdentityProviderImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), UserNameProvider.class)
+                .addBinding(AccountServiceImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(AccountResourceImpl.class);

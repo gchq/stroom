@@ -39,8 +39,14 @@ public class FolderPermissionsTabPresenter
                                          final DocumentUserListPresenter userListPresenter,
                                          final PermissionsListPresenter permissionsListPresenter,
                                          final PermissionsListPresenter createPermissionsListPresenter,
-                                         final Provider<AdvancedUserListPresenter> selectUserPresenterProvider) {
-        super(eventBus, view, userListPresenter, permissionsListPresenter, selectUserPresenterProvider);
+                                         final Provider<SelectGroupPresenter> selectUserPresenterProvider,
+                                         final Provider<SelectUserPresenter> userNameListPresenterProvider) {
+        super(eventBus,
+                view,
+                userListPresenter,
+                permissionsListPresenter,
+                selectUserPresenterProvider,
+                userNameListPresenterProvider);
         this.createPermissionsListPresenter = createPermissionsListPresenter;
         view.setCreatePermissionsView(createPermissionsListPresenter.getView());
     }

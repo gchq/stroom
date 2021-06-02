@@ -73,11 +73,6 @@ public abstract class AbstractUserListPresenter extends MyPresenterWidget<UserLi
         dataGridView.addEndColumn(new EndColumn<>());
     }
 
-//    public ImageButtonView addButton(final String title, final ImageResource enabledImage,
-//                                     final ImageResource disabledImage, final boolean enabled) {
-//        return dataGridView.addButton(title, enabledImage, disabledImage, enabled);
-//    }
-
     public ButtonView addButton(final SvgPreset preset) {
         return dataGridView.addButton(preset);
     }

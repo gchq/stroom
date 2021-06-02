@@ -7191,6 +7191,36 @@
         "tags" : [ "Api Keys" ]
       }
     },
+    "/userNames/v1/find" : {
+      "post" : {
+        "operationId" : "findUserNames",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FindUserNameCriteria"
+              }
+            }
+          },
+          "description" : "criteria",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResultPageString"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Find the user names matching the supplied criteria",
+        "tags" : [ "Authorisation" ]
+      }
+    },
     "/users/v1" : {
       "get" : {
         "operationId" : "findUsers",
@@ -10394,6 +10424,27 @@
           }
         }
       },
+      "FindUserNameCriteria" : {
+        "type" : "object",
+        "properties" : {
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          },
+          "quickFilterInput" : {
+            "type" : "string"
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
+            }
+          }
+        }
+      },
       "FlatResult" : {
         "type" : "object",
         "allOf" : [ {
@@ -12875,6 +12926,21 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/StoredQuery"
+            }
+          }
+        }
+      },
+      "ResultPageString" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
             }
           }
         }

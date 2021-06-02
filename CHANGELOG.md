@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* No changes, fixing build process.
+* Issue **#2264** : Users for user permissions are now retrieved from the account service plus authorisation.
 
 
 ## [v7.0-beta.121] - 2021-06-02

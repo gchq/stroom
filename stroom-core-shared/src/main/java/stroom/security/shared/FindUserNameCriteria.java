@@ -33,70 +33,31 @@ import java.util.List;
  * Criteria class.
  */
 @JsonInclude(Include.NON_NULL)
-public class FindUserCriteria extends BaseCriteria {
+public class FindUserNameCriteria extends BaseCriteria {
 
     public static final String FIELD_NAME = "Name";
-    public static final String FIELD_STATUS = "Status";
-    public static final String FIELD_LAST_LOGIN = "Last Login";
 
     public static final FilterFieldDefinition FIELD_DEF_NAME = FilterFieldDefinition.defaultField(FIELD_NAME);
 
     public static final List<FilterFieldDefinition> FILTER_FIELD_DEFINITIONS = Collections.singletonList(
             FIELD_DEF_NAME);
 
-    /**
-     * Find user groups
-     */
-    @JsonProperty
-    private boolean group;
-    @JsonProperty
-    private User relatedUser;
     @JsonProperty
     private String quickFilterInput;
 
-    public FindUserCriteria() {
+    public FindUserNameCriteria() {
     }
 
-    public FindUserCriteria(final String quickFilterInput, final boolean group) {
+    public FindUserNameCriteria(final String quickFilterInput) {
         this.quickFilterInput = quickFilterInput;
-        this.group = group;
     }
 
     @JsonCreator
-    public FindUserCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
-                            @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
-                            @JsonProperty("quickFilterInput") final String quickFilterInput,
-//                            @JsonProperty("requiredPermission") final String requiredPermission,
-                            @JsonProperty("group") final boolean group,
-                            @JsonProperty("relatedUser") final User relatedUser) {
+    public FindUserNameCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
+                                @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
+                                @JsonProperty("quickFilterInput") final String quickFilterInput) {
         super(pageRequest, sortList);
-        this.group = group;
-        this.relatedUser = relatedUser;
         this.quickFilterInput = quickFilterInput;
-    }
-
-    public FindUserCriteria(final Boolean group) {
-        this.group = group;
-    }
-
-    public FindUserCriteria(final User relatedUser) {
-        this.relatedUser = relatedUser;
-    }
-
-    public boolean isGroup() {
-        return group;
-    }
-
-    public void setGroup(final boolean group) {
-        this.group = group;
-    }
-
-    public User getRelatedUser() {
-        return relatedUser;
-    }
-
-    public void setRelatedUser(User relatedUser) {
-        this.relatedUser = relatedUser;
     }
 
     public String getQuickFilterInput() {
