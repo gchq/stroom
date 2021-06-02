@@ -102,6 +102,8 @@ jobs:
             args+=("--prerelease")
           fi
 
+          git tag --list "${BUILD_TAG}" --format='%(contents:subject)%0a%0a%(contents:body)'
+
           echo "Creating release with assets"
           # Use the subject/body from the annotated git tag
           git tag \
