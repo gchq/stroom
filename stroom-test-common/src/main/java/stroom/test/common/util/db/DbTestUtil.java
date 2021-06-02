@@ -36,9 +36,12 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.sql.DataSource;
@@ -93,6 +96,21 @@ public class DbTestUtil {
         return createTestDataSource(new CommonDbConfig());
     }
 
+    private static <T> T getValueOrOverride(final String envVarName,
+                                            final String propName,
+                                            final Supplier<T> valueSupplier,
+                                            final Function<String, T> typeMapper) {
+        return Optional.ofNullable(System.getenv(envVarName))
+                .map(envVarVal -> {
+                    LOGGER.info("Overriding prop {} with value [{}] from {}",
+                            propName,
+                            envVarVal,
+                            envVarName);
+                    return typeMapper.apply(envVarVal);
+                })
+                .orElseGet(valueSupplier);
+    }
+
     public static DataSource createTestDataSource(final DbConfig dbConfig) {
         // See if we have a local data source.
         DataSource dataSource = THREAD_LOCAL.get();
@@ -112,11 +130,25 @@ public class DbTestUtil {
 
             } else {
                 final DbUrl dbUrl = DbUrl.parse(connectionConfig.getUrl());
+
+                // Allow the db conn details to be overridden with env vars, e.g. when we want to run tests
+                // from within a container so we need a different host to localhost
+                final String effectiveHost = getValueOrOverride(
+                        "STROOM_JDBC_DRIVER_HOST",
+                        "JDBC hostname",
+                        dbUrl::getHost,
+                        Function.identity());
+                final int effectivePort = getValueOrOverride(
+                        "STROOM_JDBC_DRIVER_PORT",
+                        "JDBC port",
+                        dbUrl::getPort,
+                        Integer::parseInt);
+
                 final String url = DbUrl
                         .builder()
                         .scheme(dbUrl.getScheme())
-                        .host(dbUrl.getHost())
-                        .port(dbUrl.getPort())
+                        .host(effectiveHost)
+                        .port(effectivePort)
                         .build()
                         .toString();
 
@@ -132,6 +164,8 @@ public class DbTestUtil {
             final Properties connectionProps = new Properties();
             connectionProps.put("user", rootConnectionConfig.getUser());
             connectionProps.put("password", rootConnectionConfig.getPassword());
+
+            LOGGER.info("Connecting to DB as root connection with URL: " + rootConnectionConfig.getUrl());
 
             final String dbName = DbTestUtil.createTestDbName();
             try (final Connection connection = DriverManager.getConnection(rootConnectionConfig.getUrl(),
@@ -158,10 +192,12 @@ public class DbTestUtil {
                     .build()
                     .toString();
 
+
             final ConnectionConfig newConnectionConfig = connectionConfig
                     .copy()
                     .url(url)
                     .build();
+            LOGGER.info("Using DB connection url: {}", url);
             dbConfig.setConnectionConfig(newConnectionConfig);
 
             final HikariConfig hikariConfig = HikariUtil.createConfig(dbConfig);
