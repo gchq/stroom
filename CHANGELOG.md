@@ -7,10 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* No changes, fixing build process.
+
 
 ## [v7.0-beta.123] - 2021-06-02
 
-* Fix borken test
+* Fix broken test
 
 
 ## [v7.0-beta.122] - 2021-06-02
