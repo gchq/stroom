@@ -51,7 +51,7 @@ main() {
   # DEPLOY_TOKEN is a github personal access token.  GITHUB_TOKEN won't work
   # for gh-pages aparantly
   # DO NOT echo this variable as it has a token in it !!!!!!!
-  local repo_uri="https://x-access-token:${DEPLOY_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+  local repo_uri="https://${DEPLOY_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
   local remote_name="origin"
   local gh_pages_branch="gh-pages"
   # Dir where we clone the gh-pages branch down to
