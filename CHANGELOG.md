@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fix borken test
+
 
 ## [v7.0-beta.122] - 2021-06-02
 
