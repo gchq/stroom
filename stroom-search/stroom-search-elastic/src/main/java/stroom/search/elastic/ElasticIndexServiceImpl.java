@@ -70,7 +70,6 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
 
         return fieldMappings.entrySet().stream()
                 .map(field -> {
-                    final String fieldName = field.getKey();
                     final FieldMappingMetadata fieldMeta = field.getValue();
                     final Optional<Entry<String, Object>> firstFieldEntry = fieldMeta.sourceAsMap().entrySet().stream().findFirst();
 
@@ -82,6 +81,11 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
                             @SuppressWarnings("unchecked") // Need to get at the nested properties, which is always a map
                             final Map<String, Object> propertiesMap = (Map<String, Object>) properties;
                             final String nativeType = (String) propertiesMap.get("type");
+
+                            // If field type is null, this is a system field, so ignore
+                            if (nativeType == null) {
+                                return null;
+                            }
 
                             try {
                                 final ElasticIndexFieldType elasticFieldType = ElasticIndexFieldType.fromNativeType(fullName, nativeType);
@@ -132,13 +136,16 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
                         final boolean sourceFieldEnabled = sourceFieldIsEnabled(fieldMappings);
                         final boolean stored = fieldIsStored(key, fieldMeta);
 
-                        fieldsMap.put(fieldName, new ElasticIndexField(
-                                ElasticIndexFieldType.fromNativeType(fieldName, fieldType),
-                                fieldName,
-                                fieldType,
-                                sourceFieldEnabled || stored,
-                                true
-                        ));
+                        // If field type is null, this is a system field, so ignore
+                        if (fieldType != null) {
+                            fieldsMap.put(fieldName, new ElasticIndexField(
+                                    ElasticIndexFieldType.fromNativeType(fieldName, fieldType),
+                                    fieldName,
+                                    fieldType,
+                                    sourceFieldEnabled || stored,
+                                    true
+                            ));
+                        }
                     }
                     catch (Exception e) {
                         LOGGER.error(e::getMessage, e);
