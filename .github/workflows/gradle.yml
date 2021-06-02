@@ -65,7 +65,6 @@ jobs:
           echo "BUILD_BRANCH:             [$BUILD_BRANCH]"
           echo "BUILD_COMMIT:             [$BUILD_COMMIT]"
           echo "BUILD_IS_PULL_REQUEST:    [$BUILD_IS_PULL_REQUEST]"
-          echo "STROOM_RESOURCES_GIT_TAG: [$STROOM_RESOURCES_GIT_TAG]"
           echo "PWD:                      [$PWD]"
           echo "HOME:                     [$HOME]"
 
