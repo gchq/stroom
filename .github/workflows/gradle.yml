@@ -101,11 +101,18 @@ jobs:
             echo "Release is a pre-release"
             args+=("--prerelease")
           fi
-          echo "Creating release with assets"
-          # hub release create "${args[@]}" -m "$BUILD_TAG" "$BUILD_TAG"
-          # Assuming the release text will come from the tag?
 
-          hub release create "${args[@]}" "$BUILD_TAG"
+          echo "Creating release with assets"
+          # Use the subject/body from the annotated git tag
+          git tag \
+              --list ${BUILD_TAG} \
+              --format='%(contents:subject)%0a%0a%(contents:body)' \
+            | hub release create \
+                -F- \
+                "${args[@]}" \
+                ${BUILD_TAG}
+
+          #hub release create "${args[@]}" "$BUILD_TAG"
           echo "Release created"
 
       - name: Update gh-pages
