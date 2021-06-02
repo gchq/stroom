@@ -47,7 +47,7 @@ public class ElasticSearchFactory {
                        final Receiver receiver,
                        final TaskContext taskContext,
                        final AtomicLong hitCount,
-                       final HasTerminate hasTerminate) {
+                       final HasTerminate hasTerminate, final ElasticSearchResultCollector resultCollector) {
         // Reload the index.
         final ElasticIndex index = task.getElasticIndex();
 
@@ -61,7 +61,7 @@ public class ElasticSearchFactory {
         final QueryBuilder queryBuilder = getQuery(expression, indexFieldsMap, task.getDateTimeLocale(), task.getNow());
 
         final Tracker tracker = new Tracker(hitCount);
-        final ElasticSearchTask elasticSearchTask = new ElasticSearchTask(index, queryBuilder, task.getStoredFields(), receiver, tracker);
+        final ElasticSearchTask elasticSearchTask = new ElasticSearchTask(index, queryBuilder, task.getStoredFields(), receiver, tracker, resultCollector);
         elasticSearchTaskHandler.exec(elasticSearchTask);
 
         // Wait until we finish.

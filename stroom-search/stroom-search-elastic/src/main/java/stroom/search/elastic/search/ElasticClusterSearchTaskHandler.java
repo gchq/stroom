@@ -20,6 +20,7 @@ package stroom.search.elastic.search;
 import stroom.annotation.api.AnnotationDataSource;
 import stroom.pipeline.server.errorhandler.MessageUtil;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.Query;
 import stroom.query.common.v2.CompletionState;
 import stroom.search.coprocessor.Coprocessors;
 import stroom.search.coprocessor.CoprocessorsFactory;
@@ -82,8 +83,8 @@ class ElasticClusterSearchTaskHandler implements Consumer<Error> {
         this.securityContext = securityContext;
     }
 
-    public void exec(final ElasticClusterSearchTask task, final TaskCallback<NodeResult> callback) {
-        final Consumer<NodeResult> resultConsumer = callback::onSuccess;
+    public void exec(final ElasticClusterSearchTask task, final ElasticSearchResultCollector resultCollector) {
+        final Consumer<NodeResult> resultConsumer = resultCollector::onSuccess;
         CompletionState sendingDataCompletionState = new CompletionState();
         sendingDataCompletionState.complete();
 
@@ -117,11 +118,11 @@ class ElasticClusterSearchTaskHandler implements Consumer<Error> {
                         sendingDataCompletionState = resultSender.sendData(coprocessors, resultConsumer, frequency, searchCompletionState, errors);
 
                         // Start searching.
-                        search(task, query, coprocessors);
+                        search(task, query, coprocessors, resultCollector);
                     }
                 } catch (final RuntimeException e) {
                     try {
-                        callback.onFailure(e);
+                        resultCollector.onFailure(e);
                     } catch (final RuntimeException e2) {
                         // If we failed to send the result or the source node rejected the result because the source task has been terminated then terminate the task.
                         LOGGER.info(() -> "Terminating search because we were unable to send result");
@@ -150,8 +151,9 @@ class ElasticClusterSearchTaskHandler implements Consumer<Error> {
     }
 
     private void search(final ElasticClusterSearchTask task,
-                        final stroom.query.api.v2.Query query,
-                        final Coprocessors coprocessors) {
+                        final Query query,
+                        final Coprocessors coprocessors,
+                        final ElasticSearchResultCollector resultCollector) {
         taskContext.info("Searching...");
         LOGGER.debug(() -> "Incoming search request:\n" + query.getExpression().toString());
 
@@ -167,7 +169,8 @@ class ElasticClusterSearchTaskHandler implements Consumer<Error> {
                     .build();
             final ExpressionOperator expression = expressionFilter.copy(task.getQuery().getExpression());
             final AtomicLong hitCount = new AtomicLong();
-            elasticSearchFactory.search(task, expression, extractionReceiver, taskContext, hitCount, hasTerminate);
+            elasticSearchFactory.search(task, expression, extractionReceiver, taskContext, hitCount, hasTerminate,
+                    resultCollector);
 
             // Wait for search completion.
             boolean allComplete = false;

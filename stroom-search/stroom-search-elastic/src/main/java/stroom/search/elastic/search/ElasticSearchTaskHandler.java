@@ -29,6 +29,7 @@ import stroom.search.elastic.ElasticClusterStore;
 import stroom.search.elastic.shared.ElasticCluster;
 import stroom.search.elastic.shared.ElasticConnectionConfig;
 import stroom.search.elastic.shared.ElasticIndex;
+import stroom.search.extraction.ExtractionReceiver;
 import stroom.task.server.TaskContext;
 import stroom.util.concurrent.ExecutorProvider;
 import stroom.util.concurrent.ThreadPoolImpl;
@@ -60,6 +61,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 @Component
@@ -170,7 +172,8 @@ public class ElasticSearchTaskHandler {
                 processBatch(task, searchHits);
 
                 // Continue requesting results until we have all results
-                while (searchHits != null && searchHits.length > 0) {
+                final int maxResultSize = task.getResultCollector().getMaxResultSizes().size(0);
+                while (searchHits != null && searchHits.length > 0 && task.getTracker().getHitCount() < maxResultSize) {
                     SearchScrollRequest scrollRequest = new SearchScrollRequest(scrollId);
                     scrollRequest.scroll(scroll);
                     searchResponse = elasticClient.scroll(scrollRequest, RequestOptions.DEFAULT);
