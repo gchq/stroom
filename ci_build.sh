@@ -44,6 +44,7 @@ LATEST_SUFFIX="-LATEST"
 CURRENT_STROOM_RELEASE_BRANCH="6.1"
 # The version of stroom-resources used for running the DB
 STROOM_RESOURCES_GIT_TAG="stroom-stacks-v7.0-beta.118"
+SWAGGER_UI_GIT_TAG="v3.49.0"
 doDockerBuild=false
 STROOM_RESOURCES_DIR="${BUILD_DIR}/stroom-resources" 
 RELEASE_ARTEFACTS_DIR="${BUILD_DIR}/release_artefacts"
