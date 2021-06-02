@@ -345,6 +345,39 @@ docker_logout() {
   fi
 }
 
+copy_swagger_ui_content() {
+  ghPagesDir=$BUILD_DIR/gh-pages
+  swaggerUiCloneDir=$BUILD_DIR/swagger-ui
+  mkdir -p "${ghPagesDir}"
+  echo "Copying swagger-ui to ${ghPagesDir}"
+  # copy our generated swagger specs to gh-pages
+  cp \
+    "${BUILD_DIR}"/stroom-app/src/main/resources/ui/swagger/swagger.* \
+    "${ghPagesDir}/"
+  # clone swagger-ui repo so we can get the ui html/js/etc
+
+  echo "Cloning swagger UI"
+  git clone \
+    --depth 1 \
+    --branch "${SWAGGER_UI_GIT_TAG}" \
+    --single-branch \
+    https://github.com/swagger-api/swagger-ui.git \
+    "${swaggerUiCloneDir}"
+
+  # copy the bits of swagger-ui that we need
+  echo "Copying swagger UI distribution to ${ghPagesDir}"
+  cp \
+    -r \
+    "${swaggerUiCloneDir}"/dist/* \
+    "${ghPagesDir}"/
+
+  # repalce the default swagger spec url in swagger UI
+  sed \
+    -i \
+    's#url: ".*"#url: "https://gchq.github.io/stroom/swagger.json"#g' \
+    "${ghPagesDir}/index.html"
+}
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Script proper starts here
@@ -375,8 +408,17 @@ echo -e "git version:                   [${GREEN}$(git --version)${NC}]"
 
 # Normal commit/PR/tag build
 extraBuildArgs=()
+allDockerTags=()
 
-if [ -n "$BUILD_TAG" ]; then
+if [ "$BUILD_IS_PULL_REQUEST" = "true" ]; then
+  # Pull request so no build required
+  doDockerBuild=false
+elif [ -n "$BUILD_TAG" ]; then
+  # Tagged release so we want docker builds
+  # If tag is v7.1.2 then we want the following docker tags
+  # v7.1.2 (fixed tag)
+  # v7.1-LATEST (floating tag)
+  # v7-LATEST (floating tag)
   doDockerBuild=true
 
   # This is a tagged commit, so create a docker image with that tag
@@ -394,6 +436,17 @@ if [ -n "$BUILD_TAG" ]; then
     MINOR_VER_FLOATING_TAG="${minorVer}${LATEST_SUFFIX}"
   fi
 
+  # TODO - the major and minor floating tags assume that the release
+  # builds are all done in strict sequence If say the build for v6.0.1 is
+  # re-run after the build for v6.0.2 has run then v6.0-LATEST will point
+  # to v6.0.1 which is incorrect, hopefully this course of events is
+  # unlikely to happen
+  allDockerTags=( \
+    "${VERSION_FIXED_TAG}" \
+    "${MAJOR_VER_FLOATING_TAG}" \
+    "${MINOR_VER_FLOATING_TAG}" \
+  )
+
   if [[ "$BUILD_TAG" =~ ${RELEASE_VERSION_REGEX} ]]; then
     echo "This is a release version so add gradle arg for publishing" \
       "libs to Maven Central"
@@ -402,10 +455,15 @@ if [ -n "$BUILD_TAG" ]; then
     #extraBuildArgs+=("bintrayUpload")
   fi
 elif [[ "$BUILD_BRANCH" =~ $BRANCH_WHITELIST_REGEX ]]; then
-  # Not done for tagged builds
+  # Not a tagged release but is a whitelisted branch so create a snapshot
+  # docker tag, e.g. 7.0-SNAPSHOT
   # This is a branch we want to create a floating snapshot docker image for
-  SNAPSHOT_FLOATING_TAG="${BUILD_VERSION}-SNAPSHOT"
+  SNAPSHOT_FLOATING_TAG="${BUILD_BRANCH}-SNAPSHOT"
   doDockerBuild=true
+
+  allDockerTags=( \
+    "${SNAPSHOT_FLOATING_TAG}" \
+  )
 fi
 
 echo -e "VERSION FIXED DOCKER TAG:      [${GREEN}${VERSION_FIXED_TAG}${NC}]"
@@ -429,26 +487,15 @@ echo -e "${GREEN}Running all gradle builds with build version" \
   "${BLUE}${BUILD_VERSION}${NC}"
 
 # Make this available to the gradle build which will get passed through
-# into the docker container
+# into the docker containers
 export BUILD_VERSION
 
-# MAX_WORKERS env var should be set in travis settings to controll max
-# gradle/gwt workers
+# MAX_WORKERS env var should be set in travis/github actions settings to
+# control max gradle/gwt workers
 ./container_build/runInJavaDocker.sh GRADLE_BUILD
 
 # Don't do a docker build for pull requests
-if [ "$doDockerBuild" = true ] && [ "$BUILD_IS_PULL_REQUEST" = "false" ] ; then
-  # TODO - the major and minor floating tags assume that the release
-  # builds are all done in strict sequence If say the build for v6.0.1 is
-  # re-run after the build for v6.0.2 has run then v6.0-LATEST will point
-  # to v6.0.1 which is incorrect, hopefully this course of events is
-  # unlikely to happen
-  allDockerTags=( \
-    "${VERSION_FIXED_TAG}" \
-    "${SNAPSHOT_FLOATING_TAG}" \
-    "${MAJOR_VER_FLOATING_TAG}" \
-    "${MINOR_VER_FLOATING_TAG}" \
-  )
+if [ "$doDockerBuild" = true ]; then
 
   # build and release stroom image to dockerhub
   releaseToDockerHub \
@@ -461,46 +508,18 @@ if [ "$doDockerBuild" = true ] && [ "$BUILD_IS_PULL_REQUEST" = "false" ] ; then
     "${STROOM_PROXY_DOCKER_REPO}" \
     "${STROOM_PROXY_DOCKER_CONTEXT_ROOT}" \
     "${allDockerTags[@]}"
+fi
 
+# If it is a tagged build copy all the files needed for the github release
+# artefacts
+if [ -n "$BUILD_TAG" ]; then
+  copy_swagger_ui_content
 
-  # Deploy the generated swagger specs and swagger UI (obtained from github)
-  # to gh-pages
-  if [ "$BUILD_BRANCH" = "${CURRENT_STROOM_RELEASE_BRANCH}" ]; then
-    echo "Copying swagger-ui to gh-pages dir"
-    ghPagesDir=$BUILD_DIR/gh-pages
-    swaggerUiCloneDir=$BUILD_DIR/swagger-ui
-    mkdir -p "${ghPagesDir}"
-    # copy our generated swagger specs to gh-pages
-    cp \
-      "${BUILD_DIR}"/stroom-app/src/main/resources/ui/swagger/swagger.* \
-      "${ghPagesDir}/"
-    # clone swagger-ui repo so we can get the ui html/js/etc
+  generate_ddl_dump
 
-    git clone \
-      --depth 1 \
-      --branch "${SWAGGER_UI_GIT_TAG}" \
-      --single-branch \
-      https://github.com/swagger-api/swagger-ui.git \
-      "${swaggerUiCloneDir}"
+  generate_entity_rel_diagram
 
-    # copy the bits of swagger-ui that we need
-    cp -r "${swaggerUiCloneDir}"/dist/* "${ghPagesDir}"/
-    # repalce the default swagger spec url in swagger UI
-    sed \
-      -i \
-      's#url: ".*"#url: "https://gchq.github.io/stroom/swagger.json"#g' \
-      "${ghPagesDir}/index.html"
-  fi
-
-  # If it is a tagged build copy all the files needed for the github release
-  # artefacts
-  if [ -n "$BUILD_TAG" ]; then
-    generate_ddl_dump
-
-    generate_entity_rel_diagram
-
-    gather_release_artefacts
-  fi
+  gather_release_artefacts
 fi
 
 docker_logout
@@ -508,4 +527,3 @@ docker_logout
 exit 0
 
 # vim:sw=2:ts=2:et:
-
