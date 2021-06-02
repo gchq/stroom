@@ -1,5 +1,28 @@
 #!/bin/bash
 
+# This is the CI build script that is run by travis/Github and does the following:
+# * Start up a DB to run tests against
+# * Compile the app and run all the tests
+# * Build the app jars and distribution zips
+# * Build the docker images
+# If this is a push on a release branch, e.g. '7.0':
+# * Push the docker images with floating tags, e.g.  '7-LATEST' '7.0-LATEST'
+# If this is a tagged release it will also:
+# * Build an entity relationship diagram
+# * Build a SQL DDL script for the DB
+# * Gather all release artefacts into one place
+# * Push the docker images
+# * Create a Github release and add all the artefacts
+
+# Depoendencies for this script:
+# * bash + standard shell tools (sed, grep, etc.)
+# * docker
+# * docker-compose
+
+# The actual build is run inside a docker container which has all the
+# dependencies for performing the build and will spawn other docker
+# containers to perform sub parts of the build, e.g. the UI build.
+
 # exit script on any error
 set -eo pipefail
 
@@ -15,8 +38,8 @@ MINOR_VER_FLOATING_TAG=""
 BRANCH_WHITELIST_REGEX='(^dev$|^master$|^[0-9]+\.[0-9]+$)'
 RELEASE_VERSION_REGEX='^v[0-9]+\.[0-9]+.*$'
 LATEST_SUFFIX="-LATEST"
-# This is the branch containing the current release of stroom
-# It is used to test which releases we push the swagger ui to ghpages for
+# This is the branch containing the current stable release of stroom
+# It is used to determine which releases we push the swagger ui to ghpages for
 # As 7 is still in beta, this is currently 6.1
 CURRENT_STROOM_RELEASE_BRANCH="6.1"
 # The version of stroom-resources used for running the DB

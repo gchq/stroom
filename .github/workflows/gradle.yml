@@ -35,13 +35,6 @@ jobs:
               # strip off the 'refs/tags/' bit
               tag="${GITHUB_REF#refs/tags/}"
               echo "BUILD_TAG=${tag}"
-              if [[ ${tag} =~ .*(beta|alpha).* ]]; then 
-                echo "BUILD_IS_PRERELEASE=true"
-              else
-                echo "BUILD_IS_PRERELEASE=false"
-              fi
-            else
-                echo "BUILD_IS_PRERELEASE=false"
             fi
 
             if [[ ${GITHUB_REF} =~ ^refs/heads/ ]]; then
@@ -72,7 +65,6 @@ jobs:
           echo "BUILD_BRANCH:             [$BUILD_BRANCH]"
           echo "BUILD_COMMIT:             [$BUILD_COMMIT]"
           echo "BUILD_IS_PULL_REQUEST:    [$BUILD_IS_PULL_REQUEST]"
-          echo "BUILD_IS_PRERELEASE:      [$BUILD_IS_PRERELEASE]"
           echo "STROOM_RESOURCES_GIT_TAG: [$STROOM_RESOURCES_GIT_TAG]"
           echo "PWD:                      [$PWD]"
           echo "HOME:                     [$HOME]"
@@ -80,6 +72,8 @@ jobs:
       - name: Run full build
         id: run_build
         env:
+          # Docker creds for dockerhub authenticated push/pull
+          # Manually added secrets
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
         run: |
@@ -92,6 +86,7 @@ jobs:
         id: create_release
         if: ${{ startsWith(env.BUILD_TAG, 'v') }}
         env:
+          # Github provided secret
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Use Github's hub CLI to create our release
@@ -102,12 +97,15 @@ jobs:
             echo "Found asset file: $asset_file}"
             args+=("--attach" "${asset_file}")
           done
-          if [[ "${BUILD_IS_PRERELEASE}" = true ]]; then
-            args+=("--prerelease" "${asset_file}")
+
+          if [[ ${GITHUB_REF} =~ .*(beta|alpha).* ]]; then
+            echo "Release is a pre-release"
+            args+=("--prerelease")
           fi
           echo "Creating release with assets"
           # hub release create "${args[@]}" -m "$BUILD_TAG" "$BUILD_TAG"
           # Assuming the release text will come from the tag?
+
           hub release create "${args[@]}" "$BUILD_TAG"
           echo "Release created"
 
