@@ -139,11 +139,6 @@ local_repo_root="$(git rev-parse --show-toplevel)"
 
 # This script may be running inside a container so first check if
 # the env var has been set in the container
-#if [ -n "${HOST_REPO_DIR}" ]; then
-  #host_abs_repo_dir="${HOST_REPO_DIR}"
-#else
-  #host_abs_repo_dir="${local_repo_root}"
-#fi
 host_abs_repo_dir="${HOST_REPO_DIR:-$local_repo_root}"
 
 dest_dir="/builder/shared"
@@ -201,6 +196,7 @@ fi
 # shellcheck disable=SC2145
 echo -e "${GREEN}Running image ${BLUE}${image_tag}${NC} with command" \
   "${BLUE}${run_cmd[@]}${NC}"
+
 docker run \
   "${tty_args[@]+"${tty_args[@]}"}" \
   --rm \
@@ -217,11 +213,3 @@ docker run \
   "${image_tag}" \
   "${run_cmd[@]}"
 
-  #bash -c "pwd; SKIP_TESTS=\"${SKIP_TESTS:-false}\" MAX_WORKERS=\"${MAX_WORKERS:-6}\" ./container_build/gradleBuild.sh"
-
-  #bash
-  #bash -c 'echo $PWD; nvm --version; node --version; npm --version; npx --version; yarn --version; ./yarnBuild.sh'
-
-
-  #--mount "type=bind,src=$HOME/.gradle,dst=/home/builder/.gradle" \
-  #--mount "type=bind,src=$HOME/.m2,dst=/home/builder/.m2" \

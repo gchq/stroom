@@ -1,4 +1,10 @@
 #!/usr/bin/env bash
+
+# This script is used to run commands inside a docker container that
+# has been set up as a node build environment. It will bind mount
+# the root of the git repo you are currently in into the container, so
+# your pwd must be somewhere inside the desired repo.
+
 set -eo pipefail
 IFS=$'\n\t'
 
@@ -24,9 +30,10 @@ docker_login() {
 
       echo -e "Already logged into docker"
     else
-      echo -e "Logging in to Docker"
+      echo -e "Logging in to Docker (if this fails, have you provided the docker creds)"
       echo "$DOCKER_PASSWORD" \
         | docker login -u "$DOCKER_USERNAME" --password-stdin >/dev/null 2>&1
+      echo -e "Successfully logged in to docker"
     fi
   else
     echo -e "${YELLOW}LOCAL_BUILD set so skipping docker login${NC}"
@@ -65,11 +72,6 @@ local_repo_root="$(git rev-parse --show-toplevel)"
 
 # This script may be running inside a container so first check if
 # the env var has been set in the container
-#if [ -n "${HOST_REPO_DIR}" ]; then
-  #host_abs_repo_dir="${HOST_REPO_DIR}"
-#else
-  #host_abs_repo_dir="${local_repo_root}"
-#fi
 host_abs_repo_dir="${HOST_REPO_DIR:-$local_repo_root}"
 
 dest_dir="/builder/shared"
@@ -103,11 +105,6 @@ docker build \
   --build-arg "HOST_REPO_DIR=${host_abs_repo_dir}" \
   "${local_repo_root}/container_build/docker_node"
 
-  #-interactive \
-  #-tty \
-  #--rm \
-
-
 if [ -t 1 ]; then 
   # In a terminal
   tty_args=( "--tty" "--interactive" )
@@ -124,6 +121,7 @@ fi
 # shellcheck disable=SC2145
 echo -e "${GREEN}Running image ${BLUE}${image_tag}${NC} with command" \
   "${BLUE}${run_cmd[@]}${NC}"
+
 docker run \
   "${tty_args[@]+"${tty_args[@]}"}" \
   --rm \
@@ -137,8 +135,4 @@ docker run \
   --env "DOCKER_PASSWORD=${DOCKER_PASSWORD}" \
   "${image_tag}" \
   "${run_cmd[@]}"
-  #bash
-  #bash -c 'echo $PWD; nvm --version; node --version; npm --version; npx --version; yarn --version; ./yarnBuild.sh'
 
-
-#  --mount "type=bind,src=$(pwd),dst=${dest_dir}" \

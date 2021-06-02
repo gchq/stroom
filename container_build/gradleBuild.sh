@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
+# Runs the full CI gradle build in a staged approach
 # Usage: ./build.sh
 #        MAX_WORKERS=6 SKIP_TESTS=true ./build.sh
 
 set -euo pipefail
-
-# Ensure we are in the dir where this script lives
-#SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
 
 # Shell Colour constants for use in 'echo -e'
 # e.g.  echo -e "My message ${GREEN}with just this text in green${NC}"

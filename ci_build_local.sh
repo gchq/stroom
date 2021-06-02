@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# This script aims to mimic the travis build on a local machine, with
+# This script aims to mimic the travis/github build on a local machine, with
 # the exception of releasing artefacts to github and pushing to dockerhub.
 # It does the following:
 # - sets up various env vars that the build scripts expect
@@ -66,8 +66,6 @@ main() {
 
   setup_echo_colours
 
-  # IMPORTANT - Stops us trying to push builds to dockerhub
-  export LOCAL_BUILD=true
 
   local stroom_clone_branch
   # get the current branch
@@ -75,18 +73,26 @@ main() {
 
   # shellcheck disable=SC2034
   {
+    # IMPORTANT - Stops us trying to push builds to dockerhub
+    export LOCAL_BUILD=true
+
     export BUILD_BRANCH="${stroom_clone_branch}" # Needs to be a proper brach as we git clone this
-    export BUILD_DIR="/tmp/travis_build"
+    export BUILD_DIR="/tmp/stroom_ci_build"
     export BUILD_COMMIT="dummy_commit_hash" # Uses in docker imagge
     export BUILD_IS_PULL_REQUEST="false" # ensures we do docker builds
     # To run with no tag use BUILD_TAG= ./travis.local_build.sh
     export BUILD_TAG="${BUILD_TAG=v7.0-dummy}" # Gets parsed and needs to be set to trigger aspects of the build
+
+    # Settings to run the build according for your local hardware
     export SKIP_TESTS="${SKIP_TESTS:-false}"
     export MAX_WORKERS="${MAX_WORKERS:-6}"
+    export GWT_MIN_HEAP="${GWT_MIN_HEAP:-50M}"
+    export GWT_MAX_HEAP="${GWT_MAX_HEAP:-4G}"
   }
 
   if [[ ! -n "${BUILD_TAG}" ]]; then
-    echo -e "${YELLOW}WARNING:${NC} BUILD_TAG unset so won't run release parts of build${NC}"
+    echo -e "${YELLOW}WARNING:${NC} BUILD_TAG unset so won't run release" \
+      "parts of build${NC}"
   fi
 
   if [[ -d "${BUILD_DIR}" ]]; then
