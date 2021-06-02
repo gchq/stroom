@@ -63,9 +63,6 @@ main() {
   local gh_pages_versioned_dir="${gh_pages_clone_dir}/${minor_version}"
   local version_file="${gh_pages_versioned_dir}/version.txt"
 
-  git config user.name "$GITHUB_ACTOR"
-  git config user.email "${GITHUB_ACTOR}@bots.github.com"
-
   # Clone the repo with just the gh-pages branch
   echo "Cloning branch ${gh_pages_branch} to ${gh_pages_clone_dir}"
   git clone \
@@ -94,6 +91,9 @@ main() {
   echo "Writing version ${BUILD_TAG} to ${version_file}"
   echo "${BUILD_TAG}" > "${version_file}"
 
+  git config user.name "$GITHUB_ACTOR"
+  git config user.email "${GITHUB_ACTOR}@bots.github.com"
+
   echo "Adding all new/changed files"
   git add --all
 
@@ -114,7 +114,7 @@ main() {
     echo "No changes to commit"
   fi
 
-  popd
+  popd > /dev/null
 }
 
 main "$@"
