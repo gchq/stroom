@@ -21,35 +21,25 @@ package stroom.security.impl;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.shared.FindUserNameCriteria;
-import stroom.security.shared.UserNameProvider;
 import stroom.security.shared.UserNameResource;
 import stroom.util.shared.ResultPage;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
 class UserNameResourceImpl implements UserNameResource {
 
-    private final Set<UserNameProvider> userNameProviders;
+    private final Provider<UserNameService> userNameServiceProvider;
 
     @Inject
-    public UserNameResourceImpl(final Set<UserNameProvider> userNameProviders) {
-        this.userNameProviders = userNameProviders;
+    public UserNameResourceImpl(final Provider<UserNameService> userNameServiceProvider) {
+        this.userNameServiceProvider = userNameServiceProvider;
     }
 
     @Override
     public ResultPage<String> find(final FindUserNameCriteria criteria) {
-        final Set<String> names = new HashSet<>();
-        for (final UserNameProvider userNameProvider : userNameProviders) {
-            final ResultPage<String> resultPage = userNameProvider.findUserNames(criteria);
-            names.addAll(resultPage.getValues());
-        }
-        final List<String> list = names.stream().sorted().collect(Collectors.toList());
-        return new ResultPage<>(list);
+        return userNameServiceProvider.get().find(criteria);
     }
 }
 

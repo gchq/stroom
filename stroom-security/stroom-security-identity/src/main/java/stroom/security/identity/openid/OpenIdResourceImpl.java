@@ -134,7 +134,7 @@ class OpenIdResourceImpl implements OpenIdResource {
     public TokenResponse token(final TokenRequest tokenRequest) {
         try {
             return openIdServiceProvider.get().token(tokenRequest);
-        } catch (BadRequestException ex) {
+        } catch (final BadRequestException ex) {
             //Normally unlogged, but always log token failures
             AuthenticateOutcomeReason reason = AuthenticateOutcomeReason.OTHER;
             try {
