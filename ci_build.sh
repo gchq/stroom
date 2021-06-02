@@ -349,17 +349,17 @@ docker_logout() {
 }
 
 copy_swagger_ui_content() {
-  ghPagesDir=$BUILD_DIR/gh-pages
-  swaggerUiCloneDir=$BUILD_DIR/swagger-ui
+  local ghPagesDir=$BUILD_DIR/gh-pages
+  local swaggerUiCloneDir=$BUILD_DIR/swagger-ui
   mkdir -p "${ghPagesDir}"
-  echo "Copying swagger-ui to ${ghPagesDir}"
+  echo "Copying swagger spec files to ${ghPagesDir}"
   # copy our generated swagger specs to gh-pages
   cp \
-    "${BUILD_DIR}"/stroom-app/src/main/resources/ui/swagger/swagger.* \
+    "${BUILD_DIR}"/stroom-app/src/main/resources/ui/noauth/swagger/stroom.* \
     "${ghPagesDir}/"
   # clone swagger-ui repo so we can get the ui html/js/etc
 
-  echo "Cloning swagger UI"
+  echo "Cloning swagger UI at tag ${SWAGGER_UI_GIT_TAG}"
   git clone \
     --depth 1 \
     --branch "${SWAGGER_UI_GIT_TAG}" \
@@ -374,10 +374,14 @@ copy_swagger_ui_content() {
     "${swaggerUiCloneDir}"/dist/* \
     "${ghPagesDir}"/
 
+  local minor_version
+  minor_version=$(echo "${BUILD_TAG}" | grep -oP "^v[0-9]+\.[0-9]+")
+
   # repalce the default swagger spec url in swagger UI
+  # swagger is deployed to a versioned dir
   sed \
     -i \
-    's#url: ".*"#url: "https://gchq.github.io/stroom/swagger.json"#g' \
+    "s#url: \".*\"#url: \"https://gchq.github.io/stroom/${minor_version}/stroom.json\"#g" \
     "${ghPagesDir}/index.html"
 }
 
