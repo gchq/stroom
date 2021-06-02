@@ -76,6 +76,22 @@ public class ContentPackDownloader {
     public static synchronized void downloadPacks(final Path contentPacksDefinition,
                                                   final Path contentPackDownloadDir,
                                                   final Path contentPackImportDir) {
+        LOGGER.info("Downloading content packs using definition {}, with download dir {} and import dir {}",
+                contentPacksDefinition.toAbsolutePath(),
+                contentPackDownloadDir.toAbsolutePath(),
+                contentPackImportDir.toAbsolutePath());
+        try {
+            Files.createDirectories(contentPackDownloadDir);
+        } catch (IOException e) {
+            LOGGER.error("Error ensuring {} exists: {}", contentPackDownloadDir.toAbsolutePath(), e.getMessage(), e);
+        }
+
+        try {
+            Files.createDirectories(contentPackImportDir);
+        } catch (IOException e) {
+            LOGGER.error("Error ensuring {} exists: {}", contentPackImportDir.toAbsolutePath(), e.getMessage(), e);
+        }
+
         try {
             final ObjectMapper mapper = new ObjectMapper();
             final ContentPackCollection contentPacks = mapper.readValue(

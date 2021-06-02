@@ -9,10 +9,10 @@ proxyConfig:
     forwardDestinations: []
     forwardingEnabled: false
   proxyRepositoryConfig:
+    storingEnabled: false
+    repoDir: null
     format: "${pathId}/${id}"
     rollCron: null
-    storingEnabled: false
-    dir: null
   proxyRepositoryReaderConfig:
     readCron: null
     forwardThreadCount: 3
