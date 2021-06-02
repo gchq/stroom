@@ -10,14 +10,11 @@ import java.util.Optional;
 import java.util.Set;
 
 public interface UserDao {
+
     FilterFieldMappers<User> FILTER_FIELD_MAPPERS = FilterFieldMappers.of(
             FilterFieldMapper.of(FindUserCriteria.FIELD_DEF_NAME, User::getName));
 
     User create(User user);
-
-//    User createUser(String name);
-//
-//    User createUserGroup(String name);
 
     Optional<User> getById(int id);
 
@@ -25,11 +22,13 @@ public interface UserDao {
 
     Optional<User> getByName(String name);
 
+    Optional<User> getByName(String name, boolean isGroup);
+
     User update(User user);
 
     void delete(String uuid);
 
-    List<User> find(String quickFilter, Boolean userGroup);
+    List<User> find(String quickFilter, boolean isGroup);
 
     List<User> findUsersInGroup(String groupUuid, String quickFilterInput);
 

@@ -13,7 +13,6 @@ import org.jooq.Condition;
 import org.jooq.Record;
 import org.jooq.Record1;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -103,6 +102,17 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
+    public Optional<User> getByName(final String name,
+                                    final boolean isGroup) {
+        return JooqUtil.contextResult(securityDbConnProvider, context ->
+                context.select().from(STROOM_USER)
+                        .where(STROOM_USER.NAME.eq(name))
+                        .and(STROOM_USER.IS_GROUP.eq(isGroup))
+                        .fetchOptional()
+                        .map(RECORD_TO_USER_MAPPER));
+    }
+
+    @Override
     public User update(final User user) {
         return genericDao.update(user);
     }
@@ -117,17 +127,18 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
-    public List<User> find(final String quickFilterInput, final Boolean group) {
-        final Collection<Condition> conditions = JooqUtil.conditions(
-                Optional.ofNullable(group).map(STROOM_USER.IS_GROUP::eq));
+    public List<User> find(final String quickFilterInput,
+                           final boolean isGroup) {
+        final Condition condition = STROOM_USER.IS_GROUP.eq(isGroup);
 
         return JooqUtil.contextResult(securityDbConnProvider, context ->
                 QuickFilterPredicateFactory.filterStream(
                         quickFilterInput,
                         FILTER_FIELD_MAPPERS,
                         context.select().from(STROOM_USER)
-                                .where(conditions)
+                                .where(condition)
                                 .and(getExcludedUsersCondition())
+                                .orderBy(STROOM_USER.NAME)
                                 .fetch()
                                 .stream()
                                 .map(RECORD_TO_USER_MAPPER)

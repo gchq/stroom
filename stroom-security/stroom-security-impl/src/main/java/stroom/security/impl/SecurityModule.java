@@ -21,6 +21,7 @@ import stroom.security.api.TokenVerifier;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.impl.event.PermissionChangeEventLifecycleModule;
 import stroom.security.impl.event.PermissionChangeEventModule;
+import stroom.security.shared.UserNameProvider;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
@@ -55,6 +56,9 @@ public class SecurityModule extends AbstractModule {
                 .bind(new FilterInfo(SecurityFilter.class.getSimpleName(), MATCH_ALL_PATHS),
                         SecurityFilter.class);
 
+        GuiceUtil.buildMultiBinder(binder(), UserNameProvider.class)
+                .addBinding(UserServiceImpl.class);
+
         // Provide object info to the logging service.
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(UserDocumentPermissionsCache.class)
@@ -76,6 +80,7 @@ public class SecurityModule extends AbstractModule {
                 .bind(AppPermissionResourceImpl.class)
                 .bind(DocPermissionResourceImpl.class)
                 .bind(SessionResourceImpl.class)
-                .bind(UserResourceImpl.class);
+                .bind(UserResourceImpl.class)
+                .bind(UserNameResourceImpl.class);
     }
 }

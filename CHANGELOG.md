@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2264** : Users for user permissions are now retrieved from the account service plus authorisation.
+
 * Issue **#2241** : Changing field or operator in the query expression editor no longer deselects the selected row. 
 
 * Issue **#2241** : Made Firefox and Chrome drop downs look the same.
