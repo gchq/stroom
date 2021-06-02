@@ -306,7 +306,7 @@ releaseToDockerHub() {
   if [[ ! -n "${LOCAL_BUILD}" ]]; then
     echo -e "Pushing the docker image to ${GREEN}${dockerRepo}${NC} with" \
       "tags: ${GREEN}${allTagArgs[*]}${NC}"
-    docker push "${dockerRepo}" >/dev/null 2>&1
+    docker push "${dockerRepo}"
   else
     echo -e "${YELLOW}LOCAL_BUILD set so skipping docker push${NC}"
   fi
