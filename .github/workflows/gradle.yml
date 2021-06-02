@@ -109,6 +109,15 @@ jobs:
           hub release create "${args[@]}" "$BUILD_TAG"
           echo "Release created"
 
+      - name: Update gh-pages
+        id: update_gh-pages
+        if: ${{ startsWith(env.BUILD_TAG, 'v') }}
+        env:
+          # Github personal access token, manually added to secrets
+          GITHUB_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+        run: |
+          "${GITHUB_WORKSPACE}/update_gh_pages.sh"
+
       #- name: Create Release
         #id: create_release
         #if: ${{ startsWith(env.BUILD_TAG, "v") }}
