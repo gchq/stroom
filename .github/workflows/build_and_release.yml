@@ -21,6 +21,11 @@ jobs:
       - name: Checkout code
         id: checkout_code
         uses: actions/checkout@v2
+        with:
+          # Set this so it gets the annotated commit, not the commit being tagged.
+          # Which means we can get the release msg
+          # See https://github.com/actions/runner/issues/712
+          ref: ${{ github.ref }} 
 
         # Set variables in github's special env file which are then automatically 
         # read into env vars in each subsequent step
