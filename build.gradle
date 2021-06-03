@@ -422,6 +422,7 @@ subprojects {
         // maxParallelForks = Runtime.runtime.availableProcessors() ?: 1
 
         beforeSuite { descriptor ->
+            if (descriptor?.className?.trim())
             println "Executing test class ${descriptor.className}"
         }
 

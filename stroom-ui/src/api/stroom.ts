@@ -1276,6 +1276,13 @@ export interface FindUserCriteria {
   sortList?: CriteriaFieldSort[];
 }
 
+export interface FindUserNameCriteria {
+  pageRequest?: PageRequest;
+  quickFilterInput?: string;
+  sort?: string;
+  sortList?: CriteriaFieldSort[];
+}
+
 /**
  * A result structure used primarily for visualisation data
  */
@@ -2513,6 +2520,15 @@ export interface ResultPageStoredQuery {
 /**
  * A page of results.
  */
+export interface ResultPageString {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: string[];
+}
+
+/**
+ * A page of results.
+ */
 export interface ResultPageUser {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
@@ -3692,8 +3708,8 @@ export class HttpClient<SecurityDataType = unknown> {
       body: typeof body === "undefined" || body === null ? null : payloadFormatter(body),
     }).then(async (response) => {
       const r = response as HttpResponse<T, E>;
-      r.data = (null as unknown) as T;
-      r.error = (null as unknown) as E;
+      r.data = null as unknown as T;
+      r.error = null as unknown as E;
 
       const data = await response[format]()
         .then((data) => {
@@ -8480,6 +8496,26 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         method: "GET",
         query: query,
         secure: true,
+        ...params,
+      }),
+  };
+  userNames = {
+    /**
+     * No description
+     *
+     * @tags Authorisation
+     * @name FindUserNames
+     * @summary Find the user names matching the supplied criteria
+     * @request POST:/userNames/v1/find
+     * @secure
+     */
+    findUserNames: (data: FindUserNameCriteria, params: RequestParams = {}) =>
+      this.request<any, ResultPageString>({
+        path: `/userNames/v1/find`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
         ...params,
       }),
   };

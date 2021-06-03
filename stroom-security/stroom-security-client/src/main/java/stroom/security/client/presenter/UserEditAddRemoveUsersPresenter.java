@@ -25,11 +25,6 @@ import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.event.HidePopupEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -37,14 +32,18 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Consumer;
 import javax.inject.Provider;
 
-public class UserEditAddRemoveUsersPresenter extends AdvancedUserListPresenter implements UserListUiHandlers {
+public class UserEditAddRemoveUsersPresenter
+        extends AbstractDataUserListPresenter
+        implements UserListUiHandlers {
 
     private static final AppPermissionResource APP_PERMISSION_RESOURCE = GWT.create(AppPermissionResource.class);
 
     private final RestFactory restFactory;
-    private final Provider<AdvancedUserListPresenter> selectUserPresenterProvider;
+    private final Provider<SelectGroupPresenter> selectGroupPresenterProvider;
+    private final Provider<SelectUserPresenter> selectUserPresenterProvider;
     private final ButtonView addButton;
     private final ButtonView removeButton;
 
@@ -54,9 +53,11 @@ public class UserEditAddRemoveUsersPresenter extends AdvancedUserListPresenter i
     public UserEditAddRemoveUsersPresenter(final EventBus eventBus,
                                            final UserListView userListView,
                                            final RestFactory restFactory,
-                                           final Provider<AdvancedUserListPresenter> selectUserPresenterProvider) {
+                                           final Provider<SelectGroupPresenter> selectGroupPresenterProvider,
+                                           final Provider<SelectUserPresenter> selectUserPresenterProvider) {
         super(eventBus, userListView, restFactory);
         this.restFactory = restFactory;
+        this.selectGroupPresenterProvider = selectGroupPresenterProvider;
         this.selectUserPresenterProvider = selectUserPresenterProvider;
 
         addButton = addButton(SvgPresets.ADD);
@@ -69,49 +70,28 @@ public class UserEditAddRemoveUsersPresenter extends AdvancedUserListPresenter i
     protected void onBind() {
         super.onBind();
         registerHandler(addButton.addClickHandler(event -> {
-            final FindUserCriteria findUserCriteria = new FindUserCriteria();
 
-            // If we are a group then get users and vice versa.
-            findUserCriteria.setGroup(!relatedUser.isGroup());
+            final Consumer<User> consumer = user -> {
+                final Set<User> addSet = new HashSet<>();
+                addSet.add(user);
+                final ChangeSet<User> changedLinkedUsers = new ChangeSet<>(addSet, null);
+                final ChangeUserRequest request = new ChangeUserRequest(relatedUser,
+                        changedLinkedUsers,
+                        null);
 
-            final String type = getRelatedType();
-            final AdvancedUserListPresenter selectUserPresenter = selectUserPresenterProvider.get();
-            selectUserPresenter.setup(findUserCriteria);
-
-            final PopupSize popupSize = new PopupSize(400, 400, 400, 400, true);
-            final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-                @Override
-                public void onHideRequest(boolean autoClose, boolean ok) {
-                    HidePopupEvent.fire(UserEditAddRemoveUsersPresenter.this, selectUserPresenter, autoClose, ok);
-                }
-
-                @Override
-                public void onHide(boolean autoClose, boolean ok) {
-                    if (ok) {
-                        final User selected = selectUserPresenter.getSelectionModel().getSelected();
-                        if (selected != null) {
-                            final Set<User> addSet = new HashSet<>();
-                            addSet.add(selected);
-                            final ChangeSet<User> changedLinkedUsers = new ChangeSet<>(addSet, null);
-                            final ChangeUserRequest request = new ChangeUserRequest(relatedUser,
-                                    changedLinkedUsers,
-                                    null);
-
-                            final Rest<Boolean> rest = restFactory.create();
-                            rest
-                                    .onSuccess(result -> refresh())
-                                    .call(APP_PERMISSION_RESOURCE)
-                                    .changeUser(request);
-                        }
-                    }
-                }
+                final Rest<Boolean> rest = restFactory.create();
+                rest
+                        .onSuccess(result -> refresh())
+                        .call(APP_PERMISSION_RESOURCE)
+                        .changeUser(request);
             };
-            ShowPopupEvent.fire(UserEditAddRemoveUsersPresenter.this,
-                    selectUserPresenter,
-                    PopupView.PopupType.OK_CANCEL_DIALOG,
-                    popupSize,
-                    "Choose " + type + " To Add",
-                    popupUiHandlers);
+
+            if (!relatedUser.isGroup()) {
+                selectGroupPresenterProvider.get().show(consumer);
+            } else {
+                selectUserPresenterProvider.get().show(consumer);
+            }
+
         }));
         registerHandler(removeButton.addClickHandler(event -> {
             final User selected = getSelectionModel().getSelected();
@@ -135,11 +115,11 @@ public class UserEditAddRemoveUsersPresenter extends AdvancedUserListPresenter i
         removeButton.setEnabled(getSelectionModel().getSelected() != null);
     }
 
-    public void setUser(final User relateduser) {
-        this.relatedUser = relateduser;
+    public void setUser(final User relatedUser) {
+        this.relatedUser = relatedUser;
 
         final FindUserCriteria findUserCriteria = new FindUserCriteria();
-        findUserCriteria.setRelatedUser(relateduser);
+        findUserCriteria.setRelatedUser(relatedUser);
 
         final String type = getRelatedType();
         addButton.setTitle("Add " + type);
@@ -149,11 +129,9 @@ public class UserEditAddRemoveUsersPresenter extends AdvancedUserListPresenter i
     }
 
     private String getRelatedType() {
-        String type = "User";
+        String type = "Group";
         if (relatedUser.isGroup()) {
             type = "User";
-        } else {
-            type = "Group";
         }
         return type;
     }

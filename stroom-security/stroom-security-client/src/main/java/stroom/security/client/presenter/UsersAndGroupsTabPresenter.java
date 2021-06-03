@@ -44,9 +44,10 @@ public class UsersAndGroupsTabPresenter extends
     private static final UserResource USER_RESOURCE = GWT.create(UserResource.class);
 
     public static final String LIST = "LIST";
-    private final AdvancedUserListPresenter listPresenter;
+    private final SelectGroupPresenter listPresenter;
     private final Provider<UserEditPresenter> userEditPresenterProvider;
     private final Provider<GroupEditPresenter> groupEditPresenterProvider;
+    private final Provider<SelectUserPresenter> selectUserPresenterProvider;
     private final ManageNewEntityPresenter newPresenter;
     private final RestFactory restFactory;
     private final ButtonView newButton;
@@ -56,9 +57,10 @@ public class UsersAndGroupsTabPresenter extends
 
     @Inject
     public UsersAndGroupsTabPresenter(final EventBus eventBus,
-                                      final AdvancedUserListPresenter listPresenter,
+                                      final SelectGroupPresenter listPresenter,
                                       final Provider<UserEditPresenter> userEditPresenterProvider,
                                       final Provider<GroupEditPresenter> groupEditPresenterProvider,
+                                      final Provider<SelectUserPresenter> selectUserPresenterProvider,
                                       final ManageNewEntityPresenter newPresenter,
                                       final RestFactory restFactory,
                                       final ClientSecurityContext securityContext) {
@@ -66,6 +68,7 @@ public class UsersAndGroupsTabPresenter extends
         this.listPresenter = listPresenter;
         this.userEditPresenterProvider = userEditPresenterProvider;
         this.groupEditPresenterProvider = groupEditPresenterProvider;
+        this.selectUserPresenterProvider = selectUserPresenterProvider;
         this.restFactory = restFactory;
         this.newPresenter = newPresenter;
 
@@ -157,30 +160,36 @@ public class UsersAndGroupsTabPresenter extends
     }
 
     private void onNew() {
-        final PopupUiHandlers hidePopupUiHandlers = new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    final Rest<User> rest = restFactory.create();
-                    rest
-                            .onSuccess(result -> {
-                                newPresenter.hide();
-                                edit(result);
-                            })
-                            .call(USER_RESOURCE)
-                            .create(newPresenter.getName(), criteria.getGroup());
-                } else {
-                    newPresenter.hide();
+        if (criteria.isGroup()) {
+            final PopupUiHandlers hidePopupUiHandlers = new PopupUiHandlers() {
+                @Override
+                public void onHideRequest(final boolean autoClose, final boolean ok) {
+                    if (ok) {
+                        final Rest<User> rest = restFactory.create();
+                        rest
+                                .onSuccess(result -> {
+                                    newPresenter.hide();
+                                    edit(result);
+                                })
+                                .call(USER_RESOURCE)
+                                .create(newPresenter.getName(), criteria.isGroup());
+                    } else {
+                        newPresenter.hide();
+                    }
                 }
-            }
 
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                // Ignore hide.
-            }
-        };
+                @Override
+                public void onHide(final boolean autoClose, final boolean ok) {
+                    // Ignore hide.
+                }
+            };
 
-        newPresenter.show(hidePopupUiHandlers);
+            newPresenter.show(hidePopupUiHandlers);
+
+        } else {
+
+            selectUserPresenterProvider.get().show(this::edit);
+        }
     }
 
     private void edit(final User userRef) {
@@ -205,7 +214,7 @@ public class UsersAndGroupsTabPresenter extends
     }
 
     private String getTypeName() {
-        if (criteria.getGroup()) {
+        if (criteria.isGroup()) {
             return "group";
         }
 

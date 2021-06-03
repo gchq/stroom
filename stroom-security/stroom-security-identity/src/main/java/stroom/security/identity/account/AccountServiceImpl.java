@@ -3,15 +3,20 @@ package stroom.security.identity.account;
 import stroom.security.api.SecurityContext;
 import stroom.security.identity.authenticate.PasswordValidator;
 import stroom.security.identity.config.IdentityConfig;
+import stroom.security.shared.FindUserNameCriteria;
 import stroom.security.shared.PermissionNames;
+import stroom.security.shared.UserNameProvider;
 import stroom.util.shared.PermissionException;
+import stroom.util.shared.ResultPage;
 
 import com.google.common.base.Strings;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 
-public class AccountServiceImpl implements AccountService {
+public class AccountServiceImpl implements AccountService, UserNameProvider {
 
     private final AccountDao accountDao;
     private final SecurityContext securityContext;
@@ -24,6 +29,17 @@ public class AccountServiceImpl implements AccountService {
         this.accountDao = accountDao;
         this.securityContext = securityContext;
         this.config = config;
+    }
+
+    @Override
+    public ResultPage<String> findUserNames(final FindUserNameCriteria criteria) {
+        final SearchAccountRequest request = new SearchAccountRequest(
+                criteria.getPageRequest(),
+                criteria.getSortList(),
+                criteria.getQuickFilterInput());
+        final AccountResultPage result = search(request);
+        final List<String> list = result.getValues().stream().map(Account::getUserId).collect(Collectors.toList());
+        return new ResultPage<>(list, result.getPageResponse());
     }
 
     @Override
