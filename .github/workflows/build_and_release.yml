@@ -21,6 +21,11 @@ jobs:
       - name: Checkout code
         id: checkout_code
         uses: actions/checkout@v2
+        with:
+          # Set this so it gets the annotated commit, not the commit being tagged.
+          # Which means we can get the release msg
+          # See https://github.com/actions/runner/issues/712
+          ref: ${{ github.ref }} 
 
         # Set variables in github's special env file which are then automatically 
         # read into env vars in each subsequent step
@@ -50,8 +55,6 @@ jobs:
               echo "BUILD_IS_PULL_REQUEST=false"
             fi
           } >> $GITHUB_ENV
-
-          echo "git branch: [$(git rev-parse --abbrev-ref HEAD)]"
 
         # Separate step to show what is visible across steps
       - name: Build Environment Info
