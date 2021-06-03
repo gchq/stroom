@@ -1,4 +1,11 @@
 #!/usr/bin/env bash
+
+# Simple script to echo pairs of variable names and their values,
+# e.g. ./echo_variables.sh HOME $HOME "Docker version" "$(docker --version)"
+# results in:
+#   HOME:                                      [/home/dev]
+#   Docker version:                            [Docker version 20.10.6, build 370c289]
+
 set -eo pipefail
 IFS=$'\n\t'
 
@@ -48,7 +55,7 @@ main() {
 
   setup_echo_colours
 
-  local line='                                             '
+  local max_padding_str='                                        '
 
   while (( "$#" >= 2 )); do
     local name="${1}"
@@ -57,7 +64,7 @@ main() {
     printf \
       "${GREEN}%s${NC}: %s [${BLUE}%s${NC}]\n" \
       "${name}" \
-      "${line:${#name}}" \
+      "${max_padding_str:${#name}}" \
       "${value}"
   done
 }

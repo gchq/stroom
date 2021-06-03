@@ -48,10 +48,6 @@ main() {
 
   setup_echo_colours
 
-  # DEPLOY_TOKEN is a github personal access token.  GITHUB_TOKEN won't work
-  # for gh-pages aparantly
-  # DO NOT echo this variable as it has a token in it !!!!!!!
-  #local repo_uri="https://${DEPLOY_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
   local repo_uri="git@github.com:${GITHUB_REPOSITORY}.git"
   local remote_name="origin"
   local gh_pages_branch="gh-pages"
@@ -67,6 +63,10 @@ main() {
   # Start ssh-agent and add our private ssh deploy key to it
   echo -e "${GREEN}Starting ssh-agent${NC}"
   ssh-agent -a "${SSH_AUTH_SOCK}" > /dev/null
+
+  # SSH_DEPLOY_KEY is the private ssh key that corresponds to the public key
+  # that is held in the 'deploy keys' section of the stroom repo on github
+  # https://github.com/gchq/stroom/settings/keys
   ssh-add - <<< "${SSH_DEPLOY_KEY}"
 
   # Clone the repo with just the gh-pages branch

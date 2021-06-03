@@ -2,9 +2,7 @@ name: Java CI with Gradle
 
 on:
   push:
-    #branches: [ master ]
   pull_request:
-    #branches: [ master ]
 
 jobs:
   build-project:
@@ -16,6 +14,7 @@ jobs:
       # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources
       MAX_WORKERS: 3
       # Fixed ssh-agent socket so multiple steps can use the same agent
+      # if needs be
       SSH_AUTH_SOCK: "/tmp/ssh-agent-stroom.sock"
     steps:
 
@@ -23,11 +22,11 @@ jobs:
         id: checkout_code
         uses: actions/checkout@v2
 
+        # Set variables in github's special env file which are then automatically 
+        # read into env vars in each subsequent step
       - name: Set Environment Variables
         id: set_env_var
         run: |
-
-          # Set variables in github's env file which are then read into each subsequent step
           {
             # Map the GITHUB env vars to our own
             echo "BUILD_DIR=${GITHUB_WORKSPACE}"
@@ -54,6 +53,7 @@ jobs:
 
           echo "git branch: [$(git rev-parse --abbrev-ref HEAD)]"
 
+        # Separate step to show what is visible across steps
       - name: Build Environment Info
         id: build_info
         run: |
@@ -77,7 +77,8 @@ jobs:
         id: run_build
         env:
           # Docker creds for dockerhub authenticated push/pull
-          # Manually added secrets
+          # Manually added secrets in github
+          # https://github.com/gchq/stroom/settings/secrets/actions
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
         run: |
@@ -98,8 +99,10 @@ jobs:
         id: update_gh-pages
         if: ${{ startsWith(env.BUILD_TAG, 'v') }}
         env:
-          # Github personal access token, manually added to secrets
-          # GITHUB_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+          # ssh private key (corresponding to the public key in github deploy keys
+          # for the stroom repo), manually added to secrets
+          # https://github.com/gchq/stroom/settings/secrets/actions
+          # https://github.com/gchq/stroom/settings/keys
           SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
         run: "${ACTIONS_SCRIPTS_DIR}/update_gh_pages.sh"
 
