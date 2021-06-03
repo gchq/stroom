@@ -51,8 +51,6 @@ jobs:
             fi
           } >> $GITHUB_ENV
 
-          echo "git branch: [$(git rev-parse --abbrev-ref HEAD)]"
-
         # Separate step to show what is visible across steps
       - name: Build Environment Info
         id: build_info
