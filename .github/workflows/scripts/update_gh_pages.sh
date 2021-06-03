@@ -51,7 +51,8 @@ main() {
   # DEPLOY_TOKEN is a github personal access token.  GITHUB_TOKEN won't work
   # for gh-pages aparantly
   # DO NOT echo this variable as it has a token in it !!!!!!!
-  local repo_uri="https://${DEPLOY_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+  #local repo_uri="https://${DEPLOY_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+  local repo_uri="git@github.com:${GITHUB_REPOSITORY}.git"
   local remote_name="origin"
   local gh_pages_branch="gh-pages"
   # Dir where we clone the gh-pages branch down to
@@ -63,8 +64,14 @@ main() {
   local gh_pages_versioned_dir="${gh_pages_clone_dir}/${minor_version}"
   local version_file="${gh_pages_versioned_dir}/version.txt"
 
+  # Start ssh-agent and add our private ssh deploy key to it
+  echo -e "${GREEN}Starting ssh-agent${NC}"
+  ssh-agent -a "${SSH_AUTH_SOCK}" > /dev/null
+  ssh-add - <<< "${SSH_DEPLOY_KEY}"
+
   # Clone the repo with just the gh-pages branch
-  echo "Cloning branch ${gh_pages_branch} to ${gh_pages_clone_dir}"
+  echo -e "${GREEN}Cloning branch ${BLUE}${gh_pages_branch}${GREEN} to" \
+    "${BLUE}${gh_pages_clone_dir}${NC}"
   git clone \
     --branch "${gh_pages_branch}" \
     --single-branch \
@@ -77,8 +84,9 @@ main() {
 
   mkdir -p "${gh_pages_versioned_dir}"
 
-  echo "Rsyncing gh-pages content from ${gh_pages_source_dir}" \
-    "to ${gh_pages_versioned_dir}"
+  echo -e "${GREEN}Rsyncing gh-pages content from" \
+    "${BLUE}${gh_pages_source_dir}${GREEN} to" \
+    "${BLUE}${gh_pages_versioned_dir}${NC}"
   rsync \
     --verbose \
     --human-readable \
@@ -88,30 +96,33 @@ main() {
     "${gh_pages_source_dir}/" \
     "${gh_pages_versioned_dir}/"
 
-  echo "Writing version ${BUILD_TAG} to ${version_file}"
-  echo "${BUILD_TAG}" > "${version_file}"
+  echo -e "${GREEN}Writing version ${BLUE}${BUILD_TAG}${GREEN} to" \
+    "${BLUE}${version_file}${NC}"
+  echo -e "${BUILD_TAG}" > "${version_file}"
 
   git config user.name "$GITHUB_ACTOR"
   git config user.email "${GITHUB_ACTOR}@bots.github.com"
 
-  echo "Adding all new/changed files"
+  echo -e "${GREEN}Adding all new/changed files${NC}"
   git add --all
 
   local change_count
   change_count="$(git status --porcelain | wc -l)"
   if [[ "${change_count}" -gt 0 ]]; then
-    echo "Committing changes"
-    git commit -a -m "Updated GitHub Pages"
+    echo -e "${GREEN}Committing changes${NC}"
+    git commit \
+      -a \
+      -m "Updated GitHub Pages"
 
     #git remote set-url "$remote_name" "$repo_uri" # includes access token
-    echo "Pushing changes to ${remote_name} ${gh_pages_branch}"
+    echo -e "${GREEN}Pushing changes to ${BLUE}${remote_name} ${gh_pages_branch}${NC}"
     git \
       push \
       --force-with-lease \
       "${remote_name}" \
       "${gh_pages_branch}"
   else
-    echo "No changes to commit"
+    echo -e "${GREEN}No changes to commit${NC}"
   fi
 
   popd > /dev/null
