@@ -77,28 +77,33 @@ export const DatePickerControl: FunctionComponent<DatePickerProps> = ({
   );
 };
 
-export const DatePickerFormField: FunctionComponent<DatePickerFormFieldProps> = ({
-  controlId,
-  label,
-  className,
-  placeholder,
-  autoComplete,
-  autoFocus,
-  formikProps,
-  children,
-}) => {
-  const formFieldState = createFormFieldState(controlId, formikProps);
-  return (
-    <FormField controlId={controlId} label={label} error={formFieldState.error}>
-      <DatePickerControl
-        className={className}
-        placeholder={placeholder}
-        autoComplete={autoComplete}
-        autoFocus={autoFocus}
-        state={formFieldState}
+export const DatePickerFormField: FunctionComponent<DatePickerFormFieldProps> =
+  ({
+    controlId,
+    label,
+    className,
+    placeholder,
+    autoComplete,
+    autoFocus,
+    formikProps,
+    children,
+  }) => {
+    const formFieldState = createFormFieldState(controlId, formikProps);
+    return (
+      <FormField
+        controlId={controlId}
+        label={label}
+        error={formFieldState.error}
       >
-        {children}
-      </DatePickerControl>
-    </FormField>
-  );
-};
+        <DatePickerControl
+          className={className}
+          placeholder={placeholder}
+          autoComplete={autoComplete}
+          autoFocus={autoFocus}
+          state={formFieldState}
+        >
+          {children}
+        </DatePickerControl>
+      </FormField>
+    );
+  };

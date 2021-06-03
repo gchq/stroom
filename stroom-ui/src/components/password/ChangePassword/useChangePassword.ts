@@ -9,11 +9,8 @@ const useChangePassword = (): {
   changePassword: (changePasswordRequest: ChangePasswordRequest) => void;
   isSubmitting: boolean;
 } => {
-  const {
-    errorMessages,
-    showChangeConfirmation,
-    setShowChangeConfirmation,
-  } = usePasswordState();
+  const { errorMessages, showChangeConfirmation, setShowChangeConfirmation } =
+    usePasswordState();
   const [isSubmitting, setSubmitting] = useState(false);
 
   const { exec } = useStroomApi();

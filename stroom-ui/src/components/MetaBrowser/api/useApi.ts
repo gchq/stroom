@@ -27,7 +27,7 @@ export const useApi = (): Api => {
     (pageInfo: PageRequest) => {
       const url = new URL(resource);
 
-      if (!!pageInfo) {
+      if (pageInfo) {
         const { pageOffset, pageSize } = pageInfo;
         if (pageSize !== undefined)
           url.searchParams.append("pageSize", pageSize.toString());

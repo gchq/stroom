@@ -4,7 +4,14 @@ import { Token } from "../api/types";
 import { useCallback } from "react";
 import { useAppNavigation } from "lib/useAppNavigation";
 
-const useTokens = () => {
+interface UseTokens {
+  token: Token;
+  toggleEnabledState: (tokenId: number, nextState: boolean) => void;
+  createToken: (email: string, expiryDate: string) => void;
+  fetchApiKey: (tokenId: string) => void;
+}
+
+const useTokens = (): UseTokens => {
   const { token, setEnabled, setToken } = useTokenState();
 
   const {

@@ -6,13 +6,8 @@ import { PromptDisplayBoundary, usePrompt } from "./PromptDisplayBoundary";
 import { ContentProps } from "./Prompt";
 
 export const UsingPromptHook: FunctionComponent = () => {
-  const {
-    showPrompt,
-    showInfo,
-    showWarning,
-    showError,
-    showFatal,
-  } = usePrompt();
+  const { showPrompt, showInfo, showWarning, showError, showFatal } =
+    usePrompt();
 
   const content: ContentProps = {
     title: "Test",

@@ -7,8 +7,8 @@ import JsonDebug from "testing/JsonDebug";
 import { DocRefType } from "components/DocumentEditors/useDocumentApi/types/base";
 import fullTestData from "testing/data";
 
-const testDocRef = fullTestData.documentTree.children![0].children![0]
-  .children![0];
+const testDocRef =
+  fullTestData.documentTree.children![0].children![0].children![0];
 
 interface Props {
   testDocRef: DocRefType;

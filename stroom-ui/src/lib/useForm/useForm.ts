@@ -11,11 +11,11 @@ interface UseForm<T> {
   onValidate?: (updates: Partial<T>) => void;
 }
 
-const reducer = <T extends {}>(state: T, action: Partial<T>) => {
+const reducer = <T>(state: T, action: Partial<T>) => {
   return { ...state, ...action };
 };
 
-export const useForm = <T extends {}>({
+export const useForm = <T>({
   initialValues,
   onValidate,
 }: UseForm<T>): Form<T> => {
@@ -23,14 +23,14 @@ export const useForm = <T extends {}>({
 
   // Set the current values to the initial values, whenever those change
   React.useEffect(() => {
-    if (!!initialValues) {
+    if (initialValues) {
       onUpdate(initialValues);
     }
   }, [initialValues, onUpdate]);
 
   // Call out to the validation function when the values change
   React.useEffect(() => {
-    if (!!onValidate) {
+    if (onValidate) {
       onValidate(value);
     }
   }, [value, onValidate]);
@@ -48,19 +48,20 @@ export const useForm = <T extends {}>({
     type: "checkbox",
     checked: value[s],
     onChange: React.useCallback(() => {
-      onUpdate(({
+      onUpdate({
         [s]: !value[s],
-      } as unknown) as Partial<T>);
+      } as unknown as Partial<T>);
     }, [s]),
   });
 
   const useControlledInputProps = <FIELD_TYPE>(
     s: string,
   ): ControlledInput<FIELD_TYPE> => ({
-    value: (value[s] as unknown) as FIELD_TYPE,
-    onChange: React.useCallback((v) => onUpdate(({ [s]: v } as unknown) as T), [
-      s,
-    ]),
+    value: value[s] as unknown as FIELD_TYPE,
+    onChange: React.useCallback(
+      (v) => onUpdate({ [s]: v } as unknown as T),
+      [s],
+    ),
   });
 
   return {

@@ -10,16 +10,15 @@ interface UseGroupsForUser {
 }
 
 const useGroupsForUser = (user: StroomUser): UseGroupsForUser => {
-  const { items: groups, receiveItems, addItem, removeItem } = useListReducer<
-    StroomUser
-  >((g) => g.uuid);
-
   const {
-    findGroupsForUser,
-    addUserToGroup,
-    removeUserFromGroup,
-    fetchUser,
-  } = useApi();
+    items: groups,
+    receiveItems,
+    addItem,
+    removeItem,
+  } = useListReducer<StroomUser>((g) => g.uuid);
+
+  const { findGroupsForUser, addUserToGroup, removeUserFromGroup, fetchUser } =
+    useApi();
 
   React.useEffect(() => {
     findGroupsForUser(user.uuid).then(receiveItems);

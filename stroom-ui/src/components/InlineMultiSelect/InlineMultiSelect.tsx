@@ -43,12 +43,8 @@ const InlineMultiSelect: React.FunctionComponent<Props> = ({
   ...rest
 }) => {
   // Use the standard list reducer to manage the items
-  const {
-    items,
-    addItem,
-    updateItemAtIndex,
-    removeItemAtIndex,
-  } = useListReducer<string>(getKey, selected);
+  const { items, addItem, updateItemAtIndex, removeItemAtIndex } =
+    useListReducer<string>(getKey, selected);
 
   const addNewItem = useCallback(() => addItem(undefined), [addItem]);
   useEffect(() => onChange(items), [onChange, items]);
@@ -79,7 +75,7 @@ const InlineMultiSelect: React.FunctionComponent<Props> = ({
         // it can't be selected
         const thisSelectsOptions = Object.assign([], remainingOptions);
         const selectedOption = options.find((option) => option.value === value);
-        if (!!selectedOption) {
+        if (selectedOption) {
           thisSelectsOptions.push(selectedOption);
         }
         return (

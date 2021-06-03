@@ -26,7 +26,7 @@ const resourceBuilder: ResourceBuilder = (
       const indexVolume = testCache.data!.indexVolumesAndGroups.volumes.find(
         (v) => `${v.id}` === indexVolumeId,
       );
-      if (!!indexVolume) {
+      if (indexVolume) {
         res.json(indexVolume);
       } else {
         res.sendStatus(404);

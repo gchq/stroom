@@ -24,9 +24,8 @@ import useTestAnimals, { Animal } from "./useTestAnimals";
 
 const TestList = () => {
   const [lastAction, setLastAction] = React.useState<string>("no action");
-  const [externalSelectedItem, setExternalSelectedItem] = React.useState<
-    Animal | undefined
-  >(undefined);
+  const [externalSelectedItem, setExternalSelectedItem] =
+    React.useState<Animal | undefined>(undefined);
   const { animals, preFocusWrap, reset } = useTestAnimals();
 
   const {
@@ -38,19 +37,20 @@ const TestList = () => {
     ...restOfSelectable
   } = useSelectableItemListing({
     getKey: React.useCallback((a) => a.name, []),
-    openItem: React.useCallback((a) => setLastAction(`Opened Item ${a.name}`), [
-      setLastAction,
-    ]),
+    openItem: React.useCallback(
+      (a) => setLastAction(`Opened Item ${a.name}`),
+      [setLastAction],
+    ),
     items: animals,
     selectionBehaviour: SelectionBehaviour.MULTIPLE,
     preFocusWrap,
   });
 
   // Demonstrates how to 'watch' for selection changes
-  React.useEffect(() => setExternalSelectedItem(selectedItem), [
-    selectedItem,
-    setExternalSelectedItem,
-  ]);
+  React.useEffect(
+    () => setExternalSelectedItem(selectedItem),
+    [selectedItem, setExternalSelectedItem],
+  );
 
   return (
     <div tabIndex={0} onKeyDown={onKeyDown}>

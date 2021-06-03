@@ -34,11 +34,10 @@ const resourceBuilder: ResourceBuilder = (
   server
     .delete(`${resource}/:userUuid/:permissionName`)
     .intercept((req: HttpRequest, res: HttpResponse) => {
-      testCache.data!.userAppPermissions[
-        req.params.userUuid
-      ] = testCache.data!.userAppPermissions[req.params.userUuid].filter(
-        (p) => p !== req.params.permissionName,
-      );
+      testCache.data!.userAppPermissions[req.params.userUuid] =
+        testCache.data!.userAppPermissions[req.params.userUuid].filter(
+          (p) => p !== req.params.permissionName,
+        );
 
       res.status(204).send(undefined);
     });

@@ -28,9 +28,7 @@ interface RemovedByIndexAction {
   index: number;
 }
 
-export const createListReducer = <T extends {}>(
-  getKey: (item: T) => string,
-) => {
+export const createListReducer = <T>(getKey: (item: T) => string) => {
   return (
     state: T[],
     action:
@@ -59,7 +57,7 @@ export const createListReducer = <T extends {}>(
   };
 };
 
-interface UseListReducer<T extends {}> {
+interface UseListReducer<T> {
   items: T[];
   receiveItems: (items: T[]) => void;
   addItem: (item: T) => void;
@@ -68,7 +66,7 @@ interface UseListReducer<T extends {}> {
   removeItemAtIndex: (index: number) => void;
 }
 
-export const useListReducer = <T extends {}>(
+export const useListReducer = <T>(
   getKey: (item: T) => string,
   initialItems: T[] = [],
 ): UseListReducer<T> => {

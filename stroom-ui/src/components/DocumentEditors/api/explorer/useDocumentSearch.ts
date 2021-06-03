@@ -13,9 +13,8 @@ interface UseDocumentSearch {
 }
 
 const useDocumentSearch = (): UseDocumentSearch => {
-  const { searchApp, fetchDocTree, documentTree } = React.useContext(
-    DocumentTreeContext,
-  );
+  const { searchApp, fetchDocTree, documentTree } =
+    React.useContext(DocumentTreeContext);
 
   const [searchResults, setSearchResults] = React.useState<DocRefType[]>([]);
 
@@ -24,10 +23,10 @@ const useDocumentSearch = (): UseDocumentSearch => {
   return {
     documentTree,
     searchResults,
-    searchApp: React.useCallback((p) => searchApp(p).then(setSearchResults), [
-      searchApp,
-      setSearchResults,
-    ]),
+    searchApp: React.useCallback(
+      (p) => searchApp(p).then(setSearchResults),
+      [searchApp, setSearchResults],
+    ),
   };
 };
 

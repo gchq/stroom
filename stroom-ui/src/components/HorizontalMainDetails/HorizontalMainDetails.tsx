@@ -29,10 +29,8 @@ const HorizontalMainDetails: React.FunctionComponent<Props> = ({
     200,
     storeNumber,
   );
-  const {
-    value: detailsHeight,
-    reduceValue: setDetailsHeight,
-  } = useLocalStorage(`detailsHeight_${storageKey}`, 200, storeNumber);
+  const { value: detailsHeight, reduceValue: setDetailsHeight } =
+    useLocalStorage(`detailsHeight_${storageKey}`, 200, storeNumber);
 
   React.useEffect(() => {
     Mousetrap.bind("esc", onClose);

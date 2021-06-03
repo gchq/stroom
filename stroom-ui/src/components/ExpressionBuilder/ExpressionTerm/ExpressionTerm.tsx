@@ -54,15 +54,13 @@ const dragSource: DragSourceSpec<Props, DragObject> = {
   },
 };
 
-export const dragCollect: DragSourceCollector<
-  DragCollectedProps,
-  Props
-> = function dragCollect(connect, monitor) {
-  return {
-    connectDragSource: connect.dragSource(),
-    isDragging: monitor.isDragging(),
+export const dragCollect: DragSourceCollector<DragCollectedProps, Props> =
+  function dragCollect(connect, monitor) {
+    return {
+      connectDragSource: connect.dragSource(),
+      isDragging: monitor.isDragging(),
+    };
   };
-};
 
 const enhance = DragSource(DragDropTypes.TERM, dragSource, dragCollect);
 

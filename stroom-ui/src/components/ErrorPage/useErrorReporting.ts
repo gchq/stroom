@@ -1,6 +1,9 @@
 import * as React from "react";
-import ErrorReportingContext from "./ErrorReportingContext";
+import ErrorReportingContext, {
+  ErrorReportingContextState,
+} from "./ErrorReportingContext";
 
-const useErrorReporting = () => React.useContext(ErrorReportingContext);
+const useErrorReporting = (): ErrorReportingContextState =>
+  React.useContext(ErrorReportingContext);
 
 export default useErrorReporting;

@@ -31,7 +31,7 @@ export const UserPickerDialog: React.FunctionComponent<Props> = ({
   }, [reset, setIsOpen]);
 
   const onConfirmLocal = React.useCallback(() => {
-    if (!!userGroupUuid) {
+    if (userGroupUuid) {
       onConfirm(userGroupUuid);
       onClose();
     }

@@ -43,16 +43,13 @@ interface ControlledInputsFormValues {
 }
 
 const ControlledInputTestHarness: React.FunctionComponent = () => {
-  const { useControlledInputProps, value } = useForm<
-    ControlledInputsFormValues
-  >({});
+  const { useControlledInputProps, value } =
+    useForm<ControlledInputsFormValues>({});
 
-  const permissionInheritanceProps = useControlledInputProps<
-    PermissionInheritance
-  >("permissionInheritance");
-  const conditionTypeProps = useControlledInputProps<ConditionType>(
-    "conditionType",
-  );
+  const permissionInheritanceProps =
+    useControlledInputProps<PermissionInheritance>("permissionInheritance");
+  const conditionTypeProps =
+    useControlledInputProps<ConditionType>("conditionType");
   return (
     <form>
       <label>Permission Inheritance</label>

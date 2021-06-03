@@ -13,7 +13,7 @@ import {
 
 export enum DragDropTypes {
   ELEMENT = "element",
-  PALLETE_ELEMENT = "paletteElement",
+  PALETTE_ELEMENT = "paletteElement",
 }
 export interface DragObject {
   element: ElementDefinition;
@@ -55,7 +55,10 @@ export interface PipelineEditApi {
   asTree?: PipelineAsTreeType;
   existingElementNames: string[];
   settingsUpdated: (p: PipelineSettingsValues) => void;
-  elementSelected: (elementId: string, initialValues?: object) => void;
+  elementSelected: (
+    elementId: string,
+    initialValues?: Record<string, unknown>,
+  ) => void;
   elementSelectionCleared: () => void;
   elementMoved: (itemToMove: string, destination: string) => void;
   elementAdded: (newElement: NewElement) => void;

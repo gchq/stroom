@@ -22,7 +22,7 @@ import useDataRetention from "../useDataRetention";
 const DataRetentionSectionContainer = () => {
   const { policy, create } = useDataRetention();
 
-  if (!!policy) {
+  if (policy) {
     return (
       <DataRetentionSection
         policy={policy}

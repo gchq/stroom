@@ -15,11 +15,8 @@ interface Api {
 
 export const useApi = (): Api => {
   const { apiUrl } = useUrlFactory();
-  const {
-    httpGetJson,
-    httpPostEmptyResponse,
-    httpDeleteEmptyResponse,
-  } = useHttpClient();
+  const { httpGetJson, httpPostEmptyResponse, httpDeleteEmptyResponse } =
+    useHttpClient();
 
   const resource = apiUrl("/appPermissions/v1");
 

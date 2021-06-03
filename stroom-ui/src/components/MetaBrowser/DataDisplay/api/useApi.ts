@@ -17,7 +17,7 @@ export const useApi = (): Api => {
   const getDataForSelectedRow = React.useCallback(
     ({ pageOffset, pageSize, metaId }: FetchDataParams) => {
       const url = new URL(resource);
-      if (!!metaId) url.searchParams.append("streamId", metaId.toString());
+      if (metaId) url.searchParams.append("streamId", metaId.toString());
       url.searchParams.append("streamsOffset", "0");
       url.searchParams.append("streamsLength", "1");
       url.searchParams.append("pageOffset", `${pageOffset || 0}`);

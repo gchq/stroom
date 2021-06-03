@@ -38,10 +38,10 @@ const useDataVolumes = (): UseDataVolumes => {
   return {
     volumes,
     isLoading,
-    createVolume: React.useCallback(() => createVolume().then(addItem), [
-      addItem,
-      createVolume,
-    ]),
+    createVolume: React.useCallback(
+      () => createVolume().then(addItem),
+      [addItem, createVolume],
+    ),
     deleteVolume: React.useCallback(
       (id: string) => deleteVolume(id).then(() => removeItem(id)),
       [removeItem, deleteVolume],
@@ -56,10 +56,10 @@ const useDataVolumes = (): UseDataVolumes => {
         }),
       [update, updateItemAtIndex, volumes],
     ),
-    refresh: React.useCallback(() => getVolumes().then(receiveItems), [
-      getVolumes,
-      receiveItems,
-    ]),
+    refresh: React.useCallback(
+      () => getVolumes().then(receiveItems),
+      [getVolumes, receiveItems],
+    ),
   };
 };
 

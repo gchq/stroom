@@ -35,9 +35,10 @@ export const DocumentPermissionEditor: React.FunctionComponent<Props> = ({
   } = useDocumentPermissions(docRefUuid);
 
   const { history } = useRouter();
-  const userUuids = React.useMemo(() => Object.keys(permissionsByUser), [
-    permissionsByUser,
-  ]);
+  const userUuids = React.useMemo(
+    () => Object.keys(permissionsByUser),
+    [permissionsByUser],
+  );
   const users = useUsers(userUuids);
   const { componentProps: usersTableProps } = useUsersTable(users);
 
@@ -52,54 +53,50 @@ export const DocumentPermissionEditor: React.FunctionComponent<Props> = ({
   const selectedUser: StroomUser | undefined =
     selectedUsers.length > 0 ? selectedUsers[0] : undefined;
 
-  const {
-    componentProps: userPickerProps,
-    showDialog: showUserPicker,
-  } = userUserPickerDialog({
-    pickerBaseProps: { isGroup: undefined },
-    onConfirm: preparePermissionsForUser,
-  });
+  const { componentProps: userPickerProps, showDialog: showUserPicker } =
+    userUserPickerDialog({
+      pickerBaseProps: { isGroup: undefined },
+      onConfirm: preparePermissionsForUser,
+    });
 
-  const {
-    showDialog: showConfirmClear,
-    componentProps: confirmClearProps,
-  } = useThemedConfirm({
-    getQuestion: React.useCallback(
-      () =>
-        `Are you sure you wish to clear permissions for ${
-          selectedUsers.length === 0 ? "all" : "selected"
-        } users?`,
-      [selectedUsers.length],
-    ),
-    getDetails: React.useCallback(() => {
-      if (selectedUsers.length === 0) {
-        return `From Document ${docRef.type} - ${docRefUuid}`;
-      } else {
-        return (
-          `From Document ${docRef.type} - ${docRefUuid} for users ` +
-          selectedUsers.map((u) => u.name).join(", ")
-        );
-      }
-    }, [docRefUuid, docRef, selectedUsers]),
-    onConfirm: React.useCallback(() => {
-      if (selectedUsers.length !== 0) {
-        selectedUsers.forEach((user) => clearPermissionForUser(user.uuid));
-        clearSelection();
-      } else {
-        clearPermissions();
-      }
-    }, [
-      selectedUsers,
-      clearSelection,
-      clearPermissionForUser,
-      clearPermissions,
-    ]),
-  });
+  const { showDialog: showConfirmClear, componentProps: confirmClearProps } =
+    useThemedConfirm({
+      getQuestion: React.useCallback(
+        () =>
+          `Are you sure you wish to clear permissions for ${
+            selectedUsers.length === 0 ? "all" : "selected"
+          } users?`,
+        [selectedUsers.length],
+      ),
+      getDetails: React.useCallback(() => {
+        if (selectedUsers.length === 0) {
+          return `From Document ${docRef.type} - ${docRefUuid}`;
+        } else {
+          return (
+            `From Document ${docRef.type} - ${docRefUuid} for users ` +
+            selectedUsers.map((u) => u.name).join(", ")
+          );
+        }
+      }, [docRefUuid, docRef, selectedUsers]),
+      onConfirm: React.useCallback(() => {
+        if (selectedUsers.length !== 0) {
+          selectedUsers.forEach((user) => clearPermissionForUser(user.uuid));
+          clearSelection();
+        } else {
+          clearPermissions();
+        }
+      }, [
+        selectedUsers,
+        clearSelection,
+        clearPermissionForUser,
+        clearPermissions,
+      ]),
+    });
   const clearButtonText =
     selectedUsers.length === 0 ? "Clear All" : "Clear Selected";
 
   const onClickEdit = React.useCallback(() => {
-    if (!!selectedUser) {
+    if (selectedUser) {
       goToAuthorisationsForDocumentForUser(docRefUuid, selectedUser.uuid);
     }
   }, [docRefUuid, selectedUser, goToAuthorisationsForDocumentForUser]);

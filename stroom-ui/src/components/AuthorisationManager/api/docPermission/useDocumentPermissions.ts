@@ -39,20 +39,26 @@ const reducer = (
   action: Received | Cleared | ReceivedForUser | ClearedForUser,
 ): PermissionsByUser => {
   switch (action.type) {
-    case "received":
+    case "received": {
       return action.documentPermissions.userPermissions;
-    case "cleared":
+    }
+    case "cleared": {
       return DEFAULT_PERMISSIONS_BY_USER;
-    case "prepareForUser":
+    }
+    case "prepareForUser": {
       return {
         ...state,
         [action.userUuid]: [],
       };
-    case "clearedForUser":
+    }
+    case "clearedForUser": {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { [action.userUuid]: omit, ...newState } = state;
       return newState;
-    default:
+    }
+    default: {
       return state;
+    }
   }
 };
 
@@ -68,7 +74,7 @@ const useDocumentPermissions = (
   } = useApi();
 
   React.useEffect(() => {
-    if (!!docRefUuid) {
+    if (docRefUuid) {
       getPermissionForDoc(docRefUuid).then((documentPermissions) =>
         dispatch({
           type: "received",
@@ -80,7 +86,7 @@ const useDocumentPermissions = (
 
   const preparePermissionsForUser = React.useCallback(
     (userUuid: string) => {
-      if (!!docRefUuid) {
+      if (docRefUuid) {
         dispatch({
           type: "prepareForUser",
           userUuid,
@@ -91,14 +97,14 @@ const useDocumentPermissions = (
   );
 
   const clearPermissions = React.useCallback(() => {
-    if (!!docRefUuid) {
+    if (docRefUuid) {
       clearDocPermissions(docRefUuid).then(() => dispatch({ type: "cleared" }));
     }
   }, [docRefUuid, clearDocPermissions]);
 
   const clearPermissionForUser = React.useCallback(
     (userUuid: string) => {
-      if (!!docRefUuid) {
+      if (docRefUuid) {
         clearDocPermissionsForUser(docRefUuid, userUuid).then(() =>
           dispatch({
             type: "clearedForUser",

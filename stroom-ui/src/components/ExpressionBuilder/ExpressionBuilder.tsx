@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 import * as React from "react";
-
 /* import ExpressionOperator from "./ExpressionOperator"; */
 import { DataSourceType, ExpressionOperatorType } from "./types";
 import { LineContainer } from "../LineTo";
@@ -31,15 +30,10 @@ interface Props {
   onChange?: (e: ExpressionOperatorType) => void;
 }
 
-const defaultOnChange = (e: ExpressionOperatorType) =>
-  console.error("Cannot edit expression without valid onChange", e);
-
 const ExpressionBuilder: React.FunctionComponent<Props> = ({
   dataSource,
   showModeToggle,
   editMode,
-  value,
-  onChange = defaultOnChange,
 }) => {
   const { value: inEditMode, toggle: toggleEditMode } = useToggle(editMode);
 

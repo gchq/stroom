@@ -12,7 +12,9 @@ import styled from "styled-components";
  *  - Hover shows a thin border and acts as an invitation to click
  *  - Focus shows a significant border and it looks like a normal input
  */
-const MinimalInput = ({ ...rest }) => {
+const MinimalInput = ({
+  ...rest
+}: React.InputHTMLAttributes<HTMLInputElement>): React.ReactElement => {
   // Using px instead of em because it makes the calculations for changing
   // border width and padding easier. We're changing these for two reasons:
   //  1. so the total size of the input doesn't change and move other stuff

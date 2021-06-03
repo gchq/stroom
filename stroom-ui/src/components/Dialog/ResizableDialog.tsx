@@ -17,6 +17,7 @@ export interface DialogProps {
   disableHorizontalResize?: boolean;
   disableVerticalMove?: boolean;
   disableHorizontalMove?: boolean;
+  disableKeystroke?: boolean;
   onFocus?: () => void;
   className?: string;
 }
@@ -24,6 +25,7 @@ export interface DialogProps {
 export const ResizableDialog: FunctionComponent<DialogProps> = (props) => {
   const p = {
     isOpen: true,
+    disableKeystroke: true,
     // onRequestClose: () => undefined,
     // onFocus={() => console.log("Modal is clicked")}
     // className={"my-modal-custom-class"}

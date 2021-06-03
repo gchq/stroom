@@ -16,9 +16,8 @@ import {
 } from "components/DocumentEditors/useDocumentApi/types/base";
 
 const DocumentTreeContextProvider: React.FunctionComponent = ({ children }) => {
-  const [documentTree, setDocumentTree] = React.useState<DocRefTree>(
-    DEFAULT_TREE,
-  );
+  const [documentTree, setDocumentTree] =
+    React.useState<DocRefTree>(DEFAULT_TREE);
 
   const {
     fetchDocTree,

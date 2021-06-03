@@ -112,15 +112,16 @@ export const Sidebar: React.FunctionComponent<Props> = ({ activeMenuItem }) => {
     },
     [menuItemsByKey],
   );
-  const enterItem = React.useCallback((m) => menuItemOpened(m, true), [
-    menuItemOpened,
-  ]);
+  const enterItem = React.useCallback(
+    (m) => menuItemOpened(m, true),
+    [menuItemOpened],
+  );
   const goBack = React.useCallback(
     (key: string) => {
       const menuItem = menuItemsByKey[key];
       if (menuItemIsOpenByKey[key]) {
         menuItemOpened(key, false);
-      } else if (!!menuItem.parentDocRef) {
+      } else if (menuItem.parentDocRef) {
         // Can we bubble back up to the parent folder of the current selection?
         // let newSelection = openMenuItems.find(
         //   ({ key }: MenuItemType) =>
@@ -136,17 +137,14 @@ export const Sidebar: React.FunctionComponent<Props> = ({ activeMenuItem }) => {
   );
 
   const keyIsDown = useKeyIsDown();
-  const {
-    onKeyDown,
-    selectedItems,
-    highlightedItem,
-  } = useSelectableItemListing<string>({
-    items: openMenuItemKeys,
-    getKey,
-    openItem,
-    enterItem,
-    goBack,
-  });
+  const { onKeyDown, selectedItems, highlightedItem } =
+    useSelectableItemListing<string>({
+      items: openMenuItemKeys,
+      getKey,
+      openItem,
+      enterItem,
+      goBack,
+    });
 
   const {
     showDialog: showCopyDialog,

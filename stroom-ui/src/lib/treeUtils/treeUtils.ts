@@ -24,19 +24,20 @@
  */
 import v4 from "uuid/v4";
 import { Tree, TWithLineage } from "./types";
+import { DocRefType } from "../../components/DocumentEditors/useDocumentApi/types/base";
 
-export function mapObject<IN, OUT>(
-  input: { [id: string]: IN },
-  mapper: (id: string, i: IN) => OUT | undefined,
-) {
-  return Object.keys(input).reduce((previous, current) => {
-    const mappedValue = mapper(current, input[current]);
-    if (!!mappedValue) {
-      previous[current] = mappedValue;
-    }
-    return previous;
-  }, {});
-}
+// export function mapObject<IN, OUT>(
+//   input: { [id: string]: IN },
+//   mapper: (id: string, i: IN) => OUT | undefined,
+// ) {
+//   return Object.keys(input).reduce((previous, current) => {
+//     const mappedValue = mapper(current, input[current]);
+//     if (mappedValue) {
+//       previous[current] = mappedValue;
+//     }
+//     return previous;
+//   }, {});
+// }
 
 interface HasUuid {
   uuid: string;
@@ -69,7 +70,7 @@ export function filterTree<T extends HasUuid>(
  * This function can be used to iterate through all nodes in a tree.
  * The callback can return 'true' if it wishes to skip any children from this node.
  *
- * @param {treeNode} tree The tree to iterate through
+ * @param {Tree} tree The tree to iterate through
  * @param {function} callback Called for each node in the tree, first arg is an array of parents, second arg is the node
  * @param {array} lineage Contains the nodes in the lineage of the node given
  */
@@ -77,7 +78,7 @@ export function iterateNodes<T extends HasUuid>(
   tree: Tree<T> & T,
   callback: (l: (Tree<T> & T)[], t: Tree<T> & T) => void,
   lineage?: (Tree<T> & T)[],
-) {
+): void {
   const thisLineage = lineage || [];
 
   callback(thisLineage, tree);
@@ -91,7 +92,7 @@ export function iterateNodes<T extends HasUuid>(
 
 /**
  *
- * @param {treeNode} treeNode
+ * @param {Tree} treeNode
  * @param {array of strings} uuids
  */
 export function findByUuids<T extends HasUuid>(
@@ -112,8 +113,8 @@ export function findByUuids<T extends HasUuid>(
 /**
  * Recursively check that a tree node is inside the child hierarchy of the given destination tree node.
  *
- * @param {treeNode} treeNode The node we are looking into, this will be recursed through children
- * @param {treeNode} itemToFind The item to find
+ * @param {Tree} treeNode The node we are looking into, this will be recursed through children
+ * @param {T} itemToFind The item to find
  */
 export function itemIsInSubtree<T extends HasUuid>(
   treeNode: Tree<T> & T,
@@ -141,13 +142,13 @@ export function itemIsInSubtree<T extends HasUuid>(
  * 2) A folder is being moved into one of it's sub folders (at any level of nesting)
  * 3) A document is being moved into the folder it's already in
  *
- * @param {treeNode} itemToMove The item that we may want to move
- * @param {treeNode} destinationFolder The potential destination folder
+ * @param {Tree} itemToMove The item that we may want to move
+ * @param {Tree} destinationFolder The potential destination folder
  */
 export function canMove<T extends HasUuid>(
   itemToMove: Tree<T> & T,
   destinationFolder: Tree<T> & T,
-) {
+): boolean {
   // If the item being dropped is a folder, and is being dropped into itself
   if (itemIsInSubtree(itemToMove, destinationFolder)) {
     return false;
@@ -168,8 +169,8 @@ export function canMove<T extends HasUuid>(
  * Used to create a copy of a tree that has the UUID's stripped.
  * This is useful when the UUID's were only added for the UI in the first place.
  *
- * @param {treeNode} tree The input tree, will not be modified
- * @return {treeNode} the copied tree minus the UUID values
+ * @param {Tree} tree The input tree, will not be modified
+ * @return {T} the copied tree minus the UUID values
  */
 export function stripUuids<T extends HasUuid>(tree: Tree<T> & T): T {
   return {
@@ -181,36 +182,36 @@ export function stripUuids<T extends HasUuid>(tree: Tree<T> & T): T {
   };
 }
 
-/**
- * Picks a random item from the tree that passes the filter function.
- *
- * @param {treeNode} tree The tree through which to search
- * @param {function} filterFunction Callback that takes (lineage, node) and returns true/false for inclusion in random options
- * @return {object} Containing { node, lineage} of picked item
- */
-export function pickRandomItem<T extends HasUuid>(
-  tree: Tree<T> & T,
-  filterFunction: (l: (Tree<T> & T)[], t: Tree<T> & T) => boolean,
-) {
-  const options: { node: T; lineage: T[] }[] = [];
-
-  iterateNodes(tree, (lineage, node) => {
-    if (filterFunction(lineage, node)) {
-      options.push({ node, lineage });
-    }
-  });
-
-  if (options.length > 0) {
-    return options[Math.floor(Math.random() * options.length)];
-  }
-
-  return undefined;
-}
+// /**
+//  * Picks a random item from the tree that passes the filter function.
+//  *
+//  * @param {Tree} tree The tree through which to search
+//  * @param {function} filterFunction Callback that takes (lineage, node) and returns true/false for inclusion in random options
+//  * @return {object} Containing { node, lineage} of picked item
+//  */
+// export function pickRandomItem<T extends HasUuid>(
+//   tree: Tree<T> & T,
+//   filterFunction: (l: (Tree<T> & T)[], t: Tree<T> & T) => boolean,
+// ): { node: T; lineage: T[] } {
+//   const options: { node: T; lineage: T[] }[] = [];
+//
+//   iterateNodes(tree, (lineage, node) => {
+//     if (filterFunction(lineage, node)) {
+//       options.push({ node, lineage });
+//     }
+//   });
+//
+//   if (options.length > 0) {
+//     return options[Math.floor(Math.random() * options.length)];
+//   }
+//
+//   return undefined;
+// }
 
 /**
  * Given a tree, and a UUID, finds and returns the matching object and it's lineage
  *
- * @param {treeNode} tree
+ * @param {Tree} tree
  * @param {string} uuid
  */
 export function findItem<T extends HasUuid>(
@@ -238,15 +239,15 @@ export function findItem<T extends HasUuid>(
  * Given a tree, this function returns a modified copy that applies the given updates to the node with a UUID
  * that matches the one given.
  *
- * @param {treeNode} treeNode Recursively applied to nodes in a tree, will be the root node in the first instance
+ * @param {Tree} treeNode Recursively applied to nodes in a tree, will be the root node in the first instance
  * @param {string} uuid The UUID of the node to modify
  * @param {object} updates The updates to apply to the matching node
- * @return {treeNode} The modified tree
+ * @return {T} The modified tree
  */
 export function updateItemInTree<T extends HasUuid>(
   treeNode: Tree<T> & T,
   uuid: string,
-  updates: object,
+  updates: DocRefType,
 ): T {
   let children;
   if (treeNode.children) {
@@ -265,30 +266,30 @@ export function updateItemInTree<T extends HasUuid>(
   };
 }
 
-/**
- * Used to create a copy of an object with a particular key removed.
- * We can't use array filtering on objects.
- *
- * @param {object} input The input object
- * @param {string} key The key to remove
- */
-export function deleteItemFromObject(input: object, key: any) {
-  const output = {};
-
-  Object.keys(input)
-    .filter((k) => k !== key)
-    .forEach((k) => (output[k] = input[k]));
-
-  return output;
-}
+// /**
+//  * Used to create a copy of an object with a particular key removed.
+//  * We can't use array filtering on objects.
+//  *
+//  * @param {object} input The input object
+//  * @param {string} key The key to remove
+//  */
+// export function deleteItemFromObject(input: Record<string, unknown>, key: any) {
+//   const output = {};
+//
+//   Object.keys(input)
+//     .filter((k) => k !== key)
+//     .forEach((k) => (output[k] = input[k]));
+//
+//   return output;
+// }
 
 /**
  * Given a tree, this function returns a copy of the tree with the item removed with the matching UUID.
  *
- * @param {treeNode} treeNode The tree from which to remove the item.
+ * @param {Tree} treeNode The tree from which to remove the item.
  * @param {string} uuid The UUID of the item to delete
  *
- * @return {treeNode} Copy of the input tree with the input item removed.
+ * @return {T} Copy of the input tree with the input item removed.
  */
 export function deleteItemFromTree<T extends HasUuid>(
   treeNode: Tree<T> & T,
@@ -310,10 +311,10 @@ export function deleteItemFromTree<T extends HasUuid>(
 /**
  * Given a tree, this function returns a copy of the tree with the item removed with the matching UUID.
  *
- * @param {treeNode} treeNode The tree from which to remove the item.
+ * @param {Tree} treeNode The tree from which to remove the item.
  * @param {string} uuids The list of UUID of the item to delete
  *
- * @return {treeNode} Copy of the input tree with the input item removed.
+ * @return {T} Copy of the input tree with the input item removed.
  */
 export function deleteItemsFromTree<T extends HasUuid>(
   treeNode: Tree<T> & T,
@@ -335,7 +336,7 @@ export function deleteItemsFromTree<T extends HasUuid>(
 /**
  * Given a tree, returns a copy of the tree with the given items added the node with the matching UUID.
  *
- * @param {treeNode} treeNode
+ * @param {Tree} treeNode
  * @param {string} parentUuid
  * @param {array of items} items
  */
@@ -371,9 +372,9 @@ export function addItemsToTree<T extends HasUuid>(
  * Given a tree of data, returns a new tree with the item to move
  * relocated to the intended destination.
  *
- * @param {treeNode} rootNode The current entire tree of doc refs
- * @param {treeNode} itemToMove The item being moved
- * @param {treeNode} destination The destination tree node
+ * @param {Tree} rootNode The current entire tree of doc refs
+ * @param {Tree} destination The destination tree node
+ * @param {Tree} itemsToMove The item being moved
  */
 export function moveItemsInTree<T extends HasUuid>(
   rootNode: Tree<T> & T,
@@ -405,9 +406,9 @@ export function moveItemsInTree<T extends HasUuid>(
  * Given a tree of data, returns a new tree with the item to move
  * relocated to the intended destination.
  *
- * @param {treeNode} rootNode The current entire tree of doc refs
- * @param {treeNode} itemToMove The item being moved
- * @param {treeNode} destination The destination tree node
+ * @param {Tree} rootNode The current entire tree of doc refs
+ * @param {Tree} destination The destination tree node
+ * @param {Tree} itemsToCopy The item being moved
  */
 export function copyItemsInTree<T extends HasUuid>(
   rootNode: Tree<T> & T,

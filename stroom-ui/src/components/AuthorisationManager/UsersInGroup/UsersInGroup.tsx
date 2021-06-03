@@ -14,7 +14,7 @@ interface Props {
   group: StroomUser;
 }
 
-const UsersInGroup = ({ group }: Props) => {
+const UsersInGroup: React.FunctionComponent<Props> = ({ group }) => {
   const { users, addToGroup, removeFromGroup } = useUsersInGroup(group);
   const {
     nav: { goToAuthorisationsForUser },
@@ -52,13 +52,11 @@ const UsersInGroup = ({ group }: Props) => {
     }
   }, [goToAuthorisationsForUser, selectedItems]);
 
-  const {
-    componentProps: userPickerProps,
-    showDialog: showUserPicker,
-  } = useUserPickerDialog({
-    pickerBaseProps: { isGroup: false },
-    onConfirm: addToGroup,
-  });
+  const { componentProps: userPickerProps, showDialog: showUserPicker } =
+    useUserPickerDialog({
+      pickerBaseProps: { isGroup: false },
+      onConfirm: addToGroup,
+    });
 
   return (
     <div>

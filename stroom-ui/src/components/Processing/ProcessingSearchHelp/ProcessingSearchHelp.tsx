@@ -2,7 +2,7 @@ import * as React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Tooltip from "components/Tooltip";
 
-export const ProcessingSearchHelp = () => (
+export const ProcessingSearchHelp: React.FunctionComponent = () => (
   <div className="processing__search__help">
     <Tooltip
       trigger={<FontAwesomeIcon icon="question-circle" size="lg" />}

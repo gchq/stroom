@@ -25,7 +25,7 @@ import useTokenSearch from "./useTokenSearch";
 import IconHeader from "components/IconHeader";
 import { Token } from "../api/types";
 
-const TokenSearch = () => {
+const TokenSearch: React.FunctionComponent = () => {
   const {
     deleteSelectedToken,
     performTokenSearch,
@@ -117,7 +117,7 @@ const TokenSearch = () => {
             className += enabled ? "" : " table-row-dimmed";
             return {
               onClick: () => {
-                if (!!rowInfo) {
+                if (rowInfo) {
                   setSelectedTokenRowId(rowInfo.row.id);
                 }
               },

@@ -208,9 +208,8 @@ export const EditAccount: React.FunctionComponent<{
   onClose: (success: boolean) => void;
 }> = ({ account, passwordPolicyConfig, onClose }) => {
   const [showPasswordDialog, setShowPasswordDialog] = useState<boolean>();
-  const [passwordState, setPasswordState] = useState<
-    ChangePasswordFormValues
-  >();
+  const [passwordState, setPasswordState] =
+    useState<ChangePasswordFormValues>();
 
   const editPassword = () => {
     setShowPasswordDialog(true);
@@ -273,7 +272,10 @@ export const EditAccount: React.FunctionComponent<{
         confirmPassword: passwordState && passwordState.confirmPassword,
       };
 
-      exec((api) => api.account.updateAccount(account.id, request), handleResponse);
+      exec(
+        (api) => api.account.updateAccount(account.id, request),
+        handleResponse,
+      );
     }
   };
 

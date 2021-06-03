@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { ElementRoles } from "./ElementRoles";
 import {
   ElementDefinition,
   ElementDefinitionsByCategory,
@@ -67,60 +66,60 @@ export function keyByType(
  * @param {ElementDefinition} childType The child element type
  * @param {integer} currentChildCount Number of existing connections from the parent
  */
-export function isValidChildType(
-  parentType: ElementDefinition,
-  childType: ElementDefinition,
-  currentChildCount: number,
-) {
-  if (parentType.roles.includes(ElementRoles.WRITER)) {
-    if (currentChildCount > 0) {
-      return false;
-    }
-    return childType.roles.includes(ElementRoles.DESTINATION);
-  }
-
-  if (parentType.roles.includes(ElementRoles.DESTINATION)) {
-    return false;
-  }
-
-  if (parentType.roles.includes(ElementRoles.SOURCE)) {
-    return (
-      childType.roles.includes(ElementRoles.DESTINATION) ||
-      childType.roles.includes(ElementRoles.READER) ||
-      childType.roles.includes(ElementRoles.PARSER)
-    );
-  }
-
-  if (parentType.roles.includes(ElementRoles.READER)) {
-    return (
-      childType.roles.includes(ElementRoles.DESTINATION) ||
-      childType.roles.includes(ElementRoles.READER) ||
-      childType.roles.includes(ElementRoles.PARSER)
-    );
-  }
-
-  if (parentType.roles.includes(ElementRoles.PARSER)) {
-    return (
-      !childType.roles.includes(ElementRoles.READER) &&
-      !childType.roles.includes(ElementRoles.PARSER) &&
-      !childType.roles.includes(ElementRoles.DESTINATION)
-    );
-  }
-
-  if (parentType.roles.includes(ElementRoles.TARGET)) {
-    if (!parentType.roles.includes(ElementRoles.WRITER)) {
-      return (
-        !childType.roles.includes(ElementRoles.READER) &&
-        !childType.roles.includes(ElementRoles.PARSER) &&
-        !childType.roles.includes(ElementRoles.DESTINATION)
-      );
-    }
-
-    return (
-      !childType.roles.includes(ElementRoles.READER) &&
-      !childType.roles.includes(ElementRoles.PARSER)
-    );
-  }
-
-  return !childType.roles.includes(ElementRoles.DESTINATION);
-}
+// export function isValidChildType(
+//   parentType: ElementDefinition,
+//   childType: ElementDefinition,
+//   currentChildCount: number,
+// ) {
+//   if (parentType.roles.includes(ElementRoles.WRITER)) {
+//     if (currentChildCount > 0) {
+//       return false;
+//     }
+//     return childType.roles.includes(ElementRoles.DESTINATION);
+//   }
+//
+//   if (parentType.roles.includes(ElementRoles.DESTINATION)) {
+//     return false;
+//   }
+//
+//   if (parentType.roles.includes(ElementRoles.SOURCE)) {
+//     return (
+//       childType.roles.includes(ElementRoles.DESTINATION) ||
+//       childType.roles.includes(ElementRoles.READER) ||
+//       childType.roles.includes(ElementRoles.PARSER)
+//     );
+//   }
+//
+//   if (parentType.roles.includes(ElementRoles.READER)) {
+//     return (
+//       childType.roles.includes(ElementRoles.DESTINATION) ||
+//       childType.roles.includes(ElementRoles.READER) ||
+//       childType.roles.includes(ElementRoles.PARSER)
+//     );
+//   }
+//
+//   if (parentType.roles.includes(ElementRoles.PARSER)) {
+//     return (
+//       !childType.roles.includes(ElementRoles.READER) &&
+//       !childType.roles.includes(ElementRoles.PARSER) &&
+//       !childType.roles.includes(ElementRoles.DESTINATION)
+//     );
+//   }
+//
+//   if (parentType.roles.includes(ElementRoles.TARGET)) {
+//     if (!parentType.roles.includes(ElementRoles.WRITER)) {
+//       return (
+//         !childType.roles.includes(ElementRoles.READER) &&
+//         !childType.roles.includes(ElementRoles.PARSER) &&
+//         !childType.roles.includes(ElementRoles.DESTINATION)
+//       );
+//     }
+//
+//     return (
+//       !childType.roles.includes(ElementRoles.READER) &&
+//       !childType.roles.includes(ElementRoles.PARSER)
+//     );
+//   }
+//
+//   return !childType.roles.includes(ElementRoles.DESTINATION);
+// }

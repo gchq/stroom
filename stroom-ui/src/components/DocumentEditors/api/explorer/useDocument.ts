@@ -5,10 +5,10 @@ import { DocRefWithLineage } from "components/DocumentEditors/useDocumentApi/typ
 const useDocument = (docRefUuid: string): DocRefWithLineage | undefined => {
   const { findDocRefWithLineage } = useDocumentTree();
 
-  return React.useMemo(() => findDocRefWithLineage(docRefUuid), [
-    findDocRefWithLineage,
-    docRefUuid,
-  ]);
+  return React.useMemo(
+    () => findDocRefWithLineage(docRefUuid),
+    [findDocRefWithLineage, docRefUuid],
+  );
 };
 
 export default useDocument;

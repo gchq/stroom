@@ -10,9 +10,8 @@ import JsonDebug from "testing/JsonDebug";
 let nextElementId = 12;
 
 const TestHarness: React.FunctionComponent = () => {
-  const [elementDeleted, setElementDeleted] = useState<string | undefined>(
-    undefined,
-  );
+  const [elementDeleted, setElementDeleted] =
+    useState<string | undefined>(undefined);
 
   const { componentProps, showDialog } = useDialog(setElementDeleted);
 

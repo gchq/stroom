@@ -45,7 +45,7 @@ const TestHarness: React.FunctionComponent = () => {
   );
 };
 
-storiesOf(
-  "Sections/Authorisation Manager/useManageUsers",
-  module,
-).add("Sample 1", () => <TestHarness />);
+storiesOf("Sections/Authorisation Manager/useManageUsers", module).add(
+  "Sample 1",
+  () => <TestHarness />,
+);

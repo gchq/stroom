@@ -1,3 +1,4 @@
+@use "sass:math";
 @import "../../styles/colours";
 
 // Password strength meter color for the different levels
@@ -95,12 +96,12 @@ button.btn {
 
   // Dynamically create the gap effect
   &:before {
-    left: calc(20% - #{($strength-gap / 2)});
+    left: calc(20% - #{math.div($strength-gap, 2)});
   }
 
   // Dynamically create the gap effect
   &:after {
-    right: calc(20% - #{($strength-gap / 2)});
+    right: calc(20% - #{math.div($strength-gap, 2)});
   }
 }
 

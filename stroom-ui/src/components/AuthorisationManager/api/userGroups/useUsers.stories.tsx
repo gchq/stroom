@@ -31,9 +31,10 @@ const testUserLists = [
 const TestHarness = () => {
   const [testListIndex, setTestListIndex] = React.useState<number>(0);
 
-  const userUuids = React.useMemo(() => testUserLists[testListIndex], [
-    testListIndex,
-  ]);
+  const userUuids = React.useMemo(
+    () => testUserLists[testListIndex],
+    [testListIndex],
+  );
   const users = useUsers(userUuids);
 
   const switchList = React.useCallback(() => {

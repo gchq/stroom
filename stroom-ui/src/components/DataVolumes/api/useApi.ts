@@ -39,10 +39,10 @@ export const useApi = (): Api => {
       (id: string) => httpGetJson(`${resource}/${id}`),
       [resource, httpGetJson],
     ),
-    getVolumes: React.useCallback(() => httpGetJson(resource), [
-      resource,
-      httpGetJson,
-    ]),
+    getVolumes: React.useCallback(
+      () => httpGetJson(resource),
+      [resource, httpGetJson],
+    ),
     update: React.useCallback(
       (volume: FsVolume) =>
         httpPutJsonResponse(`${resource}/${volume.id}`, {

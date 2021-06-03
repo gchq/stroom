@@ -57,9 +57,8 @@ export const useThisForm = (): UseThisFormOutProps => {
 
   const docRefNameProps = useTextInput("docRefName");
   const docRefTypeProps = useControlledInputProps<string>("docRefType");
-  const permissionInheritanceProps = useControlledInputProps<
-    PermissionInheritance
-  >("permissionInheritance");
+  const permissionInheritanceProps =
+    useControlledInputProps<PermissionInheritance>("permissionInheritance");
 
   return {
     value,

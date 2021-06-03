@@ -6,9 +6,8 @@ import ErrorReportingContext from "./ErrorReportingContext";
 const ErrorReportingContextProvider: React.FunctionComponent = ({
   children,
 }) => {
-  const [error, reportError] = React.useState<SingleError | undefined>(
-    undefined,
-  );
+  const [error, reportError] =
+    React.useState<SingleError | undefined>(undefined);
 
   return (
     <ErrorReportingContext.Provider value={{ error, reportError }}>

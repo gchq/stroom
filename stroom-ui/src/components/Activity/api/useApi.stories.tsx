@@ -9,9 +9,8 @@ const CurrentActivityTestHarness: React.FunctionComponent = () => {
   // REST call promise
   const { getCurrentActivity } = useApi();
 
-  const [currentActivity, setCurrentActivity] = React.useState<Activity>(
-    undefined,
-  );
+  const [currentActivity, setCurrentActivity] =
+    React.useState<Activity>(undefined);
   React.useEffect(() => {
     getCurrentActivity().then(setCurrentActivity);
   }, [getCurrentActivity, setCurrentActivity]);
@@ -37,12 +36,9 @@ const ActivitiesTestHarness: React.FunctionComponent = () => {
   );
 };
 
-storiesOf("Sections/Activity", module).add(
-  "test",
-  () => (
-    <div>
-      <CurrentActivityTestHarness />
-      <ActivitiesTestHarness />
-    </div>
-  ),
-);
+storiesOf("Sections/Activity", module).add("test", () => (
+  <div>
+    <CurrentActivityTestHarness />
+    <ActivitiesTestHarness />
+  </div>
+));

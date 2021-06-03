@@ -25,13 +25,8 @@ const Authorisation: React.FunctionComponent<Props> = ({ isGroup }) => {
   const {
     nav: { goToAuthorisationsForUser },
   } = useAppNavigation();
-  const {
-    findUsers,
-    users,
-    createUser,
-    deleteUser,
-    addUserToGroup,
-  } = useManageUsers();
+  const { findUsers, users, createUser, deleteUser, addUserToGroup } =
+    useManageUsers();
 
   const { componentProps: tableProps } = useTable(users, {
     filterable,
@@ -40,39 +35,33 @@ const Authorisation: React.FunctionComponent<Props> = ({ isGroup }) => {
     selectableTableProps: { selectedItems: selectedUsers },
   } = tableProps;
 
-  const {
-    componentProps: newDialogComponentProps,
-    showDialog: showNewDialog,
-  } = useNewUserDialog({ isGroup, onCreateUser: createUser });
-  const {
-    componentProps: deleteDialogProps,
-    showDialog: showDeleteDialog,
-  } = useThemedConfim({
-    getQuestion: React.useCallback(
-      () => `Are you sure you want to delete user`,
-      [],
-    ),
-    getDetails: React.useCallback(
-      () => selectedUsers.map((v) => v.name).join(", "),
-      [selectedUsers],
-    ),
-    onConfirm: React.useCallback(() => {
-      selectedUsers.forEach((v) => deleteUser(v.uuid));
-    }, [selectedUsers, deleteUser]),
-  });
+  const { componentProps: newDialogComponentProps, showDialog: showNewDialog } =
+    useNewUserDialog({ isGroup, onCreateUser: createUser });
+  const { componentProps: deleteDialogProps, showDialog: showDeleteDialog } =
+    useThemedConfim({
+      getQuestion: React.useCallback(
+        () => `Are you sure you want to delete user`,
+        [],
+      ),
+      getDetails: React.useCallback(
+        () => selectedUsers.map((v) => v.name).join(", "),
+        [selectedUsers],
+      ),
+      onConfirm: React.useCallback(() => {
+        selectedUsers.forEach((v) => deleteUser(v.uuid));
+      }, [selectedUsers, deleteUser]),
+    });
 
-  const {
-    componentProps: userGroupPickerProps,
-    showDialog: showGroupPicker,
-  } = useUserPickerDialog({
-    onConfirm: React.useCallback(
-      (groupUuid: string) =>
-        selectedUsers.forEach((u) => {
-          addUserToGroup(u.uuid, groupUuid);
-        }),
-      [addUserToGroup, selectedUsers],
-    ),
-  });
+  const { componentProps: userGroupPickerProps, showDialog: showGroupPicker } =
+    useUserPickerDialog({
+      onConfirm: React.useCallback(
+        (groupUuid: string) =>
+          selectedUsers.forEach((u) => {
+            addUserToGroup(u.uuid, groupUuid);
+          }),
+        [addUserToGroup, selectedUsers],
+      ),
+    });
 
   const onViewEditClick = React.useCallback(() => {
     if (selectedUsers.length === 1) {

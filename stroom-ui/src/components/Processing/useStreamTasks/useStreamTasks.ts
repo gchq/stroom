@@ -32,9 +32,8 @@ const useStreamTasks = (): UseStreamTasks => {
   );
   const { pageSize, pageOffset, sortBy } = fetchParameters;
 
-  const [pagedTrackerInfo, setPagedTrackerInfo] = React.useState<
-    PagedTrackerInfo
-  >(defaultPagedInfo);
+  const [pagedTrackerInfo, setPagedTrackerInfo] =
+    React.useState<PagedTrackerInfo>(defaultPagedInfo);
   const { trackers, totalTrackers, numberOfPages } = pagedTrackerInfo;
 
   const updateFetchParameters = React.useCallback(

@@ -20,9 +20,8 @@ import IndexFieldTypePicker from "./IndexFieldTypePicker";
 import { IndexFieldType } from "components/DocumentEditors/useDocumentApi/types/indexDoc";
 
 const B: React.FunctionComponent = () => {
-  const [value, onChange] = React.useState<IndexFieldType | undefined>(
-    undefined,
-  );
+  const [value, onChange] =
+    React.useState<IndexFieldType | undefined>(undefined);
 
   return <IndexFieldTypePicker value={value} onChange={onChange} />;
 };

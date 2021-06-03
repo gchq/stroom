@@ -24,10 +24,7 @@ const TestHarness: React.FunctionComponent<Props> = ({
 }) => {
   const [lastConfirmed, setLastConfirmed] = React.useState<object>({});
 
-  const {
-    showDialog,
-    componentProps,
-  } = useCopyMoveDocRefDialog(
+  const { showDialog, componentProps } = useCopyMoveDocRefDialog(
     (
       uuids: string[],
       destination: DocRefType,

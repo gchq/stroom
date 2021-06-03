@@ -52,9 +52,7 @@ const TestHarness: React.FunctionComponent<Props> = ({ docRefUuid }) => (
   </Switch>
 );
 
-storiesOf(
-  "Sections/Authorisation Manager",
-  module,
-).add("Document Permission Editor", () => (
-  <TestHarness docRefUuid={testDocRef.uuid} />
-));
+storiesOf("Sections/Authorisation Manager", module).add(
+  "Document Permission Editor",
+  () => <TestHarness docRefUuid={testDocRef.uuid} />,
+);

@@ -16,10 +16,10 @@ const LineEndpoint: React.FunctionComponent<Props> = ({
 }) => {
   const { getEndpointId } = React.useContext(LineContext);
 
-  const fullId = React.useMemo(() => getEndpointId(lineEndpointId), [
-    getEndpointId,
-    lineEndpointId,
-  ]);
+  const fullId = React.useMemo(
+    () => getEndpointId(lineEndpointId),
+    [getEndpointId, lineEndpointId],
+  );
 
   return (
     <div id={fullId} {...props}>

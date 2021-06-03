@@ -67,19 +67,18 @@ const TestTable = () => {
     [name, species, addAnimal],
   );
 
-  const { onKeyDown, selectedItem, tableProps } = useSelectableReactTable<
-    Animal
-  >(
-    {
-      getKey: React.useCallback((a) => a.uuid, []),
-      items: animals,
-      selectionBehaviour: SelectionBehaviour.MULTIPLE,
-      preFocusWrap,
-    },
-    {
-      columns: COLUMNS,
-    },
-  );
+  const { onKeyDown, selectedItem, tableProps } =
+    useSelectableReactTable<Animal>(
+      {
+        getKey: React.useCallback((a) => a.uuid, []),
+        items: animals,
+        selectionBehaviour: SelectionBehaviour.MULTIPLE,
+        preFocusWrap,
+      },
+      {
+        columns: COLUMNS,
+      },
+    );
 
   return (
     <div className="fill-space" tabIndex={0} onKeyDown={onKeyDown}>
