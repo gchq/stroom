@@ -99,7 +99,10 @@ public class PipelineStoreImpl implements PipelineStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(DocumentTypeGroup.DATA_PROCESSING, PipelineDoc.DOCUMENT_TYPE, PipelineDoc.DOCUMENT_TYPE);
+        return new DocumentType(
+                DocumentTypeGroup.DATA_PROCESSING,
+                PipelineDoc.DOCUMENT_TYPE,
+                PipelineDoc.DOCUMENT_TYPE);
     }
 
     ////////////////////////////////////////////////////////////////////////
