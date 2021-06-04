@@ -1,4 +1,16 @@
 #!/usr/bin/env bash
+
+# This script will replicate all files found in gh_pages_source_dir into
+# a subdirectory of the gh-pages git branch. The subdirectory name will be the
+# minor version, i.e. if the version is v7.1.2 then the files will be replicated
+# into ./v7.1/
+# This means we will have a subdirectory for each minor version and each new
+# patch release will update the content for its minor version.
+# The replication from the source uses rsync to add/update/delete in the 
+# destination directory as required to ensure the destination subdirectory
+# matches the source.
+# Following replication the changes are commited and pushed so that they are
+# available on github.io.
 set -eo pipefail
 IFS=$'\n\t'
 
@@ -77,8 +89,6 @@ main() {
     --single-branch \
     "${repo_uri}" \
     "${gh_pages_clone_dir}"
-
-  #git rebase "${remote_name}/${main_branch}"
 
   pushd "${gh_pages_clone_dir}" > /dev/null
 
