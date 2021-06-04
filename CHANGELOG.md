@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2250** : Improved token authentication.
+
 
 ## [v7.0-beta.122] - 2021-06-02
 

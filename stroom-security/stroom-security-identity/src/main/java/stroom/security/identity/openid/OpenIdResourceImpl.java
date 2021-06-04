@@ -8,8 +8,8 @@ import stroom.security.identity.authenticate.api.AuthenticationService.AuthStatu
 import stroom.security.identity.config.TokenConfig;
 import stroom.security.identity.exceptions.BadRequestException;
 import stroom.security.identity.openid.OpenIdService.AuthResult;
-import stroom.security.identity.token.JwkCache;
 import stroom.security.openid.api.OpenIdConfigurationResponse;
+import stroom.security.openid.api.PublicJsonWebKeyProvider;
 import stroom.security.openid.api.TokenRequest;
 import stroom.security.openid.api.TokenResponse;
 
@@ -29,6 +29,8 @@ import event.logging.OtherObject;
 import event.logging.ViewEventAction;
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.PublicJsonWebKey;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.List;
@@ -39,25 +41,28 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.RedirectionException;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response.Status;
 
 @AutoLogged
 class OpenIdResourceImpl implements OpenIdResource {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(OpenIdResourceImpl.class);
+
     private final Provider<OpenIdService> openIdServiceProvider;
-    private final Provider<JwkCache> jwkCacheProvider;
+    private final Provider<PublicJsonWebKeyProvider> publicJsonWebKeyProviderProvider;
     private final Provider<UriFactory> uriFactoryProvider;
     private final Provider<TokenConfig> tokenConfigProvider;
     private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
 
     @Inject
     OpenIdResourceImpl(final Provider<OpenIdService> openIdServiceProvider,
-                       final Provider<JwkCache> jwkCacheProvider,
+                       final Provider<PublicJsonWebKeyProvider> publicJsonWebKeyProviderProvider,
                        final Provider<UriFactory> uriFactoryProvider,
                        final Provider<TokenConfig> tokenConfigProvider,
                        final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider) {
         this.openIdServiceProvider = openIdServiceProvider;
-        this.jwkCacheProvider = jwkCacheProvider;
+        this.publicJsonWebKeyProviderProvider = publicJsonWebKeyProviderProvider;
         this.uriFactoryProvider = uriFactoryProvider;
         this.tokenConfigProvider = tokenConfigProvider;
         this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
@@ -94,13 +99,7 @@ class OpenIdResourceImpl implements OpenIdResource {
 
 
             if (status.getError().isPresent()) {
-                AuthenticateOutcomeReason reason = AuthenticateOutcomeReason.OTHER;
-                try {
-                    reason = AuthenticateOutcomeReason.fromValue(status.getError().get().getReason());
-                } catch (IllegalArgumentException e) {
-                    //Ignore, just use "Other"
-                }
-
+                final AuthenticateOutcomeReason reason = status.getError().get().getReason();
                 final String message = status.getError().get().getMessage();
                 eventBuilder.withOutcome(AuthenticateOutcome.builder()
                         .withSuccess(false)
@@ -136,13 +135,7 @@ class OpenIdResourceImpl implements OpenIdResource {
             return openIdServiceProvider.get().token(tokenRequest);
         } catch (final BadRequestException ex) {
             //Normally unlogged, but always log token failures
-            AuthenticateOutcomeReason reason = AuthenticateOutcomeReason.OTHER;
-            try {
-                reason = AuthenticateOutcomeReason.fromValue(ex.getReason());
-            } catch (IllegalArgumentException e) {
-                //Ignore, just use "Other"
-            }
-
+            final AuthenticateOutcomeReason reason = ex.getReason();
             final String message = ex.getMessage();
             final AuthenticateEventAction.Builder<Void> eventBuilder = event.logging.AuthenticateEventAction.builder()
                     .withAction(AuthenticateAction.LOGON)
@@ -155,8 +148,8 @@ class OpenIdResourceImpl implements OpenIdResource {
                             .withReason(reason)
                             .withDescription(message)
                             .withData(Data.builder()
-                            .withName("Error")
-                            .withValue(message)
+                                    .withName("Error")
+                                    .withValue(message)
                                     .build())
                             .build());
 
@@ -164,7 +157,8 @@ class OpenIdResourceImpl implements OpenIdResource {
                     "OpenIdResourceImpl.token",
                     "Stroom token authentication",
                     eventBuilder.build());
-            throw  ex;
+            LOGGER.debug(ex.getMessage(), ex);
+            throw new WebApplicationException(ex.getMessage(), ex);
         }
     }
 
@@ -184,7 +178,7 @@ class OpenIdResourceImpl implements OpenIdResource {
                         .build(),
                 () -> {
                     // Do the work
-                    final List<PublicJsonWebKey> list = jwkCacheProvider.get().get();
+                    final List<PublicJsonWebKey> list = publicJsonWebKeyProviderProvider.get().list();
                     final List<Map<String, Object>> maps = list.stream()
                             .map(jwk ->
                                     jwk.toParams(JsonWebKey.OutputControlLevel.PUBLIC_ONLY))
@@ -228,7 +222,7 @@ class OpenIdResourceImpl implements OpenIdResource {
             mapper.setSerializationInclusion(Include.NON_NULL);
             return mapper.writeValueAsString(response);
         } catch (final JsonProcessingException e) {
-            throw new RuntimeException(e.getMessage(), e);
+            throw new WebApplicationException(e.getMessage(), e);
         }
     }
 }

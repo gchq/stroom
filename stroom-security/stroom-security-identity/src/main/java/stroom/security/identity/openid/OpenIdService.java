@@ -1,6 +1,5 @@
 package stroom.security.identity.openid;
 
-import stroom.config.common.UriFactory;
 import stroom.security.identity.authenticate.api.AuthenticationService;
 import stroom.security.identity.authenticate.api.AuthenticationService.AuthState;
 import stroom.security.identity.authenticate.api.AuthenticationService.AuthStatus;
@@ -36,19 +35,16 @@ class OpenIdService {
 
     private static final String UNKNOWN_SUBJECT = "Unknown";
 
-    private final UriFactory uriFactory;
     private final AccessCodeCache accessCodeCache;
     private final TokenBuilderFactory tokenBuilderFactory;
     private final AuthenticationService authenticationService;
     private final OpenIdClientFactory openIdClientDetailsFactory;
 
     @Inject
-    OpenIdService(final UriFactory uriFactory,
-                  final AccessCodeCache accessCodeCache,
+    OpenIdService(final AccessCodeCache accessCodeCache,
                   final TokenBuilderFactory tokenBuilderFactory,
                   final AuthenticationService authenticationService,
                   final OpenIdClientFactory openIdClientDetailsFactory) {
-        this.uriFactory = uriFactory;
         this.accessCodeCache = accessCodeCache;
         this.tokenBuilderFactory = tokenBuilderFactory;
         this.authenticationService = authenticationService;
@@ -56,13 +52,13 @@ class OpenIdService {
     }
 
     public AuthResult auth(final HttpServletRequest request,
-                    final String scope,
-                    final String responseType,
-                    final String clientId,
-                    final String redirectUri,
-                    @Nullable final String nonce,
-                    @Nullable final String state,
-                    @Nullable final String prompt) {
+                           final String scope,
+                           final String responseType,
+                           final String clientId,
+                           final String redirectUri,
+                           @Nullable final String nonce,
+                           @Nullable final String state,
+                           @Nullable final String prompt) {
         URI result;
         AuthStatus authStatus = null;
 
@@ -80,7 +76,7 @@ class OpenIdService {
                 @Override
                 public Optional<BadRequestException> getError() {
                     return Optional.of(new BadRequestException(UNKNOWN_SUBJECT,
-                            AuthenticateOutcomeReason.OTHER.value(), "Redirect URI is not allowed"));
+                            AuthenticateOutcomeReason.OTHER, "Redirect URI is not allowed"));
                 }
 
                 @Override
@@ -108,8 +104,10 @@ class OpenIdService {
 
                 if (authStatus.getError().isPresent()) {
                     LOGGER.error("Error authenticating request {} for {} got {} - {}",
-                            request.getRequestURI(), authStatus.getError().get().getSubject(),
-                            authStatus.getError().get().getReason(), authStatus.getError().get().getMessage());
+                            request.getRequestURI(),
+                            authStatus.getError().get().getSubject(),
+                            authStatus.getError().get().getReason().value(),
+                            authStatus.getError().get().getMessage());
                     //Send back to log in with username/password
                     result = authenticationService.createSignInUri(redirectUri);
                 } else if (authStatus.getAuthState().isPresent()) {
@@ -168,30 +166,30 @@ class OpenIdService {
         final Optional<AccessCodeRequest> optionalAccessCodeRequest = accessCodeCache.getAndRemove(code);
         if (optionalAccessCodeRequest.isEmpty()) {
             throw new BadRequestException(UNKNOWN_SUBJECT,
-                    AuthenticateOutcomeReason.OTHER.value(), "No access code request found");
+                    AuthenticateOutcomeReason.OTHER, "No access code request found");
         }
 
         final AccessCodeRequest accessCodeRequest = optionalAccessCodeRequest.get();
         if (!Objects.equal(clientId, accessCodeRequest.getClientId())) {
-            throw new BadRequestException(UNKNOWN_SUBJECT, AuthenticateOutcomeReason.OTHER.value(),
+            throw new BadRequestException(UNKNOWN_SUBJECT, AuthenticateOutcomeReason.OTHER,
                     "Unexpected client id");
         }
 
         if (!Objects.equal(redirectUri, accessCodeRequest.getRedirectUri())) {
-            throw new BadRequestException(UNKNOWN_SUBJECT,  AuthenticateOutcomeReason.OTHER.value(),
+            throw new BadRequestException(UNKNOWN_SUBJECT, AuthenticateOutcomeReason.OTHER,
                     "Unexpected redirect URI");
         }
 
         final OpenIdClient oAuth2Client = openIdClientDetailsFactory.getClient(clientId);
 
         if (!Objects.equal(clientSecret, oAuth2Client.getClientSecret())) {
-            throw new BadRequestException(oAuth2Client.getName(),  AuthenticateOutcomeReason.OTHER.value(),
+            throw new BadRequestException(oAuth2Client.getName(), AuthenticateOutcomeReason.OTHER,
                     "Incorrect secret");
         }
 
         final Pattern pattern = Pattern.compile(oAuth2Client.getUriPattern());
         if (!pattern.matcher(redirectUri).matches()) {
-            throw new BadRequestException(oAuth2Client.getName(),  AuthenticateOutcomeReason.OTHER.value(),
+            throw new BadRequestException(oAuth2Client.getName(), AuthenticateOutcomeReason.OTHER,
                     "Redirect URI is not allowed");
         }
 
@@ -224,6 +222,7 @@ class OpenIdService {
     }
 
     static class AuthResult {
+
         final URI uri;
         final AuthStatus status;
 
