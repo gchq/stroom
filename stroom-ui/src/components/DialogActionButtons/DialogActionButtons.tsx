@@ -17,34 +17,31 @@
 import * as React from "react";
 import Button from "../Button/Button";
 
-export type IconSize = "small" | "medium" | "large" | "xlarge";
 export interface DialogActionButtonProps {
   onCancel: React.MouseEventHandler;
   onConfirm: React.MouseEventHandler;
 }
 
-const DialogActionButtons = ({
-  onCancel,
-  onConfirm,
-}: DialogActionButtonProps) => (
-  <React.Fragment>
-    <Button
-      appearance="contained"
-      action="primary"
-      icon="check"
-      onClick={onConfirm}
-    >
-      Choose
-    </Button>
-    <Button
-      appearance="contained"
-      action="secondary"
-      icon="times"
-      onClick={onCancel}
-    >
-      Cancel
-    </Button>
-  </React.Fragment>
-);
+export const DialogActionButtons: React.FunctionComponent<DialogActionButtonProps> =
+  ({ onCancel, onConfirm }) => (
+    <React.Fragment>
+      <Button
+        appearance="contained"
+        action="primary"
+        icon="check"
+        onClick={onConfirm}
+      >
+        Choose
+      </Button>
+      <Button
+        appearance="contained"
+        action="secondary"
+        icon="times"
+        onClick={onCancel}
+      >
+        Cancel
+      </Button>
+    </React.Fragment>
+  );
 
 export default DialogActionButtons;

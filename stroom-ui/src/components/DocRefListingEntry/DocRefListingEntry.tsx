@@ -23,14 +23,15 @@ const DocRefListingEntry: React.FunctionComponent<Props> = ({
     [toggleSelection, docRef],
   );
 
-  const onOpenDocRef: React.MouseEventHandler<HTMLDivElement> = React.useCallback(
-    (e) => {
-      openDocRef(docRef);
-      e.preventDefault();
-      e.stopPropagation();
-    },
-    [openDocRef, docRef],
-  );
+  const onOpenDocRef: React.MouseEventHandler<HTMLDivElement> =
+    React.useCallback(
+      (e) => {
+        openDocRef(docRef);
+        e.preventDefault();
+        e.stopPropagation();
+      },
+      [openDocRef, docRef],
+    );
 
   const className = React.useMemo(() => {
     const additionalClasses = [];

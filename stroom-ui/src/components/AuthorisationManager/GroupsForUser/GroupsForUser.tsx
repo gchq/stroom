@@ -60,13 +60,15 @@ const GroupsForUser: React.FunctionComponent<Props> = ({ user }) => {
     componentProps: userGroupPickerProps,
     showDialog: showUserGroupPicker,
   } = useUserPickerDialog({
-    onConfirm: React.useCallback((groupUuid: string) => addToGroup(groupUuid), [
-      addToGroup,
-    ]),
+    onConfirm: React.useCallback(
+      (groupUuid: string) => addToGroup(groupUuid),
+      [addToGroup],
+    ),
     pickerBaseProps: {
-      valuesToFilterOut: React.useMemo(() => groups.map((g) => g.uuid), [
-        groups,
-      ]),
+      valuesToFilterOut: React.useMemo(
+        () => groups.map((g) => g.uuid),
+        [groups],
+      ),
     },
   });
 

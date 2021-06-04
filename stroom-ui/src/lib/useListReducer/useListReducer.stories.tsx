@@ -16,10 +16,11 @@ const TestHarness: React.FunctionComponent<Props> = ({ initialItems }) => {
 
   const [newName, setNewName] = React.useState<string>(generateItem());
 
-  const onNewNameChange: React.ChangeEventHandler<HTMLInputElement> = React.useCallback(
-    ({ target: { value } }) => setNewName(value),
-    [setNewName],
-  );
+  const onNewNameChange: React.ChangeEventHandler<HTMLInputElement> =
+    React.useCallback(
+      ({ target: { value } }) => setNewName(value),
+      [setNewName],
+    );
 
   const onAddNewItem = React.useCallback(
     (e) => {

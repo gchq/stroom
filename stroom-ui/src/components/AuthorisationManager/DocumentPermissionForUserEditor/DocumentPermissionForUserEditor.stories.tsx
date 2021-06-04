@@ -24,12 +24,12 @@ import DocumentPermissionForUserEditor from "./DocumentPermissionForUserEditor";
 const testUser: StroomUser = fullTestData.usersAndGroups.users[0];
 const testDocRef: DocRefType = fullTestData.documentTree.children![0];
 
-storiesOf(
-  "Sections/Authorisation Manager",
-  module,
-).add("Document Permission For User Editor", () => (
-  <DocumentPermissionForUserEditor
-    userUuid={testUser.uuid}
-    docRefUuid={testDocRef.uuid}
-  />
-));
+storiesOf("Sections/Authorisation Manager", module).add(
+  "Document Permission For User Editor",
+  () => (
+    <DocumentPermissionForUserEditor
+      userUuid={testUser.uuid}
+      docRefUuid={testDocRef.uuid}
+    />
+  ),
+);

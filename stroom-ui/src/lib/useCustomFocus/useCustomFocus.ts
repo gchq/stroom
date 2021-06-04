@@ -1,11 +1,11 @@
 import * as React from "react";
 
-interface InProps<T extends {}> {
+interface InProps<T> {
   items: T[];
   preFocusWrap?: () => boolean;
 }
 
-interface OutProps<T extends {}> {
+interface OutProps<T> {
   focusIndex: number;
   highlightedItem: T | undefined;
   setByIndex: (index: number) => void;
@@ -80,7 +80,7 @@ const reducer = (
   }
 };
 
-export const useCustomFocus = <T extends {}>({
+export const useCustomFocus = <T>({
   items,
   preFocusWrap,
 }: InProps<T>): OutProps<T> => {
@@ -110,17 +110,18 @@ export const useCustomFocus = <T extends {}>({
     (item: T) => dispatch({ type: "set", index: items.indexOf(item) }),
     [dispatch, items],
   );
-  const up = React.useCallback(() => dispatch({ type: "up", preFocusWrap }), [
-    dispatch,
-    preFocusWrap,
-  ]);
+  const up = React.useCallback(
+    () => dispatch({ type: "up", preFocusWrap }),
+    [dispatch, preFocusWrap],
+  );
   const down = React.useCallback(
     () => dispatch({ type: "down", preFocusWrap }),
     [dispatch, preFocusWrap],
   );
-  const clear = React.useCallback(() => dispatch({ type: "clear" }), [
-    dispatch,
-  ]);
+  const clear = React.useCallback(
+    () => dispatch({ type: "clear" }),
+    [dispatch],
+  );
 
   return {
     focusIndex,

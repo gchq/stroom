@@ -12,9 +12,12 @@ interface ManageUsers {
 }
 
 const useManageUsers = (): ManageUsers => {
-  const { items: users, addItem, removeItem, receiveItems } = useListReducer<
-    StroomUser
-  >((u) => u.uuid);
+  const {
+    items: users,
+    addItem,
+    removeItem,
+    receiveItems,
+  } = useListReducer<StroomUser>((u) => u.uuid);
 
   const { createUser, deleteUser, addUserToGroup, findUsers } = useApi();
 

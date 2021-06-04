@@ -63,9 +63,8 @@ export const AddElementModal: React.FunctionComponent<Props> = ({
 export const useDialog = (onAddElement: OnAddElement): UseDialog => {
   const [isOpen, setIsOpen] = React.useState<boolean>(false);
   const [parentId, setParentId] = React.useState<string | undefined>(undefined);
-  const [elementDefinition, setElementDefinition] = React.useState<
-    ElementDefinition | undefined
-  >(undefined);
+  const [elementDefinition, setElementDefinition] =
+    React.useState<ElementDefinition | undefined>(undefined);
   const [existingNames, setExistingNames] = React.useState<string[]>([]);
 
   return {

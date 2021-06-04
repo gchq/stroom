@@ -51,7 +51,7 @@ const Page: React.FunctionComponent = () => {
   const { router } = useRouter();
   if (!!router && !!router.location) {
     const query = queryString.parse(router.location.search);
-    if (!!query.redirect_uri) {
+    if (query.redirect_uri) {
       redirectUri = query.redirect_uri + "";
     }
   }

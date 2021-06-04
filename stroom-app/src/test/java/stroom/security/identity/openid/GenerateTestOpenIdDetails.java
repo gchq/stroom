@@ -2,12 +2,12 @@ package stroom.security.identity.openid;
 
 import stroom.security.identity.config.IdentityConfig;
 import stroom.security.identity.token.JsonWebKeyFactoryImpl;
-import stroom.security.identity.token.JwkCache;
 import stroom.security.identity.token.TokenBuilder;
 import stroom.security.identity.token.TokenBuilderFactory;
 import stroom.security.identity.token.TokenType;
 import stroom.security.openid.api.JsonWebKeyFactory;
 import stroom.security.openid.api.OpenIdClient;
+import stroom.security.openid.api.PublicJsonWebKeyProvider;
 import stroom.util.ConsoleColour;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.logging.LogUtil;
@@ -59,14 +59,16 @@ public class GenerateTestOpenIdDetails {
     private static final String API_KEY_USER_EMAIL = "default-test-only-api-key-user";
 
     private final JsonWebKeyFactory jsonWebKeyFactory;
-    private final JwkCache jwkCache;
+    private final PublicJsonWebKeyProvider publicJsonWebKeyProvider;
 
     private PublicJsonWebKey publicJsonWebKey;
 
     public GenerateTestOpenIdDetails() {
-        jwkCache = Mockito.mock(JwkCache.class);
-        Mockito.when(jwkCache.get())
+        publicJsonWebKeyProvider = Mockito.mock(PublicJsonWebKeyProvider.class);
+        Mockito.when(publicJsonWebKeyProvider.list())
                 .thenAnswer(invocation -> Collections.singletonList(publicJsonWebKey));
+        Mockito.when(publicJsonWebKeyProvider.getFirst())
+                .thenAnswer(invocation -> publicJsonWebKey);
         jsonWebKeyFactory = new JsonWebKeyFactoryImpl();
     }
 
@@ -90,7 +92,7 @@ public class GenerateTestOpenIdDetails {
 
         final TokenBuilderFactory tokenBuilderFactory = new TokenBuilderFactory(
                 new IdentityConfig(),
-                jwkCache);
+                publicJsonWebKeyProvider);
 
         final TokenBuilder tokenBuilder = tokenBuilderFactory
                 .expiryDateForApiKeys(ZonedDateTime.now(ZoneId.from(ZoneOffset.UTC)).plus(20, ChronoUnit.YEARS)
@@ -160,11 +162,11 @@ public class GenerateTestOpenIdDetails {
         LOGGER.info("DefaultOpenIdCredentials: {}", defaultCredsFile.toString());
 
         if (!Files.isRegularFile(defaultCredsFile)) {
-            throw new RuntimeException("Can't find " + defaultCredsFile.toString());
+            throw new RuntimeException("Can't find " + defaultCredsFile);
         }
 
         if (!Files.isWritable(defaultCredsFile)) {
-            throw new RuntimeException("File is not writable" + defaultCredsFile.toString());
+            throw new RuntimeException("File is not writable" + defaultCredsFile);
         }
 
         try {
@@ -203,7 +205,7 @@ public class GenerateTestOpenIdDetails {
             }
 
         } catch (IOException e) {
-            throw new RuntimeException("Error reading content of " + defaultCredsFile.toString());
+            throw new RuntimeException("Error reading content of " + defaultCredsFile);
         }
 
     }

@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-import {
-  ElementDefinitionsByType,
-  ElementPropertiesType,
-} from "components/DocumentEditors/PipelineEditor/useElements/types";
+import { ElementDefinitionsByType } from "components/DocumentEditors/PipelineEditor/useElements/types";
 import {
   AddRemove,
   PipelineDataType,
@@ -27,11 +24,7 @@ import {
   PipelinePropertyType,
   PipelinePropertyValue,
 } from "components/DocumentEditors/useDocumentApi/types/pipelineDoc";
-import {
-  findItem,
-  itemIsInSubtree,
-  iterateNodes,
-} from "lib/treeUtils/treeUtils";
+import { iterateNodes } from "lib/treeUtils/treeUtils";
 import { PipelineAsTreeType } from "./AddElementModal/types";
 import {
   NewElement,
@@ -132,11 +125,11 @@ export function getPipelineAsTree(
 
 /**
  * This calculates the layout information for the elements in a tree where the tree
- * must be layed out in a graphical manner.
+ * must be laid out in a graphical manner.
  * The result object only indicates horizontal and vertical positions as 1-up integers.
  * A further mapping is required to convert this to specific layout pixel information.
  *
- * @param {treeNode} asTree The pipeline information as a tree with UUID's and 'children' on nodes.
+ * @param {asTree} asTree The pipeline information as a tree with UUID's and 'children' on nodes.
  * @return {object} An object with a key for each UUID in the tree. The values are objects with
  * the following properties {horizontalPos, verticalPos}. These position indicators are just
  * 1-up integer values that can then bo converted to specific layout information (pixel position, position in grid etc)
@@ -231,7 +224,7 @@ function mapLastItemInArray(input: any, mapFunc: (input: any) => any) {
  *
  * @param {pipeline} pipeline The current total picture of the pipeline
  * @param {string} parentId The ID of the parent that the link is being added to.
- * @param {element} childDefinition The definiton of the new element.
+ * @param {element} childDefinition The definition of the new element.
  * @param {string} name The name to give to the new element.
  */
 export function createNewElementInPipeline(
@@ -283,7 +276,7 @@ function addPropertyToStackItem(
   stackItem: PipelineDataType,
   property: PipelinePropertyType,
 ): PipelineDataType {
-  const result = {
+  return {
     ...stackItem,
     properties: {
       ...stackItem.properties,
@@ -297,8 +290,6 @@ function addPropertyToStackItem(
         : [],
     },
   };
-
-  return result;
 }
 
 /**
@@ -315,7 +306,7 @@ export function setElementPropertyValueInPipeline(
   element: string,
   name: string,
   propertyType: string,
-  propertyValue: any,
+  propertyValue: string,
 ): PipelineDocumentType {
   // Create the 'value' property.
   const value: PipelinePropertyValue = {
@@ -414,7 +405,7 @@ export function getParentProperty(
   stack: PipelineDataType[],
   elementId: string,
   propertyName: string,
-) {
+): PipelinePropertyType | undefined {
   const getFromParent = (index: number): PipelinePropertyType | undefined => {
     const thisStack: PipelineDataType = stack[index];
     const property =
@@ -677,48 +668,48 @@ export function removeElementFromPipeline(
   };
 }
 
-/**
- * Use to check if a pipeline element can be moved onto the destination given.
- *
- * @param {pipeline} pipeline
- * @param {treeNode} pipelineAsTree
- * @param {string} itemToMove ID of the item to move
- * @param {string} destination ID of the destination
- * @return {boolean} Indicate if the move is valid.
- */
-
-export function canMovePipelineElement(
-  pipeline: PipelineDocumentType,
-  pipelineAsTree: PipelineAsTreeType,
-  itemToMove: string,
-  destination: string,
-): boolean {
-  const { node: itemToMoveNode } = findItem(pipelineAsTree, itemToMove)!;
-  const { node: destinationNode } = findItem(pipelineAsTree, destination)!;
-
-  // If either node cannot be found...bad times
-  if (!itemToMoveNode || !destinationNode) {
-    return false;
-  }
-
-  // If the item being dropped is a folder, and is being dropped into itself
-  if (itemIsInSubtree(itemToMoveNode, destinationNode)) {
-    return false;
-  }
-  if (
-    !!itemToMoveNode.children &&
-    itemToMoveNode.uuid === destinationNode.uuid
-  ) {
-    return false;
-  }
-
-  // Does this item appear in the destination folder already?
-  return (
-    destinationNode.children
-      .map((c) => c.uuid)
-      .filter((u) => u === itemToMoveNode.uuid).length === 0
-  );
-}
+// /**
+//  * Use to check if a pipeline element can be moved onto the destination given.
+//  *
+//  * @param {pipeline} pipeline
+//  * @param {treeNode} pipelineAsTree
+//  * @param {string} itemToMove ID of the item to move
+//  * @param {string} destination ID of the destination
+//  * @return {boolean} Indicate if the move is valid.
+//  */
+//
+// export function canMovePipelineElement(
+//   pipeline: PipelineDocumentType,
+//   pipelineAsTree: PipelineAsTreeType,
+//   itemToMove: string,
+//   destination: string,
+// ): boolean {
+//   const { node: itemToMoveNode } = findItem(pipelineAsTree, itemToMove)!;
+//   const { node: destinationNode } = findItem(pipelineAsTree, destination)!;
+//
+//   // If either node cannot be found...bad times
+//   if (!itemToMoveNode || !destinationNode) {
+//     return false;
+//   }
+//
+//   // If the item being dropped is a folder, and is being dropped into itself
+//   if (itemIsInSubtree(itemToMoveNode, destinationNode)) {
+//     return false;
+//   }
+//   if (
+//     !!itemToMoveNode.children &&
+//     itemToMoveNode.uuid === destinationNode.uuid
+//   ) {
+//     return false;
+//   }
+//
+//   // Does this item appear in the destination folder already?
+//   return (
+//     destinationNode.children
+//       .map((c) => c.uuid)
+//       .filter((u) => u === itemToMoveNode.uuid).length === 0
+//   );
+// }
 
 /**
  * Used to carry out the move of elements then return the updated pipeline definition.
@@ -765,30 +756,30 @@ export function moveElementInPipeline(
  * @param {pipeline} pipeline Pipeline definition
  * @param {string} parent The id of the parent
  */
-export function getAllChildren(
-  pipeline: PipelineDocumentType,
-  parent: string,
-): string[] {
-  let allChildren: string[] = [];
-
-  const getAllChildren = (pipeline: PipelineDocumentType, element: string) => {
-    const thisElementsChildren =
-      pipeline.merged.links.add &&
-      pipeline.merged.links.add
-        .filter((p) => p.from === element)
-        .map((p) => p.to);
-    if (thisElementsChildren) {
-      allChildren = allChildren.concat(thisElementsChildren);
-      for (const childIndex in thisElementsChildren) {
-        getAllChildren(pipeline, thisElementsChildren[childIndex]);
-      }
-    }
-  };
-
-  getAllChildren(pipeline, parent);
-
-  return allChildren;
-}
+// export function getAllChildren(
+//   pipeline: PipelineDocumentType,
+//   parent: string,
+// ): string[] {
+//   let allChildren: string[] = [];
+//
+//   const getAllChildren = (pipeline: PipelineDocumentType, element: string) => {
+//     const thisElementsChildren =
+//       pipeline.merged.links.add &&
+//       pipeline.merged.links.add
+//         .filter((p) => p.from === element)
+//         .map((p) => p.to);
+//     if (thisElementsChildren) {
+//       allChildren = allChildren.concat(thisElementsChildren);
+//       for (const childIndex in thisElementsChildren) {
+//         getAllChildren(pipeline, thisElementsChildren[childIndex]);
+//       }
+//     }
+//   };
+//
+//   getAllChildren(pipeline, parent);
+//
+//   return allChildren;
+// }
 
 /**
  * Gets the value of the child in an inherited element.
@@ -809,12 +800,10 @@ export function getChildValue(
     lastStackItem.properties.add.filter(
       (property) => property.element === elementId,
     );
-  const childValue =
+  return (
     elementPropertiesInChild &&
-    elementPropertiesInChild.find(
-      (element) => element.name === elementTypeName,
-    );
-  return childValue;
+    elementPropertiesInChild.find((element) => element.name === elementTypeName)
+  );
 }
 
 /**
@@ -828,16 +817,16 @@ export function getElementValue(
   pipeline: PipelineDocumentType,
   elementId: string,
   elementTypeName: string,
-) {
+): PipelinePropertyType {
   const elementProperties =
     pipeline.merged.properties.add &&
     pipeline.merged.properties.add.filter(
       (property) => property.element === elementId,
     );
-  const value =
+  return (
     elementProperties &&
-    elementProperties.find((element) => element.name === elementTypeName);
-  return value;
+    elementProperties.find((element) => element.name === elementTypeName)
+  );
 }
 
 /**
@@ -852,14 +841,14 @@ export function getElementValue(
  * @param {string} type The type of the property
  */
 export const getCurrentValue = (
-  value: any,
-  parentValue: any,
-  defaultValue: any,
+  value: PipelinePropertyType,
+  parentValue: PipelinePropertyType,
+  defaultValue: string,
   type: string,
-) => {
+): any => {
   // Parse the value if it's a boolean.
   if (type === "boolean") {
-    defaultValue = defaultValue === "true";
+    // defaultValue = defaultValue === "true";
   }
 
   // The property.value object uses integer so we might need to convert
@@ -921,35 +910,35 @@ export const getCurrentValue = (
   return undefined;
 };
 
-const getActualValue = (value: PipelinePropertyType, type: string) => {
-  // In case the type of the element doesn't match the type in the data.
-  type = type === "int" ? "integer" : type;
+// const getActualValue = (value: PipelinePropertyType, type: string) => {
+//   // In case the type of the element doesn't match the type in the data.
+//   type = type === "int" ? "integer" : type;
+//
+//   let actualValue;
+//
+//   if (value !== undefined && value.value[type] !== undefined) {
+//     actualValue = value.value[type];
+//   } else {
+//     actualValue = undefined;
+//   }
+//
+//   return actualValue;
+// };
 
-  let actualValue;
-
-  if (value !== undefined && value.value[type] !== undefined) {
-    actualValue = value.value[type];
-  } else {
-    actualValue = undefined;
-  }
-
-  return actualValue;
-};
-
-export const getInitialValues = (
-  elementTypeProperties: ElementPropertiesType,
-  elementProperties: PipelinePropertyType[],
-) => {
-  const initialValues = {};
-  Object.keys(elementTypeProperties).map((key) => {
-    const elementsProperty: PipelinePropertyType = elementProperties.find(
-      (element) => element.name === key,
-    )!;
-    initialValues[key] = getActualValue(
-      elementsProperty!,
-      elementTypeProperties[key].type,
-    );
-    return null;
-  });
-  return initialValues;
-};
+// export const getInitialValues = (
+//   elementTypeProperties: ElementPropertiesType,
+//   elementProperties: PipelinePropertyType[],
+// ) => {
+//   const initialValues = {};
+//   Object.keys(elementTypeProperties).map((key) => {
+//     const elementsProperty: PipelinePropertyType = elementProperties.find(
+//       (element) => element.name === key,
+//     )!;
+//     initialValues[key] = getActualValue(
+//       elementsProperty!,
+//       elementTypeProperties[key].type,
+//     );
+//     return null;
+//   });
+//   return initialValues;
+// };

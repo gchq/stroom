@@ -50,7 +50,7 @@ export const ItemManager = <T,>(
           <Button
             disabled={!selectedItem}
             onClick={() => {
-              if (!!selectedItem) {
+              if (selectedItem) {
                 actions.onRemove(selectedItem);
                 // remove(selectedUser);
               }

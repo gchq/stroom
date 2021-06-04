@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2250** : Improved token authentication.
+
 * Issue **#2264** : Users for user permissions are now retrieved from the account service plus authorisation.
 
 * Add entity relationship diagram and database DDL SQL to release artefacts.

@@ -34,20 +34,20 @@ const ProcessingContainer: React.FunctionComponent = () => {
     fetchParameters: { searchCriteria },
   } = streamTasksApi;
 
-  const onHandleSearchChange: React.ChangeEventHandler<HTMLInputElement> = React.useCallback(
-    ({ target: { value } }) => {
-      console.log({ value });
-      resetPaging();
-      updateSearchCriteria(value);
-      // This line enables search as you type. Whether we want it or not depends on performance
-      fetchTrackers();
-    },
-    [fetchTrackers, updateSearchCriteria, resetPaging],
-  );
+  const onHandleSearchChange: React.ChangeEventHandler<HTMLInputElement> =
+    React.useCallback(
+      ({ target: { value } }) => {
+        console.log({ value });
+        resetPaging();
+        updateSearchCriteria(value);
+        // This line enables search as you type. Whether we want it or not depends on performance
+        fetchTrackers();
+      },
+      [fetchTrackers, updateSearchCriteria, resetPaging],
+    );
 
-  const [selectedTracker, setSelectedTracker] = React.useState<
-    StreamTaskType | undefined
-  >(undefined);
+  const [selectedTracker, setSelectedTracker] =
+    React.useState<StreamTaskType | undefined>(undefined);
   const onClearSelection = React.useCallback(() => {
     setSelectedTracker(undefined);
   }, [setSelectedTracker]);

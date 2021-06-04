@@ -6,16 +6,13 @@ import JsonDebug from "testing/JsonDebug";
 
 const TestHarness: React.FunctionComponent = () => {
   const [prefix, setPrefix] = React.useState<string>(":stuff");
-  const [lastFunction, setLastFunction] = React.useState<string | undefined>(
-    undefined,
-  );
+  const [lastFunction, setLastFunction] =
+    React.useState<string | undefined>(undefined);
   const [lastUrl, setLastUrl] = React.useState<string | undefined>(undefined);
   const urlGenerator = useUrlGenerator(prefix);
 
-  const onPrefixChange: React.ChangeEventHandler<HTMLInputElement> = React.useCallback(
-    ({ target: { value } }) => setPrefix(value),
-    [setPrefix],
-  );
+  const onPrefixChange: React.ChangeEventHandler<HTMLInputElement> =
+    React.useCallback(({ target: { value } }) => setPrefix(value), [setPrefix]);
 
   const onButtonClick = React.useCallback(
     (name, navigationFn: () => string) => {

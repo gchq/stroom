@@ -19,11 +19,8 @@ const UserAuthorisationEditor: React.FunctionComponent<Props> = ({
 }) => {
   const { history } = useRouter();
   const user = useUser(userUuid);
-  const {
-    userAppPermissions,
-    addPermission,
-    removePermission,
-  } = useAppPermissionsForUser(userUuid);
+  const { userAppPermissions, addPermission, removePermission } =
+    useAppPermissionsForUser(userUuid);
 
   if (!user) {
     return <Loader message="Loading user..." />;

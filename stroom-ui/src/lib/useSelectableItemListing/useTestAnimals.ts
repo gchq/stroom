@@ -31,9 +31,10 @@ interface OutProps {
 const useTestAnimals = (): OutProps => {
   const [animals, setAnimals] = React.useState<Animal[]>(initialAnimals);
 
-  const reset = React.useCallback(() => setAnimals(initialAnimals), [
-    setAnimals,
-  ]);
+  const reset = React.useCallback(
+    () => setAnimals(initialAnimals),
+    [setAnimals],
+  );
   const preFocusWrap = React.useCallback((): boolean => {
     if (animals.length < MAX_ANIMALS) {
       setAnimals(

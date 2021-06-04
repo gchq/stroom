@@ -21,11 +21,8 @@ import ChangePasswordForm from "./ChangePasswordForm";
 import usePassword from "./useChangePassword";
 
 const ChangePasswordContainer = () => {
-  const {
-    changePassword,
-    showChangeConfirmation,
-    isSubmitting,
-  } = usePassword();
+  const { changePassword, showChangeConfirmation, isSubmitting } =
+    usePassword();
   const { router } = useRouter();
   const [redirectUri, setRedirectUri] = useState("");
   const [email, setEmail] = useState("");
@@ -33,11 +30,11 @@ const ChangePasswordContainer = () => {
   // const resource = apiUrl("/Oldauthentication/v1");
 
   useEffect(() => {
-    if (!!router.location) {
+    if (router.location) {
       const query = queryString.parse(router.location.search);
 
       const redirectUri: string = query.redirect_uri as string;
-      if (!!redirectUri) {
+      if (redirectUri) {
         const decodedRedirectUri: string = decodeURIComponent(redirectUri);
         setRedirectUri(decodedRedirectUri);
       }

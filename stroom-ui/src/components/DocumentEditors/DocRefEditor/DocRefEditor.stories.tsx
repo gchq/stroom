@@ -13,9 +13,8 @@ import JsonDebug from "testing/JsonDebug";
 
 const TestHarness: React.FunctionComponent = () => {
   const { documentTree } = useDocumentTree();
-  const [docRefType, setDocRefType] = React.useState<keyof ResourcesByDocType>(
-    "Dictionary",
-  );
+  const [docRefType, setDocRefType] =
+    React.useState<keyof ResourcesByDocType>("Dictionary");
   const setDocRefTypeSafe = React.useCallback(
     (d) => setDocRefType(d as keyof ResourcesByDocType),
     [setDocRefType],
@@ -41,7 +40,7 @@ const TestHarness: React.FunctionComponent = () => {
   });
   const { docRefContents } = editorProps;
 
-  return !!docRefContents ? (
+  return docRefContents ? (
     <DocRefEditor {...editorProps}>
       <DocRefTypePicker value={docRefType} onChange={setDocRefTypeSafe} />
       <JsonDebug

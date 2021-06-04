@@ -43,11 +43,10 @@ export const IndexFieldEditor: React.FunctionComponent<Props> = ({
   };
 
   const fieldTypeProps = useControlledInputProps<IndexFieldType>("fieldType");
-  const analyzerTypeProps = useControlledInputProps<AnalyzerType>(
-    "analyzerType",
-  );
+  const analyzerTypeProps =
+    useControlledInputProps<AnalyzerType>("analyzerType");
 
-  return !!indexField ? (
+  return indexField ? (
     <ThemedModal isOpen={!!indexField}>
       <DialogContent
         header={<h2>Index Field {indexField.fieldName}</h2>}
@@ -86,18 +85,18 @@ export const useEditor = (
   onUpdateField: (id: number, updates: IndexField) => void,
 ): UseIndexFieldEditor => {
   const [id, setId] = React.useState<number>(0);
-  const [indexField, setIndexField] = React.useState<IndexField | undefined>(
-    undefined,
-  );
+  const [indexField, setIndexField] =
+    React.useState<IndexField | undefined>(undefined);
 
   return {
     componentProps: {
       id,
       indexField,
       onUpdateField,
-      onCloseDialog: React.useCallback(() => setIndexField(undefined), [
-        setIndexField,
-      ]),
+      onCloseDialog: React.useCallback(
+        () => setIndexField(undefined),
+        [setIndexField],
+      ),
     },
     showEditor: React.useCallback(
       (_id, _indexField) => {

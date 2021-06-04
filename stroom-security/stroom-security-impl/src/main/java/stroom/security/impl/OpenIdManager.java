@@ -75,15 +75,16 @@ class OpenIdManager {
                            final String code,
                            final String stateId,
                            final String postAuthRedirectUri) {
+        final String uri = OpenId.removeReservedParams(postAuthRedirectUri);
         String redirectUri = null;
 
         // If we have completed the front channel flow then we will have a state id.
         if (code != null && stateId != null) {
-            redirectUri = backChannelOIDC(request, code, stateId, postAuthRedirectUri);
+            redirectUri = backChannelOIDC(request, code, stateId, uri);
         }
 
         if (redirectUri == null) {
-            redirectUri = frontChannelOIDC(request, postAuthRedirectUri);
+            redirectUri = frontChannelOIDC(request, uri);
         }
 
         return redirectUri;
@@ -147,7 +148,7 @@ class OpenIdManager {
                     nvps.add(new BasicNameValuePair(OpenId.GRANT_TYPE, OpenId.GRANT_TYPE__AUTHORIZATION_CODE));
                     nvps.add(new BasicNameValuePair(OpenId.CLIENT_ID, openIdConfig.getClientId()));
                     nvps.add(new BasicNameValuePair(OpenId.CLIENT_SECRET, openIdConfig.getClientSecret()));
-                    nvps.add(new BasicNameValuePair(OpenId.REDIRECT_URI, postAuthRedirectUri));
+                    nvps.add(new BasicNameValuePair(OpenId.REDIRECT_URI, redirectUri));
 
                     httpPost.setHeader(HttpHeaders.AUTHORIZATION, authorization);
                     httpPost.setHeader(HttpHeaders.ACCEPT, "*/*");
@@ -176,12 +177,7 @@ class OpenIdManager {
             try (final CloseableHttpClient httpClient = httpClientProvider.get()) {
                 try (final CloseableHttpResponse response = httpClient.execute(httpPost)) {
                     if (HttpServletResponse.SC_OK == response.getStatusLine().getStatusCode()) {
-                        final HttpEntity entity = response.getEntity();
-                        String msg;
-                        try (final InputStream is = entity.getContent()) {
-                            msg = StreamUtil.streamToString(is);
-                        }
-
+                        final String msg = getMessage(response);
                         final TokenResponse tokenResponse = mapper.readValue(msg, TokenResponse.class);
                         idToken = tokenResponse.getIdToken();
                     } else {
@@ -216,6 +212,19 @@ class OpenIdManager {
         }
 
         return redirectUri;
+    }
+
+    private String getMessage(final CloseableHttpResponse response) {
+        String msg = "";
+        try {
+            final HttpEntity entity = response.getEntity();
+            try (final InputStream is = entity.getContent()) {
+                msg = StreamUtil.streamToString(is);
+            }
+        } catch (final RuntimeException | IOException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+        return msg;
     }
 
     /**
@@ -332,15 +341,16 @@ class OpenIdManager {
     }
 
     public String logout(final HttpServletRequest request, final String postAuthRedirectUri) {
+        final String redirectUri = OpenId.removeReservedParams(postAuthRedirectUri);
         final String endpoint = openIdConfig.getLogoutEndpoint();
         final String clientId = openIdConfig.getClientId();
         Objects.requireNonNull(endpoint,
                 "To make a logout request the OpenId config 'logoutEndpoint' must not be null");
         Objects.requireNonNull(clientId,
                 "To make an authentication request the OpenId config 'clientId' must not be null");
-        final AuthenticationState state = AuthenticationStateSessionUtil.create(request, postAuthRedirectUri);
+        final AuthenticationState state = AuthenticationStateSessionUtil.create(request, redirectUri);
         LOGGER.debug(() -> "logout state=" + state);
-        return createAuthUri(request, endpoint, clientId, postAuthRedirectUri, state, true);
+        return createAuthUri(request, endpoint, clientId, redirectUri, state, true);
     }
 
     private String createAuthUri(final HttpServletRequest request,

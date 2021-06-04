@@ -7,7 +7,7 @@ interface UrlFactory {
 }
 
 export const useUrlFactory = (): UrlFactory => {
-  const apiUrl = React.useCallback(<T>(path: string): string => {
+  const apiUrl = React.useCallback((path: string): string => {
     if (path.startsWith("/")) {
       return apiPath + path;
     }

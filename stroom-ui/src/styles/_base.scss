@@ -18,6 +18,8 @@ body {
   margin: 0;
   padding: 0;
   height: 100%;
+  width: 100%;
+  overflow: hidden;
   // font-family: sans-serif;
   // font-family: "Open Sans";
   // font-family: "Varela";
@@ -28,6 +30,10 @@ body {
 * {
   font-family: "Open Sans";
   // font-family: "Varela";
+}
+
+textarea {
+  resize: none;
 }
 
 #root {

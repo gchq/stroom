@@ -40,7 +40,7 @@ export const ConfirmCurrentPasswordForm: React.FunctionComponent<{
         <input
           type="text"
           id="userId"
-          value={values.userId}
+          defaultValue={values.userId}
           autoComplete="username"
           hidden={true}
         />

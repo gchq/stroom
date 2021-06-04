@@ -21,16 +21,13 @@ import useResetPassword from "./useResetPassword";
 import { useTokenValidityCheck } from "./useTokenValidityCheck";
 import useUrlFactory from "lib/useUrlFactory";
 
-export const ResetPasswordContainer = () => {
+export const ResetPasswordContainer: React.FunctionComponent = () => {
   const { resetPassword } = useResetPassword();
   const { apiUrl } = useUrlFactory();
   const resource = apiUrl("/Oldauthentication/v1");
 
-  const {
-    isTokenMissing,
-    isTokenInvalid,
-    isTokenExpired,
-  } = useTokenValidityCheck();
+  const { isTokenMissing, isTokenInvalid, isTokenExpired } =
+    useTokenValidityCheck();
 
   const onValidate = (
     oldPassword: string,

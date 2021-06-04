@@ -5,7 +5,7 @@ import { useOnKeyDown } from "lib/useOnKeyDown";
 import { useCustomFocus } from "lib/useCustomFocus";
 import { useSelectable } from "lib/useSelectable/useSelectable";
 
-const useSelectableItemListing = <TItem extends {}>({
+const useSelectableItemListing = <TItem extends any>({
   getKey,
   items,
   openItem,
@@ -14,12 +14,11 @@ const useSelectableItemListing = <TItem extends {}>({
   selectionBehaviour = SelectionBehaviour.NONE,
   preFocusWrap,
 }: InProps<TItem>): OutProps<TItem> => {
-  const { up, down, setByIndex, focusIndex, highlightedItem } = useCustomFocus<
-    TItem
-  >({
-    items,
-    preFocusWrap,
-  });
+  const { up, down, setByIndex, focusIndex, highlightedItem } =
+    useCustomFocus<TItem>({
+      items,
+      preFocusWrap,
+    });
   const {
     toggleSelection,
     clearSelection,
@@ -32,7 +31,7 @@ const useSelectableItemListing = <TItem extends {}>({
   const enterItemOnKey = React.useCallback(
     (e: React.KeyboardEvent) => {
       if (highlightedItem) {
-        if (!!openItem) {
+        if (openItem) {
           openItem(highlightedItem);
         } else {
           toggleSelection(getKey(highlightedItem));
@@ -44,10 +43,10 @@ const useSelectableItemListing = <TItem extends {}>({
   );
   const goRight = React.useCallback(
     (e: React.KeyboardEvent) => {
-      if (!!highlightedItem) {
-        if (!!enterItem) {
+      if (highlightedItem) {
+        if (enterItem) {
           enterItem(highlightedItem);
-        } else if (!!openItem) {
+        } else if (openItem) {
           openItem(highlightedItem);
         }
       }

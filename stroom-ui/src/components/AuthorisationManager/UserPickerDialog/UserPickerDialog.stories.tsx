@@ -27,9 +27,8 @@ interface Props {
 }
 
 const TestHarness: React.FunctionComponent<Props> = ({ isGroup }) => {
-  const [pickedUser, setPickedUser] = React.useState<string | undefined>(
-    undefined,
-  );
+  const [pickedUser, setPickedUser] =
+    React.useState<string | undefined>(undefined);
 
   const { componentProps, showDialog } = useDialog({
     pickerBaseProps: {

@@ -1,7 +1,7 @@
 import * as React from "react";
 import { SingleError } from "./types";
 
-interface ErrorReportingContextState {
+export interface ErrorReportingContextState {
   error?: SingleError;
   reportError: (e: SingleError) => void;
 }

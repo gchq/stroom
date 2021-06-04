@@ -17,38 +17,29 @@
 import * as React from "react";
 import useDateUtil from "../../lib/useDateUtil";
 
-export const LoginStatsCopy = ({
-  lastLogin,
-  loginCount,
-}: {
+export const LoginStatsCopy: React.FunctionComponent<{
   lastLogin: number;
   loginCount: number;
-}) => {
+}> = ({ lastLogin, loginCount }) => {
   const { toDateString } = useDateUtil();
   if (lastLogin !== undefined) {
-    const loginStatsCopy = (
+    return (
       <div>
         <div className="copy">Last login: {toDateString(lastLogin)}</div>
         <div className="copy">Total logins: {loginCount}</div>
       </div>
     );
-    return loginStatsCopy;
   } else {
     return <div className="copy">This user has never logged in.</div>;
   }
 };
 
-export const AuditCopy = ({
-  createdBy,
-  createdOn,
-  updatedBy,
-  updatedOn,
-}: {
+export const AuditCopy: React.FunctionComponent<{
   createdBy: string;
   createdOn: number;
   updatedBy: string;
   updatedOn: number;
-}) => {
+}> = ({ createdBy, createdOn, updatedBy, updatedOn }) => {
   return (
     <div>
       <OnCopy on={createdOn} verb="Created" />
@@ -63,15 +54,11 @@ export const AuditCopy = ({
   );
 };
 
-export const OnCopy = ({
-  on,
-  verb,
-  fallbackCopy,
-}: {
+export const OnCopy: React.FunctionComponent<{
   on: number;
   verb: string;
   fallbackCopy?: string;
-}) => {
+}> = ({ on, verb, fallbackCopy }) => {
   const { toDateString } = useDateUtil();
   if (on !== undefined && on !== null) {
     return (
@@ -84,15 +71,11 @@ export const OnCopy = ({
   }
 };
 
-export const OnCopyMs = ({
-  on,
-  verb,
-  fallbackCopy,
-}: {
+export const OnCopyMs: React.FunctionComponent<{
   on: number;
   verb: string;
   fallbackCopy?: string;
-}) => {
+}> = ({ on, verb, fallbackCopy }) => {
   const { toDateString } = useDateUtil();
   if (on !== undefined && on !== null) {
     return (
@@ -105,15 +88,11 @@ export const OnCopyMs = ({
   }
 };
 
-export const ByCopy = ({
-  by,
-  verb,
-  fallbackCopy,
-}: {
+export const ByCopy: React.FunctionComponent<{
   by: string;
   verb: string;
   fallbackCopy?: string;
-}) => {
+}> = ({ by, verb, fallbackCopy }) => {
   if (by !== undefined && by !== null) {
     return (
       <div className="copy">

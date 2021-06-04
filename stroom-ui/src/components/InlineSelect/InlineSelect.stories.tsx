@@ -30,22 +30,19 @@ const options: SelectOption[] = [
 
 storiesOf("General Purpose", module).add("InlineSelect", () => {
   const [empty, setEmpty] = useState<string>("");
-  const onEmptyChangeHandler: ChangeEventHandler<HTMLSelectElement> = useCallback(
-    ({ target: { value } }) => setEmpty(value),
-    [setEmpty],
-  );
+  const onEmptyChangeHandler: ChangeEventHandler<HTMLSelectElement> =
+    useCallback(({ target: { value } }) => setEmpty(value), [setEmpty]);
 
   const [single, setSingle] = useState<string>("han");
-  const onSingleChangeHandler: ChangeEventHandler<HTMLSelectElement> = useCallback(
-    ({ target: { value } }) => setSingle(value),
-    [setSingle],
-  );
+  const onSingleChangeHandler: ChangeEventHandler<HTMLSelectElement> =
+    useCallback(({ target: { value } }) => setSingle(value), [setSingle]);
 
   const [placeholder, setPlaceholder] = useState<string>("leia");
-  const onPlaceholderChangeHandler: ChangeEventHandler<HTMLSelectElement> = useCallback(
-    ({ target: { value } }) => setPlaceholder(value),
-    [setPlaceholder],
-  );
+  const onPlaceholderChangeHandler: ChangeEventHandler<HTMLSelectElement> =
+    useCallback(
+      ({ target: { value } }) => setPlaceholder(value),
+      [setPlaceholder],
+    );
   return (
     <div style={{ padding: "5em" }}>
       <h1>InlineSelect</h1>

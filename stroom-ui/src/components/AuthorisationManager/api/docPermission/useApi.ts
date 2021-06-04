@@ -37,11 +37,8 @@ export const useApi = (): Api => {
   const { apiUrl } = useUrlFactory();
   const resource = apiUrl("/docPermissions/v1");
 
-  const {
-    httpGetJson,
-    httpPostEmptyResponse,
-    httpDeleteEmptyResponse,
-  } = useHttpClient();
+  const { httpGetJson, httpPostEmptyResponse, httpDeleteEmptyResponse } =
+    useHttpClient();
 
   return {
     getPermissionForDocType: React.useCallback(

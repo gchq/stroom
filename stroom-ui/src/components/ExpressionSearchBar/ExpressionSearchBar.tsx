@@ -53,13 +53,10 @@ const ExpressionSearchBar: React.FunctionComponent<Props> = ({
   const [searchString, setSearchString] = React.useState<string>(
     initialSearchString || "",
   );
-  const [isSearchStringValid, setIsSearchStringValid] = React.useState<boolean>(
-    true,
-  );
-  const [
-    searchStringValidationMessages,
-    setSearchStringValidationMessages,
-  ] = React.useState<string[]>([]);
+  const [isSearchStringValid, setIsSearchStringValid] =
+    React.useState<boolean>(true);
+  const [searchStringValidationMessages, setSearchStringValidationMessages] =
+    React.useState<string[]>([]);
 
   React.useEffect(() => {
     if (!expression) {

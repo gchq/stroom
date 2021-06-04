@@ -22,7 +22,7 @@ import useTokens from "./useTokens";
 import EditTokenForm from "./EditTokenForm";
 import CustomLoader from "../../CustomLoader";
 
-const EditTokenContainer = () => {
+const EditTokenContainer: React.FunctionComponent = () => {
   const { toggleEnabledState, fetchApiKey, token } = useTokens();
   const tokenId = useIdFromPath("apikey/");
   const {
@@ -30,7 +30,7 @@ const EditTokenContainer = () => {
   } = useAppNavigation();
 
   useEffect(() => {
-    if (!!tokenId) {
+    if (tokenId) {
       fetchApiKey(tokenId);
     }
   }, [tokenId, fetchApiKey]);

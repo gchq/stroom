@@ -26,9 +26,8 @@ import { DocRefType } from "components/DocumentEditors/useDocumentApi/types/base
 const testDocRef = fullTestData.documentTree.children![0].children![0];
 
 const BreadcrumbOpen = () => {
-  const [openDocRef, setOpenDocRef] = React.useState<DocRefType | undefined>(
-    undefined,
-  );
+  const [openDocRef, setOpenDocRef] =
+    React.useState<DocRefType | undefined>(undefined);
 
   return (
     <div>

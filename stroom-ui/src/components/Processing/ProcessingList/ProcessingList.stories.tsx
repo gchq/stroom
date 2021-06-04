@@ -8,9 +8,8 @@ import { StreamTaskType } from "../types";
 
 const TestHarness = () => {
   const streamTasksApi = useStreamTasks();
-  const [selectedTracker, setSelectedTracker] = React.useState<
-    StreamTaskType | undefined
-  >(undefined);
+  const [selectedTracker, setSelectedTracker] =
+    React.useState<StreamTaskType | undefined>(undefined);
   const { fetchTrackers } = streamTasksApi;
   React.useEffect(fetchTrackers, [fetchTrackers]);
 

@@ -9,11 +9,8 @@ function useSelectableReactTable<TItem>(
 ): TableOutProps<TItem> {
   const selectableItemProps = useSelectableItemListing<TItem>(props);
   const { getKey, items } = props;
-  const {
-    toggleSelection,
-    selectedItems,
-    highlightedItem,
-  } = selectableItemProps;
+  const { toggleSelection, selectedItems, highlightedItem } =
+    selectableItemProps;
 
   const getTdProps: ComponentPropsGetterR = React.useCallback(
     (state: any, rowInfo: RowInfo | undefined) => {

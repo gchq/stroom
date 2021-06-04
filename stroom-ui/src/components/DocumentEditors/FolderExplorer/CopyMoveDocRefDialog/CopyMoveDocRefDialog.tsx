@@ -75,9 +75,8 @@ export const useDialog = (
     permissionInheritance: PermissionInheritance,
   ) => void,
 ): UseDialog => {
-  const [initialDestination, setInitialDestination] = React.useState<
-    DocRefType | undefined
-  >(undefined);
+  const [initialDestination, setInitialDestination] =
+    React.useState<DocRefType | undefined>(undefined);
   const [uuidsToCopy, setUuidToCopy] = React.useState<string[]>([]);
   const [isOpen, setIsOpen] = React.useState<boolean>(false);
 

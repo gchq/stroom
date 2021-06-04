@@ -85,7 +85,7 @@ export const useApi = (): Api => {
         let orderBy = "issuedOn";
         let orderDirection = "desc";
 
-        if (!!searchConfig.sorting) {
+        if (searchConfig.sorting) {
           if (searchConfig.sorting.length > 0) {
             orderBy = searchConfig.sorting[0].id;
             orderDirection = searchConfig.sorting[0].desc ? "desc" : "asc";
@@ -93,7 +93,7 @@ export const useApi = (): Api => {
         }
 
         const filters = {} as { tokenType: string };
-        if (!!searchConfig.filters) {
+        if (searchConfig.filters) {
           if (searchConfig.filters.length > 0) {
             searchConfig.filters.forEach((filter: Filter) => {
               filters[filter.id] = filter.value;

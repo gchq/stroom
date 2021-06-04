@@ -53,12 +53,8 @@ const reducer = (
 const useActivities = (): UseActivities => {
   const [activities, dispatch] = React.useReducer(reducer, []);
 
-  const {
-    getActivities,
-    createActivity,
-    updateActivity,
-    deleteActivity,
-  } = useApi();
+  const { getActivities, createActivity, updateActivity, deleteActivity } =
+    useApi();
 
   React.useEffect(() => {
     getActivities().then((v) =>

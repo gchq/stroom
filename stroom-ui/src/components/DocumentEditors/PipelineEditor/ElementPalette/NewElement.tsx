@@ -27,7 +27,7 @@ interface Props {
 }
 
 const dragSource: DragSourceSpec<Props, DragObject> = {
-  canDrag(props) {
+  canDrag() {
     return true;
   },
   beginDrag(props) {
@@ -48,7 +48,7 @@ const dragCollect: DragSourceCollector<DragCollectedProps, Props> = (
 interface EnhancedProps extends Props, DragCollectedProps {}
 
 const enhance = DragSource<Props, DragCollectedProps>(
-  DragDropTypes.PALLETE_ELEMENT,
+  DragDropTypes.PALETTE_ELEMENT,
   dragSource,
   dragCollect,
 );

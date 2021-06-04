@@ -29,9 +29,10 @@ const TestHarness: React.FunctionComponent = () => {
       () => "Because...nothing will really happen anyway",
       [],
     ),
-    onConfirm: React.useCallback(() => setConfirmCount(confirmCount + 1), [
-      confirmCount,
-    ]),
+    onConfirm: React.useCallback(
+      () => setConfirmCount(confirmCount + 1),
+      [confirmCount],
+    ),
   });
 
   return (

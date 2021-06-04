@@ -32,9 +32,8 @@ const TestHarness: React.FunctionComponent = () => {
     initialValues,
   });
 
-  const permissionInheritanceProps = useControlledInputProps<
-    PermissionInheritance
-  >("permissionInheritance");
+  const permissionInheritanceProps =
+    useControlledInputProps<PermissionInheritance>("permissionInheritance");
 
   return (
     <form>
@@ -47,7 +46,7 @@ const TestHarness: React.FunctionComponent = () => {
   );
 };
 
-storiesOf(
-  "Document Editors/Folder",
-  module,
-).add("Permission Inheritance Picker", () => <TestHarness />);
+storiesOf("Document Editors/Folder", module).add(
+  "Permission Inheritance Picker",
+  () => <TestHarness />,
+);

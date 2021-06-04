@@ -108,25 +108,21 @@ const AppSearchBar: React.FunctionComponent<Props> = ({
   );
   const [searchTerm, setSearchTerm] = React.useState<string>("");
   const { documentTree, searchResults, searchApp } = useDocumentSearch();
-  const [highlightedDocRef, onOptionFocus] = React.useState<
-    DocRefType | undefined
-  >(undefined);
+  const [highlightedDocRef, onOptionFocus] =
+    React.useState<DocRefType | undefined>(undefined);
   const { recentItems: recentItemsAll } = useRecentItems();
   const recentItems: DocRefType[] = React.useMemo(
     () =>
-      !!typeFilter
+      typeFilter
         ? recentItemsAll.filter((r) => r.type === typeFilter)
         : recentItemsAll,
     [recentItemsAll, typeFilter],
   );
-  const {
-    searchMode,
-    componentProps: modeOptionProps,
-  } = useModeOptionButtons();
+  const { searchMode, componentProps: modeOptionProps } =
+    useModeOptionButtons();
   const { switchMode } = modeOptionProps;
-  const [navFolder, setNavFolder] = React.useState<DocRefType | undefined>(
-    undefined,
-  );
+  const [navFolder, setNavFolder] =
+    React.useState<DocRefType | undefined>(undefined);
 
   const onSearchTermChange = React.useCallback(
     (newValue: string) => {
@@ -166,7 +162,7 @@ const AppSearchBar: React.FunctionComponent<Props> = ({
 
   switch (searchMode) {
     case SearchMode.NAVIGATION: {
-      if (!!navFolderToUse) {
+      if (navFolderToUse) {
         const navFolderWithLineage: DocRefWithLineage = findItem(
           documentTreeToUse,
           navFolderToUse.uuid,
@@ -209,7 +205,7 @@ const AppSearchBar: React.FunctionComponent<Props> = ({
           openDocRef={onOptionFocus}
         />
       );
-      if (!!parentFolder) {
+      if (parentFolder) {
         headerIcon = "arrow-left";
       } else {
         headerIcon = "folder";
@@ -237,7 +233,7 @@ const AppSearchBar: React.FunctionComponent<Props> = ({
           setNavFolder(highlightedDocRef);
         }
       } else if (e.key === "ArrowLeft" || e.key === "h") {
-        if (!!parentFolder) {
+        if (parentFolder) {
           setNavFolder(parentFolder);
         }
       }
