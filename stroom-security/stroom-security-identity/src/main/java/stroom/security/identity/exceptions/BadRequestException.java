@@ -26,7 +26,6 @@ public class BadRequestException extends RuntimeException {
 
     private final String subject;
 
-    //See AuthenticateOutcomeReason for known values
     private final AuthenticateOutcomeReason reason;
 
     public BadRequestException(@Nullable final String subject,
