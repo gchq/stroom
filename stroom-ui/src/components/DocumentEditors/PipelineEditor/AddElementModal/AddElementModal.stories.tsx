@@ -18,10 +18,8 @@ const TestHarness: React.FunctionComponent = () => {
     () => elementDefinitions.map((e) => e.type),
     [elementDefinitions],
   );
-  const [
-    selectedElementDefinition,
-    setSelectedElementDefinition,
-  ] = React.useState<ElementDefinition>(elementDefinitions[0]);
+  const [selectedElementDefinition, setSelectedElementDefinition] =
+    React.useState<ElementDefinition>(elementDefinitions[0]);
   React.useEffect(() => {
     setSelectedElementDefinition(elementDefinitions[0]);
   }, [elementDefinitions]);

@@ -1,13 +1,14 @@
 package stroom.security.impl;
 
-import stroom.config.common.UriFactory;
 import stroom.security.impl.exception.AuthenticationException;
 import stroom.security.openid.api.OpenIdClientFactory;
+import stroom.security.openid.api.PublicJsonWebKeyProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import org.jose4j.jwa.AlgorithmConstraints;
 import org.jose4j.jwk.JsonWebKeySet;
+import org.jose4j.jwk.PublicJsonWebKey;
 import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.jwt.consumer.JwtConsumer;
@@ -16,6 +17,7 @@ import org.jose4j.jwt.consumer.JwtContext;
 import org.jose4j.keys.resolvers.JwksVerificationKeyResolver;
 import org.jose4j.keys.resolvers.VerificationKeyResolver;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import javax.inject.Inject;
@@ -27,17 +29,14 @@ class InternalJwtContextFactory implements JwtContextFactory {
 
     private static final String AUTHORIZATION_HEADER = "Authorization";
 
-    private final OpenIdPublicKeysSupplier openIdPublicKeysSupplier;
-    private final UriFactory uriFactory;
     private final OpenIdClientFactory openIdClientDetailsFactory;
+    private final PublicJsonWebKeyProvider publicJsonWebKeyProvider;
 
     @Inject
-    InternalJwtContextFactory(final OpenIdPublicKeysSupplier openIdPublicKeysSupplier,
-                              final UriFactory uriFactory,
-                              final OpenIdClientFactory openIdClientDetailsFactory) {
-        this.openIdPublicKeysSupplier = openIdPublicKeysSupplier;
-        this.uriFactory = uriFactory;
+    InternalJwtContextFactory(final OpenIdClientFactory openIdClientDetailsFactory,
+                              final PublicJsonWebKeyProvider publicJsonWebKeyProvider) {
         this.openIdClientDetailsFactory = openIdClientDetailsFactory;
+        this.publicJsonWebKeyProvider = publicJsonWebKeyProvider;
     }
 
     @Override
@@ -88,8 +87,8 @@ class InternalJwtContextFactory implements JwtContextFactory {
         // If we don't have a JWK we can't create a consumer to verify anything.
         // Why might we not have one? If the remote authentication service was down when Stroom started
         // then we wouldn't. It might not be up now but we're going to try and fetch it.
-        final String jwksUri = uriFactory.nodeUri(ResolvedOpenIdConfig.INTERNAL_JWKS_URI).toString();
-        final JsonWebKeySet publicJsonWebKey = openIdPublicKeysSupplier.get(jwksUri);
+        final List<PublicJsonWebKey> publicJsonWebKeys = publicJsonWebKeyProvider.list();
+        final JsonWebKeySet publicJsonWebKey = new JsonWebKeySet(publicJsonWebKeys);
 
         final VerificationKeyResolver verificationKeyResolver = new JwksVerificationKeyResolver(
                 publicJsonWebKey.getJsonWebKeys());

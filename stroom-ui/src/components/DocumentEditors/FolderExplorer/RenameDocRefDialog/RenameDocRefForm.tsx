@@ -30,7 +30,7 @@ interface UseThisFormProps {
 export const useThisForm = (docRef?: DocRefType): UseThisFormProps => {
   const initialValues = React.useMemo(
     () => ({
-      docRefName: !!docRef ? docRef.name : "no document",
+      docRefName: docRef ? docRef.name : "no document",
     }),
     [docRef],
   );

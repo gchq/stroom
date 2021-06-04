@@ -17,7 +17,7 @@ import * as React from "react";
 import { Route, RouteProps } from "react-router-dom";
 import useUrlFactory from "../../lib/useUrlFactory";
 
-const PrivateRoute = ({ render, ...rest }: RouteProps) => {
+const PrivateRoute = ({ render, ...rest }: RouteProps): React.ReactElement => {
   const { apiUrl } = useUrlFactory();
   const resource = apiUrl("/login/v1");
 

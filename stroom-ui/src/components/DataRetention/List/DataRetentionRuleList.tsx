@@ -30,9 +30,9 @@ interface ValueAndChangeHandler {
   onRemove: () => void;
 }
 
-const DataRetentionRuleList: React.FunctionComponent<ControlledInput<
-  DataRetentionRule[]
->> = ({ value: values, onChange }) => {
+const DataRetentionRuleList: React.FunctionComponent<
+  ControlledInput<DataRetentionRule[]>
+> = ({ value: values, onChange }) => {
   const sortedRules = useMemo(
     () => values.sort((l, r) => (l.ruleNumber >= r.ruleNumber ? 1 : -1)),
     [values],
@@ -61,7 +61,7 @@ const DataRetentionRuleList: React.FunctionComponent<ControlledInput<
 
   const handleOnDragEnd = useCallback(
     (result: DropResult) => {
-      if (!!result.destination) {
+      if (result.destination) {
         const {
           source: { index: sourceIndex },
           destination: { index: destinationIndex },

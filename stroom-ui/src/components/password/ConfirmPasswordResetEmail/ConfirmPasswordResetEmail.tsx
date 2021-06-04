@@ -18,7 +18,7 @@ import * as React from "react";
 import Button from "components/Button";
 
 const ConfirmPasswordResetEmail: React.FunctionComponent<{
-  onBack: Function;
+  onBack: () => void;
 }> = ({ onBack }) => (
   <div className="container">
     <h3>Password reset</h3>

@@ -16,7 +16,7 @@ const DeletePipelineElement: React.FunctionComponent<Props> = ({
   onDeleteElement,
 }) => {
   const onConfirm = React.useCallback(() => {
-    if (!!elementId) {
+    if (elementId) {
       onDeleteElement(elementId);
     }
     onCloseDialog();
@@ -38,9 +38,8 @@ interface UseDialog {
 }
 
 export const useDialog = (onDeleteElement: (e: string) => void): UseDialog => {
-  const [elementId, setElementId] = React.useState<string | undefined>(
-    undefined,
-  );
+  const [elementId, setElementId] =
+    React.useState<string | undefined>(undefined);
   const [isOpen, setIsOpen] = React.useState<boolean>(false);
 
   return {

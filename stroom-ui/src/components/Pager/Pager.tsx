@@ -101,7 +101,7 @@ export const Pager: React.FunctionComponent<PagerProps> = ({
           className="Pager__button"
           alt="First"
           title="First"
-          src={require("images/pager/fast-backward.svg")}
+          src={require("images/pager/fast-backward.svg").default}
         />
       </Button>
       <Button
@@ -117,7 +117,7 @@ export const Pager: React.FunctionComponent<PagerProps> = ({
           className="Pager__button"
           alt="Back"
           title="Back"
-          src={require("images/pager/step-backward.svg")}
+          src={require("images/pager/step-backward.svg").default}
         />
       </Button>
       <Button
@@ -135,7 +135,7 @@ export const Pager: React.FunctionComponent<PagerProps> = ({
           className="Pager__button"
           alt="Forward"
           title="Forward"
-          src={require("images/pager/step-forward.svg")}
+          src={require("images/pager/step-forward.svg").default}
         />
       </Button>
       <Button
@@ -153,7 +153,7 @@ export const Pager: React.FunctionComponent<PagerProps> = ({
           className="Pager__button"
           alt="Last"
           title="Last"
-          src={require("images/pager/fast-forward.svg")}
+          src={require("images/pager/fast-forward.svg").default}
         />
       </Button>
       <Button
@@ -168,7 +168,7 @@ export const Pager: React.FunctionComponent<PagerProps> = ({
           className="Pager__button"
           alt="Refresh"
           title="Refresh"
-          src={require("images/pager/refresh.svg")}
+          src={require("images/pager/refresh.svg").default}
         />
       </Button>
     </div>

@@ -39,10 +39,10 @@ export const useApi = (): Api => {
       (id: string) => httpGetJson(`${resource}/${id}`),
       [resource, httpGetJson],
     ),
-    getIndexVolumes: React.useCallback(() => httpGetJson(resource), [
-      resource,
-      httpGetJson,
-    ]),
+    getIndexVolumes: React.useCallback(
+      () => httpGetJson(resource),
+      [resource, httpGetJson],
+    ),
     update: React.useCallback(
       (indexVolume: UpdateIndexVolumeDTO) =>
         httpPutJsonResponse(resource, {

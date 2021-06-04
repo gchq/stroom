@@ -18,6 +18,7 @@ package stroom.security.identity.token;
 
 import stroom.security.identity.config.IdentityConfig;
 import stroom.security.openid.api.JsonWebKeyFactory;
+import stroom.security.openid.api.PublicJsonWebKeyProvider;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -28,10 +29,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
-public class JwkCache {
+public class JwkCache implements PublicJsonWebKeyProvider {
 
     private static final String KEY = "key";
     private final LoadingCache<String, List<PublicJsonWebKey>> cache;
@@ -57,7 +59,13 @@ public class JwkCache {
                 });
     }
 
-    public List<PublicJsonWebKey> get() {
+    @Override
+    public List<PublicJsonWebKey> list() {
         return cache.get(KEY);
+    }
+
+    @Override
+    public PublicJsonWebKey getFirst() {
+        return list().get(0);
     }
 }

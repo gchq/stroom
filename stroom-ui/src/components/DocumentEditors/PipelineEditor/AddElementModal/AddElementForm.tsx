@@ -38,7 +38,7 @@ export const useThisForm = ({
 }: UseThisFormInProps): UseThisFormOutProps => {
   const initialValues = React.useMemo<FormValues>(
     () => ({
-      newName: !!elementDefinition
+      newName: elementDefinition
         ? elementDefinition.type
         : "no element definition",
     }),

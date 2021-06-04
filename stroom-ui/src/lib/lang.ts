@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import dateFormat from "dateformat";
+// import dateFormat from "dateformat";
 
-function hasAnyProps(object: any) {
+function hasAnyProps(object: Record<string, unknown>): boolean {
   let hasProps = false;
   for (const prop in object) {
-    if (object.hasOwnProperty(prop)) {
+    if (Object.prototype.hasOwnProperty.call(object, prop)) {
       hasProps = true;
     }
   }
   return hasProps;
 }
 
-const formatDate = (dateString: string) => {
-  const dateFormatString = "ddd mmm d yyyy, hh:MM:ss";
-  return dateString ? dateFormat(dateString, dateFormatString) : "";
-};
+// const formatDate = (dateString: string) => {
+//   const dateFormatString = "ddd mmm d yyyy, hh:MM:ss";
+//   return dateString ? dateFormat(dateString, dateFormatString) : "";
+// };
 
-export { formatDate, hasAnyProps };
+export { hasAnyProps };

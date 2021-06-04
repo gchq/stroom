@@ -48,7 +48,7 @@ public class FindUserCriteria extends BaseCriteria {
      * Find user groups
      */
     @JsonProperty
-    private Boolean group;
+    private boolean group;
     @JsonProperty
     private User relatedUser;
     @JsonProperty
@@ -57,7 +57,7 @@ public class FindUserCriteria extends BaseCriteria {
     public FindUserCriteria() {
     }
 
-    public FindUserCriteria(final String quickFilterInput, final Boolean group) {
+    public FindUserCriteria(final String quickFilterInput, final boolean group) {
         this.quickFilterInput = quickFilterInput;
         this.group = group;
     }
@@ -67,7 +67,7 @@ public class FindUserCriteria extends BaseCriteria {
                             @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                             @JsonProperty("quickFilterInput") final String quickFilterInput,
 //                            @JsonProperty("requiredPermission") final String requiredPermission,
-                            @JsonProperty("group") final Boolean group,
+                            @JsonProperty("group") final boolean group,
                             @JsonProperty("relatedUser") final User relatedUser) {
         super(pageRequest, sortList);
         this.group = group;
@@ -83,11 +83,11 @@ public class FindUserCriteria extends BaseCriteria {
         this.relatedUser = relatedUser;
     }
 
-    public Boolean getGroup() {
+    public boolean isGroup() {
         return group;
     }
 
-    public void setGroup(final Boolean group) {
+    public void setGroup(final boolean group) {
         this.group = group;
     }
 

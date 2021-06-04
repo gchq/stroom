@@ -44,9 +44,8 @@ const resourceBuilder: ResourceBuilder = (
       const { name, group } = req.params;
       const newUser = { name, group, uuid: v4() };
 
-      testCache.data!.usersAndGroups.users = testCache.data!.usersAndGroups.users.concat(
-        [newUser],
-      );
+      testCache.data!.usersAndGroups.users =
+        testCache.data!.usersAndGroups.users.concat([newUser]);
 
       res.json(newUser);
     });
@@ -59,9 +58,10 @@ const resourceBuilder: ResourceBuilder = (
         users: testCache.data!.usersAndGroups.users.filter(
           (u) => u.uuid !== oldUuid,
         ),
-        userGroupMemberships: testCache.data!.usersAndGroups.userGroupMemberships.filter(
-          (m) => m.groupUuid !== oldUuid && m.userUuid !== oldUuid,
-        ),
+        userGroupMemberships:
+          testCache.data!.usersAndGroups.userGroupMemberships.filter(
+            (m) => m.groupUuid !== oldUuid && m.userUuid !== oldUuid,
+          ),
       };
 
       res.status(204).send(undefined);
@@ -105,14 +105,13 @@ const resourceBuilder: ResourceBuilder = (
   server
     .put(`${resource}/:userUuid/:groupUuid`)
     .intercept((req: HttpRequest, res: HttpResponse) => {
-      testCache.data!.usersAndGroups.userGroupMemberships = testCache.data!.usersAndGroups.userGroupMemberships.concat(
-        [
+      testCache.data!.usersAndGroups.userGroupMemberships =
+        testCache.data!.usersAndGroups.userGroupMemberships.concat([
           {
             userUuid: req.params.userUuid,
             groupUuid: req.params.groupUuid,
           },
-        ],
-      );
+        ]);
 
       res.status(204).send(undefined);
     });
@@ -121,13 +120,14 @@ const resourceBuilder: ResourceBuilder = (
   server
     .delete(`${resource}/:userUuid/:groupUuid`)
     .intercept((req: HttpRequest, res: HttpResponse) => {
-      testCache.data!.usersAndGroups.userGroupMemberships = testCache.data!.usersAndGroups.userGroupMemberships.filter(
-        (m) =>
-          !(
-            m.groupUuid === req.params.groupUuid &&
-            m.userUuid === req.params.userUuid
-          ),
-      );
+      testCache.data!.usersAndGroups.userGroupMemberships =
+        testCache.data!.usersAndGroups.userGroupMemberships.filter(
+          (m) =>
+            !(
+              m.groupUuid === req.params.groupUuid &&
+              m.userUuid === req.params.userUuid
+            ),
+        );
 
       res.status(204).send(undefined);
     });

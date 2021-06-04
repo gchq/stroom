@@ -21,9 +21,8 @@ import { ConditionType } from "../types";
 import JsonDebug from "testing/JsonDebug";
 
 const TestHarness: React.FunctionComponent = () => {
-  const [value, onChange] = React.useState<ConditionType | undefined>(
-    undefined,
-  );
+  const [value, onChange] =
+    React.useState<ConditionType | undefined>(undefined);
 
   return (
     <div>

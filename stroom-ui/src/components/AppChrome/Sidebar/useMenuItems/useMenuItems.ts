@@ -35,7 +35,7 @@ const iterateMenuItems = function (
 ) {
   menuItems.forEach((menuItem) => {
     callback(menuItem);
-    if (!!menuItem.children) {
+    if (menuItem.children) {
       iterateMenuItems(menuItem.children, callback);
     }
   });
@@ -46,14 +46,12 @@ const DEFAULT_MENU_OPEN_STATE: MenuItemsOpenState = {};
 export const useMenuItems = (): OutProps => {
   const navigateApp = useAppNavigation();
 
-  const {
-    value: menuItemIsOpenByKey,
-    reduceValue: modifyOpenMenuItems,
-  } = useLocalStorage<MenuItemsOpenState>(
-    "app-chrome-menu-items-open",
-    DEFAULT_MENU_OPEN_STATE,
-    useStoreObjectFactory<MenuItemsOpenState>(),
-  );
+  const { value: menuItemIsOpenByKey, reduceValue: modifyOpenMenuItems } =
+    useLocalStorage<MenuItemsOpenState>(
+      "app-chrome-menu-items-open",
+      DEFAULT_MENU_OPEN_STATE,
+      useStoreObjectFactory<MenuItemsOpenState>(),
+    );
   const menuItemOpened: MenuItemOpened = React.useCallback(
     (name: string, isOpen: boolean) => {
       modifyOpenMenuItems((existing) => ({

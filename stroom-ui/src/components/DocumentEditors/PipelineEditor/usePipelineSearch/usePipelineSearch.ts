@@ -27,9 +27,8 @@ const usePipelineSearch = (): UsePipelineSearch => {
   const [results, setResults] = React.useState<PipelineSearchResultType>(
     DEFAULT_SEARCH_RESULT,
   );
-  const [criteria, setCriteria] = React.useState<PipelineSearchCriteriaType>(
-    DEFAULT_CRITERIA,
-  );
+  const [criteria, setCriteria] =
+    React.useState<PipelineSearchCriteriaType>(DEFAULT_CRITERIA);
   const { searchPipelines } = useApi();
 
   return {

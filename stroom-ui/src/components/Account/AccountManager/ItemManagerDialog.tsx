@@ -17,7 +17,12 @@ export const ItemManagerDialog = <T,>(
   const { title, itemManagerProps, onClose } = props;
 
   return (
-    <ResizableDialog minWidth={400} minHeight={400} initWidth={900} initHeight={600}>
+    <ResizableDialog
+      minWidth={400}
+      minHeight={400}
+      initWidth={900}
+      initHeight={600}
+    >
       <Modal.Header closeButton={false}>
         <Modal.Title id="contained-modal-title-vcenter">{title}</Modal.Title>
       </Modal.Header>

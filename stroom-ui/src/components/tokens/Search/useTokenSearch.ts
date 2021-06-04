@@ -1,7 +1,18 @@
 import { useCallback } from "react";
-import { SearchConfig } from "../api/types";
+import { SearchConfig, Token } from "../api/types";
 import useApi from "../api/useApi";
-import { useTokenSearchState, defaultPageSize } from "./useTokenSearchState";
+import { defaultPageSize, useTokenSearchState } from "./useTokenSearchState";
+
+interface TokenSearch {
+  selectedTokenRowId: string;
+  setSelectedTokenRowId: (selectedTokenRowId: string) => void;
+  results: Token[];
+  searchConfig: SearchConfig;
+  totalPages: number;
+  toggleState: (tokenId: number, nextState: boolean) => void;
+  performTokenSearch: (searchConfig: SearchConfig) => void;
+  deleteSelectedToken: (selectedTokenRowId?: string) => void;
+}
 
 const getRowsPerPage = () => {
   const viewport = document.getElementById("User-content");
@@ -14,7 +25,7 @@ const getRowsPerPage = () => {
   return rowsInViewport;
 };
 
-const useTokenSearch = () => {
+const useTokenSearch = (): TokenSearch => {
   const {
     selectedTokenRowId,
     setSelectedTokenRowId,
@@ -73,7 +84,7 @@ const useTokenSearch = () => {
 
   const deleteSelectedToken = useCallback(
     (selectedTokenRowId?: string) => {
-      if (!!selectedTokenRowId) {
+      if (selectedTokenRowId) {
         deleteTokenApi(selectedTokenRowId).then(() => {
           performTokenSearch(lastUsedSearchConfig);
           setSelectedTokenRowId("");

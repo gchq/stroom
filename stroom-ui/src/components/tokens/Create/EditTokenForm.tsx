@@ -54,7 +54,7 @@ const EditTokenForm: React.FunctionComponent<{
                     icons={false}
                     checked={token.enabled}
                     onChange={() =>
-                      !!token.id
+                      token.id
                         ? onChangeState(token.id, !token.enabled)
                         : undefined
                     }

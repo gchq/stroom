@@ -14,37 +14,33 @@ import { useAppNavigation } from "lib/useAppNavigation";
 import { DocumentApi } from "components/DocumentEditors/useDocumentApi/types/documentApi";
 import { ButtonProps } from "components/Button/types";
 import useDocument from "../api/explorer/useDocument";
+import { PropsWithChildren } from "react";
 
-const DocRefEditor = <T extends {}>({
-  onClickSave,
-  children,
-  docRefUuid,
-  additionalActionBarItems,
-  isDirty,
-  showAppSearchBar,
-}: DocRefEditorProps<T>) => {
+function DocRefEditor<T>(
+  props: PropsWithChildren<DocRefEditorProps<T>>,
+): React.ReactElement {
   const {
     nav: { goToAuthorisationsForDocument, goToEditDocRef },
   } = useAppNavigation();
-  const { node: docRef } = useDocument(docRefUuid);
+  const { node: docRef } = useDocument(props.docRefUuid);
 
   const openDocRefPermissions = React.useCallback(
-    () => goToAuthorisationsForDocument(docRefUuid),
-    [goToAuthorisationsForDocument, docRefUuid],
+    () => goToAuthorisationsForDocument(props.docRefUuid),
+    [goToAuthorisationsForDocument, props.docRefUuid],
   );
 
   let actionBarItems: ButtonProps[] = [];
-  if (!!onClickSave) {
+  if (props.onClickSave) {
     actionBarItems.push({
       icon: "save",
       children: "Save",
-      disabled: !isDirty,
-      title: isDirty ? "Save" : "Saved",
-      onClick: onClickSave,
+      disabled: !props.isDirty,
+      title: props.isDirty ? "Save" : "Saved",
+      onClick: props.onClickSave,
     });
   }
 
-  actionBarItems = actionBarItems.concat(additionalActionBarItems || []);
+  actionBarItems = actionBarItems.concat(props.additionalActionBarItems || []);
 
   actionBarItems.push({
     icon: "key",
@@ -72,7 +68,7 @@ const DocRefEditor = <T extends {}>({
           />
         </div>
       </div>
-      {showAppSearchBar ? (
+      {props.showAppSearchBar ? (
         <div className="page__search">
           <AppSearchBar
             className="DocRefEditor__search"
@@ -80,29 +76,28 @@ const DocRefEditor = <T extends {}>({
           />
         </div>
       ) : undefined}
-      <div className="page__body">{children}</div>
+      <div className="page__body">{props.children}</div>
     </div>
   );
-};
+}
 
-export function useDocRefEditor<T extends object>({
+export function useDocRefEditor<T>({
   docRefUuid,
   documentApi,
 }: UseDocRefEditorPropsIn<T>): UseDocRefEditorProps<T> {
   const [isDirty, setIsDirty] = React.useState<boolean>(false);
-  const [docRefContents, setDocRefContents] = React.useState<T | undefined>(
-    undefined,
-  );
+  const [docRefContents, setDocRefContents] =
+    React.useState<T | undefined>(undefined);
 
-  const saveDocument: DocumentApi<T>["saveDocument"] | undefined = !!documentApi
+  const saveDocument: DocumentApi<T>["saveDocument"] | undefined = documentApi
     ? documentApi.saveDocument
     : undefined;
-  const fetchDocument:
-    | DocumentApi<T>["fetchDocument"]
-    | undefined = !!documentApi ? documentApi.fetchDocument : undefined;
+  const fetchDocument: DocumentApi<T>["fetchDocument"] | undefined = documentApi
+    ? documentApi.fetchDocument
+    : undefined;
 
   React.useEffect(() => {
-    if (!!fetchDocument) {
+    if (fetchDocument) {
       fetchDocument(docRefUuid).then((d) => {
         setDocRefContents(d);
         setIsDirty(false);
@@ -112,7 +107,7 @@ export function useDocRefEditor<T extends object>({
 
   const onClickSave = React.useCallback(() => {
     if (!!docRefContents && !!saveDocument) {
-      saveDocument((docRefContents as unknown) as T).then(() => {
+      saveDocument(docRefContents as unknown as T).then(() => {
         setIsDirty(false);
       });
     }
@@ -121,7 +116,7 @@ export function useDocRefEditor<T extends object>({
   return {
     onDocumentChange: React.useCallback(
       (updates: Partial<T>) => {
-        if (!!docRefContents) {
+        if (docRefContents) {
           setDocRefContents({ ...docRefContents, ...updates });
           setIsDirty(true);
         } else {
@@ -132,10 +127,10 @@ export function useDocRefEditor<T extends object>({
     ),
     editorProps: {
       isDirty,
-      docRefContents: !!docRefContents
-        ? ((docRefContents as unknown) as T)
+      docRefContents: docRefContents
+        ? (docRefContents as unknown as T)
         : undefined,
-      onClickSave: !!documentApi ? onClickSave : undefined,
+      onClickSave: documentApi ? onClickSave : undefined,
       docRefUuid,
     },
   };

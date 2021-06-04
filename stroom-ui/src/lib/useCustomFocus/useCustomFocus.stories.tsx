@@ -37,21 +37,16 @@ const TestHarness: React.FunctionComponent<Props> = ({ initialItems }) => {
     }
   }, [items, addItem]);
 
-  const {
-    setByIndex,
-    down,
-    up,
-    clear,
-    focusIndex,
-    highlightedItem,
-  } = useCustomFocus({
-    items,
-    preFocusWrap,
-  });
+  const { setByIndex, down, up, clear, focusIndex, highlightedItem } =
+    useCustomFocus({
+      items,
+      preFocusWrap,
+    });
 
-  const removeFirstItem = React.useCallback(() => removeItemAtIndex(0), [
-    removeItemAtIndex,
-  ]);
+  const removeFirstItem = React.useCallback(
+    () => removeItemAtIndex(0),
+    [removeItemAtIndex],
+  );
 
   const itemsWithClick: ItemWithClick<string>[] = React.useMemo(
     () =>

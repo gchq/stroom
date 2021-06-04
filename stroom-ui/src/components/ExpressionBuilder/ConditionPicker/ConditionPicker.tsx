@@ -31,7 +31,7 @@ const ConditionPicker: React.FunctionComponent<Props> = ({
   const selected = options.find((option) => option.value === value);
   return (
     <InlineSelect
-      selected={!!selected ? selected.value : undefined}
+      selected={selected ? selected.value : undefined}
       onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
         onChange(event.target.value as ConditionType)
       }

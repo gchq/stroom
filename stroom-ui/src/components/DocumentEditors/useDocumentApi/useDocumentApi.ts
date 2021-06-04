@@ -17,7 +17,7 @@ import useUrlFactory from "lib/useUrlFactory";
  */
 export const useDocumentApi = <
   T extends keyof ResourcesByDocType,
-  D extends DocumentBase<T>
+  D extends DocumentBase<T>,
 >(
   docRefType: T,
 ): DocumentApi<D> => {

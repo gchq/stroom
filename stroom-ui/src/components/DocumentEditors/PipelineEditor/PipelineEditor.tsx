@@ -36,12 +36,14 @@ import usePipelineState from "./usePipelineState/usePipelineState";
 import { ButtonProps } from "components/Button/types";
 import HorizontalMainDetails from "components/HorizontalMainDetails";
 
-export const PipelineEditor = ({ docRefUuid }: SwitchedDocRefEditorProps) => {
-  const piplineStateProps = usePipelineState(docRefUuid);
+export const PipelineEditor = ({
+  docRefUuid,
+}: SwitchedDocRefEditorProps): React.ReactElement => {
+  const pipelineStateProps = usePipelineState(docRefUuid);
   const {
     pipelineEditApi,
     useEditorProps: { editorProps },
-  } = piplineStateProps;
+  } = pipelineStateProps;
   const { docRefContents: pipeline } = editorProps;
 
   const {
@@ -71,7 +73,7 @@ export const PipelineEditor = ({ docRefUuid }: SwitchedDocRefEditorProps) => {
   });
 
   const onClickOpenSettings = React.useCallback(() => {
-    if (!!pipeline) {
+    if (pipeline) {
       showSettingsDialog({ description: pipeline.description || "something" });
     } else {
       console.error("No pipeline set");
@@ -127,7 +129,7 @@ export const PipelineEditor = ({ docRefUuid }: SwitchedDocRefEditorProps) => {
           isOpen={selectedElementId !== undefined}
           mainContent={
             <PipelineDisplay
-              pipelineStateProps={piplineStateProps}
+              pipelineStateProps={pipelineStateProps}
               showAddElementDialog={showAddElementDialog}
             />
           }

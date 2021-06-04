@@ -20,18 +20,15 @@ interface UseApi {
 }
 
 export const useApi = (): UseApi => {
-  const {
-    httpGetJson,
-    httpPostJsonResponse,
-    httpDeleteEmptyResponse,
-  } = useHttpClient();
+  const { httpGetJson, httpPostJsonResponse, httpDeleteEmptyResponse } =
+    useHttpClient();
   const { apiUrl } = useUrlFactory();
   const resource = apiUrl("/activity/v1");
   return {
-    getCurrentActivity: useCallback(() => httpGetJson(`${resource}/current`), [
-      resource,
-      httpGetJson,
-    ]),
+    getCurrentActivity: useCallback(
+      () => httpGetJson(`${resource}/current`),
+      [resource, httpGetJson],
+    ),
     setCurrentActivity: useCallback(
       (activity: Activity) =>
         httpPostJsonResponse(`${resource}/current`, {
@@ -40,10 +37,10 @@ export const useApi = (): UseApi => {
       [resource, httpPostJsonResponse],
     ),
 
-    getActivities: React.useCallback(() => httpGetJson(resource), [
-      resource,
-      httpGetJson,
-    ]),
+    getActivities: React.useCallback(
+      () => httpGetJson(resource),
+      [resource, httpGetJson],
+    ),
 
     createActivity: React.useCallback(
       (activity: Activity) =>

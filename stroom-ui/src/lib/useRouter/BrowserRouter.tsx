@@ -4,9 +4,8 @@ import { Router, Route, RouteProps } from "react-router-dom";
 import { History } from "history";
 
 export const RouterContext = React.createContext<RouteProps>({});
-export const HistoryContext = React.createContext<History | undefined>(
-  undefined,
-);
+export const HistoryContext =
+  React.createContext<History | undefined>(undefined);
 
 export interface ChromeContext {
   includeSidebar: boolean;
@@ -48,16 +47,14 @@ interface Props {
  * @returns An object with 'prefix' and 'includeSidebar' properties.
  */
 const showChrome = (pathname: string) => {
-  let prefix: string;
-  let includeSidebar = false;
   // If we're handling an Oldauthentication redirect then we need to get the path
   // from local storage.
   const referrer = localStorage.getItem("preAuthenticationRequestReferrer");
   const actualPath = referrer ? referrer : pathname;
 
   const parts = actualPath.split("/");
-  prefix = parts[1];
-  includeSidebar = prefix === DEFAULT_CHROME_MODE;
+  const prefix = parts[1];
+  const includeSidebar = prefix === DEFAULT_CHROME_MODE;
   return { includeSidebar, prefix };
 };
 
@@ -65,9 +62,8 @@ const CustomRouter: React.FunctionComponent<Props> = ({
   history,
   children,
 }) => {
-  const [urlPrefix, setUrlPrefixRaw] = React.useState<string>(
-    DEFAULT_CHROME_MODE,
-  );
+  const [urlPrefix, setUrlPrefixRaw] =
+    React.useState<string>(DEFAULT_CHROME_MODE);
 
   const { includeSidebar, prefix } = showChrome(history.location.pathname);
 

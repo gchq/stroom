@@ -19,12 +19,15 @@ package stroom.security.impl;
 import stroom.docref.DocRef;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.FindUserCriteria;
+import stroom.security.shared.FindUserNameCriteria;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
+import stroom.security.shared.UserNameProvider;
 import stroom.util.AuditUtil;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
+import stroom.util.shared.ResultPage;
 
 import java.util.HashSet;
 import java.util.List;
@@ -35,7 +38,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
-class UserServiceImpl implements UserService {
+class UserServiceImpl implements UserService, UserNameProvider {
 
     private final SecurityContext securityContext;
     private final UserDao userDao;
@@ -61,16 +64,19 @@ class UserServiceImpl implements UserService {
     }
 
     private User create(final String name, final boolean isGroup) {
-        User user = new User();
-        AuditUtil.stamp(securityContext.getUserId(), user);
-        user.setUuid(UUID.randomUUID().toString());
-        user.setName(name);
-        user.setGroup(isGroup);
+        final Optional<User> optional = userDao.getByName(name, isGroup);
+        return optional.orElseGet(() -> {
+            User user = new User();
+            AuditUtil.stamp(securityContext.getUserId(), user);
+            user.setUuid(UUID.randomUUID().toString());
+            user.setName(name);
+            user.setGroup(isGroup);
 
-        return securityContext.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
-            final User newUser = userDao.create(user);
-            fireEntityChangeEvent(newUser, EntityAction.CREATE);
-            return newUser;
+            return securityContext.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
+                final User newUser = userDao.create(user);
+                fireEntityChangeEvent(newUser, EntityAction.CREATE);
+                return newUser;
+            });
         });
     }
 
@@ -116,8 +122,21 @@ class UserServiceImpl implements UserService {
     }
 
     @Override
+    public ResultPage<String> findUserNames(final FindUserNameCriteria criteria) {
+        final FindUserCriteria findUserCriteria = new FindUserCriteria(
+                criteria.getPageRequest(),
+                criteria.getSortList(),
+                criteria.getQuickFilterInput(),
+                false,
+                null);
+        final List<User> users = find(findUserCriteria);
+        final List<String> list = users.stream().map(User::getName).collect(Collectors.toList());
+        return new ResultPage<>(list);
+    }
+
+    @Override
     public List<User> find(final FindUserCriteria criteria) {
-        return userDao.find(criteria.getQuickFilterInput(), criteria.getGroup());
+        return userDao.find(criteria.getQuickFilterInput(), criteria.isGroup());
     }
 
     @Override

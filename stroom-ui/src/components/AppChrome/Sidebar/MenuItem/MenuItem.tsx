@@ -64,16 +64,14 @@ const dropTarget: DropTargetSpec<Props> = {
   },
 };
 
-const dropCollect: DropTargetCollector<
-  DropCollectedProps,
-  Props
-> = function dropCollect(connect, monitor) {
-  return {
-    connectDropTarget: connect.dropTarget(),
-    isOver: monitor.isOver(),
-    canDrop: monitor.canDrop(),
+const dropCollect: DropTargetCollector<DropCollectedProps, Props> =
+  function dropCollect(connect, monitor) {
+    return {
+      connectDropTarget: connect.dropTarget(),
+      isOver: monitor.isOver(),
+      canDrop: monitor.canDrop(),
+    };
   };
-};
 
 const dragSource: DragSourceSpec<Props, DragObject> = {
   canDrag({ menuItem: { docRef } }) {
@@ -87,15 +85,13 @@ const dragSource: DragSourceSpec<Props, DragObject> = {
   },
 };
 
-const dragCollect: DragSourceCollector<
-  DragCollectedProps,
-  Props
-> = function dragCollect(connect, monitor) {
-  return {
-    connectDragSource: connect.dragSource(),
-    isDragging: monitor.isDragging(),
+const dragCollect: DragSourceCollector<DragCollectedProps, Props> =
+  function dragCollect(connect, monitor) {
+    return {
+      connectDragSource: connect.dragSource(),
+      isDragging: monitor.isDragging(),
+    };
   };
-};
 
 const MenuItem: React.FunctionComponent<EnhancedProps> = ({
   menuItem,

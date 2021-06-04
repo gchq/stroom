@@ -8,9 +8,8 @@ interface UseIndexVolumeGroup {
 }
 
 const useIndexVolumeGroup = (groupName: string): UseIndexVolumeGroup => {
-  const [indexVolumeGroup, setIndexVolumeGroup] = React.useState<
-    IndexVolumeGroup | undefined
-  >(undefined);
+  const [indexVolumeGroup, setIndexVolumeGroup] =
+    React.useState<IndexVolumeGroup | undefined>(undefined);
 
   const { getIndexVolumeGroup } = useApi();
 

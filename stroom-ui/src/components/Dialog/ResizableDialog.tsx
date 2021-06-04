@@ -1,6 +1,6 @@
 import { FunctionComponent } from "react";
 import * as React from "react";
-import ReactModal from "react-modal-resizable-draggable";
+import FlexibleModal from "react-modal-touch";
 
 export interface DialogProps {
   isOpen?: boolean;
@@ -17,6 +17,7 @@ export interface DialogProps {
   disableHorizontalResize?: boolean;
   disableVerticalMove?: boolean;
   disableHorizontalMove?: boolean;
+  disableKeystroke?: boolean;
   onFocus?: () => void;
   className?: string;
 }
@@ -24,6 +25,7 @@ export interface DialogProps {
 export const ResizableDialog: FunctionComponent<DialogProps> = (props) => {
   const p = {
     isOpen: true,
+    disableKeystroke: true,
     // onRequestClose: () => undefined,
     // onFocus={() => console.log("Modal is clicked")}
     // className={"my-modal-custom-class"}
@@ -32,8 +34,8 @@ export const ResizableDialog: FunctionComponent<DialogProps> = (props) => {
     ...props,
   };
   return (
-    <ReactModal {...p} aria-labelledby="contained-modal-title-vcenter">
+    <FlexibleModal {...p} aria-labelledby="contained-modal-title-vcenter">
       <div className="modal-content">{props.children}</div>
-    </ReactModal>
+    </FlexibleModal>
   );
 };

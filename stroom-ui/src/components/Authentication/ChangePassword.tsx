@@ -133,7 +133,7 @@ const ChangePasswordFormik: React.FunctionComponent<ChangePasswordProps> = ({
     .required("Password is required")
     .min(thresholdLength, "Password is short")
     .matches(new RegExp(passwordComplexityRegex), "Password is invalid")
-    .test("password-strength", "Password is weak", function (value) {
+    .test("password-strength", "Password is weak", function () {
       return currentStrength >= minStrength;
     });
 
@@ -187,28 +187,26 @@ const ChangePasswordFormik: React.FunctionComponent<ChangePasswordProps> = ({
   );
 };
 
-export const ChangePasswordDialog: React.FunctionComponent<ChangePasswordProps> = (
-  props,
-) => {
-  return (
-    <ResizableDialog
-      initWidth={400}
-      initHeight={369}
-      minWidth={400}
-      minHeight={369}
-      disableResize={true}
-    >
-      <ChangePasswordFormik {...props} />
-    </ResizableDialog>
-  );
-};
+export const ChangePasswordDialog: React.FunctionComponent<ChangePasswordProps> =
+  (props) => {
+    return (
+      <ResizableDialog
+        initWidth={400}
+        initHeight={369}
+        minWidth={400}
+        minHeight={369}
+        disableResize={true}
+      >
+        <ChangePasswordFormik {...props} />
+      </ResizableDialog>
+    );
+  };
 
-export const ChangePasswordPage: React.FunctionComponent<ChangePasswordProps> = (
-  props,
-) => {
-  return (
-    <FormContainer className={"ChangePassword"}>
-      <ChangePasswordFormik {...props} />
-    </FormContainer>
-  );
-};
+export const ChangePasswordPage: React.FunctionComponent<ChangePasswordProps> =
+  (props) => {
+    return (
+      <FormContainer className={"ChangePassword"}>
+        <ChangePasswordFormik {...props} />
+      </FormContainer>
+    );
+  };

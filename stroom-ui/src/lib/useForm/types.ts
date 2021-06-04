@@ -15,9 +15,7 @@ export interface Form<T> {
     s: string,
   ) => ControlledInput<FIELD_TYPE>;
   useTextInput: (s: string) => InputProps;
-  useCheckboxInput: (
-    s: string,
-  ) => {
+  useCheckboxInput: (s: string) => {
     onChange: React.ChangeEventHandler<HTMLElement>;
     checked: any;
   };

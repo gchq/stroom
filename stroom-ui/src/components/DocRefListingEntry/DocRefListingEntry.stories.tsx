@@ -43,12 +43,10 @@ const TestDocRefListingEntry: React.FunctionComponent<Props> = ({
   dndCanDrop,
   provideBreadcrumbs,
 }) => {
-  const [enteredFolder, enterFolder] = React.useState<DocRefType | undefined>(
-    undefined,
-  );
-  const [openedDocRef, openDocRef] = React.useState<DocRefType | undefined>(
-    undefined,
-  );
+  const [enteredFolder, enterFolder] =
+    React.useState<DocRefType | undefined>(undefined);
+  const [openedDocRef, openDocRef] =
+    React.useState<DocRefType | undefined>(undefined);
   const [wentBack, setWentBack] = React.useState<boolean>(false);
 
   const goBack = () => setWentBack(true);

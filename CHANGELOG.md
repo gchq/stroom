@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2250** : Improved token authentication.
+
+* Issue **#2250** : Using arrow keys no longer moves popup dialogs.
+
+
+## [v7.0-beta.122] - 2021-06-02
+
+* Issue **#2264** : Users for user permissions are now retrieved from the account service plus authorisation.
+
+* Add entity relationship diagram and database DDL SQL to release artefacts.
+
 * Issue **#2241** : Changing field or operator in the query expression editor no longer deselects the selected row. 
 
 * Issue **#2241** : Made Firefox and Chrome drop downs look the same.

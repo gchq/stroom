@@ -103,7 +103,7 @@ class AuthenticationService {
         Optional<User> optUser;
 
         try {
-            optUser = userDao.getByName(username);
+            optUser = userDao.getByName(username, false);
             if (optUser.isEmpty()
                     && openIdConfig.isUseInternal()
                     && User.ADMIN_USER_NAME.equals(username)) {
@@ -131,7 +131,7 @@ class AuthenticationService {
     }
 
     private User createOrRefreshUserOrGroup(final String name, final boolean isGroup) {
-        return userDao.getByName(name)
+        return userDao.getByName(name, isGroup)
                 .orElseGet(() -> {
                     LOGGER.info("Creating {} {}",
                             (isGroup
@@ -139,7 +139,7 @@ class AuthenticationService {
                                     : "user"),
                             name);
 
-                    final User userRef = create(name, false);
+                    final User userRef = create(name, isGroup);
 
                     // Creating the admin user so create its group too
                     if (User.ADMIN_USER_NAME.equals(name) && openIdConfig.isUseInternal()) {
@@ -165,7 +165,7 @@ class AuthenticationService {
     }
 
     private User createOrRefreshAdminUserGroup(final String userGroupName) {
-        return userDao.getByName(userGroupName)
+        return userDao.getByName(userGroupName, true)
                 .orElseGet(() -> {
                     final User newUserGroup = create(userGroupName, true);
                     try {

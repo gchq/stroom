@@ -17,11 +17,6 @@
 import * as React from "react";
 import useActivitySummary from "../api/useActivitySummary";
 
-interface Props {
-  name: string;
-  value: string;
-}
-
 export const ActivitySummary: React.FunctionComponent = () => {
   const activity = useActivitySummary();
 

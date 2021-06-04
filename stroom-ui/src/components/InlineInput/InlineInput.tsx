@@ -58,7 +58,7 @@ const InlineInput: FunctionComponent<InputHTMLAttributes<HTMLInputElement>> = ({
       />
     );
   } else {
-    const textToDisplay = !!value ? value : "click to edit";
+    const textToDisplay = value ? value : "click to edit";
     return (
       <span className="inline-input__not-editing" onClick={handleEdit}>
         {textToDisplay}

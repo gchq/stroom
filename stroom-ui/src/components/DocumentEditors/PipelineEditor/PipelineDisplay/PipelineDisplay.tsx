@@ -33,7 +33,6 @@ interface Props {
 
 export const PipelineDisplay: React.FunctionComponent<Props> = ({
   pipelineStateProps,
-  showAddElementDialog,
 }) => {
   const {
     pipelineEditApi,

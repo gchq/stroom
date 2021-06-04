@@ -16,7 +16,7 @@ const SingleValue: React.FunctionComponent<SingleValueProps<BasicOption>> = ({
   children,
   ...props
 }) => {
-  if (!!props.data) {
+  if (props.data) {
     return (
       <div className="DocRefTypePicker">
         <DocRefImage
@@ -49,7 +49,11 @@ const Option: React.FunctionComponent<OptionProps<BasicOption, false>> = (
   </components.Option>
 );
 
-const DocRefTypePicker = ({ value, onChange, invalidTypes = [] }: Props) => {
+export const DocRefTypePicker: React.FunctionComponent<Props> = ({
+  value,
+  onChange,
+  invalidTypes = [],
+}) => {
   const docRefTypes: string[] = useDocRefTypes();
   const options: string[] = React.useMemo(
     () => docRefTypes.filter((d) => !invalidTypes.includes(d)),

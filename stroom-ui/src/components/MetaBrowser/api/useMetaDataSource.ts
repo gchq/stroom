@@ -7,9 +7,8 @@ const defaultDataSource: DataSourceType = {
 };
 
 const useMetaDataSource = (): DataSourceType => {
-  const [dataSource, setDataSource] = React.useState<
-    DataSourceType | undefined
-  >(undefined);
+  const [dataSource, setDataSource] =
+    React.useState<DataSourceType | undefined>(undefined);
   const { fetchDataSource } = useApi();
 
   React.useEffect(() => {

@@ -11,7 +11,7 @@ export function getNext(
       pipeline.merged.links.add &&
       pipeline.merged.links.add.find((link) => link.from === selectedElementId);
     return nextLink ? nextLink.to : selectedElementId;
-  } else if (!!asTree) {
+  } else if (asTree) {
     return asTree.uuid;
   }
   return undefined;
@@ -27,7 +27,7 @@ export function getPrevious(
       pipeline.merged.links.add &&
       pipeline.merged.links.add.find((link) => link.to === selectedElementId);
     return previousLink ? previousLink.from : selectedElementId;
-  } else if (!!asTree) {
+  } else if (asTree) {
     return asTree.uuid;
   }
   return undefined;

@@ -5,7 +5,7 @@ interface Props {
   dataRow: MetaRow;
 }
 
-const DataRetention: React.FunctionComponent<Props> = ({ dataRow }) => (
+const DataRetention: React.FunctionComponent<Props> = () => (
   <div className="tab-pane">
     <div className="RetentionDetails__container">
       <div className="RetentionDetails__table__container">

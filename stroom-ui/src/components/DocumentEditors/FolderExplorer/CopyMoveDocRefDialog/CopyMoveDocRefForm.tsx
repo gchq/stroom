@@ -60,9 +60,8 @@ export const useThisForm = ({
   });
 
   const destinationProps = useControlledInputProps<DocRefType>("destination");
-  const permissionInheritanceProps = useControlledInputProps<
-    PermissionInheritance
-  >("permissionInheritance");
+  const permissionInheritanceProps =
+    useControlledInputProps<PermissionInheritance>("permissionInheritance");
 
   return {
     value,

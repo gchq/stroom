@@ -11,10 +11,9 @@ export const useElement = (type?: string): UseElement => {
 
   return {
     definition: elementDefinitions.find((e) => e.type === type),
-    properties: Object.values(
-      elementProperties[type] || {},
-    ).sort((a: ElementPropertyType, b: ElementPropertyType) =>
-      a.displayPriority > b.displayPriority ? 1 : -1,
+    properties: Object.values(elementProperties[type] || {}).sort(
+      (a: ElementPropertyType, b: ElementPropertyType) =>
+        a.displayPriority > b.displayPriority ? 1 : -1,
     ),
   };
 };

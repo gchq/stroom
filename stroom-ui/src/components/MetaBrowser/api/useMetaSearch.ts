@@ -16,9 +16,8 @@ const defaultStreams: StreamAttributeMapResult = {
 };
 
 const useMetaSearch = (): UseStreamSearch => {
-  const [streams, setStreams] = React.useState<StreamAttributeMapResult>(
-    defaultStreams,
-  );
+  const [streams, setStreams] =
+    React.useState<StreamAttributeMapResult>(defaultStreams);
   const { fetch, search } = useApi();
 
   return {
@@ -28,10 +27,10 @@ const useMetaSearch = (): UseStreamSearch => {
         search(e, p).then(setStreams),
       [search, setStreams],
     ),
-    fetch: React.useCallback((s: PageRequest) => fetch(s).then(setStreams), [
-      fetch,
-      setStreams,
-    ]),
+    fetch: React.useCallback(
+      (s: PageRequest) => fetch(s).then(setStreams),
+      [fetch, setStreams],
+    ),
   };
 };
 

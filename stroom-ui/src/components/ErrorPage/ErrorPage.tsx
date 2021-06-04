@@ -20,7 +20,7 @@ import IconHeader from "../IconHeader";
 import ErrorSection from "./ErrorSection";
 import { useErrorReporting } from ".";
 
-const ErrorPage = () => {
+const ErrorPage: React.FunctionComponent = () => {
   const { error } = useErrorReporting();
 
   if (!error) {

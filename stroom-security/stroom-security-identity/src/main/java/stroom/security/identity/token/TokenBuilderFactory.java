@@ -20,6 +20,7 @@ package stroom.security.identity.token;
 
 import stroom.security.identity.config.IdentityConfig;
 import stroom.security.identity.exceptions.TokenCreationException;
+import stroom.security.openid.api.PublicJsonWebKeyProvider;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,15 +35,15 @@ public class TokenBuilderFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(TokenBuilderFactory.class);
 
     private final IdentityConfig config;
-    private final JwkCache jwkCache;
+    private final PublicJsonWebKeyProvider publicJsonWebKeyProvider;
 
     private Instant expiryDateForApiKeys;
 
     @Inject
     public TokenBuilderFactory(final IdentityConfig config,
-                               final JwkCache jwkCache) {
+                               final PublicJsonWebKeyProvider publicJsonWebKeyProvider) {
         this.config = config;
-        this.jwkCache = jwkCache;
+        this.publicJsonWebKeyProvider = publicJsonWebKeyProvider;
     }
 
     public TokenBuilderFactory expiryDateForApiKeys(Instant expiryDate) {
@@ -78,7 +79,7 @@ public class TokenBuilderFactory {
 
         tokenBuilder
                 .issuer(config.getTokenConfig().getJwsIssuer())
-                .privateVerificationKey(jwkCache.get().get(0))
+                .privateVerificationKey(publicJsonWebKeyProvider.getFirst())
                 .algorithm(config.getTokenConfig().getAlgorithm());
 
         return tokenBuilder;

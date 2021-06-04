@@ -19,7 +19,7 @@ import useTokens from "./useTokens";
 import CreateTokenForm from "./CreateTokenForm";
 import { useAppNavigation } from "lib/useAppNavigation";
 
-const CreateFormContainer = () => {
+const CreateFormContainer: React.FunctionComponent = () => {
   const {
     nav: { goToApiKeys },
   } = useAppNavigation();

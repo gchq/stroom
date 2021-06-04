@@ -1,0 +1,111 @@
+name: Full CI Build (and Release)
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-project:
+    runs-on: ubuntu-20.04
+    env:
+      # Static env vars
+
+      # Github runners limited to 2 cores, 7Gb RAM
+      # https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources
+      MAX_WORKERS: 3
+      # Fixed ssh-agent socket so multiple steps can use the same agent
+      # if needs be
+      SSH_AUTH_SOCK: "/tmp/ssh-agent-stroom.sock"
+    steps:
+
+      - name: Checkout code
+        id: checkout_code
+        uses: actions/checkout@v2
+        with:
+          # Set this so it gets the annotated commit, not the commit being tagged.
+          # Which means we can get the release msg
+          # See https://github.com/actions/runner/issues/712
+          ref: ${{ github.ref }} 
+
+        # Set variables in github's special env file which are then automatically 
+        # read into env vars in each subsequent step
+      - name: Set Environment Variables
+        id: set_env_var
+        run: |
+          {
+            # Map the GITHUB env vars to our own
+            echo "BUILD_DIR=${GITHUB_WORKSPACE}"
+            echo "BUILD_COMMIT=${GITHUB_SHA}"
+            echo "ACTIONS_SCRIPTS_DIR=${GITHUB_WORKSPACE}/.github/workflows/scripts"
+
+            if [[ ${GITHUB_REF} =~ ^refs/tags/ ]]; then
+              # strip off the 'refs/tags/' bit
+              tag="${GITHUB_REF#refs/tags/}"
+              echo "BUILD_TAG=${tag}"
+            fi
+
+            if [[ ${GITHUB_REF} =~ ^refs/heads/ ]]; then
+              # strip off the 'ref/heads/' bit
+              echo "BUILD_BRANCH=${GITHUB_REF#refs/heads/}"
+            fi
+
+            if [[ ${GITHUB_REF} =~ ^refs/pulls/ ]]; then
+              echo "BUILD_IS_PULL_REQUEST=true"
+            else
+              echo "BUILD_IS_PULL_REQUEST=false"
+            fi
+          } >> $GITHUB_ENV
+
+        # Separate step to show what is visible across steps
+      - name: Build Environment Info
+        id: build_info
+        run: |
+          "${ACTIONS_SCRIPTS_DIR}/echo_variables.sh" \
+            "docker version" "$(docker --version)" \
+            "docker-compose version" "$(docker-compose --version)" \
+            "git version" "$(git --version)" \
+            "GITHUB_WORKSPACE" "$GITHUB_WORKSPACE" \
+            "GITHUB_REF" "$GITHUB_REF" \
+            "GITHUB_SHA" "$GITHUB_SHA" \
+            "BUILD_DIR" "$BUILD_DIR" \
+            "BUILD_TAG" "$BUILD_TAG" \
+            "BUILD_BRANCH" "$BUILD_BRANCH" \
+            "BUILD_COMMIT" "$BUILD_COMMIT" \
+            "BUILD_IS_PULL_REQUEST" "$BUILD_IS_PULL_REQUEST" \
+            "ACTIONS_SCRIPTS_DIR" "$ACTIONS_SCRIPTS_DIR" \
+            "PWD" "$PWD" \
+            "HOME" "$HOME"
+
+      - name: Run full build
+        id: run_build
+        env:
+          # Docker creds for dockerhub authenticated push/pull
+          # Manually added secrets in github
+          # https://github.com/gchq/stroom/settings/secrets/actions
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        run: |
+          pushd "${BUILD_DIR}" > /dev/null
+          echo -e "${GREEN}Running ${BLUE}ci_build.sh${NC}"
+          ./ci_build.sh
+          echo -e "${GREEN}Finished running build script${NC}"
+
+      - name: Release to GitHub
+        id: create_release
+        if: ${{ startsWith(env.BUILD_TAG, 'v') }}
+        env:
+          # Github provided secret
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: "${ACTIONS_SCRIPTS_DIR}/create_github_release.sh"
+
+      - name: Update gh-pages
+        id: update_gh-pages
+        if: ${{ startsWith(env.BUILD_TAG, 'v') }}
+        env:
+          # ssh private key (corresponding to the public key in github deploy keys
+          # for the stroom repo), manually added to secrets
+          # https://github.com/gchq/stroom/settings/secrets/actions
+          # https://github.com/gchq/stroom/settings/keys
+          SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
+        run: "${ACTIONS_SCRIPTS_DIR}/update_gh_pages.sh"
+

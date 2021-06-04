@@ -12,7 +12,7 @@ export const useOnKeyDown = (
     (e: React.KeyboardEvent) => {
       const handler = handlers[e.key];
 
-      if (!!handler) handler(e);
+      if (handler) handler(e);
     },
     [handlers],
   );

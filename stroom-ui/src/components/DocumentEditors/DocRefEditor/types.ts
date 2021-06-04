@@ -1,5 +1,6 @@
 import { DocumentApi } from "components/DocumentEditors/useDocumentApi/types/documentApi";
 import { ButtonProps } from "components/Button/types";
+import React from "react";
 
 export interface DocRefEditorProps<T> {
   docRefUuid: string;
@@ -11,12 +12,12 @@ export interface DocRefEditorProps<T> {
   showAppSearchBar?: boolean;
 }
 
-export interface UseDocRefEditorPropsIn<T extends object> {
+export interface UseDocRefEditorPropsIn<T> {
   docRefUuid: string;
   documentApi?: DocumentApi<T>;
 }
 
-export interface UseDocRefEditorProps<T extends object> {
+export interface UseDocRefEditorProps<T> {
   editorProps: DocRefEditorProps<T>;
   onDocumentChange: (updates: Partial<T>) => void;
 }

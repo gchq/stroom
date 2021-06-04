@@ -45,24 +45,24 @@
     "qs": "6.9.1",
     "query-string": "6.9.0",
     "ramda": "0.26.1",
-    "react": "^16.13.1",
+    "react": "17.0.2",
     "react-ace": "7.0.5",
-    "react-beautiful-dnd": "12.2.0",
-    "react-bootstrap": "^1.0.1",
-    "react-bootstrap-icons": "^1.0.3-alpha4",
-    "react-bootstrap-typeahead": "^5.1.0",
+    "react-beautiful-dnd": "13.1.0",
+    "react-bootstrap": "^1.6.0",
+    "react-bootstrap-icons": "^1.5.0",
+    "react-bootstrap-typeahead": "^5.1.4",
     "react-copy-to-clipboard": "5.0.2",
     "react-datepicker": "^3.1.3",
     "react-dnd": "7.4.5",
     "react-dnd-html5-backend": "7.4.4",
-    "react-dom": "^16.13.1",
+    "react-dom": "17.0.2",
     "react-hook-form": "^3.27.0",
     "react-loader": "2.4.6",
     "react-modal": "3.11.1",
-    "react-modal-resizable-draggable": "^0.1.4",
+    "react-modal-touch": "^1.0.0",
     "react-panelgroup": "1.0.10",
     "react-router-dom": "5.1.2",
-    "react-scripts": "3.4.1",
+    "react-scripts": "4.0.3",
     "react-select": "^3.0.8",
     "react-sweet-progress": "1.1.2",
     "react-table": "^7.2.1",
@@ -80,6 +80,25 @@
     "yup": "^0.29.1",
     "zxcvbn": "^4.4.2"
   },
+  "devDependencies": {
+    "@babel/core": "^7.14.3",
+    "@babel/preset-react": "^7.13.13",
+    "@storybook/addon-actions": "^5.3.19",
+    "@storybook/addon-links": "^5.3.19",
+    "@storybook/addons": "^5.3.19",
+    "@storybook/preset-create-react-app": "^3.0.1",
+    "@storybook/react": "^5.3.19",
+    "@typescript-eslint/eslint-plugin": "^4.26.0",
+    "@typescript-eslint/parser": "^4.26.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^3.4.0",
+    "eslint-plugin-react": "^7.24.0",
+    "fork-ts-checker-webpack-plugin": "^6.2.10",
+    "namor": "^2.0.3",
+    "prettier": "^2.3.0",
+    "storybook-addon-themes": "^5.4.1",
+    "storybook-react-router": "^1.0.8"
+  },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
@@ -90,37 +109,22 @@
     "lint": "eslint \"src/**\"",
     "lint-fix": "eslint \"src/**\" --quiet --fix"
   },
-  "devDependencies": {
-    "@storybook/addon-actions": "^5.3.19",
-    "@storybook/addon-links": "^5.3.19",
-    "@storybook/addons": "^5.3.19",
-    "@storybook/preset-create-react-app": "^3.0.1",
-    "@storybook/react": "^5.3.19",
-    "@typescript-eslint/eslint-plugin": "^3.2.0",
-    "@typescript-eslint/parser": "^3.2.0",
-    "eslint-config-prettier": "^6.11.0",
-    "eslint-plugin-prettier": "^3.1.4",
-    "eslint-plugin-react": "^7.20.0",
-    "fork-ts-checker-webpack-plugin": "^4.1.6",
-    "namor": "^2.0.2",
-    "prettier": "^2.0.5",
-    "storybook-addon-themes": "^5.4.1",
-    "storybook-react-router": "^1.0.8"
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
   },
-  "browserslist": [
-    ">0.2%",
-    "not dead",
-    "not ie <= 11",
-    "not op_mini all"
-  ],
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
-  },
-  "lint-staged": {
-    "*.{js,ts,tsx}": [
-      "eslint --fix"
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
     ]
   }
 }

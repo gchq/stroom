@@ -19,7 +19,4 @@ const TestHarness: React.FunctionComponent = () => {
   );
 };
 
-storiesOf("Sections/Welcome", module).add(
-  "test",
-  () => <TestHarness />,
-);
+storiesOf("Sections/Welcome", module).add("test", () => <TestHarness />);

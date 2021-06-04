@@ -19,7 +19,7 @@ export const getNewOperator = (): ExpressionOperatorType => ({
 });
 
 function childrenToString(expression: ExpressionOperatorType, asString = "") {
-  if (!!expression.children) {
+  if (expression.children) {
     expression.children.forEach((child: ExpressionItem, i: number) => {
       if (child.enabled) {
         if (child.type === "term") {
@@ -50,7 +50,7 @@ function childrenToString(expression: ExpressionOperatorType, asString = "") {
  * Currently the string is intended only for display, but we
  * might want to parse it back into an expression at some point.
  */
-export function toString(expression: ExpressionOperatorType) {
+export function toString(expression: ExpressionOperatorType): string {
   if (expression.children !== undefined && expression.children.length > 0) {
     return childrenToString(expression);
   }

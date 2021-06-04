@@ -24,12 +24,8 @@ const useIndexVolumes = (): UseIndexVolumes => {
     removeItem,
   } = useListReducer<IndexVolume>((iv) => iv.id);
 
-  const {
-    getIndexVolumes,
-    deleteIndexVolume,
-    createIndexVolume,
-    update,
-  } = useApi();
+  const { getIndexVolumes, deleteIndexVolume, createIndexVolume, update } =
+    useApi();
 
   React.useEffect(() => {
     getIndexVolumes().then(receiveItems);
@@ -56,10 +52,10 @@ const useIndexVolumes = (): UseIndexVolumes => {
         }),
       [update],
     ),
-    refresh: React.useCallback(() => getIndexVolumes().then(receiveItems), [
-      getIndexVolumes,
-      receiveItems,
-    ]),
+    refresh: React.useCallback(
+      () => getIndexVolumes().then(receiveItems),
+      [getIndexVolumes, receiveItems],
+    ),
   };
 };
 

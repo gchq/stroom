@@ -20,13 +20,13 @@ import ResetPasswordRequest from "./ResetPasswordRequest";
 import * as queryString from "query-string";
 import { useRouter } from "../../../lib/useRouter";
 
-export const ResetPasswordRequestContainer = () => {
+export const ResetPasswordRequestContainer: React.FunctionComponent = () => {
   let redirectUri: string;
 
   const { router } = useRouter();
   if (!!router && !!router.location) {
     const query = queryString.parse(router.location.search);
-    if (!!query.redirect_uri) {
+    if (query.redirect_uri) {
       redirectUri = query.redirect_uri + "";
     }
   }

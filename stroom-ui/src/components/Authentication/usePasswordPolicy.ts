@@ -4,9 +4,8 @@ import { PasswordPolicyConfig } from "api/stroom";
 import { useStroomApi } from "lib/useStroomApi";
 
 export const usePasswordPolicy = (): PasswordPolicyConfig => {
-  const [passwordPolicyConfig, setPasswordPolicyConfig] = useState<
-    PasswordPolicyConfig
-  >(undefined);
+  const [passwordPolicyConfig, setPasswordPolicyConfig] =
+    useState<PasswordPolicyConfig>(undefined);
 
   const { exec } = useStroomApi();
   useEffect(() => {

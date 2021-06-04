@@ -1,12 +1,12 @@
 import * as React from "react";
 import useKeyIsDown, { KeyDownState } from "lib/useKeyIsDown";
 
-interface InProps<T extends {}> {
+interface InProps<T> {
   items: T[];
   getKey: (item: T) => string;
 }
 
-interface OutProps<T extends {}> {
+interface OutProps<T> {
   selectedItems: T[];
   selectedIndexes: number[];
   selectedKeys: string[];
@@ -151,7 +151,7 @@ const reducer = (state: ReducerState, action: ActionType): ReducerState => {
 
 const keyDownFilters: string[] = ["Control", "Shift", "Meta"];
 
-export const useSelectable = <T extends {}>({
+export const useSelectable = <T>({
   items,
   getKey,
 }: InProps<T>): OutProps<T> => {

@@ -71,7 +71,7 @@ const InlineSelect: FunctionComponent<
       const selectedOption = options.find(
         (option) => option.value === selected,
       );
-      textToDisplay = !!selectedOption
+      textToDisplay = selectedOption
         ? selectedOption.label
         : "Error: unknown option: " + selected;
     }

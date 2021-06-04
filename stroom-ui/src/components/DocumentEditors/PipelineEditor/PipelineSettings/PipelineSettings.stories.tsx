@@ -14,10 +14,10 @@ const TestHarness: React.FunctionComponent = () => {
 
   const { componentProps, showDialog } = useDialog(update);
 
-  const onClick = React.useCallback(() => showDialog(value), [
-    value,
-    showDialog,
-  ]);
+  const onClick = React.useCallback(
+    () => showDialog(value),
+    [value, showDialog],
+  );
 
   return (
     <div>

@@ -9,6 +9,7 @@ import stroom.security.identity.account.AccountService;
 import stroom.security.identity.config.TokenConfig;
 import stroom.security.identity.exceptions.NoSuchUserException;
 import stroom.security.openid.api.OpenIdClientFactory;
+import stroom.security.openid.api.PublicJsonWebKeyProvider;
 import stroom.security.shared.PermissionNames;
 import stroom.util.HasHealthCheck;
 import stroom.util.rest.RestUtil;
@@ -26,7 +27,7 @@ import javax.inject.Inject;
 
 public class TokenServiceImpl implements TokenService, HasHealthCheck {
 
-    private final JwkCache jwkCache;
+    private final PublicJsonWebKeyProvider publicJsonWebKeyProvider;
     private final TokenDao tokenDao;
     private final AccountDao accountDao;
     private final SecurityContext securityContext;
@@ -37,7 +38,7 @@ public class TokenServiceImpl implements TokenService, HasHealthCheck {
     private final TokenVerifier tokenVerifier;
 
     @Inject
-    TokenServiceImpl(final JwkCache jwkCache,
+    TokenServiceImpl(final PublicJsonWebKeyProvider publicJsonWebKeyProvider,
                      final TokenDao tokenDao,
                      final AccountDao accountDao,
                      final SecurityContext securityContext,
@@ -46,7 +47,7 @@ public class TokenServiceImpl implements TokenService, HasHealthCheck {
                      final TokenConfig tokenConfig,
                      final OpenIdClientFactory openIdClientDetailsFactory,
                      final TokenVerifier tokenVerifier) {
-        this.jwkCache = jwkCache;
+        this.publicJsonWebKeyProvider = publicJsonWebKeyProvider;
         this.tokenDao = tokenDao;
         this.accountDao = accountDao;
         this.securityContext = securityContext;
@@ -233,8 +234,8 @@ public class TokenServiceImpl implements TokenService, HasHealthCheck {
 
     @Override
     public String getPublicKey() {
-        return jwkCache.get()
-                .get(0)
+        return publicJsonWebKeyProvider
+                .getFirst()
                 .toJson(JsonWebKey.OutputControlLevel.PUBLIC_ONLY);
     }
 

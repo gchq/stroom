@@ -41,15 +41,14 @@ const resourceBuilder: ResourceBuilder = (
     .intercept((req: HttpRequest, res: HttpResponse) => {
       const { docRefUuid, userUuid, permissionName } = req.params;
 
-      testCache.data!.userDocPermission = testCache.data!.userDocPermission.concat(
-        [
+      testCache.data!.userDocPermission =
+        testCache.data!.userDocPermission.concat([
           {
             docRefUuid,
             userUuid,
             permissionName,
           },
-        ],
-      );
+        ]);
 
       res.json(testCache.data!.allAppPermissions);
     });
@@ -60,14 +59,15 @@ const resourceBuilder: ResourceBuilder = (
     .intercept((req: HttpRequest, res: HttpResponse) => {
       const { docRefUuid, userUuid, permissionName } = req.params;
 
-      testCache.data!.userDocPermission = testCache.data!.userDocPermission.filter(
-        (udp) =>
-          !(
-            udp.userUuid === userUuid &&
-            udp.docRefUuid === docRefUuid &&
-            udp.permissionName === permissionName
-          ),
-      );
+      testCache.data!.userDocPermission =
+        testCache.data!.userDocPermission.filter(
+          (udp) =>
+            !(
+              udp.userUuid === userUuid &&
+              udp.docRefUuid === docRefUuid &&
+              udp.permissionName === permissionName
+            ),
+        );
 
       res.status(204).send(undefined);
     });
@@ -99,9 +99,11 @@ const resourceBuilder: ResourceBuilder = (
     .intercept((req: HttpRequest, res: HttpResponse) => {
       const { docRefUuid, userUuid } = req.params;
 
-      testCache.data!.userDocPermission = testCache.data!.userDocPermission.filter(
-        (udp) => !(udp.docRefUuid === docRefUuid && udp.userUuid === userUuid),
-      );
+      testCache.data!.userDocPermission =
+        testCache.data!.userDocPermission.filter(
+          (udp) =>
+            !(udp.docRefUuid === docRefUuid && udp.userUuid === userUuid),
+        );
 
       res.status(204).send(undefined);
     });
@@ -112,9 +114,10 @@ const resourceBuilder: ResourceBuilder = (
     .intercept((req: HttpRequest, res: HttpResponse) => {
       const { docRefUuid } = req.params;
 
-      testCache.data!.userDocPermission = testCache.data!.userDocPermission.filter(
-        (udp) => udp.docRefUuid !== docRefUuid,
-      );
+      testCache.data!.userDocPermission =
+        testCache.data!.userDocPermission.filter(
+          (udp) => udp.docRefUuid !== docRefUuid,
+        );
 
       res.status(204).send(undefined);
     });

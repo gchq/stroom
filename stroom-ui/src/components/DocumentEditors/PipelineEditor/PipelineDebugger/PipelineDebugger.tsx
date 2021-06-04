@@ -35,10 +35,8 @@ const PipelineDebugger: React.FunctionComponent<Props> = ({
   pipelineId,
   debuggerId,
 }) => {
-  const { fetchDocument: fetchPipeline } = useDocumentApi<
-    "Pipeline",
-    PipelineDocumentType
-  >("Pipeline");
+  const { fetchDocument: fetchPipeline } =
+    useDocumentApi<"Pipeline", PipelineDocumentType>("Pipeline");
   const debuggers = {};
   const debuggerState = debuggers[debuggerId];
   const pipelineStateProps = usePipelineState(pipelineId);

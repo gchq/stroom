@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-import * as Yup from "yup";
+// import * as Yup from "yup";
 
-export const NewUserValidationSchema = Yup.object().shape({
-  email: Yup.string().required("Required"),
-  password: Yup.string().required("Required"),
-  verifyPassword: Yup.string().required("Required"),
-});
-
-export const UserValidationSchema = Yup.object().shape({
-  email: Yup.string().required("Required"),
-});
+// export const NewUserValidationSchema = Yup.object().shape({
+//   email: Yup.string().required("Required"),
+//   password: Yup.string().required("Required"),
+//   verifyPassword: Yup.string().required("Required"),
+// });
+//
+// export const UserValidationSchema = Yup.object().shape({
+//   email: Yup.string().required("Required"),
+// });
 
 interface PasswordValidationErrors {
   password: string;
@@ -104,7 +104,7 @@ export async function validateAsync(
   verifyPassword: string,
   url: string,
   oldPassword?: string,
-) {
+): Promise<string> {
   let errors: PasswordValidationErrors = {
     oldPassword: "",
     password: "",

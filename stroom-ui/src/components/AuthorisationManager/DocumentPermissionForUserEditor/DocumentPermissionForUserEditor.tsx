@@ -15,38 +15,33 @@ interface Props {
   userUuid: string;
 }
 
-export const DocumentPermissionForUserEditor: React.FunctionComponent<Props> = ({
-  docRefUuid,
-  userUuid,
-}) => {
-  const { history } = useRouter();
-  const { findDocRefWithLineage } = useDocumentTree();
+export const DocumentPermissionForUserEditor: React.FunctionComponent<Props> =
+  ({ docRefUuid, userUuid }) => {
+    const { history } = useRouter();
+    const { findDocRefWithLineage } = useDocumentTree();
 
-  const { node: docRef } = findDocRefWithLineage(docRefUuid);
+    const { node: docRef } = findDocRefWithLineage(docRefUuid);
 
-  const user = useUser(userUuid);
-  const permissionsForType = useDocTypePermissions(docRef.type);
-  const {
-    permissionNames,
-    addPermission,
-    removePermission,
-  } = useDocumentPermissionsForUser(docRefUuid, userUuid);
+    const user = useUser(userUuid);
+    const permissionsForType = useDocTypePermissions(docRef.type);
+    const { permissionNames, addPermission, removePermission } =
+      useDocumentPermissionsForUser(docRefUuid, userUuid);
 
-  return (
-    <div>
-      <h2>{`Document Permissions for Doc ${docRef.type}-${docRef.name}, user ${
-        user && user.name
-      }`}</h2>
-      <Button onClick={history.goBack}>Back</Button>
+    return (
+      <div>
+        <h2>{`Document Permissions for Doc ${docRef.type}-${
+          docRef.name
+        }, user ${user && user.name}`}</h2>
+        <Button onClick={history.goBack}>Back</Button>
 
-      <CheckboxSeries
-        allValues={permissionsForType}
-        includedValues={permissionNames}
-        addValue={addPermission}
-        removeValue={removePermission}
-      />
-    </div>
-  );
-};
+        <CheckboxSeries
+          allValues={permissionsForType}
+          includedValues={permissionNames}
+          addValue={addPermission}
+          removeValue={removePermission}
+        />
+      </div>
+    );
+  };
 
 export default DocumentPermissionForUserEditor;

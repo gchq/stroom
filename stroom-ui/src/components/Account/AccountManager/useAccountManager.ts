@@ -33,9 +33,8 @@ const initialRequest: SearchAccountRequest = {
 };
 
 const useAccountManager = (): UseAccountManager => {
-  const [resultPage, setResultPage] = useState<AccountResultPage>(
-    initialResultPage,
-  );
+  const [resultPage, setResultPage] =
+    useState<AccountResultPage>(initialResultPage);
   const [request, setRequest] = useState(initialRequest);
 
   const { exec } = useStroomApi();
@@ -60,7 +59,7 @@ const useAccountManager = (): UseAccountManager => {
     (userId: number) =>
       exec(
         (api) => api.account.deleteAccount(userId),
-        (response) => {
+        () => {
           search(request);
         },
       ),
