@@ -35,12 +35,8 @@ const InlineMultiInput: React.FunctionComponent<ControlledInput<string[]>> = ({
   ...rest
 }) => {
   // Use the standard list reducer to manage the items
-  const {
-    items,
-    addItem,
-    updateItemAtIndex,
-    removeItemAtIndex,
-  } = useListReducer<string>(getKey, values);
+  const { items, addItem, updateItemAtIndex, removeItemAtIndex } =
+    useListReducer<string>(getKey, values);
 
   const addNewItem = useCallback(() => addItem(""), [addItem]);
 

@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { LineType, LineElementCreator, LineDefinition } from "./types";
-import { useInterval } from "lib/useInterval";
+// import { useInterval } from "lib/useInterval";
 import LineContext from "./LineContext";
 
 interface Props {
@@ -26,24 +26,23 @@ function calculateLine({ fromId, toId }: LineType): LineDefinition | undefined {
   }
 }
 
-export const useRefreshCounter = () => {
-  const [count, setCount] = React.useState(0);
-
-  useInterval({
-    callback: () => {
-      // Your custom logic here
-      setCount(count + 1);
-    },
-    delay: 1000,
-  });
-
-  return count;
-};
+// export const useRefreshCounter = () => {
+//   const [count, setCount] = React.useState(0);
+//
+//   useInterval({
+//     callback: () => {
+//       // Your custom logic here
+//       setCount(count + 1);
+//     },
+//     delay: 1000,
+//   });
+//
+//   return count;
+// };
 
 const LinesSvg: React.FunctionComponent<Props> = ({ LineElementCreator }) => {
-  const { rawLines, lineContextId, getEndpointId } = React.useContext(
-    LineContext,
-  );
+  const { rawLines, lineContextId, getEndpointId } =
+    React.useContext(LineContext);
 
   const thisRect: DOMRect | undefined = React.useMemo(() => {
     const thisElement = document.getElementById(lineContextId);

@@ -30,8 +30,6 @@ import stroom.node.shared.Node;
 import stroom.node.shared.NodeResource;
 import stroom.node.shared.NodeStatusResult;
 import stroom.util.jersey.WebTargetFactory;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResourcePaths;
 
 import event.logging.AdvancedQuery;
@@ -50,8 +48,6 @@ import javax.ws.rs.client.SyncInvoker;
 
 @AutoLogged
 class NodeResourceImpl implements NodeResource {
-
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(NodeResourceImpl.class);
 
     private final Provider<NodeServiceImpl> nodeServiceProvider;
     private final Provider<NodeInfo> nodeInfoProvider;

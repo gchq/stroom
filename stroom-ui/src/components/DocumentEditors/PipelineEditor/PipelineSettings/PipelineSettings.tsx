@@ -28,7 +28,7 @@ const PipelineSettings: React.FunctionComponent<Props> = ({
   const descriptionProps = useTextInput("description");
 
   const onConfirmLocal = React.useCallback(() => {
-    if (!!description) {
+    if (description) {
       updateValues({ description });
       onCloseDialog();
     } else {
@@ -81,9 +81,8 @@ export const useDialog = (
   updateValues: (updates: Partial<PipelineSettingsValues>) => void,
 ): UseDialog => {
   const [isOpen, setIsOpen] = React.useState(false);
-  const [initialValues, setInitialValues] = React.useState<
-    PipelineSettingsValues
-  >({ description: "" });
+  const [initialValues, setInitialValues] =
+    React.useState<PipelineSettingsValues>({ description: "" });
 
   return {
     showDialog: (_initialValues: PipelineSettingsValues) => {

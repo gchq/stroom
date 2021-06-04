@@ -29,7 +29,7 @@ const resourceBuilder: ResourceBuilder = (
       const group = testCache.data!.indexVolumesAndGroups.groups.find(
         (g) => g.name === req.params.name,
       );
-      if (!!group) {
+      if (group) {
         res.json(group);
       } else {
         res.sendStatus(404);

@@ -1,7 +1,8 @@
 import * as React from "react";
 
 import ConfigContext from "./ConfigContext";
+import { UiConfig } from "../../api/stroom";
 
-const useConfig = () => React.useContext(ConfigContext);
+const useConfig = (): UiConfig => React.useContext(ConfigContext);
 
 export default useConfig;

@@ -58,14 +58,14 @@ const FolderExplorer: React.FunctionComponent<SwitchedDocRefEditorProps> = ({
   const {
     nav: { goToEditDocRef },
   } = useAppNavigation();
-  const folder = React.useMemo(() => findDocRefWithLineage(docRefUuid), [
-    findDocRefWithLineage,
-    docRefUuid,
-  ]);
+  const folder = React.useMemo(
+    () => findDocRefWithLineage(docRefUuid),
+    [findDocRefWithLineage, docRefUuid],
+  );
 
   const onCreateDocument = React.useCallback(
     (docRefType: string, docRefName: string, permissionInheritance: string) => {
-      if (!!folder) {
+      if (folder) {
         createDocument(
           docRefType,
           docRefName,
@@ -78,7 +78,7 @@ const FolderExplorer: React.FunctionComponent<SwitchedDocRefEditorProps> = ({
   );
 
   const goBack = React.useCallback(() => {
-    if (!!folder) {
+    if (folder) {
       if (folder.lineage.length > 0) {
         goToEditDocRef(folder.lineage[folder.lineage.length - 1]);
       }
@@ -123,7 +123,7 @@ const FolderExplorer: React.FunctionComponent<SwitchedDocRefEditorProps> = ({
   /* const keyIsDown = useKeyIsDown(); */
 
   const onClickCreate = React.useCallback(() => {
-    if (!!folder) {
+    if (folder) {
       showCreateDialog();
     }
   }, [folder, showCreateDialog]);

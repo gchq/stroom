@@ -27,11 +27,8 @@ export const useAppPermissionsForUser = (
     removeItem,
   } = useListReducer<string>((g) => g);
 
-  const {
-    getPermissionsForUser,
-    addAppPermission,
-    removeAppPermission,
-  } = useApi();
+  const { getPermissionsForUser, addAppPermission, removeAppPermission } =
+    useApi();
 
   React.useEffect(() => {
     getPermissionsForUser(userUuid).then(receiveItems);

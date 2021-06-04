@@ -19,12 +19,13 @@ const TestHarnessSetValue: React.FunctionComponent = () => {
     useStoreObjectFactory(),
   );
 
-  const onName1Change: React.ChangeEventHandler<HTMLInputElement> = React.useCallback(
-    ({ target: { value } }) => {
-      setValue({ name: value });
-    },
-    [setValue],
-  );
+  const onName1Change: React.ChangeEventHandler<HTMLInputElement> =
+    React.useCallback(
+      ({ target: { value } }) => {
+        setValue({ name: value });
+      },
+      [setValue],
+    );
 
   const resetStorage = React.useCallback(() => {
     resetValue();
@@ -56,10 +57,11 @@ const TestHarnessReducer: React.FunctionComponent = () => {
   const storageKey = "testWithReducer";
 
   const [newValue, setNewValue] = React.useState<string>("kochanski");
-  const onNewValueChange: React.ChangeEventHandler<HTMLInputElement> = React.useCallback(
-    ({ target: { value } }) => setNewValue(value),
-    [setNewValue],
-  );
+  const onNewValueChange: React.ChangeEventHandler<HTMLInputElement> =
+    React.useCallback(
+      ({ target: { value } }) => setNewValue(value),
+      [setNewValue],
+    );
 
   const { value, reduceValue, resetValue } = useLocalStorage<TestStore2>(
     storageKey,

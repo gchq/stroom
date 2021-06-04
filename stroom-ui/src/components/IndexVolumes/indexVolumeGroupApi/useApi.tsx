@@ -29,10 +29,10 @@ export const useApi = (): Api => {
       () => httpGetJson(`${resource}/names`),
       [resource, httpGetJson],
     ),
-    getIndexVolumeGroups: React.useCallback(() => httpGetJson(resource), [
-      resource,
-      httpGetJson,
-    ]),
+    getIndexVolumeGroups: React.useCallback(
+      () => httpGetJson(resource),
+      [resource, httpGetJson],
+    ),
     getIndexVolumeGroup: React.useCallback(
       (name: string) => httpGetJson(`${resource}/${name}`),
       [resource, httpGetJson],

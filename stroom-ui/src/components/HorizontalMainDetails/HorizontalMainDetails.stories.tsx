@@ -148,7 +148,7 @@ const PanelTest = () => {
   );
 };
 
-storiesOf(
-  "General Purpose/Horizontal Main Details",
-  module,
-).add("Mounting Issue", () => <PanelTest />);
+storiesOf("General Purpose/Horizontal Main Details", module).add(
+  "Mounting Issue",
+  () => <PanelTest />,
+);

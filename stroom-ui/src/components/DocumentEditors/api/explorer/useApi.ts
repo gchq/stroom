@@ -52,10 +52,10 @@ export const useApi = (): Api => {
   } = useHttpClient();
 
   return {
-    fetchDocTree: React.useCallback(() => httpGetJson(`${resource}/all`), [
-      resource,
-      httpGetJson,
-    ]),
+    fetchDocTree: React.useCallback(
+      () => httpGetJson(`${resource}/all`),
+      [resource, httpGetJson],
+    ),
 
     fetchDocRefTypes: React.useCallback(
       () => httpGetJson(`${resource}/docRefTypes`),

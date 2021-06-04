@@ -5,13 +5,8 @@ import useDataVolumes from "./api/useDataVolumes";
 import FsVolume from "./types/FsVolume";
 
 const DataVolumes: React.FunctionComponent = () => {
-  const {
-    volumes,
-    isLoading,
-    createVolume,
-    deleteVolume,
-    update,
-  } = useDataVolumes();
+  const { volumes, isLoading, createVolume, deleteVolume, update } =
+    useDataVolumes();
 
   return (
     <DataVolumesSection

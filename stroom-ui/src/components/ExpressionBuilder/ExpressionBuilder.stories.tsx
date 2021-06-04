@@ -25,9 +25,8 @@ import { ExpressionOperatorType } from "./types";
 import { useCallback } from "react";
 
 const PopulatedEditable = () => {
-  const [value, onChange] = React.useState<ExpressionOperatorType>(
-    testExpression,
-  );
+  const [value, onChange] =
+    React.useState<ExpressionOperatorType>(testExpression);
   const handleChange = useCallback((value) => onChange(value), [onChange]);
 
   return (
@@ -42,9 +41,8 @@ const PopulatedEditable = () => {
 };
 
 const PopulatedReadOnly = () => {
-  const [value, onChange] = React.useState<ExpressionOperatorType>(
-    testExpression,
-  );
+  const [value, onChange] =
+    React.useState<ExpressionOperatorType>(testExpression);
 
   return (
     <ExpressionBuilder
@@ -56,9 +54,8 @@ const PopulatedReadOnly = () => {
 };
 
 const SimplestEditable = () => {
-  const [value, onChange] = React.useState<ExpressionOperatorType>(
-    simplestExpression,
-  );
+  const [value, onChange] =
+    React.useState<ExpressionOperatorType>(simplestExpression);
 
   return (
     <ExpressionBuilder
@@ -71,9 +68,8 @@ const SimplestEditable = () => {
 };
 
 const MissingDataSource = () => {
-  const [value, onChange] = React.useState<ExpressionOperatorType>(
-    testExpression,
-  );
+  const [value, onChange] =
+    React.useState<ExpressionOperatorType>(testExpression);
 
   return (
     <ExpressionBuilder
@@ -85,9 +81,8 @@ const MissingDataSource = () => {
 };
 
 const HideModeToggle = () => {
-  const [value, onChange] = React.useState<ExpressionOperatorType>(
-    testExpression,
-  );
+  const [value, onChange] =
+    React.useState<ExpressionOperatorType>(testExpression);
 
   return (
     <ExpressionBuilder
@@ -100,9 +95,8 @@ const HideModeToggle = () => {
 };
 
 const HideModeButEdit = () => {
-  const [value, onChange] = React.useState<ExpressionOperatorType>(
-    testExpression,
-  );
+  const [value, onChange] =
+    React.useState<ExpressionOperatorType>(testExpression);
 
   return (
     <ExpressionBuilder

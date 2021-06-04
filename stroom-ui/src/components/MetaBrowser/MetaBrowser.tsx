@@ -66,37 +66,34 @@ const MetaBrowser: React.FunctionComponent<Props> = ({ feedName }) => {
     [search],
   );
 
-  const initialSearchExpression:
-    | ExpressionOperatorType
-    | undefined = React.useMemo(
-    () =>
-      !!feedName
-        ? ({
-            type: "operator",
-            op: "AND",
-            children: [
-              {
-                type: "term",
-                field: "Feed",
-                condition: "EQUALS",
-                value: feedName,
-                enabled: true,
-              },
-            ],
-            enabled: true,
-          } as ExpressionOperatorType)
-        : undefined,
-    [feedName],
-  );
+  const initialSearchExpression: ExpressionOperatorType | undefined =
+    React.useMemo(
+      () =>
+        feedName
+          ? ({
+              type: "operator",
+              op: "AND",
+              children: [
+                {
+                  type: "term",
+                  field: "Feed",
+                  condition: "EQUALS",
+                  value: feedName,
+                  enabled: true,
+                },
+              ],
+              enabled: true,
+            } as ExpressionOperatorType)
+          : undefined,
+      [feedName],
+    );
 
-  const {
-    value: panelWidths,
-    reduceValue: reducePanelWidths,
-  } = useLocalStorage<PanelWidth[]>(
-    "metaBrowserPanels",
-    defaultPanelWidths,
-    useStoreObjectFactory(),
-  );
+  const { value: panelWidths, reduceValue: reducePanelWidths } =
+    useLocalStorage<PanelWidth[]>(
+      "metaBrowserPanels",
+      defaultPanelWidths,
+      useStoreObjectFactory(),
+    );
 
   const onPanelUpdate = React.useCallback(
     (panelWidths: any[]) => {
@@ -127,12 +124,12 @@ const MetaBrowser: React.FunctionComponent<Props> = ({ feedName }) => {
           onUpdate={onPanelUpdate}
         >
           <MetaTable {...tableProps} />
-          {!!selectedItem ? (
+          {selectedItem ? (
             <MetaRelations metaRow={selectedItem} />
           ) : (
             <div>Please Select a Single Row (Relations)</div>
           )}
-          {!!selectedItem ? (
+          {selectedItem ? (
             <MetaDetailTabs metaRow={selectedItem} />
           ) : (
             <div>Please Select a Single Row (Details)</div>

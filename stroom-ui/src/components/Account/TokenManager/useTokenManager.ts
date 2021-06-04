@@ -27,9 +27,8 @@ const defaultRequest: SearchTokenRequest = {
 };
 
 export const useTokenManager = (): UseTokenManager => {
-  const [resultPage, setResultPage] = useState<TokenResultPage>(
-    defaultResultPage,
-  );
+  const [resultPage, setResultPage] =
+    useState<TokenResultPage>(defaultResultPage);
   const [request, setRequest] = useState(defaultRequest);
 
   const { exec } = useStroomApi();

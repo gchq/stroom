@@ -23,7 +23,7 @@ const MenuItemList: React.FunctionComponent<MenuItemListProps> = ({
   <ul>
     {menuItems.map(({ key, title, children }) => (
       <li key={key}>
-        {!!children ? (
+        {children ? (
           <span onClick={() => menuItemToggled(key)}>
             {title} - {menuItemIsOpenByKey[key] ? "OPEN" : "CLOSED"}
           </span>
@@ -42,12 +42,8 @@ const MenuItemList: React.FunctionComponent<MenuItemListProps> = ({
 );
 
 const TestHarness: React.FunctionComponent = () => {
-  const {
-    menuItems,
-    menuItemIsOpenByKey,
-    openMenuItemKeys,
-    menuItemToggled,
-  } = useMenuItems();
+  const { menuItems, menuItemIsOpenByKey, openMenuItemKeys, menuItemToggled } =
+    useMenuItems();
 
   return (
     <div>

@@ -57,7 +57,7 @@ public class SessionResourceImpl implements SessionResource {
     @AutoLogged(OperationType.UNLOGGED)
     public ValidateSessionResponse validateSession(final String postAuthRedirectUri) {
         final HttpServletRequest request = httpServletRequestProvider.get();
-        final Optional<UserIdentity> userIdentity = openIdManagerProvider.get().loginWithRequestToken(request);
+        Optional<UserIdentity> userIdentity = openIdManagerProvider.get().loginWithRequestToken(request);
         if (userIdentity.isPresent()) {
             return new ValidateSessionResponse(true, userIdentity.get().getId(), null);
         }
@@ -79,7 +79,14 @@ public class SessionResourceImpl implements SessionResource {
                 final String stateId = getParam(postAuthRedirectUri, OpenId.STATE);
                 final String redirectUri = openIdManagerProvider.get()
                         .redirect(request, code, stateId, postAuthRedirectUri);
-                return new ValidateSessionResponse(false, null, redirectUri);
+
+                // We might have completed the back channel authentication now so see if we have a user session.
+                userIdentity = UserIdentitySessionUtil.get(request.getSession(false));
+                return userIdentity
+                        .map(identity ->
+                                new ValidateSessionResponse(true, identity.getId(), null))
+                        .orElseGet(() ->
+                                new ValidateSessionResponse(false, null, redirectUri));
 
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
@@ -104,7 +111,6 @@ public class SessionResourceImpl implements SessionResource {
     @Override
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     public UrlResponse logout(final String redirectUri) {
-        final String postAuthRedirectUri = OpenId.removeReservedParams(redirectUri);
         final HttpServletRequest request = httpServletRequestProvider.get();
 
         // Get the session.
@@ -121,7 +127,7 @@ public class SessionResourceImpl implements SessionResource {
             UserIdentitySessionUtil.set(session, null);
         }
 
-        final String url = openIdManagerProvider.get().logout(request, postAuthRedirectUri);
+        final String url = openIdManagerProvider.get().logout(request, redirectUri);
         return new UrlResponse(url);
     }
 

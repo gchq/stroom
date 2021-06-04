@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2250** : Improved token authentication.
+
+* Issue **#2250** : Using arrow keys no longer moves popup dialogs.
+
 
 ## [v7.0-beta.131] - 2021-06-03
 

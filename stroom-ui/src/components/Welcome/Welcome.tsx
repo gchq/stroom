@@ -31,7 +31,7 @@ export const Welcome: React.FunctionComponent = () => {
         <img
           className="welcome__image"
           alt="Stroom logo"
-          src={require("../../images/logo_orange.svg")}
+          src={require("images/logo_orange.svg").default}
         />
         <div dangerouslySetInnerHTML={welcomeData} />
         <div className="welcome__shortcuts">

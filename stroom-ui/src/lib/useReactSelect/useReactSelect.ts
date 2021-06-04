@@ -31,14 +31,15 @@ export const useReactSelect = ({
     () => _options.find((o) => o.value === value),
     [_options, value],
   );
-  const _onChange: (v: ValueType<BasicOption, false>) => void = React.useCallback(
-    (v) => {
-      if (!!v && (v as BasicOption).value) {
-        onChange((v as BasicOption).value);
-      }
-    },
-    [onChange],
-  );
+  const _onChange: (v: ValueType<BasicOption, false>) => void =
+    React.useCallback(
+      (v) => {
+        if (!!v && (v as BasicOption).value) {
+          onChange((v as BasicOption).value);
+        }
+      },
+      [onChange],
+    );
 
   return {
     _options,

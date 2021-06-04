@@ -181,16 +181,16 @@ export const PipelineElement: React.FunctionComponent<EnhancedProps> = ({
   pipelineEditApi: { elementSelected, selectedElementId },
   elementDefinition,
 }) => {
-  const onElementClick = React.useCallback(() => elementSelected(elementId), [
-    elementId,
-    elementSelected,
-  ]);
+  const onElementClick = React.useCallback(
+    () => elementSelected(elementId),
+    [elementId, elementSelected],
+  );
 
   const className = React.useMemo(() => {
     const classNames = ["Pipeline-element"];
     classNames.push("raised-low");
 
-    if (!!draggingItemType) {
+    if (draggingItemType) {
       if (isOver) {
         classNames.push("over");
       }

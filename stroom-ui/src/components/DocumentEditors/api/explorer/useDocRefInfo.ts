@@ -7,12 +7,11 @@ import {
 } from "components/DocumentEditors/useDocumentApi/types/base";
 
 const useDocRefInfo = (docRef?: DocRefType): DocRefInfoType | undefined => {
-  const [docRefInfo, setDocRefInfo] = React.useState<
-    DocRefInfoType | undefined
-  >(undefined);
+  const [docRefInfo, setDocRefInfo] =
+    React.useState<DocRefInfoType | undefined>(undefined);
   const { fetchDocInfo } = useApi();
   React.useEffect(() => {
-    if (!!docRef) {
+    if (docRef) {
       fetchDocInfo(docRef).then(setDocRefInfo);
     }
   }, [docRef, fetchDocInfo, setDocRefInfo]);

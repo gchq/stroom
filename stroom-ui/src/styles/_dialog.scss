@@ -7,10 +7,11 @@
 
 .flexible-modal {
   position: absolute;
-  z-index: 1;
-  //border: 1px solid #ccc;
+  z-index: 100;
   background: white;
+  color: rgba(0, 0, 0, 0.85);
   border-radius: 0.3rem;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.7);
 }
 
 .flexible-modal-mask {
@@ -21,19 +22,22 @@
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 1;
+  z-index: 100;
 }
 
 .flexible-modal-resizer {
   position: absolute;
-  right: 0;
-  bottom: 0;
+  right: -16px;
+  bottom: -16px;
   cursor: se-resize;
-  //margin: 5px;
-  //border-bottom: solid 2px #333;
-  //border-right: solid 2px #333;
-  background: url('../images/resize.svg');
+  background: url('../images/resize.svg') no-repeat;
   padding: 5px;
+  width: 32px !important;
+  height: 32px !important;
+  border-right: none;
+  border-bottom: none;
+  background-position-x: 5px;
+  background-position-y: 5px;
 }
 
 .flexible-modal-drag-area {
@@ -43,4 +47,22 @@
   right: 0;
   top: 0;
   cursor: move;
+}
+
+.flexible-modal-drag-area-left {
+  visibility: hidden;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.flexible-modal-drag-area-right {
+  visibility: hidden;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.flexible-modal-drag-area-bottom {
+  visibility: hidden;
+  width: 0 !important;
+  height: 0 !important;
 }

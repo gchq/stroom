@@ -17,9 +17,8 @@ export const useElements = (): UseElements => {
   const [elementDefinitions, setElementDefinitions] = React.useState<
     ElementDefinition[]
   >([]);
-  const [elementProperties, setElementProperties] = React.useState<
-    ElementPropertiesByElementIdType
-  >({});
+  const [elementProperties, setElementProperties] =
+    React.useState<ElementPropertiesByElementIdType>({});
 
   React.useEffect(() => {
     fetchElements().then(setElementDefinitions);

@@ -18,9 +18,10 @@ const ValueWidget: React.FunctionComponent<Props> = ({
   onChange,
   valueType,
 }) => {
-  const handleChange = useCallback((event) => onChange(event.target.value), [
-    onChange,
-  ]);
+  const handleChange = useCallback(
+    (event) => onChange(event.target.value),
+    [onChange],
+  );
   switch (condition) {
     case "CONTAINS":
     case "EQUALS":

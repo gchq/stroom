@@ -133,7 +133,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
 
             if (optionalUserId.isEmpty()) {
                 return new AuthStatusImpl(new BadRequestException(cn,
-                        AuthenticateOutcomeReason.INCORRECT_CA.value(),
+                        AuthenticateOutcomeReason.INCORRECT_CA,
                         "Found CN but the identity cannot be extracted (CN = " +
                                 cn +
                                 ")"), true);
@@ -144,7 +144,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
                 if (optionalAccount.isEmpty()) {
                     // There's no user so we can't let them have access.
                     return new AuthStatusImpl(new BadRequestException(userId,
-                            AuthenticateOutcomeReason.INCORRECT_USERNAME.value(),
+                            AuthenticateOutcomeReason.INCORRECT_USERNAME,
                             "An account for the userId does not exist (userId = " +
                                     userId +
                                     ")"), true);
@@ -154,17 +154,17 @@ class AuthenticationServiceImpl implements AuthenticationService {
 
                     if (account.isLocked()) {
                         return new AuthStatusImpl(new BadRequestException(account.getUserId(),
-                                AuthenticateOutcomeReason.ACCOUNT_LOCKED.value(),
+                                AuthenticateOutcomeReason.ACCOUNT_LOCKED,
                                 "User account " + account.getUserId() + " is locked"), true);
                     }
                     if (account.isInactive()) {
                         return new AuthStatusImpl(new BadRequestException(account.getUserId(),
-                                AuthenticateOutcomeReason.ACCOUNT_LOCKED.value(),
+                                AuthenticateOutcomeReason.ACCOUNT_LOCKED,
                                 "User account " + account.getUserId() + " is inactive"), true);
                     }
                     if (!account.isEnabled()) {
                         return new AuthStatusImpl(new BadRequestException(account.getUserId(),
-                                AuthenticateOutcomeReason.ACCOUNT_LOCKED.value(),
+                                AuthenticateOutcomeReason.ACCOUNT_LOCKED,
                                 "User account " + account.getUserId() + " is not currently enabled"), true);
 
                     }
@@ -177,8 +177,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
                         // Reset last access, login failures, etc...
                     accountDao.recordSuccessfulLogin(userId);
 
-                    AuthStatus status = new AuthStatusImpl(newState, true);
-                    return status;
+                    return new AuthStatusImpl(newState, true);
                 }
             }
         }

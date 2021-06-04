@@ -68,7 +68,7 @@ import {
   faUsers,
 } from "@fortawesome/free-solid-svg-icons";
 
-export default () =>
+export default (): void =>
   library.add(
     faAngleDown,
     faAngleRight,

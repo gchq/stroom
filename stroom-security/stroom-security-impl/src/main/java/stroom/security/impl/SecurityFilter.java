@@ -126,7 +126,7 @@ class SecurityFilter implements Filter {
         final String servletPath = request.getServletPath().toLowerCase();
         final String fullPath = request.getRequestURI().toLowerCase();
 
-        if (request.getMethod().toUpperCase().equals(HttpMethod.OPTIONS) ||
+        if (request.getMethod().equalsIgnoreCase(HttpMethod.OPTIONS) ||
                 (!isApiRequest(servletPath) && isStaticResource(request))) {
             // We need to allow CORS preflight requests
             LOGGER.debug("Passing on to next filter");
@@ -190,31 +190,14 @@ class SecurityFilter implements Filter {
     private String getPostAuthRedirectUri(final HttpServletRequest request) {
         // We have a a new request so we're going to redirect with an AuthenticationRequest.
         // Get the redirect URL for the auth service from the current request.
-        String originalPath = request.getRequestURI() + Optional.ofNullable(request.getQueryString())
+        final String originalPath = request.getRequestURI() + Optional.ofNullable(request.getQueryString())
                 .map(queryStr -> "?" + queryStr)
                 .orElse("");
 
         // Dropwiz is likely sat behind Nginx with requests reverse proxied to it
         // so we need to append just the path/query part to the public URI defined in config
         // rather than using the full url of the request
-        final String postAuthRedirectUri = uriFactory.publicUri(originalPath).toString();
-
-        // When the auth service has performed authentication it will redirect
-        // back to the current URL with some additional parameters (e.g.
-        // `state` and `accessCode`). It is important that these parameters are
-        // not provided by our redirect URL else the redirect URL that the
-        // authentication service redirects back to may end up with multiple
-        // copies of these parameters which will confuse Stroom as it will not
-        // know which one of the param values to use (i.e. which were on the
-        // original redirect request and which have been added by the
-        // authentication service). For this reason we will cleanse the URL of
-        // any reserved parameters here. The authentication service should do
-        // the same to the redirect URL before adding its additional
-        // parameters.
-        LOGGER.debug("postAuthRedirectUri before param removal: {}", postAuthRedirectUri);
-        final String cleanUri =  OpenId.removeReservedParams(postAuthRedirectUri);
-        LOGGER.debug("postAuthRedirectUri after param removal: {}", cleanUri);
-        return cleanUri;
+        return uriFactory.publicUri(originalPath).toString();
     }
 
     private boolean isStaticResource(final HttpServletRequest request) {

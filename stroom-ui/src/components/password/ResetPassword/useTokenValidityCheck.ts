@@ -3,7 +3,13 @@ import jwtDecode from "jwt-decode";
 
 import useHttpQueryParam from "lib/useHttpQueryParam";
 
-export const useTokenValidityCheck = () => {
+interface TokenState {
+  isTokenMissing: boolean;
+  isTokenInvalid: boolean;
+  isTokenExpired: boolean;
+}
+
+export const useTokenValidityCheck = (): TokenState => {
   const [isTokenMissing, setMissingToken] = React.useState(false);
   const [isTokenInvalid, setInvalidToken] = React.useState(false);
   const [isTokenExpired, setExpiredToken] = React.useState(false);

@@ -36,7 +36,6 @@ import { Processing } from "components/Processing";
 import { CreateToken } from "components/tokens";
 import { EditToken } from "components/tokens/Create";
 import TokenSearch from "components/tokens/Search/SearchToken";
-// import { UserCreate, UserEdit, UserSearch } from "components/Account";
 import UserSettings from "components/UserSettings";
 import { Welcome } from "components/Welcome";
 import AppChrome from "./AppChrome";
@@ -45,11 +44,7 @@ import DataVolumes from "components/DataVolumes/DataVolumesSectionContainer";
 import SignInManager from "../Authentication/SignInManager";
 import StroomWrapper from "../Authentication/StroomWrapper";
 
-const renderWelcome = ({
-  match: {
-    params: { urlPrefix },
-  },
-}: RouteComponentProps<{ urlPrefix: string }>) => (
+const renderWelcome = () => (
   // <AppChrome
   //   activeMenuItem="welcome"
   //   urlPrefix={urlPrefix}

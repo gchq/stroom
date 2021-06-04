@@ -24,17 +24,19 @@ const ActivityChooser: React.FunctionComponent = () => {
     selectableTableProps: { selectedItems: selectedActivities },
   } = tableProps;
 
-  const onCreateClick: React.MouseEventHandler<HTMLButtonElement> = React.useCallback(() => {
-    if (selectedActivities.length === 1) {
-      goToActivity(selectedActivities[0].id);
-    }
-  }, [goToActivity, selectedActivities]);
+  const onCreateClick: React.MouseEventHandler<HTMLButtonElement> =
+    React.useCallback(() => {
+      if (selectedActivities.length === 1) {
+        goToActivity(selectedActivities[0].id);
+      }
+    }, [goToActivity, selectedActivities]);
 
-  const onEditClick: React.MouseEventHandler<HTMLButtonElement> = React.useCallback(() => {
-    if (selectedActivities.length === 1) {
-      goToActivity(selectedActivities[0].id);
-    }
-  }, [goToActivity, selectedActivities]);
+  const onEditClick: React.MouseEventHandler<HTMLButtonElement> =
+    React.useCallback(() => {
+      if (selectedActivities.length === 1) {
+        goToActivity(selectedActivities[0].id);
+      }
+    }, [goToActivity, selectedActivities]);
 
   const { showDialog: onDeleteClick } = useThemedConfirmDialog({
     getQuestion: React.useCallback(

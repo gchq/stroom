@@ -25,9 +25,8 @@ import Button from "../Button";
 import { ExpressionOperatorType } from "../ExpressionBuilder/types";
 
 const TestHarness: React.FunctionComponent = () => {
-  const [lastSearch, setLastSearch] = React.useState<
-    ExpressionOperatorType | undefined
-  >(undefined);
+  const [lastSearch, setLastSearch] =
+    React.useState<ExpressionOperatorType | undefined>(undefined);
 
   return (
     <div>

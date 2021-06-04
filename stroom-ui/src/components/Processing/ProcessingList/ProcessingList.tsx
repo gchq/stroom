@@ -148,10 +148,10 @@ export const ProcessingList: React.FunctionComponent<Props> = ({
     },
   );
 
-  React.useEffect(() => onSelectionChanged(selectedItem), [
-    selectedItem,
-    onSelectionChanged,
-  ]);
+  React.useEffect(
+    () => onSelectionChanged(selectedItem),
+    [selectedItem, onSelectionChanged],
+  );
 
   const onHandleSort = React.useCallback(
     (sort: SortingRule) => {

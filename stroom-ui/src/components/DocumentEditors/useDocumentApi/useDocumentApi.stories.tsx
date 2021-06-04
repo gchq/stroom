@@ -11,9 +11,8 @@ import JsonDebug from "testing/JsonDebug";
 const TestHarness: React.FunctionComponent = () => {
   const { documentTree } = useDocumentTree();
   const [docRefContents, setDocRefContents] = React.useState<object>({});
-  const [docRefType, setDocRefType] = React.useState<keyof ResourcesByDocType>(
-    "Dictionary",
-  );
+  const [docRefType, setDocRefType] =
+    React.useState<keyof ResourcesByDocType>("Dictionary");
   const setDocRefTypeSafe = React.useCallback(
     (d) => setDocRefType(d as keyof ResourcesByDocType),
     [setDocRefType],
@@ -37,7 +36,7 @@ const TestHarness: React.FunctionComponent = () => {
   );
 
   React.useEffect(() => {
-    if (!!fetchDocument) {
+    if (fetchDocument) {
       fetchDocument(docRefUuid).then((d) => {
         setDocRefContents(d);
       });

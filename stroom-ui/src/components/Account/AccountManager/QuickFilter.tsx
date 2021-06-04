@@ -10,7 +10,7 @@ export interface QuickFilterProps {
 }
 
 export const QuickFilter: FunctionComponent<QuickFilterProps> = ({
-  initialValue,
+  initialValue = "",
   onChange,
 }) => {
   const [value, setValue] = useState(initialValue);

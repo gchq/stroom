@@ -19,22 +19,23 @@ import ConfirmPasswordResetEmail from "./ConfirmPasswordResetEmail";
 import * as queryString from "query-string";
 import useRouter from "../../../lib/useRouter";
 
-export const ConfirmPasswordResetEmailContainer = () => {
-  let redirectUri: string;
+export const ConfirmPasswordResetEmailContainer: React.FunctionComponent<any> =
+  () => {
+    let redirectUri: string;
 
-  const { router } = useRouter();
-  if (!!router && !!router.location) {
-    const query = queryString.parse(router.location.search);
-    if (!!query.redirect_uri) {
-      redirectUri = query.redirect_uri + "";
+    const { router } = useRouter();
+    if (!!router && !!router.location) {
+      const query = queryString.parse(router.location.search);
+      if (query.redirect_uri) {
+        redirectUri = query.redirect_uri + "";
+      }
     }
-  }
 
-  return (
-    <ConfirmPasswordResetEmail
-      onBack={() => {
-        window.location.href = redirectUri;
-      }}
-    />
-  );
-};
+    return (
+      <ConfirmPasswordResetEmail
+        onBack={() => {
+          window.location.href = redirectUri;
+        }}
+      />
+    );
+  };

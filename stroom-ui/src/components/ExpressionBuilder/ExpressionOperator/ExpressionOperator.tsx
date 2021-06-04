@@ -81,26 +81,22 @@ const dropTarget: DropTargetSpec<Props> = {
   },
 };
 
-const dropCollect: DropTargetCollector<
-  DropCollectedProps,
-  Props
-> = function dropCollect(connect, monitor) {
-  return {
-    connectDropTarget: connect.dropTarget(),
-    isOver: monitor.isOver(),
-    canDrop: monitor.canDrop(),
+const dropCollect: DropTargetCollector<DropCollectedProps, Props> =
+  function dropCollect(connect, monitor) {
+    return {
+      connectDropTarget: connect.dropTarget(),
+      isOver: monitor.isOver(),
+      canDrop: monitor.canDrop(),
+    };
   };
-};
 
-export const dragCollect: DragSourceCollector<
-  DragCollectedProps,
-  Props
-> = function dragCollect(connect, monitor) {
-  return {
-    connectDragSource: connect.dragSource(),
-    isDragging: monitor.isDragging(),
+export const dragCollect: DragSourceCollector<DragCollectedProps, Props> =
+  function dragCollect(connect, monitor) {
+    return {
+      connectDragSource: connect.dragSource(),
+      isDragging: monitor.isDragging(),
+    };
   };
-};
 
 // dnd_error: temporarily disable dnd-related code to get the build working
 /* const enhance = pipe(
@@ -168,7 +164,7 @@ const ExpressionOperator: React.FunctionComponent<EnhancedProps> = ({
   );
 
   const onEnabledToggled = useCallback(() => {
-    if (!!index) {
+    if (index) {
       onChange(
         {
           ...value,

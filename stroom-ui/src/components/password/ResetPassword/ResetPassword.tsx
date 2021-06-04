@@ -15,12 +15,13 @@
  */
 
 import * as React from "react";
+import { ResetPasswordRequest } from "../../../api/stroom";
 
 const ResetPassword: React.FunctionComponent<{
   isTokenMissing: boolean;
   isTokenInvalid: boolean;
   isTokenExpired: boolean;
-  onSubmit: Function;
+  onSubmit: (resetPasswordRequest: ResetPasswordRequest) => void;
   onValidate: (
     oldPassword: string,
     password: string,
