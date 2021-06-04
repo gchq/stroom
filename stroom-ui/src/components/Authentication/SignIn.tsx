@@ -131,7 +131,10 @@ export const SignInPage: React.FunctionComponent<AuthStateProps> = ({
 }) => (
   <div className="SignIn">
     <div className="SignIn__icon-container">
-      <img src={require("../../images/infinity_logo.svg")} alt="Stroom logo" />
+      <img
+        src={require("images/infinity_logo.svg").default}
+        alt="Stroom logo"
+      />
     </div>
 
     {children}

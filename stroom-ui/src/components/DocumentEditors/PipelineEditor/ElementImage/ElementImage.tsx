@@ -14,7 +14,7 @@ const ElementImage: React.FunctionComponent<Props> = ({
   <img
     className={`stroom-icon--${size} ${className || ""}`}
     alt={`element icon ${icon}`}
-    src={require(`../../../../images/elements/${icon}`)}
+    src={require(`images/elements/${icon}`).default}
   />
 );
 

@@ -165,7 +165,7 @@ export const Sidebar: React.FunctionComponent<Props> = ({ activeMenuItem }) => {
             <img
               className="sidebar__logo"
               alt="Stroom logo"
-              src={require("../../../images/logo.svg")}
+              src={require("images/logo.svg").default}
             />
           ) : undefined}
           <div

@@ -16,7 +16,7 @@ const DocRefImage: React.FunctionComponent<Props> = ({
       <img
         className={`stroom-icon--${size} ${className || ""}`}
         alt={`doc ref icon ${docRefType}`}
-        src={require(`../../images/docRefTypes/${docRefType}.svg`)}
+        src={require(`images/docRefTypes/${docRefType}.svg`).default}
       />
     );
   } else {

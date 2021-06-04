@@ -67,7 +67,7 @@ const PromptHeader: React.FunctionComponent<PromptProps> = (prompt) => {
     case PromptType.INFO: {
       return (
         <ImageHeader
-          imageSrc={require("../../images/prompt/info.svg")}
+          imageSrc={require("images/prompt/info.svg").default}
           text={prompt.title}
         />
       );
@@ -75,7 +75,7 @@ const PromptHeader: React.FunctionComponent<PromptProps> = (prompt) => {
     case PromptType.WARNING: {
       return (
         <ImageHeader
-          imageSrc={require("../../images/prompt/warning.svg")}
+          imageSrc={require("images/prompt/warning.svg").default}
           text={prompt.title}
         />
       );
@@ -83,7 +83,7 @@ const PromptHeader: React.FunctionComponent<PromptProps> = (prompt) => {
     case PromptType.ERROR: {
       return (
         <ImageHeader
-          imageSrc={require("../../images/prompt/error.svg")}
+          imageSrc={require("images/prompt/error.svg").default}
           text={prompt.title}
         />
       );
@@ -91,7 +91,7 @@ const PromptHeader: React.FunctionComponent<PromptProps> = (prompt) => {
     case PromptType.FATAL: {
       return (
         <ImageHeader
-          imageSrc={require("../../images/prompt/fatal.svg")}
+          imageSrc={require("images/prompt/fatal.svg").default}
           text={prompt.title}
         />
       );
@@ -99,7 +99,7 @@ const PromptHeader: React.FunctionComponent<PromptProps> = (prompt) => {
     case PromptType.QUESTION: {
       return (
         <ImageHeader
-          imageSrc={require("../../images/prompt/question.svg")}
+          imageSrc={require("images/prompt/question.svg").default}
           text={prompt.title}
         />
       );
@@ -107,7 +107,7 @@ const PromptHeader: React.FunctionComponent<PromptProps> = (prompt) => {
     default: {
       return (
         <ImageHeader
-          imageSrc={require("../../images/prompt/error.svg")}
+          imageSrc={require("images/prompt/error.svg").default}
           text={prompt.title}
         />
       );

@@ -24,7 +24,7 @@ const BackgroundLogo: React.FunctionComponent = ({ children }) => {
       <img
         className="Background__logo"
         alt="Stroom logo"
-        src={require("../../images/logo.svg")}
+        src={require("images/logo.svg").default}
       />
       {children}
     </React.Fragment>
