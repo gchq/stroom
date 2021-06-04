@@ -23,18 +23,21 @@ import event.logging.AuthenticateOutcomeReason;
 import javax.annotation.Nullable;
 
 public class BadRequestException extends RuntimeException {
+
     private final String subject;
 
-    //See AuthenticateOutcomeReason for known values
     private final AuthenticateOutcomeReason reason;
 
-    public BadRequestException(@Nullable final String subject, final AuthenticateOutcomeReason reason, final String message) {
+    public BadRequestException(@Nullable final String subject,
+                               final AuthenticateOutcomeReason reason,
+                               final String message) {
         super(message);
         this.subject = subject;
         this.reason = reason;
     }
 
-    public @Nullable String getSubject() {
+    @Nullable
+    public String getSubject() {
         return subject;
     }
 
