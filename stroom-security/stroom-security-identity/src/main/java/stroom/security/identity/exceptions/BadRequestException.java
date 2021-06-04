@@ -36,8 +36,8 @@ public class BadRequestException extends RuntimeException {
         this.reason = reason;
     }
 
-    public @Nullable
-    String getSubject() {
+    @Nullable
+    public String getSubject() {
         return subject;
     }
 
