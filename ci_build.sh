@@ -44,6 +44,7 @@ LATEST_SUFFIX="-LATEST"
 CURRENT_STROOM_RELEASE_BRANCH="6.1"
 # The version of stroom-resources used for running the DB
 STROOM_RESOURCES_GIT_TAG="stroom-stacks-v7.0-beta.118"
+SWAGGER_UI_GIT_TAG="v3.49.0"
 doDockerBuild=false
 STROOM_RESOURCES_DIR="${BUILD_DIR}/stroom-resources" 
 RELEASE_ARTEFACTS_DIR="${BUILD_DIR}/release_artefacts"
@@ -319,7 +320,7 @@ releaseToDockerHub() {
 
 docker_login() {
   # The username and password are configured in the travis gui
-  if [[ ! -n "${LOCAL_BUILD}" ]]; then
+  if [[ -n "${DOCKER_USERNAME}" ]] && [[ -n "${DOCKER_PASSWORD}" ]]; then
     # Docker login stores the creds in a file so check it to
     # see if we are already logged in
     #local dockerConfigFile="${HOME}/.docker/config.json"
@@ -328,23 +329,31 @@ docker_login() {
 
       #echo -e "Already logged into docker"
     #else
-      echo -e "Logging in to Docker (if this fails, have you provided the docker creds)"
-      echo "$DOCKER_PASSWORD" \
-        | docker login -u "$DOCKER_USERNAME" --password-stdin >/dev/null 2>&1
+      echo -e "Logging in to Docker (if this fails, have you provided the" \
+        "correct docker creds)"
+      # Login is idempotent
+      echo "${DOCKER_PASSWORD}" \
+        | docker login \
+          -u "${DOCKER_USERNAME}" \
+          --password-stdin \
+          >/dev/null 2>&1
       echo -e "Successfully logged in to docker"
     #fi
   else
-    echo -e "${YELLOW}LOCAL_BUILD set so skipping docker login${NC}"
+    echo -e "${YELLOW}DOCKER_USERNAME and/or DOCKER_PASSWORD not set so" \
+      "skipping docker login. Pulls/builds will be un-authenticated and rate" \
+      "limited, pushes will fail.${NC}"
   fi
 }
 
 docker_logout() {
   # The username and password are configured in the travis gui
-  if [[ ! -n "${LOCAL_BUILD}" ]]; then
+  if [[ -n "${DOCKER_USERNAME}" ]] && [[ -n "${DOCKER_PASSWORD}" ]]; then
     echo -e "Logging out of Docker"
     docker logout >/dev/null 2>&1
   else
-    echo -e "${YELLOW}LOCAL_BUILD set so skipping docker logout${NC}"
+    echo -e "${YELLOW}DOCKER_USERNAME and/or DOCKER_PASSWORD not set so" \
+      "skipping docker logout"
   fi
 }
 
