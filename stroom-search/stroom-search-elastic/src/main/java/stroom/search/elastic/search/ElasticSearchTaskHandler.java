@@ -29,7 +29,6 @@ import stroom.search.elastic.ElasticClusterStore;
 import stroom.search.elastic.shared.ElasticCluster;
 import stroom.search.elastic.shared.ElasticConnectionConfig;
 import stroom.search.elastic.shared.ElasticIndex;
-import stroom.search.extraction.ExtractionReceiver;
 import stroom.task.server.TaskContext;
 import stroom.util.concurrent.ExecutorProvider;
 import stroom.util.concurrent.ThreadPoolImpl;
@@ -40,9 +39,6 @@ import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskWrapper;
 
-import com.jayway.jsonpath.DocumentContext;
-import com.jayway.jsonpath.JsonPath;
-import com.jayway.jsonpath.JsonPathException;
 import org.elasticsearch.action.search.ClearScrollRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
@@ -58,11 +54,13 @@ import org.springframework.stereotype.Component;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @Component
 @Scope(StroomScope.TASK)
@@ -203,43 +201,65 @@ public class ElasticSearchTaskHandler {
             for (final SearchHit searchHit : searchHits) {
                 tracker.incrementHitCount();
 
-                final DocumentContext jsonSearchHit = JsonPath.parse(searchHit.getSourceAsString());
                 final Map<String, Object> mapSearchHit = searchHit.getSourceAsMap();
                 Val[] values = null;
 
                 for (int i = 0; i < fieldNames.length; i++) {
                     final String fieldName = fieldNames[i];
 
-                    try {
-                        Object value;
-                        // Cater for special fields, where we want to avoid using json-path operators like '@'
-                        if (fieldName.equals("@timestamp")) {
-                            value = mapSearchHit.get(fieldName);
+                    Object value = null;
+
+                    if (mapSearchHit.containsKey(fieldName)) {
+                        // Property found by its key
+                        value = mapSearchHit.get(fieldName);
+                    } else if (fieldName.contains(".")) {
+                        // Property is an object or array, so use the first part of the key to access the
+                        // child properties or array items
+                        final String[] fieldNameParts = fieldName.split("\\.");
+                        final Object property = mapSearchHit.get(fieldNameParts[0]);
+                        final String childPropertyName = fieldNameParts[1];
+
+                        if (property instanceof ArrayList) {
+                            final ArrayList<?> propertyArray = (ArrayList<?>) property;
+
+                            if (propertyArray.size() > 0) {
+                                if (propertyArray.get(0) instanceof HashMap) {
+                                    @SuppressWarnings("unchecked")
+                                    ArrayList<HashMap<String, Object>> propertyArrayMap = (ArrayList<HashMap<String, Object>>) propertyArray;
+
+                                    // Create an array of all child properties matching the field path
+                                    value = propertyArrayMap.stream()
+                                            .map(prop -> prop.get(childPropertyName))
+                                            .collect(Collectors.toList());
+                                }
+                            }
+                        } else if (property instanceof HashMap) {
+                            @SuppressWarnings("unchecked")
+                            final HashMap<String, Object> propertyMap = (HashMap<String, Object>) property;
+
+                            // Get the child property matching the field path
+                            value = propertyMap.get(childPropertyName);
+                        }
+                    }
+
+                    if (value != null) {
+                        if (values == null) {
+                            values = new Val[fieldNames.length];
+                        }
+
+                        if (value instanceof Long) {
+                            values[i] = ValLong.create((Long) value);
+                        } else if (value instanceof Integer) {
+                            values[i] = ValInteger.create((Integer) value);
+                        } else if (value instanceof Double) {
+                            values[i] = ValDouble.create((Double) value);
+                        } else if (value instanceof Float) {
+                            values[i] = ValDouble.create((Float) value);
+                        } else if (value instanceof Boolean) {
+                            values[i] = ValBoolean.create((Boolean) value);
                         } else {
-                            value = jsonSearchHit.read(fieldName);
+                            values[i] = ValString.create(value.toString());
                         }
-
-                        if (value != null) {
-                            if (values == null) {
-                                values = new Val[fieldNames.length];
-                            }
-
-                            if (value instanceof Long) {
-                                values[i] = ValLong.create((Long) value);
-                            } else if (value instanceof Integer) {
-                                values[i] = ValInteger.create((Integer) value);
-                            } else if (value instanceof Double) {
-                                values[i] = ValDouble.create((Double) value);
-                            } else if (value instanceof Float) {
-                                values[i] = ValDouble.create((Float) value);
-                            } else if (value instanceof Boolean) {
-                                values[i] = ValBoolean.create((Boolean) value);
-                            } else {
-                                values[i] = ValString.create(value.toString());
-                            }
-                        }
-                    } catch (JsonPathException e) {
-                        // Field not found. Ignore, as it was probably a system field
                     }
                 }
 
