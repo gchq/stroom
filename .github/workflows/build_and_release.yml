@@ -54,6 +54,12 @@ jobs:
             else
               echo "BUILD_IS_PULL_REQUEST=false"
             fi
+
+            if [[ ${GITHUB_REF} =~ ^refs/tags/v ]]; then
+              echo "BUILD_IS_RELEASE=true"
+            else
+              echo "BUILD_IS_RELEASE=false"
+            fi
           } >> $GITHUB_ENV
 
         # Separate step to show what is visible across steps
@@ -72,6 +78,7 @@ jobs:
             "BUILD_BRANCH" "$BUILD_BRANCH" \
             "BUILD_COMMIT" "$BUILD_COMMIT" \
             "BUILD_IS_PULL_REQUEST" "$BUILD_IS_PULL_REQUEST" \
+            "BUILD_IS_RELEASE" "$BUILD_IS_RELEASE" \
             "ACTIONS_SCRIPTS_DIR" "$ACTIONS_SCRIPTS_DIR" \
             "PWD" "$PWD" \
             "HOME" "$HOME"
@@ -92,7 +99,7 @@ jobs:
 
       - name: Release to GitHub
         id: create_release
-        if: ${{ startsWith(env.BUILD_TAG, 'v') }}
+        if: ${{ env.BUILD_IS_RELEASE == 'true' }}
         env:
           # Github provided secret
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -100,7 +107,7 @@ jobs:
 
       - name: Update gh-pages
         id: update_gh-pages
-        if: ${{ startsWith(env.BUILD_TAG, 'v') }}
+        if: ${{ env.BUILD_IS_RELEASE == 'true' }}
         env:
           # ssh private key (corresponding to the public key in github deploy keys
           # for the stroom repo), manually added to secrets
