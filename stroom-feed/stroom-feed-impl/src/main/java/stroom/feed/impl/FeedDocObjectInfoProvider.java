@@ -57,8 +57,6 @@ class FeedDocObjectInfoProvider implements ObjectInfoProvider {
             }
             builder.addData(EventLoggingUtil.createData("DataEncoding", feed.getEncoding()));
             builder.addData(EventLoggingUtil.createData("ContextEncoding", feed.getContextEncoding()));
-            builder.addData(EventLoggingUtil.createData("RetentionDayAge",
-                    String.valueOf(feed.getRetentionDayAge())));
             builder.addData(EventLoggingUtil.createData("Reference", Boolean.toString(feed.isReference())));
         } catch (final RuntimeException e) {
             LOGGER.error("Unable to add unknown but useful data!", e);

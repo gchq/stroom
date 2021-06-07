@@ -78,12 +78,11 @@ public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSetting
                 .call(FEED_RESOURCE)
                 .fetchSupportedEncodings();
 
-        view.getRetentionAge().addItems(SupportedRetentionAge.values());
         view.getFeedStatus().addItems(FeedStatus.values());
         view.getReceivedType().addItems(streamTypeUiManager.getRawStreamTypeList());
 
         // Add listeners for dirty events.
-        final KeyDownHandler keyDownHander = new DirtyKeyDownHander() {
+        final KeyDownHandler keyDownHandler = new DirtyKeyDownHander() {
             @Override
             public void onDirty(final KeyDownEvent event) {
                 setDirty(true);
@@ -92,8 +91,8 @@ public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSetting
         final ValueChangeHandler<TickBoxState> checkHandler = event -> setDirty(true);
 
         registerHandler(view.getReference().addValueChangeHandler(checkHandler));
-        registerHandler(view.getDescription().addKeyDownHandler(keyDownHander));
-        registerHandler(view.getClassification().addKeyDownHandler(keyDownHander));
+        registerHandler(view.getDescription().addKeyDownHandler(keyDownHandler));
+        registerHandler(view.getClassification().addKeyDownHandler(keyDownHandler));
         registerHandler(view.getDataEncoding().addChangeHandler(event -> {
             final String dataEncoding = ensureEncoding(view.getDataEncoding().getSelected());
             getView().getDataEncoding().setSelected(dataEncoding);
@@ -112,7 +111,6 @@ public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSetting
                 getEntity().setContextEncoding(contextEncoding);
             }
         }));
-        registerHandler(view.getRetentionAge().addSelectionHandler(event -> setDirty(true)));
         registerHandler(view.getFeedStatus().addSelectionHandler(event -> setDirty(true)));
         registerHandler(view.getReceivedType().addChangeHandler(event -> {
             final String streamType = view.getReceivedType().getSelected();
@@ -133,7 +131,6 @@ public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSetting
         getView().getDataEncoding().setSelected(ensureEncoding(feed.getEncoding()));
         getView().getContextEncoding().setSelected(ensureEncoding(feed.getContextEncoding()));
         getView().getReceivedType().setSelected(feed.getStreamType());
-        getView().getRetentionAge().setSelectedItem(SupportedRetentionAge.get(feed.getRetentionDayAge()));
         getView().getFeedStatus().setSelectedItem(feed.getStatus());
     }
 
@@ -144,7 +141,6 @@ public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSetting
         feed.setClassification(getView().getClassification().getText());
         feed.setEncoding(ensureEncoding(getView().getDataEncoding().getSelected()));
         feed.setContextEncoding(ensureEncoding(getView().getContextEncoding().getSelected()));
-        feed.setRetentionDayAge(getView().getRetentionAge().getSelectedItem().getDays());
         feed.setStreamType(getView().getReceivedType().getSelected());
         // Set the process stage.
         feed.setStatus(getView().getFeedStatus().getSelectedItem());
@@ -175,8 +171,6 @@ public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSetting
         StringListBox getContextEncoding();
 
         StringListBox getReceivedType();
-
-        ItemListBox<SupportedRetentionAge> getRetentionAge();
 
         ItemListBox<FeedStatus> getFeedStatus();
     }

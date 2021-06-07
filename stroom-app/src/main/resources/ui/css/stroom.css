@@ -610,7 +610,11 @@ input[type="file"] {
 
     /* Make Chrome and Firefox look the same */
     -webkit-appearance: none;
-    background: transparent url("../images/drop-down.svg") no-repeat center right;
+
+    background-color: var(--input-background-color);
+    background-image: url("../images/drop-down.svg");
+    background-position: center right;
+    background-repeat: no-repeat;
     background-size: 12px;
 }
 

@@ -47,12 +47,6 @@
                     <l:StringListBox ui:field="contextEncoding"/>
                 </g:customCell>
             </g:row>
-            <g:row>
-                <g:cell>Retention Period:</g:cell>
-                <g:customCell>
-                    <l:ItemListBox ui:field="retentionAge"/>
-                </g:customCell>
-            </g:row>
         </g:Grid>
     </g:FlowPanel>
 </ui:UiBinder> 
