@@ -18,7 +18,6 @@ package stroom.feed.client.view;
 
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.feed.client.presenter.FeedSettingsPresenter.FeedSettingsView;
-import stroom.feed.client.presenter.SupportedRetentionAge;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedDoc.FeedStatus;
 import stroom.item.client.ItemListBox;
@@ -49,8 +48,6 @@ public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, 
     ItemListBox<FeedDoc.FeedStatus> feedStatus;
     @UiField
     StringListBox receivedType;
-    @UiField
-    ItemListBox<SupportedRetentionAge> retentionAge;
     @UiField
     TickBox reference;
 
@@ -95,11 +92,6 @@ public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, 
     }
 
     @Override
-    public ItemListBox<SupportedRetentionAge> getRetentionAge() {
-        return retentionAge;
-    }
-
-    @Override
     public ItemListBox<FeedStatus> getFeedStatus() {
         return feedStatus;
     }
@@ -112,7 +104,6 @@ public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, 
         contextEncoding.setEnabled(!readOnly);
         receivedType.setEnabled(!readOnly);
         feedStatus.setEnabled(!readOnly);
-        retentionAge.setEnabled(!readOnly);
         reference.setEnabled(!readOnly);
     }
 

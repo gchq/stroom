@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2219** : Added migration for feed retention settings to retention rules.
+
 * Issue **#2250** : Improved token authentication.
 
 * Issue **#2250** : Using arrow keys no longer moves popup dialogs.

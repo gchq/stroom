@@ -63,7 +63,7 @@ public class V07_00_00_2200__policy extends BaseJavaMigration {
                     final String name = resultSet.getString(5);
                     final String dat = resultSet.getString(6);
 
-                    if ("Data Retention".equals(name)) {
+                    if ("Data Retention".equals(name) && dat != null && !dat.isBlank()) {
                         final DataRetentionPolicy dataRetentionPolicy = unmarshal(dat);
                         final List<DataRetentionRule> rules = MappingUtil
                                 .mapList(dataRetentionPolicy.getRules(), MappingUtil::map);
