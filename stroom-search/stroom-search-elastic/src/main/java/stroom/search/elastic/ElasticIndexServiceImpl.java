@@ -40,11 +40,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
@@ -241,9 +243,31 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
                         }
                     });
 
+                    // Build a list of all multi fields (i.e. those defined only in the field mapping).
+                    // These are excluded from the fields the user can pick via the Stroom UI, as they are not part
+                    // of the returned `_source` field.
+                    final HashSet<String> multiFieldMappings = new HashSet<>();
+                    allMappings.values().forEach(indexMappings -> indexMappings.forEach((fieldName, mapping) -> {
+                        if (mapping.sourceAsMap().get(fieldName) instanceof Map) {
+                            @SuppressWarnings("unchecked")
+                            final Map<String, Object> source = (Map<String, Object>) mapping.sourceAsMap().get(fieldName);
+                            final Object fields = source.get("fields");
+
+                            if (fields instanceof Map) {
+                                @SuppressWarnings("unchecked")
+                                final Map<String, Object> multiFields = (Map<String, Object>) fields;
+
+                                multiFields.forEach((multiFieldName, multiFieldMapping) -> {
+                                    final String fullName = mapping.fullName() + "." + multiFieldName;
+                                    multiFieldMappings.add(fullName);
+                                });
+                            }
+                        }
+                    }));
+
                     allMappings.values().forEach(indexMappings -> {
                         indexMappings.forEach((fieldName, mapping) -> {
-                            if (!mappings.containsKey(fieldName)) {
+                            if (!mappings.containsKey(fieldName) && !multiFieldMappings.contains(mapping.fullName())) {
                                 mappings.put(fieldName, mapping);
                             }
                         });
