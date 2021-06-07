@@ -84,6 +84,12 @@ public class MockExplorerNodeService implements ExplorerNodeService {
     }
 
     private ExplorerNode createTestNode() {
-        return new ExplorerNode("test", "test", "test", "test");
+        return ExplorerNode
+                .builder()
+                .type("test")
+                .uuid("test")
+                .name("test")
+                .tags("test")
+                .build();
     }
 }

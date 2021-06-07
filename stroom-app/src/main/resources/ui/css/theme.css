@@ -23,6 +23,8 @@
     --dialog-background-image: linear-gradient(rgb(248, 250, 253) 21px,	rgb(223, 234, 248) 60px);
     --dialog-background-color: rgb(223, 234, 248);
     --dialog-border-color: rgb(60, 60, 60);
+    --dialog-shadow: 0 0 8px rgba(0, 0, 0, .7);
+    --popup-shadow: 0 0 5px 0 rgba(0, 0, 0, .5);
 
     --main-background-color: #fff;
     --main-border-color: #404e60;
@@ -114,6 +116,8 @@
     --dialog-background-image: none;
     --dialog-background-color: #1a1d21;
     --dialog-border-color: #333;
+    --dialog-shadow: 0 0 5px 2px rgb(0 0 0 / 100%);
+    --popup-shadow: 0 0 5px 2px rgb(0 0 0 / 100%);
 
     --main-background-color: #19171d;
     --main-border-color: #555;

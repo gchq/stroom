@@ -490,8 +490,13 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
                 final String docRefName = docRefProvider.findNameOfDocRef(initialDocRef);
                 docRef = new DocRef(initialDocRef.getType(), initialDocRef.getUuid(), docRefName);
-                explorerNode = new ExplorerNode(docRef.getType(), docRef.getUuid(), docRefName, null);
 
+                explorerNode = ExplorerNode
+                        .builder()
+                        .type(docRef.getType())
+                        .uuid(docRef.getUuid())
+                        .name(docRefName)
+                        .build();
             } else {
                 docRef = initialDocRef;
                 explorerDocRef = docRef;

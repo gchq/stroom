@@ -25,8 +25,9 @@
 }
 
 .simplePopup-background {
-	background: white;
-	box-shadow: 0 0 5px 1px rgba(0,0,0,0.5);
+	background: var(--page-background-color);
+	border: 1px solid var(--dialog-border-color);
+	box-shadow: var(--popup-shadow);
 	border-radius: 3px;
 }
 
@@ -37,9 +38,4 @@
 
 .simplePopup-content td.cellTableCell div.menuItem-outer {
 	padding: 5px 30px 5px 10px;
-}
-
-.stroom-theme-dark .simplePopup-background {
-	background: #1a1d21;
-	box-shadow: 0 0 5px 2px rgb(0 0 0 / 100%);
 }

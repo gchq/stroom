@@ -233,14 +233,15 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
                     .selectFrom(n)
                     .fetch()
                     .stream()
-                    .collect(Collectors.toMap(ExplorerNodeRecord::getId, r -> {
-                        final ExplorerNode explorerNode = new ExplorerNode(r.getType(),
-                                r.getUuid(),
-                                r.getName(),
-                                r.getTags());
-                        explorerNode.setIconClassName(iconUrlProvider.apply(r.getType()));
-                        return explorerNode;
-                    })));
+                    .collect(Collectors.toMap(ExplorerNodeRecord::getId, r ->
+                            ExplorerNode
+                                    .builder()
+                                    .type(r.getType())
+                                    .uuid(r.getUuid())
+                                    .name(r.getName())
+                                    .tags(r.getTags())
+                                    .iconClassName(iconUrlProvider.apply(r.getType()))
+                                    .build())));
 
             // Add the roots.
             roots.forEach(rootId -> {

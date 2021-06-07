@@ -21,7 +21,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -34,12 +33,7 @@ public class FetchExplorerNodeResult {
     @JsonProperty
     private final List<String> openedItems;
     @JsonProperty
-    private Set<String> temporaryOpenedItems;
-
-    public FetchExplorerNodeResult() {
-        rootNodes = new ArrayList<>();
-        openedItems = new ArrayList<>();
-    }
+    private final Set<String> temporaryOpenedItems;
 
     @JsonCreator
     public FetchExplorerNodeResult(@JsonProperty("rootNodes") final List<ExplorerNode> rootNodes,
@@ -60,10 +54,6 @@ public class FetchExplorerNodeResult {
 
     public Set<String> getTemporaryOpenedItems() {
         return temporaryOpenedItems;
-    }
-
-    public void setTemporaryOpenedItems(final Set<String> temporaryOpenedItems) {
-        this.temporaryOpenedItems = temporaryOpenedItems;
     }
 
     @SuppressWarnings("checkstyle:needbraces")

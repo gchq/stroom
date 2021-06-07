@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -32,33 +33,23 @@ import java.util.Objects;
 public class ExplorerNode implements HasDisplayValue {
 
     @JsonProperty
-    private String type;
+    private final String type;
     @JsonProperty
-    private String uuid;
+    private final String uuid;
     @JsonProperty
-    private String name;
+    private final String name;
     @JsonProperty
-    private String tags;
+    private final String tags;
 
     @JsonProperty
-    private int depth;
+    private final int depth;
     @JsonProperty
-    private String iconClassName;
+    private final String iconClassName;
     @JsonProperty
-    private NodeState nodeState;
+    private final NodeState nodeState;
 
     @JsonProperty
-    private List<ExplorerNode> children;
-
-    public ExplorerNode() {
-    }
-
-    public ExplorerNode(final String type, final String uuid, final String name, final String tags) {
-        this.type = type;
-        this.uuid = uuid;
-        this.name = name;
-        this.tags = tags;
-    }
+    private final List<ExplorerNode> children;
 
     @JsonCreator
     public ExplorerNode(@JsonProperty("type") final String type,
@@ -83,80 +74,45 @@ public class ExplorerNode implements HasDisplayValue {
         if (docRef == null) {
             return null;
         }
-        return new ExplorerNode(docRef.getType(), docRef.getUuid(), docRef.getName(), null);
+        return ExplorerNode
+                .builder()
+                .type(docRef.getType())
+                .uuid(docRef.getUuid())
+                .name(docRef.getName())
+                .build();
     }
 
     public String getType() {
         return type;
     }
 
-    public void setType(final String type) {
-        this.type = type;
-    }
-
     public String getUuid() {
         return uuid;
-    }
-
-    public void setUuid(final String uuid) {
-        this.uuid = uuid;
     }
 
     public String getName() {
         return name;
     }
 
-    public void setName(final String name) {
-        this.name = name;
-    }
-
     public String getTags() {
         return tags;
-    }
-
-    public void setTags(final String tags) {
-        this.tags = tags;
     }
 
     public int getDepth() {
         return depth;
     }
 
-    public void setDepth(final int depth) {
-        this.depth = depth;
-    }
-
     public String getIconClassName() {
         return iconClassName;
-    }
-
-    public void setIconClassName(final String iconClassName) {
-        this.iconClassName = iconClassName;
     }
 
     public NodeState getNodeState() {
         return nodeState;
     }
 
-    public void setNodeState(final NodeState nodeState) {
-        this.nodeState = nodeState;
-    }
-
     public List<ExplorerNode> getChildren() {
         return children;
     }
-
-    public void setChildren(final List<ExplorerNode> children) {
-        this.children = children;
-    }
-
-//    public ExplorerNode copy() {
-//        final ExplorerNode copy = new ExplorerNode(type, uuid, name, tags);
-//        copy.depth = depth;
-//        copy.iconUrl = iconUrl;
-//        copy.nodeState = nodeState;
-//        return copy;
-//    }
 
     @JsonIgnore
     public DocRef getDocRef() {
@@ -268,6 +224,14 @@ public class ExplorerNode implements HasDisplayValue {
 
         public Builder children(final List<ExplorerNode> children) {
             this.children = children;
+            return this;
+        }
+
+        public Builder addChild(final ExplorerNode child) {
+            if (children == null) {
+                children = new ArrayList<>();
+            }
+            children.add(child);
             return this;
         }
 

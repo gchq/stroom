@@ -20,7 +20,13 @@ public class TestSerialisation {
 
     @Test
     void testFetchRequest() throws Exception {
-        final ExplorerNode explorerNode = new ExplorerNode("test", "test", "test", "test");
+        final ExplorerNode explorerNode = ExplorerNode
+                .builder()
+                .type("test")
+                .uuid("test")
+                .name("test")
+                .tags("test")
+                .build();
 
         final ExplorerTreeFilter explorerTreeFilter = new ExplorerTreeFilter(
                 Set.of("t1", "t2"),
@@ -49,20 +55,24 @@ public class TestSerialisation {
 
     @Test
     void testFetchResponse() throws Exception {
-        final ExplorerNode child = new ExplorerNode(
-                "test-type",
-                "child-uuid",
-                "child-name",
-                "test-tags");
-        child.setNodeState(NodeState.LEAF);
+        final ExplorerNode child = ExplorerNode
+                .builder()
+                .type("test-type")
+                .uuid("child-uuid")
+                .name("child-name")
+                .tags("test-tags")
+                .nodeState(NodeState.LEAF)
+                .build();
 
-        final ExplorerNode parent = new ExplorerNode(
-                "test-type",
-                "parent-uuid",
-                "parent-name",
-                "test-tags");
-        parent.setNodeState(NodeState.OPEN);
-        parent.setChildren(List.of(child));
+        final ExplorerNode parent = ExplorerNode
+                .builder()
+                .type("test-type")
+                .uuid("parent-uuid")
+                .name("parent-name")
+                .tags("test-tags")
+                .nodeState(NodeState.OPEN)
+                .children(List.of(child))
+                .build();
 
         final FetchExplorerNodeResult result1 = new FetchExplorerNodeResult(
                 List.of(parent),

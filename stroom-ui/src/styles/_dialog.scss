@@ -7,37 +7,37 @@
 
 .flexible-modal {
   position: absolute;
-  z-index: 100;
-  background: white;
-  color: rgba(0, 0, 0, 0.85);
-  border-radius: 0.3rem;
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.7);
+  z-index: 100 !important;
+  background: white !important;
+  color: rgba(0, 0, 0, 0.85) !important;
+  border-radius: 0.3rem !important;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.7) !important;
 }
 
 .flexible-modal-mask {
   position: fixed;
   height: 100%;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.4) !important;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 100;
+  z-index: 100 !important;
 }
 
 .flexible-modal-resizer {
   position: absolute;
-  right: -16px;
-  bottom: -16px;
+  right: -16px !important;
+  bottom: -16px !important;
   cursor: se-resize;
-  background: url('../images/resize.svg') no-repeat;
+  background: url('../images/resize.svg') no-repeat  !important;
   padding: 5px;
   width: 32px !important;
   height: 32px !important;
-  border-right: none;
-  border-bottom: none;
-  background-position-x: 5px;
-  background-position-y: 5px;
+  border-right: none !important;
+  border-bottom: none !important;
+  background-position-x: 5px !important;
+  background-position-y: 5px !important;
 }
 
 .flexible-modal-drag-area {

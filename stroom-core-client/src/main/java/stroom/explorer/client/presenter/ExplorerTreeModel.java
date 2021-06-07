@@ -254,22 +254,28 @@ public class ExplorerTreeModel {
         return rows;
     }
 
-    private void addToRows(final List<ExplorerNode> in, final List<ExplorerNode> rows, final Set<String> openItems) {
+    private void addToRows(final List<ExplorerNode> in,
+                           final List<ExplorerNode> rows,
+                           final Set<String> openItems) {
         for (ExplorerNode parent : in) {
-            rows.add(parent);
             if (openItems.contains(parent.getUuid())) {
+                final ExplorerNode.Builder builder = parent.copy();
+                if (!NodeState.LEAF.equals(parent.getNodeState())) {
+                    builder.nodeState(NodeState.OPEN);
+                }
+                rows.add(builder.build());
+
                 final List<ExplorerNode> children = parent.getChildren();
                 if (children != null) {
                     addToRows(children, rows, openItems);
                 }
 
-                if (!NodeState.LEAF.equals(parent.getNodeState())) {
-                    parent.setNodeState(NodeState.OPEN);
-                }
             } else {
+                final ExplorerNode.Builder builder = parent.copy();
                 if (!NodeState.LEAF.equals(parent.getNodeState())) {
-                    parent.setNodeState(NodeState.CLOSED);
+                    builder.nodeState(NodeState.CLOSED);
                 }
+                rows.add(builder.build());
             }
         }
     }

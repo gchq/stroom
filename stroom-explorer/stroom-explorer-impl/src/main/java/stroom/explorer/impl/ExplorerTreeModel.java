@@ -20,6 +20,7 @@ import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.task.api.TaskContextFactory;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -143,19 +144,14 @@ class ExplorerTreeModel {
     }
 
     private void sort(final List<ExplorerNode> list) {
-        list.sort((o1, o2) -> {
-            if (!o1.getType().equals(o2.getType())) {
-                final int p1 = getPriority(o1.getType());
-                final int p2 = getPriority(o2.getType());
-                return Integer.compare(p1, p2);
-            }
-
-            return o1.getName().compareTo(o2.getName());
-        });
+        list.sort(Comparator
+                .comparingInt(this::getPriority)
+                .thenComparing(ExplorerNode::getType)
+                .thenComparing(ExplorerNode::getName));
     }
 
-    private int getPriority(final String type) {
-        final DocumentType documentType = explorerActionHandlers.getType(type);
+    private int getPriority(final ExplorerNode node) {
+        final DocumentType documentType = explorerActionHandlers.getType(node.getType());
         if (documentType == null) {
             return Integer.MAX_VALUE;
         }
@@ -172,12 +168,7 @@ class ExplorerTreeModel {
     void rebuild() {
         final long now = System.currentTimeMillis();
 
-        minExplorerTreeModelBuildTime.getAndUpdate(prev -> {
-            if (prev < now) {
-                return now;
-            }
-            return prev;
-        });
+        minExplorerTreeModelBuildTime.getAndUpdate(prev -> Math.max(prev, now));
 
         explorerSession.setMinExplorerTreeModelBuildTime(now);
     }
