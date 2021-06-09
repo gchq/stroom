@@ -17,17 +17,15 @@
 
 package stroom.search.elastic;
 
+import stroom.docstore.server.JsonSerialiser;
 import stroom.docstore.server.Store;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.search.elastic.shared.ElasticCluster;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Message;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
@@ -40,18 +38,14 @@ import java.util.Set;
 @Component
 @Singleton
 public class ElasticClusterStoreImpl implements ElasticClusterStore {
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticClusterStoreImpl.class);
-
     private final Store<ElasticCluster> store;
 
     @Inject
-    public ElasticClusterStoreImpl(final Store<ElasticCluster> store,
-                                   @Value("#{propertyConfigurer.getProperty('stroom.secret.encryptionKey')}") final String secretEncryptionKey
-    ) {
+    public ElasticClusterStoreImpl(final Store<ElasticCluster> store) {
         this.store = store;
 
         store.setType(ElasticCluster.ENTITY_TYPE, ElasticCluster.class);
-        store.setSerialiser(new ElasticClusterJsonSerialiser(secretEncryptionKey));
+        store.setSerialiser(new JsonSerialiser<>());
     }
 
     ////////////////////////////////////////////////////////////////////////
