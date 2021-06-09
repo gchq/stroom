@@ -49,7 +49,6 @@ public class ElasticCluster extends Doc {
         this.connectionConfig = connectionConfig;
     }
 
-    @JsonIgnore
     @Override
     public final String getType() {
         return ENTITY_TYPE;

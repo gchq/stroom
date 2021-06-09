@@ -118,7 +118,6 @@ public class SolrIndex extends Doc {
         this.retentionExpression = retentionExpression;
     }
 
-    @JsonIgnore
     @Override
     public final String getType() {
         return ENTITY_TYPE;

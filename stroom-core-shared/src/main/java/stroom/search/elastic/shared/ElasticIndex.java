@@ -97,7 +97,6 @@ public class ElasticIndex extends Doc {
     @JsonProperty("retentionExpression")
     public void setRetentionExpression(final ExpressionOperator retentionExpression) { this.retentionExpression = retentionExpression; }
 
-    @JsonIgnore
     @Override
     public final String getType() {
         return ENTITY_TYPE;
