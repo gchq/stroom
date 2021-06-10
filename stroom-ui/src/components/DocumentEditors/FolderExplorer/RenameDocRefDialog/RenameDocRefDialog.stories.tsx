@@ -16,7 +16,9 @@ interface Props {
 
 // Rename
 const TestHarness: React.FunctionComponent<Props> = ({ testDocRef }) => {
-  const [lastConfirmed, setLastConfirmed] = React.useState<object>({});
+  const [lastConfirmed, setLastConfirmed] = React.useState<
+    Record<string, unknown>
+  >({});
   const { showDialog, componentProps } = useDialog((docRef, newName) =>
     setLastConfirmed({ docRef, newName }),
   );

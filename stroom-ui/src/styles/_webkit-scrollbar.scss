@@ -28,6 +28,13 @@
 	--scrollbar-thumb__background-color--active: rgba(0,0,0,1);
 }
 
+.stroom-theme-dark2 {
+	--scrollbar__background-color: rgba(255,255,255,0.1);
+	--scrollbar-thumb__background-color: rgba(0,0,0,0.9);
+	--scrollbar-thumb__background-color--hover: rgba(0,0,0,1);
+	--scrollbar-thumb__background-color--active: rgba(0,0,0,1);
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
 	width: 1rem;

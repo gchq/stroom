@@ -1,7 +1,8 @@
 import * as React from "react";
 import { useCounter } from "./useCounter";
+import { ReactElement } from "react";
 
-export const Step3 = () => {
+export const Step3 = (): ReactElement => {
   // Here I call my custom hook, and just destructure it's parts.
   const { count, increment, decrement } = useCounter();
 

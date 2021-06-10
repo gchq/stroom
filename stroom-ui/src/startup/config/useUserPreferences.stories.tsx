@@ -1,7 +1,6 @@
 import * as React from "react";
 
 import { storiesOf } from "@storybook/react";
-import useConfig from "./useConfig";
 import JsonDebug from "testing/JsonDebug";
 import useUserPreferences from "./useUserPreferences";
 

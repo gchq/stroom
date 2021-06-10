@@ -13,7 +13,8 @@
   //width: 700px;
   //height: 500px;
   outline: none;
-  border: 1px solid var(--border-color);/*#ced4da;*/
+  border: 1px solid var(--control__border-color);/*#ced4da;*/
+  background: var(--control__background-color);
   border-radius: .25rem;
   overflow: hidden;
   flex-grow: 1;

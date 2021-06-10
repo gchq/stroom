@@ -4,11 +4,12 @@ import * as React from "react";
 // Imports must be relative
 // Notice that I can import the 'directory' and it will look for the index.ts file and import stuff from there.
 import CustomHeader from "./CustomHeader";
+import { ReactElement } from "react";
 
 /**
  * Simple Function Component
  */
-export const Step1 = () => {
+export const Step1 = (): ReactElement => {
   /**
    * In this function, I have declared a full function body, and included a return statement.
    * Have a look at CustomHeader for an example of simply returning the value of the function in

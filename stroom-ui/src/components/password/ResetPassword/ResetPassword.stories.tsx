@@ -4,12 +4,7 @@ import * as React from "react";
 import ResetPassword from "./ResetPassword";
 // import ChangePasswordFormData from "../ChangePassword/ChangePasswordFormData";
 
-const onValidate = (
-  oldPassword: string,
-  password: string,
-  verifyPassword: string,
-  email: string,
-) => {
+const onValidate = () => {
   action("onValidate");
   return new Promise<string>(() => "");
 };

@@ -22,7 +22,9 @@ const TestHarness: React.FunctionComponent<Props> = ({
   testUuids,
   testDestination,
 }) => {
-  const [lastConfirmed, setLastConfirmed] = React.useState<object>({});
+  const [lastConfirmed, setLastConfirmed] = React.useState<
+    Record<string, unknown>
+  >({});
 
   const { showDialog, componentProps } = useCopyMoveDocRefDialog(
     (

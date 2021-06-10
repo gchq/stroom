@@ -55,7 +55,7 @@ export interface Props {
   testData: TestData;
 }
 
-export const useTestServer = (testData: TestData) => {
+export const useTestServer = (testData: TestData): void => {
   const { clearCache } = useHttpClient();
 
   React.useEffect(() => {

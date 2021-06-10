@@ -13,12 +13,12 @@ export const themeOptions: ThemeOption[] = [
   {
     text: "Light",
     label: "Light",
-    value: "theme-light",
+    value: "stroom-theme-light",
   },
   {
     text: "Dark",
     label: "Dark",
-    value: "theme-dark",
+    value: "stroom-theme-dark",
   },
 ];
 

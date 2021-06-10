@@ -4,7 +4,7 @@ import { ChangeEventHandler, useCallback } from "react";
 const useHandlers = (
   rule: DataRetentionRule,
   onChange: (dataRetentionRule: DataRetentionRule) => void,
-) => {
+): any => {
   const handleNameChange: ChangeEventHandler<HTMLInputElement> = useCallback(
     (e) => onChange({ ...rule, name: e.target.value }),
     [rule, onChange],

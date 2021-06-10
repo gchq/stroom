@@ -16,7 +16,7 @@ import { DocumentTreeContextProvider } from "components/DocumentEditors/api/expl
 import { ErrorReportingContextProvider } from "components/ErrorPage";
 
 import "styles/main.scss";
-import { FunctionComponent } from "react";
+import { FunctionComponent, ReactElement } from "react";
 import { PromptDisplayBoundary } from "../../components/Prompt/PromptDisplayBoundary";
 setupFontAwesome();
 
@@ -42,7 +42,7 @@ const DragDropRouted = pipe(
 
 ReactModal.setAppElement("#root");
 
-export default (storyFn: any) =>
+export default (storyFn: () => ReactElement): ReactElement =>
   StoryRouter()(() => (
     <ErrorReportingContextProvider>
       <PromptDisplayBoundary>

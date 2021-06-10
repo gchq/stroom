@@ -42,14 +42,14 @@ legend.form-label {
 
 .form-control {
   font-size: 0.8rem;
-  background-color: var(--input-background-color);
-  border-color: var(--input-border-color);
+  background-color: var(--control__background-color);
+  border-color: var(--control__border-color);
   color: var(--text-color);
 }
 
 .form-control:disabled, .form-control[readonly] {
-  background-color: var(--input-background-color);
-  border-color: var(--input-border-color);
+  background-color: var(--control__background-color);
+  border-color: var(--control__border-color);
   color: var(--text-color-disabled);
 }
 

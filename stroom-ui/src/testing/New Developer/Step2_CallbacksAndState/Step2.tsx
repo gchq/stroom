@@ -2,8 +2,9 @@ import * as React from "react";
 
 import { PillChoice } from "./PillChoice";
 import { DisplayPillChoice } from "./DisplayPillChoice";
+import { ReactElement } from "react";
 
-export const Step2 = () => {
+export const Step2 = (): ReactElement => {
   /**
    * This is our first use of state. This component will track a value called
    * 'pill' and useState returns this 'array', the first item is the value, the

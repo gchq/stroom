@@ -31,13 +31,7 @@ const ChangePasswordForm: React.FunctionComponent<{
   //   verifyPassword: string,
   //   email: string,
   // ) => Promise<string>;
-}> = ({
-  showChangeConfirmation,
-  redirectUri,
-  email,
-  onSubmit,
-  isSubmitting,
-}) => {
+}> = ({ showChangeConfirmation, redirectUri }) => {
   let title = "Change Password";
   if (showChangeConfirmation && redirectUri) {
     title = "Your password has been changed";

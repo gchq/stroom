@@ -7,10 +7,12 @@ import { ResourcesByDocType } from "./types/resourceUrls";
 import { useDocumentTree } from "components/DocumentEditors/api/explorer";
 import { iterateNodes } from "lib/treeUtils/treeUtils";
 import JsonDebug from "testing/JsonDebug";
+import { DocumentBase } from "./types/base";
 
 const TestHarness: React.FunctionComponent = () => {
   const { documentTree } = useDocumentTree();
-  const [docRefContents, setDocRefContents] = React.useState<object>({});
+  const [docRefContents, setDocRefContents] =
+    React.useState<DocumentBase<any>>();
   const [docRefType, setDocRefType] =
     React.useState<keyof ResourcesByDocType>("Dictionary");
   const setDocRefTypeSafe = React.useCallback(
@@ -19,7 +21,7 @@ const TestHarness: React.FunctionComponent = () => {
   );
 
   const docRefUuid = React.useMemo(() => {
-    let d;
+    let d = null;
     iterateNodes(documentTree, (_, node) => {
       if (node.type === docRefType) {
         d = node.uuid;

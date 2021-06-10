@@ -25,8 +25,13 @@ interface Props {
   isGroup: boolean;
 }
 
+interface User {
+  name?: string;
+  isGroup?: boolean;
+}
+
 const TestHarness: React.FunctionComponent<Props> = ({ isGroup }) => {
-  const [newUser, setNewUser] = React.useState<object>({});
+  const [newUser, setNewUser] = React.useState<User>({});
   const { componentProps, showDialog } = useDialog({
     isGroup,
     onCreateUser: (name, isGroup) => setNewUser({ name, isGroup }),

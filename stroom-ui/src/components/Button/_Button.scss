@@ -20,6 +20,26 @@
   --color-btn-hover-border: rgba(27, 31, 35, 0.15);
 }
 
+.stroom-theme-dark {
+  --color-btn-text: #fff;
+  --color-btn-bg: #454545;
+  --color-btn-border: #2f2f2f;
+  --color-btn-shadow: 0 1px 0 rgba(27, 31, 35, 0.04);
+  --color-btn-inset-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  --color-btn-hover-bg: #505050;
+  --color-btn-hover-border: #666;
+}
+
+.stroom-theme-dark2 {
+  --color-btn-text: #fff;
+  --color-btn-bg: #2f3540;
+  --color-btn-border: #14161b;
+  --color-btn-shadow: 0 1px 0 rgba(27, 31, 35, 0.04);
+  --color-btn-inset-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  --color-btn-hover-bg: #383d49;
+  --color-btn-hover-border: #14161b;
+}
+
 ////////////////////
 // Inner elements //
 ////////////////////
@@ -143,9 +163,9 @@
 
 
 
-  color: var(--button-text-color); /* var(--color-btn-text); */
-  background-color: var(--button-background-color); /* var(--color-btn-bg); */
-  border-color: var(--button-border-color); /* var(--color-btn-border); */
+  color: var(--color-btn-text);
+  background-color: var(--color-btn-bg);
+  border-color: var(--color-btn-border);
   box-shadow: var(--color-btn-shadow),var(--color-btn-inset-shadow);
   transition: .2s cubic-bezier(0.3, 0, 0.5, 1);
   transition-property: color,background-color,border-color;
@@ -265,7 +285,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 .Button--default {
   padding: .375rem .5rem;
-  color: var(--button-default__color);
+  color: var(--color-btn-text);
 }
 
 .Button--default.Button--selected {
@@ -301,7 +321,7 @@
 }
 
 .Button--default.Button--disabled {
-  color: var(--button-default__color--disabled);
+  color: var(--button-text-color-disabled);
 }
 
 .Button--default.Button--disabled:focus {

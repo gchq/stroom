@@ -17,13 +17,11 @@
 import * as React from "react";
 import Button from "../Button/Button";
 
-export type IconSize = "small" | "medium" | "large" | "xlarge";
-
 export interface OkButtonProps {
   onOk: React.MouseEventHandler;
 }
 
-const OkButtons = ({ onOk }: OkButtonProps) => (
+const OkButtons = ({ onOk }: OkButtonProps): any => (
   <React.Fragment>
     <Button appearance="contained" action="primary" icon="check" onClick={onOk}>
       OK

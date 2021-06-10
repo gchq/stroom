@@ -86,7 +86,9 @@ const TestHarness: React.FunctionComponent = () => {
   const initialVolumes = [volume01, volume02, volume03];
 
   const [volumes, setVolumes] = React.useState<FsVolume[]>(initialVolumes);
-  const handleAddVolume = useCallback(() => {}, []);
+  const handleAddVolume = useCallback(() => {
+    console.log("added");
+  }, []);
   // {
   // const newVolumeId = -1;
   // const newVolume: FsVolume = {

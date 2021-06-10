@@ -5,7 +5,6 @@ import { Formik } from "formik";
 import * as Yup from "yup";
 import { useState } from "react";
 import zxcvbn from "zxcvbn";
-import { ChangePasswordPage } from "./ChangePassword";
 
 const TestHarness: React.FunctionComponent = () => {
   const [strength, setStrength] = useState(0);

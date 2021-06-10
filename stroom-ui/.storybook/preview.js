@@ -26,8 +26,9 @@ addDecorator(StroomDecorator);
 
 addParameters({
   themes: [
-    { name: "light", class: "theme-light", color: "#fff", default: true },
-    { name: "dark", class: "theme-dark", color: "#000" },
+    { name: "light", class: "stroom-theme-light", color: "#fff", default: true },
+    { name: "dark", class: "stroom-theme-dark", color: "#000" },
+    { name: "dark 2", class: "stroom-theme-dark2", color: "#000" },
   ],
 });
 
