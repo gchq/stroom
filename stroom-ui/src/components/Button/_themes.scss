@@ -1,6 +1,6 @@
-@import "../../styles/colours";
+/*@import "../../styles/colours.css";*/
 //@import "../../styles/github-colours";
-@import "../../styles/themes";
+/*@import "../../styles/themes";*/
 
 :root {
   ////////////////////////////////////////////////////////////////////////////////
@@ -92,7 +92,7 @@
 
 }
 
-.theme-dark {
+.stroom-theme-dark {
   ////////////////////////////////////////////////////////////////////////////////
   // Default buttons
   ////////////////////////////////////////////////////////////////////////////////
@@ -108,7 +108,7 @@
   --button-default-secondary__background-color--hover: rgba(var(--pink-300-rgb), 0.4); // material pink 300 40%
   --button-default-secondary__background-color--selected: rgba(var(--pink-300-rgb), 0.3); // material pink 300 30%
 
-  --button-default__color--disabled: rgba(1, 1, 1, 0.26);
+  --button-default__color--disabled: rgba(var(--white-rgb), 0.26);
 
   ////////////////////////////////////////////////////////////////////////////////
   // Outline buttons

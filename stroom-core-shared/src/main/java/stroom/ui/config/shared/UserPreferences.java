@@ -16,7 +16,6 @@
 
 package stroom.ui.config.shared;
 
-import stroom.query.api.v2.DateTimeFormatSettings;
 import stroom.query.api.v2.TimeZone;
 import stroom.query.api.v2.TimeZone.Use;
 
@@ -26,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Objects;
 import javax.inject.Singleton;
@@ -47,19 +47,25 @@ public class UserPreferences {
     @JsonPropertyDescription("The font size to use, e.g. `small`, `medium`, `large`")
     private final String fontSize;
 
+    @Schema(description = "A date time formatting pattern string conforming to the specification of " +
+            "java.time.format.DateTimeFormatter")
     @JsonProperty
-    @JsonPropertyDescription("How to display dates and times in the UI")
-    private final DateTimeFormatSettings dateTimeFormat;
+    private final String dateTimePattern;
+
+    @JsonProperty
+    private final TimeZone timeZone;
 
     @JsonCreator
     public UserPreferences(@JsonProperty("theme") final String theme,
                            @JsonProperty("font") final String font,
                            @JsonProperty("fontSize") final String fontSize,
-                           @JsonProperty("dateTimeFormat") final DateTimeFormatSettings dateTimeFormat) {
+                           @JsonProperty("dateTimePattern") final String dateTimePattern,
+                           @JsonProperty("timeZone") final TimeZone timeZone) {
         this.theme = theme;
         this.font = font;
         this.fontSize = fontSize;
-        this.dateTimeFormat = dateTimeFormat;
+        this.dateTimePattern = dateTimePattern;
+        this.timeZone = timeZone;
     }
 
     public String getTheme() {
@@ -74,8 +80,12 @@ public class UserPreferences {
         return fontSize;
     }
 
-    public DateTimeFormatSettings getDateTimeFormat() {
-        return dateTimeFormat;
+    public String getDateTimePattern() {
+        return dateTimePattern;
+    }
+
+    public TimeZone getTimeZone() {
+        return timeZone;
     }
 
     @Override
@@ -88,13 +98,13 @@ public class UserPreferences {
         }
         final UserPreferences that = (UserPreferences) o;
         return Objects.equals(theme, that.theme) && Objects.equals(font,
-                that.font) && Objects.equals(fontSize, that.fontSize) && Objects.equals(dateTimeFormat,
-                that.dateTimeFormat);
+                that.font) && Objects.equals(fontSize, that.fontSize) && Objects.equals(dateTimePattern,
+                that.dateTimePattern) && Objects.equals(timeZone, that.timeZone);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(theme, font, fontSize, dateTimeFormat);
+        return Objects.hash(theme, font, fontSize, dateTimePattern, timeZone);
     }
 
     @Override
@@ -103,7 +113,8 @@ public class UserPreferences {
                 "theme='" + theme + '\'' +
                 ", font='" + font + '\'' +
                 ", fontSize='" + fontSize + '\'' +
-                ", dateTimeFormat=" + dateTimeFormat +
+                ", dateTimePattern='" + dateTimePattern + '\'' +
+                ", timeZone=" + timeZone +
                 '}';
     }
 
@@ -117,27 +128,28 @@ public class UserPreferences {
 
     public static final class Builder {
 
+        private static final String DEFAULT_DATE_TIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXX";
+
         private String theme;
         private String font;
         private String fontSize;
-        private DateTimeFormatSettings dateTimeFormat;
+        private String dateTimePattern;
+        private TimeZone timeZone;
 
         private Builder() {
             theme = "Dark";
             font = "Roboto";
             fontSize = "Medium";
-            dateTimeFormat = DateTimeFormatSettings.builder()
-                    .pattern("yyyy-MM-dd'T'HH:mm:ss.SSSXX")
-                    .timeZone(
-                            TimeZone.builder().use(Use.UTC).build())
-                    .build();
+            dateTimePattern = DEFAULT_DATE_TIME_PATTERN;
+            timeZone = TimeZone.builder().use(Use.UTC).build();
         }
 
         private Builder(final UserPreferences userPreferences) {
             this.theme = userPreferences.theme;
             this.font = userPreferences.font;
             this.fontSize = userPreferences.fontSize;
-            this.dateTimeFormat = userPreferences.dateTimeFormat;
+            this.dateTimePattern = userPreferences.dateTimePattern;
+            this.timeZone = userPreferences.timeZone;
         }
 
         public Builder theme(final String theme) {
@@ -155,13 +167,18 @@ public class UserPreferences {
             return this;
         }
 
-        public Builder dateTimeFormat(final DateTimeFormatSettings dateTimeFormat) {
-            this.dateTimeFormat = dateTimeFormat;
+        public Builder dateTimePattern(final String dateTimePattern) {
+            this.dateTimePattern = dateTimePattern;
+            return this;
+        }
+
+        public Builder timeZone(final TimeZone timeZone) {
+            this.timeZone = timeZone;
             return this;
         }
 
         public UserPreferences build() {
-            return new UserPreferences(theme, font, fontSize, dateTimeFormat);
+            return new UserPreferences(theme, font, fontSize, dateTimePattern, timeZone);
         }
     }
 }

@@ -3,11 +3,9 @@ import * as React from "react";
 import { UiConfig } from "api/stroom";
 
 export const defaultValue: UiConfig = {
+  htmlTitle: "Stroom",
   theme: {
     backgroundColour: "red",
-  },
-  uiPreferences: {
-    dateFormat: "YYYY-MM-DDTHH:mm:ss.SSS",
   },
 };
 

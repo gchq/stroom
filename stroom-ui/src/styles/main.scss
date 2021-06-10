@@ -7,6 +7,9 @@
 @import "~react-sweet-progress/lib/style.css";
 @import "~antd/dist/antd.css";
 
+@import "colours.css";
+@import "theme.css";
+
 // Fonts
 @import "./open-sans-v16-latin";
 
@@ -68,5 +71,4 @@
 @import "../components/UserSettings/UserSettings";
 @import "../components/AuthorisationManager/AuthorisationManager";
 
-@import "./themes";
 @import "./theme_styling";

@@ -61,7 +61,7 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
                          final MainView view,
                          final MainProxy proxy,
                          final KeyboardInterceptor keyboardInterceptor,
-                         final UiConfigCache clientPropertyCache) {
+                         final UiConfigCache uiConfigCache) {
         super(eventBus, view, proxy);
 
         // Handle key presses.
@@ -86,7 +86,7 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
                 }
             }
         });
-        registerHandler(clientPropertyCache.addPropertyChangeHandler(
+        registerHandler(uiConfigCache.addPropertyChangeHandler(
                 event -> {
                     final UiConfig uiConfig = event.getProperties();
                     getView().setBanner(uiConfig.getMaintenanceMessage());

@@ -1,5 +1,5 @@
 /* Customisations to standard bootstrap styles */
-@import "themes";
+/*@import "themes";*/
 
 .badge-success {
     background-color: var(--valid);
@@ -128,7 +128,8 @@ label {
   flex-direction: column;
   //align-items: stretch;
   overflow: visible;
-  border: none;
+  border: 1px solid var(--dialog-border-color);
+  background-color: var(--page-background-color);
 }
 
 .modal-header {

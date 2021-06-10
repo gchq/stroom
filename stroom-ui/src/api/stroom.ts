@@ -3357,13 +3357,8 @@ export interface UiConfig {
   source?: SourceConfig;
   splash?: SplashConfig;
   theme?: ThemeConfig;
-  uiPreferences?: UiPreferences;
   url?: UrlConfig;
   welcomeHtml?: string;
-}
-
-export interface UiPreferences {
-  dateFormat?: string;
 }
 
 export interface UpdateAccountRequest {
@@ -3424,11 +3419,14 @@ export interface UserAndPermissions {
 }
 
 export interface UserPreferences {
-  /** The string formatting to apply to a date value */
-  dateTimeFormat?: DateTimeFormatSettings;
+  /** A date time formatting pattern string conforming to the specification of java.time.format.DateTimeFormatter */
+  dateTimePattern?: string;
   font?: string;
   fontSize?: string;
   theme?: string;
+
+  /** The timezone to apply to a date time value */
+  timeZone?: TimeZone;
 }
 
 export interface ValidateExpressionResult {

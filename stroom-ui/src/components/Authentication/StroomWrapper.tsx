@@ -23,7 +23,7 @@ import CustomLoader from "../CustomLoader";
 import Background from "../Layout/Background";
 import TokenManager from "../Account/TokenManager/TokenManager";
 import { useStroomApi } from "lib/useStroomApi";
-import { ValidateSessionResponse } from "api/stroom";
+import { UserPreferences, ValidateSessionResponse } from "api/stroom";
 
 enum DialogType {
   CHANGE_PASSWORD,
@@ -37,6 +37,7 @@ const StroomWrapper: FunctionComponent = () => {
   // Client state
   const [userId, setUserId] = useState<string>();
   const { exec } = useStroomApi();
+
   useEffect(() => {
     if (!userId) {
       exec(
@@ -70,6 +71,11 @@ const StroomWrapper: FunctionComponent = () => {
     }
   }, [exec, userId, setUserId]);
 
+  const themeMap = [];
+  themeMap["Light"] = "stroom stroom-theme-light";
+  themeMap["Dark"] = "stroom stroom-theme-dark";
+  themeMap["Dark 2"] = "stroom stroom-theme-dark stroom-theme-dark2";
+
   const [dialogType, setDialogType] = useState<DialogType>(undefined);
   useEffect(() => {
     const handler = (event) => {
@@ -78,13 +84,26 @@ const StroomWrapper: FunctionComponent = () => {
         console.log("Message from Stroom:", data);
 
         if (data.message) {
-          if (data.message === "changePassword") {
-            setDialogType(DialogType.CHANGE_PASSWORD);
-          } else if (data.message === "manageUsers") {
-            setDialogType(DialogType.MANAGE_USERS);
-          } else if (data.message === "manageTokens") {
-            setDialogType(DialogType.MANAGE_TOKENS);
-          }
+          exec(
+            (api) => api.preferences.fetchUserPreferences(),
+            (response: UserPreferences) => {
+              console.log(
+                "Setting user preferences to " + JSON.stringify(response),
+              );
+              const body = document.getElementsByTagName(
+                "body",
+              )[0] as HTMLElement;
+              body.className = themeMap[response.theme];
+
+              if (data.message === "changePassword") {
+                setDialogType(DialogType.CHANGE_PASSWORD);
+              } else if (data.message === "manageUsers") {
+                setDialogType(DialogType.MANAGE_USERS);
+              } else if (data.message === "manageTokens") {
+                setDialogType(DialogType.MANAGE_TOKENS);
+              }
+            },
+          );
         }
       } catch (err) {
         // Ignore.

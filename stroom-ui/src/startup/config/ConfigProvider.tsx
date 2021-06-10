@@ -1,16 +1,18 @@
 import * as React from "react";
 
 import ConfigContext from "./ConfigContext";
-import useGlobalConfigResource from "./useGlobalConfigResource";
+import useConfigResource from "./useConfigResource";
 import CustomLoader from "../../components/CustomLoader";
 
 const ConfigProvider: React.FunctionComponent = ({ children }) => {
-  const { config } = useGlobalConfigResource();
+  const { config } = useConfigResource();
 
   if (!config) {
     return (
       <CustomLoader title="Stroom" message="Loading Config. Please wait..." />
     );
+  } else {
+    document.title = config.htmlTitle;
   }
 
   return (

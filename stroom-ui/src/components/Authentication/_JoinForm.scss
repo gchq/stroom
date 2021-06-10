@@ -1,5 +1,5 @@
 @use "sass:math";
-@import "../../styles/colours";
+/*@import "../../styles/colours.css";*/
 
 // Password strength meter color for the different levels
 $strength-colors: (var(--red-600), var(--deep-orange-600), var(--orange-600), var(--amber-600), var(--bootstrap-success));
@@ -42,10 +42,15 @@ legend.form-label {
 
 .form-control {
   font-size: 0.8rem;
+  background-color: var(--input-background-color);
+  border-color: var(--input-border-color);
+  color: var(--text-color);
 }
 
-.form-control[readonly] {
-  background-color: var(--white);
+.form-control:disabled, .form-control[readonly] {
+  background-color: var(--input-background-color);
+  border-color: var(--input-border-color);
+  color: var(--text-color-disabled);
 }
 
 .form-hint {

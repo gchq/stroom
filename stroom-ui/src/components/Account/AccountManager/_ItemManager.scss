@@ -13,7 +13,7 @@
   //width: 700px;
   //height: 500px;
   outline: none;
-  border: 1px solid #ced4da;
+  border: 1px solid var(--border-color);/*#ced4da;*/
   border-radius: .25rem;
   overflow: hidden;
   flex-grow: 1;

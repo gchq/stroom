@@ -1,4 +1,4 @@
-//@import "themes.scss";
+/*@import "themes.scss";*/
 
 .ReactTable {
   width: 100%;
@@ -187,6 +187,7 @@
 
 .table {
   margin: 0;
+  color: var(--text-color);
   //border: 1px solid rgba(0, 0, 0, .1);
 
   //border: 1px solid #ced4da;
@@ -202,7 +203,11 @@
   //}
 
   .tr:nth-of-type(odd) {
-    background-color: rgba(0, 0, 0, .05);
+    background-color: var(--odd-row-background-color);
+  }
+
+  .tr:nth-of-type(even) {
+    background-color: var(--even-row-background-color);
   }
 
   //.tr.odd {
@@ -210,11 +215,14 @@
   //}
 
   .tr:hover {
-    background-color: rgba(184,	218, 255, .5);
+    background-color: var(--hovered-row-background-color) !important;
+    /*color: var(--selected-row-text-color) !important;*/
+    /*background-color: rgba(184,	218, 255, .5);*/
   }
 
   .tr.selected {
-    background-color: #b8daff !important;
+    background-color: var(--selected-row-background-color) !important;
+    color: var(--selected-row-text-color) !important;
   }
 
   .th,
@@ -248,7 +256,8 @@
   //}
 
   .th {
-    background-color: white;
+    background-color: var(--odd-row-background-color);
+    border-bottom: 1px solid var(--header-border-color);
     user-select: none;
     font-weight: 600;
   }

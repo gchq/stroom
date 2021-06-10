@@ -1,5 +1,5 @@
-import moment from "moment";
-import useConfig from "startup/config/useConfig";
+import moment from "moment-timezone";
+import useUserPreferences from "../startup/config/useUserPreferences";
 
 interface DateUtil {
   toDateString: (value: number) => string;
@@ -7,12 +7,31 @@ interface DateUtil {
 
 const useDateUtil = (): DateUtil => {
   const {
-    uiPreferences: { dateFormat },
-  } = useConfig();
+    dateTimePattern,
+    timeZone: { use, id, offsetHours, offsetMinutes },
+  } = useUserPreferences();
 
   const toDateString = (value: number) => {
-    const onMoment = moment(value);
-    return onMoment.format(dateFormat) + "Z";
+    let m = moment.utc(value);
+    switch (use) {
+      case "UTC": {
+        m = m.utc();
+        return m.format(dateTimePattern) + "Z";
+      }
+      case "Local": {
+        m = m.local(true);
+        return m.format(dateTimePattern);
+      }
+      case "Offset": {
+        m = m.utcOffset(offsetHours + offsetMinutes);
+        return m.format(dateTimePattern);
+      }
+      case "Id": {
+        m = m.tz(id);
+        return m.format(dateTimePattern);
+      }
+    }
+    return m.format(dateTimePattern);
   };
 
   return {

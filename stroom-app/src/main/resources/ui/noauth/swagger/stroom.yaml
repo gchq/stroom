@@ -10954,16 +10954,9 @@ components:
           $ref: '#/components/schemas/SplashConfig'
         theme:
           $ref: '#/components/schemas/ThemeConfig'
-        uiPreferences:
-          $ref: '#/components/schemas/UiPreferences'
         url:
           $ref: '#/components/schemas/UrlConfig'
         welcomeHtml:
-          type: string
-    UiPreferences:
-      type: object
-      properties:
-        dateFormat:
           type: string
     UpdateAccountRequest:
       type: object
@@ -11061,14 +11054,18 @@ components:
     UserPreferences:
       type: object
       properties:
-        dateTimeFormat:
-          $ref: '#/components/schemas/DateTimeFormatSettings'
+        dateTimePattern:
+          type: string
+          description: A date time formatting pattern string conforming to the specification
+            of java.time.format.DateTimeFormatter
         font:
           type: string
         fontSize:
           type: string
         theme:
           type: string
+        timeZone:
+          $ref: '#/components/schemas/TimeZone'
     ValidateExpressionResult:
       type: object
       properties:

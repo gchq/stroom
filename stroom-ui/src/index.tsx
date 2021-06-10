@@ -17,7 +17,6 @@ import "styles/main.scss";
 import { DocumentTreeContextProvider } from "components/DocumentEditors/api/explorer";
 import { ErrorReportingContextProvider } from "components/ErrorPage";
 import { PromptDisplayBoundary } from "./components/Prompt/PromptDisplayBoundary";
-
 export const history = createHistory();
 
 const DndRoutes = DragDropContext(HTML5Backend)(Routes);

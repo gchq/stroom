@@ -21,7 +21,7 @@ export interface Api {
   config: UiConfig;
 }
 
-const useGlobalConfigResource = (): Api => {
+const useConfigResource = (): Api => {
   const [config, setConfig] = useState<UiConfig>();
   const { exec } = useStroomApi();
 
@@ -39,6 +39,6 @@ const useGlobalConfigResource = (): Api => {
   return { config };
 };
 
-export { useGlobalConfigResource };
+export { useConfigResource };
 
-export default useGlobalConfigResource;
+export default useConfigResource;

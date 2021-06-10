@@ -143,9 +143,9 @@
 
 
 
-  color: var(--color-btn-text);
-  background-color: var(--color-btn-bg);
-  border-color: var(--color-btn-border);
+  color: var(--button-text-color); /* var(--color-btn-text); */
+  background-color: var(--button-background-color); /* var(--color-btn-bg); */
+  border-color: var(--button-border-color); /* var(--color-btn-border); */
   box-shadow: var(--color-btn-shadow),var(--color-btn-inset-shadow);
   transition: .2s cubic-bezier(0.3, 0, 0.5, 1);
   transition-property: color,background-color,border-color;
@@ -418,6 +418,7 @@
 
   //color: $grey-800; // material grey 800
   color: var(--button-icon__color);
+  background-color: transparent;
 
   border: none;
   box-shadow: none;
