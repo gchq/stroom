@@ -315,6 +315,7 @@ ext.contentPackDownloadDir = contentPackDownloadDir
 //defines a list of gradle projects that we will publish with maven
 def projectsToBePublished = subprojects.findAll { project ->
     project.path in [
+        ':stroom-search:elastic-shaded'
     // TODO add in query and expression so others can use them
             //':stroom-util',
             //':stroom-util-shared',
