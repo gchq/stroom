@@ -77,12 +77,6 @@ main() {
   # so use the ip
   host_ip="${DOCKER_HOST_IP:-$(determine_host_address)}"
   export STROOM_JDBC_DRIVER_HOST="${host_ip}"
-  echo -e "${GREEN}Setting STROOM_JDBC_DRIVER_HOST to ${BLUE}${host_ip}${NC}"
-
-  echo -e "${GREEN}Clean${NC}"
-  ./gradlew \
-    "${GRADLE_ARGS[@]}" \
-    clean
 
   if [[ "${SKIP_TESTS:-false}" = true ]]; then
     echo -e "${YELLOW}Skipping tests${NC}"
@@ -90,7 +84,6 @@ main() {
   else
     test_args=( "test" )
   fi
-
 
   local publish_args
   if [[ "$BUILD_VERSION" =~ ${RELEASE_VERSION_REGEX} ]] \
@@ -106,6 +99,7 @@ main() {
     publish_args+=()
   fi
   
+  echo
   echo -e "${GREEN}LOCAL_BUILD             [${BLUE}${LOCAL_BUILD}${GREEN}]${NC}"
   echo -e "${GREEN}SKIP_TESTS              [${BLUE}${SKIP_TESTS}${GREEN}]${NC}"
   echo -e "${GREEN}BUILD_VERSION           [${BLUE}${BUILD_VERSION}${GREEN}]${NC}"
@@ -114,6 +108,12 @@ main() {
   echo -e "${GREEN}GWT_ARGS                [${BLUE}${GWT_ARGS[*]}${GREEN}]${NC}"
   echo -e "${GREEN}publish_args            [${BLUE}${publish_args[*]}${GREEN}]${NC}"
   echo -e "${GREEN}test_args               [${BLUE}${test_args[*]}${GREEN}]${NC}"
+  echo
+
+  echo -e "${GREEN}Gradle clean${NC}"
+  ./gradlew \
+    "${GRADLE_ARGS[@]}" \
+    clean
 
   # Do the gradle build
   # Use custom gwt compile jvm settings to avoid blowing the ram limit in
