@@ -39,24 +39,25 @@ public class DateTimeFormatter {
                         use = timeZone.getUse();
                     }
 
-                    int offsetHours = timeZone.getOffsetHours() == null
-                            ? 0
-                            : timeZone.getOffsetHours();
-                    int offsetMinutes = timeZone.getOffsetMinutes() == null
-                            ? 0
-                            : timeZone.getOffsetMinutes();
-
-                    if (offsetHours < 0) {
-                        offset = "-";
+                    if (timeZone.getOffsetHours() == null) {
+                        offset += "00";
+                    } else {
+                        if (timeZone.getOffsetHours() < 0) {
+                            offset = "-";
+                        }
+                        if (Math.abs(timeZone.getOffsetHours()) < 10) {
+                            offset += "0";
+                        }
+                        offset += Math.abs(timeZone.getOffsetHours());
                     }
-                    if (Math.abs(offsetHours) < 10) {
-                        offset += "0";
+                    if (timeZone.getOffsetMinutes() == null) {
+                        offset += "00";
+                    } else {
+                        if (Math.abs(timeZone.getOffsetMinutes()) < 10) {
+                            offset += "0";
+                        }
+                        offset += Math.abs(timeZone.getOffsetMinutes());
                     }
-                    offset += Math.abs(offsetHours);
-                    if (Math.abs(offsetMinutes) < 10) {
-                        offset += "0";
-                    }
-                    offset += Math.abs(offsetMinutes);
 
                     zoneId = timeZone.getId();
                 }

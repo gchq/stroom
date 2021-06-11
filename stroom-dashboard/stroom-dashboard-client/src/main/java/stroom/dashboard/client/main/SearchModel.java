@@ -17,6 +17,7 @@
 package stroom.dashboard.client.main;
 
 import stroom.dashboard.client.query.QueryPresenter;
+import stroom.dashboard.client.table.TimeZones;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardQueryKey;
@@ -24,7 +25,6 @@ import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.Search;
 import stroom.docref.DocRef;
-import stroom.dashboard.client.table.TimeZones;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionParamUtil;
 import stroom.query.api.v2.ExpressionUtil;
