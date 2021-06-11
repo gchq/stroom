@@ -29,9 +29,9 @@ import stroom.dispatch.client.RestFactory;
 import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.hyperlink.client.HyperlinkType;
+import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.UserResource;
-import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.RenamePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -96,6 +96,7 @@ public class AnnotationEditPresenter
     private final ChooserPresenter commentPresenter;
     private final LinkedEventPresenter linkedEventPresenter;
     private final ClientSecurityContext clientSecurityContext;
+    private final DateTimeFormatter dateTimeFormatter;
 
     private AnnotationDetail annotationDetail;
     private Long currentId;
@@ -114,7 +115,8 @@ public class AnnotationEditPresenter
                                    final ChooserPresenter assignedToPresenter,
                                    final ChooserPresenter commentPresenter,
                                    final LinkedEventPresenter linkedEventPresenter,
-                                   final ClientSecurityContext clientSecurityContext) {
+                                   final ClientSecurityContext clientSecurityContext,
+                                   final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.statusPresenter = statusPresenter;
@@ -122,6 +124,7 @@ public class AnnotationEditPresenter
         this.commentPresenter = commentPresenter;
         this.linkedEventPresenter = linkedEventPresenter;
         this.clientSecurityContext = clientSecurityContext;
+        this.dateTimeFormatter = dateTimeFormatter;
         getView().setUiHandlers(this);
     }
 
@@ -145,9 +148,7 @@ public class AnnotationEditPresenter
         final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
         final Rest<List<String>> rest = restFactory.create();
         rest
-                .onSuccess(values -> {
-                    getView().setHasCommentValues(!values.isEmpty());
-                })
+                .onSuccess(values -> getView().setHasCommentValues(!values.isEmpty()))
                 .call(annotationResource)
                 .getComment(null);
     }
@@ -440,7 +441,7 @@ public class AnnotationEditPresenter
         final String value = entry.getData();
 
         if (Annotation.COMMENT.equals(entry.getEntryType())) {
-            text.append(ClientDateUtil.toISOString(entry.getCreateTime()));
+            text.append(dateTimeFormatter.format(entry.getCreateTime()));
             text.append(", ");
             text.append(entry.getCreateUser());
             text.append(", commented ");
@@ -450,7 +451,7 @@ public class AnnotationEditPresenter
         } else if (Annotation.LINK.equals(entry.getEntryType())
                 || Annotation.UNLINK.equals(entry.getEntryType())) {
 
-            text.append(ClientDateUtil.toISOString(entry.getCreateTime()));
+            text.append(dateTimeFormatter.format(entry.getCreateTime()));
             text.append(", ");
             text.append(entry.getCreateUser());
             text.append(", ");
@@ -461,7 +462,7 @@ public class AnnotationEditPresenter
 
         } else if (Annotation.ASSIGNED_TO.equals(entry.getEntryType())) {
             if (currentValue != null && currentValue.isPresent()) {
-                text.append(ClientDateUtil.toISOString(entry.getCreateTime()));
+                text.append(dateTimeFormatter.format(entry.getCreateTime()));
                 text.append(", ");
                 text.append(entry.getCreateUser());
                 text.append(",");
@@ -475,7 +476,7 @@ public class AnnotationEditPresenter
             }
 
             if (value != null && value.trim().length() > 0) {
-                text.append(ClientDateUtil.toISOString(entry.getCreateTime()));
+                text.append(dateTimeFormatter.format(entry.getCreateTime()));
                 text.append(", ");
                 text.append(entry.getCreateUser());
                 text.append(",");
@@ -489,7 +490,7 @@ public class AnnotationEditPresenter
                 text.append("\n");
             }
         } else {
-            text.append(ClientDateUtil.toISOString(entry.getCreateTime()));
+            text.append(dateTimeFormatter.format(entry.getCreateTime()));
             text.append(", ");
             text.append(entry.getCreateUser());
             text.append(",");
@@ -647,7 +648,7 @@ public class AnnotationEditPresenter
                     .type(HyperlinkType.DATA.name().toLowerCase())
                     .build();
             if (!hyperlink.getText().trim().isEmpty()) {
-                builder.appendHtmlConstant("<b><u link=\"" + hyperlink.toString() + "\">" + value + "</u></b>");
+                builder.appendHtmlConstant("<b><u link=\"" + hyperlink + "\">" + value + "</u></b>");
             }
         } else {
             bold(builder, value);
@@ -685,7 +686,7 @@ public class AnnotationEditPresenter
     private SafeHtml getDurationLabel(final long time, final Date now) {
         final SafeHtmlBuilder builder = new SafeHtmlBuilder();
         builder.appendHtmlConstant(
-                "<span class=\"annotationDurationLabel\" title=\"" + ClientDateUtil.toISOString(time) + "\">");
+                "<span class=\"annotationDurationLabel\" title=\"" + dateTimeFormatter.format(time) + "\">");
         builder.appendEscaped(getDuration(time, now));
         builder.appendHtmlConstant("</span>");
         return builder.toSafeHtml();

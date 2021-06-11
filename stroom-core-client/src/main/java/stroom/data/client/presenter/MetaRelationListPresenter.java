@@ -25,6 +25,7 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
+import stroom.preferences.client.DateTimeFormatter;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.client.DataGridUtil;
@@ -57,6 +58,7 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
                                      final RestFactory restFactory,
                                      final TooltipPresenter tooltipPresenter,
                                      final LocationManager locationManager,
+                                     final DateTimeFormatter dateTimeFormatter,
                                      final Provider<SelectionSummaryPresenter> selectionSummaryPresenterProvider,
                                      final Provider<ProcessChoicePresenter> processChoicePresenterProvider,
                                      final Provider<EntityChooser> pipelineSelection) {
@@ -64,6 +66,7 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
                 restFactory,
                 tooltipPresenter,
                 locationManager,
+                dateTimeFormatter,
                 selectionSummaryPresenterProvider,
                 processChoicePresenterProvider,
                 pipelineSelection,

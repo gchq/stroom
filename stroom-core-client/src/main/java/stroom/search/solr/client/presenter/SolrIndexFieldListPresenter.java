@@ -31,13 +31,13 @@ import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.preferences.client.DateTimeFormatter;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexField;
 import stroom.search.solr.shared.SolrIndexResource;
 import stroom.search.solr.shared.SolrSynchState;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 import com.google.gwt.cell.client.TextCell;
@@ -66,6 +66,7 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
     private final DataGridView<SolrIndexField> dataGridView;
     private final SolrIndexFieldEditPresenter indexFieldEditPresenter;
     private final RestFactory restFactory;
+    private final DateTimeFormatter dateTimeFormatter;
     private final ButtonView newButton;
     private final ButtonView editButton;
     private final ButtonView removeButton;
@@ -79,10 +80,12 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
     public SolrIndexFieldListPresenter(final EventBus eventBus,
                                        final SolrIndexFieldListView view,
                                        final SolrIndexFieldEditPresenter indexFieldEditPresenter,
-                                       final RestFactory restFactory) {
+                                       final RestFactory restFactory,
+                                       final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
         this.indexFieldEditPresenter = indexFieldEditPresenter;
         this.restFactory = restFactory;
+        this.dateTimeFormatter = dateTimeFormatter;
 
         dataGridView = new DataGridViewImpl<>(true, true);
         view.setDataGridView(dataGridView);
@@ -344,7 +347,7 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
             if (state != null) {
                 if (state.getLastSynchronized() != null) {
                     sb.append("<b>Last synchronised:</b> ");
-                    sb.append(ClientDateUtil.toISOString(index.getSolrSynchState().getLastSynchronized()));
+                    sb.append(dateTimeFormatter.format(index.getSolrSynchState().getLastSynchronized()));
                     sb.append("</br>");
                 }
                 for (final String message : state.getMessages()) {

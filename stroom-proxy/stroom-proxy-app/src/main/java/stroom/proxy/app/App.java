@@ -25,6 +25,7 @@ import stroom.dropwizard.common.Servlets;
 import stroom.dropwizard.common.StroomConfigurationSourceProvider;
 import stroom.proxy.app.guice.ProxyModule;
 import stroom.util.authentication.DefaultOpenIdCredentials;
+import stroom.util.date.DateUtil;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ResourcePaths;
 
@@ -167,6 +168,6 @@ public class App extends Application<Config> {
     private void showBuildInfo() {
         Objects.requireNonNull(buildInfo);
         LOGGER.info("Build version: {}, date: {}",
-                buildInfo.getBuildVersion(), buildInfo.getBuildDate());
+                buildInfo.getBuildVersion(), DateUtil.createNormalDateTimeString(buildInfo.getBuildTime()));
     }
 }

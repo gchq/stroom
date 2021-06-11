@@ -22,10 +22,10 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.HasDocumentRead;
+import stroom.preferences.client.DateTimeFormatter;
 import stroom.search.elastic.client.presenter.ElasticIndexFieldListPresenter.ElasticIndexFieldListView;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
-import stroom.widget.customdatebox.client.ClientDateUtil;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.user.cellview.client.Column;
@@ -44,14 +44,16 @@ public class ElasticIndexFieldListPresenter extends MyPresenterWidget<ElasticInd
         implements HasDocumentRead<ElasticIndexDoc> {
 
     private final DataGridView<ElasticIndexField> dataGridView;
+    private final DateTimeFormatter dateTimeFormatter;
     private List<ElasticIndexField> fields;
     private ElasticIndexFieldDataProvider<ElasticIndexField> dataProvider;
 
     @Inject
     public ElasticIndexFieldListPresenter(final EventBus eventBus,
-                                          final ElasticIndexFieldListView view
-    ) {
+                                          final ElasticIndexFieldListView view,
+                                          final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
+        this.dateTimeFormatter = dateTimeFormatter;
 
         dataGridView = new DataGridViewImpl<>(true, true);
         view.setDataGridView(dataGridView);
@@ -130,7 +132,7 @@ public class ElasticIndexFieldListPresenter extends MyPresenterWidget<ElasticInd
             final StringBuilder sb = new StringBuilder();
             sb
                     .append("Field list updated at: ")
-                    .append(ClientDateUtil.toISOString(System.currentTimeMillis()))
+                    .append(dateTimeFormatter.format(System.currentTimeMillis()))
                     .append("<br />Field count: ").append(fields.size());
 
             getView().setStatusMessage(sb.toString());
@@ -140,6 +142,7 @@ public class ElasticIndexFieldListPresenter extends MyPresenterWidget<ElasticInd
     }
 
     public interface ElasticIndexFieldListView extends View {
+
         void setDataGridView(final View view);
 
         void setStatusMessage(final String syncState);

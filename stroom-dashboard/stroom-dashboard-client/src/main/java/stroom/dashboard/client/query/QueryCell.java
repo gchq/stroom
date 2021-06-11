@@ -17,7 +17,7 @@
 package stroom.dashboard.client.query;
 
 import stroom.dashboard.shared.StoredQuery;
-import stroom.widget.customdatebox.client.ClientDateUtil;
+import stroom.preferences.client.DateTimeFormatter;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
@@ -29,7 +29,10 @@ public class QueryCell extends AbstractCell<StoredQuery> {
 
     private static Template template;
 
-    public QueryCell() {
+    private final DateTimeFormatter dateTimeFormatter;
+
+    public QueryCell(final DateTimeFormatter dateTimeFormatter) {
+        this.dateTimeFormatter = dateTimeFormatter;
         if (template == null) {
             synchronized (QueryCell.class) {
                 if (template == null) {
@@ -47,7 +50,7 @@ public class QueryCell extends AbstractCell<StoredQuery> {
                         value.getName()));
 
             } else {
-                final String time = ClientDateUtil.toISOString(value.getCreateTimeMs());
+                final String time = dateTimeFormatter.format(value.getCreateTimeMs());
                 sb.append(template.historyLayout("queryCell-outer", "queryCell-time", time,
                         "queryCell-expression", value.getQuery().getExpression().toString()));
             }

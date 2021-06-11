@@ -22,6 +22,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.presenter.EntityChooser;
 import stroom.meta.shared.DataRetentionFields;
 import stroom.meta.shared.MetaFields;
+import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 
@@ -38,6 +39,7 @@ public class MetaListPresenter extends AbstractMetaListPresenter {
                              final RestFactory restFactory,
                              final TooltipPresenter tooltipPresenter,
                              final LocationManager locationManager,
+                             final DateTimeFormatter dateTimeFormatter,
                              final Provider<SelectionSummaryPresenter> selectionSummaryPresenterProvider,
                              final Provider<ProcessChoicePresenter> processChoicePresenterProvider,
                              final Provider<EntityChooser> pipelineSelection) {
@@ -45,6 +47,7 @@ public class MetaListPresenter extends AbstractMetaListPresenter {
                 restFactory,
                 tooltipPresenter,
                 locationManager,
+                dateTimeFormatter,
                 selectionSummaryPresenterProvider,
                 processChoicePresenterProvider,
                 pipelineSelection,

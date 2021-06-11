@@ -11,58 +11,56 @@ import java.util.Objects;
 public class BuildInfo extends AbstractConfig {
 
     @JsonProperty
-    private final String upDate;
+    private final long upTime;
     @JsonProperty
-    private final String buildDate;
+    private final long buildTime;
     @JsonProperty
     private final String buildVersion;
 
     @JsonCreator
-    public BuildInfo(@JsonProperty("upDate") final String upDate,
+    public BuildInfo(@JsonProperty("upTime") final long upTime,
                      @JsonProperty("buildVersion") final String buildVersion,
-                     @JsonProperty("buildDate") final String buildDate) {
-        this.upDate = upDate;
+                     @JsonProperty("buildTime") final long buildTime) {
+        this.upTime = upTime;
         this.buildVersion = buildVersion;
-        this.buildDate = buildDate;
+        this.buildTime = buildTime;
     }
 
     public String getBuildVersion() {
         return buildVersion;
     }
 
-    public String getBuildDate() {
-        return buildDate;
+    public long getBuildTime() {
+        return buildTime;
     }
 
-    public String getUpDate() {
-        return upDate;
+    public long getUpTime() {
+        return upTime;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof BuildInfo)) {
             return false;
         }
         final BuildInfo buildInfo = (BuildInfo) o;
-        return Objects.equals(upDate, buildInfo.upDate) &&
-                Objects.equals(buildDate, buildInfo.buildDate) &&
-                Objects.equals(buildVersion, buildInfo.buildVersion);
+        return upTime == buildInfo.upTime && buildTime == buildInfo.buildTime && Objects.equals(buildVersion,
+                buildInfo.buildVersion);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(upDate, buildDate, buildVersion);
+        return Objects.hash(upTime, buildTime, buildVersion);
     }
 
     @Override
     public String toString() {
         return "BuildInfo{" +
-                "upDate='" + upDate + '\'' +
-                ", buildDate='" + buildDate + '\'' +
+                "upTime='" + upTime + '\'' +
+                ", buildTime='" + buildTime + '\'' +
                 ", buildVersion='" + buildVersion + '\'' +
                 '}';
     }

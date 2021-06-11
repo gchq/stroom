@@ -1,5 +1,6 @@
 package stroom.proxy.app.servlet;
 
+import stroom.util.date.DateUtil;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.IsServlet;
 
@@ -42,7 +43,7 @@ public class ProxyWelcomeServlet extends HttpServlet implements IsServlet {
                 "<h1>Stroom Proxy " +
                 buildInfo.getBuildVersion() +
                 " built on " +
-                buildInfo.getBuildDate() +
+                DateUtil.createNormalDateTimeString(buildInfo.getBuildTime()) +
                 "</h1>\n" +
                 "\n" +
                 "<p>Send data to " +

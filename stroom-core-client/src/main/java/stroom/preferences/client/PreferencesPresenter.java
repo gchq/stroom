@@ -20,6 +20,7 @@ package stroom.preferences.client;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.editor.client.presenter.ChangeThemeEvent;
 import stroom.preferences.client.PreferencesPresenter.PreferencesView;
+import stroom.query.api.v2.TimeZone;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.ui.config.shared.UserPreferences;
@@ -66,7 +67,7 @@ public final class PreferencesPresenter
     @Override
     public void onChange() {
         final UserPreferences userPreferences = write();
-        preferencesManager.updateClassNames(userPreferences);
+        preferencesManager.setCurrentPreferences(userPreferences);
         final HasHandlers handlers = event -> getEventBus().fireEvent(event);
         ChangeThemeEvent.fire(handlers, userPreferences.getTheme());
     }
@@ -91,7 +92,7 @@ public final class PreferencesPresenter
     private void reset(final UserPreferences userPreferences) {
         originalPreferences = userPreferences;
         read(userPreferences);
-        preferencesManager.updateClassNames(userPreferences);
+        preferencesManager.setCurrentPreferences(userPreferences);
     }
 
     public void show() {
@@ -102,14 +103,14 @@ public final class PreferencesPresenter
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
                     final UserPreferences userPreferences = write();
-                    preferencesManager.updateClassNames(userPreferences);
+                    preferencesManager.setCurrentPreferences(userPreferences);
                     if (!Objects.equals(userPreferences, originalPreferences)) {
                         preferencesManager.update(userPreferences, (result) -> hide());
                     } else {
                         hide();
                     }
                 } else {
-                    preferencesManager.updateClassNames(originalPreferences);
+                    preferencesManager.setCurrentPreferences(originalPreferences);
                     hide();
                 }
             }
@@ -148,23 +149,74 @@ public final class PreferencesPresenter
 
 
     private void read(final UserPreferences userPreferences) {
+        final TimeZone timeZone = userPreferences.getTimeZone();
+
         getView().setThemes(preferencesManager.getThemes());
         getView().setTheme(userPreferences.getTheme());
+        getView().setFont(userPreferences.getFont());
+        getView().setFontSize(userPreferences.getFontSize());
+        getView().setPattern(userPreferences.getDateTimePattern());
+
+        if (timeZone != null) {
+            getView().setTimeZoneUse(timeZone.getUse());
+            getView().setTimeZoneId(timeZone.getId());
+            getView().setTimeZoneOffsetHours(timeZone.getOffsetHours());
+            getView().setTimeZoneOffsetMinutes(timeZone.getOffsetMinutes());
+        }
     }
 
     private UserPreferences write() {
+        final TimeZone timeZone = TimeZone.builder()
+                .use(getView().getTimeZoneUse())
+                .id(getView().getTimeZoneId())
+                .offsetHours(getView().getTimeZoneOffsetHours())
+                .offsetMinutes(getView().getTimeZoneOffsetMinutes())
+                .build();
+
         return UserPreferences.builder()
-                .theme(getView().getThere())
+                .theme(getView().getTheme())
+                .font(getView().getFont())
+                .fontSize(getView().getFontSize())
+                .dateTimePattern(getView().getPattern())
+                .timeZone(timeZone)
                 .build();
     }
 
     public interface PreferencesView extends View, HasUiHandlers<PreferencesUiHandlers> {
 
-        String getThere();
+        String getTheme();
 
         void setTheme(String theme);
 
         void setThemes(List<String> themes);
+
+        String getFont();
+
+        void setFont(String font);
+
+        String getFontSize();
+
+        void setFontSize(String fontSize);
+
+        String getPattern();
+
+        void setPattern(String pattern);
+
+        TimeZone.Use getTimeZoneUse();
+
+        void setTimeZoneUse(TimeZone.Use use);
+
+        String getTimeZoneId();
+
+        void setTimeZoneId(String timeZoneId);
+
+        Integer getTimeZoneOffsetHours();
+
+        void setTimeZoneOffsetHours(Integer timeZoneOffsetHours);
+
+        Integer getTimeZoneOffsetMinutes();
+
+        void setTimeZoneOffsetMinutes(Integer timeZoneOffsetMinutes);
 
         void setAsDefaultVisible(boolean visible);
     }

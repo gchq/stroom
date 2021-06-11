@@ -26,9 +26,9 @@ import stroom.dispatch.client.RestFactory;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeResource;
+import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
-import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.cell.client.TextCell;
@@ -45,14 +45,18 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<DataGridVi
     private static final IndexVolumeResource INDEX_VOLUME_RESOURCE = GWT.create(IndexVolumeResource.class);
 
     private final RestFactory restFactory;
+    private final DateTimeFormatter dateTimeFormatter;
 
     private Consumer<ResultPage<IndexVolume>> consumer;
     private RestDataProvider<IndexVolume, ResultPage<IndexVolume>> dataProvider;
 
     @Inject
-    public IndexVolumeStatusListPresenter(final EventBus eventBus, final RestFactory restFactory) {
+    public IndexVolumeStatusListPresenter(final EventBus eventBus,
+                                          final RestFactory restFactory,
+                                          final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, new DataGridViewImpl<>(true, true));
         this.restFactory = restFactory;
+        this.dateTimeFormatter = dateTimeFormatter;
 
         // Add a border to the list.
         getWidget().getElement().addClassName("stroom-border");
@@ -143,7 +147,7 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<DataGridVi
         final Column<IndexVolume, String> usageDateColumn = new Column<IndexVolume, String>(new TextCell()) {
             @Override
             public String getValue(final IndexVolume volume) {
-                return ClientDateUtil.toISOString(volume.getUpdateTimeMs());
+                return dateTimeFormatter.format(volume.getUpdateTimeMs());
             }
         };
         getView().addResizableColumn(usageDateColumn, "Usage Date", ColumnSizeConstants.DATE_COL);

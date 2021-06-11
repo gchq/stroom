@@ -39,7 +39,7 @@ public class App implements EntryPoint {
 
         final PreferencesManager preferencesManager = ginjector.getPreferencesManager();
         preferencesManager.fetch(preferences -> {
-            preferencesManager.updateClassNames(preferences);
+            preferencesManager.setCurrentPreferences(preferences);
 
             // Show the application panel.
             ginjector.getCorePresenter().get().forceReveal();

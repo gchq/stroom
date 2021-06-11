@@ -35,6 +35,7 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.node.client.NodeManager;
+import stroom.preferences.client.DateTimeFormatter;
 import stroom.svg.client.SvgPresets;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.FindTaskProgressCriteria;
@@ -49,7 +50,6 @@ import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -80,6 +80,7 @@ public class TaskManagerListPresenter
 
     private static final TaskResource TASK_RESOURCE = GWT.create(TaskResource.class);
 
+    private final DateTimeFormatter dateTimeFormatter;
     private final FindTaskProgressCriteria criteria = new FindTaskProgressCriteria();
     private final FindTaskProgressRequest request = new FindTaskProgressRequest(criteria);
     private final Set<TaskProgress> selectedTaskProgress = new HashSet<>();
@@ -102,12 +103,14 @@ public class TaskManagerListPresenter
     public TaskManagerListPresenter(final EventBus eventBus,
                                     final TooltipPresenter tooltipPresenter,
                                     final RestFactory restFactory,
-                                    final NodeManager nodeManager) {
+                                    final NodeManager nodeManager,
+                                    final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, new DataGridViewImpl<>(false, 1000));
         this.tooltipPresenter = tooltipPresenter;
         this.restFactory = restFactory;
         this.nodeManager = nodeManager;
         this.criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, true, false);
+        this.dateTimeFormatter = dateTimeFormatter;
 
         final ButtonView terminateButton = getView().addButton(SvgPresets.DELETE.with("Terminate Task", true));
         terminateButton.addClickHandler(event -> endSelectedTask());
@@ -251,7 +254,7 @@ public class TaskManagerListPresenter
         // Submit Time.
         getView().addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(getColouredCellFunc(taskProgress ->
-                        ClientDateUtil.toISOString(taskProgress.getSubmitTimeMs())))
+                        dateTimeFormatter.format(taskProgress.getSubmitTimeMs())))
                         .withSorting(FindTaskProgressCriteria.FIELD_SUBMIT_TIME)
                         .build(),
                 FindTaskProgressCriteria.FIELD_SUBMIT_TIME,
@@ -283,7 +286,7 @@ public class TaskManagerListPresenter
                     tableBuilder.addHeaderRow("Task")
                             .addRow("Name", row.getTaskName())
                             .addRow("User", row.getUserName())
-                            .addRow("Submit Time", ClientDateUtil.toISOString(row.getSubmitTimeMs()))
+                            .addRow("Submit Time", dateTimeFormatter.format(row.getSubmitTimeMs()))
                             .addRow("Age", ModelStringUtil.formatDurationString(row.getAgeMs()))
                             .addBlankRow()
                             .addRow("Id", row.getId())
