@@ -95,7 +95,7 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
                         if (parentIframe == null) {
                             AlertEvent.fireWarn(
                                     this,
-                                    "You are reached Stroom outside of an IFrame you will now be redirected",
+                                    "You have reached Stroom outside of an IFrame you will now be redirected",
                                     () -> {
                                         UrlBuilder builder = new UrlBuilder();
                                         builder.setProtocol(Window.Location.getProtocol());
