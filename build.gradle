@@ -26,12 +26,11 @@ plugins {
     id "com.dorongold.task-tree" version "1.3.1" apply true
 
     id "com.github.johnrengelman.shadow" version "6.1.0" apply false
-
     id 'nu.studer.jooq' version '5.2' apply false
-
     id 'org.flywaydb.flyway' version '7.5.4' apply false
-
     id "ca.cutterslade.analyze" version "1.4.3"
+    id "signing"
+    id "io.github.gradle-nexus.publish-plugin" version "1.0.0"
 
 //    id 'java-library'
 
@@ -46,6 +45,7 @@ plugins {
 
 apply plugin: 'ca.cutterslade.analyze'
 apply plugin: 'de.undercouch.download'
+apply plugin: 'io.github.gradle-nexus.publish-plugin'
 //apply plugin: 'com.vanniktech.dependency.graph.generator'
 
 def javaVersion = JavaVersion.VERSION_15;
@@ -54,15 +54,29 @@ if (JavaVersion.current() != javaVersion) {
         "This build must be run with Java " + javaVersion + " (current = " + JavaVersion.current() + ")")
 }
 
+ext.isPropertySet = { propName ->
+    if (!project.hasProperty(propName)) {
+        return false
+    } else {
+        def prop = project.getProperty(propName)
+        return (prop != "unspecified" && (prop != "" || prop != null))
+    }
+}
+
+ext.ensurePropertyIsSet = { propName -> 
+    if (!isPropertySet(propName)) {
+        throw new GradleException(
+            "Expecting project property [${propName}] or env var [ORG_GRADLE_PROJECT_${propName}] to be set.")
+    }
+}
+
 //if the project has a value for the passed property (i.e from the cmd line via -PpropName=xxx)
 //use that, else use a default value
 ext.getPropertyOrDefault = { propName, defaultValue ->
     def val;
-    if (project.hasProperty(propName)
-            && project.getProperty(propName) != "unspecified"
-            && project.getProperty(propName) != "") {
+    if (isPropertySet(propName)) {
         val = project.getProperty(propName)
-        println "Using property [$propName] with value [$val]"
+        println "Getting property [$propName] with value [$val]"
     } else {
         val = defaultValue
         println "Property [$propName] has no value, using default value [$val]"
@@ -312,12 +326,55 @@ def failedTestReportFiles = []
 
 //Configuration applicable to all projects
 allprojects {
+    group = 'uk.gov.gchq.stroom'
+    version = versions.stroom
     // Make doclint be quiet - we don't care about JavaDoc warnings.
     tasks.withType(Javadoc) {
         options.addStringOption('Xdoclint:none', '-quiet')
         options.addBooleanOption('html5', true)
     }
 
+}
+
+String base64DecodeProjectProperty(String propName) {
+    def encodedVal = project.findProperty(propName)
+    return encodedVal == null
+        ? null
+        : new String(Base64.getDecoder().decode(encodedVal.toString())).trim()
+}
+
+void configureSigning(Project project) {
+
+    // To create the GPG key do:
+    //   gpg2 --gen-key 
+    // To list it
+    //   gpg2 --list-keys
+    // To publish the public key on a keyserver
+    // You may be able to get your key id (if you have only one key) using:
+    // gpg2  --list-secret-keys | grep "\[SC\]" | tr -s ' ' | cut -d' ' -f2 | cut -d'/' -f2
+    //   gpg2 --keyserver hkp://keyserver.ubuntu.com --send-keys <your short key id>
+    // To get the ascii-armour private key for use in travis env vars as base64 encoded
+    //   gpg2 --armor --export-secret-keys <your short key id> | base64 -w0
+
+    //project.signing.gnupg.keyName = project.findProperty("signingKeyId")
+
+    project.signing {
+        println "Configuring project to sign maven artifacts"
+        required { project.gradle.taskGraph.hasTask("required") }
+        def signingKeyId = project.findProperty("signingKeyId")
+        def signingKey = base64DecodeProjectProperty("signingKey")
+        def signingPassword = project.findProperty("signingPassword")
+
+        if (signingKeyId) {
+            println "Using in memory pgp key with ID"
+            useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
+        } else if (signingKey) {
+            println "Using in memory pgp key without ID"
+            useInMemoryPgpKeys(signingKey, signingPassword)
+        }
+        //useGpgCmd()
+        sign project.publishing.publications.mavenJava
+    }
 }
 
 // Variable to capture the version of slf4j defined in the DW BOM, so
@@ -589,59 +646,66 @@ configure(projectsToBePublished) {
     println "Configuring ${project.name} for publishing"
 
     apply plugin: 'maven-publish'
+    apply plugin: 'signing'
 
-    group = 'stroom'
-    version = versions.stroom
-
-    task sourcesJar(type: Jar, dependsOn: classes) {
-        classifier = 'sources'
-        from sourceSets.main.allSource
-    }
-
-    task javadocJar(type: Jar, dependsOn: javadoc) {
-        classifier = 'javadoc'
-        from javadoc.destinationDir
-    }
-
-    artifacts {
-        archives sourcesJar
-        archives javadocJar
-    }
-
-    def pomConfig = {
-        licenses {
-            license {
-                name "The Apache Software License, Version 2.0"
-                url "http://www.apache.org/licenses/LICENSE-2.0.txt"
-                distribution "repo"
-            }
-        }
-        scm {
-            url "https://github.com/stroom/stroom"
-        }
-    }
-
-    publishing {
-        publications {
-            mavenJava(MavenPublication) {
-                artifact sourcesJar
-                artifact javadocJar
-                pom.withXml {
-                    def root = asNode()
-                    root.appendNode('name', project.name)
-                    root.children().last() + pomConfig
-                }
-            }
-        }
+    //for java plugin
+    //see https://docs.gradle.org/current/userguide/java_plugin.html
+    java {
+        //package JavaDoc as part of publication
+        withJavadocJar()
+        //package Sources as part of publication
+        withSourcesJar()
     }
 
     publishing {
         publications {
             mavenJava(MavenPublication) {
                 from components.java
+
+                pom {
+                    name = project['name']
+                    description = "Stoom published libraries"
+                    url = 'https://github.com/gchq/stroom'
+                    licenses {
+                        license {
+                            name = 'The Apache License, Version 2.0'
+                            url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        }
+                    }
+                    developers {
+                        developer {
+                            name = 'GCHQDevelopers'
+                            organization = 'GCQH'
+                            organizationUrl = 'https://github.com/gchq'
+                        }
+                    }
+                    scm {
+                        connection = 'scm:git:git@github.com:gchq/stroom.git'
+                        developerConnection = 'scm:git:git@github.com:gchq/stroom.git'
+                        url = 'https://github.com/gchq/stroom'
+                    }
+                }         
             }
         }
     }
+
+    def hasSigningKey = project.hasProperty("signingkeyId") || project.findProperty("signingKey")
+    if(hasSigningKey) {
+        configureSigning(project)
+    }
+}
+
+// Uses sonotypeUsername and sonotypePassword
+// See https://github.com/rwinch/gradle-publish-ossrh-sample
+// Also https://github.com/kit-data-manager/nexus-publish-example
+nexusPublishing {
+    repositories {
+        sonatype()    //sonatypeUsername and sonatypePassword properties are used automatically
+    }
+    // these are not strictly required. The default timeouts are set to 1 minute. But Sonatype can be really slow.
+    // If you get the error "java.net.SocketTimeoutException: timeout", these lines will help.
+    connectTimeout = Duration.ofMinutes(3)
+    clientTimeout = Duration.ofMinutes(3)
 }
 
 ////configuration specific to projects that expose their test jars for other projects to use

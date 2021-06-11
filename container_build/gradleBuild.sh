@@ -31,6 +31,8 @@ GWT_ARGS=(
   "-PgwtCompilerMaxHeap=${GWT_MAX_HEAP:-2G}"
 )
 
+RELEASE_VERSION_REGEX='^v[0-9]+\.[0-9]+.*$'
+
 determine_host_address() {
   if [ "$(uname)" == "Darwin" ]; then
     # Code required to find IP address is different in MacOS
@@ -85,6 +87,23 @@ main() {
     test_args=( "-x" "test" )
   else
     test_args=( "test" )
+  fi
+
+  echo -e "${GREEN}Using GRADLE_ARGS [${BLUE}${GRADLE_ARGS[*]}${GREEN}]${NC}"
+  echo -e "${GREEN}Using publish_args [${BLUE}${publish_args[*]}${GREEN}]${NC}"
+
+  local publish_args
+  if [[ "$BUILD_VERSION" =~ ${RELEASE_VERSION_REGEX} ]] \
+    && [[ ! -n "${LOCAL_BUILD}" ]]; then
+    echo -e "${GREEN}This is a release version so add gradle arg for publishing" \
+      "libs to Maven Central${NC}"
+    publish_args+=(
+      "signMavenJavaPublication"
+      "publishToSonatype"
+      "closeAndReleaseSonatypeStagingRepository"
+    )
+  else
+    publish_args+=()
   fi
 
   # Do the gradle build
@@ -146,6 +165,7 @@ main() {
     buildDistribution \
     copyFilesForStroomDockerBuild \
     copyFilesForProxyDockerBuild \
+    "${publish_args[@]}" \
     -x test \
     -x stroom-ui:copyYarnBuild \
     -x stroom-app-gwt:gwtCompile \

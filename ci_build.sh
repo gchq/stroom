@@ -467,9 +467,11 @@ elif [ -n "$BUILD_TAG" ]; then
   if [[ "$BUILD_TAG" =~ ${RELEASE_VERSION_REGEX} ]]; then
     echo "This is a release version so add gradle arg for publishing" \
       "libs to Maven Central"
-    # TODO need to add in the sonatype build args when we have decided 
-    # what we are publishing from stroom
-    #extraBuildArgs+=("bintrayUpload")
+    extraBuildArgs=(
+      "signMavenJavaPublication"
+      "publishToSonatype"
+      "closeAndReleaseSonatypeStagingRepository"
+    )
   fi
 elif [[ "$BUILD_BRANCH" =~ $BRANCH_WHITELIST_REGEX ]]; then
   # Not a tagged release but is a whitelisted branch so create a snapshot
@@ -509,6 +511,8 @@ export BUILD_VERSION
 
 # MAX_WORKERS env var should be set in travis/github actions settings to
 # control max gradle/gwt workers
+# This will build/run a docker container to run the gradle build in
+# which will ultimately call 
 ./container_build/runInJavaDocker.sh GRADLE_BUILD
 
 # Don't do a docker build for pull requests
