@@ -66,6 +66,8 @@ determine_host_address() {
 
 main() {
 
+  echo -e "${GREEN}Running the gradle build in multiple steps${NC}"
+
   # We want to run from the repo root
   local local_repo_root
   local_repo_root="$(git rev-parse --show-toplevel)"
@@ -89,8 +91,6 @@ main() {
     test_args=( "test" )
   fi
 
-  echo -e "${GREEN}Using GRADLE_ARGS [${BLUE}${GRADLE_ARGS[*]}${GREEN}]${NC}"
-  echo -e "${GREEN}Using publish_args [${BLUE}${publish_args[*]}${GREEN}]${NC}"
 
   local publish_args
   if [[ "$BUILD_VERSION" =~ ${RELEASE_VERSION_REGEX} ]] \
@@ -105,6 +105,15 @@ main() {
   else
     publish_args+=()
   fi
+  
+  echo -e "${GREEN}LOCAL_BUILD             [${BLUE}${LOCAL_BUILD}${GREEN}]${NC}"
+  echo -e "${GREEN}SKIP_TESTS              [${BLUE}${SKIP_TESTS}${GREEN}]${NC}"
+  echo -e "${GREEN}BUILD_VERSION           [${BLUE}${BUILD_VERSION}${GREEN}]${NC}"
+  echo -e "${GREEN}STROOM_JDBC_DRIVER_HOST [${BLUE}${STROOM_JDBC_DRIVER_HOST}${GREEN}]${NC}"
+  echo -e "${GREEN}GRADLE_ARGS             [${BLUE}${GRADLE_ARGS[*]}${GREEN}]${NC}"
+  echo -e "${GREEN}GWT_ARGS                [${BLUE}${GWT_ARGS[*]}${GREEN}]${NC}"
+  echo -e "${GREEN}publish_args            [${BLUE}${publish_args[*]}${GREEN}]${NC}"
+  echo -e "${GREEN}test_args               [${BLUE}${test_args[*]}${GREEN}]${NC}"
 
   # Do the gradle build
   # Use custom gwt compile jvm settings to avoid blowing the ram limit in
@@ -171,7 +180,7 @@ main() {
     -x stroom-app-gwt:gwtCompile \
     -x stroom-dashboard-gwt:gwtCompile
 
-  echo -e "${GREEN}Done${NC}"
+  echo -e "${GREEN}Completed all gradle build steps${NC}"
 }
 
 # Get a time for the whole build
