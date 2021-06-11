@@ -1,7 +1,7 @@
 ext.moduleName = 'stroom.annotation.impl.db'
 
 dependencies {
-    compile project(':stroom-annotation:stroom-config-common')
+    compile project(':stroom-config:stroom-config-common')
     compile project(':stroom-core-shared')
     compile project(':stroom-db-util')
 //    compile project(':stroom-entity-shared')
