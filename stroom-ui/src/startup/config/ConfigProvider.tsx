@@ -11,6 +11,8 @@ const ConfigProvider: React.FunctionComponent = ({ children }) => {
     return (
       <CustomLoader title="Stroom" message="Loading Config. Please wait..." />
     );
+  } else {
+    document.title = config.htmlTitle;
   }
 
   return (

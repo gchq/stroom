@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2291** : Fixed issue where the configured Stroom instance title did not change the browser tab title.  
+
 
 ## [v7.0-beta.132] - 2021-06-07
 
