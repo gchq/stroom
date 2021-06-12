@@ -24,15 +24,14 @@ import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.search.elastic.shared.ElasticIndex;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Message;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -41,8 +40,6 @@ import java.util.Set;
 @Component
 @Singleton
 public class ElasticIndexStoreImpl implements ElasticIndexStore {
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticIndexStoreImpl.class);
-
     private final Store<ElasticIndex> store;
     private final ElasticIndexService elasticIndexService;
 
@@ -54,7 +51,17 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
         this.elasticIndexService = elasticIndexService;
 
         store.setType(ElasticIndex.ENTITY_TYPE, ElasticIndex.class);
-        store.setSerialiser(new JsonSerialiser<>());
+        store.setSerialiser(new JsonSerialiser<ElasticIndex>() {
+            @Override
+            public void write(final OutputStream outputStream, final ElasticIndex document, final boolean export) throws IOException {
+                // Do not include field mappings in the export
+                if (export) {
+                    document.setFields(Collections.emptyList());
+                }
+
+                super.write(outputStream, document, export);
+            }
+        });
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -109,7 +116,6 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
 
     @Override
     public ElasticIndex writeDocument(final ElasticIndex document) {
-        document.setDataSourceFields(elasticIndexService.getDataSourceFields(document));
         document.setFields(elasticIndexService.getFields(document));
 
         return store.writeDocument(document);
