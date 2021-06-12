@@ -36,8 +36,7 @@ import java.util.Objects;
         "fieldUse",
         "fieldName",
         "fieldType",
-        "stored",
-        "indexed"
+        "stored"
 })
 public class ElasticIndexField implements HasDisplayValue, Comparable<ElasticIndexField>, Serializable {
     private static final long serialVersionUID = 3100770758821157580L;
@@ -46,7 +45,6 @@ public class ElasticIndexField implements HasDisplayValue, Comparable<ElasticInd
     private String fieldName;
     private String fieldType;
     private boolean stored;
-    private boolean indexed = true;
 
     public ElasticIndexField() {
         // Default constructor necessary for GWT serialisation.
@@ -55,14 +53,12 @@ public class ElasticIndexField implements HasDisplayValue, Comparable<ElasticInd
     public ElasticIndexField(final ElasticIndexFieldType fieldUse,
                              final String fieldName,
                              final String fieldType,
-                             final boolean stored,
-                             final boolean indexed
+                             final boolean stored
     ) {
         setFieldUse(fieldUse);
         setFieldName(fieldName);
         setFieldType(fieldType);
         setStored(stored);
-        setIndexed(indexed);
     }
 
     public ElasticIndexFieldType getFieldUse() {
@@ -70,10 +66,6 @@ public class ElasticIndexField implements HasDisplayValue, Comparable<ElasticInd
     }
 
     public void setFieldUse(final ElasticIndexFieldType fieldUse) {
-        if (fieldUse == null) {
-            this.fieldUse = ElasticIndexFieldType.TEXT;
-        }
-
         this.fieldUse = fieldUse;
     }
 
@@ -101,14 +93,6 @@ public class ElasticIndexField implements HasDisplayValue, Comparable<ElasticInd
         this.stored = stored;
     }
 
-    public boolean isIndexed() {
-        return indexed;
-    }
-
-    public void setIndexed(final boolean indexed) {
-        this.indexed = indexed;
-    }
-
     @JsonIgnore
     @Override
     public String getDisplayValue() {
@@ -121,7 +105,6 @@ public class ElasticIndexField implements HasDisplayValue, Comparable<ElasticInd
         if (!(o instanceof ElasticIndexField)) return false;
         final ElasticIndexField that = (ElasticIndexField) o;
         return stored == that.stored &&
-                indexed == that.indexed &&
                 fieldUse == that.fieldUse &&
                 Objects.equals(fieldName, that.fieldName) &&
                 Objects.equals(fieldType, that.fieldType);
@@ -129,7 +112,7 @@ public class ElasticIndexField implements HasDisplayValue, Comparable<ElasticInd
 
     @Override
     public int hashCode() {
-        return Objects.hash(fieldUse, fieldName, fieldType, stored, indexed);
+        return Objects.hash(fieldUse, fieldName, fieldType, stored);
     }
 
     @Override
