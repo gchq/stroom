@@ -30,10 +30,10 @@ import stroom.search.elastic.client.presenter.ElasticIndexSettingsPresenter.Elas
 import stroom.search.elastic.shared.ElasticCluster;
 import stroom.search.elastic.shared.ElasticConnectionTestAction;
 import stroom.search.elastic.shared.ElasticIndex;
+import stroom.search.elastic.shared.ElasticIndexDataSourceFieldUtil;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.EqualsUtil;
 
-import com.google.gwt.user.client.ui.TextArea;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -105,7 +105,7 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
             index.setRetentionExpression(new ExpressionOperator.Builder().op(Op.AND).build());
         }
 
-        editExpressionPresenter.init(dispatcher, docRef, index.getDataSourceFields());
+        editExpressionPresenter.init(dispatcher, docRef, ElasticIndexDataSourceFieldUtil.getDataSourceFields(index));
         editExpressionPresenter.read(index.getRetentionExpression());
     }
 

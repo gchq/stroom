@@ -16,12 +16,10 @@
 
 package stroom.search.elastic.shared;
 
-import stroom.datasource.api.v2.DataSourceField;
 import stroom.docstore.shared.Doc;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
@@ -29,11 +27,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "clusterRef", "indexName", "fields", "dataSourceFields", "retentionExpression"})
+@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "clusterRef", "indexName", "fields", "retentionExpression"})
 public class ElasticIndex extends Doc {
     public static final String ENTITY_TYPE = "ElasticIndex";
-
-    private static final long serialVersionUID = 1L;
 
     /**
      * Reference to the `ElasticCluster` containing common Elasticsearch cluster connection properties
@@ -43,12 +39,10 @@ public class ElasticIndex extends Doc {
     private String description;
     private String indexName;
     private List<ElasticIndexField> fields;
-    private List<DataSourceField> dataSourceFields;
     private ExpressionOperator retentionExpression;
 
     public ElasticIndex() {
         this.fields = new ArrayList<>();
-        this.dataSourceFields = new ArrayList<>();
     }
 
     public String getDescription() { return description; }
@@ -85,12 +79,6 @@ public class ElasticIndex extends Doc {
         this.fields = fields;
     }
 
-    @JsonProperty("dataSourceFields")
-    public List<DataSourceField> getDataSourceFields() { return dataSourceFields; }
-
-    @JsonProperty("dataSourceFields")
-    public void setDataSourceFields(final List<DataSourceField> dataSourceFields) { this.dataSourceFields = dataSourceFields; }
-
     @JsonProperty("retentionExpression")
     public ExpressionOperator getRetentionExpression() { return retentionExpression; }
 
@@ -111,13 +99,12 @@ public class ElasticIndex extends Doc {
         return Objects.equals(description, elasticIndex.description) &&
                 Objects.equals(clusterRef, elasticIndex.clusterRef) &&
                 Objects.equals(indexName, elasticIndex.indexName) &&
-                Objects.equals(fields, elasticIndex.fields) &&
-                Objects.equals(dataSourceFields, elasticIndex.dataSourceFields);
+                Objects.equals(fields, elasticIndex.fields);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), description, indexName, clusterRef, fields, dataSourceFields);
+        return Objects.hash(super.hashCode(), description, indexName, clusterRef, fields);
     }
 
     @Override
@@ -127,7 +114,6 @@ public class ElasticIndex extends Doc {
                 ", clusterRef='" + clusterRef + '\'' +
                 ", indexName='" + indexName + '\'' +
                 ", fields=" + fields +
-                ", dataSourceFields=" + dataSourceFields +
                 '}';
     }
 }

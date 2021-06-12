@@ -144,8 +144,7 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
                                     ElasticIndexFieldType.fromNativeType(fieldName, fieldType),
                                     fieldName,
                                     fieldType,
-                                    sourceFieldEnabled || stored,
-                                    true
+                                    sourceFieldEnabled || stored
                             ));
                         }
                     }
