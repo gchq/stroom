@@ -97,6 +97,10 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
                     final Map<String, Object> propertiesMap = (Map<String, Object>) properties;
                     final String nativeType = (String) propertiesMap.get("type");
 
+                    // If field type is null, this is a system field, so ignore
+                    if (nativeType == null) {
+                        return null;
+                    }
                     try {
                         final ElasticIndexFieldType elasticFieldType =
                                 ElasticIndexFieldType.fromNativeType(fullName, nativeType);
@@ -240,11 +244,6 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
                         return o1.compareToIgnoreCase(o2);
                     });
 
-                    allMappings.values().forEach(indexMappings -> indexMappings.forEach((fieldName, mapping) -> {
-                        if (!mappings.containsKey(fieldName)) {
-                            mappings.put(fieldName, mapping);
-                        }
-                    }));
                     // Build a list of all multi fields (i.e. those defined only in the field mapping).
                     // These are excluded from the fields the user can pick via the Stroom UI, as they are not part
                     // of the returned `_source` field.
