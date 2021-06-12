@@ -1110,13 +1110,6 @@ public class DefaultProperties {
                 .requireUiRestart(true)
                 .build());
         list.add(new GlobalProperty.Builder()
-                .name("stroom.secret.encryptionKey")
-                .value("secretP@ssword")
-                .description("Secret used to encrypt document properties, such as API keys")
-                .editable(true)
-                .requireUiRestart(true)
-                .build());
-        list.add(new GlobalProperty.Builder()
                 .name("stroom.auth.services.url")
                 .value("http://auth-service:8099")
                 .description("The URL of the auth service")

@@ -58,7 +58,6 @@ public class ElasticIndexCacheImpl implements ElasticIndexCache, EntityEvent.Han
 
             // Query field mappings and cache with the index
             index.setFields(elasticIndexService.getFields(index));
-            index.setDataSourceFields(elasticIndexService.getDataSourceFields(index));
 
             return index;
         });

@@ -53,6 +53,7 @@ public class ElasticSearchResultCollector implements Store, TaskCallback<NodeRes
     private final Set<String> highlights;
     private final ResultHandler resultHandler;
     private final Sizes defaultMaxResultsSizes;
+    private final Sizes maxResultSizes;
     private final Sizes storeSize;
 
     private ElasticSearchResultCollector(final TaskManager taskManager,
@@ -60,23 +61,26 @@ public class ElasticSearchResultCollector implements Store, TaskCallback<NodeRes
                                          final Set<String> highlights,
                                          final ResultHandler resultHandler,
                                          final Sizes defaultMaxResultsSizes,
+                                         final Sizes maxResultSizes,
                                          final Sizes storeSize) {
         this.taskManager = taskManager;
         this.task = task;
         this.highlights = highlights;
         this.resultHandler = resultHandler;
         this.defaultMaxResultsSizes = defaultMaxResultsSizes;
+        this.maxResultSizes = maxResultSizes;
         this.storeSize = storeSize;
     }
 
     public static ElasticSearchResultCollector create(final TaskManager taskManager,
-                                                   final Task<VoidResult> task,
-                                                   final Set<String> highlights,
-                                                   final ResultHandler resultHandler,
-                                                   final Sizes defaultMaxResultsSizes,
-                                                   final Sizes storeSize
+                                                      final Task<VoidResult> task,
+                                                      final Set<String> highlights,
+                                                      final ResultHandler resultHandler,
+                                                      final Sizes defaultMaxResultsSizes,
+                                                      final Sizes maxResultSizes,
+                                                      final Sizes storeSize
     ) {
-        return new ElasticSearchResultCollector(taskManager, task, highlights, resultHandler, defaultMaxResultsSizes, storeSize);
+        return new ElasticSearchResultCollector(taskManager, task, highlights, resultHandler, defaultMaxResultsSizes, maxResultSizes, storeSize);
     }
 
     public void start() {
@@ -178,6 +182,10 @@ public class ElasticSearchResultCollector implements Store, TaskCallback<NodeRes
     @Override
     public Sizes getDefaultMaxResultsSizes() {
         return defaultMaxResultsSizes;
+    }
+
+    public Sizes getMaxResultSizes() {
+        return maxResultSizes;
     }
 
     @Override

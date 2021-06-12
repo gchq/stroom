@@ -27,17 +27,20 @@ public class ElasticSearchTask {
     private final String[] fieldNames;
     private final Receiver receiver;
     private final Tracker tracker;
+    private final ElasticSearchResultCollector resultCollector;
 
     ElasticSearchTask(final ElasticIndex elasticIndex,
                       final QueryBuilder query,
                       final String[] fieldNames,
                       final Receiver receiver,
-                      final Tracker tracker) {
+                      final Tracker tracker,
+                      final ElasticSearchResultCollector resultCollector) {
         this.elasticIndex = elasticIndex;
         this.query = query;
         this.fieldNames = fieldNames;
         this.receiver = receiver;
         this.tracker = tracker;
+        this.resultCollector = resultCollector;
     }
 
     ElasticIndex getElasticIndex() {
@@ -56,5 +59,9 @@ public class ElasticSearchTask {
 
     Tracker getTracker() {
         return tracker;
+    }
+
+    ElasticSearchResultCollector getResultCollector() {
+        return resultCollector;
     }
 }

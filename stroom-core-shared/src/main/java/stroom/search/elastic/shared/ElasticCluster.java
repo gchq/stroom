@@ -18,7 +18,6 @@ package stroom.search.elastic.shared;
 
 import stroom.docstore.shared.Doc;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
@@ -49,7 +48,6 @@ public class ElasticCluster extends Doc {
         this.connectionConfig = connectionConfig;
     }
 
-    @JsonIgnore
     @Override
     public final String getType() {
         return ENTITY_TYPE;

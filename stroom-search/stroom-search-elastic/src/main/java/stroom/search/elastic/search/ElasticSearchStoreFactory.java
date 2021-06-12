@@ -21,11 +21,15 @@ import stroom.node.server.StroomPropertyService;
 import stroom.node.shared.ClientProperties;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.TableSettings;
+import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap;
+import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.common.v2.SearchResultHandler;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreFactory;
+import stroom.query.common.v2.TableCoprocessorSettings;
 import stroom.search.elastic.ElasticIndexCache;
 import stroom.search.elastic.shared.ElasticIndex;
 import stroom.security.SecurityContext;
@@ -39,6 +43,7 @@ import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.util.Arrays;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("unused") //used by DI
@@ -100,9 +105,10 @@ public class ElasticSearchStoreFactory implements StoreFactory {
         final Sizes storeSize = getStoreSizes();
         final Sizes defaultMaxResultsSizes = getDefaultMaxResultsSizes();
         final SearchResultHandler resultHandler = new SearchResultHandler(coprocessorSettingsMap, defaultMaxResultsSizes, storeSize);
+        final Sizes maxResultSizes = calculateMaxResultSizes(coprocessorSettingsMap);
 
         // Create the search result collector.
-        final ElasticSearchResultCollector collector = ElasticSearchResultCollector.create(taskManager, asyncSearchTask, null, resultHandler, defaultMaxResultsSizes, storeSize);
+        final ElasticSearchResultCollector collector = ElasticSearchResultCollector.create(taskManager, asyncSearchTask, null, resultHandler, defaultMaxResultsSizes, maxResultSizes, storeSize);
 
         // Tell the task where results will be collected.
         asyncSearchTask.setResultCollector(collector);
@@ -111,6 +117,24 @@ public class ElasticSearchStoreFactory implements StoreFactory {
         collector.start();
 
         return collector;
+    }
+
+    private Sizes calculateMaxResultSizes(final CoprocessorSettingsMap coprocessorSettingsMap) {
+        final Sizes defaultMaxResultsSizes = getDefaultMaxResultsSizes();
+        Sizes currentMaxResultSize = Sizes.create(0);
+
+        // Find the largest maximum result set size of all table consumers
+        for (final Entry<CoprocessorKey, CoprocessorSettings> entry : coprocessorSettingsMap.getMap().entrySet()) {
+            final CoprocessorSettings settings = entry.getValue();
+            if (settings instanceof TableCoprocessorSettings) {
+                final TableCoprocessorSettings tableCoprocessorSettings = (TableCoprocessorSettings) settings;
+                final TableSettings tableSettings = tableCoprocessorSettings.getTableSettings();
+
+                currentMaxResultSize = Sizes.max(Sizes.create(tableSettings.getMaxResults()), currentMaxResultSize);
+            }
+        }
+
+        return Sizes.min(currentMaxResultSize, defaultMaxResultsSizes);
     }
 
     private Sizes getDefaultMaxResultsSizes() {

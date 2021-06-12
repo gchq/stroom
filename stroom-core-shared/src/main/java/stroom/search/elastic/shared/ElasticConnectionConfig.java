@@ -1,7 +1,5 @@
 package stroom.search.elastic.shared;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -32,14 +30,7 @@ public class ElasticConnectionConfig implements Serializable {
     /**
      * Plain-text API key (not serialised)
      */
-    @JsonIgnore
     private String apiKeySecret;
-
-    /**
-     * This is the field that is actually serialised and is an encrypted version of member variable `apiKeySecret`
-     */
-    @JsonProperty("apiKeySecret")
-    private String apiKeySecretEncrypted;
 
     /**
      * Socket timeout duration. Any Elasticsearch requests are expected to complete within this interval,
@@ -66,10 +57,6 @@ public class ElasticConnectionConfig implements Serializable {
     public String getApiKeySecret() { return apiKeySecret; }
 
     public void setApiKeySecret(final String apiKeySecret) { this.apiKeySecret = apiKeySecret; }
-
-    public String getApiKeySecretEncrypted() { return apiKeySecretEncrypted; }
-
-    public void setApiKeySecretEncrypted(final String apiKeySecretEncrypted) { this.apiKeySecretEncrypted = apiKeySecretEncrypted; }
 
     public int getSocketTimeoutMillis() { return socketTimeoutMillis; }
 
