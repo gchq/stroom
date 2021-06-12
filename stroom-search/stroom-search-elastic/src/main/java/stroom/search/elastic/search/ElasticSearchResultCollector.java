@@ -18,6 +18,7 @@ package stroom.search.elastic.search;
 
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.DataStore;
+import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.Store;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
@@ -46,19 +47,22 @@ public class ElasticSearchResultCollector implements Store {
     private final Provider<ElasticAsyncSearchTaskHandler> elasticAsyncSearchTaskHandlerProvider;
     private final ElasticAsyncSearchTask task;
     private final Coprocessors coprocessors;
+    private final Sizes maxResultSizes;
 
     private ElasticSearchResultCollector(
             final Executor executor,
             final TaskContextFactory taskContextFactory,
             final Provider<ElasticAsyncSearchTaskHandler> elasticAsyncSearchTaskHandlerProvider,
             final ElasticAsyncSearchTask task,
-            final Coprocessors coprocessors
+            final Coprocessors coprocessors,
+            final Sizes maxResultSizes
     ) {
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
         this.elasticAsyncSearchTaskHandlerProvider = elasticAsyncSearchTaskHandlerProvider;
         this.task = task;
         this.coprocessors = coprocessors;
+        this.maxResultSizes = maxResultSizes;
     }
 
     public static ElasticSearchResultCollector create(
@@ -66,14 +70,16 @@ public class ElasticSearchResultCollector implements Store {
             final TaskContextFactory taskContextFactory,
             final Provider<ElasticAsyncSearchTaskHandler> elasticAsyncSearchTaskHandlerProvider,
             final ElasticAsyncSearchTask task,
-            final Coprocessors coprocessors
+            final Coprocessors coprocessors,
+            final Sizes maxResultSizes
     ) {
         return new ElasticSearchResultCollector(
                 executor,
                 taskContextFactory,
                 elasticAsyncSearchTaskHandlerProvider,
                 task,
-                coprocessors);
+                coprocessors,
+                maxResultSizes);
     }
 
     public void start() {
@@ -148,6 +154,10 @@ public class ElasticSearchResultCollector implements Store {
     @Override
     public List<String> getHighlights() {
         return null;
+    }
+
+    public Sizes getMaxResultSizes() {
+        return maxResultSizes;
     }
 
     @Override

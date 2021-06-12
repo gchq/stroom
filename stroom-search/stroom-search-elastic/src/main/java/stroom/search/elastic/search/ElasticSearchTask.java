@@ -29,19 +29,22 @@ class ElasticSearchTask {
     private final FieldIndex fieldIndex;
     private final Receiver receiver;
     private final Tracker tracker;
+    private final ElasticSearchResultCollector resultCollector;
 
     ElasticSearchTask(final ElasticAsyncSearchTask asyncSearchTask,
                       final ElasticIndexDoc elasticIndex,
                       final QueryBuilder query,
                       final FieldIndex fieldIndex,
                       final Receiver receiver,
-                      final Tracker tracker) {
+                      final Tracker tracker,
+                      final ElasticSearchResultCollector resultCollector) {
         this.asyncSearchTask = asyncSearchTask;
         this.elasticIndex = elasticIndex;
         this.query = query;
         this.fieldIndex = fieldIndex;
         this.receiver = receiver;
         this.tracker = tracker;
+        this.resultCollector = resultCollector;
     }
 
     ElasticAsyncSearchTask getAsyncSearchTask() {
@@ -66,5 +69,9 @@ class ElasticSearchTask {
 
     Tracker getTracker() {
         return tracker;
+    }
+
+    ElasticSearchResultCollector getResultCollector() {
+        return resultCollector;
     }
 }

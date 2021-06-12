@@ -6841,10 +6841,6 @@ components:
           format: int64
         createUser:
           type: string
-        dataSourceFields:
-          type: array
-          items:
-            $ref: '#/components/schemas/AbstractField'
         description:
           type: string
         fields:
@@ -6889,8 +6885,6 @@ components:
           - DOUBLE
           - DATE
           - TEXT
-        indexed:
-          type: boolean
         stored:
           type: boolean
     ElasticIndexTestResponse:

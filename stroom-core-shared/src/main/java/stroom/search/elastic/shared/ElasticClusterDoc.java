@@ -85,7 +85,6 @@ public class ElasticClusterDoc extends Doc {
         this.connection = connection;
     }
 
-    @JsonIgnore
     @Override
     public final String getType() {
         return DOCUMENT_TYPE;

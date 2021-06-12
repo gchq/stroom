@@ -9921,12 +9921,6 @@
           "createUser" : {
             "type" : "string"
           },
-          "dataSourceFields" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/AbstractField"
-            }
-          },
           "description" : {
             "type" : "string"
           },
@@ -9979,9 +9973,6 @@
           "fieldUse" : {
             "type" : "string",
             "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT" ]
-          },
-          "indexed" : {
-            "type" : "boolean"
           },
           "stored" : {
             "type" : "boolean"

@@ -16,7 +16,6 @@
 
 package stroom.search.elastic.shared;
 
-import stroom.datasource.api.v2.AbstractField;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
 import stroom.query.api.v2.ExpressionOperator;
@@ -45,7 +44,6 @@ import java.util.Objects;
         "clusterRef",
         "indexName",
         "fields",
-        "dataSourceFields",
         "retentionExpression"
 })
 @JsonInclude(Include.NON_NULL)
@@ -69,14 +67,10 @@ public class ElasticIndexDoc extends Doc {
     private List<ElasticIndexField> fields;
 
     @JsonProperty
-    private List<AbstractField> dataSourceFields;
-
-    @JsonProperty
     private ExpressionOperator retentionExpression;
 
     public ElasticIndexDoc() {
         this.fields = new ArrayList<>();
-        this.dataSourceFields = new ArrayList<>();
     }
 
     @JsonCreator
@@ -93,7 +87,6 @@ public class ElasticIndexDoc extends Doc {
             @JsonProperty("clusterRef") final DocRef clusterRef,
             @JsonProperty("indexName") final String indexName,
             @JsonProperty("fields") final List<ElasticIndexField> fields,
-            @JsonProperty("dataSourceFields") final List<AbstractField> dataSourceFields,
             @JsonProperty("retentionExpression") final ExpressionOperator retentionExpression
     ) {
         super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
@@ -101,7 +94,6 @@ public class ElasticIndexDoc extends Doc {
         this.clusterRef = clusterRef;
         this.indexName = indexName;
         this.fields = fields;
-        this.dataSourceFields = dataSourceFields;
         this.retentionExpression = retentionExpression;
     }
 
@@ -141,14 +133,6 @@ public class ElasticIndexDoc extends Doc {
         this.fields = fields;
     }
 
-    public List<AbstractField> getDataSourceFields() {
-        return dataSourceFields;
-    }
-
-    public void setDataSourceFields(final List<AbstractField> dataSourceFields) {
-        this.dataSourceFields = dataSourceFields;
-    }
-
     public ExpressionOperator getRetentionExpression() {
         return retentionExpression;
     }
@@ -178,13 +162,12 @@ public class ElasticIndexDoc extends Doc {
         return Objects.equals(description, elasticIndex.description) &&
                 Objects.equals(clusterRef, elasticIndex.clusterRef) &&
                 Objects.equals(indexName, elasticIndex.indexName) &&
-                Objects.equals(fields, elasticIndex.fields) &&
-                Objects.equals(dataSourceFields, elasticIndex.dataSourceFields);
+                Objects.equals(fields, elasticIndex.fields);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), description, indexName, clusterRef, fields, dataSourceFields);
+        return Objects.hash(super.hashCode(), description, indexName, clusterRef, fields);
     }
 
     @Override
@@ -194,7 +177,6 @@ public class ElasticIndexDoc extends Doc {
                 ", clusterRef='" + clusterRef + '\'' +
                 ", indexName='" + indexName + '\'' +
                 ", fields=" + fields +
-                ", dataSourceFields=" + dataSourceFields +
                 '}';
     }
 }

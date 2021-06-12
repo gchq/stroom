@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.Map;
 import javax.inject.Inject;
 
-class SolrIndexSerialiser implements DocumentSerialiser2<SolrIndexDoc> {
+public class SolrIndexSerialiser implements DocumentSerialiser2<SolrIndexDoc> {
 
     private final Serialiser2<SolrIndexDoc> delegate;
 
