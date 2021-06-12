@@ -56,8 +56,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
-import javax.inject.Inject;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 public class ElasticSearchTaskHandler {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticSearchTaskHandler.class);
