@@ -43,12 +43,10 @@ body,table td,select {
 
 .gwt-Button {
 	margin: 0;
-	padding: 2px 4px;
+	padding: 5px 6px;
 	width: 100px;
-	height: 21px;
 	text-decoration: none;
 	cursor: pointer;
-	cursor: hand;
 
 	border-radius: 6px;
 	box-shadow: 0 0 1px rgba(0, 0, 0, 0.3);
