@@ -1,22 +1,19 @@
 .explorerCell-outer {
-    display: inline-block;
     white-space: nowrap;
-    vertical-align: top;
+    display: inline-flex;
+    flex-direction: row;
+    vertical-align: middle;
 }
 
 .explorerCell-outer * {
     display: inline-block;
     white-space: nowrap;
-    vertical-align: top;
 }
 
-.explorerCell-expander {
-    padding-top: 1px;
-}
-
-.explorerCell-expanderIcon {
+.explorerCell-expanderIcon.svgIcon {
     width: 14px;
     height: 14px;
+    vertical-align: middle;
 }
 
 .explorerCell-icon {

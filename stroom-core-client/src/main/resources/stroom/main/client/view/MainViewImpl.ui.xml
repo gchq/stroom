@@ -6,12 +6,12 @@
         <g:FlowPanel styleName="mainViewImpl-max">
             <g:SimplePanel ui:field="banner" styleName="mainViewImpl-banner"/>
             <g:FlowPanel ui:field="main" styleName="mainViewImpl-max">
+                <g:SimplePanel ui:field="topPanel" styleName="mainViewImpl-topPanel"/>
                 <g:SimplePanel styleName="mainViewImpl-bottomPanel">
                     <g:ResizeLayoutPanel ui:field="contentPanel"
                                          styleName="mainViewImpl-contentPanel">
                     </g:ResizeLayoutPanel>
                 </g:SimplePanel>
-                <g:SimplePanel ui:field="topPanel" styleName="mainViewImpl-topPanel"/>
                 <s:Spinner ui:field="spinner" styleName="spinner mainViewImpl-spinner"/>
             </g:FlowPanel>
         </g:FlowPanel>

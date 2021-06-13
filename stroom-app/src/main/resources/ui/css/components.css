@@ -1413,20 +1413,12 @@
 }
 
 .mainViewImpl-topPanel {
-    position: absolute;
-    left: 0px;
-    top: 0px;
-    width: 100%;
-    height: 14px;
+
 }
 
 .mainViewImpl-bottomPanel {
-    position: absolute;
-    left: 1px;
-    right: 1px;
-    top: 14px;
-    bottom: 1px;
-    overflow: hidden;
+	overflow: hidden;
+	flex-grow: 1;
 }
 
 .mainViewImpl-contentPanel {
