@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2295** : Improved appearance, readability and usability of UI elements, especially in dark mode. 
+
 * Issue **#2292** : Fixed issue with `SolrIndex`, `ElasticCluster` and `ElasticIndex` entities not importing correctly
   from a `v6` to `v7` instance.
 
