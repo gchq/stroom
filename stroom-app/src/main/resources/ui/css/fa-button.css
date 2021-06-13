@@ -21,8 +21,8 @@
 	border: none;
 	outline: none;
 	background: none;
-	margin: 0px;
-	padding: 1px;
+	margin: 0 1px;
+	padding: 2px;
 	cursor: pointer;
 	text-decoration: none;
 	vertical-align: bottom;
