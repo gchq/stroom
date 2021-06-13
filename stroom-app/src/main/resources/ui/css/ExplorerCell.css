@@ -22,12 +22,13 @@
 .explorerCell-icon {
     padding-left: 3px;
     padding-top: 1px;
+    margin-left: 5px;
     width: 16px;
     height: 16px;
 }
 
 .explorerCell-text {
-    padding-left: 3px;
+    padding-left: 5px;
     padding-right: 2px;
     padding-top: 2px;
 }
