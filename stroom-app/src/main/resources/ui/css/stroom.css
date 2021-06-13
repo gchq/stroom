@@ -616,6 +616,12 @@ input[type="file"] {
     background-position: center right;
     background-repeat: no-repeat;
     background-size: 12px;
+	background-origin: content-box;
+}
+
+.stroom-theme-dark .gwt-ListBox,
+.stroom-theme-dark2 .gwt-ListBox {
+	background-image: url("../images/drop-down-dark.svg");
 }
 
 .gwt-TextArea {
