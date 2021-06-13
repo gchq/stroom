@@ -40,11 +40,11 @@ public class ManageNewEntityPresenter extends MyPresenterWidget<NameDocumentView
         getView().setName("");
         final PopupSize popupSize = new PopupSize(
                 300,
-                79,
+                130,
                 300,
-                79,
+                130,
                 600,
-                79,
+                130,
                 true);
         ShowPopupEvent.fire(this,
                 this,
