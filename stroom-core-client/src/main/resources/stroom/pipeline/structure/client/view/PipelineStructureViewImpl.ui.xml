@@ -3,7 +3,7 @@
              xmlns:v="urn:import:stroom.widget.button.client"
              xmlns:view="urn:import:stroom.widget.layout.client.view">
     <g:DockLayoutPanel unit="PX" addStyleNames="max">
-        <g:north size="19">
+        <g:north size="21">
             <g:FlowPanel styleName="pipelineStructureViewImpl-bar stroom-border-bottom">
                 <g:FlowPanel styleName="pipelineStructureViewImpl-buttons">
                     <v:SvgButton ui:field="add"/>

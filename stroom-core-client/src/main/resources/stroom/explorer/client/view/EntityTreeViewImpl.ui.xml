@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:v="urn:import:stroom.widget.dropdowntree.client.view">
     <g:DockLayoutPanel unit="PX" width="100%" height="100%">
-        <g:north size="19">
+        <g:north size="21">
             <v:QuickFilter ui:field="nameFilter" addStyleNames="entityTreeView-nameFilter stroom-border-bottom"/>
         </g:north>
         <g:center>
