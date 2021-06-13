@@ -87,6 +87,10 @@
 	overflow-x: hidden;
 }
 
+.dataGridCell .svgCell-button {
+	vertical-align: middle;
+}
+
 .dataGridResizableCell {
 	border-right: 5px solid transparent;
 	white-space: nowrap;
