@@ -221,7 +221,7 @@
     --dialog-titlebar-text-color: #e6e1dc;
     --dialog-background-image: none;
     --dialog-background-color: #1a1d21;
-    --dialog-border-color: #333;
+    --dialog-border-color: rgb(132 132 132 / 60%);
     --dialog-shadow: 0 0 5px 2px rgb(0 0 0 / 100%);
     --popup-shadow: 0 0 5px 2px rgb(0 0 0 / 100%);
 
