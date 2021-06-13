@@ -61,7 +61,7 @@ public class NewElementPresenter extends MyPresenterWidget<NewElementPresenter.N
 
         getView().getId().setText(ModelStringUtil.toCamelCase(elementType.getType()));
 
-        final PopupSize popupSize = new PopupSize(250, 78, 250, 78, 1000, 78, true);
+        final PopupSize popupSize = new PopupSize(250, 130, 250, 130, 1000, 130, true);
         ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, "Create Element", popupUiHandlers);
         getView().focus();
     }
