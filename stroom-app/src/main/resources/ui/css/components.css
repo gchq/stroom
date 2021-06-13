@@ -75,8 +75,8 @@
 .menuItem-outer {
     position: relative;
 	width: 100%;
-	padding: 4px 30px 4px 6px;
-	min-width: 150px;
+	padding: 4px 6px;
+	min-width: 180px;
 	border-radius: 3px;
 }
 
