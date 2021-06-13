@@ -587,6 +587,7 @@
     display: inline-block;
     width: 200px;
     height: 19px;
+	background-color: var(--input-background-color);
     cursor: pointer;
 }
 
