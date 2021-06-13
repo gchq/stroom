@@ -586,35 +586,37 @@
 
 .dropDownView-container {
     position: relative;
-    display: inline-block;
     width: 200px;
-    height: 19px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	padding: 3px 5px;
+	border-radius: 2px;
 	background-color: var(--input-background-color);
     cursor: pointer;
 }
 
 .dropDownView-label {
-    position: absolute;
-    left: 4px;
-    right: 20px;
-    top: 1px;
-    bottom: 1px;
     overflow: hidden;
     white-space: nowrap;
-    cursor: pointer;
 }
 
 .dropDownView-button {
     position: absolute;
-    background-image: url("../images/popup.png");
+    background-image: url("../images/ellipses-grey.svg");
 	background-size: contain;
 	background-color: transparent;
-    bottom: 4px;
+    bottom: 0;
     right: 4px;
-    width: 11px;
-    height: 3px;
+	width: 16px;
+	height: 15px;
     cursor: pointer;
     border: none;
+}
+
+.stroom-theme-dark .dropDownView-button,
+.stroom-theme-dark2 .dropDownView-button {
+	background-image: url("../images/ellipses-grey-dark.svg");
 }
 
 .curveTabLayoutViewImpl-layout {

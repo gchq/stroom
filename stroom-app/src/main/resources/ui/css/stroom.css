@@ -560,8 +560,7 @@ td {
 .gwt-TextBox,.gwt-PasswordTextBox,.gwt-ListBox,.gwt-TextArea,.gwt-DateBox,.stroom-DropDownTree {
 	width: 200px;
 	margin: 0px;
-	padding: 1px;
-	padding-left: 4px;
+	padding: 3px 5px;
 	outline: none !important;
 }
 
