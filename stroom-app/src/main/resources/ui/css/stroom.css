@@ -601,7 +601,7 @@ input[type="file"] {
 }
 
 .gwt-ListBox {
-	padding: 0px;
+	padding: 1px 5px;
 
 	/* Hide drop down arrow on Firefox */
     -moz-appearance: none;
