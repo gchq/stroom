@@ -1132,10 +1132,6 @@
     width: 0;
 }
 
-.dashboardViewImpl-leftInner {
-    padding: 3px;
-}
-
 .dashboardViewImpl-rightInner {
     position: absolute;
     right: 0px;
