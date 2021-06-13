@@ -82,6 +82,11 @@
     user-select: text;
 }
 
+.dataGridCell > div {
+	text-overflow: ellipsis;
+	overflow-x: hidden;
+}
+
 .dataGridResizableCell {
 	border-right: 5px solid transparent;
 	white-space: nowrap;
