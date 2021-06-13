@@ -607,6 +607,8 @@
 .dropDownView-button {
     position: absolute;
     background-image: url("../images/popup.png");
+	background-size: contain;
+	background-color: transparent;
     bottom: 4px;
     right: 4px;
     width: 11px;
