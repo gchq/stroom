@@ -64,10 +64,7 @@
 }
 
 .dataGridCell {
-	padding-left: 2px;
-	padding-right: 2px;
-	padding-top: 2px;
-	padding-bottom: 1px;
+	padding: 3px 2px;
 	vertical-align: middle;
 	overflow: hidden;
 	height: 16px;
