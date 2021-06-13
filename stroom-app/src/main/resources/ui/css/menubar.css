@@ -20,7 +20,7 @@
 .menuBar .menuItem {
 	position: relative;
 	display: inline-block;
-	padding: 5px 6px;
+	padding: 4px;
 }
 
 .menuBar .background {
