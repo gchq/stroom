@@ -75,7 +75,8 @@
 .menuItem-outer {
     position: relative;
 	width: 100%;
-	padding: 4px;
+	padding: 4px 30px 4px 6px;
+	min-width: 150px;
 }
 
 .menuItem-highlight {
@@ -1396,6 +1397,8 @@
     top: 0px;
     bottom: 0px;
     overflow: hidden;
+	display: flex;
+	flex-direction: column;
 }
 
 .mainViewImpl-banner {

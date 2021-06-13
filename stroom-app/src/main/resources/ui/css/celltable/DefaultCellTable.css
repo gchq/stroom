@@ -54,9 +54,7 @@
 }
 
 .cellTableCell {
-  padding: 0px;
-  padding-left: 2px;
-  padding-right: 2px;
+  padding: 2px 3px;
   overflow: hidden;
   vertical-align: middle;
 }
