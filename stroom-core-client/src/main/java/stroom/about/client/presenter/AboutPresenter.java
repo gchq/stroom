@@ -20,6 +20,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.config.global.shared.SessionInfoResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
+import stroom.preferences.client.DateTimeFormatter;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.SessionInfo;
@@ -44,7 +45,8 @@ public class AboutPresenter extends MyPresenter<AboutPresenter.AboutView, AboutP
                           final AboutView view,
                           final AboutProxy proxy,
                           final RestFactory restFactory,
-                          final UiConfigCache clientPropertyCache) {
+                          final UiConfigCache clientPropertyCache,
+                          final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view, proxy);
 
         final Rest<SessionInfo> rest = restFactory.create();
@@ -52,8 +54,8 @@ public class AboutPresenter extends MyPresenter<AboutPresenter.AboutView, AboutP
                 .onSuccess(sessionInfo -> {
                     final BuildInfo buildInfo = sessionInfo.getBuildInfo();
                     view.getBuildVersion().setText("Build Version: " + buildInfo.getBuildVersion());
-                    view.getBuildDate().setText("Build Date: " + buildInfo.getBuildDate());
-                    view.getUpDate().setText("Up Date: " + buildInfo.getUpDate());
+                    view.getBuildDate().setText("Build Date: " + dateTimeFormatter.format(buildInfo.getBuildTime()));
+                    view.getUpDate().setText("Up Date: " + dateTimeFormatter.format(buildInfo.getUpTime()));
                     view.getNodeName().setText("Node Name: " + sessionInfo.getNodeName());
                 })
                 .onFailure(caught -> AlertEvent.fireError(AboutPresenter.this, caught.getMessage(), null))

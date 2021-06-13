@@ -21,6 +21,7 @@ import stroom.config.global.shared.SessionInfoResource;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
+import stroom.preferences.client.DateTimeFormatter;
 import stroom.svg.client.Icon;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.BuildInfo;
@@ -42,7 +43,8 @@ public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.Welco
     public WelcomePresenter(final EventBus eventBus,
                             final WelcomeView view,
                             final RestFactory restFactory,
-                            final UiConfigCache uiConfigCache) {
+                            final UiConfigCache uiConfigCache,
+                            final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
 
         final Rest<SessionInfo> rest = restFactory.create();
@@ -50,8 +52,8 @@ public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.Welco
                 .onSuccess(sessionInfo -> {
                     final BuildInfo buildInfo = sessionInfo.getBuildInfo();
                     view.getBuildVersion().setText("Build Version: " + buildInfo.getBuildVersion());
-                    view.getBuildDate().setText("Build Date: " + buildInfo.getBuildDate());
-                    view.getUpDate().setText("Up Date: " + buildInfo.getUpDate());
+                    view.getBuildDate().setText("Build Date: " + dateTimeFormatter.format(buildInfo.getBuildTime()));
+                    view.getUpDate().setText("Up Date: " + dateTimeFormatter.format(buildInfo.getUpTime()));
                     view.getNodeName().setText("Node Name: " + sessionInfo.getNodeName());
                     view.getUserName().setText("User Name: " + sessionInfo.getUserName());
                 })

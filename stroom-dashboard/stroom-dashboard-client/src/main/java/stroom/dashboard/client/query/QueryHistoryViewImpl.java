@@ -19,6 +19,7 @@ package stroom.dashboard.client.query;
 import stroom.cell.list.client.CustomCellList;
 import stroom.dashboard.client.query.QueryHistoryPresenter.QueryHistoryView;
 import stroom.dashboard.shared.StoredQuery;
+import stroom.preferences.client.DateTimeFormatter;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -38,8 +39,9 @@ public class QueryHistoryViewImpl extends ViewImpl implements QueryHistoryView {
     SimplePanel bottom;
 
     @Inject
-    public QueryHistoryViewImpl(final Binder binder) {
-        cellList = new CustomCellList<>(new QueryCell());
+    public QueryHistoryViewImpl(final Binder binder,
+                                final DateTimeFormatter dateTimeFormatter) {
+        cellList = new CustomCellList<>(new QueryCell(dateTimeFormatter));
         widget = binder.createAndBindUi(this);
     }
 

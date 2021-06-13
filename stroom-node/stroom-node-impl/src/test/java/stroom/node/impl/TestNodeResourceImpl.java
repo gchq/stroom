@@ -11,7 +11,6 @@ import stroom.node.shared.Node;
 import stroom.node.shared.NodeResource;
 import stroom.node.shared.NodeStatusResult;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
-import stroom.util.date.DateUtil;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
@@ -320,12 +319,13 @@ class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
 
         final ClusterNodeManager clusterNodeManager = createNamedMock(ClusterNodeManager.class, node);
 
+        final long now = System.currentTimeMillis();
         ClusterNodeInfo clusterNodeInfo = new ClusterNodeInfo(
-                DateUtil.createNormalDateTimeString(Instant.now().toEpochMilli()),
+                now,
                 new BuildInfo(
-                        DateUtil.createNormalDateTimeString(Instant.now().toEpochMilli()),
+                        now,
                         "v1.1",
-                        DateUtil.createNormalDateTimeString(Instant.now().toEpochMilli())),
+                        now),
                 node.getNodeName(),
                 getBaseEndPointUrl(node));
 

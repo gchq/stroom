@@ -223,9 +223,12 @@ export interface Base64EncodedDocumentData {
 export type BooleanField = AbstractField;
 
 export interface BuildInfo {
-  buildDate?: string;
+  /** @format int64 */
+  buildTime?: number;
   buildVersion?: string;
-  upDate?: string;
+
+  /** @format int64 */
+  upTime?: number;
 }
 
 export interface BulkActionResult {
@@ -303,7 +306,9 @@ export interface ClusterLockKey {
 
 export interface ClusterNodeInfo {
   buildInfo?: BuildInfo;
-  discoverTime?: string;
+
+  /** @format int64 */
+  discoverTime?: number;
   endpointUrl?: string;
   error?: string;
   itemList?: ClusterNodeInfoItem[];

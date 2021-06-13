@@ -39,6 +39,7 @@ import stroom.security.impl.AuthenticationConfig;
 import stroom.security.impl.ContentSecurityConfig;
 import stroom.util.ColouredStringBuilder;
 import stroom.util.ConsoleColour;
+import stroom.util.date.DateUtil;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LogUtil;
@@ -48,7 +49,6 @@ import stroom.util.shared.ResourcePaths;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.dropwizard.Application;
-import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.jersey.sessions.SessionFactoryProvider;
@@ -262,7 +262,7 @@ public class App extends Application<Config> {
 
         LOGGER.info(""
                 + "\n  Build version: " + buildInfo.getBuildVersion()
-                + "\n  Build date:    " + buildInfo.getBuildDate()
+                + "\n  Build date:    " + DateUtil.createNormalDateTimeString(buildInfo.getBuildTime())
                 + "\n  Stroom home:   " + homeDirProvider.get().toAbsolutePath().normalize()
                 + "\n  Stroom temp:   " + tempDirProvider.get().toAbsolutePath().normalize()
                 + "\n  Node name:     " + getNodeName(configuration.getAppConfig()));

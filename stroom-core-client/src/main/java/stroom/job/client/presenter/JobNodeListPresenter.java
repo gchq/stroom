@@ -35,12 +35,12 @@ import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
 import stroom.job.shared.JobNodeInfo;
 import stroom.job.shared.JobNodeResource;
+import stroom.preferences.client.DateTimeFormatter;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
-import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 import com.google.gwt.cell.client.Cell.Context;
@@ -63,6 +63,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
     private static final JobNodeResource JOB_NODE_RESOURCE = GWT.create(JobNodeResource.class);
 
     private final RestFactory restFactory;
+    private final DateTimeFormatter dateTimeFormatter;
     private final SchedulePresenter schedulePresenter;
     private final UiConfigCache clientPropertyCache;
 
@@ -74,10 +75,12 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
     @Inject
     public JobNodeListPresenter(final EventBus eventBus,
                                 final RestFactory restFactory,
+                                final DateTimeFormatter dateTimeFormatter,
                                 final SchedulePresenter schedulePresenter,
                                 final UiConfigCache clientPropertyCache) {
         super(eventBus, new DataGridViewImpl<>(false));
         this.restFactory = restFactory;
+        this.dateTimeFormatter = dateTimeFormatter;
         this.schedulePresenter = schedulePresenter;
         this.clientPropertyCache = clientPropertyCache;
 
@@ -265,7 +268,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
             public String getValue(final JobNode row) {
                 final JobNodeInfo jobNodeInfo = latestNodeInfo.get(row);
                 if (jobNodeInfo != null) {
-                    return ClientDateUtil.toISOString(jobNodeInfo.getLastExecutedTime());
+                    return dateTimeFormatter.format(jobNodeInfo.getLastExecutedTime());
                 } else {
                     return "?";
                 }

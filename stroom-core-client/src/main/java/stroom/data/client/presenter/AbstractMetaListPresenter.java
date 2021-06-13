@@ -45,6 +45,7 @@ import stroom.meta.shared.Status;
 import stroom.meta.shared.UpdateStatusRequest;
 import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.preferences.client.DateTimeFormatter;
 import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.CreateReprocessFilterRequest;
 import stroom.processor.shared.ProcessorFilter;
@@ -66,7 +67,6 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 import stroom.util.shared.Severity;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.MultiSelectionModel;
 
@@ -100,6 +100,7 @@ public abstract class AbstractMetaListPresenter
     private final Selection<Long> selection = new Selection<>(false, new HashSet<>());
     private final RestFactory restFactory;
     private final LocationManager locationManager;
+    private final DateTimeFormatter dateTimeFormatter;
     private final FindMetaCriteria criteria;
     private final RestDataProvider<MetaRow, ResultPage<MetaRow>> dataProvider;
     private final Provider<SelectionSummaryPresenter> selectionSummaryPresenterProvider;
@@ -113,6 +114,7 @@ public abstract class AbstractMetaListPresenter
                               final RestFactory restFactory,
                               final TooltipPresenter tooltipPresenter,
                               final LocationManager locationManager,
+                              final DateTimeFormatter dateTimeFormatter,
                               final Provider<SelectionSummaryPresenter> selectionSummaryPresenterProvider,
                               final Provider<ProcessChoicePresenter> processChoicePresenterProvider,
                               final Provider<EntityChooser> pipelineSelection,
@@ -121,6 +123,7 @@ public abstract class AbstractMetaListPresenter
         this.tooltipPresenter = tooltipPresenter;
         this.restFactory = restFactory;
         this.locationManager = locationManager;
+        this.dateTimeFormatter = dateTimeFormatter;
         this.selectionSummaryPresenterProvider = selectionSummaryPresenterProvider;
         this.processChoicePresenterProvider = processChoicePresenterProvider;
         this.pipelineSelection = pipelineSelection;
@@ -321,7 +324,7 @@ public abstract class AbstractMetaListPresenter
 
         getView().addResizableColumn(
                 DataGridUtil.textColumnBuilder((MetaRow metaRow) ->
-                        ClientDateUtil.toISOString(metaRow.getMeta().getCreateMs()))
+                        dateTimeFormatter.format(metaRow.getMeta().getCreateMs()))
                         .withSorting(MetaFields.CREATE_TIME)
                         .build(),
                 "Created",
