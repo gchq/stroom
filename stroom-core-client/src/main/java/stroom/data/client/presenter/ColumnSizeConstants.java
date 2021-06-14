@@ -23,7 +23,7 @@ public final class ColumnSizeConstants {
     public static final int SMALL_COL = 70;
     public static final int MEDIUM_COL = 100;
     public static final int BIG_COL = 400;
-    public static final int DATE_COL = 160;
+    public static final int DATE_COL = 200;
 
     private ColumnSizeConstants() {
         // Constants.
