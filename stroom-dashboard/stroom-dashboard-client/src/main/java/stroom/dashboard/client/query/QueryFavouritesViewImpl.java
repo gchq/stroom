@@ -19,6 +19,7 @@ package stroom.dashboard.client.query;
 import stroom.cell.list.client.CustomCellList;
 import stroom.dashboard.client.query.QueryFavouritesPresenter.QueryFavouritesView;
 import stroom.dashboard.shared.StoredQuery;
+import stroom.preferences.client.DateTimeFormatter;
 import stroom.svg.client.Preset;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
@@ -44,8 +45,9 @@ public class QueryFavouritesViewImpl extends ViewImpl implements QueryFavourites
     ButtonPanel buttonPanel;
 
     @Inject
-    public QueryFavouritesViewImpl(final Binder binder) {
-        cellList = new CustomCellList<>(new QueryCell());
+    public QueryFavouritesViewImpl(final Binder binder,
+                                   final DateTimeFormatter dateTimeFormatter) {
+        cellList = new CustomCellList<>(new QueryCell(dateTimeFormatter));
         widget = binder.createAndBindUi(this);
     }
 

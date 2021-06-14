@@ -16,10 +16,10 @@ const useDateUtil = (): DateUtil => {
     switch (use) {
       case "UTC": {
         m = m.utc();
-        return m.format(dateTimePattern) + "Z";
+        return m.format(dateTimePattern);
       }
       case "Local": {
-        m = m.local(true);
+        m = m.local();
         return m.format(dateTimePattern);
       }
       case "Offset": {

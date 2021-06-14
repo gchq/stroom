@@ -126,7 +126,8 @@ class TestReceiveStreamHandlers extends StroomUnitTest {
 
         final LogStream logStream = new LogStream(logRequestConfig);
 
-        final BuildInfo buildInfo = new BuildInfo("now", "test version", "now");
+        final long now = System.currentTimeMillis();
+        final BuildInfo buildInfo = new BuildInfo(now, "test version", now);
 
         final ForwarderDestinations forwarderDestinations = new ForwarderDestinationsImpl(
                 logStream,

@@ -39,6 +39,7 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.preferences.client.DateTimeFormatter;
 import stroom.processor.shared.FetchProcessorRequest;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
@@ -55,7 +56,6 @@ import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.TreeRow;
-import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -84,6 +84,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
     private final RestDataProvider<ProcessorListRow, ProcessorListRowResultPage> dataProvider;
     private final TooltipPresenter tooltipPresenter;
     private final FetchProcessorRequest request;
+    private final DateTimeFormatter dateTimeFormatter;
     private boolean doneDataDisplay = false;
     private Column<ProcessorListRow, Expander> expanderColumn;
     private ProcessorListRow nextSelection;
@@ -97,9 +98,11 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
     @Inject
     public ProcessorListPresenter(final EventBus eventBus,
                                   final TooltipPresenter tooltipPresenter,
-                                  final RestFactory restFactory) {
+                                  final RestFactory restFactory,
+                                  final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, new DataGridViewImpl<>(true));
         this.tooltipPresenter = tooltipPresenter;
+        this.dateTimeFormatter = dateTimeFormatter;
 
         request = new FetchProcessorRequest();
         dataProvider = new RestDataProvider<ProcessorListRow, ProcessorListRowResultPage>(eventBus) {
@@ -336,7 +339,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
                 String lastStream = null;
                 if (row instanceof ProcessorFilterRow) {
                     final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
-                    lastStream = ClientDateUtil.toISOString(
+                    lastStream = dateTimeFormatter.format(
                             processorFilterRow.getProcessorFilter().getProcessorFilterTracker().getMetaCreateMs());
                 }
                 return lastStream;
@@ -572,7 +575,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
 
     private void addRowDateString(final TableBuilder2 builder, final String label, final Long ms) {
         if (ms != null) {
-            builder.addRow(label, ClientDateUtil.toISOString(ms) + " (" + ms + ")");
+            builder.addRow(label, dateTimeFormatter.format(ms) + " (" + ms + ")");
         }
     }
 }

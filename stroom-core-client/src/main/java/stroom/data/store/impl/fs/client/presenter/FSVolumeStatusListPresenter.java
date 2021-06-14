@@ -26,9 +26,9 @@ import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
+import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
-import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.cell.client.TextCell;
@@ -45,10 +45,14 @@ public class FSVolumeStatusListPresenter extends MyPresenterWidget<DataGridView<
     private static final FsVolumeResource FS_VOLUME_RESOURCE = GWT.create(FsVolumeResource.class);
 
     private final RestDataProvider<FsVolume, ResultPage<FsVolume>> dataProvider;
+    private final DateTimeFormatter dateTimeFormatter;
 
     @Inject
-    public FSVolumeStatusListPresenter(final EventBus eventBus, final RestFactory restFactory) {
+    public FSVolumeStatusListPresenter(final EventBus eventBus,
+                                       final RestFactory restFactory,
+                                       final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, new DataGridViewImpl<>(true, true));
+        this.dateTimeFormatter = dateTimeFormatter;
 
         // Add a border to the list.
         getWidget().getElement().addClassName("stroom-border");
@@ -142,7 +146,7 @@ public class FSVolumeStatusListPresenter extends MyPresenterWidget<DataGridView<
         final Column<FsVolume, String> usageDateColumn = new Column<FsVolume, String>(new TextCell()) {
             @Override
             public String getValue(final FsVolume volume) {
-                return ClientDateUtil.toISOString(volume.getVolumeState().getUpdateTimeMs());
+                return dateTimeFormatter.format(volume.getVolumeState().getUpdateTimeMs());
             }
         };
         getView().addResizableColumn(usageDateColumn, "Usage Date", ColumnSizeConstants.DATE_COL);

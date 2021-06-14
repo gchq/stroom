@@ -31,7 +31,7 @@ import java.util.Objects;
 public class ClusterNodeInfo {
 
     @JsonProperty
-    private String discoverTime;
+    private long discoverTime;
     @JsonProperty
     private BuildInfo buildInfo;
     @JsonProperty
@@ -48,7 +48,7 @@ public class ClusterNodeInfo {
     public ClusterNodeInfo() {
     }
 
-    public ClusterNodeInfo(final String discoverTime,
+    public ClusterNodeInfo(final long discoverTime,
                            final BuildInfo buildInfo,
                            final String nodeName,
                            final String endpointUrl) {
@@ -59,7 +59,7 @@ public class ClusterNodeInfo {
     }
 
     @JsonCreator
-    public ClusterNodeInfo(@JsonProperty("discoverTime") final String discoverTime,
+    public ClusterNodeInfo(@JsonProperty("discoverTime") final long discoverTime,
                            @JsonProperty("buildInfo") final BuildInfo buildInfo,
                            @JsonProperty("nodeName") final String nodeName,
                            @JsonProperty("endpointUrl") final String endpointUrl,
@@ -82,11 +82,11 @@ public class ClusterNodeInfo {
         itemList.add(new ClusterNodeInfoItem(nodeName, active, master));
     }
 
-    public String getDiscoverTime() {
+    public long getDiscoverTime() {
         return discoverTime;
     }
 
-    public void setDiscoverTime(final String discoverTime) {
+    public void setDiscoverTime(final long discoverTime) {
         this.discoverTime = discoverTime;
     }
 

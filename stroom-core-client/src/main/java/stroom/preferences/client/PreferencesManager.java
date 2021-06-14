@@ -25,6 +25,7 @@ public class PreferencesManager {
     private final CurrentTheme currentTheme;
 
     private static final Map<String, String> themeMap = new HashMap<>();
+    private UserPreferences currentPreferences;
 
     @Inject
     public PreferencesManager(final RestFactory restFactory,
@@ -71,11 +72,17 @@ public class PreferencesManager {
                 .resetToDefaultUserPreferences();
     }
 
-    public void updateClassNames(final UserPreferences userPreferences) {
+    public void setCurrentPreferences(final UserPreferences userPreferences) {
+        this.currentPreferences = userPreferences;
+
         currentTheme.setTheme(userPreferences.getTheme());
         final com.google.gwt.dom.client.Element element = RootPanel.getBodyElement().getParentElement();
         final String className = themeMap.get(currentTheme.getTheme());
         element.setClassName(className);
+    }
+
+    public UserPreferences getCurrentPreferences() {
+        return currentPreferences;
     }
 
     public List<String> getThemes() {

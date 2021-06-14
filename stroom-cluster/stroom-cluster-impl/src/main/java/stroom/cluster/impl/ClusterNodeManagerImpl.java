@@ -27,7 +27,6 @@ import stroom.node.shared.NodeResource;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
-import stroom.util.date.DateUtil;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;
@@ -233,9 +232,8 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
         final List<String> activeNodeList = asList(clusterState.getEnabledActiveNodes());
         final String thisNodeName = nodeInfo.getThisNodeName();
         final String masterNodeName = clusterState.getMasterNodeName();
-        final String discoverTime = DateUtil.createNormalDateTimeString(clusterState.getUpdateTime());
 
-        final ClusterNodeInfo clusterNodeInfo = new ClusterNodeInfo(discoverTime,
+        final ClusterNodeInfo clusterNodeInfo = new ClusterNodeInfo(clusterState.getUpdateTime(),
                 buildInfo,
                 thisNodeName,
                 nodeService.getBaseEndpointUrl(thisNodeName));

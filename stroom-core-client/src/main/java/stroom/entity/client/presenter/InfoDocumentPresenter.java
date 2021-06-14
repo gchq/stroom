@@ -20,7 +20,7 @@ package stroom.entity.client.presenter;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.document.client.event.ShowInfoDocumentDialogEvent;
-import stroom.widget.customdatebox.client.ClientDateUtil;
+import stroom.preferences.client.DateTimeFormatter;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -37,11 +37,15 @@ public class InfoDocumentPresenter
         extends MyPresenter<InfoDocumentPresenter.InfoDocumentView, InfoDocumentPresenter.InfoDocumentProxy>
         implements ShowInfoDocumentDialogEvent.Handler {
 
+    private final DateTimeFormatter dateTimeFormatter;
+
     @Inject
     public InfoDocumentPresenter(final EventBus eventBus,
                                  final InfoDocumentView view,
-                                 final InfoDocumentProxy proxy) {
+                                 final InfoDocumentProxy proxy,
+                                 final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view, proxy);
+        this.dateTimeFormatter = dateTimeFormatter;
     }
 
     @Override
@@ -74,7 +78,7 @@ public class InfoDocumentPresenter
         }
         if (info.getCreateTime() != null) {
             sb.append("\nCreated On: ");
-            sb.append(ClientDateUtil.toISOString(info.getCreateTime()));
+            sb.append(dateTimeFormatter.format(info.getCreateTime()));
         }
         if (info.getUpdateUser() != null) {
             sb.append("\nUpdated By: ");
@@ -82,7 +86,7 @@ public class InfoDocumentPresenter
         }
         if (info.getUpdateTime() != null) {
             sb.append("\nUpdated On: ");
-            sb.append(ClientDateUtil.toISOString(info.getUpdateTime()));
+            sb.append(dateTimeFormatter.format(info.getUpdateTime()));
         }
 
         getView().setInfo(sb.toString());

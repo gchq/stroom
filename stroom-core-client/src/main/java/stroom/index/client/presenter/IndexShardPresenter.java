@@ -37,6 +37,7 @@ import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexResource;
 import stroom.index.shared.IndexShard;
 import stroom.node.client.NodeManager;
+import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
@@ -44,7 +45,6 @@ import stroom.svg.client.SvgPresets;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -73,6 +73,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     private final RestFactory restFactory;
     private final NodeManager nodeManager;
     private final ClientSecurityContext securityContext;
+    private final DateTimeFormatter dateTimeFormatter;
     private RestDataProvider<IndexShard, ResultPage<IndexShard>> dataProvider;
     private ResultPage<IndexShard> resultList = null;
     private final FindIndexShardCriteria selectionCriteria = FindIndexShardCriteria.matchAll();
@@ -89,12 +90,14 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                                final TooltipPresenter tooltipPresenter,
                                final RestFactory restFactory,
                                final NodeManager nodeManager,
-                               final ClientSecurityContext securityContext) {
+                               final ClientSecurityContext securityContext,
+                               final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, new DataGridViewImpl<>(false));
         this.tooltipPresenter = tooltipPresenter;
         this.restFactory = restFactory;
         this.nodeManager = nodeManager;
         this.securityContext = securityContext;
+        this.dateTimeFormatter = dateTimeFormatter;
 
         if (securityContext.hasAppPermission(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION)) {
             buttonFlush = getView().addButton(SvgPresets.SHARD_FLUSH);
@@ -239,11 +242,11 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
 
                             if (indexShard.getPartitionFromTime() != null) {
                                 tableBuilder.addRow("Partition From",
-                                        ClientDateUtil.toISOString(indexShard.getPartitionFromTime()));
+                                        dateTimeFormatter.format(indexShard.getPartitionFromTime()));
                             }
                             if (indexShard.getPartitionToTime() != null) {
                                 tableBuilder.addRow("Partition To",
-                                        ClientDateUtil.toISOString(indexShard.getPartitionToTime()));
+                                        dateTimeFormatter.format(indexShard.getPartitionToTime()));
                             }
 
                             return tableBuilder
@@ -252,7 +255,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
                                     .addRow("Document Count", intToString(indexShard.getDocumentCount()))
                                     .addRow("File Size", indexShard.getFileSizeString())
                                     .addRow("Bytes Per Document", intToString(indexShard.getBytesPerDocument()))
-                                    .addRow("Commit", ClientDateUtil.toISOString(indexShard.getCommitMs()))
+                                    .addRow("Commit", dateTimeFormatter.format(indexShard.getCommitMs()))
                                     .addRow("Commit Duration",
                                             ModelStringUtil.formatDurationString(indexShard.getCommitDurationMs()))
                                     .addRow("Commit Document Count", intToString(indexShard.getCommitDocumentCount()))
@@ -336,7 +339,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
         getView().addResizableColumn(new Column<IndexShard, String>(new TextCell()) {
             @Override
             public String getValue(final IndexShard indexShard) {
-                return ClientDateUtil.toISOString(indexShard.getCommitMs());
+                return dateTimeFormatter.format(indexShard.getCommitMs());
             }
         }, "Last Commit", 170);
     }

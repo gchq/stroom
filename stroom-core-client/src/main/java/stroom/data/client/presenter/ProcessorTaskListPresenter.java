@@ -34,13 +34,13 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.MetaRow;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.preferences.client.DateTimeFormatter;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskExpressionUtil;
 import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskResource;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.ResultPage;
-import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -65,6 +65,7 @@ public class ProcessorTaskListPresenter
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
 
     private final TooltipPresenter tooltipPresenter;
+    private final DateTimeFormatter dateTimeFormatter;
     private final RestDataProvider<ProcessorTask, ResultPage<ProcessorTask>> dataProvider;
     private final ExpressionCriteria criteria;
     private boolean initialised;
@@ -72,9 +73,11 @@ public class ProcessorTaskListPresenter
     @Inject
     public ProcessorTaskListPresenter(final EventBus eventBus,
                                       final RestFactory restFactory,
-                                      final TooltipPresenter tooltipPresenter) {
+                                      final TooltipPresenter tooltipPresenter,
+                                      final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, new DataGridViewImpl<>(false));
         this.tooltipPresenter = tooltipPresenter;
+        this.dateTimeFormatter = dateTimeFormatter;
 
         criteria = new ExpressionCriteria();
         dataProvider = new RestDataProvider<ProcessorTask, ResultPage<ProcessorTask>>(
@@ -118,7 +121,7 @@ public class ProcessorTaskListPresenter
                         false) {
                     @Override
                     public String getValue(final ProcessorTask row) {
-                        return ClientDateUtil.toISOString(row.getCreateTimeMs());
+                        return dateTimeFormatter.format(row.getCreateTimeMs());
                     }
                 }, "Create", ColumnSizeConstants.DATE_COL);
 
@@ -186,7 +189,7 @@ public class ProcessorTaskListPresenter
                         new TextCell(), ProcessorTaskFields.FIELD_START_TIME, false) {
                     @Override
                     public String getValue(final ProcessorTask row) {
-                        return ClientDateUtil.toISOString(row.getStartTimeMs());
+                        return dateTimeFormatter.format(row.getStartTimeMs());
                     }
                 }, "Start Time", ColumnSizeConstants.DATE_COL);
         getView().addResizableColumn(
@@ -194,7 +197,7 @@ public class ProcessorTaskListPresenter
                         new TextCell(), ProcessorTaskFields.FIELD_END_TIME_DATE, false) {
                     @Override
                     public String getValue(final ProcessorTask row) {
-                        return ClientDateUtil.toISOString(row.getEndTimeMs());
+                        return dateTimeFormatter.format(row.getEndTimeMs());
                     }
                 }, "End Time", ColumnSizeConstants.DATE_COL);
 
@@ -267,7 +270,7 @@ public class ProcessorTaskListPresenter
 
     private String toDateString(final Long ms) {
         if (ms != null) {
-            return ClientDateUtil.toISOString(ms) + " (" + ms + ")";
+            return dateTimeFormatter.format(ms) + " (" + ms + ")";
         } else {
             return "";
         }

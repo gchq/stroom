@@ -33,6 +33,7 @@ import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.FetchNodeStatusResponse;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeStatusResult;
+import stroom.preferences.client.DateTimeFormatter;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
@@ -66,6 +67,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
 
     private final NodeManager nodeManager;
     private final TooltipPresenter tooltipPresenter;
+    private final DateTimeFormatter dateTimeFormatter;
     private final RestDataProvider<NodeStatusResult, FetchNodeStatusResponse> dataProvider;
 
     private final Map<String, PingResult> latestPing = new HashMap<>();
@@ -73,10 +75,12 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
     @Inject
     public NodeMonitoringPresenter(final EventBus eventBus,
                                    final NodeManager nodeManager,
-                                   final TooltipPresenter tooltipPresenter) {
+                                   final TooltipPresenter tooltipPresenter,
+                                   final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, new DataGridViewImpl<>(true));
         this.nodeManager = nodeManager;
         this.tooltipPresenter = tooltipPresenter;
+        this.dateTimeFormatter = dateTimeFormatter;
         initTableColumns();
         dataProvider = new RestDataProvider<NodeStatusResult, FetchNodeStatusResponse>(eventBus) {
             @Override
@@ -269,11 +273,11 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                         if (buildInfo != null) {
                             tableBuilder
                                     .addRow("Build Version", buildInfo.getBuildVersion(), true)
-                                    .addRow("Build Date", buildInfo.getBuildDate(), true)
-                                    .addRow("Up Date", buildInfo.getUpDate(), true);
+                                    .addRow("Build Date", dateTimeFormatter.format(buildInfo.getBuildTime()), true)
+                                    .addRow("Up Date", dateTimeFormatter.format(buildInfo.getUpTime()), true);
                         }
                         return tableBuilder
-                                .addRow("Discover Time", result.getDiscoverTime(), true)
+                                .addRow("Discover Time", dateTimeFormatter.format(result.getDiscoverTime()), true)
                                 .addRow("Node Endpoint URL", result.getEndpointUrl(), true)
                                 .addRow("Ping", ModelStringUtil.formatDurationString(result.getPing()))
                                 .addRow("Error", result.getError())

@@ -8535,14 +8535,16 @@
       "BuildInfo" : {
         "type" : "object",
         "properties" : {
-          "buildDate" : {
-            "type" : "string"
+          "buildTime" : {
+            "type" : "integer",
+            "format" : "int64"
           },
           "buildVersion" : {
             "type" : "string"
           },
-          "upDate" : {
-            "type" : "string"
+          "upTime" : {
+            "type" : "integer",
+            "format" : "int64"
           }
         }
       },
@@ -8760,7 +8762,8 @@
             "$ref" : "#/components/schemas/BuildInfo"
           },
           "discoverTime" : {
-            "type" : "string"
+            "type" : "integer",
+            "format" : "int64"
           },
           "endpointUrl" : {
             "type" : "string"

@@ -6,8 +6,8 @@ import stroom.dispatch.client.RestFactory;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.SelectionSummary;
+import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.client.SafeHtmlUtil;
-import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
@@ -24,13 +24,16 @@ public class SelectionSummaryPresenter extends MyPresenterWidget<CommonAlertView
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
 
     private final RestFactory restFactory;
+    private final DateTimeFormatter dateTimeFormatter;
 
     @Inject
     public SelectionSummaryPresenter(final EventBus eventBus,
                                      final CommonAlertView view,
-                                     final RestFactory restFactory) {
+                                     final RestFactory restFactory,
+                                     final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
         this.restFactory = restFactory;
+        this.dateTimeFormatter = dateTimeFormatter;
     }
 
     public void show(final FindMetaCriteria criteria,
@@ -93,9 +96,9 @@ public class SelectionSummaryPresenter extends MyPresenterWidget<CommonAlertView
         if (result.getAgeRange().getFrom() != null || result.getAgeRange().getTo() != null) {
             sb.appendEscaped("Created Between: ");
             sb.appendHtmlConstant("</br>");
-            sb.appendEscaped(ClientDateUtil.toISOString(result.getAgeRange().getFrom()));
+            sb.appendEscaped(dateTimeFormatter.format(result.getAgeRange().getFrom()));
             sb.appendHtmlConstant("</br>");
-            sb.appendEscaped(ClientDateUtil.toISOString(result.getAgeRange().getTo()));
+            sb.appendEscaped(dateTimeFormatter.format(result.getAgeRange().getTo()));
         } else {
             sb.appendEscaped("Created at any time.");
         }

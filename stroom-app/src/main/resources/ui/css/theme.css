@@ -139,8 +139,8 @@
     --button-border-color-disabled-hover: #000;
 
     --expression-item-box-background-color-selected: #454545;
-    --expression-item-box-background-color-hover: #555555;
-    --expression-item-box-background-color-disabled: #ccc;
+    --expression-item-box-background-color-hover: #555;
+    --expression-item-box-background-color-disabled: #333;
     --expression-item-box-background-color-hotspot: rgba(255,0,0,.3);
 
     --pipeline-element-box-background-color: #454545;
@@ -224,8 +224,8 @@
     --button-text-color-disabled: #888;
     --button-border-color-disabled-hover: #000;
     --expression-item-box-background-color-selected: #454545;
-    --expression-item-box-background-color-hover: #555555;
-    --expression-item-box-background-color-disabled: #ccc;
+    --expression-item-box-background-color-hover: #555;
+    --expression-item-box-background-color-disabled: #333;
     --expression-item-box-background-color-hotspot: rgba(255,0,0,.3);
     --pipeline-element-box-background-color: #454545;
     --pipeline-element-box-background-color-hover: #505050;

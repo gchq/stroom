@@ -19,13 +19,13 @@
 
 .cellListEvenItem {
 	cursor: pointer;
-	background: #ffffff;
+	background: var(--odd-row-background-color);
 	zoom: 1;
 }
 
 .cellListOddItem {
 	cursor: pointer;
-	background: #f0f0ff;
+	background: var(--even-row-background-color);
 	zoom: 1;
 }
 
@@ -33,8 +33,8 @@
 }
 
  .cellListSelectedItem {
-	background: #bbdefb none repeat scroll 0 0;
-	color: black;
+	background: var(--selected-row-background-color) none repeat scroll 0 0;
+	color: var(--selected-row-text-color);
 	height: auto;
 	overflow: visible;
 }

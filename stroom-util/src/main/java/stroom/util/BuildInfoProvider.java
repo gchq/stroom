@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.time.ZonedDateTime;
 import java.util.Properties;
 import javax.inject.Provider;
 import javax.inject.Singleton;
@@ -30,7 +31,7 @@ import javax.inject.Singleton;
 @Singleton
 public class BuildInfoProvider implements Provider<BuildInfo> {
 
-    private static final String upDate = DateUtil.createNormalDateTimeString();
+    private static final long upDate = System.currentTimeMillis();
     private static final Logger LOGGER = LoggerFactory.getLogger(BuildInfoProvider.class);
     private static final String BUILD_PROPERTIES = "META-INF/stroom-util-build.properties";
 
@@ -47,7 +48,22 @@ public class BuildInfoProvider implements Provider<BuildInfo> {
             }
             final String buildVersion = properties.getProperty("buildVersion");
             final String buildDate = properties.getProperty("buildDate");
-            buildInfo = new BuildInfo(upDate, buildVersion, buildDate);
+
+            long buildTime = 0;
+            if (buildDate != null) {
+                try {
+                    buildTime = ZonedDateTime.parse(buildDate).toInstant().toEpochMilli();
+                } catch (final RuntimeException e) {
+                    LOGGER.debug(e.getMessage(), e);
+                    try {
+                        buildTime = DateUtil.parseNormalDateTimeString(buildDate);
+                    } catch (final RuntimeException e2) {
+                        LOGGER.debug(e2.getMessage(), e2);
+                    }
+                }
+            }
+
+            buildInfo = new BuildInfo(upDate, buildVersion, buildTime);
         }
         return buildInfo;
     }
