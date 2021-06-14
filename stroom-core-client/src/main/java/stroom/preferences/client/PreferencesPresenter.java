@@ -69,6 +69,10 @@ public final class PreferencesPresenter
     public void onChange() {
         final UserPreferences userPreferences = write();
         preferencesManager.setCurrentPreferences(userPreferences);
+        triggerThemeChange(userPreferences);
+    }
+
+    private void triggerThemeChange(final UserPreferences userPreferences) {
         final HasHandlers handlers = event -> getEventBus().fireEvent(event);
         ChangeThemeEvent.fire(handlers, userPreferences.getTheme(), userPreferences.getEditorTheme());
     }
@@ -94,6 +98,7 @@ public final class PreferencesPresenter
         originalPreferences = userPreferences;
         read(userPreferences);
         preferencesManager.setCurrentPreferences(userPreferences);
+        triggerThemeChange(userPreferences);
     }
 
     public void show() {
