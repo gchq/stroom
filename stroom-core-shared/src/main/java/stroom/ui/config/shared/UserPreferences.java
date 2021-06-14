@@ -142,7 +142,7 @@ public class UserPreferences {
 
     public static final class Builder {
 
-        private static final AceEditorTheme DEFAULT_EDITOR_THEME = AceEditorTheme.CHROME;
+        private static final AceEditorTheme DEFAULT_EDITOR_THEME = AceEditorTheme.TOMORROW_NIGHT;
         private static final String DEFAULT_DATE_TIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXX";
 
         private String theme;
