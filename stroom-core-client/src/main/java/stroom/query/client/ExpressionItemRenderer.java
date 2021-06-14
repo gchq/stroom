@@ -123,10 +123,10 @@ public final class ExpressionItemRenderer implements CellRenderer2<Item>, NodeEx
     @Override
     public Dimension getExtents(final Item item) {
         if (item instanceof Operator) {
-            return new Dimension(54, 20);
+            return new Dimension(54, 25);
         }
 
-        return new Dimension(400, 20);
+        return new Dimension(400, 25);
     }
 
     public void clear() {
