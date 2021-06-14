@@ -19,14 +19,17 @@ package stroom.editor.client.presenter;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
+import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 
 public class ChangeThemeEvent extends GwtEvent<ChangeThemeEvent.Handler> {
 
     private static Type<Handler> TYPE;
     private final String theme;
+    private final AceEditorTheme editorTheme;
 
-    private ChangeThemeEvent(final String theme) {
+    private ChangeThemeEvent(final String theme, final AceEditorTheme editorTheme) {
         this.theme = theme;
+        this.editorTheme = editorTheme;
     }
 
     public static Type<Handler> getType() {
@@ -36,8 +39,8 @@ public class ChangeThemeEvent extends GwtEvent<ChangeThemeEvent.Handler> {
         return TYPE;
     }
 
-    public static void fire(final HasHandlers handlers, final String theme) {
-        handlers.fireEvent(new ChangeThemeEvent(theme));
+    public static void fire(final HasHandlers handlers, final String theme, final AceEditorTheme editorTheme) {
+        handlers.fireEvent(new ChangeThemeEvent(theme, editorTheme));
     }
 
     @Override
@@ -52,6 +55,10 @@ public class ChangeThemeEvent extends GwtEvent<ChangeThemeEvent.Handler> {
 
     public String getTheme() {
         return theme;
+    }
+
+    public AceEditorTheme getEditorTheme() {
+        return editorTheme;
     }
 
     public interface Handler extends EventHandler {

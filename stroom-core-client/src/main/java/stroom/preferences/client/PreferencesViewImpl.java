@@ -69,6 +69,8 @@ public final class PreferencesViewImpl
     @UiField
     StringListBox theme;
     @UiField
+    StringListBox editorTheme;
+    @UiField
     StringListBox font;
     @UiField
     StringListBox fontSize;
@@ -96,6 +98,11 @@ public final class PreferencesViewImpl
         widget = binder.createAndBindUi(this);
 
         theme.addChangeHandler(event -> {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onChange();
+            }
+        });
+        editorTheme.addChangeHandler(event -> {
             if (getUiHandlers() != null) {
                 getUiHandlers().onChange();
             }
@@ -143,6 +150,11 @@ public final class PreferencesViewImpl
     }
 
     @Override
+    public String getEditorTheme() {
+        return editorTheme.getSelected();
+    }
+
+    @Override
     public void setTheme(final String theme) {
         this.theme.setSelected(theme);
     }
@@ -151,6 +163,17 @@ public final class PreferencesViewImpl
     public void setThemes(final List<String> themes) {
         this.theme.clear();
         this.theme.addItems(themes);
+    }
+
+    @Override
+    public void setEditorTheme(final String editorTheme) {
+        this.editorTheme.setSelected(editorTheme);
+    }
+
+    @Override
+    public void setEditorThemes(final List<String> editorThemes) {
+        this.editorTheme.clear();
+        this.editorTheme.addItems(editorThemes);
     }
 
     @Override

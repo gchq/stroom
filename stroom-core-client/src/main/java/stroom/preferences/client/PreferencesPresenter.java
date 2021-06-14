@@ -36,6 +36,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 
 import java.util.List;
 import java.util.Objects;
@@ -69,7 +70,7 @@ public final class PreferencesPresenter
         final UserPreferences userPreferences = write();
         preferencesManager.setCurrentPreferences(userPreferences);
         final HasHandlers handlers = event -> getEventBus().fireEvent(event);
-        ChangeThemeEvent.fire(handlers, userPreferences.getTheme());
+        ChangeThemeEvent.fire(handlers, userPreferences.getTheme(), userPreferences.getEditorTheme());
     }
 
     @Override
@@ -149,14 +150,18 @@ public final class PreferencesPresenter
 
 
     private void read(final UserPreferences userPreferences) {
-        final TimeZone timeZone = userPreferences.getTimeZone();
-
         getView().setThemes(preferencesManager.getThemes());
         getView().setTheme(userPreferences.getTheme());
+        getView().setEditorThemes(preferencesManager.getEditorThemes());
         getView().setFont(userPreferences.getFont());
         getView().setFontSize(userPreferences.getFontSize());
         getView().setPattern(userPreferences.getDateTimePattern());
 
+        final AceEditorTheme editorTheme = userPreferences.getEditorTheme();
+        if (editorTheme != null) {
+            getView().setEditorTheme(editorTheme.getName());
+        }
+        final TimeZone timeZone = userPreferences.getTimeZone();
         if (timeZone != null) {
             getView().setTimeZoneUse(timeZone.getUse());
             getView().setTimeZoneId(timeZone.getId());
@@ -175,6 +180,7 @@ public final class PreferencesPresenter
 
         return UserPreferences.builder()
                 .theme(getView().getTheme())
+                .editorTheme(getView().getEditorTheme())
                 .font(getView().getFont())
                 .fontSize(getView().getFontSize())
                 .dateTimePattern(getView().getPattern())
@@ -189,6 +195,12 @@ public final class PreferencesPresenter
         void setTheme(String theme);
 
         void setThemes(List<String> themes);
+
+        String getEditorTheme();
+
+        void setEditorTheme(String editorTheme);
+
+        void setEditorThemes(List<String> editorThemes);
 
         String getFont();
 

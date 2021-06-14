@@ -8,7 +8,9 @@ import stroom.ui.config.shared.UserPreferences;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.RootPanel;
+import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,6 +78,8 @@ public class PreferencesManager {
         this.currentPreferences = userPreferences;
 
         currentTheme.setTheme(userPreferences.getTheme());
+        currentTheme.setEditorTheme(userPreferences.getEditorTheme());
+
         final com.google.gwt.dom.client.Element element = RootPanel.getBodyElement().getParentElement();
         final String className = themeMap.get(currentTheme.getTheme());
         element.setClassName(className);
@@ -87,5 +91,9 @@ public class PreferencesManager {
 
     public List<String> getThemes() {
         return themeMap.keySet().stream().sorted().collect(Collectors.toList());
+    }
+
+    public List<String> getEditorThemes() {
+        return Arrays.stream(AceEditorTheme.values()).map(AceEditorTheme::getName).collect(Collectors.toList());
     }
 }

@@ -3424,6 +3424,43 @@ export interface UserAndPermissions {
 export interface UserPreferences {
   /** A date time formatting pattern string conforming to the specification of java.time.format.DateTimeFormatter */
   dateTimePattern?: string;
+  editorTheme?:
+    | "AMBIANCE"
+    | "CHAOS"
+    | "CHROME"
+    | "CLOUD9_DAY"
+    | "CLOUD9_NIGHT"
+    | "CLOUD9_NIGHT_LOW_COLOR"
+    | "CLOUDS"
+    | "CLOUDS_MIDNIGHT"
+    | "COBALT"
+    | "CRIMSON_EDITOR"
+    | "DAWN"
+    | "DREAMWEAVER"
+    | "ECLIPSE"
+    | "GITHUB"
+    | "IDLE_FINGERS"
+    | "KATZENMILCH"
+    | "KR_THEME"
+    | "KR"
+    | "KUROIR"
+    | "MERBIVORE"
+    | "MERBIVORE_SOFT"
+    | "MONO_INDUSTRIAL"
+    | "MONOKAI"
+    | "PASTEL_ON_DARK"
+    | "SOLARIZED_DARK"
+    | "SOLARIZED_LIGHT"
+    | "TERMINAL"
+    | "TEXTMATE"
+    | "TOMORROW_NIGHT_BLUE"
+    | "TOMORROW_NIGHT_BRIGHT"
+    | "TOMORROW_NIGHT_EIGHTIES"
+    | "TOMORROW_NIGHT"
+    | "TOMORROW"
+    | "TWILIGHT"
+    | "VIBRANT_INK"
+    | "XCODE";
   font?: string;
   fontSize?: string;
   theme?: string;
