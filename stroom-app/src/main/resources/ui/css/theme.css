@@ -32,6 +32,7 @@
     --tooltip-background-color: #ffd;
     --tooltip-text-color: #000;
 
+
     --button-background-image: none; /*linear-gradient(#ffffff 0px, #fbfbfa 10px, #f6f5f5 0px, #e9e7e6); */
     --button-background-color: #f6f5f5;
     --button-border-color: #918e8c;
@@ -56,6 +57,7 @@
     --pipeline-element-box-background-color-selected-hover: #bbdefb;
     --pipeline-element-box-background-color-hotspot: rgba(255,0,0,.3);
     --pipeline-element-box-text-color: #000;
+    --pipeline-element-box-border-color: #918e8c;
 
     --link-text-color: #0000AA;
 
@@ -149,6 +151,7 @@
     --pipeline-element-box-background-color-selected-hover: #1164a3;
     --pipeline-element-box-background-color-hotspot: rgba(255,0,0,.5);
     --pipeline-element-box-text-color: #fff;
+    --pipeline-element-box-border-color: #a1a1a1;
 
     --link-text-color: #3aaaff;
 

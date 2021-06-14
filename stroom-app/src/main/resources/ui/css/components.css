@@ -658,7 +658,8 @@
 }
 
 .pipelineStructureViewImpl-buttons {
-    vertical-align: top;
+    position: relative;
+	top: -1px;
 }
 
 .pipelineStructureViewImpl-label {
@@ -669,27 +670,27 @@
 
 .pipelineStructureViewImpl-bar {
     position: relative;
-    padding: 0px 2px;
+    padding: 0 4px;
+	display: flex;
+	align-items: center;
+	flex-direction: row;
 }
 
 .pipelineStructureViewImpl-bar div {
-    display: inline-block;
     white-space: nowrap;
+}
+
+.pipelineStructureViewImpl-treeContainer {
+	padding: 10px 5px;
 }
 
 
 .pipelineStructureViewImpl-label {
-    margin: 0px;
-    margin-top: 2px;
-    margin-left: 10px;
-    margin-right: 5px;
-    vertical-align: top;
+	margin: 0 10px 0 15px;
 }
 
 .pipelineStructureViewImpl-viewSource {
-    position: absolute;
-    right: 4px;
-    top: 2px;
+    margin-left: auto;
     text-decoration: underline;
 }
 
