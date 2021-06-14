@@ -142,7 +142,8 @@ public class UserPreferences {
 
     public static final class Builder {
 
-        private static final AceEditorTheme DEFAULT_EDITOR_THEME = AceEditorTheme.TOMORROW_NIGHT;
+        public static final AceEditorTheme DEFAULT_EDITOR_THEME = AceEditorTheme.CHROME;
+        public static final AceEditorTheme DEFAULT_EDITOR_THEME_DARK = AceEditorTheme.TOMORROW_NIGHT;
         private static final String DEFAULT_DATE_TIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXX";
 
         private String theme;
@@ -154,7 +155,7 @@ public class UserPreferences {
 
         private Builder() {
             theme = "Dark";
-            editorTheme = DEFAULT_EDITOR_THEME;
+            editorTheme = DEFAULT_EDITOR_THEME_DARK;
             font = "Roboto";
             fontSize = "Medium";
             dateTimePattern = DEFAULT_DATE_TIME_PATTERN;
@@ -181,7 +182,7 @@ public class UserPreferences {
                     .filter(t -> t.getName().equals(editorTheme))
                     .findFirst();
 
-            this.editorTheme = editorThemeEnum.orElse(DEFAULT_EDITOR_THEME);
+            this.editorTheme = editorThemeEnum.orElse(null);
             return this;
         }
 

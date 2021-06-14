@@ -24,6 +24,7 @@ import stroom.query.api.v2.TimeZone;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.ui.config.shared.UserPreferences;
+import stroom.ui.config.shared.UserPreferences.Builder;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -39,6 +40,7 @@ import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 public final class PreferencesPresenter
@@ -67,14 +69,41 @@ public final class PreferencesPresenter
 
     @Override
     public void onChange() {
-        final UserPreferences userPreferences = write();
-        preferencesManager.setCurrentPreferences(userPreferences);
-        triggerThemeChange(userPreferences);
+        final UserPreferences before = preferencesManager.getCurrentPreferences();
+        final UserPreferences after = write();
+        preferencesManager.setCurrentPreferences(after);
+        final AceEditorTheme editorTheme = selectEditorTheme(before, after);
+        if (editorTheme != after.getEditorTheme()) {
+            // Editor theme was reset due to UI theme change, so show the new value in the dialog
+            getView().setEditorTheme(editorTheme.getName());
+        }
+        triggerThemeChange(after.getTheme(), editorTheme);
     }
 
-    private void triggerThemeChange(final UserPreferences userPreferences) {
+    /**
+     * Choose an appropriate editor theme based on whether the UI theme is light or dark.
+     * If the UI theme has not changed, use the user's editor theme preference.
+     */
+    private AceEditorTheme selectEditorTheme(final UserPreferences before, final UserPreferences after) {
+        final String beforeTheme = before.getTheme();
+        final String afterTheme = after.getTheme();
+        if (!beforeTheme.equals(afterTheme) || after.getEditorTheme() == null) {
+            // If the UI theme has changed, select an appropriate theme based on whether a light or dark theme
+            // was selected
+            if (afterTheme.toLowerCase(Locale.ROOT).contains("dark")) {
+                return Builder.DEFAULT_EDITOR_THEME_DARK;
+            } else {
+                return Builder.DEFAULT_EDITOR_THEME;
+            }
+        } else {
+            // No UI theme change, so accept the user's selection
+            return after.getEditorTheme();
+        }
+    }
+
+    private void triggerThemeChange(final String theme, final AceEditorTheme editorTheme) {
         final HasHandlers handlers = event -> getEventBus().fireEvent(event);
-        ChangeThemeEvent.fire(handlers, userPreferences.getTheme(), userPreferences.getEditorTheme());
+        ChangeThemeEvent.fire(handlers, theme, editorTheme);
     }
 
     @Override
@@ -98,7 +127,8 @@ public final class PreferencesPresenter
         originalPreferences = userPreferences;
         read(userPreferences);
         preferencesManager.setCurrentPreferences(userPreferences);
-        triggerThemeChange(userPreferences);
+        final AceEditorTheme editorTheme = selectEditorTheme(originalPreferences, userPreferences);
+        triggerThemeChange(userPreferences.getTheme(), editorTheme);
     }
 
     public void show() {
