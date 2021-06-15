@@ -37,7 +37,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 
 import java.util.List;
 import java.util.Locale;
@@ -72,10 +71,10 @@ public final class PreferencesPresenter
         final UserPreferences before = preferencesManager.getCurrentPreferences();
         final UserPreferences after = write();
         preferencesManager.setCurrentPreferences(after);
-        final AceEditorTheme editorTheme = selectEditorTheme(before, after);
-        if (editorTheme != after.getEditorTheme()) {
+        final String editorTheme = selectEditorTheme(before, after);
+        if (!editorTheme.equals(after.getEditorTheme())) {
             // Editor theme was reset due to UI theme change, so show the new value in the dialog
-            getView().setEditorTheme(editorTheme.getName());
+            getView().setEditorTheme(editorTheme);
         }
         triggerThemeChange(after.getTheme(), editorTheme);
     }
@@ -84,7 +83,7 @@ public final class PreferencesPresenter
      * Choose an appropriate editor theme based on whether the UI theme is light or dark.
      * If the UI theme has not changed, use the user's editor theme preference.
      */
-    private AceEditorTheme selectEditorTheme(final UserPreferences before, final UserPreferences after) {
+    private String selectEditorTheme(final UserPreferences before, final UserPreferences after) {
         final String beforeTheme = before.getTheme();
         final String afterTheme = after.getTheme();
         if (!beforeTheme.equals(afterTheme) || after.getEditorTheme() == null) {
@@ -101,7 +100,7 @@ public final class PreferencesPresenter
         }
     }
 
-    private void triggerThemeChange(final String theme, final AceEditorTheme editorTheme) {
+    private void triggerThemeChange(final String theme, final String editorTheme) {
         final HasHandlers handlers = event -> getEventBus().fireEvent(event);
         ChangeThemeEvent.fire(handlers, theme, editorTheme);
     }
@@ -127,7 +126,7 @@ public final class PreferencesPresenter
         originalPreferences = userPreferences;
         read(userPreferences);
         preferencesManager.setCurrentPreferences(userPreferences);
-        final AceEditorTheme editorTheme = selectEditorTheme(originalPreferences, userPreferences);
+        final String editorTheme = selectEditorTheme(originalPreferences, userPreferences);
         triggerThemeChange(userPreferences.getTheme(), editorTheme);
     }
 
@@ -192,9 +191,9 @@ public final class PreferencesPresenter
         getView().setFontSize(userPreferences.getFontSize());
         getView().setPattern(userPreferences.getDateTimePattern());
 
-        final AceEditorTheme editorTheme = userPreferences.getEditorTheme();
+        final String editorTheme = userPreferences.getEditorTheme();
         if (editorTheme != null) {
-            getView().setEditorTheme(editorTheme.getName());
+            getView().setEditorTheme(editorTheme);
         }
         final TimeZone timeZone = userPreferences.getTimeZone();
         if (timeZone != null) {

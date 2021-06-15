@@ -25,12 +25,9 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import java.util.Arrays;
 import java.util.Objects;
-import java.util.Optional;
 import javax.inject.Singleton;
 
 @Singleton
@@ -44,7 +41,7 @@ public class UserPreferences {
 
     @JsonProperty
     @JsonPropertyDescription("Theme to apply to the Ace text editor")
-    private final AceEditorTheme editorTheme;
+    private final String editorTheme;
 
     @JsonProperty
     @JsonPropertyDescription("The font to use, e.g. `Roboto`")
@@ -64,7 +61,7 @@ public class UserPreferences {
 
     @JsonCreator
     public UserPreferences(@JsonProperty("theme") final String theme,
-                           @JsonProperty("editorTheme") final AceEditorTheme editorTheme,
+                           @JsonProperty("editorTheme") final String editorTheme,
                            @JsonProperty("font") final String font,
                            @JsonProperty("fontSize") final String fontSize,
                            @JsonProperty("dateTimePattern") final String dateTimePattern,
@@ -81,7 +78,7 @@ public class UserPreferences {
         return theme;
     }
 
-    public AceEditorTheme getEditorTheme() {
+    public String getEditorTheme() {
         return editorTheme;
     }
 
@@ -142,12 +139,12 @@ public class UserPreferences {
 
     public static final class Builder {
 
-        public static final AceEditorTheme DEFAULT_EDITOR_THEME = AceEditorTheme.CHROME;
-        public static final AceEditorTheme DEFAULT_EDITOR_THEME_DARK = AceEditorTheme.TOMORROW_NIGHT;
+        public static final String DEFAULT_EDITOR_THEME = "chrome";
+        public static final String DEFAULT_EDITOR_THEME_DARK = "tomorrow_night_eighties";
         private static final String DEFAULT_DATE_TIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXX";
 
         private String theme;
-        private AceEditorTheme editorTheme;
+        private String editorTheme;
         private String font;
         private String fontSize;
         private String dateTimePattern;
@@ -177,12 +174,7 @@ public class UserPreferences {
         }
 
         public Builder editorTheme(final String editorTheme) {
-            // Find the first `AceEditorTheme` enum that matches the provided theme name
-            final Optional<AceEditorTheme> editorThemeEnum = Arrays.stream(AceEditorTheme.values())
-                    .filter(t -> t.getName().equals(editorTheme))
-                    .findFirst();
-
-            this.editorTheme = editorThemeEnum.orElse(null);
+            this.editorTheme = editorTheme;
             return this;
         }
 

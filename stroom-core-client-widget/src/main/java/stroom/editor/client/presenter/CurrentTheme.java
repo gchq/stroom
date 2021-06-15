@@ -1,19 +1,18 @@
 package stroom.editor.client.presenter;
 
-import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
-
 import javax.inject.Singleton;
 
 @Singleton
 public class CurrentTheme {
+
     private String theme;
-    private AceEditorTheme editorTheme;
+    private String editorTheme;
 
     public String getTheme() {
         return theme;
     }
 
-    public AceEditorTheme getEditorTheme() {
+    public String getEditorTheme() {
         return editorTheme;
     }
 
@@ -21,7 +20,7 @@ public class CurrentTheme {
         this.theme = theme;
     }
 
-    public void setEditorTheme(final AceEditorTheme editorTheme) {
+    public void setEditorTheme(final String editorTheme) {
         this.editorTheme = editorTheme;
     }
 }

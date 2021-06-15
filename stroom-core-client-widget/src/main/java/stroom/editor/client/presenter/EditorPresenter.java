@@ -37,6 +37,7 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionProvider;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Function;
@@ -76,8 +77,21 @@ public class EditorPresenter
                 view.setTheme(getTheme(event.getTheme(), event.getEditorTheme()))));
     }
 
-    private AceEditorTheme getTheme(final String theme, final AceEditorTheme editorTheme) {
-        return editorTheme;
+    private AceEditorTheme getTheme(final String theme, final String editorTheme) {
+        AceEditorTheme aceEditorTheme = AceEditorTheme.CHROME;
+        if (theme != null &&
+                theme.toLowerCase(Locale.ROOT).contains("dark")) {
+            aceEditorTheme = AceEditorTheme.TOMORROW_NIGHT_EIGHTIES;
+        }
+        if (editorTheme != null) {
+            aceEditorTheme = Arrays
+                    .stream(AceEditorTheme.values())
+                    .filter(t -> t.getName().equals(editorTheme))
+                    .findAny()
+                    .orElse(aceEditorTheme);
+        }
+
+        return aceEditorTheme;
     }
 
     public String getEditorId() {

@@ -2,7 +2,6 @@ package stroom.legacy.impex_6_1;
 
 import stroom.docref.DocRef;
 import stroom.importexport.shared.ImportState;
-import stroom.search.solr.SolrIndexSerialiser;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.util.shared.Severity;
 
