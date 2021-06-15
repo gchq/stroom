@@ -74,7 +74,7 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
 
         getView().setWrap(format != null && format.getWrap() != null && format.getWrap());
 
-        final PopupSize popupSize = new PopupSize(390, 217, 390, 217, true);
+        final PopupSize popupSize = new PopupSize(390, 262, 390, 262, true);
         ShowPopupEvent.fire(tablePresenter, this, PopupType.OK_CANCEL_DIALOG, popupSize,
                 "Format '" + field.getName() + "'", this);
     }
