@@ -62,7 +62,7 @@ public class EditorPresenter
         this.contextMenu = contextMenu;
         this.delegatingAceCompleter = delegatingAceCompleter;
         view.setUiHandlers(this);
-        view.setTheme(getTheme(currentTheme.getTheme()));
+        view.setTheme(getTheme(currentTheme.getTheme(), currentTheme.getEditorTheme()));
 
         registerHandler(view.addMouseDownHandler(event -> contextMenu.hide()));
         registerHandler(view.addContextMenuHandler(event ->
@@ -73,15 +73,11 @@ public class EditorPresenter
             }
         }));
         registerHandler(eventBus.addHandler(ChangeThemeEvent.getType(), event ->
-                view.setTheme(getTheme(event.getTheme()))));
+                view.setTheme(getTheme(event.getTheme(), event.getEditorTheme()))));
     }
 
-    private AceEditorTheme getTheme(final String themeName) {
-        if (themeName != null && themeName.toLowerCase(Locale.ROOT).contains("dark")) {
-            return AceEditorTheme.CHAOS;
-//            theme = AceEditorTheme.TERMINAL;
-        }
-        return AceEditorTheme.CHROME;
+    private AceEditorTheme getTheme(final String theme, final AceEditorTheme editorTheme) {
+        return editorTheme;
     }
 
     public String getEditorId() {

@@ -21,6 +21,14 @@
                     </g:customCell>
                 </g:row>
 
+                <!-- Ace editor theme -->
+                <g:row>
+                    <g:cell>Editor Theme:</g:cell>
+                    <g:customCell>
+                        <item:StringListBox ui:field="editorTheme"/>
+                    </g:customCell>
+                </g:row>
+
                 <!-- Font -->
                 <g:row>
                     <g:cell>Font:</g:cell>
