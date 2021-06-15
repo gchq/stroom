@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.Map;
 import javax.inject.Inject;
 
-class ElasticIndexSerialiser implements DocumentSerialiser2<ElasticIndexDoc> {
+public class ElasticIndexSerialiser implements DocumentSerialiser2<ElasticIndexDoc> {
 
     private final Serialiser2<ElasticIndexDoc> delegate;
 

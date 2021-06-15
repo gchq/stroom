@@ -6,7 +6,7 @@
             <g:ResizeLayoutPanel ui:field="content"
                                  styleName="max"/>
         </g:center>
-        <g:south size="26">
+        <g:south size="35">
             <g:FlowPanel styleName="resizableCloseContent-buttons">
                 <g:Button ui:field="close" text="Close"/>
             </g:FlowPanel>

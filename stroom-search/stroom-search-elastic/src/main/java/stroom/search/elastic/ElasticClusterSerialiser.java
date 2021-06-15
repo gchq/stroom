@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.Map;
 import javax.inject.Inject;
 
-class ElasticClusterSerialiser implements DocumentSerialiser2<ElasticClusterDoc> {
+public class ElasticClusterSerialiser implements DocumentSerialiser2<ElasticClusterDoc> {
 
     private final Serialiser2<ElasticClusterDoc> delegate;
 

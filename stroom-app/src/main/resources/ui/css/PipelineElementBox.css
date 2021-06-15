@@ -18,12 +18,17 @@
 	position: absolute;
 	left: -100000;
 	top: -100000;
-	border: 1px solid rgba(0,0,0,.2);
+	border: 1px solid var(--pipeline-element-box-border-color);
 	background-color: var(--pipeline-element-box-background-color);
+	box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;
 	color: var(--pipeline-element-box-text-color);
 /* 	background-image: linear-gradient(#f5f9fd, #e1ebf8); */
-	border-radius: 5px;
-	box-shadow: rgba(0, 0, 0, 0.0980392) 0 2px 4px, rgba(0, 0, 0, 0.0980392) 0 0 3px;
+	border-radius: 50px;
+	padding: 5px 5px 5px 10px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	vertical-align: middle;
 	cursor: pointer;
 	z-index: 2;
 	
@@ -53,15 +58,12 @@
 }
 
 .pipelineElementBox-image {
-	position: absolute;
-	left: 3px;
-	top: 2px;
 	width: 16px;
 	height: 16px;
 	cursor: pointer;
 }
 
 .pipelineElementBox-label {
-	padding: 2px 5px 2px 5px;
+	padding: 0 8px;
 	cursor: pointer;
 }

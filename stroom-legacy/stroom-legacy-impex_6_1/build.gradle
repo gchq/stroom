@@ -14,6 +14,8 @@ dependencies {
     compile project(':stroom-statistics:stroom-statistics-impl-hbase')
     compile project(':stroom-statistics:stroom-statistics-impl-sql')
     compile project(':stroom-dashboard:stroom-storedquery-impl-db')
+    compile project(':stroom-search:stroom-search-solr')
+    compile project(':stroom-search:stroom-search-elastic')
 
 //    compile project(':stroom-util')
 

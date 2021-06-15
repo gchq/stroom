@@ -29,6 +29,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.search.elastic.client.presenter.ElasticIndexSettingsPresenter.ElasticIndexSettingsView;
 import stroom.search.elastic.shared.ElasticClusterDoc;
+import stroom.search.elastic.shared.ElasticIndexDataSourceFieldUtil;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexResource;
 import stroom.search.elastic.shared.ElasticIndexTestResponse;
@@ -122,7 +123,7 @@ public class ElasticIndexSettingsPresenter extends DocumentSettingsPresenter<Ela
             index.setRetentionExpression(ExpressionOperator.builder().op(Op.AND).build());
         }
 
-        editExpressionPresenter.init(restFactory, docRef, index.getDataSourceFields());
+        editExpressionPresenter.init(restFactory, docRef, ElasticIndexDataSourceFieldUtil.getDataSourceFields(index));
         editExpressionPresenter.read(index.getRetentionExpression());
     }
 

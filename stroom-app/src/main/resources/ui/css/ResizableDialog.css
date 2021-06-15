@@ -37,8 +37,7 @@
 .resizableDialog-content {
 	width: 100%;
 	height: 100%;
-	padding: 5px;
-	padding-top: 26px;
+	padding: 40px 8px 8px 8px;
 }
 
 .resizableDialog-titleBar {
@@ -46,7 +45,6 @@
 	left: 0px;
 	top: 0px;
 	width: 100%;
-	height: 21px;
 	background-image: var(--dialog-titlebar-background-image);
 	background-color: var(--dialog-titlebar-background-color);
 	border-bottom: 1px solid var(--dialog-titlebar-border-color);
@@ -54,11 +52,10 @@
 
 .resizableDialog-titleText {
 	width: 100%;
-	padding: 3px 5px;
-	font-weight: 500;
+	padding: 7px 10px;
+	font-weight: bold;
 	color: white;
 	cursor: default;
-	word-wrap: none;
 }
 
 /* Resize handle */

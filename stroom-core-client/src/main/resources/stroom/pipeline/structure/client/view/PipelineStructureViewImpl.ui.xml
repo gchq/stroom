@@ -3,7 +3,7 @@
              xmlns:v="urn:import:stroom.widget.button.client"
              xmlns:view="urn:import:stroom.widget.layout.client.view">
     <g:DockLayoutPanel unit="PX" addStyleNames="max">
-        <g:north size="19">
+        <g:north size="26">
             <g:FlowPanel styleName="pipelineStructureViewImpl-bar stroom-border-bottom">
                 <g:FlowPanel styleName="pipelineStructureViewImpl-buttons">
                     <v:SvgButton ui:field="add"/>
@@ -19,7 +19,7 @@
         <g:center>
             <g:MySplitLayoutPanel vSplits="0.4">
                 <g:north size="200">
-                    <g:MaxScrollPanel ui:field="treeContainer" addStyleNames="stroom-content stroom-border-bottom"/>
+                    <g:MaxScrollPanel ui:field="treeContainer" addStyleNames="stroom-content stroom-border-bottom pipelineStructureViewImpl-treeContainer"/>
                 </g:north>
                 <g:center>
                     <g:MySplitLayoutPanel vSplits="0.5" styleName="stroom-border-top">

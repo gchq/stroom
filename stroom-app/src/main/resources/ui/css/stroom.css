@@ -560,8 +560,7 @@ td {
 .gwt-TextBox,.gwt-PasswordTextBox,.gwt-ListBox,.gwt-TextArea,.gwt-DateBox,.stroom-DropDownTree {
 	width: 200px;
 	margin: 0px;
-	padding: 1px;
-	padding-left: 4px;
+	padding: 3px 5px;
 	outline: none !important;
 }
 
@@ -601,8 +600,6 @@ input[type="file"] {
 }
 
 .gwt-ListBox {
-	padding: 0px;
-
 	/* Hide drop down arrow on Firefox */
     -moz-appearance: none;
     text-indent: 0.01px;
@@ -616,6 +613,12 @@ input[type="file"] {
     background-position: center right;
     background-repeat: no-repeat;
     background-size: 12px;
+	background-origin: content-box;
+}
+
+.stroom-theme-dark .gwt-ListBox,
+.stroom-theme-dark2 .gwt-ListBox {
+	background-image: url("../images/drop-down-dark.svg");
 }
 
 .gwt-TextArea {

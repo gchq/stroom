@@ -20,17 +20,19 @@
 .menuBar .menuItem {
 	position: relative;
 	display: inline-block;
-	z-index: 10;
+	padding: 4px;
 }
 
 .menuBar .background {
 	position: absolute;
 	width: 100%;
 	height: 100%;
+	top: 0;
+	left: 0;
 	cursor: pointer;
 	background: white;
 	opacity: 0;
-	filter: alpha(opacity =   '0');
+	filter: alpha(opacity=0);
 }
 
 .menuBar .text {

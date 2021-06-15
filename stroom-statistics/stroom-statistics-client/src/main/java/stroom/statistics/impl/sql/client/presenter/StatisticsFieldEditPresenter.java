@@ -93,7 +93,7 @@ public class StatisticsFieldEditPresenter
     }
 
     void show(final String caption, final PopupUiHandlers uiHandlers) {
-        final PopupSize popupSize = new PopupSize(305, 78, 305, 78, 800, 78, true);
+        final PopupSize popupSize = new PopupSize(305, 130, 305, 130, 800, 130, true);
         ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, caption, uiHandlers);
     }
 

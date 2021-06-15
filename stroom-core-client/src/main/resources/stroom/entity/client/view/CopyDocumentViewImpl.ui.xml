@@ -5,7 +5,7 @@
         <g:north size="18">
             <g:Label text="Select the parent group:" addStyleNames="copyDocumentViewImpl-label"/>
         </g:north>
-        <g:south size="20">
+        <g:south size="30">
             <g:Grid styleName="stroom-control-grid" width="100%">
                 <g:row>
                     <g:cell>Permissions:</g:cell>

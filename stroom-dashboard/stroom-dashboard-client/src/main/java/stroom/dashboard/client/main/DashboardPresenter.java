@@ -148,7 +148,6 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     private ButtonView addButtonLeft(final Preset preset) {
         if (leftButtons == null) {
             leftButtons = new ButtonPanel();
-            leftButtons.getElement().getStyle().setPaddingLeft(1, Style.Unit.PX);
             addWidgetLeft(leftButtons);
         }
 

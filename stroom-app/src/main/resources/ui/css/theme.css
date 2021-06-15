@@ -32,6 +32,7 @@
     --tooltip-background-color: #ffd;
     --tooltip-text-color: #000;
 
+
     --button-background-image: none; /*linear-gradient(#ffffff 0px, #fbfbfa 10px, #f6f5f5 0px, #e9e7e6); */
     --button-background-color: #f6f5f5;
     --button-border-color: #918e8c;
@@ -56,6 +57,7 @@
     --pipeline-element-box-background-color-selected-hover: #bbdefb;
     --pipeline-element-box-background-color-hotspot: rgba(255,0,0,.3);
     --pipeline-element-box-text-color: #000;
+    --pipeline-element-box-border-color: #918e8c;
 
     --link-text-color: #0000AA;
 
@@ -100,11 +102,11 @@
     --app-background-color: #000;/*#19171d;*/
     --page-background-color: #1a1d21;
     --border-color: #555;
-    --input-background-color: #000;
+    --input-background-color: #333;
     --input-border-color: #555;
 
     --header-border-color: #333;
-    --even-row-background-color: #080808;
+    --even-row-background-color: #282c31;
     --odd-row-background-color: #1a1d21;
     --hovered-row-background-color: #27242c;
     --selected-row-background-color: #1164a3;
@@ -115,7 +117,7 @@
     --dialog-titlebar-border-color: #19171d;
     --dialog-background-image: none;
     --dialog-background-color: #1a1d21;
-    --dialog-border-color: #333;
+    --dialog-border-color: rgb(132 132 132 / 60%);
     --dialog-shadow: 0 0 5px 2px rgb(0 0 0 / 100%);
     --popup-shadow: 0 0 5px 2px rgb(0 0 0 / 100%);
 
@@ -127,7 +129,7 @@
 
     --button-background-image: none;
     --button-background-color: #454545;
-    --button-border-color: #2f2f2f;
+    --button-border-color: #555;
     --button-text-color: #fff;
     --button-background-image-active: none;
     --button-background-color-active: #555555;
@@ -149,6 +151,7 @@
     --pipeline-element-box-background-color-selected-hover: #1164a3;
     --pipeline-element-box-background-color-hotspot: rgba(255,0,0,.5);
     --pipeline-element-box-text-color: #fff;
+    --pipeline-element-box-border-color: #a1a1a1;
 
     --link-text-color: #3aaaff;
 

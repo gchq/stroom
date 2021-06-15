@@ -147,7 +147,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
 
                 namePresenter.setName("");
                 namePresenter.setUihandlers(popupUiHandlers);
-                final PopupSize popupSize = new PopupSize(350, 78, 300, 78, 1024, 78, true);
+                final PopupSize popupSize = new PopupSize(350, 130, 300, 130, 1024, 130, true);
                 ShowPopupEvent.fire(QueryFavouritesPresenter.this, namePresenter, PopupType.OK_CANCEL_DIALOG,
                         popupSize, "Create New Favourite", popupUiHandlers);
                 namePresenter.getView().focus();

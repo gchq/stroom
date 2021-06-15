@@ -37,11 +37,13 @@ import org.elasticsearch.client.indices.GetFieldMappingsResponse.FieldMappingMet
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -95,6 +97,10 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
                     final Map<String, Object> propertiesMap = (Map<String, Object>) properties;
                     final String nativeType = (String) propertiesMap.get("type");
 
+                    // If field type is null, this is a system field, so ignore
+                    if (nativeType == null) {
+                        return null;
+                    }
                     try {
                         final ElasticIndexFieldType elasticFieldType =
                                 ElasticIndexFieldType.fromNativeType(fullName, nativeType);
@@ -145,8 +151,7 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
                                 ElasticIndexFieldType.fromNativeType(fieldName, fieldType),
                                 fieldName,
                                 fieldType,
-                                sourceFieldEnabled || stored,
-                                true));
+                                sourceFieldEnabled || stored));
                     } catch (Exception e) {
                         LOGGER.error(e::getMessage, e);
                     }
@@ -239,11 +244,36 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
                         return o1.compareToIgnoreCase(o2);
                     });
 
+                    // Build a list of all multi fields (i.e. those defined only in the field mapping).
+                    // These are excluded from the fields the user can pick via the Stroom UI, as they are not part
+                    // of the returned `_source` field.
+                    final HashSet<String> multiFieldMappings = new HashSet<>();
                     allMappings.values().forEach(indexMappings -> indexMappings.forEach((fieldName, mapping) -> {
-                        if (!mappings.containsKey(fieldName)) {
-                            mappings.put(fieldName, mapping);
+                        if (mapping.sourceAsMap().get(fieldName) instanceof Map) {
+                            @SuppressWarnings("unchecked")
+                            final Map<String, Object> source =
+                                    (Map<String, Object>) mapping.sourceAsMap().get(fieldName);
+                            final Object fields = source.get("fields");
+
+                            if (fields instanceof Map) {
+                                @SuppressWarnings("unchecked")
+                                final Map<String, Object> multiFields = (Map<String, Object>) fields;
+
+                                multiFields.forEach((multiFieldName, multiFieldMapping) -> {
+                                    final String fullName = mapping.fullName() + "." + multiFieldName;
+                                    multiFieldMappings.add(fullName);
+                                });
+                            }
                         }
                     }));
+
+                    allMappings.values().forEach(indexMappings -> {
+                        indexMappings.forEach((fieldName, mapping) -> {
+                            if (!mappings.containsKey(fieldName) && !multiFieldMappings.contains(mapping.fullName())) {
+                                mappings.put(fieldName, mapping);
+                            }
+                        });
+                    });
 
                     return mappings;
                 } catch (final IOException e) {

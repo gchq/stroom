@@ -822,7 +822,6 @@ export interface ElasticIndexDoc {
   /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
-  dataSourceFields?: AbstractField[];
   description?: string;
   fields?: ElasticIndexField[];
   indexName?: string;
@@ -846,7 +845,6 @@ export interface ElasticIndexField {
   fieldName?: string;
   fieldType?: string;
   fieldUse?: "ID" | "BOOLEAN" | "INTEGER" | "LONG" | "FLOAT" | "DOUBLE" | "DATE" | "TEXT";
-  indexed?: boolean;
   stored?: boolean;
 }
 

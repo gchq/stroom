@@ -9,6 +9,9 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.script.shared.ScriptDoc;
+import stroom.search.elastic.shared.ElasticClusterDoc;
+import stroom.search.elastic.shared.ElasticIndexDoc;
+import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.visualisation.shared.VisualisationDoc;
@@ -24,10 +27,13 @@ public class LegacyImpexModule extends AbstractModule {
         DataMapConverterBinder.create(binder())
                 .bind(DashboardDoc.DOCUMENT_TYPE, DashboardDataMapConverter.class)
                 .bind(DictionaryDoc.DOCUMENT_TYPE, DictionaryDataMapConverter.class)
+                .bind(ElasticClusterDoc.DOCUMENT_TYPE, ElasticClusterDataMapConverter.class)
+                .bind(ElasticIndexDoc.DOCUMENT_TYPE, ElasticIndexDataMapConverter.class)
                 .bind(FeedDoc.DOCUMENT_TYPE, FeedDataMapConverter.class)
                 .bind(IndexDoc.DOCUMENT_TYPE, IndexDataMapConverter.class)
                 .bind(PipelineDoc.DOCUMENT_TYPE, PipelineDataMapConverter.class)
                 .bind(ScriptDoc.DOCUMENT_TYPE, ScriptDataMapConverter.class)
+                .bind(SolrIndexDoc.DOCUMENT_TYPE, SolrIndexDataMapConverter.class)
                 .bind(StatisticStoreDoc.DOCUMENT_TYPE, StatisticDataMapConverter.class)
                 .bind(StroomStatsStoreDoc.DOCUMENT_TYPE, StroomStatsDataMapConverter.class)
                 .bind(TextConverterDoc.DOCUMENT_TYPE, TextConverterDataMapConverter.class)

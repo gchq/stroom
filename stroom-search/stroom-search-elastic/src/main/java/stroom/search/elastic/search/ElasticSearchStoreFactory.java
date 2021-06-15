@@ -21,12 +21,14 @@ import stroom.dictionary.api.WordListProvider;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreFactory;
+import stroom.query.common.v2.TableCoprocessorSettings;
 import stroom.search.elastic.ElasticIndexCache;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.security.api.SecurityContext;
@@ -116,13 +118,16 @@ public class ElasticSearchStoreFactory implements StoreFactory {
                 modifiedSearchRequest.getDateTimeLocale(),
                 nowEpochMilli);
 
+        final Sizes maxResultSizes = calculateMaxResultSizes(coprocessorSettingsList);
+
         // Create the search result collector.
         final ElasticSearchResultCollector searchResultCollector = ElasticSearchResultCollector.create(
                 executor,
                 taskContextFactory,
                 elasticAsyncSearchTaskHandlerProvider,
                 asyncSearchTask,
-                coprocessors);
+                coprocessors,
+                maxResultSizes);
 
         // Tell the task where results will be collected.
         asyncSearchTask.setResultCollector(searchResultCollector);
@@ -131,6 +136,23 @@ public class ElasticSearchStoreFactory implements StoreFactory {
         searchResultCollector.start();
 
         return searchResultCollector;
+    }
+
+    private Sizes calculateMaxResultSizes(final List<CoprocessorSettings> coprocessorSettings) {
+        final Sizes defaultMaxResultsSizes = getDefaultMaxResultsSizes();
+        Sizes currentMaxResultSize = Sizes.create(0);
+
+        // Find the largest maximum result set size of all table consumers
+        for (final CoprocessorSettings settings : coprocessorSettings) {
+            if (settings instanceof TableCoprocessorSettings) {
+                final TableCoprocessorSettings tableCoprocessorSettings = (TableCoprocessorSettings) settings;
+                final TableSettings tableSettings = tableCoprocessorSettings.getTableSettings();
+
+                currentMaxResultSize = Sizes.max(Sizes.create(tableSettings.getMaxResults()), currentMaxResultSize);
+            }
+        }
+
+        return Sizes.min(currentMaxResultSize, defaultMaxResultsSizes);
     }
 
     private Sizes getDefaultMaxResultsSizes() {

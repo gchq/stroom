@@ -36,14 +36,14 @@ public class PipelineElementBox extends Box<PipelineElement> {
 
         final Label label = new Label(pipelineElement.getId(), false);
         label.addStyleName("pipelineElementBox-label");
-        background.add(label);
 
         if (icon != null) {
             final Widget image = icon.asWidget();
             image.addStyleName("pipelineElementBox-image");
             background.add(image);
-            label.getElement().getStyle().setPaddingLeft(25, Unit.PX);
         }
+
+        background.add(label);
 
         initWidget(background);
     }

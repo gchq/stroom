@@ -59,7 +59,7 @@ public class AddEventLinkPresenter extends MyPresenterWidget<AddEventLinkView> i
         this.consumer = consumer;
         getView().getName().setText("");
 
-        final PopupSize popupSize = new PopupSize(250, 78, 250, 78, 1000, 78, true);
+        final PopupSize popupSize = new PopupSize(250, 130, 250, 130, 1000, 130, true);
         ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, "Link An Event", this);
         getView().focus();
     }

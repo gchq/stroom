@@ -75,7 +75,9 @@
 .menuItem-outer {
     position: relative;
 	width: 100%;
-	padding: 4px;
+	padding: 4px 6px;
+	min-width: 180px;
+	border-radius: 3px;
 }
 
 .menuItem-highlight {
@@ -584,32 +586,37 @@
 
 .dropDownView-container {
     position: relative;
-    display: inline-block;
     width: 200px;
-    height: 19px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	padding: 3px 5px;
+	border-radius: 2px;
+	background-color: var(--input-background-color);
     cursor: pointer;
 }
 
 .dropDownView-label {
-    position: absolute;
-    left: 4px;
-    right: 20px;
-    top: 1px;
-    bottom: 1px;
     overflow: hidden;
     white-space: nowrap;
-    cursor: pointer;
 }
 
 .dropDownView-button {
     position: absolute;
-    background-image: url("../images/popup.png");
-    bottom: 4px;
+    background-image: url("../images/ellipses-grey.svg");
+	background-size: contain;
+	background-color: transparent;
+    bottom: 0;
     right: 4px;
-    width: 11px;
-    height: 3px;
+	width: 15px;
+	height: 15px;
     cursor: pointer;
     border: none;
+}
+
+.stroom-theme-dark .dropDownView-button,
+.stroom-theme-dark2 .dropDownView-button {
+	background-image: url("../images/ellipses-grey-dark.svg");
 }
 
 .curveTabLayoutViewImpl-layout {
@@ -651,7 +658,8 @@
 }
 
 .pipelineStructureViewImpl-buttons {
-    vertical-align: top;
+    position: relative;
+	top: -1px;
 }
 
 .pipelineStructureViewImpl-label {
@@ -662,27 +670,27 @@
 
 .pipelineStructureViewImpl-bar {
     position: relative;
-    padding: 0px 2px;
+    padding: 0 4px;
+	display: flex;
+	align-items: center;
+	flex-direction: row;
 }
 
 .pipelineStructureViewImpl-bar div {
-    display: inline-block;
     white-space: nowrap;
+}
+
+.pipelineStructureViewImpl-treeContainer {
+	padding: 10px 5px;
 }
 
 
 .pipelineStructureViewImpl-label {
-    margin: 0px;
-    margin-top: 2px;
-    margin-left: 10px;
-    margin-right: 5px;
-    vertical-align: top;
+	margin: 0 10px 0 15px;
 }
 
 .pipelineStructureViewImpl-viewSource {
-    position: absolute;
-    right: 4px;
-    top: 2px;
+    margin-left: auto;
     text-decoration: underline;
 }
 
@@ -1129,10 +1137,6 @@
     width: 0;
 }
 
-.dashboardViewImpl-leftInner {
-    padding: 3px;
-}
-
 .dashboardViewImpl-rightInner {
     position: absolute;
     right: 0px;
@@ -1395,6 +1399,8 @@
     top: 0px;
     bottom: 0px;
     overflow: hidden;
+	display: flex;
+	flex-direction: column;
 }
 
 .mainViewImpl-banner {
@@ -1412,20 +1418,12 @@
 }
 
 .mainViewImpl-topPanel {
-    position: absolute;
-    left: 0px;
-    top: 0px;
-    width: 100%;
-    height: 14px;
+
 }
 
 .mainViewImpl-bottomPanel {
-    position: absolute;
-    left: 1px;
-    right: 1px;
-    top: 14px;
-    bottom: 1px;
-    overflow: hidden;
+	overflow: hidden;
+	flex-grow: 1;
 }
 
 .mainViewImpl-contentPanel {

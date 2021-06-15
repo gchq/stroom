@@ -102,12 +102,13 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
 
     @Override
     public ElasticIndexDoc readDocument(final DocRef docRef) {
-        return store.readDocument(docRef);
+        final ElasticIndexDoc doc = store.readDocument(docRef);
+        doc.setFields(elasticIndexService.getFields(doc));
+        return doc;
     }
 
     @Override
     public ElasticIndexDoc writeDocument(final ElasticIndexDoc document) {
-        document.setDataSourceFields(elasticIndexService.getDataSourceFields(document));
         document.setFields(elasticIndexService.getFields(document));
 
         return store.writeDocument(document);

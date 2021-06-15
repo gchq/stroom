@@ -55,7 +55,8 @@ public class ElasticSearchFactory {
         final QueryBuilder queryBuilder = getQuery(expression, indexFieldsMap, dateTimeLocale, now);
         final Tracker tracker = new Tracker(hitCount);
         final ElasticSearchTask elasticSearchTask = new ElasticSearchTask(
-                asyncSearchTask, index, queryBuilder, fieldIndex, receiver, tracker);
+                asyncSearchTask, index, queryBuilder, fieldIndex, receiver, tracker,
+                asyncSearchTask.getResultCollector());
 
         elasticSearchTaskHandler.exec(taskContext, elasticSearchTask);
 

@@ -21,7 +21,7 @@
         <g:center>
             <g:ResizeLayoutPanel ui:field="content" styleName="max"/>
         </g:center>
-        <g:south size="26">
+        <g:south size="35">
             <g:FlowPanel styleName="resizableAcceptRejectContent-buttons">
                 <g:Button ui:field="accept" styleName="resizableAcceptRejectContent-button resizableAcceptRejectContent-accept" text="Accept"/>
                 <g:Button ui:field="reject" styleName="resizableAcceptRejectContent-button resizableAcceptRejectContent-reject" text="Reject"/>

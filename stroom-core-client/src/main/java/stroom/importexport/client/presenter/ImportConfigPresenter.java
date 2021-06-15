@@ -122,11 +122,11 @@ public class ImportConfigPresenter
         EnablePopupEvent.fire(this, this);
         final PopupSize popupSize = new PopupSize(
                 350,
-                98,
+                140,
                 350,
-                98,
+                140,
                 2000,
-                98,
+                140,
                 true);
 
         ShowPopupEvent.fire(

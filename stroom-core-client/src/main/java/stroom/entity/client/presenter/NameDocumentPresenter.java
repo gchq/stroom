@@ -74,7 +74,7 @@ public class NameDocumentPresenter extends MyPresenter<NameDocumentView, NameDoc
     protected void revealInParent() {
         final String caption = "Rename " + entity.getDisplayValue();
         getView().setName(entity.getDisplayValue());
-        final PopupSize popupSize = new PopupSize(350, 78, 300, 78, 1024, 78, true);
+        final PopupSize popupSize = new PopupSize(350, 130, 300, 130, 1024, 130, true);
         ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, caption, this);
         getView().focus();
     }

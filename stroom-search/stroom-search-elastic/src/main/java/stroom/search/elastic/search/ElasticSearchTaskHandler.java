@@ -49,11 +49,14 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 public class ElasticSearchTaskHandler {
@@ -164,7 +167,8 @@ public class ElasticSearchTaskHandler {
                 processBatch(task, searchHits);
 
                 // Continue requesting results until we have all results
-                while (searchHits != null && searchHits.length > 0) {
+                final int maxResultSize = task.getResultCollector().getMaxResultSizes().size(0);
+                while (searchHits != null && searchHits.length > 0 && task.getTracker().getHitCount() < maxResultSize) {
                     if (task.getAsyncSearchTask().getResultCollector().isComplete()) {
                         break;
                     }
@@ -198,19 +202,45 @@ public class ElasticSearchTaskHandler {
             for (final SearchHit searchHit : searchHits) {
                 tracker.incrementHitCount();
 
-                final DocumentContext jsonSearchHit = JsonPath.parse(searchHit.getSourceAsString());
                 final Map<String, Object> mapSearchHit = searchHit.getSourceAsMap();
                 Val[] values = null;
 
                 for (final String fieldName : fieldIndex.getFieldNames()) {
                     final Integer insertAt = fieldIndex.getPos(fieldName);
-                    Object fieldValue;
+                    Object fieldValue = null;
 
-                    // Cater for special fields, where we want to avoid using json-path operators like '@'
-                    if (fieldName.equals("@timestamp")) {
+                    if (mapSearchHit.containsKey(fieldName)) {
+                        // Property found by its key
                         fieldValue = mapSearchHit.get(fieldName);
-                    } else {
-                        fieldValue = jsonSearchHit.read(fieldName);
+                    } else if (fieldName.contains(".")) {
+                        // Property is an object or array, so use the first part of the key to access the
+                        // child properties or array items
+                        final String[] fieldNameParts = fieldName.split("\\.");
+                        final Object property = mapSearchHit.get(fieldNameParts[0]);
+                        final String childPropertyName = fieldNameParts[1];
+
+                        if (property instanceof ArrayList) {
+                            final ArrayList<?> propertyArray = (ArrayList<?>) property;
+
+                            if (propertyArray.size() > 0) {
+                                if (propertyArray.get(0) instanceof HashMap) {
+                                    @SuppressWarnings("unchecked")
+                                    ArrayList<HashMap<String, Object>> propertyArrayMap =
+                                            (ArrayList<HashMap<String, Object>>) propertyArray;
+
+                                    // Create an array of all child properties matching the field path
+                                    fieldValue = propertyArrayMap.stream()
+                                            .map(prop -> prop.get(childPropertyName))
+                                            .collect(Collectors.toList());
+                                }
+                            }
+                        } else if (property instanceof HashMap) {
+                            @SuppressWarnings("unchecked")
+                            final HashMap<String, Object> propertyMap = (HashMap<String, Object>) property;
+
+                            // Get the child property matching the field path
+                            fieldValue = propertyMap.get(childPropertyName);
+                        }
                     }
 
                     if (fieldValue != null) {

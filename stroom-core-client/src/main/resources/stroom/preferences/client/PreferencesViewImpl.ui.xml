@@ -5,7 +5,7 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client">
     <g:DockLayoutPanel unit="PX" width="100%" height="100%" styleName="stroom-control-page">
-        <g:south size="25">
+        <g:south size="35">
             <g:FlowPanel styleName="preferencesViewImpl-buttons">
                 <g:Button ui:field="setAsDefault" text="Set As Default"/>
                 <g:Button ui:field="revertToDefault" text="Revert To Default"/>

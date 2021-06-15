@@ -48,7 +48,8 @@ public enum ElasticIndexFieldType implements HasDisplayValue {
     FLOAT(FieldTypes.FLOAT, "Float", false, new String[]{ "float", "half_float", "scaled_float" }),
     DOUBLE(FieldTypes.DOUBLE, "Double", false, new String[]{ "double" }),
     DATE(FieldTypes.DATE, "Date", false, new String[]{ "date" }),
-    TEXT(FieldTypes.TEXT, "Text", false, new String[]{ "text", "keyword", "constant_keyword", "wildcard" });
+    TEXT(FieldTypes.TEXT, "Text", false,
+            new String[]{ "text", "keyword", "ip", "version", "constant_keyword", "wildcard" });
 
     private static Map<String, ElasticIndexFieldType> nativeTypeRegistry = new HashMap<>();
 
