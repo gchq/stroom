@@ -287,8 +287,8 @@ public final class PreferencesViewImpl
 
     public void changeVisible() {
         final RowFormatter formatter = grid.getRowFormatter();
-        formatter.setVisible(7, TimeZone.Use.ID.equals(this.timeZoneUse.getSelectedItem()));
-        formatter.setVisible(8, TimeZone.Use.OFFSET.equals(this.timeZoneUse.getSelectedItem()));
+        formatter.setVisible(8, TimeZone.Use.ID.equals(this.timeZoneUse.getSelectedItem()));
+        formatter.setVisible(9, TimeZone.Use.OFFSET.equals(this.timeZoneUse.getSelectedItem()));
     }
 
     @UiHandler("custom")
