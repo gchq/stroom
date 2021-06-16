@@ -5,7 +5,7 @@
         <g:north size="18">
             <g:Label text="Select the parent group:" addStyleNames="createDocumentViewImpl-label"/>
         </g:north>
-        <g:south size="43">
+        <g:south size="55">
             <g:Grid styleName="stroom-control-grid" width="100%">
                 <g:row>
                     <g:cell>Name:</g:cell>
