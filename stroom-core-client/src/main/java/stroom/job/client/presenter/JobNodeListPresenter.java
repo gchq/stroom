@@ -132,7 +132,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
                         .onSuccess(result -> {
                             final String helpUrl = result.getHelpUrl();
                             if (helpUrl != null && helpUrl.trim().length() > 0) {
-                                String url = helpUrl + "/user-guide/tasks.html" + formatAnchor(row.getJob().getName());
+                                String url = helpUrl + "/user-guide/jobs.html" + formatAnchor(row.getJob().getName());
                                 Window.open(url, "_blank", "");
                             } else {
                                 AlertEvent.fireError(JobNodeListPresenter.this, "Help is not configured!", null);
