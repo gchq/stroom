@@ -17,6 +17,8 @@
     --selected-row-background-color: #bbdefb;
     --selected-row-text-color: #000;
 
+    --menu-separator-color: #bfbfbf;
+
     --dialog-titlebar-background-image: linear-gradient(rgb(96, 161, 240), rgb(74, 144, 228) 8px);
     --dialog-titlebar-background-color: rgb(74, 144, 228);
     --dialog-titlebar-border-color: rgb(60, 60, 60);
@@ -111,6 +113,8 @@
     --hovered-row-background-color: #27242c;
     --selected-row-background-color: #1164a3;
     --selected-row-text-color: #fff;
+
+    --menu-separator-color: rgb(255 255 255 / 20%);
 
     --dialog-titlebar-background-image: none;
     --dialog-titlebar-background-color: #19171d;
@@ -236,6 +240,7 @@
     --pipeline-element-box-background-color-selected-hover: #1164a3;
     --pipeline-element-box-background-color-hotspot: rgba(255,0,0,.5);
     --pipeline-element-box-text-color: #fff;
+    --menu-separator-color: rgb(255 255 255 / 20%);
     --link-text-color: #3aaaff;
     --code-editor-right-bar-background-color: #19171d;
     --code-editor-border-color: #000;

@@ -57,9 +57,9 @@
 }
 
 .menuItem-separator {
-    margin-left: 4px;
-    margin-right: 4px;
-	border-top: 1px solid black;
+    margin-left: 2px;
+    margin-right: 2px;
+	border-top: 1px solid var(--menu-separator-color);
 	cursor: default;
 }
 
