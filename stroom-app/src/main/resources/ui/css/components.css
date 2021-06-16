@@ -93,13 +93,11 @@
 	width: 18px;
 	height: 18px;
 	vertical-align: top;
-	cursor: pointer;
 }
 
 .menuItem-disabled {
 	cursor: default;
-	color: #000;
-	opacity: 0.3;
+	opacity: 0.4;
 }
 
 .menuItem-text {
