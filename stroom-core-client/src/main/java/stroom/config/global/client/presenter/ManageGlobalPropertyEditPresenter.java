@@ -520,9 +520,9 @@ public final class ManageGlobalPropertyEditPresenter
 
     protected PopupSize getPopupSize() {
         return new PopupSize(
-                700, 556,
-                700, 556,
-                1024, 556,
+                700, 610,
+                700, 610,
+                1024, 610,
                 true);
     }
 
