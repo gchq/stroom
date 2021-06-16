@@ -17,30 +17,32 @@
 .valueSpinner {
 	display: inline-block;
 	position: relative;
-	width: 55px;
+	width: 50px;
 }
 
 .valueSpinner .gwt-TextBox {
 	margin: 0;
-	padding: 0 15px 0 0;
+	padding: 3px 15px 3px 5px;
 	width: 100%;
 }
 
 .valueSpinner .arrows {
 	position: absolute;
-	right: 0px;
-	top: 0px;
-	width: 15px;
-	height: 16px;
+	right: 0;
+	top: 2px;
+	width: 18px;
+	height: 18px;
 	font-size: 0px;
 }
 
 .valueSpinner .arrows button {
 	display: block;
-    width: 15px;
-    height: 8px;
-    border: none !important;
-    border-radius: 0 !important;
+    width: 17px;
+    height: 10px;
+	border: 1px solid #333;
+    border-radius: 2px;
+	background-position-x: center;
+	background-size: contain;
 }
 
 .valueSpinner-arrowUp {
