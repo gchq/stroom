@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2278** : Close a dialog box on keypress. `Escape` = Close, `Ctrl+Enter` = OK.
+
 * Fix problem with DynamicAssetsBundle throwing an exception when run from the fat jar.
 
 * Issue **#2295** : Improved appearance, readability and usability of UI elements, especially in dark mode. 
