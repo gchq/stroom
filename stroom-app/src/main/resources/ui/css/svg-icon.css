@@ -35,6 +35,9 @@
 .svgIcon-database {
   background-image: url("../images/database.svg");
 }
+.stroom-theme-dark .svgIcon-database {
+  background-image: url("../images/database-dark.svg");
+}
 .svgIcon-delete {
   background-image: url("../images/delete.svg");
 }
@@ -131,6 +134,9 @@
 .svgIcon-jobs {
   background-image: url("../images/jobs.svg");
 }
+.stroom-theme-dark .svgIcon-jobs {
+  background-image: url("../images/jobs-dark.svg");
+}
 .svgIcon-key {
   background-image: url("../images/key.svg");
 }
@@ -143,6 +149,9 @@
 .svgIcon-monitoring {
   background-image: url("../images/monitoring.svg");
 }
+.stroom-theme-dark .svgIcon-monitoring {
+  background-image: url("../images/monitoring-dark.svg");
+}
 .svgIcon-move {
   background-image: url("../images/move.svg");
 }
@@ -152,6 +161,9 @@
 .svgIcon-nodes {
   background-image: url("../images/nodes.svg");
 }
+.stroom-theme-dark .svgIcon-nodes {
+  background-image: url("../images/nodes-dark.svg");
+}
 .svgIcon-edit {
   background-image: url("../images/edit.svg");
 }
@@ -160,6 +172,9 @@
 }
 .svgIcon-password {
   background-image: url("../images/password.svg");
+}
+.stroom-theme-dark .svgIcon-password {
+  background-image: url("../images/password-dark.svg");
 }
 .svgIcon-process {
   background-image: url("../images/process.svg");
@@ -232,6 +247,9 @@
 }
 .svgIcon-volumes {
   background-image: url("../images/volumes.svg");
+}
+.stroom-theme-dark .svgIcon-volumes {
+  background-image: url("../images/volumes-dark.svg");
 }
 .svgIcon-collapse-up {
   background-image: url("../images/collapse-up.svg");
@@ -320,6 +338,9 @@
 }
 .svgIcon-document-ElasticIndex {
   background-image: url("../images/document/ElasticIndex.svg");
+}
+.stroom-theme-dark .svgIcon-document-ElasticIndex {
+  background-image: url("../images/document/ElasticIndex-dark.svg");
 }
 .svgIcon-document-Feed {
   background-image: url("../images/document/Feed.svg");
