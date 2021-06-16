@@ -42,10 +42,8 @@ public abstract class AbstractPopupPanel extends PopupPanel implements Popup {
 
     /**
      * Notify the dialog when either the Enter or Escape key is pressed.
-     * For dialogs with a close button, the Escape will cause them to close. The Enter key will close the dialog,
-     * with a `true` result. The exception to this is where a keyboard modifier (like Shift) is held. This allows
-     * the user to press Enter within a dialog without dismissing it, such as when typing in a multiline text field.
-     * @param event
+     * For dialogs with a close button, the Escape will cause them to close.
+     * The combination Ctrl+Enter key will close the dialog, with a `true` result.
      */
     @Override
     protected void onPreviewNativeEvent(final NativePreviewEvent event) {
@@ -59,7 +57,8 @@ public abstract class AbstractPopupPanel extends PopupPanel implements Popup {
                     onEscapeKeyPressed();
                     break;
                 case KeyCodes.KEY_ENTER:
-                    if (!(nativeEvent.getAltKey() || nativeEvent.getCtrlKey() || nativeEvent.getShiftKey())) {
+                    // Only close the dialog if the Ctrl modifier is pressed
+                    if (nativeEvent.getCtrlKey()) {
                         onEnterKeyPressed();
                     }
                     break;
