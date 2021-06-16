@@ -92,6 +92,10 @@
 	padding-top: 18px;
 }
 
+.stroom-dashboard-table .dataGridHeader {
+	padding: 0 0 0 2px;
+}
+
 .stroom-dashboard-table td {
 	padding-left: 0 !important;
     padding-right: 0 !important;
@@ -100,11 +104,7 @@
 }
 
 .stroom-dashboard-table .cell {
-    padding-left: 2px;
-    padding-right: 2px;
-    padding-top: 1px;
-    padding-bottom: 1px;
-    height: 16px;
+	padding: 5px 10px 5px 3px;
 }
 
 .stroom-dashboard-text {
