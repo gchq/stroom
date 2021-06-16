@@ -110,7 +110,7 @@
     --header-border-color: #333;
     --even-row-background-color: #282c31;
     --odd-row-background-color: #1a1d21;
-    --hovered-row-background-color: #27242c;
+    --hovered-row-background-color: rgb(255 255 255 / 15%);
     --selected-row-background-color: #1164a3;
     --selected-row-text-color: #fff;
 
