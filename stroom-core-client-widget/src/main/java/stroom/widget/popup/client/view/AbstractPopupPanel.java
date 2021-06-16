@@ -17,19 +17,59 @@
 package stroom.widget.popup.client.view;
 
 import stroom.data.grid.client.Glass;
+import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.ui.PopupPanel;
 
 public abstract class AbstractPopupPanel extends PopupPanel implements Popup {
+    private final PopupType popupType;
     private final Glass dragGlass = new Glass(
             "popupPanel-dragGlass",
             "popupPanel-dragGlassVisible");
 
-    public AbstractPopupPanel(final boolean autoHide, final boolean modal) {
+    public AbstractPopupPanel(final boolean autoHide, final boolean modal, final PopupType popupType) {
         super(autoHide, modal);
+        this.popupType = popupType;
     }
 
     public Glass getDragGlass() {
         return dragGlass;
     }
+
+    /**
+     * Notify the dialog when either the Enter or Escape key is pressed.
+     * For dialogs with a close button, the Escape will cause them to close. The Enter key will close the dialog,
+     * with a `true` result. The exception to this is where a keyboard modifier (like Shift) is held. This allows
+     * the user to press Enter within a dialog without dismissing it, such as when typing in a multiline text field.
+     * @param event
+     */
+    @Override
+    protected void onPreviewNativeEvent(final NativePreviewEvent event) {
+        super.onPreviewNativeEvent(event);
+
+        if (event.getTypeInt() == Event.ONKEYDOWN) {
+            final NativeEvent nativeEvent = event.getNativeEvent();
+
+            switch (nativeEvent.getKeyCode()) {
+                case KeyCodes.KEY_ESCAPE:
+                    onEscapeKeyPressed();
+                    break;
+                case KeyCodes.KEY_ENTER:
+                    if (!(nativeEvent.getAltKey() || nativeEvent.getCtrlKey() || nativeEvent.getShiftKey())) {
+                        onEnterKeyPressed();
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    protected void onEscapeKeyPressed() { }
+
+    protected void onEnterKeyPressed() { }
 }
