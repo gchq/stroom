@@ -74,7 +74,7 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
 
         getView().setWrap(format != null && format.getWrap() != null && format.getWrap());
 
-        final PopupSize popupSize = new PopupSize(390, 262, 390, 262, true);
+        final PopupSize popupSize = new PopupSize(390, 288, 390, 288, true);
         ShowPopupEvent.fire(tablePresenter, this, PopupType.OK_CANCEL_DIALOG, popupSize,
                 "Format '" + field.getName() + "'", this);
     }
@@ -136,7 +136,7 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
     }
 
     private FormatSettings getDateTimeSettings() {
-        return new DateTimeFormatSettings(getView().getPattern(), getTimeZone());
+        return new DateTimeFormatSettings(getView().isUsePreferences(), getView().getPattern(), getTimeZone());
     }
 
     private void setDateTimeSettings(final FormatSettings settings) {
@@ -165,7 +165,7 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
         getView().setTimeZoneUse(timeZone.getUse());
 
         if (timeZone.getId() == null) {
-            getView().setTimeZoneId(timeZones.getTimeZone());
+            getView().setTimeZoneId(timeZones.getLocalTimeZoneId());
         } else {
             getView().setTimeZoneId(timeZone.getId());
         }
@@ -187,6 +187,10 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
         boolean isUseSeparator();
 
         void setUseSeparator(boolean useSeparator);
+
+        boolean isUsePreferences();
+
+        void setUsePreferences(boolean usePreferences);
 
         String getPattern();
 

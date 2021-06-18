@@ -19,6 +19,7 @@ package stroom.query.common.v2.format;
 import stroom.dashboard.expression.v1.DateUtil;
 import stroom.dashboard.expression.v1.Val;
 import stroom.query.api.v2.DateTimeFormatSettings;
+import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.TimeZone;
 
 import java.time.Instant;
@@ -35,40 +36,46 @@ public class DateTimeFormatter implements Formatter {
         this.zone = zone;
     }
 
-    public static DateTimeFormatter create(final DateTimeFormatSettings dateTimeFormat, final String dateTimeLocale) {
+    public static DateTimeFormatter create(final DateTimeFormatSettings dateTimeFormat,
+                                           final DateTimeSettings defaultDateTimeSettings) {
         java.time.format.DateTimeFormatter format = null;
         ZoneId zone = ZoneOffset.UTC;
 
-        if (dateTimeFormat != null) {
-            String pattern = dateTimeFormat.getPattern();
-            if (pattern != null && pattern.trim().length() > 0) {
-                final TimeZone timeZone = dateTimeFormat.getTimeZone();
+        String pattern = null;
+        TimeZone timeZone = null;
+        if (dateTimeFormat != null && !dateTimeFormat.isUsePreferences()) {
+            pattern = dateTimeFormat.getPattern();
+            timeZone = dateTimeFormat.getTimeZone();
+        } else if (defaultDateTimeSettings != null) {
+            pattern = defaultDateTimeSettings.getDateTimePattern();
+            timeZone = defaultDateTimeSettings.getTimeZone();
+        }
 
-                if (timeZone != null) {
-                    if (TimeZone.Use.UTC.equals(timeZone.getUse())) {
-                        zone = ZoneOffset.UTC;
-                    } else if (TimeZone.Use.LOCAL.equals(timeZone.getUse())) {
-                        zone = ZoneId.systemDefault();
+        if (pattern != null && pattern.trim().length() > 0) {
+            if (timeZone != null) {
+                if (TimeZone.Use.UTC.equals(timeZone.getUse())) {
+                    zone = ZoneOffset.UTC;
+                } else if (TimeZone.Use.LOCAL.equals(timeZone.getUse())) {
+                    zone = ZoneId.systemDefault();
 
-                        try {
-                            if (dateTimeLocale != null) {
-                                zone = ZoneId.of(dateTimeLocale);
-                            }
-                        } catch (final IllegalArgumentException e) {
-                            // The client time zone was not recognised so we'll
-                            // use the default.
+                    try {
+                        if (defaultDateTimeSettings != null) {
+                            zone = ZoneId.of(defaultDateTimeSettings.getLocalZoneId());
                         }
-
-                    } else if (TimeZone.Use.ID.equals(timeZone.getUse())) {
-                        zone = ZoneId.of(timeZone.getId());
-                    } else if (TimeZone.Use.OFFSET.equals(timeZone.getUse())) {
-                        zone = ZoneOffset.ofHoursMinutes(getInt(timeZone.getOffsetHours()),
-                                getInt(timeZone.getOffsetMinutes()));
+                    } catch (final IllegalArgumentException e) {
+                        // The client time zone was not recognised so we'll
+                        // use the default.
                     }
-                }
 
-                format = java.time.format.DateTimeFormatter.ofPattern(pattern);
+                } else if (TimeZone.Use.ID.equals(timeZone.getUse())) {
+                    zone = ZoneId.of(timeZone.getId());
+                } else if (TimeZone.Use.OFFSET.equals(timeZone.getUse())) {
+                    zone = ZoneOffset.ofHoursMinutes(getInt(timeZone.getOffsetHours()),
+                            getInt(timeZone.getOffsetMinutes()));
+                }
             }
+
+            format = java.time.format.DateTimeFormatter.ofPattern(pattern);
         }
 
         return new DateTimeFormatter(format, zone);

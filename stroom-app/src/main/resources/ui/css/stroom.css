@@ -582,6 +582,24 @@ input[type="file"] {
 	color: var(--text-color);
 }
 
+.gwt-TextArea:disabled,
+.gwt-TextBox:disabled,
+.gwt-PasswordTextBox:disabled,
+.gwt-ListBox:disabled,
+.gwt-DateBox:disabled,
+.stroom-DropDownTree:disabled,
+.stroom-input:disabled,
+select option:disabled,
+textarea:disabled,
+input:disabled,
+input[type="text"]:disabled,
+input[type="checkbox"]:disabled,
+input[type="file"]:disabled {
+	border: solid 1px var(--input-border-color-disabled);
+	background-color: var(--input-background-color-disabled);
+	color: var(--text-color-disabled);
+}
+
 .info-page {
 	background-color: var(--main-background-color);
 	color: var(--text-color);

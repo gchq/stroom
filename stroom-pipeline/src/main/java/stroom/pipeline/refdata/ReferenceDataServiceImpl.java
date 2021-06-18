@@ -26,6 +26,7 @@ import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory.Factory;
 import stroom.pipeline.refdata.store.RefStoreEntry;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
+import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -49,7 +50,6 @@ import net.sf.saxon.event.Receiver;
 
 import java.io.StringWriter;
 import java.time.Instant;
-import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -748,7 +748,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     private long getDate(final String fieldName, final String value, final long nowEpochMs) {
         try {
             // TODO @AT Get the timezone from the user's local?
-            return DateExpressionParser.parse(value, ZoneOffset.UTC.getId(), nowEpochMs)
+            return DateExpressionParser.parse(value, DateTimeSettings.builder().build(), nowEpochMs)
                     .map(dt -> dt.toInstant().toEpochMilli())
                     .orElseThrow(() -> new RuntimeException("Expected a standard date value for field \"" + fieldName
                             + "\" but was given string \"" + value + "\""));

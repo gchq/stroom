@@ -141,7 +141,7 @@ public class UserPreferences {
 
         public static final String DEFAULT_EDITOR_THEME = "chrome";
         public static final String DEFAULT_EDITOR_THEME_DARK = "tomorrow_night_eighties";
-        private static final String DEFAULT_DATE_TIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXX";
+        public static final String DEFAULT_DATE_TIME_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXX";
 
         private String theme;
         private String editorTheme;

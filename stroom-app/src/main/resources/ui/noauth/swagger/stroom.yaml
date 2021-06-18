@@ -6052,8 +6052,8 @@ components:
     ClusterSearchTask:
       type: object
       properties:
-        dateTimeLocale:
-          type: string
+        dateTimeSettings:
+          $ref: '#/components/schemas/DateTimeSettings'
         key:
           $ref: '#/components/schemas/QueryKey'
         now:
@@ -6395,8 +6395,8 @@ components:
             $ref: '#/components/schemas/ComponentResultRequest'
         dashboardQueryKey:
           $ref: '#/components/schemas/DashboardQueryKey'
-        dateTimeLocale:
-          type: string
+        dateTimeSettings:
+          $ref: '#/components/schemas/DateTimeSettings'
         search:
           $ref: '#/components/schemas/Search'
     DashboardSearchResponse:
@@ -6570,10 +6570,31 @@ components:
               of java.time.format.DateTimeFormatter
           timeZone:
             $ref: '#/components/schemas/TimeZone'
+          usePreferences:
+            type: boolean
+            description: Choose if you want to use the user preference to determine
+              the date/time format
       description: The string formatting to apply to a date value
       required:
       - pattern
       - timeZone
+      - usePreferences
+    DateTimeSettings:
+      type: object
+      description: The client date/time settings
+      properties:
+        dateTimePattern:
+          type: string
+          description: A date time formatting pattern string conforming to the specification
+            of java.time.format.DateTimeFormatter
+        localZoneId:
+          type: string
+          description: The local zone id to use when formatting date values in the
+            search results. The value is the string form of a java.time.ZoneId
+        timeZone:
+          $ref: '#/components/schemas/TimeZone'
+      required:
+      - localZoneId
     DefaultLocation:
       type: object
       allOf:
@@ -9684,10 +9705,8 @@ components:
       description: A request for new search or a follow up request for more data for
         an existing iterative search
       properties:
-        dateTimeLocale:
-          type: string
-          description: The locale to use when formatting date values in the search
-            results. The value is the string form of a java.time.ZoneId
+        dateTimeSettings:
+          $ref: '#/components/schemas/DateTimeSettings'
         incremental:
           type: boolean
           description: If true the response will contain all results found so far,
@@ -9720,7 +9739,6 @@ components:
             with complete=false, however for a non-incremental query it will return
             no results, complete=false and details of the timeout in the error field
       required:
-      - dateTimeLocale
       - incremental
       - key
       - query
@@ -11057,43 +11075,6 @@ components:
             of java.time.format.DateTimeFormatter
         editorTheme:
           type: string
-          enum:
-          - AMBIANCE
-          - CHAOS
-          - CHROME
-          - CLOUD9_DAY
-          - CLOUD9_NIGHT
-          - CLOUD9_NIGHT_LOW_COLOR
-          - CLOUDS
-          - CLOUDS_MIDNIGHT
-          - COBALT
-          - CRIMSON_EDITOR
-          - DAWN
-          - DREAMWEAVER
-          - ECLIPSE
-          - GITHUB
-          - IDLE_FINGERS
-          - KATZENMILCH
-          - KR_THEME
-          - KR
-          - KUROIR
-          - MERBIVORE
-          - MERBIVORE_SOFT
-          - MONO_INDUSTRIAL
-          - MONOKAI
-          - PASTEL_ON_DARK
-          - SOLARIZED_DARK
-          - SOLARIZED_LIGHT
-          - TERMINAL
-          - TEXTMATE
-          - TOMORROW_NIGHT_BLUE
-          - TOMORROW_NIGHT_BRIGHT
-          - TOMORROW_NIGHT_EIGHTIES
-          - TOMORROW_NIGHT
-          - TOMORROW
-          - TWILIGHT
-          - VIBRANT_INK
-          - XCODE
         font:
           type: string
         fontSize:

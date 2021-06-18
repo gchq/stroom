@@ -1,6 +1,6 @@
 package stroom.config.global.impl.db;
 
-import stroom.config.global.impl.PreferencesDao;
+import stroom.config.global.impl.UserPreferencesDao;
 import stroom.db.util.JooqUtil;
 import stroom.ui.config.shared.UserPreferences;
 
@@ -18,14 +18,14 @@ import javax.inject.Inject;
 
 import static stroom.config.impl.db.jooq.tables.Preferences.PREFERENCES;
 
-class PreferencesDaoImpl implements PreferencesDao {
+class UserPreferencesDaoImpl implements UserPreferencesDao {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PreferencesDaoImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserPreferencesDaoImpl.class);
 
     private final GlobalConfigDbConnProvider connProvider;
 
     @Inject
-    PreferencesDaoImpl(final GlobalConfigDbConnProvider connProvider) {
+    UserPreferencesDaoImpl(final GlobalConfigDbConnProvider connProvider) {
         this.connProvider = connProvider;
     }
 

@@ -19,6 +19,7 @@ package stroom.search.solr.search;
 
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
+import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -58,18 +59,18 @@ public class SearchExpressionQueryBuilder {
     private final Map<String, SolrIndexField> indexFieldsMap;
     private final WordListProvider wordListProvider;
     private final int maxBooleanClauseCount;
-    private final String timeZoneId;
+    private final DateTimeSettings dateTimeSettings;
     private final long nowEpochMilli;
 
     public SearchExpressionQueryBuilder(final WordListProvider wordListProvider,
                                         final Map<String, SolrIndexField> indexFieldsMap,
                                         final int maxBooleanClauseCount,
-                                        final String timeZoneId,
+                                        final DateTimeSettings dateTimeSettings,
                                         final long nowEpochMilli) {
         this.wordListProvider = wordListProvider;
         this.indexFieldsMap = indexFieldsMap;
         this.maxBooleanClauseCount = maxBooleanClauseCount;
-        this.timeZoneId = timeZoneId;
+        this.dateTimeSettings = dateTimeSettings;
         this.nowEpochMilli = nowEpochMilli;
     }
 
@@ -550,7 +551,7 @@ public class SearchExpressionQueryBuilder {
 
     private long getDate(final String fieldName, final String value) {
         try {
-            return DateExpressionParser.parse(value, timeZoneId, nowEpochMilli)
+            return DateExpressionParser.parse(value, dateTimeSettings, nowEpochMilli)
                     .map(dt -> dt.toInstant().toEpochMilli())
                     .orElseThrow(() -> new SearchException("Expected a standard date value for field \"" + fieldName
                             + "\" but was given string \"" + value + "\""));

@@ -115,7 +115,7 @@ public class ElasticSearchStoreFactory implements StoreFactory {
                 searchName,
                 query,
                 coprocessorSettingsList,
-                modifiedSearchRequest.getDateTimeLocale(),
+                modifiedSearchRequest.getDateTimeSettings(),
                 nowEpochMilli);
 
         final Sizes maxResultSizes = calculateMaxResultSizes(coprocessorSettingsList);

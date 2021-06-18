@@ -16,8 +16,8 @@
 
 package stroom.dashboard.client;
 
-import stroom.dashboard.client.gin.DashboardAppGinjector;
-import stroom.preferences.client.PreferencesManager;
+import stroom.dashboard.client.gin.DashboardAppGinjectorUser;
+import stroom.preferences.client.UserPreferencesManager;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
@@ -28,7 +28,7 @@ import com.gwtplatform.mvp.client.DelayedBindRegistry;
  */
 public class DashboardApp implements EntryPoint {
 
-    public final DashboardAppGinjector ginjector = GWT.create(DashboardAppGinjector.class);
+    public final DashboardAppGinjectorUser ginjector = GWT.create(DashboardAppGinjectorUser.class);
 
     /**
      * This is the entry point method.
@@ -37,9 +37,9 @@ public class DashboardApp implements EntryPoint {
         // This is required for Gwt-Platform proxy's generator.
         DelayedBindRegistry.bind(ginjector);
 
-        final PreferencesManager preferencesManager = ginjector.getPreferencesManager();
-        preferencesManager.fetch(preferences -> {
-            preferencesManager.setCurrentPreferences(preferences);
+        final UserPreferencesManager userPreferencesManager = ginjector.getPreferencesManager();
+        userPreferencesManager.fetch(preferences -> {
+            userPreferencesManager.setCurrentPreferences(preferences);
 
             // Show the application panel.
             ginjector.getCorePresenter().get().forceReveal();

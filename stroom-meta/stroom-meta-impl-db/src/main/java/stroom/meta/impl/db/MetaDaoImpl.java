@@ -32,6 +32,7 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
+import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -64,7 +65,6 @@ import org.jooq.impl.DSL;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -237,7 +237,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
     private long getDate(final DateField field, final String value) {
         try {
             final Optional<ZonedDateTime> optional = DateExpressionParser.parse(value,
-                    ZoneOffset.UTC.getId(),
+                    DateTimeSettings.builder().build(),
                     System.currentTimeMillis());
 
             return optional.orElseThrow(() ->

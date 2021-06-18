@@ -23,6 +23,7 @@ import stroom.index.impl.LuceneVersionUtil;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.node.api.NodeInfo;
+import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
@@ -90,7 +91,7 @@ public class LuceneSearchStoreFactory implements StoreFactory {
         final Set<String> highlights = getHighlights(
                 index,
                 query.getExpression(),
-                modifiedSearchRequest.getDateTimeLocale(),
+                modifiedSearchRequest.getDateTimeSettings(),
                 nowEpochMilli);
 
         // Create a coprocessor settings list.
@@ -110,7 +111,7 @@ public class LuceneSearchStoreFactory implements StoreFactory {
                 searchName,
                 query,
                 coprocessorSettingsList,
-                modifiedSearchRequest.getDateTimeLocale(),
+                modifiedSearchRequest.getDateTimeSettings(),
                 nowEpochMilli);
 
         // Create the search result collector.
@@ -135,7 +136,7 @@ public class LuceneSearchStoreFactory implements StoreFactory {
      */
     private Set<String> getHighlights(final IndexDoc index,
                                       final ExpressionOperator expression,
-                                      final String timeZoneId,
+                                      DateTimeSettings dateTimeSettings,
                                       final long nowEpochMilli) {
         Set<String> highlights = Collections.emptySet();
 
@@ -144,7 +145,7 @@ public class LuceneSearchStoreFactory implements StoreFactory {
             final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(index.getFields());
             // Parse the query.
             final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
-                    wordListProvider, indexFieldsMap, maxBooleanClauseCount, timeZoneId, nowEpochMilli);
+                    wordListProvider, indexFieldsMap, maxBooleanClauseCount, dateTimeSettings, nowEpochMilli);
             final SearchExpressionQuery query = searchExpressionQueryBuilder
                     .buildQuery(LuceneVersionUtil.CURRENT_LUCENE_VERSION, expression);
 

@@ -27,8 +27,8 @@ import stroom.dashboard.client.vis.gin.VisModule;
 import stroom.dispatch.client.RestModule;
 import stroom.entity.client.gin.EntityGinjector;
 import stroom.entity.client.gin.EntityModule;
-import stroom.preferences.client.gin.PreferencesGinjector;
-import stroom.preferences.client.gin.PreferencesModule;
+import stroom.preferences.client.gin.UserPreferencesGinjector;
+import stroom.preferences.client.gin.UserPreferencesModule;
 import stroom.query.client.QueryModule;
 import stroom.security.client.gin.SecurityGinjector;
 import stroom.security.client.gin.SecurityModule;
@@ -50,18 +50,18 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         AlertModule.class,
         SecurityModule.class,
         EntityModule.class,
-        PreferencesModule.class,
+        UserPreferencesModule.class,
         QueryModule.class,
         DashboardModule.class,
         VisModule.class})
-public interface DashboardAppGinjector extends
+public interface DashboardAppGinjectorUser extends
         Ginjector,
         PopupGinjector,
         AlertGinjector,
         SecurityGinjector,
         EntityGinjector,
         DashboardGinjector,
-        PreferencesGinjector,
+        UserPreferencesGinjector,
         VisGinjector {
 
     // Default implementation of standard resources

@@ -28,6 +28,7 @@ import stroom.index.impl.LuceneVersionUtil;
 import stroom.index.impl.analyzer.AnalyzerFactory;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldsMap;
+import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Field;
 import stroom.query.common.v2.CompiledField;
@@ -57,6 +58,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class AlertProcessorImpl implements AlertProcessor {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AlertProcessorImpl.class);
 
     private final AlertQueryHits alertQueryHits;
@@ -73,14 +75,14 @@ public class AlertProcessorImpl implements AlertProcessor {
 
     private Long currentStreamId = null;
 
-    private final String locale;
+    private final DateTimeSettings dateTimeSettings;
 
     public AlertProcessorImpl(final ExtractionDecoratorFactory extractionDecoratorFactory,
-                               final List<RuleConfig> rules,
-                               final IndexStructure indexStructure,
-                               final WordListProvider wordListProvider,
-                               final int maxBooleanClauseCount,
-                               final String locale) {
+                              final List<RuleConfig> rules,
+                              final IndexStructure indexStructure,
+                              final WordListProvider wordListProvider,
+                              final int maxBooleanClauseCount,
+                              final DateTimeSettings dateTimeSettings) {
         this.rules = rules;
         this.wordListProvider = wordListProvider;
         this.maxBooleanClauseCount = maxBooleanClauseCount;
@@ -96,7 +98,7 @@ public class AlertProcessorImpl implements AlertProcessor {
         }
         alertQueryHits = new AlertQueryHits();
         this.extractionDecoratorFactory = extractionDecoratorFactory;
-        this.locale = locale;
+        this.dateTimeSettings = dateTimeSettings;
     }
 
     @Override
@@ -157,14 +159,14 @@ public class AlertProcessorImpl implements AlertProcessor {
 
                     //First get the original event XML
 
-   //                 System.out.println ("Found a matching query rule");
+                    //                 System.out.println ("Found a matching query rule");
 
                     alertQueryHits.addQueryHitForRule(rule, eventId);
                     LOGGER.debug("Adding {}:{} to rule {} from dashboards {}", currentStreamId,
                             eventId, rule.getQueryId(),
                             rule.getAlertDefinitions().stream()
-                                .map(a -> a.getAttributes().get(AlertManager.DASHBOARD_NAME_KEY))
-                                .collect(Collectors.joining(", ")));
+                                    .map(a -> a.getAttributes().get(AlertManager.DASHBOARD_NAME_KEY))
+                                    .collect(Collectors.joining(", ")));
                     ;
                 } else {
                     LOGGER.trace("Not adding {}:{} to rule {} from dashboards {}", currentStreamId,
@@ -194,8 +196,8 @@ public class AlertProcessorImpl implements AlertProcessor {
                     final ExtractionReceiver receiver = new AlertProcessorReceiver(ruleConfig.getAlertDefinitions(),
                             ruleConfig.getParams());
                     extractionDecoratorFactory.createAlertExtractionTask(receiver,
-                                currentStreamId, eventIds, pipeline,
-                                ruleConfig.getAlertDefinitions(), ruleConfig.getParams());
+                            currentStreamId, eventIds, pipeline,
+                            ruleConfig.getAlertDefinitions(), ruleConfig.getParams());
                     numTasks++;
                 }
             }
@@ -211,7 +213,11 @@ public class AlertProcessorImpl implements AlertProcessor {
 
         try {
             final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
-                    wordListProvider, indexFieldsMap, maxBooleanClauseCount, locale, System.currentTimeMillis());
+                    wordListProvider,
+                    indexFieldsMap,
+                    maxBooleanClauseCount,
+                    dateTimeSettings,
+                    System.currentTimeMillis());
             final SearchExpressionQueryBuilder.SearchExpressionQuery luceneQuery = searchExpressionQueryBuilder
                     .buildQuery(LuceneVersionUtil.CURRENT_LUCENE_VERSION, query);
 
@@ -249,11 +255,12 @@ public class AlertProcessorImpl implements AlertProcessor {
     }
 
     private static class AlertProcessorReceiver implements ExtractionReceiver {
+
         private final CompiledField[] compiledFields;
         private final FieldIndex fieldIndexMap = FieldIndex.forFields();
 
         AlertProcessorReceiver(final List<AlertDefinition> alertDefinitions,
-                                final Map<String, String> paramMap) {
+                               final Map<String, String> paramMap) {
 
             final List<Field> fields = alertDefinitions.stream().map(a -> a.getTableComponentSettings().getFields())
                     .reduce(new ArrayList<>(), (a, b) -> {
@@ -266,7 +273,8 @@ public class AlertProcessorImpl implements AlertProcessor {
 
         @Override
         public Consumer<Val[]> getValuesConsumer() {
-            return values -> {};
+            return values -> {
+            };
         }
 
         @Override

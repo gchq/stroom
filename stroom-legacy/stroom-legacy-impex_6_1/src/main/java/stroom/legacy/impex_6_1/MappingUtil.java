@@ -365,7 +365,7 @@ public final class MappingUtil {
         } else if (stroom.legacy.model_6_1.Format.Type.DATE_TIME.equals(value.getType())) {
             if (value.getDateTimeFormat() != null) {
                 final stroom.legacy.model_6_1.DateTimeFormat dateTimeFormat = value.getDateTimeFormat();
-                formatSettings = new stroom.query.api.v2.DateTimeFormatSettings(dateTimeFormat.getPattern(),
+                formatSettings = new stroom.query.api.v2.DateTimeFormatSettings(false, dateTimeFormat.getPattern(),
                         map(dateTimeFormat.getTimeZone()));
             }
         }

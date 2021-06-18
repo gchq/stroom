@@ -17,16 +17,17 @@
 package stroom.query.common.v2.format;
 
 import stroom.query.api.v2.DateTimeFormatSettings;
+import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.NumberFormatSettings;
 
 public class FormatterFactory {
 
-    private final String dateTimeLocale;
+    private final DateTimeSettings dateTimeSettings;
 
-    public FormatterFactory(final String dateTimeLocale) {
-        this.dateTimeLocale = dateTimeLocale;
+    public FormatterFactory(final DateTimeSettings dateTimeSettings) {
+        this.dateTimeSettings = dateTimeSettings;
     }
 
     public Formatter create(final Field field) {
@@ -44,7 +45,7 @@ public class FormatterFactory {
                 return NumberFormatter.create((NumberFormatSettings) field.getFormat().getSettings());
             case DATE_TIME:
                 return DateTimeFormatter.create((DateTimeFormatSettings) field.getFormat().getSettings(),
-                        dateTimeLocale);
+                        dateTimeSettings);
             default:
                 return Unformatted.create();
         }

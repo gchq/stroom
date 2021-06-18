@@ -27,13 +27,13 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
-public class PreferencesPlugin extends Plugin {
+public class UserPreferencesPlugin extends Plugin {
 
-    private final Provider<PreferencesPresenter> preferencesPresenterProvider;
+    private final Provider<UserPreferencesPresenter> preferencesPresenterProvider;
 
     @Inject
-    public PreferencesPlugin(final EventBus eventBus,
-                             final Provider<PreferencesPresenter> preferencesPresenterProvider) {
+    public UserPreferencesPlugin(final EventBus eventBus,
+                                 final Provider<UserPreferencesPresenter> preferencesPresenterProvider) {
         super(eventBus);
         this.preferencesPresenterProvider = preferencesPresenterProvider;
     }

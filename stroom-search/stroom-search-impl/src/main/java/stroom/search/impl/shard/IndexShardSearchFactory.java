@@ -161,7 +161,7 @@ public class IndexShardSearchFactory {
                             dictionaryStore,
                             indexFieldsMap,
                             maxBooleanClauseCount,
-                            task.getDateTimeLocale(),
+                            task.getDateTimeSettings(),
                             task.getNow());
                     final SearchExpressionQuery query = searchExpressionQueryBuilder.buildQuery(version, expression);
 
@@ -169,7 +169,7 @@ public class IndexShardSearchFactory {
                     if (query.getQuery() == null) {
                         throw new SearchException("Failed to build Lucene query given expression");
                     } else {
-                        LOGGER.debug(() -> "Lucene Query is " + query.toString());
+                        LOGGER.debug(() -> "Lucene Query is " + query);
                     }
 
                     return Optional.of(query);

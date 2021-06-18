@@ -29,7 +29,7 @@ public class GlobalConfigModule extends AbstractModule {
         RestResourcesBinder.create(binder())
                 .bind(GlobalConfigResourceImpl.class);
         RestResourcesBinder.create(binder())
-                .bind(PreferencesResourceImpl.class);
+                .bind(UserUserPreferencesResourceImpl.class);
 
         install(new ValidationModule());
 

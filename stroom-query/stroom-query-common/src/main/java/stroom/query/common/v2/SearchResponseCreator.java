@@ -16,6 +16,7 @@
 
 package stroom.query.common.v2;
 
+import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.Result;
 import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.ResultRequest.Fetch;
@@ -286,7 +287,7 @@ public class SearchResponseCreator {
                         searchRequest.getKey().getUuid(),
                         componentId,
                         resultRequest,
-                        searchRequest.getDateTimeLocale());
+                        searchRequest.getDateTimeSettings());
                 if (resultCreator != null) {
                     result = resultCreator.create(data, resultRequest);
                 }
@@ -301,12 +302,14 @@ public class SearchResponseCreator {
     private ResultCreator getResultCreator(final String queryKey,
                                            final String componentId,
                                            final ResultRequest resultRequest,
-                                           final String dateTimeLocale) {
+                                           final DateTimeSettings dateTimeSettings) {
         return cachedResultCreators.computeIfAbsent(componentId, k -> {
             ResultCreator resultCreator;
             try {
                 if (ResultStyle.TABLE.equals(resultRequest.getResultStyle())) {
-                    final FieldFormatter fieldFormatter = new FieldFormatter(new FormatterFactory(dateTimeLocale));
+                    final FieldFormatter fieldFormatter =
+                            new FieldFormatter(
+                                    new FormatterFactory(dateTimeSettings));
                     resultCreator = new TableResultCreator(fieldFormatter, sizesProvider.getDefaultMaxResultsSizes());
                 } else {
                     resultCreator = new FlatResultCreator(

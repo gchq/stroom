@@ -16,6 +16,7 @@
 
 package stroom.search.solr.search;
 
+import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.common.v2.CoprocessorSettings;
@@ -30,7 +31,7 @@ public class SolrAsyncSearchTask {
     private final Query query;
     @JsonProperty
     private final List<CoprocessorSettings> settings;
-    private final String dateTimeLocale;
+    private final DateTimeSettings dateTimeSettings;
     private final long now;
 
     private transient volatile SolrSearchResultCollector resultCollector;
@@ -39,13 +40,13 @@ public class SolrAsyncSearchTask {
                                final String searchName,
                                final Query query,
                                @JsonProperty("settings") final List<CoprocessorSettings> settings,
-                               final String dateTimeLocale,
+                               final DateTimeSettings dateTimeSettings,
                                final long now) {
         this.key = key;
         this.searchName = searchName;
         this.query = query;
         this.settings = settings;
-        this.dateTimeLocale = dateTimeLocale;
+        this.dateTimeSettings = dateTimeSettings;
         this.now = now;
     }
 
@@ -65,8 +66,8 @@ public class SolrAsyncSearchTask {
         return settings;
     }
 
-    public String getDateTimeLocale() {
-        return dateTimeLocale;
+    public DateTimeSettings getDateTimeSettings() {
+        return dateTimeSettings;
     }
 
     public long getNow() {

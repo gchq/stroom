@@ -57,7 +57,7 @@ public class RemoteNodeSearch implements NodeSearch {
                 query,
                 shards,
                 task.getSettings(),
-                task.getDateTimeLocale(),
+                task.getDateTimeSettings(),
                 task.getNow());
         LOGGER.debug(() -> "Dispatching clusterSearchTask to node: " + targetNode);
         try {

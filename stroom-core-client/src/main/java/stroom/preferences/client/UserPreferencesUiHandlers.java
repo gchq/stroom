@@ -18,7 +18,7 @@ package stroom.preferences.client;
 
 import com.gwtplatform.mvp.client.UiHandlers;
 
-public interface PreferencesUiHandlers extends UiHandlers {
+public interface UserPreferencesUiHandlers extends UiHandlers {
 
     void onChange();
 

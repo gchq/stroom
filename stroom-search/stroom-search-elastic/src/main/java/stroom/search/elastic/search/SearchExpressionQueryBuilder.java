@@ -19,6 +19,7 @@ package stroom.search.elastic.search;
 
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
+import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -48,17 +49,17 @@ public class SearchExpressionQueryBuilder {
     private static final String DELIMITER = ",";
     private final Map<String, ElasticIndexField> indexFieldsMap;
     private final WordListProvider wordListProvider;
-    private final String timeZoneId;
+    private final DateTimeSettings dateTimeSettings;
     private final long nowEpochMilli;
 
     public SearchExpressionQueryBuilder(final WordListProvider wordListProvider,
                                         final Map<String, ElasticIndexField> indexFieldsMap,
-                                        final String timeZoneId,
+                                        final DateTimeSettings dateTimeSettings,
                                         final long nowEpochMilli
     ) {
         this.wordListProvider = wordListProvider;
         this.indexFieldsMap = indexFieldsMap;
-        this.timeZoneId = timeZoneId;
+        this.dateTimeSettings = dateTimeSettings;
         this.nowEpochMilli = nowEpochMilli;
     }
 
@@ -267,7 +268,7 @@ public class SearchExpressionQueryBuilder {
     private Long getDate(final String fieldName, final String value) {
         try {
             // Empty optional will be caught below
-            return DateExpressionParser.parse(value, timeZoneId, nowEpochMilli).get().toInstant().toEpochMilli();
+            return DateExpressionParser.parse(value, dateTimeSettings, nowEpochMilli).get().toInstant().toEpochMilli();
         } catch (final Exception e) {
             throw new IllegalArgumentException("Expected a standard date value for field \"" + fieldName
                     + "\" but was given string \"" + value + "\"");

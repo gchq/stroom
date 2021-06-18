@@ -13,7 +13,9 @@ class SearchRequestBuilderTest {
     @Test
     void doesBuild() {
         // Given
-        final String dateTimeLocale = "en-gb";
+        final DateTimeSettings dateTimeSettings = DateTimeSettings
+                .builder()
+                .build();
         final boolean incremental = true;
         final String queryKeyUUID = UUID.randomUUID().toString();
         final String resultRequestComponentId0 = "someResultComponentId0";
@@ -30,7 +32,7 @@ class SearchRequestBuilderTest {
                                 .uuid(dataSourceUuid)
                                 .build())
                         .build())
-                .dateTimeLocale(dateTimeLocale)
+                .dateTimeSettings(dateTimeSettings)
                 .incremental(incremental)
                 .key(queryKeyUUID)
                 .addResultRequests(ResultRequest
@@ -44,7 +46,7 @@ class SearchRequestBuilderTest {
                 .build();
 
         // Then
-        assertThat(searchRequest.getDateTimeLocale()).isEqualTo(dateTimeLocale);
+        assertThat(searchRequest.getDateTimeSettings()).isEqualTo(dateTimeSettings);
         assertThat(searchRequest.getIncremental()).isEqualTo(incremental);
         assertThat(searchRequest.getKey()).isNotNull();
         assertThat(searchRequest.getKey().getUuid()).isEqualTo(queryKeyUUID);

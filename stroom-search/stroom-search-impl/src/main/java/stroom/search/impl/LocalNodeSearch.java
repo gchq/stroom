@@ -54,7 +54,7 @@ public class LocalNodeSearch implements NodeSearch {
                 query,
                 shards,
                 task.getSettings(),
-                task.getDateTimeLocale(),
+                task.getDateTimeSettings(),
                 task.getNow());
         final Coprocessors coprocessors = resultCollector.getCoprocessors();
         LOGGER.debug(() -> "Dispatching clusterSearchTask to node: " + targetNode);

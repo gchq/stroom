@@ -25,6 +25,7 @@ import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.DateTimeFormatSettings;
+import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.Field;
@@ -138,12 +139,13 @@ public class SearchRequestTestData {
             componentResultRequests.add(tableResultRequest);
         }
 
+        final DateTimeSettings dateTimeSettings = DateTimeSettings.builder().build();
         return new DashboardSearchRequest(
-                dashboardQueryKey(), search, componentResultRequests, "en-gb");
+                dashboardQueryKey(), search, componentResultRequests, dateTimeSettings);
     }
 
     private static DateTimeFormatSettings createDateTimeFormat() {
         final TimeZone timeZone = TimeZone.fromOffset(2, 30);
-        return new DateTimeFormatSettings("yyyy-MM-dd'T'HH:mm:ss", timeZone);
+        return new DateTimeFormatSettings(true, "yyyy-MM-dd'T'HH:mm:ss", timeZone);
     }
 }

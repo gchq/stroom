@@ -31,6 +31,12 @@
 
       <!-- Date time settings -->
       <g:row>
+        <g:cell>Use Preferences:</g:cell>
+        <g:customCell>
+          <v:TickBox ui:field="usePreferences" width="100%" />
+        </g:customCell>
+      </g:row>
+      <g:row>
         <g:cell>Format:</g:cell>
         <g:customCell>
           <i:StringListBox ui:field="format" width="100%" />

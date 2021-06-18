@@ -18,6 +18,7 @@
 package stroom.search.elastic.search;
 
 import stroom.annotation.api.AnnotationFields;
+import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.Coprocessor;
@@ -58,7 +59,7 @@ class ElasticClusterSearchTaskHandler {
                      final Query query,
                      final String[] storedFields,
                      final long now,
-                     final String dateTimeLocale,
+                     final DateTimeSettings dateTimeSettings,
                      final Coprocessors coprocessors
     ) {
         securityContext.useAsRead(() -> {
@@ -78,7 +79,7 @@ class ElasticClusterSearchTaskHandler {
 
                     if (coprocessors.size() > 0) {
                         // Start searching.
-                        search(taskContext, task, elasticIndex, query, now, dateTimeLocale, coprocessors);
+                        search(taskContext, task, elasticIndex, query, now, dateTimeSettings, coprocessors);
                     }
                 } catch (final RuntimeException e) {
                     try {
@@ -104,7 +105,7 @@ class ElasticClusterSearchTaskHandler {
                         final ElasticIndexDoc elasticIndex,
                         final Query query,
                         final long now,
-                        final String dateTimeLocale,
+                        final DateTimeSettings dateTimeSettings,
                         final Coprocessors coprocessors) {
         taskContext.info(() -> "Searching...");
         LOGGER.debug(() -> "Incoming search request:\n" + query.getExpression().toString());
@@ -128,7 +129,7 @@ class ElasticClusterSearchTaskHandler {
                     extractionReceiver,
                     taskContext,
                     hitCount,
-                    dateTimeLocale);
+                    dateTimeSettings);
 
             // Wait for search completion.
             boolean allComplete = false;

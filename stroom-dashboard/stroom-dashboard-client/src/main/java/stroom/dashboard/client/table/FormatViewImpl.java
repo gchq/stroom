@@ -60,7 +60,7 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
                     "MM/dd/yyyy",
                     "d MMM yyyy");
 
-    private static final int ROW_COUNT = 8;
+    private static final int ROW_COUNT = 9;
     private final Widget widget;
     @UiField
     Grid grid;
@@ -70,6 +70,8 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
     ValueSpinner decimalPlaces;
     @UiField
     TickBox separate;
+    @UiField
+    TickBox usePreferences;
     @UiField
     StringListBox format;
     @UiField
@@ -143,8 +145,8 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
             for (int i = 1; i <= ROW_COUNT - 2; i++) {
                 formatter.setVisible(i, i > 2);
             }
-            formatter.setVisible(7, TimeZone.Use.ID.equals(this.timeZoneUse.getSelectedItem()));
-            formatter.setVisible(8, TimeZone.Use.OFFSET.equals(this.timeZoneUse.getSelectedItem()));
+            formatter.setVisible(8, TimeZone.Use.ID.equals(this.timeZoneUse.getSelectedItem()));
+            formatter.setVisible(9, TimeZone.Use.OFFSET.equals(this.timeZoneUse.getSelectedItem()));
         } else {
             for (int i = 1; i <= ROW_COUNT; i++) {
                 formatter.setVisible(i, false);
@@ -170,6 +172,16 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
     @Override
     public void setUseSeparator(final boolean useSeparator) {
         this.separate.setBooleanValue(useSeparator);
+    }
+
+    @Override
+    public boolean isUsePreferences() {
+        return this.usePreferences.getBooleanValue();
+    }
+
+    @Override
+    public void setUsePreferences(final boolean usePreferences) {
+        this.usePreferences.setBooleanValue(usePreferences);
     }
 
     @Override

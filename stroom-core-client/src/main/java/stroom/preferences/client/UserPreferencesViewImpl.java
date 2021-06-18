@@ -19,7 +19,7 @@ package stroom.preferences.client;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.item.client.ItemListBox;
 import stroom.item.client.StringListBox;
-import stroom.preferences.client.PreferencesPresenter.PreferencesView;
+import stroom.preferences.client.UserPreferencesPresenter.UserPreferencesView;
 import stroom.query.api.v2.TimeZone;
 import stroom.query.api.v2.TimeZone.Use;
 import stroom.widget.tickbox.client.view.TickBox;
@@ -43,24 +43,25 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import java.util.Arrays;
 import java.util.List;
 
-public final class PreferencesViewImpl
-        extends ViewWithUiHandlers<PreferencesUiHandlers>
-        implements PreferencesView {
+public final class UserPreferencesViewImpl
+        extends ViewWithUiHandlers<UserPreferencesUiHandlers>
+        implements UserPreferencesView {
 
     public static final List<String> STANDARD_FORMATS = Arrays
-            .asList("YYYY-MM-DDTHH:mm:ss.SSS[Z]",
-                    "YYYY-MM-DDTHH:mm:ss.SSS z",
-                    "YYYY-MM-DDTHH:mm:ss.SSS Z",
-                    "YYYY-MM-DDTHH:mm:ss.SSS ZZ",
-                    "DD/MM/YYYY HH:mm:ss",
-                    "DD/MM/YY HH:mm:ss",
-                    "MM/DD/YYYY HH:mm:ss",
-                    "D MMM YYYY HH:mm:ss",
-                    "YYYY-MM-DD",
-                    "DD/MM/YYYY",
-                    "DD/MM/YY",
-                    "MM/DD/YYYY",
-                    "D MMM YYYY");
+            .asList("yyyy-MM-dd'T'HH:mm:ss.SSSXX",
+                    "yyyy-MM-dd'T'HH:mm:ss.SSS xx",
+                    "yyyy-MM-dd'T'HH:mm:ss.SSS xxx",
+                    "yyyy-MM-dd'T'HH:mm:ss.SSS VV",
+                    "yyyy-MM-dd'T'HH:mm:ss.SSS",
+                    "dd/MM/yyyy HH:mm:ss",
+                    "dd/MM/yy HH:mm:ss",
+                    "MM/dd/yyyy HH:mm:ss",
+                    "d MMM yyyy HH:mm:ss",
+                    "yyyy-MM-dd",
+                    "dd/MM/yyyy",
+                    "dd/MM/yy",
+                    "MM/dd/yyyy",
+                    "d MMM yyyy");
 
     private final Widget widget;
 
@@ -94,7 +95,7 @@ public final class PreferencesViewImpl
     Button revertToDefault;
 
     @Inject
-    public PreferencesViewImpl(final Binder binder) {
+    public UserPreferencesViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
 
         theme.addChangeHandler(event -> {
@@ -321,7 +322,7 @@ public final class PreferencesViewImpl
         }
     }
 
-    public interface Binder extends UiBinder<Widget, PreferencesViewImpl> {
+    public interface Binder extends UiBinder<Widget, UserPreferencesViewImpl> {
 
     }
 

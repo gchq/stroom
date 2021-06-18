@@ -1,6 +1,5 @@
 package stroom.processor.impl.db;
 
-import stroom.cluster.lock.api.ClusterLockService;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValInteger;
 import stroom.dashboard.expression.v1.ValLong;
@@ -33,6 +32,7 @@ import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.processor.shared.TaskStatus;
+import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionUtil;
@@ -54,7 +54,6 @@ import org.jooq.Record;
 import org.jooq.Result;
 import org.jooq.impl.DSL;
 
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -206,7 +205,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     private long getDate(final DateField field, final String value) {
         try {
             final Optional<ZonedDateTime> optional = DateExpressionParser.parse(value,
-                    ZoneOffset.UTC.getId(),
+                    DateTimeSettings.builder().build(),
                     System.currentTimeMillis());
 
             return optional.orElseThrow(() ->

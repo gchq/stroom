@@ -4,6 +4,7 @@ import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.StaticValueFunction;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.OffsetRange;
 import stroom.query.api.v2.ResultRequest;
@@ -273,7 +274,7 @@ class TestSearchResponseCreator {
                         .build())
                 .incremental(isIncremental)
                 .timeout(timeout)
-                .dateTimeLocale("en-gb")
+                .dateTimeSettings(DateTimeSettings.builder().build())
                 .build();
     }
 

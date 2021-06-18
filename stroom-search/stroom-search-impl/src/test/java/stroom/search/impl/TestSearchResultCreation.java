@@ -6,6 +6,7 @@ import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.docref.DocRef;
+import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
@@ -599,12 +600,12 @@ class TestSearchResultCreation {
                 .addParam("currentUser()", "admin")
                 .build();
 
-        final String dateTimeLocale = "Europe/London";
+        final DateTimeSettings dateTimeSettings = DateTimeSettings.builder().localZoneId("Europe/London").build();
         return SearchRequest.builder()
                 .key(key)
                 .query(query)
                 .addResultRequests(createGroupedUserTableResultRequest())
-                .dateTimeLocale(dateTimeLocale)
+                .dateTimeSettings(dateTimeSettings)
                 .incremental(true)
                 .build();
     }
@@ -628,7 +629,7 @@ class TestSearchResultCreation {
                 .addParam("currentUser()", "admin")
                 .build();
 
-        final String dateTimeLocale = "Europe/London";
+        final DateTimeSettings dateTimeSettings = DateTimeSettings.builder().localZoneId("Europe/London").build();
         return SearchRequest.builder()
                 .key(key)
                 .query(query)
@@ -637,7 +638,7 @@ class TestSearchResultCreation {
                 .addResultRequests(createGroupedUserAndEventTimeTableResultRequest())
                 .addResultRequests(createBubbleResultRequest())
                 .addResultRequests(createLineResultRequest())
-                .dateTimeLocale(dateTimeLocale)
+                .dateTimeSettings(dateTimeSettings)
                 .incremental(true)
                 .build();
     }

@@ -51,6 +51,7 @@ import stroom.document.client.event.HasDirtyHandlers;
 import stroom.explorer.client.presenter.EntityChooser;
 import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.preferences.client.UserPreferencesManager;
 import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.Limits;
 import stroom.processor.shared.ProcessorFilter;
@@ -154,7 +155,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                           final ClientSecurityContext securityContext,
                           final UiConfigCache clientPropertyCache,
                           final LocationManager locationManager,
-                          final TimeZones timeZones) {
+                          final TimeZones timeZones,
+                          final UserPreferencesManager userPreferencesManager) {
         super(eventBus, view, settingsPresenterProvider);
         this.expressionPresenter = expressionPresenter;
         this.historyPresenter = historyPresenter;
@@ -198,7 +200,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         warningsButton.setVisible(false);
 
         indexLoader = new IndexLoader(getEventBus(), restFactory);
-        searchModel = new SearchModel(searchBus, this, indexLoader, timeZones);
+        searchModel = new SearchModel(searchBus, this, indexLoader, timeZones, userPreferencesManager);
 
         clientPropertyCache.get()
                 .onSuccess(result -> {

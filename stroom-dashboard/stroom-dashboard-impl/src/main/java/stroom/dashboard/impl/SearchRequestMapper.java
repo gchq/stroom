@@ -79,7 +79,7 @@ public class SearchRequestMapper {
                 .key(new QueryKey(queryKey.getUuid()))
                 .query(mapQuery(searchRequest))
                 .resultRequests(mapResultRequests(searchRequest))
-                .dateTimeLocale(searchRequest.getDateTimeLocale())
+                .dateTimeSettings(searchRequest.getDateTimeSettings())
                 .incremental(searchRequest.getSearch().isIncremental())
                 .build();
     }

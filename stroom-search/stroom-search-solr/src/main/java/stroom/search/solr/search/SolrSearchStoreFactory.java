@@ -18,6 +18,7 @@
 package stroom.search.solr.search;
 
 import stroom.dictionary.api.WordListProvider;
+import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
@@ -109,7 +110,7 @@ class SolrSearchStoreFactory implements StoreFactory {
         final Set<String> highlights = getHighlights(
                 index,
                 query.getExpression(),
-                modifiedSearchRequest.getDateTimeLocale(),
+                modifiedSearchRequest.getDateTimeSettings(),
                 nowEpochMilli);
 
         // Create a coprocessor settings list.
@@ -129,7 +130,7 @@ class SolrSearchStoreFactory implements StoreFactory {
                 searchName,
                 query,
                 coprocessorSettingsList,
-                modifiedSearchRequest.getDateTimeLocale(),
+                modifiedSearchRequest.getDateTimeSettings(),
                 nowEpochMilli);
 
         // Create the search result collector.
@@ -180,7 +181,7 @@ class SolrSearchStoreFactory implements StoreFactory {
      */
     private Set<String> getHighlights(final CachedSolrIndex index,
                                       final ExpressionOperator expression,
-                                      final String timeZoneId,
+                                      final DateTimeSettings dateTimeSettings,
                                       final long nowEpochMilli) {
         Set<String> highlights = Collections.emptySet();
 
@@ -195,7 +196,7 @@ class SolrSearchStoreFactory implements StoreFactory {
                     wordListProvider,
                     indexFieldsMap,
                     searchConfig.getMaxBooleanClauseCount(),
-                    timeZoneId,
+                    dateTimeSettings,
                     nowEpochMilli);
             final SearchExpressionQuery query = searchExpressionQueryBuilder
                     .buildQuery(expression);

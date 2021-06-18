@@ -7,41 +7,43 @@ import stroom.ui.config.shared.UserPreferences;
 import java.util.Optional;
 import javax.inject.Inject;
 
-public class PreferencesService {
+public class UserPreferencesService {
 
     private static final String DEFAULT_PREFERENCES = "__default__";
 
-    private final PreferencesDao preferencesDao;
+    private final UserPreferencesDao userPreferencesDao;
     private final SecurityContext securityContext;
 
     @Inject
-    public PreferencesService(final PreferencesDao preferencesDao,
-                              final SecurityContext securityContext) {
-        this.preferencesDao = preferencesDao;
+    public UserPreferencesService(final UserPreferencesDao userPreferencesDao,
+                                  final SecurityContext securityContext) {
+        this.userPreferencesDao = userPreferencesDao;
         this.securityContext = securityContext;
     }
 
     public UserPreferences fetch() {
         return securityContext.secureResult(() -> {
-            Optional<UserPreferences> optionalUserPreferences = preferencesDao.fetch(securityContext.getUserId());
+            Optional<UserPreferences> optionalUserPreferences = userPreferencesDao.fetch(securityContext.getUserId());
             if (optionalUserPreferences.isEmpty()) {
-                optionalUserPreferences = preferencesDao.fetch(DEFAULT_PREFERENCES);
+                optionalUserPreferences = userPreferencesDao.fetch(DEFAULT_PREFERENCES);
             }
             return optionalUserPreferences.orElseGet(() -> UserPreferences.builder().build());
         });
     }
 
     public int update(final UserPreferences userPreferences) {
-        return securityContext.secureResult(() -> preferencesDao.update(securityContext.getUserId(), userPreferences));
+        return securityContext.secureResult(() ->
+                userPreferencesDao.update(securityContext.getUserId(), userPreferences));
     }
 
     public int delete() {
-        return securityContext.secureResult(() -> preferencesDao.delete(securityContext.getUserId()));
+        return securityContext.secureResult(() ->
+                userPreferencesDao.delete(securityContext.getUserId()));
     }
 
     public UserPreferences setDefaultUserPreferences(final UserPreferences userPreferences) {
         return securityContext.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
-            preferencesDao.update(DEFAULT_PREFERENCES, userPreferences);
+            userPreferencesDao.update(DEFAULT_PREFERENCES, userPreferences);
             delete();
             return userPreferences;
         });

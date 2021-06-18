@@ -16,6 +16,8 @@
 
 package stroom.query.common.v2;
 
+import stroom.query.api.v2.DateTimeSettings;
+
 import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -42,11 +44,14 @@ public class DateExpressionParser {
     }
 
     public static Optional<ZonedDateTime> parse(final String expression, final long nowEpochMilli) {
-        return parse(expression, ZoneOffset.UTC.getId(), nowEpochMilli);
+        return parse(
+                expression,
+                DateTimeSettings.builder().build(),
+                nowEpochMilli);
     }
 
     public static Optional<ZonedDateTime> parse(final String expression,
-                                                final String timeZoneId,
+                                                final DateTimeSettings dateTimeSettings,
                                                 final long nowEpochMilli) {
         final char[] chars = expression.toCharArray();
         final Part[] parts = new Part[chars.length];
@@ -73,8 +78,9 @@ public class DateExpressionParser {
                 ZoneId zoneId = ZoneId.systemDefault();
 
                 try {
-                    if (timeZoneId != null) {
-                        zoneId = ZoneId.of(timeZoneId);
+                    if (dateTimeSettings != null &&
+                            dateTimeSettings.getLocalZoneId() != null) {
+                        zoneId = ZoneId.of(dateTimeSettings.getLocalZoneId());
                     }
                 } catch (final RuntimeException ex) {
                     // Ignore error

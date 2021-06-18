@@ -16,6 +16,8 @@
 
 package stroom.dashboard.shared;
 
+import stroom.query.api.v2.DateTimeSettings;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -34,19 +36,19 @@ public class DashboardSearchRequest {
     @JsonProperty
     private final List<ComponentResultRequest> componentResultRequests;
     @JsonProperty
-    private final String dateTimeLocale;
+    private final DateTimeSettings dateTimeSettings;
 
     @JsonCreator
     public DashboardSearchRequest(
             @JsonProperty("dashboardQueryKey") final DashboardQueryKey dashboardQueryKey,
             @JsonProperty("search") final Search search,
             @JsonProperty("componentResultRequests") final List<ComponentResultRequest> componentResultRequests,
-            @JsonProperty("dateTimeLocale") final String dateTimeLocale) {
+            @JsonProperty("dateTimeSettings") final DateTimeSettings dateTimeSettings) {
 
         this.dashboardQueryKey = dashboardQueryKey;
         this.search = search;
         this.componentResultRequests = componentResultRequests;
-        this.dateTimeLocale = dateTimeLocale;
+        this.dateTimeSettings = dateTimeSettings;
     }
 
     public DashboardQueryKey getDashboardQueryKey() {
@@ -61,8 +63,8 @@ public class DashboardSearchRequest {
         return componentResultRequests;
     }
 
-    public String getDateTimeLocale() {
-        return dateTimeLocale;
+    public DateTimeSettings getDateTimeSettings() {
+        return dateTimeSettings;
     }
 
     @Override
@@ -77,12 +79,12 @@ public class DashboardSearchRequest {
         return Objects.equals(dashboardQueryKey, that.dashboardQueryKey) &&
                 Objects.equals(search, that.search) &&
                 Objects.equals(componentResultRequests, that.componentResultRequests) &&
-                Objects.equals(dateTimeLocale, that.dateTimeLocale);
+                Objects.equals(dateTimeSettings, that.dateTimeSettings);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(dashboardQueryKey, search, componentResultRequests, dateTimeLocale);
+        return Objects.hash(dashboardQueryKey, search, componentResultRequests, dateTimeSettings);
     }
 
     @Override
@@ -91,7 +93,7 @@ public class DashboardSearchRequest {
                 "dashboardQueryKey=" + dashboardQueryKey +
                 ", search=" + search +
                 ", componentResultRequests=" + componentResultRequests +
-                ", dateTimeLocale='" + dateTimeLocale + '\'' +
+                ", dateTimeSettings='" + dateTimeSettings + '\'' +
                 '}';
     }
 
@@ -108,7 +110,7 @@ public class DashboardSearchRequest {
         private DashboardQueryKey dashboardQueryKey;
         private Search search;
         private List<ComponentResultRequest> componentResultRequests;
-        private String dateTimeLocale;
+        private DateTimeSettings dateTimeSettings;
 
         private Builder() {
         }
@@ -117,7 +119,7 @@ public class DashboardSearchRequest {
             this.dashboardQueryKey = searchRequest.dashboardQueryKey;
             this.search = searchRequest.search;
             this.componentResultRequests = searchRequest.componentResultRequests;
-            this.dateTimeLocale = searchRequest.dateTimeLocale;
+            this.dateTimeSettings = searchRequest.dateTimeSettings;
         }
 
         public Builder dashboardQueryKey(final DashboardQueryKey dashboardQueryKey) {
@@ -135,13 +137,13 @@ public class DashboardSearchRequest {
             return this;
         }
 
-        public Builder dateTimeLocale(final String dateTimeLocale) {
-            this.dateTimeLocale = dateTimeLocale;
+        public Builder dateTimeSettings(final DateTimeSettings dateTimeSettings) {
+            this.dateTimeSettings = dateTimeSettings;
             return this;
         }
 
         public DashboardSearchRequest build() {
-            return new DashboardSearchRequest(dashboardQueryKey, search, componentResultRequests, dateTimeLocale);
+            return new DashboardSearchRequest(dashboardQueryKey, search, componentResultRequests, dateTimeSettings);
         }
     }
 }

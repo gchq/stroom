@@ -1,3 +1,4 @@
+import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -20,6 +21,7 @@ import java.util.Map;
 import java.util.Optional;
 
 public class TestSearchExpressionQueryBuilder {
+
     private final long nowEpochMillis = System.currentTimeMillis();
     private ExpressionOperator.Builder expressionBuilder;
     private Map<String, ElasticIndexField> indexFieldsMap;
@@ -33,7 +35,7 @@ public class TestSearchExpressionQueryBuilder {
         builder = new SearchExpressionQueryBuilder(
                 null,
                 indexFieldsMap,
-                "UTC",
+                DateTimeSettings.builder().build(),
                 nowEpochMillis
         );
     }
@@ -91,7 +93,10 @@ public class TestSearchExpressionQueryBuilder {
         final long expectedParsedDateFieldValue = 1613525014000L;
 
         // Parse the date/time. Must specify UTC for `timeZoneId`, otherwise the local system timezone will be used
-        final Optional<ZonedDateTime> expectedDate = DateExpressionParser.parse(nowStr, "UTC", nowEpochMillis);
+        final Optional<ZonedDateTime> expectedDate = DateExpressionParser.parse(
+                nowStr,
+                DateTimeSettings.builder().build(),
+                nowEpochMillis);
         Assertions.assertTrue(expectedDate.isPresent(), "Date was parsed");
         final long dateFieldValue = expectedDate.get().toInstant().toEpochMilli();
         Assertions.assertEquals(expectedParsedDateFieldValue, dateFieldValue, "Parsed date value is correct");

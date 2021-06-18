@@ -19,7 +19,7 @@ package stroom.preferences.client;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.editor.client.presenter.ChangeThemeEvent;
-import stroom.preferences.client.PreferencesPresenter.PreferencesView;
+import stroom.preferences.client.UserPreferencesPresenter.UserPreferencesView;
 import stroom.query.api.v2.TimeZone;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
@@ -42,21 +42,21 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
-public final class PreferencesPresenter
-        extends MyPresenterWidget<PreferencesView>
-        implements PreferencesUiHandlers {
+public final class UserPreferencesPresenter
+        extends MyPresenterWidget<UserPreferencesView>
+        implements UserPreferencesUiHandlers {
 
-    private final PreferencesManager preferencesManager;
+    private final UserPreferencesManager userPreferencesManager;
     private UserPreferences originalPreferences;
 
     @Inject
-    public PreferencesPresenter(
+    public UserPreferencesPresenter(
             final EventBus eventBus,
-            final PreferencesView view,
-            final PreferencesManager preferencesManager,
+            final UserPreferencesView view,
+            final UserPreferencesManager userPreferencesManager,
             final ClientSecurityContext clientSecurityContext) {
         super(eventBus, view);
-        this.preferencesManager = preferencesManager;
+        this.userPreferencesManager = userPreferencesManager;
 
         view.setUiHandlers(this);
         view.setAsDefaultVisible(clientSecurityContext.hasAppPermission(PermissionNames.MANAGE_PROPERTIES_PERMISSION));
@@ -68,9 +68,9 @@ public final class PreferencesPresenter
 
     @Override
     public void onChange() {
-        final UserPreferences before = preferencesManager.getCurrentPreferences();
+        final UserPreferences before = userPreferencesManager.getCurrentPreferences();
         final UserPreferences after = write();
-        preferencesManager.setCurrentPreferences(after);
+        userPreferencesManager.setCurrentPreferences(after);
         final String editorTheme = selectEditorTheme(before, after);
         if (!editorTheme.equals(after.getEditorTheme())) {
             // Editor theme was reset due to UI theme change, so show the new value in the dialog
@@ -112,20 +112,20 @@ public final class PreferencesPresenter
                 (ok) -> {
                     if (ok) {
                         final UserPreferences userPreferences = write();
-                        preferencesManager.setDefaultUserPreferences(userPreferences, this::reset);
+                        userPreferencesManager.setDefaultUserPreferences(userPreferences, this::reset);
                     }
                 });
     }
 
     @Override
     public void onRevertToDefault() {
-        preferencesManager.resetToDefaultUserPreferences(this::reset);
+        userPreferencesManager.resetToDefaultUserPreferences(this::reset);
     }
 
     private void reset(final UserPreferences userPreferences) {
         originalPreferences = userPreferences;
         read(userPreferences);
-        preferencesManager.setCurrentPreferences(userPreferences);
+        userPreferencesManager.setCurrentPreferences(userPreferences);
         final String editorTheme = selectEditorTheme(originalPreferences, userPreferences);
         triggerThemeChange(userPreferences.getTheme(), editorTheme);
     }
@@ -138,14 +138,14 @@ public final class PreferencesPresenter
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
                     final UserPreferences userPreferences = write();
-                    preferencesManager.setCurrentPreferences(userPreferences);
+                    userPreferencesManager.setCurrentPreferences(userPreferences);
                     if (!Objects.equals(userPreferences, originalPreferences)) {
-                        preferencesManager.update(userPreferences, (result) -> hide());
+                        userPreferencesManager.update(userPreferences, (result) -> hide());
                     } else {
                         hide();
                     }
                 } else {
-                    preferencesManager.setCurrentPreferences(originalPreferences);
+                    userPreferencesManager.setCurrentPreferences(originalPreferences);
                     hide();
                 }
             }
@@ -155,12 +155,12 @@ public final class PreferencesPresenter
             }
         };
 
-        preferencesManager.fetch(userPreferences -> {
+        userPreferencesManager.fetch(userPreferences -> {
             originalPreferences = userPreferences;
             read(userPreferences);
             ShowPopupEvent.fire(
-                    PreferencesPresenter.this,
-                    PreferencesPresenter.this,
+                    UserPreferencesPresenter.this,
+                    UserPreferencesPresenter.this,
                     popupType,
                     getPopupSize(),
                     caption,
@@ -178,15 +178,15 @@ public final class PreferencesPresenter
 
     protected void hide() {
         HidePopupEvent.fire(
-                PreferencesPresenter.this,
-                PreferencesPresenter.this);
+                UserPreferencesPresenter.this,
+                UserPreferencesPresenter.this);
     }
 
 
     private void read(final UserPreferences userPreferences) {
-        getView().setThemes(preferencesManager.getThemes());
+        getView().setThemes(userPreferencesManager.getThemes());
         getView().setTheme(userPreferences.getTheme());
-        getView().setEditorThemes(preferencesManager.getEditorThemes());
+        getView().setEditorThemes(userPreferencesManager.getEditorThemes());
         getView().setFont(userPreferences.getFont());
         getView().setFontSize(userPreferences.getFontSize());
         getView().setPattern(userPreferences.getDateTimePattern());
@@ -222,7 +222,7 @@ public final class PreferencesPresenter
                 .build();
     }
 
-    public interface PreferencesView extends View, HasUiHandlers<PreferencesUiHandlers> {
+    public interface UserPreferencesView extends View, HasUiHandlers<UserPreferencesUiHandlers> {
 
         String getTheme();
 

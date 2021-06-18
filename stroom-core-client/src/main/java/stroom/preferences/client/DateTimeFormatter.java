@@ -10,11 +10,11 @@ import javax.inject.Singleton;
 @Singleton
 public class DateTimeFormatter {
 
-    private final PreferencesManager preferencesManager;
+    private final UserPreferencesManager userPreferencesManager;
 
     @Inject
-    public DateTimeFormatter(final PreferencesManager preferencesManager) {
-        this.preferencesManager = preferencesManager;
+    public DateTimeFormatter(final UserPreferencesManager userPreferencesManager) {
+        this.userPreferencesManager = userPreferencesManager;
     }
 
     public String format(final Long ms) {
@@ -27,11 +27,12 @@ public class DateTimeFormatter {
         String offset = "0000";
         String zoneId = "UTC";
 
-        final UserPreferences userPreferences = preferencesManager.getCurrentPreferences();
+        final UserPreferences userPreferences = userPreferencesManager.getCurrentPreferences();
         if (userPreferences != null) {
             if (userPreferences.getDateTimePattern() != null
                     && userPreferences.getDateTimePattern().trim().length() > 0) {
                 pattern = userPreferences.getDateTimePattern();
+                pattern = convertJavaDateTimePattern(pattern);
 
                 final TimeZone timeZone = userPreferences.getTimeZone();
                 if (timeZone != null) {
@@ -65,6 +66,18 @@ public class DateTimeFormatter {
         }
 
         return nativeToDateString(ms, use.getDisplayValue(), pattern, zoneId, offset);
+    }
+
+    private String convertJavaDateTimePattern(final String pattern) {
+        String converted = pattern;
+        converted = converted.replace('y', 'Y');
+        converted = converted.replace('d', 'D');
+        converted = converted.replaceAll("'", "");
+        converted = converted.replaceAll("SSSXX", "SSS[Z]");
+        converted = converted.replaceAll("xxx", "Z");
+        converted = converted.replaceAll("xx", "z");
+        converted = converted.replaceAll("VV", "ZZ");
+        return converted;
     }
 
     private static native String nativeToDateString(final double ms,

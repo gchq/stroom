@@ -18,6 +18,7 @@
 package stroom.search.solr.search;
 
 import stroom.annotation.api.AnnotationFields;
+import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.Coprocessor;
@@ -56,7 +57,7 @@ class SolrClusterSearchTaskHandler {
                      final CachedSolrIndex cachedSolrIndex,
                      final Query query,
                      final long now,
-                     final String dateTimeLocale,
+                     final DateTimeSettings dateTimeSettings,
                      final Coprocessors coprocessors) {
         securityContext.useAsRead(() -> {
             if (!Thread.currentThread().isInterrupted()) {
@@ -70,7 +71,7 @@ class SolrClusterSearchTaskHandler {
 
                     if (coprocessors.size() > 0) {
                         // Start searching.
-                        search(taskContext, cachedSolrIndex, query, now, dateTimeLocale, coprocessors);
+                        search(taskContext, cachedSolrIndex, query, now, dateTimeSettings, coprocessors);
                     }
 
                 } catch (final RuntimeException e) {
@@ -89,7 +90,7 @@ class SolrClusterSearchTaskHandler {
                         final CachedSolrIndex cachedSolrIndex,
                         final Query query,
                         final long now,
-                        final String dateTimeLocale,
+                        final DateTimeSettings dateTimeSettings,
                         final Coprocessors coprocessors) {
         taskContext.info(() -> "Searching...");
         LOGGER.debug(() -> "Incoming search request:\n" + query.getExpression().toString());
@@ -113,7 +114,7 @@ class SolrClusterSearchTaskHandler {
                     extractionReceiver,
                     taskContext,
                     hitCount,
-                    dateTimeLocale);
+                    dateTimeSettings);
 
             // Wait for search completion.
             boolean allComplete = false;

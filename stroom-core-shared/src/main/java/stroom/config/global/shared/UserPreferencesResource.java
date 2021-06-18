@@ -16,10 +16,10 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 @Tag(name = "Preferences")
-@Path(PreferencesResource.BASE_PATH)
+@Path(UserPreferencesResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface PreferencesResource extends RestResource, DirectRestService {
+public interface UserPreferencesResource extends RestResource, DirectRestService {
 
     String BASE_PATH = "/preferences" + ResourcePaths.V1;
 

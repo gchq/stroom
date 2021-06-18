@@ -47,7 +47,7 @@ public class SqlStatisticsStore implements Store {
         final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(
                 statisticStoreDoc,
                 modifiedSearchRequest.getQuery().getExpression(),
-                modifiedSearchRequest.getDateTimeLocale());
+                modifiedSearchRequest.getDateTimeSettings());
 
         // Create coprocessors.
         coprocessors = coprocessorsFactory.create(modifiedSearchRequest);

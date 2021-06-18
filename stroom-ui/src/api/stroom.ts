@@ -325,7 +325,8 @@ export interface ClusterNodeInfoItem {
 }
 
 export interface ClusterSearchTask {
-  dateTimeLocale?: string;
+  /** The client date/time settings */
+  dateTimeSettings?: DateTimeSettings;
 
   /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
   key?: QueryKey;
@@ -541,7 +542,9 @@ export interface DashboardQueryKey {
 export interface DashboardSearchRequest {
   componentResultRequests?: ComponentResultRequest[];
   dashboardQueryKey?: DashboardQueryKey;
-  dateTimeLocale?: string;
+
+  /** The client date/time settings */
+  dateTimeSettings?: DateTimeSettings;
   search?: Search;
 }
 
@@ -649,7 +652,25 @@ export type DateField = AbstractField;
 /**
  * The string formatting to apply to a date value
  */
-export type DateTimeFormatSettings = FormatSettings & { pattern?: string; timeZone?: TimeZone };
+export type DateTimeFormatSettings = FormatSettings & {
+  pattern?: string;
+  timeZone?: TimeZone;
+  usePreferences?: boolean;
+};
+
+/**
+ * The client date/time settings
+ */
+export interface DateTimeSettings {
+  /** A date time formatting pattern string conforming to the specification of java.time.format.DateTimeFormatter */
+  dateTimePattern?: string;
+
+  /** The local zone id to use when formatting date values in the search results. The value is the string form of a java.time.ZoneId */
+  localZoneId: string;
+
+  /** The timezone to apply to a date time value */
+  timeZone?: TimeZone;
+}
 
 export type DefaultLocation = Location;
 
@@ -2640,8 +2661,8 @@ export interface SearchBusPollRequest {
  * A request for new search or a follow up request for more data for an existing iterative search
  */
 export interface SearchRequest {
-  /** The locale to use when formatting date values in the search results. The value is the string form of a java.time.ZoneId */
-  dateTimeLocale: string;
+  /** The client date/time settings */
+  dateTimeSettings?: DateTimeSettings;
 
   /** If true the response will contain all results found so far, typically no results on the first request. Future requests for the same query key may return more results. Intended for use on longer running searches to allow partial result sets to be returned as soon as they are available rather than waiting for the full result set. */
   incremental: boolean;
@@ -3424,43 +3445,7 @@ export interface UserAndPermissions {
 export interface UserPreferences {
   /** A date time formatting pattern string conforming to the specification of java.time.format.DateTimeFormatter */
   dateTimePattern?: string;
-  editorTheme?:
-    | "AMBIANCE"
-    | "CHAOS"
-    | "CHROME"
-    | "CLOUD9_DAY"
-    | "CLOUD9_NIGHT"
-    | "CLOUD9_NIGHT_LOW_COLOR"
-    | "CLOUDS"
-    | "CLOUDS_MIDNIGHT"
-    | "COBALT"
-    | "CRIMSON_EDITOR"
-    | "DAWN"
-    | "DREAMWEAVER"
-    | "ECLIPSE"
-    | "GITHUB"
-    | "IDLE_FINGERS"
-    | "KATZENMILCH"
-    | "KR_THEME"
-    | "KR"
-    | "KUROIR"
-    | "MERBIVORE"
-    | "MERBIVORE_SOFT"
-    | "MONO_INDUSTRIAL"
-    | "MONOKAI"
-    | "PASTEL_ON_DARK"
-    | "SOLARIZED_DARK"
-    | "SOLARIZED_LIGHT"
-    | "TERMINAL"
-    | "TEXTMATE"
-    | "TOMORROW_NIGHT_BLUE"
-    | "TOMORROW_NIGHT_BRIGHT"
-    | "TOMORROW_NIGHT_EIGHTIES"
-    | "TOMORROW_NIGHT"
-    | "TOMORROW"
-    | "TWILIGHT"
-    | "VIBRANT_INK"
-    | "XCODE";
+  editorTheme?: string;
   font?: string;
   fontSize?: string;
   theme?: string;

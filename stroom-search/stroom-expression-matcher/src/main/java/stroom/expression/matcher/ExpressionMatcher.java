@@ -23,13 +23,13 @@ import stroom.datasource.api.v2.DocRefField;
 import stroom.datasource.api.v2.FieldTypes;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
+import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.common.v2.DateExpressionParser;
 
-import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -44,26 +44,26 @@ public class ExpressionMatcher {
     private final CollectionService collectionService;
     private final Map<DocRef, String[]> wordMap = new HashMap<>();
     private final Map<String, Pattern> patternMap = new HashMap<>();
-    private final String timeZoneId;
+    private final DateTimeSettings dateTimeSettings;
     private final long nowEpochMilli;
 
     public ExpressionMatcher(final Map<String, AbstractField> fieldMap) {
         this.fieldMap = fieldMap;
         this.wordListProvider = null;
         this.collectionService = null;
-        this.timeZoneId = ZoneOffset.UTC.getId();
+        this.dateTimeSettings = DateTimeSettings.builder().build();
         this.nowEpochMilli = System.currentTimeMillis();
     }
 
     public ExpressionMatcher(final Map<String, AbstractField> fieldMap,
                              final WordListProvider wordListProvider,
                              final CollectionService collectionService,
-                             final String timeZoneId,
+                             final DateTimeSettings dateTimeSettings,
                              final long nowEpochMilli) {
         this.fieldMap = fieldMap;
         this.wordListProvider = wordListProvider;
         this.collectionService = collectionService;
-        this.timeZoneId = timeZoneId;
+        this.dateTimeSettings = dateTimeSettings;
         this.nowEpochMilli = nowEpochMilli;
     }
 
@@ -423,8 +423,9 @@ public class ExpressionMatcher {
             }
 
             //empty optional will be caught below
-            return DateExpressionParser.parse(value.toString(),
-                    timeZoneId,
+            return DateExpressionParser.parse(
+                    value.toString(),
+                    dateTimeSettings,
                     nowEpochMilli).get().toInstant().toEpochMilli();
         } catch (final Exception e) {
             throw new MatchException("Expected a standard date value for field \"" + fieldName

@@ -16,6 +16,7 @@
 
 package stroom.search.impl;
 
+import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.common.v2.CoprocessorSettings;
@@ -45,7 +46,7 @@ public class ClusterSearchTask implements Serializable {
     @JsonProperty
     private final List<CoprocessorSettings> settings;
     @JsonProperty
-    private final String dateTimeLocale;
+    private final DateTimeSettings dateTimeSettings;
     @JsonProperty
     private final long now;
 
@@ -56,7 +57,7 @@ public class ClusterSearchTask implements Serializable {
                              @JsonProperty("query") final Query query,
                              @JsonProperty("shards") final List<Long> shards,
                              @JsonProperty("settings") final List<CoprocessorSettings> settings,
-                             @JsonProperty("dateTimeLocale") final String dateTimeLocale,
+                             @JsonProperty("dateTimeSettings") final DateTimeSettings dateTimeSettings,
                              @JsonProperty("now") final long now) {
         this.sourceTaskId = sourceTaskId;
         this.taskName = taskName;
@@ -64,7 +65,7 @@ public class ClusterSearchTask implements Serializable {
         this.query = query;
         this.shards = shards;
         this.settings = settings;
-        this.dateTimeLocale = dateTimeLocale;
+        this.dateTimeSettings = dateTimeSettings;
         this.now = now;
     }
 
@@ -92,8 +93,8 @@ public class ClusterSearchTask implements Serializable {
         return settings;
     }
 
-    public String getDateTimeLocale() {
-        return dateTimeLocale;
+    public DateTimeSettings getDateTimeSettings() {
+        return dateTimeSettings;
     }
 
     public long getNow() {

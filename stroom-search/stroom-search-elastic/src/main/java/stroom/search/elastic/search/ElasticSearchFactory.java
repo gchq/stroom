@@ -2,6 +2,7 @@ package stroom.search.elastic.search;
 
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dictionary.api.WordListProvider;
+import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.common.v2.Receiver;
 import stroom.search.elastic.ElasticIndexService;
@@ -19,6 +20,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import javax.inject.Inject;
 
 public class ElasticSearchFactory {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticSearchFactory.class);
 
     private final WordListProvider wordListProvider;
@@ -44,15 +46,14 @@ public class ElasticSearchFactory {
                        final Receiver receiver,
                        final TaskContext taskContext,
                        final AtomicLong hitCount,
-                       final String dateTimeLocale
-    ) {
+                       final DateTimeSettings dateTimeSettings) {
         if (index == null) {
             throw new SearchException("Search index has not been set");
         }
 
         // Create a map of index fields keyed by name.
         final Map<String, ElasticIndexField> indexFieldsMap = elasticIndexService.getFieldsMap(index);
-        final QueryBuilder queryBuilder = getQuery(expression, indexFieldsMap, dateTimeLocale, now);
+        final QueryBuilder queryBuilder = getQuery(expression, indexFieldsMap, dateTimeSettings, now);
         final Tracker tracker = new Tracker(hitCount);
         final ElasticSearchTask elasticSearchTask = new ElasticSearchTask(
                 asyncSearchTask, index, queryBuilder, fieldIndex, receiver, tracker,
@@ -81,13 +82,13 @@ public class ElasticSearchFactory {
 
     private QueryBuilder getQuery(final ExpressionOperator expression,
                                   final Map<String, ElasticIndexField> indexFieldsMap,
-                                  final String timeZoneId,
+                                  final DateTimeSettings dateTimeSettings,
                                   final long nowEpochMilli
     ) {
         final SearchExpressionQueryBuilder builder = new SearchExpressionQueryBuilder(
                 wordListProvider,
                 indexFieldsMap,
-                timeZoneId,
+                dateTimeSettings,
                 nowEpochMilli);
 
         final QueryBuilder query = builder.buildQuery(expression);
@@ -96,7 +97,7 @@ public class ElasticSearchFactory {
         if (query == null) {
             throw new SearchException("Failed to build query given expression");
         } else {
-            LOGGER.debug(() -> "Query is " + query.toString());
+            LOGGER.debug(() -> "Query is " + query);
         }
 
         return query;

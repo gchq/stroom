@@ -1,6 +1,6 @@
 package stroom.config.global.impl;
 
-import stroom.config.global.shared.PreferencesResource;
+import stroom.config.global.shared.UserPreferencesResource;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.ui.config.shared.UserPreferences;
 
@@ -9,12 +9,12 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 
 @AutoLogged
-public class PreferencesResourceImpl implements PreferencesResource {
+public class UserUserPreferencesResourceImpl implements UserPreferencesResource {
 
-    private final Provider<PreferencesService> preferencesServiceProvider;
+    private final Provider<UserPreferencesService> preferencesServiceProvider;
 
     @Inject
-    PreferencesResourceImpl(final Provider<PreferencesService> preferencesServiceProvider) {
+    UserUserPreferencesResourceImpl(final Provider<UserPreferencesService> preferencesServiceProvider) {
 
         this.preferencesServiceProvider = Objects.requireNonNull(preferencesServiceProvider);
     }

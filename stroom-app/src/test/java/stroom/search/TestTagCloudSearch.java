@@ -21,6 +21,7 @@ package stroom.search;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexDoc;
+import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
@@ -120,7 +121,7 @@ class TestTagCloudSearch extends AbstractSearchTest {
         final SearchRequest searchRequest = new SearchRequest(queryKey,
                 query,
                 resultRequests,
-                ZoneOffset.UTC.getId(),
+                DateTimeSettings.builder().build(),
                 false);
         final SearchResponse searchResponse = search(searchRequest);
 

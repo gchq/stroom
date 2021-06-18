@@ -3,6 +3,7 @@ package stroom.index;
 import stroom.app.App;
 import stroom.config.app.Config;
 import stroom.docref.DocRef;
+import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.Query;
@@ -65,12 +66,12 @@ class TestStroomIndexQueryResource {
                 .build();
 
         List<ResultRequest> resultRequestList = new ArrayList<>();
-        String datetimeLocale = "en-gb";
+        final DateTimeSettings dateTimeSettings = DateTimeSettings.builder().build();
         boolean incremental = false;
         SearchRequest searchRequest = new SearchRequest(queryKey,
                 query,
                 resultRequestList,
-                datetimeLocale,
+                dateTimeSettings,
                 incremental);
         return searchRequest;
     }

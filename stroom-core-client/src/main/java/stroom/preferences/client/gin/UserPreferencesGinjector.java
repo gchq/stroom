@@ -16,20 +16,8 @@
 
 package stroom.preferences.client.gin;
 
-import stroom.core.client.gin.PluginModule;
-import stroom.preferences.client.PreferencesPlugin;
-import stroom.preferences.client.PreferencesPresenter;
-import stroom.preferences.client.PreferencesViewImpl;
+import stroom.preferences.client.UserPreferencesManager;
 
-public class PreferencesModule extends PluginModule {
-
-    @Override
-    protected void configure() {
-        bindPresenterWidget(
-                PreferencesPresenter.class,
-                PreferencesPresenter.PreferencesView.class,
-                PreferencesViewImpl.class);
-
-        bindPlugin(PreferencesPlugin.class);
-    }
+public interface UserPreferencesGinjector {
+    UserPreferencesManager getPreferencesManager();
 }

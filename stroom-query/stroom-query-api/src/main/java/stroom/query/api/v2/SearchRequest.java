@@ -23,7 +23,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -52,9 +51,7 @@ import javax.xml.bind.annotation.XmlType;
 @XmlAccessorType(XmlAccessType.FIELD)
 @Schema(description = "A request for new search or a follow up request for more data for an existing " +
         "iterative search")
-public final class SearchRequest implements Serializable {
-
-    private static final long serialVersionUID = -6668626615097471925L;
+public final class SearchRequest {
 
     @XmlElement
     @Schema(required = true)
@@ -74,11 +71,9 @@ public final class SearchRequest implements Serializable {
 
 
     @XmlElement
-    @Schema(description = "The locale to use when formatting date values in the search results. The " +
-            "value is the string form of a java.time.ZoneId",
-            required = true)
+    @Schema(description = "The client date/time settings")
     @JsonProperty
-    private String dateTimeLocale;
+    private DateTimeSettings dateTimeSettings;
 
     @XmlElement
     @Schema(description = "If true the response will contain all results found so far, typically no results on the " +
@@ -106,63 +101,63 @@ public final class SearchRequest implements Serializable {
     }
 
     /**
-     * @param key            A unique key to identify the instance of the search by. This key is used to identify
-     *                       multiple requests for the same search when running in incremental mode.
-     * @param query          The query terms for the search
-     * @param resultRequests A list of {@link ResultRequest resultRequest} definitions. If null or the list is empty
-     *                       no results will be returned. Allows the caller to request that the results of the query
-     *                       are returned in multiple forms, e.g. using a number of different
-     *                       filtering/aggregation/sorting approaches.
-     * @param dateTimeLocale The locale to use when formatting date values in the search results. The value is the
-     *                       string form of a {@link java.time.ZoneId zoneId}
-     * @param incremental    If true the response will contain all results found so far. Future requests for the same
-     *                       query key may return more results. Intended for use on longer running searches to allow
-     *                       partial result sets to be returned as soon as they are available rather than waiting
-     *                       for the full result set.
-     * @param timeout        Set the maximum time (in ms) for the server to wait for a complete result set. The
-     *                       timeout applies to both incremental and non incremental queries, though the behaviour
-     *                       is slightly different. The timeout will make the server wait for which ever comes
-     *                       first out of the query completing or the timeout period being reached. If no value
-     *                       is supplied then for an incremental query a default value of 0 will be used (i.e.
-     *                       returning immediately) and for a non-incremental query the server's default timeout
-     *                       period will be used. For an incremental query, if the query has not completed by the
-     *                       end of the timeout period, it will return the currently know results with
-     *                       complete=false, however for a non-incremental query it will return no results,
-     *                       complete=false and details of the timeout in the error field
+     * @param key                    A unique key to identify the instance of the search by. This key is used to
+     *                               identify multiple requests for the same search when running in incremental mode.
+     * @param query                  The query terms for the search
+     * @param resultRequests         A list of {@link ResultRequest resultRequest} definitions. If null or the list is
+     *                               empty no results will be returned. Allows the caller to request that the results of
+     *                               the query are returned in multiple forms, e.g. using a number of different
+     *                               filtering/aggregation/sorting approaches.
+     * @param dateTimeSettings The client date time settings to use when formatting date values in the search
+     *                               results.
+     * @param incremental            If true the response will contain all results found so far. Future requests for the
+     *                               same query key may return more results. Intended for use on longer running searches
+     *                               to allow partial result sets to be returned as soon as they are available rather
+     *                               than waiting for the full result set.
+     * @param timeout                Set the maximum time (in ms) for the server to wait for a complete result set.The
+     *                               timeout applies to both incremental and non incremental queries, though the
+     *                               behaviour is slightly different. The timeout will make the server wait for which
+     *                               ever comes first out of the query completing or the timeout period being reached.
+     *                               If no value is supplied then for an incremental query a default value of 0 will be
+     *                               used (i.e. returning immediately) and for a non-incremental query the server's
+     *                               default timeout period will be used. For an incremental query, if the query has not
+     *                               completed by the end of the timeout period, it will return the currently know
+     *                               results with complete=false, however for a non-incremental query it will return no
+     *                               results, complete=false and details of the timeout in the error field
      */
     @JsonCreator
     public SearchRequest(@JsonProperty("key") final QueryKey key,
                          @JsonProperty("query") final Query query,
                          @JsonProperty("resultRequests") final List<ResultRequest> resultRequests,
-                         @JsonProperty("dateTimeLocale") final String dateTimeLocale,
+                         @JsonProperty("dateTimeSettings") final DateTimeSettings dateTimeSettings,
                          @JsonProperty("incremental") final Boolean incremental,
                          @JsonProperty("timeout") final Long timeout) {
         this.key = key;
         this.query = query;
         this.resultRequests = resultRequests;
-        this.dateTimeLocale = dateTimeLocale;
+        this.dateTimeSettings = dateTimeSettings;
         this.incremental = incremental;
         this.timeout = timeout;
     }
 
     /**
-     * See {@link SearchRequest#SearchRequest(QueryKey, Query, List, String, Boolean, Long)}
+     * See {@link SearchRequest#SearchRequest(QueryKey, Query, List, DateTimeSettings, Boolean, Long)}
      *
-     * @param key            As linked
-     * @param query          As linked
-     * @param resultRequests As linked
-     * @param dateTimeLocale As linked
-     * @param incremental    As linked
+     * @param key                    As linked
+     * @param query                  As linked
+     * @param resultRequests         As linked
+     * @param dateTimeSettings As linked
+     * @param incremental            As linked
      */
     public SearchRequest(final QueryKey key,
                          final Query query,
                          final List<ResultRequest> resultRequests,
-                         final String dateTimeLocale,
+                         final DateTimeSettings dateTimeSettings,
                          final Boolean incremental) {
         this.key = key;
         this.query = query;
         this.resultRequests = resultRequests;
-        this.dateTimeLocale = dateTimeLocale;
+        this.dateTimeSettings = dateTimeSettings;
         this.incremental = incremental;
         this.timeout = null;
     }
@@ -201,14 +196,14 @@ public final class SearchRequest implements Serializable {
     }
 
     /**
-     * @return The locale ID, see {@link java.time.ZoneId}, for the date values uses in the search response.
+     * @return Date and time settings specific to the client making the request.
      */
-    public String getDateTimeLocale() {
-        return dateTimeLocale;
+    public DateTimeSettings getDateTimeSettings() {
+        return dateTimeSettings;
     }
 
-    public void setDateTimeLocale(final String dateTimeLocale) {
-        this.dateTimeLocale = dateTimeLocale;
+    public void setDateTimeSettings(final DateTimeSettings dateTimeSettings) {
+        this.dateTimeSettings = dateTimeSettings;
     }
 
     /**
@@ -255,14 +250,14 @@ public final class SearchRequest implements Serializable {
         return Objects.equals(key, that.key) &&
                 Objects.equals(query, that.query) &&
                 Objects.equals(resultRequests, that.resultRequests) &&
-                Objects.equals(dateTimeLocale, that.dateTimeLocale) &&
+                Objects.equals(dateTimeSettings, that.dateTimeSettings) &&
                 Objects.equals(incremental, that.incremental) &&
                 Objects.equals(timeout, that.timeout);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(key, query, resultRequests, dateTimeLocale, incremental, timeout);
+        return Objects.hash(key, query, resultRequests, dateTimeSettings, incremental, timeout);
     }
 
     @Override
@@ -271,7 +266,7 @@ public final class SearchRequest implements Serializable {
                 "key=" + key +
                 ", query=" + query +
                 ", resultRequests=" + resultRequests +
-                ", dateTimeLocale='" + dateTimeLocale + '\'' +
+                ", dateTimeSettings='" + dateTimeSettings + '\'' +
                 ", incremental=" + incremental +
                 ", timeout=" + timeout +
                 '}';
@@ -293,7 +288,7 @@ public final class SearchRequest implements Serializable {
         private List<ResultRequest> resultRequests;
         private QueryKey key;
         private Query query;
-        private String dateTimeLocale;
+        private DateTimeSettings dateTimeSettings;
         private Boolean incremental;
         private Long timeout;
 
@@ -304,7 +299,7 @@ public final class SearchRequest implements Serializable {
             this.resultRequests = searchRequest.resultRequests;
             this.key = searchRequest.key;
             this.query = searchRequest.query;
-            this.dateTimeLocale = searchRequest.dateTimeLocale;
+            this.dateTimeSettings = searchRequest.dateTimeSettings;
             this.incremental = searchRequest.incremental;
             this.timeout = searchRequest.timeout;
         }
@@ -356,11 +351,11 @@ public final class SearchRequest implements Serializable {
         }
 
         /**
-         * @param value The date time locale to apply to any date/time results
+         * @param value The date time settings to apply to any date/time results
          * @return The {@link Builder}, enabling method chaining
          */
-        public Builder dateTimeLocale(final String value) {
-            this.dateTimeLocale = value;
+        public Builder dateTimeSettings(final DateTimeSettings value) {
+            this.dateTimeSettings = value;
             return this;
         }
 
@@ -377,7 +372,8 @@ public final class SearchRequest implements Serializable {
         }
 
         /**
-         * @param value See {@link SearchRequest#SearchRequest(QueryKey, Query, List, String, Boolean, Long)}
+         * @param value See {@link SearchRequest#SearchRequest(QueryKey, Query, List, DateTimeSettings, Boolean,
+         *              Long)}
          * @return The {@link Builder}, enabling method chaining
          */
         public Builder timeout(final Long value) {
@@ -386,7 +382,7 @@ public final class SearchRequest implements Serializable {
         }
 
         public SearchRequest build() {
-            return new SearchRequest(key, query, resultRequests, dateTimeLocale, incremental, timeout);
+            return new SearchRequest(key, query, resultRequests, dateTimeSettings, incremental, timeout);
         }
     }
 

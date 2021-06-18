@@ -73,7 +73,7 @@ public class ElasticAsyncSearchTaskHandler {
                         query,
                         storedFields.toArray(new String[0]),
                         task.getNow(),
-                        task.getDateTimeLocale(),
+                        task.getDateTimeSettings(),
                         coprocessors
                     );
 

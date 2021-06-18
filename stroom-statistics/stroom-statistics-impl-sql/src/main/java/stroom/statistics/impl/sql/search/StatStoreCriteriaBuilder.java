@@ -1,5 +1,6 @@
 package stroom.statistics.impl.sql.search;
 
+import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -31,7 +32,7 @@ public class StatStoreCriteriaBuilder {
 
     public static FindEventCriteria buildCriteria(final StatisticStoreDoc dataSource,
                                                   final ExpressionOperator expression,
-                                                  final String timeZoneId) {
+                                                  final DateTimeSettings dateTimeSettings) {
 
         LOGGER.trace(String.format("buildCriteria called for statistic %s", dataSource.getName()));
 
@@ -109,7 +110,7 @@ public class StatStoreCriteriaBuilder {
 
         // if we have got here then we have a single BETWEEN date term, so parse
         // it.
-        final Range<Long> range = extractRange(dateTerm, timeZoneId, nowEpochMilli);
+        final Range<Long> range = extractRange(dateTerm, dateTimeSettings, nowEpochMilli);
 
         final List<ExpressionTerm> termNodesInFilter = new ArrayList<>();
         findAllTermNodes(expression, termNodesInFilter);
@@ -207,7 +208,7 @@ public class StatStoreCriteriaBuilder {
     }
 
     private static Range<Long> extractRange(final ExpressionTerm dateTerm,
-                                            final String timeZoneId,
+                                            final DateTimeSettings dateTimeSettings,
                                             final long nowEpochMilli) {
         long rangeFrom = 0;
         long rangeTo = Long.MAX_VALUE;
@@ -218,9 +219,9 @@ public class StatStoreCriteriaBuilder {
             throw RestUtil.badRequest("DateTime term is not a valid format, term: " + dateTerm.toString());
         }
 
-        rangeFrom = parseDateTime("from", dateArr[0], timeZoneId, nowEpochMilli);
+        rangeFrom = parseDateTime("from", dateArr[0], dateTimeSettings, nowEpochMilli);
         // add one to make it exclusive
-        rangeTo = parseDateTime("to", dateArr[1], timeZoneId, nowEpochMilli) + 1;
+        rangeTo = parseDateTime("to", dateArr[1], dateTimeSettings, nowEpochMilli) + 1;
 
         final Range<Long> range = new Range<>(rangeFrom, rangeTo);
 
@@ -229,11 +230,11 @@ public class StatStoreCriteriaBuilder {
 
     private static long parseDateTime(final String type,
                                       final String value,
-                                      final String timeZoneId,
+                                      final DateTimeSettings dateTimeSettings,
                                       final long nowEpochMilli) {
         final ZonedDateTime dateTime;
         try {
-            dateTime = DateExpressionParser.parse(value, timeZoneId, nowEpochMilli)
+            dateTime = DateExpressionParser.parse(value, dateTimeSettings, nowEpochMilli)
                     .orElseThrow(() -> RestUtil.badRequest(
                             "DateTime term has an invalid '" + type + "' value of '" + value + "'"));
         } catch (final Exception e) {

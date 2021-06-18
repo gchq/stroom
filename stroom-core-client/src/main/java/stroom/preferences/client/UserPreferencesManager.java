@@ -1,6 +1,6 @@
 package stroom.preferences.client;
 
-import stroom.config.global.shared.PreferencesResource;
+import stroom.config.global.shared.UserPreferencesResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.CurrentTheme;
@@ -20,9 +20,9 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class PreferencesManager {
+public class UserPreferencesManager {
 
-    private static final PreferencesResource PREFERENCES_RESOURCE = GWT.create(PreferencesResource.class);
+    private static final UserPreferencesResource PREFERENCES_RESOURCE = GWT.create(UserPreferencesResource.class);
     private final RestFactory restFactory;
     private final CurrentTheme currentTheme;
 
@@ -30,8 +30,8 @@ public class PreferencesManager {
     private UserPreferences currentPreferences;
 
     @Inject
-    public PreferencesManager(final RestFactory restFactory,
-                              final CurrentTheme currentTheme) {
+    public UserPreferencesManager(final RestFactory restFactory,
+                                  final CurrentTheme currentTheme) {
         this.restFactory = restFactory;
         this.currentTheme = currentTheme;
 

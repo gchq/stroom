@@ -79,7 +79,7 @@ public class SolrAsyncSearchTaskHandler {
                             index,
                             query,
                             task.getNow(),
-                            task.getDateTimeLocale(),
+                            task.getDateTimeSettings(),
                             coprocessors);
 
                     // Await completion.

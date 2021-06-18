@@ -25,11 +25,14 @@ import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.Search;
 import stroom.docref.DocRef;
+import stroom.preferences.client.UserPreferencesManager;
+import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionParamUtil;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.Result;
+import stroom.ui.config.shared.UserPreferences;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -43,6 +46,7 @@ public class SearchModel {
     private final QueryPresenter queryPresenter;
     private final IndexLoader indexLoader;
     private final TimeZones timeZones;
+    private final UserPreferencesManager userPreferencesManager;
     private Map<String, ResultComponent> componentMap = new HashMap<>();
     private Map<String, String> currentParameterMap;
     private ExpressionOperator currentExpression;
@@ -56,11 +60,13 @@ public class SearchModel {
     public SearchModel(final SearchBus searchBus,
                        final QueryPresenter queryPresenter,
                        final IndexLoader indexLoader,
-                       final TimeZones timeZones) {
+                       final TimeZones timeZones,
+                       final UserPreferencesManager userPreferencesManager) {
         this.searchBus = searchBus;
         this.queryPresenter = queryPresenter;
         this.indexLoader = indexLoader;
         this.timeZones = timeZones;
+        this.userPreferencesManager = userPreferencesManager;
     }
 
     /**
@@ -339,7 +345,18 @@ public class SearchModel {
             final ComponentResultRequest componentResultRequest = resultComponent.getResultRequest();
             requests.add(componentResultRequest);
         }
-        return new DashboardSearchRequest(currentQueryKey, search, requests, timeZones.getTimeZone());
+
+        return new DashboardSearchRequest(currentQueryKey, search, requests, getDateTimeSettings());
+    }
+
+    private DateTimeSettings getDateTimeSettings() {
+        final UserPreferences userPreferences = userPreferencesManager.getCurrentPreferences();
+        return DateTimeSettings
+                .builder()
+                .dateTimePattern(userPreferences.getDateTimePattern())
+                .timeZone(userPreferences.getTimeZone())
+                .localZoneId(timeZones.getLocalTimeZoneId())
+                .build();
     }
 
     /**
@@ -386,7 +403,7 @@ public class SearchModel {
             requests.add(componentResultRequest);
         }
 
-        return new DashboardSearchRequest(currentQueryKey, search, requests, timeZones.getTimeZone());
+        return new DashboardSearchRequest(currentQueryKey, search, requests, getDateTimeSettings());
     }
 
     public boolean isSearching() {

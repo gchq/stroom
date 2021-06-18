@@ -3,8 +3,8 @@ package stroom.expression.matcher;
 import stroom.collection.api.CollectionService;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.dictionary.api.WordListProvider;
+import stroom.query.api.v2.DateTimeSettings;
 
-import java.time.ZoneOffset;
 import java.util.Map;
 import javax.inject.Inject;
 
@@ -23,7 +23,7 @@ public class ExpressionMatcherFactory {
         return new ExpressionMatcher(fieldMap,
                 wordListProvider,
                 collectionService,
-                ZoneOffset.UTC.getId(),
+                DateTimeSettings.builder().build(),
                 System.currentTimeMillis());
     }
 }

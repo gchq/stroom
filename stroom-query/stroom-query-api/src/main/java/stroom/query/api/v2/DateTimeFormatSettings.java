@@ -36,6 +36,11 @@ public final class DateTimeFormatSettings implements FormatSettings {
 
     private static final String DEFAULT_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXX";
 
+    @Schema(description = "Choose if you want to use the user preference to determine the date/time format",
+            required = true)
+    @JsonProperty
+    private final boolean usePreferences;
+
     @Schema(description = "A date time formatting pattern string conforming to the specification of " +
             "java.time.format.DateTimeFormatter",
             required = true)
@@ -52,10 +57,16 @@ public final class DateTimeFormatSettings implements FormatSettings {
      * @param timeZone The time zone to use when formatting the date time value
      */
     @JsonCreator
-    public DateTimeFormatSettings(@JsonProperty("pattern") final String pattern,
+    public DateTimeFormatSettings(@JsonProperty("usePreferences") final boolean usePreferences,
+                                  @JsonProperty("pattern") final String pattern,
                                   @JsonProperty("timeZone") final TimeZone timeZone) {
+        this.usePreferences = usePreferences;
         this.pattern = pattern;
         this.timeZone = timeZone;
+    }
+
+    public boolean isUsePreferences() {
+        return usePreferences;
     }
 
     /**
@@ -78,29 +89,29 @@ public final class DateTimeFormatSettings implements FormatSettings {
         return pattern == null || pattern.equals(DEFAULT_PATTERN);
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof DateTimeFormatSettings)) {
             return false;
         }
         final DateTimeFormatSettings that = (DateTimeFormatSettings) o;
-        return Objects.equals(pattern, that.pattern) &&
-                Objects.equals(timeZone, that.timeZone);
+        return usePreferences == that.usePreferences && Objects.equals(pattern,
+                that.pattern) && Objects.equals(timeZone, that.timeZone);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(pattern, timeZone);
+        return Objects.hash(usePreferences, pattern, timeZone);
     }
 
     @Override
     public String toString() {
         return "DateTimeFormatSettings{" +
-                "pattern='" + pattern + '\'' +
+                "usePreferences=" + usePreferences +
+                ", pattern='" + pattern + '\'' +
                 ", timeZone=" + timeZone +
                 '}';
     }
@@ -118,6 +129,7 @@ public final class DateTimeFormatSettings implements FormatSettings {
      */
     public static final class Builder {
 
+        private boolean usePreferences = true;
         private String pattern;
         private TimeZone timeZone;
 
@@ -125,10 +137,16 @@ public final class DateTimeFormatSettings implements FormatSettings {
         }
 
         private Builder(final DateTimeFormatSettings dateTimeFormat) {
+            this.usePreferences = dateTimeFormat.usePreferences;
             this.pattern = dateTimeFormat.pattern;
             if (dateTimeFormat.timeZone != null) {
                 this.timeZone = dateTimeFormat.timeZone;
             }
+        }
+
+        public Builder usePreferences(final boolean usePreferences) {
+            this.usePreferences = usePreferences;
+            return this;
         }
 
         /**
@@ -150,7 +168,7 @@ public final class DateTimeFormatSettings implements FormatSettings {
         }
 
         public DateTimeFormatSettings build() {
-            return new DateTimeFormatSettings(pattern, timeZone);
+            return new DateTimeFormatSettings(usePreferences, pattern, timeZone);
         }
     }
 }

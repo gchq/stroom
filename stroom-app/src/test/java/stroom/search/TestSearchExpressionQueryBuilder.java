@@ -8,6 +8,7 @@ import stroom.index.impl.LuceneVersionUtil;
 import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldsMap;
+import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.search.impl.SearchExpressionQueryBuilder;
@@ -15,7 +16,6 @@ import stroom.test.AbstractCoreIntegrationTest;
 
 import org.junit.jupiter.api.Test;
 
-import java.time.ZoneOffset;
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -51,7 +51,7 @@ public class TestSearchExpressionQueryBuilder extends AbstractCoreIntegrationTes
                 wordListProvider,
                 indexFieldsMap,
                 1024,
-                ZoneOffset.UTC.getId(),
+                DateTimeSettings.builder().build(),
                 System.currentTimeMillis());
 
         final ExpressionOperator expressionOperator = ExpressionOperator.builder()

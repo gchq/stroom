@@ -56,8 +56,10 @@ import stroom.dispatch.client.RestFactory;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
+import stroom.preferences.client.UserPreferencesManager;
 import stroom.processor.shared.ProcessorExpressionUtil;
 import stroom.query.api.v2.ConditionalFormattingRule;
+import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -76,6 +78,7 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.Expander;
 import stroom.util.shared.RandomId;
 import stroom.util.shared.ResourceGeneration;
@@ -140,6 +143,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private final RestFactory restFactory;
     private final ApplicationInstanceIdProvider applicationInstanceIdProvider;
     private final TimeZones timeZones;
+    private final UserPreferencesManager userPreferencesManager;
     private final FieldsManager fieldsManager;
     private final DataGridView<TableRow> dataGrid;
     private final Column<TableRow, Expander> expanderColumn;
@@ -168,7 +172,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final RestFactory restFactory,
                           final ApplicationInstanceIdProvider applicationInstanceIdProvider,
                           final UiConfigCache clientPropertyCache,
-                          final TimeZones timeZones) {
+                          final TimeZones timeZones,
+                          final UserPreferencesManager userPreferencesManager) {
         super(eventBus, view, settingsPresenterProvider);
         this.locationManager = locationManager;
         this.fieldAddPresenterProvider = fieldAddPresenterProvider;
@@ -177,6 +182,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         this.restFactory = restFactory;
         this.applicationInstanceIdProvider = applicationInstanceIdProvider;
         this.timeZones = timeZones;
+        this.userPreferencesManager = userPreferencesManager;
         this.dataGrid = new DataGridViewImpl<>(true, true);
 
         view.setTableView(dataGrid);
@@ -440,7 +446,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                     queryKey,
                                     search,
                                     requests,
-                                    timeZones.getTimeZone());
+                                    getDateTimeSettings());
 
                             final DownloadSearchResultsRequest downloadSearchResultsRequest =
                                     new DownloadSearchResultsRequest(
@@ -450,7 +456,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                             downloadPresenter.getFileType(),
                                             downloadPresenter.isSample(),
                                             downloadPresenter.getPercent(),
-                                            timeZones.getTimeZone());
+                                            timeZones.getLocalTimeZoneId());
                             final Rest<ResourceGeneration> rest = restFactory.create();
                             rest
                                     .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager,
@@ -473,6 +479,16 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                         popupUiHandlers);
             }
         }
+    }
+
+    private DateTimeSettings getDateTimeSettings() {
+        final UserPreferences userPreferences = userPreferencesManager.getCurrentPreferences();
+        return DateTimeSettings
+                .builder()
+                .dateTimePattern(userPreferences.getDateTimePattern())
+                .timeZone(userPreferences.getTimeZone())
+                .localZoneId(timeZones.getLocalTimeZoneId())
+                .build();
     }
 
     private void enableAnnotate() {

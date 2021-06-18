@@ -31,15 +31,15 @@ public class TimeZones {
 
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
 
-    private String timeZone;
+    private String localTimeZoneId;
     private List<String> ids;
 
     @Inject
     public TimeZones(final RestFactory restFactory) {
         try {
-            timeZone = getIntlTimeZone();
+            localTimeZoneId = getIntlTimeZone();
         } catch (final RuntimeException e) {
-            timeZone = null;
+            localTimeZoneId = "Z";
         }
 
         final Rest<List<String>> rest = restFactory.create();
@@ -49,8 +49,8 @@ public class TimeZones {
                 .fetchTimeZones();
     }
 
-    public String getTimeZone() {
-        return timeZone;
+    public String getLocalTimeZoneId() {
+        return localTimeZoneId;
     }
 
     public List<String> getIds() {

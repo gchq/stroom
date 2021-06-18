@@ -31,6 +31,7 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.index.impl.IndexStructure;
 import stroom.index.impl.IndexStructureCache;
+import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.search.extraction.ExtractionDecoratorFactory;
 import stroom.search.impl.SearchConfig;
@@ -38,7 +39,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,12 +65,12 @@ public class AlertManagerImpl implements AlertManager {
 
     @Inject
     AlertManagerImpl(final AlertConfig config,
-                      final ExplorerNodeService explorerNodeService,
-                      final DashboardStore dashboardStore,
-                      final WordListProvider wordListProvider,
-                      final SearchConfig searchConfig,
-                      final IndexStructureCache indexStructureCache,
-                      final ExtractionDecoratorFactory extractionDecoratorFactory) {
+                     final ExplorerNodeService explorerNodeService,
+                     final DashboardStore dashboardStore,
+                     final WordListProvider wordListProvider,
+                     final SearchConfig searchConfig,
+                     final IndexStructureCache indexStructureCache,
+                     final ExtractionDecoratorFactory extractionDecoratorFactory) {
         this.alertConfig = config;
         this.explorerNodeService = explorerNodeService;
         this.dashboardStore = dashboardStore;
@@ -97,8 +97,13 @@ public class AlertManagerImpl implements AlertManager {
                 LOGGER.warn("Unable to locate index " + indexDocRef + " specified in rule");
                 return Optional.empty();
             } else {
-                AlertProcessorImpl processor = new AlertProcessorImpl(extractionDecoratorFactory, rules, indexStructure,
-                                wordListProvider, maxBooleanClauseCount, getTimeZoneId());
+                AlertProcessorImpl processor = new AlertProcessorImpl(
+                        extractionDecoratorFactory,
+                        rules,
+                        indexStructure,
+                        wordListProvider,
+                        maxBooleanClauseCount,
+                        DateTimeSettings.builder().localZoneId(getTimeZoneId()).build());
                 return Optional.of(processor);
             }
         }
@@ -119,7 +124,7 @@ public class AlertManagerImpl implements AlertManager {
             return null;
         }
 
-        final String [] path = folderPath.trim().split("/");
+        final String[] path = folderPath.trim().split("/");
 
         final Optional<ExplorerNode> folder = explorerNodeService.getRoot();
 
@@ -132,13 +137,13 @@ public class AlertManagerImpl implements AlertManager {
             List<ExplorerNode> matchingChildren =
                     explorerNodeService.getNodesByName(currentNode, name).stream().filter(explorerNode ->
                             ExplorerConstants.FOLDER.equals(explorerNode.getDocRef().getType()))
-                    .collect(Collectors.toList());
+                            .collect(Collectors.toList());
 
             if (matchingChildren.size() == 0) {
                 return null;
             } else if (matchingChildren.size() > 1) {
                 final ExplorerNode node = currentNode;
-                LOGGER.warn(() -> "There are multiple folders called " + name + " under " + node.getName()  +
+                LOGGER.warn(() -> "There are multiple folders called " + name + " under " + node.getName() +
                         " when opening rules path " + path + " using first...");
             }
             currentNode = matchingChildren.get(0);
@@ -208,8 +213,8 @@ public class AlertManagerImpl implements AlertManager {
 
                                         AlertDefinition alertDefinition = new AlertDefinition(tableComponentSettings,
                                                 Map.of(AlertManager.DASHBOARD_NAME_KEY, dashboard.getName(),
-                                                       AlertManager.RULES_FOLDER_KEY, childPath,
-                                                       AlertManager.TABLE_NAME_KEY,
+                                                        AlertManager.RULES_FOLDER_KEY, childPath,
+                                                        AlertManager.TABLE_NAME_KEY,
                                                         associatedComponentConfig.getName()));
                                         pipelineTableSettings.get(pipeline).add(alertDefinition);
                                     }

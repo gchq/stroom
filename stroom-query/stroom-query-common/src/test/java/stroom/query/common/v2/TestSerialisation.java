@@ -21,6 +21,7 @@ import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.DateTimeFormatSettings;
+import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
@@ -130,14 +131,14 @@ class TestSerialisation {
                                 .showDetail(false)
                                 .build())
                         .build())
-                .dateTimeLocale("en-gb")
+                .dateTimeSettings(DateTimeSettings.builder().build())
                 .incremental(true)
                 .build();
     }
 
     private static DateTimeFormatSettings createDateTimeFormat() {
         final TimeZone timeZone = TimeZone.fromOffset(2, 30);
-        return new DateTimeFormatSettings("yyyy-MM-dd'T'HH:mm:ss", timeZone);
+        return new DateTimeFormatSettings(true, "yyyy-MM-dd'T'HH:mm:ss", timeZone);
     }
 
     @Test

@@ -4,7 +4,7 @@ import stroom.ui.config.shared.UserPreferences;
 
 import java.util.Optional;
 
-public interface PreferencesDao {
+public interface UserPreferencesDao {
 
     Optional<UserPreferences> fetch(String userId);
 

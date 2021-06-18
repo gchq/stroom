@@ -30,6 +30,7 @@ import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.CompiledField;
@@ -83,15 +84,18 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
     private Map<String, String> indexVals = new HashMap<>();
 
     @Inject
-    SearchResultOutputFilter(final AlertManager alertManager, final LocationFactoryProxy locationFactory,
-                              final ErrorReceiverProxy errorReceiverProxy) {
+    SearchResultOutputFilter(final AlertManager alertManager,
+                             final LocationFactoryProxy locationFactory,
+                             final ErrorReceiverProxy errorReceiverProxy) {
         this.locationFactory = locationFactory;
         this.errorReceiverProxy = errorReceiverProxy;
         this.timeZoneId = alertManager.getTimeZoneId();
         isoFormat = new SimpleDateFormat("YYYY-MM-dd'T'HH:mm:ss.SSS'Z'");
         isoFormat.setTimeZone(TimeZone.getTimeZone(ZoneId.of(timeZoneId)));
-        additionalFieldsPrefix = alertManager.getAdditionalFieldsPrefix() != null ?
-                alertManager.getAdditionalFieldsPrefix() : "";
+        additionalFieldsPrefix = alertManager.getAdditionalFieldsPrefix() != null
+                ?
+                alertManager.getAdditionalFieldsPrefix()
+                : "";
         outputIndexFields = alertManager.isReportAllExtractedFieldsEnabled();
 
     }
@@ -126,7 +130,7 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
             values = new Val[fieldIndexes.size()];
             recordAtts = atts;
             indexVals.clear();
-        } else if (isConfiguredForAlerting() &&  !DATA.equals(localName)) {
+        } else if (isConfiguredForAlerting() && !DATA.equals(localName)) {
             super.startElement(uri, localName, qName, atts);
         }
     }
@@ -204,7 +208,8 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
 
         //Output all the dashboard fields
         List<String> skipFields = new ArrayList<>();
-        final FieldFormatter fieldFormatter = new FieldFormatter(new FormatterFactory(timeZoneId));
+        final DateTimeSettings dateTimeSettings = DateTimeSettings.builder().localZoneId(timeZoneId).build();
+        final FieldFormatter fieldFormatter = new FieldFormatter(new FormatterFactory(dateTimeSettings));
         int index = 0;
         for (Field field : alertDefinition.getTableComponentSettings().getFields()) {
             if (field.isVisible()) {
@@ -261,7 +266,7 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
         final CompiledField[] compiledFields = CompiledFields.create(fields, fieldIndexes,
                 paramMapForAlerting);
 
-        final CompiledFieldValue[] output = new CompiledFieldValue [compiledFields.length];
+        final CompiledFieldValue[] output = new CompiledFieldValue[compiledFields.length];
         int index = 0;
 
         for (final CompiledField compiledField : compiledFields) {
@@ -319,6 +324,7 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
     }
 
     private static class CompiledFieldValue {
+
         private final CompiledField compiledField;
         private final Val val;
 

@@ -2,6 +2,7 @@ package stroom.search.solr.search;
 
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dictionary.api.WordListProvider;
+import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.common.v2.Receiver;
 import stroom.search.solr.CachedSolrIndex;
@@ -42,7 +43,7 @@ public class SolrSearchFactory {
                        final Receiver receiver,
                        final TaskContext taskContext,
                        final AtomicLong hitCount,
-                       final String dateTimeLocale) {
+                       final DateTimeSettings dateTimeSettings) {
         // Make sure we have a search index.
         if (index == null) {
             throw new SearchException("Search index has not been set");
@@ -50,7 +51,7 @@ public class SolrSearchFactory {
 
         // Create a map of index fields keyed by name.
         final Map<String, SolrIndexField> indexFieldsMap = index.getFieldsMap();
-        final SearchExpressionQuery searchExpressionQuery = getQuery(expression, indexFieldsMap, dateTimeLocale, now);
+        final SearchExpressionQuery searchExpressionQuery = getQuery(expression, indexFieldsMap, dateTimeSettings, now);
         final String queryString = searchExpressionQuery.getQuery().toString();
         final SolrQuery solrQuery = new SolrQuery(queryString);
         solrQuery.setRows(Integer.MAX_VALUE);
@@ -81,13 +82,13 @@ public class SolrSearchFactory {
 
     private SearchExpressionQuery getQuery(final ExpressionOperator expression,
                                            final Map<String, SolrIndexField> indexFieldsMap,
-                                           final String timeZoneId,
+                                           final DateTimeSettings dateTimeSettings,
                                            final long nowEpochMilli) {
         final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
                 wordListProvider,
                 indexFieldsMap,
                 config.getMaxBooleanClauseCount(),
-                timeZoneId,
+                dateTimeSettings,
                 nowEpochMilli);
         final SearchExpressionQuery query = searchExpressionQueryBuilder.buildQuery(expression);
 
