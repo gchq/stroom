@@ -105,6 +105,8 @@
     padding-top: 1px;
     padding-bottom: 1px;
     height: 16px;
+    text-overflow: ellipsis;
+    overflow: hidden;
 }
 
 .stroom-dashboard-text {
