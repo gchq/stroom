@@ -57,7 +57,7 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
             summary = "List all properties matching the criteria on the current node.",
             operationId = "listConfigProperties")
     ListConfigResponse list(
-            final @Parameter(description = "criteria", required = true) GlobalConfigCriteria criteria);
+            @Parameter(description = "criteria", required = true) final GlobalConfigCriteria criteria);
 
     @POST
     @Path(NODE_PROPERTIES_SUB_PATH + NODE_NAME_PATH_PARAM)
@@ -65,23 +65,23 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
             summary = "List all properties matching the criteria on the requested node.",
             operationId = "listConfigPropertiesByNode")
     ListConfigResponse listByNode(
-            final @PathParam("nodeName") String nodeName,
-            final @Parameter(description = "criteria", required = true) GlobalConfigCriteria criteria);
+            @PathParam("nodeName") final String nodeName,
+            @Parameter(description = "criteria", required = true) final GlobalConfigCriteria criteria);
 
     @GET
     @Path(PROPERTIES_SUB_PATH + PROP_NAME_PATH_PARAM)
     @Operation(
             summary = "Fetch a property by its name, e.g. 'stroom.path.home'",
             operationId = "getConfigPropertyByName")
-    ConfigProperty getPropertyByName(final @PathParam("propertyName") String propertyName);
+    ConfigProperty getPropertyByName(@PathParam("propertyName") final String propertyName);
 
     @GET
     @Path(CLUSTER_PROPERTIES_SUB_PATH + PROP_NAME_PATH_PARAM + YAML_OVERRIDE_VALUE_SUB_PATH + NODE_NAME_PATH_PARAM)
     @Operation(
             summary = "Get the property value from the YAML configuration in the specified node.",
             operationId = "getConfigYamlValueByNodeAndName")
-    OverrideValue<String> getYamlValueByNodeAndName(final @PathParam("propertyName") String propertyName,
-                                                    final @PathParam("nodeName") String nodeName);
+    OverrideValue<String> getYamlValueByNodeAndName(@PathParam("propertyName") final String propertyName,
+                                                    @PathParam("nodeName") final String nodeName);
 
     @POST
     @Operation(
@@ -95,9 +95,8 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Update a configuration property",
             operationId = "updateConfigProperty")
-    ConfigProperty update(final @PathParam("propertyName") String propertyName,
-                          final @Parameter(description = "configProperty", required = true)
-                                  ConfigProperty configProperty);
+    ConfigProperty update(@PathParam("propertyName") final String propertyName,
+                          @Parameter(description = "configProperty", required = true) final ConfigProperty configProperty);
 
     @GET
     @Path(FETCH_UI_CONFIG_SUB_PATH)
