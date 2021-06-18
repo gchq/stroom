@@ -32,7 +32,6 @@ import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.processor.shared.TaskStatus;
-import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionUtil;
@@ -204,9 +203,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
     private long getDate(final DateField field, final String value) {
         try {
-            final Optional<ZonedDateTime> optional = DateExpressionParser.parse(value,
-                    DateTimeSettings.builder().build(),
-                    System.currentTimeMillis());
+            final Optional<ZonedDateTime> optional = DateExpressionParser.parse(value);
 
             return optional.orElseThrow(() ->
                     new RuntimeException("Expected a standard date value for field \"" + field.getName()

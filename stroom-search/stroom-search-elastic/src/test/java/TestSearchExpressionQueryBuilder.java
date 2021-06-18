@@ -95,7 +95,6 @@ public class TestSearchExpressionQueryBuilder {
         // Parse the date/time. Must specify UTC for `timeZoneId`, otherwise the local system timezone will be used
         final Optional<ZonedDateTime> expectedDate = DateExpressionParser.parse(
                 nowStr,
-                DateTimeSettings.builder().build(),
                 nowEpochMillis);
         Assertions.assertTrue(expectedDate.isPresent(), "Date was parsed");
         final long dateFieldValue = expectedDate.get().toInstant().toEpochMilli();

@@ -39,14 +39,23 @@ public class DateExpressionParser {
 
     private static final Pattern DURATION_PATTERN = Pattern.compile("[+\\- ]*(?:\\d+[smhdwMy])+");
     private static final Pattern WHITESPACE = Pattern.compile("\\s");
+    private static final ZoneId DEFAULT_TIME_ZONE = ZoneId.of("Z");
 
     private DateExpressionParser() {
     }
 
+    public static Optional<ZonedDateTime> parse(final String expression) {
+        return parse(
+                expression,
+                null,
+                System.currentTimeMillis());
+    }
+
+
     public static Optional<ZonedDateTime> parse(final String expression, final long nowEpochMilli) {
         return parse(
                 expression,
-                DateTimeSettings.builder().build(),
+                null,
                 nowEpochMilli);
     }
 
@@ -69,25 +78,46 @@ public class DateExpressionParser {
 
         if (index != -1) {
             final String trimmed = new String(chars).trim();
-            ZonedDateTime time;
+            ZonedDateTime time = null;
 
             try {
                 // Assume a timezone is specified on the string.
                 time = ZonedDateTime.parse(trimmed);
             } catch (final DateTimeParseException e) {
-                ZoneId zoneId = ZoneId.systemDefault();
 
                 try {
                     if (dateTimeSettings != null &&
-                            dateTimeSettings.getLocalZoneId() != null) {
-                        zoneId = ZoneId.of(dateTimeSettings.getLocalZoneId());
+                            dateTimeSettings.getTimeZone() != null &&
+                            dateTimeSettings.getTimeZone().getUse() != null) {
+                        switch (dateTimeSettings.getTimeZone().getUse()) {
+                            case LOCAL -> {
+                                final ZoneId zoneId = ZoneId.of(dateTimeSettings.getLocalZoneId());
+                                time = LocalDateTime.parse(trimmed).atZone(zoneId);
+                            }
+                            case UTC -> {
+                                final ZoneId zoneId = ZoneId.of("Z");
+                                time = LocalDateTime.parse(trimmed).atZone(zoneId);
+                            }
+                            case ID -> {
+                                final ZoneId zoneId = ZoneId.of(dateTimeSettings.getTimeZone().getId());
+                                time = LocalDateTime.parse(trimmed).atZone(zoneId);
+                            }
+                            case OFFSET -> {
+                                final ZoneOffset zoneOffset = ZoneOffset
+                                        .ofHoursMinutes(dateTimeSettings.getTimeZone().getOffsetHours(),
+                                                dateTimeSettings.getTimeZone().getOffsetMinutes());
+                                time = LocalDateTime.parse(trimmed).atOffset(zoneOffset).toZonedDateTime();
+                            }
+                        }
                     }
                 } catch (final RuntimeException ex) {
                     // Ignore error
                 }
 
                 // If no time zone was specified then try and parse as a local datetime.
-                time = LocalDateTime.parse(trimmed).atZone(zoneId);
+                if (time == null) {
+                    time = LocalDateTime.parse(trimmed).atZone(DEFAULT_TIME_ZONE);
+                }
             }
 
             parts[index] = new Part(trimmed, time);
@@ -134,7 +164,7 @@ public class DateExpressionParser {
                 // Obliterate the matched part of the expression so it can't be matched by any other matcher.
                 Arrays.fill(chars, start, end, ' ');
 
-                ZonedDateTime time = null;
+                ZonedDateTime time;
                 switch (datePoint) {
                     case NOW:
                         time = now;

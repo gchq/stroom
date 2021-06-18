@@ -21,6 +21,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.pipeline.structure.client.view.DraggableTreePanel;
+import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.client.ExpressionTreePresenter.ExpressionTreeView;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
@@ -42,9 +43,14 @@ public class ExpressionTreeViewImpl extends ViewWithUiHandlers<ExpressionUiHandl
     private MySingleSelectionModel<Item> selectionModel;
 
     @Inject
-    public ExpressionTreeViewImpl(final Provider<EntityDropDownPresenter> docRefProvider) {
-        treePanel = new ExpressionTreePanel(docRefProvider);
-        final ExpressionTreePanel subTreePanel = new ExpressionTreePanel(docRefProvider);
+    public ExpressionTreeViewImpl(final Provider<EntityDropDownPresenter> docRefProvider,
+                                  final UserPreferencesManager userPreferencesManager) {
+        treePanel = new ExpressionTreePanel(
+                docRefProvider,
+                userPreferencesManager.isUtc());
+        final ExpressionTreePanel subTreePanel = new ExpressionTreePanel(
+                docRefProvider,
+                userPreferencesManager.isUtc());
 
         layoutPanel = new DraggableTreePanel<Item>(treePanel, subTreePanel) {
             @Override

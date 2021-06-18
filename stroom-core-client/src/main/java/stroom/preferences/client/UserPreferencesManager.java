@@ -4,6 +4,7 @@ import stroom.config.global.shared.UserPreferencesResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.CurrentTheme;
+import stroom.query.api.v2.TimeZone.Use;
 import stroom.ui.config.shared.UserPreferences;
 
 import com.google.gwt.core.client.GWT;
@@ -95,5 +96,15 @@ public class UserPreferencesManager {
 
     public List<String> getEditorThemes() {
         return Arrays.stream(AceEditorTheme.values()).map(AceEditorTheme::getName).collect(Collectors.toList());
+    }
+
+    public boolean isUtc() {
+        if (currentPreferences != null &&
+                currentPreferences.getTimeZone() != null &&
+                currentPreferences.getTimeZone().getUse() != null &&
+                currentPreferences.getTimeZone().getUse() != Use.UTC) {
+            return false;
+        }
+        return true;
     }
 }

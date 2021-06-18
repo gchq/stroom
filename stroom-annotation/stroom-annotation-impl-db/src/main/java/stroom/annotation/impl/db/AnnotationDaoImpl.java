@@ -22,7 +22,6 @@ import stroom.db.util.JooqUtil;
 import stroom.db.util.ValueMapper;
 import stroom.db.util.ValueMapper.Mapper;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.util.logging.LambdaLogger;
@@ -38,7 +37,6 @@ import org.jooq.Result;
 import org.jooq.SelectJoinStep;
 import org.jooq.impl.DSL;
 
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -147,9 +145,7 @@ class AnnotationDaoImpl implements AnnotationDao {
 
     private long getDate(final String fieldName, final String value) {
         try {
-            final Optional<ZonedDateTime> optional = DateExpressionParser.parse(value,
-                    DateTimeSettings.builder().localZoneId(ZoneOffset.UTC.getId()).build(),
-                    System.currentTimeMillis());
+            final Optional<ZonedDateTime> optional = DateExpressionParser.parse(value);
 
             return optional.orElseThrow(() ->
                     new RuntimeException(

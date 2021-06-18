@@ -72,7 +72,8 @@ public class TermEditor extends Composite {
 
     private final AsyncSuggestOracle suggestOracle = new AsyncSuggestOracle();
 
-    public TermEditor(final EntityDropDownPresenter docRefPresenter) {
+    public TermEditor(final EntityDropDownPresenter docRefPresenter,
+                      final boolean utc) {
         this.docRefPresenter = docRefPresenter;
         if (docRefPresenter != null) {
             docRefWidget = docRefPresenter.getWidget();
@@ -97,11 +98,11 @@ public class TermEditor extends Composite {
         valueTo = createTextBox(NARROW_VALUE);
         valueTo.setVisible(false);
 
-        date = createDateBox(NARROW_VALUE);
+        date = createDateBox(NARROW_VALUE, utc);
         date.setVisible(false);
-        dateFrom = createDateBox(NARROW_VALUE);
+        dateFrom = createDateBox(NARROW_VALUE, utc);
         dateFrom.setVisible(false);
-        dateTo = createDateBox(NARROW_VALUE);
+        dateTo = createDateBox(NARROW_VALUE, utc);
         dateTo.setVisible(false);
 
         layout = new FlowPanel();
@@ -571,8 +572,9 @@ public class TermEditor extends Composite {
         return textBox;
     }
 
-    private MyDateBox createDateBox(final int width) {
-        final MyDateBox dateBox = new MyDateBox();
+    private MyDateBox createDateBox(final int width,
+                                    final boolean utc) {
+        final MyDateBox dateBox = new MyDateBox(utc);
         fixStyle(dateBox, width);
         return dateBox;
     }

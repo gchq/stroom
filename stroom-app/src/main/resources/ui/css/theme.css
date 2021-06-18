@@ -15,13 +15,14 @@
     --header-border-color: #dddddd;
     --even-row-background-color: #ebebeb;
     --odd-row-background-color: #fff;
-    --hovered-row-background-color: #bbdefb;
+    --hovered-row-background-color: #e6f4ff;
     --selected-row-background-color: #bbdefb;
     --selected-row-text-color: #000;
 
     --dialog-titlebar-background-image: linear-gradient(rgb(96, 161, 240), rgb(74, 144, 228) 8px);
     --dialog-titlebar-background-color: rgb(74, 144, 228);
     --dialog-titlebar-border-color: rgb(60, 60, 60);
+    --dialog-titlebar-text-color: #fff;
     --dialog-background-image: linear-gradient(rgb(248, 250, 253) 21px,	rgb(223, 234, 248) 60px);
     --dialog-background-color: rgb(223, 234, 248);
     --dialog-border-color: rgb(60, 60, 60);
@@ -119,6 +120,7 @@
     --dialog-titlebar-background-image: none;
     --dialog-titlebar-background-color: #19171d;
     --dialog-titlebar-border-color: #19171d;
+    --dialog-titlebar-text-color: #fff;
     --dialog-background-image: none;
     --dialog-background-color: #1a1d21;
     --dialog-border-color: rgb(132 132 132 / 60%);
@@ -215,6 +217,7 @@
     --dialog-titlebar-background-image: none;
     --dialog-titlebar-background-color: #14161b;
     --dialog-titlebar-border-color: #14161b;
+    --dialog-titlebar-text-color: #fff;
     --dialog-background-image: none;
     --dialog-background-color: #1b1d24;
     --dialog-border-color: #15161b;

@@ -32,7 +32,6 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
-import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -236,9 +235,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
 
     private long getDate(final DateField field, final String value) {
         try {
-            final Optional<ZonedDateTime> optional = DateExpressionParser.parse(value,
-                    DateTimeSettings.builder().build(),
-                    System.currentTimeMillis());
+            final Optional<ZonedDateTime> optional = DateExpressionParser.parse(value);
 
             return optional.orElseThrow(() ->
                     new RuntimeException("Expected a standard date value for field \"" + field.getName()

@@ -41,13 +41,17 @@ import java.util.Date;
 
 public class MyDateBox extends Composite implements DateBoxView {
 
-    private static final String DEFAULT_TIME = "T00:00:00.000Z";
+    private static final String DEFAULT_UTC_TIME = "T00:00:00.000Z";
+    private static final String DEFAULT_LOCAL_TIME = "T00:00:00.000";
 
+    private final boolean utc;
     private final PopupPanel popup;
     private final DatePicker datePicker;
     private final TextBox textBox;
 
-    public MyDateBox() {
+    public MyDateBox(final boolean utc) {
+        this.utc = utc;
+
         datePicker = new CustomDatePicker();
         textBox = new TextBox();
 
@@ -153,19 +157,27 @@ public class MyDateBox extends Composite implements DateBoxView {
             // Trim down the date to be just the date part.
             String date = ClientDateUtil.toDateString(event.getValue().getTime());
 
-            String time = DEFAULT_TIME;
+            String time = utc
+                    ? DEFAULT_UTC_TIME
+                    : DEFAULT_LOCAL_TIME;
             String expression = "";
 
             String text = textBox.getText().trim();
             int tIndex = text.indexOf('T');
             if (tIndex != -1) {
-                int zIndex = text.indexOf('Z', tIndex);
-                if (zIndex != -1) {
-                    time = text.substring(tIndex, zIndex + 1);
-                    expression = text.substring(zIndex + 1).trim();
-                    if (expression.length() > 0) {
-                        expression = " " + expression;
-                    }
+                int end = text.indexOf('Z', tIndex);
+                if (end == -1) {
+                    end = text.indexOf(' ', tIndex);
+                }
+                if (end == -1) {
+                    end = text.length() - 1;
+                }
+                end++;
+
+                time = text.substring(tIndex, end);
+                expression = text.substring(end).trim();
+                if (expression.length() > 0) {
+                    expression = " " + expression;
                 }
             }
 

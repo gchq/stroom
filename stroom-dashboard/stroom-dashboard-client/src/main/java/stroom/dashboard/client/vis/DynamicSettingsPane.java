@@ -40,12 +40,14 @@ import java.util.List;
 
 public class DynamicSettingsPane extends Composite implements Layer, HasReadAndWrite<JSONObject> {
 
+    private final boolean utc;
     private final SimplePanel outer;
     private final List<StringListBox> fieldControls = new ArrayList<>();
     private final List<HasReadAndWrite<JSONObject>> controls = new ArrayList<>();
     private double opacity;
 
-    public DynamicSettingsPane() {
+    public DynamicSettingsPane(final boolean utc) {
+        this.utc = utc;
         outer = new SimplePanel();
         initWidget(outer);
     }
@@ -205,7 +207,7 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
     }
 
     private MyDateBox createDateBox(final String id) {
-        final MyDateBox ctrl = new MyDateBox();
+        final MyDateBox ctrl = new MyDateBox(utc);
         ctrl.getElement().getStyle().setWidth(100, Unit.PCT);
 
         final HasReadAndWrite<JSONObject> hasReadAndWrite = new HasReadAndWrite<JSONObject>() {

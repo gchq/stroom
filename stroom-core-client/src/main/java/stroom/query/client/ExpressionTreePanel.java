@@ -53,8 +53,6 @@ public class ExpressionTreePanel extends TreePanel<Item> {
 
     private static final double HORIZONTAL_SEPARATION = 20;
     private static final double VERTICAL_SEPARATION = 0;
-    private final LayeredCanvas canvas;
-    private final FlowPanel panel;
     private final FlowPanel boxPanel;
     private final OperatorEditor operatorEditor;
     private final TermEditor termEditor;
@@ -63,20 +61,21 @@ public class ExpressionTreePanel extends TreePanel<Item> {
     private ExpressionItemRenderer cellRenderer;
     private DefaultTreeForTreeLayout<Item> tree;
 
-    public ExpressionTreePanel(final Provider<EntityDropDownPresenter> docRefProvider) {
+    public ExpressionTreePanel(final Provider<EntityDropDownPresenter> docRefProvider,
+                               final boolean utc) {
         final EntityDropDownPresenter docRefPresenter = docRefProvider.get();
         docRefPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
         docRefPresenter.getWidget().getElement().getStyle().setMargin(0, Unit.PX);
 
         operatorEditor = new OperatorEditor();
-        termEditor = new TermEditor(docRefPresenter);
+        termEditor = new TermEditor(docRefPresenter, utc);
 
-        panel = new FlowPanel();
+        final FlowPanel panel = new FlowPanel();
         setAbsoluteLeftTop(panel.getElement());
         boxPanel = new FlowPanel();
         setAbsoluteLeftTop(boxPanel.getElement());
 
-        canvas = LayeredCanvas.createIfSupported();
+        final LayeredCanvas canvas = LayeredCanvas.createIfSupported();
         if (canvas != null) {
             final Context2d arrowContext = canvas.getLayer(TreeRenderer.ARROW_LAYER).getContext2d();
 

@@ -19,7 +19,6 @@ package stroom.expression.matcher;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DocRefField;
 import stroom.datasource.api.v2.TextField;
-import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -82,7 +81,7 @@ class TestExpressionMatcher {
         final ExpressionMatcher expressionMatcher = new ExpressionMatcher(FIELD_MAP,
                 null,
                 null,
-                DateTimeSettings.builder().build(),
+                null,
                 System.currentTimeMillis());
         assertThat(expressionMatcher.match(attributeMap, expression)).isEqualTo(outcome);
     }

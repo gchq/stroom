@@ -17,6 +17,7 @@
 package stroom.importexport.client.view;
 
 import stroom.importexport.client.presenter.ImportConfigConfirmPresenter.ImportConfigConfirmView;
+import stroom.preferences.client.UserPreferencesManager;
 import stroom.widget.customdatebox.client.MyDateBox;
 
 import com.google.gwt.dom.client.Style;
@@ -37,13 +38,15 @@ public class ImportConfigConfirmViewImpl extends ViewImpl implements ImportConfi
     Grid grid;
     @UiField
     SimplePanel dataGridView;
-    @UiField
+    @UiField(provided = true)
     MyDateBox enableFrom;
     @UiField
     CheckBox enableFilters;
 
     @Inject
-    public ImportConfigConfirmViewImpl(final Binder binder) {
+    public ImportConfigConfirmViewImpl(final Binder binder,
+                                       final UserPreferencesManager userPreferencesManager) {
+        enableFrom = new MyDateBox(userPreferencesManager.isUtc());
         widget = binder.createAndBindUi(this);
         grid.getRowFormatter().getElement(0).getStyle().setHeight(100, Style.Unit.PCT);
     }

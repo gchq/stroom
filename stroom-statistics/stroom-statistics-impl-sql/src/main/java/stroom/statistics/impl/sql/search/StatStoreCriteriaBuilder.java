@@ -216,7 +216,7 @@ public class StatStoreCriteriaBuilder {
         final String[] dateArr = dateTerm.getValue().split(",");
 
         if (dateArr.length != 2) {
-            throw RestUtil.badRequest("DateTime term is not a valid format, term: " + dateTerm.toString());
+            throw RestUtil.badRequest("DateTime term is not a valid format, term: " + dateTerm);
         }
 
         rangeFrom = parseDateTime("from", dateArr[0], dateTimeSettings, nowEpochMilli);

@@ -51,7 +51,7 @@ public class ExpressionMatcher {
         this.fieldMap = fieldMap;
         this.wordListProvider = null;
         this.collectionService = null;
-        this.dateTimeSettings = DateTimeSettings.builder().build();
+        this.dateTimeSettings = null;
         this.nowEpochMilli = System.currentTimeMillis();
     }
 

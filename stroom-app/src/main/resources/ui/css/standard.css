@@ -888,7 +888,7 @@ a, a:visited, a:hover {
 }
 .datePickerDays {
   width: 100%;
-  background: white;
+  background: var(--input-background-color);/*white;*/
 }
 .datePickerDay,
 .datePickerWeekdayLabel,
@@ -900,10 +900,10 @@ a, a:visited, a:hover {
 }
 .datePickerWeekdayLabel,
 .datePickerWeekendLabel {
-  background: #1E88E5;
+  background: var(--dialog-titlebar-background-color);/*#1E88E5;*/
   padding: 0px 4px 2px;
   cursor: default;
-  color: white;
+  color: var(--dialog-titlebar-text-color);/*white;*/
 }
 .datePickerDay {
   padding: 4px;
@@ -914,42 +914,43 @@ a, a:visited, a:hover {
 .datePickerDayIsToday {
   padding: 4px;
   border-radius: 4px;
-  color: blue;
+  color: var(--text-color);/*blue;*/
   font-weight: 500;
+  text-decoration: underline;
 }
 .datePickerDayIsWeekend {
-  background: #EEEEEE;
+  background: var(--input-background-color-disabled);/*#EEEEEE;*/
   border-radius: 0px;
 }
 .datePickerDayIsFiller {
   color: #888888;
 }
 .datePickerDayIsValue {
-    background: #2196F3;
-    color: white;
+    background: var(--selected-row-background-color);/*#2196F3;*/
+    color: var(--selected-row-text-color);/*white;*/
     font-weight: 500;
     border-radius: 4px;
 }
 .datePickerDayIsDisabled {
-  color: #AAAAAA;
+  color: var(--text-color-disabled);/*#AAAAAA;*/
   font-style: italic;
 }
 .datePickerDayIsHighlighted {
-  background: #BBDEFB;
+  background: var(--hovered-row-background-color);/*#BBDEFB;*/
   border-radius: 4px;
 }
 .datePickerDayIsValueAndHighlighted {
 }
 .datePickerDayIsValue.datePickerDayIsHighlighted {
-    background: #42A5F5;
-    color: white;
+    background: var(--hovered-row-background-color);/*#42A5F5;*/
+    color: var(--text-color);/*white;*/
     font-weight: 500;
     border-radius: 4px;
 }
 .datePickerMonthSelector {
-  background: #1E88E5;
+  background: var(--dialog-titlebar-background-color);/*#1E88E5;*/
   width: 100%;
-  color: white;
+  color: var(--dialog-titlebar-text-color);/*white;*/
 }
 td.datePickerMonth,
 td.datePickerYear {
@@ -965,7 +966,7 @@ td.datePickerYear {
 .datePickerNextYearButton {
   font-size: 120%;
   line-height: 1em;
-  color: white;
+  color: var(--dialog-titlebar-text-color);/*white;*/
   cursor: hand;
   cursor: pointer;
   padding: 0px 4px;

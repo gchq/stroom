@@ -19,6 +19,7 @@ package stroom.data.client.view;
 import stroom.data.client.presenter.DataTypeUiManager;
 import stroom.data.client.presenter.DataUploadPresenter.DataUploadView;
 import stroom.item.client.StringListBox;
+import stroom.preferences.client.UserPreferencesManager;
 import stroom.widget.customdatebox.client.MyDateBox;
 
 import com.google.gwt.dom.client.Style.Unit;
@@ -41,7 +42,7 @@ public class StreamUploadViewImpl extends ViewImpl implements DataUploadView {
     StringListBox type;
     @UiField
     FileUpload fileUpload;
-    @UiField
+    @UiField(provided = true)
     MyDateBox effective;
     @UiField
     FormPanel form;
@@ -49,7 +50,10 @@ public class StreamUploadViewImpl extends ViewImpl implements DataUploadView {
     TextArea metaData;
 
     @Inject
-    public StreamUploadViewImpl(final Binder binder, final DataTypeUiManager streamTypeUiManager) {
+    public StreamUploadViewImpl(final Binder binder,
+                                final DataTypeUiManager streamTypeUiManager,
+                                final UserPreferencesManager userPreferencesManager) {
+        effective = new MyDateBox(userPreferencesManager.isUtc());
         type = new StringListBox();
 
         for (final String st : streamTypeUiManager.getRawStreamTypeList()) {

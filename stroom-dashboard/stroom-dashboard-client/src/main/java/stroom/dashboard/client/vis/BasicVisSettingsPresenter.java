@@ -26,6 +26,7 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
+import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.v2.Field;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.client.JSONUtil;
@@ -56,6 +57,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
 
     private final EntityDropDownPresenter visualisationPresenter;
     private final RestFactory restFactory;
+    private final UserPreferencesManager userPreferencesManager;
     private final Map<TabData, DynamicSettingsPane> dynamicSettingsMap = new HashMap<>();
     private SettingsPresenter settingsPresenter;
     private DocRef currentVisualisation;
@@ -66,10 +68,12 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
     public BasicVisSettingsPresenter(final EventBus eventBus,
                                      final BasicVisSettingsView view,
                                      final EntityDropDownPresenter visualisationPresenter,
-                                     final RestFactory restFactory) {
+                                     final RestFactory restFactory,
+                                     final UserPreferencesManager userPreferencesManager) {
         super(eventBus, view);
         this.visualisationPresenter = visualisationPresenter;
         this.restFactory = restFactory;
+        this.userPreferencesManager = userPreferencesManager;
         view.setUiHandlers(this);
 
         visualisationPresenter.setIncludedTypes(VisualisationDoc.DOCUMENT_TYPE);
@@ -153,7 +157,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
             final String name = JSONUtil.getString(tab.get("name"));
             final JSONArray controls = JSONUtil.getArray(tab.get("controls"));
             if (controls != null) {
-                final DynamicSettingsPane dynamicSettingsPane = new DynamicSettingsPane();
+                final DynamicSettingsPane dynamicSettingsPane = new DynamicSettingsPane(userPreferencesManager.isUtc());
                 final TabData t = settingsPresenter.addTab(name, dynamicSettingsPane);
                 dynamicSettingsMap.put(t, dynamicSettingsPane);
 
