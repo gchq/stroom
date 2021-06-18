@@ -25,7 +25,11 @@ public final class TestFileUtil {
     private static final Path TEST_DATA_DIR;
 
     static {
-        final Path dir = Paths.get("../stroom-query-common/src/test/resources");
+        Path dir = Paths.get("").toAbsolutePath();
+        while (dir != null && !dir.getFileName().toString().equals("stroom-query-common")) {
+            dir = dir.getParent();
+        }
+        dir = dir.resolve("src/test/resources");
         if (!Files.isDirectory(dir)) {
             throw new RuntimeException("Test data directory not found: " + dir.toAbsolutePath().toString());
         }

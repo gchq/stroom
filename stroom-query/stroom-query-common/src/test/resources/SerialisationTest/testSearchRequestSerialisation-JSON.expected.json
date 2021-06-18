@@ -79,7 +79,8 @@
               "use" : "OFFSET",
               "offsetHours" : 2,
               "offsetMinutes" : 30
-            }
+            },
+            "usePreferences" : true
           }
         },
         "group" : 2,
@@ -101,6 +102,12 @@
       "length" : 100
     }
   } ],
-  "dateTimeLocale" : "en-gb",
-  "incremental" : true
+  "incremental" : true,
+  "dateTimeSettings" : {
+    "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
+    "localZoneId" : "Z",
+    "timeZone" : {
+      "use" : "UTC"
+    }
+  }
 }
