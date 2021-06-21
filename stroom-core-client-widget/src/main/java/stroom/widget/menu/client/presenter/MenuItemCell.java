@@ -185,7 +185,7 @@ public class MenuItemCell extends AbstractCell<Item> {
 
         private static final Template TEMPLATE = GWT.create(Template.class);
         private static final SafeStyles NORMAL = SafeStylesUtils.fromTrustedString("cursor:pointer;");
-        private static final SafeStyles DISABLED = SafeStylesUtils.fromTrustedString("cursor:default;color:grey;");
+        private static final SafeStyles DISABLED = SafeStylesUtils.fromTrustedString("cursor:default");
         private final MenuPresenter menuPresenter;
 
         public IconMenuItemAppearance(final MenuPresenter menuPresenter) {
@@ -232,10 +232,11 @@ public class MenuItemCell extends AbstractCell<Item> {
                             SafeHtmlUtils.fromTrustedString(value.getShortcut())));
                 }
 
+                final String disabledClass = value.isEnabled() ? "" : " menuItem-disabled";
                 if (menuPresenter.isHighlighted(value)) {
-                    sb.append(TEMPLATE.outer("menuItem-highlight", styles, inner.toSafeHtml()));
+                    sb.append(TEMPLATE.outer("menuItem-highlight" + disabledClass, styles, inner.toSafeHtml()));
                 } else {
-                    sb.append(TEMPLATE.outer("menuItem-outer", styles, inner.toSafeHtml()));
+                    sb.append(TEMPLATE.outer("menuItem-outer" + disabledClass, styles, inner.toSafeHtml()));
                 }
             }
         }
@@ -260,7 +261,7 @@ public class MenuItemCell extends AbstractCell<Item> {
 
         private static final Template TEMPLATE = GWT.create(Template.class);
         private static final SafeStyles NORMAL = SafeStylesUtils.fromTrustedString("cursor:pointer;");
-        private static final SafeStyles DISABLED = SafeStylesUtils.fromTrustedString("cursor:default;color:grey;");
+        private static final SafeStyles DISABLED = SafeStylesUtils.fromTrustedString("cursor:default;");
         private final MenuPresenter menuPresenter;
 
         public SimpleMenuItemAppearance(final MenuPresenter menuPresenter) {
@@ -291,10 +292,12 @@ public class MenuItemCell extends AbstractCell<Item> {
                             SafeHtmlUtils.fromTrustedString(value.getShortcut())));
                 }
 
+                final String disabledClass = value.isEnabled() ? "" : " menuItem-disabled";
                 if (menuPresenter.isHighlighted(value)) {
-                    sb.append(TEMPLATE.outer("menuItem-highlight", styles, inner.toSafeHtml()));
+                    sb.append(TEMPLATE.outer("menuItem-highlight" + disabledClass, styles,
+                            inner.toSafeHtml()));
                 } else {
-                    sb.append(TEMPLATE.outer("menuItem-outer", styles, inner.toSafeHtml()));
+                    sb.append(TEMPLATE.outer("menuItem-outer" + disabledClass, styles, inner.toSafeHtml()));
                 }
             }
         }
