@@ -193,7 +193,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                                 .trustedColor("#white")
                                 .trustedBackgroundColor(barColour)
                                 .width(barWidthPct, Unit.PCT)
-                                .height(14, Unit.PX));
+                                .height(100, Unit.PCT));
 
                 final SafeHtml outerDiv = TooltipUtil.styledDiv(barDiv, safeStylesBuilder ->
                         safeStylesBuilder
