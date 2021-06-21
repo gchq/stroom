@@ -185,7 +185,7 @@ public class MenuItemCell extends AbstractCell<Item> {
 
         private static final Template TEMPLATE = GWT.create(Template.class);
         private static final SafeStyles NORMAL = SafeStylesUtils.fromTrustedString("cursor:pointer;");
-        private static final SafeStyles DISABLED = SafeStylesUtils.fromTrustedString("cursor:default");
+        private static final SafeStyles DISABLED = SafeStylesUtils.fromTrustedString("cursor:default;");
         private final MenuPresenter menuPresenter;
 
         public IconMenuItemAppearance(final MenuPresenter menuPresenter) {
