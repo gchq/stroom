@@ -35,7 +35,8 @@
             "timeZone" : {
               "use" : "UTC",
               "id" : "Europe/London"
-            }
+            },
+            "usePreferences" : false
           }
         },
         "group" : 0,
