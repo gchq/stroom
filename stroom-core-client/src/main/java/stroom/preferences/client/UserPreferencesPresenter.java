@@ -187,6 +187,7 @@ public final class UserPreferencesPresenter
         getView().setThemes(userPreferencesManager.getThemes());
         getView().setTheme(userPreferences.getTheme());
         getView().setEditorThemes(userPreferencesManager.getEditorThemes());
+        getView().setFonts(userPreferencesManager.getFonts());
         getView().setFont(userPreferences.getFont());
         getView().setFontSize(userPreferences.getFontSize());
         getView().setPattern(userPreferences.getDateTimePattern());
@@ -239,6 +240,8 @@ public final class UserPreferencesPresenter
         String getFont();
 
         void setFont(String font);
+
+        void setFonts(List<String> themes);
 
         String getFontSize();
 

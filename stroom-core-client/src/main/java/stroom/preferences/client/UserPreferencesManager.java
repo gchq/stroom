@@ -28,6 +28,8 @@ public class UserPreferencesManager {
     private final CurrentTheme currentTheme;
 
     private static final Map<String, String> themeMap = new HashMap<>();
+    private static final Map<String, String> fontMap = new HashMap<>();
+    private static final Map<String, String> fontSizeMap = new HashMap<>();
     private UserPreferences currentPreferences;
 
     @Inject
@@ -36,9 +38,19 @@ public class UserPreferencesManager {
         this.restFactory = restFactory;
         this.currentTheme = currentTheme;
 
-        themeMap.put("Light", "stroom stroom-theme-light");
-        themeMap.put("Dark", "stroom stroom-theme-dark");
-        themeMap.put("Dark 2", "stroom stroom-theme-dark stroom-theme-dark2");
+        themeMap.put("Light", "stroom-theme-light");
+        themeMap.put("Dark", "stroom-theme-dark");
+        themeMap.put("Dark 2", "stroom-theme-dark stroom-theme-dark2");
+
+        fontMap.put("Arial", "stroom-font-arial");
+        fontMap.put("Open Sans", "stroom-font-open-sans");
+        fontMap.put("Roboto", "stroom-font-roboto");
+        fontMap.put("Tahoma", "stroom-font-tahoma");
+        fontMap.put("Verdana", "stroom-font-verdana");
+
+        fontSizeMap.put("Small", "stroom-font-size-small");
+        fontSizeMap.put("Medium", "stroom-font-size-medium");
+        fontSizeMap.put("Large", "stroom-font-size-large");
     }
 
     public void fetch(final Consumer<UserPreferences> consumer) {
@@ -82,7 +94,16 @@ public class UserPreferencesManager {
         currentTheme.setEditorTheme(userPreferences.getEditorTheme());
 
         final com.google.gwt.dom.client.Element element = RootPanel.getBodyElement().getParentElement();
-        final String className = themeMap.get(currentTheme.getTheme());
+        String className = "stroom";
+        if (currentTheme.getTheme() != null) {
+            className += " " + themeMap.get(currentTheme.getTheme());
+        }
+        if (currentPreferences != null && currentPreferences.getFont() != null) {
+            className += " " + fontMap.get(currentPreferences.getFont());
+        }
+        if (currentPreferences != null && currentPreferences.getFontSize() != null) {
+            className += " " + fontSizeMap.get(currentPreferences.getFontSize());
+        }
         element.setClassName(className);
     }
 
@@ -92,6 +113,10 @@ public class UserPreferencesManager {
 
     public List<String> getThemes() {
         return themeMap.keySet().stream().sorted().collect(Collectors.toList());
+    }
+
+    public List<String> getFonts() {
+        return fontMap.keySet().stream().sorted().collect(Collectors.toList());
     }
 
     public List<String> getEditorThemes() {

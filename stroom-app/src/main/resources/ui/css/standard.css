@@ -19,12 +19,12 @@
  */
 
 body, table td, select {
-  font-family: Arial Unicode MS, Arial, sans-serif;
-  font-size: small;
+  font-family: var(--main-font-family);
+  font-size: var(--font-size-11);
 }
 pre {
-  font-family: "courier new", courier, sans-serif;
-  font-size: small;
+  font-family: var(--monospace-font-family);
+  font-size: var(--font-size-11);
 }
 body {
   color: black;
@@ -54,7 +54,7 @@ a, a:visited, a:hover {
   margin: 0;
   padding: 3px 5px;
   text-decoration: none;
-  font-size: small;
+  font-size: var(--font-size-11);
   cursor: pointer;
   background: url("images/hborder.png") repeat-x 0px -27px;
   border: 1px outset #ccc;
@@ -534,7 +534,7 @@ a, a:visited, a:hover {
   cursor: pointer;
   cursor: hand;
   font-weight: 500;
-  font-size: 1.3em;
+  font-size: var(--font-size-21);
   padding: 3px;
   border: 1px solid #bbbbbb;
   border-bottom: 0px;
@@ -597,7 +597,7 @@ a, a:visited, a:hover {
 }
 .gwt-DecoratedStackPanel .stackItemMiddleCenter {
   font-weight: 500;
-  font-size: 1.3em;
+  font-size: var(--font-size-21);
   background: #d3def6 url(images/hborder.png) repeat-x 0px -989px;
 }
 .gwt-DecoratedStackPanel .gwt-StackPanelItem-first .stackItemTopRight,
@@ -893,7 +893,7 @@ a, a:visited, a:hover {
 .datePickerDay,
 .datePickerWeekdayLabel,
 .datePickerWeekendLabel {
-  font-size: 75%;
+  font-size: var(--font-size-12);
   text-align: center;
   padding: 4px;
   outline: none;
@@ -957,14 +957,14 @@ td.datePickerYear {
   text-align: center;
   vertical-align: middle;
   white-space: nowrap;
-  font-size: 70%;
+  font-size: var(--font-size-11);
   font-weight: 500;
 }
 .datePickerPreviousButton,
 .datePickerNextButton,
 .datePickerPreviousYearButton,
 .datePickerNextYearButton {
-  font-size: 120%;
+  font-size: var(--font-size-19);
   line-height: 1em;
   color: var(--dialog-titlebar-text-color);/*white;*/
   cursor: hand;
@@ -979,7 +979,7 @@ td.datePickerYear {
   cursor: pointer;
   cursor: hand;
   font-weight: 500;
-  font-size: 1.3em;
+  font-size: var(--font-size-21);
   padding: 3px;
   border: 1px solid #bbbbbb;
   border-bottom: 0px;

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 @import url("theme.css");
+@import url("font.css");
 
 /* Font Awesome */
 @import url("font-awesome.css");
@@ -29,8 +30,8 @@ html, body {
 	padding: 0px;
 	margin: 0px;
 	overflow: hidden;
-	font-family: Roboto, arial, tahoma, verdana;
-	font-size: 13px;
+	font-family: var(--regular-font-family);
+	font-size: var(--font-size-13);
 	font-weight: 400;
 }
 

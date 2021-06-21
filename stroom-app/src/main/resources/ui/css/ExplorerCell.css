@@ -1,13 +1,14 @@
 .explorerCell-outer {
     white-space: nowrap;
-    display: inline-flex;
+    display: flex;
     flex-direction: row;
-    vertical-align: middle;
+    align-items: center;
 }
 
 .explorerCell-outer * {
-    display: inline-block;
+    display: flex;
     white-space: nowrap;
+    align-items: center;
 }
 
 .explorerCell-expanderIcon.svgIcon {

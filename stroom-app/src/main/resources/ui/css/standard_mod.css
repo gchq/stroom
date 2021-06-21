@@ -15,8 +15,8 @@
  */
 
 body,table td,select {
-	font-family: Roboto, arial, tahoma, verdana, sans-serif;
-	font-size: 13px;
+	font-family: var(--regular-font-family);
+	font-size: var(--font-size-13);
 	font-weight: 400;
 	
 	-moz-box-sizing: border-box;
@@ -348,7 +348,7 @@ textarea {
 	z-index: 100;
 }
 .datePickerDay,.datePickerWeekdayLabel,.datePickerWeekendLabel {
-	font-size: 13px;
+	font-size: var(--font-size-13);
 	text-align: center;
 	padding: 4px;
 	outline: none;
@@ -364,14 +364,14 @@ td.datePickerYear {
   text-align: center;
   vertical-align: middle;
   white-space: nowrap;
-  font-size: 13px;
+  font-size: var(--font-size-13);
   font-weight: 500;
 }
 .datePickerPreviousButton,
 .datePickerNextButton,
 .datePickerPreviousYearButton,
 .datePickerNextYearButton {
-  font-size: 13px;
+  font-size: var(--font-size-13);
   line-height: 1em;
   cursor: hand;
   cursor: pointer;

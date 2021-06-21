@@ -108,10 +108,17 @@ public final class UserPreferencesViewImpl
                 getUiHandlers().onChange();
             }
         });
+        font.addChangeHandler(event -> {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onChange();
+            }
+        });
+        fontSize.addChangeHandler(event -> {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onChange();
+            }
+        });
 
-        font.addItem("Open Sans");
-        font.addItem("Roboto");
-        font.addItem("Arial");
         fontSize.addItem("Small");
         fontSize.addItem("Medium");
         fontSize.addItem("Large");
@@ -186,6 +193,12 @@ public final class UserPreferencesViewImpl
     @Override
     public void setFont(final String font) {
         this.font.setSelected(font);
+    }
+
+    @Override
+    public void setFonts(final List<String> fonts) {
+        this.font.clear();
+        this.font.addItems(fonts);
     }
 
     @Override

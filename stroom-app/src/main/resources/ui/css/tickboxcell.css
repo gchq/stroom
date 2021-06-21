@@ -31,7 +31,7 @@
 	margin: 0px;
 	margin-right: 4px;
 	padding-top: 1px;
-	font-size: 0px;
+	font-size: 0;
 	overflow: hidden;
 	position: relative;
 	vertical-align: top;
@@ -44,6 +44,6 @@
 	margin: 0px;
 	margin-top: 1px;
 	margin-bottom: 1px;
-	font-size: 0px;
+	font-size: 0;
 	vertical-align: top;
 }

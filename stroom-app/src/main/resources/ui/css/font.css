@@ -1,0 +1,93 @@
+:root {
+    --regular-font-family: Roboto, Arial Unicode MS, Arial, tahoma, verdana, sans-serif;
+    --monospace-font-family: "courier new", courier, sans-serif;
+}
+
+.stroom-font-open-sans {
+    --regular-font-family: "Open Sans", Arial Unicode MS, Arial, tahoma, verdana, sans-serif;
+}
+
+.stroom-font-roboto {
+    --regular-font-family: Roboto, Arial Unicode MS, Arial, tahoma, verdana, sans-serif;
+}
+
+.stroom-font-arial {
+    --regular-font-family: Arial Unicode MS, Arial, tahoma, verdana, sans-serif;
+}
+
+.stroom-font-tahoma {
+    --regular-font-family: tahoma, verdana, Arial Unicode MS, Arial, sans-serif;
+}
+
+.stroom-font-verdana {
+    --regular-font-family: verdana, tahoma, Arial Unicode MS, Arial, sans-serif;
+}
+
+
+
+
+.stroom-font-size-small {
+    --font-size-6: 6px;
+    --font-size-7: 7px;
+    --font-size-8: 8px;
+    --font-size-9: 9px;
+    --font-size-10: 10px;
+    --font-size-11: 11px;
+    --font-size-12: 12px;
+    --font-size-13: 13px;
+    --font-size-14: 14px;
+    --font-size-15: 15px;
+    --font-size-16: 16px;
+    --font-size-17: 17px;
+    --font-size-18: 18px;
+    --font-size-19: 19px;
+    --font-size-20: 20px;
+    --font-size-21: 21px;
+    --font-size-22: 22px;
+    --font-size-23: 23px;
+    --font-size-24: 24px;
+}
+
+.stroom-font-size-medium {
+    --font-size-6: .625rem;
+    --font-size-7: .65rem;
+    --font-size-8: .7rem;
+    --font-size-9: .725rem;
+    --font-size-10: .75rem;
+    --font-size-11: .8rem;
+    --font-size-12: .875rem;
+    --font-size-13: .95rem;
+    --font-size-14: 1rem;
+    --font-size-15: 1.05rem;
+    --font-size-16: 1.125rem;
+    --font-size-17: 1.2rem;
+    --font-size-18: 1.25rem;
+    --font-size-19: 1.3rem;
+    --font-size-20: 1.4rem;
+    --font-size-21: 1.45rem;
+    --font-size-22: 1.5rem;
+    --font-size-23: 1.6rem;
+    --font-size-24: 1.8rem;
+}
+
+.stroom-font-size-large {
+    --font-size-6: .7rem;
+    --font-size-7: .725rem;
+    --font-size-8: .75rem;
+    --font-size-9: .8rem;
+    --font-size-10: .875rem;
+    --font-size-11: .95rem;
+    --font-size-12: 1rem;
+    --font-size-13: 1.05rem;
+    --font-size-14: 1.125rem;
+    --font-size-15: 1.2rem;
+    --font-size-16: 1.25rem;
+    --font-size-17: 1.3rem;
+    --font-size-18: 1.4rem;
+    --font-size-19: 1.45rem;
+    --font-size-20: 1.5rem;
+    --font-size-21: 1.6rem;
+    --font-size-22: 1.8rem;
+    --font-size-23: 1.9rem;
+    --font-size-24: 2.1rem;
+}

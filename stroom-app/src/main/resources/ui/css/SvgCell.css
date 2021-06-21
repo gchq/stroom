@@ -35,7 +35,7 @@
 	overflow: hidden;
 	position: relative;
 	color: #5398ff;
-	font-size: 16px;
+	font-size: var(--font-size-16);
 	opacity: 1;
 	top: -2px;
 }

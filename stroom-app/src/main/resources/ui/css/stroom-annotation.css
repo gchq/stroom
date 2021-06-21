@@ -62,7 +62,7 @@
 }
 
 .annotationTitleTextBox {
-    font-size: 18pt;
+    font-size: var(--font-size-24);
     width: 100%;
 }
 
@@ -92,7 +92,7 @@
 }
 
 .annotationSubjectTextBox {
-    font-size: 14pt;
+    font-size: var(--font-size-19);
     width: 100%;
 }
 

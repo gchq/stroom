@@ -32,7 +32,12 @@
 }
 
 .buttonPanel-layout {
-	white-space: nowrap;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    align-content: center;
+    justify-content: flex-start;
 }
 
 .contextMenu-layout {
@@ -66,7 +71,7 @@
 .menuItem-groupHeading {
 	padding: 6px 0 3px 6px;
 	opacity: 0.8;
-	font-size: 0.8em;
+	font-size: var(--font-size-13);
 	text-transform: uppercase;
 	display: block;
 	cursor: default;
@@ -145,7 +150,7 @@
 }
 
 .basicTabSelector-text {
-	font-size: 7px;
+	font-size: var(--font-size-7);
 	white-space: nowrap;
 	margin-left: 7px;
 	margin-top: 7px;
@@ -240,7 +245,7 @@
 	overflow: hidden;
 	position: relative;
 	color: #5398ff;
-	font-size: 16px;
+	font-size: var(--font-size-16);
 	opacity: 1;
 }
 
@@ -383,7 +388,7 @@
 
 .curveTabSelector .curveTabSelector-foreground .curveTabSelector-text {
 	position: relative;
-	font-size: 7px;
+	font-size: var(--font-size-7);
 	white-space: nowrap;
 	margin-left: 7px;
 	margin-top: 7px;
@@ -736,12 +741,17 @@
     position: relative;
     width: 250px;
     text-align: right;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-content: center;
+    align-items: center;
+    justify-content: flex-end;
 }
 
 .pager-label {
     display: inline-block;
     margin: 0px;
-    margin-top: 2px;
     cursor: pointer;
 }
 
@@ -1175,7 +1185,7 @@
     margin: 0;
     padding: 3px 5px;
     text-decoration: none;
-    font-size: small;
+    font-size: var(--font-size-11);
     cursor: pointer;
     cursor: hand;
     background: blue;

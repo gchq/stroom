@@ -1,12 +1,12 @@
 .editor * {
     font-family: "Roboto Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace, "Courier New";
-    font-size: 12px;
+    font-size: var(--font-size-12);
     line-height: 14px;
 }
 
 .editor.ace_editor {
     font-family: "Roboto Mono", Monaco, Menlo, "Ubuntu Mono", Consolas, source-code-pro, monospace, "Courier New";
-    font-size: 12px;
+    font-size: var(--font-size-12);
     line-height: 14px;
 }
 
@@ -22,8 +22,8 @@
     border: none;
     border-radius: 0px;
     box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.5);
-    font-family: Roboto, arial, tahoma, verdana, sans-serif;
-    font-size: 13px;
+    font-family: var(--regular-font-family);
+    font-size: var(--font-size-13);
     font-weight: 400;
     padding: 0 2px;
   	-webkit-user-select: text;

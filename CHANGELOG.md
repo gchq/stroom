@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#220** : Users can now change font and font size.
+
 * Issue **#215** : User date/time format preferences are now usable in dashboard tables.
 
 * Fix problem with DynamicAssetsBundle throwing an exception when run from the fat jar.
