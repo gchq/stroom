@@ -474,7 +474,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     }
                 };
 
-                final PopupSize popupSize = new PopupSize(316, 124, false);
+                final PopupSize popupSize = new PopupSize(340, 180, false);
                 ShowPopupEvent.fire(this, downloadPresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Download Options",
                         popupUiHandlers);
             }

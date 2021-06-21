@@ -399,7 +399,7 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
                 }
             };
 
-            final PopupSize popupSize = new PopupSize(300, 200, 300, 200, 2000, 200, true);
+            final PopupSize popupSize = new PopupSize(400, 200, 300, 200, 2000, 200, true);
             ShowPopupEvent.fire(this, editor, PopupType.OK_CANCEL_DIALOG, popupSize, "Edit Property", popupUiHandlers);
         }
     }

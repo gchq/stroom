@@ -44,7 +44,7 @@ public abstract class DropDownTreePresenter extends MyPresenterWidget<DropDownTr
     public void show() {
         getView().clearFilter();
         refresh();
-        final PopupSize popupSize = new PopupSize(350, 400, 350, 350, 2000, 2000, true);
+        final PopupSize popupSize = new PopupSize(400, 550, 400, 350, 2000, 2000, true);
         ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, caption, this);
         focus();
     }
