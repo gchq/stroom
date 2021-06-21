@@ -73,7 +73,7 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
                             final String helpUrl = result.getHelpUrl();
                             if (helpUrl != null && helpUrl.trim().length() > 0) {
                                 final String url = helpUrl
-                                        + "/user-guide/tasks.html"
+                                        + "/user-guide/jobs.html"
                                         + formatAnchor(row.getName());
                                 Window.open(url, "_blank", "");
                             } else {
