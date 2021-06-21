@@ -298,25 +298,25 @@ public class PopupSupportImpl implements PopupSupport {
                     popup.setContent(view.asWidget());
                     break;
                 case DIALOG:
-                    popup = new ResizableDialog(popupUiHandlers, popupSize);
+                    popup = new ResizableDialog(popupUiHandlers, popupSize, popupType);
                     popup.setContent(view.asWidget());
                     break;
                 case CLOSE_DIALOG:
-                    popup = new ResizableDialog(popupUiHandlers, popupSize);
+                    popup = new ResizableDialog(popupUiHandlers, popupSize, popupType);
                     final ResizableCloseContent closeContent = new ResizableCloseContent(popupUiHandlers);
                     controls = closeContent;
                     closeContent.setContent(view.asWidget());
                     popup.setContent(closeContent);
                     break;
                 case OK_CANCEL_DIALOG:
-                    popup = new ResizableDialog(popupUiHandlers, popupSize);
+                    popup = new ResizableDialog(popupUiHandlers, popupSize, popupType);
                     final ResizableOkCancelContent okCancelContent = new ResizableOkCancelContent(popupUiHandlers);
                     controls = okCancelContent;
                     okCancelContent.setContent(view.asWidget());
                     popup.setContent(okCancelContent);
                     break;
                 case ACCEPT_REJECT_DIALOG:
-                    popup = new ResizableDialog(popupUiHandlers, popupSize);
+                    popup = new ResizableDialog(popupUiHandlers, popupSize, popupType);
                     final ResizableAcceptRejectContent acceptRejectContent = new ResizableAcceptRejectContent(
                             popupUiHandlers);
                     controls = acceptRejectContent;
@@ -331,25 +331,25 @@ public class PopupSupportImpl implements PopupSupport {
                     popup.setContent(view.asWidget());
                     break;
                 case DIALOG:
-                    popup = new Dialog(popupUiHandlers);
+                    popup = new Dialog(popupUiHandlers, popupType);
                     popup.setContent(view.asWidget());
                     break;
                 case CLOSE_DIALOG:
-                    popup = new Dialog(popupUiHandlers);
+                    popup = new Dialog(popupUiHandlers, popupType);
                     final CloseContent closeContent = new CloseContent(popupUiHandlers);
                     controls = closeContent;
                     closeContent.setContent(view.asWidget());
                     popup.setContent(closeContent);
                     break;
                 case OK_CANCEL_DIALOG:
-                    popup = new Dialog(popupUiHandlers);
+                    popup = new Dialog(popupUiHandlers, popupType);
                     final OkCancelContent okCancelContent = new OkCancelContent(popupUiHandlers);
                     controls = okCancelContent;
                     okCancelContent.setContent(view.asWidget());
                     popup.setContent(okCancelContent);
                     break;
                 case ACCEPT_REJECT_DIALOG:
-                    popup = new Dialog(popupUiHandlers);
+                    popup = new Dialog(popupUiHandlers, popupType);
                     final AcceptRejectContent acceptRejectContent = new AcceptRejectContent(popupUiHandlers);
                     controls = acceptRejectContent;
                     acceptRejectContent.setContent(view.asWidget());

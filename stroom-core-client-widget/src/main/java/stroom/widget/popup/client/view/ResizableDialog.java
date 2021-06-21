@@ -18,6 +18,7 @@ package stroom.widget.popup.client.view;
 
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
+import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -69,8 +70,8 @@ public class ResizableDialog extends AbstractPopupPanel {
      * Creates an empty dialog box. It should not be shown until its child
      * widget has been added using {@link #add(Widget)}.
      */
-    ResizableDialog(final PopupUiHandlers popupUiHandlers, final PopupSize popupSize) {
-        this(popupUiHandlers, false, popupSize);
+    ResizableDialog(final PopupUiHandlers popupUiHandlers, final PopupSize popupSize, final PopupType popupType) {
+        this(popupUiHandlers, false, popupSize, popupType);
     }
 
     /**
@@ -81,8 +82,9 @@ public class ResizableDialog extends AbstractPopupPanel {
      * @param autoHide <code>true</code> if the dialog should be automatically hidden
      *                 when the user clicks outside of it
      */
-    private ResizableDialog(final PopupUiHandlers popupUiHandlers, final boolean autoHide, final PopupSize popupSize) {
-        this(popupUiHandlers, autoHide, true, popupSize);
+    private ResizableDialog(final PopupUiHandlers popupUiHandlers, final boolean autoHide, final PopupSize popupSize,
+                            final PopupType popupType) {
+        this(popupUiHandlers, autoHide, true, popupSize, popupType);
     }
 
     /**
@@ -96,8 +98,8 @@ public class ResizableDialog extends AbstractPopupPanel {
      *                 contained by the dialog should be ignored
      */
     private ResizableDialog(final PopupUiHandlers popupUiHandlers, final boolean autoHide, final boolean modal,
-                            final PopupSize popupSize) {
-        super(autoHide, modal);
+                            final PopupSize popupSize, final PopupType popupType) {
+        super(autoHide, modal, popupType);
         this.popupUiHandlers = popupUiHandlers;
         this.popupSize = popupSize;
 
@@ -157,6 +159,16 @@ public class ResizableDialog extends AbstractPopupPanel {
     @Override
     public void hide(final boolean autoClosed) {
         popupUiHandlers.onHideRequest(autoClosed, false);
+    }
+
+    @Override
+    protected void onEscapeKeyPressed() {
+        hide(false);
+    }
+
+    @Override
+    protected void onEnterKeyPressed() {
+        popupUiHandlers.onHideRequest(false, true);
     }
 
     @Override

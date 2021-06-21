@@ -17,6 +17,7 @@
 package stroom.widget.popup.client.view;
 
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
+import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
@@ -60,8 +61,8 @@ public class Dialog extends AbstractPopupPanel {
      * Creates an empty dialog box. It should not be shown until its child
      * widget has been added using {@link #add(Widget)}.
      */
-    public Dialog(final PopupUiHandlers popupUiHandlers) {
-        this(popupUiHandlers, false);
+    public Dialog(final PopupUiHandlers popupUiHandlers, final PopupType popupType) {
+        this(popupUiHandlers, false, popupType);
     }
 
     /**
@@ -72,8 +73,8 @@ public class Dialog extends AbstractPopupPanel {
      * @param autoHide <code>true</code> if the dialog should be automatically hidden
      *                 when the user clicks outside of it
      */
-    public Dialog(final PopupUiHandlers popupUiHandlers, final boolean autoHide) {
-        this(popupUiHandlers, autoHide, true);
+    public Dialog(final PopupUiHandlers popupUiHandlers, final boolean autoHide, final PopupType popupType) {
+        this(popupUiHandlers, autoHide, true, popupType);
     }
 
     /**
@@ -86,8 +87,9 @@ public class Dialog extends AbstractPopupPanel {
      * @param modal    <code>true</code> if keyboard and mouse events for widgets not
      *                 contained by the dialog should be ignored
      */
-    public Dialog(final PopupUiHandlers popupUiHandlers, final boolean autoHide, final boolean modal) {
-        super(autoHide, modal);
+    public Dialog(final PopupUiHandlers popupUiHandlers, final boolean autoHide, final boolean modal,
+                  final PopupType popupType) {
+        super(autoHide, modal, popupType);
         this.popupUiHandlers = popupUiHandlers;
 
         setStyleName("dialog-popup");
@@ -144,6 +146,16 @@ public class Dialog extends AbstractPopupPanel {
     @Override
     public void hide(final boolean autoClosed) {
         popupUiHandlers.onHideRequest(autoClosed, false);
+    }
+
+    @Override
+    protected void onEscapeKeyPressed() {
+        hide(false);
+    }
+
+    @Override
+    protected void onEnterKeyPressed() {
+        popupUiHandlers.onHideRequest(false, true);
     }
 
     @Override

@@ -17,6 +17,7 @@
 package stroom.widget.popup.client.view;
 
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
+import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -62,7 +63,7 @@ public class SimplePopup extends AbstractPopupPanel {
      *                 contained by the dialog should be ignored
      */
     public SimplePopup(final PopupUiHandlers popupUiHandlers, final boolean autoHide, final boolean modal) {
-        super(autoHide, modal);
+        super(autoHide, modal, PopupType.POPUP);
         this.popupUiHandlers = popupUiHandlers;
 
         setStyleName("simplePopup-popup");
