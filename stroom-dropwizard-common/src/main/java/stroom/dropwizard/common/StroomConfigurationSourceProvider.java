@@ -66,6 +66,9 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
             final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
             final JsonNode rootNode = mapper.readTree(in);
 
+            Objects.requireNonNull(rootNode, () ->
+                    LogUtil.message("Config file {} appears to be empty or contains no YAML"));
+
             // Parse the yaml to find out if the home/temp props have been set so
             // we can construct a PathCreator to do the path substitution on the drop wiz
             // section of the yaml

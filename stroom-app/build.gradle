@@ -535,6 +535,10 @@ task copySupportingFiles(type: Copy) {
     into releaseBuildDir
 
     doLast {
+        exec {
+            // Move the banner.txt into bin where it is expected
+            commandLine 'mv', "${releaseBuildDir}/banner.txt", "${releaseBuildDir}/bin/banner.txt"
+        }
         // This is a sym-link so it seems to go into the zip with +x perms
         // which we don't want
         //exec {
