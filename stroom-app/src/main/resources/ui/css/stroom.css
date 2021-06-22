@@ -787,3 +787,33 @@ input[type="file"]:disabled {
 .popupPanel-dragGlassVisible {
 	visibility: visible;
 }
+
+
+
+
+
+
+.dock-container-horizontal {
+    display: flex;
+}
+
+.dock-container-vertical {
+    display: flex;
+    flex-direction: column;
+}
+
+.dock-min {
+    flex-grow: 0;
+}
+
+.dock-max {
+    flex-grow: 1;
+}
+
+.overflow-auto {
+    overflow: auto;
+}
+
+.overflow-hidden {
+    overflow: hidden;
+}

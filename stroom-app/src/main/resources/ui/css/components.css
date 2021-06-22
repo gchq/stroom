@@ -32,12 +32,20 @@
 }
 
 .buttonPanel-layout {
-    white-space: nowrap;
     display: flex;
+    align-items: center;
+
+    /*
+    white-space: nowrap;
     align-items: center;
     flex-wrap: nowrap;
     align-content: center;
     justify-content: flex-start;
+
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    padding: 2px;*/
 }
 
 .contextMenu-layout {
@@ -849,14 +857,7 @@
 }
 
 .dataViewImpl-tabBarOuter {
-    position: absolute;
-    left: 0px;
-    top: 1px;
-    width: 300px;
-    height: 24px;
-    padding-left: 10px;
-    padding-right: 3px;
-    padding-top: 1px;
+    padding-left: 5px;
 }
 
 .dataViewImpl-tabBarInner {
@@ -879,6 +880,10 @@
     height: 6px;
     padding-right: 0.25em;
     padding-left: 0.25em;
+}
+
+.dataViewImpl-layerContainer {
+    position: relative;
 }
 
 .dataViewImpl-sourceLinkLabel {
@@ -1253,28 +1258,23 @@
     height:50px;
 }
 
+.linkTabPanelViewImpl {
+    display: flex;
+    gap: 10px;
+}
+
 .linkTabPanelViewImpl-left {
-    position: relative;
-    width: 0;
+    flex-grow: 0;
 }
 
 .linkTabPanelViewImpl-middle {
-    position: relative;
-    width: 100%;
+    flex-grow: 1;
 }
 
 .linkTabPanelViewImpl-right {
-    position: relative;
-    width: 0;
-}
-
-.linkTabPanelViewImpl-leftInner {
-    padding-right: 10px;
-}
-
-.linkTabPanelViewImpl-rightInner {
-    position: absolute;
-    right: 0px;
+    display: flex;
+    justify-content: flex-end;
+    flex-grow: 0;
 }
 
 .queryFavouritesViewImpl-cellList {
@@ -1573,12 +1573,7 @@
 }
 
 .explorerTreeViewImpl-nameFilter {
-    width: 100%;
     border: none !important;
-}
-
-.explorerTreeViewImpl-buttonContainer {
-    margin-left: 2px;
 }
 
 .stepControlViewImpl-layout {

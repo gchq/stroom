@@ -1,28 +1,20 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-	xmlns:g="urn:import:com.google.gwt.user.client.ui" 
-    xmlns:tab="urn:import:stroom.widget.tab.client.view">
-	<g:DockLayoutPanel unit="PX" width="100%" height="100%">
-		<g:north size="21">
-			<g:SimplePanel styleName="max stroom-content stroom-border-bottom">
-				<g:Grid width="100%" height="100%">
-					<g:row>
-						<g:customCell styleName="linkTabPanelViewImpl-left">
-							<g:FlowPanel ui:field="left" styleName="linkTabPanelViewImpl-leftInner" />
-						</g:customCell>
-						<g:customCell styleName="linkTabPanelViewImpl-middle">
-							<g:ResizeLayoutPanel><tab:LinkTabBar ui:field="tabBar" /></g:ResizeLayoutPanel>
-						</g:customCell>
-						<g:customCell styleName="linkTabPanelViewImpl-right">
-							<g:FlowPanel ui:field="right" styleName="linkTabPanelViewImpl-rightInner" />
-						</g:customCell>
-					</g:row>
-				</g:Grid>
-			</g:SimplePanel>
-		</g:north>
-		<g:center>
-			<tab:LayerContainerImpl ui:field="layerContainer" width="100%"
-				height="100%" />
-		</g:center>
-	</g:DockLayoutPanel>
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:tab="urn:import:stroom.widget.tab.client.view">
+    <g:FlowPanel styleName="max dock-container-vertical">
+        <g:SimplePanel styleName="dock-min stroom-content stroom-border-bottom">
+            <g:FlowPanel styleName="linkTabPanelViewImpl">
+                <g:FlowPanel ui:field="left" styleName="linkTabPanelViewImpl-left"/>
+                <g:ResizeLayoutPanel styleName="linkTabPanelViewImpl-middle">
+                    <tab:LinkTabBar ui:field="tabBar"/>
+                </g:ResizeLayoutPanel>
+                <g:FlowPanel ui:field="right" styleName="linkTabPanelViewImpl-right"/>
+            </g:FlowPanel>
+        </g:SimplePanel>
+        <g:SimplePanel styleName="dock-max">
+            <tab:LayerContainerImpl ui:field="layerContainer" width="100%"
+                                    height="100%"/>
+        </g:SimplePanel>
+    </g:FlowPanel>
 </ui:UiBinder>
