@@ -168,13 +168,13 @@ public class ContentMigration {
             final Properties properties = new Properties();
 
             if (uuid == null) {
-                throw new IllegalArgumentException("Unable to process " + path.toString() + " no UUID found");
+                throw new IllegalArgumentException("Unable to process " + path.toString() + " no UUID found.");
             }
             properties.setProperty("uuid", uuid);
 
             if (type == null) {
                 throw new IllegalArgumentException("Unable to process " + path.toString()
-                        + " docref type not defined found");
+                        + " docref type not defined.");
             }
             properties.setProperty("type", type);
 
