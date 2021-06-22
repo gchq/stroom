@@ -166,9 +166,19 @@ public class ContentMigration {
             final String name = getValue(xml, "name");
 
             final Properties properties = new Properties();
+
+            if (uuid == null) {
+                throw new IllegalArgumentException("Unable to process " + path.toString() + " no UUID found");
+            }
             properties.setProperty("uuid", uuid);
+
+            if (type == null) {
+                throw new IllegalArgumentException("Unable to process " + path.toString()
+                        + " docref type not defined found");
+            }
             properties.setProperty("type", type);
-            properties.setProperty("name", name);
+
+            properties.setProperty("name", (name != null) ? name : ("Unnamed " + type));
             properties.setProperty("path", String.join("/", pathElements));
 
             final String newFileStem = createFilePrefix(name, type, uuid);
