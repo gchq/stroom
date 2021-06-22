@@ -312,8 +312,9 @@ public class StatisticsFilter extends AbstractXMLFilter {
                 }
 
                 if (currentEventTimeMs == null) {
-                    throw new IllegalStateException("Statistic with missing timestamp. Cannot update " + statisticStoreEntity.toString()
-                            + " other tags associated with this record are as follows: " +
+                    throw new IllegalStateException("Statistic with missing timestamp. Cannot update " +
+                            statisticStoreEntity.toString() +
+                            " other tags associated with this record are as follows: " +
                             tagList.stream().map(StatisticTag::toString).collect(Collectors.joining(", ")));
                 }
 
