@@ -48,6 +48,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 /**
@@ -308,6 +309,12 @@ public class StatisticsFilter extends AbstractXMLFilter {
                 for (final StatisticField statisticField : statisticStoreEntity.getStatisticFields()) {
                     final String tagName = statisticField.getFieldName();
                     tagList.add(new StatisticTag(tagName, currentTagToValueMap.get(tagName)));
+                }
+
+                if (currentEventTimeMs == null) {
+                    throw new IllegalStateException("Statistic with missing timestamp. Cannot update " + statisticStoreEntity.toString()
+                            + " other tags associated with this record are as follows: " +
+                            tagList.stream().map(StatisticTag::toString).collect(Collectors.joining(", ")));
                 }
 
                 if (currentTagToValueMap.size() != statisticStoreEntity.getFieldNames().size()) {
