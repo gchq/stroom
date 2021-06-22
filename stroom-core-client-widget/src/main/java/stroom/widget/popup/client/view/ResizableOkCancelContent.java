@@ -24,11 +24,13 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.ResizeLayoutPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
-public class ResizableOkCancelContent extends ResizeComposite implements HasEnabled {
+public class ResizableOkCancelContent extends Composite implements HasEnabled {
 
     private static final Binder binder = GWT.create(Binder.class);
     private final PopupUiHandlers popupUiHandlers;
@@ -37,7 +39,7 @@ public class ResizableOkCancelContent extends ResizeComposite implements HasEnab
     @UiField
     Button cancel;
     @UiField
-    ResizeLayoutPanel content;
+    SimplePanel content;
 
     public ResizableOkCancelContent(final PopupUiHandlers popupUiHandlers) {
         initWidget(binder.createAndBindUi(this));
