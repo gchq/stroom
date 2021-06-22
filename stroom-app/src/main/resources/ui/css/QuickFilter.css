@@ -15,30 +15,18 @@
  */
 
 .quickFilter {
+    display: flex;
+	align-items: center;
     position: relative;
 	padding: 1px;
 	overflow: hidden;
 }
 
 .quickFilter-textBox {
-	position: absolute;
-	left: 0px;
-	top: 0px;
-	width: 100%; /* To allow for info and clear btns */
-	height: 100%;
+    width: 100%; /* To allow for info and clear btns */
 	margin: 0px;
 	padding-left: 22px;
 	border: none !important;
-	cursor: text;
-}
-
-.quickFilter-label {
-	position: absolute;
-	left: 22px;
-	top: 2px;
-	width: 100%;
-	height: 100%;
-	color: grey;
 	cursor: text;
 }
 
@@ -50,9 +38,11 @@
 
 .quickFilter-infoButton {
 	position: absolute;
+	/*
 	left: 0px;
-	/*top: -1px; */
+	top: -1px;
 	top: 0px;
+	*/
 }
 
 .quickFilter-tooltip {
