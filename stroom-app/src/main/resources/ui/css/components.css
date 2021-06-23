@@ -171,10 +171,13 @@
 }
 
 .curveTab {
-	position: absolute;
-	left: 0;
-	top: 0;
-	cursor: pointer;
+    position: absolute;
+    left: 0;
+    top: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    height: 25px;
 }
 
 .curveTab-selected {
@@ -229,13 +232,12 @@
 
 /* Tab content */
 .curveTab .curveTab-icon {
-	position: absolute;
-	top: 0;
-	left: 5px;
-	width: 18px;
-	height: 18px;
-	margin-top: 5px;
-	-moz-user-select: none;
+    position: relative;
+    width: 18px;
+    height: 18px;
+    -moz-user-select: none;
+    margin: 0 5px 0 5px;
+    background-size: 100%;
 }
 
 .curveTab .curveTab-face {
@@ -256,11 +258,11 @@
 }
 
 .curveTab .curveTab-text {
-	position: relative;
-	white-space: nowrap;
-	padding: 6px 32px 0 26px;
-	-moz-user-select: none;
-	opacity: 0.8;
+    position: relative;
+    white-space: nowrap;
+    padding: 1px 1px 1px 1px;
+    -moz-user-select: none;
+    opacity: 0.8;
 }
 
 .curveTab-selected .curveTab-text {
@@ -269,25 +271,25 @@
 
 /* Close button */
 .curveTab .curveTab-close {
-	background-image: url("../images/tabs/close.png");
-	position: absolute;
-	right: 15px;
-	top: 8px;
-	width: 12px;
-	height: 12px;
-	-moz-user-select: none;
-	cursor: pointer;
+    background-image: url("../images/tabs/close.png");
+    width: 12px;
+    height: 12px;
+    -moz-user-select: none;
+    cursor: pointer;
+    margin: 2px 16px 0 4px;
+    z-index: 0;
+    background-repeat: no-repeat;
 }
 
 .curveTab .curveTab-closeActive	{
 	background-image: url("../images/tabs/closeActive.png");
-	position: absolute;
-	right: 15px;
-	top: 8px;
 	width: 12px;
     height: 12px;
 	-moz-user-select: none;
 	cursor: pointer;
+    margin: 2px 16px 0 4px;
+    z-index: 0;
+    background-repeat: no-repeat;
 }
 
 .stroom-theme-dark .curveTab .curveTab-leftBackground {
