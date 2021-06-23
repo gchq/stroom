@@ -57,7 +57,7 @@
 	border: solid transparent;
 
 	border-width: 0 0 0 0;
-	min-width: 0px;
+	min-width: 0;
 	min-height: 28px;
 	padding: 100px 0 0 0;
 	box-shadow: inset 1px 1px 3px rgba(0,0,0,0.3),inset -1px -1px 3px rgba(0,0,0,0.3);
@@ -65,7 +65,7 @@
 ::-webkit-scrollbar-thumb:horizontal {
 	border-width: 0 0 0 0;
 	min-width: 28px;
-	min-height: 0px;
+	min-height: 0;
 	padding: 0 0 0 100px;
 
 }

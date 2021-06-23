@@ -172,8 +172,8 @@
 
 .curveTab {
 	position: absolute;
-	left: 0px;
-	top: 0px;
+	left: 0;
+	top: 0;
 	cursor: pointer;
 }
 
@@ -183,8 +183,8 @@
 
 .curveTab .curveTab-background {
 	position: absolute;
-	left: 0px;
-	top: 0px;
+	left: 0;
+	top: 0;
 	opacity: 0.6;
 	height: 24px;
 	width: 100%;
@@ -205,8 +205,8 @@
 .curveTab .curveTab-leftBackground {
 	background-image: url("../images/tabs/left.png");
 	position: absolute;
-	left: 0px;
-	top: 0px;
+	left: 0;
+	top: 0;
     width: 5px;
     height: 25px;
 }
@@ -221,8 +221,8 @@
 .curveTab .curveTab-rightBackground {
 	background-image: url("../images/tabs/right.png");
 	position: absolute;
-	right: 0px;
-	top: 0px;
+	right: 0;
+	top: 0;
     width: 15px;
     height: 25px;
 }
@@ -230,7 +230,7 @@
 /* Tab content */
 .curveTab .curveTab-icon {
 	position: absolute;
-	top: 0px;
+	top: 0;
 	left: 5px;
 	width: 18px;
 	height: 18px;
@@ -258,7 +258,7 @@
 .curveTab .curveTab-text {
 	position: relative;
 	white-space: nowrap;
-	padding: 6px 32px 0px 26px;
+	padding: 6px 32px 0 26px;
 	-moz-user-select: none;
 	opacity: 0.8;
 }
@@ -325,7 +325,7 @@
 
 .curveTabSelector {
 	position: absolute;
-	left: 0px;
+	left: 0;
 	top: 4px;
 	height: 24px;
 	cursor: pointer;
@@ -355,8 +355,8 @@
 .curveTabSelector .curveTabSelector-background .curveTabSelector-leftBackground {
 	background-image: url("../images/tabs/tabSelectorLeft.png");
 	position: absolute;
-	left: 0px;
-	top: 0px;
+	left: 0;
+	top: 0;
     width: 10px;
     height: 18px;
 }
@@ -371,8 +371,8 @@
 .curveTabSelector .curveTabSelector-background .curveTabSelector-rightBackground {
 	background-image: url("../images/tabs/tabSelectorRight.png");
 	position: absolute;
-	right: 0px;
-	top: 0px;
+	right: 0;
+	top: 0;
     width: 10px;
     height: 18px;
 }
@@ -450,13 +450,19 @@
 
 
 .linkTabBar {
+    position: relative;
 	white-space: nowrap;
 	padding-top: 1px;
 }
 
+.linkTabBar-hiddenText {
+    display: inline;
+    opacity: 0;
+}
+
 .linkTabBar .linkTabBar-separator {
 	position: absolute;
-	top: 2px;
+	top: 0;
 	padding-left: 5px;
 	padding-right: 5px;
 }
@@ -464,8 +470,8 @@
 
 .linkTab {
 	position: absolute;
-	left: 0px;
-	top: 2px;
+	left: 0;
+	top: 0;
 	cursor: pointer;
     opacity: 0.8;
     transition: opacity 0.5s linear;
@@ -492,8 +498,8 @@
 
 .linkTab-label {
 	position: absolute;
-	left: 0px;
-	top: 0px;
+	left: 0;
+	top: 0;
 	width: 100%;
 	cursor: pointer;
 	text-decoration: inherit;
@@ -506,12 +512,12 @@
 
 .linkTab .linkTab-hotspot {
 	position: absolute;
-	left: 0px;
-	right: 0px;
-	top: 0px;
-	bottom: 0px;
-	margin: 0px;
-	padding: 0px;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	margin: 0;
+	padding: 0;
 	border-width: 1px;
 	border-color: black;
 	border-style: solid;
@@ -573,7 +579,7 @@
 .userTaskView-terminate {
     vertical-align: middle;
     padding: 3px;
-    padding-bottom: 0px;
+    padding-bottom: 0;
     background-image: url("../images/terminate.png");
     width: 11px;
     height: 11px;
@@ -638,20 +644,18 @@
 
 .curveTabLayoutViewImpl-layerContainerOuter {
     position: absolute;
-    left: 0px;
-    right: 0px;
+    left: 0;
+    right: 0;
     top:
     24px;
-    bottom: 0px;
+    bottom: 0;
 }
 
 .curveTabLayoutViewImpl-tabBarOuter {
     position: absolute;
-    left: 0px;
-    right:
-    0px;
-    top:
-    0px;
+    left: 0;
+    right: 0;
+    top: 0;
     height: 25px;
 }
 
@@ -757,7 +761,7 @@
 
 .pager-label {
     display: inline-block;
-    margin: 0px;
+    margin: 0;
     cursor: pointer;
 }
 
@@ -765,8 +769,8 @@
     display: inline-block;
     width: 30px;
     height: 14px;
-    padding: 0px;
-    margin: 0px;
+    padding: 0;
+    margin: 0;
     margin-top: 2px;
     border: none;
 }
@@ -783,8 +787,8 @@
 
 .dashboardMainViewImpl-root {
     position: absolute;
-    left: 0px;
-    top: 0px;
+    left: 0;
+    top: 0;
     width: 100%;
     height: 100%;
     overflow: hidden;
@@ -794,7 +798,7 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background-image: linear-gradient(rgb(244, 248, 253) 0px, rgb(222, 234, 248) 36px);
+    background-image: linear-gradient(rgb(244, 248, 253) 0, rgb(222, 234, 248) 36px);
     background-color: rgb(223, 234, 248);
 }
 
@@ -857,6 +861,8 @@
 }
 
 .dataViewImpl-tabBarOuter {
+    overflow: hidden;
+    flex-shrink: 1;
     padding-left: 5px;
 }
 
@@ -865,8 +871,9 @@
 }
 
 .dataViewImpl-rightPanel {
-    width: max-content;
-    float: right;
+    display: flex;
+    flex-shrink: 0;
+    justify-content: flex-end;
     padding-right: 0.25em;
     padding-top: 1px;
 }
@@ -887,12 +894,10 @@
 }
 
 .dataViewImpl-sourceLinkLabel {
-    margin: 0px;
-    margin-top: 2px;
+    margin: 0;
     cursor: pointer;
     padding-left: 0.75em;
     padding-right: 0.75em;
-    float: left;
 }
 
 .dataViewImpl-sourceLinkLabel:hover {
@@ -1025,7 +1030,7 @@
 
 .dataNavigator-label {
     display: inline-block;
-    margin: 0px;
+    margin: 0;
     margin-top: 2px;
     cursor: pointer;
     padding-left: 0.75em;
@@ -1044,7 +1049,7 @@
 .aboutViewImpl-layout {
     width: 500px;
     height: 288px;
-    margin: -5px -5px 0px;
+    margin: -5px -5px 0;
 }
 
 .aboutViewImpl-stroom-body {
@@ -1111,18 +1116,18 @@
 
 .dashboardViewImpl-bar {
     position: absolute;
-    left: 0px;
-    right: 0px;
-    top: 0px;
+    left: 0;
+    right: 0;
+    top: 0;
     height: 21px;
 }
 
 .dashboardViewImpl-content {
     position: absolute;
-    left: 0px;
-    right: 0px;
+    left: 0;
+    right: 0;
     top: 21px;
-    bottom: 0px;
+    bottom: 0;
 }
 
 .dashboardViewImpl-left {
@@ -1152,7 +1157,7 @@
 
 .dashboardViewImpl-rightInner {
     position: absolute;
-    right: 0px;
+    right: 0;
 }
 
 .subStreamNavigator {
@@ -1162,7 +1167,7 @@
 
 .subStreamNavigator-label {
     display: inline-block;
-    margin: 0px;
+    margin: 0;
     margin-top: 2px;
     cursor: pointer;
     padding-left: 0.75em;
@@ -1226,16 +1231,15 @@
 }
 
 .itemNavigator {
+    display: flex;
 }
 
 .itemNavigator-label {
     margin: 0px;
-    margin-top: 2px;
     cursor: pointer;
     padding-left: 0.75em;
     padding-right: 0.75em;
     display: flex;
-    float: left;
 }
 
 .itemNavigator-label:hover {
@@ -1260,6 +1264,7 @@
 
 .linkTabPanelViewImpl {
     display: flex;
+    align-items: center;
     gap: 10px;
 }
 
@@ -1319,7 +1324,7 @@
 .resizableCloseContent-buttons {
     width: 100%;
     text-align: right;
-    padding-top: 5px;
+    padding-top: 8px;
 }
 
 .expressionViewImpl-button {

@@ -93,7 +93,7 @@ body,table td,select {
 }
 
 .gwt-DialogBox .Caption {
-	background: #e3e8f3 url(../images/hborder.png) repeat-x 0px -2003px;
+	background: #e3e8f3 url(../images/hborder.png) repeat-x 0 -2003px;
 	padding: 4px 4px 4px 8px;
 	cursor: default;
 	border-bottom: 1px solid #bbbbbb;
@@ -106,12 +106,12 @@ body,table td,select {
 }
 
 .gwt-DialogBox .dialogMiddleCenter {
-	padding: 0px;
+	padding: 0;
 }
 
 .gwt-DialogBox .dialogBottomCenter {
-	background: url(../images/hborder.png) repeat-x 0px -4px;
-	-background: transparent url(../images/hborder_ie6.png) repeat-x 0px -4px;
+	background: url(../images/hborder.png) repeat-x 0 -4px;
+	-background: transparent url(../images/hborder_ie6.png) repeat-x 0 -4px;
 }
 
 .gwt-DialogBox .dialogMiddleLeft {
@@ -120,8 +120,8 @@ body,table td,select {
 }
 
 .gwt-DialogBox .dialogMiddleRight {
-	background: url(../images/vborder.png) repeat-y -4px 0px;
-	-background: transparent url(../images/vborder_ie6.png) repeat-y -4px 0px;
+	background: url(../images/vborder.png) repeat-y -4px 0;
+	-background: transparent url(../images/vborder_ie6.png) repeat-y -4px 0;
 }
 
 .gwt-DialogBox .dialogTopLeftInner {
@@ -147,14 +147,14 @@ body,table td,select {
 }
 
 .gwt-DialogBox .dialogTopLeft {
-	background: url(../images/corner.png) no-repeat -13px 0px;
-	-background: transparent url(../images/corner_ie6.png) no-repeat -13px 0px;
+	background: url(../images/corner.png) no-repeat -13px 0;
+	-background: transparent url(../images/corner_ie6.png) no-repeat -13px 0;
 	width: 5px;
 }
 
 .gwt-DialogBox .dialogTopRight {
-	background: url(../images/corner.png) no-repeat -18px 0px;
-	-background: transparent url(../images/corner_ie6.png) no-repeat -18px 0px;
+	background: url(../images/corner.png) no-repeat -18px 0;
+	-background: transparent url(../images/corner_ie6.png) no-repeat -18px 0;
 	width: 8px;
 }
 

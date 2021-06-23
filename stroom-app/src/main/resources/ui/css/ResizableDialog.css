@@ -42,8 +42,8 @@
 
 .resizableDialog-titleBar {
 	position: absolute;
-	left: 0px;
-	top: 0px;
+	left: 0;
+	top: 0;
 	width: 100%;
 	background-image: var(--dialog-titlebar-background-image);
 	background-color: var(--dialog-titlebar-background-color);

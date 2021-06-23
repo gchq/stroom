@@ -6,9 +6,7 @@
         <g:SimplePanel styleName="dock-min stroom-content stroom-border-bottom">
             <g:FlowPanel styleName="linkTabPanelViewImpl">
                 <g:FlowPanel ui:field="left" styleName="linkTabPanelViewImpl-left"/>
-                <g:ResizeLayoutPanel styleName="linkTabPanelViewImpl-middle">
-                    <tab:LinkTabBar ui:field="tabBar"/>
-                </g:ResizeLayoutPanel>
+                <tab:LinkTabBar ui:field="tabBar" styleName="linkTabPanelViewImpl-middle linkTabBar"/>
                 <g:FlowPanel ui:field="right" styleName="linkTabPanelViewImpl-right"/>
             </g:FlowPanel>
         </g:SimplePanel>

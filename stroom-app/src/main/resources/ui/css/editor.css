@@ -20,7 +20,7 @@
     color: var(--tooltip-text-color);
     background-image: none;
     border: none;
-    border-radius: 0px;
+    border-radius: 0;
     box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.5);
     font-family: var(--regular-font-family);
     font-size: var(--font-size-13);

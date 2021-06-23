@@ -21,13 +21,22 @@ import stroom.widget.tab.client.presenter.TabData;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
 
-public class LinkTabBar extends AbstractTabBar {
+public class LinkTabBar extends AbstractTabBar2 {
 
     public LinkTabBar() {
         final Element element = DOM.createDiv();
         element.setClassName("linkTabBar");
 
+        final Element text = DOM.createDiv();
+        text.setClassName("linkTabBar-hiddenText");
+        text.setInnerText("A");
+        element.appendChild(text);
+
         setElement(element);
+
+        ResizeObserver.observe(element, (e) -> {
+            onResize();
+        });
     }
 
     @Override

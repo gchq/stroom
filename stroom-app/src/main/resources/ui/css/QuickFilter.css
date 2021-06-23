@@ -18,13 +18,13 @@
     display: flex;
 	align-items: center;
     position: relative;
-	padding: 1px;
 	overflow: hidden;
+	border: 1px solid var(--border-color);
 }
 
 .quickFilter-textBox {
     width: 100%; /* To allow for info and clear btns */
-	margin: 0px;
+	margin: 0;
 	padding-left: 22px;
 	border: none !important;
 	cursor: text;
@@ -33,15 +33,15 @@
 .quickFilter-clear {
 	position: absolute;
 	right: 1px;
-	top: 0px;
+	top: 0;
 }
 
 .quickFilter-infoButton {
 	position: absolute;
 	/*
-	left: 0px;
+	left: 0;
 	top: -1px;
-	top: 0px;
+	top: 0;
 	*/
 }
 
