@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Improve exception handling when node name is not configured.
+
 
 ## [v7.0-beta.133] - 2021-06-21
 
