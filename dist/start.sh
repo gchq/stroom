@@ -166,9 +166,9 @@ start_stroom() {
     # Tail the log files in the background
     tail -F "${path_to_start_log}" "${path_to_app_log}" 2>/dev/null &
 
-    # STROOM_ADMIN_PORT is exported in scripts.env
+    # ADMIN_(PORT|PATH) are exported in scripts.env
     wait_for_200_response \
-      "http://localhost:${STROOM_ADMIN_PORT}/stroomAdmin/healthcheck"
+      "http://localhost:${ADMIN_PORT}/${ADMIN_PATH}/healthcheck"
 
     kill_log_tailing
 

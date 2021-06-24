@@ -83,7 +83,7 @@ main() {
 
   echo
   info "You can access the admin page at the following location:"
-  info "${BLUE}http://localhost:${STROOM_ADMIN_PORT}/stroomAdmin${NC}"
+  info "${BLUE}http://localhost:${ADMIN_PORT}/${ADMIN_PATH}${NC}"
 
   echo
   info "Data can be POSTed to ${APP_NAME} using the following URL (see README" \
