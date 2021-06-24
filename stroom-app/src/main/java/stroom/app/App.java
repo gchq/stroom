@@ -143,7 +143,8 @@ public class App extends Application<Config> {
         // This allows us to use templating in the YAML configuration.
         bootstrap.setConfigurationSourceProvider(
                 new StroomConfigurationSourceProvider(
-                        new SubstitutingSourceProvider(bootstrap.getConfigurationSourceProvider(),
+                        new SubstitutingSourceProvider(
+                                bootstrap.getConfigurationSourceProvider(),
                                 new EnvironmentVariableSubstitutor(false))
                 )
         );
@@ -315,7 +316,7 @@ public class App extends Application<Config> {
 
         if (result.hasErrors() && appConfig.isHaltBootOnConfigValidationFailure()) {
             LOGGER.error("Application configuration is invalid. Stopping Stroom. To run Stroom with invalid " +
-                            "configuration, set {} to false. This is not advised!",
+                            "configuration, set {} to false, however this is not advised!",
                     appConfig.getFullPath(AppConfig.PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE));
             System.exit(1);
         }
