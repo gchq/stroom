@@ -3,39 +3,35 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
 >
-    <g:DockLayoutPanel unit="PX" width="100%" height="100%">
-        <g:south size="120">
-            <g:SimplePanel styleName="ruleView-bottom max">
-                <g:Grid ui:field="grid" styleName="stroom-control-grid" width="100%">
-                    <g:row>
-                        <g:cell>Hide:</g:cell>
-                        <g:customCell>
-                            <tickbox:TickBox ui:field="hide"/>
-                        </g:customCell>
-                    </g:row>
-                    <g:row>
-                        <g:cell>Background Color:</g:cell>
-                        <g:customCell>
-                            <g:TextBox ui:field="backgroundColor" width="100%"/>
-                        </g:customCell>
-                    </g:row>
-                    <g:row>
-                        <g:cell>Text Color:</g:cell>
-                        <g:customCell>
-                            <g:TextBox ui:field="textColor" width="100%"/>
-                        </g:customCell>
-                    </g:row>
-                    <g:row>
-                        <g:cell>Enabled:</g:cell>
-                        <g:customCell>
-                            <tickbox:TickBox ui:field="enabled"/>
-                        </g:customCell>
-                    </g:row>
-                </g:Grid>
-            </g:SimplePanel>
-        </g:south>
-        <g:center>
-            <g:SimplePanel ui:field="expression" styleName="max stroom-content stroom-border"/>
-        </g:center>
-    </g:DockLayoutPanel>
+    <g:FlowPanel styleName="dock-container-vertical">
+        <g:SimplePanel styleName="dock-min ruleView-bottom max">
+            <g:Grid ui:field="grid" styleName="stroom-control-grid w-100">
+                <g:row>
+                    <g:cell>Hide:</g:cell>
+                    <g:customCell>
+                        <tickbox:TickBox ui:field="hide"/>
+                    </g:customCell>
+                </g:row>
+                <g:row>
+                    <g:cell>Background Color:</g:cell>
+                    <g:customCell>
+                        <g:TextBox ui:field="backgroundColor" addStyleNames="w-100"/>
+                    </g:customCell>
+                </g:row>
+                <g:row>
+                    <g:cell>Text Color:</g:cell>
+                    <g:customCell>
+                        <g:TextBox ui:field="textColor" addStyleNames="w-100"/>
+                    </g:customCell>
+                </g:row>
+                <g:row>
+                    <g:cell>Enabled:</g:cell>
+                    <g:customCell>
+                        <tickbox:TickBox ui:field="enabled"/>
+                    </g:customCell>
+                </g:row>
+            </g:Grid>
+        </g:SimplePanel>
+        <g:SimplePanel ui:field="expression" styleName="dock-max stroom-content stroom-border"/>
+    </g:FlowPanel>
 </ui:UiBinder>

@@ -19,13 +19,12 @@ package stroom.security.client.view;
 import stroom.item.client.ItemListBox;
 import stroom.security.client.presenter.DocumentPermissionsPresenter;
 import stroom.security.shared.ChangeDocumentPermissionsRequest;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.Grid;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -37,11 +36,7 @@ public final class DocumentPermissionsViewImpl extends ViewImpl
 
     private final Widget widget;
     @UiField
-    DockLayoutPanel layout;
-    @UiField
-    DockLayoutPanel innerLayout;
-    @UiField
-    ResizeSimplePanel tabs;
+    SimplePanel tabs;
     @UiField
     Button copyPermissionsFromParentButton;
     @UiField
@@ -77,7 +72,7 @@ public final class DocumentPermissionsViewImpl extends ViewImpl
 
     @Override
     public void setCascadeVisible(boolean visible) {
-        innerLayout.setWidgetHidden(cascadeGrid, !visible);
+        cascadeGrid.setVisible(visible);
     }
 
     public interface Binder extends UiBinder<Widget, DocumentPermissionsViewImpl> {

@@ -16,13 +16,13 @@
 
 package stroom.widget.tab.client.view;
 
-import stroom.widget.layout.client.view.ResizeSimplePanel;
 import stroom.widget.tab.client.presenter.CurveTabLayoutView;
 import stroom.widget.tab.client.presenter.TabBar;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.LayerContainer;
@@ -32,7 +32,7 @@ public class CurveTabLayoutViewImpl extends ViewImpl implements CurveTabLayoutVi
 
     private final Widget widget;
     @UiField
-    ResizeSimplePanel tabBarOuter;
+    SimplePanel tabBarOuter;
     @UiField
     TabBar tabBar;
     @UiField

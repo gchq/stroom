@@ -42,10 +42,9 @@ import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.util.client.SelectionType;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.DockLayoutPanel;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -101,19 +100,19 @@ public class ExplorerTreePresenter
                 activityContainer.setStyleName("activityContainer");
 
                 final SimplePanel activityOuter = new SimplePanel();
-                activityOuter.setStyleName("activityOuter");
+                activityOuter.setStyleName("dock-min activityOuter");
                 activityOuter.setWidget(activityContainer);
 
                 final SimplePanel treeContainer = new SimplePanel();
-                treeContainer.setStyleName("stroom-content");
+                treeContainer.setStyleName("dock-max stroom-content");
                 treeContainer.setWidget(explorerTree);
 
-                final DockLayoutPanel dockLayoutPanel = new DockLayoutPanel(Unit.PX);
-                dockLayoutPanel.setStyleName("explorerWrapper");
-                dockLayoutPanel.addSouth(activityOuter, 107);
-                dockLayoutPanel.add(treeContainer);
+                final FlowPanel explorerWrapper = new FlowPanel();
+                explorerWrapper.setStyleName("dock-container-vertical explorerWrapper");
+                explorerWrapper.add(treeContainer);
+                explorerWrapper.add(activityOuter);
 
-                view.setCellTree(dockLayoutPanel);
+                view.setCellTree(explorerWrapper);
 
                 updateActivitySummary();
 

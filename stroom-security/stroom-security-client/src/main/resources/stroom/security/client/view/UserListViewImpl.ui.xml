@@ -1,12 +1,9 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:view="urn:import:stroom.widget.dropdowntree.client.view"
-             xmlns:layout="urn:import:stroom.widget.layout.client.view">
+             xmlns:view="urn:import:stroom.widget.dropdowntree.client.view">
     <g:FlowPanel styleName="dock-container-vertical max">
-        <view:QuickFilter ui:field="nameFilter"
-                          addStyleNames="dock-min userListViewImpl-nameFilter"/>
-        <layout:ResizeSimplePanel ui:field="dataGrid"
-                                  styleName="dock-max dataGrid stroom-border"/>
+        <view:QuickFilter ui:field="nameFilter" addStyleNames="dock-min userListViewImpl-nameFilter"/>
+        <g:SimplePanel ui:field="dataGrid" styleName="dock-max stroom-border"/>
     </g:FlowPanel>
 </ui:UiBinder>

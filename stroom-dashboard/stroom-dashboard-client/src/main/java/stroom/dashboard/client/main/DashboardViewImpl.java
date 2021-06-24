@@ -16,8 +16,6 @@
 
 package stroom.dashboard.client.main;
 
-import stroom.widget.layout.client.view.ResizeSimplePanel;
-
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -26,6 +24,7 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -43,7 +42,7 @@ public class DashboardViewImpl extends ViewWithUiHandlers<DashboardUiHandlers>
     @UiField
     TextBox params;
     @UiField
-    ResizeSimplePanel content;
+    SimplePanel content;
 
     @Inject
     public DashboardViewImpl(final Binder binder) {

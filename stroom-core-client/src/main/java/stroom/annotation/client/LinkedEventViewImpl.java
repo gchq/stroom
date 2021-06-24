@@ -21,12 +21,12 @@ import stroom.annotation.client.LinkedEventPresenter.LinkedEventView;
 import stroom.svg.client.Preset;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
@@ -37,9 +37,9 @@ public class LinkedEventViewImpl extends ViewImpl implements LinkedEventView, Re
     private final Widget widget;
 
     @UiField
-    ResizeSimplePanel eventList;
+    SimplePanel eventList;
     @UiField
-    ResizeSimplePanel data;
+    SimplePanel data;
     @UiField
     ButtonPanel buttonPanel;
 

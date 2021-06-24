@@ -17,10 +17,10 @@
 package stroom.job.client.view;
 
 import stroom.job.client.presenter.JobPresenter;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
@@ -29,9 +29,9 @@ public class JobViewImpl extends ViewImpl implements JobPresenter.JobView {
 
     private final Widget widget;
     @UiField
-    ResizeSimplePanel jobList;
+    SimplePanel jobList;
     @UiField
-    ResizeSimplePanel jobNodeList;
+    SimplePanel jobNodeList;
 
     @Inject
     public JobViewImpl(final Binder binder) {

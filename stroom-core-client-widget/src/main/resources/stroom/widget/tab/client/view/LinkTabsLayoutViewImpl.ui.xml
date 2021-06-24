@@ -3,6 +3,6 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:tab="urn:import:stroom.widget.tab.client.view">
     <g:FlowPanel styleName="max dock-container-vertical">
         <tab:LinkTabBar ui:field="tabBar" styleName="dock-min linkTabBar"/>
-        <tab:LayerContainerImpl ui:field="layerContainer" styleName="dock-max layerContainer-container"/>
+        <tab:LayerContainerImpl ui:field="layerContainer" styleName="dock-max"/>
     </g:FlowPanel>
 </ui:UiBinder> 

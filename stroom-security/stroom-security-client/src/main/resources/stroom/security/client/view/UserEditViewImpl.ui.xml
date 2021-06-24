@@ -1,33 +1,17 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
-<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:v="urn:import:stroom.widget.layout.client.view">
-    <g:DockLayoutPanel unit="PX" width="100%" height="100%">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui">
+    <g:MySplitLayoutPanel styleName="max">
+        <g:north size="200">
+            <g:FlowPanel styleName="dock-container-vertical">
+                <g:Label text="Group Membership:" styleName="dock-min"/>
+                <g:SimplePanel ui:field="userGroups" styleName="dock-max"/>
+            </g:FlowPanel>
+        </g:north>
         <g:center>
-            <g:MySplitLayoutPanel width="100%" height="100%">
-                <g:north size="200">
-                    <g:DockLayoutPanel unit="PX" width="100%" height="100%">
-                        <g:north size="15">
-                            <g:Label text="Group Membership:" width="100%"/>
-                        </g:north>
-                        <g:center>
-                            <v:ResizeSimplePanel ui:field="userGroups" width="100%" height="100%"/>
-                        </g:center>
-                    </g:DockLayoutPanel>
-                </g:north>
-                <g:center>
-                    <g:DockLayoutPanel unit="PX" width="100%" height="100%">
-                        <g:north size="15">
-                            <g:Label text="Application Permissions:" width="100%"/>
-                        </g:north>
-                        <g:center>
-                            <v:ResizeSimplePanel ui:field="appPermissions" styleName="stroom-border" width="100%"
-                                                 height="100%"/>
-                        </g:center>
-                    </g:DockLayoutPanel>
-                </g:center>
-            </g:MySplitLayoutPanel>
+            <g:FlowPanel styleName="dock-container-vertical">
+                <g:Label text="Application Permissions:" styleName="dock-min"/>
+                <g:SimplePanel ui:field="appPermissions" styleName="dock-max stroom-border"/>
+            </g:FlowPanel>
         </g:center>
-    </g:DockLayoutPanel>
-
-
+    </g:MySplitLayoutPanel>
 </ui:UiBinder> 

@@ -1,40 +1,28 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-  xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:v="urn:import:stroom.widget.layout.client.view">
-  <v:ResizeSimplePanel styleName="stroom-control-page" width="100%" height="100%">
-    <g:DockLayoutPanel unit="PX" width="100%" height="100%">
-      <g:north size="132">
-        <g:Grid styleName="stroom-control-grid">
-          <g:row>
-            <g:cell>Description:</g:cell>
-            <g:customCell>
-              <g:TextArea ui:field="description" width="400px" />
-            </g:customCell>
-          </g:row>
-          <g:row>
-            <g:cell>Function Name:</g:cell>
-            <g:customCell>
-              <g:TextBox ui:field="functionName" />
-            </g:customCell>
-          </g:row>
-          <g:row>
-            <g:cell>Script:</g:cell>
-            <g:customCell>
-              <g:SimplePanel ui:field="script" />
-            </g:customCell>
-          </g:row>
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+    <g:FlowPanel styleName="dock-container-vertical stroom-control-page">
+        <g:Grid styleName="dock-min stroom-control-grid">
+            <g:row>
+                <g:cell>Description:</g:cell>
+                <g:customCell>
+                    <g:TextArea ui:field="description" width="400px"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Function Name:</g:cell>
+                <g:customCell>
+                    <g:TextBox ui:field="functionName"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Script:</g:cell>
+                <g:customCell>
+                    <g:SimplePanel ui:field="script"/>
+                </g:customCell>
+            </g:row>
         </g:Grid>
-      </g:north>
-      <g:center>
-        <g:DockLayoutPanel unit="PX" width="100%" height="100%">
-          <g:north size="15">
-            <g:Label text="Settings:" width="100%" />
-          </g:north>
-          <g:center>
-            <v:ResizeSimplePanel ui:field="settings" addStyleNames="max stroom-border" />
-          </g:center>
-        </g:DockLayoutPanel>
-      </g:center>
-    </g:DockLayoutPanel>
-  </v:ResizeSimplePanel>
+        <g:Label text="Settings:" addStyleNames="dock-min"/>
+        <g:SimplePanel ui:field="settings" addStyleNames="dock-max stroom-border"/>
+    </g:FlowPanel>
 </ui:UiBinder>

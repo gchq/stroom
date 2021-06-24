@@ -20,7 +20,6 @@ import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter.Pip
 import stroom.pipeline.structure.client.presenter.PipelineStructureUiHandlers;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.SvgButton;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -50,9 +49,9 @@ public class PipelineStructureViewImpl extends ViewWithUiHandlers<PipelineStruct
     @UiField
     ScrollPanel treeContainer;
     @UiField
-    ResizeSimplePanel properties;
+    SimplePanel properties;
     @UiField
-    ResizeSimplePanel pipelineReferences;
+    SimplePanel pipelineReferences;
     @UiField
     Hyperlink viewSource;
 

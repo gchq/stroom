@@ -17,27 +17,27 @@
 package stroom.data.client.view;
 
 import stroom.data.client.presenter.MetaPresenter;
-import stroom.data.client.presenter.MetaPresenter.StreamView;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
+import stroom.data.client.presenter.MetaPresenter.MetaView;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-public class StreamViewImpl extends ViewImpl implements StreamView {
+public class MetaViewImpl extends ViewImpl implements MetaView {
 
     private final Widget widget;
     @UiField
-    ResizeSimplePanel streamList;
+    SimplePanel streamList;
     @UiField
-    ResizeSimplePanel streamRelationList;
+    SimplePanel streamRelationList;
     @UiField
-    ResizeSimplePanel data;
+    SimplePanel data;
 
     @Inject
-    public StreamViewImpl(final Binder binder) {
+    public MetaViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
@@ -57,7 +57,7 @@ public class StreamViewImpl extends ViewImpl implements StreamView {
         }
     }
 
-    public interface Binder extends UiBinder<Widget, StreamViewImpl> {
+    public interface Binder extends UiBinder<Widget, MetaViewImpl> {
 
     }
 }

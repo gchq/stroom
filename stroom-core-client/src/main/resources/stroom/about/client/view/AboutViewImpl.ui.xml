@@ -1,23 +1,19 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui">
-    <g:DockLayoutPanel unit="PX" styleName="aboutViewImpl-layout stroom-border-bottom">
-        <g:north size="30">
-            <g:FlowPanel styleName="stroom-body aboutViewImpl-stroom-body stroom-content">
-                <g:HTMLPanel>
-                    <img style="position:absolute;width:185px;height:29px;" src="images/logo.svg"/>
-                </g:HTMLPanel>
-            </g:FlowPanel>
-        </g:north>
-        <g:center>
-            <g:FlowPanel styleName="aboutViewImpl-body">
-                <g:SimplePanel ui:field="html"/>
-                <g:FlowPanel styleName="aboutViewImpl-buildInfo">
+    <g:FlowPanel styleName="dock-container-vertical aboutViewImpl-layout stroom-border-bottom">
+        <g:HTMLPanel styleName="dock-min stroom-body aboutViewImpl-stroom-body stroom-content">
+            <img style="position:absolute;width:185px;height:29px;" src="images/logo.svg"/>
+        </g:HTMLPanel>
+        <g:FlowPanel styleName="dock-max aboutViewImpl-body">
+            <g:SimplePanel ui:field="html"/>
+            <g:SimplePanel styleName="aboutViewImpl-buildInfo">
+                <g:FlowPanel>
                     <g:Label ui:field="buildVersion"/>
                     <g:Label ui:field="buildDate"/>
                     <g:Label ui:field="upDate"/>
                     <g:Label ui:field="nodeName"/>
                 </g:FlowPanel>
-            </g:FlowPanel>
-        </g:center>
-    </g:DockLayoutPanel>
+            </g:SimplePanel>
+        </g:FlowPanel>
+    </g:FlowPanel>
 </ui:UiBinder>

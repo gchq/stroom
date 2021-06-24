@@ -1,40 +1,36 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:v="urn:import:stroom.widget.button.client"
-             xmlns:view="urn:import:stroom.widget.layout.client.view">
-    <g:DockLayoutPanel unit="PX" addStyleNames="max">
-        <g:north size="26">
-            <g:FlowPanel styleName="pipelineStructureViewImpl-bar stroom-border-bottom">
-                <g:FlowPanel styleName="pipelineStructureViewImpl-buttons">
-                    <v:SvgButton ui:field="add"/>
-                    <v:SvgButton ui:field="remove"/>
-                    <v:SvgButton ui:field="restore"/>
-                </g:FlowPanel>
-                <g:Label text="Inherit From: " styleName="gwt-Label pipelineStructureViewImpl-label"/>
-                <g:SimplePanel ui:field="inherit"/>
-                <g:Hyperlink ui:field="viewSource" text="View Source"
-                             addStyleNames="pipelineStructureViewImpl-viewSource"/>
+             xmlns:v="urn:import:stroom.widget.button.client">
+    <g:FlowPanel addStyleNames="dock-container-vertical">
+        <g:FlowPanel styleName="dock-min pipelineStructureViewImpl-bar stroom-border-bottom">
+            <g:FlowPanel styleName="pipelineStructureViewImpl-buttons">
+                <v:SvgButton ui:field="add"/>
+                <v:SvgButton ui:field="remove"/>
+                <v:SvgButton ui:field="restore"/>
             </g:FlowPanel>
-        </g:north>
-        <g:center>
-            <g:MySplitLayoutPanel vSplits="0.4">
-                <g:north size="200">
-                    <g:MaxScrollPanel ui:field="treeContainer" addStyleNames="stroom-content stroom-border-bottom pipelineStructureViewImpl-treeContainer"/>
-                </g:north>
-                <g:center>
-                    <g:MySplitLayoutPanel vSplits="0.5" styleName="stroom-border-top">
-                        <g:north size="200">
-                            <view:ResizeSimplePanel ui:field="properties"
-                                                    styleName="stroom-content stroom-border-bottom"/>
-                        </g:north>
-                        <g:center>
-                            <view:ResizeSimplePanel ui:field="pipelineReferences"
-                                                    styleName="stroom-content stroom-border-top"/>
-                        </g:center>
-                    </g:MySplitLayoutPanel>
-                </g:center>
-            </g:MySplitLayoutPanel>
-        </g:center>
-    </g:DockLayoutPanel>
+            <g:Label text="Inherit From: " styleName="gwt-Label pipelineStructureViewImpl-label"/>
+            <g:SimplePanel ui:field="inherit"/>
+            <g:Hyperlink ui:field="viewSource" text="View Source"
+                         addStyleNames="pipelineStructureViewImpl-viewSource"/>
+        </g:FlowPanel>
+        <g:MySplitLayoutPanel vSplits="0.4" styleName="dock-max">
+            <g:north size="200">
+                <g:MaxScrollPanel ui:field="treeContainer"
+                                  addStyleNames="stroom-content stroom-border-bottom pipelineStructureViewImpl-treeContainer"/>
+            </g:north>
+            <g:center>
+                <g:MySplitLayoutPanel vSplits="0.5" styleName="max stroom-border-top">
+                    <g:north size="200">
+                        <g:SimplePanel ui:field="properties"
+                                       styleName="stroom-content stroom-border-bottom"/>
+                    </g:north>
+                    <g:center>
+                        <g:SimplePanel ui:field="pipelineReferences"
+                                       styleName="stroom-content stroom-border-top"/>
+                    </g:center>
+                </g:MySplitLayoutPanel>
+            </g:center>
+        </g:MySplitLayoutPanel>
+    </g:FlowPanel>
 </ui:UiBinder>
  

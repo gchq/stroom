@@ -2,14 +2,11 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:v="urn:import:stroom.widget.dropdowntree.client.view">
-    <g:DockLayoutPanel unit="PX" styleName="itemCheckList max">
-        <g:north size="21">
-            <v:QuickFilter ui:field="nameFilter" addStyleNames="dropDownTreeViewImpl-nameFilter stroom-border-bottom"/>
-        </g:north>
-        <g:center>
-            <g:MaxScrollPanel>
-                <g:SimplePanel ui:field="treeContainer" addStyleNames="max"/>
-            </g:MaxScrollPanel>
-        </g:center>
-    </g:DockLayoutPanel>
+    <g:FlowPanel styleName="dock-container-vertical itemCheckList max">
+        <v:QuickFilter ui:field="nameFilter"
+                       addStyleNames="dock-min dropDownTreeViewImpl-nameFilter stroom-border-bottom"/>
+        <g:MaxScrollPanel addStyleNames="dock-max">
+            <g:SimplePanel ui:field="treeContainer" addStyleNames="max"/>
+        </g:MaxScrollPanel>
+    </g:FlowPanel>
 </ui:UiBinder>

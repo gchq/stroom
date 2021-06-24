@@ -30,6 +30,8 @@ public class CurveTabBar extends AbstractTabBar {
         element.setClassName("curveTabBar");
 
         setElement(element);
+
+        ResizeObserver.observe(element, (e) -> onResize());
     }
 
     @Override

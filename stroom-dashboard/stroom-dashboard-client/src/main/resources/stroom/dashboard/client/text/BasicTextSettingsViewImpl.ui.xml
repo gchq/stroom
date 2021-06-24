@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:v="urn:import:stroom.widget.tickbox.client.view"
              xmlns:i="urn:import:stroom.item.client">
-    <g:Grid styleName="stroom-control-grid" width="100%">
+    <g:Grid styleName="stroom-control-grid w-100">
         <g:row>
             <g:cell>Id:</g:cell>
             <g:customCell>
@@ -13,61 +13,61 @@
         <g:row>
             <g:cell>Name:</g:cell>
             <g:customCell>
-                <g:TextBox ui:field="name" width="100%"/>
+                <g:TextBox ui:field="name" addStyleNames="w-100"/>
             </g:customCell>
         </g:row>
         <g:row>
             <g:cell>Table:</g:cell>
             <g:customCell>
-                <i:ItemListBox ui:field="table" width="100%"/>
+                <i:ItemListBox ui:field="table" addStyleNames="w-100"/>
             </g:customCell>
         </g:row>
         <g:row>
             <g:cell>Stream Id Field:</g:cell>
             <g:customCell>
-                <i:ItemListBox ui:field="streamIdField" width="100%"/>
+                <i:ItemListBox ui:field="streamIdField" addStyleNames="w-100"/>
             </g:customCell>
         </g:row>
         <g:row>
             <g:cell>Part No Field:</g:cell>
             <g:customCell>
-                <i:ItemListBox ui:field="partNoField" width="100%"/>
+                <i:ItemListBox ui:field="partNoField" addStyleNames="w-100"/>
             </g:customCell>
         </g:row>
         <g:row>
             <g:cell>Record No Field:</g:cell>
             <g:customCell>
-                <i:ItemListBox ui:field="recordNoField" width="100%"/>
+                <i:ItemListBox ui:field="recordNoField" addStyleNames="w-100"/>
             </g:customCell>
         </g:row>
         <g:row>
             <g:cell>Line From Field:</g:cell>
             <g:customCell>
-                <i:ItemListBox ui:field="lineFromField" width="100%"/>
+                <i:ItemListBox ui:field="lineFromField" addStyleNames="w-100"/>
             </g:customCell>
         </g:row>
         <g:row>
             <g:cell>Col From Field:</g:cell>
             <g:customCell>
-                <i:ItemListBox ui:field="colFromField" width="100%"/>
+                <i:ItemListBox ui:field="colFromField" addStyleNames="w-100"/>
             </g:customCell>
         </g:row>
         <g:row>
             <g:cell>Line To Field:</g:cell>
             <g:customCell>
-                <i:ItemListBox ui:field="lineToField" width="100%"/>
+                <i:ItemListBox ui:field="lineToField" addStyleNames="w-100"/>
             </g:customCell>
         </g:row>
         <g:row>
             <g:cell>Col To Field:</g:cell>
             <g:customCell>
-                <i:ItemListBox ui:field="colToField" width="100%"/>
+                <i:ItemListBox ui:field="colToField" addStyleNames="w-100"/>
             </g:customCell>
         </g:row>
         <g:row>
             <g:cell>Pipeline:</g:cell>
             <g:customCell>
-                <g:SimplePanel ui:field="pipeline" width="100%"/>
+                <g:SimplePanel ui:field="pipeline" addStyleNames="w-100"/>
             </g:customCell>
         </g:row>
         <g:row>

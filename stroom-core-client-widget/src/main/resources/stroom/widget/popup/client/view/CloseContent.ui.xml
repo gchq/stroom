@@ -2,8 +2,8 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
     <g:FlowPanel styleName="max dock-container-vertical">
-        <g:SimplePanel ui:field="content" styleName="dock-max"/>
-        <g:FlowPanel styleName="dock-min closeContent-layout">
+        <g:SimplePanel ui:field="content" styleName="dialog-content"/>
+        <g:FlowPanel styleName="dialog-buttons">
             <g:Button ui:field="close" text="Close"/>
         </g:FlowPanel>
     </g:FlowPanel>

@@ -21,12 +21,12 @@ import stroom.data.client.presenter.EditExpressionPresenter.EditExpressionView;
 import stroom.svg.client.Preset;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
@@ -37,7 +37,7 @@ public class EditExpressionViewImpl extends ViewImpl implements EditExpressionVi
     private final Widget widget;
 
     @UiField
-    ResizeSimplePanel expressionTree;
+    SimplePanel expressionTree;
     @UiField
     ButtonPanel buttonPanel;
 

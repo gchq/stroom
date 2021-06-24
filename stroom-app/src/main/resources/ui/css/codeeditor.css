@@ -40,26 +40,18 @@
 }
 
 .codeEditor-rightBar {
-	position: relative;
-	left: 0px;
-	top: 0px;
-	width: 100%;
-	height: 100%;
-	padding: 0px;
-	margin: 0px;
-	overflow: hidden;
-	background-color: var(--code-editor-right-bar-background-color);
-	border-left: solid 1px var(--code-editor-border-color);
-
-	-moz-user-focus: ignore;
-	-moz-user-input: disabled;
-	-moz-user-select: none;
-	-webkit-user-focus: ignore;
-	-webkit-user-input: disabled;
-	-webkit-user-select: none;
-	user-focus: ignore;
-	user-input: disabled;
-	user-select: none;
+    overflow: hidden;
+    background-color: var(--code-editor-right-bar-background-color);
+    border-left: solid 1px var(--code-editor-border-color);
+    -moz-user-focus: ignore;
+    -moz-user-input: disabled;
+    -moz-user-select: none;
+    -webkit-user-focus: ignore;
+    -webkit-user-input: disabled;
+    -webkit-user-select: none;
+    user-focus: ignore;
+    user-input: disabled;
+    user-select: none;
 }
 
 .codeEditor-summaryContainer {

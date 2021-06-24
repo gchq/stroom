@@ -17,11 +17,11 @@
 package stroom.dashboard.client.table;
 
 import stroom.dashboard.client.table.TablePresenter.TableView;
-import stroom.widget.layout.client.view.ResizeFlowPanel;
 import stroom.widget.spinner.client.SpinnerSmall;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
@@ -34,7 +34,7 @@ public class TableViewImpl extends ViewImpl
     private final SpinnerSmall spinnerSmall;
 
     @UiField
-    ResizeFlowPanel layout;
+    FlowPanel layout;
 
     @Inject
     public TableViewImpl(final Binder binder) {

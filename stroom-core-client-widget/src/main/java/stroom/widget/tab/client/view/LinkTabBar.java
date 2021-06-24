@@ -21,7 +21,7 @@ import stroom.widget.tab.client.presenter.TabData;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
 
-public class LinkTabBar extends AbstractTabBar2 {
+public class LinkTabBar extends AbstractTabBar {
 
     public LinkTabBar() {
         final Element element = DOM.createDiv();

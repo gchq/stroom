@@ -3,10 +3,10 @@ package stroom.data.client.view;
 import stroom.data.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
 import stroom.data.client.presenter.DataPresenter;
 import stroom.data.client.presenter.DataPreviewTabPresenter.DataPreviewTabView;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -19,7 +19,7 @@ public class DataPreviewTabViewImpl extends ViewImpl implements DataPreviewTabVi
     private final Widget widget;
 
     @UiField
-    ResizeSimplePanel container;
+    SimplePanel container;
 
     @Inject
     public DataPreviewTabViewImpl(final EventBus eventBus,

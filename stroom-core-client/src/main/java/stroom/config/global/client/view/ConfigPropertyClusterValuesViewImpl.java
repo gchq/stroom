@@ -2,10 +2,10 @@ package stroom.config.global.client.view;
 
 import stroom.config.global.client.presenter.ConfigPropertyClusterValuesPresenter;
 import stroom.config.global.client.presenter.ConfigPropertyClusterValuesUiHandlers;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
@@ -17,7 +17,7 @@ public class ConfigPropertyClusterValuesViewImpl
     private final Widget widget;
 
     @UiField
-    ResizeSimplePanel dataGrid;
+    SimplePanel dataGrid;
 
     @Inject
     ConfigPropertyClusterValuesViewImpl(final Binder binder) {

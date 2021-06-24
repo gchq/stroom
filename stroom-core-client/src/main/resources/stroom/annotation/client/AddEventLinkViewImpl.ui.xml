@@ -1,13 +1,13 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
   xmlns:g="urn:import:com.google.gwt.user.client.ui">
-  <g:Grid styleName="stroom-control-grid" width="100%">
+  <g:Grid styleName="stroom-control-grid w-100">
     <g:row>
       <g:customCell>
         <g:Label text="Event:" width="40px" />
       </g:customCell>
       <g:customCell>
-        <g:TextBox ui:field="event" width="100%" />
+        <g:TextBox ui:field="event" addStyleNames="w-100" />
       </g:customCell>
     </g:row>
   </g:Grid>

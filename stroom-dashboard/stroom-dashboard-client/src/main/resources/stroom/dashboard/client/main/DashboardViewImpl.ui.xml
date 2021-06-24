@@ -1,13 +1,12 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:v="urn:import:stroom.widget.layout.client.view">
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
     <g:FlowPanel styleName="max dock-container-vertical">
         <g:FlowPanel styleName="dock-min dock-container-horizontal">
             <g:FlowPanel ui:field="left" styleName="dock-min button-container dashboardViewImpl-leftInner"/>
             <g:TextBox ui:field="params" styleName="dashboardViewImpl-params"/>
             <g:FlowPanel ui:field="right"/>
         </g:FlowPanel>
-        <v:ResizeSimplePanel ui:field="content" styleName="dock-max dashboardViewImpl-content"/>
+        <g:SimplePanel ui:field="content" styleName="dock-max dashboardViewImpl-content"/>
     </g:FlowPanel>
 </ui:UiBinder>
