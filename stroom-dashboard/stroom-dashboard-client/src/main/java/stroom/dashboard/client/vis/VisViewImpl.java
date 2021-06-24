@@ -20,6 +20,7 @@ import stroom.dashboard.client.vis.VisPresenter.VisView;
 import stroom.widget.layout.client.view.ResizeFlowPanel;
 import stroom.widget.spinner.client.SpinnerSmall;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Label;
@@ -107,13 +108,29 @@ public class VisViewImpl extends ViewImpl implements VisView {
     private void resize() {
         if (visPane != null) {
             final Style style = visPane.asWidget().getElement().getStyle();
-            style.setLeft(visContainer.getElement().getAbsoluteLeft(), Unit.PX);
-            style.setTop(visContainer.getElement().getAbsoluteTop(), Unit.PX);
-            style.setWidth(visContainer.getElement().getClientWidth(), Unit.PX);
-            style.setHeight(visContainer.getElement().getClientHeight(), Unit.PX);
+            Element ref = visContainer.getElement();
+            while (ref != null && (ref.getClassName() == null || !ref.getClassName().contains("tabLayout-contentInner"))) {
+                ref = ref.getParentElement();
+            }
 
-            if (visPane instanceof RequiresResize) {
-                visPane.onResize();
+            if (ref != null) {
+                style.setLeft(ref.getAbsoluteLeft(), Unit.PX);
+                style.setTop(ref.getAbsoluteTop(), Unit.PX);
+                style.setWidth(ref.getClientWidth(), Unit.PX);
+                style.setHeight(ref.getClientHeight(), Unit.PX);
+
+                if (visPane instanceof RequiresResize) {
+                    visPane.onResize();
+                }
+            } else {
+                style.setLeft(-1000, Unit.PX);
+                style.setTop(-1000, Unit.PX);
+                style.setWidth(1000, Unit.PX);
+                style.setHeight(1000, Unit.PX);
+
+                if (visPane instanceof RequiresResize) {
+                    visPane.onResize();
+                }
             }
         }
     }

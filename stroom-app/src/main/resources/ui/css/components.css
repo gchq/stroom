@@ -31,9 +31,10 @@
     padding: 5px;
 }
 
-.buttonPanel-layout {
+.button-container {
     display: flex;
     align-items: center;
+    margin: 2px;
 
     /*
     white-space: nowrap;
@@ -1112,54 +1113,13 @@
     padding-bottom: 12px;
 }
 
-.dashboardViewImpl-dashboard {
-    overflow: hidden;
-}
-
-.dashboardViewImpl-bar {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    height: 21px;
-}
-
 .dashboardViewImpl-content {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 21px;
-    bottom: 0;
-}
-
-.dashboardViewImpl-left {
     position: relative;
-    width: 0;
-}
-
-.dashboardViewImpl-middle {
-    position: relative;
-    width: 100%;
-}
-
-.dashboardViewImpl-paramsContainer {
-    width: 100%;
-    padding: 2px;
 }
 
 .dashboardViewImpl-params {
     width: 100%;
     border: 1px solid #ddd;
-}
-
-.dashboardViewImpl-right {
-    position: relative;
-    width: 0;
-}
-
-.dashboardViewImpl-rightInner {
-    position: absolute;
-    right: 0;
 }
 
 .subStreamNavigator {

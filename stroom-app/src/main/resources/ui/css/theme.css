@@ -318,14 +318,6 @@
 	-o-transition: background-color 3s linear;
 }
 
-/*
-.stroom-theme-transitions .stroom-content-container {
-    transition: background-color 3s linear;
-	-webkit-transition: background-color 3s linear;
-	-moz-transition: background-color 3s linear;
-	-o-transition: background-color 3s linear;
-}
-*/
 .stroom-theme-transitions .gwt-TabLayoutPanel .gwt-TabLayoutPanelContent {
     transition: background-color 3s linear;
 	-webkit-transition: background-color 3s linear;

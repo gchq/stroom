@@ -15,9 +15,6 @@
  */
 
 .stroom-dashboard-query {
-	width: 100%;
-	height: 100%;
-	padding-top: 18px;
 }
 
 .stroom-dashboard-query-buttons {
@@ -87,9 +84,6 @@
 }
 
 .stroom-dashboard-table {
-	width: 100%;
-	height: 100%;
-	padding-top: var(--font-size-18);
 }
 
 .stroom-dashboard-table .dataGridHeader {

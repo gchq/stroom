@@ -153,45 +153,50 @@ td {
 
 /* STYLES FOR THE LOADING BANNER */
 #loading {
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	height: 50px;
-	font-size: var(--font-size-13);
-	color: #000;
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    font-size: var(--font-size-13);
+    color: #000;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 #loadingBox {
-	position: relative;
-	top: -26px;
-	left: -50%;
-	border: 1px solid #404e60;
-	background: white;
-	padding: 10px;
-	margin: 0;
-	width: 270px;
-	min-height: 53px;
-	text-align: center;
-	z-index: 100;
-	
-	border-radius: 200px;
-	box-shadow: 1px 1px 8px rgba(0, 0, 0, 0.2), -1px -1px 8px rgba(0, 0, 0, 0.2);
+    border: 1px solid #404e60;
+    background: white;
+    padding: 10px;
+    z-index: 100;
+    border-radius: 200px;
+    box-shadow: 1px 1px 8px rgba(0, 0, 0, 0.2), -1px -1px 8px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
 }
 
-#loadingImage {
-	float: left;
-	margin-right: 8px;
+#loadingLeft {
+    margin: 0 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    align-content: center;
+}
+
+#loadingRight {
+    margin: 0 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    align-content: center;
 }
 
 #loadingTitle {
 	font-weight: 500;
-	padding-left: 42px;
-	text-align: left;
 }
 
 #loadingText {
-	padding-left: 42px;
-	text-align: left;
 }
 
 .stroom-pipeline-stepping-button {

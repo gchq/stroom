@@ -30,6 +30,7 @@ import stroom.data.grid.client.Glass;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.view.LinkTab;
 import stroom.widget.tab.client.view.LinkTabBar;
+import stroom.widget.tab.client.view.ResizeObserver;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
@@ -39,8 +40,6 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.ProvidesResize;
-import com.google.gwt.user.client.ui.RequiresResize;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -48,7 +47,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-public class FlexLayout extends Composite implements RequiresResize, ProvidesResize {
+public class FlexLayout extends Composite {
 
     private static final int DRAG_ZONE = 20;
     private static final int MIN_COMPONENT_WIDTH = 50;
@@ -90,6 +89,8 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
         initWidget(panel);
 
         element = panel.getElement();
+
+        ResizeObserver.observe(element, e -> refresh());
 
         sinkEvents(Event.ONMOUSEMOVE | Event.ONMOUSEDOWN | Event.ONMOUSEUP);
     }
@@ -1034,11 +1035,6 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
         clear = true;
         // Clear the panel.
         panel.clear();
-    }
-
-    @Override
-    public void onResize() {
-        refresh();
     }
 
     private void recalculateSingleLayout(final LayoutConfig layoutData) {

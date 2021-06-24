@@ -4,7 +4,7 @@
              xmlns:btn="urn:import:stroom.widget.button.client">
     <g:FlowPanel styleName="itemNavigator">
         <g:Label ui:field="lblDetail" styleName="itemNavigator-label"/>
-        <g:FlowPanel styleName="buttonPanel-layout">
+        <g:FlowPanel styleName="button-container">
             <btn:SvgButton ui:field="firstPageBtn"/>
             <btn:SvgButton ui:field="previousPageBtn"/>
             <btn:SvgButton ui:field="nextPageBtn"/>

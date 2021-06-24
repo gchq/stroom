@@ -104,18 +104,16 @@
 	width: 100%;
 	height: 100%;
 	overflow: hidden;
-
+    display: flex;
+    flex-direction: column;
 	border-radius: 2px;
 	background-color: var(--page-background-color);
 }
 
 .tabLayout .tabLayout-barOuter {
-	position: absolute;
-	left: 0px;
-	top: 0px;
-	width: 100%;
-	height: 24px;
-	padding: 0 48px 0 0;
+    display: flex;
+	flex-grow: 0;
+	gap: 5px;
 	cursor: default;
 	overflow: hidden;
 	z-index: 5;
@@ -129,10 +127,6 @@
 }
 
 .tabLayout .tabLayout-buttons {
-	position: absolute;
-	right: 0px;
-	top: 0px;
-	padding: 1px;
 	z-index: 5;
 }
 
@@ -263,7 +257,7 @@
 }
 
 .fields-fieldLabel {
-	display: inline-block;
+	display: inline;
 	height: 16px;
 	padding: 0px;
 	padding-right: 5px;
