@@ -1,11 +1,11 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:i="urn:import:stroom.widget.button.client">
-    <g:FlowPanel styleName="stepControlViewImpl-layout">
-        <i:SvgButton ui:field="refreshButton"/>
-        <i:SvgButton ui:field="lastButton"/>
-        <i:SvgButton ui:field="forwardButton"/>
-        <i:SvgButton ui:field="backwardButton"/>
+    <g:FlowPanel styleName="button-container">
         <i:SvgButton ui:field="firstButton"/>
+        <i:SvgButton ui:field="backwardButton"/>
+        <i:SvgButton ui:field="forwardButton"/>
+        <i:SvgButton ui:field="lastButton"/>
+        <i:SvgButton ui:field="refreshButton"/>
     </g:FlowPanel>
 </ui:UiBinder>

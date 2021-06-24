@@ -1452,25 +1452,6 @@
     position: relative;
 }
 
-.steppingViewImpl-left {
-    position: relative;
-    width: 0px;
-}
-
-.steppingViewImpl-right {
-    position: relative;
-    width: 100%;
-}
-
-.steppingViewImpl-leftInner {
-    padding-right: 10px;
-}
-
-.steppingViewImpl-rightInner {
-    position: absolute;
-    right: 0px;
-}
-
 .importConfigViewImpl-label {
     float: left;
     width: 100px;
@@ -1509,10 +1490,6 @@
     border: none !important;
 }
 
-.stepControlViewImpl-layout {
-    display: inline-block;
-}
-
 .chooserViewImpl-container {
     display: flex;
     flex-flow: column;
@@ -1542,12 +1519,17 @@
     padding: 6px 8px;
 }
 
+.stepLocationViewImpl-left {
+}
+
+.stepLocationViewImpl-right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
 .stepLocationViewImpl-layout {
-    display: inline-block;
-    white-space: nowrap;
-    position: absolute;
-    right: 100px;
-    top: 2px;
     white-space: nowrap;
 }
 
