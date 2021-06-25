@@ -20,8 +20,11 @@ import stroom.pipeline.shared.XPathFilter;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.stepping.client.event.ShowSteppingFilterSettingsEvent;
 import stroom.pipeline.stepping.client.event.ShowSteppingFilterSettingsEvent.ShowSteppingFilterSettingsHandler;
+import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter.SteppingFilterView;
+import stroom.svg.client.SvgPresets;
 import stroom.util.shared.OutputState;
 import stroom.util.shared.Severity;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -30,7 +33,6 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenter;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
@@ -41,9 +43,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SteppingFilterPresenter extends
-        MyPresenter<SteppingFilterPresenter.SteppingFilterSettingsView,
+        MyPresenter<SteppingFilterView,
                 SteppingFilterPresenter.SteppingFilterSettingsProxy>
-        implements SteppingFilterUiHandlers, ShowSteppingFilterSettingsHandler, PopupUiHandlers {
+        implements ShowSteppingFilterSettingsHandler, PopupUiHandlers {
 
     public static final String LIST = "LIST";
     private final XPathListPresenter xPathListPresenter;
@@ -52,14 +54,26 @@ public class SteppingFilterPresenter extends
     private SteppingFilterSettings settings;
     private List<XPathFilter> xPathFilters;
 
+    private final ButtonView addXPath;
+    private final ButtonView editXPath;
+    private final ButtonView removeXPath;
+
     @Inject
-    public SteppingFilterPresenter(final EventBus eventBus, final SteppingFilterSettingsView view,
+    public SteppingFilterPresenter(final EventBus eventBus, final SteppingFilterView view,
                                    final SteppingFilterSettingsProxy proxy, final XPathListPresenter xPathListPresenter,
                                    final XPathFilterPresenter xPathFilterProvider) {
         super(eventBus, view, proxy);
         this.xPathListPresenter = xPathListPresenter;
         this.xPathFilterPresenter = xPathFilterProvider;
-        view.setUiHandlers(this);
+
+        addXPath = xPathListPresenter.addButton(SvgPresets.ADD);
+        addXPath.setTitle("Add XPath");
+        editXPath = xPathListPresenter.addButton(SvgPresets.EDIT);
+        editXPath.setTitle("Edit XPath");
+        removeXPath = xPathListPresenter.addButton(SvgPresets.REMOVE);
+        removeXPath.setTitle("Delete XPath");
+        editXPath.setEnabled(false);
+        removeXPath.setEnabled(false);
 
         setInSlot(LIST, xPathListPresenter);
     }
@@ -70,8 +84,8 @@ public class SteppingFilterPresenter extends
 
         registerHandler(xPathListPresenter.getSelectionModel().addSelectionHandler(event -> {
             final List<XPathFilter> list = xPathListPresenter.getSelectionModel().getSelectedItems();
-            getView().setEditEnabled(list.size() == 1);
-            getView().setRemoveEnabled(list.size() > 0);
+            editXPath.setEnabled(list.size() == 1);
+            removeXPath.setEnabled(list.size() > 0);
 
             if (event.getSelectionType().isDoubleSelect()) {
                 if (list.size() == 1) {
@@ -79,10 +93,12 @@ public class SteppingFilterPresenter extends
                 }
             }
         }));
+        registerHandler(addXPath.addClickHandler(e -> addXPathFilter()));
+        registerHandler(editXPath.addClickHandler(e -> editXPathFilter()));
+        registerHandler(removeXPath.addClickHandler(e -> removeXPathFilter()));
     }
 
-    @Override
-    public void addXPathFilter() {
+    private void addXPathFilter() {
         final XPathFilter xPathFilter = new XPathFilter();
         final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
             @Override
@@ -104,8 +120,7 @@ public class SteppingFilterPresenter extends
         xPathFilterPresenter.add(xPathFilter, popupUiHandlers);
     }
 
-    @Override
-    public void editXPathFilter() {
+    private void editXPathFilter() {
         final List<XPathFilter> list = xPathListPresenter.getSelectionModel().getSelectedItems();
         if (list.size() == 1) {
             final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
@@ -127,8 +142,7 @@ public class SteppingFilterPresenter extends
         }
     }
 
-    @Override
-    public void removeXPathFilter() {
+    private void removeXPathFilter() {
         // If there is a selected filter remove it from the set of filters and
         // the display.
         final List<XPathFilter> list = xPathListPresenter.getSelectionModel().getSelectedItems();
@@ -194,7 +208,7 @@ public class SteppingFilterPresenter extends
         event.getEditor().setFilterActive(settings.isActive());
     }
 
-    public interface SteppingFilterSettingsView extends View, HasUiHandlers<SteppingFilterUiHandlers> {
+    public interface SteppingFilterView extends View {
 
         Severity getSkipToErrors();
 
@@ -203,10 +217,6 @@ public class SteppingFilterPresenter extends
         OutputState getSkipToOutput();
 
         void setSkipToOutput(OutputState skipToOutput);
-
-        void setEditEnabled(boolean enabled);
-
-        void setRemoveEnabled(boolean enabled);
     }
 
     @ProxyCodeSplit
