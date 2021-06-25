@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2316** : Fixed React dialog styling by increasing CSS specificity.
+
 
 ## [v7.0-beta.133] - 2021-06-21
 
