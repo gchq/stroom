@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v7.0-beta.134] - 2021-06-25
+
 * Issue **#2316** : Fixed React dialog styling by increasing CSS specificity.
 
 
@@ -3548,7 +3551,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.133...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.134...HEAD
+[v7.0-beta.134]: https://github.com/gchq/stroom/compare/v7.0-beta.133...v7.0-beta.134
 [v7.0-beta.133]: https://github.com/gchq/stroom/compare/v7.0-beta.132...v7.0-beta.133
 [v7.0-beta.132]: https://github.com/gchq/stroom/compare/v7.0-beta.131...v7.0-beta.132
 [v7.0-beta.131]: https://github.com/gchq/stroom/compare/v7.0-beta.130...v7.0-beta.131
