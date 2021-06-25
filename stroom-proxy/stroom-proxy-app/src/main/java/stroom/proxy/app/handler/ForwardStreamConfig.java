@@ -1,11 +1,15 @@
 package stroom.proxy.app.handler;
 
+import stroom.util.shared.IsProxyConfig;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
 import java.util.List;
+import javax.inject.Singleton;
 
-public class ForwardStreamConfig {
+@Singleton
+public class ForwardStreamConfig implements IsProxyConfig {
 
     private boolean isForwardingEnabled = false;
     private String userAgent;

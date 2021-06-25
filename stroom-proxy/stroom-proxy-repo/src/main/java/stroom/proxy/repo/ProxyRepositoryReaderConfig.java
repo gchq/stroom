@@ -1,12 +1,16 @@
 package stroom.proxy.repo;
 
+import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.ModelStringUtil;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
-public class ProxyRepositoryReaderConfig {
+import javax.inject.Singleton;
+
+@Singleton
+public class ProxyRepositoryReaderConfig implements IsProxyConfig {
 
     private String readCron;
     private int forwardThreadCount = 3;

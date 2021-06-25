@@ -1,8 +1,13 @@
 package stroom.proxy.app.handler;
 
+import stroom.util.shared.IsProxyConfig;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class ProxyRequestConfig {
+import javax.inject.Singleton;
+
+@Singleton
+public class ProxyRequestConfig implements IsProxyConfig {
 
     private String receiptPolicyUuid;
 

@@ -6,25 +6,29 @@ import stroom.proxy.app.handler.LogStreamConfig;
 import stroom.proxy.app.handler.ProxyRequestConfig;
 import stroom.proxy.repo.ProxyRepositoryConfig;
 import stroom.proxy.repo.ProxyRepositoryReaderConfig;
+import stroom.util.shared.IsProxyConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import io.dropwizard.client.JerseyClientConfiguration;
 
-public class ProxyConfig {
+import javax.inject.Singleton;
+
+@Singleton
+public class ProxyConfig implements IsProxyConfig {
 
     private String proxyContentDir;
     private boolean useDefaultOpenIdCredentials = true;
 
-    private ProxyRequestConfig proxyRequestConfig = new ProxyRequestConfig();
-    private ForwardStreamConfig forwardStreamConfig = new ForwardStreamConfig();
-    private ProxyRepositoryConfig proxyRepositoryConfig = new ProxyRepositoryConfig();
-    private ProxyRepositoryReaderConfig proxyRepositoryReaderConfig = new ProxyRepositoryReaderConfig();
-    private LogStreamConfig logStreamConfig = new LogStreamConfig();
     private ContentSyncConfig contentSyncConfig = new ContentSyncConfig();
     private FeedStatusConfig feedStatusConfig = new FeedStatusConfig();
-
+    private ForwardStreamConfig forwardStreamConfig = new ForwardStreamConfig();
     private JerseyClientConfiguration jerseyClientConfig = new JerseyClientConfiguration();
+    private LogStreamConfig logStreamConfig = new LogStreamConfig();
+    private ProxyPathConfig pathConfig = new ProxyPathConfig();
+    private ProxyRepositoryConfig proxyRepositoryConfig = new ProxyRepositoryConfig();
+    private ProxyRepositoryReaderConfig proxyRepositoryReaderConfig = new ProxyRepositoryReaderConfig();
+    private ProxyRequestConfig proxyRequestConfig = new ProxyRequestConfig();
 
 
     @JsonProperty()
@@ -87,6 +91,16 @@ public class ProxyConfig {
     @JsonProperty
     public void setLogStreamConfig(final LogStreamConfig logStreamConfig) {
         this.logStreamConfig = logStreamConfig;
+    }
+
+    @JsonProperty("path")
+    public ProxyPathConfig getProxyPathConfig() {
+        return pathConfig;
+    }
+
+    @SuppressWarnings("unused")
+    public void setProxyPathConfig(final ProxyPathConfig pathConfig) {
+        this.pathConfig = pathConfig;
     }
 
     @JsonProperty

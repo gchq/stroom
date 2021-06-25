@@ -2,12 +2,17 @@
 proxyConfig:
   proxyContentDir: null
   useDefaultOpenIdCredentials: true
-  proxyRequestConfig:
-    receiptPolicyUuid: null
+  contentSyncConfig:
+    upstreamUrl: null
+    syncFrequency: 0
+    apiKey: null
+    contentSyncEnabled: false
   forwardStreamConfig:
     userAgent: null
-    forwardDestinations: []
+    forwardDestinations: [ ]
     forwardingEnabled: false
+  logStreamConfig:
+    metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn"
   proxyRepositoryConfig:
     storingEnabled: false
     repoDir: null
@@ -20,16 +25,14 @@ proxyConfig:
     maxConcurrentMappedFiles: 100000
     maxAggregation: 1000
     maxStreamSize: "1.0G"
-  logStreamConfig:
-    metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn"
-  contentSyncConfig:
-    upstreamUrl: null
-    syncFrequency: 0
-    apiKey: null
-    contentSyncEnabled: false
+  proxyRequestConfig:
+    receiptPolicyUuid: null
   feedStatus:
     url: null
     apiKey: null
+  path:
+    home: "."
+    temp: "/tmp/stroom-proxy"
   jerseyClient:
     timeout: "500 milliseconds"
     connectionTimeout: "500 milliseconds"

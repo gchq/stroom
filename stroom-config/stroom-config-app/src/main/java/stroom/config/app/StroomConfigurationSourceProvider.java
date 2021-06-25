@@ -157,7 +157,7 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
         final Optional<String> optTemp = getNodeValue(rootNode, STROOM_TEMP_JSON_POINTER);
 
         // A vanilla PathConfig with the hard coded defaults
-        final PathConfig pathConfig = new PathConfig();
+        final PathConfig pathConfig = new StroomPathConfig();
 
         final String homeSource = Objects.equals(pathConfig.getHome(), optHome.orElse(null))
                 ? SOURCE_DEFAULTS
