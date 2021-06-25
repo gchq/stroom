@@ -40,6 +40,7 @@
 }
 
 .codeEditor-rightBar {
+    position: relative;
     overflow: hidden;
     background-color: var(--code-editor-right-bar-background-color);
     border-left: solid 1px var(--code-editor-border-color);
