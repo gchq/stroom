@@ -5,7 +5,6 @@
     --text-color: #000;
     --text-color-disabled: #666;
     --app-background-color: #d50101;
-    --page-background-color: #fff;
     --border-color: #c5cde2;
     --input-background-color: #fff;
     --input-border-color: #c5cde2;
@@ -203,7 +202,6 @@
     --text-color: #e6e1dc;
     --text-color-disabled: #666;
     --app-background-color: #000;/*#19171d;*/
-    --page-background-color: #1a1d21;
     --border-color: #555;
     --input-background-color: #000;
     --input-border-color: #555;
@@ -377,7 +375,6 @@
     --text-color: #abb0b6;
     --text-color-disabled: #666;
     --app-background-color: #000;
-    --page-background-color: #22252c;
     --border-color: #14161b;
     --input-background-color: #262a32;
     --input-border-color: #191c21;

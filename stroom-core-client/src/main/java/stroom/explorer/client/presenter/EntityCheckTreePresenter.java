@@ -129,6 +129,16 @@ public class EntityCheckTreePresenter extends MyPresenterWidget<EntityCheckTreeP
         explorerTree.getTreeModel().setIncludedTypes(includedTypes);
     }
 
+    public void setIncludedTypeSet(final Set<String> types) {
+        explorerTree.getTreeModel().setIncludedTypeSet(types);
+        refresh();
+    }
+
+    public void changeNameFilter(final String name) {
+        explorerTree.getTreeModel().changeNameFilter(name);
+        refresh();
+    }
+
     public void setTags(final String... tags) {
         explorerTree.getTreeModel().setTags(tags);
     }

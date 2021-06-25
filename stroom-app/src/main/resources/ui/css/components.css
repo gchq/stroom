@@ -1069,7 +1069,7 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    background-color: var(--page-background-color);
+    background-color: var(--main-background-color);
 }
 
 .aboutViewImpl-buildInfo {
@@ -1565,6 +1565,14 @@
 
 .exportConfigViewImpl-label {
     margin-top: 2px;
+}
+
+.exportConfigViewImpl-filter {
+    border-bottom: none !important;
+}
+
+.exportConfigViewImpl-nameFilter {
+    border: none !important;
 }
 
 .infoMenuItem {

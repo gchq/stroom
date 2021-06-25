@@ -617,7 +617,7 @@ input[type="file"]:disabled {
 }
 
 .stroom-content {
-	background-color: var(--page-background-color);
+	background-color: var(--main-background-color);
 }
 
 .gwt-ListBox {
@@ -698,8 +698,7 @@ input[type="file"]:disabled {
 }
 
 .itemCheckList {
-	background-color: var(--input-background-color);
-	_background-color: var(--input-background-color);
+	background-color: var(--main-background-color);
 	border: 1px solid var(--input-border-color);
 }
 

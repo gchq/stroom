@@ -1,13 +1,10 @@
 .explorerTickBoxCell-outer {
-    display: inline-block;
-    white-space: nowrap;
-    vertical-align: top;
+    display: flex;
+    align-items: center;
 }
 
 .explorerTickBoxCell-outer * {
-    display: inline-block;
     white-space: nowrap;
-    vertical-align: top;
 }
 
 .explorerTickBoxCell-expander {
@@ -25,12 +22,10 @@
 }
 
 .explorerTickBoxCell-tickBox {
-    padding-top: 1px;
 }
 
 .explorerTickBoxCell-icon {
     padding-left: 3px;
-    padding-top: 1px;
     width: 16px;
     height: 16px;
     margin: 0 3px;
@@ -39,5 +34,5 @@
 .explorerTickBoxCell-text {
     padding-left: 2px;
     padding-right: 2px;
-    padding-top: 1px;
+    white-space: nowrap;
 }
