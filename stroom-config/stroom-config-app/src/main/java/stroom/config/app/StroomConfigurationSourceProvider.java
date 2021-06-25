@@ -6,6 +6,7 @@ import stroom.util.io.HomeDirProviderImpl;
 import stroom.util.io.PathConfig;
 import stroom.util.io.PathCreator;
 import stroom.util.io.StreamUtil;
+import stroom.util.io.StroomPathConfig;
 import stroom.util.io.TempDirProvider;
 import stroom.util.io.TempDirProviderImpl;
 import stroom.util.logging.LogUtil;

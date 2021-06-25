@@ -34,6 +34,7 @@ import stroom.searchable.impl.SearchableConfig;
 import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
+import stroom.util.io.StroomPathConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.validation.ValidationSeverity;
 

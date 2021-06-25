@@ -70,6 +70,7 @@ import stroom.ui.config.shared.UiConfig;
 import stroom.ui.config.shared.UiPreferences;
 import stroom.ui.config.shared.UrlConfig;
 import stroom.util.io.PathConfig;
+import stroom.util.io.StroomPathConfig;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.xml.ParserConfig;

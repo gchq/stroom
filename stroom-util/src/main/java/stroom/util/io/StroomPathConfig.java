@@ -1,7 +1,6 @@
-package stroom.config.app;
+package stroom.util.io;
 
 import stroom.util.config.annotations.ReadOnly;
-import stroom.util.io.PathConfig;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
