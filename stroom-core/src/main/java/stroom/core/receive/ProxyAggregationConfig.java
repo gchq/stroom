@@ -20,7 +20,8 @@ public class ProxyAggregationConfig extends AbstractConfig {
     private volatile int maxFilesPerAggregate = 10000;
     private String maxUncompressedFileSize = "1G";
 
-    @JsonPropertyDescription("Folder to look for Stroom Proxy Content to aggregate. If the value is a " +
+    @JsonPropertyDescription("Directory to look for Stroom Proxy Content to aggregate. Typically this directory " +
+            "will belong to the stroom-proxy that is populating the repository in it. If the value is a " +
             "relative path then it will be treated as being relative to stroom.path.home.")
     public String getProxyDir() {
         return proxyDir;

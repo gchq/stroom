@@ -22,6 +22,7 @@ public class NodeConfig extends AbstractConfig implements HasDbConfig {
 
     private String nodeName = "tba";
 
+    @Override
     @JsonProperty("db")
     public DbConfig getDbConfig() {
         return dbConfig;
@@ -34,7 +35,8 @@ public class NodeConfig extends AbstractConfig implements HasDbConfig {
     @NotNull
     @ReadOnly
     @JsonPropertyDescription("The name of the node to identify it in the cluster. " +
-            "Should only be set per node in the application YAML config file")
+            "Should only be set per node in the application YAML config file. The node name should not " +
+            "be changed once set.")
     @JsonProperty(PROP_NAME_NAME)
     public String getNodeName() {
         return nodeName;
