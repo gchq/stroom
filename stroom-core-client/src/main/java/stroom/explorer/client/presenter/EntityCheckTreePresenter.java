@@ -159,6 +159,10 @@ public class EntityCheckTreePresenter extends MyPresenterWidget<EntityCheckTreeP
 //        treeModel.refresh(openItems, depth);
 //    }
 
+    public ExplorerTreeModel getTreeModel() {
+        return explorerTree.getTreeModel();
+    }
+
     public TickBoxSelectionModel getSelectionModel() {
         return explorerTree.getSelectionModel();
     }

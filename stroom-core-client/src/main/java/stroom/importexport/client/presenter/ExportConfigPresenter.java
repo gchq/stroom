@@ -97,6 +97,13 @@ public class ExportConfigPresenter
     @ProxyEvent
     @Override
     public void onExport(final ExportConfigEvent event) {
+        if (event.getSelection() != null) {
+            for (final ExplorerNode node : event.getSelection()) {
+                treePresenter.getTreeModel().setEnsureVisible(new HashSet<>(event.getSelection()));
+                treePresenter.getSelectionModel().setSelected(node, true);
+            }
+        }
+
         forceReveal();
     }
 

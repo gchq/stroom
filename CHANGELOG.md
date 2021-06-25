@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2288** : Added export content menu item.
+
 * Added name filtering on export items.
 
 * Moved stepping filter button to make the feature more obvious.
