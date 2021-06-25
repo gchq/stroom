@@ -111,6 +111,7 @@ public final class SvgPresets {
     public static final Preset FAST_FORWARD_BLUE = disabled("svgIcon-fast-forward", "Last");
     public static final Preset REFRESH_BLUE = enabled("svgIcon-refresh", "Refresh");
 
+    public static final Preset FILTER_GREEN = enabled("svgIcon-filter-green", "Filter");
     public static final Preset FAST_BACKWARD_GREEN = disabled("svgIcon-fast-backward-green", "First");
     public static final Preset STEP_BACKWARD_GREEN = disabled("svgIcon-step-backward-green", "Backward");
     public static final Preset STEP_FORWARD_GREEN = disabled("svgIcon-step-forward-green", "Forward");

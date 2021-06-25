@@ -16,7 +16,6 @@
 
 package stroom.pipeline.stepping.client.view;
 
-import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter;
 import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter.SteppingFilterView;
 import stroom.util.shared.OutputState;
 import stroom.util.shared.Severity;
@@ -27,11 +26,14 @@ import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 
 public class SteppingFilterViewImpl extends ViewImpl implements SteppingFilterView {
 
     private final Widget widget;
+    @UiField
+    SimplePanel elementChooser;
     @UiField
     ListBox skipToErrors;
     @UiField
@@ -57,6 +59,11 @@ public class SteppingFilterViewImpl extends ViewImpl implements SteppingFilterVi
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    @Override
+    public void setElementChooser(final View view) {
+        elementChooser.setWidget(view.asWidget());
     }
 
     @Override
@@ -108,10 +115,8 @@ public class SteppingFilterViewImpl extends ViewImpl implements SteppingFilterVi
     }
 
     @Override
-    public void setInSlot(final Object slot, final Widget content) {
-        if (SteppingFilterPresenter.LIST.equals(slot)) {
-            xPathList.setWidget(content);
-        }
+    public void setXPathList(final View view) {
+        xPathList.setWidget(view.asWidget());
     }
 
     public interface Binder extends UiBinder<Widget, SteppingFilterViewImpl> {

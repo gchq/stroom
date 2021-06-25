@@ -2,6 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:i="urn:import:stroom.widget.button.client">
     <g:FlowPanel styleName="button-container">
+        <i:SvgButton ui:field="filterButton"/>
         <i:SvgButton ui:field="firstButton"/>
         <i:SvgButton ui:field="backwardButton"/>
         <i:SvgButton ui:field="forwardButton"/>

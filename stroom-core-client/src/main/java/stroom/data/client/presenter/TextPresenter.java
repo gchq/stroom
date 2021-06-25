@@ -131,36 +131,12 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> {
         editorPresenter.setIndicators(indicators);
     }
 
-    public void changeFilterSettings() {
-        editorPresenter.changeFilterSettings();
-    }
-
-    public void setFilterActive(final boolean active) {
-        editorPresenter.setFilterActive(active);
-    }
-
     public void setReadOnly(final boolean readOnly) {
         editorPresenter.setReadOnly(readOnly);
     }
 
     public void setTheme(final AceEditorTheme theme) {
         editorPresenter.setTheme(theme);
-    }
-
-    public boolean isShowFilterSettings() {
-        return editorPresenter.isShowFilterSettings();
-    }
-
-    public void setShowFilterSettings(final boolean showFilterSettings) {
-        editorPresenter.setShowFilterSettings(showFilterSettings);
-    }
-
-    public boolean isInput() {
-        return editorPresenter.isInput();
-    }
-
-    public void setInput(final boolean input) {
-        editorPresenter.setInput(input);
     }
 
     public EditorMenuPresenter getContextMenu() {

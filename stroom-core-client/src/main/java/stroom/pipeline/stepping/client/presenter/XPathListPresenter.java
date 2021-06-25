@@ -20,6 +20,7 @@ import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
+import stroom.data.grid.client.EndColumn;
 import stroom.data.table.client.Refreshable;
 import stroom.pipeline.shared.XPathFilter;
 import stroom.svg.client.Preset;
@@ -95,7 +96,8 @@ public class XPathListPresenter extends MyPresenterWidget<DataGridView<XPathFilt
                 return TickBoxState.fromBoolean(filter.isIgnoreCase());
             }
         };
-        getView().addColumn(ignoreCaseColumn, "Ignore Case", 80);
+        getView().addResizableColumn(ignoreCaseColumn, "Ignore Case", 100);
+        getView().addEndColumn(new EndColumn<>());
     }
 
     @Override

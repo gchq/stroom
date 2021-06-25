@@ -35,6 +35,7 @@ import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
+import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.StepLocation;
@@ -69,6 +70,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.SteppingView> implements HasDirtyHandlers {
 
@@ -81,6 +83,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
     private final Provider<ElementPresenter> editorProvider;
     private final StepLocationPresenter stepLocationPresenter;
     private final StepControlPresenter stepControlPresenter;
+    private final SteppingFilterPresenter steppingFilterPresenter;
     private final RestFactory restFactory;
     private final Map<String, ElementPresenter> editorMap = new HashMap<>();
     private final PipelineModel pipelineModel;
@@ -101,7 +104,8 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                              final SourcePresenter sourcePresenter,
                              final Provider<ElementPresenter> editorProvider,
                              final StepLocationPresenter stepLocationPresenter,
-                             final StepControlPresenter stepControlPresenter) {
+                             final StepControlPresenter stepControlPresenter,
+                             final SteppingFilterPresenter steppingFilterPresenter) {
         super(eventBus, view);
         this.restFactory = restFactory;
 
@@ -110,6 +114,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         this.editorProvider = editorProvider;
         this.stepLocationPresenter = stepLocationPresenter;
         this.stepControlPresenter = stepControlPresenter;
+        this.steppingFilterPresenter = steppingFilterPresenter;
 
         view.addWidgetRight(stepLocationPresenter.getView().asWidget());
         view.addWidgetRight(stepControlPresenter.getView().asWidget());
@@ -147,6 +152,19 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                 step(event.getStepType(), event.getStepLocation())));
         registerHandler(stepControlPresenter.addStepControlHandler(event ->
                 step(event.getStepType(), event.getStepLocation())));
+        registerHandler(stepControlPresenter.addChangeFilterHandler(event -> {
+            final List<String> elements =
+                    pipelineModel
+                            .getChildMap()
+                            .keySet()
+                            .stream()
+                            .filter(element ->
+                                    element.getElementType().hasRole(PipelineElementType.VISABILITY_STEPPING))
+                            .map(PipelineElement::getId)
+                            .sorted()
+                            .collect(Collectors.toList());
+            steppingFilterPresenter.show(elements, request.getStepFilterMap(), request::setStepFilterMap);
+        }));
         registerHandler(saveButton.addClickHandler(event -> save()));
     }
 
@@ -179,7 +197,6 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                 presenter.setProperties(properties);
                 presenter.setFeedName(meta.getFeedName());
                 presenter.setPipelineName(request.getPipeline().getName());
-                presenter.setPipelineStepRequest(request);
                 editorMap.put(elementId, presenter);
                 presenter.addDirtyHandler(dirtyEditorHandler);
 

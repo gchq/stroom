@@ -35,6 +35,8 @@ public class StepControlViewImpl extends ViewWithUiHandlers<StepControlUIHandler
 
     private final Widget widget;
     @UiField(provided = true)
+    SvgButton filterButton;
+    @UiField(provided = true)
     SvgButton firstButton;
     @UiField(provided = true)
     SvgButton backwardButton;
@@ -48,6 +50,7 @@ public class StepControlViewImpl extends ViewWithUiHandlers<StepControlUIHandler
     @Inject
     public StepControlViewImpl(final Binder binder) {
 
+        filterButton = createButton(SvgPresets.FILTER_GREEN, "Filter");
         firstButton = createButton(SvgPresets.FAST_BACKWARD_GREEN, "Step First");
         backwardButton = createButton(SvgPresets.STEP_BACKWARD_GREEN, "Step Backward");
         forwardButton = createButton(SvgPresets.STEP_FORWARD_GREEN, "Step Forward");
@@ -94,6 +97,13 @@ public class StepControlViewImpl extends ViewWithUiHandlers<StepControlUIHandler
     @Override
     public void setStepRefreshEnabled(boolean enabled) {
         refreshButton.setEnabled(enabled);
+    }
+
+    @UiHandler("filterButton")
+    public void onFilterButtonClick(final ClickEvent event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().filter();
+        }
     }
 
     @UiHandler("firstButton")

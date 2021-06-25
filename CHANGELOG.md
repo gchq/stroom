@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Moved stepping filter button to make the feature more obvious.
+
 * Issue **#2313** : Integrate LeafletJS for geographical mapping.
 
 * Issue **#2293** : Fix location of banner.txt in zip distribution.

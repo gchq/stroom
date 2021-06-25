@@ -16,10 +16,10 @@
 
 package stroom.pipeline.stepping.client.presenter;
 
+import stroom.data.table.client.CellTableView;
+import stroom.data.table.client.CellTableViewImpl;
 import stroom.pipeline.shared.XPathFilter;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
-import stroom.pipeline.stepping.client.event.ShowSteppingFilterSettingsEvent;
-import stroom.pipeline.stepping.client.event.ShowSteppingFilterSettingsEvent.ShowSteppingFilterSettingsHandler;
 import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter.SteppingFilterView;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.OutputState;
@@ -27,42 +27,49 @@ import stroom.util.shared.Severity;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import com.google.gwt.cell.client.SafeHtmlCell;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.view.client.SingleSelectionModel;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenter;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
-import com.gwtplatform.mvp.client.proxy.Proxy;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
 
 public class SteppingFilterPresenter extends
-        MyPresenter<SteppingFilterView,
-                SteppingFilterPresenter.SteppingFilterSettingsProxy>
-        implements ShowSteppingFilterSettingsHandler, PopupUiHandlers {
+        MyPresenterWidget<SteppingFilterView> {
 
-    public static final String LIST = "LIST";
     private final XPathListPresenter xPathListPresenter;
     private final XPathFilterPresenter xPathFilterPresenter;
-    private ShowSteppingFilterSettingsEvent event;
-    private SteppingFilterSettings settings;
     private List<XPathFilter> xPathFilters;
 
+    private final SingleSelectionModel<String> elementSelectionModel = new SingleSelectionModel<>();
+    private final CellTableView<String> elementChooser;
     private final ButtonView addXPath;
     private final ButtonView editXPath;
     private final ButtonView removeXPath;
 
+    private Map<String, SteppingFilterSettings> settingsMap;
+    private String currentElementId;
+
     @Inject
-    public SteppingFilterPresenter(final EventBus eventBus, final SteppingFilterView view,
-                                   final SteppingFilterSettingsProxy proxy, final XPathListPresenter xPathListPresenter,
+    public SteppingFilterPresenter(final EventBus eventBus,
+                                   final SteppingFilterView view,
+                                   final XPathListPresenter xPathListPresenter,
                                    final XPathFilterPresenter xPathFilterProvider) {
-        super(eventBus, view, proxy);
+        super(eventBus, view);
         this.xPathListPresenter = xPathListPresenter;
         this.xPathFilterPresenter = xPathFilterProvider;
 
@@ -75,7 +82,26 @@ public class SteppingFilterPresenter extends
         editXPath.setEnabled(false);
         removeXPath.setEnabled(false);
 
-        setInSlot(LIST, xPathListPresenter);
+
+        elementChooser = new CellTableViewImpl<>(true, "hoverCellTable");
+
+        // Text.
+        final Column<String, SafeHtml> textColumn = new Column<String, SafeHtml>(new SafeHtmlCell()) {
+            @Override
+            public SafeHtml getValue(final String string) {
+                final SafeHtmlBuilder builder = new SafeHtmlBuilder();
+                builder.appendHtmlConstant("<div style=\"padding: 5px; min-width: 200px\">");
+                builder.appendEscaped(string);
+                builder.appendHtmlConstant("</div>");
+                return builder.toSafeHtml();
+            }
+        };
+        elementChooser.addColumn(textColumn);
+        elementChooser.setSupportsSelection(true);
+        elementChooser.setSelectionModel(elementSelectionModel);
+
+        getView().setElementChooser(elementChooser);
+        getView().setXPathList(xPathListPresenter.getView());
     }
 
     @Override
@@ -96,6 +122,8 @@ public class SteppingFilterPresenter extends
         registerHandler(addXPath.addClickHandler(e -> addXPathFilter()));
         registerHandler(editXPath.addClickHandler(e -> editXPathFilter()));
         registerHandler(removeXPath.addClickHandler(e -> removeXPathFilter()));
+        registerHandler(elementSelectionModel.addSelectionChangeHandler(e ->
+                update(elementSelectionModel.getSelectedObject())));
     }
 
     private void addXPathFilter() {
@@ -153,62 +181,77 @@ public class SteppingFilterPresenter extends
         }
     }
 
-    @Override
-    public void onHideRequest(final boolean autoClose, final boolean ok) {
-        if (ok) {
-            write();
-        }
-
-        HidePopupEvent.fire(this, this);
-    }
-
-    @Override
-    public void onHide(final boolean autoClose, final boolean ok) {
-        // Do nothing.
-    }
-
-    @ProxyEvent
-    @Override
-    public void onShow(final ShowSteppingFilterSettingsEvent event) {
-        this.event = event;
-        this.settings = event.getSettings();
-        read();
-        revealInParent();
-    }
-
-    @Override
-    protected void revealInParent() {
-        String caption;
-        if (event.isInput()) {
-            caption = "Change '" + event.getElementId() + "' Input Filter";
+    public void show(final List<String> elements,
+                     final Map<String, SteppingFilterSettings> map,
+                     final Consumer<Map<String, SteppingFilterSettings>> consumer) {
+        currentElementId = null;
+        if (map != null) {
+            settingsMap = new HashMap<>(map);
         } else {
-            caption = "Change '" + event.getElementId() + "' Output Filter";
+            settingsMap = new HashMap<>();
+        }
+        elementChooser.setRowData(0, elements);
+        elementChooser.setRowCount(elements.size());
+        if (elements.size() > 0) {
+            final String elementId = elements.get(0);
+            elementSelectionModel.setSelected(elementId, true);
+            update(elementId);
         }
 
-        final PopupSize popupSize = new PopupSize(650, 400, 650, 400, 1000, 1000, true);
-        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, caption, this);
+        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
+            @Override
+            public void onHideRequest(final boolean autoClose, final boolean ok) {
+                if (ok) {
+                    update(null);
+                    consumer.accept(settingsMap);
+                }
+
+                HidePopupEvent.fire(SteppingFilterPresenter.this, SteppingFilterPresenter.this);
+            }
+        };
+
+        final PopupSize popupSize =
+                new PopupSize(850, 550,
+                        650, 400,
+                        1000, 1000, true);
+        ShowPopupEvent.fire(this,
+                this,
+                PopupType.OK_CANCEL_DIALOG,
+                popupSize,
+                "Change Filters",
+                popupUiHandlers);
     }
 
-    private void read() {
-        getView().setSkipToErrors(settings.getSkipToSeverity());
-        getView().setSkipToOutput(settings.getSkipToOutput());
-
-        xPathFilters = xPathListPresenter.getDataProvider().getList();
-        xPathFilters.clear();
-        if (settings.getFilters() != null && settings.getFilters().size() > 0) {
-            xPathFilters.addAll(settings.getFilters());
+    private void update(final String elementId) {
+        if (currentElementId != null) {
+            final SteppingFilterSettings settings = new SteppingFilterSettings();
+            settings.setSkipToSeverity(getView().getSkipToErrors());
+            settings.setSkipToOutput(getView().getSkipToOutput());
+            settings.setFilters(new ArrayList<>(xPathFilters));
+            settingsMap.put(currentElementId, settings);
         }
-    }
 
-    private void write() {
-        settings.setSkipToSeverity(getView().getSkipToErrors());
-        settings.setSkipToOutput(getView().getSkipToOutput());
-        settings.setFilters(new ArrayList<>(xPathFilters));
+        if (elementId != null && !elementId.equals(currentElementId)) {
+            SteppingFilterSettings settings = settingsMap.get(elementId);
+            if (settings == null) {
+                settings = new SteppingFilterSettings();
+            }
+            getView().setSkipToErrors(settings.getSkipToSeverity());
+            getView().setSkipToOutput(settings.getSkipToOutput());
 
-        event.getEditor().setFilterActive(settings.isActive());
+            xPathFilters = xPathListPresenter.getDataProvider().getList();
+            xPathFilters.clear();
+            if (settings.getFilters() != null && settings.getFilters().size() > 0) {
+                xPathFilters.addAll(settings.getFilters());
+            }
+        }
+
+        currentElementId = elementId;
     }
 
     public interface SteppingFilterView extends View {
+
+        void setElementChooser(View view);
 
         Severity getSkipToErrors();
 
@@ -217,10 +260,7 @@ public class SteppingFilterPresenter extends
         OutputState getSkipToOutput();
 
         void setSkipToOutput(OutputState skipToOutput);
-    }
 
-    @ProxyCodeSplit
-    public interface SteppingFilterSettingsProxy extends Proxy<SteppingFilterPresenter> {
-
+        void setXPathList(View view);
     }
 }

@@ -290,6 +290,9 @@
 .svgIcon-refresh {
   background-image: url("../images/refresh.svg");
 }
+.svgIcon-filter-green {
+  background-image: url("../images/filter-green.svg");
+}
 .svgIcon-fast-backward-green {
   background-image: url("../images/fast-backward-green.svg");
 }
