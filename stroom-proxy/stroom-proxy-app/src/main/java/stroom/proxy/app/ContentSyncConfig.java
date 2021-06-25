@@ -3,11 +3,13 @@ package stroom.proxy.app;
 import stroom.util.shared.IsProxyConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Map;
 import javax.inject.Singleton;
 
 @Singleton
+@JsonPropertyOrder(alphabetic = true)
 public class ContentSyncConfig implements IsProxyConfig {
 
     private boolean isContentSyncEnabled = false;

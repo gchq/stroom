@@ -1,23 +1,28 @@
 ---
 proxyConfig:
-  proxyContentDir: null
-  useDefaultOpenIdCredentials: true
   contentSyncConfig:
-    upstreamUrl: null
-    syncFrequency: 0
     apiKey: null
     contentSyncEnabled: false
+    syncFrequency: 0
+    upstreamUrl: null
+  feedStatus:
+    apiKey: null
+    url: null
   forwardStreamConfig:
-    userAgent: null
     forwardDestinations: [ ]
     forwardingEnabled: false
+    userAgent: null
   logStreamConfig:
     metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn"
+  path:
+    home: "."
+    temp: "/tmp/stroom-proxy"
+  proxyContentDir: null
   proxyRepositoryConfig:
-    storingEnabled: false
-    repoDir: null
     format: "${pathId}/${id}"
+    repoDir: null
     rollCron: null
+    storingEnabled: false
   proxyRepositoryReaderConfig:
     readCron: null
     forwardThreadCount: 3
@@ -27,31 +32,26 @@ proxyConfig:
     maxStreamSize: "1.0G"
   proxyRequestConfig:
     receiptPolicyUuid: null
-  feedStatus:
-    url: null
-    apiKey: null
-  path:
-    home: "."
-    temp: "/tmp/stroom-proxy"
-  jerseyClient:
-    timeout: "500 milliseconds"
-    connectionTimeout: "500 milliseconds"
+  restClient:
+    chunkedEncodingEnabled: true
     connectionRequestTimeout: "500 milliseconds"
-    timeToLive: "1 hour"
+    connectionTimeout: "500 milliseconds"
     cookiesEnabled: false
+    gzipEnabled: true
+    gzipEnabledForRequests: true
+    keepAlive: "0 milliseconds"
     maxConnections: 1024
     maxConnectionsPerRoute: 1024
-    keepAlive: "0 milliseconds"
+    maxThreads: 128
+    minThreads: 1
+    proxy: null
     retries: 0
+    timeToLive: "1 hour"
+    timeout: "500 milliseconds"
+    tls: null
     userAgent:
       empty: true
       present: false
     validateAfterInactivityPeriod: "0 microseconds"
-    minThreads: 1
-    maxThreads: 128
     workQueueSize: 8
-    gzipEnabled: true
-    gzipEnabledForRequests: true
-    chunkedEncodingEnabled: true
-    proxy: null
-    tls: null
+  useDefaultOpenIdCredentials: true

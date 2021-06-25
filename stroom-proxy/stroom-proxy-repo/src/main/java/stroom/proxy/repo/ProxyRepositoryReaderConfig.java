@@ -6,10 +6,12 @@ import stroom.util.shared.ModelStringUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.inject.Singleton;
 
 @Singleton
+@JsonPropertyOrder({"storingEnabled", "repoDir", "format", "rollCron"})
 public class ProxyRepositoryReaderConfig implements IsProxyConfig {
 
     private String readCron;

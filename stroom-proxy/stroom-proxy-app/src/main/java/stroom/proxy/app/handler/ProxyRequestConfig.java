@@ -3,10 +3,12 @@ package stroom.proxy.app.handler;
 import stroom.util.shared.IsProxyConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.inject.Singleton;
 
 @Singleton
+@JsonPropertyOrder({"storingEnabled", "repoDir", "format", "rollCron"})
 public class ProxyRequestConfig implements IsProxyConfig {
 
     private String receiptPolicyUuid;

@@ -3,6 +3,7 @@ package stroom.proxy.app.guice;
 import stroom.proxy.app.ContentSyncConfig;
 import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.ProxyPathConfig;
+import stroom.proxy.app.RestClientConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.proxy.app.handler.ForwardStreamConfig;
 import stroom.proxy.app.handler.LogStreamConfig;
@@ -14,7 +15,6 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.IsProxyConfig;
 
 import com.google.inject.AbstractModule;
-import io.dropwizard.client.JerseyClientConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,13 +65,7 @@ public class ProxyConfigModule extends AbstractModule {
                 ProxyConfig::setProxyRepositoryReaderConfig,
                 ProxyRepositoryReaderConfig.class);
         bindConfig(ProxyConfig::getProxyRequestConfig, ProxyConfig::setProxyRequestConfig, ProxyRequestConfig.class);
-
-        // We have to do JerseyClientConfiguration differently to the above as it is not our
-        // class so doesn't extend AbstractConfig
-        if (proxyConfig.getJerseyClientConfiguration() == null) {
-            proxyConfig.setJerseyClientConfiguration(new JerseyClientConfiguration());
-        }
-        bind(JerseyClientConfiguration.class).toInstance(proxyConfig.getJerseyClientConfiguration());
+        bindConfig(ProxyConfig::getRestClientConfig, ProxyConfig::setRestClientConfig, RestClientConfig.class);
     }
 
     private <T extends IsProxyConfig> void bindConfig(

@@ -20,6 +20,7 @@ import stroom.proxy.app.BufferFactoryImpl;
 import stroom.proxy.app.Config;
 import stroom.proxy.app.ContentSyncService;
 import stroom.proxy.app.ProxyConfigHealthCheck;
+import stroom.proxy.app.RestClientConfig;
 import stroom.proxy.app.handler.ForwardStreamHandlerFactory;
 import stroom.proxy.app.handler.ProxyRequestHandler;
 import stroom.proxy.app.handler.RemoteFeedStatusService;
@@ -168,13 +169,16 @@ public class ProxyModule extends AbstractModule {
 
     @Provides
     @Singleton
-    Client provideJerseyClient(final JerseyClientConfiguration jerseyClientConfiguration,
+    Client provideJerseyClient(final RestClientConfig restClientConfig,
                                final Environment environment,
                                final Provider<BuildInfo> buildInfoProvider) {
 
+        // RestClientConfig is really just JerseyClientConfiguration
+        final JerseyClientConfiguration jerseyClientConfiguration = restClientConfig;
+
         // If the userAgent has not been explicitly set in the config then set it based
         // on the build version
-        if (!jerseyClientConfiguration.getUserAgent().isPresent()) {
+        if (jerseyClientConfiguration.getUserAgent().isEmpty()) {
             final String userAgent = PROXY_JERSEY_CLIENT_USER_AGENT_PREFIX
                     + buildInfoProvider.get().getBuildVersion();
             LOGGER.info("Setting jersey client user agent string to [{}]", userAgent);

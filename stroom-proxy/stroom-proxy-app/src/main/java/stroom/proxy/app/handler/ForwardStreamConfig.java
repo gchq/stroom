@@ -3,12 +3,14 @@ package stroom.proxy.app.handler;
 import stroom.util.shared.IsProxyConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Singleton;
 
 @Singleton
+@JsonPropertyOrder(alphabetic = true)
 public class ForwardStreamConfig implements IsProxyConfig {
 
     private boolean isForwardingEnabled = false;

@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import javax.inject.Singleton;
 
 @Singleton
-@JsonPropertyOrder({"storingEnabled", "repoDir", "format", "rollCron"})
+@JsonPropertyOrder(alphabetic = true)
 public class ProxyRepositoryConfig implements IsProxyConfig {
 
     private boolean isStoringEnabled = false;

@@ -10,11 +10,12 @@ import stroom.util.shared.IsProxyConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import io.dropwizard.client.JerseyClientConfiguration;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.inject.Singleton;
 
 @Singleton
+@JsonPropertyOrder(alphabetic = true)
 public class ProxyConfig implements IsProxyConfig {
 
     private String proxyContentDir;
@@ -23,7 +24,7 @@ public class ProxyConfig implements IsProxyConfig {
     private ContentSyncConfig contentSyncConfig = new ContentSyncConfig();
     private FeedStatusConfig feedStatusConfig = new FeedStatusConfig();
     private ForwardStreamConfig forwardStreamConfig = new ForwardStreamConfig();
-    private JerseyClientConfiguration jerseyClientConfig = new JerseyClientConfiguration();
+    private RestClientConfig restClientConfig = new RestClientConfig();
     private LogStreamConfig logStreamConfig = new LogStreamConfig();
     private ProxyPathConfig pathConfig = new ProxyPathConfig();
     private ProxyRepositoryConfig proxyRepositoryConfig = new ProxyRepositoryConfig();
@@ -133,13 +134,13 @@ public class ProxyConfig implements IsProxyConfig {
         this.proxyContentDir = proxyContentDir;
     }
 
-    @JsonProperty("jerseyClient")
-    public JerseyClientConfiguration getJerseyClientConfiguration() {
-        return jerseyClientConfig;
+    @JsonProperty("restClient")
+    public RestClientConfig getRestClientConfig() {
+        return restClientConfig;
     }
 
-    @JsonProperty("jerseyClient")
-    public void setJerseyClientConfiguration(final JerseyClientConfiguration jerseyClientConfig) {
-        this.jerseyClientConfig = jerseyClientConfig;
+    @JsonProperty("restClient")
+    public void setRestClientConfig(final RestClientConfig restClientConfig) {
+        this.restClientConfig = restClientConfig;
     }
 }
