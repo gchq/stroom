@@ -817,31 +817,6 @@
     margin-left: 5px;
 }
 
-.spinnerWhite-color {
-     border-color: white;
-}
-
-.spinnerWhite-size {
-      width: 32px;
-      height: 32px;
-}
-
-.spinnerWhite-circle {
-}
-
-.smallSpinner-color {
-    border-color: rgb(2,121,223);
-}
-
-.smallSpinner-size {
-    width: 16px;
-    height: 16px;
-}
-
-.smallSpinner-circle {
-    border-width: 2px;
-}
-
 .linkEventViewImpl-data {
     margin-left: 3px;
 }

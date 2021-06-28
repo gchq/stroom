@@ -84,7 +84,6 @@ public final class SvgPresets {
     public static final Preset SETTINGS_BLUE = enabled("svgIcon-settings-blue", "Settings");
     public static final Preset SHARD_CLOSE = disabled("svgIcon-shard-close", "Close Selected Shards");
     public static final Preset SHARD_FLUSH = disabled("svgIcon-shard-flush", "Flush Selected Shards");
-    public static final Preset SPINNER = enabled("svgIcon-spinner", null);
     public static final Preset TABLE = enabled("svgIcon-table", "Table");
     public static final Preset TABLE_NESTED = enabled("svgIcon-table-nested", "Nested Table");
     public static final Preset UNDO = disabled("svgIcon-undo", "Undo");

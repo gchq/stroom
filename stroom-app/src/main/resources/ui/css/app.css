@@ -60,7 +60,6 @@
 @import url("ExpanderCell.css");
 @import url("SvgCell.css");
 @import url("CellList.css");
-@import url("SmallSpinner.css");
 @import url("codeeditor.css");
 @import url("components.css");
 @import url("dashboard.css");
@@ -73,8 +72,3 @@
 @import url("celltable/ExplorerTree.css");
 @import url("celltable/HoverCellTable.css");
 @import url("celltable/MenuCellTable.css");
-
-/* Material Design Spinner */
-@import url("spinner.min.css");
-@import url("spinner.custom.css");
-
