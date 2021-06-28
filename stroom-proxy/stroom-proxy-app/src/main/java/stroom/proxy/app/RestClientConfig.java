@@ -5,6 +5,9 @@ import stroom.util.shared.IsProxyConfig;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.dropwizard.client.JerseyClientConfiguration;
 
+import javax.inject.Singleton;
+
+@Singleton
 @JsonPropertyOrder(alphabetic = true)
 public class RestClientConfig extends JerseyClientConfiguration implements IsProxyConfig {
 
