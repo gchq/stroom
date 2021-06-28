@@ -38,6 +38,7 @@ public class ConnectionConfig extends AbstractConfig {
             "Connection details can be set in one place using 'stroom.commonDbDetails.*', individually for each " +
             "service area or a mixture of the two.";
 
+    // Default values are applied in CommonDbConfig
     private String className;
     private String url;
     private String user;

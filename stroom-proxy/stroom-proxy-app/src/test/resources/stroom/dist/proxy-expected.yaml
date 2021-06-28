@@ -17,7 +17,7 @@ proxyConfig:
   path:
     home: "."
     temp: "/tmp/stroom-proxy"
-  proxyContentDir: null
+  proxyContentDir: "content"
   proxyRepositoryConfig:
     format: "${pathId}/${id}"
     repoDir: null

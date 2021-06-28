@@ -65,7 +65,10 @@ class TestAppConfigModule {
                 .getPrepStmtCacheSize();
         int newValue = currentValue + 1000;
 
-        modifiedConfig.getAppConfig().getCommonDbConfig().getConnectionPoolConfig().setPrepStmtCacheSize(newValue);
+        modifiedConfig.getAppConfig()
+                .getCommonDbConfig()
+                .getConnectionPoolConfig()
+                .setPrepStmtCacheSize(newValue);
 
         Injector injector = Guice.createInjector(new AbstractModule() {
             @Override
@@ -105,9 +108,13 @@ class TestAppConfigModule {
                     final DbConfig mergedConfig = commonDbConfig.mergeConfig(hasDbConfig.getDbConfig());
 
                     Assertions.assertThat(mergedConfig.getConnectionConfig())
+                            .as(LogUtil.message("ConnectionConfig doesn't match for class {}",
+                                    hasDbConfig.getClass().getSimpleName()))
                             .isEqualTo(commonDbConfig.getConnectionConfig());
 
                     Assertions.assertThat(mergedConfig.getConnectionPoolConfig())
+                            .as(LogUtil.message("ConnectionPoolConfig doesn't match for class {}",
+                                    hasDbConfig.getClass().getSimpleName()))
                             .isEqualTo(commonDbConfig.getConnectionPoolConfig());
 
                     Assertions.assertThat(mergedConfig.getConnectionPoolConfig().getPrepStmtCacheSize())
