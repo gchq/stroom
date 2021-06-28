@@ -11,6 +11,6 @@
                 <p:SvgButton ui:field="typeFilter"/>
             </g:FlowPanel>
         </g:FlowPanel>
-        <g:SimplePanel ui:field="tree" styleName="dock-max itemCheckList overflow-hidden"/>
+        <g:SimplePanel ui:field="tree" styleName="dock-max itemCheckList"/>
     </g:FlowPanel>
 </ui:UiBinder>

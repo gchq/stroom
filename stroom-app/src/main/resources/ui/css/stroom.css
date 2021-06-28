@@ -810,13 +810,6 @@ input[type="file"]:disabled {
 
 .dock-max {
     flex-grow: 1;
-}
-
-.overflow-auto {
-    overflow: auto;
-}
-
-.overflow-hidden {
     overflow: hidden;
 }
 

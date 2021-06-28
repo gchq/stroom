@@ -14,6 +14,6 @@
                 <p:SvgButton ui:field="typeFilter"/>
             </g:FlowPanel>
         </g:FlowPanel>
-        <g:SimplePanel styleName="dock-max stroom-content overflow-hidden" ui:field="treeContainer"/>
+        <g:SimplePanel styleName="dock-max stroom-content" ui:field="treeContainer"/>
     </g:FlowPanel>
 </ui:UiBinder> 
