@@ -47,7 +47,8 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
     private TabConfig tabConfig;
     private SettingsPresenter settingsPresenter;
 
-    public AbstractComponentPresenter(final EventBus eventBus, final V view,
+    public AbstractComponentPresenter(final EventBus eventBus,
+                                      final V view,
                                       final Provider<?> settingsPresenterProvider) {
         super(eventBus, view);
         this.settingsPresenterProvider = settingsPresenterProvider;
