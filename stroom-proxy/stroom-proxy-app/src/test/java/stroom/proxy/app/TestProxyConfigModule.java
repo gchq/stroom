@@ -95,8 +95,8 @@ class TestProxyConfigModule {
 
                     Class<?> valueClass = prop.getValueClass();
                     if (classFilter.test(valueClass)) {
-                        appConfigTreeClasses.add(prop.getValueClass());
                         IsProxyConfig propValue = (IsProxyConfig) prop.getValueFromConfigObject();
+                        appConfigTreeClasses.add(prop.getValueClass());
                         // Keep a record of the instance ID of the instance in the tree
                         appConfigTreeClassToIdMap.put(valueClass, System.identityHashCode(propValue));
                     }
@@ -117,8 +117,10 @@ class TestProxyConfigModule {
         Assertions.assertThat(isProxyConfigConcreteClasses)
                 .containsAll(appConfigTreeClasses);
 
-        Assertions.assertThat(appConfigTreeClasses)
-                .containsAll(isProxyConfigConcreteClasses);
+        // We can't check that all sub classes of IsProxyConfig are in the tree as some
+        // branches have a null default or an empty list, ForwardStreamConfig#getForwardDestinations
+//        Assertions.assertThat(appConfigTreeClasses)
+//                .containsAll(isProxyConfigConcreteClasses);
 
         // Now we know the appConfig tree contains all the concrete IsProxyConfig classes
         // check that guice will give us the right instance. This ensures

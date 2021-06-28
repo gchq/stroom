@@ -18,7 +18,7 @@ import javax.inject.Singleton;
 @JsonPropertyOrder(alphabetic = true)
 public class ProxyConfig implements IsProxyConfig {
 
-    private String proxyContentDir;
+    private String proxyContentDir = "content";
     private boolean useDefaultOpenIdCredentials = true;
 
     private ContentSyncConfig contentSyncConfig = new ContentSyncConfig();
@@ -30,7 +30,6 @@ public class ProxyConfig implements IsProxyConfig {
     private ProxyRepositoryConfig proxyRepositoryConfig = new ProxyRepositoryConfig();
     private ProxyRepositoryReaderConfig proxyRepositoryReaderConfig = new ProxyRepositoryReaderConfig();
     private ProxyRequestConfig proxyRequestConfig = new ProxyRequestConfig();
-
 
     @JsonProperty()
     @JsonPropertyDescription("If true, stroom will use a set of default authentication credentials to allow" +

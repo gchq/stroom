@@ -56,6 +56,7 @@ import stroom.util.guice.ServletBinder;
 import stroom.util.io.BufferFactory;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.HomeDirProviderImpl;
+import stroom.util.io.PathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.io.TempDirProviderImpl;
 import stroom.util.shared.BuildInfo;
@@ -71,7 +72,6 @@ import org.glassfish.jersey.logging.LoggingFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.file.Paths;
 import java.util.Optional;
 import javax.inject.Provider;
 import javax.ws.rs.client.Client;
@@ -163,8 +163,10 @@ public class ProxyModule extends AbstractModule {
 
     @Provides
     @Singleton
-    Persistence providePersistence() {
-        return new FSPersistence(Paths.get(configuration.getProxyConfig().getProxyContentDir()));
+    Persistence providePersistence(final PathCreator pathCreator) {
+        return new FSPersistence(
+                configuration.getProxyConfig().getProxyContentDir(),
+                pathCreator);
     }
 
     @Provides
