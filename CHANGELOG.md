@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2317** : The user id can now be resolved from the `username` JWT claim if `email` is not present. 
+
 
 ## [v7.0-beta.134] - 2021-06-25
 

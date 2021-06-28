@@ -52,6 +52,8 @@ class OpenIdManager {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(OpenIdManager.class);
 
+    private static final String USER_NAME = "username";
+
     private final ResolvedOpenIdConfig openIdConfig;
     private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     private final JwtContextFactory jwtContextFactory;
@@ -267,10 +269,26 @@ class OpenIdManager {
     }
 
     private String getUserId(final JwtClaims jwtClaims) throws MalformedClaimException {
+        LOGGER.trace("getUserId");
+        LOGGER.debug(() -> "Claim value " + OpenId.SCOPE__EMAIL + "=" + jwtClaims.getClaimValue(OpenId.SCOPE__EMAIL));
+        LOGGER.debug(() -> "Claim value " + USER_NAME + "=" + jwtClaims.getClaimValue(USER_NAME));
+        LOGGER.debug(() -> {
+            try {
+                return "Subject=" + jwtClaims.getSubject();
+            } catch (final MalformedClaimException e) {
+                LOGGER.debug(e.getMessage(), e);
+            }
+            return "MalformedClaimException";
+        });
+
         String userId = (String) jwtClaims.getClaimValue(OpenId.SCOPE__EMAIL);
+        if (userId == null) {
+            userId = (String) jwtClaims.getClaimValue(USER_NAME);
+        }
         if (userId == null) {
             userId = jwtClaims.getSubject();
         }
+
         return userId;
     }
 
@@ -309,6 +327,8 @@ class OpenIdManager {
 
     private Optional<UserIdentityImpl> getUserIdentity(final HttpServletRequest request,
                                                        final JwtContext jwtContext) {
+        LOGGER.debug(() -> "Getting user identity from jwtContext=" + jwtContext);
+
         String sessionId = null;
         final HttpSession session = request.getSession(false);
         if (session != null) {
