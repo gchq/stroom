@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Added layout density user preference.
+
 * Issue **#2288** : Added export content menu item.
 
 * Added name filtering on export items.

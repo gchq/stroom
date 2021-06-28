@@ -31,7 +31,7 @@ public class ExportConfigEvent extends GwtEvent<ExportConfigEvent.Handler> {
     private final List<ExplorerNode> selection;
 
     private ExportConfigEvent(final List<ExplorerNode> selection) {
-       this.selection = selection;
+        this.selection = selection;
     }
 
     public static void fire(final HasHandlers source, final List<ExplorerNode> selection) {

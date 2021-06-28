@@ -89,6 +89,7 @@
     <inherits name="stroom.feed.Feed"/>
 <!--    <inherits name="stroom.monitoring.Monitoring" />-->
     <inherits name="stroom.job.Job" />
+    <inherits name="stroom.importexport.ImportExport" />
 
     <!-- Include new data controls -->
     <inherits name="stroom.data.Data"/>

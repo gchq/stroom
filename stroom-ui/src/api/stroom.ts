@@ -3445,6 +3445,7 @@ export interface UserAndPermissions {
 export interface UserPreferences {
   /** A date time formatting pattern string conforming to the specification of java.time.format.DateTimeFormatter */
   dateTimePattern?: string;
+  density?: string;
   editorTheme?: string;
   font?: string;
   fontSize?: string;

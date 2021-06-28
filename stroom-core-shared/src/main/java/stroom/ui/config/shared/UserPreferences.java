@@ -44,6 +44,10 @@ public class UserPreferences {
     private final String editorTheme;
 
     @JsonProperty
+    @JsonPropertyDescription("Layout density to use")
+    private final String density;
+
+    @JsonProperty
     @JsonPropertyDescription("The font to use, e.g. `Roboto`")
     private final String font;
 
@@ -62,12 +66,14 @@ public class UserPreferences {
     @JsonCreator
     public UserPreferences(@JsonProperty("theme") final String theme,
                            @JsonProperty("editorTheme") final String editorTheme,
+                           @JsonProperty("density") final String density,
                            @JsonProperty("font") final String font,
                            @JsonProperty("fontSize") final String fontSize,
                            @JsonProperty("dateTimePattern") final String dateTimePattern,
                            @JsonProperty("timeZone") final TimeZone timeZone) {
         this.theme = theme;
         this.editorTheme = editorTheme;
+        this.density = density;
         this.font = font;
         this.fontSize = fontSize;
         this.dateTimePattern = dateTimePattern;
@@ -80,6 +86,10 @@ public class UserPreferences {
 
     public String getEditorTheme() {
         return editorTheme;
+    }
+
+    public String getDensity() {
+        return density;
     }
 
     public String getFont() {
@@ -107,14 +117,15 @@ public class UserPreferences {
             return false;
         }
         final UserPreferences that = (UserPreferences) o;
-        return Objects.equals(theme, that.theme) && Objects.equals(editorTheme, that.editorTheme) &&
-                Objects.equals(font, that.font) && Objects.equals(fontSize, that.fontSize) &&
-                Objects.equals(dateTimePattern, that.dateTimePattern) && Objects.equals(timeZone, that.timeZone);
+        return Objects.equals(theme, that.theme) && Objects.equals(editorTheme,
+                that.editorTheme) && Objects.equals(density, that.density) && Objects.equals(font,
+                that.font) && Objects.equals(fontSize, that.fontSize) && Objects.equals(dateTimePattern,
+                that.dateTimePattern) && Objects.equals(timeZone, that.timeZone);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(theme, editorTheme, font, fontSize, dateTimePattern, timeZone);
+        return Objects.hash(theme, editorTheme, density, font, fontSize, dateTimePattern, timeZone);
     }
 
     @Override
@@ -122,6 +133,7 @@ public class UserPreferences {
         return "UserPreferences{" +
                 "theme='" + theme + '\'' +
                 ", editorTheme='" + editorTheme + '\'' +
+                ", density='" + density + '\'' +
                 ", font='" + font + '\'' +
                 ", fontSize='" + fontSize + '\'' +
                 ", dateTimePattern='" + dateTimePattern + '\'' +
@@ -145,6 +157,7 @@ public class UserPreferences {
 
         private String theme;
         private String editorTheme;
+        private String density;
         private String font;
         private String fontSize;
         private String dateTimePattern;
@@ -153,6 +166,7 @@ public class UserPreferences {
         private Builder() {
             theme = "Dark";
             editorTheme = DEFAULT_EDITOR_THEME_DARK;
+            density = "Default";
             font = "Roboto";
             fontSize = "Medium";
             dateTimePattern = DEFAULT_DATE_TIME_PATTERN;
@@ -162,6 +176,7 @@ public class UserPreferences {
         private Builder(final UserPreferences userPreferences) {
             this.theme = userPreferences.theme;
             this.editorTheme = userPreferences.editorTheme;
+            this.density = userPreferences.density;
             this.font = userPreferences.font;
             this.fontSize = userPreferences.fontSize;
             this.dateTimePattern = userPreferences.dateTimePattern;
@@ -175,6 +190,11 @@ public class UserPreferences {
 
         public Builder editorTheme(final String editorTheme) {
             this.editorTheme = editorTheme;
+            return this;
+        }
+
+        public Builder density(final String density) {
+            this.density = density;
             return this;
         }
 
@@ -199,7 +219,7 @@ public class UserPreferences {
         }
 
         public UserPreferences build() {
-            return new UserPreferences(theme, editorTheme, font, fontSize, dateTimePattern, timeZone);
+            return new UserPreferences(theme, editorTheme, density, font, fontSize, dateTimePattern, timeZone);
         }
     }
 }
