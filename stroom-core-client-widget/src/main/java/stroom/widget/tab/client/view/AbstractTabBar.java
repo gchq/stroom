@@ -173,7 +173,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
         final int tabGap = getTabGap();
         final int selectorWidth = getTabSelector().getOffsetWidth();
 
-        // igure out how many tabs are not visible because they overflow the bar
+        // Figure out how many tabs are not visible because they overflow the bar
         // width.
         int remaining = getElement().getOffsetWidth();
         if (remaining > 0) {
