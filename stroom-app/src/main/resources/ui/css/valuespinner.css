@@ -27,22 +27,24 @@
 }
 
 .valueSpinner .arrows {
-	position: absolute;
-	right: 0;
-	top: 2px;
-	width: 18px;
-	height: 18px;
-	font-size: 0;
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    right: 0;
+    top: 0px;
+    width: 18px;
+    height: 100%;
+    font-size: 0;
+    border-top: solid 1px var(--input-border-color);
+    border-bottom: solid 1px var(--input-border-color);
 }
 
 .valueSpinner .arrows button {
-	display: block;
-    width: 17px;
-    height: 10px;
-	border: 1px solid #333;
-    border-radius: 2px;
-	background-position-x: center;
-	background-size: contain;
+    border: none;
+    background-size: 100% 100%;
+    flex-grow: 1;
+    background-color: transparent;
+    border-radius: 0;
 }
 
 .valueSpinner-arrowUp {
