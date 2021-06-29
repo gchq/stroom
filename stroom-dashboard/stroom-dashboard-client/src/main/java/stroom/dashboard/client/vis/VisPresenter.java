@@ -179,10 +179,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
 
     @Override
     public void onResize() {
-        if (getWidget() instanceof RequiresResize) {
-            ((RequiresResize) getWidget()).onResize();
-        }
-        visFrame.onResize();
+        getView().onResize();
     }
 
     /*****************
@@ -706,7 +703,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
         return currentSelection;
     }
 
-    public interface VisView extends View {
+    public interface VisView extends View, RequiresResize {
 
         void setRefreshing(boolean refreshing);
 

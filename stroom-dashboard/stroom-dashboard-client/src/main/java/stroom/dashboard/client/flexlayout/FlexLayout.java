@@ -28,9 +28,9 @@ import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
 import stroom.data.grid.client.Glass;
 import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.tab.client.view.GlobalResizeObserver;
 import stroom.widget.tab.client.view.LinkTab;
 import stroom.widget.tab.client.view.LinkTabBar;
-import stroom.widget.tab.client.view.ResizeObserver;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
@@ -85,13 +85,22 @@ public class FlexLayout extends Composite {
             marker = new Glass("flexLayout-marker", "flexLayout-markerVisible");
         }
 
-        panel = new FlowPanel();
+        panel = new FlowPanel() {
+            @Override
+            protected void onAttach() {
+                super.onAttach();
+                GlobalResizeObserver.addListener(getElement(), e -> refresh());
+            }
+
+            @Override
+            protected void onDetach() {
+                GlobalResizeObserver.removeListener(getElement());
+                super.onDetach();
+            }
+        };
         initWidget(panel);
 
         element = panel.getElement();
-
-        ResizeObserver.observe(element, e -> refresh());
-
         sinkEvents(Event.ONMOUSEMOVE | Event.ONMOUSEDOWN | Event.ONMOUSEUP);
     }
 

@@ -23,7 +23,7 @@ import stroom.svg.client.Preset;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToggleButtonView;
-import stroom.widget.tab.client.view.ResizeObserver;
+import stroom.widget.tab.client.view.GlobalResizeObserver;
 import stroom.widget.util.client.DoubleSelectTester;
 import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -144,12 +144,22 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
         } else {
             widget = dataGrid;
         }
-
-        ResizeObserver.observe(dataGrid.getElement(), element -> dataGrid.onResize());
     }
 
     private DataGrid<R> createDataGrid(final boolean supportsSelection, final int size) {
         final DataGrid<R> dataGrid = new DataGrid<R>(size, resources) {
+            @Override
+            protected void onAttach() {
+                super.onAttach();
+                GlobalResizeObserver.addListener(getElement(), element -> onResize());
+            }
+
+            @Override
+            protected void onDetach() {
+                GlobalResizeObserver.removeListener(getElement());
+                super.onDetach();
+            }
+
             @Override
             protected void onBrowserEvent2(final Event event) {
                 final int eventType = event.getTypeInt();

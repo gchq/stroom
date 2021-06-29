@@ -28,7 +28,7 @@ import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 import stroom.util.shared.TextRange;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent;
-import stroom.widget.tab.client.view.ResizeObserver;
+import stroom.widget.tab.client.view.GlobalResizeObserver;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.NativeEvent;
@@ -80,7 +80,9 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
     private final Option liveAutoCompletionOption;
     private final Option highlightActiveLineOption;
 
-    @UiField
+    private final Widget widget;
+
+    @UiField(provided = true)
     FlowPanel layout;
     @UiField
     Editor editor;
@@ -94,9 +96,21 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
 
     @Inject
     public EditorViewImpl(final Binder binder) {
-        layout = binder.createAndBindUi(this);
-        ResizeObserver.observe(layout.getElement(), element -> doLayout(SHOW_INDICATORS_DEFAULT));
+        layout = new FlowPanel() {
+            @Override
+            protected void onAttach() {
+                super.onAttach();
+                GlobalResizeObserver.addListener(getElement(), element -> onResize());
+            }
 
+            @Override
+            protected void onDetach() {
+                GlobalResizeObserver.removeListener(getElement());
+                super.onDetach();
+            }
+        };
+
+        widget = binder.createAndBindUi(this);
         formatAction = new Action("Format", false, this::format);
 
         // Don't forget to add any new options into EditorPresenter
@@ -137,7 +151,7 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
 
     @Override
     public Widget asWidget() {
-        return layout;
+        return widget;
     }
 
     private void doLayout() {
