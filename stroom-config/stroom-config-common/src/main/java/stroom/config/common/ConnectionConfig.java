@@ -38,7 +38,15 @@ public class ConnectionConfig extends AbstractConfig {
             "Connection details can be set in one place using 'stroom.commonDbDetails.*', individually for each " +
             "service area or a mixture of the two.";
 
-    // Default values are applied in CommonDbConfig
+    // These defaults are set in CommonDbConfig. We don't set them here else the properties UI
+    // will show the default conn details for each non-common db module (if not set) which is then
+    // confusing for the user.
+    public static final String DEFAULT_JDBC_DRIVER_CLASS_NAME = "com.mysql.cj.jdbc.Driver";
+    public static final String DEFAULT_JDBC_DRIVER_URL =
+            "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8";
+    public static final String DEFAULT_JDBC_DRIVER_USERNAME = "stroomuser";
+    public static final String DEFAULT_JDBC_DRIVER_PASSWORD = "stroompassword1";
+
     private String className;
     private String url;
     private String user;
@@ -138,7 +146,6 @@ public class ConnectionConfig extends AbstractConfig {
                 "jdbcDriverClassName='" + className + '\'' +
                 ", jdbcDriverUrl='" + url + '\'' +
                 ", jdbcDriverUsername='" + user + '\'' +
-                ", jdbcDriverPassword='" + password + '\'' +
                 '}';
     }
 
@@ -152,10 +159,10 @@ public class ConnectionConfig extends AbstractConfig {
 
     public static final class Builder {
 
-        private String className = "com.mysql.cj.jdbc.Driver";
-        private String url;
-        private String user;
-        private String password;
+        private String className = DEFAULT_JDBC_DRIVER_CLASS_NAME;
+        private String url = DEFAULT_JDBC_DRIVER_URL;
+        private String user = DEFAULT_JDBC_DRIVER_USERNAME;
+        private String password = DEFAULT_JDBC_DRIVER_PASSWORD;
 
         private Builder() {
         }
