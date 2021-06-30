@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fixed issue where annotation menu button did not show when existing annotation was selected.
+
 
 ## [v7.0-beta.136] - 2021-06-29
 
