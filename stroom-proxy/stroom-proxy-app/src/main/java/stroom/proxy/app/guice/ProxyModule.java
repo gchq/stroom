@@ -20,6 +20,7 @@ import stroom.proxy.app.BufferFactoryImpl;
 import stroom.proxy.app.Config;
 import stroom.proxy.app.ContentSyncService;
 import stroom.proxy.app.ProxyConfigHealthCheck;
+import stroom.proxy.app.ProxyPathConfig;
 import stroom.proxy.app.RestClientConfig;
 import stroom.proxy.app.handler.ForwardStreamHandlerFactory;
 import stroom.proxy.app.handler.ProxyRequestHandler;
@@ -56,6 +57,7 @@ import stroom.util.guice.ServletBinder;
 import stroom.util.io.BufferFactory;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.HomeDirProviderImpl;
+import stroom.util.io.PathConfig;
 import stroom.util.io.PathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.io.TempDirProviderImpl;
@@ -122,6 +124,7 @@ public class ProxyModule extends AbstractModule {
         bind(StoreFactory.class).to(StoreFactoryImpl.class);
         bind(StreamHandlerFactory.class).to(ForwardStreamHandlerFactory.class);
 
+        bind(PathConfig.class).to(ProxyPathConfig.class);
         bind(HomeDirProvider.class).to(HomeDirProviderImpl.class);
         bind(TempDirProvider.class).to(TempDirProviderImpl.class);
 

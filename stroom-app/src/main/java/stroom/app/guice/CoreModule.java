@@ -3,6 +3,8 @@ package stroom.app.guice;
 import stroom.security.impl.SessionSecurityModule;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.HomeDirProviderImpl;
+import stroom.util.io.PathConfig;
+import stroom.util.io.StroomPathConfig;
 import stroom.util.io.TempDirProvider;
 import stroom.util.io.TempDirProviderImpl;
 
@@ -106,6 +108,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.util.pipeline.scope.PipelineScopeModule());
 
         // Bind the directory providers.
+        bind(PathConfig.class).to(StroomPathConfig.class);
         bind(HomeDirProvider.class).to(HomeDirProviderImpl.class);
         bind(TempDirProvider.class).to(TempDirProviderImpl.class);
     }
