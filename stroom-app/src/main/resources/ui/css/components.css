@@ -715,6 +715,26 @@
     text-decoration: underline;
 }
 
+.pipelineStructureViewImpl-property-added {
+    font-weight: 600;
+}
+
+.pipelineStructureViewImpl-property-removed {
+    font-weight: 600;
+    text-decoration: line-through;
+}
+
+.pipelineStructureViewImpl-property-inherited {
+}
+
+.pipelineStructureViewImpl-property-default {
+    opacity: 0.5;
+}
+
+
+
+
+
 .sourceViewImpl-buttonPanel {
     float: right;
     padding-right: 0.25em;
