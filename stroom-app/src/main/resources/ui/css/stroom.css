@@ -44,6 +44,7 @@ html,body,div,span,table,tbody,tr,th,td,table th,table td,b,p,h1,h2,h3,h4,select
 	-moz-box-sizing: border-box;
 	-ms-box-sizing: border-box;
 	box-sizing: border-box;
+	background-size: 100% 100%;
 	outline: none;
 }
 
@@ -208,7 +209,6 @@ td {
 
 .stroom-pipeline-stepping-button-icon {
     background-image: url("../images/stepping.svg");
-    background-size: 100%;
     width: 46px;
     height: 46px;
     margin-left: 2px;

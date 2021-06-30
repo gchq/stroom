@@ -1,6 +1,5 @@
 .svgIcon {
   display: inline-block;
-  background-size: 100%;
   width: 16px;
   height: 16px;
 }
@@ -271,7 +270,6 @@
 }
 .svgIcon-stepping {
   background-image: url("../images/stepping-circle.svg");
-  background-size: 100%;
   width: 18px;
   height: 18px;
 }
@@ -316,7 +314,6 @@
 }
 
 .svgIcon-document {
-  background-size: 100%;
   width: 18px;
   height: 18px;
 }
