@@ -9,7 +9,7 @@ proxyConfig:
     apiKey: null
     url: null
   forwardStreamConfig:
-    forwardDestinations: [ ]
+    forwardDestinations: []
     forwardingEnabled: false
     userAgent: null
   logStreamConfig:
