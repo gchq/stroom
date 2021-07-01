@@ -430,7 +430,7 @@ check_for_out_of_date_puml_svgs() {
   if [[ ${out_of_date_file_count} -gt 0 ]]; then
     echo -e "${RED}ERROR${NC}: ${out_of_date_file_count} PlantUML generated" \
       "file(s) are out of date. Run '${convert_cmd[*]}' to update them," \
-    "then commit.${NC}"
+    "then commit. Failing the build!${NC}"
 
     exit 1
   fi
