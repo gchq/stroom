@@ -67,7 +67,6 @@ main() {
   echo -e "${GREEN}Converting .puml files in ${BLUE}${dir}${NC}"
   java \
     -jar ../plantuml.jar \
-    -progress \
     -svg \
     "${dir}"/**/*.puml
 }
