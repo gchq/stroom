@@ -394,6 +394,48 @@ copy_swagger_ui_content() {
     "${ghPagesDir}/index.html"
 }
 
+check_for_out_of_date_puml_svgs() {
+
+  local convert_cmd=("${BUILD_DIR}"/container_build/runInJavaDocker.sh SVG)
+
+  echo -e "${GREEN}Ensuring all PlantUML generated .svg files are up to date${NC}"
+  
+  # shellcheck disable=SC2068
+  ${convert_cmd[@]}
+
+  # Now see if git thinks there are any differences
+  # if so, fail the build as it means the puml has been changed
+  # but the svg has not been regenerated.
+
+  # Example git status --porcelain output:
+  #  M stroom-proxy/stroom-proxy-app/doc/storing-data.puml
+  #  M stroom-proxy/stroom-proxy-app/doc/storing-data.svg
+  # ?? stroom-proxy/stroom-proxy-app/doc/storing-dataX.svg
+
+  local out_of_date_file_count=0
+  # grep the git status output for modified/untracked svg files and
+  # grab the file path
+  while read -r svg_file; do
+    # Change file extension to .puml
+    local puml_file="${svg_file%.svg}.puml"
+
+    if [[ -f "${puml_file}" ]]; then
+      echo -e "${RED}ERROR${NC}: PlantUML generated file ${svg_file}" \
+        "is out of date${NC}"
+      out_of_date_file_count=$((out_of_date_file_count + 1))
+    fi
+  done < <(git status --porcelain \
+    | grep -Po "(?<=( M|\?\?) ).*\.svg")
+  
+  if [[ ${out_of_date_file_count} -gt 0 ]]; then
+    echo -e "${RED}ERROR${NC}: ${out_of_date_file_count} PlantUML generated" \
+      "file(s) are out of date. Run '${convert_cmd[*]}' to update them," \
+    "then commit.${NC}"
+
+    exit 1
+  fi
+}
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Script proper starts here
@@ -494,6 +536,8 @@ pushd "${BUILD_DIR}" > /dev/null
 
 # Login to docker so we have authenticated pulls that are not rate limited
 docker_login
+
+check_for_out_of_date_puml_svgs
 
 start_stroom_all_dbs
 
