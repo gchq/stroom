@@ -147,13 +147,9 @@ logging:
 # https://gchq.github.io/stroom-docs/user-guide/properties.html
 
 proxyConfig:
+  {% if distribution == "docker" %}
   useDefaultOpenIdCredentials: {{ false | envVar('USE_DEFAULT_OPEN_ID_CREDENTIALS') }}
-  # TODO if this is defaulted, we don't need it here
-  proxyContentDir: "content"
-# If you want to use a receipt policy then the RuleSet must exist
-# in Stroom and have the UUID as specified below in receiptPolicyUuid
-#  proxyRequestConfig:
-#    receiptPolicyUuid: "{{ (rootPath + 'content') | envVar('RECEIPT_POLICY_UUID') }}"
+  {% endif %}
   feedStatus:
     url: "{{ 'http://stroom:8080/api/feedStatus/v1' | envVar('FEED_STATUS_URL') }}"
     apiKey: ""
@@ -168,9 +164,13 @@ proxyConfig:
           keyStorePassword: "password"
           trustStorePath: "certs/ca.jks"
           trustStorePassword: "password"
+          {% if distribution == "docker" %}
           hostnameVerificationEnabled: {{ true | envVar('FORWARDING_HOST_VERIFICATION_ENABLED') }}
+          {% endif %}
   path:
-    # Set this to the absolute path of the stroom home directory, i.e. the location of start.sh
+    # By default all files read or written to by stroom-proxy will be in directories relative to
+    # the home location. This should be set to an absolute path that differs from the location of
+    # the installed software as it has a different lifecycle.
     home: "{{ proxyHome }}"
   proxyRepositoryConfig:
     storingEnabled: {{ true | envVar('STORING_ENABLED') }}
@@ -183,35 +183,17 @@ proxyConfig:
     readCron: "* * *"
   logStreamConfig:
     metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn,remotecertexpiry"
-#  contentSyncConfig:
-#    contentSyncEnabled: {{ false | envVar('CONTENT_SYNC_ENABLED') }}
-#    upstreamUrl:
-#      ReceiveDataRuleSet: "{{ 'http://stroom:8080/api/ruleset/v1' | envVar('UPSTREAM_RULE_URL') }}"
-#      Dictionary: "{{ 'http://stroom:8080/api/dictionary/v1' | envVar('UPSTREAM_DICTIONARY_URL') }}"
-#    syncFrequency: 30000
-#    apiKey: "{{ '' | envVar('SYNC_API_KEY') }}"
   # restClient is used for making feed status REST calls
   restClient:
-    # timeout: "{{ '10s' | envVar('JERSEY_TIMEOUT') }}"
-    # connectionTimeout: "{{ '10s' | envVar('JERSEY_CONN_TIMEOUT') }}"
-    # timeToLive: "{{ '1h' | envVar('JERSEY_TIME_TO_LIVE') }}"
-    # cookiesEnabled: false
-    # maxConnections: {{ 1024 | envVar('JERSEY_MAX_CONNECTIONS') }}
-    # maxConnectionsPerRoute: "{{ '1024' | envVar('JERSEY_MAX_CONNECTIONS_PER_ROUTE') }}"
-    # keepAlive: "{{ '0ms' | envVar('JERSEY_KEEP_ALIVE') }}"
-    # retries: {{ 0 | envVar('JERSEY_RETRIES') }}
+    timeout: "10s"
+    connectionTimeout: "10s"
     tls:
-      verifyHostname: {{ true | envVar('JERSEY_VERIFY_HOSTNAME') }}
-      # TODO fix SSLUtil.java so it makes these relative to proxy.home
+      {% if distribution == "docker" %}
+      verifyHostname: {{ true | envVar('REST_CLIENT_VERIFY_HOSTNAME') }}
+      {% endif %}
       keyStorePath: "certs/client.jks"
       keyStorePassword: "password"
-        # TODO what is default for this
-      keyStoreType: "JKS"
       trustStorePath: "certs/ca.jks"
       trustStorePassword: "password"
-        # TODO what is default for this
-      trustStoreType: "JKS"
-        # TODO is this false by default
-      trustSelfSignedCertificates: false
 
 # vim: set filetype=yaml tabstop=2 shiftwidth=2 expandtab:

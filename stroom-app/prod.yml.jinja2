@@ -187,7 +187,9 @@ appConfig:
     {% endif %}
 
   path:
-    # Set this to the absolute path of the stroom home directory, i.e. the location of start.sh
+    # By default all files read or written to by stroom will be in directories relative to
+    # the home location. This should be set to an absolute path that differs from the location of
+    # the installed software as it has a different lifecycle.
     home: "{{ stroomHome }}"
   publicUri:
     # The public FQDN for stroom, as typed into the browser, typically the public address of nginx
