@@ -111,6 +111,6 @@ RUN apk add --no-cache \
     && mkdir -p /builder/shared \
     && chown -R $USER_ID:$GROUP_ID /builder
 
-COPY --chown=$USER_ID:$GROUP_ID docker-entrypoint.sh /builder/
+COPY --chown=$USER_ID:$GROUP_ID *.sh /builder/
 
 USER $USER_ID
