@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="553px" preserveAspectRatio="none" style="width:512px;height:553px;" version="1.1" viewBox="0 0 512 553" width="512px" zoomAndPan="magnify"><defs><filter height="300%" id="fn7duy5tiea2k" width="300%" x="-1" y="-1"><feGaussianBlur result="blurOut" stdDeviation="2.0"/><feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/><feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3"/><feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/></filter></defs><g><!--MD5=[fb94403e3d3521d383fd6507b67b3642]
+class source--><rect codeLine="5" fill="#FEFECE" filter="url(#fn7duy5tiea2k)" height="150.4375" id="source" style="stroke:#A80036;stroke-width:1.5;" width="172" x="7" y="7"/><ellipse cx="70.25" cy="23" fill="#ADD1B2" rx="11" ry="11" style="stroke:#A80036;stroke-width:1.0;"/><path d="M73.2656,29 L66.2813,29 L66.2813,16.8594 L73.2656,16.8594 L73.2656,18.9688 L68.8438,18.9688 L68.8438,21.6406 L72.9531,21.6406 L72.9531,23.75 L68.8438,23.75 L68.8438,26.875 L73.2656,26.875 L73.2656,29 Z " fill="#000000"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="37" x="90.75" y="27.1543">source</text><line style="stroke:#A80036;stroke-width:1.5;" x1="8" x2="178" y1="39" y2="39"/><ellipse cx="18" cy="50" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="43" x="27" y="53.2104">id : bigint</text><line style="stroke:#A80036;stroke-width:1.0;" x1="8" x2="178" y1="59.8047" y2="59.8047"/><ellipse cx="18" cy="70.8047" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="134" x="27" y="74.0151">path : varchar(255) - unique</text><ellipse cx="18" cy="83.6094" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="125" x="27" y="86.8198">feed_name : varchar(255)</text><ellipse cx="18" cy="96.4141" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="125" x="27" y="99.6245">type_name : varchar(255)</text><ellipse cx="18" cy="109.2188" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="146" x="27" y="112.4292">last_modified_time_ms : bigint</text><ellipse cx="18" cy="122.0234" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="95" x="27" y="125.2339">examined : boolean</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="97" x="27" y="138.0386">forwarded : boolean</text><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="114" x="27" y="150.8433">forward_error : boolean</text><!--MD5=[23693ca385c1414b1e74e8b4c3b37cb4]
+class source_item--><rect codeLine="17" fill="#FEFECE" filter="url(#fn7duy5tiea2k)" height="124.8281" id="source_item" style="stroke:#A80036;stroke-width:1.5;" width="151" x="17.5" y="229.5"/><ellipse cx="55.9" cy="245.5" fill="#ADD1B2" rx="11" ry="11" style="stroke:#A80036;stroke-width:1.0;"/><path d="M58.9156,251.5 L51.9313,251.5 L51.9313,239.3594 L58.9156,239.3594 L58.9156,241.4688 L54.4938,241.4688 L54.4938,244.1406 L58.6031,244.1406 L58.6031,246.25 L54.4938,246.25 L54.4938,249.375 L58.9156,249.375 L58.9156,251.5 Z " fill="#000000"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="67" x="75.1" y="249.6543">source_item</text><line style="stroke:#A80036;stroke-width:1.5;" x1="18.5" x2="167.5" y1="261.5" y2="261.5"/><ellipse cx="28.5" cy="272.5" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="43" x="37.5" y="275.7104">id : bigint</text><line style="stroke:#A80036;stroke-width:1.0;" x1="18.5" x2="167.5" y1="282.3047" y2="282.3047"/><ellipse cx="28.5" cy="293.3047" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="98" x="37.5" y="296.5151">name : varchar(255)</text><ellipse cx="28.5" cy="306.1094" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="125" x="37.5" y="309.3198">feed_name : varchar(255)</text><ellipse cx="28.5" cy="318.9141" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="125" x="37.5" y="322.1245">type_name : varchar(255)</text><ellipse cx="28.5" cy="331.7188" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="94" x="37.5" y="334.9292">fk_source_id : bigint</text><ellipse cx="28.5" cy="344.5234" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="103" x="37.5" y="347.7339">aggregated : boolean</text><!--MD5=[920d5660a06730163c0204a2780a33ae]
+class source_entry--><rect codeLine="27" fill="#FEFECE" filter="url(#fn7duy5tiea2k)" height="112.0234" id="source_entry" style="stroke:#A80036;stroke-width:1.5;" width="147" x="19.5" y="427"/><ellipse cx="55.2" cy="443" fill="#ADD1B2" rx="11" ry="11" style="stroke:#A80036;stroke-width:1.0;"/><path d="M58.2156,449 L51.2313,449 L51.2313,436.8594 L58.2156,436.8594 L58.2156,438.9688 L53.7938,438.9688 L53.7938,441.6406 L57.9031,441.6406 L57.9031,443.75 L53.7938,443.75 L53.7938,446.875 L58.2156,446.875 L58.2156,449 Z " fill="#000000"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="69" x="73.8" y="447.1543">source_entry</text><line style="stroke:#A80036;stroke-width:1.5;" x1="20.5" x2="165.5" y1="459" y2="459"/><ellipse cx="30.5" cy="470" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="43" x="39.5" y="473.2104">id : bigint</text><line style="stroke:#A80036;stroke-width:1.0;" x1="20.5" x2="165.5" y1="479.8047" y2="479.8047"/><ellipse cx="30.5" cy="490.8047" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="117" x="39.5" y="494.0151">extension : varchar(255)</text><ellipse cx="30.5" cy="503.6094" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="95" x="39.5" y="506.8198">extension_type : int</text><ellipse cx="30.5" cy="516.4141" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="80" x="39.5" y="519.6245">byte_size : bigint</text><ellipse cx="30.5" cy="529.2188" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="121" x="39.5" y="532.4292">fk_source_item_id : bigint</text><!--MD5=[1ef907470190a52481b72bc04299235e]
+class aggregate--><rect codeLine="36" fill="#FEFECE" filter="url(#fn7duy5tiea2k)" height="150.4375" id="aggregate" style="stroke:#A80036;stroke-width:1.5;" width="151" x="203.5" y="217"/><ellipse cx="247.75" cy="233" fill="#ADD1B2" rx="11" ry="11" style="stroke:#A80036;stroke-width:1.0;"/><path d="M250.7656,239 L243.7813,239 L243.7813,226.8594 L250.7656,226.8594 L250.7656,228.9688 L246.3438,228.9688 L246.3438,231.6406 L250.4531,231.6406 L250.4531,233.75 L246.3438,233.75 L246.3438,236.875 L250.7656,236.875 L250.7656,239 Z " fill="#000000"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="54" x="268.25" y="237.1543">aggregate</text><line style="stroke:#A80036;stroke-width:1.5;" x1="204.5" x2="353.5" y1="249" y2="249"/><ellipse cx="214.5" cy="260" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="43" x="223.5" y="263.2104">id : bigint</text><line style="stroke:#A80036;stroke-width:1.0;" x1="204.5" x2="353.5" y1="269.8047" y2="269.8047"/><ellipse cx="214.5" cy="280.8047" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="113" x="223.5" y="284.0151">create_time_ms : bigint</text><ellipse cx="214.5" cy="293.6094" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="125" x="223.5" y="296.8198">feed_name : varchar(255)</text><ellipse cx="214.5" cy="306.4141" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="125" x="223.5" y="309.6245">type_name : varchar(255)</text><ellipse cx="214.5" cy="319.2188" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="80" x="223.5" y="322.4292">byte_size : bigint</text><ellipse cx="214.5" cy="332.0234" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="48" x="223.5" y="335.2339">items : int</text><ellipse cx="214.5" cy="344.8281" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="92" x="223.5" y="348.0386">complete : boolean</text><ellipse cx="214.5" cy="357.6328" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="114" x="223.5" y="360.8433">forward_error : boolean</text><!--MD5=[a7aae3f2a4de1495d12a81e05f498d83]
+class aggregate_item--><rect codeLine="48" fill="#FEFECE" filter="url(#fn7duy5tiea2k)" height="86.4141" id="aggregate_item" style="stroke:#A80036;stroke-width:1.5;" width="147" x="203.5" y="440"/><ellipse cx="232.45" cy="456" fill="#ADD1B2" rx="11" ry="11" style="stroke:#A80036;stroke-width:1.0;"/><path d="M235.4656,462 L228.4813,462 L228.4813,449.8594 L235.4656,449.8594 L235.4656,451.9688 L231.0438,451.9688 L231.0438,454.6406 L235.1531,454.6406 L235.1531,456.75 L231.0438,456.75 L231.0438,459.875 L235.4656,459.875 L235.4656,462 Z " fill="#000000"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="84" x="249.55" y="460.1543">aggregate_item</text><line style="stroke:#A80036;stroke-width:1.5;" x1="204.5" x2="349.5" y1="472" y2="472"/><ellipse cx="214.5" cy="483" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="43" x="223.5" y="486.2104">id : bigint</text><line style="stroke:#A80036;stroke-width:1.0;" x1="204.5" x2="349.5" y1="492.8047" y2="492.8047"/><ellipse cx="214.5" cy="503.8047" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="112" x="223.5" y="507.0151">fk_aggregate_id : bigint</text><ellipse cx="214.5" cy="516.6094" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="121" x="223.5" y="519.8198">fk_source_item_id : bigint</text><!--MD5=[3cc1e4effaee23fb9097a8bf1d8fa0d4]
+class forward_url--><rect codeLine="55" fill="#FEFECE" filter="url(#fn7duy5tiea2k)" height="73.6094" id="forward_url" style="stroke:#A80036;stroke-width:1.5;" width="108" x="390" y="255"/><ellipse cx="412.2" cy="271" fill="#ADD1B2" rx="11" ry="11" style="stroke:#A80036;stroke-width:1.0;"/><path d="M415.2156,277 L408.2313,277 L408.2313,264.8594 L415.2156,264.8594 L415.2156,266.9688 L410.7938,266.9688 L410.7938,269.6406 L414.9031,269.6406 L414.9031,271.75 L410.7938,271.75 L410.7938,274.875 L415.2156,274.875 L415.2156,277 Z " fill="#000000"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="60" x="427.8" y="275.1543">forward_url</text><line style="stroke:#A80036;stroke-width:1.5;" x1="391" x2="497" y1="287" y2="287"/><ellipse cx="401" cy="298" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="29" x="410" y="301.2104">id : int</text><line style="stroke:#A80036;stroke-width:1.0;" x1="391" x2="497" y1="307.8047" y2="307.8047"/><ellipse cx="401" cy="318.8047" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="82" x="410" y="322.0151">url : varchar(255)</text><!--MD5=[d4f398bbc1193deb68c8428dcb929078]
+class forward_aggregate--><rect codeLine="61" fill="#FEFECE" filter="url(#fn7duy5tiea2k)" height="112.0234" id="forward_aggregate" style="stroke:#A80036;stroke-width:1.5;" width="138" x="294" y="26"/><ellipse cx="311.7" cy="42" fill="#ADD1B2" rx="11" ry="11" style="stroke:#A80036;stroke-width:1.0;"/><path d="M314.7156,48 L307.7313,48 L307.7313,35.8594 L314.7156,35.8594 L314.7156,37.9688 L310.2938,37.9688 L310.2938,40.6406 L314.4031,40.6406 L314.4031,42.75 L310.2938,42.75 L310.2938,45.875 L314.7156,45.875 L314.7156,48 Z " fill="#000000"/><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="100" x="326.3" y="46.1543">forward_aggregate</text><line style="stroke:#A80036;stroke-width:1.5;" x1="295" x2="431" y1="58" y2="58"/><ellipse cx="305" cy="69" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="43" x="314" y="72.2104">id : bigint</text><line style="stroke:#A80036;stroke-width:1.0;" x1="295" x2="431" y1="78.8047" y2="78.8047"/><ellipse cx="305" cy="89.8047" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="103" x="314" y="93.0151">fk_forward_url_id : int</text><ellipse cx="305" cy="102.6094" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="112" x="314" y="105.8198">fk_aggregate_id : bigint</text><ellipse cx="305" cy="115.4141" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="84" x="314" y="118.6245">success : boolean</text><ellipse cx="305" cy="128.2188" fill="#000000" rx="3" ry="3" style="stroke:#000000;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="11" lengthAdjust="spacing" textLength="94" x="314" y="131.4292">error : varchar(255)</text><!--MD5=[bde66a182555eb887059de8293221a83]
+link source to source_item--><path codeLine="70" d="M93,165.22 C93,165.22 93,221.41 93,221.41 " fill="none" id="source-source_item" style="stroke:#A80036;stroke-width:1.0;stroke-dasharray:7.0,7.0;"/><line style="stroke:#A80036;stroke-width:1.0;" x1="93" x2="99" y1="221.41" y2="229.41"/><line style="stroke:#A80036;stroke-width:1.0;" x1="93" x2="87" y1="221.41" y2="229.41"/><line style="stroke:#A80036;stroke-width:1.0;" x1="93" x2="93" y1="221.41" y2="229.41"/><ellipse cx="93" cy="215.41" rx="4" ry="4" style="stroke:#A80036;stroke-width:1.0;fill:none;"/><line style="stroke:#A80036;stroke-width:1.0;fill:none;" x1="89" x2="97" y1="161.22" y2="161.22"/><line style="stroke:#A80036;stroke-width:1.0;fill:none;" x1="89" x2="97" y1="164.22" y2="164.22"/><line style="stroke:#A80036;stroke-width:1.0;fill:none;" x1="93" x2="93" y1="165.22" y2="157.22"/><!--MD5=[6610028f0c7a0554f2085ee3824405a3]
+link source_item to source_entry--><path codeLine="71" d="M93,362.54 C93,362.54 93,418.77 93,418.77 " fill="none" id="source_item-source_entry" style="stroke:#A80036;stroke-width:1.0;"/><line style="stroke:#A80036;stroke-width:1.0;" x1="93" x2="99" y1="418.77" y2="426.77"/><line style="stroke:#A80036;stroke-width:1.0;" x1="93" x2="87" y1="418.77" y2="426.77"/><line style="stroke:#A80036;stroke-width:1.0;" x1="93" x2="93" y1="418.77" y2="426.77"/><line style="stroke:#A80036;stroke-width:1.0;" x1="97" x2="89" y1="416.77" y2="416.77"/><line style="stroke:#A80036;stroke-width:1.0;" x1="89" x2="97" y1="358.54" y2="358.54"/><line style="stroke:#A80036;stroke-width:1.0;" x1="89" x2="97" y1="361.54" y2="361.54"/><line style="stroke:#A80036;stroke-width:1.0;" x1="93" x2="93" y1="362.54" y2="354.54"/><!--MD5=[791733cf99fddd84ca9a2108048a79c4]
+link aggregate to aggregate_item--><path codeLine="72" d="M277,375.21 C277,375.21 277,431.81 277,431.81 " fill="none" id="aggregate-aggregate_item" style="stroke:#A80036;stroke-width:1.0;"/><line style="stroke:#A80036;stroke-width:1.0;" x1="277" x2="283" y1="431.81" y2="439.81"/><line style="stroke:#A80036;stroke-width:1.0;" x1="277" x2="271" y1="431.81" y2="439.81"/><line style="stroke:#A80036;stroke-width:1.0;" x1="277" x2="277" y1="431.81" y2="439.81"/><line style="stroke:#A80036;stroke-width:1.0;" x1="281" x2="273" y1="429.81" y2="429.81"/><line style="stroke:#A80036;stroke-width:1.0;" x1="273" x2="281" y1="371.21" y2="371.21"/><line style="stroke:#A80036;stroke-width:1.0;" x1="273" x2="281" y1="374.21" y2="374.21"/><line style="stroke:#A80036;stroke-width:1.0;" x1="277" x2="277" y1="375.21" y2="367.21"/><!--MD5=[446b403935e84f8470581e0b86ba8ed1]
+link source_item to aggregate_item--><path codeLine="73" d="M173.27,293 C173.27,293 173.75,293 173.75,293 C173.75,293 173.75,484 173.75,484 C173.75,484 195.34,484 195.34,484 " fill="none" id="source_item-aggregate_item" style="stroke:#A80036;stroke-width:1.0;stroke-dasharray:7.0,7.0;"/><line style="stroke:#A80036;stroke-width:1.0;" x1="192.34" x2="203.34" y1="484" y2="484"/><ellipse cx="192.34" cy="484" rx="4" ry="4" style="stroke:#A80036;stroke-width:1.0;fill:none;"/><line style="stroke:#A80036;stroke-width:1.0;fill:none;" x1="199.34" x2="199.34" y1="480" y2="488"/><line style="stroke:#A80036;stroke-width:1.0;fill:none;" x1="172.94" x2="172.94" y1="297" y2="289"/><line style="stroke:#A80036;stroke-width:1.0;fill:none;" x1="175.94" x2="175.94" y1="297" y2="289"/><line style="stroke:#A80036;stroke-width:1.0;fill:none;" x1="176.94" x2="168.94" y1="293" y2="293"/><!--MD5=[04d9ecdcc61a774a98679dad38ac2f3f]
+link forward_aggregate to forward_url--><path codeLine="74" d="M411,146 C411,146 411,246.69 411,246.69 " fill="none" id="forward_aggregate-forward_url" style="stroke:#A80036;stroke-width:1.0;"/><line style="stroke:#A80036;stroke-width:1.0;" x1="415" x2="407" y1="250.69" y2="250.69"/><line style="stroke:#A80036;stroke-width:1.0;" x1="415" x2="407" y1="247.69" y2="247.69"/><line style="stroke:#A80036;stroke-width:1.0;" x1="411" x2="411" y1="246.69" y2="254.69"/><line style="stroke:#A80036;stroke-width:1.0;" x1="411" x2="405" y1="146" y2="138"/><line style="stroke:#A80036;stroke-width:1.0;" x1="411" x2="417" y1="146" y2="138"/><line style="stroke:#A80036;stroke-width:1.0;" x1="411" x2="411" y1="146" y2="138"/><ellipse cx="411" cy="152" rx="4" ry="4" style="stroke:#A80036;stroke-width:1.0;fill:none;"/><!--MD5=[0ac3d8377118ba1284c6e32a49f23729]
+link forward_aggregate to aggregate--><path codeLine="75" d="M324.25,146 C324.25,146 324.25,208.82 324.25,208.82 " fill="none" id="forward_aggregate-aggregate" style="stroke:#A80036;stroke-width:1.0;"/><line style="stroke:#A80036;stroke-width:1.0;" x1="328.25" x2="320.25" y1="212.82" y2="212.82"/><line style="stroke:#A80036;stroke-width:1.0;" x1="328.25" x2="320.25" y1="209.82" y2="209.82"/><line style="stroke:#A80036;stroke-width:1.0;" x1="324.25" x2="324.25" y1="208.82" y2="216.82"/><line style="stroke:#A80036;stroke-width:1.0;" x1="324.25" x2="318.25" y1="146" y2="138"/><line style="stroke:#A80036;stroke-width:1.0;" x1="324.25" x2="330.25" y1="146" y2="138"/><line style="stroke:#A80036;stroke-width:1.0;" x1="324.25" x2="324.25" y1="146" y2="138"/><ellipse cx="324.25" cy="152" rx="4" ry="4" style="stroke:#A80036;stroke-width:1.0;fill:none;"/><!--MD5=[96f6f9dd02eece5d7f63722825c1b488]
+@startuml
+
+' avoid problems with angled crows feet
+skinparam linetype ortho
+
+entity source {
+  *id : bigint
+  - -
+  *path : varchar(255) - unique
+  *feed_name : varchar(255)
+  *type_name : varchar(255)
+  *last_modified_time_ms : bigint
+  *examined : boolean
+  forwarded : boolean
+  forward_error : boolean
+}
+
+entity source_item {
+  *id : bigint
+  - -
+  *name : varchar(255)
+  *feed_name : varchar(255)
+  *type_name : varchar(255)
+  *fk_source_id : bigint
+  *aggregated : boolean
+}
+
+entity source_entry {
+  *id : bigint
+  - -
+  *extension : varchar(255)
+  *extension_type : int
+  *byte_size : bigint
+  *fk_source_item_id : bigint
+}
+
+entity aggregate {
+  *id : bigint
+  - -
+  *create_time_ms : bigint
+  *feed_name : varchar(255)
+  *type_name : varchar(255)
+  *byte_size : bigint
+  *items : int
+  *complete : boolean
+  *forward_error : boolean
+}
+
+entity aggregate_item {
+  *id : bigint
+  - -
+  *fk_aggregate_id : bigint
+  *fk_source_item_id : bigint
+}
+
+entity forward_url {
+  *id : int
+  - -
+  *url : varchar(255)
+}
+
+entity forward_aggregate {
+  *id : bigint
+  - -
+  *fk_forward_url_id : int
+  *fk_aggregate_id : bigint
+  *success : boolean
+  *error : varchar(255)
+}
+
+source ||..o{ source_item
+source_item ||- -|{ source_entry
+aggregate ||- -|{ aggregate_item
+source_item ||..o| aggregate_item
+forward_aggregate }o- -|| forward_url
+forward_aggregate }o- -|| aggregate
+
+@enduml
+
+@startuml
+
+skinparam linetype ortho
+
+entity source {
+  *id : bigint
+  - -
+  *path : varchar(255) - unique
+  *feed_name : varchar(255)
+  *type_name : varchar(255)
+  *last_modified_time_ms : bigint
+  *examined : boolean
+  forwarded : boolean
+  forward_error : boolean
+}
+
+entity source_item {
+  *id : bigint
+  - -
+  *name : varchar(255)
+  *feed_name : varchar(255)
+  *type_name : varchar(255)
+  *fk_source_id : bigint
+  *aggregated : boolean
+}
+
+entity source_entry {
+  *id : bigint
+  - -
+  *extension : varchar(255)
+  *extension_type : int
+  *byte_size : bigint
+  *fk_source_item_id : bigint
+}
+
+entity aggregate {
+  *id : bigint
+  - -
+  *create_time_ms : bigint
+  *feed_name : varchar(255)
+  *type_name : varchar(255)
+  *byte_size : bigint
+  *items : int
+  *complete : boolean
+  *forward_error : boolean
+}
+
+entity aggregate_item {
+  *id : bigint
+  - -
+  *fk_aggregate_id : bigint
+  *fk_source_item_id : bigint
+}
+
+entity forward_url {
+  *id : int
+  - -
+  *url : varchar(255)
+}
+
+entity forward_aggregate {
+  *id : bigint
+  - -
+  *fk_forward_url_id : int
+  *fk_aggregate_id : bigint
+  *success : boolean
+  *error : varchar(255)
+}
+
+source ||..o{ source_item
+source_item ||- -|{ source_entry
+aggregate ||- -|{ aggregate_item
+source_item ||..o| aggregate_item
+forward_aggregate }o- -|| forward_url
+forward_aggregate }o- -|| aggregate
+
+@enduml
+
+PlantUML version 1.2021.5(Sun Apr 25 11:20:28 GMT 2021)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Default Encoding: UTF-8
+Language: en
+Country: US
+--></g></svg>

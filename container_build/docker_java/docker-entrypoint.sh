@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-echo "PWD: $PWD"
+echo "PWD in container: $PWD"
 
 # Re-set permission to the `stroom` user if current user is root
 # This avoids permission denied if the data volume is mounted by root
