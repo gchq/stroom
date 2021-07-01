@@ -396,7 +396,7 @@ copy_swagger_ui_content() {
 
 check_for_out_of_date_puml_svgs() {
 
-  local convert_cmd=( "container_build/runInJavaDocker.sh" "SVG" )
+  local convert_cmd=( "./container_build/runInJavaDocker.sh" "SVG" )
 
   echo -e "${GREEN}Ensuring all PlantUML generated .svg files are up to date${NC}"
   
