@@ -255,7 +255,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                 super.startDocument();
             }
 
-        } catch (final TransformerConfigurationException | RuntimeException e) {
+        } catch (final RuntimeException e) {
             final Throwable throwable = unwrapException(e);
 
             errorReceiverProxy.log(Severity.FATAL_ERROR,
