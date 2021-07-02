@@ -54,7 +54,7 @@
 	border-top: 4px solid transparent;
 	white-space: nowrap;
 	vertical-align: middle;
-	padding: 0 10px 0 3px;
+	/*padding: 0 10px 0 3px;*/
 }
 
 .stroom .stroom-control-grid tr:first-child th, .stroom .stroom-control-grid tr:first-child td {

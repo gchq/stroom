@@ -17,11 +17,13 @@
 package stroom.dashboard.client.vis;
 
 import stroom.dashboard.client.vis.VisPresenter.VisView;
-import stroom.widget.layout.client.view.ResizeFlowPanel;
 import stroom.widget.spinner.client.SpinnerSmall;
+import stroom.widget.tab.client.view.ResizeObserver;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -31,7 +33,7 @@ import com.gwtplatform.mvp.client.ViewImpl;
 
 public class VisViewImpl extends ViewImpl implements VisView {
 
-    private final ResizeFlowPanel widget;
+    private final FlowPanel widget;
     private final SimplePanel visContainer;
     private final SpinnerSmall spinnerSmall;
     private final SimplePanel messagePanel;
@@ -56,14 +58,7 @@ public class VisViewImpl extends ViewImpl implements VisView {
         spinnerSmall.setStyleName("dashboardVis-smallSpinner");
         spinnerSmall.setVisible(false);
 
-        widget = new ResizeFlowPanel() {
-            @Override
-            public void onResize() {
-                if (widget.getOffsetWidth() > 0 && widget.getOffsetHeight() > 0) {
-                    resize();
-                }
-            }
-
+        widget = new FlowPanel() {
             @Override
             protected void onAttach() {
                 super.onAttach();
@@ -84,6 +79,12 @@ public class VisViewImpl extends ViewImpl implements VisView {
         widget.add(visContainer);
         widget.add(spinnerSmall);
         widget.add(messagePanel);
+
+        ResizeObserver.observe(widget.getElement(), element -> {
+            if (widget.getOffsetWidth() > 0 && widget.getOffsetHeight() > 0) {
+                resize();
+            }
+        });
 
         // Window.alert("d3.js current version " + D3.version());
     }
@@ -107,13 +108,29 @@ public class VisViewImpl extends ViewImpl implements VisView {
     private void resize() {
         if (visPane != null) {
             final Style style = visPane.asWidget().getElement().getStyle();
-            style.setLeft(visContainer.getElement().getAbsoluteLeft(), Unit.PX);
-            style.setTop(visContainer.getElement().getAbsoluteTop(), Unit.PX);
-            style.setWidth(visContainer.getElement().getClientWidth(), Unit.PX);
-            style.setHeight(visContainer.getElement().getClientHeight(), Unit.PX);
+            Element ref = visContainer.getElement();
+            while (ref != null && (ref.getClassName() == null || !ref.getClassName().contains("tabLayout-contentInner"))) {
+                ref = ref.getParentElement();
+            }
 
-            if (visPane instanceof RequiresResize) {
-                visPane.onResize();
+            if (ref != null) {
+                style.setLeft(ref.getAbsoluteLeft(), Unit.PX);
+                style.setTop(ref.getAbsoluteTop(), Unit.PX);
+                style.setWidth(ref.getClientWidth(), Unit.PX);
+                style.setHeight(ref.getClientHeight(), Unit.PX);
+
+                if (visPane instanceof RequiresResize) {
+                    visPane.onResize();
+                }
+            } else {
+                style.setLeft(-1000, Unit.PX);
+                style.setTop(-1000, Unit.PX);
+                style.setWidth(1000, Unit.PX);
+                style.setHeight(1000, Unit.PX);
+
+                if (visPane instanceof RequiresResize) {
+                    visPane.onResize();
+                }
             }
         }
     }

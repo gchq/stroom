@@ -6,12 +6,12 @@ import stroom.config.global.shared.GlobalConfigResource;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -24,7 +24,7 @@ public class GlobalPropertyTabViewImpl
     @UiField
     QuickFilter nameFilter;
     @UiField
-    ResizeSimplePanel dataGrid;
+    SimplePanel dataGrid;
 
     private final Widget widget;
 

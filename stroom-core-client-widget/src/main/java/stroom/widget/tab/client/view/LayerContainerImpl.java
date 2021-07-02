@@ -22,6 +22,7 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.IsWidget;
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.Layer;
 import com.gwtplatform.mvp.client.LayerContainer;
@@ -40,9 +41,9 @@ public class LayerContainerImpl extends Composite implements LayerContainer, Req
 
     public LayerContainerImpl() {
         panel = new FlowPanel();
-        panel.setStyleName("layerContainer-container");
+        panel.addStyleName("layerContainer-container");
 
-        initWidget(panel);
+        initWidget(new SimplePanel(panel));
     }
 
     @Override

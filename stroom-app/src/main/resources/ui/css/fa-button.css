@@ -15,17 +15,14 @@
  */
 
 .fa-button {
-    width: 18px;
-    height: 18px;
 	display: inline-block;
 	border: none;
 	outline: none;
 	background: none;
-	margin: 0 1px;
 	padding: 2px;
 	cursor: pointer;
 	text-decoration: none;
-	vertical-align: bottom;
+	font-size: 0;
 }
 
 .fa-button .face {
@@ -36,7 +33,7 @@
 	text-decoration: none;
 	width: 16px;
 	height: 16px;
-	margin: auto;
+	margin: 0;
 	padding: 0;
 	overflow: hidden;
 	position: relative;

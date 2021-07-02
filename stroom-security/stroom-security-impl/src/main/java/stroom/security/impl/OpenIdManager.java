@@ -148,7 +148,7 @@ class OpenIdManager {
                     nvps.add(new BasicNameValuePair(OpenId.GRANT_TYPE, OpenId.GRANT_TYPE__AUTHORIZATION_CODE));
                     nvps.add(new BasicNameValuePair(OpenId.CLIENT_ID, openIdConfig.getClientId()));
                     nvps.add(new BasicNameValuePair(OpenId.CLIENT_SECRET, openIdConfig.getClientSecret()));
-                    nvps.add(new BasicNameValuePair(OpenId.REDIRECT_URI, redirectUri));
+                    nvps.add(new BasicNameValuePair(OpenId.REDIRECT_URI, postAuthRedirectUri));
 
                     httpPost.setHeader(HttpHeaders.AUTHORIZATION, authorization);
                     httpPost.setHeader(HttpHeaders.ACCEPT, "*/*");
@@ -236,41 +236,44 @@ class OpenIdManager {
                                            final String idToken) {
         UserIdentityImpl token = null;
 
-        try {
-            final String sessionId = session.getId();
-            final Optional<JwtContext> optionalJwtContext = jwtContextFactory.getJwtContext(idToken);
-            final JwtClaims jwtClaims = optionalJwtContext
-                    .map(JwtContext::getJwtClaims)
-                    .orElseThrow(() -> new RuntimeException("Unable to extract JWT claims"));
+        final String sessionId = session.getId();
+        final Optional<JwtContext> optionalJwtContext = jwtContextFactory.getJwtContext(idToken);
+        final JwtClaims jwtClaims = optionalJwtContext
+                .map(JwtContext::getJwtClaims)
+                .orElseThrow(() -> new RuntimeException("Unable to extract JWT claims"));
 
-            final String nonce = (String) jwtClaims.getClaimsMap().get(OpenId.NONCE);
-            final boolean match = nonce != null && nonce.equals(state.getNonce());
-            if (match) {
-                LOGGER.info(() -> "User is authenticated for sessionId " + sessionId);
-                final String userId = getUserId(jwtClaims);
-                final Optional<User> optionalUser = userCache.get(userId);
-                final User user = optionalUser.orElseThrow(() ->
-                        new AuthenticationException("Unable to find user: " + userId));
-                token = new UserIdentityImpl(user.getUuid(), userId, idToken, sessionId);
+        final String nonce = (String) jwtClaims.getClaimsMap().get(OpenId.NONCE);
+        final boolean match = nonce != null && nonce.equals(state.getNonce());
+        if (match) {
+            LOGGER.info(() -> "User is authenticated for sessionId " + sessionId);
+            final String userId = getUserId(jwtClaims);
+            final Optional<User> optionalUser = userCache.get(userId);
+            final User user = optionalUser.orElseThrow(() ->
+                    new AuthenticationException("Unable to find user: " + userId));
+            token = new UserIdentityImpl(user.getUuid(), userId, idToken, sessionId);
 
-            } else {
-                // If the nonces don't match we need to redirect to log in again.
-                // Maybe the request uses an out-of-date stroomSessionId?
-                LOGGER.info(() -> "Received a bad nonce!");
-            }
-        } catch (final MalformedClaimException e) {
-            LOGGER.warn(e::getMessage);
-            throw new RuntimeException(e.getMessage(), e);
+        } else {
+            // If the nonces don't match we need to redirect to log in again.
+            // Maybe the request uses an out-of-date stroomSessionId?
+            LOGGER.info(() -> "Received a bad nonce!");
         }
 
         return token;
     }
 
-    private String getUserId(final JwtClaims jwtClaims) throws MalformedClaimException {
-        String userId = (String) jwtClaims.getClaimValue(OpenId.SCOPE__EMAIL);
+    private String getUserId(final JwtClaims jwtClaims) {
+        LOGGER.trace("getUserId");
+        String userId = JwtUtil.getEmail(jwtClaims);
         if (userId == null) {
-            userId = jwtClaims.getSubject();
+            userId = JwtUtil.getUserIdFromIdentities(jwtClaims);
         }
+        if (userId == null) {
+            userId = JwtUtil.getUserName(jwtClaims);
+        }
+        if (userId == null) {
+            userId = JwtUtil.getSubject(jwtClaims);
+        }
+
         return userId;
     }
 
@@ -309,6 +312,8 @@ class OpenIdManager {
 
     private Optional<UserIdentityImpl> getUserIdentity(final HttpServletRequest request,
                                                        final JwtContext jwtContext) {
+        LOGGER.debug(() -> "Getting user identity from jwtContext=" + jwtContext);
+
         String sessionId = null;
         final HttpSession session = request.getSession(false);
         if (session != null) {

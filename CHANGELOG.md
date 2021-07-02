@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fixed issue where annotation menu button did not show when existing annotation was selected.
+
+* Issue **#2317** : The user id can now be resolved from the `username` JWT claim if `email` is not present.
+
+* Issue **#2317** : The user id can now be resolved from the `username` JWT claim if `email` is not present.
+
+* Issue **#2316** : Fixed React dialog styling by increasing CSS specificity.
+
 * Issue **#2313** : Integrate LeafletJS for geographical mapping.
 
 * Issue **#2293** : Fix location of banner.txt in zip distribution.

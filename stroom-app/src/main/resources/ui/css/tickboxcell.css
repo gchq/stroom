@@ -27,8 +27,8 @@
 	display: inline-block;
 	width: 13px;
 	height: 16px;
-	padding: 0px;
-	margin: 0px;
+	padding: 0;
+	margin: 0;
 	margin-right: 4px;
 	padding-top: 1px;
 	font-size: 0;
@@ -40,8 +40,8 @@
 .tickBoxCell-margin {
 	width: 13px;
 	height: 13px;
-	padding: 0px;
-	margin: 0px;
+	padding: 0;
+	margin: 0;
 	margin-top: 1px;
 	margin-bottom: 1px;
 	font-size: 0;

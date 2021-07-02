@@ -21,10 +21,10 @@ import stroom.editor.client.presenter.EditorView;
 import stroom.svg.client.Preset;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
@@ -33,7 +33,7 @@ public class ExpressionViewImpl extends ViewWithUiHandlers<ExpressionUiHandlers>
     private final Widget widget;
 
     @UiField
-    ResizeSimplePanel editorContainer;
+    SimplePanel editorContainer;
     @UiField
     ButtonPanel buttonPanel;
 

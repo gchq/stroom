@@ -6,7 +6,6 @@ import stroom.data.client.presenter.TextPresenter.TextView;
 import stroom.svg.client.Preset;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
 import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -33,9 +32,9 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
     @UiField
     Label lblType;
     @UiField
-    ResizeSimplePanel container;
+    SimplePanel container;
     @UiField
-    ResizeSimplePanel navigatorContainer;
+    SimplePanel navigatorContainer;
     @UiField
     ButtonPanel buttonPanel;
 

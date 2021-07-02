@@ -23,33 +23,33 @@
             <!-- Line:Col => Line:col -->
             <g:row styleName="characterRangeSelectionViewImpl-paddedRow">
                 <g:customCell>
-                    <g:FlowPanel width="100%" height="100%" addStyleNames="characterRangeSelectionViewImpl-flowPanel">
+                    <g:FlowPanel addStyleNames="characterRangeSelectionViewImpl-flowPanel">
                         <g:RadioButton
                                 ui:field="radioLocationToLocation"
                                 addStyleNames="characterRangeSelectionViewImpl-panelChild"/>
                     </g:FlowPanel>
                 </g:customCell>
                 <g:customCell>
-                    <g:FlowPanel width="100%" height="100%" addStyleNames="characterRangeSelectionViewImpl-flowPanel characterRangeSelectionViewImpl-cell">
+                    <g:FlowPanel addStyleNames="characterRangeSelectionViewImpl-flowPanel characterRangeSelectionViewImpl-cell">
                         <g:Label ui:field="lblLineColFrom1"
                                  addStyleNames="characterRangeSelectionViewImpl-panelChild">Line:Col From (inc.)</g:Label>
                     </g:FlowPanel>
                 </g:customCell>
                 <g:customCell>
-                    <g:FlowPanel width="100%" height="100%" addStyleNames="characterRangeSelectionViewImpl-flowPanel characterRangeSelectionViewImpl-cell">
+                    <g:FlowPanel addStyleNames="characterRangeSelectionViewImpl-flowPanel characterRangeSelectionViewImpl-cell">
                         <lci:LineColInput
                                 ui:field="lineColFrom1"
                                 addStyleNames="characterRangeSelectionViewImpl-panelChild"/>
                     </g:FlowPanel>
                 </g:customCell>
                 <g:customCell styleName="characterRangeSelectionViewImpl-paddedCol">
-                    <g:FlowPanel width="100%" height="100%" addStyleNames="characterRangeSelectionViewImpl-flowPanel characterRangeSelectionViewImpl-cell">
+                    <g:FlowPanel addStyleNames="characterRangeSelectionViewImpl-flowPanel characterRangeSelectionViewImpl-cell">
                         <g:Label ui:field="lblLineColTo"
                                  addStyleNames="characterRangeSelectionViewImpl-panelChild">Line:Col To (inc.)</g:Label>
                     </g:FlowPanel>
                 </g:customCell>
                 <g:customCell>
-                    <g:FlowPanel width="100%" height="100%" addStyleNames="characterRangeSelectionViewImpl-flowPanel characterRangeSelectionViewImpl-cell">
+                    <g:FlowPanel addStyleNames="characterRangeSelectionViewImpl-flowPanel characterRangeSelectionViewImpl-cell">
                         <lci:LineColInput
                                 ui:field="lineColTo"
                                 addStyleNames="characterRangeSelectionViewImpl-panelChild"/>
@@ -60,33 +60,33 @@
             <!-- Line:Col => count -->
             <g:row styleName="characterRangeSelectionViewImpl-paddedRow">
                 <g:customCell>
-                    <g:FlowPanel width="100%" height="100%" addStyleNames="characterRangeSelectionViewImpl-flowPanel">
+                    <g:FlowPanel addStyleNames="characterRangeSelectionViewImpl-flowPanel">
                         <g:RadioButton
                                 ui:field="radioLocationWithCount"
                                 addStyleNames="characterRangeSelectionViewImpl-panelChild"/>
                     </g:FlowPanel>
                 </g:customCell>
                 <g:customCell>
-                    <g:FlowPanel width="100%" height="100%" addStyleNames="characterRangeSelectionViewImpl-flowPanel characterRangeSelectionViewImpl-cell">
+                    <g:FlowPanel addStyleNames="characterRangeSelectionViewImpl-flowPanel characterRangeSelectionViewImpl-cell">
                         <g:Label ui:field="lblLineColFrom2"
                                  addStyleNames="characterRangeSelectionViewImpl-panelChild">Line:Col From (inc.)</g:Label>
                     </g:FlowPanel>
                 </g:customCell>
                 <g:customCell>
-                    <g:FlowPanel width="100%" height="100%" addStyleNames="characterRangeSelectionViewImpl-flowPanel characterRangeSelectionViewImpl-cell">
+                    <g:FlowPanel addStyleNames="characterRangeSelectionViewImpl-flowPanel characterRangeSelectionViewImpl-cell">
                         <lci:LineColInput
                                 ui:field="lineColFrom2"
                                 addStyleNames="characterRangeSelectionViewImpl-panelChild"/>
                     </g:FlowPanel>
                 </g:customCell>
                 <g:customCell styleName="characterRangeSelectionViewImpl-paddedCol">
-                    <g:FlowPanel width="100%" height="100%" addStyleNames="characterRangeSelectionViewImpl-flowPanel characterRangeSelectionViewImpl-cell">
+                    <g:FlowPanel addStyleNames="characterRangeSelectionViewImpl-flowPanel characterRangeSelectionViewImpl-cell">
                         <g:Label ui:field="lblCharCountSpinner1"
                                  addStyleNames="characterRangeSelectionViewImpl-panelChild">Character Count</g:Label>
                     </g:FlowPanel>
                 </g:customCell>
                 <g:customCell>
-                    <g:FlowPanel width="100%" height="100%" addStyleNames="characterRangeSelectionViewImpl-flowPanel characterRangeSelectionViewImpl-cell">
+                    <g:FlowPanel addStyleNames="characterRangeSelectionViewImpl-flowPanel characterRangeSelectionViewImpl-cell">
                         <v:ValueSpinner
                                 ui:field="charCountSpinner1"
                                 addStyleNames="characterRangeSelectionViewImpl-panelChild characterRangeSelectionViewImpl-charSpinner"/>
@@ -97,33 +97,33 @@
             <!-- Offset => offset -->
             <g:row styleName="characterRangeSelectionViewImpl-paddedRow">
                 <g:customCell>
-                    <g:FlowPanel width="100%" height="100%" addStyleNames="characterRangeSelectionViewImpl-flowPanel">
+                    <g:FlowPanel addStyleNames="characterRangeSelectionViewImpl-flowPanel">
                         <g:RadioButton
                                 ui:field="radioOffsetToOffset"
                                 addStyleNames="characterRangeSelectionViewImpl-panelChild"/>
                     </g:FlowPanel>
                 </g:customCell>
                 <g:customCell>
-                    <g:FlowPanel width="100%" height="100%" addStyleNames="characterRangeSelectionViewImpl-flowPanel characterRangeSelectionViewImpl-cell">
+                    <g:FlowPanel addStyleNames="characterRangeSelectionViewImpl-flowPanel characterRangeSelectionViewImpl-cell">
                         <g:Label ui:field="lblCharOffsetFromSpinner1"
                                  addStyleNames="characterRangeSelectionViewImpl-panelChild">Offset From (inc.)</g:Label>
                     </g:FlowPanel>
                 </g:customCell>
                 <g:customCell>
-                    <g:FlowPanel width="100%" height="100%" addStyleNames="characterRangeSelectionViewImpl-flowPanel characterRangeSelectionViewImpl-cell">
+                    <g:FlowPanel addStyleNames="characterRangeSelectionViewImpl-flowPanel characterRangeSelectionViewImpl-cell">
                         <v:ValueSpinner
                                 ui:field="charOffsetFromSpinner1"
                                 addStyleNames="characterRangeSelectionViewImpl-panelChild characterRangeSelectionViewImpl-offsetSpinner"/>
                     </g:FlowPanel>
                 </g:customCell>
                 <g:customCell styleName="characterRangeSelectionViewImpl-paddedCol">
-                    <g:FlowPanel width="100%" height="100%" addStyleNames="characterRangeSelectionViewImpl-flowPanel characterRangeSelectionViewImpl-cell">
+                    <g:FlowPanel addStyleNames="characterRangeSelectionViewImpl-flowPanel characterRangeSelectionViewImpl-cell">
                         <g:Label ui:field="lblCharOffsetToSpinner1"
                                  addStyleNames="characterRangeSelectionViewImpl-panelChild">Offset To (inc.)</g:Label>
                     </g:FlowPanel>
                 </g:customCell>
                 <g:customCell>
-                    <g:FlowPanel width="100%" height="100%" addStyleNames="characterRangeSelectionViewImpl-flowPanel characterRangeSelectionViewImpl-cell">
+                    <g:FlowPanel addStyleNames="characterRangeSelectionViewImpl-flowPanel characterRangeSelectionViewImpl-cell">
                         <v:ValueSpinner
                                 ui:field="charOffsetToSpinner1"
                                 addStyleNames="characterRangeSelectionViewImpl-panelChild characterRangeSelectionViewImpl-offsetSpinner"/>
@@ -134,33 +134,33 @@
             <!-- Offset => count -->
             <g:row styleName="characterRangeSelectionViewImpl-paddedRow">
                 <g:customCell>
-                    <g:FlowPanel width="100%" height="100%" addStyleNames="characterRangeSelectionViewImpl-flowPanel">
+                    <g:FlowPanel addStyleNames="characterRangeSelectionViewImpl-flowPanel">
                         <g:RadioButton
                                 ui:field="radioOffsetWithCount"
                                 addStyleNames="characterRangeSelectionViewImpl-panelChild"/>
                     </g:FlowPanel>
                 </g:customCell>
                 <g:customCell>
-                    <g:FlowPanel width="100%" height="100%" addStyleNames="characterRangeSelectionViewImpl-flowPanel characterRangeSelectionViewImpl-cell">
+                    <g:FlowPanel addStyleNames="characterRangeSelectionViewImpl-flowPanel characterRangeSelectionViewImpl-cell">
                         <g:Label ui:field="lblCharOffsetFromSpinner2"
                                  addStyleNames="characterRangeSelectionViewImpl-panelChild">Offset From (inc.)</g:Label>
                     </g:FlowPanel>
                 </g:customCell>
                 <g:customCell>
-                    <g:FlowPanel width="100%" height="100%" addStyleNames="characterRangeSelectionViewImpl-flowPanel characterRangeSelectionViewImpl-cell">
+                    <g:FlowPanel addStyleNames="characterRangeSelectionViewImpl-flowPanel characterRangeSelectionViewImpl-cell">
                         <v:ValueSpinner
                                 ui:field="charOffsetFromSpinner2"
                                 addStyleNames="characterRangeSelectionViewImpl-panelChild characterRangeSelectionViewImpl-offsetSpinner"/>
                     </g:FlowPanel>
                 </g:customCell>
                 <g:customCell styleName="characterRangeSelectionViewImpl-paddedCol">
-                    <g:FlowPanel width="100%" height="100%" addStyleNames="characterRangeSelectionViewImpl-flowPanel characterRangeSelectionViewImpl-cell">
+                    <g:FlowPanel addStyleNames="characterRangeSelectionViewImpl-flowPanel characterRangeSelectionViewImpl-cell">
                         <g:Label ui:field="lblCharCountSpinner2"
                                  addStyleNames="characterRangeSelectionViewImpl-panelChild">Character Count</g:Label>
                     </g:FlowPanel>
                 </g:customCell>
                 <g:customCell>
-                    <g:FlowPanel width="100%" height="100%" addStyleNames="characterRangeSelectionViewImpl-flowPanel characterRangeSelectionViewImpl-cell">
+                    <g:FlowPanel addStyleNames="characterRangeSelectionViewImpl-flowPanel characterRangeSelectionViewImpl-cell">
                         <v:ValueSpinner
                                 ui:field="charCountSpinner2"
                                 addStyleNames="characterRangeSelectionViewImpl-panelChild characterRangeSelectionViewImpl-charSpinner"/>

@@ -68,12 +68,12 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
         contentInner.add(barOuter);
 
         tabBar = new LinkTabBar();
-        tabBar.addStyleName("tabLayout-barInner");
+        tabBar.addStyleName("dock-max tabLayout-barInner");
         barOuter.add(tabBar);
 
         final FlowPanel buttons = new FlowPanel();
-        buttons.setStyleName("tabLayout-buttons");
-        contentInner.add(buttons);
+        buttons.setStyleName("dock-min button-container tabLayout-buttons");
+        barOuter.add(buttons);
 
         settings = new Button();
         settings.setStyleName("fa-button face tabLayout-settingsButton");

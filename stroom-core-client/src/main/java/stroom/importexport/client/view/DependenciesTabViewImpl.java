@@ -4,13 +4,13 @@ import stroom.importexport.client.presenter.DependenciesTabPresenter;
 import stroom.importexport.client.presenter.DependenciesTabPresenter.DependenciesTabView;
 import stroom.importexport.client.presenter.DependenciesUiHandlers;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -23,7 +23,7 @@ public class DependenciesTabViewImpl
     @UiField
     QuickFilter quickFilter;
     @UiField
-    ResizeSimplePanel dataGrid;
+    SimplePanel dataGrid;
 
     private final Widget widget;
 

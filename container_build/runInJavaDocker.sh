@@ -86,7 +86,7 @@ host_ip="${DOCKER_HOST_IP:-$(determine_host_address)}"
 
 run_cmd=()
 
-if [[ $# -ne 1 ]]; then
+if [[ $# -lt 1 ]]; then
   echo -e "${RED}ERROR: Invalid arguments.${NC}"
   echo -e "Usage: $0 bash_command"
   echo -e "e.g:   $0 \"./some_path/a_script.sh arg1 arg2\""
@@ -94,6 +94,7 @@ if [[ $# -ne 1 ]]; then
   echo -e "or:    $0 ERD  # To run the entity relationship diagram build"
   echo -e "or:    $0 GRADLE_BUILD  # To run the full gradle build"
   echo -e "or:    $0 MIGRATE  # To run the db migration"
+  echo -e "or:    $0 SVG  # To convert all .puml files to .puml.svg"
   echo -e "Commands are relative to the repo root."
   echo -e "Commands/scripts with args must be quoted as a whole."
   exit 1
@@ -122,6 +123,12 @@ else
       "bash" \
       "-c"  \
       "pwd; export STROOM_JDBC_DRIVER_URL=\"jdbc:mysql://${host_ip}:3307/stroom?useUnicode=yes&characterEncoding=UTF-8\"; java -jar ./stroom-app/build/libs/stroom-app-all.jar migrate ./local.yml" \
+    )
+  elif [[ $# -ge 1 ]] && [[ "$1" = "SVG" ]]; then
+    run_cmd=( \
+      "bash" \
+      "-c"  \
+      "/builder/convert_puml_files.sh ${2:-/builder/shared}" \
     )
   else
     run_cmd=( \

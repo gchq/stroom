@@ -1,25 +1,14 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:r="urn:import:stroom.widget.layout.client.view"
              xmlns:b="urn:import:stroom.widget.button.client">
-    <r:ResizeFlowPanel width="100%" height="100%">
-        <g:DockLayoutPanel unit="PX" width="100%" height="100%">
-            <g:north size="20">
-                <b:ButtonPanel ui:field="buttonPanel"/>
-            </g:north>
-            <g:center>
-                <g:DockLayoutPanel unit="PX" width="100%" height="100%">
-                    <g:west size="200">
-                        <r:ResizeSimplePanel ui:field="eventList"
-                                             styleName="max stroom-border"/>
-                    </g:west>
-                    <g:center>
-                        <r:ResizeSimplePanel ui:field="data"
-                                             styleName="max linkEventViewImpl-data stroom-border"/>
-                    </g:center>
-                </g:DockLayoutPanel>
-            </g:center>
-        </g:DockLayoutPanel>
-    </r:ResizeFlowPanel>
+    <g:FlowPanel styleName="dock-container-vertical">
+        <b:ButtonPanel ui:field="buttonPanel" addStyleNames="dock-min"/>
+        <g:FlowPanel styleName="dock-max dock-container-horizontal">
+            <g:SimplePanel ui:field="eventList"
+                           styleName="dock-min stroom-border"/>
+            <g:SimplePanel ui:field="data"
+                           styleName="dock-max linkEventViewImpl-data stroom-border"/>
+        </g:FlowPanel>
+    </g:FlowPanel>
 </ui:UiBinder>

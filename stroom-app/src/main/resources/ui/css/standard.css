@@ -28,9 +28,9 @@ pre {
 }
 body {
   color: black;
-  margin: 0px;
-  border: 0px;
-  padding: 0px;
+  margin: 0;
+  border: 0;
+  padding: 0;
   background: #fff;
   direction: ltr;
 }
@@ -56,7 +56,7 @@ a, a:visited, a:hover {
   text-decoration: none;
   font-size: var(--font-size-11);
   cursor: pointer;
-  background: url("images/hborder.png") repeat-x 0px -27px;
+  background: url("images/hborder.png") repeat-x 0 -27px;
   border: 1px outset #ccc;
 }
 .gwt-Button:active {
@@ -98,20 +98,20 @@ a, a:visited, a:hover {
   zoom: 1;
 }
 .gwt-DecoratorPanel .topLeft {
-  background: url(images/corner.png) no-repeat 0px 0px;
+  background: url(images/corner.png) no-repeat 0 0;
 }
 .gwt-DecoratorPanel .topRight {
-  background: url(images/corner.png) no-repeat -5px 0px;
+  background: url(images/corner.png) no-repeat -5px 0;
 }
 .gwt-DecoratorPanel .bottomLeft {
-  background: url(images/corner.png) no-repeat 0px -5px;
+  background: url(images/corner.png) no-repeat 0 -5px;
 }
 .gwt-DecoratorPanel .bottomRight {
   background: url(images/corner.png) no-repeat -5px -5px;
 }
 
 .gwt-DialogBox .Caption {
-  background: #e3e8f3 url(images/hborder.png) repeat-x 0px -2003px;
+  background: #e3e8f3 url(images/hborder.png) repeat-x 0 -2003px;
   padding: 4px 4px 4px 8px;
   cursor: default;
   border-bottom: 1px solid #bbbbbb;
@@ -124,13 +124,13 @@ a, a:visited, a:hover {
   background: white;
 }
 .gwt-DialogBox .dialogBottomCenter {
-  background: url(images/hborder.png) repeat-x 0px -4px;
+  background: url(images/hborder.png) repeat-x 0 -4px;
 }
 .gwt-DialogBox .dialogMiddleLeft {
   background: url(images/vborder.png) repeat-y;
 }
 .gwt-DialogBox .dialogMiddleRight {
-  background: url(images/vborder.png) repeat-y -4px 0px;
+  background: url(images/vborder.png) repeat-y -4px 0;
 }
 .gwt-DialogBox .dialogTopLeftInner {
   width: 5px;
@@ -151,13 +151,13 @@ a, a:visited, a:hover {
   zoom: 1;
 }
 .gwt-DialogBox .dialogTopLeft {
-  background: url(images/corner.png) no-repeat -13px 0px;
+  background: url(images/corner.png) no-repeat -13px 0;
 }
 .gwt-DialogBox .dialogTopRight {
-  background: url(images/corner.png) no-repeat -18px 0px;
+  background: url(images/corner.png) no-repeat -18px 0;
 }
 .gwt-DialogBox .dialogBottomLeft {
-  background: url(images/corner.png) no-repeat 0px -15px;
+  background: url(images/corner.png) no-repeat 0 -15px;
 }
 .gwt-DialogBox .dialogBottomRight {
   background: url(images/corner.png) no-repeat -5px -15px;
@@ -179,7 +179,7 @@ a, a:visited, a:hover {
 }
 .gwt-DisclosurePanel .content {
   border-left: 3px solid #e8eef7;
-  padding: 4px 0px 4px 8px;
+  padding: 4px 0 4px 8px;
   margin-left: 6px;
 }
 
@@ -197,15 +197,15 @@ a, a:visited, a:hover {
 }
 .gwt-HorizontalSplitPanel .hsplitter {
   cursor: move;
-  border: 0px;
+  border: 0;
   background: #91c0ef url(images/vborder.png) repeat-y;
-  line-height: 0px;
+  line-height: 0;
 }
 .gwt-VerticalSplitPanel {
 }
 .gwt-VerticalSplitPanel .vsplitter {
   cursor: move;
-  border: 0px;
+  border: 0;
   background: #91c0ef url(images/hborder.png) repeat-x;
   line-height: 0px;
 }

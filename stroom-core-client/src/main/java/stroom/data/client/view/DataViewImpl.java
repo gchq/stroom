@@ -18,7 +18,6 @@ package stroom.data.client.view;
 
 import stroom.data.client.presenter.DataPresenter.DataView;
 import stroom.data.client.presenter.ItemNavigatorPresenter.ItemNavigatorView;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
 import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
 import stroom.widget.tab.client.view.LinkTabBar;
 
@@ -43,7 +42,7 @@ public class DataViewImpl extends ViewImpl implements DataView {
     Label sourceLinkLabel;
 
     @UiField
-    ResizeSimplePanel navigatorContainer;
+    SimplePanel navigatorContainer;
 
     @UiField
     LayerContainer layerContainer;

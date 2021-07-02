@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:i="urn:import:stroom.item.client"
              xmlns:v="urn:import:stroom.widget.tickbox.client.view">
 
-  <g:Grid styleName="stroom-control-grid" width="100%">
+  <g:Grid styleName="stroom-control-grid w-100">
     <g:row>
       <g:cell>Id:</g:cell>
       <g:customCell>
@@ -13,13 +13,13 @@
     <g:row>
       <g:cell>Name:</g:cell>
       <g:customCell>
-        <g:TextBox ui:field="name" width="100%" />
+        <g:TextBox ui:field="name" addStyleNames="w-100" />
       </g:customCell>
     </g:row>
     <g:row>
       <g:cell>Query:</g:cell>
       <g:customCell>
-        <i:ItemListBox ui:field="query" width="100%"/>
+        <i:ItemListBox ui:field="query" addStyleNames="w-100"/>
       </g:customCell>
     </g:row>
     <g:row>
@@ -31,13 +31,13 @@
     <g:row>
       <g:cell>Extraction Pipeline:</g:cell>
       <g:customCell>
-        <g:SimplePanel ui:field="pipeline" width="100%" />
+        <g:SimplePanel ui:field="pipeline" addStyleNames="w-100" />
       </g:customCell>
     </g:row>
     <g:row>
       <g:cell>Maximum Results:</g:cell>
       <g:customCell>
-        <g:TextBox ui:field="maxResults" width="100%" />
+        <g:TextBox ui:field="maxResults" addStyleNames="w-100" />
       </g:customCell>
     </g:row>
     <g:row>

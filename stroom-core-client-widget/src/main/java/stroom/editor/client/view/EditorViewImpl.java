@@ -29,6 +29,7 @@ import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 import stroom.util.shared.TextRange;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent;
+import stroom.widget.tab.client.view.ResizeObserver;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -45,7 +46,6 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
@@ -86,8 +86,8 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     private final Option liveAutoCompletionOption;
     private final Option highlightActiveLineOption;
 
-    @UiField(provided = true)
-    DockLayoutPanel layout;
+    @UiField
+    FlowPanel layout;
     @UiField
     Editor editor;
     @UiField
@@ -105,20 +105,9 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     private Function<String, List<TextRange>> formattedHighlightsFunc;
 
     @Inject
-    public EditorViewImpl() {
-        if (binder == null) {
-            binder = GWT.create(Binder.class);
-        }
-
-        layout = new DockLayoutPanel(Unit.PX) {
-            @Override
-            public void onResize() {
-                super.onResize();
-                doLayout(SHOW_INDICATORS_DEFAULT);
-            }
-        };
-
+    public EditorViewImpl(final Binder binder) {
         layout = binder.createAndBindUi(this);
+        ResizeObserver.observe(layout.getElement(), element -> doLayout(SHOW_INDICATORS_DEFAULT));
 
         filterButtons.addDomHandler(event -> {
             if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
@@ -191,7 +180,7 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
 
     private void doLayout(final boolean showIndicators) {
         rightBar.render(indicators, showIndicators);
-        layout.setWidgetSize(rightBar, rightBar.getWidth());
+//        layout.setWidgetSize(rightBar, rightBar.getWidth());
         editor.onResize();
     }
 
@@ -536,7 +525,7 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     }
 
 
-    public interface Binder extends UiBinder<DockLayoutPanel, EditorViewImpl> {
+    public interface Binder extends UiBinder<FlowPanel, EditorViewImpl> {
 
     }
 }

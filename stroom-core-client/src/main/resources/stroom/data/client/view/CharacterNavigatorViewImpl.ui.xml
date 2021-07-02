@@ -3,19 +3,19 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:btn="urn:import:stroom.widget.button.client">
     <g:FlowPanel styleName="characterNavigator">
-
-        <g:Label ui:field="lblLines"
-                 styleName="characterNavigator-label"/>
-        <g:Label ui:field="lblCharacters"
-                 styleName="characterNavigator-label"/>
-
-<!--        <g:SimplePanel ui:field="progressBarPanel"-->
-<!--                       styleName="characterNavigator-progressBarPanel"/>-->
-
-        <btn:SvgButton ui:field="showHeadCharactersBtn"/>
-        <btn:SvgButton ui:field="advanceCharactersBackwardBtn"/>
-        <btn:SvgButton ui:field="advanceCharactersForwardBtn"/>
-
-        <btn:SvgButton ui:field="refreshBtn" />
+        <g:FlowPanel styleName="characterNavigator-labels">
+            <g:Label ui:field="lblLines"
+                     styleName="characterNavigator-label"/>
+            <g:Label ui:field="lblCharacters"
+                     styleName="characterNavigator-label"/>
+        </g:FlowPanel>
+        <!--        <g:SimplePanel ui:field="progressBarPanel"-->
+        <!--                       styleName="characterNavigator-progressBarPanel"/>-->
+        <g:FlowPanel styleName="button-container">
+            <btn:SvgButton ui:field="showHeadCharactersBtn"/>
+            <btn:SvgButton ui:field="advanceCharactersBackwardBtn"/>
+            <btn:SvgButton ui:field="advanceCharactersForwardBtn"/>
+            <btn:SvgButton ui:field="refreshBtn"/>
+        </g:FlowPanel>
     </g:FlowPanel>
 </ui:UiBinder>

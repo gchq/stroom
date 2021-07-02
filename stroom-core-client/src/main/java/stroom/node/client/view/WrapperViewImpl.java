@@ -16,18 +16,17 @@
 
 package stroom.node.client.view;
 
-import stroom.widget.layout.client.view.ResizeSimplePanel;
-
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 
 public class WrapperViewImpl extends ViewImpl implements WrapperView {
 
-    private final ResizeSimplePanel widget;
+    private final SimplePanel widget;
 
     public WrapperViewImpl() {
-        widget = new ResizeSimplePanel();
+        widget = new SimplePanel();
         widget.setSize("100%", "100%");
     }
 

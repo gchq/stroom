@@ -26,7 +26,7 @@ public class ButtonPanel extends FlowPanel {
     private boolean vertical;
 
     public ButtonPanel() {
-        setStyleName("buttonPanel-layout");
+        setStyleName("button-container");
     }
 
     public ButtonView addButton(final Preset preset) {
