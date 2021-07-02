@@ -13,7 +13,7 @@ proxyConfig:
     forwardingEnabled: false
     userAgent: null
   logStreamConfig:
-    metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn"
+    metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn,remotecertexpiry"
   path:
     home: "."
     temp: "/tmp/stroom-proxy"
