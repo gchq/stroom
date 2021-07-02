@@ -646,7 +646,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v7.0-beta.71] - 2020-12-02
 
-* Issue **#1957** : Fix invaldiation of the stat datasource caches on content import and other changes.
+* Issue **#1957** : Fix invalidation of the stat datasource caches on content import and other changes.
 
 * Issue **#1960** : Fix the data preview display of empty streams.
 
@@ -668,7 +668,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Add `viewType` and `displayType` args to `data(...)` dashboard expression.
 
-* Fix task spinner appearing briefly on every poll and consumign a lot of CPU.
+* Fix task spinner appearing briefly on every poll and consuming a lot of CPU.
 
 * Add _progress_ bar to Source Data view and Data Preview to show location in the file.
 
@@ -694,7 +694,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Add completion and snippets to edit screens using the ACE editor.
 
-* Add editor options to use Vim bindings, show invisble chracters, highlight current line, word wrap.
+* Add editor options to use Vim bindings, show invisble characters, highlight current line, word wrap.
 
 * Issue **#1949** : Fixed bug in download for streams from multiple feeds.
 
@@ -1008,7 +1008,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Uplift LMDB to v0.8.1.
 
-* Changed implementaion of the byte buffer pool used in the ref data store to improve performance.
+* Changed implementation of the byte buffer pool used in the ref data store to improve performance.
 
 * Increase default value for ref data `maxPutsBeforeCommit` to improve load times.
 
@@ -1037,7 +1037,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1803** : Fix `/api/export/v1` failing with NoSuchFileException.
 
-* Issue **#1719** : Create rest endpoint to get rererence data store entries. Experimental feature at the moment.
+* Issue **#1719** : Create rest endpoint to get reference data store entries. Experimental feature at the moment.
 
 * Issue **#1649** : Make the local reference data store searchable from the dashboard. Experimental feature at the moment.
 
