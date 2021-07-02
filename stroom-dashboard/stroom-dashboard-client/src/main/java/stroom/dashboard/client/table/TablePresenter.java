@@ -492,12 +492,13 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void enableAnnotate() {
-        final List<EventId> idList = annotationManager.getEventIdList(getTableSettings(),
+        final List<EventId> eventIdList = annotationManager.getEventIdList(getTableSettings(),
                 dataGrid.getSelectionModel().getSelectedItems());
-        final boolean enabled = idList.size() > 0;
+        final List<Long> annotationIdList = annotationManager.getAnnotationIdList(getTableSettings(),
+                dataGrid.getSelectionModel().getSelectedItems());
+        final boolean enabled = eventIdList.size() > 0 || annotationIdList.size() > 0;
         annotateButton.setEnabled(enabled);
     }
-
 
     @Override
     public void startSearch() {
