@@ -120,15 +120,7 @@ public class ImportConfigPresenter
         };
 
         EnablePopupEvent.fire(this, this);
-        final PopupSize popupSize = new PopupSize(
-                350,
-                155,
-                350,
-                155,
-                2000,
-                155,
-                true);
-
+        final PopupSize popupSize = PopupSize.resizableX();
         ShowPopupEvent.fire(
                 this,
                 this,

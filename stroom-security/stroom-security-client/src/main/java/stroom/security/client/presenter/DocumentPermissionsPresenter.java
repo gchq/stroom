@@ -35,6 +35,7 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView;
+import stroom.widget.popup.client.presenter.Size;
 import stroom.widget.tab.client.presenter.LinkTabsPresenter;
 import stroom.widget.tab.client.presenter.TabData;
 
@@ -183,19 +184,35 @@ public class DocumentPermissionsPresenter
 
                         PopupSize popupSize;
                         if (DocumentTypes.isFolder(explorerNode.getType())) {
-                            popupSize = new PopupSize(
-                                    384,
-                                    664,
-                                    384,
-                                    664,
-                                    true);
+                            popupSize = PopupSize.builder()
+                                    .width(Size
+                                            .builder()
+                                            .initial(400)
+                                            .min(400)
+                                            .resizable(true)
+                                            .build())
+                                    .height(Size
+                                            .builder()
+                                            .initial(700)
+                                            .min(700)
+                                            .resizable(true)
+                                            .build())
+                                    .build();
                         } else {
-                            popupSize = new PopupSize(
-                                    384,
-                                    500,
-                                    384,
-                                    500,
-                                    true);
+                            popupSize = PopupSize.builder()
+                                    .width(Size
+                                            .builder()
+                                            .initial(400)
+                                            .min(400)
+                                            .resizable(true)
+                                            .build())
+                                    .height(Size
+                                            .builder()
+                                            .initial(600)
+                                            .min(600)
+                                            .resizable(true)
+                                            .build())
+                                    .build();
                         }
 
                         ShowPopupEvent.fire(

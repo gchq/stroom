@@ -210,10 +210,7 @@ public class SteppingFilterPresenter extends
             }
         };
 
-        final PopupSize popupSize =
-                new PopupSize(850, 550,
-                        650, 400,
-                        1000, 1000, true);
+        final PopupSize popupSize = PopupSize.resizable(850, 550);
         ShowPopupEvent.fire(this,
                 this,
                 PopupType.OK_CANCEL_DIALOG,

@@ -127,7 +127,7 @@ public class ExportConfigPresenter
             }
         };
 
-        final PopupSize popupSize = new PopupSize(500, 600, 350, 350, 2000, 2000, true);
+        final PopupSize popupSize = PopupSize.resizable(500, 600);
         ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, "Export", popupUiHandlers);
     }
 

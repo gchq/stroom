@@ -34,7 +34,6 @@ public class LayeredCanvas extends FlowPanel {
 
     private LayeredCanvas() {
         final Style style = getElement().getStyle();
-        style.setPosition(Position.RELATIVE);
         style.setWidth(width, Unit.PX);
         style.setHeight(height, Unit.PX);
     }

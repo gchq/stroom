@@ -4,24 +4,23 @@
              xmlns:l="urn:import:stroom.item.client"
              xmlns:c="urn:import:stroom.widget.customdatebox.client">
     <g:FormPanel ui:field="form">
-        <g:Grid ui:field="grid" styleName="stroom-control-grid">
+        <g:Grid ui:field="grid" styleName="max stroom-control-grid">
             <g:row>
                 <g:cell>Meta Data:</g:cell>
                 <g:customCell>
-                    <g:TextArea ui:field="metaData" name="metaData"
-                    />
+                    <g:TextArea ui:field="metaData" name="metaData" addStyleNames="w-100"/>
                 </g:customCell>
             </g:row>
             <g:row>
                 <g:cell>Type:</g:cell>
                 <g:customCell>
-                    <l:StringListBox ui:field="type"/>
+                    <l:StringListBox ui:field="type" addStyleNames="w-100"/>
                 </g:customCell>
             </g:row>
             <g:row>
                 <g:cell>Effective:</g:cell>
                 <g:customCell>
-                    <c:MyDateBox ui:field="effective"/>
+                    <c:MyDateBox ui:field="effective" addStyleNames="w-100"/>
                 </g:customCell>
             </g:row>
             <g:row>

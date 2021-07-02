@@ -3,84 +3,86 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:v="urn:import:stroom.widget.tickbox.client.view"
              xmlns:i="urn:import:stroom.item.client">
-    <g:Grid styleName="stroom-control-grid w-100">
-        <g:row>
-            <g:cell>Id:</g:cell>
-            <g:customCell>
-                <g:Label ui:field="id" addStyleNames="stroom-control-label"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Name:</g:cell>
-            <g:customCell>
-                <g:TextBox ui:field="name" addStyleNames="w-100"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Table:</g:cell>
-            <g:customCell>
-                <i:ItemListBox ui:field="table" addStyleNames="w-100"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Stream Id Field:</g:cell>
-            <g:customCell>
-                <i:ItemListBox ui:field="streamIdField" addStyleNames="w-100"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Part No Field:</g:cell>
-            <g:customCell>
-                <i:ItemListBox ui:field="partNoField" addStyleNames="w-100"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Record No Field:</g:cell>
-            <g:customCell>
-                <i:ItemListBox ui:field="recordNoField" addStyleNames="w-100"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Line From Field:</g:cell>
-            <g:customCell>
-                <i:ItemListBox ui:field="lineFromField" addStyleNames="w-100"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Col From Field:</g:cell>
-            <g:customCell>
-                <i:ItemListBox ui:field="colFromField" addStyleNames="w-100"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Line To Field:</g:cell>
-            <g:customCell>
-                <i:ItemListBox ui:field="lineToField" addStyleNames="w-100"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Col To Field:</g:cell>
-            <g:customCell>
-                <i:ItemListBox ui:field="colToField" addStyleNames="w-100"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Pipeline:</g:cell>
-            <g:customCell>
-                <g:SimplePanel ui:field="pipeline" addStyleNames="w-100"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Show As HTML:</g:cell>
-            <g:customCell>
-                <v:TickBox ui:field="showAsHtml"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Show Stepping:</g:cell>
-            <g:customCell>
-                <v:TickBox ui:field="showStepping"/>
-            </g:customCell>
-        </g:row>
-    </g:Grid>
+    <g:SimplePanel styleName="max default-min-sizes">
+        <g:Grid styleName="stroom-control-grid w-100">
+            <g:row>
+                <g:cell>Id:</g:cell>
+                <g:customCell>
+                    <g:Label ui:field="id" addStyleNames="stroom-control-label"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Name:</g:cell>
+                <g:customCell>
+                    <g:TextBox ui:field="name" addStyleNames="w-100"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Table:</g:cell>
+                <g:customCell>
+                    <i:ItemListBox ui:field="table" addStyleNames="w-100"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Stream Id Field:</g:cell>
+                <g:customCell>
+                    <i:ItemListBox ui:field="streamIdField" addStyleNames="w-100"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Part No Field:</g:cell>
+                <g:customCell>
+                    <i:ItemListBox ui:field="partNoField" addStyleNames="w-100"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Record No Field:</g:cell>
+                <g:customCell>
+                    <i:ItemListBox ui:field="recordNoField" addStyleNames="w-100"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Line From Field:</g:cell>
+                <g:customCell>
+                    <i:ItemListBox ui:field="lineFromField" addStyleNames="w-100"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Col From Field:</g:cell>
+                <g:customCell>
+                    <i:ItemListBox ui:field="colFromField" addStyleNames="w-100"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Line To Field:</g:cell>
+                <g:customCell>
+                    <i:ItemListBox ui:field="lineToField" addStyleNames="w-100"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Col To Field:</g:cell>
+                <g:customCell>
+                    <i:ItemListBox ui:field="colToField" addStyleNames="w-100"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Pipeline:</g:cell>
+                <g:customCell>
+                    <g:SimplePanel ui:field="pipeline" addStyleNames="w-100"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Show As HTML:</g:cell>
+                <g:customCell>
+                    <v:TickBox ui:field="showAsHtml"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Show Stepping:</g:cell>
+                <g:customCell>
+                    <v:TickBox ui:field="showStepping"/>
+                </g:customCell>
+            </g:row>
+        </g:Grid>
+    </g:SimplePanel>
 </ui:UiBinder> 

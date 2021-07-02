@@ -4,7 +4,7 @@
   <g:Grid styleName="stroom-control-grid w-100">
     <g:row>
       <g:customCell>
-        <g:Label text="Event:" width="40px" />
+        <g:Label text="Event:" width="50px" />
       </g:customCell>
       <g:customCell>
         <g:TextBox ui:field="event" addStyleNames="w-100" />

@@ -106,7 +106,7 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
                 }
             };
 
-            final PopupSize popupSize = new PopupSize(640, 480, true);
+            final PopupSize popupSize = PopupSize.resizable(640, 480);
             ShowPopupEvent.fire(this,
                     this,
                     PopupType.OK_CANCEL_DIALOG,

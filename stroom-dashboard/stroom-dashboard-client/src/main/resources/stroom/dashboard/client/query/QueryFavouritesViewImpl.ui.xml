@@ -2,7 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:l="urn:import:stroom.cell.list.client">
-    <g:MySplitLayoutPanel styleName="max">
+    <g:MySplitLayoutPanel styleName="max default-min-sizes">
         <g:south size="120">
             <g:ScrollPanel styleName="max stroom-content stroom-border">
                 <g:SimplePanel ui:field="bottom"/>

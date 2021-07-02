@@ -56,6 +56,7 @@ public class FSVolumeStatusListPresenter extends MyPresenterWidget<DataGridView<
 
         // Add a border to the list.
         getWidget().getElement().addClassName("stroom-border");
+        getWidget().getElement().addClassName("default-min-sizes");
 
         initTableColumns();
 

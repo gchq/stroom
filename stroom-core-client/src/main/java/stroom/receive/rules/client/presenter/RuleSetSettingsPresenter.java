@@ -292,15 +292,7 @@ public class RuleSetSettingsPresenter
     private void showRulePresenter(final RulePresenter rulePresenter,
                                    final Runnable okHandler) {
 
-        final PopupSize popupSize = new PopupSize(
-                800,
-                400,
-                300,
-                300,
-                2000,
-                2000,
-                true);
-
+        final PopupSize popupSize = PopupSize.resizable(800, 400);
         ShowPopupEvent.fire(
                 RuleSetSettingsPresenter.this,
                 rulePresenter,

@@ -484,15 +484,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
         final DataRetentionRulePresenter editRulePresenter = editRulePresenterProvider.get();
         editRulePresenter.read(newRule);
 
-        final PopupSize popupSize = new PopupSize(
-                800,
-                400,
-                300,
-                300,
-                2000,
-                2000,
-                true);
-
+        final PopupSize popupSize = PopupSize.resizable(800, 400);
         ShowPopupEvent.fire(
                 DataRetentionPolicyPresenter.this,
                 editRulePresenter,
@@ -525,15 +517,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
         final DataRetentionRulePresenter editRulePresenter = editRulePresenterProvider.get();
         editRulePresenter.read(existingRule);
 
-        final PopupSize popupSize = new PopupSize(
-                800,
-                400,
-                300,
-                300,
-                2000,
-                2000,
-                true);
-
+        final PopupSize popupSize = PopupSize.resizable(800, 400);
         ShowPopupEvent.fire(
                 DataRetentionPolicyPresenter.this,
                 editRulePresenter,

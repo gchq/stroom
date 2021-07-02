@@ -82,11 +82,7 @@ public class ConfigPropertyClusterValuesPresenter
     }
 
     protected PopupSize getPopupSize() {
-        return new PopupSize(
-                900, 700,
-                700, 700,
-                1500, 1500,
-                true);
+        return PopupSize.resizable(900, 700);
     }
 
     private String getEntityDisplayType() {

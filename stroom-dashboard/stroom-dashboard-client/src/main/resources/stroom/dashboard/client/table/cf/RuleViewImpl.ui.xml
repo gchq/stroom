@@ -3,8 +3,8 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
 >
-    <g:FlowPanel styleName="dock-container-vertical">
-        <g:SimplePanel styleName="dock-min ruleView-bottom max">
+    <g:FlowPanel styleName="max default-min-sizes dock-container-vertical">
+        <g:SimplePanel styleName="dock-min ruleView-bottom">
             <g:Grid ui:field="grid" styleName="stroom-control-grid w-100">
                 <g:row>
                     <g:cell>Hide:</g:cell>

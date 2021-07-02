@@ -327,7 +327,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
                 }
             };
 
-            final PopupSize popupSize = new PopupSize(300, 153, 300, 153, 2000, 153, true);
+            final PopupSize popupSize = PopupSize.resizableX();
             if (isNew) {
                 ShowPopupEvent.fire(this, editor, PopupType.OK_CANCEL_DIALOG, popupSize, "New Pipeline Reference",
                         popupUiHandlers);

@@ -513,7 +513,7 @@
 }
 
 .linkTab-selected .linkTab-label {
-	font-weight: 500;
+	font-weight: 600;
 }
 
 .linkTab .linkTab-hotspot {
@@ -773,7 +773,6 @@
 
 .pager-paging {
     position: relative;
-    width: 250px;
     text-align: right;
     display: flex;
     flex-direction: row;
@@ -919,6 +918,9 @@
     min-width: 100%;
 }
 
+.dataRetentionRuleViewImpl {
+}
+
 .dataRetentionRuleViewImpl-bottom {
     padding-top: 5px;
 }
@@ -993,7 +995,6 @@
 }
 
 .resizableAcceptRejectContent-reject {
-    margin-left: 5px;
     background-color: #d50000;
     border-color: #b71c1c;
 }
@@ -1179,7 +1180,6 @@
 }
 
 .acceptRejectContent-reject {
-    margin-left: 5px;
     background-color: red;
 }
 
@@ -1241,27 +1241,6 @@
 }
 
 .okCancelContent-cancel {
-    margin-left: 5px;
-}
-
-.filterViewImpl-row {
-    position: relative;
-    width: 100%;
-    height: 50%;
-}
-
-.filterViewImpl-container {
-    position: absolute;
-    left: 0px;
-    right: 0px;
-    top: 16px;
-    bottom: 0px;
-}
-
-.filterViewImpl-label {
-    width: 100%;
-    white-space: nowrap;
-    padding-top: 2px;
 }
 
 .editExpressionViewImpl-expressionTree {
@@ -1320,7 +1299,6 @@
 }
 
 .resizableOkCancelContent-cancel {
-    margin-left: 5px;
 }
 
 .userListViewImpl-nameFilter {
@@ -1457,6 +1435,8 @@
 
 .dropDownTreeViewImpl-nameFilter {
     width: 100%;
+    border: none;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .welcomeViewImpl-body {
@@ -1474,7 +1454,7 @@
     border-bottom: none !important;
 }
 
-.splashViewImpl-scroll {
+.splashViewImpl-content {
     padding: 5px;
 }
 
@@ -1514,6 +1494,11 @@
     cursor: pointer;
     text-decoration: underline;
     padding: 6px 8px;
+}
+
+.steppingFilterViewImpl {
+    min-width: 400px;
+    min-height: 400px;
 }
 
 .stepLocationViewImpl-left {
@@ -1591,3 +1576,31 @@
     width: 250px;
     margin-right: 5px;
 }
+
+.default-min-sizes {
+    min-width: 200px;
+    min-height: 200px;
+}
+
+.large-min-sizes {
+    min-width: 400px;
+    min-height: 400px;
+}
+
+/*
+.treePanel-panel {
+    position: relative;
+}
+
+.treePanel-boxPanel {
+    position: relative;
+    top: 0;
+    left: 0;
+}
+
+.treePanel-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+*/

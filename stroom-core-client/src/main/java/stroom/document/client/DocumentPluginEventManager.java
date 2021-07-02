@@ -65,9 +65,11 @@ import stroom.explorer.shared.ExplorerServiceMoveRequest;
 import stroom.explorer.shared.ExplorerServiceRenameRequest;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.importexport.client.event.ExportConfigEvent;
+import stroom.importexport.client.event.ImportConfigEvent;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.GroupHeading;
@@ -732,8 +734,11 @@ public class DocumentPluginEventManager extends Plugin {
         menuItems.add(createRenameMenuItem(updatableItems, 6, singleSelection && allowUpdate));
         menuItems.add(createDeleteMenuItem(deletableItems, 7, allowDelete));
 
-        if (securityContext.hasAppPermission("Export Configuration")) {
-            menuItems.add(createExportMenuItem(8, readableItems));
+        if (securityContext.hasAppPermission(PermissionNames.IMPORT_CONFIGURATION)) {
+            menuItems.add(createImportMenuItem(8));
+        }
+        if (securityContext.hasAppPermission(PermissionNames.EXPORT_CONFIGURATION)) {
+            menuItems.add(createExportMenuItem(9, readableItems));
         }
 
         // Only allow users to change permissions if they have a single item selected.
@@ -742,8 +747,8 @@ public class DocumentPluginEventManager extends Plugin {
                     DocumentPermissionNames.OWNER,
                     true);
             if (ownedItems.size() == 1) {
-                menuItems.add(new Separator(9));
-                menuItems.add(createPermissionsMenuItem(ownedItems.get(0), 10, true));
+                menuItems.add(new Separator(10));
+                menuItems.add(createPermissionsMenuItem(ownedItems.get(0), 11, true));
             }
         }
     }
@@ -882,6 +887,16 @@ public class DocumentPluginEventManager extends Plugin {
                 null,
                 enabled,
                 command);
+    }
+
+    private MenuItem createImportMenuItem(final int priority) {
+        return new IconMenuItem(priority,
+                SvgPresets.UPLOAD,
+                SvgPresets.UPLOAD,
+                "Import",
+                null,
+                true,
+                () -> ImportConfigEvent.fire(DocumentPluginEventManager.this));
     }
 
     private MenuItem createExportMenuItem(final int priority,

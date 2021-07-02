@@ -26,7 +26,6 @@ import stroom.security.shared.UserResource;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
@@ -75,19 +74,8 @@ public class ChangeAssignedToPresenter extends MyPresenterWidget<ChangeAssignedT
 
     public void show(final List<Long> annotationIdList) {
         this.annotationIdList = annotationIdList;
-
-//        if (currentAssignedTo == null) {
-//            final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-//            final Rest<List<String>> rest = restFactory.create();
-//            rest.onSuccess(values -> {
-//                if (currentAssignedTo == null && values != null && values.size() > 0) {
-//                    changeAssignedTo(values.get(0), false);
-//                }
-//            }).call(annotationResource).getStatus(null);
-//        }
-
-        final PopupSize popupSize = new PopupSize(400, 83, 400, 83, true);
-        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, "Change Assigned To", this);
+        ShowPopupEvent.fire(this, this,
+                PopupType.OK_CANCEL_DIALOG, "Change Assigned To", this);
     }
 
     private void changeAssignedTo(final String selected) {

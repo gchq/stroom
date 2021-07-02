@@ -3,23 +3,20 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:i="urn:import:stroom.item.client">
-    <g:FlowPanel styleName="dock-container-vertical">
-        <g:SimplePanel styleName="dock-min selectionHandlerViewImpl-bottom max">
-            <g:Grid ui:field="grid" styleName="stroom-control-grid w-100">
-                <g:row>
-                    <g:cell>Component:</g:cell>
-                    <g:customCell>
-                        <i:ItemListBox ui:field="component" addStyleNames="w-100"/>
-                    </g:customCell>
-                </g:row>
-                <g:row>
-                    <g:cell>Enabled:</g:cell>
-                    <g:customCell>
-                        <tickbox:TickBox ui:field="enabled"/>
-                    </g:customCell>
-                </g:row>
-            </g:Grid>
-        </g:SimplePanel>
-        <g:SimplePanel ui:field="expression" styleName="dock-max stroom-content stroom-border"/>
+    <g:FlowPanel ui:field="layout" styleName="max large-min-sizes dock-container-vertical">
+        <g:Grid ui:field="grid" styleName="dock-min selectionHandlerViewImpl-bottom stroom-control-grid w-100">
+            <g:row>
+                <g:cell>Component:</g:cell>
+                <g:customCell>
+                    <i:ItemListBox ui:field="component" addStyleNames="w-100"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Enabled:</g:cell>
+                <g:customCell>
+                    <tickbox:TickBox ui:field="enabled"/>
+                </g:customCell>
+            </g:row>
+        </g:Grid>
     </g:FlowPanel>
 </ui:UiBinder>

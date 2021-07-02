@@ -169,11 +169,7 @@ public final class UserPreferencesPresenter
     }
 
     private PopupSize getPopupSize() {
-        return new PopupSize(
-                700, 556,
-                700, 556,
-                1024, 556,
-                true);
+        return PopupSize.resizableX();
     }
 
     protected void hide() {

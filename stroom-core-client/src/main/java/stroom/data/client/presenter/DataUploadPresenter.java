@@ -160,7 +160,7 @@ public class DataUploadPresenter extends MyPresenterWidget<DataUploadPresenter.D
             }
         };
 
-        final PopupSize popupSize = new PopupSize(500, 330, 400, 330, 1024, 1024, true);
+        final PopupSize popupSize = PopupSize.resizable();
         ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, "Upload", popupUiHandlers);
     }
 

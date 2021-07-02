@@ -1,6 +1,6 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui">
-    <g:MySplitLayoutPanel styleName="max">
+    <g:MySplitLayoutPanel styleName="max default-min-sizes">
         <g:north size="200">
             <g:FlowPanel styleName="dock-container-vertical">
                 <g:Label text="User Membership:" styleName="dock-min"/>

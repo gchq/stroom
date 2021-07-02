@@ -32,9 +32,6 @@ import stroom.widget.htree.client.treelayout.util.DefaultConfiguration;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 
 import com.google.gwt.canvas.dom.client.Context2d;
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.Position;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.view.client.SelectionModel;
@@ -54,9 +51,9 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
 
     public PipelineTreePanel(final PipelineElementBoxFactory pipelineElementBoxFactory) {
         panel = new FlowPanel();
-        setAbsoluteLeftTop(panel.getElement());
+        panel.setStyleName("treePanel-panel");
         boxPanel = new FlowPanel();
-        setAbsoluteLeftTop(boxPanel.getElement());
+        boxPanel.setStyleName("treePanel-boxPanel");
 
         // setup the tree layout configuration.
         canvas = LayeredCanvas.createIfSupported();
@@ -77,19 +74,12 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
             renderer = new TreeRenderer2<>(canvas, cellRenderer, connectorRenderer);
             renderer.setTreeLayout(treeLayout);
 
-            setAbsoluteLeftTop(canvas.getElement());
+            canvas.setStyleName("treePanel-canvas");
             panel.add(canvas);
         }
 
         panel.add(boxPanel);
         initWidget(panel);
-    }
-
-    private void setAbsoluteLeftTop(final com.google.gwt.dom.client.Element element) {
-        final Style style = element.getStyle();
-        style.setPosition(Position.ABSOLUTE);
-        style.setLeft(0, Unit.PX);
-        style.setTop(0, Unit.PX);
     }
 
     @Override

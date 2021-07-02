@@ -216,8 +216,7 @@ public class IndexVolumeGroupEditPresenter
                 }
             };
 
-            final PopupSize popupSize =
-                    new PopupSize(1000, 600, 350, 250, true);
+            final PopupSize popupSize = PopupSize.resizable(1000, 600);
             ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, title,
                     popupUiHandlers);
         }

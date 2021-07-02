@@ -1,14 +1,14 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
-    <g:MySplitLayoutPanel styleName="max">
+    <g:MySplitLayoutPanel styleName="steppingFilterViewImpl  max">
         <g:west size="220">
             <g:MaxScrollPanel styleName="max stroom-content stroom-border">
                 <g:SimplePanel ui:field="elementChooser" />
             </g:MaxScrollPanel>
         </g:west>
         <g:center>
-            <g:FlowPanel styleName="SteppingFilterViewImpl max dock-container-vertical">
+            <g:FlowPanel styleName="max dock-container-vertical">
                 <g:Grid styleName="dock-min stroom-control-grid w-100">
                     <g:row>
                         <g:cell>Jump to where message severity >=</g:cell>

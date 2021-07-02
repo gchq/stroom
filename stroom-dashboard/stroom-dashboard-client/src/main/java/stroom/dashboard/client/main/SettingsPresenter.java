@@ -42,6 +42,7 @@ public class SettingsPresenter extends MyPresenterWidget<LinkTabsLayoutView> {
     @Inject
     public SettingsPresenter(final EventBus eventBus, final LinkTabsLayoutView view) {
         super(eventBus, view);
+        getWidget().getElement().addClassName("default-min-sizes");
     }
 
     public TabData addTab(final String text, final Layer layer) {

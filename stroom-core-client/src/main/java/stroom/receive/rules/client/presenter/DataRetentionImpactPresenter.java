@@ -287,15 +287,7 @@ public class DataRetentionImpactPresenter
         editExpressionPresenter.read(criteria.getExpression());
         editExpressionPresenter.init(restFactory, MetaFields.STREAM_STORE_DOC_REF, FILTERABLE_FIELDS);
 
-        final PopupSize popupSize = new PopupSize(
-                800,
-                400,
-                300,
-                300,
-                2000,
-                2000,
-                true);
-
+        final PopupSize popupSize = PopupSize.resizable(800, 400);
         ShowPopupEvent.fire(
                 DataRetentionImpactPresenter.this,
                 editExpressionPresenter,

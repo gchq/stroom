@@ -49,7 +49,7 @@ public class ManageFSVolumesPlugin extends NodeToolsPlugin {
         if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_VOLUMES_PERMISSION)) {
             event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
                     new IconMenuItem(2, SvgPresets.VOLUMES, SvgPresets.VOLUMES, "Data Volumes", null, true, () -> {
-                        final PopupSize popupSize = new PopupSize(1000, 600, true);
+                        final PopupSize popupSize = PopupSize.resizable(1000, 600);
                         ShowPopupEvent.fire(ManageFSVolumesPlugin.this, manageVolumesPresenter.get(),
                                 PopupType.CLOSE_DIALOG, null, popupSize, "Data Volumes", null, null);
                     }));

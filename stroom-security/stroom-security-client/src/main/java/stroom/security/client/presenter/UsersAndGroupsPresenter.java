@@ -32,6 +32,8 @@ public class UsersAndGroupsPresenter extends LinkTabsPresenter {
                                    final Provider<UsersAndGroupsTabPresenter> usersAndGroupsTabPresenterProvider) {
         super(eventBus, view);
 
+        getWidget().getElement().addClassName("default-min-sizes");
+
         final UsersAndGroupsTabPresenter usersPresenter = usersAndGroupsTabPresenterProvider.get();
         final UsersAndGroupsTabPresenter groupsPresenter = usersAndGroupsTabPresenterProvider.get();
 
