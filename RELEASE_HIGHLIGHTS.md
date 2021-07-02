@@ -14,6 +14,9 @@
 ### Elastic Search Integration
 * Stroom now integrates with elastic search as a data source provider for indexing and searching.
 
+### XSLT 3.0 Support
+* The XSLT library has been updated to allow the use of XSLT 3.0.
+
 ### Stroom Proxy
 * Improved Stroom Proxy configuration.
 * Stroom proxy can now forward to multiple destinations.
