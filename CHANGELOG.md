@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2313** : Integrate LeafletJS for geographical mapping.
+
 * Issue **#2293** : Fix location of banner.txt in zip distribution.
 
 * Issue **#2278** : Close a dialog box on keypress. `Escape` = Close, `Ctrl+Enter` = OK.
