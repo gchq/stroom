@@ -9,6 +9,33 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Improve exception handling when node name is not configured.
 
+* Fixed issue where annotation menu button did not show when existing annotation was selected.
+
+* Fix problem with merging DB connection configs when values not supplied.
+
+* Make relative proxy file paths be relative to configured proxy home directory.
+
+* Make proxy logger file paths support `~` and relative paths be relative to proxy home.
+
+* Remove redundant items from stroom and proxy distribution config yaml files.
+
+* Rename `jerseyClient` key in proxy config.yml to `restClient`.
+
+
+## [v7.0-beta.136] - 2021-06-29
+
+* Issue **#2317** : The user id can now be resolved from the `username` JWT claim if `email` is not present.
+
+
+## [v7.0-beta.135] - 2021-06-28
+
+* Issue **#2317** : The user id can now be resolved from the `username` JWT claim if `email` is not present. 
+
+
+## [v7.0-beta.134] - 2021-06-25
+
+* Issue **#2316** : Fixed React dialog styling by increasing CSS specificity.
+
 
 ## [v7.0-beta.133] - 2021-06-21
 
@@ -3548,7 +3575,10 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.133...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.136...HEAD
+[v7.0-beta.136]: https://github.com/gchq/stroom/compare/v7.0-beta.135...v7.0-beta.136
+[v7.0-beta.135]: https://github.com/gchq/stroom/compare/v7.0-beta.134...v7.0-beta.135
+[v7.0-beta.134]: https://github.com/gchq/stroom/compare/v7.0-beta.133...v7.0-beta.134
 [v7.0-beta.133]: https://github.com/gchq/stroom/compare/v7.0-beta.132...v7.0-beta.133
 [v7.0-beta.132]: https://github.com/gchq/stroom/compare/v7.0-beta.131...v7.0-beta.132
 [v7.0-beta.131]: https://github.com/gchq/stroom/compare/v7.0-beta.130...v7.0-beta.131
