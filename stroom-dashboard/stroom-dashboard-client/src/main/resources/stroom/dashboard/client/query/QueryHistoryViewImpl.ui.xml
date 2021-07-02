@@ -1,7 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
 	xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:l="urn:import:stroom.cell.list.client">
-	<g:MySplitLayoutPanel styleName="max">
+	<g:MySplitLayoutPanel styleName="max default-min-sizes">
 		<g:south size="120">
 			<g:ScrollPanel ui:field="bottom" styleName="max stroom-content stroom-border" />
 		</g:south>

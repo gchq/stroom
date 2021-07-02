@@ -32,10 +32,7 @@ import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.stepping.FindElementDocRequest;
-import stroom.pipeline.shared.stepping.PipelineStepRequest;
-import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.shared.stepping.SteppingResource;
-import stroom.pipeline.stepping.client.event.ShowSteppingFilterSettingsEvent;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
 import stroom.util.shared.HasData;
 import stroom.widget.util.client.Future;
@@ -64,7 +61,6 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
     private List<PipelineProperty> properties;
     private String feedName;
     private String pipelineName;
-    private PipelineStepRequest pipelineStepRequest;
     private boolean refreshRequired = true;
     private boolean loaded;
     private boolean dirtyCode;
@@ -298,10 +294,6 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
         this.pipelineName = pipelineName;
     }
 
-    public void setPipelineStepRequest(final PipelineStepRequest pipelineStepRequest) {
-        this.pipelineStepRequest = pipelineStepRequest;
-    }
-
     public boolean isRefreshRequired() {
         return refreshRequired;
     }
@@ -338,9 +330,6 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
             inputPresenter = editorProvider.get();
             setCommonEditorOptions(inputPresenter);
             setReadOnlyEditorOptions(inputPresenter);
-
-            inputPresenter.setShowFilterSettings(false);
-            inputPresenter.setInput(true);
         }
         return inputPresenter;
     }
@@ -356,15 +345,6 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
             if (element != null && element.getElementType().hasRole(PipelineElementType.ROLE_VALIDATOR)) {
                 outputPresenter.getLineNumbersOption().setOn(true);
             }
-
-            outputPresenter.setShowFilterSettings(true);
-            outputPresenter.setInput(false);
-
-            registerHandler(outputPresenter.addChangeFilterHandler(event -> {
-                final SteppingFilterSettings settings = pipelineStepRequest.getStepFilter(element.getId());
-                ShowSteppingFilterSettingsEvent.fire(ElementPresenter.this, outputPresenter, false, element.getId(),
-                        settings);
-            }));
         }
         return outputPresenter;
     }

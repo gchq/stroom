@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Added layout density user preference.
+
+* Issue **#2288** : Added export content menu item.
+
+* Added name filtering on export items.
+
+* Moved stepping filter button to make the feature more obvious.
+
 * Fixed issue where annotation menu button did not show when existing annotation was selected.
 
 * Issue **#2317** : The user id can now be resolved from the `username` JWT claim if `email` is not present.

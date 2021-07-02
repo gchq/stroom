@@ -99,7 +99,7 @@ public class FSVolumeEditPresenter extends MyPresenterWidget<FSVolumeEditPresent
             }
         };
 
-        final PopupSize popupSize = new PopupSize(400, 197, 400, 197, 1000, 197, true);
+        final PopupSize popupSize = PopupSize.resizableX();
         ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, title, popupUiHandlers);
     }
 

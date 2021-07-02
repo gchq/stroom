@@ -299,7 +299,7 @@ public class AnnotationEditPresenter
             }
         };
 
-        final PopupSize popupSize = new PopupSize(800, 600, true);
+        final PopupSize popupSize = PopupSize.resizable(800, 600);
         ShowPopupEvent.fire(this,
                 this,
                 PopupType.CLOSE_DIALOG,

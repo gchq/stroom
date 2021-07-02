@@ -64,11 +64,14 @@ import stroom.explorer.shared.ExplorerServiceDeleteRequest;
 import stroom.explorer.shared.ExplorerServiceMoveRequest;
 import stroom.explorer.shared.ExplorerServiceRenameRequest;
 import stroom.explorer.shared.PermissionInheritance;
+import stroom.importexport.client.event.ExportConfigEvent;
+import stroom.importexport.client.event.ImportConfigEvent;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
+import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.PermissionNames;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
-import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.menu.client.presenter.GroupHeading;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
@@ -98,7 +101,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -121,10 +123,10 @@ public class DocumentPluginEventManager extends Plugin {
     private final DocumentTypeCache documentTypeCache;
     private final MenuListPresenter menuListPresenter;
     private final DocumentPluginRegistry documentPluginRegistry;
+    private final ClientSecurityContext securityContext;
     private final KeyboardInterceptor keyboardInterceptor;
     private TabData selectedTab;
     private MultiSelectionModel<ExplorerNode> selectionModel;
-    private final UiConfigCache clientPropertyCache;
 
     @Inject
     public DocumentPluginEventManager(final EventBus eventBus,
@@ -134,7 +136,7 @@ public class DocumentPluginEventManager extends Plugin {
                                       final DocumentTypeCache documentTypeCache,
                                       final MenuListPresenter menuListPresenter,
                                       final DocumentPluginRegistry documentPluginRegistry,
-                                      final UiConfigCache clientPropertyCache) {
+                                      final ClientSecurityContext securityContext) {
         super(eventBus);
         this.hasSaveRegistry = hasSaveRegistry;
         this.keyboardInterceptor = keyboardInterceptor;
@@ -142,7 +144,7 @@ public class DocumentPluginEventManager extends Plugin {
         this.documentTypeCache = documentTypeCache;
         this.menuListPresenter = menuListPresenter;
         this.documentPluginRegistry = documentPluginRegistry;
-        this.clientPropertyCache = clientPropertyCache;
+        this.securityContext = securityContext;
     }
 
     @Override
@@ -249,59 +251,56 @@ public class DocumentPluginEventManager extends Plugin {
         ///////////////////////////////
 
         // 1. Handle entity creation events.
-        registerHandler(getEventBus().addHandler(CreateDocumentEvent.getType(), event -> {
-            create(event.getDocType(),
-                    event.getDocName(),
-                    event.getDestinationFolderRef(),
-                    event.getPermissionInheritance(),
-                    docRef -> {
-                        // Hide the create document presenter.
-                        HidePopupEvent.fire(DocumentPluginEventManager.this, event.getPresenter());
+        registerHandler(getEventBus().addHandler(CreateDocumentEvent.getType(), event ->
+                create(event.getDocType(),
+                        event.getDocName(),
+                        event.getDestinationFolderRef(),
+                        event.getPermissionInheritance(),
+                        docRef -> {
+                            // Hide the create document presenter.
+                            HidePopupEvent.fire(DocumentPluginEventManager.this, event.getPresenter());
 
-                        highlight(docRef);
+                            highlight(docRef);
 
-                        // The initiator of this event can now do what they want with the docref.
-                        event.getNewDocConsumer().accept(docRef);
-                    });
-        }));
+                            // The initiator of this event can now do what they want with the docref.
+                            event.getNewDocConsumer().accept(docRef);
+                        })));
 
         // 8.1. Handle entity copy events.
-        registerHandler(getEventBus().addHandler(CopyDocumentEvent.getType(), event -> {
-            copy(event.getDocRefs(), event.getDestinationFolderRef(), event.getPermissionInheritance(), result -> {
-                // Hide the copy document presenter.
-                HidePopupEvent.fire(DocumentPluginEventManager.this, event.getPresenter());
+        registerHandler(getEventBus().addHandler(CopyDocumentEvent.getType(), event ->
+                copy(event.getDocRefs(), event.getDestinationFolderRef(), event.getPermissionInheritance(), result -> {
+                    // Hide the copy document presenter.
+                    HidePopupEvent.fire(DocumentPluginEventManager.this, event.getPresenter());
 
-                if (result.getMessage().length() > 0) {
-                    AlertEvent.fireInfo(DocumentPluginEventManager.this,
-                            "Unable to copy some items",
-                            result.getMessage(),
-                            null);
-                }
+                    if (result.getMessage().length() > 0) {
+                        AlertEvent.fireInfo(DocumentPluginEventManager.this,
+                                "Unable to copy some items",
+                                result.getMessage(),
+                                null);
+                    }
 
-                if (result.getDocRefs().size() > 0) {
-                    highlight(result.getDocRefs().get(0));
-                }
-            });
-        }));
+                    if (result.getDocRefs().size() > 0) {
+                        highlight(result.getDocRefs().get(0));
+                    }
+                })));
 
         // 8.2. Handle entity move events.
-        registerHandler(getEventBus().addHandler(MoveDocumentEvent.getType(), event -> {
-            move(event.getDocRefs(), event.getDestinationFolderRef(), event.getPermissionInheritance(), result -> {
-                // Hide the move document presenter.
-                HidePopupEvent.fire(DocumentPluginEventManager.this, event.getPresenter());
+        registerHandler(getEventBus().addHandler(MoveDocumentEvent.getType(), event ->
+                move(event.getDocRefs(), event.getDestinationFolderRef(), event.getPermissionInheritance(), result -> {
+                    // Hide the move document presenter.
+                    HidePopupEvent.fire(DocumentPluginEventManager.this, event.getPresenter());
 
-                if (result.getMessage().length() > 0) {
-                    AlertEvent.fireInfo(DocumentPluginEventManager.this,
-                            "Unable to move some items",
-                            result.getMessage(),
-                            null);
-                }
+                    if (result.getMessage().length() > 0) {
+                        AlertEvent.fireInfo(DocumentPluginEventManager.this,
+                                "Unable to move some items",
+                                result.getMessage(),
+                                null);
+                    }
 
-                if (result.getDocRefs().size() > 0) {
-                    highlight(result.getDocRefs().get(0));
-                }
-            });
-        }));
+                    if (result.getDocRefs().size() > 0) {
+                        highlight(result.getDocRefs().get(0));
+                    }
+                })));
 
         // 9. Handle entity rename events.
         registerHandler(getEventBus().addHandler(RenameDocumentEvent.getType(), event -> {
@@ -702,10 +701,10 @@ public class DocumentPluginEventManager extends Plugin {
                 documentType.getDisplayType(), null, true, () ->
                 ShowCreateDocumentDialogEvent.fire(
                         DocumentPluginEventManager.this,
-                                "New " + documentType.getDisplayType(),
+                        "New " + documentType.getDisplayType(),
                         explorerNode,
                         documentType.getType(),
-                                "",
+                        "",
                         true,
                         newDocumentConsumer)
         );
@@ -735,14 +734,21 @@ public class DocumentPluginEventManager extends Plugin {
         menuItems.add(createRenameMenuItem(updatableItems, 6, singleSelection && allowUpdate));
         menuItems.add(createDeleteMenuItem(deletableItems, 7, allowDelete));
 
+        if (securityContext.hasAppPermission(PermissionNames.IMPORT_CONFIGURATION)) {
+            menuItems.add(createImportMenuItem(8));
+        }
+        if (securityContext.hasAppPermission(PermissionNames.EXPORT_CONFIGURATION)) {
+            menuItems.add(createExportMenuItem(9, readableItems));
+        }
+
         // Only allow users to change permissions if they have a single item selected.
         if (singleSelection) {
             final List<ExplorerNode> ownedItems = getExplorerNodeListWithPermission(documentPermissionMap,
                     DocumentPermissionNames.OWNER,
                     true);
             if (ownedItems.size() == 1) {
-                menuItems.add(new Separator(8));
-                menuItems.add(createPermissionsMenuItem(ownedItems.get(0), 8, true));
+                menuItems.add(new Separator(10));
+                menuItems.add(createPermissionsMenuItem(ownedItems.get(0), 11, true));
             }
         }
     }
@@ -881,6 +887,27 @@ public class DocumentPluginEventManager extends Plugin {
                 null,
                 enabled,
                 command);
+    }
+
+    private MenuItem createImportMenuItem(final int priority) {
+        return new IconMenuItem(priority,
+                SvgPresets.UPLOAD,
+                SvgPresets.UPLOAD,
+                "Import",
+                null,
+                true,
+                () -> ImportConfigEvent.fire(DocumentPluginEventManager.this));
+    }
+
+    private MenuItem createExportMenuItem(final int priority,
+                                          final List<ExplorerNode> readableItems) {
+        return new IconMenuItem(priority,
+                SvgPresets.DOWNLOAD,
+                SvgPresets.DOWNLOAD,
+                "Export",
+                null,
+                true,
+                () -> ExportConfigEvent.fire(DocumentPluginEventManager.this, readableItems));
     }
 
     void registerPlugin(final String entityType, final DocumentPlugin<?> plugin) {

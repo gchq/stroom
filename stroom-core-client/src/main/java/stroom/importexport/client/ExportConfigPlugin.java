@@ -57,6 +57,6 @@ public class ExportConfigPlugin extends Plugin {
                 "Export",
                 null,
                 true,
-                () -> ExportConfigEvent.fire(ExportConfigPlugin.this));
+                () -> ExportConfigEvent.fire(ExportConfigPlugin.this, null));
     }
 }

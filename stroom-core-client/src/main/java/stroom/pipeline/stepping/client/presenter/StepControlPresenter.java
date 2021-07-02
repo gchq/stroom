@@ -16,6 +16,9 @@
 
 package stroom.pipeline.stepping.client.presenter;
 
+import stroom.editor.client.event.ChangeFilterEvent;
+import stroom.editor.client.event.ChangeFilterEvent.ChangeFilterHandler;
+import stroom.editor.client.event.HasChangeFilterHandlers;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.presenter.StepControlEvent.StepControlHandler;
 
@@ -26,13 +29,20 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-public class StepControlPresenter extends MyPresenterWidget<StepControlPresenter.StepControlView>
-        implements StepControlUIHandlers {
+public class StepControlPresenter
+        extends MyPresenterWidget<StepControlPresenter.StepControlView>
+        implements StepControlUIHandlers,
+        HasChangeFilterHandlers {
 
     @Inject
     public StepControlPresenter(final EventBus eventBus, final StepControlView view) {
         super(eventBus, view);
         view.setUiHandlers(this);
+    }
+
+    @Override
+    public void filter() {
+        ChangeFilterEvent.fire(this);
     }
 
     @Override
@@ -113,6 +123,11 @@ public class StepControlPresenter extends MyPresenterWidget<StepControlPresenter
             getView().setStepLastEnabled(false);
             getView().setStepRefreshEnabled(showingData);
         }
+    }
+
+    @Override
+    public HandlerRegistration addChangeFilterHandler(final ChangeFilterHandler handler) {
+        return addHandlerToSource(ChangeFilterEvent.TYPE, handler);
     }
 
     public HandlerRegistration addStepControlHandler(final StepControlHandler handler) {

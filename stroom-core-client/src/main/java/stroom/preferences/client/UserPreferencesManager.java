@@ -28,6 +28,7 @@ public class UserPreferencesManager {
     private final CurrentTheme currentTheme;
 
     private static final Map<String, String> themeMap = new HashMap<>();
+    private static final Map<String, String> densityMap = new HashMap<>();
     private static final Map<String, String> fontMap = new HashMap<>();
     private static final Map<String, String> fontSizeMap = new HashMap<>();
     private UserPreferences currentPreferences;
@@ -41,6 +42,10 @@ public class UserPreferencesManager {
         themeMap.put("Light", "stroom-theme-light");
         themeMap.put("Dark", "stroom-theme-dark");
         themeMap.put("Dark 2", "stroom-theme-dark stroom-theme-dark2");
+
+        densityMap.put("Default", "stroom-density-comfortable");
+        densityMap.put("Comfortable", "stroom-density-comfortable");
+        densityMap.put("Compact", "stroom-density-compact");
 
         fontMap.put("Arial", "stroom-font-arial");
         fontMap.put("Open Sans", "stroom-font-open-sans");
@@ -97,6 +102,9 @@ public class UserPreferencesManager {
         String className = "stroom";
         if (currentTheme.getTheme() != null) {
             className += " " + themeMap.get(currentTheme.getTheme());
+        }
+        if (currentPreferences != null && currentPreferences.getDensity() != null) {
+            className += " " + densityMap.get(currentPreferences.getDensity());
         }
         if (currentPreferences != null && currentPreferences.getFont() != null) {
             className += " " + fontMap.get(currentPreferences.getFont());

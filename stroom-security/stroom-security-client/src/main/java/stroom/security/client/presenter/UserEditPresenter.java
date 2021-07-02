@@ -23,6 +23,7 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView;
+import stroom.widget.popup.client.presenter.Size;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -70,7 +71,20 @@ public class UserEditPresenter extends MyPresenterWidget<UserEditView>
                 popupUiHandlers.onHide(autoClose, ok);
             }
         };
-        final PopupSize popupSize = new PopupSize(500, 600, 500, 600, true);
+        final PopupSize popupSize = PopupSize.builder()
+                .width(Size
+                        .builder()
+                        .initial(500)
+                        .min(500)
+                        .resizable(true)
+                        .build())
+                .height(Size
+                        .builder()
+                        .initial(600)
+                        .min(600)
+                        .resizable(true)
+                        .build())
+                .build();
         final String caption = "User - " + userRef.getName();
         ShowPopupEvent.fire(UserEditPresenter.this, UserEditPresenter.this, PopupView.PopupType.CLOSE_DIALOG,
                 popupSize, caption, internalPopupUiHandlers);

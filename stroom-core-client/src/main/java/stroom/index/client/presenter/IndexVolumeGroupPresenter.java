@@ -96,7 +96,7 @@ public class IndexVolumeGroupPresenter extends MyPresenterWidget<WrapperView> {
                 hide();
             }
         };
-        final PopupSize popupSize = new PopupSize(1000, 600, true);
+        final PopupSize popupSize = PopupSize.resizable(1000, 600);
         ShowPopupEvent.fire(
                 this,
                 this,

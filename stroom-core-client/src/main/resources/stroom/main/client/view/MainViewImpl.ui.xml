@@ -1,6 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:s="urn:import:stroom.main.client.view">
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:s="urn:import:stroom.main.client.view">
     <!-- Add a focus panel as the root so we can catch all keyboard events. -->
     <g:FocusPanel styleName="mainViewImpl-max">
         <g:FlowPanel styleName="mainViewImpl-max">

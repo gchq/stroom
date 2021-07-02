@@ -20,7 +20,6 @@ import stroom.editor.client.event.FormatEvent;
 import stroom.editor.client.event.FormatEvent.FormatHandler;
 import stroom.editor.client.model.XmlFormatter;
 import stroom.editor.client.presenter.Action;
-import stroom.editor.client.presenter.EditorUiHandlers;
 import stroom.editor.client.presenter.EditorView;
 import stroom.editor.client.presenter.Option;
 import stroom.util.shared.DefaultLocation;
@@ -29,13 +28,10 @@ import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 import stroom.util.shared.TextRange;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent;
-import stroom.widget.tab.client.view.ResizeObserver;
+import stroom.widget.tab.client.view.GlobalResizeObserver;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
@@ -45,10 +41,9 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.gwtplatform.mvp.client.ViewWithUiHandlers;
+import com.gwtplatform.mvp.client.ViewImpl;
 import edu.ycp.cs.dh.acegwt.client.ace.AceAnnotationType;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorCursorPosition;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
@@ -69,11 +64,10 @@ import javax.inject.Inject;
  * functionality such as formatting, styling, line numbers and warning/error
  * markers.
  */
-public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> implements EditorView {
+public class EditorViewImpl extends ViewImpl implements EditorView {
 
     private static final IndicatorPopup indicatorPopup = new IndicatorPopup();
     private static final boolean SHOW_INDICATORS_DEFAULT = false;
-    private static volatile Binder binder;
     private final Action formatAction;
     private final Option stylesOption;
     private final Option lineNumbersOption;
@@ -86,18 +80,14 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     private final Option liveAutoCompletionOption;
     private final Option highlightActiveLineOption;
 
-    @UiField
+    private final Widget widget;
+
+    @UiField(provided = true)
     FlowPanel layout;
     @UiField
     Editor editor;
     @UiField
     RightBar rightBar;
-    @UiField
-    FlowPanel filterButtons;
-    @UiField
-    Button filterInactive;
-    @UiField
-    Button filterActive;
 
     private IndicatorLines indicators;
     private AceEditorMode mode = AceEditorMode.XML;
@@ -106,27 +96,21 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
 
     @Inject
     public EditorViewImpl(final Binder binder) {
-        layout = binder.createAndBindUi(this);
-        ResizeObserver.observe(layout.getElement(), element -> doLayout(SHOW_INDICATORS_DEFAULT));
-
-        filterButtons.addDomHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                if (getUiHandlers() != null) {
-                    getUiHandlers().changeFilterSettings();
-                }
+        layout = new FlowPanel() {
+            @Override
+            protected void onAttach() {
+                super.onAttach();
+                GlobalResizeObserver.addListener(getElement(), element -> onResize());
             }
-        }, ClickEvent.getType());
 
-        filterButtons.setWidth(ScrollbarMetrics.getVerticalScrollBarWidth() + "px");
-        filterButtons.setHeight(ScrollbarMetrics.getHorizontalScrollBarWidth() + "px");
+            @Override
+            protected void onDetach() {
+                GlobalResizeObserver.removeListener(getElement());
+                super.onDetach();
+            }
+        };
 
-        final int left = ((ScrollbarMetrics.getVerticalScrollBarWidth() - 10) / 2);
-        final int top = ((ScrollbarMetrics.getHorizontalScrollBarWidth() - 10) / 2);
-        filterInactive.getElement().getStyle().setLeft(left, Unit.PX);
-        filterActive.getElement().getStyle().setLeft(left, Unit.PX);
-        filterInactive.getElement().getStyle().setTop(top, Unit.PX);
-        filterActive.getElement().getStyle().setTop(top, Unit.PX);
-
+        widget = binder.createAndBindUi(this);
         formatAction = new Action("Format", false, this::format);
 
         // Don't forget to add any new options into EditorPresenter
@@ -152,7 +136,7 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
                 "Highlight Active Line", true, true, (on) -> editor.setHighlightActiveLine(on));
 
         editor.getElement().setClassName("editor");
-        editor.addDomHandler(event -> handleMouseDown(event), MouseDownEvent.getType());
+        editor.addDomHandler(this::handleMouseDown, MouseDownEvent.getType());
         rightBar.setEditor(editor);
     }
 
@@ -167,11 +151,7 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
 
     @Override
     public Widget asWidget() {
-        return layout;
-    }
-
-    private void updateGutter(final boolean showLineNumbers) {
-        editor.setShowGutter(showLineNumbers);
+        return widget;
     }
 
     private void doLayout() {
@@ -180,7 +160,6 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
 
     private void doLayout(final boolean showIndicators) {
         rightBar.render(indicators, showIndicators);
-//        layout.setWidgetSize(rightBar, rightBar.getWidth());
         editor.onResize();
     }
 
@@ -261,7 +240,7 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
                         }
 
                         final Severity severity = error.getSeverity();
-                        AceAnnotationType annotationType = AceAnnotationType.INFO;
+                        AceAnnotationType annotationType;
                         switch (severity) {
                             case INFO:
                                 annotationType = AceAnnotationType.INFO;
@@ -467,17 +446,6 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     @Override
     public Option getHighlightActiveLineOption() {
         return highlightActiveLineOption;
-    }
-
-    @Override
-    public void showFilterButton(final boolean show) {
-        filterActive.setVisible(false);
-        filterButtons.setVisible(show);
-    }
-
-    @Override
-    public void setFilterActive(final boolean active) {
-        filterActive.setVisible(active);
     }
 
     @Override

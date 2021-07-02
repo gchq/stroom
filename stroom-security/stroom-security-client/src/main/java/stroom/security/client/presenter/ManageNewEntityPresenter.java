@@ -38,14 +38,7 @@ public class ManageNewEntityPresenter extends MyPresenterWidget<NameDocumentView
     public void show(final PopupUiHandlers popupUiHandlers) {
         getView().setUiHandlers(popupUiHandlers);
         getView().setName("");
-        final PopupSize popupSize = new PopupSize(
-                300,
-                130,
-                300,
-                130,
-                600,
-                130,
-                true);
+        final PopupSize popupSize = PopupSize.resizableX();
         ShowPopupEvent.fire(this,
                 this,
                 PopupType.OK_CANCEL_DIALOG,

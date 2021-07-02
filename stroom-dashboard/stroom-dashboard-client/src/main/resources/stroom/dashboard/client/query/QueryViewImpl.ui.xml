@@ -3,15 +3,15 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:search="urn:import:stroom.dashboard.client.query">
-    <g:FlowPanel styleName="max stroom-dashboard-query">
-        <g:FlowPanel styleName="dock-max dock-container-vertical">
+    <g:FlowPanel styleName="QueryViewImpl max stroom-dashboard-query">
+        <g:FlowPanel styleName="max">
             <b:ButtonPanel ui:field="buttonPanel" addStyleNames="dock-min"/>
             <g:MaxScrollPanel addStyleNames="dock-max">
                 <g:SimplePanel ui:field="expressionTree"
                                styleName="max queryViewImpl-expressionTree"/>
             </g:MaxScrollPanel>
         </g:FlowPanel>
-        <g:FlowPanel styleName="dock-min stroom-dashboard-query-buttons">
+        <g:FlowPanel styleName="stroom-dashboard-query-buttons">
             <b:FabButton ui:field="stop"
                          addStyleNames="stroom-dashboard-query-stop"
                          iconClassName="stroom-dashboard-query-stop-icon"

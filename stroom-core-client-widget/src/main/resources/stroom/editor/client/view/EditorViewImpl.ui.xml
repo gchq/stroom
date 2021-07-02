@@ -3,13 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:e="urn:import:stroom.editor.client.view">
     <g:FlowPanel ui:field="layout" styleName="max dock-container-horizontal">
+        <e:Editor ui:field="editor" styleName="dock-max"/>
         <e:RightBar ui:field="rightBar" addStyleNames="dock-min"/>
-        <g:FlowPanel addStyleNames="dock-max">
-            <e:Editor ui:field="editor" styleName="max"/>
-            <g:FlowPanel ui:field="filterButtons" styleName="codeEditor-filterButtons" visible="false">
-                <g:Button ui:field="filterInactive" styleName="codeEditor-filterButton codeEditor-filterInactive"/>
-                <g:Button ui:field="filterActive" styleName="codeEditor-filterButton codeEditor-filterActive"/>
-            </g:FlowPanel>
-        </g:FlowPanel>
     </g:FlowPanel>
 </ui:UiBinder>

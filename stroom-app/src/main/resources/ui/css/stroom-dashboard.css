@@ -28,7 +28,6 @@
 
 .stroom-dashboard-query-play-icon {
     background-image: url("../images/play.svg");
-    background-size: 100%;
     width: 32px;
     height: 36px;
     margin-left: 5px;
@@ -45,7 +44,6 @@
 
 .stroom-dashboard-query-pause-icon {
     background-image: url("../images/pause.svg");
-    background-size: 100%;
     width: 32px;
     height: 37px;
     margin-left: 9px;
@@ -61,7 +59,6 @@
 
 .stroom-dashboard-query-stop-icon {
     background-image: url("../images/stop.svg");
-    background-size: 100%;
     width: 16px;
     height: 18px;
     margin-left: 7px;

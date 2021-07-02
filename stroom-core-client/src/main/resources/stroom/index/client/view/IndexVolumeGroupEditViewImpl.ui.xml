@@ -1,7 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
-    <g:FlowPanel ui:field="layout" styleName="max dock-container-vertical">
+    <g:FlowPanel ui:field="layout" styleName="max default-min-sizes dock-container-vertical">
         <g:FlowPanel styleName="dock-min input-row">
             <g:Label text="Volume Group Name:"/>
             <g:TextBox ui:field="name" addStyleNames="dock-max"/>

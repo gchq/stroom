@@ -32,7 +32,6 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.MaxScrollPanel;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -61,23 +60,6 @@ public class SplashPresenter extends MyPresenterWidget<SplashPresenter.SplashVie
         this.urlParameters = urlParameters;
     }
 
-//    @Override
-//    protected void onBind() {
-//        super.onBind();
-//        registerHandler(getView().getScrollPanel().addScrollHandler(event -> testScroll()));
-//    }
-//
-//    private boolean testScroll() {
-//        if (!enabled) {
-//            if (getView().getScrollPanel().getVerticalScrollPosition()
-//            >= getView().getScrollPanel().getMaximumVerticalScrollPosition()) {
-//                EnablePopupEvent.fire(SplashPresenter.this, SplashPresenter.this);
-//                enabled = true;
-//            }
-//        }
-//        return enabled;
-//    }
-
     public void show(final Consumer<Boolean> consumer) {
         uiConfigCache.get().onSuccess(uiConfig -> {
             final SplashConfig splashConfig = uiConfig.getSplash();
@@ -100,9 +82,7 @@ public class SplashPresenter extends MyPresenterWidget<SplashPresenter.SplashVie
                             AlertEvent.fireWarn(SplashPresenter.this,
                                     "You must accept the terms to use this system",
                                     null,
-                                    () -> {
-                                        hide(autoClose, ok);
-                                    });
+                                    () -> hide(autoClose, ok));
                         }
                     }
 
@@ -117,7 +97,7 @@ public class SplashPresenter extends MyPresenterWidget<SplashPresenter.SplashVie
 
 //                Scheduler.get().scheduleFixedDelay(this::testScroll, 2000);
 
-                final PopupSize popupSize = new PopupSize(800, 600, true);
+                final PopupSize popupSize = PopupSize.resizable(800, 600);
                 ShowPopupEvent.fire(SplashPresenter.this,
                         SplashPresenter.this,
                         PopupType.ACCEPT_REJECT_DIALOG,
@@ -144,7 +124,5 @@ public class SplashPresenter extends MyPresenterWidget<SplashPresenter.SplashVie
     public interface SplashView extends View {
 
         void setHtml(String html);
-
-        MaxScrollPanel getScrollPanel();
     }
 }

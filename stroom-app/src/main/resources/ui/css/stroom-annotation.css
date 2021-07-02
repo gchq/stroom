@@ -19,9 +19,9 @@
     flex-flow: column;
     width: 100%;
     height: 100%;
-    background-color: var(--input-background-color);
-    border: 1px solid var(--input-border-color);
     padding: 10px;
+    min-width: 700;
+    min-height: 550;
 }
 
 .annotationTop {
@@ -117,7 +117,6 @@
 .annotationClickLabel {
     flex-grow: 0;
     font-weight: 500;
-    width: 90px;
     padding-right: 5px;
     opacity: 0.9;
     transition: opacity 0.5s linear;
@@ -229,11 +228,12 @@
 
 .annotationHistoryCommentHeader {
     width: 100%;
-    padding :5px;
+    padding: 5px;
     white-space: pre-wrap;
     word-break: break-word;
     border-bottom: 1px solid var(--border-color);
-    background-color: #eee;
+    background-color: var(--dialog-titlebar-background-color);
+    color: var(--dialog-titlebar-text-color);
 }
 
 .annotationHistoryCommentBody {
@@ -241,6 +241,7 @@
     padding: 5px;
     white-space: pre-wrap;
     word-break: break-word;
+    background-color: var(--input-background-color);
 }
 
 .annotationHistoryItem {

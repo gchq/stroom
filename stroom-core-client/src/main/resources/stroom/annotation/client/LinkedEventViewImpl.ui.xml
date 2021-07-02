@@ -2,7 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client">
-    <g:FlowPanel styleName="dock-container-vertical">
+    <g:FlowPanel styleName="max default-min-sizes dock-container-vertical">
         <b:ButtonPanel ui:field="buttonPanel" addStyleNames="dock-min"/>
         <g:FlowPanel styleName="dock-max dock-container-horizontal">
             <g:SimplePanel ui:field="eventList"

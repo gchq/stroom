@@ -163,7 +163,7 @@ public class SelectUserPresenter extends MyPresenterWidget<UserListView> impleme
         final FindUserNameCriteria findUserCriteria = new FindUserNameCriteria();
         setup(findUserCriteria);
 
-        final PopupSize popupSize = new PopupSize(400, 400, 400, 400, true);
+        final PopupSize popupSize = PopupSize.resizable(400, 400);
         final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
             @Override
             public void onHideRequest(boolean autoClose, boolean ok) {

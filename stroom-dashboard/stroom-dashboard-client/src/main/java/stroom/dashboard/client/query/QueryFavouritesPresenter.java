@@ -147,7 +147,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
 
                 namePresenter.setName("");
                 namePresenter.setUihandlers(popupUiHandlers);
-                final PopupSize popupSize = new PopupSize(350, 130, 300, 130, 1024, 130, true);
+                final PopupSize popupSize = PopupSize.resizableX();
                 ShowPopupEvent.fire(QueryFavouritesPresenter.this, namePresenter, PopupType.OK_CANCEL_DIALOG,
                         popupSize, "Create New Favourite", popupUiHandlers);
                 namePresenter.getView().focus();
@@ -246,7 +246,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
                             }
                         };
 
-                        final PopupSize popupSize = new PopupSize(500, 400, true);
+                        final PopupSize popupSize = PopupSize.resizable(500, 400);
                         ShowPopupEvent.fire(queryPresenter, QueryFavouritesPresenter.this, PopupType.OK_CANCEL_DIALOG,
                                 popupSize, "Query Favourites", popupUiHandlers);
                     }

@@ -23,7 +23,9 @@ import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.explorer.client.presenter.EntityCheckTreePresenter;
+import stroom.explorer.client.presenter.TypeFilterPresenter;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.client.event.ExportConfigEvent;
 import stroom.importexport.shared.ContentResource;
@@ -35,13 +37,17 @@ import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
+import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenter;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
@@ -53,13 +59,15 @@ import java.util.Set;
 
 public class ExportConfigPresenter
         extends MyPresenter<ExportConfigPresenter.ExportConfigView, ExportConfigPresenter.ExportProxy>
-        implements ExportConfigEvent.Handler {
+        implements ExportConfigUiHandlers, ExportConfigEvent.Handler {
 
     private static final ContentResource CONTENT_RESOURCE = GWT.create(ContentResource.class);
 
     private final LocationManager locationManager;
     private final EntityCheckTreePresenter treePresenter;
+    private final TypeFilterPresenter typeFilterPresenter;
     private final RestFactory restFactory;
+    private final DocumentTypeCache documentTypeCache;
 
     @Inject
     public ExportConfigPresenter(final EventBus eventBus,
@@ -67,22 +75,44 @@ public class ExportConfigPresenter
                                  final ExportProxy proxy,
                                  final LocationManager locationManager,
                                  final EntityCheckTreePresenter treePresenter,
-                                 final RestFactory restFactory) {
+                                 final TypeFilterPresenter typeFilterPresenter,
+                                 final RestFactory restFactory,
+                                 final DocumentTypeCache documentTypeCache) {
         super(eventBus, view, proxy);
         this.locationManager = locationManager;
         this.treePresenter = treePresenter;
+        this.typeFilterPresenter = typeFilterPresenter;
         this.restFactory = restFactory;
+        this.documentTypeCache = documentTypeCache;
         view.setTreeView(treePresenter.getView());
+        view.setUiHandlers(this);
+    }
+
+    @Override
+    protected void onBind() {
+        registerHandler(typeFilterPresenter.addDataSelectionHandler(event -> treePresenter.setIncludedTypeSet(
+                typeFilterPresenter.getIncludedTypes())));
     }
 
     @ProxyEvent
     @Override
     public void onExport(final ExportConfigEvent event) {
+        if (event.getSelection() != null) {
+            for (final ExplorerNode node : event.getSelection()) {
+                treePresenter.getTreeModel().setEnsureVisible(new HashSet<>(event.getSelection()));
+                treePresenter.getSelectionModel().setSelected(node, true);
+            }
+        }
+
         forceReveal();
     }
 
     @Override
     protected void revealInParent() {
+        documentTypeCache.clear();
+        // Set the data for the type filter.
+        documentTypeCache.fetch(typeFilterPresenter::setDocumentTypes);
+
         treePresenter.setRequiredPermissions(DocumentPermissionNames.READ);
         treePresenter.refresh();
 
@@ -97,7 +127,7 @@ public class ExportConfigPresenter
             }
         };
 
-        final PopupSize popupSize = new PopupSize(350, 400, 350, 350, 2000, 2000, true);
+        final PopupSize popupSize = PopupSize.resizable(500, 600);
         ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, "Export", popupUiHandlers);
     }
 
@@ -127,7 +157,27 @@ public class ExportConfigPresenter
         }
     }
 
-    public interface ExportConfigView extends View {
+    @Override
+    public void changeQuickFilter(final String name) {
+        treePresenter.changeNameFilter(name);
+    }
+
+    @Override
+    public void showTypeFilter(final MouseDownEvent event) {
+        final Element target = event.getNativeEvent().getEventTarget().cast();
+
+        final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft() - 1,
+                target.getAbsoluteTop() + target.getClientHeight() + 2);
+        ShowPopupEvent.fire(
+                this,
+                typeFilterPresenter,
+                PopupType.POPUP,
+                popupPosition,
+                null,
+                target);
+    }
+
+    public interface ExportConfigView extends View, HasUiHandlers<ExportConfigUiHandlers> {
 
         void setTreeView(View view);
     }

@@ -71,12 +71,10 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
 
-    private static final SafeHtml ADDED = SafeHtmlUtils.fromSafeConstant("<div style=\"font-weight:500\">");
-    private static final SafeHtml REMOVED = SafeHtmlUtils
-            .fromSafeConstant("<div style=\"font-weight:500;text-decoration:line-through\">");
-    private static final SafeHtml INHERITED = SafeHtmlUtils.fromSafeConstant("<div style=\"color:black\">");
-    private static final SafeHtml DEFAULT = SafeHtmlUtils.fromSafeConstant("<div style=\"color:grey\">");
-    private static final SafeHtml END = SafeHtmlUtils.fromSafeConstant("</div>");
+    private static final String ADDED = "pipelineStructureViewImpl-property-added";
+    private static final String REMOVED = "pipelineStructureViewImpl-property-removed";
+    private static final String INHERITED = "pipelineStructureViewImpl-property-inherited";
+    private static final String DEFAULT = "pipelineStructureViewImpl-property-default";
     private final ButtonView editButton;
     private final Provider<NewPropertyPresenter> newPropertyPresenter;
     private final RestFactory restFactory;
@@ -262,26 +260,28 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
             return SafeHtmlUtils.EMPTY_SAFE_HTML;
         }
 
-        final SafeHtmlBuilder builder = new SafeHtmlBuilder();
+        String className = null;
         if (pipelineModel.getPipelineData().getAddedProperties().contains(property)) {
-            builder.append(ADDED);
+            className = ADDED;
         } else if (pipelineModel.getPipelineData().getRemovedProperties().contains(property)) {
             if (showRemovedAsDefault) {
-                builder.append(DEFAULT);
+                className = DEFAULT;
             } else {
-                builder.append(REMOVED);
+                className = REMOVED;
             }
         } else {
             final PipelineProperty inheritedProperty = getInheritedProperty(property);
             if (inheritedProperty != null) {
-                builder.append(INHERITED);
+                className = INHERITED;
             } else {
-                builder.append(DEFAULT);
+                className = DEFAULT;
             }
         }
 
+        final SafeHtmlBuilder builder = new SafeHtmlBuilder();
+        builder.append(SafeHtmlUtils.fromTrustedString("<div class=\"" + className + "\">"));
         builder.appendEscaped(string);
-        builder.append(END);
+        builder.append(SafeHtmlUtils.fromTrustedString("</div>"));
 
         return builder.toSafeHtml();
     }
@@ -399,7 +399,7 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
                 }
             };
 
-            final PopupSize popupSize = new PopupSize(400, 200, 300, 200, 2000, 200, true);
+            final PopupSize popupSize = PopupSize.resizableX();
             ShowPopupEvent.fire(this, editor, PopupType.OK_CANCEL_DIALOG, popupSize, "Edit Property", popupUiHandlers);
         }
     }

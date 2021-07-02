@@ -19,6 +19,7 @@ package stroom.widget.popup.client.view;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.Size;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -30,8 +31,6 @@ import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseMoveHandler;
 import com.google.gwt.event.dom.client.MouseUpEvent;
 import com.google.gwt.event.dom.client.MouseUpHandler;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.DOM;
@@ -115,7 +114,8 @@ public class ResizableDialog extends AbstractPopupPanel {
         addDomHandler(mouseHandler, MouseUpEvent.getType());
         addDomHandler(mouseHandler, MouseMoveEvent.getType());
 
-        setResizeEnabled(popupSize.isResizable());
+        setResizeEnabled((popupSize != null && popupSize.getWidth() != null && popupSize.getWidth().isResizable()) ||
+                (popupSize != null && popupSize.getHeight() != null && popupSize.getHeight().isResizable()));
     }
 
     @Override
@@ -239,31 +239,37 @@ public class ResizableDialog extends AbstractPopupPanel {
                 setPopupPosition(left, top);
 
             } else {
-                int width = x + dragStartX;
-                int height = y + dragStartY;
-
-                // Constrain width.
-                if (popupSize.getMinWidth() != null && width < popupSize.getMinWidth()) {
-                    width = popupSize.getMinWidth();
-                } else if (popupSize.getMaxWidth() != null && width > popupSize.getMaxWidth()) {
-                    width = popupSize.getMaxWidth();
-                }
-
-                // Constrain height.
-                if (popupSize.getMinHeight() != null && height < popupSize.getMinHeight()) {
-                    height = popupSize.getMinHeight();
-                } else if (popupSize.getMaxHeight() != null && height > popupSize.getMaxHeight()) {
-                    height = popupSize.getMaxHeight();
-                }
-
-                // Add window based size constraint.
-                width = Math.min(windowWidth, width);
-                height = Math.min(windowHeight, height);
-
                 final Widget widget = getWidget();
                 final Element elem = widget.getElement();
-                elem.getStyle().setPropertyPx("width", width);
-                elem.getStyle().setPropertyPx("height", height);
+                final Size widthSize = popupSize.getWidth();
+                final Size heightSize = popupSize.getHeight();
+
+                if (widthSize != null && widthSize.isResizable()) {
+                    int width = x + dragStartX;
+                    // Constrain width.
+                    if (widthSize.getMin() != null && width < widthSize.getMin()) {
+                        width = widthSize.getMin();
+                    } else if (widthSize.getMax() != null && width > widthSize.getMax()) {
+                        width = widthSize.getMax();
+                    }
+                    // Add window based size constraint.
+                    width = Math.min(windowWidth, width);
+
+                    elem.getStyle().setPropertyPx("width", width);
+                }
+                if (heightSize != null && heightSize.isResizable()) {
+                    int height = y + dragStartY;
+                    // Constrain height.
+                    if (heightSize.getMin() != null && height < heightSize.getMin()) {
+                        height = heightSize.getMin();
+                    } else if (heightSize.getMax() != null && height > heightSize.getMax()) {
+                        height = heightSize.getMax();
+                    }
+                    // Add window based size constraint.
+                    height = Math.min(windowHeight, height);
+
+                    elem.getStyle().setPropertyPx("height", height);
+                }
 
                 if (widget instanceof RequiresResize) {
                     final RequiresResize requiresResize = (RequiresResize) widget;

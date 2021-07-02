@@ -3,7 +3,7 @@
   xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:i="urn:import:stroom.item.client"
   xmlns:v="urn:import:stroom.widget.tickbox.client.view"
   xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client">
-  <g:FlowPanel styleName="w-100">
+  <g:FlowPanel styleName="max default-min-sizes">
     <g:Grid ui:field="grid" styleName="stroom-control-grid w-100">
       <g:row>
         <g:customCell>

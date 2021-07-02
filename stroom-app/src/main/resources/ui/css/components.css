@@ -169,6 +169,9 @@
 }
 
 .curveTabBar {
+    position: relative;
+    width: 100%;
+    height: 100%;
 }
 
 .curveTab {
@@ -238,7 +241,6 @@
     height: 18px;
     -moz-user-select: none;
     margin: 0 5px 0 5px;
-    background-size: 100%;
 }
 
 .curveTab .curveTab-face {
@@ -511,7 +513,7 @@
 }
 
 .linkTab-selected .linkTab-label {
-	font-weight: 500;
+	font-weight: 600;
 }
 
 .linkTab .linkTab-hotspot {
@@ -713,6 +715,26 @@
     text-decoration: underline;
 }
 
+.pipelineStructureViewImpl-property-added {
+    font-weight: 600;
+}
+
+.pipelineStructureViewImpl-property-removed {
+    font-weight: 600;
+    text-decoration: line-through;
+}
+
+.pipelineStructureViewImpl-property-inherited {
+}
+
+.pipelineStructureViewImpl-property-default {
+    opacity: 0.5;
+}
+
+
+
+
+
 .sourceViewImpl-buttonPanel {
     float: right;
     padding-right: 0.25em;
@@ -751,7 +773,6 @@
 
 .pager-paging {
     position: relative;
-    width: 250px;
     text-align: right;
     display: flex;
     flex-direction: row;
@@ -815,31 +836,6 @@
 .ruleViewImpl-optional {
     display: inline-block;
     margin-left: 5px;
-}
-
-.spinnerWhite-color {
-     border-color: white;
-}
-
-.spinnerWhite-size {
-      width: 32px;
-      height: 32px;
-}
-
-.spinnerWhite-circle {
-}
-
-.smallSpinner-color {
-    border-color: rgb(2,121,223);
-}
-
-.smallSpinner-size {
-    width: 16px;
-    height: 16px;
-}
-
-.smallSpinner-circle {
-    border-width: 2px;
 }
 
 .linkEventViewImpl-data {
@@ -922,6 +918,9 @@
     min-width: 100%;
 }
 
+.dataRetentionRuleViewImpl {
+}
+
 .dataRetentionRuleViewImpl-bottom {
     padding-top: 5px;
 }
@@ -996,7 +995,6 @@
 }
 
 .resizableAcceptRejectContent-reject {
-    margin-left: 5px;
     background-color: #d50000;
     border-color: #b71c1c;
 }
@@ -1069,7 +1067,7 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    background-color: var(--page-background-color);
+    background-color: var(--main-background-color);
 }
 
 .aboutViewImpl-buildInfo {
@@ -1182,7 +1180,6 @@
 }
 
 .acceptRejectContent-reject {
-    margin-left: 5px;
     background-color: red;
 }
 
@@ -1244,27 +1241,6 @@
 }
 
 .okCancelContent-cancel {
-    margin-left: 5px;
-}
-
-.filterViewImpl-row {
-    position: relative;
-    width: 100%;
-    height: 50%;
-}
-
-.filterViewImpl-container {
-    position: absolute;
-    left: 0px;
-    right: 0px;
-    top: 16px;
-    bottom: 0px;
-}
-
-.filterViewImpl-label {
-    width: 100%;
-    white-space: nowrap;
-    padding-top: 2px;
 }
 
 .editExpressionViewImpl-expressionTree {
@@ -1323,7 +1299,6 @@
 }
 
 .resizableOkCancelContent-cancel {
-    margin-left: 5px;
 }
 
 .userListViewImpl-nameFilter {
@@ -1452,25 +1427,6 @@
     position: relative;
 }
 
-.steppingViewImpl-left {
-    position: relative;
-    width: 0px;
-}
-
-.steppingViewImpl-right {
-    position: relative;
-    width: 100%;
-}
-
-.steppingViewImpl-leftInner {
-    padding-right: 10px;
-}
-
-.steppingViewImpl-rightInner {
-    position: absolute;
-    right: 0px;
-}
-
 .importConfigViewImpl-label {
     float: left;
     width: 100px;
@@ -1479,6 +1435,8 @@
 
 .dropDownTreeViewImpl-nameFilter {
     width: 100%;
+    border: none;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .welcomeViewImpl-body {
@@ -1496,7 +1454,7 @@
     border-bottom: none !important;
 }
 
-.splashViewImpl-scroll {
+.splashViewImpl-content {
     padding: 5px;
 }
 
@@ -1507,10 +1465,6 @@
 
 .explorerTreeViewImpl-nameFilter {
     border: none !important;
-}
-
-.stepControlViewImpl-layout {
-    display: inline-block;
 }
 
 .chooserViewImpl-container {
@@ -1542,12 +1496,22 @@
     padding: 6px 8px;
 }
 
+.steppingFilterViewImpl {
+    min-width: 400px;
+    min-height: 400px;
+}
+
+.stepLocationViewImpl-left {
+}
+
+.stepLocationViewImpl-right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
 .stepLocationViewImpl-layout {
-    display: inline-block;
-    white-space: nowrap;
-    position: absolute;
-    right: 100px;
-    top: 2px;
     white-space: nowrap;
 }
 
@@ -1585,6 +1549,14 @@
     margin-top: 2px;
 }
 
+.exportConfigViewImpl-filter {
+    border-bottom: none !important;
+}
+
+.exportConfigViewImpl-nameFilter {
+    border: none !important;
+}
+
 .infoMenuItem {
     cursor:default;
     color:#212121;
@@ -1604,3 +1576,31 @@
     width: 250px;
     margin-right: 5px;
 }
+
+.default-min-sizes {
+    min-width: 200px;
+    min-height: 200px;
+}
+
+.large-min-sizes {
+    min-width: 400px;
+    min-height: 400px;
+}
+
+/*
+.treePanel-panel {
+    position: relative;
+}
+
+.treePanel-boxPanel {
+    position: relative;
+    top: 0;
+    left: 0;
+}
+
+.treePanel-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+*/

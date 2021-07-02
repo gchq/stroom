@@ -136,13 +136,7 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
     private void show(final List<EventId> data) {
         setData(data);
 
-        final PopupSize popupSize = new PopupSize(
-                800,
-                600,
-                800,
-                600,
-                true);
-
+        final PopupSize popupSize = PopupSize.resizable(800, 600);
         ShowPopupEvent.fire(
                 this,
                 this,

@@ -1,28 +1,30 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:v="urn:import:stroom.widget.button.client">
-    <g:FlowPanel styleName="dock-container-vertical">
-        <g:Grid styleName="dock-min stroom-control-grid w-100">
-            <g:row>
-                <g:cell>Jump to where message severity >=</g:cell>
-                <g:customCell>
-                    <g:ListBox ui:field="skipToErrors"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Jump to where output is:</g:cell>
-                <g:customCell>
-                    <g:ListBox ui:field="skipToOutput"/>
-                </g:customCell>
-            </g:row>
-        </g:Grid>
-        <g:FlowPanel styleName="dock-max dock-container-horizontal">
-            <g:FlowPanel styleName="dock-min button-container">
-                <v:SvgButton ui:field="addXPath"/>
-                <v:SvgButton ui:field="editXPath"/>
-                <v:SvgButton ui:field="removeXPath"/>
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+    <g:MySplitLayoutPanel styleName="steppingFilterViewImpl  max">
+        <g:west size="220">
+            <g:MaxScrollPanel styleName="max stroom-content stroom-border">
+                <g:SimplePanel ui:field="elementChooser" />
+            </g:MaxScrollPanel>
+        </g:west>
+        <g:center>
+            <g:FlowPanel styleName="max dock-container-vertical">
+                <g:Grid styleName="dock-min stroom-control-grid w-100">
+                    <g:row>
+                        <g:cell>Jump to where message severity >=</g:cell>
+                        <g:customCell>
+                            <g:ListBox ui:field="skipToErrors"/>
+                        </g:customCell>
+                    </g:row>
+                    <g:row>
+                        <g:cell>Jump to where output is:</g:cell>
+                        <g:customCell>
+                            <g:ListBox ui:field="skipToOutput"/>
+                        </g:customCell>
+                    </g:row>
+                </g:Grid>
+                <g:SimplePanel ui:field="xPathList" addStyleNames="dock-max stroom-border"/>
             </g:FlowPanel>
-            <g:SimplePanel ui:field="xPathList" addStyleNames="dock-max stroom-border"/>
-        </g:FlowPanel>
-    </g:FlowPanel>
+        </g:center>
+    </g:MySplitLayoutPanel>
 </ui:UiBinder> 

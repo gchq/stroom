@@ -120,13 +120,6 @@ public class PipelineStepRequest {
         this.stepType = stepType;
     }
 
-    public SteppingFilterSettings getStepFilter(final String elementId) {
-        if (stepFilterMap == null) {
-            stepFilterMap = new HashMap<>();
-        }
-        return stepFilterMap.computeIfAbsent(elementId, k -> new SteppingFilterSettings());
-    }
-
     public Map<String, SteppingFilterSettings> getStepFilterMap() {
         return stepFilterMap;
     }

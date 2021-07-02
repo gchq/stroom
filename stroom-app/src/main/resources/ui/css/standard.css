@@ -221,6 +221,7 @@ a, a:visited, a:hover {
 }
 
 .gwt-Label {
+  white-space: nowrap;
 }
 
 .gwt-ListBox {

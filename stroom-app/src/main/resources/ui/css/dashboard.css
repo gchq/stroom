@@ -108,7 +108,7 @@
     display: flex;
     flex-direction: column;
 	border-radius: 2px;
-	background-color: var(--page-background-color);
+	background-color: var(--main-background-color);
 }
 
 .tabLayout .tabLayout-barOuter {
@@ -140,7 +140,6 @@
 .tabLayout .tabLayout-settingsButton {
 	color: #ddd;
     background-image: url("../images/settings-grey.svg");
-    background-size: 100%;
     width: 16px;
     height: 16px;
 }
@@ -156,7 +155,6 @@
 .tabLayout .tabLayout-closeButton {
 	color: #ddd;
 	background-image: url("../images/close-grey.svg");
-	background-size: 100%;
 	width: 16px;
 	height: 16px;
 }

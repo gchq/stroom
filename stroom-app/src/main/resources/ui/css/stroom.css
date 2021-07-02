@@ -44,6 +44,7 @@ html,body,div,span,table,tbody,tr,th,td,table th,table td,b,p,h1,h2,h3,h4,select
 	-moz-box-sizing: border-box;
 	-ms-box-sizing: border-box;
 	box-sizing: border-box;
+	background-size: 100% 100%;
 	outline: none;
 }
 
@@ -208,7 +209,6 @@ td {
 
 .stroom-pipeline-stepping-button-icon {
     background-image: url("../images/stepping.svg");
-    background-size: 100%;
     width: 46px;
     height: 46px;
     margin-left: 2px;
@@ -617,7 +617,7 @@ input[type="file"]:disabled {
 }
 
 .stroom-content {
-	background-color: var(--page-background-color);
+	background-color: var(--main-background-color);
 }
 
 .gwt-ListBox {
@@ -698,8 +698,7 @@ input[type="file"]:disabled {
 }
 
 .itemCheckList {
-	background-color: var(--input-background-color);
-	_background-color: var(--input-background-color);
+	background-color: var(--main-background-color);
 	border: 1px solid var(--input-border-color);
 }
 
@@ -732,13 +731,12 @@ input[type="file"]:disabled {
 
 .activityOuter {
     background-color: var(--input-background-color);
-    width: 100%;
-    height: 100%;
     padding: 10px;
 }
 
 .activityContainer {
     background-color: var(--input-background-color);
+    color: var(--input-text-color);
     border: 1px solid var(--input-border-color);
     border-radius: 5px;
     padding: 5px;
@@ -807,18 +805,15 @@ input[type="file"]:disabled {
 
 .dock-min {
     flex-grow: 0;
+    flex-shrink: 0;
+    position: relative;
 }
 
 .dock-max {
     flex-grow: 1;
-}
-
-.overflow-auto {
-    overflow: auto;
-}
-
-.overflow-hidden {
+    flex-shrink: 1;
     overflow: hidden;
+    position: relative;
 }
 
 .input-row {

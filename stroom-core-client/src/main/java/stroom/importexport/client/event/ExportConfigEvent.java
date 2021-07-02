@@ -16,20 +16,26 @@
 
 package stroom.importexport.client.event;
 
+import stroom.explorer.shared.ExplorerNode;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
+
+import java.util.List;
 
 public class ExportConfigEvent extends GwtEvent<ExportConfigEvent.Handler> {
 
     private static Type<Handler> TYPE;
 
-    private ExportConfigEvent() {
-        // Private constructor.
+    private final List<ExplorerNode> selection;
+
+    private ExportConfigEvent(final List<ExplorerNode> selection) {
+        this.selection = selection;
     }
 
-    public static void fire(final HasHandlers source) {
-        source.fireEvent(new ExportConfigEvent());
+    public static void fire(final HasHandlers source, final List<ExplorerNode> selection) {
+        source.fireEvent(new ExportConfigEvent(selection));
     }
 
     public static Type<Handler> getType() {
@@ -47,6 +53,10 @@ public class ExportConfigEvent extends GwtEvent<ExportConfigEvent.Handler> {
     @Override
     protected void dispatch(final Handler handler) {
         handler.onExport(this);
+    }
+
+    public List<ExplorerNode> getSelection() {
+        return selection;
     }
 
     public interface Handler extends EventHandler {

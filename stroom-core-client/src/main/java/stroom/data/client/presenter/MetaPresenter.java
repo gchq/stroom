@@ -233,8 +233,8 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
                 }
             };
 
-            final PopupSize popupSize = new PopupSize(
-                    800, 600, 400, 400, true);
+            presenter.getWidget().getElement().addClassName("default-min-sizes");
+            final PopupSize popupSize = PopupSize.resizable(800, 600);
             ShowPopupEvent.fire(
                     MetaPresenter.this,
                     presenter,

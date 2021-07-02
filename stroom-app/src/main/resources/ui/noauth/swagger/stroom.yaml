@@ -11073,6 +11073,8 @@ components:
           type: string
           description: A date time formatting pattern string conforming to the specification
             of java.time.format.DateTimeFormatter
+        density:
+          type: string
         editorTheme:
           type: string
         font:

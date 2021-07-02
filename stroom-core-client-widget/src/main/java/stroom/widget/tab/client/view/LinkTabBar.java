@@ -33,10 +33,18 @@ public class LinkTabBar extends AbstractTabBar {
         element.appendChild(text);
 
         setElement(element);
+    }
 
-        ResizeObserver.observe(element, (e) -> {
-            onResize();
-        });
+    @Override
+    protected void onAttach() {
+        super.onAttach();
+        GlobalResizeObserver.addListener(getElement(), (e) -> onResize());
+    }
+
+    @Override
+    protected void onDetach() {
+        GlobalResizeObserver.removeListener(getElement());
+        super.onDetach();
     }
 
     @Override

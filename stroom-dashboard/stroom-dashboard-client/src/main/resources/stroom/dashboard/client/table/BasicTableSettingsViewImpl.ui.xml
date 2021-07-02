@@ -2,49 +2,50 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:i="urn:import:stroom.item.client"
              xmlns:v="urn:import:stroom.widget.tickbox.client.view">
-
-  <g:Grid styleName="stroom-control-grid w-100">
-    <g:row>
-      <g:cell>Id:</g:cell>
-      <g:customCell>
-        <g:Label ui:field="id" addStyleNames="stroom-control-label" />
-      </g:customCell>
-    </g:row>
-    <g:row>
-      <g:cell>Name:</g:cell>
-      <g:customCell>
-        <g:TextBox ui:field="name" addStyleNames="w-100" />
-      </g:customCell>
-    </g:row>
-    <g:row>
-      <g:cell>Query:</g:cell>
-      <g:customCell>
-        <i:ItemListBox ui:field="query" addStyleNames="w-100"/>
-      </g:customCell>
-    </g:row>
-    <g:row>
-      <g:cell>Extract Values:</g:cell>
-      <g:customCell>
-        <v:TickBox ui:field="extractValues" />
-      </g:customCell>
-    </g:row>
-    <g:row>
-      <g:cell>Extraction Pipeline:</g:cell>
-      <g:customCell>
-        <g:SimplePanel ui:field="pipeline" addStyleNames="w-100" />
-      </g:customCell>
-    </g:row>
-    <g:row>
-      <g:cell>Maximum Results:</g:cell>
-      <g:customCell>
-        <g:TextBox ui:field="maxResults" addStyleNames="w-100" />
-      </g:customCell>
-    </g:row>
-    <g:row>
-      <g:cell>Show Group Detail:</g:cell>
-      <g:customCell>
-        <v:TickBox ui:field="showDetail" />
-      </g:customCell>
-    </g:row>
-  </g:Grid>
+    <g:SimplePanel styleName="max default-min-sizes">
+        <g:Grid styleName="stroom-control-grid w-100">
+            <g:row>
+                <g:cell>Id:</g:cell>
+                <g:customCell>
+                    <g:Label ui:field="id" addStyleNames="stroom-control-label"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Name:</g:cell>
+                <g:customCell>
+                    <g:TextBox ui:field="name" addStyleNames="w-100"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Query:</g:cell>
+                <g:customCell>
+                    <i:ItemListBox ui:field="query" addStyleNames="w-100"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Extract Values:</g:cell>
+                <g:customCell>
+                    <v:TickBox ui:field="extractValues"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Extraction Pipeline:</g:cell>
+                <g:customCell>
+                    <g:SimplePanel ui:field="pipeline" addStyleNames="w-100"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Maximum Results:</g:cell>
+                <g:customCell>
+                    <g:TextBox ui:field="maxResults" addStyleNames="w-100"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Show Group Detail:</g:cell>
+                <g:customCell>
+                    <v:TickBox ui:field="showDetail"/>
+                </g:customCell>
+            </g:row>
+        </g:Grid>
+    </g:SimplePanel>
 </ui:UiBinder> 

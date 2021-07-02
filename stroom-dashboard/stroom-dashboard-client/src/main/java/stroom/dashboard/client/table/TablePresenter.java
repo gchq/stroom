@@ -88,7 +88,6 @@ import stroom.widget.menu.client.presenter.MenuListPresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
@@ -474,8 +473,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     }
                 };
 
-                final PopupSize popupSize = new PopupSize(340, 180, false);
-                ShowPopupEvent.fire(this, downloadPresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Download Options",
+                ShowPopupEvent.fire(this, downloadPresenter, PopupType.OK_CANCEL_DIALOG, "Download Options",
                         popupUiHandlers);
             }
         }

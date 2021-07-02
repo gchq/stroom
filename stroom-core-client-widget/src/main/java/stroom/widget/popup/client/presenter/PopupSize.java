@@ -18,66 +18,70 @@ package stroom.widget.popup.client.presenter;
 
 public class PopupSize {
 
-    private static final int DEFAULT_MIN_WIDTH = 235;
-    private static final int DEFAULT_MIN_HEIGHT = 160;
+    private final Size width;
+    private final Size height;
 
-    private final int width;
-    private final int height;
-    private final Integer minWidth;
-    private final Integer minHeight;
-    private final Integer maxWidth;
-    private final Integer maxHeight;
-    private final boolean resizable;
-
-    public PopupSize(final int width, final int height) {
-        this(width, height, DEFAULT_MIN_WIDTH, DEFAULT_MIN_HEIGHT, false);
-    }
-
-    public PopupSize(final int width, final int height, final boolean resizable) {
-        this(width, height, DEFAULT_MIN_WIDTH, DEFAULT_MIN_HEIGHT, resizable);
-    }
-
-    public PopupSize(final int width, final int height, final Integer minWidth, final Integer minHeight,
-                     final boolean resizable) {
-        this(width, height, minWidth, minHeight, null, null, resizable);
-    }
-
-    public PopupSize(final int width, final int height, final Integer minWidth, final Integer minHeight,
-                     final Integer maxWidth, final Integer maxHeight, final boolean resizable) {
+    private PopupSize(final Size width, final Size height) {
         this.width = width;
         this.height = height;
-        this.minWidth = minWidth;
-        this.minHeight = minHeight;
-        this.maxWidth = maxWidth;
-        this.maxHeight = maxHeight;
-        this.resizable = resizable;
     }
 
-    public int getWidth() {
+    public Size getWidth() {
         return width;
     }
 
-    public int getHeight() {
+    public Size getHeight() {
         return height;
     }
 
-    public Integer getMinWidth() {
-        return minWidth;
+    public static PopupSize resizable(int initialWidth,
+                                      int initialHeight) {
+        return PopupSize.builder()
+                .width(Size.builder().initial(initialWidth).resizable(true).build())
+                .height(Size.builder().initial(initialHeight).resizable(true).build())
+                .build();
     }
 
-    public Integer getMinHeight() {
-        return minHeight;
+    public static PopupSize resizable() {
+        return PopupSize.builder()
+                .width(Size.builder().resizable(true).build())
+                .height(Size.builder().resizable(true).build())
+                .build();
     }
 
-    public Integer getMaxWidth() {
-        return maxWidth;
+    public static PopupSize resizableX() {
+        return PopupSize.builder()
+                .width(Size.builder().resizable(true).build())
+                .build();
     }
 
-    public Integer getMaxHeight() {
-        return maxHeight;
+    public static PopupSize resizableY() {
+        return PopupSize.builder()
+                .height(Size.builder().resizable(true).build())
+                .build();
     }
 
-    public boolean isResizable() {
-        return resizable;
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder {
+
+        private Size width;
+        private Size height;
+
+        public Builder width(final Size width) {
+            this.width = width;
+            return this;
+        }
+
+        public Builder height(final Size height) {
+            this.height = height;
+            return this;
+        }
+
+        public PopupSize build() {
+            return new PopupSize(width, height);
+        }
     }
 }

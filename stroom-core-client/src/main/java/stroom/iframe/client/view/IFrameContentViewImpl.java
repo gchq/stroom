@@ -18,7 +18,7 @@ package stroom.iframe.client.view;
 
 import stroom.iframe.client.presenter.IFrameContentPresenter.IFrameContentView;
 import stroom.iframe.client.presenter.IFrameLoadUiHandlers;
-import stroom.widget.tab.client.view.ResizeObserver;
+import stroom.widget.tab.client.view.GlobalResizeObserver;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
@@ -63,10 +63,12 @@ public class IFrameContentViewImpl extends ViewWithUiHandlers<IFrameLoadUiHandle
                 super.onAttach();
                 frame.setVisible(true);
                 resize();
+                GlobalResizeObserver.addListener(widget.getElement(), element -> resize());
             }
 
             @Override
             protected void onDetach() {
+                GlobalResizeObserver.removeListener(widget.getElement());
                 super.onDetach();
                 frame.setVisible(false);
             }
@@ -75,7 +77,6 @@ public class IFrameContentViewImpl extends ViewWithUiHandlers<IFrameLoadUiHandle
         widget.getElement().getStyle().setWidth(100, Unit.PCT);
         widget.getElement().getStyle().setHeight(100, Unit.PCT);
         widget.getElement().getStyle().setBorderWidth(0, Unit.PX);
-        ResizeObserver.observe(widget.getElement(), element -> resize());
 
         final RepeatingCommand updateTitleCommand = () -> {
             final IFrameElement iFrameElement = frame.getElement().cast();

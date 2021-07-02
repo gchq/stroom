@@ -118,7 +118,7 @@ public class SolrIndexFieldEditPresenter extends MyPresenterWidget<SolrIndexFiel
     }
 
     public void show(final String caption, final PopupUiHandlers uiHandlers) {
-        final PopupSize popupSize = new PopupSize(400, 500, 400, 500, 800, 500, true);
+        final PopupSize popupSize = PopupSize.resizableX();
         ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, caption, uiHandlers);
     }
 

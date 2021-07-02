@@ -2,42 +2,44 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:v="urn:import:stroom.widget.tickbox.client.view">
-    <g:Grid styleName="stroom-control-grid w-100">
-        <g:row>
-            <g:cell>Id:</g:cell>
-            <g:customCell>
-                <g:Label ui:field="id" addStyleNames="stroom-control-label"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Name:</g:cell>
-            <g:customCell>
-                <g:TextBox ui:field="name" addStyleNames="w-100"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Data Source:</g:cell>
-            <g:customCell>
-                <g:SimplePanel ui:field="dataSource" addStyleNames="w-100"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Query On Open:</g:cell>
-            <g:customCell>
-                <v:TickBox ui:field="queryOnOpen" addStyleNames="w-100"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Auto Refresh:</g:cell>
-            <g:customCell>
-                <v:TickBox ui:field="autoRefresh" addStyleNames="w-100"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Refresh Interval:</g:cell>
-            <g:customCell>
-                <g:TextBox ui:field="refreshInterval" addStyleNames="w-100"/>
-            </g:customCell>
-        </g:row>
-    </g:Grid>
+    <g:SimplePanel styleName="max default-min-sizes">
+        <g:Grid styleName="stroom-control-grid w-100">
+            <g:row>
+                <g:cell>Id:</g:cell>
+                <g:customCell>
+                    <g:Label ui:field="id" addStyleNames="stroom-control-label"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Name:</g:cell>
+                <g:customCell>
+                    <g:TextBox ui:field="name" addStyleNames="w-100"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Data Source:</g:cell>
+                <g:customCell>
+                    <g:SimplePanel ui:field="dataSource" addStyleNames="w-100"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Query On Open:</g:cell>
+                <g:customCell>
+                    <v:TickBox ui:field="queryOnOpen" addStyleNames="w-100"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Auto Refresh:</g:cell>
+                <g:customCell>
+                    <v:TickBox ui:field="autoRefresh" addStyleNames="w-100"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Refresh Interval:</g:cell>
+                <g:customCell>
+                    <g:TextBox ui:field="refreshInterval" addStyleNames="w-100"/>
+                </g:customCell>
+            </g:row>
+        </g:Grid>
+    </g:SimplePanel>
 </ui:UiBinder> 

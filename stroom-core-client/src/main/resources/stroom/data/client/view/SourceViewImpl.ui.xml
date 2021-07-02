@@ -2,7 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:btn="urn:import:stroom.widget.button.client">
-    <g:FlowPanel styleName="max dock-container-vertical stroom-content">
+    <g:FlowPanel styleName="SourceViewImpl max dock-container-vertical stroom-content">
         <g:FlowPanel styleName="dock-min dock-container-vertical stroom-content">
             <g:FlowPanel styleName="dock-max">
                 <g:Label styleName="sourceViewImpl-titleHeading">Feed:</g:Label>
@@ -27,8 +27,8 @@
         </g:FlowPanel>
         <g:SimplePanel ui:field="progressBarPanel"
                        styleName="dock-min sourceViewImpl-progressBarPanel"/>
-        <g:FlowPanel styleName="dock-max">
-            <g:SimplePanel ui:field="container" styleName="max"/>
+        <g:FlowPanel ui:field="container"
+                     styleName="dock-max default-min-sizes">
             <btn:FabButton ui:field="playButton"
                            addStyleNames="stroom-pipeline-stepping-button"
                            iconClassName="stroom-pipeline-stepping-button-icon"

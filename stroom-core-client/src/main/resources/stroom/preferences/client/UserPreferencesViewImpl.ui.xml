@@ -23,6 +23,14 @@
                     </g:customCell>
                 </g:row>
 
+                <!-- Layout Density -->
+                <g:row>
+                    <g:cell>Layout Density:</g:cell>
+                    <g:customCell>
+                        <item:StringListBox ui:field="density" addStyleNames="w-100"/>
+                    </g:customCell>
+                </g:row>
+
                 <!-- Font -->
                 <g:row>
                     <g:cell>Font:</g:cell>

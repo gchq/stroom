@@ -31,8 +31,6 @@ public class RulesViewImpl extends ViewImpl implements RulesPresenter.RulesView 
 
     @UiField
     SimplePanel table;
-//    @UiField
-//    SimplePanel expression;
 
     @Inject
     public RulesViewImpl(final Binder binder) {
@@ -49,12 +47,6 @@ public class RulesViewImpl extends ViewImpl implements RulesPresenter.RulesView 
         this.table.setWidget(view.asWidget());
     }
 
-//    @Override
-//    public void setExpressionView(final View view) {
-//        this.expression.setWidget(view.asWidget());
-//    }
-
     public interface Binder extends UiBinder<Widget, RulesViewImpl> {
-
     }
 }

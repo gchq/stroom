@@ -2,19 +2,22 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:c="urn:import:stroom.widget.customdatebox.client">
-    <g:FlowPanel styleName="importConfigContainer">
-        <g:Grid ui:field="grid" styleName="stroom-control-grid">
+    <g:FlowPanel styleName="importConfigContainer max default-min-sizes dock-container-vertical">
+        <g:Grid ui:field="grid" styleName="dock-min stroom-control-grid">
             <g:row>
+                <g:cell>Enable Processor Filters:</g:cell>
                 <g:customCell>
                     <g:CheckBox styleName="itemCheckList" ui:field="enableFilters"/>
                 </g:customCell>
-                <g:cell>Enable Processor Filters</g:cell>
+            </g:row>
+            <g:row>
+                <g:cell>From this date</g:cell>
                 <g:customCell>
                     <c:MyDateBox ui:field="enableFrom"/>
                 </g:customCell>
-                <g:cell>from this date (or leave blank to process from first stream)</g:cell>
             </g:row>
         </g:Grid>
-        <g:SimplePanel ui:field="dataGridView" styleName="itemCheckList"/>
+        <g:Label text="(or leave blank to process from first stream)" addStyleNames="dock-min"/>
+        <g:SimplePanel ui:field="dataGridView" styleName="dock-max itemCheckList"/>
     </g:FlowPanel>
 </ui:UiBinder> 

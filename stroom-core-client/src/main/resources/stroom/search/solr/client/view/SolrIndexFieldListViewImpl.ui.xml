@@ -3,8 +3,8 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
     <g:FlowPanel styleName="dock-container-vertical stroom-content">
         <g:SimplePanel ui:field="dataGrid" styleName="dock-max"/>
-        <g:MaxScrollPanel styleName="dock-min">
+        <g:ScrollPanel styleName="dock-min">
             <g:HTML ui:field="synchState" styleName="solrIndexFieldListViewImpl-synchState"/>
-        </g:MaxScrollPanel>
+        </g:ScrollPanel>
     </g:FlowPanel>
 </ui:UiBinder>
