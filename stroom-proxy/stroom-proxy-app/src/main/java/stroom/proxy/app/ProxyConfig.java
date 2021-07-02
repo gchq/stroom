@@ -6,26 +6,30 @@ import stroom.proxy.app.handler.LogStreamConfig;
 import stroom.proxy.app.handler.ProxyRequestConfig;
 import stroom.proxy.repo.ProxyRepositoryConfig;
 import stroom.proxy.repo.ProxyRepositoryReaderConfig;
+import stroom.util.shared.IsProxyConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import io.dropwizard.client.JerseyClientConfiguration;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-public class ProxyConfig {
+import javax.inject.Singleton;
 
-    private String proxyContentDir;
+@Singleton
+@JsonPropertyOrder(alphabetic = true)
+public class ProxyConfig implements IsProxyConfig {
+
+    private String proxyContentDir = "content";
     private boolean useDefaultOpenIdCredentials = true;
 
-    private ProxyRequestConfig proxyRequestConfig = new ProxyRequestConfig();
-    private ForwardStreamConfig forwardStreamConfig = new ForwardStreamConfig();
-    private ProxyRepositoryConfig proxyRepositoryConfig = new ProxyRepositoryConfig();
-    private ProxyRepositoryReaderConfig proxyRepositoryReaderConfig = new ProxyRepositoryReaderConfig();
-    private LogStreamConfig logStreamConfig = new LogStreamConfig();
     private ContentSyncConfig contentSyncConfig = new ContentSyncConfig();
     private FeedStatusConfig feedStatusConfig = new FeedStatusConfig();
-
-    private JerseyClientConfiguration jerseyClientConfig = new JerseyClientConfiguration();
-
+    private ForwardStreamConfig forwardStreamConfig = new ForwardStreamConfig();
+    private RestClientConfig restClientConfig = new RestClientConfig();
+    private LogStreamConfig logStreamConfig = new LogStreamConfig();
+    private ProxyPathConfig pathConfig = new ProxyPathConfig();
+    private ProxyRepositoryConfig proxyRepositoryConfig = new ProxyRepositoryConfig();
+    private ProxyRepositoryReaderConfig proxyRepositoryReaderConfig = new ProxyRepositoryReaderConfig();
+    private ProxyRequestConfig proxyRequestConfig = new ProxyRequestConfig();
 
     @JsonProperty()
     @JsonPropertyDescription("If true, stroom will use a set of default authentication credentials to allow" +
@@ -89,6 +93,16 @@ public class ProxyConfig {
         this.logStreamConfig = logStreamConfig;
     }
 
+    @JsonProperty("path")
+    public ProxyPathConfig getProxyPathConfig() {
+        return pathConfig;
+    }
+
+    @SuppressWarnings("unused")
+    public void setProxyPathConfig(final ProxyPathConfig pathConfig) {
+        this.pathConfig = pathConfig;
+    }
+
     @JsonProperty
     public ContentSyncConfig getContentSyncConfig() {
         return contentSyncConfig;
@@ -119,13 +133,13 @@ public class ProxyConfig {
         this.proxyContentDir = proxyContentDir;
     }
 
-    @JsonProperty("jerseyClient")
-    public JerseyClientConfiguration getJerseyClientConfiguration() {
-        return jerseyClientConfig;
+    @JsonProperty("restClient")
+    public RestClientConfig getRestClientConfig() {
+        return restClientConfig;
     }
 
-    @JsonProperty("jerseyClient")
-    public void setJerseyClientConfiguration(final JerseyClientConfiguration jerseyClientConfig) {
-        this.jerseyClientConfig = jerseyClientConfig;
+    @JsonProperty("restClient")
+    public void setRestClientConfig(final RestClientConfig restClientConfig) {
+        this.restClientConfig = restClientConfig;
     }
 }

@@ -4,6 +4,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.RWLockFactory;
 import stroom.docstore.impl.Persistence;
 import stroom.docstore.shared.Doc;
+import stroom.util.io.PathCreator;
 import stroom.util.shared.Clearable;
 import stroom.util.string.EncodingUtil;
 
@@ -44,10 +45,17 @@ public class FSPersistence implements Persistence, Clearable {
     private final ObjectMapper objectMapper;
 
     @Inject
-    FSPersistence(final FSPersistenceConfig config) {
+    public FSPersistence(final FSPersistenceConfig config,
+                         final PathCreator pathCreator) {
+        this(config.getPath(), pathCreator);
+    }
+
+    public FSPersistence(final String relativeDir, final PathCreator pathCreator) {
         try {
-            final String path = config.getPath();
-            this.dir = Paths.get(path);
+            String absoluteDir = pathCreator.makeAbsolute(relativeDir);
+            absoluteDir = pathCreator.replaceSystemProperties(absoluteDir);
+            LOGGER.debug("Using path {}", absoluteDir);
+            this.dir = Paths.get(absoluteDir);
             Files.createDirectories(dir);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
@@ -56,16 +64,19 @@ public class FSPersistence implements Persistence, Clearable {
         objectMapper = createMapper();
     }
 
-    public FSPersistence(final Path dir) {
+    // For testing
+    FSPersistence(final Path absoluteDir) {
         try {
-            this.dir = dir;
-            Files.createDirectories(dir);
+            this.dir = absoluteDir;
+            LOGGER.debug("Using path {}", absoluteDir);
+            Files.createDirectories(absoluteDir);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
 
         objectMapper = createMapper();
     }
+
 
     @Override
     public boolean exists(final DocRef docRef) {

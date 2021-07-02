@@ -7,7 +7,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Improve exception handling when node name is not configured.
+
 * Fixed issue where annotation menu button did not show when existing annotation was selected.
+
+* Fix problem with merging DB connection configs when values not supplied.
+
+* Make relative proxy file paths be relative to configured proxy home directory.
+
+* Make proxy logger file paths support `~` and relative paths be relative to proxy home.
+
+* Remove redundant items from stroom and proxy distribution config yaml files.
+
+* Rename `jerseyClient` key in proxy config.yml to `restClient`.
+
+* Add `remotecertexpiry` to the default config value for `proxyConfig.logStream.metaKeys`.
 
 
 ## [v7.0-beta.136] - 2021-06-29

@@ -21,6 +21,7 @@ import stroom.task.api.TaskContextFactory;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -78,6 +79,8 @@ public class ManualProxyAggregationTest {
     private Provider<FileSetProcessor> filePackProcessorProvider;
     @Inject
     private CommonTestControl commonTestControl;
+    @Inject
+    private PathCreator pathCreator;
 
     private static final int FEED_COUNT = 5;
     private static final int ENTRIES_PER_ZIP = 10;
@@ -280,6 +283,7 @@ public class ManualProxyAggregationTest {
                 executorProvider,
                 taskContextFactory,
                 filePackProcessorProvider,
+                pathCreator,
                 proxyDir,
                 10,
                 10000,

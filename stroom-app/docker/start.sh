@@ -19,14 +19,16 @@ main() {
       "volume or you are running in development."
   fi
 
+  local java_opts="${JAVA_OPTS:- -Xms50m -Xmx2g}"
+
   echo "Starting stroom"
   echo "Command:     [${dropwizard_command}]"
   echo "Config file: [${config_file}]"
-  echo "JAVA_OPTS:   [${JAVA_OPTS}]"
+  echo "JAVA_OPTS:   [${java_opts}]"
 
   #shellcheck disable=2086
   java \
-    ${JAVA_OPTS} \
+    ${java_opts} \
     -jar stroom-app-all.jar \
     "${dropwizard_command}" \
     "${config_file}"
@@ -34,4 +36,4 @@ main() {
 
 main "$@"
 
-#vim:set et sw=2 ts=2:
+# vim: set tabstop=2 shiftwidth=2 expandtab:

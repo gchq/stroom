@@ -21,6 +21,7 @@ import stroom.proxy.repo.FileSetProcessor;
 import stroom.proxy.repo.RepositoryProcessor;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
+import stroom.util.io.PathCreator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,16 +39,19 @@ public class ProxyAggregationExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyAggregationExecutor.class);
 
     private final RepositoryProcessor repositoryProcessor;
+    private final PathCreator pathCreator;
 
     @Inject
     ProxyAggregationExecutor(final ExecutorProvider executorProvider,
                              final TaskContextFactory taskContextFactory,
                              final Provider<FileSetProcessor> fileSetProcessorProvider,
-                             final ProxyAggregationConfig proxyAggregationConfig) {
+                             final ProxyAggregationConfig proxyAggregationConfig,
+                             final PathCreator pathCreator) {
         this(
                 executorProvider,
                 taskContextFactory,
                 fileSetProcessorProvider,
+                pathCreator,
                 proxyAggregationConfig.getProxyDir(),
                 proxyAggregationConfig.getProxyThreads(),
                 proxyAggregationConfig.getMaxFileScan(),
@@ -57,25 +61,45 @@ public class ProxyAggregationExecutor {
         );
     }
 
+
     public ProxyAggregationExecutor(final ExecutorProvider executorProvider,
                                     final TaskContextFactory taskContextFactory,
                                     final Provider<FileSetProcessor> fileSetProcessorProvider,
+                                    final PathCreator pathCreator,
                                     final String proxyDir,
                                     final int threadCount,
                                     final int maxFileScan,
                                     final int maxConcurrentMappedFiles,
                                     final int maxFilesPerAggregate,
                                     final long maxUncompressedFileSize) {
+
+        this.pathCreator = pathCreator;
         this.repositoryProcessor = new RepositoryProcessor(
                 executorProvider,
                 taskContextFactory,
                 fileSetProcessorProvider,
-                proxyDir,
+                getAbsoluteProxyDir(proxyDir),
                 threadCount,
                 maxFileScan,
                 maxConcurrentMappedFiles,
                 maxFilesPerAggregate,
                 maxUncompressedFileSize);
+    }
+
+    private String getAbsoluteProxyDir(final String proxyDir) {
+        if (proxyDir == null) {
+            return null;
+        } else {
+            // handle any things like ${stroom.home} or turn relative paths into absolute
+            // paths based on the stroom home location.
+            // This dir is normally owned by stroom-proxy as it writes to it and we
+            // consume from it
+            // It could be theoretically be something like
+            // ../../stroom-proxy/stroom-proxy-vX.Y.Z/repo
+            String absoluteProxyDir = pathCreator.replaceSystemProperties(proxyDir);
+            absoluteProxyDir = pathCreator.makeAbsolute(absoluteProxyDir);
+            return absoluteProxyDir;
+        }
     }
 
     public void exec() {

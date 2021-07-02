@@ -1,13 +1,15 @@
 package stroom.proxy.repo;
 
+import stroom.util.shared.IsProxyConfig;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.inject.Singleton;
 
 @Singleton
-@JsonPropertyOrder({"storingEnabled", "repoDir", "format", "rollCron"})
-public class ProxyRepositoryConfig {
+@JsonPropertyOrder(alphabetic = true)
+public class ProxyRepositoryConfig implements IsProxyConfig {
 
     private boolean isStoringEnabled = false;
     private String repoDir;

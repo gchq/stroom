@@ -75,7 +75,7 @@ public class GenerateDistributionConfig {
             LOGGER.info("Building template for {} distribution", context.get(DIST_KEY));
             LOGGER.info("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
 
-            final String renderedTemplate = jinjava.render(configTemplate, context);
+            String renderedTemplate = jinjava.render(configTemplate, context);
 
 //            LOGGER.debug("rendered\n{}", renderedTemplate);
 
@@ -88,6 +88,13 @@ public class GenerateDistributionConfig {
 
                 LOGGER.info("Writing file {}", outputFileNameFile.normalize().toAbsolutePath());
                 generatedFiles.add(outputFileNameFile);
+
+                // The conditional jinja2 blocks leave extra blank lines so remove them all
+                // then replace lines with an empty comment with an empty line so that
+                // we can still have empty lines where we want.
+                renderedTemplate = renderedTemplate
+                        .replaceAll("(?m)^\\s*\\n", "") // remove empty lines
+                        .replaceAll("(?m)^\\s*#\\s*$", ""); // clear lines with empty comment
 
                 Files.writeString(outputFileNameFile, renderedTemplate);
 
@@ -123,6 +130,10 @@ public class GenerateDistributionConfig {
                                 FileUtil.getCanonicalPath(file1),
                                 FileUtil.getCanonicalPath(file2),
                                 String.join("\n", diffLines)));
+        LOGGER.info("vimdiff {} {}",
+                FileUtil.getCanonicalPath(file1),
+                FileUtil.getCanonicalPath(file2));
+
     }
 
     private static void verifyOutputFile(final Path configFile) throws IOException {

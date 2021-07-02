@@ -43,7 +43,6 @@ import com.google.common.base.CaseFormat;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
-import io.dropwizard.client.JerseyClientConfiguration;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
@@ -370,42 +369,39 @@ public class ConfigMapper {
 
             final Class<?> valueType = prop.getValueClass();
 
-            // Ignore the dropwiz jersey config in our config
-            if (valueType != JerseyClientConfiguration.class) {
 
-                final Object value = prop.getValueFromConfigObject();
+            final Object value = prop.getValueFromConfigObject();
 //                if (isSupportedPropertyType(valueType) && !prop.hasAnnotation(JsonIgnore.class)) {
-                if (isSupportedPropertyType(valueType)) {
+            if (isSupportedPropertyType(valueType)) {
 
-                    if (!prop.hasSetter()) {
-                        throw new RuntimeException(LogUtil.message("Prop {} in class {} has no setter.",
-                                prop.getName(),
-                                (prop.getParentObject() != null
-                                        ? prop.getParentObject().getClass().getName()
-                                        : "null")));
-                    }
-                    // This is a leaf, i.e. a property so add it to our map
-                    propertyMap.put(fullPath, prop);
-
-                    // Now let the consumer do something to it
-                    propConsumer.accept(fullPath, prop);
-                } else if (AbstractConfig.class.isAssignableFrom(valueType)) {
-                    // This must be a branch, i.e. config object so recurse into that
-                    if (value != null) {
-                        AbstractConfig childConfigObject = (AbstractConfig) value;
-                        addConfigObjectMethods(
-                                childConfigObject,
-                                fullPath,
-                                propertyMap,
-                                propConsumer);
-                    }
-                } else {
-                    // This is not expected
-                    throw new RuntimeException(LogUtil.message(
-                            "Unexpected bean property of type [{}], expecting an instance of {}, or a supported type.",
-                            valueType.getName(),
-                            AbstractConfig.class.getSimpleName()));
+                if (!prop.hasSetter()) {
+                    throw new RuntimeException(LogUtil.message("Prop {} in class {} has no setter.",
+                            prop.getName(),
+                            (prop.getParentObject() != null
+                                    ? prop.getParentObject().getClass().getName()
+                                    : "null")));
                 }
+                // This is a leaf, i.e. a property so add it to our map
+                propertyMap.put(fullPath, prop);
+
+                // Now let the consumer do something to it
+                propConsumer.accept(fullPath, prop);
+            } else if (AbstractConfig.class.isAssignableFrom(valueType)) {
+                // This must be a branch, i.e. config object so recurse into that
+                if (value != null) {
+                    AbstractConfig childConfigObject = (AbstractConfig) value;
+                    addConfigObjectMethods(
+                            childConfigObject,
+                            fullPath,
+                            propertyMap,
+                            propConsumer);
+                }
+            } else {
+                // This is not expected
+                throw new RuntimeException(LogUtil.message(
+                        "Unexpected bean property of type [{}], expecting an instance of {}, or a supported type.",
+                        valueType.getName(),
+                        AbstractConfig.class.getSimpleName()));
             }
         });
     }

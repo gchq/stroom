@@ -1,4 +1,4 @@
-package stroom.config.app;
+package stroom.proxy.app;
 
 import stroom.util.io.DiffUtil;
 import stroom.util.io.HomeDirProvider;
@@ -6,7 +6,6 @@ import stroom.util.io.HomeDirProviderImpl;
 import stroom.util.io.PathConfig;
 import stroom.util.io.PathCreator;
 import stroom.util.io.StreamUtil;
-import stroom.util.io.StroomPathConfig;
 import stroom.util.io.TempDirProvider;
 import stroom.util.io.TempDirProviderImpl;
 import stroom.util.logging.LogUtil;
@@ -31,9 +30,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
-public class StroomConfigurationSourceProvider implements ConfigurationSourceProvider {
+public class ProxyConfigurationSourceProvider implements ConfigurationSourceProvider {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(StroomConfigurationSourceProvider.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProxyConfigurationSourceProvider.class);
 
     private static final String SOURCE_DEFAULTS = "defaults";
     private static final String SOURCE_YAML = "YAML";
@@ -45,13 +44,13 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
             "currentLogFilename",
             "archivedLogFilenamePattern");
 
-    private static final String PATH_CONFIG_JSON_POINTER = "/appConfig/path";
+    private static final String PATH_CONFIG_JSON_POINTER = "/proxyConfig/path";
     private static final String STROOM_HOME_JSON_POINTER = PATH_CONFIG_JSON_POINTER + "/home";
     private static final String STROOM_TEMP_JSON_POINTER = PATH_CONFIG_JSON_POINTER + "/temp";
 
     private final ConfigurationSourceProvider delegate;
 
-    public StroomConfigurationSourceProvider(final ConfigurationSourceProvider delegate) {
+    public ProxyConfigurationSourceProvider(final ConfigurationSourceProvider delegate) {
         this.delegate = delegate;
     }
 
@@ -158,7 +157,7 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
         final Optional<String> optTemp = getNodeValue(rootNode, STROOM_TEMP_JSON_POINTER);
 
         // A vanilla PathConfig with the hard coded defaults
-        final PathConfig pathConfig = new StroomPathConfig();
+        final PathConfig pathConfig = new ProxyPathConfig();
 
         final String homeSource = Objects.equals(pathConfig.getHome(), optHome.orElse(null))
                 ? SOURCE_DEFAULTS

@@ -20,6 +20,8 @@ import stroom.proxy.app.BufferFactoryImpl;
 import stroom.proxy.app.Config;
 import stroom.proxy.app.ContentSyncService;
 import stroom.proxy.app.ProxyConfigHealthCheck;
+import stroom.proxy.app.ProxyPathConfig;
+import stroom.proxy.app.RestClientConfig;
 import stroom.proxy.app.handler.ForwardStreamHandlerFactory;
 import stroom.proxy.app.handler.ProxyRequestHandler;
 import stroom.proxy.app.handler.RemoteFeedStatusService;
@@ -55,6 +57,8 @@ import stroom.util.guice.ServletBinder;
 import stroom.util.io.BufferFactory;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.HomeDirProviderImpl;
+import stroom.util.io.PathConfig;
+import stroom.util.io.PathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.io.TempDirProviderImpl;
 import stroom.util.shared.BuildInfo;
@@ -70,7 +74,6 @@ import org.glassfish.jersey.logging.LoggingFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.file.Paths;
 import java.util.Optional;
 import javax.inject.Provider;
 import javax.ws.rs.client.Client;
@@ -162,19 +165,24 @@ public class ProxyModule extends AbstractModule {
 
     @Provides
     @Singleton
-    Persistence providePersistence() {
-        return new FSPersistence(Paths.get(configuration.getProxyConfig().getProxyContentDir()));
+    Persistence providePersistence(final PathCreator pathCreator) {
+        return new FSPersistence(
+                configuration.getProxyConfig().getProxyContentDir(),
+                pathCreator);
     }
 
     @Provides
     @Singleton
-    Client provideJerseyClient(final JerseyClientConfiguration jerseyClientConfiguration,
+    Client provideJerseyClient(final RestClientConfig restClientConfig,
                                final Environment environment,
                                final Provider<BuildInfo> buildInfoProvider) {
 
+        // RestClientConfig is really just JerseyClientConfiguration
+        final JerseyClientConfiguration jerseyClientConfiguration = restClientConfig;
+
         // If the userAgent has not been explicitly set in the config then set it based
         // on the build version
-        if (!jerseyClientConfiguration.getUserAgent().isPresent()) {
+        if (jerseyClientConfiguration.getUserAgent().isEmpty()) {
             final String userAgent = PROXY_JERSEY_CLIENT_USER_AGENT_PREFIX
                     + buildInfoProvider.get().getBuildVersion();
             LOGGER.info("Setting jersey client user agent string to [{}]", userAgent);

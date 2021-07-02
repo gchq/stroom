@@ -44,6 +44,7 @@ import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.io.BufferFactory;
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathCreator;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -103,6 +104,8 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     private Provider<FileSetProcessor> filePackProcessorProvider;
     @Inject
     private CommonTestControl commonTestControl;
+    @Inject
+    private PathCreator pathCreator;
 
     private void aggregate(final String proxyDir,
                            final int maxAggregation,
@@ -111,6 +114,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
                 executorProvider,
                 taskContextFactory,
                 filePackProcessorProvider,
+                pathCreator,
                 proxyDir,
                 10,
                 10000,

@@ -100,7 +100,7 @@ public final class RepositoryProcessor {
     public void process() {
         final Consumer<TaskContext> consumer = taskContext -> {
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
-            LOGGER.info("Started");
+            LOGGER.info("Started processing repository {}", repoDir);
 
             taskContext.info(() -> LogUtil.message(
                     "Process started {}, maxFileScan {}, maxConcurrentMappedFiles {}, " +

@@ -1,10 +1,17 @@
 package stroom.proxy.app.handler;
 
+import stroom.util.shared.IsProxyConfig;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-public class LogStreamConfig {
+import javax.inject.Singleton;
 
-    private String metaKeys = "guid,feed,system,environment,remotehost,remoteaddress,remotedn";
+@Singleton
+@JsonPropertyOrder(alphabetic = true)
+public class LogStreamConfig implements IsProxyConfig {
+
+    private String metaKeys = "guid,feed,system,environment,remotehost,remoteaddress,remotedn,remotecertexpiry";
 
     /**
      * Optional log line with header attributes output as defined by this property

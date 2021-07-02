@@ -54,7 +54,7 @@ public class FsVolumeConfig extends AbstractConfig {
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.UI)
-    @JsonPropertyDescription("If no existing stream volumes are present default volume swill be created on " +
+    @JsonPropertyDescription("If no existing stream volumes are present default volumes will be created on " +
             "application start.  Use property defaultStreamVolumePaths to define the volumes created.")
     public boolean isCreateDefaultStreamVolumesOnStart() {
         return createDefaultStreamVolumesOnStart;
