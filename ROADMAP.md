@@ -63,6 +63,11 @@ Changing Stroom libraries to replace Spring with Guice and Hibernate with JOOQ.
 ## Annotations
 Search results in dashboards can be annotated to provide status and notes relating to the result item, e.g. an event. These annotations can later be searched to see which events have annotations associated with them.
 
+# v7.1
+
+## Elastic search integration
+Elastic search can be used for indexing data. Data can be sent to an elastic index via a pipeline element and an elastic index can be queried from a Stroom dashboard.
+
 # v8.0
 
 ## HDFS Storage Support
@@ -74,9 +79,6 @@ Add support for HDFS as a data storage option.
 Replace the GWT UI with a React-based implementation.
 
 # v10+
-
-## Elastic search integration
-Elastic search can be used for indexing data. Data can be sent to an elastic index via a pipeline element and an elastic index can be queried from a Stroom dashboard.
 
 ## Authorisation enhancements
 The Stroom authorisation system is split out into a separate service and provides integration with external authorisation mechanisms.

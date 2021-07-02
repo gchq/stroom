@@ -11,8 +11,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2317** : The user id can now be resolved from the `username` JWT claim if `email` is not present.
 
-* Issue **#2317** : The user id can now be resolved from the `username` JWT claim if `email` is not present.
-
 * Issue **#2316** : Fixed React dialog styling by increasing CSS specificity.
 
 * Issue **#2313** : Integrate LeafletJS for geographical mapping.
