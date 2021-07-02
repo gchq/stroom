@@ -11,7 +11,7 @@ import javax.inject.Singleton;
 @JsonPropertyOrder(alphabetic = true)
 public class LogStreamConfig implements IsProxyConfig {
 
-    private String metaKeys = "guid,feed,system,environment,remotehost,remoteaddress,remotedn";
+    private String metaKeys = "guid,feed,system,environment,remotehost,remoteaddress,remotedn,remotecertexpiry";
 
     /**
      * Optional log line with header attributes output as defined by this property

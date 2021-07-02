@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Rename `jerseyClient` key in proxy config.yml to `restClient`.
 
+* Add `remotecertexpiry` to the default config value for `proxyConfig.logStream.metaKeys`.
+
 
 ## [v7.0-beta.136] - 2021-06-29
 
