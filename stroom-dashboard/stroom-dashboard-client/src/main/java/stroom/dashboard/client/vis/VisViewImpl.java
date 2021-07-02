@@ -109,7 +109,8 @@ public class VisViewImpl extends ViewImpl implements VisView {
         if (visPane != null) {
             final Style style = visPane.asWidget().getElement().getStyle();
             Element ref = visContainer.getElement();
-            while (ref != null && (ref.getClassName() == null || !ref.getClassName().contains("tabLayout-contentInner"))) {
+            while (ref != null && (ref.getClassName() == null ||
+                    !ref.getClassName().contains("tabLayout-contentInner"))) {
                 ref = ref.getParentElement();
             }
 
