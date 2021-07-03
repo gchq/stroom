@@ -32,6 +32,7 @@ FROM adoptopenjdk/openjdk15:jdk-15.0.2_7-alpine as stroom-base-stage
 RUN echo "http_proxy: $http_proxy" && \
     echo "https_proxy: $https_proxy" && \
     apk add --no-cache \
+        bash \
         curl \
         su-exec \
         tini
