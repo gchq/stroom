@@ -26,6 +26,7 @@
 # See https://github.com/docker-library/docs/blob/master/openjdk/README.md#openjdkversion-alpine
 FROM adoptopenjdk/openjdk15:jdk-15.0.2_7-alpine as stroom-base-stage
 
+# bash and jq are required for Kubernetes lifecycle scripts, which interact with the API
 # curl is required for the docker healthcheck
 # su-exec required for running stroom as not-root user
 # tini required for process control in the entrypoint
@@ -33,6 +34,7 @@ RUN echo "http_proxy: $http_proxy" && \
     echo "https_proxy: $https_proxy" && \
     apk add --no-cache \
         bash \
+        jq \
         curl \
         su-exec \
         tini
