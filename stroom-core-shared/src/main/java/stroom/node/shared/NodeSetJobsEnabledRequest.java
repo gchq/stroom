@@ -37,8 +37,8 @@ public class NodeSetJobsEnabledRequest {
             @JsonProperty("excludeJobs") final Set<String> excludeJobs) {
 
         this.enabled = enabled;
-        this.includeJobs = includeJobs;
-        this.excludeJobs = excludeJobs;
+        this.includeJobs = includeJobs != null ? includeJobs : Collections.emptySet();
+        this.excludeJobs = excludeJobs != null ? excludeJobs : Collections.emptySet();
     }
 
     public boolean isEnabled() {
