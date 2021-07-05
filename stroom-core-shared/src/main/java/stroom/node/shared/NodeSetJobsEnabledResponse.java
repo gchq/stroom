@@ -12,10 +12,7 @@ import java.util.Objects;
 public class NodeSetJobsEnabledResponse implements Serializable {
 
     @JsonProperty
-    private Integer modifiedCount;
-
-    public NodeSetJobsEnabledResponse() {
-    }
+    private final Integer modifiedCount;
 
     @JsonCreator
     public NodeSetJobsEnabledResponse(@JsonProperty("modifiedCount") final Integer modifiedCount) {

@@ -12,23 +12,19 @@ import java.util.Set;
 public class NodeSetJobsEnabledRequest {
 
     @JsonProperty
-    private boolean enabled;
+    private final boolean enabled;
 
     /*
     List of job names to include in this operation
      */
     @JsonProperty
-    private Set<String> includeJobs = Collections.emptySet();
+    private final Set<String> includeJobs;
 
     /*
     List of job names to exclude from this operation
      */
     @JsonProperty
-    private Set<String> excludeJobs = Collections.emptySet();
-
-    public NodeSetJobsEnabledRequest() {
-
-    }
+    private final Set<String> excludeJobs;
 
     @JsonCreator
     public NodeSetJobsEnabledRequest(
@@ -45,23 +41,11 @@ public class NodeSetJobsEnabledRequest {
         return enabled;
     }
 
-    public void setEnabled(final boolean enabled) {
-        this.enabled = enabled;
-    }
-
     public Set<String> getIncludeJobs() {
         return includeJobs;
     }
 
-    public void setIncludeJobs(final Set<String> includeJobs) {
-        this.includeJobs = includeJobs;
-    }
-
     public Set<String> getExcludeJobs() {
         return excludeJobs;
-    }
-
-    public void setExcludeJobs(final Set<String> excludeJobs) {
-        this.excludeJobs = excludeJobs;
     }
 }
