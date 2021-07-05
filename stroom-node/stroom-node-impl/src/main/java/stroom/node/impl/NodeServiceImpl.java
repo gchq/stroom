@@ -42,6 +42,7 @@ import stroom.util.shared.ResultPage;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -310,5 +311,14 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
     @Override
     public void clear() {
         thisNode = null;
+    }
+
+    int setJobsEnabledForNode(final String nodeName,
+                              final boolean enabled,
+                              final Set<String> includeJobs,
+                              final Set<String> excludeJobs) {
+        return securityContext.secureResult(
+                PermissionNames.MANAGE_JOBS_PERMISSION,
+                () -> nodeDao.setJobsEnabled(nodeName, enabled, includeJobs, excludeJobs));
     }
 }

@@ -86,7 +86,7 @@ public interface NodeResource extends RestResource, DirectRestService {
             summary = "Sets the priority of a node",
             operationId = "setNodePriority")
     boolean setPriority(@PathParam("nodeName") String nodeName,
-                     @Parameter(description = "nodeName", required = true) Integer priority);
+                        @Parameter(description = "nodeName", required = true) Integer priority);
 
     @PUT
     @Path(ENABLED_PATH_PART + NODE_NAME_PATH_PARAM)
@@ -94,5 +94,16 @@ public interface NodeResource extends RestResource, DirectRestService {
             summary = "Sets whether a node is enabled",
             operationId = "setNodeEnabled")
     boolean setEnabled(@PathParam("nodeName") String nodeName,
-                    @Parameter(description = "enabled", required = true) Boolean enabled);
+                       @Parameter(description = "enabled", required = true) Boolean enabled);
+
+    @PUT
+    @Path("/setJobsEnabled" + NODE_NAME_PATH_PARAM)
+    @Operation(
+            summary = "Sets the enabled state of jobs for the selected node. If both `includeJobs` and `excludeJobs` " +
+                    "are unspecified or empty, this action will apply to ALL jobs.",
+            operationId = "setNodeJobsEnabled"
+    )
+    NodeSetJobsEnabledResponse setJobsEnabled(
+            @PathParam("nodeName") String nodeName,
+            @Parameter(description = "Request parameters", required = true) NodeSetJobsEnabledRequest params);
 }
