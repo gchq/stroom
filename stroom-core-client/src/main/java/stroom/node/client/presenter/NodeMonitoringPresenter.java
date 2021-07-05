@@ -136,7 +136,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                 return row.getNode().getName();
             }
         };
-        getView().addResizableColumn(nameColumn, "Name", 100);
+        getView().addResizableColumn(nameColumn, "Name", 200);
 
         // Host Name.
         final Column<NodeStatusResult, String> hostNameColumn = new Column<NodeStatusResult, String>(new TextCell()) {
