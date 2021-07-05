@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import javax.inject.Inject;
 
 import static org.jooq.impl.DSL.select;
@@ -109,8 +110,8 @@ public class NodeDaoImpl implements NodeDao {
     @Override
     public int setJobsEnabled(final String nodeName,
                               final boolean enabled,
-                              final String[] includeJobs,
-                              final String[] excludeJobs) {
+                              final Set<String> includeJobs,
+                              final Set<String> excludeJobs) {
         return JooqUtil.contextResult(nodeDbConnProvider, context -> context
                 .update(JOB_NODE)
                 .set(JOB_NODE.ENABLED, enabled)
@@ -118,11 +119,11 @@ public class NodeDaoImpl implements NodeDao {
                         .and(JOB_NODE.JOB_ID.in(
                                 select(JOB.ID).from(JOB)
                                         .where(JOB.NAME.in(includeJobs)
-                                                .or(DSL.condition(includeJobs.length == 0)))
+                                                .or(DSL.condition(includeJobs.size() == 0)))
                         )).and(JOB_NODE.JOB_ID.notIn(
                                 select(JOB.ID).from(JOB)
                                         .where(JOB.NAME.in(excludeJobs)
-                                                .and(DSL.condition(excludeJobs.length > 0)))
+                                                .and(DSL.condition(excludeJobs.size() > 0)))
                         )))
                 .execute()
         );

@@ -100,7 +100,7 @@ public interface NodeResource extends RestResource, DirectRestService {
     @Path("/setJobsEnabled" + NODE_NAME_PATH_PARAM)
     @Operation(
             summary = "Sets the enabled state of jobs for the selected node. If both `includeJobs` and `excludeJobs` " +
-                    "are not specified, this action will apply to ALL jobs.",
+                    "are unspecified or empty, this action will apply to ALL jobs.",
             operationId = "setNodeJobsEnabled"
     )
     int setJobsEnabled(

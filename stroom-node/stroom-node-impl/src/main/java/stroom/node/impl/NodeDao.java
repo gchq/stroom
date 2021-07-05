@@ -20,6 +20,8 @@ import stroom.node.api.FindNodeCriteria;
 import stroom.node.shared.Node;
 import stroom.util.shared.ResultPage;
 
+import java.util.Set;
+
 public interface NodeDao {
 
     Node create(Node node);
@@ -30,5 +32,5 @@ public interface NodeDao {
 
     Node getNode(String nodeName);
 
-    int setJobsEnabled(String nodeName, boolean enabled, final String[] includeJobs, final String[] excludeJobs);
+    int setJobsEnabled(String nodeName, boolean enabled, final Set<String> includeJobs, final Set<String> excludeJobs);
 }

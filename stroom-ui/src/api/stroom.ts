@@ -6364,7 +6364,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      *
      * @tags Nodes
      * @name SetNodeJobsEnabled
-     * @summary Sets the enabled state of jobs for the selected node. If both `includeJobs` and `excludeJobs` are not specified, this action will apply to ALL jobs.
+     * @summary Sets the enabled state of jobs for the selected node. If both `includeJobs` and `excludeJobs` are unspecified or empty, this action will apply to ALL jobs.
      * @request PUT:/node/v1/setJobsEnabled/{nodeName}
      * @secure
      */

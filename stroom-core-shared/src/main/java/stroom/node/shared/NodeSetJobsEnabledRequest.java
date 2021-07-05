@@ -5,6 +5,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Collections;
+import java.util.Set;
+
 @JsonInclude(Include.NON_NULL)
 public class NodeSetJobsEnabledRequest {
 
@@ -15,13 +18,13 @@ public class NodeSetJobsEnabledRequest {
     List of job names to include in this operation
      */
     @JsonProperty
-    private String[] includeJobs;
+    private Set<String> includeJobs = Collections.emptySet();
 
     /*
     List of job names to exclude from this operation
      */
     @JsonProperty
-    private String[] excludeJobs;
+    private Set<String> excludeJobs = Collections.emptySet();
 
     public NodeSetJobsEnabledRequest() {
 
@@ -30,8 +33,8 @@ public class NodeSetJobsEnabledRequest {
     @JsonCreator
     public NodeSetJobsEnabledRequest(
             @JsonProperty("enabled") final boolean enabled,
-            @JsonProperty("includeJobs") final String[] includeJobs,
-            @JsonProperty("excludeJobs") final String[] excludeJobs) {
+            @JsonProperty("includeJobs") final Set<String> includeJobs,
+            @JsonProperty("excludeJobs") final Set<String> excludeJobs) {
 
         this.enabled = enabled;
         this.includeJobs = includeJobs;
@@ -46,19 +49,19 @@ public class NodeSetJobsEnabledRequest {
         this.enabled = enabled;
     }
 
-    public String[] getIncludeJobs() {
+    public Set<String> getIncludeJobs() {
         return includeJobs;
     }
 
-    public void setIncludeJobs(final String[] includeJobs) {
+    public void setIncludeJobs(final Set<String> includeJobs) {
         this.includeJobs = includeJobs;
     }
 
-    public String[] getExcludeJobs() {
+    public Set<String> getExcludeJobs() {
         return excludeJobs;
     }
 
-    public void setExcludeJobs(final String[] excludeJobs) {
+    public void setExcludeJobs(final Set<String> excludeJobs) {
         this.excludeJobs = excludeJobs;
     }
 }
