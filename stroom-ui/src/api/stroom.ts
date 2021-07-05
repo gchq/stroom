@@ -6352,6 +6352,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         type: ContentType.Json,
         ...params,
       }),
+
+    /**
+     * No description
+     *
+     * @tags Nodes
+     * @name SetNodeJobsEnabled
+     * @summary Sets the enabled state of all jobs for the selected node
+     * @request PUT:/node/v1/setJobsEnabled/{nodeName}
+     * @secure
+     */
+    setNodeJobsEnabled: (nodeName: string, data: boolean, params: RequestParams = {}) =>
+      this.request<any, number>({
+        path: `/node/v1/setJobsEnabled/${nodeName}`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
   };
   oauth2 = {
     /**

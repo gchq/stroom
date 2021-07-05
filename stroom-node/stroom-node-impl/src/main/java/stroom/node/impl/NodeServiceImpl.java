@@ -311,4 +311,10 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
     public void clear() {
         thisNode = null;
     }
+
+    int setAllJobsEnabledForNode(final String nodeName, final boolean enabled) {
+        return securityContext.secureResult(
+                PermissionNames.MANAGE_JOBS_PERMISSION,
+                () -> nodeDao.setJobsEnabled(nodeName, enabled));
+    }
 }

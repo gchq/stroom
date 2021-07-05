@@ -95,4 +95,13 @@ public interface NodeResource extends RestResource, DirectRestService {
             operationId = "setNodeEnabled")
     boolean setEnabled(@PathParam("nodeName") String nodeName,
                     @Parameter(description = "enabled", required = true) Boolean enabled);
+
+    @PUT
+    @Path("/setJobsEnabled" + NODE_NAME_PATH_PARAM)
+    @Operation(
+            summary = "Sets the enabled state of all jobs for the selected node",
+            operationId = "setNodeJobsEnabled"
+    )
+    int setJobsEnabled(@PathParam("nodeName") String nodeName,
+                       @Parameter(description = "enabled", required = true) Boolean enabled);
 }

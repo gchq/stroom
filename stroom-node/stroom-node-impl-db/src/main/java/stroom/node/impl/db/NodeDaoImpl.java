@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
 
+import static stroom.job.impl.db.jooq.tables.JobNode.JOB_NODE;
 import static stroom.node.impl.db.jooq.tables.Node.NODE;
 
 public class NodeDaoImpl implements NodeDao {
@@ -99,5 +100,15 @@ public class NodeDaoImpl implements NodeDao {
                 .fetchOptional()
                 .map(r -> r.into(Node.class)));
         return optional.orElse(null);
+    }
+
+    @Override
+    public int setJobsEnabled(final String nodeName, final boolean enabled) {
+        return JooqUtil.contextResult(nodeDbConnProvider, context -> context
+                .update(JOB_NODE)
+                .set(JOB_NODE.ENABLED, enabled)
+                .where(JOB_NODE.NODE_NAME.eq(nodeName))
+                .execute()
+        );
     }
 }

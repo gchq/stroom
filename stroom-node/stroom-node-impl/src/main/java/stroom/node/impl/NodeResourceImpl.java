@@ -35,6 +35,8 @@ import stroom.util.shared.ResourcePaths;
 import event.logging.AdvancedQuery;
 import event.logging.And;
 import event.logging.Query;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Comparator;
 import java.util.List;
@@ -48,6 +50,7 @@ import javax.ws.rs.client.SyncInvoker;
 
 @AutoLogged
 class NodeResourceImpl implements NodeResource {
+    private static final Logger LOGGER = LoggerFactory.getLogger(NodeResourceImpl.class);
 
     private final Provider<NodeServiceImpl> nodeServiceProvider;
     private final Provider<NodeInfo> nodeInfoProvider;
@@ -241,5 +244,18 @@ class NodeResourceImpl implements NodeResource {
             documentEventLog.update(before, after, e);
             throw e;
         }
+    }
+
+    @Override
+    public int setJobsEnabled(final String nodeName, final Boolean enabled) {
+        final NodeServiceImpl nodeService = nodeServiceProvider.get();
+        final int recordsUpdated = nodeService.setAllJobsEnabledForNode(nodeName, enabled);
+
+        if (recordsUpdated > 0) {
+            String enabledState = enabled ? "Enabled" : "Disabled";
+            LOGGER.info(enabledState + " " + recordsUpdated + " tasks for node " + nodeName);
+        }
+
+        return recordsUpdated;
     }
 }

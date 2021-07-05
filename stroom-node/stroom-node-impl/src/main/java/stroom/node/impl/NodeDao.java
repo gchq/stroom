@@ -29,4 +29,6 @@ public interface NodeDao {
     ResultPage<Node> find(FindNodeCriteria criteria);
 
     Node getNode(String nodeName);
+
+    int setJobsEnabled(String nodeName, boolean enabled);
 }

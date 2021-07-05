@@ -4133,6 +4133,45 @@
         "tags" : [ "Nodes" ]
       }
     },
+    "/node/v1/setJobsEnabled/{nodeName}" : {
+      "put" : {
+        "operationId" : "setNodeJobsEnabled",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "nodeName",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "boolean"
+              }
+            }
+          },
+          "description" : "enabled",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "integer",
+                  "format" : "int32"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Sets the enabled state of all jobs for the selected node",
+        "tags" : [ "Nodes" ]
+      }
+    },
     "/oauth2/v1/noauth/.well-known/openid-configuration" : {
       "get" : {
         "operationId" : "openIdConfiguration",
