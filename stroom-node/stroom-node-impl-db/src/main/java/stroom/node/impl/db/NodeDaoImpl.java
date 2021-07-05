@@ -26,6 +26,7 @@ import stroom.util.shared.ResultPage;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.OrderField;
+import org.jooq.impl.DSL;
 
 import java.util.Collection;
 import java.util.List;
@@ -33,6 +34,9 @@ import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
 
+import static org.jooq.impl.DSL.select;
+import static org.jooq.impl.DSL.trueCondition;
+import static stroom.job.impl.db.jooq.tables.Job.JOB;
 import static stroom.job.impl.db.jooq.tables.JobNode.JOB_NODE;
 import static stroom.node.impl.db.jooq.tables.Node.NODE;
 
@@ -103,11 +107,23 @@ public class NodeDaoImpl implements NodeDao {
     }
 
     @Override
-    public int setJobsEnabled(final String nodeName, final boolean enabled) {
+    public int setJobsEnabled(final String nodeName,
+                              final boolean enabled,
+                              final String[] includeJobs,
+                              final String[] excludeJobs) {
         return JooqUtil.contextResult(nodeDbConnProvider, context -> context
                 .update(JOB_NODE)
                 .set(JOB_NODE.ENABLED, enabled)
-                .where(JOB_NODE.NODE_NAME.eq(nodeName))
+                .where(JOB_NODE.NODE_NAME.eq(nodeName)
+                        .and(JOB_NODE.JOB_ID.in(
+                                select(JOB.ID).from(JOB)
+                                        .where(JOB.NAME.in(includeJobs)
+                                                .or(DSL.condition(includeJobs.length == 0)))
+                        )).and(JOB_NODE.JOB_ID.notIn(
+                                select(JOB.ID).from(JOB)
+                                        .where(JOB.NAME.in(excludeJobs)
+                                                .and(DSL.condition(excludeJobs.length > 0)))
+                        )))
                 .execute()
         );
     }

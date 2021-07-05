@@ -30,5 +30,5 @@ public interface NodeDao {
 
     Node getNode(String nodeName);
 
-    int setJobsEnabled(String nodeName, boolean enabled);
+    int setJobsEnabled(String nodeName, boolean enabled, final String[] includeJobs, final String[] excludeJobs);
 }

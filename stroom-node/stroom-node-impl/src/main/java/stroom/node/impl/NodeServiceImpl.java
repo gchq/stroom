@@ -312,9 +312,12 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
         thisNode = null;
     }
 
-    int setAllJobsEnabledForNode(final String nodeName, final boolean enabled) {
+    int setJobsEnabledForNode(final String nodeName,
+                              final boolean enabled,
+                              final String[] includeJobs,
+                              final String[] excludeJobs) {
         return securityContext.secureResult(
                 PermissionNames.MANAGE_JOBS_PERMISSION,
-                () -> nodeDao.setJobsEnabled(nodeName, enabled));
+                () -> nodeDao.setJobsEnabled(nodeName, enabled, includeJobs, excludeJobs));
     }
 }

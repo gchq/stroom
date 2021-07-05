@@ -28,6 +28,7 @@ import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.FetchNodeStatusResponse;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeResource;
+import stroom.node.shared.NodeSetJobsEnabledRequest;
 import stroom.node.shared.NodeStatusResult;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.shared.ResourcePaths;
@@ -247,12 +248,16 @@ class NodeResourceImpl implements NodeResource {
     }
 
     @Override
-    public int setJobsEnabled(final String nodeName, final Boolean enabled) {
+    public int setJobsEnabled(final String nodeName, final NodeSetJobsEnabledRequest params) {
         final NodeServiceImpl nodeService = nodeServiceProvider.get();
-        final int recordsUpdated = nodeService.setAllJobsEnabledForNode(nodeName, enabled);
+        final int recordsUpdated = nodeService.setJobsEnabledForNode(
+                nodeName,
+                params.isEnabled(),
+                params.getIncludeJobs(),
+                params.getExcludeJobs());
 
         if (recordsUpdated > 0) {
-            String enabledState = enabled ? "Enabled" : "Disabled";
+            String enabledState = params.isEnabled() ? "Enabled" : "Disabled";
             LOGGER.info(enabledState + " " + recordsUpdated + " tasks for node " + nodeName);
         }
 

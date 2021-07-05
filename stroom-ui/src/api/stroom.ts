@@ -1798,6 +1798,12 @@ export interface Node {
   version?: number;
 }
 
+export interface NodeSetJobsEnabledRequest {
+  enabled?: boolean;
+  excludeJobs?: string[];
+  includeJobs?: string[];
+}
+
 export interface NodeStatusResult {
   master?: boolean;
   node?: Node;
@@ -6358,11 +6364,11 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      *
      * @tags Nodes
      * @name SetNodeJobsEnabled
-     * @summary Sets the enabled state of all jobs for the selected node
+     * @summary Sets the enabled state of jobs for the selected node. If both `includeJobs` and `excludeJobs` are not specified, this action will apply to ALL jobs.
      * @request PUT:/node/v1/setJobsEnabled/{nodeName}
      * @secure
      */
-    setNodeJobsEnabled: (nodeName: string, data: boolean, params: RequestParams = {}) =>
+    setNodeJobsEnabled: (nodeName: string, data: NodeSetJobsEnabledRequest, params: RequestParams = {}) =>
       this.request<any, number>({
         path: `/node/v1/setJobsEnabled/${nodeName}`,
         method: "PUT",

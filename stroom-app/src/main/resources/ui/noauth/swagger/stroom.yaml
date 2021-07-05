@@ -2848,8 +2848,8 @@ paths:
         content:
           application/json:
             schema:
-              type: boolean
-        description: enabled
+              $ref: '#/components/schemas/NodeSetJobsEnabledRequest'
+        description: Request parameters
         required: true
       responses:
         default:
@@ -2859,7 +2859,8 @@ paths:
                 type: integer
                 format: int32
           description: default response
-      summary: Sets the enabled state of all jobs for the selected node
+      summary: Sets the enabled state of jobs for the selected node. If both `includeJobs`
+        and `excludeJobs` are not specified, this action will apply to ALL jobs.
       tags:
       - Nodes
   /oauth2/v1/noauth/.well-known/openid-configuration:
@@ -8456,6 +8457,19 @@ components:
         version:
           type: integer
           format: int32
+    NodeSetJobsEnabledRequest:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        excludeJobs:
+          type: array
+          items:
+            type: string
+        includeJobs:
+          type: array
+          items:
+            type: string
     NodeStatusResult:
       type: object
       properties:
