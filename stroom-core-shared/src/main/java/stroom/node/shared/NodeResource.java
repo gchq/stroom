@@ -103,7 +103,7 @@ public interface NodeResource extends RestResource, DirectRestService {
                     "are unspecified or empty, this action will apply to ALL jobs.",
             operationId = "setNodeJobsEnabled"
     )
-    int setJobsEnabled(
+    NodeSetJobsEnabledResponse setJobsEnabled(
             @PathParam("nodeName") String nodeName,
             @Parameter(description = "Request parameters", required = true) NodeSetJobsEnabledRequest params);
 }

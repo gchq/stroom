@@ -1804,6 +1804,11 @@ export interface NodeSetJobsEnabledRequest {
   includeJobs?: string[];
 }
 
+export interface NodeSetJobsEnabledResponse {
+  /** @format int32 */
+  modifiedCount?: number;
+}
+
 export interface NodeStatusResult {
   master?: boolean;
   node?: Node;
@@ -6369,7 +6374,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     setNodeJobsEnabled: (nodeName: string, data: NodeSetJobsEnabledRequest, params: RequestParams = {}) =>
-      this.request<any, number>({
+      this.request<any, NodeSetJobsEnabledResponse>({
         path: `/node/v1/setJobsEnabled/${nodeName}`,
         method: "PUT",
         body: data,

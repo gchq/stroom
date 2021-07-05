@@ -29,6 +29,7 @@ import stroom.node.shared.FetchNodeStatusResponse;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeResource;
 import stroom.node.shared.NodeSetJobsEnabledRequest;
+import stroom.node.shared.NodeSetJobsEnabledResponse;
 import stroom.node.shared.NodeStatusResult;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.shared.ResourcePaths;
@@ -248,7 +249,7 @@ class NodeResourceImpl implements NodeResource {
     }
 
     @Override
-    public int setJobsEnabled(final String nodeName, final NodeSetJobsEnabledRequest params) {
+    public NodeSetJobsEnabledResponse setJobsEnabled(final String nodeName, final NodeSetJobsEnabledRequest params) {
         final NodeServiceImpl nodeService = nodeServiceProvider.get();
         final int recordsUpdated = nodeService.setJobsEnabledForNode(
                 nodeName,
@@ -261,6 +262,6 @@ class NodeResourceImpl implements NodeResource {
             LOGGER.info(enabledState + " " + recordsUpdated + " tasks for node " + nodeName);
         }
 
-        return recordsUpdated;
+        return new NodeSetJobsEnabledResponse(recordsUpdated);
     }
 }

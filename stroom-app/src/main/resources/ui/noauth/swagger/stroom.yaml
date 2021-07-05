@@ -2856,8 +2856,7 @@ paths:
           content:
             application/json:
               schema:
-                type: integer
-                format: int32
+                $ref: '#/components/schemas/NodeSetJobsEnabledResponse'
           description: default response
       summary: Sets the enabled state of jobs for the selected node. If both `includeJobs`
         and `excludeJobs` are unspecified or empty, this action will apply to ALL
@@ -8473,6 +8472,12 @@ components:
           items:
             type: string
           uniqueItems: true
+    NodeSetJobsEnabledResponse:
+      type: object
+      properties:
+        modifiedCount:
+          type: integer
+          format: int32
     NodeStatusResult:
       type: object
       properties:

@@ -4160,8 +4160,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "type" : "integer",
-                  "format" : "int32"
+                  "$ref" : "#/components/schemas/NodeSetJobsEnabledResponse"
                 }
               }
             },
@@ -12077,6 +12076,15 @@
               "type" : "string"
             },
             "uniqueItems" : true
+          }
+        }
+      },
+      "NodeSetJobsEnabledResponse" : {
+        "type" : "object",
+        "properties" : {
+          "modifiedCount" : {
+            "type" : "integer",
+            "format" : "int32"
           }
         }
       },
