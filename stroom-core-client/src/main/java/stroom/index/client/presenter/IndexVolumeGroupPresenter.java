@@ -18,11 +18,13 @@
 package stroom.index.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.IndexVolumeGroupResource;
 import stroom.node.client.view.WrapperView;
+import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -36,11 +38,10 @@ import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.List;
 
-public class IndexVolumeGroupPresenter extends MyPresenterWidget<WrapperView> {
+public class IndexVolumeGroupPresenter extends ContentTabPresenter<WrapperView> {
 
     private static final IndexVolumeGroupResource INDEX_VOLUME_GROUP_RESOURCE =
             GWT.create(IndexVolumeGroupResource.class);
@@ -89,28 +90,28 @@ public class IndexVolumeGroupPresenter extends MyPresenterWidget<WrapperView> {
         registerHandler(deleteButton.addClickHandler(event -> delete()));
     }
 
-    public void show() {
-        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                hide();
-            }
-        };
-        final PopupSize popupSize = PopupSize.resizable(1000, 600);
-        ShowPopupEvent.fire(
-                this,
-                this,
-                PopupType.CLOSE_DIALOG,
-                null,
-                popupSize,
-                "Index Volumes",
-                popupUiHandlers,
-                null);
-    }
-
-    public void hide() {
-        HidePopupEvent.fire(this, this, false, true);
-    }
+//    public void show() {
+//        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
+//            @Override
+//            public void onHideRequest(final boolean autoClose, final boolean ok) {
+//                hide();
+//            }
+//        };
+//        final PopupSize popupSize = PopupSize.resizable(1000, 600);
+//        ShowPopupEvent.fire(
+//                this,
+//                this,
+//                PopupType.CLOSE_DIALOG,
+//                null,
+//                popupSize,
+//                "Index Volumes",
+//                popupUiHandlers,
+//                null);
+//    }
+//
+//    public void hide() {
+//        HidePopupEvent.fire(this, this, false, true);
+//    }
 
     private void add() {
         final NewIndexVolumeGroupPresenter presenter = newIndexVolumeGroupPresenterProvider.get();
@@ -180,5 +181,15 @@ public class IndexVolumeGroupPresenter extends MyPresenterWidget<WrapperView> {
 
     public void refresh() {
         volumeStatusListPresenter.refresh();
+    }
+
+    @Override
+    public Icon getIcon() {
+        return SvgPresets.VOLUMES;
+    }
+
+    @Override
+    public String getLabel() {
+        return "Index Volumes";
     }
 }

@@ -16,10 +16,11 @@
 
 package stroom.index.client;
 
+import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.index.client.presenter.IndexVolumeGroupPresenter;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.node.client.NodeToolsPlugin;
+import stroom.node.client.NodeToolsContentPlugin;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPresets;
@@ -29,24 +30,27 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
-public class ManageIndexVolumesPlugin extends NodeToolsPlugin {
-
-    private final Provider<IndexVolumeGroupPresenter> manageVolumesPresenter;
+public class ManageIndexVolumesPlugin extends NodeToolsContentPlugin<IndexVolumeGroupPresenter> {
 
     @Inject
-    public ManageIndexVolumesPlugin(final EventBus eventBus,
-                                    final ClientSecurityContext securityContext,
-                                    final Provider<IndexVolumeGroupPresenter> manageVolumesPresenter) {
-        super(eventBus, securityContext);
-        this.manageVolumesPresenter = manageVolumesPresenter;
+    ManageIndexVolumesPlugin(final EventBus eventBus,
+                             final ContentManager contentManager,
+                             final Provider<IndexVolumeGroupPresenter> presenterProvider,
+                             final ClientSecurityContext securityContext) {
+        super(eventBus, contentManager, presenterProvider, securityContext);
     }
 
     @Override
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_VOLUMES_PERMISSION)) {
             event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
-                    new IconMenuItem(3, SvgPresets.VOLUMES, SvgPresets.VOLUMES, "Index Volumes", null, true, () ->
-                            manageVolumesPresenter.get().show()));
+                    new IconMenuItem(3,
+                            SvgPresets.VOLUMES,
+                            SvgPresets.VOLUMES,
+                            "Index Volumes",
+                            null,
+                            true,
+                            this::open));
         }
     }
 }

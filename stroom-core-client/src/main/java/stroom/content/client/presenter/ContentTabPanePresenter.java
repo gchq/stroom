@@ -28,9 +28,11 @@ import stroom.content.client.event.SelectContentTabEvent;
 import stroom.content.client.event.SelectContentTabEvent.SelectContentTabHandler;
 import stroom.data.table.client.Refreshable;
 import stroom.main.client.presenter.MainPresenter;
+import stroom.widget.tab.client.event.MaximiseEvent;
 import stroom.widget.tab.client.presenter.CurveTabLayoutPresenter;
 import stroom.widget.tab.client.presenter.CurveTabLayoutView;
 import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.tab.client.view.CurveTabLayoutUiHandlers;
 
 import com.google.gwt.user.client.History;
 import com.google.inject.Inject;
@@ -45,7 +47,12 @@ import java.util.List;
 
 public class ContentTabPanePresenter
         extends CurveTabLayoutPresenter<ContentTabPanePresenter.ContentTabPaneProxy>
-        implements OpenContentTabHandler, CloseContentTabHandler, SelectContentTabHandler, RefreshContentTabHandler {
+        implements
+        OpenContentTabHandler,
+        CloseContentTabHandler,
+        SelectContentTabHandler,
+        RefreshContentTabHandler,
+        CurveTabLayoutUiHandlers {
 
     private final List<TabData> historyList = new ArrayList<>();
     private int currentHistoryId;
@@ -56,6 +63,7 @@ public class ContentTabPanePresenter
     public ContentTabPanePresenter(final EventBus eventBus, final CurveTabLayoutView view,
                                    final ContentTabPaneProxy proxy) {
         super(eventBus, view, proxy);
+        view.setUiHandlers(this);
 
         registerHandler(eventBus.addHandler(RefreshCurrentContentTabEvent.getType(),
                 event -> {
@@ -106,6 +114,11 @@ public class ContentTabPanePresenter
                 ignoreHistory = false;
             }
         }));
+    }
+
+    @Override
+    public void maximise() {
+        MaximiseEvent.fire(this, null);
     }
 
     @Override

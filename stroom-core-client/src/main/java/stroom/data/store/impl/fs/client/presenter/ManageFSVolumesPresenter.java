@@ -18,28 +18,24 @@
 package stroom.data.store.impl.fs.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.view.WrapperView;
+import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenter;
-import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.proxy.Proxy;
 
 import java.util.List;
 
-public class ManageFSVolumesPresenter extends MyPresenter<WrapperView, ManageFSVolumesPresenter.ManageVolumesProxy> {
+public class ManageFSVolumesPresenter extends ContentTabPresenter<WrapperView> {
 
     private static final FsVolumeResource FS_VOLUME_RESOURCE = GWT.create(FsVolumeResource.class);
 
@@ -55,11 +51,10 @@ public class ManageFSVolumesPresenter extends MyPresenter<WrapperView, ManageFSV
     @Inject
     public ManageFSVolumesPresenter(final EventBus eventBus,
                                     final WrapperView view,
-                                    final ManageVolumesProxy proxy,
                                     final FSVolumeStatusListPresenter volumeStatusListPresenter,
                                     final Provider<FSVolumeEditPresenter> editProvider,
                                     final RestFactory restFactory) {
-        super(eventBus, view, proxy);
+        super(eventBus, view);
         this.volumeStatusListPresenter = volumeStatusListPresenter;
         this.editProvider = editProvider;
         this.restFactory = restFactory;
@@ -141,11 +136,11 @@ public class ManageFSVolumesPresenter extends MyPresenter<WrapperView, ManageFSV
         }
     }
 
-    @Override
-    protected void revealInParent() {
-        final PopupSize popupSize = PopupSize.resizable(1000, 600);
-        ShowPopupEvent.fire(this, this, PopupType.CLOSE_DIALOG, null, popupSize, "Manage Volumes", null, null);
-    }
+//    @Override
+//    protected void revealInParent() {
+//        final PopupSize popupSize = PopupSize.resizable(1000, 600);
+//        ShowPopupEvent.fire(this, this, PopupType.CLOSE_DIALOG, null, popupSize, "Manage Volumes", null, null);
+//    }
 
     private void enableButtons() {
         final boolean enabled = volumeStatusListPresenter.getSelectionModel().getSelected() != null;
@@ -157,8 +152,13 @@ public class ManageFSVolumesPresenter extends MyPresenter<WrapperView, ManageFSV
         volumeStatusListPresenter.refresh();
     }
 
-    @ProxyCodeSplit
-    public interface ManageVolumesProxy extends Proxy<ManageFSVolumesPresenter> {
+    @Override
+    public Icon getIcon() {
+        return SvgPresets.VOLUMES;
+    }
 
+    @Override
+    public String getLabel() {
+        return "Data Volumes";
     }
 }

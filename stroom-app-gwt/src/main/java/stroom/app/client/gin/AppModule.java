@@ -38,14 +38,16 @@ import stroom.explorer.client.presenter.EntityCheckTreePresenter;
 import stroom.explorer.client.presenter.EntityCheckTreePresenter.EntityCheckTreeView;
 import stroom.explorer.client.presenter.EntityTreePresenter;
 import stroom.explorer.client.presenter.EntityTreePresenter.EntityTreeView;
-import stroom.explorer.client.presenter.ExplorerTabPanePresenter;
-import stroom.explorer.client.presenter.ExplorerTabPanePresenter.ExplorerTabPaneProxy;
+import stroom.explorer.client.presenter.NavigationPresenter;
+import stroom.explorer.client.presenter.NavigationPresenter.NavigationProxy;
+import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
 import stroom.explorer.client.presenter.ExplorerTreePresenter;
 import stroom.explorer.client.presenter.ExplorerTreePresenter.ExplorerTreeProxy;
 import stroom.explorer.client.presenter.ExplorerTreePresenter.ExplorerTreeView;
 import stroom.explorer.client.view.EntityCheckTreeViewImpl;
 import stroom.explorer.client.view.EntityTreeViewImpl;
 import stroom.explorer.client.view.ExplorerTreeViewImpl;
+import stroom.explorer.client.view.NavigationViewImpl;
 import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
 import stroom.iframe.client.presenter.IFrameContentPresenter;
 import stroom.iframe.client.presenter.IFrameContentPresenter.IFrameContentView;
@@ -110,7 +112,11 @@ public class AppModule extends AbstractPresenterModule {
 
         bindPresenter(MainPresenter.class, MainView.class, MainViewImpl.class, MainProxy.class);
         bindPresenter(MenubarPresenter.class, MenubarView.class, MenubarViewImpl.class, MenubarProxy.class);
-        bindPresenter(ExplorerTabPanePresenter.class, ExplorerTabPaneProxy.class);
+        bindPresenter(
+                NavigationPresenter.class,
+                NavigationView.class,
+                NavigationViewImpl.class,
+                NavigationProxy.class);
         bindPresenter(ContentTabPanePresenter.class, ContentTabPaneProxy.class);
 
         bindPresenter(ExplorerTreePresenter.class, ExplorerTreeView.class, ExplorerTreeViewImpl.class,

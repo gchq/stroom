@@ -20,20 +20,20 @@
     position: relative;
 	overflow: hidden;
 	border: 1px solid var(--border-color);
+	padding: .5rem;
 }
 
 .quickFilter-textBox {
     width: 100%; /* To allow for info and clear btns */
 	margin: 0;
 	padding-left: 22px;
-	border: none !important;
+	/*border: none !important;*/
 	cursor: text;
 }
 
 .quickFilter-clear {
 	position: absolute;
 	right: 1px;
-	top: 0;
 }
 
 .quickFilter-infoButton {

@@ -42,21 +42,21 @@ public class ExportConfigPlugin extends Plugin {
 
     @Override
     public void onReveal(final BeforeRevealMenubarEvent event) {
-        // Add items to the tools menu.
-        event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, new Separator(100));
-        if (securityContext.hasAppPermission("Export Configuration")) {
-            event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, createExportMenuItem());
-        }
+//        // Add items to the tools menu.
+//        event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, new Separator(100));
+//        if (securityContext.hasAppPermission("Export Configuration")) {
+//            event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, createExportMenuItem());
+//        }
 
     }
 
-    private MenuItem createExportMenuItem() {
-        return new IconMenuItem(110,
-                SvgPresets.DOWNLOAD,
-                SvgPresets.DOWNLOAD,
-                "Export",
-                null,
-                true,
-                () -> ExportConfigEvent.fire(ExportConfigPlugin.this, null));
-    }
+//    private MenuItem createExportMenuItem() {
+//        return new IconMenuItem(110,
+//                SvgPresets.DOWNLOAD,
+//                SvgPresets.DOWNLOAD,
+//                "Export",
+//                null,
+//                true,
+//                () -> ExportConfigEvent.fire(ExportConfigPlugin.this, null));
+//    }
 }

@@ -47,8 +47,8 @@ import com.gwtplatform.mvp.client.proxy.RevealContentHandler;
 
 public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPresenter.MainProxy> {
 
-    @ContentSlot
-    public static final Type<RevealContentHandler<?>> MENUBAR = new Type<>();
+//    @ContentSlot
+//    public static final Type<RevealContentHandler<?>> MENUBAR = new Type<>();
     @ContentSlot
     public static final Type<RevealContentHandler<?>> EXPLORER = new Type<>();
     @ContentSlot

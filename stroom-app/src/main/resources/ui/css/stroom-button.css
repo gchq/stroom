@@ -51,8 +51,8 @@
 }
 
 .stroom-button-fab .face--disabled {
-	background: #ddd !important;
 	cursor: default;
+	opacity: 0;
 }
 
 .stroom-button-fab .face--down {

@@ -56,6 +56,6 @@ public class CurveTabBar extends AbstractTabBar {
 
     @Override
     protected int getTabGap() {
-        return -10;
+        return 0;
     }
 }

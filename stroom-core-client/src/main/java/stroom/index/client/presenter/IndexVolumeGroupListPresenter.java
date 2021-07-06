@@ -49,7 +49,7 @@ public class IndexVolumeGroupListPresenter extends MyPresenterWidget<DataGridVie
         super(eventBus, new DataGridViewImpl<>(true, true));
 
         // Add a border to the list.
-        getWidget().getElement().addClassName("stroom-border");
+//        getWidget().getElement().addClassName("stroom-border");
         getWidget().getElement().addClassName("default-min-sizes");
 
         initTableColumns();

@@ -18,11 +18,9 @@ package stroom.menubar.client.presenter;
 
 import stroom.core.client.MenuKeys;
 import stroom.item.client.presenter.ListPresenter.ListView;
-import stroom.main.client.presenter.MainPresenter;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.menubar.client.view.MenubarItem;
 import stroom.security.client.api.event.CurrentUserChangedEvent;
-import stroom.security.client.api.event.CurrentUserChangedEvent.CurrentUserChangedHandler;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 import stroom.widget.menu.client.presenter.HasChildren;
@@ -41,22 +39,18 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.DomEvent;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenter;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
-import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
-import com.gwtplatform.mvp.client.proxy.RevealContentEvent;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class MenubarPresenter extends MyPresenter<MenubarPresenter.MenubarView, MenubarPresenter.MenubarProxy>
-        implements CurrentUserChangedHandler {
+public class MenubarPresenter extends MyPresenter<MenubarPresenter.MenubarView, MenubarPresenter.MenubarProxy> {
 
     private final Provider<MenuListPresenter> menuListPresenterProvider;
     private final Provider<MenubarItem> menubarItemProvider;
@@ -66,35 +60,38 @@ public class MenubarPresenter extends MyPresenter<MenubarPresenter.MenubarView, 
     private String currentItem;
 
     @Inject
-    public MenubarPresenter(final EventBus eventBus, final MenubarView display, final MenubarProxy proxy,
+    public MenubarPresenter(final EventBus eventBus,
+                            final MenubarView display,
+                            final MenubarProxy proxy,
                             final Provider<MenuListPresenter> menuListPresenterProvider,
-                            final Provider<MenubarItem> menubarItemProvider, final MenuItems menuItems) {
+                            final Provider<MenubarItem> menubarItemProvider,
+                            final MenuItems menuItems) {
         super(eventBus, display, proxy);
         this.menuListPresenterProvider = menuListPresenterProvider;
         this.menubarItemProvider = menubarItemProvider;
         this.menuItems = menuItems;
     }
 
-    private void addItem(final Item item) {
-        if (item instanceof MenuItem) {
-            final MenuItem menuItem = (MenuItem) item;
-
-            // Create the presenter for the menu item.
-            final MenuItemPresenter presenter =
-                    addItem(null,
-                            null,
-                            menuItem.getText(),
-                            null,
-                            true,
-                            null);
-            registerHandler(presenter.getView().addClickHandler(event -> showPopup(menuItem, event)));
-            registerHandler(presenter.getView().addMouseOverHandler(event -> {
-                if (currentMenu != null) {
-                    showPopup(menuItem, event);
-                }
-            }));
-        }
-    }
+//    private void addItem(final Item item) {
+//        if (item instanceof MenuItem) {
+//            final MenuItem menuItem = (MenuItem) item;
+//
+//            // Create the presenter for the menu item.
+//            final MenuItemPresenter presenter =
+//                    addItem(null,
+//                            null,
+//                            menuItem.getText(),
+//                            null,
+//                            true,
+//                            null);
+//            registerHandler(presenter.getView().addClickHandler(event -> showPopup(menuItem, event)));
+//            registerHandler(presenter.getView().addMouseOverHandler(event -> {
+//                if (currentMenu != null) {
+//                    showPopup(menuItem, event);
+//                }
+//            }));
+//        }
+//    }
 
     protected MenuItemPresenter addItem(final String enabledImageClassName,
                                         final String disabledImageClassName,
@@ -129,12 +126,12 @@ public class MenubarPresenter extends MyPresenter<MenubarPresenter.MenubarView, 
         });
     }
 
-    private void showPopup(final MenuItem menuItem, final DomEvent<?> event) {
-        final int x = event.getRelativeElement().getAbsoluteLeft();
-        final int y = event.getRelativeElement().getAbsoluteBottom();
-        final Element element = event.getRelativeElement();
-        showPopup(menuItem, x, y, element);
-    }
+//    private void showPopup(final MenuItem menuItem, final DomEvent<?> event) {
+//        final int x = event.getRelativeElement().getAbsoluteLeft();
+//        final int y = event.getRelativeElement().getAbsoluteBottom();
+//        final Element element = event.getRelativeElement();
+//        showPopup(menuItem, x, y, element);
+//    }
 
     public void showPopup(final MenuItem menuItem, final int x, final int y, final Element autoHidePartner) {
         // Only change the popup if the item selected is changing and we have
@@ -150,47 +147,63 @@ public class MenubarPresenter extends MyPresenter<MenubarPresenter.MenubarView, 
             if (menuItem instanceof HasChildren) {
                 final HasChildren hasChildren = (HasChildren) menuItem;
 
-                hasChildren.getChildren().onSuccess(children -> {
-                    if (children != null && children.size() > 0) {
-                        final MenuListPresenter presenter = menuListPresenterProvider.get();
-                        presenter.setData(children);
-
-                        // Set the current presenter telling us that the
-                        // popup is
-                        // showing.
-                        currentItem = menuItem.getText();
-                        currentMenu = presenter;
-
-                        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-                            @Override
-                            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                                HidePopupEvent.fire(MenubarPresenter.this, presenter);
-                            }
-
-                            @Override
-                            public void onHide(final boolean autoClose, final boolean ok) {
-                                currentItem = null;
-                                currentMenu = null;
-                            }
-                        };
-
-                        // Add parent auto hide partners.
-                        final List<Element> autoHidePartners = new ArrayList<>();
-                        autoHidePartners.add(autoHidePartner);
-                        presenter.setAutoHidePartners(autoHidePartners);
-
-                        final Element[] partners = autoHidePartners.toArray(new Element[0]);
-                        final PopupPosition popupPosition = new PopupPosition(x, y);
-                        ShowPopupEvent.fire(MenubarPresenter.this, presenter, PopupType.POPUP, popupPosition,
-                                popupUiHandlers, partners);
-                    }
-                });
+                hasChildren.getChildren().onSuccess(children ->
+                        showMenuItems(menuItem, children, x, y, autoHidePartner));
             }
         }
     }
 
-    @ProxyEvent
-    @Override
+    public void showMenuItems(final MenuItem menuItem,
+                              final List<Item> children,
+                              final int x,
+                              final int y,
+                              final Element autoHidePartner) {
+        if (currentMenu != null) {
+            currentMenu.hide(true, true, false);
+        } else {
+
+            if (children != null && children.size() > 0) {
+                final MenuListPresenter presenter = menuListPresenterProvider.get();
+                presenter.setData(children);
+
+                // Set the current presenter telling us that the
+                // popup is
+                // showing.
+                if (menuItem != null) {
+                    currentItem = menuItem.getText();
+                }
+                currentMenu = presenter;
+
+                final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+                    @Override
+                    public void onHideRequest(final boolean autoClose, final boolean ok) {
+                        HidePopupEvent.fire(MenubarPresenter.this, presenter);
+                    }
+
+                    @Override
+                    public void onHide(final boolean autoClose, final boolean ok) {
+                        currentItem = null;
+                        currentMenu = null;
+                    }
+                };
+
+                // Add parent auto hide partners.
+                final List<Element> autoHidePartners = new ArrayList<>();
+                if (autoHidePartner != null) {
+                    autoHidePartners.add(autoHidePartner);
+                }
+                presenter.setAutoHidePartners(autoHidePartners);
+
+                final Element[] partners = autoHidePartners.toArray(new Element[0]);
+                final PopupPosition popupPosition = new PopupPosition(x, y);
+                ShowPopupEvent.fire(MenubarPresenter.this, presenter, PopupType.POPUP, popupPosition,
+                        popupUiHandlers, partners);
+            }
+        }
+    }
+
+    //    @ProxyEvent
+//    @Override
     public void onCurrentUserChanged(final CurrentUserChangedEvent event) {
         // Clear the current menus.
         menuItems.clear();
@@ -219,9 +232,9 @@ public class MenubarPresenter extends MyPresenter<MenubarPresenter.MenubarView, 
                 }
             }
         }
-
-        // Show the menubar.
-        forceReveal();
+//
+//        // Show the menubar.
+//        forceReveal();
     }
 
     private void refresh() {
@@ -229,15 +242,15 @@ public class MenubarPresenter extends MyPresenter<MenubarPresenter.MenubarView, 
         getView().clear();
         // Sort the menu items by priority.
         currentMenuItems.sort(new MenuItems.ItemComparator());
-        for (final Item item : currentMenuItems) {
-            // Add the item to the view.
-            addItem(item);
-        }
+//        for (final Item item : currentMenuItems) {
+//            // Add the item to the view.
+//            addItem(item);
+//        }
     }
 
     @Override
     protected void revealInParent() {
-        RevealContentEvent.fire(this, MainPresenter.MENUBAR, this);
+//        RevealContentEvent.fire(this, MainPresenter.MENUBAR, this);
     }
 
     public interface MenubarView extends ListView {

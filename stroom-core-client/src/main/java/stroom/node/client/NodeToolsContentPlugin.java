@@ -18,7 +18,7 @@ public abstract class NodeToolsContentPlugin<P extends MyPresenterWidget<?>>
     private P presenter;
 
     @Inject
-    NodeToolsContentPlugin(final EventBus eventBus,
+    public NodeToolsContentPlugin(final EventBus eventBus,
                            final ContentManager contentManager,
                            final Provider<P> presenterProvider,
                            final ClientSecurityContext securityContext) {

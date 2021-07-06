@@ -43,10 +43,8 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
     @UiField
     Spinner spinner;
     @UiField
-    SimplePanel topPanel;
-    @UiField
     ResizeLayoutPanel contentPanel;
-    private View maximisedView;
+    private Widget maximisedWidget;
     private int splitPos = 300;
     private MySplitLayoutPanel splitPanel;
     private Widget westWidget;
@@ -67,9 +65,7 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
 
     @Override
     public void setInSlot(final Object slot, final Widget content) {
-        if (slot == MainPresenter.MENUBAR) {
-            topPanel.add(content);
-        } else if (slot == MainPresenter.EXPLORER) {
+        if (slot == MainPresenter.EXPLORER) {
             westWidget = content;
             showSplit();
         } else if (slot == MainPresenter.CONTENT) {
@@ -82,24 +78,52 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
 
     @Override
     public void maximise(final View view) {
-        if (maximisedView == null || maximisedView != view) {
-            // Remember split panel.
-            if (westWidget != null) {
-                splitPos = westWidget.getOffsetWidth();
+        if (view == null) {
+
+            if (maximisedWidget == null) {
+                // Remember split panel.
+                if (westWidget != null) {
+                    splitPos = westWidget.getOffsetWidth();
+                }
+
+                // Maximise the passed view.
+                centerWidget.getElement().addClassName("maximised");
+                contentPanel.setWidget(centerWidget);
+
+                // Clear the split panel.
+                hideSplit();
+
+                maximisedWidget = centerWidget;
+            } else {
+                centerWidget.getElement().removeClassName("maximised");
+
+                // Restore the view.
+                showSplit();
+
+                maximisedWidget = null;
             }
 
-            // Maximise the passed view.
-            contentPanel.setWidget(view.asWidget());
+        } else {
+            final Widget widget = view.asWidget();
+            if (maximisedWidget == null || maximisedWidget != widget) {
+                // Remember split panel.
+                if (westWidget != null) {
+                    splitPos = westWidget.getOffsetWidth();
+                }
 
-            // Clear the split panel.
-            hideSplit();
+                // Maximise the passed view.
+                contentPanel.setWidget(widget);
 
-            maximisedView = view;
-        } else if (maximisedView == view) {
-            // Restore the view.
-            showSplit();
+                // Clear the split panel.
+                hideSplit();
 
-            maximisedView = null;
+                maximisedWidget = widget;
+            } else {
+                // Restore the view.
+                showSplit();
+
+                maximisedWidget = null;
+            }
         }
     }
 

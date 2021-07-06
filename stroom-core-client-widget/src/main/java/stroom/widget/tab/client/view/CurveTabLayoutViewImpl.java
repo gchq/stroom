@@ -20,17 +20,23 @@ import stroom.widget.tab.client.presenter.CurveTabLayoutView;
 import stroom.widget.tab.client.presenter.TabBar;
 
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.LayerContainer;
-import com.gwtplatform.mvp.client.ViewImpl;
+import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class CurveTabLayoutViewImpl extends ViewImpl implements CurveTabLayoutView {
+public class CurveTabLayoutViewImpl extends ViewWithUiHandlers<CurveTabLayoutUiHandlers> implements CurveTabLayoutView {
 
     private final Widget widget;
+
+    @UiField
+    Button menu;
     @UiField
     SimplePanel tabBarOuter;
     @UiField
@@ -61,6 +67,11 @@ public class CurveTabLayoutViewImpl extends ViewImpl implements CurveTabLayoutVi
     @Override
     public void setRightIndent(final int indent) {
         tabBarOuter.getElement().getStyle().setRight(indent, Unit.PX);
+    }
+
+    @UiHandler("menu")
+    void onMenu(final ClickEvent event) {
+        getUiHandlers().maximise();
     }
 
     public interface Binder extends UiBinder<Widget, CurveTabLayoutViewImpl> {

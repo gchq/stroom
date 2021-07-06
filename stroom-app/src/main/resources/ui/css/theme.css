@@ -4,7 +4,7 @@
 :root {
     --text-color: #000;
     --text-color-disabled: #666;
-    --app-background-color: #d50101;
+    --app-background-color: #fff;/*#d50101;*/
     --page-background-color: #fff;
     --border-color: #c5cde2;
     --input-background-color: #fff;
@@ -92,12 +92,119 @@
     --vis-tip-background-color: rgba(30, 30, 30, 0.8);
     --vis-tip-text-color: #bbb;
 
-    --scrollbar-background-color: #fff;
-    --scrollbar-corner-background-color: #fff;
-    --scrollbar-thumb-border-color: rgba(255,255,255,0);
+    --scrollbar-background-color: transparent;
+    --scrollbar-corner-background-color: transparent;
+    --scrollbar-thumb-border-color: transparent;
     --scrollbar-thumb-background-color: rgba(0,0,0,0.3);
     --scrollbar-thumb-background-color-hover: rgba(0,0,0,.5);
     --scrollbar-thumb-background-color-active: rgba(0,0,0,.8);
+
+    --navigation-background-color: #d5e9ff;
+    --navigation-text-color: #fff;
+
+
+
+
+
+
+
+    /**
+     * NEW UI VARS
+     */
+
+
+    /* Page */
+    --page__background-color: #fff;
+    --page__text-color: rgba(0, 0, 0, 0.8);
+
+    /* Controls */
+    --control__background-color: #fff;
+    --control__text-color: rgba(0, 0, 0, 0.8);
+    --control__border-color: rgba(0, 0, 0, 0.1);
+
+    /* Items, e.g. rows for tables, drop downs lists etc. */
+    --item__background-color--focus--highlighted: rgba(144, 202, 249, 0.4);
+    --item__text-color--focus--highlighted: rgba(0, 0, 0, 0.9);
+    --item__background-color--focus--highlighted--hover: rgba(144, 202, 249, 0.4); /* rgba(24,94,144,0.4); */
+    --item__text-color--focus--highlighted--hover: rgba(0, 0, 0, 0.9);
+    --item__background-color--focus--selected: rgba(144, 202, 249, 0.9);
+    --item__text-color--focus--selected: #000;
+    --item__background-color--focus--highlighted--selected: rgba(144, 202, 249, 1); /* #cae1f1; */
+    --item__text-color--focus--highlighted--selected: #000;
+    --item__background-color--hover: rgba(0, 0, 0, 0.1); /* rgba(24,94,144,0.3); */
+    --item__text-color--hover: rgba(0, 0, 0, 0.8);
+    --item__background-color--selected: rgba(0, 0, 0, 0.2); /* rgba(24,94,144,0.6); */
+    --item__text-color--selected: #000; /* rgba(0, 0, 0, 0.8); #fff */
+    --item__background-color--selected--hover: rgba(0, 0, 0, 0.2); /* rgba(24,94,144,0.7); */
+    --item__text-color--selected--hover: #000; /* rgba(0, 0, 0, 0.8); #fff; */
+
+    /* Pipeline editor */
+    --raised-low__background-color: #e4e4e4;
+    --raised-low__text-color: rgba(0, 0, 0, 0.8);
+    --raised-high__background-color: #2185d0;
+    --raised-high__text-color: rgba(0, 0, 0, 0.8);
+    --raised-high__selected-background-color: red;
+    --raised-high__selected-focus-background-color: #1c70b1;
+    --raised-element__border: thin solid #fff;
+
+    /* Sidebar */
+    --sidebar__header-color: var(--white);
+    --sidebar__background-color: var(--light-blue-500); /* material light blue 900 */
+    --menu-item__text-color: rgba(1, 1, 1, 0.8);
+    --menu-item__background-color--focus--highlighted: rgba(2, 136, 209, 0.3);
+    --menu-item__text-color--focus--highlighted: var(--white);
+    --menu-item__background-color--focus--highlighted--hover: rgba(2, 136, 209, 0.3); /* rgba(24,94,144,0.4); */
+    --menu-item__text-color--focus--highlighted--hover: var(--white);
+    --menu-item__background-color--focus--selected: rgba(2, 136, 209, 0.9);
+    --menu-item__text-color--focus--selected: var(--white);
+    --menu-item__background-color--focus--highlighted--selected: rgba(2, 136, 209, 1); /* material light blue 700 */
+    --menu-item__text-color--focus--highlighted--selected: var(--white);
+    --menu-item__background-color--hover: rgba(2, 136, 209, .2); /* rgba(24,94,144,0.3); */
+    --menu-item__text-color--hover: var(--white);
+    --menu-item__background-color--selected: rgba(2, 136, 209, .5); /* rgba(24,94,144,0.6); */
+    --menu-item__text-color--selected: var(--white);
+    --menu-item__background-color--selected--hover: rgba(2, 136, 209, .6); /* rgba(24,94,144,0.7); */
+    --menu-item__text-color--selected--hover: #fff; /* #cacbcb; #fff; */
+
+    /*--border-color: rgba(0, 0, 0, 0.1);*/
+
+    /* Specific */
+    --header__icon-color: #2185d0;
+
+    /* React table */
+    --table__odd-row__background-color: rgba(var(--black-rgb), .05);
+
+    /* Dialog */
+    --dialog__border-color: rgba(var(--black-rgb), .2);
+
+    /* Status */
+    --ok: var(--blue-500);
+    --warn: var(--bootstrap-warning);
+    --error: var(--bootstrap-error);
+    --fatal: var(--black);
+
+    /* Form fields */
+    --primary-rgb: var(--blue-500-rgb);
+    --valid-rgb: var(--bootstrap-success-rgb);
+    --invalid-rgb: var(--bootstrap-error-rgb);
+    --feedback-rgb: var(--bootstrap-error-rgb);
+
+    --primary: var(--blue-500);
+    --valid: var(--bootstrap-success);
+    --invalid: var(--bootstrap-error);
+    --feedback: var(--bootstrap-error);
+
+    --focus-border: var(--blue-500);
+    --focus-shadow: inset 0 1px 1px rgba(var(--black-rgb), .08), 0 0 8px rgba(var(--blue-500-rgb), .6); /* blue-500*/
+
+    --focus-border--valid: var(--valid);
+    --focus-shadow--valid: inset 0 1px 1px rgba(var(--black-rgb), .08), 0 0 8px rgba(var(--valid-rgb), .6); /* --bootstrap-success*/
+
+    --focus-border--invalid: var(--invalid);
+    --focus-shadow--invalid: inset 0 1px 1px rgba(var(--black-rgb), .08), 0 0 8px rgba(var(--invalid-rgb), .6); /* --bootstrap-error*/
+
+    --focus-border--secondary: var(--pink-500);
+    --focus-shadow--secondary: inset 0 1px 1px rgba(var(--black-rgb), .075), 0 0 8px rgba(var(--pink-500-rgb), .6); /* pink-500*/
 }
 
 .stroom-theme-dark {
@@ -191,19 +298,101 @@
     --vis-tip-background-color: rgba(30, 30, 30, 0.8);
     --vis-tip-text-color: #bbb;
 
-    --scrollbar-background-color: #141414;
-    --scrollbar-corner-background-color: #141414;
-    --scrollbar-thumb-border-color: #141414;
+    --scrollbar-background-color: transparent;
+    --scrollbar-corner-background-color: transparent;
+    --scrollbar-thumb-border-color: transparent;
     --scrollbar-thumb-background-color: #5c5c5c;
     --scrollbar-thumb-background-color-hover: #8d8d8d;
     --scrollbar-thumb-background-color-active: #979797;
+
+    --navigation-background-color: #19171d;
+    --navigation-text-color: #e6e1dc;
+
+    /**
+     * NEW UI VARS
+     */
+
+    /* Page */
+    --page__background-color: #212121;
+    --page__text-color: #cacbcb;
+
+    /* Controls */
+    --control__background-color: #131417;
+    --control__text-color: #cacbcb;
+    --control__border-color: #4d5250;
+
+    /* Items, e.g. rows for tables, drop downs lists etc. */
+    --item__background-color--focus--highlighted: rgba(24, 94, 144, 0.3);
+    --item__text-color--focus--highlighted: #cacbcb;
+    --item__background-color--focus--highlighted--hover: rgba(24, 94, 144, 0.3); /* rgba(24,94,144,0.4); */
+    --item__text-color--focus--highlighted--hover: #cacbcb;
+    --item__background-color--focus--selected: rgba(24, 94, 144, 0.9);
+    --item__text-color--focus--selected: #fff;
+    --item__background-color--focus--highlighted--selected: rgba(24, 94, 144, 1);
+    --item__text-color--focus--highlighted--selected: #fff;
+    --item__background-color--hover: rgba(255, 255, 255, 0.1); /* rgba(24,94,144,0.3); */
+    --item__text-color--hover: #cacbcb;
+    --item__background-color--selected: rgba(255, 255, 255, 0.2); /* rgba(24,94,144,0.6); */
+    --item__text-color--selected: #fff; /* #cacbcb; #fff; */
+    --item__background-color--selected--hover: rgba(255, 255, 255, 0.2); /* rgba(24,94,144,0.7); */
+    --item__text-color--selected--hover: #fff; /* #cacbcb; #fff; */
+
+    /* Pipeline editor */
+    --raised-low__background-color: #adadad;
+    --raised-low__text-color: #cacbcb;
+    --raised-high__background-color: #4d5250;
+    --raised-high__text-color: #cacbcb;
+    --raised-high__selected-background-color: #747c79;
+    --raised-high__selected-focus-background-color: #747c79;
+    --raised-element__border: thin solid #aaa;
+    /*--border-color: #4d5250;*/
+
+    /* Sidebar */
+    --sidebar__header-color: #fff;
+    --sidebar__background-color: #252526;
+    --menu-item__text-color: rgba(255, 255, 255, 0.8);
+    --menu-item__background-color--focus--highlighted: rgba(24, 94, 144, 0.3);
+    --menu-item__text-color--focus--highlighted: #cacbcb;
+    --menu-item__background-color--focus--highlighted--hover: rgba(24, 94, 144, 0.3); /* rgba(24,94,144,0.4); */
+    --menu-item__text-color--focus--highlighted--hover: #cacbcb;
+    --menu-item__background-color--focus--selected: rgba(24, 94, 144, 0.9);
+    --menu-item__text-color--focus--selected: #fff;
+    --menu-item__background-color--focus--highlighted--selected: rgba(24, 94, 144, 1);
+    --menu-item__text-color--focus--highlighted--selected: #fff;
+    --menu-item__background-color--hover: rgba(255, 255, 255, 0.1); /* rgba(24,94,144,0.3); */
+    --menu-item__text-color--hover: #cacbcb;
+    --menu-item__background-color--selected: rgba(255, 255, 255, 0.2); /* rgba(24,94,144,0.6); */
+    --menu-item__text-color--selected: #fff; /* #cacbcb; #fff; */
+    --menu-item__background-color--selected--hover: rgba(255, 255, 255, 0.2); /* rgba(24,94,144,0.7); */
+    --menu-item__text-color--selected--hover: #fff; /* #cacbcb; #fff; */
+
+    /* Specific */
+    --header__icon-color: #2185d0;
+
+    /* React table */
+    --table__odd-row__background-colo: rgba(var(--black-rgb), 0.2);
+
+    /* Dialog */
+    --dialog__border-color: rgba(var(--black-rgb), .2);
+
+    /* Status */
+    --ok: var(--blue-500);
+    --warn: var(--bootstrap-warning);
+    --error: var(--bootstrap-error);
+    --fatal: var(--black);
+
+    /* Form fields */
+    --primary: var(--blue-500);
+    --valid: var(--bootstrap-success);
+    --invalid: var(--bootstrap-error);
+    --feedback: var(--red-200),
 }
 
 .stroom-theme-dark2 {
     --text-color: #abb0b6;
     --text-color-disabled: #666;
-    --app-background-color: #000;
-    --page-background-color: #1b1d24;
+    --app-background-color: #1a1d21;
+    --page-background-color: #1a1d21;
     --border-color: #14161b;
     --input-background-color: #262a32;
     --input-border-color: #191c21;
@@ -224,15 +413,15 @@
     --dialog-titlebar-border-color: #14161b;
     --dialog-titlebar-text-color: #fff;
     --dialog-background-image: none;
-    --dialog-background-color: #1b1d24;
+    --dialog-background-color: #1a1d21;
     --dialog-border-color: #15161b;
     --dialog-shadow: 0 0 5px 2px rgb(0 0 0 / 100%);
     --popup-shadow: 0 0 5px 2px rgb(0 0 0 / 100%);
 
-    --main-background-color: #1b1d24;
+    --main-background-color: #1a1d21;
     --main-border-color: #15161b;
 
-    --tooltip-background-color: #1b1d24;
+    --tooltip-background-color: #1a1d21;
     --tooltip-text-color: #fff;
 
     --button-background-image: none;
@@ -289,16 +478,104 @@
     --vis-tip-background-color: rgba(30, 30, 30, 0.8);
     --vis-tip-text-color: #bbb;
 
-    --scrollbar-background-color: #22252c;
-    --scrollbar-corner-background-color: #22252c;
-    --scrollbar-thumb-border-color: #22252c;
+    --scrollbar-background-color: transparent;
+    --scrollbar-corner-background-color: transparent;
+    --scrollbar-thumb-border-color: transparent;
     --scrollbar-thumb-background-color: #5c5c5c;
     --scrollbar-thumb-background-color-hover: #8d8d8d;
     --scrollbar-thumb-background-color-active: #979797;
+
+    --navigation-background-color: #19171d;
+    --navigation-text-color: #e6e1dc;
+
+
+
+    /**
+     * NEW UI VARS
+     */
+
+    /* Page */
+    --page__background-color: #212121;
+    --page__text-color: #cacbcb;
+
+    /* Controls */
+    --control__background-color: #1c1f25;
+    --control__text-color: #cacbcb;
+    --control__border-color: #4d5250;
+
+    /* Items, e.g. rows for tables, drop downs lists etc. */
+    --item__background-color--focus--highlighted: rgba(24, 94, 144, 0.3);
+    --item__text-color--focus--highlighted: #cacbcb;
+    --item__background-color--focus--highlighted--hover: rgba(24, 94, 144, 0.3); /* rgba(24,94,144,0.4); */
+    --item__text-color--focus--highlighted--hover: #cacbcb;
+    --item__background-color--focus--selected: rgba(24, 94, 144, 0.9);
+    --item__text-color--focus--selected: #fff;
+    --item__background-color--focus--highlighted--selected: rgba(24, 94, 144, 1);
+    --item__text-color--focus--highlighted--selected: #fff;
+    --item__background-color--hover: rgba(255, 255, 255, 0.1); /* rgba(24,94,144,0.3); */
+    --item__text-color--hover: #cacbcb;
+    --item__background-color--selected: rgba(255, 255, 255, 0.2); /* rgba(24,94,144,0.6); */
+    --item__text-color--selected: #fff; /* #cacbcb; #fff; */
+    --item__background-color--selected--hover: rgba(255, 255, 255, 0.2); /* rgba(24,94,144,0.7); */
+    --item__text-color--selected--hover: #fff; /* #cacbcb; #fff; */
+
+    /* Pipeline editor */
+    --raised-low__background-color: #adadad;
+    --raised-low__text-color: #cacbcb;
+    --raised-high__background-color: #4d5250;
+    --raised-high__text-color: #cacbcb;
+    --raised-high__selected-background-color: #747c79;
+    --raised-high__selected-focus-background-color: #747c79;
+    --raised-element__border: thin solid #aaa;
+    /*--border-color: #4d5250;*/
+
+    /* Sidebar */
+    --sidebar__header-color: #fff;
+    --sidebar__background-color: #252526;
+    --menu-item__text-color: rgba(255, 255, 255, 0.8);
+    --menu-item__background-color--focus--highlighted: rgba(24, 94, 144, 0.3);
+    --menu-item__text-color--focus--highlighted: #cacbcb;
+    --menu-item__background-color--focus--highlighted--hover: rgba(24, 94, 144, 0.3); /* rgba(24,94,144,0.4); */
+    --menu-item__text-color--focus--highlighted--hover: #cacbcb;
+    --menu-item__background-color--focus--selected: rgba(24, 94, 144, 0.9);
+    --menu-item__text-color--focus--selected: #fff;
+    --menu-item__background-color--focus--highlighted--selected: rgba(24, 94, 144, 1);
+    --menu-item__text-color--focus--highlighted--selected: #fff;
+    --menu-item__background-color--hover: rgba(255, 255, 255, 0.1); /* rgba(24,94,144,0.3); */
+    --menu-item__text-color--hover: #cacbcb;
+    --menu-item__background-color--selected: rgba(255, 255, 255, 0.2); /* rgba(24,94,144,0.6); */
+    --menu-item__text-color--selected: #fff; /* #cacbcb; #fff; */
+    --menu-item__background-color--selected--hover: rgba(255, 255, 255, 0.2); /* rgba(24,94,144,0.7); */
+    --menu-item__text-color--selected--hover: #fff; /* #cacbcb; #fff; */
+
+    /* Specific */
+    --header__icon-color: #2185d0;
+
+    /* React table */
+    --table__odd-row__background-colo: rgba(var(--black-rgb), 0.2);
+
+    /* Dialog */
+    --dialog__border-color: rgba(var(--black-rgb), .2);
+
+    /* Status */
+    --ok: var(--blue-500);
+    --warn: var(--bootstrap-warning);
+    --error: var(--bootstrap-error);
+    --fatal: var(--black);
+
+    /* Form fields */
+    --primary: var(--blue-500);
+    --valid: var(--bootstrap-success);
+    --invalid: var(--bootstrap-error);
+    --feedback: var(--red-200),
 }
 
-.stroom-theme-dark .stroom-body {
-	background-color: var(--app-background-color) !important;
+.stroom-body {
+	background-color: var(--app-background-color);
+}
+
+.stroom-theme-dark .navigation {
+	background-color: var(--navigation-background-color) !important;
 }
 
 /**

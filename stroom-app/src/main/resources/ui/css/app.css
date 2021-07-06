@@ -1,6 +1,8 @@
 /* Material Design Lite */
 /* @import ../mdl/material.min.css" /> */
 /* <script type="text/javascript" src='../mdl/material.min.js'></script> */
+@import url("material_design_colors.css");
+
 @import url("theme.css");
 @import url("layout.css");
 @import url("font.css");
@@ -13,6 +15,9 @@
 
 /* Roboto Monospace Font */
 @import url("Roboto_Mono.css");
+
+@import url("bootstrap/bootstrap.min.css");
+@import url("bootstrap/custom-bootstrap.css");
 
 /* Standard GWT CSS plus Stroom modifications */
 @import url("standard.css");

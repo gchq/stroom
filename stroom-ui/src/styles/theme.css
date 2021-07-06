@@ -4,7 +4,7 @@
 :root {
     --text-color: #000;
     --text-color-disabled: #666;
-    --app-background-color: #d50101;
+    --app-background-color: #fff;/*#d50101;*/
     --page-background-color: #fff;
     --border-color: #c5cde2;
     --input-background-color: #fff;
@@ -92,13 +92,15 @@
     --vis-tip-background-color: rgba(30, 30, 30, 0.8);
     --vis-tip-text-color: #bbb;
 
-    --scrollbar-background-color: #fff;
-    --scrollbar-corner-background-color: #fff;
-    --scrollbar-thumb-border-color: rgba(255,255,255,0);
+    --scrollbar-background-color: transparent;
+    --scrollbar-corner-background-color: transparent;
+    --scrollbar-thumb-border-color: transparent;
     --scrollbar-thumb-background-color: rgba(0,0,0,0.3);
     --scrollbar-thumb-background-color-hover: rgba(0,0,0,.5);
     --scrollbar-thumb-background-color-active: rgba(0,0,0,.8);
 
+    --navigation-background-color: #d5e9ff;
+    --navigation-text-color: #fff;
 
 
 
@@ -295,13 +297,15 @@
     --vis-tip-background-color: rgba(30, 30, 30, 0.8);
     --vis-tip-text-color: #bbb;
 
-    --scrollbar-background-color: #141414;
-    --scrollbar-corner-background-color: #141414;
-    --scrollbar-thumb-border-color: #141414;
+    --scrollbar-background-color: transparent;
+    --scrollbar-corner-background-color: transparent;
+    --scrollbar-thumb-border-color: transparent;
     --scrollbar-thumb-background-color: #5c5c5c;
     --scrollbar-thumb-background-color-hover: #8d8d8d;
     --scrollbar-thumb-background-color-active: #979797;
 
+    --navigation-background-color: #19171d;
+    --navigation-text-color: #e6e1dc;
 
     /**
      * NEW UI VARS
@@ -473,13 +477,15 @@
     --vis-tip-background-color: rgba(30, 30, 30, 0.8);
     --vis-tip-text-color: #bbb;
 
-    --scrollbar-background-color: #22252c;
-    --scrollbar-corner-background-color: #22252c;
-    --scrollbar-thumb-border-color: #22252c;
+    --scrollbar-background-color: transparent;
+    --scrollbar-corner-background-color: transparent;
+    --scrollbar-thumb-border-color: transparent;
     --scrollbar-thumb-background-color: #5c5c5c;
     --scrollbar-thumb-background-color-hover: #8d8d8d;
     --scrollbar-thumb-background-color-active: #979797;
 
+    --navigation-background-color: #19171d;
+    --navigation-text-color: #e6e1dc;
 
 
 
@@ -563,8 +569,12 @@
     --feedback: var(--red-200),
 }
 
-.stroom-theme-dark .stroom-body {
-	background-color: var(--app-background-color) !important;
+.stroom-body {
+	background-color: var(--app-background-color);
+}
+
+.stroom-theme-dark .navigation {
+	background-color: var(--navigation-background-color) !important;
 }
 
 /**

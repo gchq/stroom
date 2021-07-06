@@ -116,7 +116,6 @@ td {
  * Styles for basic Stroom components
  */
 .stroom-body {
-	background-color: #d50101 !important;
 	line-height: 14px;
 	line-height: initial;
 }
@@ -136,20 +135,6 @@ td {
 	left: 0px;
 	width: 100%;
 	height: 100%;
-}
-
-.tubeEffect {
-	position: absolute;
-	top: 0px;
-	left: 0px;
-	width: 100%;
-	height: 100%;
-	opacity: 0.6;
-	visibility: visible;
-	
-	box-shadow: inset 0 0 150px rgba(0,0,0,1), inset 0 0 150px rgba(0,0,0,1);
-	
-	/*box-shadow: inset 0 150px 150px rgba(0,0,0,0.4),inset 0 -150px 150px rgba(0,0,0,0.4),inset -150px 0 150px rgba(0,0,0,0.4),inset 150px 0 150px rgba(0,0,0,0.4) */
 }
 
 /* STYLES FOR THE LOADING BANNER */
@@ -394,8 +379,8 @@ td {
 .stroom-main-content-container {
 	height: 100%;
 	padding: 0px;
-	border: 1px solid var(--main-border-color);
-    background-color: var(--main-background-color);
+	/*border: 1px solid var(--main-border-color);*/
+    /*background-color: var(--main-background-color);*/
 }
 
 /* DATA GRID */
@@ -616,9 +601,11 @@ input[type="file"]:disabled {
   background: var(--input-background-color) !important;
 }
 
+/*
 .stroom-content {
 	background-color: var(--main-background-color);
 }
+*/
 
 .gwt-ListBox {
 	/* Hide drop down arrow on Firefox */
@@ -730,11 +717,11 @@ input[type="file"]:disabled {
 }
 
 .activityOuter {
-    background-color: var(--input-background-color);
-    padding: 10px;
+    padding: .5rem;
+    color: var(--text-color);
 }
 
-.activityContainer {
+.activityButton {
     background-color: var(--input-background-color);
     color: var(--input-text-color);
     border: 1px solid var(--input-border-color);
