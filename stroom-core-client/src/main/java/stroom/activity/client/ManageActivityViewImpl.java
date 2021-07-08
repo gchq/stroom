@@ -18,13 +18,13 @@ package stroom.activity.client;
 
 import stroom.activity.client.ManageActivityPresenter.ManageActivityView;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -44,7 +44,7 @@ public class ManageActivityViewImpl extends ViewWithUiHandlers<ManageActivityUiH
     @UiField
     QuickFilter nameFilter;
     @UiField
-    ResizeSimplePanel dataGrid;
+    SimplePanel dataGrid;
 
     private Supplier<SafeHtml> tooltipContentSupplier;
 

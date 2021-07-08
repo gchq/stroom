@@ -50,7 +50,7 @@ public class InfoDocumentPresenter
 
     @Override
     protected void revealInParent() {
-        final PopupSize popupSize = new PopupSize(400, 250, 200, 200, true);
+        final PopupSize popupSize = PopupSize.resizable(450, 300);
         ShowPopupEvent.fire(this, this, PopupType.CLOSE_DIALOG, popupSize, "Info", null);
     }
 

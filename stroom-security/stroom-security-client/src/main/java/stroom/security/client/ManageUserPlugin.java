@@ -68,7 +68,7 @@ public class ManageUserPlugin extends NodeToolsPlugin {
                             () -> usersAndGroupsPresenterProvider.get(new AsyncCallback<UsersAndGroupsPresenter>() {
                                 @Override
                                 public void onSuccess(final UsersAndGroupsPresenter presenter) {
-                                    final PopupSize popupSize = new PopupSize(800, 600, true);
+                                    final PopupSize popupSize = PopupSize.resizable(800, 600);
                                     ShowPopupEvent.fire(ManageUserPlugin.this, presenter,
                                             PopupType.CLOSE_DIALOG, null, popupSize, "User Permissions", null, null);
                                 }

@@ -93,13 +93,7 @@ public class DataDisplaySupport {
             caption = "Stream " + sourceLocation.getIdentifierString();
         }
 
-        final PopupSize popupSize = new PopupSize(
-                1400,
-                800,
-                1000,
-                600,
-                true);
-
+        final PopupSize popupSize = PopupSize.resizable(1400, 800);
         ShowPopupEvent.fire(
                 presenter,
                 presenter,

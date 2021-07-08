@@ -2,12 +2,12 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
 	xmlns:g="urn:import:com.google.gwt.user.client.ui">
 
-	<g:FlowPanel styleName="resizableDialog-container">
-		<g:FlowPanel styleName="resizableDialog-background">
-			<g:SimplePanel ui:field="content" styleName="resizableDialog-content" />
-			<g:SimplePanel styleName="resizableDialog-titleBar">
-				<g:Label ui:field="titleText" styleName="resizableDialog-titleText">Caption</g:Label>
+	<g:FlowPanel styleName="dialog-container">
+		<g:FlowPanel styleName="dialog-background">
+			<g:SimplePanel styleName="dialog-titleBar">
+				<g:Label ui:field="titleText" styleName="dialog-titleText">Caption</g:Label>
 			</g:SimplePanel>
+			<g:SimplePanel ui:field="content" styleName="dialog-body" />
 		</g:FlowPanel>
 		<g:SimplePanel ui:field="resizeHandle" styleName="resizableDialog-resizeHandle" />
 	</g:FlowPanel>

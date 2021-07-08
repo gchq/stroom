@@ -128,7 +128,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
             final Rest<Boolean> rest = restFactory.create();
             rest.call(CACHE_RESOURCE).clear(row.getName(), row.getNodeName());
         });
-        getView().addColumn(clearColumn, "</br>", 50);
+        getView().addColumn(clearColumn, "</br>", 80);
 
         getView().addEndColumn(new EndColumn<>());
     }

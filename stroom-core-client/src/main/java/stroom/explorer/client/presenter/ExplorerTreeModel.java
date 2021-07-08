@@ -93,6 +93,18 @@ public class ExplorerTreeModel {
         explorerTreeFilterBuilder.setRequiredPermissions(requiredPermissions);
     }
 
+    public void setEnsureVisible(final Set<ExplorerNode> ensureVisible) {
+        this.ensureVisible = null;
+        if (ensureVisible != null) {
+            this.ensureVisible = new HashSet<>();
+            for (ExplorerNode node : ensureVisible) {
+                if (node != null && node.getUuid() != null) {
+                    this.ensureVisible.add(node.getUuid());
+                }
+            }
+        }
+    }
+
     public void setEnsureVisible(final ExplorerNode... ensureVisible) {
         this.ensureVisible = null;
         if (ensureVisible != null) {

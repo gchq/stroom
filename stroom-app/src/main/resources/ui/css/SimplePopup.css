@@ -25,7 +25,7 @@
 }
 
 .simplePopup-background {
-	background: var(--page-background-color);
+	background: var(--main-background-color);
 	border: 1px solid var(--dialog-border-color);
 	box-shadow: var(--popup-shadow);
 	border-radius: 3px;

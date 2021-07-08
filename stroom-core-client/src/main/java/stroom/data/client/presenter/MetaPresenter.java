@@ -19,6 +19,7 @@ package stroom.data.client.presenter;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
+import stroom.data.client.presenter.MetaPresenter.MetaView;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.HasDocumentRead;
@@ -60,7 +61,7 @@ import com.gwtplatform.mvp.client.View;
 import java.util.HashSet;
 import java.util.Set;
 
-public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
+public class MetaPresenter extends MyPresenterWidget<MetaView>
         implements HasDataSelectionHandlers<Selection<Long>>, HasDocumentRead<Object>, BeginSteppingHandler {
 
     public static final String DATA = "DATA";
@@ -89,7 +90,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
 
     @Inject
     public MetaPresenter(final EventBus eventBus,
-                         final StreamView view,
+                         final MetaView view,
                          final MetaListPresenter metaListPresenter,
                          final MetaRelationListPresenter metaRelationListPresenter,
                          final DataPresenter dataPresenter,
@@ -232,8 +233,8 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
                 }
             };
 
-            final PopupSize popupSize = new PopupSize(
-                    800, 600, 400, 400, true);
+            presenter.getWidget().getElement().addClassName("default-min-sizes");
+            final PopupSize popupSize = PopupSize.resizable(800, 600);
             ShowPopupEvent.fire(
                     MetaPresenter.this,
                     presenter,
@@ -621,7 +622,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
         dataPresenter.setClassificationUiHandlers(classificationUiHandlers);
     }
 
-    public interface StreamView extends View {
+    public interface MetaView extends View {
 
     }
 }

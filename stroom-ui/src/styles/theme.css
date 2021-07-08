@@ -9,13 +9,17 @@
     --border-color: #c5cde2;
     --input-background-color: #fff;
     --input-border-color: #c5cde2;
+    --input-background-color-disabled: #eee;
+    --input-border-color-disabled: #ccc;
 
     --header-border-color: #dddddd;
     --even-row-background-color: #ebebeb;
     --odd-row-background-color: #fff;
-    --hovered-row-background-color: #bbdefb;
+    --hovered-row-background-color: #e6f4ff;
     --selected-row-background-color: #bbdefb;
     --selected-row-text-color: #000;
+
+    --menu-separator-color: #bfbfbf;
 
     --dialog-titlebar-background-image: linear-gradient(rgb(96, 161, 240), rgb(74, 144, 228) 8px);
     --dialog-titlebar-background-color: rgb(74, 144, 228);
@@ -57,6 +61,7 @@
     --pipeline-element-box-background-color-selected-hover: #bbdefb;
     --pipeline-element-box-background-color-hotspot: rgba(255,0,0,.3);
     --pipeline-element-box-text-color: #000;
+    --pipeline-element-box-border-color: #918e8c;
 
     --link-text-color: #0000AA;
 
@@ -203,17 +208,21 @@
     --text-color: #e6e1dc;
     --text-color-disabled: #666;
     --app-background-color: #000;/*#19171d;*/
-    --page-background-color: #1a1d21;
+    --page-background-color: #19171d;
     --border-color: #555;
-    --input-background-color: #000;
+    --input-background-color: #333;
     --input-border-color: #555;
+    --input-background-color-disabled: #222427;
+    --input-border-color-disabled: #3c3c3c;
 
     --header-border-color: #333;
-    --even-row-background-color: #080808;
+    --even-row-background-color: #282c31;
     --odd-row-background-color: #1a1d21;
-    --hovered-row-background-color: #27242c;
+    --hovered-row-background-color: rgb(255 255 255 / 15%);
     --selected-row-background-color: #1164a3;
     --selected-row-text-color: #fff;
+
+    --menu-separator-color: rgb(255 255 255 / 20%);
 
     --dialog-titlebar-background-image: none;
     --dialog-titlebar-background-color: #19171d;
@@ -233,7 +242,7 @@
 
     --button-background-image: none;
     --button-background-color: #454545;
-    --button-border-color: #2f2f2f;
+    --button-border-color: #555;
     --button-text-color: #fff;
     --button-background-image-active: none;
     --button-background-color-active: #555555;
@@ -245,8 +254,8 @@
     --button-border-color-disabled-hover: #000;
 
     --expression-item-box-background-color-selected: #454545;
-    --expression-item-box-background-color-hover: #555555;
-    --expression-item-box-background-color-disabled: #ccc;
+    --expression-item-box-background-color-hover: #555;
+    --expression-item-box-background-color-disabled: #333;
     --expression-item-box-background-color-hotspot: rgba(255,0,0,.3);
 
     --pipeline-element-box-background-color: #454545;
@@ -255,6 +264,7 @@
     --pipeline-element-box-background-color-selected-hover: #1164a3;
     --pipeline-element-box-background-color-hotspot: rgba(255,0,0,.5);
     --pipeline-element-box-text-color: #fff;
+    --pipeline-element-box-border-color: #a1a1a1;
 
     --link-text-color: #3aaaff;
 
@@ -377,10 +387,12 @@
     --text-color: #abb0b6;
     --text-color-disabled: #666;
     --app-background-color: #000;
-    --page-background-color: #22252c;
+    --page-background-color: #1b1d24;
     --border-color: #14161b;
     --input-background-color: #262a32;
     --input-border-color: #191c21;
+    --input-background-color-disabled: #1f2229;
+    --input-border-color-disabled: #191c21;
 
     --header-border-color: #14161b;
     --even-row-background-color: #15161b;
@@ -388,6 +400,8 @@
     --hovered-row-background-color: #2d2f35;
     --selected-row-background-color: #3498db;
     --selected-row-text-color: #fff;
+
+    --menu-separator-color: rgb(255 255 255 / 20%);
 
     --dialog-titlebar-background-image: none;
     --dialog-titlebar-background-color: #14161b;
@@ -419,8 +433,8 @@
     --button-border-color-disabled-hover: #000;
 
     --expression-item-box-background-color-selected: #454545;
-    --expression-item-box-background-color-hover: #555555;
-    --expression-item-box-background-color-disabled: #ccc;
+    --expression-item-box-background-color-hover: #555;
+    --expression-item-box-background-color-disabled: #333;
     --expression-item-box-background-color-hotspot: rgba(255,0,0,.3);
 
     --pipeline-element-box-background-color: #454545;
@@ -570,14 +584,6 @@
 	-o-transition: background-color 3s linear;
 }
 
-/*
-.stroom-theme-transitions .stroom-content-container {
-    transition: background-color 3s linear;
-	-webkit-transition: background-color 3s linear;
-	-moz-transition: background-color 3s linear;
-	-o-transition: background-color 3s linear;
-}
-*/
 .stroom-theme-transitions .gwt-TabLayoutPanel .gwt-TabLayoutPanelContent {
     transition: background-color 3s linear;
 	-webkit-transition: background-color 3s linear;

@@ -4,20 +4,14 @@
              xmlns:item="urn:import:stroom.item.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client">
-    <g:DockLayoutPanel unit="PX" width="100%" height="100%" styleName="stroom-control-page">
-        <g:south size="35">
-            <g:FlowPanel styleName="preferencesViewImpl-buttons">
-                <g:Button ui:field="setAsDefault" text="Set As Default"/>
-                <g:Button ui:field="revertToDefault" text="Revert To Default"/>
-            </g:FlowPanel>
-        </g:south>
-        <g:center>
+    <g:FlowPanel styleName="max dock-container-vertical stroom-control-page">
+        <g:SimplePanel styleName="dock-max">
             <g:Grid ui:field="grid" styleName="stroom-control-grid">
                 <!-- Theme -->
                 <g:row>
                     <g:cell>Theme:</g:cell>
                     <g:customCell>
-                        <item:StringListBox ui:field="theme"/>
+                        <item:StringListBox ui:field="theme" addStyleNames="w-100"/>
                     </g:customCell>
                 </g:row>
 
@@ -25,7 +19,15 @@
                 <g:row>
                     <g:cell>Editor Theme:</g:cell>
                     <g:customCell>
-                        <item:StringListBox ui:field="editorTheme"/>
+                        <item:StringListBox ui:field="editorTheme" addStyleNames="w-100"/>
+                    </g:customCell>
+                </g:row>
+
+                <!-- Layout Density -->
+                <g:row>
+                    <g:cell>Layout Density:</g:cell>
+                    <g:customCell>
+                        <item:StringListBox ui:field="density" addStyleNames="w-100"/>
                     </g:customCell>
                 </g:row>
 
@@ -33,7 +35,7 @@
                 <g:row>
                     <g:cell>Font:</g:cell>
                     <g:customCell>
-                        <item:StringListBox ui:field="font"/>
+                        <item:StringListBox ui:field="font" addStyleNames="w-100"/>
                     </g:customCell>
                 </g:row>
 
@@ -41,7 +43,7 @@
                 <g:row>
                     <g:cell>Font Size:</g:cell>
                     <g:customCell>
-                        <item:StringListBox ui:field="fontSize"/>
+                        <item:StringListBox ui:field="fontSize" addStyleNames="w-100"/>
                     </g:customCell>
                 </g:row>
 
@@ -49,31 +51,31 @@
                 <g:row>
                     <g:cell>Date and Time Format:</g:cell>
                     <g:customCell>
-                        <item:StringListBox ui:field="format" width="100%"/>
+                        <item:StringListBox ui:field="format" addStyleNames="w-100"/>
                     </g:customCell>
                 </g:row>
                 <g:row>
                     <g:cell>Custom:</g:cell>
                     <g:customCell>
-                        <tickbox:TickBox ui:field="custom" width="100%"/>
+                        <tickbox:TickBox ui:field="custom" addStyleNames="w-100"/>
                     </g:customCell>
                 </g:row>
                 <g:row>
                     <g:cell>Custom Format:</g:cell>
                     <g:customCell>
-                        <g:TextBox ui:field="text" width="100%"/>
+                        <g:TextBox ui:field="text" addStyleNames="w-100"/>
                     </g:customCell>
                 </g:row>
                 <g:row>
                     <g:cell>Time Zone:</g:cell>
                     <g:customCell>
-                        <item:ItemListBox ui:field="timeZoneUse" width="100%"/>
+                        <item:ItemListBox ui:field="timeZoneUse" addStyleNames="w-100"/>
                     </g:customCell>
                 </g:row>
                 <g:row>
                     <g:cell>Time Zone Id:</g:cell>
                     <g:customCell>
-                        <item:StringListBox ui:field="timeZoneId" width="100%"/>
+                        <item:StringListBox ui:field="timeZoneId" addStyleNames="w-100"/>
                     </g:customCell>
                 </g:row>
                 <g:row>
@@ -86,6 +88,10 @@
                     </g:customCell>
                 </g:row>
             </g:Grid>
-        </g:center>
-    </g:DockLayoutPanel>
+        </g:SimplePanel>
+        <g:FlowPanel styleName="dock-min button-container preferencesViewImpl-buttons">
+            <g:Button ui:field="setAsDefault" text="Set As Default"/>
+            <g:Button ui:field="revertToDefault" text="Revert To Default"/>
+        </g:FlowPanel>
+    </g:FlowPanel>
 </ui:UiBinder>

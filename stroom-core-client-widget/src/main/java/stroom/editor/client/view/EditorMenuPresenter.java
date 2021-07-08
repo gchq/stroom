@@ -39,7 +39,6 @@ import java.util.List;
 public class EditorMenuPresenter {
 
     private final MenuListPresenter menuListPresenter;
-    private final boolean showFormatOption = true;
     private EditorPresenter xmlEditorPresenter;
 
     @Inject
@@ -81,19 +80,7 @@ public class EditorMenuPresenter {
         addMenuItem(position++, menuItems, xmlEditorPresenter.getBasicAutoCompletionOption());
         addMenuItem(position++, menuItems, xmlEditorPresenter.getSnippetsOption());
         addMenuItem(position++, menuItems, xmlEditorPresenter.getLiveAutoCompletionOption());
-
         addMenuItem(position++, menuItems, xmlEditorPresenter.getFormatAction());
-
-        if (xmlEditorPresenter.isShowFilterSettings()) {
-            String title;
-            if (xmlEditorPresenter.isInput()) {
-                title = "Filter Input";
-            } else {
-                title = "Filter Output";
-            }
-
-            menuItems.add(createItem(title, () -> xmlEditorPresenter.changeFilterSettings(), position++));
-        }
 
         menuListPresenter.setData(menuItems);
     }

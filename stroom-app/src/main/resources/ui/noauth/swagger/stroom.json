@@ -4133,6 +4133,44 @@
         "tags" : [ "Nodes" ]
       }
     },
+    "/node/v1/setJobsEnabled/{nodeName}" : {
+      "put" : {
+        "operationId" : "setNodeJobsEnabled",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "nodeName",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/NodeSetJobsEnabledRequest"
+              }
+            }
+          },
+          "description" : "Request parameters",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/NodeSetJobsEnabledResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Sets the enabled state of jobs for the selected node. If both `includeJobs` and `excludeJobs` are unspecified or empty, this action will apply to ALL jobs.",
+        "tags" : [ "Nodes" ]
+      }
+    },
     "/oauth2/v1/noauth/.well-known/openid-configuration" : {
       "get" : {
         "operationId" : "openIdConfiguration",
@@ -12019,6 +12057,37 @@
           }
         }
       },
+      "NodeSetJobsEnabledRequest" : {
+        "type" : "object",
+        "properties" : {
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "excludeJobs" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            },
+            "uniqueItems" : true
+          },
+          "includeJobs" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            },
+            "uniqueItems" : true
+          }
+        }
+      },
+      "NodeSetJobsEnabledResponse" : {
+        "type" : "object",
+        "properties" : {
+          "modifiedCount" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
       "NodeStatusResult" : {
         "type" : "object",
         "properties" : {
@@ -15565,6 +15634,9 @@
           "dateTimePattern" : {
             "type" : "string",
             "description" : "A date time formatting pattern string conforming to the specification of java.time.format.DateTimeFormatter"
+          },
+          "density" : {
+            "type" : "string"
           },
           "editorTheme" : {
             "type" : "string"

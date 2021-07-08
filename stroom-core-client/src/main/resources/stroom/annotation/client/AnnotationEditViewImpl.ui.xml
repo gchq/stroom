@@ -1,7 +1,6 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:v="urn:import:stroom.widget.layout.client.view"
              xmlns:button="urn:import:stroom.widget.button.client">
 
     <g:FlowPanel styleName="annotationContainer">
@@ -34,7 +33,7 @@
                 </g:FlowPanel>
                 <g:FlowPanel addStyleNames="annotationSetting">
                     <g:FlowPanel ui:field="commentFlowPanel" addStyleNames="annotationSettingHeading clickable">
-                        <g:Label ui:field="commentLabel" styleName="annotationClickLabel clickable" text="Comment:" width="100%"/>
+                        <g:Label ui:field="commentLabel" styleName="annotationClickLabel clickable w-100" text="Comment:" />
                         <button:SvgButton ui:field="commentIcon" addStyleNames="annotationDropDownIcon"/>
                     </g:FlowPanel>
                 </g:FlowPanel>
@@ -47,7 +46,7 @@
             </g:FlowPanel>
             <g:FlowPanel styleName="annotationRight">
                 <g:Label ui:field="showLinkedEvents" styleName="showLinkedEvents" text="Show Linked Events"/>
-                <v:ResizeSimplePanel ui:field="history" styleName="annotationHistory"/>
+                <g:SimplePanel ui:field="history" styleName="annotationHistory"/>
             </g:FlowPanel>
         </g:FlowPanel>
     </g:FlowPanel>

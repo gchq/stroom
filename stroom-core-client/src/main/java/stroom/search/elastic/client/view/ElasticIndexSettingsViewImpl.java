@@ -19,7 +19,6 @@ package stroom.search.elastic.client.view;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.search.elastic.client.presenter.ElasticIndexSettingsPresenter.ElasticIndexSettingsView;
 import stroom.search.elastic.client.presenter.ElasticIndexSettingsUiHandlers;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -47,7 +46,7 @@ public class ElasticIndexSettingsViewImpl extends ViewWithUiHandlers<ElasticInde
     @UiField
     Button testConnection;
     @UiField
-    ResizeSimplePanel retentionExpressionPanel;
+    SimplePanel retentionExpressionPanel;
 
     @Inject
     public ElasticIndexSettingsViewImpl(final Binder binder) {

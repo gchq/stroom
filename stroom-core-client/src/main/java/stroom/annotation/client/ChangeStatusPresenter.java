@@ -24,7 +24,6 @@ import stroom.dispatch.client.RestFactory;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
@@ -81,8 +80,7 @@ public class ChangeStatusPresenter extends MyPresenterWidget<ChangeStatusView>
             }).call(annotationResource).getStatus(null);
         }
 
-        final PopupSize popupSize = new PopupSize(400, 83, 400, 83, true);
-        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, "Change Status", this);
+        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, "Change Status", this);
     }
 
     private void changeStatus(final String selected) {

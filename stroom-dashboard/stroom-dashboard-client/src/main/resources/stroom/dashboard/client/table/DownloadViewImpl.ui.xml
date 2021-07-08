@@ -3,7 +3,7 @@
   xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:list="urn:import:stroom.item.client"
   xmlns:v="urn:import:stroom.widget.valuespinner.client"
   xmlns:view="urn:import:stroom.widget.tickbox.client.view">
-  <g:Grid styleName="stroom-control-grid" width="100%">
+  <g:Grid styleName="stroom-control-grid w-100">
     <g:row>
       <g:cell>File Type:</g:cell>
       <g:customCell>

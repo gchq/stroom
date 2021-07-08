@@ -215,7 +215,7 @@ public class ManageActivityPresenter extends
         };
         uiConfigCache.get().onSuccess(uiConfig -> {
             final String title = uiConfig.getActivity().getManagerTitle();
-            final PopupSize popupSize = new PopupSize(1000, 600, true);
+            final PopupSize popupSize = PopupSize.resizable(1000, 600);
             ShowPopupEvent.fire(ManageActivityPresenter.this, ManageActivityPresenter.this,
                     PopupType.CLOSE_DIALOG, null, popupSize, title, popupUiHandlers, null);
             enableButtons();

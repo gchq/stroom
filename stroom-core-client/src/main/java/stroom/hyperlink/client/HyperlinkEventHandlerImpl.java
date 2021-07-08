@@ -234,7 +234,7 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
     }
 
     private void openDialog(final Hyperlink hyperlink, final String customTitle) {
-        final PopupSize popupSize = new PopupSize(800, 600, true);
+        final PopupSize popupSize = PopupSize.resizable(800, 600);
         final IFramePresenter presenter = iFramePresenterProvider.get();
         final HandlerRegistration handlerRegistration = presenter.addDirtyHandler(event1 ->
                 RenamePopupEvent.fire(this, presenter, presenter.getLabel()));

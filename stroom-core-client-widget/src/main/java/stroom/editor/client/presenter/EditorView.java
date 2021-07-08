@@ -26,7 +26,6 @@ import com.google.gwt.event.dom.client.HasMouseDownHandlers;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.RequiresResize;
-import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
@@ -35,7 +34,7 @@ import java.util.List;
 import java.util.function.Function;
 
 public interface EditorView extends View, HasKeyDownHandlers, HasFormatHandlers, HasText, HasMouseDownHandlers,
-        HasContextMenuHandlers, HasUiHandlers<EditorUiHandlers>, HasValueChangeHandlers<String>, RequiresResize {
+        HasContextMenuHandlers, HasValueChangeHandlers<String>, RequiresResize {
 
     String getEditorId();
 
@@ -93,10 +92,6 @@ public interface EditorView extends View, HasKeyDownHandlers, HasFormatHandlers,
     Option getLiveAutoCompletionOption();
 
     Option getHighlightActiveLineOption();
-
-    void showFilterButton(boolean show);
-
-    void setFilterActive(boolean active);
 
     void setControlsVisible(boolean visible);
 }

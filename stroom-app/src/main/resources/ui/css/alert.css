@@ -15,7 +15,7 @@
  */
 
 .alert-table {
-	padding: 0px;
+	padding: 0;
 }
 
 .alert-message {
@@ -33,10 +33,10 @@
 	width: 500px;
 	height: 400px;
 	margin-left: 10px;
-	margin-right: 0px;
+	margin-right: 0;
 	margin-top: 5px;
-	margin-bottom: 0px;
-	padding: 0px;
+	margin-bottom: 0;
+	padding: 0;
 	background-color: white;
 	border: 1px solid #C5CDE2;
 }
@@ -44,7 +44,6 @@
 .alert-icon-question {
     display: inline-block;
     background-image: url("../images/question.svg");
-    background-size: 100%;
     width: 32px;
     height: 32px;
 }
@@ -52,7 +51,6 @@
 .alert-icon-info {
     display: inline-block;
     background-image: url("../images/info.svg");
-    background-size: 100%;
     width: 32px;
     height: 32px;
 }
@@ -60,7 +58,6 @@
 .alert-icon-warning {
     display: inline-block;
     background-image: url("../images/warning.svg");
-    background-size: 100%;
     width: 32px;
     height: 32px;
 }
@@ -68,7 +65,6 @@
 .alert-icon-error {
     display: inline-block;
     background-image: url("../images/error.svg");
-    background-size: 100%;
     width: 32px;
     height: 32px;
 }

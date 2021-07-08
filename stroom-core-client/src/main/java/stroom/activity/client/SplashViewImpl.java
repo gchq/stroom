@@ -19,7 +19,6 @@ package stroom.activity.client;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.MaxScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
@@ -32,8 +31,6 @@ public class SplashViewImpl extends ViewImpl implements SplashPresenter.SplashVi
 
     private final Widget widget;
 
-    @UiField
-    MaxScrollPanel scrollPanel;
     @UiField
     HTML html;
 
@@ -49,10 +46,5 @@ public class SplashViewImpl extends ViewImpl implements SplashPresenter.SplashVi
 
     public void setHtml(final String html) {
         this.html.setHTML(html);
-    }
-
-    @Override
-    public MaxScrollPanel getScrollPanel() {
-        return scrollPanel;
     }
 }

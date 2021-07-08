@@ -31,7 +31,6 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.HasText;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.TextBox;
 
@@ -46,7 +45,6 @@ public class QuickFilter extends FlowPanel
             .addLine("Field values containing the characters input will be included.")
             .build();
 
-    private final Label label = new Label("Quick Filter", false);
     private final TextBox textBox = new TextBox();
     private final SvgButton clearButton;
     private final SvgButton helpButton;
@@ -56,7 +54,7 @@ public class QuickFilter extends FlowPanel
     public QuickFilter() {
         setStyleName("quickFilter");
         textBox.setStyleName("quickFilter-textBox");
-        label.setStyleName("quickFilter-label");
+        textBox.getElement().setAttribute("placeholder", "Quick Filter");
 
         clearButton = SvgButton.create(SvgPresets.CLEAR.title("Clear Filter"));
         clearButton.addStyleName("quickFilter-clear");
@@ -65,17 +63,9 @@ public class QuickFilter extends FlowPanel
         helpButton.addStyleName("quickFilter-infoButton");
 
         add(textBox);
-        add(label);
         add(clearButton);
         add(helpButton);
 
-        label.addClickHandler(event -> {
-            label.setVisible(false);
-            textBox.setFocus(true);
-        });
-
-        textBox.addFocusHandler(event -> label.setVisible(false));
-        textBox.addBlurHandler(event -> reset());
         textBox.addKeyUpHandler(event -> onChange());
         helpButton.addClickHandler(event -> showHelpPopup());
         clearButton.addClickHandler(event -> clear());
@@ -114,19 +104,6 @@ public class QuickFilter extends FlowPanel
     public void clear() {
         textBox.setText("");
         onChange();
-        reset();
-    }
-
-    public void reset() {
-        if (textBox.getText().length() == 0) {
-            label.setVisible(true);
-        }
-    }
-
-    private SafeHtml getPopupText() {
-        return popupTextSupplier != null
-                ? popupTextSupplier.get()
-                : null;
     }
 
     public void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {

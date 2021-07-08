@@ -35,14 +35,14 @@ public class FastInfosetContentHandler extends ReceivingContentHandler {
     }
 
     @Override
-    public void startPrefixMapping(final String prefix, final String uri) throws SAXException {
+    public void startPrefixMapping(final String prefix, final String uri) {
         LOGGER.trace("startPrefixMapping({}, {})", prefix, uri);
         super.startPrefixMapping(prefix, uri);
     }
 
 
     @Override
-    public void endPrefixMapping(final String prefix) throws SAXException {
+    public void endPrefixMapping(final String prefix) {
         LOGGER.trace("endPrefixMapping({}})", prefix);
         super.endPrefixMapping(prefix);
     }

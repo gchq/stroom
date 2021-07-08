@@ -52,7 +52,6 @@ public class RulesPresenter
         implements HasDirtyHandlers {
 
     private final RuleListPresenter listPresenter;
-    //    private final ExpressionTreePresenter expressionPresenter;
     private final Provider<RulePresenter> editRulePresenterProvider;
 
     private List<AbstractField> fields;
@@ -75,14 +74,9 @@ public class RulesPresenter
                           final Provider<RulePresenter> editRulePresenterProvider) {
         super(eventBus, view);
         this.listPresenter = listPresenter;
-//        this.expressionPresenter = expressionPresenter;
         this.editRulePresenterProvider = editRulePresenterProvider;
 
         getView().setTableView(listPresenter.getView());
-//        getView().setExpressionView(expressionPresenter.getView());
-
-        // Stop users from selecting expression items.
-//        expressionPresenter.setSelectionModel(null);
 
         addButton = listPresenter.add(SvgPresets.ADD);
         editButton = listPresenter.add(SvgPresets.EDIT);
@@ -202,7 +196,7 @@ public class RulesPresenter
         final RulePresenter editRulePresenter = editRulePresenterProvider.get();
         editRulePresenter.read(newRule, fields);
 
-        final PopupSize popupSize = new PopupSize(800, 400, 300, 300, 2000, 2000, true);
+        final PopupSize popupSize = PopupSize.resizable(800, 400);
         ShowPopupEvent.fire(RulesPresenter.this,
                 editRulePresenter,
                 PopupType.OK_CANCEL_DIALOG,
@@ -233,15 +227,7 @@ public class RulesPresenter
         final RulePresenter editRulePresenter = editRulePresenterProvider.get();
         editRulePresenter.read(existingRule, fields);
 
-        final PopupSize popupSize = new PopupSize(
-                800,
-                400,
-                300,
-                300,
-                2000,
-                2000,
-                true);
-
+        final PopupSize popupSize = PopupSize.resizable(800, 400);
         ShowPopupEvent.fire(
                 RulesPresenter.this,
                 editRulePresenter,
@@ -384,7 +370,5 @@ public class RulesPresenter
     public interface RulesView extends View {
 
         void setTableView(View view);
-
-//        void setExpressionView(View view);
     }
 }

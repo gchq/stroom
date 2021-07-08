@@ -33,6 +33,18 @@ public class CurveTabBar extends AbstractTabBar {
     }
 
     @Override
+    protected void onAttach() {
+        super.onAttach();
+        GlobalResizeObserver.addListener(element, (e) -> onResize());
+    }
+
+    @Override
+    protected void onDetach() {
+        GlobalResizeObserver.removeListener(element);
+        super.onDetach();
+    }
+
+    @Override
     protected AbstractTab createTab(final TabData tabData) {
         return new CurveTab(tabData.getIcon(), tabData.getLabel(), tabData.isCloseable());
     }

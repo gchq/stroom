@@ -18,10 +18,10 @@ package stroom.security.client.view;
 
 import stroom.security.client.presenter.UserEditPresenter.UserEditView;
 import stroom.security.client.presenter.UserEditUiHandlers;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -32,9 +32,9 @@ public final class UserEditViewImpl extends ViewWithUiHandlers<UserEditUiHandler
 
     private final Widget widget;
     @UiField
-    ResizeSimplePanel userGroups;
+    SimplePanel userGroups;
     @UiField
-    ResizeSimplePanel appPermissions;
+    SimplePanel appPermissions;
 
     @Inject
     public UserEditViewImpl(final EventBus eventBus, final Binder binder) {

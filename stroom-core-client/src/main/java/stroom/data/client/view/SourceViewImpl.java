@@ -6,11 +6,11 @@ import stroom.data.client.presenter.TextPresenter.TextView;
 import stroom.svg.client.Preset;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
 import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -33,9 +33,9 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
     @UiField
     Label lblType;
     @UiField
-    ResizeSimplePanel container;
+    FlowPanel container;
     @UiField
-    ResizeSimplePanel navigatorContainer;
+    SimplePanel navigatorContainer;
     @UiField
     ButtonPanel buttonPanel;
 
@@ -83,7 +83,7 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
 
     @Override
     public void setTextView(final TextView textView) {
-        container.setWidget(textView.asWidget());
+        container.add(textView.asWidget());
     }
 
     @Override

@@ -72,6 +72,7 @@ import java.util.stream.Collectors;
 
 public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.ExpressionView>
         implements ExpressionUiHandlers {
+
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
     private static final int DEFAULT_COMPLETION_SCORE = 300; // Not sure what the range of scores is
     private static final String EXPRESSIONS_HELP_BASE_PATH = "/user-guide/dashboards/expressions";
@@ -239,13 +240,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
             editorPresenter.setText("");
         }
 
-        final PopupSize popupSize = new PopupSize(
-                700,
-                300,
-                300,
-                300,
-                true);
-
+        final PopupSize popupSize = PopupSize.resizable(700, 300);
         ShowPopupEvent.fire(
                 tablePresenter,
                 this,
@@ -449,6 +444,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     public static class Ancestors {
+
         private final List<String> ancestors;
 
         public Ancestors() {

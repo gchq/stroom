@@ -1,6 +1,5 @@
 .svgIcon {
   display: inline-block;
-  background-size: 100%;
   width: 16px;
   height: 16px;
 }
@@ -271,7 +270,6 @@
 }
 .svgIcon-stepping {
   background-image: url("../images/stepping-circle.svg");
-  background-size: 100%;
   width: 18px;
   height: 18px;
 }
@@ -289,6 +287,9 @@
 }
 .svgIcon-refresh {
   background-image: url("../images/refresh.svg");
+}
+.svgIcon-filter-green {
+  background-image: url("../images/filter-green.svg");
 }
 .svgIcon-fast-backward-green {
   background-image: url("../images/fast-backward-green.svg");
@@ -313,7 +314,6 @@
 }
 
 .svgIcon-document {
-  background-size: 100%;
   width: 18px;
   height: 18px;
 }

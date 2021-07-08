@@ -78,7 +78,7 @@ public class IndexFieldEditPresenter extends MyPresenterWidget<IndexFieldEditVie
     }
 
     public void show(final String caption, final PopupUiHandlers uiHandlers) {
-        final PopupSize popupSize = new PopupSize(305, 220, 305, 220, 800, 220, true);
+        final PopupSize popupSize = PopupSize.resizableX();
         ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, caption, uiHandlers);
     }
 

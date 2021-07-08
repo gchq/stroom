@@ -41,8 +41,7 @@ import stroom.pipeline.stepping.client.presenter.StepControlPresenter.StepContro
 import stroom.pipeline.stepping.client.presenter.StepLocationPresenter;
 import stroom.pipeline.stepping.client.presenter.StepLocationPresenter.StepLocationView;
 import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter;
-import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter.SteppingFilterSettingsProxy;
-import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter.SteppingFilterSettingsView;
+import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter.SteppingFilterView;
 import stroom.pipeline.stepping.client.presenter.SteppingPresenter;
 import stroom.pipeline.stepping.client.presenter.SteppingPresenter.SteppingView;
 import stroom.pipeline.stepping.client.presenter.XPathFilterPresenter;
@@ -108,8 +107,7 @@ public class PipelineModule extends PluginModule {
                 NewPipelineReferenceViewImpl.class);
 
         bindPresenterWidget(SteppingPresenter.class, SteppingView.class, SteppingViewImpl.class);
-        bind(SteppingFilterSettingsProxy.class).asEagerSingleton();
-        bindPresenterWidget(SteppingFilterPresenter.class, SteppingFilterSettingsView.class,
+        bindPresenterWidget(SteppingFilterPresenter.class, SteppingFilterView.class,
                 SteppingFilterViewImpl.class);
         bindPresenterWidget(XPathFilterPresenter.class, XPathFilterView.class, XPathFilterViewImpl.class);
 

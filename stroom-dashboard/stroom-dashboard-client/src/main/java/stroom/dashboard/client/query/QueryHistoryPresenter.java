@@ -134,7 +134,7 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
                             }
                         };
 
-                        final PopupSize popupSize = new PopupSize(500, 400, true);
+                        final PopupSize popupSize = PopupSize.resizable(500, 400);
 
                         ShowPopupEvent.fire(
                                 queryPresenter,

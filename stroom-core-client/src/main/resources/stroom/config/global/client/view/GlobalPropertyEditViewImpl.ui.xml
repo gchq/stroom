@@ -7,19 +7,19 @@
         <g:row>
             <g:cell>Name:</g:cell>
             <g:customCell>
-                <g:Label ui:field="name" width="100%" addStyleNames="globalProperties stroom-control-label"/>
+                <g:Label ui:field="name" addStyleNames="globalProperties stroom-control-label w-100"/>
             </g:customCell>
         </g:row>
         <g:row>
             <g:cell>Description:</g:cell>
             <g:customCell>
-                <g:TextArea ui:field="description" width="100%" addStyleNames="globalProperties globalPropertyEditViewImpl-textArea"/>
+                <g:TextArea ui:field="description" addStyleNames="globalProperties globalPropertyEditViewImpl-textArea w-100"/>
             </g:customCell>
         </g:row>
         <g:row>
             <g:cell>Default Value:</g:cell>
             <g:customCell>
-                <g:TextArea ui:field="defaultValue" width="100%" addStyleNames="globalProperties globalPropertyEditViewImpl-textAreaReducedHeight"/>
+                <g:TextArea ui:field="defaultValue" addStyleNames="globalProperties globalPropertyEditViewImpl-textAreaReducedHeight w-100"/>
             </g:customCell>
         </g:row>
         <g:row>
@@ -31,13 +31,13 @@
         <g:row styleName="globalPropertyEditViewImpl-textArea">
             <g:cell>Database Value:</g:cell>
             <g:customCell>
-                <g:TextArea ui:field="databaseValue" width="100%" addStyleNames="globalProperties globalPropertyEditViewImpl-textAreaReducedHeight"/>
+                <g:TextArea ui:field="databaseValue" addStyleNames="globalProperties globalPropertyEditViewImpl-textAreaReducedHeight w-100"/>
             </g:customCell>
         </g:row>
         <g:row>
             <g:cell>Database Value:</g:cell>
             <g:customCell>
-                <g:PasswordTextBox ui:field="databaseValuePassword" width="100%" addStyleNames="globalProperties"/>
+                <g:PasswordTextBox ui:field="databaseValuePassword" addStyleNames="globalProperties w-100"/>
             </g:customCell>
         </g:row>
         <g:row>
@@ -48,7 +48,7 @@
                 </g:FlowPanel>
             </g:customCell>
             <g:customCell>
-                <g:TextArea ui:field="yamlValue" width="100%" addStyleNames="globalProperties globalPropertyEditViewImpl-textAreaReducedHeight"/>
+                <g:TextArea ui:field="yamlValue" addStyleNames="globalProperties globalPropertyEditViewImpl-textAreaReducedHeight w-100"/>
             </g:customCell>
         </g:row>
         <g:row>
@@ -59,7 +59,7 @@
                 </g:FlowPanel>
             </g:customCell>
             <g:customCell>
-                <g:TextArea ui:field="effectiveValue" width="100%" addStyleNames="globalProperties globalPropertyEditViewImpl-textAreaReducedHeight"/>
+                <g:TextArea ui:field="effectiveValue" addStyleNames="globalProperties globalPropertyEditViewImpl-textAreaReducedHeight w-100"/>
             </g:customCell>
         </g:row>
         <g:row>
@@ -70,13 +70,13 @@
                 </g:HorizontalPanel>
             </g:customCell>
             <g:customCell>
-                <g:Label ui:field="dataType" width="100%" addStyleNames="globalProperties"/>
+                <g:Label ui:field="dataType" addStyleNames="globalProperties w-100"/>
             </g:customCell>
         </g:row>
         <g:row>
             <g:cell>Source:</g:cell>
             <g:customCell>
-                <g:Label ui:field="source" width="100%" addStyleNames="globalProperties"/>
+                <g:Label ui:field="source" addStyleNames="globalProperties w-100"/>
             </g:customCell>
         </g:row>
         <g:row>

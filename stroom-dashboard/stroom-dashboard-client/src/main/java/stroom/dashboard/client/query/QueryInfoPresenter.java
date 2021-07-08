@@ -73,7 +73,7 @@ public class QueryInfoPresenter extends MyPresenterWidget<QueryInfoPresenter.Que
 
             if (queryInfoPopupEnabled && required) {
                 getView().setQueryInfo(queryInfo);
-                final PopupSize popupSize = new PopupSize(640, 480, true);
+                final PopupSize popupSize = PopupSize.resizable(640, 480);
                 ShowPopupEvent.fire(this,
                         this,
                         PopupType.OK_CANCEL_DIALOG,

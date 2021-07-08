@@ -23,6 +23,7 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupSupport;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.Size;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
@@ -89,12 +90,6 @@ public class PopupSupportImpl implements PopupSupport {
             popupPanel.setModal(modal);
         }
 
-        // Set the popup size.
-        if (popupSize != null) {
-            popupPanel.setWidth(popupSize.getWidth() + "px");
-            popupPanel.setHeight(popupSize.getHeight() + "px");
-        }
-
         // Add auto hide partners.
         if (autoHidePartners != null && autoHidePartners.size() > 0) {
             for (final Element element : autoHidePartners) {
@@ -112,13 +107,27 @@ public class PopupSupportImpl implements PopupSupport {
                 final int w = popupPanel.getOffsetWidth();
                 final int h = popupPanel.getOffsetHeight();
 
+                // Set the popup size.
+                int newWidth = w;
+                int newHeight = h;
+                if (popupSize != null) {
+                    newWidth = getSize(newWidth, popupSize.getWidth());
+                    newHeight = getSize(newHeight, popupSize.getHeight());
+                }
+                if (newWidth != w) {
+                    popupPanel.setWidth(newWidth + "px");
+                }
+                if (newHeight != h) {
+                    popupPanel.setHeight(newHeight + "px");
+                }
+
                 if (popupPosition == null) {
                     // Center the popup in the client window.
-                    centerPopup(popup, w, h);
+                    centerPopup(popup, newWidth, newHeight);
                 } else {
                     // Position the popup so it is as close as possible to
                     // the required location but is all on screen.
-                    positionPopup(popup, popupType, popupPosition, w, h);
+                    positionPopup(popup, popupType, popupPosition, newWidth, newHeight);
                 }
 
                 // Make the popup visible.
@@ -129,6 +138,19 @@ public class PopupSupportImpl implements PopupSupport {
                 onShow();
             }
         });
+    }
+
+    private int getSize(final int current, Size size) {
+        int newSize = current;
+        if (size != null) {
+            if (size.getMin() == null) {
+                size.setMin(current);
+            }
+            if (size.getInitial() != null) {
+                newSize = Math.max(current, Math.max(size.getMin(), size.getInitial()));
+            }
+        }
+        return newSize;
     }
 
     private void centerPopup(final Popup popup, final int width, final int height) {

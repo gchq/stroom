@@ -39,6 +39,7 @@ import java.util.function.BiConsumer;
 public class RenameFieldPresenter
         extends MyPresenterWidget<RenameFieldPresenter.RenameFieldView>
         implements PopupUiHandlers {
+
     private TablePresenter tablePresenter;
     private Field field;
     private BiConsumer<Field, Field> fieldChangeConsumer;
@@ -68,15 +69,7 @@ public class RenameFieldPresenter
 
         getView().getName().setText(field.getName());
 
-        final PopupSize popupSize = new PopupSize(
-                250,
-                78,
-                250,
-                78,
-                1000,
-                78,
-                true);
-
+        final PopupSize popupSize = PopupSize.resizableX();
         ShowPopupEvent.fire(
                 this,
                 this,
@@ -132,6 +125,7 @@ public class RenameFieldPresenter
     }
 
     public interface RenameFieldView extends View {
+
         HasText getName();
 
         HasKeyDownHandlers getNameBox();

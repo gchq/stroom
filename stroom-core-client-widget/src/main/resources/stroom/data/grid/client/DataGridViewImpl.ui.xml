@@ -1,21 +1,14 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-  xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:c="urn:import:com.google.gwt.user.cellview.client"
-  xmlns:p="urn:import:stroom.data.pager.client" xmlns:b="urn:import:stroom.widget.button.client">
-
-  <g:DockLayoutPanel addStyleNames='max stroom-content'>
-    <g:center>
-      <c:DataGrid ui:field='dataGrid' addStyleNames='max' />
-    </g:center>
-    <g:north size='20'>
-      <g:DockLayoutPanel width='100%'>
-        <g:center>
-          <b:ButtonPanel ui:field='buttonPanel' />
-        </g:center>
-        <g:east size='250'>
-          <p:Pager ui:field='pager' />
-        </g:east>
-      </g:DockLayoutPanel>
-    </g:north>
-  </g:DockLayoutPanel>
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:c="urn:import:com.google.gwt.user.cellview.client"
+             xmlns:p="urn:import:stroom.data.pager.client"
+             xmlns:b="urn:import:stroom.widget.button.client">
+    <g:FlowPanel addStyleNames="max dock-container-vertical stroom-content">
+        <g:FlowPanel styleName="dock-container-horizontal dock-min">
+            <b:ButtonPanel ui:field="buttonPanel" addStyleNames="dock-max"/>
+            <p:Pager ui:field="pager" addStyleNames="dock-min"/>
+        </g:FlowPanel>
+        <c:DataGrid ui:field="dataGrid" addStyleNames="dock-max"/>
+    </g:FlowPanel>
 </ui:UiBinder>

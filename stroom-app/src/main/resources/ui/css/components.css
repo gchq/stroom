@@ -31,13 +31,22 @@
     padding: 5px;
 }
 
-.buttonPanel-layout {
-    white-space: nowrap;
+.button-container {
     display: flex;
+    align-items: center;
+    margin: 2px;
+
+    /*
+    white-space: nowrap;
     align-items: center;
     flex-wrap: nowrap;
     align-content: center;
     justify-content: flex-start;
+
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    padding: 2px;*/
 }
 
 .contextMenu-layout {
@@ -160,13 +169,19 @@
 }
 
 .curveTabBar {
+    position: relative;
+    width: 100%;
+    height: 100%;
 }
 
 .curveTab {
-	position: absolute;
-	left: 0px;
-	top: 0px;
-	cursor: pointer;
+    position: absolute;
+    left: 0;
+    top: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    height: 25px;
 }
 
 .curveTab-selected {
@@ -175,8 +190,8 @@
 
 .curveTab .curveTab-background {
 	position: absolute;
-	left: 0px;
-	top: 0px;
+	left: 0;
+	top: 0;
 	opacity: 0.6;
 	height: 24px;
 	width: 100%;
@@ -197,8 +212,8 @@
 .curveTab .curveTab-leftBackground {
 	background-image: url("../images/tabs/left.png");
 	position: absolute;
-	left: 0px;
-	top: 0px;
+	left: 0;
+	top: 0;
     width: 5px;
     height: 25px;
 }
@@ -213,21 +228,19 @@
 .curveTab .curveTab-rightBackground {
 	background-image: url("../images/tabs/right.png");
 	position: absolute;
-	right: 0px;
-	top: 0px;
+	right: 0;
+	top: 0;
     width: 15px;
     height: 25px;
 }
 
 /* Tab content */
 .curveTab .curveTab-icon {
-	position: absolute;
-	top: 0px;
-	left: 5px;
-	width: 18px;
-	height: 18px;
-	margin-top: 5px;
-	-moz-user-select: none;
+    position: relative;
+    width: 18px;
+    height: 18px;
+    -moz-user-select: none;
+    margin: 0 5px 0 5px;
 }
 
 .curveTab .curveTab-face {
@@ -248,11 +261,11 @@
 }
 
 .curveTab .curveTab-text {
-	position: relative;
-	white-space: nowrap;
-	padding: 6px 32px 0px 26px;
-	-moz-user-select: none;
-	opacity: 0.8;
+    position: relative;
+    white-space: nowrap;
+    padding: 1px 1px 1px 1px;
+    -moz-user-select: none;
+    opacity: 0.8;
 }
 
 .curveTab-selected .curveTab-text {
@@ -261,25 +274,25 @@
 
 /* Close button */
 .curveTab .curveTab-close {
-	background-image: url("../images/tabs/close.png");
-	position: absolute;
-	right: 15px;
-	top: 8px;
-	width: 12px;
-	height: 12px;
-	-moz-user-select: none;
-	cursor: pointer;
+    background-image: url("../images/tabs/close.png");
+    width: 12px;
+    height: 12px;
+    -moz-user-select: none;
+    cursor: pointer;
+    margin: 2px 16px 0 4px;
+    z-index: 0;
+    background-repeat: no-repeat;
 }
 
 .curveTab .curveTab-closeActive	{
 	background-image: url("../images/tabs/closeActive.png");
-	position: absolute;
-	right: 15px;
-	top: 8px;
 	width: 12px;
     height: 12px;
 	-moz-user-select: none;
 	cursor: pointer;
+    margin: 2px 16px 0 4px;
+    z-index: 0;
+    background-repeat: no-repeat;
 }
 
 .stroom-theme-dark .curveTab .curveTab-leftBackground {
@@ -317,7 +330,7 @@
 
 .curveTabSelector {
 	position: absolute;
-	left: 0px;
+	left: 0;
 	top: 4px;
 	height: 24px;
 	cursor: pointer;
@@ -347,8 +360,8 @@
 .curveTabSelector .curveTabSelector-background .curveTabSelector-leftBackground {
 	background-image: url("../images/tabs/tabSelectorLeft.png");
 	position: absolute;
-	left: 0px;
-	top: 0px;
+	left: 0;
+	top: 0;
     width: 10px;
     height: 18px;
 }
@@ -363,8 +376,8 @@
 .curveTabSelector .curveTabSelector-background .curveTabSelector-rightBackground {
 	background-image: url("../images/tabs/tabSelectorRight.png");
 	position: absolute;
-	right: 0px;
-	top: 0px;
+	right: 0;
+	top: 0;
     width: 10px;
     height: 18px;
 }
@@ -438,17 +451,24 @@
 	position: absolute !important;
 	left: 0 !important;
 	top: 0 !important;
+    width: 100%;
+    height: 100%;
 }
 
-
 .linkTabBar {
+    position: relative;
 	white-space: nowrap;
 	padding-top: 1px;
 }
 
+.linkTabBar-hiddenText {
+    display: inline;
+    opacity: 0;
+}
+
 .linkTabBar .linkTabBar-separator {
 	position: absolute;
-	top: 2px;
+	top: 0;
 	padding-left: 5px;
 	padding-right: 5px;
 }
@@ -456,8 +476,8 @@
 
 .linkTab {
 	position: absolute;
-	left: 0px;
-	top: 2px;
+	left: 0;
+	top: 0;
 	cursor: pointer;
     opacity: 0.8;
     transition: opacity 0.5s linear;
@@ -484,8 +504,8 @@
 
 .linkTab-label {
 	position: absolute;
-	left: 0px;
-	top: 0px;
+	left: 0;
+	top: 0;
 	width: 100%;
 	cursor: pointer;
 	text-decoration: inherit;
@@ -493,17 +513,17 @@
 }
 
 .linkTab-selected .linkTab-label {
-	font-weight: 500;
+	font-weight: 600;
 }
 
 .linkTab .linkTab-hotspot {
 	position: absolute;
-	left: 0px;
-	right: 0px;
-	top: 0px;
-	bottom: 0px;
-	margin: 0px;
-	padding: 0px;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	margin: 0;
+	padding: 0;
 	border-width: 1px;
 	border-color: black;
 	border-style: solid;
@@ -565,7 +585,7 @@
 .userTaskView-terminate {
     vertical-align: middle;
     padding: 3px;
-    padding-bottom: 0px;
+    padding-bottom: 0;
     background-image: url("../images/terminate.png");
     width: 11px;
     height: 11px;
@@ -630,20 +650,18 @@
 
 .curveTabLayoutViewImpl-layerContainerOuter {
     position: absolute;
-    left: 0px;
-    right: 0px;
+    left: 0;
+    right: 0;
     top:
     24px;
-    bottom: 0px;
+    bottom: 0;
 }
 
 .curveTabLayoutViewImpl-tabBarOuter {
     position: absolute;
-    left: 0px;
-    right:
-    0px;
-    top:
-    0px;
+    left: 0;
+    right: 0;
+    top: 0;
     height: 25px;
 }
 
@@ -697,14 +715,32 @@
     text-decoration: underline;
 }
 
+.pipelineStructureViewImpl-property-added {
+    font-weight: 600;
+}
+
+.pipelineStructureViewImpl-property-removed {
+    font-weight: 600;
+    text-decoration: line-through;
+}
+
+.pipelineStructureViewImpl-property-inherited {
+}
+
+.pipelineStructureViewImpl-property-default {
+    opacity: 0.5;
+}
+
+
+
+
+
 .sourceViewImpl-buttonPanel {
     float: right;
     padding-right: 0.25em;
 }
 
 .sourceViewImpl-characterNavigator {
-    float: right;
-    text-align: right;
 }
 
 .sourceViewImpl-titleText {
@@ -737,7 +773,6 @@
 
 .pager-paging {
     position: relative;
-    width: 250px;
     text-align: right;
     display: flex;
     flex-direction: row;
@@ -749,7 +784,7 @@
 
 .pager-label {
     display: inline-block;
-    margin: 0px;
+    margin: 0;
     cursor: pointer;
 }
 
@@ -757,8 +792,8 @@
     display: inline-block;
     width: 30px;
     height: 14px;
-    padding: 0px;
-    margin: 0px;
+    padding: 0;
+    margin: 0;
     margin-top: 2px;
     border: none;
 }
@@ -775,8 +810,8 @@
 
 .dashboardMainViewImpl-root {
     position: absolute;
-    left: 0px;
-    top: 0px;
+    left: 0;
+    top: 0;
     width: 100%;
     height: 100%;
     overflow: hidden;
@@ -786,7 +821,7 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background-image: linear-gradient(rgb(244, 248, 253) 0px, rgb(222, 234, 248) 36px);
+    background-image: linear-gradient(rgb(244, 248, 253) 0, rgb(222, 234, 248) 36px);
     background-color: rgb(223, 234, 248);
 }
 
@@ -801,31 +836,6 @@
 .ruleViewImpl-optional {
     display: inline-block;
     margin-left: 5px;
-}
-
-.spinnerWhite-color {
-     border-color: white;
-}
-
-.spinnerWhite-size {
-      width: 32px;
-      height: 32px;
-}
-
-.spinnerWhite-circle {
-}
-
-.smallSpinner-color {
-    border-color: rgb(2,121,223);
-}
-
-.smallSpinner-size {
-    width: 16px;
-    height: 16px;
-}
-
-.smallSpinner-circle {
-    border-width: 2px;
 }
 
 .linkEventViewImpl-data {
@@ -849,14 +859,9 @@
 }
 
 .dataViewImpl-tabBarOuter {
-    position: absolute;
-    left: 0px;
-    top: 1px;
-    width: 300px;
-    height: 24px;
-    padding-left: 10px;
-    padding-right: 3px;
-    padding-top: 1px;
+    overflow: hidden;
+    flex-shrink: 1;
+    padding-left: 5px;
 }
 
 .dataViewImpl-tabBarInner {
@@ -864,8 +869,9 @@
 }
 
 .dataViewImpl-rightPanel {
-    width: max-content;
-    float: right;
+    display: flex;
+    flex-shrink: 0;
+    justify-content: flex-end;
     padding-right: 0.25em;
     padding-top: 1px;
 }
@@ -881,13 +887,17 @@
     padding-left: 0.25em;
 }
 
+/*
+.dataViewImpl-layerContainer {
+    position: relative;
+}
+*/
+
 .dataViewImpl-sourceLinkLabel {
-    margin: 0px;
-    margin-top: 2px;
+    margin: 0;
     cursor: pointer;
     padding-left: 0.75em;
     padding-right: 0.75em;
-    float: left;
 }
 
 .dataViewImpl-sourceLinkLabel:hover {
@@ -908,6 +918,9 @@
     min-width: 100%;
 }
 
+.dataRetentionRuleViewImpl {
+}
+
 .dataRetentionRuleViewImpl-bottom {
     padding-top: 5px;
 }
@@ -919,12 +932,6 @@
 .dataRetentionRuleViewImpl-optional {
     display: inline-block;
     margin-left: 5px;
-}
-
-.resizableAcceptRejectContent-buttons {
-    width: 100%;
-    text-align: right;
-    padding-top: 5px;
 }
 
 .resizableAcceptRejectContent-button {
@@ -988,7 +995,6 @@
 }
 
 .resizableAcceptRejectContent-reject {
-    margin-left: 5px;
     background-color: #d50000;
     border-color: #b71c1c;
 }
@@ -1020,7 +1026,7 @@
 
 .dataNavigator-label {
     display: inline-block;
-    margin: 0px;
+    margin: 0;
     margin-top: 2px;
     cursor: pointer;
     padding-left: 0.75em;
@@ -1039,13 +1045,15 @@
 .aboutViewImpl-layout {
     width: 500px;
     height: 288px;
-    margin: -5px -5px 0px;
+    display: flex;
+    flex-direction: column;
+    margin: -8px -8px 0 -8px;
 }
 
 .aboutViewImpl-stroom-body {
-    position: relative;
-    width: 500px;
-    height: 30px;
+    height: 50px;
+    display: flex;
+    align-items: center;
 }
 
 .aboutViewImpl-stroom-background {
@@ -1055,13 +1063,16 @@
 }
 
 .aboutViewImpl-body {
-    padding: 5px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background-color: var(--main-background-color);
 }
 
 .aboutViewImpl-buildInfo {
-    position: absolute;
-    right: 5px;
-    bottom: 5px;
+    display: flex;
+    justify-content: flex-end;
 }
 
 .characterRangeSelectionViewImpl-lineColInput {
@@ -1100,54 +1111,13 @@
     padding-bottom: 12px;
 }
 
-.dashboardViewImpl-dashboard {
-    overflow: hidden;
-}
-
-.dashboardViewImpl-bar {
-    position: absolute;
-    left: 0px;
-    right: 0px;
-    top: 0px;
-    height: 21px;
-}
-
 .dashboardViewImpl-content {
-    position: absolute;
-    left: 0px;
-    right: 0px;
-    top: 21px;
-    bottom: 0px;
-}
-
-.dashboardViewImpl-left {
     position: relative;
-    width: 0;
-}
-
-.dashboardViewImpl-middle {
-    position: relative;
-    width: 100%;
-}
-
-.dashboardViewImpl-paramsContainer {
-    width: 100%;
-    padding: 2px;
 }
 
 .dashboardViewImpl-params {
     width: 100%;
     border: 1px solid #ddd;
-}
-
-.dashboardViewImpl-right {
-    position: relative;
-    width: 0;
-}
-
-.dashboardViewImpl-rightInner {
-    position: absolute;
-    right: 0px;
 }
 
 .subStreamNavigator {
@@ -1157,7 +1127,7 @@
 
 .subStreamNavigator-label {
     display: inline-block;
-    margin: 0px;
+    margin: 0;
     margin-top: 2px;
     cursor: pointer;
     padding-left: 0.75em;
@@ -1171,12 +1141,6 @@
 .subStreamNavigator-button {
     padding: 1px;
     text-align: center;
-}
-
-.acceptRejectContent-layout {
-    width: 100%;
-    text-align: right;
-    padding-top: 5px;
 }
 
 .acceptRejectContent-button {
@@ -1216,21 +1180,19 @@
 }
 
 .acceptRejectContent-reject {
-    margin-left: 5px;
     background-color: red;
 }
 
 .itemNavigator {
+    display: flex;
 }
 
 .itemNavigator-label {
     margin: 0px;
-    margin-top: 2px;
     cursor: pointer;
     padding-left: 0.75em;
     padding-right: 0.75em;
     display: flex;
-    float: left;
 }
 
 .itemNavigator-label:hover {
@@ -1253,28 +1215,24 @@
     height:50px;
 }
 
+.linkTabPanelViewImpl {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 .linkTabPanelViewImpl-left {
-    position: relative;
-    width: 0;
+    flex-grow: 0;
 }
 
 .linkTabPanelViewImpl-middle {
-    position: relative;
-    width: 100%;
+    flex-grow: 1;
 }
 
 .linkTabPanelViewImpl-right {
-    position: relative;
-    width: 0;
-}
-
-.linkTabPanelViewImpl-leftInner {
-    padding-right: 10px;
-}
-
-.linkTabPanelViewImpl-rightInner {
-    position: absolute;
-    right: 0px;
+    display: flex;
+    justify-content: flex-end;
+    flex-grow: 0;
 }
 
 .queryFavouritesViewImpl-cellList {
@@ -1282,44 +1240,11 @@
     min-width: 100%;
 }
 
-.okCancelContent-layout {
-    width: 100%;
-    text-align: right;
-    padding-top: 5px;
-}
-
 .okCancelContent-cancel {
-    margin-left: 5px;
-}
-
-.filterViewImpl-row {
-    position: relative;
-    width: 100%;
-    height: 50%;
-}
-
-.filterViewImpl-container {
-    position: absolute;
-    left: 0px;
-    right: 0px;
-    top: 16px;
-    bottom: 0px;
-}
-
-.filterViewImpl-label {
-    width: 100%;
-    white-space: nowrap;
-    padding-top: 2px;
 }
 
 .editExpressionViewImpl-expressionTree {
     padding-left: 5px;
-}
-
-.resizableCloseContent-buttons {
-    width: 100%;
-    text-align: right;
-    padding-top: 5px;
 }
 
 .expressionViewImpl-button {
@@ -1347,10 +1272,12 @@
     float: left;
 }
 
-
 .characterNavigator {
-    position: relative;
-    text-align: right;
+    display: flex;
+    justify-content: space-between;
+}
+
+.characterNavigator-labels {
 }
 
 .characterNavigator-label {
@@ -1371,18 +1298,10 @@
     text-align: center;
 }
 
-.resizableOkCancelContent-buttons {
-    width: 100%;
-    text-align: right;
-    padding-top: 5px;
-}
-
 .resizableOkCancelContent-cancel {
-    margin-left: 5px;
 }
 
 .userListViewImpl-nameFilter {
-    width: 100%;
     border-bottom: none !important;
 }
 
@@ -1392,12 +1311,6 @@
 
 .createDocumentViewImpl-foldersOuter {
     margin-bottom: 5px;
-}
-
-.closeContent-layout {
-    width: 100%;
-    text-align: right;
-    padding-top: 5px;
 }
 
 .mainViewImpl-max {
@@ -1505,11 +1418,6 @@
 }
 
 .dataRetentionViewImpl-tabBarOuter {
-    position: absolute;
-    left: 0px;
-    top: 1px;
-    width: 100%;
-    height: 24px;
     padding-left: 10px;
     padding-right: 3px;
     padding-top: 1px;
@@ -1517,25 +1425,6 @@
 
 .dataRetentionViewImpl-tabBarInner {
     position: relative;
-}
-
-.steppingViewImpl-left {
-    position: relative;
-    width: 0px;
-}
-
-.steppingViewImpl-right {
-    position: relative;
-    width: 100%;
-}
-
-.steppingViewImpl-leftInner {
-    padding-right: 10px;
-}
-
-.steppingViewImpl-rightInner {
-    position: absolute;
-    right: 0px;
 }
 
 .importConfigViewImpl-label {
@@ -1546,6 +1435,8 @@
 
 .dropDownTreeViewImpl-nameFilter {
     width: 100%;
+    border: none;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .welcomeViewImpl-body {
@@ -1563,7 +1454,7 @@
     border-bottom: none !important;
 }
 
-.splashViewImpl-scroll {
+.splashViewImpl-content {
     padding: 5px;
 }
 
@@ -1573,16 +1464,7 @@
 }
 
 .explorerTreeViewImpl-nameFilter {
-    width: 100%;
     border: none !important;
-}
-
-.explorerTreeViewImpl-buttonContainer {
-    margin-left: 2px;
-}
-
-.stepControlViewImpl-layout {
-    display: inline-block;
 }
 
 .chooserViewImpl-container {
@@ -1614,12 +1496,22 @@
     padding: 6px 8px;
 }
 
+.steppingFilterViewImpl {
+    min-width: 400px;
+    min-height: 400px;
+}
+
+.stepLocationViewImpl-left {
+}
+
+.stepLocationViewImpl-right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
 .stepLocationViewImpl-layout {
-    display: inline-block;
-    white-space: nowrap;
-    position: absolute;
-    right: 100px;
-    top: 2px;
     white-space: nowrap;
 }
 
@@ -1657,6 +1549,14 @@
     margin-top: 2px;
 }
 
+.exportConfigViewImpl-filter {
+    border-bottom: none !important;
+}
+
+.exportConfigViewImpl-nameFilter {
+    border: none !important;
+}
+
 .infoMenuItem {
     cursor:default;
     color:#212121;
@@ -1676,3 +1576,31 @@
     width: 250px;
     margin-right: 5px;
 }
+
+.default-min-sizes {
+    min-width: 200px;
+    min-height: 200px;
+}
+
+.large-min-sizes {
+    min-width: 400px;
+    min-height: 400px;
+}
+
+/*
+.treePanel-panel {
+    position: relative;
+}
+
+.treePanel-boxPanel {
+    position: relative;
+    top: 0;
+    left: 0;
+}
+
+.treePanel-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+*/

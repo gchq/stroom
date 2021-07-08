@@ -12,10 +12,12 @@
         <g:Label ui:field="lblOfSeparator" text="&nbsp;of&nbsp;" styleName="pager-label"/>
         <g:Label ui:field="lblOf" styleName="pager-label"/>
         <g:HTMLPanel styleName="pager-space">&nbsp;</g:HTMLPanel>
-        <paging:SvgButton ui:field="first"/>
-        <paging:SvgButton ui:field="prev"/>
-        <paging:SvgButton ui:field="next"/>
-        <paging:SvgButton ui:field="last"/>
-        <paging:SvgButton ui:field="refresh"/>
+        <g:FlowPanel styleName="button-container">
+            <paging:SvgButton ui:field="first"/>
+            <paging:SvgButton ui:field="prev"/>
+            <paging:SvgButton ui:field="next"/>
+            <paging:SvgButton ui:field="last"/>
+            <paging:SvgButton ui:field="refresh"/>
+        </g:FlowPanel>
     </g:FlowPanel>
 </ui:UiBinder>

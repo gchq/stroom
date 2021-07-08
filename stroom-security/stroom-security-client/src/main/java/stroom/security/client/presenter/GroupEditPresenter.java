@@ -23,6 +23,7 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView;
+import stroom.widget.popup.client.presenter.Size;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -62,7 +63,20 @@ public class GroupEditPresenter extends MyPresenterWidget<UserGroupEditView> {
                 popupUiHandlers.onHide(autoClose, ok);
             }
         };
-        final PopupSize popupSize = new PopupSize(500, 555, 500, 555, true);
+        final PopupSize popupSize = PopupSize.builder()
+                .width(Size
+                        .builder()
+                        .initial(500)
+                        .min(500)
+                        .resizable(true)
+                        .build())
+                .height(Size
+                        .builder()
+                        .initial(555)
+                        .min(555)
+                        .resizable(true)
+                        .build())
+                .build();
         final String caption = "Group - " + userRef.getName();
         ShowPopupEvent.fire(GroupEditPresenter.this, GroupEditPresenter.this, PopupView.PopupType.CLOSE_DIALOG,
                 popupSize, caption, internalPopupUiHandlers);

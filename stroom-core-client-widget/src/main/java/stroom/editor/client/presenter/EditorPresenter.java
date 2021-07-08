@@ -16,10 +16,7 @@
 
 package stroom.editor.client.presenter;
 
-import stroom.editor.client.event.ChangeFilterEvent;
-import stroom.editor.client.event.ChangeFilterEvent.ChangeFilterHandler;
 import stroom.editor.client.event.FormatEvent.FormatHandler;
-import stroom.editor.client.event.HasChangeFilterHandlers;
 import stroom.editor.client.event.HasFormatHandlers;
 import stroom.editor.client.model.XmlFormatter;
 import stroom.editor.client.view.EditorMenuPresenter;
@@ -44,14 +41,12 @@ import java.util.function.Function;
 
 public class EditorPresenter
         extends MyPresenterWidget<EditorView>
-        implements HasFormatHandlers, HasChangeFilterHandlers, HasText, EditorUiHandlers,
+        implements HasFormatHandlers,
+        HasText,
         HasValueChangeHandlers<String> {
 
     private final EditorMenuPresenter contextMenu;
     private final DelegatingAceCompleter delegatingAceCompleter;
-
-    private boolean showFilterSettings;
-    private boolean input;
 
     @Inject
     public EditorPresenter(final EventBus eventBus,
@@ -62,7 +57,6 @@ public class EditorPresenter
         super(eventBus, view);
         this.contextMenu = contextMenu;
         this.delegatingAceCompleter = delegatingAceCompleter;
-        view.setUiHandlers(this);
         view.setTheme(getTheme(currentTheme.getTheme(), currentTheme.getEditorTheme()));
 
         registerHandler(view.addMouseDownHandler(event -> contextMenu.hide()));
@@ -201,15 +195,6 @@ public class EditorPresenter
         getView().setFormattedHighlights(highlightsFunction);
     }
 
-    @Override
-    public void changeFilterSettings() {
-        ChangeFilterEvent.fire(this);
-    }
-
-    public void setFilterActive(final boolean active) {
-        getView().setFilterActive(active);
-    }
-
     public void setControlsVisible(final boolean visible) {
         getView().setControlsVisible(visible);
     }
@@ -246,23 +231,6 @@ public class EditorPresenter
         getView().setTheme(theme);
     }
 
-    public boolean isShowFilterSettings() {
-        return showFilterSettings;
-    }
-
-    public void setShowFilterSettings(final boolean showFilterSettings) {
-        this.showFilterSettings = showFilterSettings;
-        getView().showFilterButton(showFilterSettings);
-    }
-
-    public boolean isInput() {
-        return input;
-    }
-
-    public void setInput(final boolean input) {
-        this.input = input;
-    }
-
     public EditorMenuPresenter getContextMenu() {
         return contextMenu;
     }
@@ -275,12 +243,6 @@ public class EditorPresenter
     @Override
     public HandlerRegistration addFormatHandler(final FormatHandler handler) {
         return getView().addFormatHandler(handler);
-    }
-
-    @Override
-    public com.google.web.bindery.event.shared.HandlerRegistration addChangeFilterHandler(
-            final ChangeFilterHandler handler) {
-        return addHandlerToSource(ChangeFilterEvent.TYPE, handler);
     }
 
     /**

@@ -1,0 +1,9 @@
+:root {
+    --layout-padding-explorer: .06rem;
+    --layout-padding-data: .24rem .12rem;
+}
+
+.stroom-density-compact {
+    --layout-padding-explorer: 0;
+    --layout-padding-data: .12rem .06rem;
+}

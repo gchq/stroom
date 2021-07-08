@@ -17,10 +17,10 @@
 package stroom.data.client.view;
 
 import stroom.data.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
@@ -29,7 +29,7 @@ public class ClassificationWrapperViewImpl extends ViewImpl implements Classific
 
     private final Widget widget;
     @UiField
-    ResizeSimplePanel content;
+    SimplePanel content;
     @UiField(provided = true)
     ClassificationLabel classification;
 

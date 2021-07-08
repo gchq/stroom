@@ -83,8 +83,8 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     private static final VisualisationResource VISUALISATION_RESOURCE = GWT.create(VisualisationResource.class);
 
     public static final ComponentType TYPE = new ComponentType(4, "vis", "Visualisation");
-    //    private static final int MAX_RESULTS = 1000;
     private static final long UPDATE_INTERVAL = 2000;
+
     private final VisFunctionCache visFunctionCache;
     private final ScriptCache scriptCache;
     private final RestFactory restFactory;
@@ -179,10 +179,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
 
     @Override
     public void onResize() {
-        if (getWidget() instanceof RequiresResize) {
-            ((RequiresResize) getWidget()).onResize();
-        }
-        visFrame.onResize();
+        getView().onResize();
     }
 
     /*****************
@@ -706,7 +703,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
         return currentSelection;
     }
 
-    public interface VisView extends View {
+    public interface VisView extends View, RequiresResize {
 
         void setRefreshing(boolean refreshing);
 

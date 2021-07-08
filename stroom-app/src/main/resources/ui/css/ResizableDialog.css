@@ -18,46 +18,6 @@
 	z-index: 100;
 }
 
-.resizableDialog-container {
-	
-}
-
-.resizableDialog-background {
-	position: relative;
-	width: 100%;
-	height: 100%;
-	border: 1px solid var(--dialog-border-color);
-	border-radius: 6px;
-	background-image: var(--dialog-background-image);
-	background-color: var(--dialog-background-color);
-	box-shadow: var(--dialog-shadow);
-	overflow: hidden;
-}
-
-.resizableDialog-content {
-	width: 100%;
-	height: 100%;
-	padding: 40px 8px 8px 8px;
-}
-
-.resizableDialog-titleBar {
-	position: absolute;
-	left: 0px;
-	top: 0px;
-	width: 100%;
-	background-image: var(--dialog-titlebar-background-image);
-	background-color: var(--dialog-titlebar-background-color);
-	border-bottom: 1px solid var(--dialog-titlebar-border-color);
-}
-
-.resizableDialog-titleText {
-	width: 100%;
-	padding: 7px 10px;
-	font-weight: bold;
-	color: var(--dialog-titlebar-text-color);
-	cursor: default;
-}
-
 /* Resize handle */
 .resizableDialog-resizeHandle {
 	background-image: url("../images/dialog/resizeBottomRight.png");

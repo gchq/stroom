@@ -97,7 +97,7 @@ public class CreateDocumentPresenter
         getView().setName(name);
         getView().setPermissionInheritance(PermissionInheritance.DESTINATION);
 
-        final PopupSize popupSize = new PopupSize(400, 550, 350, 350, 2000, 2000, true);
+        final PopupSize popupSize = PopupSize.resizable(400, 550);
         ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, caption, this);
         getView().focus();
     }

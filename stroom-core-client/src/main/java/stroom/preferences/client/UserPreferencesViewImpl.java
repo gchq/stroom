@@ -72,6 +72,8 @@ public final class UserPreferencesViewImpl
     @UiField
     StringListBox editorTheme;
     @UiField
+    StringListBox density;
+    @UiField
     StringListBox font;
     @UiField
     StringListBox fontSize;
@@ -108,6 +110,11 @@ public final class UserPreferencesViewImpl
                 getUiHandlers().onChange();
             }
         });
+        density.addChangeHandler(event -> {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onChange();
+            }
+        });
         font.addChangeHandler(event -> {
             if (getUiHandlers() != null) {
                 getUiHandlers().onChange();
@@ -118,6 +125,10 @@ public final class UserPreferencesViewImpl
                 getUiHandlers().onChange();
             }
         });
+
+        density.addItem("Default");
+        density.addItem("Comfortable");
+        density.addItem("Compact");
 
         fontSize.addItem("Small");
         fontSize.addItem("Medium");
@@ -158,11 +169,6 @@ public final class UserPreferencesViewImpl
     }
 
     @Override
-    public String getEditorTheme() {
-        return editorTheme.getSelected();
-    }
-
-    @Override
     public void setTheme(final String theme) {
         this.theme.setSelected(theme);
     }
@@ -171,6 +177,11 @@ public final class UserPreferencesViewImpl
     public void setThemes(final List<String> themes) {
         this.theme.clear();
         this.theme.addItems(themes);
+    }
+
+    @Override
+    public String getEditorTheme() {
+        return editorTheme.getSelected();
     }
 
     @Override
@@ -183,6 +194,20 @@ public final class UserPreferencesViewImpl
         this.editorTheme.clear();
         this.editorTheme.addItem("");
         this.editorTheme.addItems(editorThemes);
+    }
+
+    @Override
+    public String getDensity() {
+        return density.getSelected();
+    }
+
+    @Override
+    public void setDensity(final String density) {
+        if (density == null) {
+            this.density.setSelected("Default");
+        } else {
+            this.density.setSelected(density);
+        }
     }
 
     @Override
@@ -302,8 +327,8 @@ public final class UserPreferencesViewImpl
 
     public void changeVisible() {
         final RowFormatter formatter = grid.getRowFormatter();
-        formatter.setVisible(8, TimeZone.Use.ID.equals(this.timeZoneUse.getSelectedItem()));
-        formatter.setVisible(9, TimeZone.Use.OFFSET.equals(this.timeZoneUse.getSelectedItem()));
+        formatter.setVisible(9, TimeZone.Use.ID.equals(this.timeZoneUse.getSelectedItem()));
+        formatter.setVisible(10, TimeZone.Use.OFFSET.equals(this.timeZoneUse.getSelectedItem()));
     }
 
     @UiHandler("custom")

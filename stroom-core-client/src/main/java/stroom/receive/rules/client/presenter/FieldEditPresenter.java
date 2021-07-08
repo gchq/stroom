@@ -74,7 +74,7 @@ public class FieldEditPresenter extends MyPresenterWidget<FieldEditPresenter.Fie
     }
 
     public void show(final String caption, final PopupUiHandlers uiHandlers) {
-        final PopupSize popupSize = new PopupSize(305, 102, 305, 220, 800, 102, true);
+        final PopupSize popupSize = PopupSize.resizableX();
         ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, caption, uiHandlers);
     }
 

@@ -20,11 +20,17 @@ import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
+import stroom.data.grid.client.EndColumn;
 import stroom.data.table.client.Refreshable;
 import stroom.pipeline.shared.XPathFilter;
+import stroom.svg.client.Preset;
+import stroom.svg.client.SvgPresets;
+import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.SvgButton;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.inject.Inject;
@@ -45,6 +51,10 @@ public class XPathListPresenter extends MyPresenterWidget<DataGridView<XPathFilt
 
         dataProvider = new ListDataProvider<>(new ArrayList<>());
         dataProvider.addDataDisplay(getView().getDataDisplay());
+    }
+
+    ButtonView addButton(Preset preset) {
+        return getView().addButton(preset);
     }
 
     /**
@@ -86,7 +96,8 @@ public class XPathListPresenter extends MyPresenterWidget<DataGridView<XPathFilt
                 return TickBoxState.fromBoolean(filter.isIgnoreCase());
             }
         };
-        getView().addColumn(ignoreCaseColumn, "Ignore Case", 80);
+        getView().addResizableColumn(ignoreCaseColumn, "Ignore Case", 100);
+        getView().addEndColumn(new EndColumn<>());
     }
 
     @Override

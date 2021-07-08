@@ -18,7 +18,6 @@ package stroom.visualisation.client.view;
 
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.visualisation.client.presenter.VisualisationSettingsPresenter.VisualisationSettingsView;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -42,7 +41,7 @@ public class VisualisationSettingsViewImpl extends ViewImpl
     @UiField
     SimplePanel script;
     @UiField
-    ResizeSimplePanel settings;
+    SimplePanel settings;
 
     @Inject
     public VisualisationSettingsViewImpl(final Binder binder) {

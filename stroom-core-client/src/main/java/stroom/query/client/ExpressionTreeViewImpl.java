@@ -36,7 +36,7 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 import java.util.List;
 
-public class ExpressionTreeViewImpl extends ViewWithUiHandlers<ExpressionUiHandlers> implements ExpressionTreeView {
+class ExpressionTreeViewImpl extends ViewWithUiHandlers<ExpressionUiHandlers> implements ExpressionTreeView {
 
     private final ExpressionTreePanel treePanel;
     private final DraggableTreePanel<Item> layoutPanel;
@@ -80,6 +80,7 @@ public class ExpressionTreeViewImpl extends ViewWithUiHandlers<ExpressionUiHandl
             }
         };
         layoutPanel.setAllowDragging(true);
+        layoutPanel.addStyleName("ExpressionTreeViewImpl-layoutPanel");
     }
 
     @Override

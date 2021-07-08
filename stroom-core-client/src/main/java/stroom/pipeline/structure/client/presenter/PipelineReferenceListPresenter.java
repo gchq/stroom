@@ -72,11 +72,9 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
         implements HasDirtyHandlers, ReadOnlyChangeHandler {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
-    private static final SafeHtml ADDED = SafeHtmlUtils.fromSafeConstant("<div style=\"font-weight:500\">");
-    private static final SafeHtml REMOVED = SafeHtmlUtils
-            .fromSafeConstant("<div style=\"font-weight:500;text-decoration:line-through\">");
-    private static final SafeHtml INHERITED = SafeHtmlUtils.fromSafeConstant("<div style=\"color:black\">");
-    private static final SafeHtml END = SafeHtmlUtils.fromSafeConstant("</div>");
+    private static final String ADDED = "pipelineStructureViewImpl-property-added";
+    private static final String REMOVED = "pipelineStructureViewImpl-property-removed";
+    private static final String INHERITED = "pipelineStructureViewImpl-property-inherited";
     private final ButtonView addButton;
     private final ButtonView editButton;
     private final ButtonView removeButton;
@@ -206,23 +204,24 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
             return SafeHtmlUtils.EMPTY_SAFE_HTML;
         }
 
-        final SafeHtmlBuilder builder = new SafeHtmlBuilder();
+        String className = null;
         final State state = referenceStateMap.get(pipelineReference);
         switch (state) {
             case ADDED:
-                builder.append(ADDED);
+                className = ADDED;
                 break;
             case REMOVED:
-                builder.append(REMOVED);
+                className = REMOVED;
                 break;
             case INHERITED:
-                builder.append(INHERITED);
+                className = INHERITED;
                 break;
         }
 
+        final SafeHtmlBuilder builder = new SafeHtmlBuilder();
+        builder.append(SafeHtmlUtils.fromTrustedString("<div class=\"" + className + "\">"));
         builder.appendEscaped(string);
-        builder.append(END);
-
+        builder.append(SafeHtmlUtils.fromTrustedString("</div>"));
         return builder.toSafeHtml();
     }
 
@@ -328,7 +327,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
                 }
             };
 
-            final PopupSize popupSize = new PopupSize(300, 153, 300, 153, 2000, 153, true);
+            final PopupSize popupSize = PopupSize.resizableX();
             if (isNew) {
                 ShowPopupEvent.fire(this, editor, PopupType.OK_CANCEL_DIALOG, popupSize, "New Pipeline Reference",
                         popupUiHandlers);

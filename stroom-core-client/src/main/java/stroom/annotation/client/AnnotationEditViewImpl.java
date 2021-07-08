@@ -19,7 +19,6 @@ package stroom.annotation.client;
 import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
 import stroom.svg.client.Preset;
 import stroom.widget.button.client.SvgButton;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.BlurEvent;
@@ -32,6 +31,7 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
@@ -79,7 +79,7 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     @UiField
     TextArea comment;
     @UiField
-    ResizeSimplePanel history;
+    SimplePanel history;
     @UiField
     Label showLinkedEvents;
 

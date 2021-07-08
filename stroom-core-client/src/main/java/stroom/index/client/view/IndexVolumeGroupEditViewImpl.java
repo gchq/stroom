@@ -17,10 +17,10 @@
 package stroom.index.client.view;
 
 import stroom.index.client.presenter.IndexVolumeGroupEditPresenter.IndexVolumeGroupEditView;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -34,7 +34,7 @@ public class IndexVolumeGroupEditViewImpl extends ViewImpl implements IndexVolum
     @UiField
     TextBox name;
     @UiField
-    ResizeSimplePanel list;
+    SimplePanel list;
 
     @Inject
     public IndexVolumeGroupEditViewImpl(final Binder binder) {

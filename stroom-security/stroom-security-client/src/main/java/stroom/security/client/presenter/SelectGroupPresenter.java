@@ -23,6 +23,7 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView;
+import stroom.widget.popup.client.presenter.Size;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -45,7 +46,20 @@ public class SelectGroupPresenter extends AbstractDataUserListPresenter {
         findUserCriteria.setGroup(true);
         setup(findUserCriteria);
 
-        final PopupSize popupSize = new PopupSize(400, 400, 400, 400, true);
+        final PopupSize popupSize = PopupSize.builder()
+                .width(Size
+                        .builder()
+                        .initial(400)
+                        .min(400)
+                        .resizable(true)
+                        .build())
+                .height(Size
+                        .builder()
+                        .initial(400)
+                        .min(400)
+                        .resizable(true)
+                        .build())
+                .build();
         final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
             @Override
             public void onHideRequest(boolean autoClose, boolean ok) {

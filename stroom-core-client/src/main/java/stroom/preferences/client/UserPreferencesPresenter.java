@@ -169,11 +169,7 @@ public final class UserPreferencesPresenter
     }
 
     private PopupSize getPopupSize() {
-        return new PopupSize(
-                700, 556,
-                700, 556,
-                1024, 556,
-                true);
+        return PopupSize.resizableX();
     }
 
     protected void hide() {
@@ -187,6 +183,7 @@ public final class UserPreferencesPresenter
         getView().setThemes(userPreferencesManager.getThemes());
         getView().setTheme(userPreferences.getTheme());
         getView().setEditorThemes(userPreferencesManager.getEditorThemes());
+        getView().setDensity(userPreferences.getDensity());
         getView().setFonts(userPreferencesManager.getFonts());
         getView().setFont(userPreferences.getFont());
         getView().setFontSize(userPreferences.getFontSize());
@@ -216,6 +213,7 @@ public final class UserPreferencesPresenter
         return UserPreferences.builder()
                 .theme(getView().getTheme())
                 .editorTheme(getView().getEditorTheme())
+                .density(getView().getDensity())
                 .font(getView().getFont())
                 .fontSize(getView().getFontSize())
                 .dateTimePattern(getView().getPattern())
@@ -236,6 +234,10 @@ public final class UserPreferencesPresenter
         void setEditorTheme(String editorTheme);
 
         void setEditorThemes(List<String> editorThemes);
+
+        String getDensity();
+
+        void setDensity(String density);
 
         String getFont();
 

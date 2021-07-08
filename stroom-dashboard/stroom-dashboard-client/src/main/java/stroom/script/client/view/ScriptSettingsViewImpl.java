@@ -18,10 +18,10 @@ package stroom.script.client.view;
 
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.script.client.presenter.ScriptSettingsPresenter.ScriptSettingsView;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -35,7 +35,7 @@ public class ScriptSettingsViewImpl extends ViewImpl implements ScriptSettingsVi
     @UiField
     TextArea description;
     @UiField
-    ResizeSimplePanel dependencies;
+    SimplePanel dependencies;
 
     @Inject
     public ScriptSettingsViewImpl(final Binder binder) {

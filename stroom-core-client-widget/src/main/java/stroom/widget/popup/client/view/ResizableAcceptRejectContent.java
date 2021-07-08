@@ -24,11 +24,11 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.ResizeComposite;
-import com.google.gwt.user.client.ui.ResizeLayoutPanel;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
-public class ResizableAcceptRejectContent extends ResizeComposite implements HasEnabled {
+public class ResizableAcceptRejectContent extends Composite implements HasEnabled {
 
     private static final Binder binder = GWT.create(Binder.class);
 
@@ -43,7 +43,7 @@ public class ResizableAcceptRejectContent extends ResizeComposite implements Has
     @UiField
     Button reject;
     @UiField
-    ResizeLayoutPanel content;
+    SimplePanel content;
 
     public ResizableAcceptRejectContent(final PopupUiHandlers popupUiHandlers) {
         initWidget(binder.createAndBindUi(this));

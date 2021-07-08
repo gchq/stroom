@@ -78,7 +78,6 @@ import stroom.widget.menu.client.presenter.MenuListPresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
@@ -490,8 +489,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private void setProcessorLimits(final QueryData queryData, final DocRef pipeline) {
         processorLimitsPresenter.setTimeLimitMins(defaultProcessorTimeLimit);
         processorLimitsPresenter.setRecordLimit(defaultProcessorRecordLimit);
-        final PopupSize popupSize = new PopupSize(321, 102, false);
-        ShowPopupEvent.fire(this, processorLimitsPresenter, PopupType.OK_CANCEL_DIALOG, popupSize,
+        ShowPopupEvent.fire(this, processorLimitsPresenter, PopupType.OK_CANCEL_DIALOG,
                 "Process Search Results", new PopupUiHandlers() {
                     @Override
                     public void onHideRequest(final boolean autoClose, final boolean ok) {

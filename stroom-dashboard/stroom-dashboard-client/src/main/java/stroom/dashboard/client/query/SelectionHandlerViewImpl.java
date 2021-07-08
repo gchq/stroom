@@ -25,7 +25,7 @@ import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
@@ -42,9 +42,9 @@ public class SelectionHandlerViewImpl extends ViewWithUiHandlers<SelectionHandle
     private final Widget widget;
 
     @UiField
-    ItemListBox<HasDisplayValue> component;
+    FlowPanel layout;
     @UiField
-    SimplePanel expression;
+    ItemListBox<HasDisplayValue> component;
     @UiField
     TickBox enabled;
 
@@ -99,7 +99,7 @@ public class SelectionHandlerViewImpl extends ViewWithUiHandlers<SelectionHandle
 
     @Override
     public void setExpressionView(final View view) {
-        this.expression.setWidget(view.asWidget());
+        layout.add(view.asWidget());
     }
 
     @Override

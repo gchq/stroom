@@ -17,7 +17,6 @@
 package stroom.processor.client.view;
 
 import stroom.processor.client.presenter.ProcessorPresenter.ProcessorView;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -31,7 +30,7 @@ public class ProcessorViewImpl extends ViewImpl implements ProcessorView {
 
     private final Widget widget;
     @UiField
-    ResizeSimplePanel processorList;
+    SimplePanel processorList;
     @UiField
     SimplePanel details;
 

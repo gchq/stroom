@@ -27,8 +27,8 @@
 html, body {
 	width: 100%;
 	height: 100%;
-	padding: 0px;
-	margin: 0px;
+	padding: 0;
+	margin: 0;
 	overflow: hidden;
 	font-family: var(--regular-font-family);
 	font-size: var(--font-size-13);
@@ -36,8 +36,8 @@ html, body {
 }
 
 .vis {
-	margin: 0px;
-	padding: 0px;
+	margin: 0;
+	padding: 0;
 	width: 100%;
 	height: 100%;
 }
@@ -81,22 +81,22 @@ html, body {
 
 .vis-label {
     position: absolute;
-    left: 0px;
-    top: 0px;
+    left: 0;
+    top: 0;
 }
 
 .vis-seriesLabel {
     position: absolute;
-    left: 0px;
-    top: 0px;
+    left: 0;
+    top: 0;
     background-color: rgba(255,255,255,0.8);
     white-space: nowrap;
 }
 
 .vis-glass {
 	position: absolute;
-	left: 0px;
-	top: 0px;
+	left: 0;
+	top: 0;
 	width: 100%;
 	height: 100%;
 	pointer-events: all;

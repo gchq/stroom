@@ -47,7 +47,8 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
     private TabConfig tabConfig;
     private SettingsPresenter settingsPresenter;
 
-    public AbstractComponentPresenter(final EventBus eventBus, final V view,
+    public AbstractComponentPresenter(final EventBus eventBus,
+                                      final V view,
                                       final Provider<?> settingsPresenterProvider) {
         super(eventBus, view);
         this.settingsPresenterProvider = settingsPresenterProvider;
@@ -137,7 +138,7 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
         settingsPresenter.setComponents(components);
         settingsPresenter.read(componentConfig);
 
-        final PopupSize popupSize = new PopupSize(550, 450, true);
+        final PopupSize popupSize = PopupSize.resizable(550, 450);
         ShowPopupEvent.fire(this, settingsPresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Settings", uiHandlers);
     }
 

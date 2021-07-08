@@ -119,15 +119,7 @@ public class ImportConfigConfirmPresenter extends
 
     @Override
     protected void revealInParent() {
-        final PopupSize popupSize = new PopupSize(
-                800,
-                400,
-                300,
-                300,
-                2000,
-                2000,
-                true);
-
+        final PopupSize popupSize = PopupSize.resizable(800, 400);
         ShowPopupEvent.fire(
                 this,
                 this,

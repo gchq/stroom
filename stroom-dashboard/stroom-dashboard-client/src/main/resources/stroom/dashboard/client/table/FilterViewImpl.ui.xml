@@ -1,22 +1,13 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui">
-    <g:FlowPanel styleName="max">
-        <g:FlowPanel styleName="filterViewImpl-row">
-
-            <g:Label text="Include:" styleName="filterViewImpl-label"/>
-            <g:FlowPanel styleName="filterViewImpl-container">
-                <g:TextArea ui:field="includes" styleName="max"/>
-            </g:FlowPanel>
-
+    <g:FlowPanel styleName="max default-min-sizes dock-container-vertical">
+        <g:FlowPanel styleName="dock-max">
+            <g:Label text="Include:"/>
+            <g:TextArea ui:field="includes" styleName="max"/>
         </g:FlowPanel>
-        <g:FlowPanel styleName="filterViewImpl-row">
-
-            <g:Label text="Exclude:" styleName="filterViewImpl-label"/>
-            <g:FlowPanel styleName="filterViewImpl-container">
-                <g:TextArea ui:field="excludes" styleName="max"/>
-            </g:FlowPanel>
-
+        <g:FlowPanel styleName="dock-max">
+            <g:Label text="Exclude:"/>
+            <g:TextArea ui:field="excludes" styleName="max"/>
         </g:FlowPanel>
     </g:FlowPanel>
-
 </ui:UiBinder> 

@@ -143,7 +143,7 @@ public class ManageFSVolumesPresenter extends MyPresenter<WrapperView, ManageFSV
 
     @Override
     protected void revealInParent() {
-        final PopupSize popupSize = new PopupSize(1000, 600, true);
+        final PopupSize popupSize = PopupSize.resizable(1000, 600);
         ShowPopupEvent.fire(this, this, PopupType.CLOSE_DIALOG, null, popupSize, "Manage Volumes", null, null);
     }
 

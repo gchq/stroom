@@ -105,8 +105,7 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
         };
 
         // Show the processor creation dialog.
-        final PopupSize popupSize = new PopupSize(
-                800, 600, 400, 400, true);
+        final PopupSize popupSize = PopupSize.resizable(800, 600);
         if (filter != null) {
             ShowPopupEvent.fire(
                     this,

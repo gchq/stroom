@@ -64,7 +64,7 @@ public class FilterPresenter extends MyPresenterWidget<FilterPresenter.FilterVie
         getView().setIncludes(includes);
         getView().setExcludes(excludes);
 
-        final PopupSize popupSize = new PopupSize(400, 500, 300, 300, true);
+        final PopupSize popupSize = PopupSize.resizable(400, 500);
         ShowPopupEvent.fire(tablePresenter, this, PopupType.OK_CANCEL_DIALOG, popupSize,
                 "Filter '" + field.getName() + "'", this);
     }

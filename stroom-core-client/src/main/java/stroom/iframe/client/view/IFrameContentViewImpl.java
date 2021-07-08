@@ -18,7 +18,7 @@ package stroom.iframe.client.view;
 
 import stroom.iframe.client.presenter.IFrameContentPresenter.IFrameContentView;
 import stroom.iframe.client.presenter.IFrameLoadUiHandlers;
-import stroom.widget.layout.client.view.ResizeSimplePanel;
+import stroom.widget.tab.client.view.GlobalResizeObserver;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
@@ -27,6 +27,7 @@ import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
@@ -37,7 +38,7 @@ public class IFrameContentViewImpl extends ViewWithUiHandlers<IFrameLoadUiHandle
 
     private static final String DEFAULT_TITLE = "Loading...";
 
-    private final ResizeSimplePanel widget;
+    private final SimplePanel widget;
     private final Frame frame;
     private boolean updateTitle = true;
     private String lastTitle = DEFAULT_TITLE;
@@ -56,21 +57,18 @@ public class IFrameContentViewImpl extends ViewWithUiHandlers<IFrameLoadUiHandle
         frame.setVisible(false);
         RootPanel.get().add(frame);
 
-        widget = new ResizeSimplePanel() {
-            @Override
-            public void onResize() {
-                resize();
-            }
-
+        widget = new SimplePanel() {
             @Override
             protected void onAttach() {
                 super.onAttach();
                 frame.setVisible(true);
                 resize();
+                GlobalResizeObserver.addListener(widget.getElement(), element -> resize());
             }
 
             @Override
             protected void onDetach() {
+                GlobalResizeObserver.removeListener(widget.getElement());
                 super.onDetach();
                 frame.setVisible(false);
             }

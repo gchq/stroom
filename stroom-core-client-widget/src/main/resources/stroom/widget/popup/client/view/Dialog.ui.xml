@@ -4,10 +4,10 @@
 
 	<g:FlowPanel styleName="dialog-container">
 		<g:FlowPanel styleName="dialog-background">
-			<g:SimplePanel ui:field="content" styleName="dialog-content" />
 			<g:SimplePanel styleName="dialog-titleBar">
 				<g:Label ui:field="titleText" styleName="dialog-titleText">Caption</g:Label>
 			</g:SimplePanel>
+			<g:SimplePanel ui:field="content" styleName="dialog-body" />
 		</g:FlowPanel>
 	</g:FlowPanel>
 </ui:UiBinder> 

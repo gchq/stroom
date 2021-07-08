@@ -39,8 +39,6 @@ import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
 
 import com.google.gwt.canvas.dom.client.Context2d;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -71,9 +69,9 @@ public class ExpressionTreePanel extends TreePanel<Item> {
         termEditor = new TermEditor(docRefPresenter, utc);
 
         final FlowPanel panel = new FlowPanel();
-        setAbsoluteLeftTop(panel.getElement());
+        panel.setStyleName("treePanel-panel");
         boxPanel = new FlowPanel();
-        setAbsoluteLeftTop(boxPanel.getElement());
+        boxPanel.setStyleName("treePanel-boxPanel");
 
         final LayeredCanvas canvas = LayeredCanvas.createIfSupported();
         if (canvas != null) {
@@ -92,20 +90,13 @@ public class ExpressionTreePanel extends TreePanel<Item> {
             renderer = new TreeRenderer2<>(canvas, cellRenderer, connectorRenderer);
             renderer.setTreeLayout(treeLayout);
 
-            setAbsoluteLeftTop(canvas.getElement());
+            canvas.setStyleName("treePanel-canvas");
             panel.add(canvas);
         }
 
         panel.add(boxPanel);
 
         initWidget(panel);
-    }
-
-    private void setAbsoluteLeftTop(final Element element) {
-        final Style style = element.getStyle();
-        style.setPosition(Position.ABSOLUTE);
-        style.setLeft(0, Unit.PX);
-        style.setTop(0, Unit.PX);
     }
 
     @Override

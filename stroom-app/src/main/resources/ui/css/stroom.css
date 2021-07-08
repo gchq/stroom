@@ -44,6 +44,7 @@ html,body,div,span,table,tbody,tr,th,td,table th,table td,b,p,h1,h2,h3,h4,select
 	-moz-box-sizing: border-box;
 	-ms-box-sizing: border-box;
 	box-sizing: border-box;
+	background-size: 100% 100%;
 	outline: none;
 }
 
@@ -74,13 +75,13 @@ img {
 }
 
 h1 {
-	font-size: var(--font-size-14);
+	font-size: var(--font-size-19);
 	font-weight: 500;
 	margin-bottom: 11px;
 }
 
 h2 {
-	font-size: var(--font-size-12);
+	font-size: var(--font-size-15);
 	font-weight: 500;
 }
 
@@ -153,45 +154,50 @@ td {
 
 /* STYLES FOR THE LOADING BANNER */
 #loading {
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	height: 50px;
-	font-size: var(--font-size-13);
-	color: #000;
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    font-size: var(--font-size-13);
+    color: #000;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 #loadingBox {
-	position: relative;
-	top: -26px;
-	left: -50%;
-	border: 1px solid #404e60;
-	background: white;
-	padding: 10px;
-	margin: 0;
-	width: 270px;
-	min-height: 53px;
-	text-align: center;
-	z-index: 100;
-	
-	border-radius: 200px;
-	box-shadow: 1px 1px 8px rgba(0, 0, 0, 0.2), -1px -1px 8px rgba(0, 0, 0, 0.2);
+    border: 1px solid #404e60;
+    background: white;
+    padding: 10px;
+    z-index: 100;
+    border-radius: 200px;
+    box-shadow: 1px 1px 8px rgba(0, 0, 0, 0.2), -1px -1px 8px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
 }
 
-#loadingImage {
-	float: left;
-	margin-right: 8px;
+#loadingLeft {
+    margin: 0 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    align-content: center;
+}
+
+#loadingRight {
+    margin: 0 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    align-content: center;
 }
 
 #loadingTitle {
 	font-weight: 500;
-	padding-left: 42px;
-	text-align: left;
 }
 
 #loadingText {
-	padding-left: 42px;
-	text-align: left;
 }
 
 .stroom-pipeline-stepping-button {
@@ -203,7 +209,6 @@ td {
 
 .stroom-pipeline-stepping-button-icon {
     background-image: url("../images/stepping.svg");
-    background-size: 100%;
     width: 46px;
     height: 46px;
     margin-left: 2px;
@@ -232,8 +237,6 @@ td {
 
 /* STYLE FOR THE CLASSIFICATION BANNERS */
 .classification {
-	width: 100%;
-	height: 15px;
 	font-weight: 500;
 	text-align: center;
 	background-color: #888888;
@@ -614,7 +617,7 @@ input[type="file"]:disabled {
 }
 
 .stroom-content {
-	background-color: var(--page-background-color);
+	background-color: var(--main-background-color);
 }
 
 .gwt-ListBox {
@@ -695,8 +698,7 @@ input[type="file"]:disabled {
 }
 
 .itemCheckList {
-	background-color: var(--input-background-color);
-	_background-color: var(--input-background-color);
+	background-color: var(--main-background-color);
 	border: 1px solid var(--input-border-color);
 }
 
@@ -729,13 +731,12 @@ input[type="file"]:disabled {
 
 .activityOuter {
     background-color: var(--input-background-color);
-    width: 100%;
-    height: 100%;
     padding: 10px;
 }
 
 .activityContainer {
     background-color: var(--input-background-color);
+    color: var(--input-text-color);
     border: 1px solid var(--input-border-color);
     border-radius: 5px;
     padding: 5px;
@@ -786,4 +787,41 @@ input[type="file"]:disabled {
 
 .popupPanel-dragGlassVisible {
 	visibility: visible;
+}
+
+
+
+
+
+
+.dock-container-horizontal {
+    display: flex;
+}
+
+.dock-container-vertical {
+    display: flex;
+    flex-direction: column;
+}
+
+.dock-min {
+    flex-grow: 0;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.dock-max {
+    flex-grow: 1;
+    flex-shrink: 1;
+    overflow: hidden;
+    position: relative;
+}
+
+.input-row {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.w-100 {
+  width: 100% !important;
 }
