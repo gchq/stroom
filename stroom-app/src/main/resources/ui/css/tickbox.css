@@ -28,109 +28,208 @@
 	margin-top: 1px;
 }
 */
-.tickBox .tickBox-text {
+.tickBox-text {
 	display: inline-block;
 	margin-left: 4px;
 	cursor: pointer;
 }
 
 
-.tickBox .tickBox-tick {
+.tickBox-tick {
     background-image: url("../images/tickbox/tick.png");
     width: 13px;
     height: 13px;
 }
 
-.tickBox .tickBox-tickNB {
+.tickBox-tickNB {
     background-image: url("../images/tickbox/tickNB.png");
     width: 13px;
     height: 13px;
 }
 
-.tickBox .tickBox-halfTick {
+.tickBox-halfTick {
     background-image: url("../images/tickbox/halfTick.png");
     width: 13px;
     height: 13px;
 }
 
-.tickBox .tickBox-halfTickNB {
+.tickBox-halfTickNB {
     background-image: url("../images/tickbox/halfTickNB.png");
     width: 13px;
     height: 13px;
 }
 
-.tickBox .tickBox-untick {
+.tickBox-untick {
     background-image: url("../images/tickbox/untick.png");
     width: 13px;
     height: 13px;
 }
 
-.tickBox .tickBox-untickNB {
+.tickBox-untickNB {
     background-image: url("../images/tickbox/untickNB.png");
     width: 13px;
     height: 13px;
 }
 
-.tickBox .tickBox-tickDisabled {
+.tickBox-tickDisabled {
     background-image: url("../images/tickbox/tickDisabled.png");
     width: 13px;
     height: 13px;
 }
 
-.tickBox .tickBox-halfTickDisabled {
+.tickBox-halfTickDisabled {
     background-image: url("../images/tickbox/halfTickDisabled.png");
     width: 13px;
     height: 13px;
 }
 
-.tickBox .tickBox-untickDisabled {
+.tickBox-untickDisabled {
     background-image: url("../images/tickbox/untickDisabled.png");
     width: 13px;
     height: 13px;
 }
 
 
-.stroom-theme-dark .tickBox .tickBox-halfTick {
+.stroom-theme-dark .tickBox-halfTick {
     background-image: url("../images/tickbox/halfTick-dark.png");
 }
 
-.stroom-theme-dark .tickBox .tickBox-halfTickDisabled {
+.stroom-theme-dark .tickBox-halfTickDisabled {
     background-image: url("../images/tickbox/halfTickDisabled-dark.png");
 }
 
-.stroom-theme-dark .tickBox .tickBox-untick {
+.stroom-theme-dark .tickBox-untick {
     background-image: url("../images/tickbox/untick-dark.png");
 }
 
-.stroom-theme-dark .tickBox .tickBox-untickDisabled {
+.stroom-theme-dark .tickBox-untickDisabled {
     background-image: url("../images/tickbox/untickDisabled-dark.png");
 }
 
 
-.stroom-theme-dark2 .tickBox .tickBox-tick {
+.stroom-theme-dark2 .tickBox-tick {
     background-image: url("../images/tickbox/tick-dark2.png");
 }
 
-.stroom-theme-dark2 .tickBox .tickBox-tickNB {
+.stroom-theme-dark2 .tickBox-tickNB {
     background-image: url("../images/tickbox/tickNB-dark2.png");
 }
 
-.stroom-theme-dark2 .tickBox .tickBox-halfTick {
+.stroom-theme-dark2 .tickBox-halfTick {
     background-image: url("../images/tickbox/halfTick-dark2.png");
 }
 
-.stroom-theme-dark2 .tickBox .tickBox-halfTickNB {
+.stroom-theme-dark2 .tickBox-halfTickNB {
     background-image: url("../images/tickbox/halfTickNB-dark2.png");
 }
 
-.stroom-theme-dark2 .tickBox .tickBox-halfTickDisabled {
+.stroom-theme-dark2 .tickBox-halfTickDisabled {
     background-image: url("../images/tickbox/halfTickDisabled-dark2.png");
 }
 
-.stroom-theme-dark2 .tickBox .tickBox-untick {
+.stroom-theme-dark2 .tickBox-untick {
     background-image: url("../images/tickbox/untick-dark2.png");
 }
 
-.stroom-theme-dark2 .tickBox .tickBox-untickDisabled {
+.stroom-theme-dark2 .tickBox-untickDisabled {
     background-image: url("../images/tickbox/untickDisabled-dark2.png");
+}
+
+
+
+
+
+
+
+.SimpleTickBox {
+    display: block;
+    position: relative;
+    width: 25px;
+    height: 25px;
+    font-size: 0;
+    color: transparent;
+}
+
+.SimpleTickBox-checkbox {
+    position: absolute;
+    opacity: 0;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    z-index: 1;
+}
+
+.SimpleTickBox-checkmark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    background-color: var(--control__background-color);
+    border: 1px solid var(--control__border-color);
+    border-radius: .25rem;
+}
+
+.SimpleTickBox-checkmark svg {
+  display: none;
+  color: white;
+  margin: 3px;
+}
+
+
+
+
+
+
+
+/* On mouse-over, add a grey background color */
+.SimpleTickBox:hover input ~ .SimpleTickBox-checkmark {
+    /*background-color: #ccc;*/
+}
+
+/* When the checkbox is checked, add a blue background */
+.SimpleTickBox input:checked ~ .SimpleTickBox-checkmark {
+    background-color: #2196F3;
+}
+
+.SimpleTickBox input:checked ~ .SimpleTickBox-checkmark svg {
+    display: block;
+}
+
+.SimpleTickBox input:focus ~ .SimpleTickBox-checkmark {
+    outline: 0;
+    border-color: var(--focus-border);
+    box-shadow: var(--focus-shadow);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+.SimpleTickBox-tick {
+    color: white;
+}
+
+.SimpleTickBox-halfTick {
+}
+
+.SimpleTickBox-untick {
+}
+
+.SimpleTickBox.disabled {
+    opacity: 0.5;
+}
+
+.stroom-theme-dark .SimpleTickBox-halfTick {
+}
+
+.stroom-theme-dark .SimpleTickBox-untick {
 }

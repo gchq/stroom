@@ -44,14 +44,14 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
     private boolean allowClickPropagation;
 
     BaseSvgButton(final Preset preset) {
-        super(Document.get().createDivElement());
+        super(Document.get().createPushButtonElement());
 
         sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.FOCUSEVENTS | Event.KEYEVENTS);
         getElement().getStyle().setDisplay(Display.INLINE_BLOCK);
 
         getElement().setClassName("fa-button");
 
-        face = Document.get().createPushButtonElement();
+        face = Document.get().createDivElement();
         face.setClassName("face");
 
         getElement().appendChild(face);

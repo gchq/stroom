@@ -889,7 +889,7 @@ a, a:visited, a:hover {
 }
 .datePickerDays {
   width: 100%;
-  background: var(--input-background-color);/*white;*/
+  background: var(--control__background-color);/*white;*/
 }
 .datePickerDay,
 .datePickerWeekdayLabel,
@@ -920,7 +920,7 @@ a, a:visited, a:hover {
   text-decoration: underline;
 }
 .datePickerDayIsWeekend {
-  background: var(--input-background-color-disabled);/*#EEEEEE;*/
+  background: var(--control__background-color-disabled);/*#EEEEEE;*/
   border-radius: 0px;
 }
 .datePickerDayIsFiller {

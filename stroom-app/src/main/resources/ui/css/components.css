@@ -184,17 +184,27 @@
     align-items: center;
     height: 34px;
     border: none;
-    border-radius: 5px;
+    border-radius: .25rem;
     border: 1px solid transparent;
+    background-color: transparent;
+    color: var(--control__text-color);
 }
 
+/*
 .curveTab:hover {
     border: 1px solid #666;
+}
+*/
+
+.curveTab:focus {
+    outline: 0;
+    border-color: var(--focus-border);
+    box-shadow: var(--focus-shadow);
 }
 
 .curveTab-selected {
 	z-index: 1;
-    border: 1px solid #aaa !important;
+    border: 1px solid #aaa;
 }
 
 .curveTab .curveTab-background {
@@ -205,15 +215,21 @@
 	height: 100%;
 	width: 100%;
 	overflow: hidden;
-	background-color: rgba(255,255,255,.1);
+	background-color: rgba(255,255,255,.2);
+}
+
+
+
+.curveTab-selected .curveTab-background {
+	opacity: .8;
 }
 
 .curveTab:hover .curveTab-background {
-	opacity: 0.7;
+	opacity: .9;
 }
 
-.curveTab-selected .curveTab-background {
-	opacity: 1 !important;
+.curveTab-selected:hover .curveTab-background {
+	opacity: 1;
 }
 
 /*
@@ -579,8 +595,8 @@
 	width: 100%;
 	height: 100%;
 	border: 1px solid var(--border-color);
-	background: var(--input-background-color);
-	color: var(--text-color);
+	background: var(--control__background-color);
+	color: var(--control__text-color);
 	white-space: pre;
 }
 
@@ -603,7 +619,8 @@
 .entityTreeView-nameFilter {
     width: 100%;
     border: none !important;
-    background: var(--input-background-color);
+    background: var(--control__background-color);
+    color: var(--control__text-color);
 }
 
 .entityTreeView-nameFilter input[type="text"] {
@@ -612,9 +629,8 @@
 }
 
 .entityTreeView-scrollPanel {
-    background: var(--input-background-color);
+    background: var(--control__background-color);
 }
-
 
 .dropDownView-container {
     position: relative;
@@ -624,7 +640,8 @@
 	align-items: center;
 	padding: 3px 5px;
 	border-radius: 2px;
-	background-color: var(--input-background-color);
+	background-color: var(--control__background-color);
+	color: var(--control__text-color);
     cursor: pointer;
 }
 
@@ -1274,8 +1291,8 @@
 }
 
 .expressionViewImpl-editorContainer {
-    border: 1px solid var(--input-border-color);
-    background-color: var(--input-background-color);
+    border: 1px solid var(--control__border-color);
+    background-color: var(--control__background-color);
 }
 
 .expressionViewImpl-completionLabel {
@@ -1393,12 +1410,12 @@
 
 .progressViewImpl-progressBarOuter {
     position: absolute;
-    background-color: var(--input-background-color);
+    background-color: var(--control__background-color);
     width: 100%;
     height: 6px;
     border-style: solid;
     border-width: 1px;
-    border-color: var(--input-border-color);
+    border-color: var(--control__border-color);
 }
 
 .progressViewImpl-progressBarInner {
@@ -1795,10 +1812,10 @@
 
 
 .form-control {
-  font-size: 0.8rem;
   background-color: var(--control__background-color);
   border-color: var(--control__border-color);
-  color: var(--text-color);
+  color: var(--control__text-color);
+  border-radius: .25rem;
 }
 
 .form-control:disabled, .form-control[readonly] {

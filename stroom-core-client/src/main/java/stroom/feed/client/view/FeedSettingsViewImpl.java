@@ -22,7 +22,7 @@ import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedDoc.FeedStatus;
 import stroom.item.client.ItemListBox;
 import stroom.item.client.StringListBox;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -49,7 +49,7 @@ public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, 
     @UiField
     StringListBox receivedType;
     @UiField
-    TickBox reference;
+    CustomCheckBox reference;
 
     @Inject
     public FeedSettingsViewImpl(final Binder binder) {
@@ -72,7 +72,7 @@ public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, 
     }
 
     @Override
-    public TickBox getReference() {
+    public CustomCheckBox getReference() {
         return reference;
     }
 

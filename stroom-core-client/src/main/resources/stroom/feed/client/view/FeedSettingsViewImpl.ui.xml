@@ -2,51 +2,29 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
-             xmlns:l="urn:import:stroom.item.client">
+             xmlns:l="urn:import:stroom.item.client"
+             xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="stroom-control-page">
-        <g:Grid styleName="stroom-control-grid">
-            <g:row>
-                <g:cell>Description:</g:cell>
-                <g:customCell>
-                    <g:TextArea ui:field="description" width="400px"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Classification:</g:cell>
-                <g:customCell>
-                    <g:TextBox ui:field="classification" width="400px"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Reference Feed:</g:cell>
-                <g:customCell>
-                    <tickbox:TickBox ui:field="reference"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Feed Status:</g:cell>
-                <g:customCell>
-                    <l:ItemListBox ui:field="feedStatus"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Received Type:</g:cell>
-                <g:customCell>
-                    <l:StringListBox ui:field="receivedType"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Data Encoding:</g:cell>
-                <g:customCell>
-                    <l:StringListBox ui:field="dataEncoding"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Context Encoding:</g:cell>
-                <g:customCell>
-                    <l:StringListBox ui:field="contextEncoding"/>
-                </g:customCell>
-            </g:row>
-        </g:Grid>
+        <form:FormRow identity="feedSettingsDescription" label="Description">
+            <g:TextArea ui:field="description" width="400px"/>
+        </form:FormRow>
+        <form:FormRow identity="feedSettingsClassification" label="Classification">
+            <g:TextBox ui:field="classification" width="400px"/>
+        </form:FormRow>
+        <form:FormRow identity="feedSettingsReferenceFeed" label="Reference Feed">
+            <tickbox:CustomCheckBox ui:field="reference"/>
+        </form:FormRow>
+        <form:FormRow identity="feedSettingsFeedStatus" label="Feed Status">
+            <l:ItemListBox ui:field="feedStatus"/>
+        </form:FormRow>
+        <form:FormRow identity="feedSettingsReceivedType" label="Received Type">
+            <l:StringListBox ui:field="receivedType"/>
+        </form:FormRow>
+        <form:FormRow identity="feedSettingsDataEncoding" label="Data Encoding">
+            <l:StringListBox ui:field="dataEncoding"/>
+        </form:FormRow>
+        <form:FormRow identity="feedSettingsContextEncoding" label="Context Encoding">
+            <l:StringListBox ui:field="contextEncoding"/>
+        </form:FormRow>
     </g:FlowPanel>
 </ui:UiBinder> 

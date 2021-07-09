@@ -219,14 +219,14 @@ body,table td,select {
 
 .gwt-PushButton-up-hovering {
 	border: 1px outset;
-	border-color: var(--input-border-color) #69e #69e #7af;
+	border-color: var(--control__border-color) #69e #69e #7af;
 	cursor: pointer;
 	cursor: hand;
 }
 
 .gwt-PushButton-down-hovering {
 	border: 1px inset;
-	border-color: var(--input-border-color) #69e #69e #7af;
+	border-color: var(--control__border-color) #69e #69e #7af;
 	cursor: pointer;
 	cursor: hand;
 }
@@ -288,7 +288,7 @@ body,table td,select {
 
 .gwt-ToggleButton-up-hovering {
 	border: 1px outset;
-	border-color: var(--input-border-color) #69e #69e #7af;
+	border-color: var(--control__border-color) #69e #69e #7af;
 	cursor: pointer;
 	cursor: hand;
 }
@@ -296,7 +296,7 @@ body,table td,select {
 .gwt-ToggleButton-down-hovering {
 	background-position: 0 -513px;
 	border: 1px inset;
-	border-color: var(--input-border-color) #69e #69e #7af;
+	border-color: var(--control__border-color) #69e #69e #7af;
 	cursor: pointer;
 	cursor: hand;
 }
@@ -315,7 +315,7 @@ body,table td,select {
 	width: 200px;
 	margin: 0px;
 	padding: 1px;
-	border: solid 1px var(--input-border-color);
+	border: solid 1px var(--control__border-color);
 	background-color: white;
 	_background-color: white;
 	outline: none !important;
@@ -394,7 +394,7 @@ td.datePickerYear {
 
 .gwt-ValueSpinner .textBox {
 	text-align: right;
-	border: 1px solid var(--input-border-color);
+	border: 1px solid var(--control__border-color);
 }
 
 .gwt-SplitLayoutPanel-HDragger {
@@ -419,11 +419,12 @@ td.datePickerYear {
 .gwt-SuggestBox {
 padding: 1px;
 margin: 0px;
-border: 1px solid var(--input-border-color);
+border: 1px solid var(--control__border-color);
 }
 .gwt-SuggestBoxPopup {
   margin-left: 0px;
-  background-color: var(--input-background-color);
+  background-color: var(--control__background-color);
+  color: var(--control__text-color);
   box-shadow: 0 0 5px 1px rgba(0, 0, 0, 0.5);
   margin-left: -2px;
   margin-top: 1px;
@@ -439,7 +440,8 @@ border: 1px solid var(--input-border-color);
   color: var(--selected-row-text-color);
 }
 .gwt-SuggestBoxPopup .suggestPopupContent {
-  background: var(--input-background-color);
+  background: var(--control__background-color);
+  color: var(--control__text-color);
 }
 .gwt-SuggestBoxPopup .suggestPopupTopCenter {
 background: none;

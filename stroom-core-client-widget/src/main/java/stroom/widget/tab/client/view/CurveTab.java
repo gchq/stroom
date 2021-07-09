@@ -18,6 +18,7 @@ package stroom.widget.tab.client.view;
 
 import stroom.svg.client.Icon;
 
+import com.google.gwt.dom.client.ButtonElement;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Unit;
@@ -28,7 +29,7 @@ public class CurveTab extends AbstractTab {
 
     private static final int MAX_TEXT_LENGTH = 50;
 
-    private final Element element;
+    private final ButtonElement element;
     //    private final Element icon;
     private final Element label;
     private final Element close;
@@ -37,7 +38,8 @@ public class CurveTab extends AbstractTab {
     public CurveTab(final Icon icon, final String text, final boolean allowClose) {
         this.allowClose = allowClose;
 
-        element = DOM.createDiv();
+        element = ButtonElement.as(DOM.createButton());
+        element.setTabIndex(0);
         element.setClassName("curveTab");
 
         final Element background = DOM.createDiv();

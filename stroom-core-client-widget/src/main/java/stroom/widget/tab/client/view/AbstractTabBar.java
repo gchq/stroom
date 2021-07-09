@@ -34,6 +34,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.Visibility;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -63,7 +64,11 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
     private List<Element> separators;
 
     public AbstractTabBar() {
-        sinkEvents(Event.ONMOUSEDOWN | Event.ONMOUSEUP | Event.ONMOUSEOVER | Event.ONMOUSEOUT);
+        sinkEvents(Event.ONMOUSEDOWN |
+                Event.ONMOUSEUP |
+                Event.ONMOUSEOVER |
+                Event.ONMOUSEOUT |
+                Event.ONKEYDOWN);
     }
 
     protected abstract AbstractTab createTab(TabData tabData);
@@ -298,7 +303,19 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
 
     @Override
     public void onBrowserEvent(final Event event) {
-        if (Event.ONMOUSEDOWN == event.getTypeInt()) {
+        if (Event.ONKEYDOWN == event.getTypeInt()) {
+            if (event.getKeyCode() == KeyCodes.KEY_ENTER || event.getKeyCode() == KeyCodes.KEY_SPACE) {
+                final Element target = event.getEventTarget().cast();
+                final Element targetObject = getTargetObject(event);
+                select(target, targetObject);
+            } else if (event.getKeyCode() == KeyCodes.KEY_ESCAPE) {
+                final Element target = event.getEventTarget().cast();
+                final TabData targetTabData = getTargetTabData(target);
+                if (targetTabData != null) {
+                    fireTabCloseRequest(targetTabData);
+                }
+            }
+        } else if (Event.ONMOUSEDOWN == event.getTypeInt()) {
             if ((event.getButton() & NativeEvent.BUTTON_LEFT) != 0) {
                 currentTargetObject = getTargetObject(event);
             }
@@ -315,39 +332,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
                         showTabSelector(getTabSelector().getElement());
 
                     } else {
-                        TabData targetTabData = null;
-                        for (final TabData tabData : tabs) {
-                            final AbstractTab tab = getTab(tabData);
-
-                            // Test if this tab has been clicked at all.
-                            if (tab != null && tab.getElement().isOrHasChild(target)) {
-                                targetTabData = tabData;
-                                break;
-                            }
-                        }
-
-                        if (targetTabData == null) {
-                            // If we didn't click a tab then test for maximise.
-                            doubleClickTarget = targetObject;
-
-                        } else {
-                            final AbstractTab tab = getTab(targetTabData);
-                            // See if close has been clicked on this tab.
-                            if (tab.getCloseElement() != null && tab.getCloseElement().isOrHasChild(target)) {
-                                fireTabCloseRequest(targetTabData);
-
-                            } else if (targetTabData == selectedTab) {
-                                // If this tab has been clicked and is the same
-                                // as the currently selected tab then try a
-                                // double click test.
-                                doubleClickTarget = targetObject;
-
-                            } else {
-                                // If this tab isn't currently selected then
-                                // request it is selected.
-                                fireTabSelection(targetTabData);
-                            }
-                        }
+                        doubleClickTarget = select(target, targetObject);
                     }
                 }
 
@@ -387,6 +372,49 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
         }
 
         super.onBrowserEvent(event);
+    }
+
+    private Element select(final Element target, final Element targetObject) {
+        Element doubleClickTarget = null;
+
+        final TabData targetTabData = getTargetTabData(target);
+
+        if (targetTabData == null) {
+            // If we didn't click a tab then test for maximise.
+            doubleClickTarget = targetObject;
+
+        } else {
+            final AbstractTab tab = getTab(targetTabData);
+            // See if close has been clicked on this tab.
+            if (tab.getCloseElement() != null && tab.getCloseElement().isOrHasChild(target)) {
+                fireTabCloseRequest(targetTabData);
+
+            } else if (targetTabData == selectedTab) {
+                // If this tab has been clicked and is the same
+                // as the currently selected tab then try a
+                // double click test.
+                doubleClickTarget = targetObject;
+
+            } else {
+                // If this tab isn't currently selected then
+                // request it is selected.
+                fireTabSelection(targetTabData);
+            }
+        }
+
+        return doubleClickTarget;
+    }
+
+    private TabData getTargetTabData(final Element target) {
+        for (final TabData tabData : tabs) {
+            final AbstractTab tab = getTab(tabData);
+
+            // Test if this tab has been clicked at all.
+            if (tab != null && tab.getElement().isOrHasChild(target)) {
+                return tabData;
+            }
+        }
+        return null;
     }
 
     private Element getTargetObject(final Event event) {

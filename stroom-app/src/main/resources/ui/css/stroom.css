@@ -48,6 +48,29 @@ html,body,div,span,table,tbody,tr,th,td,table th,table td,b,p,h1,h2,h3,h4,select
 	outline: none;
 }
 
+/*
+button {
+    outline: 0;
+    border-color: transparent;
+    border-width: 2px;
+    border-style: solid;
+    border-radius: .25rem;
+}
+
+button:focus:focus-visible {
+    outline: 0;
+    border-color: var(--focus-border);
+    box-shadow: var(--focus-shadow);
+    border-width: 2px;
+    border-style: solid;
+    border-radius: .25rem;
+}
+*/
+/*
+button:focus:not(:focus-visible) {
+  outline: 0;
+}
+*/
 select,input,textarea {
   	-webkit-user-select: text;
   	-moz-user-select: text;
@@ -63,7 +86,7 @@ textarea {
 	display: block;
 	margin: 0px;
 	_margin-top: -1px;
-	border: solid 1px var(--input-border-color);
+	border: solid 1px var(--control__border-color);
 	resize: none;
 	height: 80px;
 	/* To ensure we get a pointer for the scrollbar */
@@ -362,7 +385,7 @@ td {
 
 .toolbarButton-hover { /*	
 	padding: 2px;
-	background-color: var(--input-border-color);
+	background-color: var(--control__border-color);
 	border: 1px solid #2291D0;
 */
 	
@@ -387,7 +410,7 @@ td {
 .dataGrid-Layout {
 	width: 100%;
 	height: 100%;
-	border: solid 1px var(--input-border-color);
+	border: solid 1px var(--control__border-color);
 	/*	background-color: white;*/
 }
 
@@ -565,9 +588,10 @@ input,
 input[type="text"],
 input[type="checkbox"],
 input[type="file"] {
-	border: solid 1px var(--input-border-color);
-	background-color: var(--input-background-color);
-	color: var(--text-color);
+	border: solid 1px var(--control__border-color);
+	background-color: var(--control__background-color);
+	color: var(--control__text-color);
+	border-radius: .25rem;
 }
 
 .gwt-TextArea:disabled,
@@ -583,8 +607,8 @@ input:disabled,
 input[type="text"]:disabled,
 input[type="checkbox"]:disabled,
 input[type="file"]:disabled {
-	border: solid 1px var(--input-border-color-disabled);
-	background-color: var(--input-background-color-disabled);
+	border: solid 1px var(--control__border-color-disabled);
+	background-color: var(--control__background-color-disabled);
 	color: var(--text-color-disabled);
 }
 
@@ -598,7 +622,8 @@ input[type="file"]:disabled {
 
 .gwt-SuggestBoxPopup .suggestPopupContent,
 .com-google-gwt-user-client-ui-CustomScrollPanel-Style-customScrollPanelCorner {
-  background: var(--input-background-color) !important;
+  background: var(--control__background-color) !important;
+  color: var(--control__text-color);
 }
 
 /*
@@ -616,12 +641,13 @@ input[type="file"]:disabled {
     /* Make Chrome and Firefox look the same */
     -webkit-appearance: none;
 
-    background-color: var(--input-background-color);
+    background-color: var(--control__background-color);
     background-image: url("../images/drop-down.svg");
     background-position: center right;
     background-repeat: no-repeat;
     background-size: 12px;
 	background-origin: content-box;
+	color: var(--control__text-color);
 }
 
 .stroom-theme-dark .gwt-ListBox,
@@ -686,7 +712,7 @@ input[type="file"]:disabled {
 
 .itemCheckList {
 	background-color: var(--main-background-color);
-	border: 1px solid var(--input-border-color);
+	border: 1px solid var(--control__border-color);
 }
 
 .gwt-ValueSpinner .arrows {
@@ -704,7 +730,7 @@ input[type="file"]:disabled {
 
 .gwt-ValueSpinner .textBox {
 	text-align: right;
-	border: 1px solid var(--input-border-color);
+	border: 1px solid var(--control__border-color);
 }
 
 .gwt-Tree * {
@@ -722,9 +748,9 @@ input[type="file"]:disabled {
 }
 
 .activityButton {
-    background-color: var(--input-background-color);
-    color: var(--input-text-color);
-    border: 1px solid var(--input-border-color);
+    background-color: var(--control__background-color);
+    color: var(--control__text-color);
+    border: 1px solid var(--control__border-color);
     border-radius: 5px;
     padding: 5px;
     width: 100%;

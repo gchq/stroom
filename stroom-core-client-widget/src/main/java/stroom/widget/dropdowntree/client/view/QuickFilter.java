@@ -53,7 +53,8 @@ public class QuickFilter extends FlowPanel
 
     public QuickFilter() {
         setStyleName("quickFilter");
-        textBox.setStyleName("quickFilter-textBox form-control allow-focus");
+        textBox.addStyleName("quickFilter-textBox");
+        textBox.addStyleName("allow-focus");
         textBox.getElement().setAttribute("placeholder", "Quick Filter");
 
         clearButton = SvgButton.create(SvgPresets.CLEAR.title("Clear Filter"));

@@ -17,8 +17,6 @@
 
 package stroom.feed.client.presenter;
 
-import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.data.client.presenter.DataTypeUiManager;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -31,11 +29,11 @@ import stroom.feed.shared.FeedResource;
 import stroom.item.client.ItemListBox;
 import stroom.item.client.StringListBox;
 import stroom.util.shared.EqualsUtil;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.InputEvent;
+import com.google.gwt.event.dom.client.InputHandler;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
@@ -82,17 +80,11 @@ public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSetting
         view.getReceivedType().addItems(streamTypeUiManager.getRawStreamTypeList());
 
         // Add listeners for dirty events.
-        final KeyDownHandler keyDownHandler = new DirtyKeyDownHander() {
-            @Override
-            public void onDirty(final KeyDownEvent event) {
-                setDirty(true);
-            }
-        };
-        final ValueChangeHandler<TickBoxState> checkHandler = event -> setDirty(true);
-
+        final InputHandler inputHandler = event -> setDirty(true);
+        final ValueChangeHandler<Boolean> checkHandler = event -> setDirty(true);
+        registerHandler(view.getDescription().addDomHandler(inputHandler, InputEvent.getType()));
+        registerHandler(view.getClassification().addDomHandler(inputHandler, InputEvent.getType()));
         registerHandler(view.getReference().addValueChangeHandler(checkHandler));
-        registerHandler(view.getDescription().addKeyDownHandler(keyDownHandler));
-        registerHandler(view.getClassification().addKeyDownHandler(keyDownHandler));
         registerHandler(view.getDataEncoding().addChangeHandler(event -> {
             final String dataEncoding = ensureEncoding(view.getDataEncoding().getSelected());
             getView().getDataEncoding().setSelected(dataEncoding);
@@ -126,7 +118,7 @@ public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSetting
     @Override
     protected void onRead(final DocRef docRef, final FeedDoc feed) {
         getView().getDescription().setText(feed.getDescription());
-        getView().getReference().setBooleanValue(feed.isReference());
+        getView().getReference().setValue(feed.isReference());
         getView().getClassification().setText(feed.getClassification());
         getView().getDataEncoding().setSelected(ensureEncoding(feed.getEncoding()));
         getView().getContextEncoding().setSelected(ensureEncoding(feed.getContextEncoding()));
@@ -137,7 +129,7 @@ public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSetting
     @Override
     protected void onWrite(final FeedDoc feed) {
         feed.setDescription(getView().getDescription().getText().trim());
-        feed.setReference(getView().getReference().getBooleanValue());
+        feed.setReference(getView().getReference().getValue());
         feed.setClassification(getView().getClassification().getText());
         feed.setEncoding(ensureEncoding(getView().getDataEncoding().getSelected()));
         feed.setContextEncoding(ensureEncoding(getView().getContextEncoding().getSelected()));
@@ -164,7 +156,7 @@ public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSetting
 
         TextBox getClassification();
 
-        TickBox getReference();
+        CustomCheckBox getReference();
 
         StringListBox getDataEncoding();
 

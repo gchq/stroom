@@ -35,8 +35,8 @@
     width: 18px;
     height: 100%;
     font-size: 0;
-    border-top: solid 1px var(--input-border-color);
-    border-bottom: solid 1px var(--input-border-color);
+    border-top: solid 1px var(--control__border-color);
+    border-bottom: solid 1px var(--control__border-color);
 }
 
 .valueSpinner .arrows button {

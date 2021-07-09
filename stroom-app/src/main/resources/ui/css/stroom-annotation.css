@@ -74,7 +74,7 @@
 }
 
 .annotationTextBox:focus {
-    border-color: var(--input-border-color);
+    border-color: var(--control__border-color);
     opacity: 1 !important;
  }
 
@@ -241,7 +241,8 @@
     padding: 5px;
     white-space: pre-wrap;
     word-break: break-word;
-    background-color: var(--input-background-color);
+    background-color: var(--control__background-color);
+    color: var(--control__text-color);
 }
 
 .annotationHistoryItem {

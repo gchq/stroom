@@ -32,9 +32,7 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.HasValue;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -77,6 +75,8 @@ public class TickBox extends Composite
             lblText.setStyleName("tickBox-text");
             layout.add(lblText);
         }
+
+        image.getElement().setAttribute("role", "tickbox");
     }
 
     @Override
@@ -137,23 +137,23 @@ public class TickBox extends Composite
         switch (state) {
             case TICK:
                 if (enabled) {
-                    image.getElement().setClassName("flatButton tickBox-tick");
+                    image.getElement().setClassName("form-check-input flatButton tickBox-tick");
                 } else {
-                    image.getElement().setClassName("flatButton tickBox-tickDisabled");
+                    image.getElement().setClassName("form-check-input flatButton tickBox-tickDisabled");
                 }
                 break;
             case HALF_TICK:
                 if (enabled) {
-                    image.getElement().setClassName("flatButton tickBox-halfTick");
+                    image.getElement().setClassName("form-check-input flatButton tickBox-halfTick");
                 } else {
-                    image.getElement().setClassName("flatButton tickBox-halfTickDisabled");
+                    image.getElement().setClassName("form-check-input flatButton tickBox-halfTickDisabled");
                 }
                 break;
             case UNTICK:
                 if (enabled) {
-                    image.getElement().setClassName("flatButton tickBox-untick");
+                    image.getElement().setClassName("form-check-input flatButton tickBox-untick");
                 } else {
-                    image.getElement().setClassName("flatButton tickBox-untickDisabled");
+                    image.getElement().setClassName("form-check-input flatButton tickBox-untickDisabled");
                 }
                 break;
         }
