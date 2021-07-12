@@ -331,19 +331,22 @@ public class UiConfig extends AbstractConfig {
             return false;
         }
         final UiConfig uiConfig = (UiConfig) o;
-        return Objects.equals(welcomeHtml, uiConfig.welcomeHtml) && Objects.equals(aboutHtml,
-                uiConfig.aboutHtml) && Objects.equals(maintenanceMessage,
-                uiConfig.maintenanceMessage) && Objects.equals(defaultMaxResults,
-                uiConfig.defaultMaxResults) && Objects.equals(process,
-                uiConfig.process) && Objects.equals(helpUrl, uiConfig.helpUrl) && Objects.equals(theme,
-                uiConfig.theme) && Objects.equals(query, uiConfig.query) && Objects.equals(namePattern,
-                uiConfig.namePattern) && Objects.equals(htmlTitle,
-                uiConfig.htmlTitle) && Objects.equals(oncontextmenu,
-                uiConfig.oncontextmenu) && Objects.equals(splash, uiConfig.splash) && Objects.equals(
-                activity,
-                uiConfig.uiPreferences) && Objects.equals(source, uiConfig.source) && Objects.equals(
-                requireReactWrapper,
-                uiConfig.requireReactWrapper);
+        return Objects.equals(welcomeHtml, uiConfig.welcomeHtml)
+                && Objects.equals(aboutHtml, uiConfig.aboutHtml)
+                && Objects.equals(maintenanceMessage, uiConfig.maintenanceMessage)
+                && Objects.equals(defaultMaxResults, uiConfig.defaultMaxResults)
+                && Objects.equals(process, uiConfig.process)
+                && Objects.equals(helpUrl, uiConfig.helpUrl)
+                && Objects.equals(theme, uiConfig.theme)
+                && Objects.equals(query, uiConfig.query)
+                && Objects.equals(namePattern, uiConfig.namePattern)
+                && Objects.equals(htmlTitle, uiConfig.htmlTitle)
+                && Objects.equals(oncontextmenu, uiConfig.oncontextmenu)
+                && Objects.equals(splash, uiConfig.splash)
+                && Objects.equals(activity, uiConfig.activity)
+                && Objects.equals(uiPreferences, uiConfig.uiPreferences)
+                && Objects.equals(source, uiConfig.source)
+                && Objects.equals(requireReactWrapper, uiConfig.requireReactWrapper);
     }
 
     @Override
