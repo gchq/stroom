@@ -144,7 +144,11 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
                     ((ObjectNode) parent).put(entry.getKey(), newValue);
                 } else {
                     // not our node so recurse into it
-                    mutateNodes(entry.getValue(), names, valueMutator, path + "/" + entry.getKey());
+                    mutateNodes(
+                            entry.getValue(),
+                            names,
+                            valueMutator,
+                            path + "/" + entry.getKey());
                 }
             });
         }
