@@ -8,6 +8,7 @@ import stroom.config.global.impl.ConfigMapper;
 import stroom.config.global.impl.GlobalConfigService;
 import stroom.config.global.impl.validation.ConfigValidator;
 import stroom.test.AbstractCoreIntegrationTest;
+import stroom.util.config.AbstractFileChangeMonitor;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LogUtil;
 
@@ -22,7 +23,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Optional;
-import java.util.Random;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 import javax.inject.Inject;
@@ -56,8 +56,8 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
         final ConfigLocation configLocation = new ConfigLocation(devYamlCopyPath);
         final ConfigValidator configValidator = new ConfigValidator(validator);
 
-        final AppConfigMonitor appConfigMonitor = new AppConfigMonitor(
-                appConfig, configLocation, configMapper, configValidator, globalConfigService);
+        final AbstractFileChangeMonitor appConfigMonitor = new AppConfigMonitor(
+                appConfig, configLocation, globalConfigService, configValidator);
 
         // start watching our copied file for changes, the start is async
         appConfigMonitor.start();

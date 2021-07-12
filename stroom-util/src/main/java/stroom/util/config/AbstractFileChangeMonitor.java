@@ -17,23 +17,23 @@ import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 
 @Singleton
-public class AppConfigMonitor implements HasHealthCheck {
+public abstract class AbstractFileChangeMonitor implements HasHealthCheck {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AppConfigMonitor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractFileChangeMonitor.class);
 
-    private final Path configFile;
+    private final Path monitoredFile;
     private final Path dirToWatch;
     private final ExecutorService executorService;
     private WatchService watchService = null;
@@ -42,18 +42,18 @@ public class AppConfigMonitor implements HasHealthCheck {
     private final boolean isValidFile;
     private final AtomicBoolean isFileReadScheduled = new AtomicBoolean(false);
     private final List<String> errors = new ArrayList<>();
-    private Runnable configFileChangeListener;
+//    private final Runnable fileChangeListener;
 
     private static final long DELAY_BEFORE_FILE_READ_MS = 1_000;
 
-    @Inject
-    public AppConfigMonitor(final Path configFile) {
-        this.configFile = configFile;
+    public AbstractFileChangeMonitor(final Path monitoredFile) {
+        this.monitoredFile = Objects.requireNonNull(monitoredFile);
+//        this.fileChangeListener = Objects.requireNonNull(fileChangeListener);
 
-        if (Files.isRegularFile(configFile)) {
+        if (Files.isRegularFile(monitoredFile)) {
             isValidFile = true;
 
-            dirToWatch = configFile.getParent();
+            dirToWatch = monitoredFile.getParent();
             if (!Files.isDirectory(dirToWatch)) {
                 throw new RuntimeException(LogUtil.message("{} is not a directory", dirToWatch));
             }
@@ -65,9 +65,7 @@ public class AppConfigMonitor implements HasHealthCheck {
         }
     }
 
-    public void setConfigFileChangeListener(final Runnable configFileChangeListener) {
-        this.configFileChangeListener = configFileChangeListener;
-    }
+    protected abstract void onFileChange();
 
     /**
      * Starts the object. Called <i>before</i> the application becomes available.
@@ -79,11 +77,15 @@ public class AppConfigMonitor implements HasHealthCheck {
             } catch (Exception e) {
                 // Swallow and log as we don't want to stop the app from starting just for this
                 errors.add(e.getMessage());
-                LOGGER.error("Unable to start config file monitor due to [{}]. Changes to {} will not be monitored.",
-                        e.getMessage(), configFile.toAbsolutePath().normalize(), e);
+                LOGGER.error(
+                        "Unable to start file monitor for file {} due to [{}]. Changes will not be monitored.",
+                        monitoredFile.toAbsolutePath(),
+                        e.getMessage(),
+                        e);
             }
         } else {
-            LOGGER.error("Unable to start watcher as {} is not a valid file", configFile.toAbsolutePath().normalize());
+            LOGGER.error("Unable to start watcher as {} is not a valid file",
+                    monitoredFile.toAbsolutePath().normalize());
         }
     }
 
@@ -97,10 +99,12 @@ public class AppConfigMonitor implements HasHealthCheck {
         dirToWatch.register(watchService, StandardWatchEventKinds.ENTRY_MODIFY);
 
         // run the watcher in its own thread else it will block app startup
+        // TODO @AT Change to use CompleteableFuture.runAsync()
         watcherFuture = executorService.submit(() -> {
             WatchKey watchKey = null;
 
-            LOGGER.info("Starting config file modification watcher for {}", configFile.toAbsolutePath().normalize());
+            LOGGER.info("Starting file modification watcher for {}",
+                    monitoredFile.toAbsolutePath().normalize());
             while (true) {
                 if (Thread.currentThread().isInterrupted()) {
                     LOGGER.debug("Thread interrupted, stopping watching directory {}",
@@ -123,10 +127,10 @@ public class AppConfigMonitor implements HasHealthCheck {
                         if (event == null) {
                             LOGGER.debug("Event is null");
                         } else {
-                            String name = event.kind() != null
+                            final String name = event.kind() != null
                                     ? event.kind().name()
                                     : "kind==null";
-                            String type = event.kind() != null
+                            final String type = event.kind() != null
                                     ? event.kind().type().getSimpleName()
                                     : "kind==null";
                             LOGGER.debug("Dir watch event {}, {}, {}", name, type, event.context());
@@ -134,7 +138,7 @@ public class AppConfigMonitor implements HasHealthCheck {
                     }
 
                     if (event.kind().equals(OVERFLOW)) {
-                        LOGGER.warn("{} event detected breaking out. Retry config file change", OVERFLOW.name());
+                        LOGGER.warn("{} event detected breaking out. Retry file change", OVERFLOW.name());
                         break;
                     }
                     if (event.kind() != null && Path.class.isAssignableFrom(event.kind().type())) {
@@ -161,13 +165,13 @@ public class AppConfigMonitor implements HasHealthCheck {
 
             try {
                 // we don't care about changes to other files
-                if (Files.isRegularFile(modifiedFile) && Files.isSameFile(configFile, modifiedFile)) {
-                    LOGGER.info("Change detected to config file {}", configFile.toAbsolutePath().normalize());
+                if (Files.isRegularFile(modifiedFile) && Files.isSameFile(monitoredFile, modifiedFile)) {
+                    LOGGER.info("Change detected to file {}", monitoredFile.toAbsolutePath().normalize());
                     scheduleUpdateIfRequired();
                 }
             } catch (IOException e) {
                 // Swallow error so future changes can be monitored.
-                LOGGER.error("Error comparing paths {} and {}", configFile, modifiedFile, e);
+                LOGGER.error("Error comparing paths {} and {}", monitoredFile, modifiedFile, e);
             }
         }
     }
@@ -178,15 +182,14 @@ public class AppConfigMonitor implements HasHealthCheck {
         // and another to change the file access time. To prevent a duplicate read we delay the read
         // a bit so we can have many changes during that delay period but with only one read of the file.
         if (isFileReadScheduled.compareAndSet(false, true)) {
-            LOGGER.info("Scheduling update of application config from file in {}ms",
+            LOGGER.info("Scheduling call to change listener for file {} in {}ms",
+                    monitoredFile.toAbsolutePath().normalize(),
                     DELAY_BEFORE_FILE_READ_MS);
             CompletableFuture.delayedExecutor(DELAY_BEFORE_FILE_READ_MS, TimeUnit.MILLISECONDS)
                     .execute(() -> {
                         try {
-                            if (configFileChangeListener != null) {
-                                configFileChangeListener.run();
-                            } else {
-                                LOGGER.debug("No configFileChangeListener configured");
+                            synchronized (this) {
+                                onFileChange();
                             }
                         } finally {
                             isFileReadScheduled.set(false);
@@ -202,14 +205,17 @@ public class AppConfigMonitor implements HasHealthCheck {
      */
     public void stop() throws Exception {
         if (isValidFile) {
-            LOGGER.info("Stopping file modification watcher for {}", configFile.toAbsolutePath().normalize());
+            LOGGER.info("Stopping file modification watcher for {}",
+                    monitoredFile.toAbsolutePath().normalize());
 
             if (watchService != null) {
                 watchService.close();
             }
             if (executorService != null) {
                 watchService.close();
-                if (watcherFuture != null && !watcherFuture.isCancelled() && !watcherFuture.isDone()) {
+                if (watcherFuture != null
+                        && !watcherFuture.isCancelled()
+                        && !watcherFuture.isDone()) {
                     watcherFuture.cancel(true);
                 }
                 executorService.shutdown();
@@ -236,16 +242,11 @@ public class AppConfigMonitor implements HasHealthCheck {
         }
 
         return resultBuilder
-                .withDetail("configFilePath", configFile != null
-                        ? configFile.toAbsolutePath().normalize().toString()
+                .withDetail("monitoredFile", monitoredFile != null
+                        ? monitoredFile.toAbsolutePath().normalize().toString()
                         : null)
                 .withDetail("isRunning", isRunning)
                 .withDetail("isValidFile", isValidFile)
-                .withDetail(
-                        "configFileChangeListener",
-                        configFileChangeListener == null
-                                ? "NULL"
-                                : "NOT NULL")
                 .build();
     }
 }
