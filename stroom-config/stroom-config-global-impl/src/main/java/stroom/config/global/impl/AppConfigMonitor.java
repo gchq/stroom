@@ -2,6 +2,7 @@ package stroom.config.global.impl;
 
 import stroom.config.app.AppConfig;
 import stroom.config.app.ConfigLocation;
+import stroom.config.app.SuperDevUtil;
 import stroom.config.app.YamlUtil;
 import stroom.config.global.impl.validation.ConfigValidator;
 import stroom.util.HasHealthCheck;
@@ -50,6 +51,9 @@ public class AppConfigMonitor extends AbstractFileChangeMonitor implements Manag
         try {
             LOGGER.info("Reading updated config file");
             newAppConfig = YamlUtil.readAppConfig(configFile);
+
+            // Check if we are running GWT Super Dev Mode, if so relax security
+            SuperDevUtil.relaxSecurityInSuperDevMode(newAppConfig);
 
             final ConfigValidator.Result result = validateNewConfig(newAppConfig);
 
