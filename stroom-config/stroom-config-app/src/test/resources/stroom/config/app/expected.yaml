@@ -838,10 +838,6 @@ appConfig:
       labelColours: "TEST1=#FF0000,TEST2=#FF9900"
     uiPreferences:
       dateFormat: "YYYY-MM-DDTHH:mm:ss.SSS"
-    url:
-      apiKeys: "../../../s/apiKeys"
-      changepassword: "../../../s/changepassword"
-      users: "../../../s/users"
     welcomeHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from\
       \ multiple systems.</p>"
   uiUri:
