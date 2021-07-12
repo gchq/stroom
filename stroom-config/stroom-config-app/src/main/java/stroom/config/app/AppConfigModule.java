@@ -68,7 +68,6 @@ import stroom.ui.config.shared.SplashConfig;
 import stroom.ui.config.shared.ThemeConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.ui.config.shared.UiPreferences;
-import stroom.ui.config.shared.UrlConfig;
 import stroom.util.io.PathConfig;
 import stroom.util.io.StroomPathConfig;
 import stroom.util.logging.LogUtil;
@@ -314,7 +313,6 @@ public class AppConfigModule extends AbstractModule {
                             InfoPopupConfig.class));
             bindConfig(uiConfig, UiConfig::getSplash, UiConfig::setSplash, SplashConfig.class);
             bindConfig(uiConfig, UiConfig::getTheme, UiConfig::setTheme, ThemeConfig.class);
-            bindConfig(uiConfig, UiConfig::getUrl, UiConfig::setUrl, UrlConfig.class);
             bindConfig(uiConfig, UiConfig::getUiPreferences, UiConfig::setUiPreferences, UiPreferences.class);
             bindConfig(uiConfig, UiConfig::getSource, UiConfig::setSource, SourceConfig.class);
         });

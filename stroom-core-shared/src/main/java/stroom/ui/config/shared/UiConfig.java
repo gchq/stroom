@@ -91,9 +91,6 @@ public class UiConfig extends AbstractConfig {
     private ActivityConfig activity;
 
     @JsonProperty
-    private UrlConfig url;
-
-    @JsonProperty
     private UiPreferences uiPreferences;
 
     @JsonProperty
@@ -126,7 +123,6 @@ public class UiConfig extends AbstractConfig {
                     @JsonProperty("oncontextmenu") final String oncontextmenu,
                     @JsonProperty("splash") final SplashConfig splash,
                     @JsonProperty("activity") final ActivityConfig activity,
-                    @JsonProperty("url") final UrlConfig url,
                     @JsonProperty("uiPreferences") final UiPreferences uiPreferences,
                     @JsonProperty("source") final SourceConfig source,
                     @JsonProperty("requireReactWrapper") Boolean requireReactWrapper) {
@@ -143,7 +139,6 @@ public class UiConfig extends AbstractConfig {
         this.oncontextmenu = oncontextmenu;
         this.splash = splash;
         this.activity = activity;
-        this.url = url;
         this.uiPreferences = uiPreferences;
         this.source = source;
         this.requireReactWrapper = requireReactWrapper;
@@ -187,9 +182,6 @@ public class UiConfig extends AbstractConfig {
         }
         if (activity == null) {
             activity = new ActivityConfig();
-        }
-        if (url == null) {
-            url = new UrlConfig();
         }
         if (uiPreferences == null) {
             uiPreferences = new UiPreferences();
@@ -290,14 +282,6 @@ public class UiConfig extends AbstractConfig {
         this.activity = activity;
     }
 
-    public UrlConfig getUrl() {
-        return url;
-    }
-
-    public void setUrl(final UrlConfig url) {
-        this.url = url;
-    }
-
     public String getHtmlTitle() {
         return htmlTitle;
     }
@@ -357,7 +341,6 @@ public class UiConfig extends AbstractConfig {
                 uiConfig.htmlTitle) && Objects.equals(oncontextmenu,
                 uiConfig.oncontextmenu) && Objects.equals(splash, uiConfig.splash) && Objects.equals(
                 activity,
-                uiConfig.activity) && Objects.equals(url, uiConfig.url) && Objects.equals(uiPreferences,
                 uiConfig.uiPreferences) && Objects.equals(source, uiConfig.source) && Objects.equals(
                 requireReactWrapper,
                 uiConfig.requireReactWrapper);
@@ -378,7 +361,6 @@ public class UiConfig extends AbstractConfig {
                 oncontextmenu,
                 splash,
                 activity,
-                url,
                 uiPreferences,
                 source,
                 requireReactWrapper);
@@ -400,7 +382,6 @@ public class UiConfig extends AbstractConfig {
                 ", oncontextmenu='" + oncontextmenu + '\'' +
                 ", splash=" + splash +
                 ", activity=" + activity +
-                ", url=" + url +
                 ", uiPreferences=" + uiPreferences +
                 ", source=" + source +
                 ", requireReactWrapper=" + requireReactWrapper +

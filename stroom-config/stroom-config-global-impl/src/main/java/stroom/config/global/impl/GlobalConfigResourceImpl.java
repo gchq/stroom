@@ -12,9 +12,7 @@ import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.NodeService;
-import stroom.security.identity.authenticate.api.AuthenticationService;
 import stroom.ui.config.shared.UiConfig;
-import stroom.ui.config.shared.UrlConfig;
 import stroom.util.logging.LogUtil;
 import stroom.util.rest.RestUtil;
 import stroom.util.shared.PropertyPath;
@@ -204,15 +202,6 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     @Timed
     @Override
     public UiConfig fetchUiConfig() {
-        // Temporary code to fix url paths.
-        if (this.uriFactory != null) {
-            final UrlConfig urlConfig = new UrlConfig(
-                    this.uriFactory.get().uiUri(AuthenticationService.USERS_URL_PATH).toString(),
-                    this.uriFactory.get().uiUri(AuthenticationService.API_KEYS_URL_PATH).toString(),
-                    this.uriFactory.get().uiUri(AuthenticationService.CHANGE_PASSWORD_URL_PATH).toString());
-            uiConfig.get().setUrl(urlConfig);
-        }
-
         return uiConfig.get();
     }
 }
