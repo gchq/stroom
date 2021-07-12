@@ -196,7 +196,8 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
         // and another to change the file access time. To prevent a duplicate read we delay the read
         // a bit so we can have many changes during that delay period but with only one read of the file.
         if (isFileReadScheduled.compareAndSet(false, true)) {
-            LOGGER.info("Scheduling update of application config from file in {}ms", DELAY_BEFORE_FILE_READ_MS);
+            LOGGER.info("Scheduling update of application config from file in {}ms",
+                    DELAY_BEFORE_FILE_READ_MS);
             CompletableFuture.delayedExecutor(DELAY_BEFORE_FILE_READ_MS, TimeUnit.MILLISECONDS)
                     .execute(() -> {
                         try {
@@ -217,8 +218,10 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
             final ConfigValidator.Result result = validateNewConfig(newAppConfig);
 
             if (result.hasErrors()) {
-                LOGGER.error("Unable to update application config from file {} because it failed validation. " +
-                        "Fix the errors and save the file.", configFile.toAbsolutePath().normalize().toString());
+                LOGGER.error(
+                        "Unable to update application config from file {} because it failed validation. " +
+                                "Fix the errors and save the file.",
+                        configFile.toAbsolutePath().normalize().toString());
             } else {
                 try {
                     // Don't have to worry about the DB config merging that goes on in DataSourceFactoryImpl
