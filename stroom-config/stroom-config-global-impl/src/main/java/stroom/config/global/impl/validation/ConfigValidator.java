@@ -20,26 +20,29 @@ import javax.inject.Inject;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 
-public class ConfigValidator {
+public class ConfigValidator<T> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ConfigValidator.class);
 
 
     private final Validator validator;
+    private final Class<T> configSuperType;
 
     @Inject
-    public ConfigValidator(final Validator validator) {
+    public ConfigValidator(final Validator validator,
+                           final Class<T> configSuperType) {
         this.validator = validator;
+        this.configSuperType = configSuperType;
     }
 
     /**
      * Validates a single config property value
      */
-    public Result validateValue(final Class<? extends AbstractConfig> configClass,
+    public Result validateValue(final Class<? extends T> configClass,
                                 final String propertyName,
                                 final Object value) {
 
-        final Set<? extends ConstraintViolation<? extends AbstractConfig>> constraintViolations =
+        final Set<? extends ConstraintViolation<? extends T>> constraintViolations =
                 validator.validateValue(configClass, propertyName, value);
 
         return Result.of(constraintViolations);
@@ -49,8 +52,8 @@ public class ConfigValidator {
      * Default validation that logs errors/warnings to the logger as well as returning the results.
      * Will only validate child objects marked with @Valid.
      */
-    public Result validate(final AbstractConfig config) {
-        final Set<ConstraintViolation<AbstractConfig>> constraintViolations = validator.validate(config);
+    public Result validate(final T config) {
+        final Set<ConstraintViolation<T>> constraintViolations = validator.validate(config);
         return Result.of(constraintViolations);
     }
 
@@ -58,7 +61,7 @@ public class ConfigValidator {
      * Walks the config object tree validating each branch regardless of whether they have @Valid
      * annotations.
      */
-    public Result validateRecursively(final AbstractConfig config) {
+    public Result validateRecursively(final T config) {
         final List<Result> resultList = new ArrayList<>();
 
         // Validate the top level AppConfig object
@@ -74,10 +77,10 @@ public class ConfigValidator {
                 config,
                 prop ->
                         // Only want to validate config objects
-                        AbstractConfig.class.isAssignableFrom(prop.getValueClass())
+                        configSuperType.isAssignableFrom(prop.getValueClass())
                                 && prop.getValueFromConfigObject() != null,
                 prop -> {
-                    final AbstractConfig configObject = (AbstractConfig) prop.getValueFromConfigObject();
+                    final T configObject = (T) prop.getValueFromConfigObject();
                     final ConfigValidator.Result result = validate(configObject);
                     if (result.hasErrorsOrWarnings()) {
                         resultList.add(result);
@@ -116,15 +119,16 @@ public class ConfigValidator {
                 constraintViolation.getMessage()));
     }
 
-    public static class Result {
-
-        private static final Result EMPTY = new Result(Collections.emptySet());
+    public static class Result<T> {
 
         private final int errorCount;
         private final int warningCount;
-        private final Set<? extends ConstraintViolation<? extends AbstractConfig>> constraintViolations;
+        private final Class<T> configSuperType;
+        private final Set<? extends ConstraintViolation<? extends T>> constraintViolations;
 
-        private Result(final Set<? extends ConstraintViolation<? extends AbstractConfig>> constraintViolations) {
+        private Result(final Set<? extends ConstraintViolation<? extends T>> constraintViolations,
+                       final Class<T> configSuperType) {
+            this.configSuperType = configSuperType;
             if (constraintViolations == null || constraintViolations.isEmpty()) {
                 this.errorCount = 0;
                 this.warningCount = 0;
@@ -133,7 +137,7 @@ public class ConfigValidator {
                 int errorCount = 0;
                 int warningCount = 0;
 
-                for (final ConstraintViolation<? extends AbstractConfig> constraintViolation : constraintViolations) {
+                for (final ConstraintViolation<? extends T> constraintViolation : constraintViolations) {
                     LOGGER.debug(() -> LogUtil.message("constraintViolation - prop: {}, value: [{}], object: {}",
                             constraintViolation.getPropertyPath().toString(),
                             constraintViolation.getInvalidValue(),
@@ -156,18 +160,21 @@ public class ConfigValidator {
             }
         }
 
-        public static Result of(
-                final Set<? extends ConstraintViolation<? extends AbstractConfig>> constraintViolations) {
+        public static <T> Result<T> of(
+                final Set<? extends ConstraintViolation<? extends T>> constraintViolations,
+                final Class<T> configSuperType) {
 
             if (constraintViolations == null || constraintViolations.isEmpty()) {
-                return empty();
+                return new Result<>(Collections.emptySet(), configSuperType);
             } else {
-                return new Result(constraintViolations);
+                return new Result(constraintViolations, configSuperType);
             }
         }
 
-        public static Result of(final Collection<Result> results) {
-            final Set<ConstraintViolation<? extends AbstractConfig>> constraintViolations = new HashSet<>();
+        public static <T> Result<T> of(
+                final Collection<Result<T>> results,
+                final Class<T> configSuperType) {
+            final Set<ConstraintViolation<? extends T>> constraintViolations = new HashSet<>();
 
             results.forEach(result -> {
                 if (result.hasErrorsOrWarnings()) {
@@ -175,14 +182,14 @@ public class ConfigValidator {
                 }
             });
 
-            return Result.of(constraintViolations);
+            return Result.of(constraintViolations, configSuperType);
         }
 
-        public static Result merge(final Result result1, final Result result2) {
-            final Set<ConstraintViolation<? extends AbstractConfig>> constraintViolations = new HashSet<>();
+        public static <T> Result<T> merge(final Result<T> result1, final Result<T> result2) {
+            final Set<ConstraintViolation<? extends T>> constraintViolations = new HashSet<>();
             constraintViolations.addAll(result1.constraintViolations);
             constraintViolations.addAll(result2.constraintViolations);
-            return Result.of(constraintViolations);
+            return Result.of(constraintViolations, result1.configSuperType);
         }
 
 
@@ -195,9 +202,9 @@ public class ConfigValidator {
          * errors or warnings the consumer will not be called.
          */
         public void handleViolations(
-                final BiConsumer<ConstraintViolation<? extends AbstractConfig>, ValidationSeverity> consumer) {
+                final BiConsumer<ConstraintViolation<? extends T>, ValidationSeverity> consumer) {
 
-            for (final ConstraintViolation<? extends AbstractConfig> constraintViolation : constraintViolations) {
+            for (final ConstraintViolation<? extends T> constraintViolation : constraintViolations) {
                 final ValidationSeverity severity = ValidationSeverity.fromPayloads(
                         constraintViolation.getConstraintDescriptor().getPayload());
 
@@ -210,7 +217,7 @@ public class ConfigValidator {
          * errors the consumer will not be called.
          */
         public void handleErrors(
-                final Consumer<ConstraintViolation<? extends AbstractConfig>> errorConsumer) {
+                final Consumer<ConstraintViolation<? extends T>> errorConsumer) {
 
             handleViolations(buildFilteringConsumer(ValidationSeverity.ERROR, errorConsumer));
         }
@@ -220,14 +227,14 @@ public class ConfigValidator {
          * errors the consumer will not be called.
          */
         public void handleWarnings(
-                final Consumer<ConstraintViolation<? extends AbstractConfig>> warningConsumer) {
+                final Consumer<ConstraintViolation<? extends T>> warningConsumer) {
 
             handleViolations(buildFilteringConsumer(ValidationSeverity.WARNING, warningConsumer));
         }
 
-        private BiConsumer<ConstraintViolation<? extends AbstractConfig>, ValidationSeverity> buildFilteringConsumer(
+        private BiConsumer<ConstraintViolation<? extends T>, ValidationSeverity> buildFilteringConsumer(
                 final ValidationSeverity requiredSeverity,
-                final Consumer<ConstraintViolation<? extends AbstractConfig>> errorConsumer) {
+                final Consumer<ConstraintViolation<? extends T>> errorConsumer) {
             Objects.requireNonNull(requiredSeverity);
 
             return (constraintViolation, severity) -> {
