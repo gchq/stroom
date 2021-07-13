@@ -38,12 +38,12 @@ import stroom.explorer.client.presenter.EntityCheckTreePresenter;
 import stroom.explorer.client.presenter.EntityCheckTreePresenter.EntityCheckTreeView;
 import stroom.explorer.client.presenter.EntityTreePresenter;
 import stroom.explorer.client.presenter.EntityTreePresenter.EntityTreeView;
-import stroom.explorer.client.presenter.NavigationPresenter;
-import stroom.explorer.client.presenter.NavigationPresenter.NavigationProxy;
-import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
 import stroom.explorer.client.presenter.ExplorerTreePresenter;
 import stroom.explorer.client.presenter.ExplorerTreePresenter.ExplorerTreeProxy;
 import stroom.explorer.client.presenter.ExplorerTreePresenter.ExplorerTreeView;
+import stroom.explorer.client.presenter.NavigationPresenter;
+import stroom.explorer.client.presenter.NavigationPresenter.NavigationProxy;
+import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
 import stroom.explorer.client.view.EntityCheckTreeViewImpl;
 import stroom.explorer.client.view.EntityTreeViewImpl;
 import stroom.explorer.client.view.ExplorerTreeViewImpl;
@@ -61,12 +61,10 @@ import stroom.main.client.presenter.MainPresenter;
 import stroom.main.client.presenter.MainPresenter.MainProxy;
 import stroom.main.client.presenter.MainPresenter.MainView;
 import stroom.main.client.view.MainViewImpl;
-import stroom.menubar.client.presenter.MenubarPresenter;
-import stroom.menubar.client.presenter.MenubarPresenter.MenubarProxy;
-import stroom.menubar.client.presenter.MenubarPresenter.MenubarView;
-import stroom.menubar.client.view.MenubarViewImpl;
 import stroom.widget.menu.client.presenter.MenuItems;
-import stroom.widget.menu.client.presenter.MenuListPresenter;
+import stroom.widget.menu.client.presenter.MenuPresenter;
+import stroom.widget.menu.client.presenter.MenuPresenter.MenuView;
+import stroom.widget.menu.client.presenter.MenuViewImpl;
 import stroom.widget.tab.client.presenter.CurveTabLayoutView;
 import stroom.widget.tab.client.view.CurveTabLayoutViewImpl;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
@@ -111,7 +109,6 @@ public class AppModule extends AbstractPresenterModule {
         bindPresenter(CorePresenter.class, CoreView.class, CoreViewImpl.class, CoreProxy.class);
 
         bindPresenter(MainPresenter.class, MainView.class, MainViewImpl.class, MainProxy.class);
-        bindPresenter(MenubarPresenter.class, MenubarView.class, MenubarViewImpl.class, MenubarProxy.class);
         bindPresenter(
                 NavigationPresenter.class,
                 NavigationView.class,
@@ -137,7 +134,7 @@ public class AppModule extends AbstractPresenterModule {
         // Widgets
         // bindPresenterWidget(CurveTabPresenter.class, CurveTabView.class,
         // CurveTabLayoutViewImpl.class);
-        bind(MenuListPresenter.class);
+        bindPresenterWidget(MenuPresenter.class, MenuView.class, MenuViewImpl.class);
         // bindSharedView(CellTreeView.class, CellTreeViewImpl.class);
         // bind(LinkTabPanelPresenter.class);
         bindSharedView(CurveTabLayoutView.class, CurveTabLayoutViewImpl.class);

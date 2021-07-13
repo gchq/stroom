@@ -20,7 +20,3 @@
 .basicCellTable.cellTableOddRow {
     background: none;
 }
-
-.basicCellTable .cellTableHoveredRow {
-  background: var(--hovered-row-background-color);
-}

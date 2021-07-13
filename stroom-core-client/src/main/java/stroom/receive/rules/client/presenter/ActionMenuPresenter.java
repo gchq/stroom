@@ -20,7 +20,7 @@ import stroom.editor.client.presenter.Action;
 import stroom.editor.client.presenter.Option;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuListPresenter;
+import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -38,12 +38,12 @@ import java.util.List;
  */
 public class ActionMenuPresenter {
 
-    private final MenuListPresenter menuListPresenter;
+    private final MenuPresenter menuPresenter;
     private HasHandlers hasHandlers;
 
     @Inject
-    public ActionMenuPresenter(final MenuListPresenter menuListPresenter) {
-        this.menuListPresenter = menuListPresenter;
+    public ActionMenuPresenter(final MenuPresenter menuPresenter) {
+        this.menuPresenter = menuPresenter;
 
     }
 
@@ -52,16 +52,16 @@ public class ActionMenuPresenter {
                      final int x,
                      final int y) {
         this.hasHandlers = hasHandlers;
-        HidePopupEvent.fire(hasHandlers, menuListPresenter);
-        menuListPresenter.setData(items);
+        HidePopupEvent.fire(hasHandlers, menuPresenter);
+        menuPresenter.setData(items);
 //        updateText();
         final PopupPosition popupPosition = new PopupPosition(x + 10, y);
-        ShowPopupEvent.fire(hasHandlers, menuListPresenter, PopupType.POPUP, popupPosition, null);
+        ShowPopupEvent.fire(hasHandlers, menuPresenter, PopupType.POPUP, popupPosition, null);
     }
 
     public void hide() {
         if (hasHandlers != null) {
-            HidePopupEvent.fire(hasHandlers, menuListPresenter);
+            HidePopupEvent.fire(hasHandlers, menuPresenter);
             hasHandlers = null;
         }
     }
@@ -97,7 +97,7 @@ public class ActionMenuPresenter {
 //            menuItems.add(createItem(title, () -> xmlEditorPresenter.changeFilterSettings(), position++));
 //        }
 
-        menuListPresenter.setData(menuItems);
+        menuPresenter.setData(menuItems);
     }
 
     private void addMenuItem(int position, final List<Item> menuItems, final Option option) {

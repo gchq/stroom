@@ -39,7 +39,6 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.cellview.client.AbstractCellTable;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.CellTable.Resources;

@@ -21,10 +21,6 @@
   background: var(--odd-row-background-color);
 }
 
-.hoverCellTable .cellTableHoveredRow {
-  background: var(--hovered-row-background-color) none repeat scroll 0 0;
-}
-
 .hoverCellTable .cellTableSelectedRow {
   background: var(--selected-row-background-color) none repeat scroll 0 0 !important;
   height: auto;

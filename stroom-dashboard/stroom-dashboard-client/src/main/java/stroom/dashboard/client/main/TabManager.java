@@ -26,7 +26,7 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuListPresenter;
+import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -47,7 +47,7 @@ public class TabManager {
 
     private final Components components;
     private final Provider<RenameTabPresenter> renameTabPresenterProvider;
-    private final MenuListPresenter menuListPresenter;
+    private final MenuPresenter menuPresenter;
     private final DashboardPresenter dashboardPresenter;
 
     private FlexLayout flexLayout;
@@ -55,11 +55,11 @@ public class TabManager {
     private TabConfig currentTabConfig;
 
     public TabManager(final Components components,
-                      final MenuListPresenter menuListPresenter,
+                      final MenuPresenter menuPresenter,
                       final Provider<RenameTabPresenter> renameTabPresenterProvider,
                       final DashboardPresenter dashboardPresenter) {
         this.components = components;
-        this.menuListPresenter = menuListPresenter;
+        this.menuPresenter = menuPresenter;
         this.renameTabPresenterProvider = renameTabPresenterProvider;
         this.dashboardPresenter = dashboardPresenter;
     }
@@ -82,7 +82,7 @@ public class TabManager {
                 public void run() {
                     if (currentTabConfig == tabConfig) {
                         currentTabConfig = null;
-                        HidePopupEvent.fire(dashboardPresenter, menuListPresenter);
+                        HidePopupEvent.fire(dashboardPresenter, menuPresenter);
 
                     } else {
                         currentTabConfig = tabConfig;
@@ -97,7 +97,7 @@ public class TabManager {
                         final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
                             @Override
                             public void onHideRequest(final boolean autoClose, final boolean ok) {
-                                HidePopupEvent.fire(dashboardPresenter, menuListPresenter);
+                                HidePopupEvent.fire(dashboardPresenter, menuPresenter);
                             }
 
                             @Override
@@ -113,7 +113,7 @@ public class TabManager {
 //                                element = element.getParentElement();
 //                            }
 
-                        ShowPopupEvent.fire(dashboardPresenter, menuListPresenter, PopupType.POPUP, popupPosition,
+                        ShowPopupEvent.fire(dashboardPresenter, menuPresenter, PopupType.POPUP, popupPosition,
                                 popupUiHandlers, target);
                     }
                 }
@@ -183,7 +183,7 @@ public class TabManager {
         // Create remove menu.
         menuItems.add(createRemoveMenu(tabLayoutConfig, tabConfig));
 
-        menuListPresenter.setData(menuItems);
+        menuPresenter.setData(menuItems);
     }
 
     private Item createRenameMenu(final ComponentConfig componentConfig,

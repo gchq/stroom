@@ -31,7 +31,7 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuListPresenter;
+import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.menu.client.presenter.SimpleMenuItem;
 import stroom.widget.menu.client.presenter.SimpleParentMenuItem;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -77,7 +77,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     private static final int DEFAULT_COMPLETION_SCORE = 300; // Not sure what the range of scores is
     private static final String EXPRESSIONS_HELP_BASE_PATH = "/user-guide/dashboards/expressions";
 
-    private final MenuListPresenter menuListPresenter;
+    private final MenuPresenter menuPresenter;
     private final RestFactory restFactory;
     private final EditorPresenter editorPresenter;
     private final List<AceCompletion> functionCompletions = new ArrayList<>();
@@ -92,12 +92,12 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     @Inject
     public ExpressionPresenter(final EventBus eventBus,
                                final ExpressionView view,
-                               final MenuListPresenter menuListPresenter,
+                               final MenuPresenter menuPresenter,
                                final RestFactory restFactory,
                                final EditorPresenter editorPresenter,
                                final UiConfigCache clientPropertyCache) {
         super(eventBus, view);
-        this.menuListPresenter = menuListPresenter;
+        this.menuPresenter = menuPresenter;
         this.restFactory = restFactory;
         this.editorPresenter = editorPresenter;
         this.clientPropertyCache = clientPropertyCache;
@@ -303,7 +303,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
             final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
                 @Override
                 public void onHideRequest(final boolean autoClose, final boolean ok) {
-                    HidePopupEvent.fire(ExpressionPresenter.this, menuListPresenter);
+                    HidePopupEvent.fire(ExpressionPresenter.this, menuPresenter);
                 }
 
                 @Override
@@ -316,11 +316,11 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
                     target.getAbsoluteLeft() - 3,
                     target.getAbsoluteTop() + target.getClientHeight() + 1);
 
-            menuListPresenter.setData(menuItems);
+            menuPresenter.setData(menuItems);
 
             ShowPopupEvent.fire(
                     this,
-                    menuListPresenter,
+                    menuPresenter,
                     PopupType.POPUP,
                     popupPosition,
                     popupUiHandlers);

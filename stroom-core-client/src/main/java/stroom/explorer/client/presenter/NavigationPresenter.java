@@ -31,7 +31,6 @@ import stroom.explorer.client.presenter.NavigationPresenter.NavigationProxy;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
 import stroom.main.client.presenter.MainPresenter;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.menubar.client.presenter.MenubarPresenter;
 import stroom.security.client.api.event.CurrentUserChangedEvent;
 import stroom.security.client.api.event.CurrentUserChangedEvent.CurrentUserChangedHandler;
 import stroom.security.shared.DocumentPermissionNames;
@@ -44,11 +43,15 @@ import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItem;
 import stroom.widget.menu.client.presenter.MenuItems;
+import stroom.widget.menu.client.presenter.MenuPresenter;
+import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tab.client.event.MaximiseEvent;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.user.client.Command;
@@ -58,6 +61,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenter;
@@ -80,22 +84,20 @@ public class NavigationPresenter
         RefreshExplorerTreeEvent.Handler,
         HighlightExplorerNodeEvent.Handler,
         CurrentUserChangedHandler {
-//
-//    private static final String EXPLORER = "Explorer";
 
     private final DocumentTypeCache documentTypeCache;
     private final TypeFilterPresenter typeFilterPresenter;
     private final CurrentActivity currentActivity;
     private final ExplorerTree explorerTree;
-    private final MenubarPresenter menubarPresenter;
+    private final Provider<MenuPresenter> menuListPresenterProvider;
     private final SimplePanel activityOuter = new SimplePanel();
     private final Button activityButton = new Button();
 
     private final MenuItems menuItems;
-    //    private final Provider<MenuListPresenter> menuListPresenterProvider;
     private final List<Item> currentMenuItems = new ArrayList<>();
 
-    final Map<Item, List<Item>> allItems = new HashMap<>();
+    private final Map<Item, List<Item>> allItems = new HashMap<>();
+    private MenuPresenter currentMenu;
 
     private SvgButton add;
     private SvgButton delete;
@@ -126,13 +128,13 @@ public class NavigationPresenter
                                final TypeFilterPresenter typeFilterPresenter,
                                final CurrentActivity currentActivity,
                                final UiConfigCache uiConfigCache,
-                               final MenubarPresenter menubarPresenter) {
+                               final Provider<MenuPresenter> menuListPresenterProvider) {
         super(eventBus, view, proxy);
         this.menuItems = menuItems;
         this.documentTypeCache = documentTypeCache;
         this.typeFilterPresenter = typeFilterPresenter;
         this.currentActivity = currentActivity;
-        this.menubarPresenter = menubarPresenter;
+        this.menuListPresenterProvider = menuListPresenterProvider;
 
         view.setUiHandlers(this);
 
@@ -252,12 +254,53 @@ public class NavigationPresenter
 
     @Override
     public void showMenu(final Element target) {
-        menubarPresenter.showMenuItems(
-                null,
+        showMenuItems(
                 currentMenuItems,
                 target.getAbsoluteLeft(),
                 target.getAbsoluteBottom() + 10,
                 target);
+    }
+
+    public void showMenuItems(final List<Item> children,
+                              final int x,
+                              final int y,
+                              final Element autoHidePartner) {
+        if (currentMenu != null) {
+            currentMenu.hideAll();
+        } else {
+
+            if (children != null && children.size() > 0) {
+                final MenuPresenter presenter = menuListPresenterProvider.get();
+                presenter.setData(children);
+
+                currentMenu = presenter;
+
+                final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+                    @Override
+                    public void onHideRequest(final boolean autoClose, final boolean ok) {
+                        HidePopupEvent.fire(NavigationPresenter.this, presenter);
+                    }
+
+                    @Override
+                    public void onHide(final boolean autoClose, final boolean ok) {
+                        currentMenu = null;
+                    }
+                };
+
+                // Add parent auto hide partners.
+                final List<Element> autoHidePartners = new ArrayList<>();
+                if (autoHidePartner != null) {
+                    autoHidePartners.add(autoHidePartner);
+                }
+                presenter.setAutoHidePartners(autoHidePartners);
+                presenter.selectFirstItem();
+
+                final Element[] partners = autoHidePartners.toArray(new Element[0]);
+                final PopupPosition popupPosition = new PopupPosition(x, y);
+                ShowPopupEvent.fire(NavigationPresenter.this, presenter, PopupType.POPUP, popupPosition,
+                        popupUiHandlers, partners);
+            }
+        }
     }
 
     public void showTypeFilter(final MouseDownEvent event) {

@@ -16,6 +16,7 @@
     --even-row-background-color: #ebebeb;
     --odd-row-background-color: #fff;
     --hovered-row-background-color: #e6f4ff;
+    --focussed-row-border-color: black;
     --selected-row-background-color: #bbdefb;
     --selected-row-text-color: #000;
 
@@ -222,6 +223,7 @@
     --even-row-background-color: #282c31;
     --odd-row-background-color: #1a1d21;
     --hovered-row-background-color: rgb(255 255 255 / 15%);
+    --focussed-row-border-color: white;
     --selected-row-background-color: #1164a3;
     --selected-row-text-color: #fff;
 
@@ -403,6 +405,7 @@
     --even-row-background-color: #15161b;
     --odd-row-background-color: #22252c;
     --hovered-row-background-color: #2d2f35;
+    --focussed-row-border-color: white;
     --selected-row-background-color: #3498db;
     --selected-row-text-color: #fff;
 

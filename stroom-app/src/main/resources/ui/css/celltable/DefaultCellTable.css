@@ -97,6 +97,10 @@
   background: var(--even-row-background-color);
 }
 
+.cellTableEvenRow:hover {
+  background: var(--hovered-row-background-color);
+}
+
 .cellTableEvenRowCell {
 }
 
@@ -104,14 +108,11 @@
   background: var(--odd-row-background-color);
 }
 
-.cellTableOddRowCell {
-}
-
-.cellTableHoveredRow {
+.cellTableOddRow:hover {
   background: var(--hovered-row-background-color);
 }
 
-.cellTableHoveredRowCell {
+.cellTableOddRowCell {
 }
 
 .cellTableKeyboardSelectedRow {
@@ -121,10 +122,9 @@
 }
 
 .cellTableSelectedRow {
-  height: auto;
-  overflow: auto;
-  background: var(--selected-row-background-color) none repeat scroll 0 0 !important;
-  color: var(--selected-row-text-color) !important;
+}
+
+.cellTableSelectedRow:focus-within {
 }
 
 .cellTableSelectedRowCell {

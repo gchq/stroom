@@ -17,7 +17,6 @@
 package stroom.widget.menu.client.presenter;
 
 import stroom.svg.client.Icon;
-import stroom.widget.menu.client.presenter.MenuItemCell.SeparatorAppearance.Template;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.ValueUpdater;
@@ -35,11 +34,11 @@ import com.google.gwt.safehtml.shared.SafeUri;
 
 public class MenuItemCell extends AbstractCell<Item> {
 
-    private final MenuPresenter menuPresenter;
+    private final MenuItemCellUiHandler handler;
 
-    public MenuItemCell(final MenuPresenter menuPresenter) {
+    public MenuItemCell(final MenuItemCellUiHandler handler) {
         super(BrowserEvents.CLICK, BrowserEvents.MOUSEOVER, BrowserEvents.MOUSEOUT);
-        this.menuPresenter = menuPresenter;
+        this.handler = handler;
     }
 
     @Override
@@ -58,8 +57,8 @@ public class MenuItemCell extends AbstractCell<Item> {
                 if (BrowserEvents.MOUSEOVER.equals(eventType)) {
                     final CommandMenuItem menuItem = (CommandMenuItem) value;
                     if (menuItem.isEnabled()) {
-                        menuPresenter.onMouseOver(menuItem, element);
-                        if (menuPresenter.isHover(menuItem)) {
+                        handler.onMouseOver(menuItem, element);
+                        if (handler.isHover(menuItem)) {
                             element.addClassName("cellTableHoveredRow");
                         }
                     } else {
@@ -68,8 +67,8 @@ public class MenuItemCell extends AbstractCell<Item> {
 
                 } else if (BrowserEvents.MOUSEOUT.equals(eventType)) {
                     final CommandMenuItem menuItem = (CommandMenuItem) value;
-                    menuPresenter.onMouseOut(menuItem, element);
-                    if (!menuPresenter.isHover(menuItem)) {
+                    handler.onMouseOut(menuItem, element);
+                    if (!handler.isHover(menuItem)) {
                         element.removeClassName("cellTableHoveredRow");
                     }
 
@@ -77,7 +76,7 @@ public class MenuItemCell extends AbstractCell<Item> {
                         && ((event.getButton() & NativeEvent.BUTTON_LEFT) != 0)) {
                     final CommandMenuItem menuItem = (CommandMenuItem) value;
                     if (menuItem.isEnabled()) {
-                        menuPresenter.onClick(menuItem, element);
+                        handler.onClick(menuItem, element);
                     }
                 }
 
@@ -86,14 +85,14 @@ public class MenuItemCell extends AbstractCell<Item> {
 
                 if (BrowserEvents.MOUSEOVER.equals(eventType)) {
                     element.addClassName("cellTableHoveredRow");
-                    menuPresenter.onMouseOver(menuItem, element);
+                    handler.onMouseOver(menuItem, element);
 
                 } else if (BrowserEvents.MOUSEOUT.equals(eventType)) {
                     element.removeClassName("cellTableHoveredRow");
 
                 } else if (BrowserEvents.CLICK.equals(eventType)
                         && ((event.getButton() & NativeEvent.BUTTON_LEFT) != 0)) {
-                    menuPresenter.onClick(menuItem, element);
+                    handler.onClick(menuItem, element);
                 }
             }
         }
@@ -111,11 +110,11 @@ public class MenuItemCell extends AbstractCell<Item> {
     public void render(final Context context, final Item value, final SafeHtmlBuilder sb) {
         if (value != null) {
             if (value instanceof IconMenuItem) {
-                new IconMenuItemAppearance(menuPresenter).render(this, context, (IconMenuItem) value, sb);
+                new IconMenuItemAppearance(handler).render(this, context, (IconMenuItem) value, sb);
             } else if (value instanceof SimpleMenuItem) {
-                new SimpleMenuItemAppearance(menuPresenter).render(this, context, (SimpleMenuItem) value, sb);
+                new SimpleMenuItemAppearance(handler).render(this, context, (SimpleMenuItem) value, sb);
             } else if (value instanceof InfoMenuItem) {
-                new InfoMenuItemAppearance(menuPresenter).render(this, context, (InfoMenuItem) value, sb);
+                new InfoMenuItemAppearance(handler).render(this, context, (InfoMenuItem) value, sb);
             } else if (value instanceof MenuItem) {
                 new MenuItemAppearance().render(this, context, (MenuItem) value, sb);
             } else if (value instanceof Separator) {
@@ -145,6 +144,7 @@ public class MenuItemCell extends AbstractCell<Item> {
         }
 
         public interface Template extends SafeHtmlTemplates {
+
             @Template("<div class=\"{0}\"></div>")
             SafeHtml separator(String className);
         }
@@ -165,6 +165,7 @@ public class MenuItemCell extends AbstractCell<Item> {
         }
 
         public interface Template extends SafeHtmlTemplates {
+
             @Template("<div class=\"{0}\">{1}</div>")
             SafeHtml groupHeading(String className, SafeHtml groupName);
         }
@@ -186,10 +187,10 @@ public class MenuItemCell extends AbstractCell<Item> {
         private static final Template TEMPLATE = GWT.create(Template.class);
         private static final SafeStyles NORMAL = SafeStylesUtils.fromTrustedString("cursor:pointer;");
         private static final SafeStyles DISABLED = SafeStylesUtils.fromTrustedString("cursor:default;");
-        private final MenuPresenter menuPresenter;
+        private final MenuItemCellUiHandler uiHandler;
 
-        public IconMenuItemAppearance(final MenuPresenter menuPresenter) {
-            this.menuPresenter = menuPresenter;
+        public IconMenuItemAppearance(final MenuItemCellUiHandler uiHandler) {
+            this.uiHandler = uiHandler;
         }
 
         @Override
@@ -232,8 +233,10 @@ public class MenuItemCell extends AbstractCell<Item> {
                             SafeHtmlUtils.fromTrustedString(value.getShortcut())));
                 }
 
-                final String disabledClass = value.isEnabled() ? "" : " menuItem-disabled";
-                if (menuPresenter.isHighlighted(value)) {
+                final String disabledClass = value.isEnabled()
+                        ? ""
+                        : " menuItem-disabled";
+                if (uiHandler.isHighlighted(value)) {
                     sb.append(TEMPLATE.outer("menuItem-highlight" + disabledClass, styles, inner.toSafeHtml()));
                 } else {
                     sb.append(TEMPLATE.outer("menuItem-outer" + disabledClass, styles, inner.toSafeHtml()));
@@ -262,10 +265,10 @@ public class MenuItemCell extends AbstractCell<Item> {
         private static final Template TEMPLATE = GWT.create(Template.class);
         private static final SafeStyles NORMAL = SafeStylesUtils.fromTrustedString("cursor:pointer;");
         private static final SafeStyles DISABLED = SafeStylesUtils.fromTrustedString("cursor:default;");
-        private final MenuPresenter menuPresenter;
+        private final MenuItemCellUiHandler uiHandler;
 
-        public SimpleMenuItemAppearance(final MenuPresenter menuPresenter) {
-            this.menuPresenter = menuPresenter;
+        public SimpleMenuItemAppearance(final MenuItemCellUiHandler uiHandler) {
+            this.uiHandler = uiHandler;
         }
 
         @Override
@@ -292,8 +295,10 @@ public class MenuItemCell extends AbstractCell<Item> {
                             SafeHtmlUtils.fromTrustedString(value.getShortcut())));
                 }
 
-                final String disabledClass = value.isEnabled() ? "" : " menuItem-disabled";
-                if (menuPresenter.isHighlighted(value)) {
+                final String disabledClass = value.isEnabled()
+                        ? ""
+                        : " menuItem-disabled";
+                if (uiHandler.isHighlighted(value)) {
                     sb.append(TEMPLATE.outer("menuItem-highlight" + disabledClass, styles,
                             inner.toSafeHtml()));
                 } else {
@@ -319,7 +324,7 @@ public class MenuItemCell extends AbstractCell<Item> {
 
         private static final Template TEMPLATE = GWT.create(Template.class);
 
-        public InfoMenuItemAppearance(final MenuPresenter menuPresenter) {
+        public InfoMenuItemAppearance(final MenuItemCellUiHandler uiHandler) {
         }
 
         @Override

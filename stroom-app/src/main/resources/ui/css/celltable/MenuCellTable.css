@@ -22,10 +22,6 @@
     background: none;
 }
 
-.menuCellTable.cellTableOddRow {
+.menuCellTable .cellTableOddRow {
     background: none;
-}
-
-.menuCellTable .cellTableHoveredRow {
-  background: var(--hovered-row-background-color);
 }

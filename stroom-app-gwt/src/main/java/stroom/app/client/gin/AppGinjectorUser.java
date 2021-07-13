@@ -52,7 +52,6 @@ import stroom.index.client.gin.IndexModule;
 import stroom.kafka.client.gin.KafkaConfigGinjector;
 import stroom.kafka.client.gin.KafkaConfigModule;
 import stroom.main.client.presenter.MainPresenter;
-import stroom.menubar.client.presenter.MenubarPresenter;
 import stroom.monitoring.client.gin.MonitoringGinjector;
 import stroom.monitoring.client.gin.MonitoringModule;
 import stroom.pipeline.client.gin.PipelineGinjector;
@@ -171,8 +170,6 @@ public interface AppGinjectorUser extends
     Provider<CorePresenter> getCorePresenter();
 
     AsyncProvider<MainPresenter> getMainPresenter();
-
-    AsyncProvider<MenubarPresenter> getMenubarPresenter();
 
     AsyncProvider<NavigationPresenter> getExplorerTabPanePresenter();
 

@@ -84,7 +84,7 @@ import stroom.util.shared.RandomId;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.Version;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.menu.client.presenter.MenuListPresenter;
+import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -159,7 +159,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final TableView view,
                           final ClientSecurityContext securityContext,
                           final LocationManager locationManager,
-                          final MenuListPresenter menuListPresenter,
+                          final MenuPresenter menuPresenter,
                           final Provider<RenameFieldPresenter> renameFieldPresenterProvider,
                           final Provider<ExpressionPresenter> expressionPresenterProvider,
                           final FormatPresenter formatPresenter,
@@ -201,7 +201,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         fieldsManager = new FieldsManager(
                 this,
-                menuListPresenter,
+                menuPresenter,
                 renameFieldPresenterProvider,
                 expressionPresenterProvider,
                 formatPresenter,

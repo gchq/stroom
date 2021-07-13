@@ -27,7 +27,7 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuListPresenter;
+import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -56,20 +56,20 @@ public class FieldsManager implements HeadingListener {
     private final Provider<ExpressionPresenter> expressionPresenterProvider;
     private final FormatPresenter formatPresenter;
     private final FilterPresenter filterPresenter;
-    private final MenuListPresenter menuListPresenter;
+    private final MenuPresenter menuPresenter;
     private int fieldsStartIndex;
     private boolean busy;
     private int currentColIndex = -1;
     private boolean ignoreNext;
 
     public FieldsManager(final TablePresenter tablePresenter,
-                         final MenuListPresenter menuListPresenter,
+                         final MenuPresenter menuPresenter,
                          final Provider<RenameFieldPresenter> renameFieldPresenterProvider,
                          final Provider<ExpressionPresenter> expressionPresenterProvider,
                          final FormatPresenter formatPresenter,
                          final FilterPresenter filterPresenter) {
         this.tablePresenter = tablePresenter;
-        this.menuListPresenter = menuListPresenter;
+        this.menuPresenter = menuPresenter;
         this.renameFieldPresenterProvider = renameFieldPresenterProvider;
         this.expressionPresenterProvider = expressionPresenterProvider;
         this.formatPresenter = formatPresenter;
@@ -84,7 +84,7 @@ public class FieldsManager implements HeadingListener {
         }
 
         ignoreNext = currentColIndex == colIndex;
-        HidePopupEvent.fire(tablePresenter, menuListPresenter);
+        HidePopupEvent.fire(tablePresenter, menuPresenter);
     }
 
     @Override
@@ -99,7 +99,7 @@ public class FieldsManager implements HeadingListener {
                     @Override
                     public void run() {
                         if (currentColIndex == colIndex) {
-                            HidePopupEvent.fire(tablePresenter, menuListPresenter);
+                            HidePopupEvent.fire(tablePresenter, menuPresenter);
 
                         } else {
                             currentColIndex = colIndex;
@@ -113,7 +113,7 @@ public class FieldsManager implements HeadingListener {
                             final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
                                 @Override
                                 public void onHideRequest(final boolean autoClose, final boolean ok) {
-                                    HidePopupEvent.fire(tablePresenter, menuListPresenter);
+                                    HidePopupEvent.fire(tablePresenter, menuPresenter);
                                 }
 
                                 @Override
@@ -130,7 +130,7 @@ public class FieldsManager implements HeadingListener {
                                 element = element.getParentElement();
                             }
 
-                            ShowPopupEvent.fire(tablePresenter, menuListPresenter, PopupType.POPUP, popupPosition,
+                            ShowPopupEvent.fire(tablePresenter, menuPresenter, PopupType.POPUP, popupPosition,
                                     popupUiHandlers, element);
                         }
                     }
@@ -396,8 +396,8 @@ public class FieldsManager implements HeadingListener {
         // Create remove menu.
         menuItems.add(createRemoveMenu(field, highlights));
 
-        menuListPresenter.setHighlightItems(highlights);
-        menuListPresenter.setData(menuItems);
+        menuPresenter.setHighlightItems(highlights);
+        menuPresenter.setData(menuItems);
     }
 
     private Item createRenameMenu(final Field field) {

@@ -129,11 +129,6 @@ public class MenuCellTable<R> extends Composite {
         cellTable.fireEvent(event);
     }
 
-    public HandlerRegistration addCellPreviewHandler(
-            final com.google.gwt.view.client.CellPreviewEvent.Handler<R> handler) {
-        return cellTable.addCellPreviewHandler(handler);
-    }
-
     @SuppressWarnings("unchecked")
     public SelectionModel<R> getSelectionModel() {
         return (SelectionModel<R>) cellTable.getSelectionModel();

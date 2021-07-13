@@ -77,7 +77,7 @@ import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItem;
-import stroom.widget.menu.client.presenter.MenuListPresenter;
+import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.menu.client.presenter.Separator;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -121,7 +121,7 @@ public class DocumentPluginEventManager extends Plugin {
     private final HasSaveRegistry hasSaveRegistry;
     private final RestFactory restFactory;
     private final DocumentTypeCache documentTypeCache;
-    private final MenuListPresenter menuListPresenter;
+    private final MenuPresenter menuPresenter;
     private final DocumentPluginRegistry documentPluginRegistry;
     private final ClientSecurityContext securityContext;
     private final KeyboardInterceptor keyboardInterceptor;
@@ -134,7 +134,7 @@ public class DocumentPluginEventManager extends Plugin {
                                       final KeyboardInterceptor keyboardInterceptor,
                                       final RestFactory restFactory,
                                       final DocumentTypeCache documentTypeCache,
-                                      final MenuListPresenter menuListPresenter,
+                                      final MenuPresenter menuPresenter,
                                       final DocumentPluginRegistry documentPluginRegistry,
                                       final ClientSecurityContext securityContext) {
         super(eventBus);
@@ -142,7 +142,7 @@ public class DocumentPluginEventManager extends Plugin {
         this.keyboardInterceptor = keyboardInterceptor;
         this.restFactory = restFactory;
         this.documentTypeCache = documentTypeCache;
-        this.menuListPresenter = menuListPresenter;
+        this.menuPresenter = menuPresenter;
         this.documentPluginRegistry = documentPluginRegistry;
         this.securityContext = securityContext;
     }
@@ -340,10 +340,10 @@ public class DocumentPluginEventManager extends Plugin {
             if (getSelectedItems().size() == 1) {
                 final ExplorerNode primarySelection = getPrimarySelection();
                 getNewMenuItems(primarySelection).onSuccess(children -> {
-                    menuListPresenter.setData(children);
+                    menuPresenter.setData(children);
 
                     final PopupPosition popupPosition = new PopupPosition(event.getX(), event.getY());
-                    ShowPopupEvent.fire(DocumentPluginEventManager.this, menuListPresenter, PopupType.POPUP,
+                    ShowPopupEvent.fire(DocumentPluginEventManager.this, menuPresenter, PopupType.POPUP,
                             popupPosition, null, event.getElement());
                 });
             }
@@ -366,11 +366,11 @@ public class DocumentPluginEventManager extends Plugin {
                                     documentTypes);
                             addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
 
-                            menuListPresenter.setData(menuItems);
+                            menuPresenter.setData(menuItems);
                             final PopupPosition popupPosition = new PopupPosition(event.getX(), event.getY());
                             ShowPopupEvent.fire(
                                     DocumentPluginEventManager.this,
-                                    menuListPresenter,
+                                    menuPresenter,
                                     PopupType.POPUP,
                                     popupPosition,
                                     null);

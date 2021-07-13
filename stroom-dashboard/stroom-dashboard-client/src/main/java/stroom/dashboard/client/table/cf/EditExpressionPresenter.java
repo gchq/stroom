@@ -31,7 +31,7 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuListPresenter;
+import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -52,7 +52,7 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         implements HasDirtyHandlers {
 
     private final ExpressionTreePresenter expressionPresenter;
-    private final MenuListPresenter menuListPresenter;
+    private final MenuPresenter menuPresenter;
 
     private final ButtonView addOperatorButton;
     private final ButtonView addTermButton;
@@ -62,10 +62,10 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
     @Inject
     public EditExpressionPresenter(final EventBus eventBus, final EditExpressionView view,
                                    final ExpressionTreePresenter expressionPresenter,
-                                   final MenuListPresenter menuListPresenter) {
+                                   final MenuPresenter menuPresenter) {
         super(eventBus, view);
         this.expressionPresenter = expressionPresenter;
-        this.menuListPresenter = menuListPresenter;
+        this.menuPresenter = menuPresenter;
 
         view.setExpressionView(expressionPresenter.getView());
 
@@ -204,19 +204,19 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
     }
 
     private void showMenu(final PopupPosition popupPosition, final List<Item> menuItems) {
-        menuListPresenter.setData(menuItems);
+        menuPresenter.setData(menuItems);
 
         final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
-                HidePopupEvent.fire(EditExpressionPresenter.this, menuListPresenter);
+                HidePopupEvent.fire(EditExpressionPresenter.this, menuPresenter);
             }
 
             @Override
             public void onHide(final boolean autoClose, final boolean ok) {
             }
         };
-        ShowPopupEvent.fire(this, menuListPresenter, PopupType.POPUP, popupPosition, popupUiHandlers);
+        ShowPopupEvent.fire(this, menuPresenter, PopupType.POPUP, popupPosition, popupUiHandlers);
     }
 
     public void setDirty(final boolean dirty) {

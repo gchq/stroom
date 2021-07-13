@@ -74,7 +74,7 @@ import stroom.util.shared.ResourceGeneration;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuListPresenter;
+import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -113,7 +113,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private final Provider<EntityChooser> pipelineSelection;
     private final Provider<QueryInfoPresenter> queryInfoPresenterProvider;
     private final ProcessorLimitsPresenter processorLimitsPresenter;
-    private final MenuListPresenter menuListPresenter;
+    private final MenuPresenter menuPresenter;
     private final RestFactory restFactory;
     private final LocationManager locationManager;
 
@@ -149,7 +149,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                           final Provider<EntityChooser> pipelineSelection,
                           final Provider<QueryInfoPresenter> queryInfoPresenterProvider,
                           final ProcessorLimitsPresenter processorLimitsPresenter,
-                          final MenuListPresenter menuListPresenter,
+                          final MenuPresenter menuPresenter,
                           final RestFactory restFactory,
                           final ClientSecurityContext securityContext,
                           final UiConfigCache clientPropertyCache,
@@ -163,7 +163,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         this.pipelineSelection = pipelineSelection;
         this.queryInfoPresenterProvider = queryInfoPresenterProvider;
         this.processorLimitsPresenter = processorLimitsPresenter;
-        this.menuListPresenter = menuListPresenter;
+        this.menuPresenter = menuPresenter;
         this.restFactory = restFactory;
         this.locationManager = locationManager;
 
@@ -775,19 +775,19 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     private void showMenu(final PopupPosition popupPosition, final List<Item> menuItems) {
-        menuListPresenter.setData(menuItems);
+        menuPresenter.setData(menuItems);
 
         final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
-                HidePopupEvent.fire(QueryPresenter.this, menuListPresenter);
+                HidePopupEvent.fire(QueryPresenter.this, menuPresenter);
             }
 
             @Override
             public void onHide(final boolean autoClose, final boolean ok) {
             }
         };
-        ShowPopupEvent.fire(this, menuListPresenter, PopupType.POPUP, popupPosition, popupUiHandlers);
+        ShowPopupEvent.fire(this, menuPresenter, PopupType.POPUP, popupPosition, popupUiHandlers);
     }
 
     private void downloadQuery() {

@@ -51,7 +51,7 @@ import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItems;
-import stroom.widget.menu.client.presenter.MenuListPresenter;
+import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
@@ -88,7 +88,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
     private static final DocRef NULL_SELECTION = DocRef.builder().uuid("").name("None").type("").build();
 
     private final EntityDropDownPresenter pipelinePresenter;
-    private final MenuListPresenter menuListPresenter;
+    private final MenuPresenter menuPresenter;
     private final RestFactory restFactory;
     private final NewElementPresenter newElementPresenter;
     private final PropertyListPresenter propertyListPresenter;
@@ -114,7 +114,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                                       final PipelineTreePresenter pipelineTreePresenter,
                                       final EntityDropDownPresenter pipelinePresenter,
                                       final RestFactory restFactory,
-                                      final MenuListPresenter menuListPresenter,
+                                      final MenuPresenter menuPresenter,
                                       final NewElementPresenter newElementPresenter,
                                       final PropertyListPresenter propertyListPresenter,
                                       final PipelineReferenceListPresenter pipelineReferenceListPresenter,
@@ -122,7 +122,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
         super(eventBus, view);
         this.pipelineTreePresenter = pipelineTreePresenter;
         this.pipelinePresenter = pipelinePresenter;
-        this.menuListPresenter = menuListPresenter;
+        this.menuPresenter = menuPresenter;
         this.restFactory = restFactory;
         this.newElementPresenter = newElementPresenter;
         this.propertyListPresenter = propertyListPresenter;
@@ -458,19 +458,19 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
     }
 
     private void showMenu(final PopupPosition popupPosition, final List<Item> menuItems) {
-        menuListPresenter.setData(menuItems);
+        menuPresenter.setData(menuItems);
 
         final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
-                HidePopupEvent.fire(PipelineStructurePresenter.this, menuListPresenter);
+                HidePopupEvent.fire(PipelineStructurePresenter.this, menuPresenter);
             }
 
             @Override
             public void onHide(final boolean autoClose, final boolean ok) {
             }
         };
-        ShowPopupEvent.fire(this, menuListPresenter, PopupType.POPUP, popupPosition, popupUiHandlers);
+        ShowPopupEvent.fire(this, menuPresenter, PopupType.POPUP, popupPosition, popupUiHandlers);
     }
 
     private List<PipelineElement> getExistingElements() {

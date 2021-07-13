@@ -50,14 +50,13 @@ import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.RandomId;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.menu.client.presenter.MenuListPresenter;
+import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.SelectionChangeEvent;
@@ -102,7 +101,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
                               final DashboardLayoutPresenter layoutPresenter,
                               final Provider<ComponentAddPresenter> addPresenterProvider,
                               final Components components,
-                              final MenuListPresenter menuListPresenter,
+                              final MenuPresenter menuPresenter,
                               final Provider<RenameTabPresenter> renameTabPresenterProvider,
                               final Provider<QueryInfoPresenter> queryInfoPresenterProvider,
                               final ClientSecurityContext securityContext) {
@@ -112,7 +111,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         this.components = components;
         this.queryInfoPresenterProvider = queryInfoPresenterProvider;
 
-        final TabManager tabManager = new TabManager(components, menuListPresenter, renameTabPresenterProvider, this);
+        final TabManager tabManager = new TabManager(components, menuPresenter, renameTabPresenterProvider, this);
         layoutPresenter.setTabManager(tabManager);
 
         saveButton = addButtonLeft(SvgPresets.SAVE);

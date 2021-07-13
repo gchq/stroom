@@ -21,7 +21,7 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.Option;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuListPresenter;
+import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -38,26 +38,26 @@ import java.util.List;
  */
 public class EditorMenuPresenter {
 
-    private final MenuListPresenter menuListPresenter;
+    private final MenuPresenter menuPresenter;
     private EditorPresenter xmlEditorPresenter;
 
     @Inject
-    public EditorMenuPresenter(final MenuListPresenter menuListPresenter) {
-        this.menuListPresenter = menuListPresenter;
+    public EditorMenuPresenter(final MenuPresenter menuPresenter) {
+        this.menuPresenter = menuPresenter;
 
     }
 
     public void show(final EditorPresenter xmlEditorPresenter, final int x, final int y) {
         this.xmlEditorPresenter = xmlEditorPresenter;
-        HidePopupEvent.fire(xmlEditorPresenter, menuListPresenter);
+        HidePopupEvent.fire(xmlEditorPresenter, menuPresenter);
         updateText();
         final PopupPosition popupPosition = new PopupPosition(x, y);
-        ShowPopupEvent.fire(xmlEditorPresenter, menuListPresenter, PopupType.POPUP, popupPosition, null);
+        ShowPopupEvent.fire(xmlEditorPresenter, menuPresenter, PopupType.POPUP, popupPosition, null);
     }
 
     public void hide() {
         if (xmlEditorPresenter != null) {
-            HidePopupEvent.fire(xmlEditorPresenter, menuListPresenter);
+            HidePopupEvent.fire(xmlEditorPresenter, menuPresenter);
             xmlEditorPresenter = null;
         }
     }
@@ -82,7 +82,7 @@ public class EditorMenuPresenter {
         addMenuItem(position++, menuItems, xmlEditorPresenter.getLiveAutoCompletionOption());
         addMenuItem(position++, menuItems, xmlEditorPresenter.getFormatAction());
 
-        menuListPresenter.setData(menuItems);
+        menuPresenter.setData(menuItems);
     }
 
     private void addMenuItem(int position, final List<Item> menuItems, final Option option) {
