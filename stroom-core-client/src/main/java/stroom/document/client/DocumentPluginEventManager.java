@@ -81,7 +81,9 @@ import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.menu.client.presenter.Separator;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tab.client.event.RequestCloseAllTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseTabEvent;
@@ -367,13 +369,27 @@ public class DocumentPluginEventManager extends Plugin {
                             addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
 
                             menuPresenter.setData(menuItems);
+                            menuPresenter.selectFirstItem();
+                            final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+                                @Override
+                                public void onHideRequest(final boolean autoClose, final boolean ok) {
+                                    HidePopupEvent.fire(DocumentPluginEventManager.this, menuPresenter);
+                                }
+
+                                @Override
+                                public void onHide(final boolean autoClose, final boolean ok) {
+                                    if (event.getCloseHandler() != null) {
+                                        event.getCloseHandler().accept(true);
+                                    }
+                                }
+                            };
                             final PopupPosition popupPosition = new PopupPosition(event.getX(), event.getY());
                             ShowPopupEvent.fire(
                                     DocumentPluginEventManager.this,
                                     menuPresenter,
                                     PopupType.POPUP,
                                     popupPosition,
-                                    null);
+                                    popupUiHandlers);
                         })
                 );
             }

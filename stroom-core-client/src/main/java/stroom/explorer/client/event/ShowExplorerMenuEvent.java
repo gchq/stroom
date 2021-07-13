@@ -23,24 +23,33 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
+import java.util.function.Consumer;
+import javax.swing.text.Element;
+
 public class ShowExplorerMenuEvent extends GwtEvent<ShowExplorerMenuEvent.Handler> {
 
     private static Type<Handler> TYPE;
     private final MultiSelectionModel<ExplorerNode> selectionModel;
+    private final Consumer<Boolean> closeHandler;
     private final int x;
     private final int y;
 
-    private ShowExplorerMenuEvent(final MultiSelectionModel<ExplorerNode> selectionModel, final int x, final int y) {
+    private ShowExplorerMenuEvent(final MultiSelectionModel<ExplorerNode> selectionModel,
+                                  final Consumer<Boolean> closeHandler,
+                                  final int x,
+                                  final int y) {
         this.selectionModel = selectionModel;
+        this.closeHandler = closeHandler;
         this.x = x;
         this.y = y;
     }
 
     public static void fire(final HasHandlers handlers,
                             final MultiSelectionModel<ExplorerNode> selectionModel,
+                            final Consumer<Boolean> closeHandler,
                             final int x,
                             final int y) {
-        handlers.fireEvent(new ShowExplorerMenuEvent(selectionModel, x, y));
+        handlers.fireEvent(new ShowExplorerMenuEvent(selectionModel, closeHandler, x, y));
     }
 
     public static Type<Handler> getType() {
@@ -62,6 +71,10 @@ public class ShowExplorerMenuEvent extends GwtEvent<ShowExplorerMenuEvent.Handle
 
     public MultiSelectionModel<ExplorerNode> getSelectionModel() {
         return selectionModel;
+    }
+
+    public Consumer<Boolean> getCloseHandler() {
+        return closeHandler;
     }
 
     public int getX() {

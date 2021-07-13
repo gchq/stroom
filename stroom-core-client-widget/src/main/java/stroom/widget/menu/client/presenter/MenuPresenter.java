@@ -36,7 +36,6 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -48,7 +47,6 @@ public class MenuPresenter
     private MenuPresenter currentMenu;
     private MenuItem currentItem;
     private MenuPresenter parent;
-    private List<Element> autoHidePartners;
 
     @Inject
     public MenuPresenter(final EventBus eventBus,
@@ -106,19 +104,6 @@ public class MenuPresenter
                             }
                         };
 
-                        final List<Element> autoHidePartners = new ArrayList<>();
-
-                        // Add parent auto hide partners.
-                        if (MenuPresenter.this.autoHidePartners != null
-                                && MenuPresenter.this.autoHidePartners.size() > 0) {
-                            autoHidePartners.addAll(MenuPresenter.this.autoHidePartners);
-                        }
-
-                        // Add this as an auto hide partner
-                        autoHidePartners.add(element);
-                        presenter.setAutoHidePartners(autoHidePartners);
-                        final Element[] partners = autoHidePartners.toArray(new Element[0]);
-
                         final PopupPosition popupPosition = new PopupPosition(
                                 element.getAbsoluteRight(),
                                 element.getAbsoluteLeft(),
@@ -137,7 +122,7 @@ public class MenuPresenter
                                 PopupType.POPUP,
                                 popupPosition,
                                 popupUiHandlers,
-                                partners);
+                                null);
                     }
                 });
             }
@@ -199,15 +184,6 @@ public class MenuPresenter
     @Override
     public void escape() {
         hideAll();
-
-        MenuPresenter p = this;
-        while (p.parent != null) {
-            p = p.parent;
-        }
-        final List<Element> autoHidePartners = p.getAutoHidePartners();
-        if (autoHidePartners != null && autoHidePartners.size() > 0) {
-            autoHidePartners.get(0).focus();
-        }
     }
 
     public void hideAll() {
@@ -218,14 +194,6 @@ public class MenuPresenter
 
     public void setParent(final MenuPresenter parent) {
         this.parent = parent;
-    }
-
-    public List<Element> getAutoHidePartners() {
-        return autoHidePartners;
-    }
-
-    public void setAutoHidePartners(final List<Element> autoHidePartners) {
-        this.autoHidePartners = autoHidePartners;
     }
 
     public void setData(final List<Item> items) {

@@ -287,17 +287,7 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
 
     @Override
     public void selectFirstItem() {
-        // Get the first selectable item if there is one.
-        final List<Item> items = cellTable.getVisibleItems();
-        int row = -1;
-        for (int i = 0; i < items.size(); i++) {
-            final Item item = items.get(i);
-            if (isSelectable(item)) {
-                row = i;
-                break;
-            }
-        }
-
+        final int row = getFirstSelectableRow();
         if (row >= 0) {
             cellTable.setKeyboardSelectedRow(row, true);
         }
@@ -305,6 +295,24 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
 
     @Override
     public void focus() {
-        cellTable.setKeyboardSelectedRow(cellTable.getKeyboardSelectedRow(), true);
+        final int firstSelectableRow = getFirstSelectableRow();
+        final int row = cellTable.getKeyboardSelectedRow();
+        if (row >= 0 && row < firstSelectableRow) {
+            cellTable.setKeyboardSelectedRow(firstSelectableRow, true);
+        } else {
+            cellTable.setKeyboardSelectedRow(row, true);
+        }
+    }
+
+    private int getFirstSelectableRow() {
+        final List<Item> items = cellTable.getVisibleItems();
+        int row = -1;
+        for (int i = 0; i < items.size() && row == -1; i++) {
+            final  Item item = items.get(i);
+            if (isSelectable(item)) {
+                row = i;
+            }
+        }
+        return row;
     }
 }

@@ -284,21 +284,14 @@ public class NavigationPresenter
                     @Override
                     public void onHide(final boolean autoClose, final boolean ok) {
                         currentMenu = null;
+                        autoHidePartner.focus();
                     }
                 };
 
-                // Add parent auto hide partners.
-                final List<Element> autoHidePartners = new ArrayList<>();
-                if (autoHidePartner != null) {
-                    autoHidePartners.add(autoHidePartner);
-                }
-                presenter.setAutoHidePartners(autoHidePartners);
                 presenter.selectFirstItem();
-
-                final Element[] partners = autoHidePartners.toArray(new Element[0]);
                 final PopupPosition popupPosition = new PopupPosition(x, y);
                 ShowPopupEvent.fire(NavigationPresenter.this, presenter, PopupType.POPUP, popupPosition,
-                        popupUiHandlers, partners);
+                        popupUiHandlers, autoHidePartner);
             }
         }
     }
