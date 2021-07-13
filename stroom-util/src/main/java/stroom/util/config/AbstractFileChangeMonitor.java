@@ -24,11 +24,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.inject.Singleton;
 
 import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 
-@Singleton
 public abstract class AbstractFileChangeMonitor implements HasHealthCheck {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractFileChangeMonitor.class);
@@ -42,13 +40,11 @@ public abstract class AbstractFileChangeMonitor implements HasHealthCheck {
     private final boolean isValidFile;
     private final AtomicBoolean isFileReadScheduled = new AtomicBoolean(false);
     private final List<String> errors = new ArrayList<>();
-//    private final Runnable fileChangeListener;
 
     private static final long DELAY_BEFORE_FILE_READ_MS = 1_000;
 
     public AbstractFileChangeMonitor(final Path monitoredFile) {
         this.monitoredFile = Objects.requireNonNull(monitoredFile);
-//        this.fileChangeListener = Objects.requireNonNull(fileChangeListener);
 
         if (Files.isRegularFile(monitoredFile)) {
             isValidFile = true;

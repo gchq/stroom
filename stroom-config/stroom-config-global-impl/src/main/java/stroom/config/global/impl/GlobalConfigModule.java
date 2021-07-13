@@ -3,7 +3,6 @@ package stroom.config.global.impl;
 import stroom.config.global.impl.validation.ValidationModule;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.util.RunnableWrapper;
-import stroom.util.config.AbstractFileChangeMonitor;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasHealthCheckBinder;
 import stroom.util.guice.RestResourcesBinder;
@@ -19,10 +18,10 @@ public class GlobalConfigModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(AbstractFileChangeMonitor.class).asEagerSingleton();
+        bind(AppConfigMonitor.class).asEagerSingleton();
 
         HasHealthCheckBinder.create(binder())
-                .bind(AbstractFileChangeMonitor.class);
+                .bind(AppConfigMonitor.class);
 
         GuiceUtil.buildMultiBinder(binder(), Managed.class)
                 .addBinding(AppConfigMonitor.class);

@@ -4,7 +4,6 @@ import stroom.config.app.AppConfig;
 import stroom.config.app.ConfigLocation;
 import stroom.config.app.YamlUtil;
 import stroom.config.global.impl.AppConfigMonitor;
-import stroom.config.global.impl.ConfigMapper;
 import stroom.config.global.impl.GlobalConfigService;
 import stroom.config.global.impl.validation.ConfigValidator;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -52,7 +51,6 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
         // We need to craft our own instances of these classes rather than use guice
         // so that we can use our own config file
         final AppConfig appConfig = YamlUtil.readAppConfig(devYamlCopyPath);
-        final ConfigMapper configMapper = new ConfigMapper(appConfig);
         final ConfigLocation configLocation = new ConfigLocation(devYamlCopyPath);
         final ConfigValidator configValidator = new ConfigValidator(validator);
 
