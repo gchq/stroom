@@ -8,7 +8,7 @@
             <tab:LayerContainerImpl ui:field="layerContainer" styleName="stroom-main-content-container"/>
         </g:SimplePanel>
         <g:FlowPanel ui:field="tabBarContainer"  styleName="tabBarContainer">
-            <g:Button ui:field="menu" title="Menu" styleName="navigation-menu-button"/>
+            <g:Button ui:field="menu" title="Menu" styleName="navigation-menu-button focus-without-border"/>
             <g:SimplePanel ui:field="tabBarOuter"
                            styleName="curveTabLayoutViewImpl-tabBarOuter">
                 <tab:CurveTabBar ui:field="tabBar"/>

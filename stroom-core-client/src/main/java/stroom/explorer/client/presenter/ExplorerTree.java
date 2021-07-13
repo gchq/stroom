@@ -99,10 +99,9 @@ public class ExplorerTree extends AbstractExplorerTree {
                 MultiSelectEvent.fire(ExplorerTree.this, selectionType);
             }
         };
-        cellTable.setSelectionModel(multiSelectionModel, new MySelectionEventManager(cellTable));
+        cellTable.setSelectionModel(multiSelectionModel);
         selectionModel = multiSelectionModel;
-        cellTable.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
-
+        cellTable.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.ENABLED);
         cellTable.getRowContainer().getStyle().setCursor(Style.Cursor.POINTER);
 
         treeModel = new ExplorerTreeModel(this, spinnerSmall, restFactory);
@@ -116,6 +115,159 @@ public class ExplorerTree extends AbstractExplorerTree {
         flowPanel.setHeight("100%");
         flowPanel.add(scrollPanel);
         flowPanel.add(spinnerSmall);
+
+        // We need to set this to prevent default keyboard behaviour.
+        cellTable.setKeyboardSelectionHandler(e -> {
+//            GWT.log("KSH: " + e.getNativeEvent().getType() + " " + e.getValue());
+        });
+
+        cellTable.addCellPreviewHandler(e -> {
+            final NativeEvent nativeEvent = e.getNativeEvent();
+            final String type = nativeEvent.getType();
+            GWT.log("CELL PREVIEW: " + type + " " + e.getValue());
+
+            if ("keydown".equals(type) || "focus".equals(type)) {
+                final List<ExplorerNode> items = cellTable.getVisibleItems();
+                final ExplorerNode item = e.getValue();
+
+                if (items.size() > 0) {
+                    int originalRow = cellTable.getKeyboardSelectedRow();
+                    int row = originalRow;
+                    int keyCode = e.getNativeEvent().getKeyCode();
+
+                    if (keyCode == KeyCodes.KEY_UP) {
+                        row--;
+                        row = Math.max(0, row);
+                        if (row != originalRow) {
+                            cellTable.setKeyboardSelectedRow(row, true);
+                        }
+
+                    } else if (keyCode == KeyCodes.KEY_DOWN) {
+                        row++;
+                        row = Math.min(cellTable.getVisibleItemCount() - 1, row);
+                        if (row != originalRow) {
+                            cellTable.setKeyboardSelectedRow(row, true);
+                        }
+
+                    } else if (keyCode == KeyCodes.KEY_RIGHT) {
+                        treeModel.setItemOpen(item, true);
+
+                    } else if (keyCode == KeyCodes.KEY_LEFT) {
+                        treeModel.setItemOpen(item, false);
+
+                        // Default behaviour uses space for selection anyway.
+//                    } else if (keyCode == KeyCodes.KEY_SPACE) {
+//                        selectionModel.setSelected(item, !selectionModel.isSelected(item));
+
+                    } else if (keyCode == KeyCodes.KEY_ENTER) {
+                        selectionModel.setSelected(item, true);
+                        doSelect(item,
+                                new SelectionType(true,
+                                        false,
+                                        allowMultiSelect,
+                                        nativeEvent.getCtrlKey(),
+                                        nativeEvent.getShiftKey()));
+
+                    } else if (keyCode == KeyCodes.KEY_ALT) {
+                        final Element element  = cellTable.getRowElement(cellTable.getKeyboardSelectedRow());
+                        if (element != null) {
+                            final int x = element.getAbsoluteRight();
+                            final int y = element.getAbsoluteTop();
+
+                            // If the item clicked is already selected then don't change the selection.
+                            if (!selectionModel.isSelected(item)) {
+                                // Change the selection.
+                                doSelect(item,
+                                        new SelectionType(false,
+                                                true,
+                                                false,
+                                                nativeEvent.getCtrlKey(),
+                                                nativeEvent.getShiftKey()));
+                            }
+
+                            ShowExplorerMenuEvent.fire(ExplorerTree.this, selectionModel, x, y);
+                        }
+                    }
+                }
+
+
+            } else if ("mousedown".equals(type)) {
+                // We set focus here so that we can use the keyboard to navigate once we have focus.
+                cellTable.setFocus(true);
+                final int row = cellTable.getVisibleItems().indexOf(e.getValue());
+                if (row >= 0) {
+                    cellTable.setKeyboardSelectedRow(row);
+                }
+
+                final int x = nativeEvent.getClientX();
+                final int y = nativeEvent.getClientY();
+                final int button = nativeEvent.getButton();
+
+                if ((button & NativeEvent.BUTTON_RIGHT) != 0) {
+                    final ExplorerNode selectedItem = e.getValue();
+                    // If the item clicked is already selected then don't change the selection.
+                    if (!selectionModel.isSelected(selectedItem)) {
+                        // Change the selection.
+                        doSelect(selectedItem,
+                                new SelectionType(false,
+                                        true,
+                                        false,
+                                        nativeEvent.getCtrlKey(),
+                                        nativeEvent.getShiftKey()));
+                    }
+
+                    ShowExplorerMenuEvent.fire(ExplorerTree.this, selectionModel, x, y);
+
+                } else if ((button & NativeEvent.BUTTON_LEFT) != 0) {
+                    final ExplorerNode selectedItem = e.getValue();
+                    if (selectedItem != null && (button & NativeEvent.BUTTON_LEFT) != 0) {
+                        if (NodeState.LEAF.equals(selectedItem.getNodeState())) {
+                            final boolean doubleClick = doubleClickTest.test(selectedItem);
+                            doSelect(selectedItem,
+                                    new SelectionType(doubleClick,
+                                            false,
+                                            allowMultiSelect,
+                                            nativeEvent.getCtrlKey(),
+                                            nativeEvent.getShiftKey()));
+                        } else {
+                            final Element element = nativeEvent.getEventTarget().cast();
+                            final String className = element.getClassName();
+
+                            // Expander
+                            if ((className != null && className.contains(expanderClassName))
+                                    || (element.getParentElement().getClassName() != null
+                                    && element.getParentElement().getClassName().contains(expanderClassName))) {
+                                treeModel.toggleOpenState(selectedItem);
+                            } else {
+                                final boolean doubleClick = doubleClickTest.test(selectedItem);
+                                doSelect(selectedItem,
+                                        new SelectionType(doubleClick,
+                                                false,
+                                                allowMultiSelect,
+                                                nativeEvent.getCtrlKey(),
+                                                nativeEvent.getShiftKey()));
+                            }
+                        }
+                    }
+                }
+
+
+//            } else if ("click".equals(type)) {
+//                final ExplorerNode item = e.getValue();
+//                final int row = cellTable.getVisibleItems().indexOf(item);
+//                cellTable.setKeyboardSelectedRow(row);
+//                selectionModel.setSelected(item, true);
+////                mouseOverRow = -1;
+//
+////                if (item instanceof CommandMenuItem) {
+////                    execute((CommandMenuItem) item);
+////                } else {
+////                    showSubMenu((MenuItem) item, true);
+////                }
+//
+            }
+        });
+
 
         initWidget(flowPanel);
     }
@@ -142,18 +294,18 @@ public class ExplorerTree extends AbstractExplorerTree {
 
     private void onKeyDown(final int keyCode) {
         switch (keyCode) {
-            case KeyCodes.KEY_LEFT:
-                setOpenState(false);
-                break;
-            case KeyCodes.KEY_RIGHT:
-                setOpenState(true);
-                break;
-            case KeyCodes.KEY_UP:
-                moveSelection(-1);
-                break;
-            case KeyCodes.KEY_DOWN:
-                moveSelection(+1);
-                break;
+//            case KeyCodes.KEY_LEFT:
+//                setOpenState(false);
+//                break;
+//            case KeyCodes.KEY_RIGHT:
+//                setOpenState(true);
+//                break;
+//            case KeyCodes.KEY_UP:
+//                moveSelection(-1);
+//                break;
+//            case KeyCodes.KEY_DOWN:
+//                moveSelection(+1);
+//                break;
             case KeyCodes.KEY_ENTER:
                 final ExplorerNode selected = selectionModel.getSelected();
                 if (selected != null) {
@@ -164,33 +316,33 @@ public class ExplorerTree extends AbstractExplorerTree {
         }
     }
 
-    private void setOpenState(boolean open) {
-        treeModel.setItemOpen(selectionModel.getSelected(), open);
-    }
-
-    private void moveSelection(int plus) {
-        ExplorerNode currentSelection = selectionModel.getSelected();
-        if (currentSelection == null) {
-            selectFirstItem();
-        } else {
-            final int index = getItemIndex(currentSelection);
-            if (index == -1) {
-                selectFirstItem();
-            } else {
-                final ExplorerNode newSelection = cellTable.getVisibleItem(index + plus);
-                if (newSelection != null) {
-                    setSelectedItem(newSelection);
-                } else {
-                    selectFirstItem();
-                }
-            }
-        }
-    }
-
-    private void selectFirstItem() {
-        final ExplorerNode firstItem = cellTable.getVisibleItem(0);
-        setSelectedItem(firstItem);
-    }
+//    private void setOpenState(boolean open) {
+//        treeModel.setItemOpen(selectionModel.getSelected(), open);
+//    }
+//
+//    private void moveSelection(int plus) {
+//        ExplorerNode currentSelection = selectionModel.getSelected();
+//        if (currentSelection == null) {
+//            selectFirstItem();
+//        } else {
+//            final int index = getItemIndex(currentSelection);
+//            if (index == -1) {
+//                selectFirstItem();
+//            } else {
+//                final ExplorerNode newSelection = cellTable.getVisibleItem(index + plus);
+//                if (newSelection != null) {
+//                    setSelectedItem(newSelection);
+//                } else {
+//                    selectFirstItem();
+//                }
+//            }
+//        }
+//    }
+//
+//    private void selectFirstItem() {
+//        final ExplorerNode firstItem = cellTable.getVisibleItem(0);
+//        setSelectedItem(firstItem);
+//    }
 
     private int getItemIndex(ExplorerNode item) {
         final List<ExplorerNode> items = cellTable.getVisibleItems();
@@ -360,7 +512,7 @@ public class ExplorerTree extends AbstractExplorerTree {
             } else if ("keydown".equals(type)) {
                 final int keyCode = nativeEvent.getKeyCode();
                 onKeyDown(keyCode);
-                super.onCellPreview(event);
+//                super.onCellPreview(event);
             } else {
                 super.onCellPreview(event);
             }

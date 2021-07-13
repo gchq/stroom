@@ -5,8 +5,8 @@
 >
     <g:FlowPanel styleName="max dock-container-vertical navigation">
         <g:FlowPanel styleName="dock-min navigation-title-bar">
-            <g:Button ui:field="logo" styleName="navigation-logo"/>
-            <g:Button ui:field="menu" title="Menu" styleName="navigation-menu-button"/>
+            <g:Button ui:field="logo" styleName="navigation-logo focus-without-border"/>
+            <g:Button ui:field="menu" title="Menu" styleName="navigation-menu-button focus-without-border"/>
         </g:FlowPanel>
         <v:QuickFilter ui:field="nameFilter" addStyleNames="dock-min explorerTreeViewImpl-nameFilter"/>
         <g:ScrollPanel ui:field="scrollPanel" styleName="dock-max"/>

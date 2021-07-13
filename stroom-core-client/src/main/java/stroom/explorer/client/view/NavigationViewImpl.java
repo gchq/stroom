@@ -16,6 +16,7 @@
 
 package stroom.explorer.client.view;
 
+import stroom.widget.tab.client.view.Images;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
 import stroom.explorer.client.presenter.NavigationUiHandlers;
 import stroom.explorer.shared.ExplorerTreeFilter;
@@ -54,6 +55,8 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
     public NavigationViewImpl(final NavigationViewImpl.Binder binder,
                               final UiConfigCache uiConfigCache) {
         widget = binder.createAndBindUi(this);
+        logo.getElement().setInnerHTML(Images.LOGO);
+        menu.getElement().setInnerHTML(Images.MENU);
 
         uiConfigCache.get()
                 .onSuccess(uiConfig ->

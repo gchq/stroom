@@ -54,9 +54,7 @@
 }
 
 .cellTableCell {
-  padding: 2px 3px;
   overflow: hidden;
-  vertical-align: middle;
 }
 
 .cellTableFirstColumnFooter {

@@ -4,6 +4,7 @@
     white-space: nowrap;
     border: 1px solid transparent;
     border-radius: .2rem;
+    padding: var(--layout-padding-explorer);
 }
 
 .cellTableSelectedRow .explorerCell-outer {
@@ -11,7 +12,11 @@
     color: var(--selected-row-text-color);
 }
 
-.cellTableRow:focus-within .explorerCell-outer {
+.cellTableOddRow:focus-within .explorerCell-outer {
+    border-color: var(--focussed-row-border-color);
+}
+
+.cellTableEvenRow:focus-within .explorerCell-outer {
     border-color: var(--focussed-row-border-color);
 }
 

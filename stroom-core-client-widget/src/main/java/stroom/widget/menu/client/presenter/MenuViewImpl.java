@@ -64,102 +64,11 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
         widget = scrollPanel;
     }
 
-    //    public void onClick(final MenuItem menuItem, final Element element) {
-//        CommandMenuItem commandMenuItem = null;
-//        if (menuItem instanceof CommandMenuItem) {
-//            commandMenuItem = (CommandMenuItem) menuItem;
-//        }
-//        if (commandMenuItem != null && commandMenuItem.getCommand() != null) {
-//            hide(false, true, true);
-//            execute(commandMenuItem.getCommand());
-//        } else {
-//            onMouseOver(menuItem, element);
-//        }
-//    }
-
     @Override
     public HandlerRegistration bind() {
-
-
+        // We need to set this to prevent default keyboard behaviour.
         cellTable.setKeyboardSelectionHandler(e -> {
-            GWT.log("KSH: " + e.getNativeEvent().getType() + " " + e.getValue());
-
-//            if ("keydown".equals(e.getNativeEvent().getType()) || "focus".equals(e.getNativeEvent().getType())) {
-//                final List<Item> items = cellTable.getVisibleItems();
-//
-////                if (items.size() > 0) {
-////                    final Item selected = selectionModel.getSelectedObject();
-////                    int originalRow = -1;
-////                    if (selected != null) {
-////                        originalRow = items.indexOf(selected);
-////                    }
-////
-////                    int row = originalRow;
-////                    int keyCode = e.getNativeEvent().getKeyCode();
-////                    if (keyCode == KeyCodes.KEY_UP) {
-////                        for (int i = row - 1; i >= 0; i--) {
-////                            final Item item = items.get(row);
-////                            if (item instanceof MenuItem) {
-////                                row = i;
-////                                break;
-////                            }
-////                        }
-////
-////                    } else if (keyCode == KeyCodes.KEY_DOWN) {
-////                        for (int i = row + 1; i < items.size(); i++) {
-////                            final Item item = items.get(row);
-////                            if (item instanceof MenuItem) {
-////                                row = i;
-////                                break;
-////                            }
-////                        }
-////                    } else if (keyCode == KeyCodes.KEY_RIGHT) {
-////                        if (selected instanceof MenuItem) {
-////                            showSubMenu((MenuItem) selected);
-////                            row = -1;
-////                        }
-////                    } else if (keyCode == KeyCodes.KEY_LEFT) {
-////                        hideSubMenu();
-////                        row = -1;
-////                    }
-////
-////                    if (row >= 0) {
-////                        if (row != originalRow) {
-////                            cellTable.setKeyboardSelectedRow(row, true);
-////                        }
-////
-////                        final Item item = items.get(row);
-////                        if (item instanceof MenuItem) {
-////                            selectionModel.setSelected(item, true);
-////                            showSubMenu((MenuItem) item);
-////                        }
-////                    }
-////                }
-//
-//
-//            } else if ("click".equals(e.getNativeEvent().getType())) {
-//                final Item item = e.getValue();
-//                if (item instanceof MenuItem) {
-//                    final int row = cellTable.getVisibleItems().indexOf(item);
-//                    cellTable.setKeyboardSelectedRow(row);
-//                    selectionModel.setSelected(item, true);
-//
-//                    if (item instanceof CommandMenuItem) {
-//                        execute((CommandMenuItem) item);
-//                    } else {
-//                        showSubMenu((MenuItem) item);
-//                    }
-//                }
-//
-//            } else if ("mouseover".equals(e.getNativeEvent().getType())) {
-//                final Item item = e.getValue();
-//                if (item instanceof MenuItem) {
-//                    final int row = cellTable.getVisibleItems().indexOf(item);
-//                    cellTable.setKeyboardSelectedRow(row);
-//                    selectionModel.setSelected(item, true);
-//                    showSubMenu((MenuItem) item);
-//                }
-//            }
+//            GWT.log("KSH: " + e.getNativeEvent().getType() + " " + e.getValue());
         });
 
         return cellTable.addCellPreviewHandler(e -> {
@@ -378,7 +287,20 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
 
     @Override
     public void selectFirstItem() {
-        cellTable.setKeyboardSelectedRow(0, true);
+        // Get the first selectable item if there is one.
+        final List<Item> items = cellTable.getVisibleItems();
+        int row = -1;
+        for (int i = 0; i < items.size(); i++) {
+            final Item item = items.get(i);
+            if (isSelectable(item)) {
+                row = i;
+                break;
+            }
+        }
+
+        if (row >= 0) {
+            cellTable.setKeyboardSelectedRow(row, true);
+        }
     }
 
     @Override
