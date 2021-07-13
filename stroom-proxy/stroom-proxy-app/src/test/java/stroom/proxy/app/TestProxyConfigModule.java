@@ -3,7 +3,7 @@ package stroom.proxy.app;
 import stroom.proxy.app.guice.ProxyConfigModule;
 import stroom.util.config.PropertyUtil;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.IsProxyConfig;
+import stroom.util.shared.AbstractProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
 
 import com.google.common.reflect.ClassPath;
@@ -46,7 +46,7 @@ class TestProxyConfigModule {
 
         Predicate<Class<?>> classFilter = clazz ->
                 clazz.getSimpleName().endsWith("Config")
-                        && !clazz.equals(IsProxyConfig.class)
+                        && !clazz.equals(AbstractProxyConfig.class)
                         && !clazz.equals(ProxyConfig.class);
 
         LOGGER.info("Finding all IsProxyConfig classes");
@@ -59,7 +59,7 @@ class TestProxyConfigModule {
                 .filter(classInfo -> packageNameFilter.test(classInfo.getPackageName()))
                 .map(ClassPath.ClassInfo::load)
                 .filter(classFilter)
-                .filter(IsProxyConfig.class::isAssignableFrom)
+                .filter(AbstractProxyConfig.class::isAssignableFrom)
                 .filter(clazz -> {
                     boolean isAbstract = Modifier.isAbstract(clazz.getModifiers());
                     if (isAbstract) {
@@ -95,7 +95,7 @@ class TestProxyConfigModule {
 
                     Class<?> valueClass = prop.getValueClass();
                     if (classFilter.test(valueClass)) {
-                        IsProxyConfig propValue = (IsProxyConfig) prop.getValueFromConfigObject();
+                        AbstractProxyConfig propValue = (AbstractProxyConfig) prop.getValueFromConfigObject();
                         appConfigTreeClasses.add(prop.getValueClass());
                         // Keep a record of the instance ID of the instance in the tree
                         appConfigTreeClassToIdMap.put(valueClass, System.identityHashCode(propValue));
@@ -147,7 +147,7 @@ class TestProxyConfigModule {
             classesWithMultipleInstances.stream()
                     .sorted(Comparator.comparing(Class::getName))
                     .forEach(clazz -> {
-                        IsProxyConfig config = (IsProxyConfig) injector.getInstance(clazz);
+                        AbstractProxyConfig config = (AbstractProxyConfig) injector.getInstance(clazz);
                         LOGGER.info("  {}", clazz.getName());
                     });
         }

@@ -1,8 +1,5 @@
 package stroom.util.shared;
 
-/**
- * Marker interface for marking all proxy config classes
- */
-public interface IsProxyConfig {
+public interface IsProxyConfig extends HasPropertyPath {
 
 }

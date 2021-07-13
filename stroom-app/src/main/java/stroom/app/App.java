@@ -27,7 +27,7 @@ import stroom.config.app.StroomConfigurationSourceProvider;
 import stroom.config.app.SuperDevUtil;
 import stroom.config.app.YamlUtil;
 import stroom.config.global.impl.ConfigMapper;
-import stroom.config.global.impl.validation.ConfigValidator;
+import stroom.util.config.AppConfigValidator;
 import stroom.config.global.impl.validation.ValidationModule;
 import stroom.dropwizard.common.Filters;
 import stroom.dropwizard.common.HealthChecks;
@@ -39,9 +39,11 @@ import stroom.event.logging.rs.api.RestResourceAutoLogger;
 import stroom.security.impl.AuthenticationConfig;
 import stroom.util.ColouredStringBuilder;
 import stroom.util.ConsoleColour;
+import stroom.util.config.ConfigValidator;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ResourcePaths;
 
@@ -299,14 +301,14 @@ public class App extends Application<Config> {
 
         ConfigMapper.decorateWithPropertyPaths(appConfig);
 
-        final ConfigValidator configValidator = validationOnlyInjector.getInstance(ConfigValidator.class);
+        final AppConfigValidator appConfigValidator = validationOnlyInjector.getInstance(AppConfigValidator.class);
 
         LOGGER.info("Validating application configuration file {}",
                 configFile.toAbsolutePath().normalize().toString());
 
-        final ConfigValidator.Result result = configValidator.validateRecursively(appConfig);
+        final ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validateRecursively(appConfig);
 
-        result.handleViolations(ConfigValidator::logConstraintViolation);
+        result.handleViolations(AppConfigValidator::logConstraintViolation);
 
         LOGGER.info("Completed validation of application configuration, errors: {}, warnings: {}",
                 result.getErrorCount(),

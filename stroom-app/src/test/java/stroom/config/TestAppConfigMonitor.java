@@ -1,11 +1,11 @@
 package stroom.config;
 
 import stroom.config.app.AppConfig;
-import stroom.config.app.ConfigLocation;
+import stroom.util.config.ConfigLocation;
 import stroom.config.app.YamlUtil;
 import stroom.config.global.impl.AppConfigMonitor;
 import stroom.config.global.impl.GlobalConfigService;
-import stroom.config.global.impl.validation.ConfigValidator;
+import stroom.util.config.AppConfigValidator;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.config.AbstractFileChangeMonitor;
 import stroom.util.io.FileUtil;
@@ -52,10 +52,10 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
         // so that we can use our own config file
         final AppConfig appConfig = YamlUtil.readAppConfig(devYamlCopyPath);
         final ConfigLocation configLocation = new ConfigLocation(devYamlCopyPath);
-        final ConfigValidator configValidator = new ConfigValidator(validator);
+        final AppConfigValidator appConfigValidator = new AppConfigValidator(validator);
 
         final AbstractFileChangeMonitor appConfigMonitor = new AppConfigMonitor(
-                appConfig, configLocation, globalConfigService, configValidator);
+                appConfig, configLocation, globalConfigService, appConfigValidator);
 
         // start watching our copied file for changes, the start is async
         appConfigMonitor.start();

@@ -5,11 +5,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.Objects;
 
 /**
- * Marker interface for java bean classes used to provide configuration properties.
- * This includes AppConfig and the classes that sit beneath it.  Implementing classes
- * are expected to be (de)serialised from/to YAML configuration files.
+ * Super class for all stroom config pojos. Can be decorated with property path
+ * information, e.g. stroom.path.home
  */
-public abstract class AbstractConfig {
+public abstract class AbstractConfig implements HasPropertyPath {
 
     // Held in part form to reduce memory overhead as some parts will be used
     // many times over all the config objects

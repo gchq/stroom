@@ -24,6 +24,10 @@ import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.proxy.app.guice.ProxyModule;
 import stroom.util.authentication.DefaultOpenIdCredentials;
+import stroom.util.config.AppConfigValidator;
+import stroom.util.config.ConfigValidator;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ResourcePaths;
 
@@ -40,11 +44,14 @@ import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.Objects;
 import javax.inject.Inject;
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
+import javax.validation.ValidatorFactory;
 
 public class App extends Application<Config> {
 
@@ -65,8 +72,29 @@ public class App extends Application<Config> {
     @Inject
     private BuildInfo buildInfo;
 
+    private final Path configFile;
+
+    // This is an additional injector for use only with javax.validation. It means we can do validation
+    // of the yaml file before our main injector has been created and also so we can use our custom
+    // validation annotations with REST services (see initialize() method). It feels a bit wrong having two
+    // injectors running but not sure how else we could do this unless Guice is not used for the validators.
+    private final Injector validationOnlyInjector;
+
+    // Needed for DropwizardExtensionsSupport
+    public App() {
+        configFile = Paths.get("PATH_NOT_SUPPLIED");
+        validationOnlyInjector = createValidationInjector();
+    }
+
+
+    App(final Path configFile) {
+        this.configFile = configFile;
+        validationOnlyInjector = createValidationInjector();
+    }
+
     public static void main(final String[] args) throws Exception {
-        new App().run(args);
+        final Path yamlConfigFile = ProxyYamlUtil.getYamlFileFromArgs(args);
+        new App(yamlConfigFile).run(args);
     }
 
     @Override
@@ -78,10 +106,22 @@ public class App extends Application<Config> {
                                 bootstrap.getConfigurationSourceProvider(),
                                 new EnvironmentVariableSubstitutor(false))));
 //        bootstrap.addBundle(new AssetsBundle("/ui", ResourcePaths.ROOT_PATH, "index.html", "ui"));
+
+        // If we want to use javax.validation on our rest resources with our own custom validation annotations
+        // then we need to set the ValidatorFactory. As our main Guice Injector is not available yet we need to
+        // create one just for the REST validation
+        bootstrap.setValidatorFactory(validationOnlyInjector.getInstance(ValidatorFactory.class));
     }
 
     @Override
     public void run(final Config configuration, final Environment environment) {
+        Objects.requireNonNull(configFile, () ->
+                LogUtil.message("No config YAML file supplied in arguments"));
+
+        LOGGER.info("Using application configuration file {}", configFile.toAbsolutePath().normalize());
+
+        validateAppConfig(configuration, configFile);
+
         // Add useful logging setup.
         registerLogConfiguration(environment);
 
@@ -167,5 +207,36 @@ public class App extends Application<Config> {
         Objects.requireNonNull(buildInfo);
         LOGGER.info("Build version: {}, date: {}",
                 buildInfo.getBuildVersion(), buildInfo.getBuildDate());
+    }
+
+    private Injector createValidationInjector() {
+        return Guice.createInjector(new ValidationModule());
+    }
+
+    private void validateAppConfig(final Config config, final Path configFile) {
+
+        final ProxyConfig proxyConfig = config.getProxyConfig();
+
+        ConfigMapper.decorateWithPropertyPaths(proxyConfig);
+
+        final AppConfigValidator appConfigValidator = validationOnlyInjector.getInstance(AppConfigValidator.class);
+
+        LOGGER.info("Validating application configuration file {}",
+                configFile.toAbsolutePath().normalize().toString());
+
+        final ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validateRecursively(proxyConfig);
+
+        result.handleViolations(AppConfigValidator::logConstraintViolation);
+
+        LOGGER.info("Completed validation of application configuration, errors: {}, warnings: {}",
+                result.getErrorCount(),
+                result.getWarningCount());
+
+        if (result.hasErrors() && proxyConfig.isHaltBootOnConfigValidationFailure()) {
+            LOGGER.error("Application configuration is invalid. Stopping Stroom. To run Stroom with invalid " +
+                            "configuration, set {} to false, however this is not advised!",
+                    proxyConfig.getFullPath(AppConfig.PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE));
+            System.exit(1);
+        }
     }
 }

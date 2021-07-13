@@ -1,6 +1,7 @@
 package stroom.proxy.dist;
 
 import stroom.proxy.app.ProxyConfig;
+import stroom.proxy.app.ProxyYamlUtil;
 import stroom.util.io.DiffUtil;
 
 import org.junit.jupiter.api.Test;

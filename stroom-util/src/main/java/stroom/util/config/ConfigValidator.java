@@ -1,10 +1,9 @@
-package stroom.config.global.impl.validation;
+package stroom.util.config;
 
-import stroom.util.config.PropertyUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.HasPropertyPath;
 import stroom.util.shared.validation.ValidationSeverity;
 
 import java.util.ArrayList;
@@ -16,7 +15,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import javax.inject.Inject;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
 
@@ -28,7 +26,6 @@ public class ConfigValidator<T> {
     private final Validator validator;
     private final Class<T> configSuperType;
 
-    @Inject
     public ConfigValidator(final Validator validator,
                            final Class<T> configSuperType) {
         this.validator = validator;
@@ -38,34 +35,35 @@ public class ConfigValidator<T> {
     /**
      * Validates a single config property value
      */
-    public Result validateValue(final Class<? extends T> configClass,
+    public Result<T> validateValue(final Class<? extends T> configClass,
                                 final String propertyName,
-                                final Object value) {
+                                final Object value,
+                                final Class<T> configSuperType) {
 
         final Set<? extends ConstraintViolation<? extends T>> constraintViolations =
                 validator.validateValue(configClass, propertyName, value);
 
-        return Result.of(constraintViolations);
+        return Result.of(constraintViolations, configSuperType);
     }
 
     /**
      * Default validation that logs errors/warnings to the logger as well as returning the results.
      * Will only validate child objects marked with @Valid.
      */
-    public Result validate(final T config) {
+    public Result<T> validate(final T config, final Class<T> configSuperType) {
         final Set<ConstraintViolation<T>> constraintViolations = validator.validate(config);
-        return Result.of(constraintViolations);
+        return Result.of(constraintViolations, configSuperType);
     }
 
     /**
      * Walks the config object tree validating each branch regardless of whether they have @Valid
      * annotations.
      */
-    public Result validateRecursively(final T config) {
-        final List<Result> resultList = new ArrayList<>();
+    public Result<T> validateRecursively(final T config, final Class<T> configSuperType) {
+        final List<Result<T>> resultList = new ArrayList<>();
 
         // Validate the top level AppConfig object
-        final ConfigValidator.Result rootResult = validate(config);
+        final Result<T> rootResult = validate(config, configSuperType);
         if (rootResult.hasErrorsOrWarnings()) {
             resultList.add(rootResult);
         }
@@ -81,18 +79,19 @@ public class ConfigValidator<T> {
                                 && prop.getValueFromConfigObject() != null,
                 prop -> {
                     final T configObject = (T) prop.getValueFromConfigObject();
-                    final ConfigValidator.Result result = validate(configObject);
+                    final Result<T> result = validate(configObject, configSuperType);
                     if (result.hasErrorsOrWarnings()) {
                         resultList.add(result);
                     }
                 });
 
-        return ConfigValidator.Result.of(resultList);
+        return Result.of(resultList, configSuperType);
     }
 
-    public static void logConstraintViolation(
-            final ConstraintViolation<? extends AbstractConfig> constraintViolation,
-            final ValidationSeverity severity) {
+    public static <T> void logConstraintViolation(
+            final ConstraintViolation<? extends T> constraintViolation,
+            final ValidationSeverity severity,
+            final Class<T> configSuperType) {
 
         final Consumer<String> logFunc;
         final String severityStr;
@@ -108,9 +107,19 @@ public class ConfigValidator<T> {
         for (javax.validation.Path.Node node : constraintViolation.getPropertyPath()) {
             propName = node.getName();
         }
-        final AbstractConfig config = (AbstractConfig) constraintViolation.getLeafBean();
+        final T config = (T) constraintViolation.getLeafBean();
 
-        final String path = config.getFullPath(propName);
+        final String path;
+        if (config instanceof HasPropertyPath) {
+            final HasPropertyPath hasPropertyPath = ((HasPropertyPath) config);
+            final String propPath = hasPropertyPath.getFullPath(propName);
+            path = propPath != null
+                    ? propPath
+                    : config.getClass().getName();
+        } else {
+            // No path so make do with the class name
+            path = config.getClass().getName();
+        }
 
         logFunc.accept(LogUtil.message("  Validation {} for {} [{}] - {}",
                 severityStr,
@@ -190,11 +199,6 @@ public class ConfigValidator<T> {
             constraintViolations.addAll(result1.constraintViolations);
             constraintViolations.addAll(result2.constraintViolations);
             return Result.of(constraintViolations, result1.configSuperType);
-        }
-
-
-        public static Result empty() {
-            return EMPTY;
         }
 
         /**

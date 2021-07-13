@@ -1,5 +1,7 @@
 package stroom.config.global.impl.validation;
 
+import stroom.util.config.AppConfigValidator;
+import stroom.util.config.ConfigValidator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.AbstractConfig;
@@ -17,12 +19,12 @@ import javax.inject.Inject;
 import javax.validation.constraints.AssertTrue;
 import javax.validation.constraints.Min;
 
-public class TestConfigValidator {
+public class TestAppConfigValidator {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ConfigValidator.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AppConfigValidator.class);
 
     @Inject
-    private ConfigValidator configValidator;
+    private AppConfigValidator appConfigValidator;
 
     @Test
     void testMyPojo_good() {
@@ -32,7 +34,7 @@ public class TestConfigValidator {
 
         var myPojo = new MyPojoErrors();
 
-        ConfigValidator.Result result = configValidator.validateRecursively(myPojo);
+        ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validateRecursively(myPojo);
 
         LOGGER.info(result.toString());
         result.handleViolations((constraintViolation, validationSeverity) ->
@@ -61,7 +63,7 @@ public class TestConfigValidator {
         myPojo.getChild().setCronValue("xxxxxxxxxxxxx");
         myPojo.getChild().setIntValue(0);
 
-        ConfigValidator.Result result = configValidator.validateRecursively(myPojo);
+        ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validateRecursively(myPojo);
 
         LOGGER.info(result.toString());
         result.handleViolations((constraintViolation, validationSeverity) -> {
@@ -89,7 +91,7 @@ public class TestConfigValidator {
         myPojo.getChild().setCronValue("xxxxxxxxxxxxx");
         myPojo.getChild().setIntValue(0);
 
-        ConfigValidator.Result result = configValidator.validate(myPojo);
+        ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validate(myPojo);
 
         LOGGER.info(result.toString());
         result.handleViolations((constraintViolation, validationSeverity) -> {
@@ -112,7 +114,7 @@ public class TestConfigValidator {
         myPojo.setCronValue("xxxxxxxxxxxxx");
         myPojo.setIntValue(0);
 
-        ConfigValidator.Result result = configValidator.validate(myPojo);
+        ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validate(myPojo);
 
         LOGGER.info(result.toString());
         result.handleViolations((constraintViolation, validationSeverity) -> {

@@ -6,20 +6,25 @@ import stroom.proxy.app.handler.LogStreamConfig;
 import stroom.proxy.app.handler.ProxyRequestConfig;
 import stroom.proxy.repo.ProxyRepositoryConfig;
 import stroom.proxy.repo.ProxyRepositoryReaderConfig;
-import stroom.util.shared.IsProxyConfig;
+import stroom.util.shared.AbstractProxyConfig;
+import stroom.util.shared.validation.ValidationSeverity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.inject.Singleton;
+import javax.validation.constraints.AssertTrue;
 
 @Singleton
 @JsonPropertyOrder(alphabetic = true)
-public class ProxyConfig implements IsProxyConfig {
+public class ProxyConfig extends AbstractProxyConfig {
+
+    public static final String PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE = "haltBootOnConfigValidationFailure";
 
     private String proxyContentDir = "content";
     private boolean useDefaultOpenIdCredentials = true;
+    private boolean haltBootOnConfigValidationFailure = true;
 
     private ContentSyncConfig contentSyncConfig = new ContentSyncConfig();
     private FeedStatusConfig feedStatusConfig = new FeedStatusConfig();
@@ -30,6 +35,22 @@ public class ProxyConfig implements IsProxyConfig {
     private ProxyRepositoryConfig proxyRepositoryConfig = new ProxyRepositoryConfig();
     private ProxyRepositoryReaderConfig proxyRepositoryReaderConfig = new ProxyRepositoryReaderConfig();
     private ProxyRequestConfig proxyRequestConfig = new ProxyRequestConfig();
+
+    @AssertTrue(
+            message = "proxyConfig." + PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE + " is set to false. If there is " +
+                    "invalid configuration the system may behave in unexpected ways. This setting is not advised.",
+            payload = ValidationSeverity.Warning.class)
+    @JsonProperty(PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE)
+    @JsonPropertyDescription("If true, Stroom-Proxy will halt on start up if any errors are found in the YAML " +
+            "configuration file. If false, the errors will simply be logged. Setting this to false is not advised.")
+    public boolean isHaltBootOnConfigValidationFailure() {
+        return haltBootOnConfigValidationFailure;
+    }
+
+    @SuppressWarnings("unused")
+    public void setHaltBootOnConfigValidationFailure(final boolean haltBootOnConfigValidationFailure) {
+        this.haltBootOnConfigValidationFailure = haltBootOnConfigValidationFailure;
+    }
 
     @JsonProperty()
     @JsonPropertyDescription("If true, stroom will use a set of default authentication credentials to allow" +

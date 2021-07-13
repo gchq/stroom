@@ -1,6 +1,7 @@
 package stroom.proxy.dist;
 
 import stroom.proxy.app.ProxyConfig;
+import stroom.proxy.app.ProxyYamlUtil;
 import stroom.util.io.DiffUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LogUtil;

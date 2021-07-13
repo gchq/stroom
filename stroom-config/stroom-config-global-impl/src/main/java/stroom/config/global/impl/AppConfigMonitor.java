@@ -1,12 +1,13 @@
 package stroom.config.global.impl;
 
 import stroom.config.app.AppConfig;
-import stroom.config.app.ConfigLocation;
+import stroom.util.config.ConfigLocation;
 import stroom.config.app.SuperDevUtil;
 import stroom.config.app.YamlUtil;
-import stroom.config.global.impl.validation.ConfigValidator;
+import stroom.util.config.AppConfigValidator;
 import stroom.util.HasHealthCheck;
 import stroom.util.config.AbstractFileChangeMonitor;
+import stroom.util.config.ConfigValidator;
 import stroom.util.config.FieldMapper;
 import stroom.util.shared.AbstractConfig;
 
@@ -27,18 +28,18 @@ public class AppConfigMonitor extends AbstractFileChangeMonitor implements Manag
     private final AppConfig appConfig;
     private final Path configFile;
     private final GlobalConfigService globalConfigService;
-    private final ConfigValidator configValidator;
+    private final AppConfigValidator appConfigValidator;
 
     @Inject
     public AppConfigMonitor(final AppConfig appConfig,
                             final ConfigLocation configLocation,
                             final GlobalConfigService globalConfigService,
-                            final ConfigValidator configValidator) {
+                            final AppConfigValidator appConfigValidator) {
         super(configLocation.getConfigFilePath());
         this.appConfig = appConfig;
         this.configFile = configLocation.getConfigFilePath();
         this.globalConfigService = globalConfigService;
-        this.configValidator = configValidator;
+        this.appConfigValidator = appConfigValidator;
     }
 
     @Override
@@ -55,7 +56,7 @@ public class AppConfigMonitor extends AbstractFileChangeMonitor implements Manag
             // Check if we are running GWT Super Dev Mode, if so relax security
             SuperDevUtil.relaxSecurityInSuperDevMode(newAppConfig);
 
-            final ConfigValidator.Result result = validateNewConfig(newAppConfig);
+            final ConfigValidator.Result<AbstractConfig> result = validateNewConfig(newAppConfig);
 
             if (result.hasErrors()) {
                 LOGGER.error("Unable to update application config from file {} because it failed validation. " +
@@ -97,15 +98,15 @@ public class AppConfigMonitor extends AbstractFileChangeMonitor implements Manag
         }
     }
 
-    private ConfigValidator.Result validateNewConfig(final AppConfig newAppConfig) {
+    private ConfigValidator.Result<AbstractConfig> validateNewConfig(final AppConfig newAppConfig) {
         // Decorate the new config tree so it has all the paths,
         // i.e. call setBasePath on each branch in the newAppConfig tree so if we get any violations we
         // can log their locations with full paths.
         ConfigMapper.decorateWithPropertyPaths(newAppConfig);
 
         LOGGER.info("Validating modified config file");
-        final ConfigValidator.Result result = configValidator.validateRecursively(newAppConfig);
-        result.handleViolations(ConfigValidator::logConstraintViolation);
+        final ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validateRecursively(newAppConfig);
+        result.handleViolations(AppConfigValidator::logConstraintViolation);
 
         LOGGER.info("Completed validation of application configuration, errors: {}, warnings: {}",
                 result.getErrorCount(),

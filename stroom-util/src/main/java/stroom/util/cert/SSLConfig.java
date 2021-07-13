@@ -1,12 +1,12 @@
 package stroom.util.cert;
 
-import stroom.util.shared.IsProxyConfig;
+import stroom.util.shared.AbstractProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @NotInjectableConfig
-public class SSLConfig implements IsProxyConfig {
+public class SSLConfig extends AbstractProxyConfig {
 
     private String keyStorePath;
     private String keyStoreType = "JKS";

@@ -1,5 +1,7 @@
 package stroom.proxy.repo;
 
+import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.AbstractProxyConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.ModelStringUtil;
 
@@ -12,7 +14,7 @@ import javax.inject.Singleton;
 
 @Singleton
 @JsonPropertyOrder({"storingEnabled", "repoDir", "format", "rollCron"})
-public class ProxyRepositoryReaderConfig implements IsProxyConfig {
+public class ProxyRepositoryReaderConfig extends AbstractConfig implements IsProxyConfig {
 
     private String readCron;
     private int forwardThreadCount = 3;

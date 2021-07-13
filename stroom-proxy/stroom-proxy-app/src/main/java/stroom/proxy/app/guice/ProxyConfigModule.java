@@ -2,6 +2,7 @@ package stroom.proxy.app.guice;
 
 import stroom.proxy.app.ContentSyncConfig;
 import stroom.proxy.app.ProxyConfig;
+import stroom.proxy.app.ProxyConfigHolder;
 import stroom.proxy.app.ProxyPathConfig;
 import stroom.proxy.app.RestClientConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
@@ -10,8 +11,10 @@ import stroom.proxy.app.handler.LogStreamConfig;
 import stroom.proxy.app.handler.ProxyRequestConfig;
 import stroom.proxy.repo.ProxyRepositoryConfig;
 import stroom.proxy.repo.ProxyRepositoryReaderConfig;
+import stroom.util.config.ConfigLocation;
 import stroom.util.io.PathConfig;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.AbstractProxyConfig;
 import stroom.util.shared.IsProxyConfig;
 
 import com.google.inject.AbstractModule;
@@ -26,16 +29,21 @@ public class ProxyConfigModule extends AbstractModule {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyConfigModule.class);
 
-    private final ProxyConfig proxyConfig;
+    private final ProxyConfigHolder proxyConfigHolder;
 
-    public ProxyConfigModule(final ProxyConfig proxyConfig) {
-        this.proxyConfig = proxyConfig;
+    public ProxyConfigModule(final ProxyConfigHolder proxyConfigHolder) {
+        this.proxyConfigHolder = proxyConfigHolder;
     }
 
     @Override
     protected void configure() {
         // Bind the application config.
-        bind(ProxyConfig.class).toInstance(proxyConfig);
+        bind(ProxyConfig.class).toInstance(proxyConfigHolder.getProxyConfig());
+
+        // Holder for the location of the yaml config file so the AppConfigMonitor can
+        // get hold of it via guice
+        bind(ConfigLocation.class)
+                .toInstance(new ConfigLocation(proxyConfigHolder.getConfigFile()));
 
         // AppConfig will instantiate all of its child config objects so
         // bind each of these instances so we can inject these objects on their own.
@@ -72,7 +80,13 @@ public class ProxyConfigModule extends AbstractModule {
             final Function<ProxyConfig, T> configGetter,
             final BiConsumer<ProxyConfig, T> configSetter,
             final Class<T> clazz) {
-        bindConfig(proxyConfig, configGetter, configSetter, clazz, clazz, null);
+        bindConfig(
+                proxyConfigHolder.getProxyConfig(),
+                configGetter,
+                configSetter,
+                clazz,
+                clazz,
+                null);
     }
 
     private <T extends IsProxyConfig> void bindConfig(
@@ -80,7 +94,13 @@ public class ProxyConfigModule extends AbstractModule {
             final BiConsumer<ProxyConfig, T> configSetter,
             final Class<T> instanceClass,
             final Class<? super T> bindClass) {
-        bindConfig(proxyConfig, configGetter, configSetter, instanceClass, bindClass, null);
+        bindConfig(
+                proxyConfigHolder.getProxyConfig(),
+                configGetter,
+                configSetter,
+                instanceClass,
+                bindClass,
+                null);
     }
 
     private <T extends IsProxyConfig> void bindConfig(
@@ -88,7 +108,13 @@ public class ProxyConfigModule extends AbstractModule {
             final BiConsumer<ProxyConfig, T> configSetter,
             final Class<T> clazz,
             final Consumer<T> childConfigConsumer) {
-        bindConfig(proxyConfig, configGetter, configSetter, clazz, clazz, childConfigConsumer);
+        bindConfig(
+                proxyConfigHolder.getProxyConfig(),
+                configGetter,
+                configSetter,
+                clazz,
+                clazz,
+                childConfigConsumer);
     }
 
     private <X extends IsProxyConfig, T extends IsProxyConfig> void bindConfig(
@@ -96,7 +122,13 @@ public class ProxyConfigModule extends AbstractModule {
             final Function<X, T> configGetter,
             final BiConsumer<X, T> configSetter,
             final Class<T> clazz) {
-        bindConfig(parentObject, configGetter, configSetter, clazz, clazz, null);
+        bindConfig(
+                parentObject,
+                configGetter,
+                configSetter,
+                clazz,
+                clazz,
+                null);
     }
 
     private <X extends IsProxyConfig, T extends IsProxyConfig> void bindConfig(

@@ -20,6 +20,7 @@ import stroom.proxy.app.BufferFactoryImpl;
 import stroom.proxy.app.Config;
 import stroom.proxy.app.ContentSyncService;
 import stroom.proxy.app.ProxyConfigHealthCheck;
+import stroom.proxy.app.ProxyConfigHolder;
 import stroom.proxy.app.ProxyPathConfig;
 import stroom.proxy.app.RestClientConfig;
 import stroom.proxy.app.handler.ForwardStreamHandlerFactory;
@@ -47,6 +48,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
 import stroom.task.impl.TaskContextModule;
 import stroom.util.BuildInfoProvider;
+import stroom.util.config.ConfigLocation;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
@@ -74,6 +76,7 @@ import org.glassfish.jersey.logging.LoggingFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Path;
 import java.util.Optional;
 import javax.inject.Provider;
 import javax.ws.rs.client.Client;
@@ -89,10 +92,17 @@ public class ProxyModule extends AbstractModule {
 
     private final Config configuration;
     private final Environment environment;
+    private final ProxyConfigHolder proxyConfigHolder;
 
-    public ProxyModule(final Config configuration, final Environment environment) {
+    public ProxyModule(final Config configuration,
+                       final Environment environment,
+                       final Path configFile) {
         this.configuration = configuration;
         this.environment = environment;
+
+        proxyConfigHolder = new ProxyConfigHolder(
+                configuration.getProxyConfig(),
+                configFile);
     }
 
     @Override
@@ -100,7 +110,7 @@ public class ProxyModule extends AbstractModule {
         bind(Config.class).toInstance(configuration);
         bind(Environment.class).toInstance(environment);
 
-        install(new ProxyConfigModule(configuration.getProxyConfig()));
+        install(new ProxyConfigModule(proxyConfigHolder));
         install(new MockCollectionModule());
 
         install(new DictionaryModule());
