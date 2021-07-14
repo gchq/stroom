@@ -17,6 +17,7 @@
 package stroom.widget.menu.client.presenter;
 
 import stroom.svg.client.Icon;
+import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.ValueUpdater;
@@ -73,7 +74,7 @@ public class MenuItemCell extends AbstractCell<Item> {
                     }
 
                 } else if (BrowserEvents.CLICK.equals(eventType)
-                        && ((event.getButton() & NativeEvent.BUTTON_LEFT) != 0)) {
+                        && (MouseUtil.isPrimary(event))) {
                     final CommandMenuItem menuItem = (CommandMenuItem) value;
                     if (menuItem.isEnabled()) {
                         handler.onClick(menuItem, element);
@@ -91,7 +92,7 @@ public class MenuItemCell extends AbstractCell<Item> {
                     element.removeClassName("cellTableHoveredRow");
 
                 } else if (BrowserEvents.CLICK.equals(eventType)
-                        && ((event.getButton() & NativeEvent.BUTTON_LEFT) != 0)) {
+                        && (MouseUtil.isPrimary(event))) {
                     handler.onClick(menuItem, element);
                 }
             }

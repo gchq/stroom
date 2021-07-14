@@ -33,9 +33,9 @@ import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
+import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -79,19 +79,19 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView
         super.onBind();
 
         registerHandler(newButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 onAdd();
             }
         }));
 
         registerHandler(editButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 onEdit();
             }
         }));
 
         registerHandler(removeButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 onRemove();
             }
         }));

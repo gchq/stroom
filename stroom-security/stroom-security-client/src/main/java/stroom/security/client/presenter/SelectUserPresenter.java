@@ -33,10 +33,10 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView;
+import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -93,7 +93,7 @@ public class SelectUserPresenter extends MyPresenterWidget<UserListView> impleme
     protected void onBind() {
         super.onBind();
         registerHandler(newButton.addClickHandler(event -> {
-            if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
+            if (MouseUtil.isPrimary(event)) {
                 onNew();
             }
         }));

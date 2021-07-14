@@ -80,6 +80,11 @@ public class NameDocumentPresenter extends MyPresenter<NameDocumentView, NameDoc
     }
 
     @Override
+    public void onShow() {
+
+    }
+
+    @Override
     public void onHideRequest(final boolean autoClose, final boolean ok) {
         if (ok) {
             String entityName = getView().getName();

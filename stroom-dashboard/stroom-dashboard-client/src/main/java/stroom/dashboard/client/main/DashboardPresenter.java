@@ -55,8 +55,8 @@ import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.util.client.MouseUtil;
 
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.SelectionChangeEvent;
@@ -351,7 +351,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         addButton.setEnabled(enabled);
         if (enabled) {
             registerHandler(addButton.addClickHandler(event -> {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                if (MouseUtil.isPrimary(event)) {
                     onAdd(event);
                 }
             }));

@@ -69,11 +69,10 @@ public class PopupManager {
             // default hide behaviour.
             PopupUiHandlers popupUiHandlers = event.getPopupUiHandlers();
             if (popupUiHandlers == null) {
-                popupUiHandlers = new DefaultPopupUiHandlers() {
+                popupUiHandlers = new PopupUiHandlers() {
                     @Override
                     public void onHideRequest(final boolean autoClose, final boolean ok) {
-                        // By default always hide a popup when requested to do
-                        // so.
+                        // By default always hide a popup when requested to do so.
                         hide(presenterWidget, autoClose, ok);
                     }
                 };

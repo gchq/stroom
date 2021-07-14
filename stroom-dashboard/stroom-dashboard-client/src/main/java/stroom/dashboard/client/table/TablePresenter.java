@@ -90,10 +90,10 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -261,7 +261,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }));
         registerHandler(dataGrid.addHyperlinkHandler(event -> getEventBus().fireEvent(event)));
         registerHandler(addFieldButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 onAddField(event);
             }
         }));
@@ -284,7 +284,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }));
 
         registerHandler(annotateButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 annotationManager.showAnnotationMenu(event.getNativeEvent(),
                         getTableSettings(),
                         dataGrid.getSelectionModel().getSelectedItems());

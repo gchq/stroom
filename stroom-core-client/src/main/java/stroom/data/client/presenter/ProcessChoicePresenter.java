@@ -19,24 +19,21 @@ public class ProcessChoicePresenter extends MyPresenterWidget<ProcessChoicePrese
     }
 
     public void show(final ProcessChoiceUiHandler processorChoiceUiHandler) {
-        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, "Create Processors", new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    final ProcessChoice processChoice = new ProcessChoice(
-                            getView().getPriority(),
-                            getView().isAutoPriority(),
-                            getView().isReprocess(),
-                            getView().isEnabled());
-                    processorChoiceUiHandler.onChoice(processChoice);
-                }
-                hide();
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-            }
-        });
+        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, "Create Processors",
+                new PopupUiHandlers() {
+                    @Override
+                    public void onHideRequest(final boolean autoClose, final boolean ok) {
+                        if (ok) {
+                            final ProcessChoice processChoice = new ProcessChoice(
+                                    getView().getPriority(),
+                                    getView().isAutoPriority(),
+                                    getView().isReprocess(),
+                                    getView().isEnabled());
+                            processorChoiceUiHandler.onChoice(processChoice);
+                        }
+                        hide();
+                    }
+                });
     }
 
     private void hide() {

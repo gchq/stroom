@@ -76,15 +76,10 @@ import stroom.widget.menu.client.presenter.GroupHeading;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
+import stroom.widget.menu.client.presenter.Menu;
 import stroom.widget.menu.client.presenter.MenuItem;
-import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.menu.client.presenter.Separator;
 import stroom.widget.popup.client.event.HidePopupEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tab.client.event.RequestCloseAllTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseTabEvent;
 import stroom.widget.tab.client.presenter.TabData;
@@ -123,7 +118,7 @@ public class DocumentPluginEventManager extends Plugin {
     private final HasSaveRegistry hasSaveRegistry;
     private final RestFactory restFactory;
     private final DocumentTypeCache documentTypeCache;
-    private final MenuPresenter menuPresenter;
+    private final Menu menu;
     private final DocumentPluginRegistry documentPluginRegistry;
     private final ClientSecurityContext securityContext;
     private final KeyboardInterceptor keyboardInterceptor;
@@ -136,7 +131,7 @@ public class DocumentPluginEventManager extends Plugin {
                                       final KeyboardInterceptor keyboardInterceptor,
                                       final RestFactory restFactory,
                                       final DocumentTypeCache documentTypeCache,
-                                      final MenuPresenter menuPresenter,
+                                      final Menu menu,
                                       final DocumentPluginRegistry documentPluginRegistry,
                                       final ClientSecurityContext securityContext) {
         super(eventBus);
@@ -144,7 +139,7 @@ public class DocumentPluginEventManager extends Plugin {
         this.keyboardInterceptor = keyboardInterceptor;
         this.restFactory = restFactory;
         this.documentTypeCache = documentTypeCache;
-        this.menuPresenter = menuPresenter;
+        this.menu = menu;
         this.documentPluginRegistry = documentPluginRegistry;
         this.securityContext = securityContext;
     }
@@ -341,13 +336,12 @@ public class DocumentPluginEventManager extends Plugin {
         registerHandler(getEventBus().addHandler(ShowNewMenuEvent.getType(), event -> {
             if (getSelectedItems().size() == 1) {
                 final ExplorerNode primarySelection = getPrimarySelection();
-                getNewMenuItems(primarySelection).onSuccess(children -> {
-                    menuPresenter.setData(children);
-
-                    final PopupPosition popupPosition = new PopupPosition(event.getX(), event.getY());
-                    ShowPopupEvent.fire(DocumentPluginEventManager.this, menuPresenter, PopupType.POPUP,
-                            popupPosition, null, event.getElement());
-                });
+                getNewMenuItems(primarySelection).onSuccess(children ->
+                        menu.show(children,
+                                event.getX(),
+                                event.getY(),
+                                () -> event.getElement().focus(),
+                                event.getElement()));
             }
         }));
         registerHandler(getEventBus().addHandler(ShowExplorerMenuEvent.getType(), event -> {
@@ -357,40 +351,45 @@ public class DocumentPluginEventManager extends Plugin {
 
             if (selectedItems.size() > 0) {
                 fetchPermissions(selectedItems, documentPermissionMap ->
-                        documentTypeCache.fetch(documentTypes -> {
-                            final List<Item> menuItems = new ArrayList<>();
+                                documentTypeCache.fetch(documentTypes -> {
+                                    final List<Item> menuItems = new ArrayList<>();
 
-                            // Only allow the new menu to appear if we have a single selection.
-                            addNewMenuItem(menuItems,
-                                    singleSelection,
-                                    documentPermissionMap,
-                                    primarySelection,
-                                    documentTypes);
-                            addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
+                                    // Only allow the new menu to appear if we have a single selection.
+                                    addNewMenuItem(menuItems,
+                                            singleSelection,
+                                            documentPermissionMap,
+                                            primarySelection,
+                                            documentTypes);
+                                    addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
 
-                            menuPresenter.setData(menuItems);
-                            menuPresenter.selectFirstItem();
-                            final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-                                @Override
-                                public void onHideRequest(final boolean autoClose, final boolean ok) {
-                                    HidePopupEvent.fire(DocumentPluginEventManager.this, menuPresenter);
-                                }
+                                    menu.show(menuItems,
+                                            event.getX(),
+                                            event.getY(),
+                                            event.getCloseHandler());
 
-                                @Override
-                                public void onHide(final boolean autoClose, final boolean ok) {
-                                    if (event.getCloseHandler() != null) {
-                                        event.getCloseHandler().accept(true);
-                                    }
-                                }
-                            };
-                            final PopupPosition popupPosition = new PopupPosition(event.getX(), event.getY());
-                            ShowPopupEvent.fire(
-                                    DocumentPluginEventManager.this,
-                                    menuPresenter,
-                                    PopupType.POPUP,
-                                    popupPosition,
-                                    popupUiHandlers);
-                        })
+//                            menuPresenter.setData(menuItems);
+//                            menuPresenter.selectFirstItem();
+//                            final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+//                                @Override
+//                                public void onHideRequest(final boolean autoClose, final boolean ok) {
+//                                    HidePopupEvent.fire(DocumentPluginEventManager.this, menuPresenter);
+//                                }
+//
+//                                @Override
+//                                public void onHide(final boolean autoClose, final boolean ok) {
+//                                    if (event.getCloseHandler() != null) {
+//                                        event.getCloseHandler().accept(true);
+//                                    }
+//                                }
+//                            };
+//                            final PopupPosition popupPosition = new PopupPosition(event.getX(), event.getY());
+//                            ShowPopupEvent.fire(
+//                                    DocumentPluginEventManager.this,
+//                                    menuPresenter,
+//                                    PopupType.POPUP,
+//                                    popupPosition,
+//                                    popupUiHandlers);
+                                })
                 );
             }
         }));

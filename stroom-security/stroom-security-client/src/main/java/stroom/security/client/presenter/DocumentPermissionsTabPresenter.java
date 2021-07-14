@@ -22,8 +22,8 @@ import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.User;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.util.client.MouseUtil;
 
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
@@ -76,12 +76,12 @@ public class DocumentPermissionsTabPresenter
             setCurrentUser(userListPresenter.getSelectionModel().getSelected());
         }));
         registerHandler(addButton.addClickHandler(event -> {
-            if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
+            if (MouseUtil.isPrimary(event)) {
                 add();
             }
         }));
         registerHandler(removeButton.addClickHandler(event -> {
-            if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
+            if (MouseUtil.isPrimary(event)) {
                 remove();
             }
         }));

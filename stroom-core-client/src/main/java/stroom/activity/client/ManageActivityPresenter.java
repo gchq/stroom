@@ -32,13 +32,12 @@ import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.Timer;
@@ -116,21 +115,21 @@ public class ManageActivityPresenter extends
         }));
         if (newButton != null) {
             registerHandler(newButton.addClickHandler(event -> {
-                if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
+                if (MouseUtil.isPrimary(event)) {
                     onNew();
                 }
             }));
         }
         if (openButton != null) {
             registerHandler(openButton.addClickHandler(event -> {
-                if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
+                if (MouseUtil.isPrimary(event)) {
                     onOpen();
                 }
             }));
         }
         if (deleteButton != null) {
             registerHandler(deleteButton.addClickHandler(event -> {
-                if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
+                if (MouseUtil.isPrimary(event)) {
                     onDelete();
                 }
             }));
@@ -200,7 +199,7 @@ public class ManageActivityPresenter extends
             listPresenter.refresh();
         }
 
-        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
+        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 hide();

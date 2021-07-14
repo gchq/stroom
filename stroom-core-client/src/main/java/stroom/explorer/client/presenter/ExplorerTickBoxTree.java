@@ -24,6 +24,7 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNode.NodeState;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.widget.spinner.client.SpinnerSmall;
+import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectEvent;
 
 import com.google.gwt.core.client.GWT;
@@ -298,12 +299,10 @@ public class ExplorerTickBoxTree extends AbstractExplorerTree {
             final String type = nativeEvent.getType();
 
             if ("click".equals(type)) {
-                final int button = nativeEvent.getButton();
-
                 final ExplorerNode selectedItem = event.getValue();
 
                 if (selectedItem != null) {
-                    if ((button & NativeEvent.BUTTON_LEFT) != 0) {
+                    if (MouseUtil.isPrimary(nativeEvent)) {
                         final Element element = event.getNativeEvent().getEventTarget().cast();
 
                         if (hasClassName(element, tickBoxClassName, 0, 5)) {

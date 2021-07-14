@@ -74,7 +74,9 @@ public class PopupSupportImpl implements PopupSupport {
     }
 
     @Override
-    public void show(final PopupType popupType, final PopupPosition popupPosition, final PopupSize popupSize,
+    public void show(final PopupType popupType,
+                     final PopupPosition popupPosition,
+                     final PopupSize popupSize,
                      final PopupUiHandlers popupUiHandlers) {
         this.popupUiHandlers = popupUiHandlers;
 
@@ -134,8 +136,8 @@ public class PopupSupportImpl implements PopupSupport {
                 popupPanel.setVisible(true);
                 popupPanel.getElement().getStyle().setOpacity(1);
 
-                // Tell the view that the popup is visible if necessary.
-                onShow();
+                // Tell the handler that the popup is visible.
+                popupUiHandlers.onShow();
             }
         });
     }
@@ -297,12 +299,6 @@ public class PopupSupportImpl implements PopupSupport {
         if (popup != null) {
             popup.setCaption(caption);
         }
-    }
-
-    /**
-     * Used by some views to focus widgets.
-     */
-    protected void onShow() {
     }
 
     private void setModal(final boolean modal) {

@@ -54,6 +54,11 @@ public abstract class DropDownTreePresenter extends MyPresenterWidget<DropDownTr
     protected abstract void focus();
 
     @Override
+    public void onShow() {
+        // Do nothing.
+    }
+
+    @Override
     public void onHide(final boolean autoClose, final boolean ok) {
         // Do nothing.
     }

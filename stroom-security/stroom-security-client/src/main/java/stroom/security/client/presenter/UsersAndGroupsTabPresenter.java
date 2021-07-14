@@ -26,11 +26,10 @@ import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
+import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -98,17 +97,17 @@ public class UsersAndGroupsTabPresenter extends
             }
         }));
         registerHandler(newButton.addClickHandler(event -> {
-            if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
+            if (MouseUtil.isPrimary(event)) {
                 onNew();
             }
         }));
         registerHandler(openButton.addClickHandler(event -> {
-            if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
+            if (MouseUtil.isPrimary(event)) {
                 onOpen();
             }
         }));
         registerHandler(deleteButton.addClickHandler(event -> {
-            if (event.getNativeButton() == NativeEvent.BUTTON_LEFT) {
+            if (MouseUtil.isPrimary(event)) {
                 onDelete();
             }
         }));
@@ -193,7 +192,7 @@ public class UsersAndGroupsTabPresenter extends
     }
 
     private void edit(final User userRef) {
-        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
+        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
             @Override
             public void onHide(final boolean autoClose, final boolean ok) {
                 listPresenter.refresh();

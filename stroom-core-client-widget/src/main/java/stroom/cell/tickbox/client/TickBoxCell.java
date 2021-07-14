@@ -17,6 +17,7 @@
 package stroom.cell.tickbox.client;
 
 import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.cell.client.AbstractEditableCell;
 import com.google.gwt.cell.client.Cell;
@@ -112,7 +113,7 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
             if ("div".equalsIgnoreCase(target.getTagName())
                     && clickable
                     && "click".equals(type)
-                    && (event.getButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                    && MouseUtil.isPrimary(event)) {
                 TickBoxState state = value;
                 SafeHtml image = appearance.getTick();
 

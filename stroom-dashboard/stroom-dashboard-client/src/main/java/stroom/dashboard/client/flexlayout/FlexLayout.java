@@ -31,10 +31,10 @@ import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
 import stroom.widget.tab.client.view.LinkTab;
 import stroom.widget.tab.client.view.LinkTabBar;
+import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Event;
@@ -113,7 +113,7 @@ public class FlexLayout extends Composite {
         final int eventType = event.getTypeInt();
         if (Event.ONMOUSEMOVE == eventType) {
             onMouseMove(event);
-        } else if ((event.getButton() & NativeEvent.BUTTON_LEFT) != 0) {
+        } else if (MouseUtil.isPrimary(event)) {
             if (Event.ONMOUSEDOWN == eventType) {
                 onMouseDown(event);
             } else if (Event.ONMOUSEUP == eventType) {

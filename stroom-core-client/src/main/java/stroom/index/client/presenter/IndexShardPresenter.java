@@ -50,10 +50,10 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
+import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.shared.GWT;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.inject.Inject;
@@ -112,14 +112,14 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
         super.onBind();
         if (buttonFlush != null) {
             registerHandler(buttonFlush.addClickHandler(event -> {
-                if (NativeEvent.BUTTON_LEFT == event.getNativeButton()) {
+                if (MouseUtil.isPrimary(event)) {
                     flush();
                 }
             }));
         }
         if (buttonDelete != null) {
             registerHandler(buttonDelete.addClickHandler(event -> {
-                if (NativeEvent.BUTTON_LEFT == event.getNativeButton()) {
+                if (MouseUtil.isPrimary(event)) {
                     delete();
                 }
             }));

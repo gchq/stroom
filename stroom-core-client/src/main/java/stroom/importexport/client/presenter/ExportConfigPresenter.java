@@ -36,7 +36,6 @@ import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
@@ -116,7 +115,7 @@ public class ExportConfigPresenter
         treePresenter.setRequiredPermissions(DocumentPermissionNames.READ);
         treePresenter.refresh();
 
-        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
+        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {

@@ -40,10 +40,10 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Command;
@@ -149,7 +149,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     }
 
     private void onShowHelp(final ClickEvent clickEvent) {
-        if ((clickEvent.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+        if (MouseUtil.isPrimary(clickEvent)) {
             withHelpUrl(helpUrl -> {
                 String url = helpUrl + EXPRESSIONS_HELP_BASE_PATH;
 
@@ -299,7 +299,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     }
 
     public void showMenu(final ClickEvent event, final List<Item> menuItems) {
-        if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+        if (MouseUtil.isPrimary(event)) {
             final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
                 @Override
                 public void onHideRequest(final boolean autoClose, final boolean ok) {

@@ -25,6 +25,7 @@ import stroom.explorer.shared.ExplorerNode.NodeState;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.spinner.client.SpinnerSmall;
 import stroom.widget.util.client.DoubleSelectTester;
+import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectEvent.Handler;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -48,7 +49,6 @@ import com.google.gwt.user.client.ui.MaxScrollPanel;
 
 import java.util.List;
 import java.util.Set;
-import java.util.function.Consumer;
 
 public class ExplorerTree extends AbstractExplorerTree {
 
@@ -184,7 +184,7 @@ public class ExplorerTree extends AbstractExplorerTree {
                                                 nativeEvent.getShiftKey()));
                             }
 
-                            final Consumer<Boolean> closeHandler = (ok) ->
+                            final Runnable closeHandler = () ->
                                     cellTable.setKeyboardSelectedRow(row, true);
                             ShowExplorerMenuEvent.fire(ExplorerTree.this, selectionModel, closeHandler, x, y);
                         }
@@ -202,9 +202,8 @@ public class ExplorerTree extends AbstractExplorerTree {
 
                 final int x = nativeEvent.getClientX();
                 final int y = nativeEvent.getClientY();
-                final int button = nativeEvent.getButton();
 
-                if ((button & NativeEvent.BUTTON_RIGHT) != 0) {
+                if (MouseUtil.isSecondary(nativeEvent)) {
                     final ExplorerNode selectedItem = e.getValue();
                     // If the item clicked is already selected then don't change the selection.
                     if (!selectionModel.isSelected(selectedItem)) {
@@ -217,13 +216,13 @@ public class ExplorerTree extends AbstractExplorerTree {
                                         nativeEvent.getShiftKey()));
                     }
 
-                    final Consumer<Boolean> closeHandler = (ok) ->
+                    final Runnable closeHandler = () ->
                             cellTable.setKeyboardSelectedRow(row, true);
                     ShowExplorerMenuEvent.fire(ExplorerTree.this, selectionModel, closeHandler, x, y);
 
-                } else if ((button & NativeEvent.BUTTON_LEFT) != 0) {
+                } else if (MouseUtil.isPrimary(nativeEvent)) {
                     final ExplorerNode selectedItem = e.getValue();
-                    if (selectedItem != null && (button & NativeEvent.BUTTON_LEFT) != 0) {
+                    if (selectedItem != null && MouseUtil.isPrimary(nativeEvent)) {
                         if (NodeState.LEAF.equals(selectedItem.getNodeState())) {
                             final boolean doubleClick = doubleClickTest.test(selectedItem);
                             doSelect(selectedItem,
@@ -295,29 +294,29 @@ public class ExplorerTree extends AbstractExplorerTree {
         treeModel.refresh();
     }
 
-    private void onKeyDown(final int keyCode) {
-        switch (keyCode) {
-//            case KeyCodes.KEY_LEFT:
-//                setOpenState(false);
+//    private void onKeyDown(final int keyCode) {
+//        switch (keyCode) {
+////            case KeyCodes.KEY_LEFT:
+////                setOpenState(false);
+////                break;
+////            case KeyCodes.KEY_RIGHT:
+////                setOpenState(true);
+////                break;
+////            case KeyCodes.KEY_UP:
+////                moveSelection(-1);
+////                break;
+////            case KeyCodes.KEY_DOWN:
+////                moveSelection(+1);
+////                break;
+//            case KeyCodes.KEY_ENTER:
+//                final ExplorerNode selected = selectionModel.getSelected();
+//                if (selected != null) {
+//                    final boolean doubleClick = doubleClickTest.test(selected);
+//                    doSelect(selected, new SelectionType(doubleClick, false));
+//                }
 //                break;
-//            case KeyCodes.KEY_RIGHT:
-//                setOpenState(true);
-//                break;
-//            case KeyCodes.KEY_UP:
-//                moveSelection(-1);
-//                break;
-//            case KeyCodes.KEY_DOWN:
-//                moveSelection(+1);
-//                break;
-            case KeyCodes.KEY_ENTER:
-                final ExplorerNode selected = selectionModel.getSelected();
-                if (selected != null) {
-                    final boolean doubleClick = doubleClickTest.test(selected);
-                    doSelect(selected, new SelectionType(doubleClick, false));
-                }
-                break;
-        }
-    }
+//        }
+//    }
 
 //    private void setOpenState(boolean open) {
 //        treeModel.setItemOpen(selectionModel.getSelected(), open);
@@ -461,7 +460,7 @@ public class ExplorerTree extends AbstractExplorerTree {
 //                final int y = nativeEvent.getClientY();
 //                final int button = nativeEvent.getButton();
 //
-//                if ((button & NativeEvent.BUTTON_RIGHT) != 0) {
+//                if (MouseUtil.isSecondary(event)) {
 //                    final ExplorerNode selectedItem = event.getValue();
 //                    // If the item clicked is already selected then don't change the selection.
 //                    if (!selectionModel.isSelected(selectedItem)) {
@@ -476,9 +475,9 @@ public class ExplorerTree extends AbstractExplorerTree {
 //
 //                    ShowExplorerMenuEvent.fire(ExplorerTree.this, selectionModel, x, y);
 //
-//                } else if ((button & NativeEvent.BUTTON_LEFT) != 0) {
+//                } else if (MouseUtil.isPrimaryClick(nativeEvent)) {
 //                    final ExplorerNode selectedItem = event.getValue();
-//                    if (selectedItem != null && (button & NativeEvent.BUTTON_LEFT) != 0) {
+//                    if (selectedItem != null && MouseUtil.isPrimaryClick(nativeEvent)) {
 //                        if (NodeState.LEAF.equals(selectedItem.getNodeState())) {
 //                            final boolean doubleClick = doubleClickTest.test(selectedItem);
 //                            doSelect(selectedItem,

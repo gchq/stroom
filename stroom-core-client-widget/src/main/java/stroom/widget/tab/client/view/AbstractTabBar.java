@@ -17,7 +17,6 @@
 package stroom.widget.tab.client.view;
 
 import stroom.util.shared.EqualsUtil;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSupport;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
@@ -29,9 +28,9 @@ import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabListPresenter;
 import stroom.widget.util.client.DoubleClickTester;
+import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -316,12 +315,12 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
                 }
             }
         } else if (Event.ONMOUSEDOWN == event.getTypeInt()) {
-            if ((event.getButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 currentTargetObject = getTargetObject(event);
             }
 
         } else if (Event.ONMOUSEUP == event.getTypeInt()) {
-            if ((event.getButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 final Element target = event.getEventTarget().cast();
                 final Element targetObject = getTargetObject(event);
 
@@ -470,7 +469,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
 
         tabItemListPresenter.setData(nonHiddenTabs, overflowTabCount);
 
-        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
+        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 popupSupport.hide();
@@ -479,7 +478,6 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
 
         final PopupPosition popupPosition = new PopupPosition(left, right, top, bottom);
         popupSupport.show(PopupType.POPUP, popupPosition, null, popupUiHandlers);
-
     }
 
     private void fireTabSelection(final TabData tabData) {

@@ -57,19 +57,19 @@ public class SelectionSummaryPresenter extends MyPresenterWidget<CommonAlertView
                     .getSelectionSummary(criteria);
         }
 
-        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, caption, new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    runnable.run();
-                }
-                HidePopupEvent.fire(SelectionSummaryPresenter.this, SelectionSummaryPresenter.this, autoClose, ok);
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-            }
-        });
+        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, caption,
+                new PopupUiHandlers() {
+                    @Override
+                    public void onHideRequest(final boolean autoClose, final boolean ok) {
+                        if (ok) {
+                            runnable.run();
+                        }
+                        HidePopupEvent.fire(SelectionSummaryPresenter.this,
+                                SelectionSummaryPresenter.this,
+                                autoClose,
+                                ok);
+                    }
+                });
     }
 
     private void update(final String postAction, final String action, final SelectionSummary result) {

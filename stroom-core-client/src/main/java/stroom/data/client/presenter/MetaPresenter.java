@@ -45,12 +45,11 @@ import stroom.util.shared.Selection;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.util.client.MouseUtil;
 
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -183,7 +182,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
                     MetaFields.STREAM_STORE_DOC_REF,
                     MetaFields.getAllFields());
 
-            final PopupUiHandlers streamFilterPUH = new DefaultPopupUiHandlers() {
+            final PopupUiHandlers streamFilterPUH = new PopupUiHandlers() {
                 @Override
                 public void onHideRequest(final boolean autoClose, final boolean ok) {
                     if (ok) {
@@ -247,21 +246,21 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
         // Some button's may not exist due to permissions
         if (streamListUpload != null) {
             registerHandler(streamListUpload.addClickHandler(event -> {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                if (MouseUtil.isPrimary(event)) {
                     streamUploadPresenter.get().show(MetaPresenter.this, feedRef);
                 }
             }));
         }
         if (streamListDownload != null) {
             registerHandler(streamListDownload.addClickHandler(event -> {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                if (MouseUtil.isPrimary(event)) {
                     metaListPresenter.download();
                 }
             }));
         }
         if (streamRelationListDownload != null) {
             registerHandler(streamRelationListDownload.addClickHandler(event -> {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                if (MouseUtil.isPrimary(event)) {
                     metaRelationListPresenter.download();
                 }
             }));
@@ -269,14 +268,14 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
         // Delete
         if (streamListDelete != null) {
             registerHandler(streamListDelete.addClickHandler(event -> {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                if (MouseUtil.isPrimary(event)) {
                     metaListPresenter.delete();
                 }
             }));
         }
         if (streamRelationListDelete != null) {
             registerHandler(streamRelationListDelete.addClickHandler(event -> {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                if (MouseUtil.isPrimary(event)) {
                     metaRelationListPresenter.delete();
                 }
             }));
@@ -284,14 +283,14 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
         // Restore
         if (streamListRestore != null) {
             registerHandler(streamListRestore.addClickHandler(event -> {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                if (MouseUtil.isPrimary(event)) {
                     metaListPresenter.restore();
                 }
             }));
         }
         if (streamRelationListRestore != null) {
             registerHandler(streamRelationListRestore.addClickHandler(event -> {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                if (MouseUtil.isPrimary(event)) {
                     metaRelationListPresenter.restore();
                 }
             }));
@@ -299,14 +298,14 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
         // Process
         if (streamListProcess != null) {
             registerHandler(streamListProcess.addClickHandler(event -> {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                if (MouseUtil.isPrimary(event)) {
                     metaListPresenter.process();
                 }
             }));
         }
         if (streamRelationListProcess != null) {
             registerHandler(streamRelationListProcess.addClickHandler(event -> {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                if (MouseUtil.isPrimary(event)) {
                     metaRelationListPresenter.process();
                 }
             }));

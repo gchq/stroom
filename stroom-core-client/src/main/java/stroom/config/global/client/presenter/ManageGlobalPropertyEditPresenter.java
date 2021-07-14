@@ -31,14 +31,13 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.HasText;
@@ -120,7 +119,7 @@ public final class ManageGlobalPropertyEditPresenter
     @Override
     protected void onBind() {
         ClickHandler iconClickHandler = event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 onOpenClusterValues();
             }
         };
@@ -128,20 +127,13 @@ public final class ManageGlobalPropertyEditPresenter
         registerHandler(effectiveValueInfoButton.addClickHandler(iconClickHandler));
         registerHandler(effectiveValueWarningsButton.addClickHandler(iconClickHandler));
         registerHandler(dataTypeHelpButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 showHelp("Data Types");
             }
         }));
     }
 
     private void onOpenClusterValues() {
-        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-
-            }
-        };
-
         if (clusterValuesPresenterProvider != null) {
             final ConfigPropertyClusterValuesPresenter clusterValuesPresenter = clusterValuesPresenterProvider.get();
 
@@ -156,7 +148,7 @@ public final class ManageGlobalPropertyEditPresenter
                     getEntity(),
                     effectiveValueToNodeSourcesMap,
                     offsetPopupPosition,
-                    popupUiHandlers);
+                    null);
         }
     }
 

@@ -93,7 +93,6 @@ public class CharacterNavigatorPresenter extends MyPresenterWidget<CharacterNavi
             public void onHide(final boolean autoClose, final boolean ok) {
                 if (ok) {
                     final DataRange dataRange = characterRangeSelectionPresenter.getDataRange();
-
                     display.setDataRange(dataRange);
                 }
             }

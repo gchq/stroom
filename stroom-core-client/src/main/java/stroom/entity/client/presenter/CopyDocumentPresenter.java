@@ -115,11 +115,6 @@ public class CopyDocumentPresenter
         }
     }
 
-    @Override
-    public void onHide(final boolean autoClose, final boolean ok) {
-        // Do nothing.
-    }
-
     public interface CopyDocumentView extends View {
 
         void setFolderView(View view);

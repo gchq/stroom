@@ -18,8 +18,8 @@ package stroom.widget.dropdowntree.client.view;
 
 import stroom.widget.dropdowntree.client.presenter.DropDownPresenter;
 import stroom.widget.dropdowntree.client.presenter.DropDownUiHandlers;
+import stroom.widget.util.client.MouseUtil;
 
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -62,7 +62,7 @@ public class DropDownViewImpl extends ViewWithUiHandlers<DropDownUiHandlers>
     }
 
     private void showPopup(final MouseDownEvent e) {
-        if (e.getNativeButton() == NativeEvent.BUTTON_LEFT) {
+        if (MouseUtil.isPrimary(e)) {
             if (getUiHandlers() != null) {
                 getUiHandlers().showPopup();
             }

@@ -32,6 +32,7 @@ public class OkCancelContent extends Composite implements HasEnabled {
 
     private static final Binder binder = GWT.create(Binder.class);
     private final PopupUiHandlers popupUiHandlers;
+
     @UiField
     Button ok;
     @UiField

@@ -29,7 +29,6 @@ import stroom.node.client.NodeManager;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -69,7 +68,7 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
                 nodeNames -> {
                     read(nodeNames, volume);
 
-                    final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
+                    final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
                         @Override
                         public void onHideRequest(final boolean autoClose, final boolean ok) {
                             if (ok) {

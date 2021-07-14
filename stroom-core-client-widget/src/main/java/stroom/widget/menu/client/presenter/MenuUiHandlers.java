@@ -5,7 +5,9 @@ import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface MenuUiHandlers extends UiHandlers {
 
-    void showSubMenu(MenuItem menuItem, Element element, boolean focus);
+    void showSubMenu(MenuItem menuItem, Element element);
+
+    void focusSubMenu();
 
     void focusParent();
 

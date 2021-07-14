@@ -43,7 +43,7 @@ public class MenuPresenter
         extends MyPresenterWidget<MenuView>
         implements MenuUiHandlers {
 
-    private final Provider<MenuPresenter> menuListPresenterProvider;
+    private final Provider<MenuPresenter> menuPresenterProvider;
     private MenuPresenter currentMenu;
     private MenuItem currentItem;
     private MenuPresenter parent;
@@ -51,9 +51,9 @@ public class MenuPresenter
     @Inject
     public MenuPresenter(final EventBus eventBus,
                          final MenuView view,
-                         final Provider<MenuPresenter> menuListPresenterProvider) {
+                         final Provider<MenuPresenter> menuPresenterProvider) {
         super(eventBus, view);
-        this.menuListPresenterProvider = menuListPresenterProvider;
+        this.menuPresenterProvider = menuPresenterProvider;
         view.setUiHandlers(this);
     }
 
@@ -64,7 +64,7 @@ public class MenuPresenter
     }
 
     @Override
-    public void showSubMenu(final MenuItem menuItem, final Element element, boolean focus) {
+    public void showSubMenu(final MenuItem menuItem, final Element element) {
         // Only change the popup if the item selected is changing and we have
         // some sub items.
         if (currentItem == null || !currentItem.equals(menuItem)) {
@@ -82,7 +82,7 @@ public class MenuPresenter
                         // if it is open.
                         hideChildren();
 
-                        final MenuPresenter presenter = menuListPresenterProvider.get();
+                        final MenuPresenter presenter = menuPresenterProvider.get();
                         presenter.setParent(MenuPresenter.this);
 //                        presenter.setHighlightItems(getHighlightItems());
                         presenter.setData(children);
@@ -97,10 +97,8 @@ public class MenuPresenter
                             public void onHideRequest(final boolean autoClose, final boolean ok) {
                                 presenter.hideChildren();
                                 presenter.hideSelf();
-                            }
-
-                            @Override
-                            public void onHide(final boolean autoClose, final boolean ok) {
+                                currentMenu = null;
+                                currentItem = null;
                             }
                         };
 
@@ -112,23 +110,23 @@ public class MenuPresenter
                                 HorizontalLocation.RIGHT,
                                 null);
 
-                        if (focus) {
-                            presenter.selectFirstItem();
-                        }
-
                         ShowPopupEvent.fire(
                                 MenuPresenter.this,
                                 presenter,
                                 PopupType.POPUP,
                                 popupPosition,
                                 popupUiHandlers,
-                                null);
+                                element);
                     }
                 });
             }
+        }
+    }
 
-        } else if (focus && currentMenu != null) {
-            currentMenu.getView().focus();
+    @Override
+    public void focusSubMenu() {
+        if (currentMenu != null) {
+            currentMenu.selectFirstItem();
         }
     }
 

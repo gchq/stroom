@@ -25,6 +25,7 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToggleButtonView;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
 import stroom.widget.util.client.DoubleSelectTester;
+import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -258,7 +259,7 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
             }
 
         } else if (Event.ONMOUSEDOWN == nativePreviewEvent.getTypeInt()) {
-            if ((event.getButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 final ResizeHandle<R> resizeHandle = getResizeHandle();
                 final MoveHandle<R> moveHandle = getMoveHandle();
 
@@ -284,7 +285,7 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
             }
 
         } else if (Event.ONMOUSEUP == nativePreviewEvent.getTypeInt()) {
-            if ((event.getButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 if (!isBusy()) {
                     final ResizeHandle<R> resizeHandle = getResizeHandle();
                     final MoveHandle<R> moveHandle = getMoveHandle();
@@ -829,7 +830,7 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
                     dataGrid.setFocus(true);
 
                     final R row = event.getValue();
-                    if (row != null && (nativeEvent.getButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                    if (row != null && MouseUtil.isPrimary(nativeEvent)) {
                         final boolean doubleClick = doubleClickTest.test(row);
                         doSelect(row, new SelectionType(
                                 doubleClick,

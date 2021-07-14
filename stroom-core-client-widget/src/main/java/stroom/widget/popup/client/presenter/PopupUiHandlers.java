@@ -19,8 +19,12 @@ package stroom.widget.popup.client.presenter;
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface PopupUiHandlers extends UiHandlers {
+    default void onShow() {
+    }
 
-    void onHideRequest(boolean autoClose, boolean ok);
+    default void onHideRequest(boolean autoClose, boolean ok) {
+    }
 
-    void onHide(boolean autoClose, boolean ok);
+    default void onHide(boolean autoClose, boolean ok) {
+    }
 }

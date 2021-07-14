@@ -153,11 +153,6 @@ public class DataUploadPresenter extends MyPresenterWidget<DataUploadPresenter.D
                     hide();
                 }
             }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                // Do nothing.
-            }
         };
 
         final PopupSize popupSize = PopupSize.resizable();

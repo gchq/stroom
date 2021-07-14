@@ -39,10 +39,10 @@ import stroom.search.solr.shared.SolrSynchState;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
+import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -103,21 +103,21 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
 
         registerHandler(newButton.addClickHandler(event -> {
             if (!readOnly) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                if (MouseUtil.isPrimary(event)) {
                     onAdd();
                 }
             }
         }));
         registerHandler(editButton.addClickHandler(event -> {
             if (!readOnly) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                if (MouseUtil.isPrimary(event)) {
                     onEdit();
                 }
             }
         }));
         registerHandler(removeButton.addClickHandler(event -> {
             if (!readOnly) {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                if (MouseUtil.isPrimary(event)) {
                     onRemove();
                 }
             }

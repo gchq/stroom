@@ -132,11 +132,6 @@ public class CreateDocumentPresenter
         }
     }
 
-    @Override
-    public void onHide(final boolean autoClose, final boolean ok) {
-        // Do nothing.
-    }
-
     private DocRef getFolder() {
         final ExplorerNode selected = entityTreePresenter.getSelectedItem();
         if (selected != null) {

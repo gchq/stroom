@@ -37,8 +37,8 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.util.client.MouseUtil;
 
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -101,22 +101,22 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
             }
         }));
         registerHandler(addOperatorButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 addOperator();
             }
         }));
         registerHandler(addTermButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 addTerm();
             }
         }));
         registerHandler(disableItemButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 disable();
             }
         }));
         registerHandler(deleteItemButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 delete();
             }
         }));
@@ -210,10 +210,6 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 HidePopupEvent.fire(EditExpressionPresenter.this, menuPresenter);
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
             }
         };
         ShowPopupEvent.fire(this, menuPresenter, PopupType.POPUP, popupPosition, popupUiHandlers);

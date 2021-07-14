@@ -16,13 +16,14 @@
 
 package stroom.explorer.client.view;
 
-import stroom.widget.tab.client.view.Images;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
 import stroom.explorer.client.presenter.NavigationUiHandlers;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
+import stroom.widget.tab.client.view.Images;
+import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -79,12 +80,16 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
 
     @UiHandler("logo")
     void onLogo(final ClickEvent event) {
-        getUiHandlers().showMenu(logo.getElement());
+        if (MouseUtil.isPrimary(event)) {
+            getUiHandlers().showMenu(logo.getElement());
+        }
     }
 
     @UiHandler("menu")
     void onMenu(final ClickEvent event) {
-        getUiHandlers().maximise();
+        if (MouseUtil.isPrimary(event)) {
+            getUiHandlers().maximise();
+        }
     }
 
     @Override

@@ -60,13 +60,6 @@ public class ItemNavigatorPresenter extends MyPresenterWidget<ItemNavigatorView>
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 itemSelectionPresenter.hide(autoClose, ok);
             }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                if (ok) {
-//                    display.setItemNo(itemSelectionPresenter.getItemNo());
-                }
-            }
         };
         itemSelectionPresenter.show(popupUiHandlers);
     }

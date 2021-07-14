@@ -41,6 +41,7 @@ import stroom.widget.button.client.SvgButton;
 import stroom.widget.menu.client.presenter.HasChildren;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
+import stroom.widget.menu.client.presenter.Menu;
 import stroom.widget.menu.client.presenter.MenuItem;
 import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.menu.client.presenter.MenuPresenter;
@@ -89,7 +90,7 @@ public class NavigationPresenter
     private final TypeFilterPresenter typeFilterPresenter;
     private final CurrentActivity currentActivity;
     private final ExplorerTree explorerTree;
-    private final Provider<MenuPresenter> menuListPresenterProvider;
+    private final Menu menu;
     private final SimplePanel activityOuter = new SimplePanel();
     private final Button activityButton = new Button();
 
@@ -97,7 +98,6 @@ public class NavigationPresenter
     private final List<Item> currentMenuItems = new ArrayList<>();
 
     private final Map<Item, List<Item>> allItems = new HashMap<>();
-    private MenuPresenter currentMenu;
 
     private SvgButton add;
     private SvgButton delete;
@@ -128,13 +128,13 @@ public class NavigationPresenter
                                final TypeFilterPresenter typeFilterPresenter,
                                final CurrentActivity currentActivity,
                                final UiConfigCache uiConfigCache,
-                               final Provider<MenuPresenter> menuListPresenterProvider) {
+                               final Menu menu) {
         super(eventBus, view, proxy);
         this.menuItems = menuItems;
         this.documentTypeCache = documentTypeCache;
         this.typeFilterPresenter = typeFilterPresenter;
         this.currentActivity = currentActivity;
-        this.menuListPresenterProvider = menuListPresenterProvider;
+        this.menu = menu;
 
         view.setUiHandlers(this);
 
@@ -265,34 +265,10 @@ public class NavigationPresenter
                               final int x,
                               final int y,
                               final Element autoHidePartner) {
-        if (currentMenu != null) {
-            currentMenu.hideAll();
-        } else {
-
-            if (children != null && children.size() > 0) {
-                final MenuPresenter presenter = menuListPresenterProvider.get();
-                presenter.setData(children);
-
-                currentMenu = presenter;
-
-                final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-                    @Override
-                    public void onHideRequest(final boolean autoClose, final boolean ok) {
-                        HidePopupEvent.fire(NavigationPresenter.this, presenter);
-                    }
-
-                    @Override
-                    public void onHide(final boolean autoClose, final boolean ok) {
-                        currentMenu = null;
-                        autoHidePartner.focus();
-                    }
-                };
-
-                presenter.selectFirstItem();
-                final PopupPosition popupPosition = new PopupPosition(x, y);
-                ShowPopupEvent.fire(NavigationPresenter.this, presenter, PopupType.POPUP, popupPosition,
-                        popupUiHandlers, autoHidePartner);
-            }
+        if (menu.isShowing()) {
+            menu.hide();
+        } else if (children != null && children.size() > 0) {
+            menu.show(children, x, y, autoHidePartner::focus, autoHidePartner);
         }
     }
 

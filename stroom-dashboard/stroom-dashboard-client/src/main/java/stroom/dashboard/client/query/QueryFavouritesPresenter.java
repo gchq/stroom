@@ -38,10 +38,10 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MySingleSelectionModel;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.cellview.client.CellList;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -108,7 +108,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
         }));
         registerHandler(selectionModel.addDoubleSelectHandler(event -> close(true)));
         registerHandler(createButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
                     @Override
                     public void onHideRequest(final boolean autoClose, final boolean ok) {
@@ -154,7 +154,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
             }
         }));
         registerHandler(editButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 final StoredQuery query = selectionModel.getSelectedObject();
                 if (query != null) {
                     final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
@@ -194,7 +194,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
             }
         }));
         registerHandler(deleteButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 final StoredQuery query = selectionModel.getSelectedObject();
                 if (query != null) {
                     ConfirmEvent.fire(QueryFavouritesPresenter.this,

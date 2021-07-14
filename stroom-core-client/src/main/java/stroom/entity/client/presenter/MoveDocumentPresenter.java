@@ -46,7 +46,7 @@ import java.util.stream.Collectors;
 
 public class MoveDocumentPresenter
         extends MyPresenter<MoveDocumentView, MoveDocumentProxy>
-        implements ShowMoveDocumentDialogEvent.Handler, PopupUiHandlers {
+        implements ShowMoveDocumentDialogEvent.Handler {
 
     private final EntityTreePresenter entityTreePresenter;
     private List<ExplorerNode> explorerNodeList;
@@ -86,38 +86,35 @@ public class MoveDocumentPresenter
         }
         getView().setPermissionInheritance(PermissionInheritance.DESTINATION);
 
-        final PopupSize popupSize = PopupSize.resizable(400, 550);
-        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, caption, this);
-    }
+        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+            @Override
+            public void onHideRequest(final boolean autoClose, final boolean ok) {
+                if (ok) {
+                    final ExplorerNode folder = entityTreePresenter.getSelectedItem();
 
-    @Override
-    public void onHideRequest(final boolean autoClose, final boolean ok) {
-        if (ok) {
-            final ExplorerNode folder = entityTreePresenter.getSelectedItem();
+                    DocRef destinationFolderRef = null;
+                    if (folder != null) {
+                        destinationFolderRef = folder.getDocRef();
+                    }
 
-            DocRef destinationFolderRef = null;
-            if (folder != null) {
-                destinationFolderRef = folder.getDocRef();
+                    final List<DocRef> docRefs = explorerNodeList.stream()
+                            .map(ExplorerNode::getDocRef)
+                            .collect(Collectors.toList());
+
+                    MoveDocumentEvent.fire(
+                            MoveDocumentPresenter.this,
+                            MoveDocumentPresenter.this,
+                            docRefs,
+                            destinationFolderRef,
+                            getView().getPermissionInheritance());
+                } else {
+                    HidePopupEvent.fire(MoveDocumentPresenter.this, MoveDocumentPresenter.this, autoClose, ok);
+                }
             }
+        };
 
-            final List<DocRef> docRefs = explorerNodeList.stream()
-                    .map(ExplorerNode::getDocRef)
-                    .collect(Collectors.toList());
-
-            MoveDocumentEvent.fire(
-                    this,
-                    this,
-                    docRefs,
-                    destinationFolderRef,
-                    getView().getPermissionInheritance());
-        } else {
-            HidePopupEvent.fire(this, this, autoClose, ok);
-        }
-    }
-
-    @Override
-    public void onHide(final boolean autoClose, final boolean ok) {
-        // Do nothing.
+        final PopupSize popupSize = PopupSize.resizable(400, 550);
+        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, caption, popupUiHandlers);
     }
 
     public interface MoveDocumentView extends View {

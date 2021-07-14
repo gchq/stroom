@@ -54,7 +54,6 @@ import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.VerticalLocation;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -513,7 +512,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
             xmlEditor.getView().asWidget().getElement().addClassName("default-min-sizes");
 
             final PopupSize popupSize = PopupSize.resizable(600, 400);
-            final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
+            final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
                 @Override
                 public void onHideRequest(final boolean autoClose, final boolean ok) {
                     if (ok) {
@@ -666,7 +665,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
         public void execute() {
             final PipelineElement selectedElement = pipelineTreePresenter.getSelectionModel().getSelectedObject();
             if (selectedElement != null && elementType != null) {
-                final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
+                final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
                     @Override
                     public void onHideRequest(final boolean autoClose, final boolean ok) {
                         if (ok) {
