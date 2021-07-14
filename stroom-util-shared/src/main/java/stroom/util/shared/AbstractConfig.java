@@ -18,6 +18,7 @@ public abstract class AbstractConfig implements HasPropertyPath {
     /**
      * @return The base property path, e.g. "stroom.node" for this config object
      */
+    @Override
     @JsonIgnore
     public String getBasePath() {
         Objects.requireNonNull(basePropertyPath);
@@ -28,14 +29,17 @@ public abstract class AbstractConfig implements HasPropertyPath {
      * @return The full property path, e.g. "stroom.node.status" for the named property on this config
      * object
      */
+    @Override
     public String getFullPath(final String propertyName) {
         Objects.requireNonNull(basePropertyPath);
         Objects.requireNonNull(propertyName);
         return basePropertyPath.merge(propertyName).toString();
     }
 
+    @Override
     @JsonIgnore
     public void setBasePath(final PropertyPath basePropertyPath) {
         this.basePropertyPath = basePropertyPath;
     }
+
 }

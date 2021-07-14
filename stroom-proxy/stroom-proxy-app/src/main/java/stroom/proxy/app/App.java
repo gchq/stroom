@@ -26,10 +26,12 @@ import stroom.proxy.app.guice.ProxyModule;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.config.AppConfigValidator;
 import stroom.util.config.ConfigValidator;
+import stroom.util.config.PropertyPathDecorator;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ResourcePaths;
+import stroom.util.validation.ValidationModule;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -136,7 +138,7 @@ public class App extends Application<Config> {
 
         LOGGER.info("Starting Stroom Proxy");
 
-        final ProxyModule proxyModule = new ProxyModule(configuration, environment);
+        final ProxyModule proxyModule = new ProxyModule(configuration, environment, configFile);
         final Injector injector = Guice.createInjector(proxyModule);
         injector.injectMembers(this);
 
@@ -217,7 +219,9 @@ public class App extends Application<Config> {
 
         final ProxyConfig proxyConfig = config.getProxyConfig();
 
-        ConfigMapper.decorateWithPropertyPaths(proxyConfig);
+        // Walk the config tree to decorate it with all the path names
+        // so we can qualify each prop
+        PropertyPathDecorator.decoratePaths(proxyConfig, ProxyConfig.ROOT_PATH_NAME);
 
         final AppConfigValidator appConfigValidator = validationOnlyInjector.getInstance(AppConfigValidator.class);
 
@@ -235,7 +239,7 @@ public class App extends Application<Config> {
         if (result.hasErrors() && proxyConfig.isHaltBootOnConfigValidationFailure()) {
             LOGGER.error("Application configuration is invalid. Stopping Stroom. To run Stroom with invalid " +
                             "configuration, set {} to false, however this is not advised!",
-                    proxyConfig.getFullPath(AppConfig.PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE));
+                    proxyConfig.getFullPath(ProxyConfig.PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE));
             System.exit(1);
         }
     }

@@ -1,9 +1,5 @@
 package stroom.util.shared;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import java.util.Objects;
-
 /**
  * Super class for all stroom-proxy config pojos. Can be decorated with property path
  * information, e.g. stroom.path.home

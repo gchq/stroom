@@ -28,7 +28,7 @@ import stroom.config.app.SuperDevUtil;
 import stroom.config.app.YamlUtil;
 import stroom.config.global.impl.ConfigMapper;
 import stroom.util.config.AppConfigValidator;
-import stroom.config.global.impl.validation.ValidationModule;
+import stroom.util.validation.ValidationModule;
 import stroom.dropwizard.common.Filters;
 import stroom.dropwizard.common.HealthChecks;
 import stroom.dropwizard.common.ManagedServices;

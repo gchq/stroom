@@ -8,6 +8,7 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.validation.ValidRegex;
 import stroom.util.shared.validation.ValidSimpleCron;
 import stroom.util.shared.validation.ValidationSeverity;
+import stroom.util.validation.ValidationModule;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Guice;

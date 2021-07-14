@@ -1,13 +1,13 @@
-package stroom.config.global.impl.validation;
+package stroom.util.validation;
 
-import stroom.util.shared.validation.ValidDirectoryPath;
-import stroom.util.shared.validation.ValidDirectoryPathValidator;
+import stroom.util.shared.validation.ValidFilePath;
+import stroom.util.shared.validation.ValidFilePathValidator;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import javax.validation.ConstraintValidatorContext;
 
-public class ValidDirectoryPathValidatorImpl implements ValidDirectoryPathValidator {
+public class ValidFilePathValidatorImpl implements ValidFilePathValidator {
 
     /**
      * Initializes the validator in preparation for
@@ -21,7 +21,7 @@ public class ValidDirectoryPathValidatorImpl implements ValidDirectoryPathValida
      * @param constraintAnnotation annotation instance for a given constraint declaration
      */
     @Override
-    public void initialize(final ValidDirectoryPath constraintAnnotation) {
+    public void initialize(final ValidFilePath constraintAnnotation) {
 
     }
 
@@ -39,7 +39,7 @@ public class ValidDirectoryPathValidatorImpl implements ValidDirectoryPathValida
     @Override
     public boolean isValid(final String value, final ConstraintValidatorContext context) {
         if (value != null) {
-            return Files.isDirectory(Path.of(value));
+            return Files.isRegularFile(Path.of(value));
         } else {
             return true;
         }

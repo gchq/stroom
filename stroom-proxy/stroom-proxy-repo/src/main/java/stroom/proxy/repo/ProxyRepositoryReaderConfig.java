@@ -1,7 +1,6 @@
 package stroom.proxy.repo;
 
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.AbstractProxyConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.ModelStringUtil;
 
