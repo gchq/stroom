@@ -121,7 +121,8 @@ class TestAppConfig {
         LOGGER.logDurationIfInfoEnabled(
                 () -> {
                     for (int i = 0; i < 100; i++) {
-                        PropertyPathDecorator.decoratePaths(appConfig, "stroom");
+                        PropertyPathDecorator.decoratePaths(
+                                appConfig, AppConfig.ROOT_PROPERTY_PATH);
                     }
                 },
                 "decorating paths");

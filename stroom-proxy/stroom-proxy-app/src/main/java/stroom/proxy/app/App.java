@@ -221,7 +221,7 @@ public class App extends Application<Config> {
 
         // Walk the config tree to decorate it with all the path names
         // so we can qualify each prop
-        PropertyPathDecorator.decoratePaths(proxyConfig, ProxyConfig.ROOT_PATH_NAME);
+        PropertyPathDecorator.decoratePaths(proxyConfig, ProxyConfig.ROOT_PROPERTY_PATH);
 
         final AppConfigValidator appConfigValidator = validationOnlyInjector.getInstance(AppConfigValidator.class);
 

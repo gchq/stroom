@@ -18,6 +18,7 @@
 package stroom.config.global.impl;
 
 
+import stroom.config.app.AppConfig;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.ConfigPropertyValidationException;
 import stroom.config.global.shared.OverrideValue;
@@ -72,7 +73,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 /**
- * Responsible for mapping between the config object tree and a flat set of key value pairs.
+ * Responsible for mapping between the AppConfig object tree and a flat set of key value pairs.
  * The key for a leaf of the tree is a dot delimited path of all the branches to get to that leaf,
  * e.g.
  */
@@ -94,7 +95,6 @@ public class ConfigMapper {
             "|", ":", ";", ",", "!", "/", "\\", "#", "@", "~", "-", "_", "=", "+", "?");
     private static final Set<String> VALID_DELIMITERS_SET = new HashSet<>(VALID_DELIMITERS_LIST);
 
-    private static final PropertyPath ROOT_PROPERTY_PATH = PropertyPath.fromParts("stroom");
     private static final String DOCREF_PREFIX = "docRef";
     private static final Pattern DOCREF_PATTERN = Pattern.compile("^" + DOCREF_PREFIX + "\\([^)]+\\)$");
     public static final String LIST_EXAMPLE = "|item1|item2|item3";
@@ -104,8 +104,8 @@ public class ConfigMapper {
             + "(StatisticStore,934a1600-b456-49bf-9aea-f1e84025febd,Heap Histogram Bytes)";
 
 
-    // The guice bound config
-    private final AbstractConfig abstractConfig;
+    // The guice bound appConfig
+    private final AppConfig appConfig;
 
     // A map of config properties keyed on the fully qualified prop path (i.e. stroom.path.temp)
     // This is the source of truth for all properties. It is used to update the guice injected object model
@@ -129,30 +129,30 @@ public class ConfigMapper {
 //    }
 
     @Inject
-    public ConfigMapper(final AbstractConfig abstractConfig) {
+    public ConfigMapper(final AppConfig appConfig) {
         LOGGER.debug(() -> LogUtil.message("Initialising ConfigMapper with class {}",
-                abstractConfig.getClass().getName()));
+                appConfig.getClass().getName()));
 
-        this.abstractConfig = abstractConfig;
+        this.appConfig = appConfig;
 
-        // The values in the passed config will have been set initially from the compile-time defaults and
+        // The values in the passed AppConfig will have been set initially from the compile-time defaults and
         // then from the DropWizard yaml file on app boot.
         // We want to know the default values as defined by the compile-time initial values of
-        // the instance variables in the config tree.  This is so we can make the default values available
-        // to the config UI.  Therefore create our own vanilla config tree and walk it to populate
+        // the instance variables in the AppConfig tree.  This is so we can make the default values available
+        // to the config UI.  Therefore create our own vanilla AppConfig tree and walk it to populate
         // globalPropertiesMap with the defaults.
         LOGGER.debug("Building globalPropertiesMap from compile-time default values and annotations");
 
-        // Pass in an empty hashmap because we are not parsing the actual guice bound config. We are only
+        // Pass in an empty hashmap because we are not parsing the actual guice bound appConfig. We are only
         // populating the globalPropertiesMap so the passed hashmap is thrown away.
         addConfigObjectMethods(
-                getVanillaConfig(abstractConfig.getClass()),
-                ROOT_PROPERTY_PATH,
+                getVanillaAppConfig(),
+                AppConfig.ROOT_PROPERTY_PATH,
                 new HashMap<>(),
                 this::defaultValuePropertyConsumer);
 
         // Now add in any values from the yaml
-        updateConfigFromYaml(abstractConfig);
+        updateConfigFromYaml(appConfig);
 
         if (LOGGER.isDebugEnabled()) {
             final Set<PropertyPath> onlyInGlobal = new HashSet<>(globalPropertiesMap.keySet());
@@ -165,53 +165,52 @@ public class ConfigMapper {
         }
     }
 
-    public static void decorateWithPropertyPaths(final AbstractConfig abstractConfig) {
+    public static void decorateWithPropertyPaths(final AppConfig appConfig) {
         // This will add all the property paths to the passed AppConfig instance
-        new ConfigMapper(abstractConfig);
+        new ConfigMapper(appConfig);
     }
 
-    private AbstractConfig getVanillaConfig(Class<? extends AbstractConfig> configClass) {
+    private AppConfig getVanillaAppConfig() {
         try {
-            return configClass.getDeclaredConstructor()
-                    .newInstance();
-
+            // We do this rather than new AppConfig() so that tests can sub class AppConfig
+            return appConfig.getClass().getDeclaredConstructor().newInstance();
         } catch (InstantiationException
                 | IllegalAccessException
                 | InvocationTargetException
                 | NoSuchMethodException e) {
             throw new RuntimeException(LogUtil.message("Unable to call constructor on class {}",
-                    abstractConfig.getClass().getName()), e);
+                    appConfig.getClass().getName()), e);
         }
     }
 
     /**
-     * Will copy the contents of the passed {@link AbstractConfig} into the guice bound {@link AbstractConfig}
+     * Will copy the contents of the passed {@link AppConfig} into the guice bound {@link AppConfig}
      * and update the globalPropertiesMap.
      * It will also apply common database config to all other database config objects.
      */
-    public void updateConfigFromYaml(final AbstractConfig newAbstractConfig) {
+    public void updateConfigFromYaml(final AppConfig newAppConfig) {
         synchronized (this) {
             // The object will be different when we are re-reading the yaml into AppConfig
             // as part of AppConfigMonitor
-            if (System.identityHashCode(newAbstractConfig) != System.identityHashCode(abstractConfig)) {
+            if (System.identityHashCode(newAppConfig) != System.identityHashCode(appConfig)) {
                 // We have been passed a different object to our instance appConfig so copy all
                 // the values over.
                 LOGGER.debug("Copying values from newAppConfig to appConfig");
-                FieldMapper.copy(newAbstractConfig, abstractConfig);
+                FieldMapper.copy(newAppConfig, appConfig);
             }
 
-            refreshPropertyMap(newAbstractConfig);
+            refreshPropertyMap(newAppConfig);
         }
     }
 
-    public void refreshPropertyMap(final AbstractConfig newConfig) {
+    public void refreshPropertyMap(final AppConfig newAppConfig) {
         synchronized (this) {
             // Now walk the AppConfig object model from the DropWiz YAML updating globalPropertiesMap with the
             // YAML values where present.
             LOGGER.debug("Adding yaml config values into global property map");
             addConfigObjectMethods(
-                    newConfig,
-                    ROOT_PROPERTY_PATH,
+                    newAppConfig,
+                    AppConfig.ROOT_PROPERTY_PATH,
                     propertyMap,
                     this::yamlPropertyConsumer);
         }
@@ -279,7 +278,7 @@ public class ConfigMapper {
 
                             final Prop prop = propertyMap.get(entry.getKey());
                             if (prop != null) {
-                                // Now set the new effective value on our guice bound config instance
+                                // Now set the new effective value on our guice bound appConfig instance
                                 final Type genericType = prop.getValueType();
                                 final Object typedValue = convertToObject(
                                         prop,
@@ -327,7 +326,7 @@ public class ConfigMapper {
 
                 // Now we have updated the globalConfigProperty with the value from the DB
                 // we can ask it what the effective value is now and set that on our
-                // guice bound config instance.
+                // guice bound appConfig instance.
                 final Type genericType = prop.getValueType();
                 final Object typedValue = convertToObject(
                         prop,
@@ -413,8 +412,12 @@ public class ConfigMapper {
         // props should be in here with a default value (and a value that matches it)
         final ConfigProperty configProperty = globalPropertiesMap.get(fullPath);
 
-        Preconditions.checkNotNull(configProperty, "Property %s with path %s exists in the " +
-                "YAML but not in the object model, this should not happen", yamlProp, fullPath);
+        Preconditions.checkNotNull(
+                configProperty,
+                "Property %s with path %s exists in the " +
+                        "YAML but not in the object model, this should not happen",
+                yamlProp,
+                fullPath);
 
         // Create global property.
         final String yamlValueAsStr = getStringValue(yamlProp);

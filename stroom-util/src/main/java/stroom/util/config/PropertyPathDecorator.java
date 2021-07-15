@@ -17,14 +17,7 @@ public class PropertyPathDecorator {
     }
 
     public static void decoratePaths(final AbstractConfig config,
-                                     final String rootPathName) {
-        final PropertyPath rootPath = PropertyPath.fromParts(rootPathName);
-
-        PropertyPathDecorator.decoratePaths(config, rootPath);
-    }
-
-    private static void decoratePaths(final AbstractConfig config,
-                                      final PropertyPath propertyPath) {
+                                     final PropertyPath propertyPath) {
 
         // Set the path of this config object
         config.setBasePath(propertyPath);

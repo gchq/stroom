@@ -1,14 +1,15 @@
 package stroom.config.global.impl;
 
 import stroom.config.app.AppConfig;
-import stroom.util.config.ConfigLocation;
 import stroom.config.app.SuperDevUtil;
 import stroom.config.app.YamlUtil;
-import stroom.util.config.AppConfigValidator;
 import stroom.util.HasHealthCheck;
 import stroom.util.config.AbstractFileChangeMonitor;
+import stroom.util.config.AppConfigValidator;
+import stroom.util.config.ConfigLocation;
 import stroom.util.config.ConfigValidator;
 import stroom.util.config.FieldMapper;
+import stroom.util.config.PropertyPathDecorator;
 import stroom.util.shared.AbstractConfig;
 
 import io.dropwizard.lifecycle.Managed;
@@ -60,7 +61,8 @@ public class AppConfigMonitor extends AbstractFileChangeMonitor implements Manag
 
             if (result.hasErrors()) {
                 LOGGER.error("Unable to update application config from file {} because it failed validation. " +
-                        "Fix the errors and save the file.", configFile.toAbsolutePath().normalize().toString());
+                                "Fix the errors and save the file.",
+                        configFile.toAbsolutePath().normalize().toString());
             } else {
                 try {
                     // Don't have to worry about the DB config merging that goes on in DataSourceFactoryImpl
@@ -102,7 +104,7 @@ public class AppConfigMonitor extends AbstractFileChangeMonitor implements Manag
         // Decorate the new config tree so it has all the paths,
         // i.e. call setBasePath on each branch in the newAppConfig tree so if we get any violations we
         // can log their locations with full paths.
-        ConfigMapper.decorateWithPropertyPaths(newAppConfig);
+        PropertyPathDecorator.decoratePaths(newAppConfig, AppConfig.ROOT_PROPERTY_PATH);
 
         LOGGER.info("Validating modified config file");
         final ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validateRecursively(newAppConfig);

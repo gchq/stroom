@@ -7,6 +7,7 @@ import stroom.proxy.app.handler.ProxyRequestConfig;
 import stroom.proxy.repo.ProxyRepositoryConfig;
 import stroom.proxy.repo.ProxyRepositoryReaderConfig;
 import stroom.util.shared.AbstractProxyConfig;
+import stroom.util.shared.PropertyPath;
 import stroom.util.shared.validation.ValidationSeverity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -20,7 +21,7 @@ import javax.validation.constraints.AssertTrue;
 @JsonPropertyOrder(alphabetic = true)
 public class ProxyConfig extends AbstractProxyConfig {
 
-    public static final String ROOT_PATH_NAME = "proxyConfig";
+    public static final PropertyPath ROOT_PROPERTY_PATH = PropertyPath.fromParts("proxyConfig");
 
     public static final String PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE = "haltBootOnConfigValidationFailure";
 
