@@ -4,7 +4,7 @@ import stroom.docref.DocRef;
 import stroom.util.config.PropertyUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.AbstractProxyConfig;
+import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
 import stroom.util.time.StroomDuration;
 
@@ -51,10 +51,10 @@ class TestProxyConfig {
                 LOGGER.debug("{}Field {} : {} {}",
                         indent, field.getName(), fieldClass.getSimpleName(), fieldClass.getAnnotations());
 
-                Assertions.assertThat(AbstractProxyConfig.class)
+                Assertions.assertThat(IsProxyConfig.class)
                         .withFailMessage(LogUtil.message("Class {} does not extend {}",
                                 fieldClass.getName(),
-                                AbstractProxyConfig.class.getName()))
+                                IsProxyConfig.class.getName()))
                         .isAssignableFrom(fieldClass);
 
                 if (fieldClass.getDeclaredAnnotation(NotInjectableConfig.class) == null) {

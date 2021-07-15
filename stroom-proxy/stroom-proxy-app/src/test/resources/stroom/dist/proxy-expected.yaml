@@ -12,6 +12,7 @@ proxyConfig:
     forwardDestinations: []
     forwardingEnabled: false
     userAgent: null
+  haltBootOnConfigValidationFailure: true
   logStreamConfig:
     metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn,remotecertexpiry"
   path:

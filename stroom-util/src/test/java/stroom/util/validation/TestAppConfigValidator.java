@@ -1,4 +1,4 @@
-package stroom.config.global.impl.validation;
+package stroom.util.validation;
 
 import stroom.util.config.AppConfigValidator;
 import stroom.util.config.ConfigValidator;
@@ -8,7 +8,6 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.validation.ValidRegex;
 import stroom.util.shared.validation.ValidSimpleCron;
 import stroom.util.shared.validation.ValidationSeverity;
-import stroom.util.validation.ValidationModule;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Guice;

@@ -707,7 +707,7 @@ public class ConfigMapper {
 
             LOGGER.debug(() -> LogUtil.message(
                     "Unable to convert value [{}] of property [{}] to type [{}] due to: {}",
-                    value, propName, e.getMessage()), e);
+                    value, propName, getDataTypeName(genericType), e.getMessage()), e);
             throw new ConfigPropertyValidationException(LogUtil.message(
                     "Unable to convert value [{}] of property [{}] to type [{}] due to: {}",
                     value, propName, getDataTypeName(genericType), e.getMessage()), e);

@@ -1,6 +1,4 @@
-package stroom.config.global.impl.validation;
-
-import stroom.util.validation.ValidationModule;
+package stroom.util.validation;
 
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.assertj.core.api.Assertions;
