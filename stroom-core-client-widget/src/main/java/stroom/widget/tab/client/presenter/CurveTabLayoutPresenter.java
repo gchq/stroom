@@ -42,8 +42,6 @@ public abstract class CurveTabLayoutPresenter<P extends Proxy<?>> extends MyPres
     protected void onBind() {
         super.onBind();
 
-        registerHandler(getView().getTabBar().addKeyboardSelectionHandler(event ->
-                keyboardSelectTab(event.getSelectedItem())));
         registerHandler(getView().getTabBar().addSelectionHandler(event ->
                 selectTab(event.getSelectedItem())));
         registerHandler(getView().getTabBar().addRequestCloseTabHandler(event ->
@@ -83,10 +81,6 @@ public abstract class CurveTabLayoutPresenter<P extends Proxy<?>> extends MyPres
             layer.removeLayer();
             fireSelectedTabChange(getSelectedTab());
         }
-    }
-
-    public void keyboardSelectTab(final TabData tabData) {
-        getView().getTabBar().keyboardSelectTab(tabData);
     }
 
     public void selectTab(final TabData tabData) {

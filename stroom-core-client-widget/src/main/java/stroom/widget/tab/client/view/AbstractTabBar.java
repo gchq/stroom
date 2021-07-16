@@ -22,7 +22,6 @@ import stroom.widget.popup.client.presenter.PopupSupport;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.popup.client.view.PopupSupportImpl;
-import stroom.widget.tab.client.event.KeyboardSelectionEvent;
 import stroom.widget.tab.client.event.RequestCloseTabEvent;
 import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.presenter.TabData;
@@ -123,12 +122,9 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
         onResize();
     }
 
-    @Override
-    public void keyboardSelectTab(final TabData tabData) {
-//        if (!EqualsUtil.isEquals(tabData, keyboardSelectedTab)) {
+    private void keyboardSelectTab(final TabData tabData) {
         keyboardSelectedTab = tabData;
         onResize();
-//        }
     }
 
     @Override
@@ -329,7 +325,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
                         }
                     }
                 }
-                KeyboardSelectionEvent.fire(this, tabData);
+                keyboardSelectTab(tabData);
             } else if (event.getKeyCode() == KeyCodes.KEY_LEFT) {
                 TabData tabData = null;
                 if (visibleTabs.size() > 0) {
@@ -344,7 +340,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
                         }
                     }
                 }
-                KeyboardSelectionEvent.fire(this, tabData);
+                keyboardSelectTab(tabData);
             } else if (event.getKeyCode() == KeyCodes.KEY_SPACE || event.getKeyCode() == KeyCodes.KEY_ENTER) {
                 if (keyboardSelectedTab != null) {
                     fireTabSelection(keyboardSelectedTab);
@@ -501,7 +497,6 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
         if (tabData != null && tabData != selectedTab) {
             SelectionEvent.fire(this, tabData);
             keyboardSelectTab(tabData);
-            KeyboardSelectionEvent.fire(this, tabData);
         }
     }
 
@@ -509,11 +504,6 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
         if (tabData != null) {
             RequestCloseTabEvent.fire(this, tabData);
         }
-    }
-
-    @Override
-    public HandlerRegistration addKeyboardSelectionHandler(final KeyboardSelectionEvent.Handler<TabData> handler) {
-        return addHandler(handler, KeyboardSelectionEvent.getType());
     }
 
     @Override

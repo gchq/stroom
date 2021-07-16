@@ -17,14 +17,12 @@
 package stroom.widget.tab.client.presenter;
 
 import stroom.widget.tab.client.event.HasRequestCloseTabHandlers;
-import stroom.widget.tab.client.event.KeyboardSelectionEvent.HasKeyboardSelectionHandlers;
 
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 
 import java.util.List;
 
 public interface TabBar extends
-        HasKeyboardSelectionHandlers<TabData>,
         HasSelectionHandlers<TabData>,
         HasRequestCloseTabHandlers {
 
@@ -33,8 +31,6 @@ public interface TabBar extends
     void removeTab(TabData tab);
 
     void clear();
-
-    void keyboardSelectTab(TabData tab);
 
     void selectTab(TabData tab);
 
