@@ -962,12 +962,14 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         }
     }
 
-    private void fetchMetaInfoData(long metaId) {
-        final Rest<List<DataInfoSection>> rest = restFactory.create();
-        rest
-                .onSuccess(this::handleMetaInfoResult)
-                .call(DATA_RESOURCE)
-                .viewInfo(metaId);
+    private void fetchMetaInfoData(final Long metaId) {
+        if (metaId != null) {
+            final Rest<List<DataInfoSection>> rest = restFactory.create();
+            rest
+                    .onSuccess(this::handleMetaInfoResult)
+                    .call(DATA_RESOURCE)
+                    .viewInfo(metaId);
+        }
     }
 
     private void handleMetaInfoResult(final List<DataInfoSection> dataInfoSections) {

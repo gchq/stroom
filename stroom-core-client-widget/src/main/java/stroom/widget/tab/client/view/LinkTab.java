@@ -52,6 +52,15 @@ public class LinkTab extends AbstractTab {
     }
 
     @Override
+    protected void setKeyboardSelected(final boolean selected) {
+        if (selected) {
+            element.addClassName("linkTab-keyboardSelected");
+        } else {
+            element.removeClassName("linkTab-keyboardSelected");
+        }
+    }
+
+    @Override
     public void setSelected(final boolean selected) {
         if (selected) {
             element.addClassName("linkTab-selected");

@@ -22,12 +22,11 @@ import stroom.widget.popup.client.presenter.PopupSupport;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.popup.client.view.PopupSupportImpl;
-import stroom.widget.tab.client.event.MaximiseRequestEvent;
+import stroom.widget.tab.client.event.KeyboardSelectionEvent;
 import stroom.widget.tab.client.event.RequestCloseTabEvent;
 import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabListPresenter;
-import stroom.widget.util.client.DoubleClickTester;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.dom.client.Element;
@@ -53,8 +52,9 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
     private final Map<TabData, AbstractTab> tabWidgetMap = new HashMap<>();
     private final List<TabData> tabPriority = new ArrayList<>();
     private final List<TabData> tabs = new ArrayList<>();
-    private final DoubleClickTester doubleClickTest = new DoubleClickTester();
+    private final List<TabData> visibleTabs = new ArrayList<>();
     private TabData selectedTab;
+    private TabData keyboardSelectedTab;
     private int overflowTabCount;
     private TabListPresenter tabItemListPresenter;
     private PopupSupport popupSupport;
@@ -105,6 +105,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
             tabPriority.remove(tabData);
 
             if (tabPriority.size() > 0) {
+                keyboardSelectedTab = tabPriority.get(0);
                 fireTabSelection(tabPriority.get(0));
             }
 
@@ -123,36 +124,30 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
     }
 
     @Override
-    public void selectTab(final int index) {
-        if (index < 0 || index >= tabs.size()) {
-            selectTab(null);
-        } else {
-            selectTab(tabs.get(index));
-        }
+    public void keyboardSelectTab(final TabData tabData) {
+//        if (!EqualsUtil.isEquals(tabData, keyboardSelectedTab)) {
+        keyboardSelectedTab = tabData;
+        onResize();
+//        }
     }
 
     @Override
     public void selectTab(final TabData tabData) {
         if (!EqualsUtil.isEquals(tabData, selectedTab)) {
             selectedTab = tabData;
+            keyboardSelectedTab = tabData;
 
             if (selectedTab != null) {
                 tabPriority.remove(tabData);
 
                 final AbstractTab tab = getTab(selectedTab);
                 if (tab != null) {
-                    tab.setSelected(true);
                     tabPriority.add(0, tabData);
                 } else {
                     selectedTab = null;
+                    keyboardSelectedTab = null;
                 }
             }
-
-            for (int i = 0; i < tabs.size(); i++) {
-                final TabData t = tabs.get(i);
-                getTab(t).setSelected(t.equals(selectedTab));
-            }
-
             onResize();
         }
     }
@@ -164,8 +159,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
 
     @Override
     public void refresh() {
-        for (int i = 0; i < tabs.size(); i++) {
-            final TabData tabData = tabs.get(i);
+        for (final TabData tabData : tabs) {
             final AbstractTab tab = getTab(tabData);
             tab.setText(tabData.getLabel());
         }
@@ -174,6 +168,9 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
 
     @Override
     public void onResize() {
+        // Clear all visible tabs.
+        visibleTabs.clear();
+
         final int tabGap = getTabGap();
         final int selectorWidth = getTabSelector().getOffsetWidth();
 
@@ -228,29 +225,41 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
             // Loop through the tabs in display order and make them visible if
             // they are prioritised.
             int x = 0;
-            for (int i = 0; i < tabs.size(); i++) {
-                final TabData tabData = tabs.get(i);
+            for (final TabData tabData : tabs) {
                 final AbstractTab tab = getTab(tabData);
 
                 // Deal with tabs that have been deliberately hidden.
-                if (tab.isHidden()) {
-                    makeInvisible(tab.getElement());
-
-                } else {
-                    if (displayable.contains(tabData)) {
-                        if (x > 0) {
-                            final Element separator = addSeparator();
-                            if (separator != null) {
-                                separator.getStyle().setLeft(x, Unit.PX);
-                                x += separator.getOffsetWidth();
-                            }
+                boolean visible = false;
+                if (!tab.isHidden() && displayable.contains(tabData)) {
+                    if (x > 0) {
+                        final Element separator = addSeparator();
+                        if (separator != null) {
+                            separator.getStyle().setLeft(x, Unit.PX);
+                            x += separator.getOffsetWidth();
                         }
-
-                        makeVisible(tab.getElement(), x);
-                        x += tab.getOffsetWidth() + tabGap;
-                    } else {
-                        makeInvisible(tab.getElement());
                     }
+
+                    visible = true;
+                    makeVisible(tab.getElement(), x);
+                    visibleTabs.add(tabData);
+                    x += tab.getOffsetWidth() + tabGap;
+
+                    if (keyboardSelectedTab == null && overflowTabCount == 0) {
+                        keyboardSelectedTab = tabData;
+                    }
+                }
+
+                if (!visible) {
+                    makeInvisible(tab.getElement());
+                }
+
+                tab.setKeyboardSelected(visible && tabData.equals(keyboardSelectedTab));
+                tab.setSelected(visible && tabData.equals(selectedTab));
+            }
+
+            if (!visibleTabs.contains(keyboardSelectedTab)) {
+                if (overflowTabCount > 0) {
+                    keyboardSelectedTab = null;
                 }
             }
 
@@ -285,6 +294,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
         if (count > 0) {
             getTabSelector().setText(String.valueOf(count));
             makeVisible(getTabSelector().getElement(), x);
+            getTabSelector().setKeyboardSelected(keyboardSelectedTab == null);
         } else {
             makeInvisible(getTabSelector().getElement());
         }
@@ -303,15 +313,43 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
     @Override
     public void onBrowserEvent(final Event event) {
         if (Event.ONKEYDOWN == event.getTypeInt()) {
-            if (event.getKeyCode() == KeyCodes.KEY_ENTER || event.getKeyCode() == KeyCodes.KEY_SPACE) {
-                final Element target = event.getEventTarget().cast();
-                final Element targetObject = getTargetObject(event);
-                select(target, targetObject);
-            } else if (event.getKeyCode() == KeyCodes.KEY_ESCAPE) {
-                final Element target = event.getEventTarget().cast();
-                final TabData targetTabData = getTargetTabData(target);
-                if (targetTabData != null) {
-                    fireTabCloseRequest(targetTabData);
+            if (event.getKeyCode() == KeyCodes.KEY_ESCAPE) {
+                if (keyboardSelectedTab != null) {
+                    fireTabCloseRequest(keyboardSelectedTab);
+                }
+            } else if (event.getKeyCode() == KeyCodes.KEY_RIGHT) {
+                TabData tabData = null;
+                if (visibleTabs.size() > 0) {
+                    if (keyboardSelectedTab == null) {
+                        tabData = visibleTabs.get(0);
+                    } else {
+                        int index = visibleTabs.indexOf(keyboardSelectedTab);
+                        if (index >= 0 && index < visibleTabs.size() - 1) {
+                            tabData = visibleTabs.get(index + 1);
+                        }
+                    }
+                }
+                KeyboardSelectionEvent.fire(this, tabData);
+            } else if (event.getKeyCode() == KeyCodes.KEY_LEFT) {
+                TabData tabData = null;
+                if (visibleTabs.size() > 0) {
+                    if (keyboardSelectedTab == null) {
+                        tabData = visibleTabs.get(visibleTabs.size() - 1);
+                    } else {
+                        int index = visibleTabs.indexOf(keyboardSelectedTab);
+                        if (index > 0) {
+                            tabData = visibleTabs.get(index - 1);
+                        } else if (overflowTabCount == 0) {
+                            tabData = visibleTabs.get(visibleTabs.size() - 1);
+                        }
+                    }
+                }
+                KeyboardSelectionEvent.fire(this, tabData);
+            } else if (event.getKeyCode() == KeyCodes.KEY_SPACE || event.getKeyCode() == KeyCodes.KEY_ENTER) {
+                if (keyboardSelectedTab != null) {
+                    fireTabSelection(keyboardSelectedTab);
+                } else {
+                    showTabSelector(getTabSelector().getElement());
                 }
             }
         } else if (Event.ONMOUSEDOWN == event.getTypeInt()) {
@@ -324,19 +362,13 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
                 final Element target = event.getEventTarget().cast();
                 final Element targetObject = getTargetObject(event);
 
-                Element doubleClickTarget = null;
-
                 if (targetObject == currentTargetObject) {
                     if (getTabSelector().getElement().isOrHasChild(target)) {
                         showTabSelector(getTabSelector().getElement());
 
                     } else {
-                        doubleClickTarget = select(target, targetObject);
+                        select(target);
                     }
-                }
-
-                if (doubleClickTest.isDoubleClick(doubleClickTarget)) {
-                    fireMaximiseRequest();
                 }
             }
         } else if (Event.ONMOUSEOVER == event.getTypeInt()) {
@@ -373,35 +405,20 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
         super.onBrowserEvent(event);
     }
 
-    private Element select(final Element target, final Element targetObject) {
-        Element doubleClickTarget = null;
-
+    private void select(final Element target) {
         final TabData targetTabData = getTargetTabData(target);
-
-        if (targetTabData == null) {
-            // If we didn't click a tab then test for maximise.
-            doubleClickTarget = targetObject;
-
-        } else {
+        if (targetTabData != null) {
             final AbstractTab tab = getTab(targetTabData);
             // See if close has been clicked on this tab.
             if (tab.getCloseElement() != null && tab.getCloseElement().isOrHasChild(target)) {
                 fireTabCloseRequest(targetTabData);
 
-            } else if (targetTabData == selectedTab) {
-                // If this tab has been clicked and is the same
-                // as the currently selected tab then try a
-                // double click test.
-                doubleClickTarget = targetObject;
-
-            } else {
+            } else if (targetTabData != selectedTab) {
                 // If this tab isn't currently selected then
                 // request it is selected.
                 fireTabSelection(targetTabData);
             }
         }
-
-        return doubleClickTarget;
     }
 
     private TabData getTargetTabData(final Element target) {
@@ -483,6 +500,8 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
     private void fireTabSelection(final TabData tabData) {
         if (tabData != null && tabData != selectedTab) {
             SelectionEvent.fire(this, tabData);
+            keyboardSelectTab(tabData);
+            KeyboardSelectionEvent.fire(this, tabData);
         }
     }
 
@@ -492,8 +511,9 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
         }
     }
 
-    private void fireMaximiseRequest() {
-        MaximiseRequestEvent.fire(this);
+    @Override
+    public HandlerRegistration addKeyboardSelectionHandler(final KeyboardSelectionEvent.Handler<TabData> handler) {
+        return addHandler(handler, KeyboardSelectionEvent.getType());
     }
 
     @Override
@@ -502,14 +522,9 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
     }
 
     @Override
-    public com.google.web.bindery.event.shared.HandlerRegistration addRequestCloseTabHandler(
+    public HandlerRegistration addRequestCloseTabHandler(
             final RequestCloseTabEvent.Handler handler) {
         return addHandler(handler, RequestCloseTabEvent.getType());
-    }
-
-    @Override
-    public HandlerRegistration addMaximiseRequestHandler(final MaximiseRequestEvent.Handler handler) {
-        return addHandler(handler, MaximiseRequestEvent.getType());
     }
 
     @Override

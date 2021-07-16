@@ -32,7 +32,6 @@ public class LinkTabsPresenter extends MyPresenterWidget<LinkTabsLayoutView> {
 
     private TabData firstTab;
     private TabData selectedTab;
-    private final boolean firstShowing = true;
 
     @Inject
     public LinkTabsPresenter(final EventBus eventBus, final LinkTabsLayoutView view) {

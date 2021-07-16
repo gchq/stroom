@@ -24,12 +24,25 @@ import com.google.gwt.uibinder.client.UiField;
 public class CurveTabSelector extends AbstractTabSelector {
 
     private static final Binder binder = GWT.create(Binder.class);
+
+    @UiField
+    DivElement arrows;
     @UiField
     DivElement text;
 
     public CurveTabSelector() {
         final DivElement element = binder.createAndBindUi(this);
+        arrows.setInnerHTML(Images.DOUBLE_ARROW);
         setElement(element);
+    }
+
+    @Override
+    protected void setKeyboardSelected(final boolean selected) {
+        if (selected) {
+            getElement().addClassName("curveTabSelector-keyboardSelected");
+        } else {
+            getElement().removeClassName("curveTabSelector-keyboardSelected");
+        }
     }
 
     @Override

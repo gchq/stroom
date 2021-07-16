@@ -18,7 +18,6 @@ package stroom.widget.tab.client.view;
 
 import stroom.svg.client.Icon;
 
-import com.google.gwt.dom.client.ButtonElement;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Unit;
@@ -29,8 +28,7 @@ public class CurveTab extends AbstractTab {
 
     private static final int MAX_TEXT_LENGTH = 50;
 
-    private final ButtonElement element;
-    //    private final Element icon;
+    private final Element element;
     private final Element label;
     private final Element close;
     private final boolean allowClose;
@@ -38,25 +36,12 @@ public class CurveTab extends AbstractTab {
     public CurveTab(final Icon icon, final String text, final boolean allowClose) {
         this.allowClose = allowClose;
 
-        element = ButtonElement.as(DOM.createButton());
-        element.setTabIndex(0);
+        element = DOM.createDiv();
         element.setClassName("curveTab");
 
         final Element background = DOM.createDiv();
         background.setClassName("curveTab-background");
         element.appendChild(background);
-
-        final Element leftBackground = DOM.createDiv();
-        leftBackground.setClassName("curveTab-leftBackground");
-        background.appendChild(leftBackground);
-
-        final Element midBackground = DOM.createDiv();
-        midBackground.setClassName("curveTab-midBackground");
-        background.appendChild(midBackground);
-
-        final Element rightBackground = DOM.createDiv();
-        rightBackground.setClassName("curveTab-rightBackground");
-        background.appendChild(rightBackground);
 
         if (icon != null) {
             final Widget iconWidget = icon.asWidget();
@@ -78,6 +63,7 @@ public class CurveTab extends AbstractTab {
 
         close = DOM.createDiv();
         close.setClassName("curveTab-close");
+        close.setInnerHTML(Images.CLOSE);
         element.appendChild(close);
 
         setElement(element);
@@ -85,6 +71,15 @@ public class CurveTab extends AbstractTab {
         if (!allowClose) {
             close.getStyle().setDisplay(Display.NONE);
             label.getStyle().setPaddingRight(20, Unit.PX);
+        }
+    }
+
+    @Override
+    protected void setKeyboardSelected(final boolean selected) {
+        if (selected) {
+            element.addClassName("curveTab-keyboardSelected");
+        } else {
+            element.removeClassName("curveTab-keyboardSelected");
         }
     }
 

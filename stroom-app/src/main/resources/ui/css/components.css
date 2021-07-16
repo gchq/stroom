@@ -146,34 +146,36 @@
 	padding-left: 15px;
 }
 
-
 .basicTabSelector {
-	position: absolute;
-	display: inline-block;
-	height: 20px;
-	vertical-align: top;
-	padding-left: 2px;
-	padding-top: 2px;
-	cursor: pointer;
+    position: absolute;
+    left: 0;
+    top: 0;
+    cursor: pointer;
+    display: flex;
+    height: 34px;
+    border: none;
+    border-radius: .25rem;
+    border: 1px solid transparent;
+    background-color: transparent;
+    color: var(--control__text-color);
+    padding: 1px;
 }
 
 .basicTabSelector-arrows {
-	background-image: url("../images/tabs/arrows.png");
-	position: absolute;
-	width: 8px;
-	height: 5px;
+    display: flex;
+}
+
+.basicTabSelector-arrows svg {
+    width: 11px;
+    height: 9px;
 }
 
 .basicTabSelector-text {
-	font-size: var(--font-size-7);
-	white-space: nowrap;
-	margin-left: 7px;
-	margin-top: 7px;
-	-moz-user-select: none;
-}
-
-.stroom-theme-dark .basicTabSelector-arrows {
-	background-image: url("../images/tabs/arrows-dark.png");
+    font-size: var(--font-size-7);
+    white-space: nowrap;
+    margin-left: 2px;
+    margin-top: 6px;
+    -moz-user-select: none;
 }
 
 .curveTabBar {
@@ -198,21 +200,20 @@
     color: var(--control__text-color);
 }
 
-/*
 .curveTab:hover {
-    border: 1px solid #666;
-}
-*/
-
-.curveTab:focus {
-    outline: 0;
-    border-color: var(--focus-border);
-    box-shadow: var(--focus-shadow);
+    border-color: rgba(255,255,255,.5);
 }
 
 .curveTab-selected {
-	z-index: 1;
-    border: 1px solid #aaa;
+    border-color: rgba(255,255,255,.8);
+}
+
+.curveTab-selected:hover {
+    border-color: rgba(255,255,255,1);
+}
+
+.curveTabBar:focus .curveTab-keyboardSelected {
+    border-color: rgba(255,255,255,1);
 }
 
 .curveTab .curveTab-background {
@@ -239,33 +240,6 @@
 .curveTab-selected:hover .curveTab-background {
 	opacity: 1;
 }
-
-/*
-.curveTab .curveTab-leftBackground {
-	background-image: url("../images/tabs/left.png");
-	position: absolute;
-	left: 0;
-	top: 0;
-    width: 5px;
-    height: 25px;
-}
-
-.curveTab .curveTab-midBackground {
-	background-image: url("../images/tabs/middle.png");
-	background-repeat: repeat-x;
-	width: 100%;
-	height: 25px;
-}
-
-.curveTab .curveTab-rightBackground {
-	background-image: url("../images/tabs/right.png");
-	position: absolute;
-	right: 0;
-	top: 0;
-    width: 15px;
-    height: 25px;
-}
-*/
 
 /* Tab content */
 .curveTab .curveTab-icon {
@@ -306,6 +280,7 @@
 }
 
 /* Close button */
+/*
 .curveTab .curveTab-close {
     background-image: url("../images/tabs/close.png");
     width: 12px;
@@ -316,163 +291,79 @@
     z-index: 0;
     background-repeat: no-repeat;
 }
+*/
+.curveTab .curveTab-close {
+    display: flex;
+}
 
-.curveTab .curveTab-closeActive	{
-	background-image: url("../images/tabs/closeActive.png");
-	width: 12px;
-    height: 12px;
-	-moz-user-select: none;
-	cursor: pointer;
-    margin: 2px 6px 0 4px;
+.curveTab .curveTab-close svg {
+    width: 17px;
+    height: 17px;
+    cursor: pointer;
+    margin: 0px 6px 0 4px;
     z-index: 0;
-    background-repeat: no-repeat;
-}
-/*
-.stroom-theme-dark .curveTab .curveTab-leftBackground {
-	background-image: url("../images/tabs/left-dark.png");
+    color: #aaa;
 }
 
-.stroom-theme-dark .curveTab .curveTab-midBackground {
-	background-image: url("../images/tabs/middle-dark.png");
+.curveTab .curveTab-closeActive svg {
+    color: #fff;
 }
-
-.stroom-theme-dark .curveTab .curveTab-rightBackground {
-	background-image: url("../images/tabs/right-dark.png");
-}
-*/
-.stroom-theme-dark .curveTab .curveTab-close {
-	background-image: url("../images/tabs/close-dark.png");
-}
-
-.stroom-theme-dark .curveTab .curveTab-closeActive {
-	background-image: url("../images/tabs/closeActive.png");
-}
-/*
-.stroom-theme-dark2 .curveTab .curveTab-leftBackground {
-	background-image: url("../images/tabs/left-dark2.png");
-}
-
-.stroom-theme-dark2 .curveTab .curveTab-midBackground {
-	background-image: url("../images/tabs/middle-dark2.png");
-}
-
-.stroom-theme-dark2 .curveTab .curveTab-rightBackground {
-	background-image: url("../images/tabs/right-dark2.png");
-}
-*/
 
 .curveTabSelector {
-	position: absolute;
-	left: 0;
-	top: 4px;
-	height: 24px;
-	cursor: pointer;
+    position: absolute;
+    left: 0;
+    top: 0;
+    cursor: pointer;
+    display: flex;
+    height: 34px;
+    border: none;
+    border-radius: .25rem;
+    border: 1px solid transparent;
+    background-color: transparent;
+    color: var(--control__text-color);
+    padding: 6px;
 }
 
 .curveTabSelector .curveTabSelector-background {
-	position: absolute;
-	opacity: 0.3;
-	height: 24px;
-	width: 100%;
-	padding-left: 10px;
-	padding-right: 10px;
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background-color: rgba(255,255,255,.2);
 }
 
-.curveTabSelector-hover .curveTabSelector-background {
-	opacity: 0.4;
+.curveTabSelector:hover {
+    border-color: rgba(255,255,255,.5);
 }
 
-.stroom-theme-dark .curveTabSelector .curveTabSelector-background {
-	opacity: 0.8;
+.curveTabSelector:hover .curveTabSelector-background {
+	opacity: .9;
 }
 
-.stroom-theme-dark .curveTabSelector-hover .curveTabSelector-background {
-	opacity: 1;
-}
-
-.curveTabSelector .curveTabSelector-background .curveTabSelector-leftBackground {
-	background-image: url("../images/tabs/tabSelectorLeft.png");
-	position: absolute;
-	left: 0;
-	top: 0;
-    width: 10px;
-    height: 18px;
-}
-
-.curveTabSelector .curveTabSelector-background .curveTabSelector-midBackground {
-	background-image: url("../images/tabs/tabSelectorMiddle.png");
-	background-repeat: repeat-x;
-	width: 100%;
-    height: 18px;
-}
-
-.curveTabSelector .curveTabSelector-background .curveTabSelector-rightBackground {
-	background-image: url("../images/tabs/tabSelectorRight.png");
-	position: absolute;
-	right: 0;
-	top: 0;
-    width: 10px;
-    height: 18px;
-}
-
-.curveTabSelector .curveTabSelector-foreground {
-	margin-left: 10px;
-	margin-right: 10px;
+.curveTabBar:focus .curveTabSelector-keyboardSelected {
+    border-color: rgba(255,255,255,1);
 }
 
 /* Content. */
-.curveTabSelector .curveTabSelector-foreground .curveTabSelector-arrows {
-	background-image: url("../images/tabs/arrows.png");
-	position: absolute;
-	left: 8px;
-	top: 4px;
-	width: 8px;
-	height: 5px;
+.curveTabSelector .curveTabSelector-arrows {
+    display: flex;
 }
 
-.curveTabSelector .curveTabSelector-foreground .curveTabSelector-text {
-	position: relative;
-	font-size: var(--font-size-7);
-	white-space: nowrap;
-	margin-left: 7px;
-	margin-top: 7px;
-	-moz-user-select: none;
+.curveTabSelector .curveTabSelector-arrows svg {
+    width: 11px;
+    height: 9px;
 }
 
-
-
-
-
-
-
-.stroom-theme-dark .curveTabSelector .curveTabSelector-background .curveTabSelector-leftBackground {
-	background-image: url("../images/tabs/tabSelectorLeft-dark.png");
+.curveTabSelector .curveTabSelector-text {
+    font-size: var(--font-size-7);
+    white-space: nowrap;
+    margin-left: 4px;
+    margin-top: 9px;
+    -moz-user-select: none;
 }
-
-.stroom-theme-dark .curveTabSelector .curveTabSelector-background .curveTabSelector-midBackground {
-    background-image: url("../images/tabs/tabSelectorMiddle-dark.png");
-}
-
-.stroom-theme-dark .curveTabSelector .curveTabSelector-background .curveTabSelector-rightBackground {
-	background-image: url("../images/tabs/tabSelectorRight-dark.png");
-}
-
-.stroom-theme-dark .curveTabSelector .curveTabSelector-foreground .curveTabSelector-arrows {
-	background-image: url("../images/tabs/arrows-dark.png");
-}
-
-.stroom-theme-dark2 .curveTabSelector .curveTabSelector-background .curveTabSelector-leftBackground {
-	background-image: url("../images/tabs/tabSelectorLeft-dark2.png");
-}
-
-.stroom-theme-dark2 .curveTabSelector .curveTabSelector-background .curveTabSelector-midBackground {
-    background-image: url("../images/tabs/tabSelectorMiddle-dark2.png");
-}
-
-.stroom-theme-dark2 .curveTabSelector .curveTabSelector-background .curveTabSelector-rightBackground {
-	background-image: url("../images/tabs/tabSelectorRight-dark2.png");
-}
-
 
 .layerContainer-container {
 	position: relative;
@@ -521,6 +412,14 @@
 
 .linkTab-selected {
     opacity: 1;
+}
+
+.linkTab-keyboardSelected {
+    opacity: 1;
+}
+
+.linkTabBar:focus .linkTab-keyboardSelected {
+    color: #fff;
 }
 
 .linkTab:hover {
@@ -690,13 +589,13 @@
     position: absolute;
     left: 0;
     right: 0;
-    top:
-    42px;
+    top: 42px;
     bottom: 0;
 }
 
 .curveTabLayoutViewImpl-tabBarOuter {
     height: 42px;
+    margin-right: 42px;
     flex-grow: 1;
 }
 

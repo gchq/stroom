@@ -22,6 +22,9 @@ abstract class AbstractTabSelector extends Widget {
 
     public abstract void setText(String text);
 
+    protected void setKeyboardSelected(boolean selected) {
+    }
+
     protected void setHover(final boolean hover) {
     }
 }

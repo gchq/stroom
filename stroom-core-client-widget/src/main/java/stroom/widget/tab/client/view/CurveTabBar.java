@@ -28,6 +28,7 @@ public class CurveTabBar extends AbstractTabBar {
     public CurveTabBar() {
         element = DOM.createDiv();
         element.setClassName("curveTabBar");
+        element.setTabIndex(0);
 
         setElement(element);
     }

@@ -23,6 +23,8 @@ public abstract class AbstractTab extends Widget {
 
     private boolean hidden;
 
+    protected abstract void setKeyboardSelected(boolean selected);
+
     protected abstract void setSelected(boolean selected);
 
     protected abstract void setText(String text);
