@@ -32,10 +32,13 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
+import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HandlerRegistrations;
 import com.gwtplatform.mvp.client.LayerContainer;
 
 public class TabLayout extends Composite implements RequiresResize, ProvidesResize {
+
+    private final EventBus eventBus;
     private final TabLayoutConfig tabLayoutConfig;
     private final FlexLayoutChangeHandler changeHandler;
     private final Button settings;
@@ -47,7 +50,11 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
     private TabVisibility tabVisibility = TabVisibility.SHOW_ALL;
     private boolean tabsVisible = true;
 
-    public TabLayout(final TabLayoutConfig tabLayoutConfig, final FlexLayoutChangeHandler changeHandler) {
+    public TabLayout(final EventBus eventBus,
+                     final TabLayoutConfig tabLayoutConfig,
+                     final FlexLayoutChangeHandler changeHandler) {
+        this.eventBus = eventBus;
+
         this.tabLayoutConfig = tabLayoutConfig;
         this.changeHandler = changeHandler;
 
@@ -103,7 +110,7 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
             getTabLayoutConfig().setSelected(index);
             changeHandler.onDirty();
         }));
-
+        handlerRegistrations.add(tabBar.addShowMenuHandler(eventBus::fireEvent));
         handlerRegistrations.add(settings.addDomHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
                 final TabData selectedTab = tabBar.getSelectedTab();

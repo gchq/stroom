@@ -35,7 +35,9 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.function.Consumer;
+import javax.inject.Singleton;
 
+@Singleton
 public class FolderPlugin extends DocumentPlugin<DocRef> {
 
     private final Provider<FolderPresenter> editorProvider;

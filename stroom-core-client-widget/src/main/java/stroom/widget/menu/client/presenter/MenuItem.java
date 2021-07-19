@@ -33,22 +33,22 @@ public class MenuItem extends Item {
         this.text = text;
     }
 
-    @Override
-    public boolean equals(final Object obj) {
-        if (obj == null || !(obj instanceof MenuItem)) {
-            return false;
-        }
-        final MenuItem menuItem = (MenuItem) obj;
-        return menuItem.text.equals(text);
-    }
-
-    @Override
-    public int hashCode() {
-        return text.hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return text;
-    }
+//    @Override
+//    public boolean equals(final Object obj) {
+//        if (obj == null || !(obj instanceof MenuItem)) {
+//            return false;
+//        }
+//        final MenuItem menuItem = (MenuItem) obj;
+//        return menuItem.text.equals(text);
+//    }
+//
+//    @Override
+//    public int hashCode() {
+//        return text.hashCode();
+//    }
+//
+//    @Override
+//    public String toString() {
+//        return text;
+//    }
 }

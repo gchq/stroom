@@ -44,7 +44,9 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
+import javax.inject.Singleton;
 
+@Singleton
 public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
 
     private static final StatisticResource STATISTIC_RESOURCE = GWT.create(StatisticResource.class);

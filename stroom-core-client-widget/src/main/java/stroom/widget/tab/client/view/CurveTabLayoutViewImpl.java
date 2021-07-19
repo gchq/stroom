@@ -40,7 +40,7 @@ public class CurveTabLayoutViewImpl extends ViewWithUiHandlers<CurveTabLayoutUiH
     @UiField
     SimplePanel tabBarOuter;
     @UiField
-    TabBar tabBar;
+    CurveTabBar tabBar;
     @UiField
     LayerContainer layerContainer;
 

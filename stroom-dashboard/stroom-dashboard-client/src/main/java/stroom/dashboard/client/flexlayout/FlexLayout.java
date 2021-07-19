@@ -40,6 +40,7 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -54,6 +55,7 @@ public class FlexLayout extends Composite {
     private static final int SPLIT_SIZE = 4;
     private static Glass marker;
     private static Glass glass;
+    private final EventBus eventBus;
     private final FlowPanel panel;
     private final Map<Object, PositionAndSize> positionAndSizeMap = new HashMap<>();
     private final Map<SplitInfo, Splitter> splitToWidgetMap = new HashMap<>();
@@ -77,7 +79,9 @@ public class FlexLayout extends Composite {
     private FlexLayoutChangeHandler changeHandler;
     private TabVisibility tabVisibility = TabVisibility.SHOW_ALL;
 
-    public FlexLayout() {
+    public FlexLayout(final EventBus eventBus) {
+        this.eventBus = eventBus;
+
         if (glass == null) {
             glass = new Glass("flexLayout-glass", "flexLayout-glassVisible");
         }
@@ -1176,7 +1180,7 @@ public class FlexLayout extends Composite {
                 final TabLayoutConfig tabLayoutConfig = (TabLayoutConfig) key;
                 TabLayout tabLayout = layoutToWidgetMap.get(tabLayoutConfig);
                 if (tabLayout == null) {
-                    tabLayout = new TabLayout(tabLayoutConfig, changeHandler);
+                    tabLayout = new TabLayout(eventBus, tabLayoutConfig, changeHandler);
                     if (tabLayoutConfig.getAllTabCount() > 0) {
                         for (final TabConfig tabConfig : tabLayoutConfig.getTabs()) {
                             if (tabConfig.visible()) {

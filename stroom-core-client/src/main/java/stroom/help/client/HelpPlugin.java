@@ -28,6 +28,9 @@ import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import javax.inject.Singleton;
+
+@Singleton
 public class HelpPlugin extends Plugin {
 
     private final UiConfigCache clientPropertyCache;

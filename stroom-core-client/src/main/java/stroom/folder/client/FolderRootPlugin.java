@@ -37,6 +37,9 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
+import javax.inject.Singleton;
+
+@Singleton
 public class FolderRootPlugin extends Plugin implements TabData {
 
     private final ContentManager contentManager;

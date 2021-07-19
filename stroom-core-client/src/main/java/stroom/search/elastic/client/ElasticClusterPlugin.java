@@ -35,7 +35,9 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Consumer;
+import javax.inject.Singleton;
 
+@Singleton
 public class ElasticClusterPlugin extends DocumentPlugin<ElasticClusterDoc> {
 
     private static final ElasticClusterResource ELASTIC_CLUSTER_RESOURCE = GWT.create(ElasticClusterResource.class);

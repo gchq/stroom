@@ -42,7 +42,9 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 
+@Singleton
 public class PipelineSteppingPlugin extends Plugin implements BeginPipelineSteppingEvent.Handler {
 
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);

@@ -16,15 +16,38 @@
 
 package stroom.widget.menu.client.presenter;
 
+import java.util.Objects;
+
 public class Item {
 
+    private static int lastId = 0;
+
+    private final int id;
     private final int priority;
 
     public Item(final int priority) {
+        this.id = lastId++;
         this.priority = priority;
     }
 
     public int getPriority() {
         return priority;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Item)) {
+            return false;
+        }
+        final Item item = (Item) o;
+        return id == item.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

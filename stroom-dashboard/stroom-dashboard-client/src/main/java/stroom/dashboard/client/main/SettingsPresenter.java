@@ -76,6 +76,7 @@ public class SettingsPresenter extends MyPresenterWidget<LinkTabsLayoutView> {
                 changeSelectedTab(tab);
             }
         }));
+        registerHandler(getView().getTabBar().addShowMenuHandler((e) -> getEventBus().fireEvent(e)));
     }
 
     public void setComponents(final Components components) {

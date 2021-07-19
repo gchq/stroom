@@ -23,6 +23,7 @@ import stroom.explorer.client.view.ExplorerCell;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNode.NodeState;
 import stroom.util.shared.EqualsUtil;
+import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.spinner.client.SpinnerSmall;
 import stroom.widget.util.client.DoubleSelectTester;
 import stroom.widget.util.client.MouseUtil;
@@ -57,7 +58,7 @@ public class ExplorerTree extends AbstractExplorerTree {
     private final MaxScrollPanel scrollPanel;
     private final CellTable<ExplorerNode> cellTable;
     private final DoubleSelectTester doubleClickTest = new DoubleSelectTester();
-//    private final boolean allowMultiSelect;
+    //    private final boolean allowMultiSelect;
     private final String expanderClassName;
 
     // Required for multiple selection using shift and control key modifiers.
@@ -186,7 +187,11 @@ public class ExplorerTree extends AbstractExplorerTree {
 
                             final Runnable closeHandler = () ->
                                     cellTable.setKeyboardSelectedRow(row, true);
-                            ShowExplorerMenuEvent.fire(ExplorerTree.this, selectionModel, closeHandler, x, y);
+                            ShowExplorerMenuEvent.fire(
+                                    ExplorerTree.this,
+                                    selectionModel,
+                                    closeHandler,
+                                    new PopupPosition(x, y));
                         }
                     }
                 }
@@ -218,7 +223,11 @@ public class ExplorerTree extends AbstractExplorerTree {
 
                     final Runnable closeHandler = () ->
                             cellTable.setKeyboardSelectedRow(row, true);
-                    ShowExplorerMenuEvent.fire(ExplorerTree.this, selectionModel, closeHandler, x, y);
+                    ShowExplorerMenuEvent.fire(
+                            ExplorerTree.this,
+                            selectionModel,
+                            closeHandler,
+                            new PopupPosition(x, y));
 
                 } else if (MouseUtil.isPrimary(nativeEvent)) {
                     final ExplorerNode selectedItem = e.getValue();

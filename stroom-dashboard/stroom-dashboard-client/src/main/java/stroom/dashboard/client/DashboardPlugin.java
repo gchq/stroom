@@ -43,7 +43,9 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
+import javax.inject.Singleton;
 
+@Singleton
 public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
 
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);

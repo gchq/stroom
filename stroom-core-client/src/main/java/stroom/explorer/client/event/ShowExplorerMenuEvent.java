@@ -17,6 +17,7 @@
 package stroom.explorer.client.event;
 
 import stroom.explorer.shared.ExplorerNode;
+import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.event.shared.EventHandler;
@@ -28,25 +29,21 @@ public class ShowExplorerMenuEvent extends GwtEvent<ShowExplorerMenuEvent.Handle
     private static Type<Handler> TYPE;
     private final MultiSelectionModel<ExplorerNode> selectionModel;
     private final Runnable closeHandler;
-    private final int x;
-    private final int y;
+    private final PopupPosition popupPosition;
 
     private ShowExplorerMenuEvent(final MultiSelectionModel<ExplorerNode> selectionModel,
                                   final Runnable closeHandler,
-                                  final int x,
-                                  final int y) {
+                                  final PopupPosition popupPosition) {
         this.selectionModel = selectionModel;
         this.closeHandler = closeHandler;
-        this.x = x;
-        this.y = y;
+        this.popupPosition = popupPosition;
     }
 
     public static void fire(final HasHandlers handlers,
                             final MultiSelectionModel<ExplorerNode> selectionModel,
                             final Runnable closeHandler,
-                            final int x,
-                            final int y) {
-        handlers.fireEvent(new ShowExplorerMenuEvent(selectionModel, closeHandler, x, y));
+                            final PopupPosition popupPosition) {
+        handlers.fireEvent(new ShowExplorerMenuEvent(selectionModel, closeHandler, popupPosition));
     }
 
     public static Type<Handler> getType() {
@@ -74,12 +71,8 @@ public class ShowExplorerMenuEvent extends GwtEvent<ShowExplorerMenuEvent.Handle
         return closeHandler;
     }
 
-    public int getX() {
-        return x;
-    }
-
-    public int getY() {
-        return y;
+    public PopupPosition getPopupPosition() {
+        return popupPosition;
     }
 
     public interface Handler extends EventHandler {

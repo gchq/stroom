@@ -18,7 +18,9 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Consumer;
+import javax.inject.Singleton;
 
+@Singleton
 public class IndexPlugin extends DocumentPlugin<IndexDoc> {
 
     private static final IndexResource INDEX_RESOURCE = GWT.create(IndexResource.class);

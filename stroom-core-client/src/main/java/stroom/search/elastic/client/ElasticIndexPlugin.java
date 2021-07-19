@@ -35,7 +35,9 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Consumer;
+import javax.inject.Singleton;
 
+@Singleton
 public class ElasticIndexPlugin extends DocumentPlugin<ElasticIndexDoc> {
 
     private static final ElasticIndexResource ELASTIC_INDEX_RESOURCE = GWT.create(ElasticIndexResource.class);

@@ -29,6 +29,9 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
+import javax.inject.Singleton;
+
+@Singleton
 public class AboutPlugin extends Plugin {
 
     private final Provider<AboutPresenter> provider;
@@ -37,13 +40,6 @@ public class AboutPlugin extends Plugin {
     public AboutPlugin(final EventBus eventBus, final Provider<AboutPresenter> provider) {
         super(eventBus);
         this.provider = provider;
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(getEventBus().addHandler(BeforeRevealMenubarEvent.getType(), this));
     }
 
     @Override

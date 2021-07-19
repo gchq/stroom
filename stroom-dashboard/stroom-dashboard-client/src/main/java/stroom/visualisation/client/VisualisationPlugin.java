@@ -35,7 +35,9 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Consumer;
+import javax.inject.Singleton;
 
+@Singleton
 public class VisualisationPlugin extends DocumentPlugin<VisualisationDoc> {
 
     private static final VisualisationResource VISUALISATION_RESOURCE = GWT.create(VisualisationResource.class);

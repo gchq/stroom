@@ -265,6 +265,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         registerHandler(getView().getTabBar().addSelectionHandler(event ->
                 onNewTabSelected(event.getSelectedItem())));
+        registerHandler(getView().getTabBar().addShowMenuHandler((e) -> getEventBus().fireEvent(e)));
     }
 
     private void onNewTabSelected(final TabData tab) {

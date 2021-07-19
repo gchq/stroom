@@ -17,15 +17,14 @@
 package stroom.widget.tab.client.view;
 
 import stroom.util.shared.EqualsUtil;
+import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.presenter.Item;
+import stroom.widget.menu.client.presenter.ShowMenuEvent;
+import stroom.widget.menu.client.presenter.ShowMenuEvent.Handler;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupSupport;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import stroom.widget.popup.client.view.PopupSupportImpl;
 import stroom.widget.tab.client.event.RequestCloseTabEvent;
 import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.presenter.TabData;
-import stroom.widget.tab.client.presenter.TabListPresenter;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.dom.client.Element;
@@ -40,6 +39,7 @@ import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -55,8 +55,6 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
     private TabData selectedTab;
     private TabData keyboardSelectedTab;
     private int overflowTabCount;
-    private TabListPresenter tabItemListPresenter;
-    private PopupSupport popupSupport;
     private Object currentTargetObject;
     private AbstractTabSelector tabSelector;
     private List<Element> separators;
@@ -79,6 +77,10 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
 
     @Override
     public void addTab(final TabData tabData) {
+        if (tabs.size() == 0) {
+            keyboardSelectedTab = tabData;
+        }
+
         if (tabWidgetMap.containsKey(tabData)) {
             removeTab(tabData);
         }
@@ -131,8 +133,6 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
     public void selectTab(final TabData tabData) {
         if (!EqualsUtil.isEquals(tabData, selectedTab)) {
             selectedTab = tabData;
-            keyboardSelectedTab = tabData;
-
             if (selectedTab != null) {
                 tabPriority.remove(tabData);
 
@@ -141,7 +141,6 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
                     tabPriority.add(0, tabData);
                 } else {
                     selectedTab = null;
-                    keyboardSelectedTab = null;
                 }
             }
             onResize();
@@ -412,6 +411,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
             } else if (targetTabData != selectedTab) {
                 // If this tab isn't currently selected then
                 // request it is selected.
+                keyboardSelectTab(targetTabData);
                 fireTabSelection(targetTabData);
             }
         }
@@ -460,43 +460,44 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
         final int right = left + element.getOffsetWidth();
         final int top = element.getAbsoluteTop();
         final int bottom = top + 20;
+        final PopupPosition popupPosition = new PopupPosition(left, right, top, bottom);
 
-        if (tabItemListPresenter == null) {
-            tabItemListPresenter = new TabListPresenter();
-            popupSupport = new PopupSupportImpl(tabItemListPresenter.getView(), null, null, element);
+        final List<TabData> tabsNotShown = new ArrayList<>();
+        final List<TabData> tabsShown = new ArrayList<>();
 
-            tabItemListPresenter.addSelectionHandler(event -> {
-                popupSupport.hide();
-
-                final TabData tabData = event.getSelectedItem();
-                fireTabSelection(tabData);
-            });
-        }
-
-        final List<TabData> nonHiddenTabs = new ArrayList<>();
+        final List<TabData> tabList = new ArrayList<>();
         for (final TabData tabData : tabPriority) {
             if (!getTab(tabData).isHidden()) {
-                nonHiddenTabs.add(tabData);
+                tabList.add(tabData);
             }
         }
 
-        tabItemListPresenter.setData(nonHiddenTabs, overflowTabCount);
+        for (int i = tabList.size() - overflowTabCount; i < tabList.size(); i++) {
+            tabsNotShown.add(tabList.get(i));
+        }
+        for (int i = 0; i < tabList.size() - overflowTabCount; i++) {
+            tabsShown.add(tabList.get(i));
+        }
 
-        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                popupSupport.hide();
-            }
-        };
+        final TabItemComparator comparator = new TabItemComparator();
+        tabsNotShown.sort(comparator);
+        tabsShown.sort(comparator);
 
-        final PopupPosition popupPosition = new PopupPosition(left, right, top, bottom);
-        popupSupport.show(PopupType.POPUP, popupPosition, null, popupUiHandlers);
+        final List<Item> menuItems = new ArrayList<>();
+
+        for (final TabData tabData : tabsNotShown) {
+            menuItems.add(new TabDataIconMenuItem(this, 0, tabData, true));
+        }
+        for (final TabData tabData : tabsShown) {
+            menuItems.add(new TabDataIconMenuItem(this, 0, tabData, false));
+        }
+
+        ShowMenuEvent.fire(this, menuItems, popupPosition, () -> getElement().focus(), element);
     }
 
     private void fireTabSelection(final TabData tabData) {
         if (tabData != null && tabData != selectedTab) {
             SelectionEvent.fire(this, tabData);
-            keyboardSelectTab(tabData);
         }
     }
 
@@ -515,6 +516,11 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
     public HandlerRegistration addRequestCloseTabHandler(
             final RequestCloseTabEvent.Handler handler) {
         return addHandler(handler, RequestCloseTabEvent.getType());
+    }
+
+    @Override
+    public HandlerRegistration addShowMenuHandler(final Handler handler) {
+        return addHandler(handler, ShowMenuEvent.getType());
     }
 
     @Override
@@ -560,5 +566,38 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
 
     protected int getTabGap() {
         return 0;
+    }
+
+    private static class TabDataIconMenuItem extends IconMenuItem {
+
+        private final TabData tabData;
+
+        public TabDataIconMenuItem(final AbstractTabBar tabBar,
+                                   final int priority,
+                                   final TabData tabData,
+                                   final boolean notShown) {
+            super(priority,
+                    tabData.getIcon(),
+                    null,
+                    notShown
+                            ? "<b>" + tabData.getLabel() + "</b>"
+                            : tabData.getLabel(),
+                    null,
+                    true,
+                    () -> tabBar.fireTabSelection(tabData));
+            this.tabData = tabData;
+        }
+
+        public TabData getTabData() {
+            return tabData;
+        }
+    }
+
+    private static class TabItemComparator implements Comparator<TabData> {
+
+        @Override
+        public int compare(final TabData o1, final TabData o2) {
+            return o1.getLabel().compareTo(o2.getLabel());
+        }
     }
 }

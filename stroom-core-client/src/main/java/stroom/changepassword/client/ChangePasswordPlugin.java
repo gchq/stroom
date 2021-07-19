@@ -12,6 +12,9 @@ import stroom.widget.menu.client.presenter.IconMenuItem;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import javax.inject.Singleton;
+
+@Singleton
 public class ChangePasswordPlugin extends Plugin {
 
     private final UiConfigCache clientPropertyCache;
@@ -21,13 +24,6 @@ public class ChangePasswordPlugin extends Plugin {
                                 final UiConfigCache clientPropertyCache) {
         super(eventBus);
         this.clientPropertyCache = clientPropertyCache;
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-
-        registerHandler(getEventBus().addHandler(BeforeRevealMenubarEvent.getType(), this));
     }
 
     @Override

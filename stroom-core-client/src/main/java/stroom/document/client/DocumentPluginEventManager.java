@@ -76,9 +76,9 @@ import stroom.widget.menu.client.presenter.GroupHeading;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.Menu;
 import stroom.widget.menu.client.presenter.MenuItem;
 import stroom.widget.menu.client.presenter.Separator;
+import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.tab.client.event.RequestCloseAllTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseTabEvent;
@@ -102,7 +102,9 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.inject.Singleton;
 
+@Singleton
 public class DocumentPluginEventManager extends Plugin {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
@@ -118,7 +120,6 @@ public class DocumentPluginEventManager extends Plugin {
     private final HasSaveRegistry hasSaveRegistry;
     private final RestFactory restFactory;
     private final DocumentTypeCache documentTypeCache;
-    private final Menu menu;
     private final DocumentPluginRegistry documentPluginRegistry;
     private final ClientSecurityContext securityContext;
     private final KeyboardInterceptor keyboardInterceptor;
@@ -131,7 +132,6 @@ public class DocumentPluginEventManager extends Plugin {
                                       final KeyboardInterceptor keyboardInterceptor,
                                       final RestFactory restFactory,
                                       final DocumentTypeCache documentTypeCache,
-                                      final Menu menu,
                                       final DocumentPluginRegistry documentPluginRegistry,
                                       final ClientSecurityContext securityContext) {
         super(eventBus);
@@ -139,7 +139,6 @@ public class DocumentPluginEventManager extends Plugin {
         this.keyboardInterceptor = keyboardInterceptor;
         this.restFactory = restFactory;
         this.documentTypeCache = documentTypeCache;
-        this.menu = menu;
         this.documentPluginRegistry = documentPluginRegistry;
         this.securityContext = securityContext;
     }
@@ -337,9 +336,10 @@ public class DocumentPluginEventManager extends Plugin {
             if (getSelectedItems().size() == 1) {
                 final ExplorerNode primarySelection = getPrimarySelection();
                 getNewMenuItems(primarySelection).onSuccess(children ->
-                        menu.show(children,
-                                event.getX(),
-                                event.getY(),
+                        ShowMenuEvent.fire(
+                                this,
+                                children,
+                                event.getPopupPosition(),
                                 () -> event.getElement().focus(),
                                 event.getElement()));
             }
@@ -362,9 +362,10 @@ public class DocumentPluginEventManager extends Plugin {
                                             documentTypes);
                                     addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
 
-                                    menu.show(menuItems,
-                                            event.getX(),
-                                            event.getY(),
+                                    ShowMenuEvent.fire(
+                                            this,
+                                            menuItems,
+                                            event.getPopupPosition(),
                                             event.getCloseHandler());
 
 //                            menuPresenter.setData(menuItems);

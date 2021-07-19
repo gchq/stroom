@@ -15,6 +15,9 @@ import stroom.widget.menu.client.presenter.IconMenuItem;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import javax.inject.Singleton;
+
+@Singleton
 public class UsersPlugin extends NodeToolsPlugin {
 
     private final UiConfigCache clientPropertyCache;

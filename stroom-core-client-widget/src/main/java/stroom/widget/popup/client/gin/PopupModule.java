@@ -16,6 +16,7 @@
 
 package stroom.widget.popup.client.gin;
 
+import stroom.widget.menu.client.presenter.Menu;
 import stroom.widget.popup.client.presenter.PopupManager;
 
 import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
@@ -25,5 +26,6 @@ public class PopupModule extends AbstractPresenterModule {
     @Override
     protected void configure() {
         bind(PopupManager.class).asEagerSingleton();
+        bind(Menu.class).asEagerSingleton();
     }
 }

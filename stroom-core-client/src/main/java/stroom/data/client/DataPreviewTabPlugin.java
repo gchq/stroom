@@ -26,7 +26,9 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.Optional;
+import javax.inject.Singleton;
 
+@Singleton
 public class DataPreviewTabPlugin extends AbstractTabPresenterPlugin<DataPreviewKey, DataPreviewTabPresenter> {
 
     @Inject

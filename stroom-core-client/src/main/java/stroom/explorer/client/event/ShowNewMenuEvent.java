@@ -16,6 +16,8 @@
 
 package stroom.explorer.client.event;
 
+import stroom.widget.popup.client.presenter.PopupPosition;
+
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -25,17 +27,15 @@ public class ShowNewMenuEvent extends GwtEvent<ShowNewMenuEvent.Handler> {
 
     private static Type<Handler> TYPE;
     private final Element element;
-    private final int x;
-    private final int y;
+    private final PopupPosition popupPosition;
 
-    private ShowNewMenuEvent(final Element element, final int x, final int y) {
+    private ShowNewMenuEvent(final Element element, final PopupPosition popupPosition) {
         this.element = element;
-        this.x = x;
-        this.y = y;
+        this.popupPosition = popupPosition;
     }
 
-    public static void fire(final HasHandlers handlers, final Element element, final int x, final int y) {
-        handlers.fireEvent(new ShowNewMenuEvent(element, x, y));
+    public static void fire(final HasHandlers handlers, final Element element, final PopupPosition popupPosition) {
+        handlers.fireEvent(new ShowNewMenuEvent(element, popupPosition));
     }
 
     public static Type<Handler> getType() {
@@ -59,12 +59,8 @@ public class ShowNewMenuEvent extends GwtEvent<ShowNewMenuEvent.Handler> {
         return element;
     }
 
-    public int getX() {
-        return x;
-    }
-
-    public int getY() {
-        return y;
+    public PopupPosition getPopupPosition() {
+        return popupPosition;
     }
 
     public interface Handler extends EventHandler {

@@ -29,6 +29,9 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
+import javax.inject.Singleton;
+
+@Singleton
 public class DependenciesPlugin extends MonitoringPlugin<DependenciesTabPresenter> {
 
     @Inject

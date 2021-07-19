@@ -35,7 +35,9 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Consumer;
+import javax.inject.Singleton;
 
+@Singleton
 public class XsltPlugin extends DocumentPlugin<XsltDoc> {
 
     private static final XsltResource XSLT_RESOURCE = GWT.create(XsltResource.class);

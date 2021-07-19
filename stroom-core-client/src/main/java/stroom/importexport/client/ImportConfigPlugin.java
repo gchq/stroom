@@ -29,6 +29,9 @@ import stroom.widget.menu.client.presenter.Separator;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import javax.inject.Singleton;
+
+@Singleton
 public class ImportConfigPlugin extends Plugin {
 
     private final ClientSecurityContext securityContext;

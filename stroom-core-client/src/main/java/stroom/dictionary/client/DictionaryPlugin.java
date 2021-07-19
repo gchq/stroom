@@ -35,7 +35,9 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Consumer;
+import javax.inject.Singleton;
 
+@Singleton
 public class DictionaryPlugin extends DocumentPlugin<DictionaryDoc> {
 
     private static final DictionaryResource DICTIONARY_RESOURCE = GWT.create(DictionaryResource.class);

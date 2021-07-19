@@ -48,6 +48,7 @@ public abstract class CurveTabLayoutPresenter<P extends Proxy<?>> extends MyPres
                 RequestCloseTabEvent.fire(
                         CurveTabLayoutPresenter.this,
                         event.getTabData())));
+        registerHandler(getView().getTabBar().addShowMenuHandler(event -> getEventBus().fireEvent(event)));
     }
 
     public void add(final TabData tabData, final Layer layer) {

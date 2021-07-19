@@ -176,8 +176,7 @@ public class ExplorerTreePresenter
     public void newItem(final Element element) {
         final int x = element.getAbsoluteLeft() - 1;
         final int y = element.getAbsoluteTop() + element.getOffsetHeight() + 1;
-
-        ShowNewMenuEvent.fire(this, element, x, y);
+        ShowNewMenuEvent.fire(this, element, new PopupPosition(x, y));
     }
 
     @Override

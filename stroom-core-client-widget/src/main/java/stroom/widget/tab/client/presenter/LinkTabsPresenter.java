@@ -67,6 +67,7 @@ public class LinkTabsPresenter extends MyPresenterWidget<LinkTabsLayoutView> {
                 }
             }
         }));
+        registerHandler(getView().getTabBar().addShowMenuHandler((e) -> getEventBus().fireEvent(e)));
     }
 
     public void changeSelectedTab(final TabData tab) {

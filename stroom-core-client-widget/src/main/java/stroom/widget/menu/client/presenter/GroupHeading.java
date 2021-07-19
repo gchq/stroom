@@ -29,22 +29,22 @@ public class GroupHeading extends Item {
         return groupName;
     }
 
-    @Override
-    public boolean equals(final Object obj) {
-        if (!(obj instanceof GroupHeading)) {
-            return false;
-        }
-        final GroupHeading groupHeading = (GroupHeading) obj;
-        return groupHeading.groupName.equals(this.groupName);
-    }
-
-    @Override
-    public int hashCode() {
-        return groupName.hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return groupName;
-    }
+//    @Override
+//    public boolean equals(final Object obj) {
+//        if (!(obj instanceof GroupHeading)) {
+//            return false;
+//        }
+//        final GroupHeading groupHeading = (GroupHeading) obj;
+//        return groupHeading.groupName.equals(this.groupName);
+//    }
+//
+//    @Override
+//    public int hashCode() {
+//        return groupName.hashCode();
+//    }
+//
+//    @Override
+//    public String toString() {
+//        return groupName;
+//    }
 }

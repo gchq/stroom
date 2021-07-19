@@ -384,6 +384,7 @@ public class App extends Application<Config> {
 
             // Super Dev Mode isn't compatible with HTTPS so ensure cookies are not secure.
             appConfig.getSessionCookieConfig().setSecure(false);
+            appConfig.getUiConfig().setRequireReactWrapper(false);
 
             // The standard content security policy is incompatible with GWT super dev mode
             disableContentSecurity(appConfig);

@@ -41,18 +41,14 @@ import stroom.widget.button.client.SvgButton;
 import stroom.widget.menu.client.presenter.HasChildren;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.Menu;
 import stroom.widget.menu.client.presenter.MenuItem;
 import stroom.widget.menu.client.presenter.MenuItems;
-import stroom.widget.menu.client.presenter.MenuPresenter;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tab.client.event.MaximiseEvent;
 
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.user.client.Command;
@@ -62,7 +58,6 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenter;
@@ -90,7 +85,6 @@ public class NavigationPresenter
     private final TypeFilterPresenter typeFilterPresenter;
     private final CurrentActivity currentActivity;
     private final ExplorerTree explorerTree;
-    private final Menu menu;
     private final SimplePanel activityOuter = new SimplePanel();
     private final Button activityButton = new Button();
 
@@ -127,14 +121,12 @@ public class NavigationPresenter
                                final DocumentTypeCache documentTypeCache,
                                final TypeFilterPresenter typeFilterPresenter,
                                final CurrentActivity currentActivity,
-                               final UiConfigCache uiConfigCache,
-                               final Menu menu) {
+                               final UiConfigCache uiConfigCache) {
         super(eventBus, view, proxy);
         this.menuItems = menuItems;
         this.documentTypeCache = documentTypeCache;
         this.typeFilterPresenter = typeFilterPresenter;
         this.currentActivity = currentActivity;
-        this.menu = menu;
 
         view.setUiHandlers(this);
 
@@ -232,8 +224,7 @@ public class NavigationPresenter
     public void newItem(final Element element) {
         final int x = element.getAbsoluteLeft() - 1;
         final int y = element.getAbsoluteTop() + element.getOffsetHeight() + 1;
-
-        ShowNewMenuEvent.fire(this, element, x, y);
+        ShowNewMenuEvent.fire(this, element, new PopupPosition(x, y));
     }
 
     public void deleteItem() {
@@ -265,10 +256,12 @@ public class NavigationPresenter
                               final int x,
                               final int y,
                               final Element autoHidePartner) {
-        if (menu.isShowing()) {
-            menu.hide();
-        } else if (children != null && children.size() > 0) {
-            menu.show(children, x, y, autoHidePartner::focus, autoHidePartner);
+//        if (menu.isShowing()) {
+//            menu.hide();
+//        } else
+
+        if (children != null && children.size() > 0) {
+            ShowMenuEvent.fire(this, children, new PopupPosition(x, y), autoHidePartner::focus, autoHidePartner);
         }
     }
 

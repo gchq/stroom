@@ -17,6 +17,7 @@
 package stroom.widget.tab.client.presenter;
 
 import stroom.widget.tab.client.event.HasRequestCloseTabHandlers;
+import stroom.widget.menu.client.presenter.ShowMenuEvent.HasShowMenuHandlers;
 
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 
@@ -24,7 +25,8 @@ import java.util.List;
 
 public interface TabBar extends
         HasSelectionHandlers<TabData>,
-        HasRequestCloseTabHandlers {
+        HasRequestCloseTabHandlers,
+        HasShowMenuHandlers {
 
     void addTab(TabData tab);
 

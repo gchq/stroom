@@ -35,7 +35,9 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Consumer;
+import javax.inject.Singleton;
 
+@Singleton
 public class XMLSchemaPlugin extends DocumentPlugin<XmlSchemaDoc> {
 
     private static final XmlSchemaResource XML_SCHEMA_RESOURCE = GWT.create(XmlSchemaResource.class);
