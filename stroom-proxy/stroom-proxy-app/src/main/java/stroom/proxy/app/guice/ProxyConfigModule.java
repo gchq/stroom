@@ -14,7 +14,6 @@ import stroom.proxy.repo.ProxyRepositoryReaderConfig;
 import stroom.util.config.ConfigLocation;
 import stroom.util.io.PathConfig;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.AbstractProxyConfig;
 import stroom.util.shared.IsProxyConfig;
 
 import com.google.inject.AbstractModule;

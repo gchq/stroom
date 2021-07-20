@@ -2,8 +2,8 @@ package stroom.proxy.app;
 
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.io.PathConfig;
-import stroom.util.shared.AbstractProxyConfig;
 import stroom.util.shared.IsProxyConfig;
+import stroom.util.shared.validation.ValidDirectoryPath;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -24,6 +24,7 @@ public class ProxyPathConfig extends PathConfig implements IsProxyConfig {
 
     @Override
     @ReadOnly
+    @ValidDirectoryPath
     @JsonPropertyDescription("By default, unless configured otherwise, all other configured paths " +
             "(except proxyConfig.path.temp) will be relative to this directory. If this value is null then" +
             "Stroom-Proxy will use either of the following to derive proxyConfig.path.home: the directory of the " +
@@ -36,6 +37,7 @@ public class ProxyPathConfig extends PathConfig implements IsProxyConfig {
     @Override
     @Nonnull
     @ReadOnly
+    @ValidDirectoryPath
     @JsonPropertyDescription("This directory is used by stroom-proxy to write any temporary file to. " +
             "Should only be set per node in application YAML configuration file.")
     public String getTemp() {

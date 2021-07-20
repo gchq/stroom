@@ -1,7 +1,6 @@
 package stroom.proxy.app.handler;
 
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.AbstractProxyConfig;
 import stroom.util.shared.IsProxyConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;

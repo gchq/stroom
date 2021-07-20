@@ -1,6 +1,5 @@
 package stroom.proxy.app;
 
-import stroom.util.shared.AbstractProxyConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.PropertyPath;
 
@@ -26,6 +25,7 @@ public class RestClientConfig extends JerseyClientConfiguration implements IsPro
     /**
      * @return The base property path, e.g. "stroom.node" for this config object
      */
+    @Override
     @JsonIgnore
     public String getBasePath() {
         Objects.requireNonNull(basePropertyPath);
@@ -36,12 +36,14 @@ public class RestClientConfig extends JerseyClientConfiguration implements IsPro
      * @return The full property path, e.g. "stroom.node.status" for the named property on this config
      * object
      */
+    @Override
     public String getFullPath(final String propertyName) {
         Objects.requireNonNull(basePropertyPath);
         Objects.requireNonNull(propertyName);
         return basePropertyPath.merge(propertyName).toString();
     }
 
+    @Override
     @JsonIgnore
     public void setBasePath(final PropertyPath basePropertyPath) {
         this.basePropertyPath = basePropertyPath;

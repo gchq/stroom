@@ -1,12 +1,14 @@
 package stroom.util.cert;
 
-import stroom.util.shared.AbstractProxyConfig;
+import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
+import stroom.util.shared.validation.ValidFilePath;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @NotInjectableConfig
-public class SSLConfig extends AbstractProxyConfig {
+public class SSLConfig extends AbstractConfig implements IsProxyConfig {
 
     private String keyStorePath;
     private String keyStoreType = "JKS";
@@ -23,6 +25,7 @@ public class SSLConfig extends AbstractProxyConfig {
      * The path to the keystore file that will be used for client authentication during forwarding
      */
     @JsonProperty
+    @ValidFilePath
     public String getKeyStorePath() {
         return keyStorePath;
     }
@@ -62,6 +65,7 @@ public class SSLConfig extends AbstractProxyConfig {
      * The path to the truststore file that will be used for client authentication during forwarding
      */
     @JsonProperty
+    @ValidFilePath
     public String getTrustStorePath() {
         return trustStorePath;
     }

@@ -25,6 +25,8 @@ logging:
   level: ${STROOM_PROXY_LOGGING_LEVEL:- WARN}
   loggers:
     stroom: INFO
+    stroom.util.validation: DEBUG
+    stroom.util.config: DEBUG
     io.dropwizard: INFO
     org.eclipse.jetty: INFO
     org.flywaydb: INFO
@@ -124,7 +126,7 @@ proxyConfig:
     metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn,remotecertexpiry"
   path:
     # Versioned dirs for dev to allow running multiple proxy instances
-    home: "~/.stroom-proxy/v7"
+    home: "${HOME}/.stroom-proxy/v7"
     temp: "/tmp/stroom-proxy/v7"
   proxyRepositoryConfig:
     storingEnabled: true

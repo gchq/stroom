@@ -1,11 +1,13 @@
 package stroom.util.config;
 
+import stroom.util.config.PropertyUtil.Prop;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.HasPropertyPath;
 import stroom.util.shared.validation.ValidationSeverity;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -36,9 +38,9 @@ public class ConfigValidator<T> {
      * Validates a single config property value
      */
     public Result<T> validateValue(final Class<? extends T> configClass,
-                                final String propertyName,
-                                final Object value,
-                                final Class<T> configSuperType) {
+                                   final String propertyName,
+                                   final Object value,
+                                   final Class<T> configSuperType) {
 
         final Set<? extends ConstraintViolation<? extends T>> constraintViolations =
                 validator.validateValue(configClass, propertyName, value);
@@ -51,6 +53,7 @@ public class ConfigValidator<T> {
      * Will only validate child objects marked with @Valid.
      */
     public Result<T> validate(final T config, final Class<T> configSuperType) {
+        LOGGER.debug(() -> LogUtil.message("Validating class {}", config.getClass()));
         final Set<ConstraintViolation<T>> constraintViolations = validator.validate(config);
         return Result.of(constraintViolations, configSuperType);
     }
@@ -74,18 +77,73 @@ public class ConfigValidator<T> {
         PropertyUtil.walkObjectTree(
                 config,
                 prop ->
-                        // Only want to validate config objects
-                        configSuperType.isAssignableFrom(prop.getValueClass())
-                                && prop.getValueFromConfigObject() != null,
-                prop -> {
-                    final T configObject = (T) prop.getValueFromConfigObject();
-                    final Result<T> result = validate(configObject, configSuperType);
-                    if (result.hasErrorsOrWarnings()) {
-                        resultList.add(result);
-                    }
-                });
+                        canValidateProp(configSuperType, prop),
+                prop ->
+                        validateProp(prop, resultList));
 
         return Result.of(resultList, configSuperType);
+    }
+
+    private void validateProp(final Prop prop, final List<Result<T>> resultList) {
+
+        if (Collection.class.isAssignableFrom(prop.getValueClass())) {
+            ((Collection<?>) prop.getValueFromConfigObject()).forEach(item -> {
+                // we already know the items in the collection are config objects
+                // so recurse into each one.
+                PropertyUtil.walkObjectTree(
+                        item,
+                        childProp ->
+                                canValidateProp(configSuperType, childProp),
+                        childProp ->
+                                validateProp(childProp, resultList));
+            });
+        } else {
+            final T configObject = (T) prop.getValueFromConfigObject();
+            final Result<T> result = validate(configObject, configSuperType);
+            if (result.hasErrorsOrWarnings()) {
+                resultList.add(result);
+            }
+        }
+    }
+
+    private boolean canValidateProp(final Class<T> configSuperType, final Prop prop) {
+        // Only want to validate config objects
+        final Class<?> valueClass = prop.getValueClass();
+
+        final boolean isIncludedInValidation;
+
+        if (prop.getValueFromConfigObject() == null) {
+            isIncludedInValidation = false;
+        } else if (configSuperType.isAssignableFrom(valueClass)) {
+            // One of our config classes
+            isIncludedInValidation = true;
+        } else if (Collection.class.isAssignableFrom(valueClass)) {
+            // e.g. List<?>, as in forwardStreamConfig.forwardDestinations
+            final List<Type> genericTypes = PropertyUtil.getGenericTypes(prop.getValueType());
+            // TODO what to do about maps? Hopefully we won't have maps containing config objects
+            if (genericTypes.size() == 1) {
+                final Class<?> genericTypeClass = PropertyUtil.getDataType(genericTypes.get(0));
+                if (configSuperType.isAssignableFrom(genericTypeClass)) {
+                    // e.g. List<XxxxConfig>, Set<XxxxxConfig>, etc.
+                    isIncludedInValidation = true;
+                } else {
+                    // e.g. List<String>
+                    isIncludedInValidation = false;
+                }
+            } else {
+                isIncludedInValidation = false;
+            }
+        } else {
+            isIncludedInValidation = false;
+        }
+
+        if (LOGGER.isDebugEnabled() && valueClass.getName().startsWith("stroom")) {
+            LOGGER.debug(() -> LogUtil.message(
+                    "Testing class {}, isIncluded {}",
+                    valueClass.getSimpleName(),
+                    isIncludedInValidation));
+        }
+        return isIncludedInValidation;
     }
 
     public static <T> void logConstraintViolation(

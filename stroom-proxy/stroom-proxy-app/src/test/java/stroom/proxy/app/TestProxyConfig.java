@@ -1,19 +1,26 @@
 package stroom.proxy.app;
 
 import stroom.docref.DocRef;
+import stroom.util.config.ConfigValidator.Result;
 import stroom.util.config.PropertyUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
 import stroom.util.time.StroomDuration;
+import stroom.util.validation.ValidationModule;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -28,6 +35,24 @@ class TestProxyConfig {
             LambdaLogger.class,
             StroomDuration.class
     );
+
+    @Test
+    void testValidation() throws IOException {
+        Files.createDirectories(Path.of("/tmp/stroom-proxy"));
+       
+        final Injector injector = Guice.createInjector(new ValidationModule());
+
+        final ProxyConfigValidator proxyConfigValidator = injector.getInstance(ProxyConfigValidator.class);
+
+        final ProxyConfig proxyConfig = new ProxyConfig();
+
+        final Result<IsProxyConfig> result = proxyConfigValidator.validateRecursively(proxyConfig);
+
+        result.handleViolations(ProxyConfigValidator::logConstraintViolation);
+
+        Assertions.assertThat(result.hasErrorsOrWarnings())
+                .isFalse();
+    }
 
     /**
      * Test to verify that all fields in the config tree of type stroom.*

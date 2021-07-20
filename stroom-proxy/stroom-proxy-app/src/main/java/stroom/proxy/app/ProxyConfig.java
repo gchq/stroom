@@ -6,7 +6,8 @@ import stroom.proxy.app.handler.LogStreamConfig;
 import stroom.proxy.app.handler.ProxyRequestConfig;
 import stroom.proxy.repo.ProxyRepositoryConfig;
 import stroom.proxy.repo.ProxyRepositoryReaderConfig;
-import stroom.util.shared.AbstractProxyConfig;
+import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.PropertyPath;
 import stroom.util.shared.validation.ValidationSeverity;
 
@@ -19,7 +20,7 @@ import javax.validation.constraints.AssertTrue;
 
 @Singleton
 @JsonPropertyOrder(alphabetic = true)
-public class ProxyConfig extends AbstractProxyConfig {
+public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
     public static final PropertyPath ROOT_PROPERTY_PATH = PropertyPath.fromParts("proxyConfig");
 

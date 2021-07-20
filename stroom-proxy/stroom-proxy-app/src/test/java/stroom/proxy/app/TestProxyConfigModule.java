@@ -4,7 +4,6 @@ import stroom.proxy.app.guice.ProxyConfigModule;
 import stroom.util.config.PropertyUtil;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.AbstractProxyConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
 
@@ -152,7 +151,7 @@ class TestProxyConfigModule {
             classesWithMultipleInstances.stream()
                     .sorted(Comparator.comparing(Class::getName))
                     .forEach(clazz -> {
-                        AbstractProxyConfig config = (AbstractProxyConfig) injector.getInstance(clazz);
+                        AbstractConfig config = (AbstractConfig) injector.getInstance(clazz);
                         LOGGER.info("  {}", config.getBasePath());
                     });
         }

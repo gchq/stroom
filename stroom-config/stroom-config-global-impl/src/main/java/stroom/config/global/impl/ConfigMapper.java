@@ -72,6 +72,7 @@ import java.util.stream.StreamSupport;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+
 /**
  * Responsible for mapping between the AppConfig object tree and a flat set of key value pairs.
  * The key for a leaf of the tree is a dot delimited path of all the branches to get to that leaf,
@@ -648,7 +649,7 @@ public class ConfigMapper {
             final Prop prop,
             final String value,
             final Type genericType) {
-        final Class<?> type = getDataType(genericType);
+        final Class<?> type = PropertyUtil.getDataType(genericType);
 
         if (value == null) {
             if (type.isPrimitive()) {
@@ -740,7 +741,7 @@ public class ConfigMapper {
     }
 
     private static Class<?> getGenericsParam(final Type typeWithGenerics, final int index) {
-        List<Type> genericsParamTypes = getGenericTypes(typeWithGenerics);
+        List<Type> genericsParamTypes = PropertyUtil.getGenericTypes(typeWithGenerics);
         if (genericsParamTypes.isEmpty()) {
             throw new RuntimeException(LogUtil.message(
                     "Unable to get generics parameter {} for type {} as it has no parameterised types",
@@ -751,7 +752,7 @@ public class ConfigMapper {
                     index, genericsParamTypes));
         }
 
-        return getDataType(genericsParamTypes.get(index));
+        return PropertyUtil.getDataType(genericsParamTypes.get(index));
     }
 
     private static Boolean parseBoolean(final String str) {
@@ -958,43 +959,6 @@ public class ConfigMapper {
         return Enum.valueOf((Class<Enum>) type, serialisedForm.toUpperCase());
     }
 
-    private static Class<?> getDataType(Class<?> clazz) {
-        if (clazz.isPrimitive()) {
-            return clazz;
-        }
-
-        if (clazz.isArray()) {
-            return getDataType(clazz.getComponentType());
-        }
-
-        return clazz;
-    }
-
-    private static Class<?> getDataType(Type type) {
-        if (type instanceof Class) {
-            return getDataType((Class<?>) type);
-        } else if (type instanceof ParameterizedType) {
-            ParameterizedType pt = (ParameterizedType) type;
-            return getDataType(pt.getRawType());
-        } else {
-            throw new RuntimeException(LogUtil.message("Unexpected type of type {}",
-                    type.getClass().getName()));
-        }
-    }
-
-    private static List<Type> getGenericTypes(Type type) {
-        if (type instanceof Class) {
-            return Collections.emptyList();
-        } else if (type instanceof ParameterizedType) {
-            ParameterizedType pt = (ParameterizedType) type;
-            Type[] specificTypes = pt.getActualTypeArguments();
-
-            return Arrays.asList(specificTypes);
-        } else {
-            throw new RuntimeException(LogUtil.message("Unexpected type of type {}",
-                    type.getClass().getName()));
-        }
-    }
 
     private static String getDelimiter(final String allText,
                                        final List<String> availableDelimiters) {

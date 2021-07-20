@@ -24,12 +24,11 @@ import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.proxy.app.guice.ProxyModule;
 import stroom.util.authentication.DefaultOpenIdCredentials;
-import stroom.util.config.AppConfigValidator;
 import stroom.util.config.ConfigValidator;
 import stroom.util.config.PropertyPathDecorator;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.BuildInfo;
+import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.validation.ValidationModule;
 
@@ -223,14 +222,14 @@ public class App extends Application<Config> {
         // so we can qualify each prop
         PropertyPathDecorator.decoratePaths(proxyConfig, ProxyConfig.ROOT_PROPERTY_PATH);
 
-        final AppConfigValidator appConfigValidator = validationOnlyInjector.getInstance(AppConfigValidator.class);
+        final ProxyConfigValidator appConfigValidator = validationOnlyInjector.getInstance(ProxyConfigValidator.class);
 
         LOGGER.info("Validating application configuration file {}",
                 configFile.toAbsolutePath().normalize().toString());
 
-        final ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validateRecursively(proxyConfig);
+        final ConfigValidator.Result<IsProxyConfig> result = appConfigValidator.validateRecursively(proxyConfig);
 
-        result.handleViolations(AppConfigValidator::logConstraintViolation);
+        result.handleViolations(ProxyConfigValidator::logConstraintViolation);
 
         LOGGER.info("Completed validation of application configuration, errors: {}, warnings: {}",
                 result.getErrorCount(),
