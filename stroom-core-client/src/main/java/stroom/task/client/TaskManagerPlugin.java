@@ -46,7 +46,12 @@ public class TaskManagerPlugin extends MonitoringPlugin<TaskManagerPresenter> {
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_TASKS_PERMISSION)) {
             event.getMenuItems().addMenuItem(MenuKeys.MONITORING_MENU,
-                    new IconMenuItem(13, SvgPresets.JOBS, SvgPresets.JOBS, "Server Tasks", null, true, () -> open()));
+                    new IconMenuItem.Builder()
+                            .priority(13)
+                            .icon(SvgPresets.JOBS)
+                            .text("Server Tasks")
+                            .command(this::open)
+                            .build());
         }
     }
 }

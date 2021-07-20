@@ -53,13 +53,11 @@ public class DataRetentionPlugin extends MonitoringPlugin<DataRetentionPresenter
     }
 
     private MenuItem createDataRetentionMenuItem() {
-        return new IconMenuItem(
-                51,
-                SvgPresets.HISTORY,
-                SvgPresets.HISTORY,
-                "Data Retention",
-                null,
-                true,
-                this::open);
+        return new IconMenuItem.Builder()
+                .priority(51)
+                .icon(SvgPresets.HISTORY)
+                .text("Data Retention")
+                .command(this::open)
+                .build();
     }
 }

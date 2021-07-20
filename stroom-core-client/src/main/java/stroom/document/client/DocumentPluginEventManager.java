@@ -559,39 +559,39 @@ public class DocumentPluginEventManager extends Plugin {
     public void onReveal(final BeforeRevealMenubarEvent event) {
         super.onReveal(event);
 
+        final FutureImpl<List<Item>> future = new FutureImpl<>();
+        final List<ExplorerNode> selectedItems = getSelectedItems();
+        final boolean singleSelection = selectedItems.size() == 1;
+        final ExplorerNode primarySelection = getPrimarySelection();
+
+        fetchPermissions(selectedItems,
+                documentPermissionMap -> documentTypeCache.fetch(documentTypes -> {
+                    final List<Item> menuItems = new ArrayList<>();
+
+                    // Only allow the new menu to appear if we have a single selection.
+                    addNewMenuItem(menuItems,
+                            singleSelection,
+                            documentPermissionMap,
+                            primarySelection,
+                            documentTypes);
+                    menuItems.add(createCloseMenuItem(isTabItemSelected(selectedTab)));
+                    menuItems.add(createCloseAllMenuItem(isTabItemSelected(selectedTab)));
+                    menuItems.add(new Separator(5));
+                    menuItems.add(createSaveMenuItem(6, isDirty(selectedTab)));
+                    menuItems.add(createSaveAllMenuItem(8, hasSaveRegistry.isDirty()));
+                    menuItems.add(new Separator(9));
+                    addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
+
+                    future.setResult(menuItems);
+                }));
+
         // Add menu bar item menu.
         event.getMenuItems()
-                .addMenuItem(MenuKeys.MAIN_MENU, new IconParentMenuItem(1, "Item", null) {
-                    @Override
-                    public Future<List<Item>> getChildren() {
-                        final FutureImpl<List<Item>> future = new FutureImpl<>();
-                        final List<ExplorerNode> selectedItems = getSelectedItems();
-                        final boolean singleSelection = selectedItems.size() == 1;
-                        final ExplorerNode primarySelection = getPrimarySelection();
-
-                        fetchPermissions(selectedItems,
-                                documentPermissionMap -> documentTypeCache.fetch(documentTypes -> {
-                                    final List<Item> menuItems = new ArrayList<>();
-
-                                    // Only allow the new menu to appear if we have a single selection.
-                                    addNewMenuItem(menuItems,
-                                            singleSelection,
-                                            documentPermissionMap,
-                                            primarySelection,
-                                            documentTypes);
-                                    menuItems.add(createCloseMenuItem(isTabItemSelected(selectedTab)));
-                                    menuItems.add(createCloseAllMenuItem(isTabItemSelected(selectedTab)));
-                                    menuItems.add(new Separator(5));
-                                    menuItems.add(createSaveMenuItem(6, isDirty(selectedTab)));
-                                    menuItems.add(createSaveAllMenuItem(8, hasSaveRegistry.isDirty()));
-                                    menuItems.add(new Separator(9));
-                                    addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
-
-                                    future.setResult(menuItems);
-                                }));
-                        return future;
-                    }
-                });
+                .addMenuItem(MenuKeys.MAIN_MENU, new IconParentMenuItem.Builder()
+                        .priority(1)
+                        .text("Item")
+                        .children(future)
+                        .build());
     }
 
     private Future<List<Item>> getNewMenuItems(final ExplorerNode explorerNode) {
@@ -638,34 +638,27 @@ public class DocumentPluginEventManager extends Plugin {
                                 final Map<ExplorerNode, ExplorerNodePermissions> documentPermissionMap,
                                 final ExplorerNode primarySelection,
                                 final DocumentTypes documentTypes) {
+        boolean enabled = false;
+        List<Item> children = null;
+
         // Only allow the new menu to appear if we have a single selection.
         if (singleSelection) {
             // Add 'New' menu item.
             final ExplorerNodePermissions documentPermissions = documentPermissionMap.get(primarySelection);
-            final List<Item> children = createNewMenuItems(primarySelection, documentPermissions,
+            children = createNewMenuItems(primarySelection, documentPermissions,
                     documentTypes);
-            final boolean allowNew = children.size() > 0;
-
-            if (allowNew) {
-                final Item newItem = new IconParentMenuItem(
-                        1,
-                        SvgPresets.NEW_ITEM,
-                        SvgPresets.NEW_ITEM,
-                        "New",
-                        null,
-                        true,
-                        null) {
-                    @Override
-                    public Future<List<Item>> getChildren() {
-                        final FutureImpl<List<Item>> future = new FutureImpl<>();
-                        future.setResult(children);
-                        return future;
-                    }
-                };
-                menuItems.add(newItem);
-                menuItems.add(new Separator(2));
-            }
+            enabled = children.size() > 0;
         }
+
+        final Item newItem = new IconParentMenuItem.Builder()
+                .priority(1)
+                .icon(SvgPresets.NEW_ITEM)
+                .text("New")
+                .children(children)
+                .enabled(enabled)
+                .build();
+        menuItems.add(newItem);
+        menuItems.add(new Separator(2));
     }
 
     private List<Item> createNewMenuItems(final ExplorerNode explorerNode,
@@ -710,20 +703,20 @@ public class DocumentPluginEventManager extends Plugin {
             }
         };
 
-        return new IconMenuItem(
-                1,
-                Icon.create(documentType.getIconClassName()),
-                null,
-                documentType.getDisplayType(), null, true, () ->
-                ShowCreateDocumentDialogEvent.fire(
-                        DocumentPluginEventManager.this,
-                        "New " + documentType.getDisplayType(),
-                        explorerNode,
-                        documentType.getType(),
-                        "",
-                        true,
-                        newDocumentConsumer)
-        );
+        return new IconMenuItem.Builder()
+                .priority(1)
+                .icon(Icon.create(documentType.getIconClassName()))
+                .text(documentType.getDisplayType())
+                .command(() ->
+                        ShowCreateDocumentDialogEvent.fire(
+                                DocumentPluginEventManager.this,
+                                "New " + documentType.getDisplayType(),
+                                explorerNode,
+                                documentType.getType(),
+                                "",
+                                true,
+                                newDocumentConsumer))
+                .build();
     }
 
     private void addModifyMenuItems(final List<Item> menuItems,
@@ -778,14 +771,14 @@ public class DocumentPluginEventManager extends Plugin {
 
         keyboardInterceptor.addKeyTest(ALT_W, command);
 
-        return new IconMenuItem(
-                3,
-                SvgPresets.CLOSE,
-                SvgPresets.CLOSE,
-                "Close",
-                "Alt+W",
-                enabled,
-                command);
+        return new IconMenuItem.Builder()
+                .priority(3)
+                .icon(SvgPresets.CLOSE)
+                .text("Close")
+                .shortcut("Alt+W")
+                .enabled(enabled)
+                .command(command)
+                .build();
     }
 
     private MenuItem createCloseAllMenuItem(final boolean enabled) {
@@ -797,8 +790,14 @@ public class DocumentPluginEventManager extends Plugin {
 
         keyboardInterceptor.addKeyTest(ALT_SHIFT_W, command);
 
-        return new IconMenuItem(4, SvgPresets.CLOSE, SvgPresets.CLOSE, "Close All",
-                "Alt+Shift+W", enabled, command);
+        return new IconMenuItem.Builder()
+                .priority(4)
+                .icon(SvgPresets.CLOSE)
+                .text("Close All")
+                .shortcut("Alt+Shift+W")
+                .enabled(enabled)
+                .command(command)
+                .build();
     }
 
     private MenuItem createSaveMenuItem(final int priority, final boolean enabled) {
@@ -811,8 +810,14 @@ public class DocumentPluginEventManager extends Plugin {
 
         keyboardInterceptor.addKeyTest(CTRL_S, command);
 
-        return new IconMenuItem(priority, SvgPresets.SAVE, SvgPresets.SAVE, "Save", "Ctrl+S",
-                enabled, command);
+        return new IconMenuItem.Builder()
+                .priority(priority)
+                .icon(SvgPresets.SAVE)
+                .text("Save")
+                .shortcut("Ctrl+S")
+                .enabled(enabled)
+                .command(command)
+                .build();
     }
 
     private MenuItem createSaveAllMenuItem(final int priority, final boolean enabled) {
@@ -820,8 +825,14 @@ public class DocumentPluginEventManager extends Plugin {
 
         keyboardInterceptor.addKeyTest(CTRL_SHIFT_S, command);
 
-        return new IconMenuItem(priority, SvgPresets.SAVE, SvgPresets.SAVE, "Save All",
-                "Ctrl+Shift+S", enabled, command);
+        return new IconMenuItem.Builder()
+                .priority(priority)
+                .icon(SvgPresets.SAVE)
+                .text("Save All")
+                .shortcut("Ctrl+Shift+S")
+                .enabled(enabled)
+                .command(command)
+                .build();
     }
 
     private MenuItem createInfoMenuItem(final List<ExplorerNode> explorerNodeList,
@@ -842,8 +853,13 @@ public class DocumentPluginEventManager extends Plugin {
                             .info(explorerNode.getDocRef());
                 });
 
-        return new IconMenuItem(priority, SvgPresets.INFO, SvgPresets.INFO, "Info", null,
-                enabled, command);
+        return new IconMenuItem.Builder()
+                .priority(priority)
+                .icon(SvgPresets.INFO)
+                .text("Info")
+                .enabled(enabled)
+                .command(command)
+                .build();
     }
 
     private MenuItem createCopyMenuItem(final List<ExplorerNode> explorerNodeList,
@@ -852,8 +868,13 @@ public class DocumentPluginEventManager extends Plugin {
         final Command command = () -> ShowCopyDocumentDialogEvent.fire(DocumentPluginEventManager.this,
                 explorerNodeList);
 
-        return new IconMenuItem(
-                priority, SvgPresets.COPY, SvgPresets.COPY, "Copy", null, enabled, command);
+        return new IconMenuItem.Builder()
+                .priority(priority)
+                .icon(SvgPresets.COPY)
+                .text("Copy")
+                .enabled(enabled)
+                .command(command)
+                .build();
     }
 
     private MenuItem createMoveMenuItem(final List<ExplorerNode> explorerNodeList,
@@ -862,8 +883,13 @@ public class DocumentPluginEventManager extends Plugin {
         final Command command = () -> ShowMoveDocumentDialogEvent.fire(DocumentPluginEventManager.this,
                 explorerNodeList);
 
-        return new IconMenuItem(
-                priority, SvgPresets.MOVE, SvgPresets.MOVE, "Move", null, enabled, command);
+        return new IconMenuItem.Builder()
+                .priority(priority)
+                .icon(SvgPresets.MOVE)
+                .text("Move")
+                .enabled(enabled)
+                .command(command)
+                .build();
     }
 
     private MenuItem createRenameMenuItem(final List<ExplorerNode> explorerNodeList,
@@ -872,8 +898,13 @@ public class DocumentPluginEventManager extends Plugin {
         final Command command = () ->
                 renameItems(explorerNodeList);
 
-        return new IconMenuItem(
-                priority, SvgPresets.EDIT, SvgPresets.EDIT, "Rename", null, enabled, command);
+        return new IconMenuItem.Builder()
+                .priority(priority)
+                .icon(SvgPresets.EDIT)
+                .text("Rename")
+                .enabled(enabled)
+                .command(command)
+                .build();
     }
 
     private MenuItem createDeleteMenuItem(final List<ExplorerNode> explorerNodeList,
@@ -882,8 +913,13 @@ public class DocumentPluginEventManager extends Plugin {
         final Command command = () ->
                 deleteItems(explorerNodeList);
 
-        return new IconMenuItem(
-                priority, SvgPresets.DELETE, SvgPresets.DELETE, "Delete", null, enabled, command);
+        return new IconMenuItem.Builder()
+                .priority(priority)
+                .icon(SvgPresets.DELETE)
+                .text("Delete")
+                .enabled(enabled)
+                .command(command)
+                .build();
     }
 
     private MenuItem createPermissionsMenuItem(final ExplorerNode explorerNode,
@@ -895,35 +931,32 @@ public class DocumentPluginEventManager extends Plugin {
             }
         };
 
-        return new IconMenuItem(
-                priority,
-                SvgPresets.LOCKED_AMBER,
-                SvgPresets.LOCKED_AMBER,
-                "Permissions",
-                null,
-                enabled,
-                command);
+        return new IconMenuItem.Builder()
+                .priority(priority)
+                .icon(SvgPresets.LOCKED_AMBER)
+                .text("Permissions")
+                .enabled(enabled)
+                .command(command)
+                .build();
     }
 
     private MenuItem createImportMenuItem(final int priority) {
-        return new IconMenuItem(priority,
-                SvgPresets.UPLOAD,
-                SvgPresets.UPLOAD,
-                "Import",
-                null,
-                true,
-                () -> ImportConfigEvent.fire(DocumentPluginEventManager.this));
+        return new IconMenuItem.Builder()
+                .priority(priority)
+                .icon(SvgPresets.UPLOAD)
+                .text("Import")
+                .command(() -> ImportConfigEvent.fire(DocumentPluginEventManager.this))
+                .build();
     }
 
     private MenuItem createExportMenuItem(final int priority,
                                           final List<ExplorerNode> readableItems) {
-        return new IconMenuItem(priority,
-                SvgPresets.DOWNLOAD,
-                SvgPresets.DOWNLOAD,
-                "Export",
-                null,
-                true,
-                () -> ExportConfigEvent.fire(DocumentPluginEventManager.this, readableItems));
+        return new IconMenuItem.Builder()
+                .priority(priority)
+                .icon(SvgPresets.DOWNLOAD)
+                .text("Export")
+                .command(() -> ExportConfigEvent.fire(DocumentPluginEventManager.this, readableItems))
+                .build();
     }
 
     void registerPlugin(final String entityType, final DocumentPlugin<?> plugin) {

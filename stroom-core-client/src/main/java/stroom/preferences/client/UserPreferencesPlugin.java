@@ -46,9 +46,18 @@ public class UserPreferencesPlugin extends Plugin {
         super.onReveal(event);
 
         event.getMenuItems().addMenuItem(MenuKeys.MAIN_MENU,
-                new KeyedParentMenuItem(4, "User", event.getMenuItems(), MenuKeys.USER_MENU));
+                new KeyedParentMenuItem.Builder()
+                        .priority(4)
+                        .text("User")
+                        .menuItems(event.getMenuItems())
+                        .menuKey(MenuKeys.USER_MENU)
+                        .build());
         event.getMenuItems().addMenuItem(MenuKeys.USER_MENU,
-                new IconMenuItem(1, SvgPresets.SETTINGS_BLUE, SvgPresets.SETTINGS_BLUE, "Preferences", null, true, () ->
-                        preferencesPresenterProvider.get().show()));
+                new IconMenuItem.Builder()
+                        .priority(1)
+                        .icon(SvgPresets.SETTINGS_BLUE)
+                        .text("Preferences")
+                        .command(() -> preferencesPresenterProvider.get().show())
+                        .build());
     }
 }

@@ -45,9 +45,19 @@ public class AboutPlugin extends Plugin {
     @Override
     public void onReveal(final BeforeRevealMenubarEvent event) {
         event.getMenuItems().addMenuItem(MenuKeys.MAIN_MENU,
-                new KeyedParentMenuItem(5, "Help", event.getMenuItems(), MenuKeys.HELP_MENU));
+                new KeyedParentMenuItem.Builder()
+                        .priority(5)
+                        .text("Help")
+                        .menuItems(event.getMenuItems())
+                        .menuKey(MenuKeys.HELP_MENU)
+                        .build());
         event.getMenuItems().addMenuItem(MenuKeys.HELP_MENU, new Separator(2));
         event.getMenuItems().addMenuItem(MenuKeys.HELP_MENU,
-                new IconMenuItem(3, SvgPresets.ABOUT, null, "About", null, true, () -> provider.get().forceReveal()));
+                new IconMenuItem.Builder()
+                        .priority(3)
+                        .icon(SvgPresets.ABOUT)
+                        .text("About")
+                        .command(() -> provider.get().forceReveal())
+                        .build());
     }
 }

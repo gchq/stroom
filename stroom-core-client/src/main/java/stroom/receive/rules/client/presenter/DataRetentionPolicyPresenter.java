@@ -207,38 +207,38 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
 //                .withSeparator()
                 .withIconMenuItem(itemBuilder ->
                         itemBuilder
-                                .withIcon(ADD_ABOVE_SVG_PRESET)
-                                .withText("Add new rule above")
-                                .withCommand(() ->
+                                .icon(ADD_ABOVE_SVG_PRESET)
+                                .text("Add new rule above")
+                                .command(() ->
                                         addNewRule(rule.getRuleNumber() - 1)))
                 .withIconMenuItemIf(!isDefaultRule, itemBuilder ->
                         itemBuilder
-                                .withIcon(ADD_BELOW_SVG_PRESET)
-                                .withText("Add new rule below")
-                                .withCommand(() ->
+                                .icon(ADD_BELOW_SVG_PRESET)
+                                .text("Add new rule below")
+                                .command(() ->
                                         addNewRule(rule.getRuleNumber())))
                 .withIconMenuItemIf(!isDefaultRule, itemBuilder ->
                         itemBuilder
-                                .withIcon(EDIT_RULE_SVG_PRESET)
-                                .withCommand(() ->
+                                .icon(EDIT_RULE_SVG_PRESET)
+                                .command(() ->
                                         editRule(rule)))
                 .withIconMenuItem(itemBuilder ->
                         itemBuilder
-                                .withIcon(COPY_RULE_SVG_PRESET)
-                                .withCommand(() ->
+                                .icon(COPY_RULE_SVG_PRESET)
+                                .command(() ->
                                         copyRule(rule)))
                 .withIconMenuItemIf(!isDefaultRule, itemBuilder ->
                         itemBuilder
-                                .withIcon(DELETE_RULE_SVG_PRESET)
-                                .withCommand(() ->
+                                .icon(DELETE_RULE_SVG_PRESET)
+                                .command(() ->
                                         deleteRule(rule)))
                 .withIconMenuItemIf(!isDefaultRule && rule.getRuleNumber() > 0, itemBuilder ->
-                        itemBuilder.withIcon(MOVE_RULE_UP_SVG_PRESET)
-                                .withCommand(() ->
+                        itemBuilder.icon(MOVE_RULE_UP_SVG_PRESET)
+                                .command(() ->
                                         moveRuleUp(rule)))
                 .withIconMenuItemIf(rule.getRuleNumber() < visibleRules.size() - 1, itemBuilder ->
-                        itemBuilder.withIcon(MOVE_RULE_DOWN_SVG_PRESET)
-                                .withCommand(() ->
+                        itemBuilder.icon(MOVE_RULE_DOWN_SVG_PRESET)
+                                .command(() ->
                                         moveRuleDown(rule)))
                 .build();
     }

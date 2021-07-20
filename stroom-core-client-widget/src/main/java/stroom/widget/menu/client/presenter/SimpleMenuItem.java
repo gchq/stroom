@@ -18,58 +18,24 @@ package stroom.widget.menu.client.presenter;
 
 import com.google.gwt.user.client.Command;
 
-public class SimpleMenuItem extends CommandMenuItem {
+public class SimpleMenuItem extends MenuItem {
 
-    public SimpleMenuItem(final int priority,
-                          final String text,
-                          final String shortcut,
-                          final boolean enabled,
-                          final Command command) {
+    protected SimpleMenuItem(final int priority,
+                             final String text,
+                             final String shortcut,
+                             final boolean enabled,
+                             final Command command) {
         super(priority, text, shortcut, enabled, command);
     }
 
-    public static Builder builder(final int priority) {
-        return new Builder(priority);
-    }
+    public static class Builder extends AbstractBuilder<SimpleMenuItem, Builder> {
 
-    public static class Builder {
-
-        private final int priority;
-        private String text = null;
-        private String shortcut = null;
-        private Command command = null;
-        private boolean enabled = true;
-
-        Builder(final int priority) {
-            this.priority = priority;
-        }
-
-        public Builder withText(final String text) {
-            this.text = text;
+        @Override
+        protected Builder self() {
             return this;
         }
 
-        public Builder withShortcut(final String shortcut) {
-            this.shortcut = shortcut;
-            return this;
-        }
-
-        public Builder withCommand(final Command command) {
-            this.command = command;
-            return this;
-        }
-
-        public Builder withEnabledState(final boolean enabled) {
-            this.enabled = enabled;
-            return this;
-        }
-
-        public Builder disabled() {
-            this.enabled = false;
-            return this;
-        }
-
-        public Item build() {
+        public SimpleMenuItem build() {
             return new SimpleMenuItem(
                     priority,
                     text,

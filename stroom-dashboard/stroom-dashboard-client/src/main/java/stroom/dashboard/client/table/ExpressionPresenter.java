@@ -31,14 +31,13 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuPresenter;
+import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.menu.client.presenter.SimpleMenuItem;
 import stroom.widget.menu.client.presenter.SimpleParentMenuItem;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.util.client.MouseUtil;
 
@@ -77,7 +76,6 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     private static final int DEFAULT_COMPLETION_SCORE = 300; // Not sure what the range of scores is
     private static final String EXPRESSIONS_HELP_BASE_PATH = "/user-guide/dashboards/expressions";
 
-    private final MenuPresenter menuPresenter;
     private final RestFactory restFactory;
     private final EditorPresenter editorPresenter;
     private final List<AceCompletion> functionCompletions = new ArrayList<>();
@@ -92,12 +90,10 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     @Inject
     public ExpressionPresenter(final EventBus eventBus,
                                final ExpressionView view,
-                               final MenuPresenter menuPresenter,
                                final RestFactory restFactory,
                                final EditorPresenter editorPresenter,
                                final UiConfigCache clientPropertyCache) {
         super(eventBus, view);
-        this.menuPresenter = menuPresenter;
         this.restFactory = restFactory;
         this.editorPresenter = editorPresenter;
         this.clientPropertyCache = clientPropertyCache;
@@ -300,30 +296,11 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
 
     public void showMenu(final ClickEvent event, final List<Item> menuItems) {
         if (MouseUtil.isPrimary(event)) {
-            final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-                @Override
-                public void onHideRequest(final boolean autoClose, final boolean ok) {
-                    HidePopupEvent.fire(ExpressionPresenter.this, menuPresenter);
-                }
-
-                @Override
-                public void onHide(final boolean autoClose, final boolean ok) {
-                }
-            };
-
             final com.google.gwt.dom.client.Element target = event.getNativeEvent().getEventTarget().cast();
             final PopupPosition popupPosition = new PopupPosition(
                     target.getAbsoluteLeft() - 3,
                     target.getAbsoluteTop() + target.getClientHeight() + 1);
-
-            menuPresenter.setData(menuItems);
-
-            ShowPopupEvent.fire(
-                    this,
-                    menuPresenter,
-                    PopupType.POPUP,
-                    popupPosition,
-                    popupUiHandlers);
+            ShowMenuEvent.fire(this, menuItems, popupPosition, target::focus);
         }
     }
 
@@ -344,12 +321,11 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
                     .map(fieldName ->
                             "${" + fieldName + "}")
                     .map(fieldName ->
-                            new SimpleMenuItem(
-                                    position.getAndIncrement(),
-                                    fieldName,
-                                    null,
-                                    true,
-                                    () -> addField(fieldName)))
+                            new SimpleMenuItem.Builder()
+                                    .priority(position.getAndIncrement())
+                                    .text(fieldName)
+                                    .command(() -> addField(fieldName))
+                                    .build())
                     .collect(Collectors.toList());
         } else {
             menuItems = Collections.emptyList();
@@ -512,7 +488,11 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
                                    final BiFunction<FunctionDef, Ancestors, Command> commandBuilder) {
 
             final Command command = commandBuilder.apply(functionDef, ancestors);
-            items.add(new SimpleMenuItem(items.size(), functionDef.toString(), null, true, command));
+            items.add(new SimpleMenuItem.Builder()
+                    .priority(items.size())
+                    .text(functionDef.toString())
+                    .command(command)
+                    .build());
             return this;
         }
 

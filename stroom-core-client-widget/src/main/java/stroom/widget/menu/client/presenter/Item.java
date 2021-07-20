@@ -18,14 +18,14 @@ package stroom.widget.menu.client.presenter;
 
 import java.util.Objects;
 
-public class Item {
+public abstract class Item {
 
     private static int lastId = 0;
 
     private final int id;
     private final int priority;
 
-    public Item(final int priority) {
+    protected Item(final int priority) {
         this.id = lastId++;
         this.priority = priority;
     }
@@ -49,5 +49,19 @@ public class Item {
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+    protected abstract static class AbstractBuilder<T extends Item, B extends Item.AbstractBuilder<T, ?>> {
+
+        protected int priority;
+
+        public B priority(final int priority) {
+            this.priority = priority;
+            return self();
+        }
+
+        protected abstract B self();
+
+        public abstract T build();
     }
 }

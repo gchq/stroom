@@ -37,7 +37,6 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
-import java.util.Set;
 
 public class MenuPresenter
         extends MyPresenterWidget<MenuView>
@@ -143,7 +142,7 @@ public class MenuPresenter
     }
 
     @Override
-    public void execute(final CommandMenuItem menuItem) {
+    public void execute(final MenuItem menuItem) {
         if (menuItem != null && menuItem.getCommand() != null) {
             hideAll();
             TaskStartEvent.fire(MenuPresenter.this);
@@ -198,17 +197,11 @@ public class MenuPresenter
         getView().setData(items);
     }
 
-    public void setHighlightItems(final Set<Item> highlightItems) {
-        getView().setHighlightItems(highlightItems);
-    }
-
     public interface MenuView extends View, HasUiHandlers<MenuUiHandlers> {
 
         HandlerRegistration bind();
 
         void setData(List<Item> items);
-
-        void setHighlightItems(Set<Item> highlightItems);
 
         void selectFirstItem();
 

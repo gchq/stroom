@@ -22,18 +22,13 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 import java.util.List;
-import java.util.Set;
 
-public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements MenuView, MenuItemCellUiHandler {
+public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements MenuView {
 
     private final CellTable<Item> cellTable;
     private final Widget widget;
 
     private final MySingleSelectionModel<Item> selectionModel = new MySingleSelectionModel<>();
-//    private final Map<Item, Element> hoverItems = new HashMap<>();
-//
-//    private Set<Item> highlightItems;
-
     private int mouseOverRow = -1;
 
     public MenuViewImpl() {
@@ -55,7 +50,7 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
         scrollPanel.getElement().getStyle().setProperty("maxWidth", 600 + "px");
         scrollPanel.getElement().getStyle().setProperty("maxHeight", 600 + "px");
 
-        final Column<Item, Item> iconColumn = new Column<Item, Item>(new MenuItemCell(this)) {
+        final Column<Item, Item> iconColumn = new Column<Item, Item>(new MenuItemCell()) {
             @Override
             public Item getValue(final Item item) {
                 return item;
@@ -127,8 +122,8 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
                         row = -1;
 
                     } else if (keyCode == KeyCodes.KEY_ENTER) {
-                        if (selected instanceof CommandMenuItem) {
-                            execute((CommandMenuItem) selected);
+                        if (selected instanceof MenuItem) {
+                            execute((MenuItem) selected);
                         }
                         row = -1;
                     }
@@ -152,8 +147,8 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
                     final int row = cellTable.getVisibleItems().indexOf(item);
                     selectRow(row);
 
-                    if (item instanceof CommandMenuItem && ((CommandMenuItem) item).getCommand() != null) {
-                        execute((CommandMenuItem) item);
+                    if (item instanceof MenuItem && ((MenuItem) item).getCommand() != null) {
+                        execute((MenuItem) item);
                     } else {
                         showSubMenu(item);
 //                        focusSubMenu();
@@ -161,7 +156,7 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
                 }
 
             } else if ("mousemove".equals(type)) {
-                GWT.log("MOUSEMOVE: " + mouseOverRow);
+//                GWT.log("MOUSEMOVE: " + mouseOverRow);
 
                 final Item item = e.getValue();
                 if (isSelectable(item)) {
@@ -178,14 +173,13 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
                     mouseOverRow = -1;
                 }
 
-                GWT.log("BLUR: " + mouseOverRow);
+//                GWT.log("BLUR: " + mouseOverRow);
             }
         });
     }
 
     private boolean isSelectable(final Item item) {
-        return item instanceof MenuItem &&
-                (!(item instanceof CommandMenuItem) || ((CommandMenuItem) item).isEnabled());
+        return item instanceof MenuItem && ((MenuItem) item).isEnabled();
     }
 
     public void showSubMenu(final Item item) {
@@ -215,7 +209,7 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
         }
     }
 
-    public void execute(final CommandMenuItem menuItem) {
+    public void execute(final MenuItem menuItem) {
         if (getUiHandlers() != null) {
             if (menuItem.getCommand() != null) {
                 getUiHandlers().execute(menuItem);
@@ -229,76 +223,9 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
     }
 
     @Override
-    public void onClick(final MenuItem menuItem, final Element element) {
-    }
-
-    @Override
-    public void onMouseOver(final MenuItem menuItem, final Element element) {
-//        hoverItems.put(menuItem, element);
-    }
-
-    @Override
-    public void onMouseOut(final MenuItem menuItem, final Element element) {
-//        hoverItems.remove(menuItem);
-    }
-
-    @Override
-    public boolean isHover(final MenuItem menuItem) {
-//        return hoverItems.containsKey(menuItem);
-//
-        return false;
-    }
-
-    protected void removeHover(final MenuItem menuItem) {
-//        final Element tr = hoverItems.remove(menuItem);
-//        if (tr != null) {
-//            tr.removeClassName("cellTableHoveredRow");
-//        }
-    }
-
-    protected void removeAllHovers() {
-//        final Iterator<Entry<Item, Element>> iter = hoverItems.entrySet().iterator();
-//        while (iter.hasNext()) {
-//            final Entry<Item, Element> entry = iter.next();
-//
-//            final Element tr = entry.getValue();
-//            if (tr != null) {
-//                tr.removeClassName("cellTableHoveredRow");
-//            }
-//
-//            iter.remove();
-//        }
-    }
-
-    @Override
-    public boolean isHighlighted(final MenuItem menuItem) {
-//        if (highlightItems == null) {
-//            return false;
-//        }
-//        return highlightItems.contains(menuItem);
-
-        return false;
-    }
-
-//    @Override
-//    public Set<Item> getHighlightItems() {
-//        return highlightItems;
-//    }
-
-    @Override
-    public void setHighlightItems(final Set<Item> highlightItems) {
-//        this.highlightItems = highlightItems;
-    }
-
-    @Override
     public void setData(final List<Item> items) {
-        removeAllHovers();
         cellTable.setRowData(0, items);
         cellTable.setRowCount(items.size());
-
-//        selectionModel.setSelected(items.get(0), true);
-//        cellTable.setKeyboardSelectedRow(0, true);
-//        Scheduler.get().scheduleDeferred(() -> cellTable.getRowElement(0).focus());
     }
 
     @Override

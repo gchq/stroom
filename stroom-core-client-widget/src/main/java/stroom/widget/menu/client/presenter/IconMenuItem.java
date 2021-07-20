@@ -21,23 +21,24 @@ import stroom.svg.client.Preset;
 
 import com.google.gwt.user.client.Command;
 
-public class IconMenuItem extends CommandMenuItem {
+public class IconMenuItem extends MenuItem {
 
     private final Icon enabledIcon;
     private final Icon disabledIcon;
+    private final boolean highlight;
 
-    public IconMenuItem(final int priority, final Icon enabledIcon, final Icon disabledIcon,
-                        final String text, final String shortcut, final boolean enabled, final Command command) {
+    protected IconMenuItem(final int priority,
+                           final Icon enabledIcon,
+                           final Icon disabledIcon,
+                           final String text,
+                           final String shortcut,
+                           final boolean enabled,
+                           final Command command,
+                           final boolean highlight) {
         super(priority, text, shortcut, enabled, command);
         this.enabledIcon = enabledIcon;
         this.disabledIcon = disabledIcon;
-    }
-
-    public IconMenuItem(final int priority, final String text, final String shortcut, final boolean enabled,
-                        final Command command) {
-        super(priority, text, shortcut, enabled, command);
-        this.enabledIcon = null;
-        this.disabledIcon = null;
+        this.highlight = highlight;
     }
 
     public Icon getEnabledIcon() {
@@ -48,61 +49,46 @@ public class IconMenuItem extends CommandMenuItem {
         return disabledIcon;
     }
 
-    public static Builder builder(final int priority) {
-        return new Builder(priority);
+    public boolean isHighlight() {
+        return highlight;
     }
 
-    public static class Builder {
+    protected abstract static class AbstractBuilder<T extends IconMenuItem, B extends AbstractBuilder<T, ?>>
+            extends MenuItem.AbstractBuilder<T, B> {
 
-        private final int priority;
-        private String text = null;
-        private String shortcut = null;
-        private Command command = null;
-        private boolean enabled = true;
-        private Icon enabledIcon = null;
-        private Icon disabledIcon = null;
+        protected Icon enabledIcon = null;
+        protected Icon disabledIcon = null;
+        protected boolean highlight;
 
-
-        Builder(final int priority) {
-            this.priority = priority;
-        }
-
-        public Builder withText(final String text) {
-            this.text = text;
-            return this;
-        }
-
-        public Builder withShortcut(final String shortcut) {
-            this.shortcut = shortcut;
-            return this;
-        }
-
-        public Builder withCommand(final Command command) {
-            this.command = command;
-            return this;
-        }
-
-        public Builder withEnabledState(final boolean enabled) {
-            this.enabled = enabled;
-            return this;
-        }
-
-        public Builder disabled() {
-            this.enabled = false;
-            return this;
-        }
-
-        public Builder withIcon(final Icon icon) {
+        public B icon(final Icon icon) {
             this.enabledIcon = icon;
-            return this;
+            return self();
         }
 
-        public Builder withDisabledIcon(final Icon icon) {
+        public B disabledIcon(final Icon icon) {
             this.disabledIcon = icon;
+            return self();
+        }
+
+        public B highlight(final boolean highlight) {
+            this.highlight = highlight;
+            return self();
+        }
+
+        protected abstract B self();
+
+        public abstract T build();
+    }
+
+    public static class Builder
+            extends AbstractBuilder<IconMenuItem, Builder> {
+
+        @Override
+        protected Builder self() {
             return this;
         }
 
-        public Item build() {
+        public IconMenuItem build() {
             if (text == null && enabledIcon != null && enabledIcon instanceof Preset) {
                 text = ((Preset) enabledIcon).getTitle();
             }
@@ -113,7 +99,8 @@ public class IconMenuItem extends CommandMenuItem {
                     text,
                     shortcut,
                     enabled,
-                    command);
+                    command,
+                    highlight);
         }
     }
 }

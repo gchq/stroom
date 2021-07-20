@@ -13,5 +13,5 @@ public interface MenuUiHandlers extends UiHandlers {
 
     void escape();
 
-    void execute(CommandMenuItem menuItem);
+    void execute(MenuItem menuItem);
 }

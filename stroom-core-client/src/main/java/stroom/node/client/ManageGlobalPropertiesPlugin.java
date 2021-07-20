@@ -31,14 +31,12 @@ public class ManageGlobalPropertiesPlugin extends NodeToolsContentPlugin<GlobalP
         if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_PROPERTIES_PERMISSION)) {
             event.getMenuItems().addMenuItem(
                     MenuKeys.TOOLS_MENU,
-                    new IconMenuItem(
-                            90,
-                            SvgPresets.PROPERTIES,
-                            SvgPresets.PROPERTIES,
-                            "Properties",
-                            null,
-                            true,
-                            super::open));
+                    new IconMenuItem.Builder()
+                            .priority(90)
+                            .icon(SvgPresets.PROPERTIES)
+                            .text("Properties")
+                            .command(super::open)
+                            .build());
         }
 
     }

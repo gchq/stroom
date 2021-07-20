@@ -27,13 +27,11 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuPresenter;
+import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.VerticalLocation;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -43,11 +41,9 @@ import com.google.inject.Provider;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 public class FieldsManager implements HeadingListener {
 
@@ -56,20 +52,17 @@ public class FieldsManager implements HeadingListener {
     private final Provider<ExpressionPresenter> expressionPresenterProvider;
     private final FormatPresenter formatPresenter;
     private final FilterPresenter filterPresenter;
-    private final MenuPresenter menuPresenter;
     private int fieldsStartIndex;
     private boolean busy;
     private int currentColIndex = -1;
     private boolean ignoreNext;
 
     public FieldsManager(final TablePresenter tablePresenter,
-                         final MenuPresenter menuPresenter,
                          final Provider<RenameFieldPresenter> renameFieldPresenterProvider,
                          final Provider<ExpressionPresenter> expressionPresenterProvider,
                          final FormatPresenter formatPresenter,
                          final FilterPresenter filterPresenter) {
         this.tablePresenter = tablePresenter;
-        this.menuPresenter = menuPresenter;
         this.renameFieldPresenterProvider = renameFieldPresenterProvider;
         this.expressionPresenterProvider = expressionPresenterProvider;
         this.formatPresenter = formatPresenter;
@@ -84,7 +77,7 @@ public class FieldsManager implements HeadingListener {
         }
 
         ignoreNext = currentColIndex == colIndex;
-        HidePopupEvent.fire(tablePresenter, menuPresenter);
+//        HidePopupEvent.fire(tablePresenter, menuPresenter);
     }
 
     @Override
@@ -98,41 +91,45 @@ public class FieldsManager implements HeadingListener {
                 new Timer() {
                     @Override
                     public void run() {
-                        if (currentColIndex == colIndex) {
-                            HidePopupEvent.fire(tablePresenter, menuPresenter);
+//                        if (currentColIndex == colIndex) {
+//                            HidePopupEvent.fire(tablePresenter, menuPresenter);
+//
+//                        } else {
+                        currentColIndex = colIndex;
+                        final Element target = heading.getElement();
+                        final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft(),
+                                target.getAbsoluteRight(),
+                                target.getAbsoluteTop(),
+                                target.getAbsoluteBottom(),
+                                null,
+                                VerticalLocation.BELOW);
+//                        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+//                            @Override
+//                            public void onHideRequest(final boolean autoClose, final boolean ok) {
+//                                HidePopupEvent.fire(tablePresenter, menuPresenter);
+//                            }
+//
+//                            @Override
+//                            public void onHide(final boolean autoClose, final boolean ok) {
+//                                busy = false;
+//                                currentColIndex = -1;
+//                            }
+//                        };
 
-                        } else {
-                            currentColIndex = colIndex;
-                            final Element target = heading.getElement();
-                            final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft(),
-                                    target.getAbsoluteRight(),
-                                    target.getAbsoluteTop(),
-                                    target.getAbsoluteBottom(),
-                                    null,
-                                    VerticalLocation.BELOW);
-                            final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-                                @Override
-                                public void onHideRequest(final boolean autoClose, final boolean ok) {
-                                    HidePopupEvent.fire(tablePresenter, menuPresenter);
-                                }
+                        final List<Item> menuItems = getMenuItems(field);
 
-                                @Override
-                                public void onHide(final boolean autoClose, final boolean ok) {
-                                    busy = false;
-                                    currentColIndex = -1;
-                                }
-                            };
-
-                            updateMenuItems(field);
-
-                            Element element = event.getEventTarget().cast();
-                            while (!element.getTagName().equalsIgnoreCase("th")) {
-                                element = element.getParentElement();
-                            }
-
-                            ShowPopupEvent.fire(tablePresenter, menuPresenter, PopupType.POPUP, popupPosition,
-                                    popupUiHandlers, element);
+                        Element element = event.getEventTarget().cast();
+                        while (!element.getTagName().equalsIgnoreCase("th")) {
+                            element = element.getParentElement();
                         }
+                        final Element e = element;
+
+                        ShowMenuEvent.fire(tablePresenter, menuItems, popupPosition, () -> {
+                            busy = false;
+                            currentColIndex = -1;
+                            e.focus();
+                        }, element);
+//                        }
                     }
                 }.schedule(0);
             }
@@ -367,155 +364,145 @@ public class FieldsManager implements HeadingListener {
         this.fieldsStartIndex = fieldsStartIndex;
     }
 
-    private void updateMenuItems(final Field field) {
+    private List<Item> getMenuItems(final Field field) {
         final List<Item> menuItems = new ArrayList<>();
-        final Set<Item> highlights = new HashSet<>();
 
         // Create rename menu.
         menuItems.add(createRenameMenu(field));
         // Create expression menu.
-        menuItems.add(createExpressionMenu(field, highlights));
+        menuItems.add(createExpressionMenu(field));
         // Create sort menu.
-        menuItems.add(createSortMenu(field, highlights));
+        menuItems.add(createSortMenu(field));
         // Create group by menu.
-        menuItems.add(createGroupByMenu(field, highlights));
+        menuItems.add(createGroupByMenu(field));
         // Create format menu.
-        menuItems.add(createFormatMenu(field, highlights));
+        menuItems.add(createFormatMenu(field));
         // Add filter menu item.
-        menuItems.add(createFilterMenu(field, highlights));
+        menuItems.add(createFilterMenu(field));
 
         // Create hide menu.
-        menuItems.add(createHideMenu(field, highlights));
+        menuItems.add(createHideMenu(field));
 
         // Create show menu.
-        Item showMenu = createShowMenu(field, highlights);
+        Item showMenu = createShowMenu();
         if (showMenu != null) {
             menuItems.add(showMenu);
         }
 
         // Create remove menu.
-        menuItems.add(createRemoveMenu(field, highlights));
+        menuItems.add(createRemoveMenu(field));
 
-        menuPresenter.setHighlightItems(highlights);
-        menuPresenter.setData(menuItems);
+        return menuItems;
     }
 
     private Item createRenameMenu(final Field field) {
-        return new IconMenuItem(0, SvgPresets.EDIT, SvgPresets.EDIT, "Rename", null, true, () -> showRename(field));
+        return new IconMenuItem.Builder()
+                .priority(0)
+                .icon(SvgPresets.EDIT)
+                .text("Rename")
+                .command(() -> showRename(field))
+                .build();
     }
 
-    private Item createExpressionMenu(final Field field, final Set<Item> highlights) {
-        final Item item = new IconMenuItem(1,
-                Icon.create("fields-expression"),
-                null,
-                "Expression",
-                null,
-                true,
-                () -> showExpression(field));
+    private Item createExpressionMenu(final Field field) {
+        boolean highlight = false;
         if (field.getExpression() != null) {
             String expression = field.getExpression();
             expression = expression.replaceAll("\\$\\{[^\\{\\}]*\\}", "");
             expression = expression.trim();
             if (expression.length() > 0) {
-                highlights.add(item);
+                highlight = true;
             }
         }
-        return item;
+
+        return new IconMenuItem.Builder()
+                .priority(1)
+                .icon(Icon.create("fields-expression"))
+                .text("Expression")
+                .command(() -> showExpression(field))
+                .highlight(highlight)
+                .build();
     }
 
-    private Item createSortMenu(final Field field, final Set<Item> highlights) {
+    private Item createSortMenu(final Field field) {
         final List<Item> menuItems = new ArrayList<>();
         menuItems.add(
                 createSortOption(field,
-                        highlights,
                         0,
                         "fields-sortaz",
                         "Sort A to Z",
                         SortDirection.ASCENDING));
         menuItems.add(
                 createSortOption(field,
-                        highlights,
                         1,
                         "fields-sortza",
                         "Sort Z to A",
                         SortDirection.DESCENDING));
-        menuItems.add(createSortOption(field, highlights, 2, null, "Unsorted", null));
-        final Item item = new IconParentMenuItem(2,
-                Icon.create("fields-sortaz"),
-                null,
-                "Sort",
-                null,
-                true,
-                menuItems);
-        if (field.getSort() != null) {
-            highlights.add(item);
-        }
-        return item;
+        menuItems.add(createSortOption(field, 2, null, "Unsorted", null));
+        return new IconParentMenuItem.Builder()
+                .priority(2)
+                .icon(Icon.create("fields-sortaz"))
+                .text("Sort")
+                .children(menuItems)
+                .highlight(field.getSort() != null)
+                .build();
     }
 
-    private Item createSortOption(final Field field, final Set<Item> highlights, final int pos,
-                                  final String className, final String text, final SortDirection sortDirection) {
-        final Item item = new IconMenuItem(pos,
-                Icon.create(className),
-                null,
-                text,
-                null,
-                true,
-                () -> changeSort(field, sortDirection));
-        if (field.getSort() != null && field.getSort().getDirection() == sortDirection) {
-            highlights.add(item);
-        }
-        return item;
+    private Item createSortOption(final Field field,
+                                  final int pos,
+                                  final String className,
+                                  final String text,
+                                  final SortDirection sortDirection) {
+        return new IconMenuItem.Builder()
+                .priority(pos)
+                .icon(Icon.create(className))
+                .text(text)
+                .command(() -> changeSort(field, sortDirection))
+                .highlight(field.getSort() != null && field.getSort().getDirection() == sortDirection)
+                .build();
     }
 
-    private Item createGroupByMenu(final Field field, final Set<Item> highlights) {
+    private Item createGroupByMenu(final Field field) {
         final List<Item> menuItems = new ArrayList<>();
         final int maxGroup = fixGroups(getFields());
         for (int i = 0; i < maxGroup; i++) {
             final int group = i;
-            final Item item = new IconMenuItem(i,
-                    Icon.create("fields-group"),
-                    null,
-                    "Level " + (i + 1),
-                    null,
-                    true,
-                    () -> setGroup(field, group));
+            final Item item = new IconMenuItem.Builder()
+                    .priority(i)
+                    .icon(Icon.create("fields-group"))
+                    .text("Level " + (i + 1))
+                    .command(() -> setGroup(field, group))
+                    .highlight(field.getGroup() != null && field.getGroup() == i)
+                    .build();
             menuItems.add(item);
-
-            if (field.getGroup() != null && field.getGroup() == i) {
-                highlights.add(item);
-            }
         }
 
         // Add the next possible group if the field isn't the only field in the
         // next group.
         if (addNextGroup(maxGroup, field)) {
-            final Item item = new IconMenuItem(maxGroup,
-                    Icon.create("fields-group"),
-                    null,
-                    "Level " + (maxGroup + 1),
-                    null,
-                    true,
-                    () -> setGroup(field, maxGroup));
+            final Item item = new IconMenuItem.Builder()
+                    .priority(maxGroup)
+                    .icon(Icon.create("fields-group"))
+                    .text("Level " + (maxGroup + 1))
+                    .command(() -> setGroup(field, maxGroup))
+                    .build();
             menuItems.add(item);
         }
 
-        final Item item = new IconMenuItem(maxGroup + 1, "Not grouped", null, true, () -> setGroup(field, null));
+        final Item item = new IconMenuItem.Builder()
+                .priority(maxGroup + 1)
+                .text("Not grouped")
+                .command(() -> setGroup(field, null))
+                .build();
         menuItems.add(item);
 
-        final Item parentItem = new IconParentMenuItem(3,
-                Icon.create("fields-group"),
-                null,
-                "Group",
-                null,
-                true,
-                menuItems);
-
-        if (field.getGroup() != null) {
-            highlights.add(parentItem);
-        }
-
-        return parentItem;
+        return new IconParentMenuItem.Builder()
+                .priority(3)
+                .icon(Icon.create("fields-group"))
+                .text("Group")
+                .children(menuItems)
+                .highlight(field.getGroup() != null)
+                .build();
     }
 
     private void setGroup(final Field field, final Integer group) {
@@ -577,49 +564,53 @@ public class FieldsManager implements HeadingListener {
         return depths.size();
     }
 
-    private Item createFilterMenu(final Field field, final Set<Item> highlights) {
-        final Item item = new IconMenuItem(4,
-                SvgPresets.FILTER,
-                SvgPresets.FILTER,
-                "Filter",
-                null,
-                true,
-                () -> filterField(field));
-        if (field.getFilter() != null && ((field.getFilter().getIncludes() != null
-                && field.getFilter().getIncludes().trim().length() > 0)
-                || (field.getFilter().getExcludes() != null && field.getFilter().getExcludes().trim().length() > 0))) {
-            highlights.add(item);
-        }
-        return item;
+    private Item createFilterMenu(final Field field) {
+        return new IconMenuItem.Builder()
+                .priority(4)
+                .icon(SvgPresets.FILTER)
+                .disabledIcon(SvgPresets.FILTER)
+                .text("Filter")
+                .command(() -> filterField(field))
+                .highlight(field.getFilter() != null
+                        && ((field.getFilter().getIncludes() != null
+                        && field.getFilter().getIncludes().trim().length() > 0)
+                        || (field.getFilter().getExcludes() != null
+                        && field.getFilter().getExcludes().trim().length() > 0)))
+                .build();
     }
 
-    private Item createFormatMenu(final Field field, final Set<Item> highlights) {
-        final Item item = new IconMenuItem(5,
-                Icon.create("fields-format"),
-                null,
-                "Format",
-                null,
-                true,
-                () -> showFormat(field));
-        if (field.getFormat() != null && field.getFormat().getSettings() != null
-                && !field.getFormat().getSettings().isDefault()) {
-            highlights.add(item);
-        }
-        return item;
+    private Item createFormatMenu(final Field field) {
+        return new IconMenuItem.Builder()
+                .priority(5)
+                .icon(Icon.create("fields-format"))
+                .text("Format")
+                .command(() -> showFormat(field))
+                .highlight(field.getFormat() != null && field.getFormat().getSettings() != null
+                        && !field.getFormat().getSettings().isDefault())
+                .build();
     }
 
-    private Item createHideMenu(final Field field, final Set<Item> highlights) {
-        return new IconMenuItem(6, SvgPresets.HIDE, SvgPresets.HIDE, "Hide", null, true, () -> hideField(field));
+    private Item createHideMenu(final Field field) {
+        return new IconMenuItem.Builder()
+                .priority(6)
+                .icon(SvgPresets.HIDE)
+                .text("Hide")
+                .command(() -> hideField(field))
+                .build();
     }
 
-    private Item createShowMenu(final Field field, final Set<Item> highlights) {
+    private Item createShowMenu() {
         final List<Item> menuItems = new ArrayList<>();
 
         int i = 0;
-        for (final Field field2 : getFields()) {
-            if (!field2.isVisible() && !field2.isSpecial()) {
-                final Item item2 = new IconMenuItem(i++, SvgPresets.SHOW, SvgPresets.SHOW, field2.getName(), null, true,
-                        () -> showField(field2));
+        for (final Field field : getFields()) {
+            if (!field.isVisible() && !field.isSpecial()) {
+                final Item item2 = new IconMenuItem.Builder()
+                        .priority(i++)
+                        .icon(SvgPresets.SHOW)
+                        .text(field.getName())
+                        .command(() -> showField(field))
+                        .build();
                 menuItems.add(item2);
             }
         }
@@ -628,16 +619,20 @@ public class FieldsManager implements HeadingListener {
             return null;
         }
 
-        return new IconParentMenuItem(7, SvgPresets.SHOW, SvgPresets.SHOW, "Show", null, true, menuItems);
+        return new IconParentMenuItem.Builder()
+                .priority(7)
+                .icon(SvgPresets.SHOW)
+                .text("Show")
+                .children(menuItems)
+                .build();
     }
 
-    private Item createRemoveMenu(final Field field, final Set<Item> highlights) {
-        return new IconMenuItem(8,
-                SvgPresets.DELETE,
-                SvgPresets.DELETE,
-                "Remove",
-                null,
-                true,
-                () -> deleteField(field));
+    private Item createRemoveMenu(final Field field) {
+        return new IconMenuItem.Builder()
+                .priority(8)
+                .icon(SvgPresets.DELETE)
+                .text("Remove")
+                .command(() -> deleteField(field))
+                .build();
     }
 }

@@ -17,14 +17,9 @@
 package stroom.widget.menu.client.presenter;
 
 import stroom.svg.client.Icon;
-import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
-import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.BrowserEvents;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safecss.shared.SafeStyles;
 import com.google.gwt.safecss.shared.SafeStylesUtils;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
@@ -35,87 +30,15 @@ import com.google.gwt.safehtml.shared.SafeUri;
 
 public class MenuItemCell extends AbstractCell<Item> {
 
-    private final MenuItemCellUiHandler handler;
-
-    public MenuItemCell(final MenuItemCellUiHandler handler) {
-        super(BrowserEvents.CLICK, BrowserEvents.MOUSEOVER, BrowserEvents.MOUSEOUT);
-        this.handler = handler;
-    }
-
-    @Override
-    public void onBrowserEvent(final Context context,
-                               final Element parent,
-                               final Item value,
-                               final NativeEvent event,
-                               final ValueUpdater<Item> valueUpdater) {
-        super.onBrowserEvent(context, parent, value, event, valueUpdater);
-
-        if (value != null) {
-            final String eventType = event.getType();
-            final Element element = getElement(parent);
-
-            if (value instanceof CommandMenuItem) {
-                if (BrowserEvents.MOUSEOVER.equals(eventType)) {
-                    final CommandMenuItem menuItem = (CommandMenuItem) value;
-                    if (menuItem.isEnabled()) {
-                        handler.onMouseOver(menuItem, element);
-                        if (handler.isHover(menuItem)) {
-                            element.addClassName("cellTableHoveredRow");
-                        }
-                    } else {
-                        element.removeClassName("cellTableHoveredRow");
-                    }
-
-                } else if (BrowserEvents.MOUSEOUT.equals(eventType)) {
-                    final CommandMenuItem menuItem = (CommandMenuItem) value;
-                    handler.onMouseOut(menuItem, element);
-                    if (!handler.isHover(menuItem)) {
-                        element.removeClassName("cellTableHoveredRow");
-                    }
-
-                } else if (BrowserEvents.CLICK.equals(eventType)
-                        && (MouseUtil.isPrimary(event))) {
-                    final CommandMenuItem menuItem = (CommandMenuItem) value;
-                    if (menuItem.isEnabled()) {
-                        handler.onClick(menuItem, element);
-                    }
-                }
-
-            } else if (value instanceof MenuItem) {
-                final MenuItem menuItem = (MenuItem) value;
-
-                if (BrowserEvents.MOUSEOVER.equals(eventType)) {
-                    element.addClassName("cellTableHoveredRow");
-                    handler.onMouseOver(menuItem, element);
-
-                } else if (BrowserEvents.MOUSEOUT.equals(eventType)) {
-                    element.removeClassName("cellTableHoveredRow");
-
-                } else if (BrowserEvents.CLICK.equals(eventType)
-                        && (MouseUtil.isPrimary(event))) {
-                    handler.onClick(menuItem, element);
-                }
-            }
-        }
-    }
-
-    private Element getElement(final Element parent) {
-        if (parent.getFirstChildElement() != null) {
-            return parent.getFirstChildElement();
-        }
-
-        return parent;
-    }
-
     @Override
     public void render(final Context context, final Item value, final SafeHtmlBuilder sb) {
         if (value != null) {
             if (value instanceof IconMenuItem) {
-                new IconMenuItemAppearance(handler).render(this, context, (IconMenuItem) value, sb);
+                new IconMenuItemAppearance().render(this, context, (IconMenuItem) value, sb);
             } else if (value instanceof SimpleMenuItem) {
-                new SimpleMenuItemAppearance(handler).render(this, context, (SimpleMenuItem) value, sb);
+                new SimpleMenuItemAppearance().render(this, context, (SimpleMenuItem) value, sb);
             } else if (value instanceof InfoMenuItem) {
-                new InfoMenuItemAppearance(handler).render(this, context, (InfoMenuItem) value, sb);
+                new InfoMenuItemAppearance().render(this, context, (InfoMenuItem) value, sb);
             } else if (value instanceof MenuItem) {
                 new MenuItemAppearance().render(this, context, (MenuItem) value, sb);
             } else if (value instanceof Separator) {
@@ -188,11 +111,6 @@ public class MenuItemCell extends AbstractCell<Item> {
         private static final Template TEMPLATE = GWT.create(Template.class);
         private static final SafeStyles NORMAL = SafeStylesUtils.fromTrustedString("cursor:pointer;");
         private static final SafeStyles DISABLED = SafeStylesUtils.fromTrustedString("cursor:default;");
-        private final MenuItemCellUiHandler uiHandler;
-
-        public IconMenuItemAppearance(final MenuItemCellUiHandler uiHandler) {
-            this.uiHandler = uiHandler;
-        }
 
         @Override
         public void render(final MenuItemCell cell,
@@ -237,7 +155,7 @@ public class MenuItemCell extends AbstractCell<Item> {
                 final String disabledClass = value.isEnabled()
                         ? ""
                         : " menuItem-disabled";
-                if (uiHandler.isHighlighted(value)) {
+                if (value.isHighlight()) {
                     sb.append(TEMPLATE.outer("menuItem-highlight" + disabledClass, styles, inner.toSafeHtml()));
                 } else {
                     sb.append(TEMPLATE.outer("menuItem-outer" + disabledClass, styles, inner.toSafeHtml()));
@@ -266,11 +184,6 @@ public class MenuItemCell extends AbstractCell<Item> {
         private static final Template TEMPLATE = GWT.create(Template.class);
         private static final SafeStyles NORMAL = SafeStylesUtils.fromTrustedString("cursor:pointer;");
         private static final SafeStyles DISABLED = SafeStylesUtils.fromTrustedString("cursor:default;");
-        private final MenuItemCellUiHandler uiHandler;
-
-        public SimpleMenuItemAppearance(final MenuItemCellUiHandler uiHandler) {
-            this.uiHandler = uiHandler;
-        }
 
         @Override
         public void render(final MenuItemCell cell,
@@ -299,12 +212,7 @@ public class MenuItemCell extends AbstractCell<Item> {
                 final String disabledClass = value.isEnabled()
                         ? ""
                         : " menuItem-disabled";
-                if (uiHandler.isHighlighted(value)) {
-                    sb.append(TEMPLATE.outer("menuItem-highlight" + disabledClass, styles,
-                            inner.toSafeHtml()));
-                } else {
-                    sb.append(TEMPLATE.outer("menuItem-outer" + disabledClass, styles, inner.toSafeHtml()));
-                }
+                sb.append(TEMPLATE.outer("menuItem-outer" + disabledClass, styles, inner.toSafeHtml()));
             }
         }
 
@@ -324,9 +232,6 @@ public class MenuItemCell extends AbstractCell<Item> {
     public static class InfoMenuItemAppearance implements Appearance<InfoMenuItem> {
 
         private static final Template TEMPLATE = GWT.create(Template.class);
-
-        public InfoMenuItemAppearance(final MenuItemCellUiHandler uiHandler) {
-        }
 
         @Override
         public void render(final MenuItemCell cell,

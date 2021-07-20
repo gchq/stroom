@@ -42,11 +42,12 @@ public abstract class NodeToolsPlugin extends Plugin {
 
         event.getMenuItems().addMenuItem(
                 MenuKeys.MAIN_MENU,
-                new KeyedParentMenuItem(
-                        2,
-                        "Tools",
-                        event.getMenuItems(),
-                        MenuKeys.TOOLS_MENU));
+                new KeyedParentMenuItem.Builder()
+                        .priority(2)
+                        .text("Tools")
+                        .menuItems(event.getMenuItems())
+                        .menuKey(MenuKeys.TOOLS_MENU)
+                        .build());
 
         addChildItems(event);
     }

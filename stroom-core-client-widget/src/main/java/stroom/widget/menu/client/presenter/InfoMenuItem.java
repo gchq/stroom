@@ -3,7 +3,7 @@ package stroom.widget.menu.client.presenter;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.Command;
 
-public class InfoMenuItem extends CommandMenuItem {
+public class InfoMenuItem extends MenuItem {
 
     private final SafeHtml safeHtml;
 

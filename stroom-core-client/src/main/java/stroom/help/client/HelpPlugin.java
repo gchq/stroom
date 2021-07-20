@@ -50,21 +50,18 @@ public class HelpPlugin extends Plugin {
                     IconMenuItem helpMenuItem;
                     final String helpUrl = result.getHelpUrl();
                     if (helpUrl != null && helpUrl.trim().length() > 0) {
-                        helpMenuItem = new IconMenuItem(1,
-                                SvgPresets.HELP,
-                                SvgPresets.HELP,
-                                "Help",
-                                null,
-                                true,
-                                () -> Window.open(helpUrl, "_blank", ""));
+                        helpMenuItem = new IconMenuItem.Builder()
+                                .priority(1)
+                                .icon(SvgPresets.HELP)
+                                .text("Help")
+                                .command(() -> Window.open(helpUrl, "_blank", ""))
+                                .build();
                     } else {
-                        helpMenuItem = new IconMenuItem(1,
-                                SvgPresets.HELP,
-                                SvgPresets.HELP,
-                                "Help is not configured!",
-                                null,
-                                false,
-                                null);
+                        helpMenuItem = new IconMenuItem.Builder()
+                                .priority(1)
+                                .icon(SvgPresets.HELP)
+                                .text("Help is not configured!")
+                                .build();
                     }
 
                     event.getMenuItems().addMenuItem(MenuKeys.HELP_MENU, helpMenuItem);

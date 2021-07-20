@@ -34,7 +34,11 @@ public class ChangePasswordPlugin extends Plugin {
                     final Preset icon = SvgPresets.PASSWORD;
                     final String changePasswordUiUrl = result.getUrl().getChangepassword();
                     if (changePasswordUiUrl != null && changePasswordUiUrl.trim().length() > 0) {
-                        changePasswordMenuItem = new IconMenuItem(5, icon, null, "Change password", null, true, () -> {
+                        changePasswordMenuItem = new IconMenuItem.Builder()
+                                .priority(5)
+                                .icon(icon)
+                                .text("Change password")
+                                .command(() -> {
 //                            final Hyperlink hyperlink = new Builder()
 //                                    .text("Change password")
 //                                    .href(changePasswordUiUrl)
@@ -42,17 +46,16 @@ public class ChangePasswordPlugin extends Plugin {
 //                                    .icon(icon)
 //                                    .build();
 //                            HyperlinkEvent.fire(this, hyperlink);
-                            postMessage("changePassword");
+                                    postMessage("changePassword");
 
-                        });
+                                })
+                                .build();
                     } else {
-                        changePasswordMenuItem = new IconMenuItem(5,
-                                icon,
-                                icon,
-                                "'Change Password' is not configured!",
-                                null,
-                                false,
-                                null);
+                        changePasswordMenuItem = new IconMenuItem.Builder()
+                                .priority(5)
+                                .icon(icon)
+                                .text("'Change Password' is not configured!")
+                                .build();
                     }
 
                     event.getMenuItems().addMenuItem(MenuKeys.USER_MENU, changePasswordMenuItem);

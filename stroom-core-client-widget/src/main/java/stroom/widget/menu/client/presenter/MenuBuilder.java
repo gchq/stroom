@@ -1,5 +1,7 @@
 package stroom.widget.menu.client.presenter;
 
+import stroom.widget.menu.client.presenter.SimpleMenuItem.Builder;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -43,7 +45,8 @@ public class MenuBuilder {
     public MenuBuilder withIconMenuItemIf(final boolean condition,
                                           final Consumer<IconMenuItem.Builder> iconMenuItemBuilder) {
         if (condition) {
-            final IconMenuItem.Builder builder = IconMenuItem.builder(getNextPriority());
+            final IconMenuItem.Builder builder = new IconMenuItem.Builder()
+                    .priority(getNextPriority());
             iconMenuItemBuilder.accept(builder);
             return withItem(builder.build());
         } else {
@@ -62,7 +65,8 @@ public class MenuBuilder {
     public MenuBuilder withSimpleMenuItemIf(final boolean condition,
                                             final Consumer<SimpleMenuItem.Builder> simpleMenuItemBuilder) {
         if (condition) {
-            final SimpleMenuItem.Builder builder = SimpleMenuItem.builder(getNextPriority());
+            final SimpleMenuItem.Builder builder = new Builder()
+                    .priority(getNextPriority());
             simpleMenuItemBuilder.accept(builder);
             return withItem(builder.build());
         } else {

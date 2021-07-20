@@ -67,8 +67,11 @@ public class ManageUserPlugin extends NodeToolsPlugin {
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
             event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
-                    new IconMenuItem(1, SvgPresets.USER, SvgPresets.USER, "User Permissions", null, true,
-                            () -> usersAndGroupsPresenterProvider.get(new AsyncCallback<UsersAndGroupsPresenter>() {
+                    new IconMenuItem.Builder()
+                            .priority(1)
+                            .icon(SvgPresets.USER)
+                            .text("User Permissions")
+                            .command(() -> usersAndGroupsPresenterProvider.get(new AsyncCallback<UsersAndGroupsPresenter>() {
                                 @Override
                                 public void onSuccess(final UsersAndGroupsPresenter presenter) {
                                     final PopupSize popupSize = PopupSize.resizable(800, 600);
@@ -79,7 +82,8 @@ public class ManageUserPlugin extends NodeToolsPlugin {
                                 @Override
                                 public void onFailure(final Throwable caught) {
                                 }
-                            })));
+                            }))
+                            .build());
         }
     }
 }

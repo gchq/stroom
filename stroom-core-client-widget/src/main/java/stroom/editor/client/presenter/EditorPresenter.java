@@ -59,7 +59,7 @@ public class EditorPresenter
         this.delegatingAceCompleter = delegatingAceCompleter;
         view.setTheme(getTheme(currentTheme.getTheme(), currentTheme.getEditorTheme()));
 
-        registerHandler(view.addMouseDownHandler(event -> contextMenu.hide()));
+//        registerHandler(view.addMouseDownHandler(event -> contextMenu.hide()));
         registerHandler(view.addContextMenuHandler(event ->
                 contextMenu.show(EditorPresenter.this, event.getX(), event.getY())));
         registerHandler(view.addKeyDownHandler(event -> {

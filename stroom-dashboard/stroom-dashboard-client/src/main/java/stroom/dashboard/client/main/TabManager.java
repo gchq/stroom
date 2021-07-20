@@ -26,13 +26,9 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuPresenter;
-import stroom.widget.popup.client.event.HidePopupEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.VerticalLocation;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Timer;
@@ -47,19 +43,15 @@ public class TabManager {
 
     private final Components components;
     private final Provider<RenameTabPresenter> renameTabPresenterProvider;
-    private final MenuPresenter menuPresenter;
     private final DashboardPresenter dashboardPresenter;
 
     private FlexLayout flexLayout;
     private TabLayout tabLayout;
-    private TabConfig currentTabConfig;
 
     public TabManager(final Components components,
-                      final MenuPresenter menuPresenter,
                       final Provider<RenameTabPresenter> renameTabPresenterProvider,
                       final DashboardPresenter dashboardPresenter) {
         this.components = components;
-        this.menuPresenter = menuPresenter;
         this.renameTabPresenterProvider = renameTabPresenterProvider;
         this.dashboardPresenter = dashboardPresenter;
     }
@@ -80,42 +72,18 @@ public class TabManager {
             new Timer() {
                 @Override
                 public void run() {
-                    if (currentTabConfig == tabConfig) {
-                        currentTabConfig = null;
-                        HidePopupEvent.fire(dashboardPresenter, menuPresenter);
-
-                    } else {
-                        currentTabConfig = tabConfig;
-                        final Element target = tabWidget.getElement();
-                        final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft(),
-                                target.getAbsoluteRight(), target.getAbsoluteTop(), target.getAbsoluteBottom(), null,
-                                VerticalLocation.BELOW);
-
-//                        final PopupPosition popupPosition = new PopupPosition(event.getClientX(),
-//                                event.getClientX(), event.getClientY(), event.getClientY(), null,
-//                                VerticalLocation.BELOW);
-                        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-                            @Override
-                            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                                HidePopupEvent.fire(dashboardPresenter, menuPresenter);
-                            }
-
-                            @Override
-                            public void onHide(final boolean autoClose, final boolean ok) {
-                                currentTabConfig = null;
-                            }
-                        };
-
-                        updateMenuItems(tabLayout.getTabLayoutConfig(), tabConfig, componentConfig, nameChangeConsumer);
-
-//                            Element element = event.getEventTarget().cast();
-//                            while (!element.getTagName().toLowerCase().equals("th")) {
-//                                element = element.getParentElement();
-//                            }
-
-                        ShowPopupEvent.fire(dashboardPresenter, menuPresenter, PopupType.POPUP, popupPosition,
-                                popupUiHandlers, target);
-                    }
+                    final Element target = tabWidget.getElement();
+                    final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft(),
+                            target.getAbsoluteRight(), target.getAbsoluteTop(), target.getAbsoluteBottom(), null,
+                            VerticalLocation.BELOW);
+                    final List<Item> menuItems = updateMenuItems(tabLayout.getTabLayoutConfig(),
+                            tabConfig,
+                            componentConfig,
+                            nameChangeConsumer);
+                    ShowMenuEvent.fire(dashboardPresenter,
+                            menuItems,
+                            popupPosition,
+                            () -> tabWidget.getElement().focus());
                 }
             }.schedule(0);
         }
@@ -159,10 +127,10 @@ public class TabManager {
         }
     }
 
-    private void updateMenuItems(final TabLayoutConfig tabLayoutConfig,
-                                 final TabConfig tabConfig,
-                                 final ComponentConfig componentConfig,
-                                 final Consumer<String> nameChangeConsumer) {
+    private List<Item> updateMenuItems(final TabLayoutConfig tabLayoutConfig,
+                                       final TabConfig tabConfig,
+                                       final ComponentConfig componentConfig,
+                                       final Consumer<String> nameChangeConsumer) {
         final List<Item> menuItems = new ArrayList<>();
 
         // Create rename menu.
@@ -183,33 +151,35 @@ public class TabManager {
         // Create remove menu.
         menuItems.add(createRemoveMenu(tabLayoutConfig, tabConfig));
 
-        menuPresenter.setData(menuItems);
+        return menuItems;
     }
 
     private Item createRenameMenu(final ComponentConfig componentConfig,
                                   final Consumer<String> nameChangeConsumer) {
-        return new IconMenuItem(0, SvgPresets.EDIT, SvgPresets.EDIT, "Rename", null, true, () ->
-                showRename(componentConfig, nameChangeConsumer));
+        return new IconMenuItem.Builder()
+                .priority(0)
+                .icon(SvgPresets.EDIT)
+                .text("Rename")
+                .command(() -> showRename(componentConfig, nameChangeConsumer))
+                .build();
     }
 
     private Item createSettingsMenu(final TabConfig tabConfig) {
-        return new IconMenuItem(1,
-                SvgPresets.SETTINGS_BLUE,
-                SvgPresets.SETTINGS_BLUE,
-                "Settings",
-                null,
-                true,
-                () -> showSettings(tabConfig));
+        return new IconMenuItem.Builder()
+                .priority(1)
+                .icon(SvgPresets.SETTINGS_BLUE)
+                .text("Settings")
+                .command(() -> showSettings(tabConfig))
+                .build();
     }
 
     private Item createHideMenu(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
-        return new IconMenuItem(6,
-                SvgPresets.HIDE,
-                SvgPresets.HIDE,
-                "Hide",
-                null,
-                true,
-                () -> hideTab(tabLayoutConfig, tabConfig));
+        return new IconMenuItem.Builder()
+                .priority(6)
+                .icon(SvgPresets.HIDE)
+                .text("Hide")
+                .command(() -> hideTab(tabLayoutConfig, tabConfig))
+                .build();
     }
 
     private Item createShowMenu(final TabLayoutConfig tabLayoutConfig) {
@@ -220,13 +190,12 @@ public class TabManager {
             if (!tc.visible()) {
                 final Component component = components.get(tc.getId());
                 if (component != null) {
-                    final Item item2 = new IconMenuItem(i++,
-                            SvgPresets.SHOW,
-                            SvgPresets.SHOW,
-                            component.getComponentConfig().getName(),
-                            null,
-                            true,
-                            () -> showTab(tc));
+                    final Item item2 = new IconMenuItem.Builder()
+                            .priority(i++)
+                            .icon(SvgPresets.SHOW)
+                            .text(component.getComponentConfig().getName())
+                            .command(() -> showTab(tc))
+                            .build();
                     menuItems.add(item2);
                 }
             }
@@ -236,16 +205,20 @@ public class TabManager {
             return null;
         }
 
-        return new IconParentMenuItem(7, SvgPresets.SHOW, SvgPresets.SHOW, "Show", null, true, menuItems);
+        return new IconParentMenuItem.Builder()
+                .priority(7)
+                .icon(SvgPresets.SHOW)
+                .text("Show")
+                .children(menuItems)
+                .build();
     }
 
     private Item createRemoveMenu(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
-        return new IconMenuItem(8,
-                SvgPresets.DELETE,
-                SvgPresets.DELETE,
-                "Close",
-                null,
-                true,
-                () -> closeTab(tabLayoutConfig, tabConfig));
+        return new IconMenuItem.Builder()
+                .priority(8)
+                .icon(SvgPresets.DELETE)
+                .text("Close")
+                .command(() -> closeTab(tabLayoutConfig, tabConfig))
+                .build();
     }
 }

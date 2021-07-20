@@ -21,14 +21,10 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.Option;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuPresenter;
-import stroom.widget.popup.client.event.HidePopupEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import com.google.gwt.user.client.Command;
-import com.google.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,35 +34,21 @@ import java.util.List;
  */
 public class EditorMenuPresenter {
 
-    private final MenuPresenter menuPresenter;
     private EditorPresenter xmlEditorPresenter;
-
-    @Inject
-    public EditorMenuPresenter(final MenuPresenter menuPresenter) {
-        this.menuPresenter = menuPresenter;
-
-    }
 
     public void show(final EditorPresenter xmlEditorPresenter, final int x, final int y) {
         this.xmlEditorPresenter = xmlEditorPresenter;
-        HidePopupEvent.fire(xmlEditorPresenter, menuPresenter);
-        updateText();
-        final PopupPosition popupPosition = new PopupPosition(x, y);
-        ShowPopupEvent.fire(xmlEditorPresenter, menuPresenter, PopupType.POPUP, popupPosition, null);
-    }
-
-    public void hide() {
-        if (xmlEditorPresenter != null) {
-            HidePopupEvent.fire(xmlEditorPresenter, menuPresenter);
-            xmlEditorPresenter = null;
-        }
+        ShowMenuEvent.fire(xmlEditorPresenter,
+                getMenuItems(),
+                new PopupPosition(x, y),
+                xmlEditorPresenter::focus);
     }
 
     /**
      * Update the labels of the context menu items depending on the current XML
      * editor settings.
      */
-    private void updateText() {
+    private List<Item> getMenuItems() {
         // TODO @AT Consider using MenuBuilder.builder() instead
         int position = 0;
         final List<Item> menuItems = new ArrayList<>();
@@ -81,8 +63,7 @@ public class EditorMenuPresenter {
         addMenuItem(position++, menuItems, xmlEditorPresenter.getSnippetsOption());
         addMenuItem(position++, menuItems, xmlEditorPresenter.getLiveAutoCompletionOption());
         addMenuItem(position++, menuItems, xmlEditorPresenter.getFormatAction());
-
-        menuPresenter.setData(menuItems);
+        return menuItems;
     }
 
     private void addMenuItem(int position, final List<Item> menuItems, final Option option) {
@@ -99,7 +80,10 @@ public class EditorMenuPresenter {
     }
 
     private Item createItem(final String text, final Command command, final int position) {
-        return new IconMenuItem(position, text, null, true, command);
+        return new IconMenuItem.Builder()
+                .priority(position)
+                .text(text)
+                .command(command)
+                .build();
     }
-
 }

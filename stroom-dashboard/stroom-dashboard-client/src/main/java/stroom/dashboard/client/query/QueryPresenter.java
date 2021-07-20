@@ -74,7 +74,7 @@ import stroom.util.shared.ResourceGeneration;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuPresenter;
+import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -113,7 +113,6 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private final Provider<EntityChooser> pipelineSelection;
     private final Provider<QueryInfoPresenter> queryInfoPresenterProvider;
     private final ProcessorLimitsPresenter processorLimitsPresenter;
-    private final MenuPresenter menuPresenter;
     private final RestFactory restFactory;
     private final LocationManager locationManager;
 
@@ -149,7 +148,6 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                           final Provider<EntityChooser> pipelineSelection,
                           final Provider<QueryInfoPresenter> queryInfoPresenterProvider,
                           final ProcessorLimitsPresenter processorLimitsPresenter,
-                          final MenuPresenter menuPresenter,
                           final RestFactory restFactory,
                           final ClientSecurityContext securityContext,
                           final UiConfigCache clientPropertyCache,
@@ -163,7 +161,6 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         this.pipelineSelection = pipelineSelection;
         this.queryInfoPresenterProvider = queryInfoPresenterProvider;
         this.processorLimitsPresenter = processorLimitsPresenter;
-        this.menuPresenter = menuPresenter;
         this.restFactory = restFactory;
         this.locationManager = locationManager;
 
@@ -748,13 +745,32 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         final boolean hasSelection = selectedItem != null;
 
         final List<Item> menuItems = new ArrayList<>();
-        menuItems.add(new IconMenuItem(1, SvgPresets.ADD, SvgPresets.ADD, "Add Term", null, true, this::addTerm));
-        menuItems.add(new IconMenuItem(2, SvgPresets.OPERATOR, SvgPresets.OPERATOR, "Add Operator", null,
-                true, this::addOperator));
-        menuItems.add(new IconMenuItem(3, SvgPresets.DISABLE, SvgPresets.DISABLE, getEnableDisableText(),
-                null, hasSelection, this::disable));
-        menuItems.add(new IconMenuItem(4, SvgPresets.DELETE, SvgPresets.DELETE, "Delete", null,
-                hasSelection, this::delete));
+        menuItems.add(new IconMenuItem.Builder()
+                .priority(1)
+                .icon(SvgPresets.ADD)
+                .text("Add Term")
+                .command(this::addTerm)
+                .build());
+        menuItems.add(new IconMenuItem.Builder()
+                .priority(2)
+                .icon(SvgPresets.OPERATOR)
+                .text("Add Operator")
+                .command(this::addOperator)
+                .build());
+        menuItems.add(new IconMenuItem.Builder()
+                .priority(3)
+                .icon(SvgPresets.DISABLE)
+                .text(getEnableDisableText())
+                .enabled(hasSelection)
+                .command(this::disable)
+                .build());
+        menuItems.add(new IconMenuItem.Builder()
+                .priority(4)
+                .icon(SvgPresets.DELETE)
+                .text("Delete")
+                .enabled(hasSelection)
+                .command(this::delete)
+                .build());
 
         return menuItems;
     }
@@ -775,19 +791,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     private void showMenu(final PopupPosition popupPosition, final List<Item> menuItems) {
-        menuPresenter.setData(menuItems);
-
-        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                HidePopupEvent.fire(QueryPresenter.this, menuPresenter);
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-            }
-        };
-        ShowPopupEvent.fire(this, menuPresenter, PopupType.POPUP, popupPosition, popupUiHandlers);
+        ShowMenuEvent.fire(this, menuItems, popupPosition, () -> getWidget().getElement().focus());
     }
 
     private void downloadQuery() {

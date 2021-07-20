@@ -24,9 +24,10 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.Item;
+import stroom.widget.menu.client.presenter.ShowMenuEvent;
+import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
@@ -39,7 +40,6 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
@@ -51,14 +51,11 @@ import java.util.function.Function;
 public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGridView<DataRetentionRule>> {
 
     private BiConsumer<DataRetentionRule, Boolean> enabledStateHandler;
-    private final Provider<ActionMenuPresenter> actionMenuPresenterProvider;
     private Function<DataRetentionRule, List<Item>> actionMenuItemProvider;
 
     @Inject
-    public DataRetentionPolicyListPresenter(final EventBus eventBus,
-                                            final Provider<ActionMenuPresenter> actionMenuPresenterProvider) {
+    public DataRetentionPolicyListPresenter(final EventBus eventBus) {
         super(eventBus, new DataGridViewImpl<>(true, false));
-        this.actionMenuPresenterProvider = actionMenuPresenterProvider;
 
         // Add a border to the list.
         getWidget().getElement().addClassName("stroom-border");
@@ -120,13 +117,11 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGrid
     }
 
     private void showActionMenu(final DataRetentionRule row, final NativeEvent event) {
-
-        List<Item> items = actionMenuItemProvider.apply(row);
-        actionMenuPresenterProvider.get().show(
-                DataRetentionPolicyListPresenter.this,
+        final List<Item> items = actionMenuItemProvider.apply(row);
+        ShowMenuEvent.fire(this,
                 items,
-                event.getClientX(),
-                event.getClientY());
+                new PopupPosition(event.getClientX() + 10, event.getClientY()),
+                () -> getWidget().getElement().focus());
     }
 
     private void addTickBoxColumn(final String name,

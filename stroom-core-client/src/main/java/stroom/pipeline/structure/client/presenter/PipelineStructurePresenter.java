@@ -51,7 +51,7 @@ import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItems;
-import stroom.widget.menu.client.presenter.MenuPresenter;
+import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -87,7 +87,6 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
     private static final DocRef NULL_SELECTION = DocRef.builder().uuid("").name("None").type("").build();
 
     private final EntityDropDownPresenter pipelinePresenter;
-    private final MenuPresenter menuPresenter;
     private final RestFactory restFactory;
     private final NewElementPresenter newElementPresenter;
     private final PropertyListPresenter propertyListPresenter;
@@ -113,7 +112,6 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                                       final PipelineTreePresenter pipelineTreePresenter,
                                       final EntityDropDownPresenter pipelinePresenter,
                                       final RestFactory restFactory,
-                                      final MenuPresenter menuPresenter,
                                       final NewElementPresenter newElementPresenter,
                                       final PropertyListPresenter propertyListPresenter,
                                       final PipelineReferenceListPresenter pipelineReferenceListPresenter,
@@ -121,7 +119,6 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
         super(eventBus, view);
         this.pipelineTreePresenter = pipelineTreePresenter;
         this.pipelinePresenter = pipelinePresenter;
-        this.menuPresenter = menuPresenter;
         this.restFactory = restFactory;
         this.newElementPresenter = newElementPresenter;
         this.propertyListPresenter = propertyListPresenter;
@@ -334,27 +331,27 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
 
         final List<Item> menuItems = new ArrayList<>();
 
-        menuItems.add(new IconParentMenuItem(0,
-                SvgPresets.ADD,
-                SvgPresets.ADD,
-                "Add",
-                null,
-                addMenuItems != null && addMenuItems.size() > 0,
-                addMenuItems));
-        menuItems.add(new IconParentMenuItem(1,
-                SvgPresets.UNDO,
-                SvgPresets.UNDO,
-                "Restore",
-                null,
-                restoreMenuItems != null && restoreMenuItems.size() > 0,
-                restoreMenuItems));
-        menuItems.add(new IconMenuItem(2,
-                SvgPresets.REMOVE,
-                SvgPresets.REMOVE,
-                "Remove",
-                null,
-                selected != null,
-                () -> onRemove(null)));
+        menuItems.add(new IconParentMenuItem.Builder()
+                .priority(0)
+                .icon(SvgPresets.ADD)
+                .text("Add")
+                .enabled(addMenuItems != null && addMenuItems.size() > 0)
+                .children(addMenuItems)
+                .build());
+        menuItems.add(new IconParentMenuItem.Builder()
+                .priority(1)
+                .icon(SvgPresets.UNDO)
+                .text("Restore")
+                .enabled(restoreMenuItems != null && restoreMenuItems.size() > 0)
+                .children(restoreMenuItems)
+                .build());
+        menuItems.add(new IconMenuItem.Builder()
+                .priority(2)
+                .icon(SvgPresets.REMOVE)
+                .text("Remove")
+                .enabled(selected != null)
+                .command(() -> onRemove(null))
+                .build());
 
         return menuItems;
     }
@@ -380,16 +377,23 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                         if (StructureValidationUtil.isValidChildType(parentType, pipelineElementType, childCount)) {
                             final String type = pipelineElementType.getType();
                             final Icon icon = Icon.create(pipelineElementType.getIcon());
-                            final Item item = new IconMenuItem(j++, icon, null, type, null, true,
-                                    new AddPipelineElementCommand(pipelineElementType));
+                            final Item item = new IconMenuItem.Builder()
+                                    .priority(j++)
+                                    .icon(icon)
+                                    .text(type)
+                                    .command(new AddPipelineElementCommand(pipelineElementType))
+                                    .build();
                             children.add(item);
                         }
                     }
 
                     if (children.size() > 0) {
                         children.sort(new MenuItems.ItemComparator());
-                        final Item parentItem = new IconParentMenuItem(category.getOrder(), null, null,
-                                category.getDisplayValue(), null, true, children);
+                        final Item parentItem = new IconParentMenuItem.Builder()
+                                .priority(category.getOrder())
+                                .text(category.getDisplayValue())
+                                .children(children)
+                                .build();
                         menuItems.add(parentItem);
                     }
                 }
@@ -403,7 +407,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
     private List<Item> getRestoreMenuItems() {
         final List<PipelineElement> existingElements = getExistingElements();
 
-        if (existingElements == null || existingElements.size() == 0) {
+        if (existingElements.size() == 0) {
             return null;
         }
 
@@ -428,8 +432,12 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                     final List<Item> items = categoryMenuItems.computeIfAbsent(category, k -> new ArrayList<>());
                     final Icon icon = Icon.create(pipelineElementType.getIcon());
 
-                    final Item item = new IconMenuItem(pos++, icon, null, element.getId(), null, true,
-                            new RestorePipelineElementCommand(element));
+                    final Item item = new IconMenuItem.Builder()
+                            .priority(pos++)
+                            .icon(icon)
+                            .text(element.getId())
+                            .command(new RestorePipelineElementCommand(element))
+                            .build();
                     items.add(item);
                 }
             }
@@ -439,8 +447,11 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                 final List<Item> children = entry.getValue();
 
                 children.sort(new MenuItems.ItemComparator());
-                final Item parentItem = new IconParentMenuItem(category.getOrder(), null, null,
-                        category.getDisplayValue(), null, true, children);
+                final Item parentItem = new IconParentMenuItem.Builder()
+                        .priority(category.getOrder())
+                        .text(category.getDisplayValue())
+                        .children(children)
+                        .build();
                 menuItems.add(parentItem);
             }
         }
@@ -457,19 +468,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
     }
 
     private void showMenu(final PopupPosition popupPosition, final List<Item> menuItems) {
-        menuPresenter.setData(menuItems);
-
-        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                HidePopupEvent.fire(PipelineStructurePresenter.this, menuPresenter);
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-            }
-        };
-        ShowPopupEvent.fire(this, menuPresenter, PopupType.POPUP, popupPosition, popupUiHandlers);
+        ShowMenuEvent.fire(this, menuItems, popupPosition, () -> getWidget().getElement().focus());
     }
 
     private List<PipelineElement> getExistingElements() {
@@ -479,9 +478,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
             final List<PipelineElement> removedElements = pipelineModel.getRemovedElements();
 
             if (removedElements != null) {
-                for (final PipelineElement element : removedElements) {
-                    existingElements.add(element);
-                }
+                existingElements.addAll(removedElements);
             }
         }
 

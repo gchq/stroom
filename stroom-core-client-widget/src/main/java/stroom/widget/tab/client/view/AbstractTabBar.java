@@ -486,10 +486,20 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
         final List<Item> menuItems = new ArrayList<>();
 
         for (final TabData tabData : tabsNotShown) {
-            menuItems.add(new TabDataIconMenuItem(this, 0, tabData, true));
+            menuItems.add(new IconMenuItem.Builder()
+                    .priority(0)
+                    .icon(tabData.getIcon())
+                    .text("<b>" + tabData.getLabel() + "</b>")
+                    .command(() -> fireTabSelection(tabData))
+                    .build());
         }
         for (final TabData tabData : tabsShown) {
-            menuItems.add(new TabDataIconMenuItem(this, 0, tabData, false));
+            menuItems.add(new IconMenuItem.Builder()
+                    .priority(0)
+                    .icon(tabData.getIcon())
+                    .text(tabData.getLabel())
+                    .command(() -> fireTabSelection(tabData))
+                    .build());
         }
 
         ShowMenuEvent.fire(this, menuItems, popupPosition, () -> getElement().focus(), element);
@@ -566,31 +576,6 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
 
     protected int getTabGap() {
         return 0;
-    }
-
-    private static class TabDataIconMenuItem extends IconMenuItem {
-
-        private final TabData tabData;
-
-        public TabDataIconMenuItem(final AbstractTabBar tabBar,
-                                   final int priority,
-                                   final TabData tabData,
-                                   final boolean notShown) {
-            super(priority,
-                    tabData.getIcon(),
-                    null,
-                    notShown
-                            ? "<b>" + tabData.getLabel() + "</b>"
-                            : tabData.getLabel(),
-                    null,
-                    true,
-                    () -> tabBar.fireTabSelection(tabData));
-            this.tabData = tabData;
-        }
-
-        public TabData getTabData() {
-            return tabData;
-        }
     }
 
     private static class TabItemComparator implements Comparator<TabData> {

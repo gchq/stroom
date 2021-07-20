@@ -17,6 +17,7 @@
 package stroom.widget.menu.client.presenter;
 
 import stroom.svg.client.Icon;
+import stroom.svg.client.Preset;
 import stroom.widget.util.client.Future;
 import stroom.widget.util.client.FutureImpl;
 
@@ -28,20 +29,15 @@ public class KeyedParentMenuItem extends IconMenuItem implements HasChildren {
     private final MenuItems menuItems;
     private final MenuKey menuKey;
 
-    public KeyedParentMenuItem(final int priority, final String text, final MenuItems menuItems,
-                               final MenuKey menuKey) {
-        this(priority, null, null, text, null, true, menuItems, menuKey);
-    }
-
-    public KeyedParentMenuItem(final int priority,
-                               final Icon enabledIcon,
-                               final Icon disabledIcon,
-                               final String text,
-                               final String shortcut,
-                               final boolean enabled,
-                               final MenuItems menuItems,
-                               final MenuKey menuKey) {
-        super(priority, enabledIcon, disabledIcon, text, shortcut, enabled, null);
+    KeyedParentMenuItem(final int priority,
+                        final Icon enabledIcon,
+                        final Icon disabledIcon,
+                        final String text,
+                        final String shortcut,
+                        final boolean enabled,
+                        final MenuItems menuItems,
+                        final MenuKey menuKey) {
+        super(priority, enabledIcon, disabledIcon, text, shortcut, enabled, null, false);
         this.menuItems = menuItems;
         this.menuKey = menuKey;
     }
@@ -68,5 +64,41 @@ public class KeyedParentMenuItem extends IconMenuItem implements HasChildren {
     @Override
     public int hashCode() {
         return Objects.hash(menuKey);
+    }
+
+    public static class Builder extends AbstractBuilder<KeyedParentMenuItem, Builder> {
+
+        MenuItems menuItems;
+        MenuKey menuKey;
+
+        public Builder menuItems(final MenuItems menuItems) {
+            this.menuItems = menuItems;
+            return self();
+        }
+
+        public Builder menuKey(final MenuKey menuKey) {
+            this.menuKey = menuKey;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public KeyedParentMenuItem build() {
+            if (text == null && enabledIcon != null && enabledIcon instanceof Preset) {
+                text = ((Preset) enabledIcon).getTitle();
+            }
+            return new KeyedParentMenuItem(
+                    priority,
+                    enabledIcon,
+                    disabledIcon,
+                    text,
+                    shortcut,
+                    enabled,
+                    menuItems,
+                    menuKey);
+        }
     }
 }

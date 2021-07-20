@@ -47,13 +47,12 @@ public class ManageIndexVolumesPlugin extends NodeToolsContentPlugin<IndexVolume
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_VOLUMES_PERMISSION)) {
             event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
-                    new IconMenuItem(3,
-                            SvgPresets.VOLUMES,
-                            SvgPresets.VOLUMES,
-                            "Index Volumes",
-                            null,
-                            true,
-                            this::open));
+                    new IconMenuItem.Builder()
+                            .priority(3)
+                            .icon(SvgPresets.VOLUMES)
+                            .text("Index Volumes")
+                            .command(this::open)
+                            .build());
         }
     }
 }

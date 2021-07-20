@@ -44,14 +44,24 @@ public class LogoutPlugin extends Plugin {
         super.onReveal(event);
 
         event.getMenuItems().addMenuItem(MenuKeys.MAIN_MENU,
-                new KeyedParentMenuItem(4, "User", event.getMenuItems(), MenuKeys.USER_MENU));
+                new KeyedParentMenuItem.Builder()
+                        .priority(4)
+                        .text("User")
+                        .menuItems(event.getMenuItems())
+                        .menuKey(MenuKeys.USER_MENU)
+                        .build());
         event.getMenuItems().addMenuItem(MenuKeys.USER_MENU, new Separator(2));
         event.getMenuItems().addMenuItem(MenuKeys.USER_MENU,
-                new IconMenuItem(3, SvgPresets.LOGOUT, SvgPresets.LOGOUT, "Logout", null, true, () ->
-                        ConfirmEvent.fire(LogoutPlugin.this, "Are you sure you want to logout?", result -> {
-                            if (result) {
-                                RequestLogoutEvent.fire(LogoutPlugin.this);
-                            }
-                        })));
+                new IconMenuItem.Builder()
+                        .priority(3)
+                        .icon(SvgPresets.LOGOUT)
+                        .text("Logout")
+                        .command(() ->
+                                ConfirmEvent.fire(LogoutPlugin.this, "Are you sure you want to logout?", result -> {
+                                    if (result) {
+                                        RequestLogoutEvent.fire(LogoutPlugin.this);
+                                    }
+                                }))
+                        .build());
     }
 }
