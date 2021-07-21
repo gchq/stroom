@@ -212,7 +212,12 @@
     border-color: rgba(255,255,255,1);
 }
 
+/*
 .curveTabBar:focus .curveTab-keyboardSelected {
+    border-color: rgba(255,255,255,1);
+}
+*/
+.curveTab-keyboardSelected:focus {
     border-color: rgba(255,255,255,1);
 }
 
@@ -343,7 +348,12 @@
 	opacity: .9;
 }
 
+/*
 .curveTabBar:focus .curveTabSelector-keyboardSelected {
+    border-color: rgba(255,255,255,1);
+}
+*/
+.curveTabSelector-keyboardSelected:focus {
     border-color: rgba(255,255,255,1);
 }
 
@@ -418,7 +428,12 @@
     opacity: 1;
 }
 
+/*
 .linkTabBar:focus .linkTab-keyboardSelected {
+    color: #fff;
+}
+*/
+.linkTab-keyboardSelected:focus {
     color: #fff;
 }
 

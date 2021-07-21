@@ -27,7 +27,7 @@ public class BasicTabSelector extends AbstractTabSelector {
     public BasicTabSelector() {
         final Element arrows = DOM.createDiv();
         arrows.setClassName("basicTabSelector-arrows");
-        arrows.setInnerHTML(Images.DOUBLE_ARROW);
+        arrows.setInnerHTML(SvgImage.MONO_DOUBLE_ARROW);
 
         text = DOM.createDiv();
         text.setClassName("basicTabSelector-text");
@@ -37,6 +37,7 @@ public class BasicTabSelector extends AbstractTabSelector {
 
         element.appendChild(arrows);
         element.appendChild(text);
+        element.setAttribute("aria-label", "Tab Selector");
 
         setElement(element);
     }

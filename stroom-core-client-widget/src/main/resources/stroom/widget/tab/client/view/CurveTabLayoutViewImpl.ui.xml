@@ -4,7 +4,7 @@
              xmlns:tab="urn:import:stroom.widget.tab.client.view">
     <g:FlowPanel styleName="curveTabLayoutViewImpl-layout">
         <g:FlowPanel ui:field="tabBarContainer"  styleName="tabBarContainer">
-            <g:Button ui:field="menu" title="Menu" styleName="navigation-menu-button focus-without-border"/>
+            <g:Button ui:field="menu" title="Show Sidebar" styleName="navigation-menu-button focus-without-border"/>
             <g:SimplePanel ui:field="tabBarOuter"
                            styleName="curveTabLayoutViewImpl-tabBarOuter">
                 <tab:CurveTabBar ui:field="tabBar"/>

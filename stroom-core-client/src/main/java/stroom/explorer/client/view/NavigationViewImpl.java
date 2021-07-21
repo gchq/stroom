@@ -22,7 +22,7 @@ import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
-import stroom.widget.tab.client.view.Images;
+import stroom.widget.tab.client.view.SvgImage;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -56,8 +56,8 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
     public NavigationViewImpl(final NavigationViewImpl.Binder binder,
                               final UiConfigCache uiConfigCache) {
         widget = binder.createAndBindUi(this);
-        logo.getElement().setInnerHTML(Images.LOGO);
-        menu.getElement().setInnerHTML(Images.MENU);
+        logo.getElement().setInnerHTML(SvgImage.MONO_LOGO);
+        menu.getElement().setInnerHTML(SvgImage.MONO_MENU);
 
         uiConfigCache.get()
                 .onSuccess(uiConfig ->

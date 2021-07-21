@@ -27,6 +27,7 @@ import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.util.client.MouseUtil;
 
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.Visibility;
@@ -54,6 +55,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
     private final List<TabData> visibleTabs = new ArrayList<>();
     private TabData selectedTab;
     private TabData keyboardSelectedTab;
+    private Element currentTabIndexElement;
     private int overflowTabCount;
     private Object currentTargetObject;
     private AbstractTabSelector tabSelector;
@@ -163,6 +165,10 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
 
     @Override
     public void onResize() {
+//        GWT.log("onResize");
+
+        Element tabIndexElement = null;
+
         // Clear all visible tabs.
         visibleTabs.clear();
 
@@ -248,6 +254,10 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
                     makeInvisible(tab.getElement());
                 }
 
+                if (visible && tabData.equals(keyboardSelectedTab)) {
+                    tabIndexElement = tab.getElement();
+                }
+
                 tab.setKeyboardSelected(visible && tabData.equals(keyboardSelectedTab));
                 tab.setSelected(visible && tabData.equals(selectedTab));
             }
@@ -260,8 +270,56 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
 
             x += 2;
             setOverflowTabCount(x, overflowTabCount);
+
+            if (tabIndexElement == null) {
+                tabIndexElement = getTabSelector().getElement();
+            }
+
+            switchTabIndexElement(tabIndexElement);
         }
     }
+
+    private boolean hasFocus(final Element element) {
+        if (element != null) {
+            final Element activeElement = getActiveElement(Document.get());
+//            GWT.log("Active Element = " + (activeElement == null
+//                    ? "null"
+//                    : activeElement.getTagName()));
+//            GWT.log("Current tab index = " + (element == null
+//                    ? "null"
+//                    : element.getTagName()));
+            return activeElement != null && activeElement.equals(element);
+        }
+        return false;
+    }
+
+    private void switchTabIndexElement(final Element tabIndexElement) {
+        if (tabIndexElement != null && !tabIndexElement.equals(currentTabIndexElement)) {
+            final boolean currentHasFocus = hasFocus(currentTabIndexElement);
+
+            if (currentTabIndexElement != null) {
+                currentTabIndexElement.setTabIndex(-1);
+            }
+            tabIndexElement.setTabIndex(0);
+            currentTabIndexElement = tabIndexElement;
+
+            if (currentHasFocus) {
+                focusTabIndexElement();
+            }
+        }
+    }
+
+    private void focusTabIndexElement() {
+//        GWT.log("Focus: " + currentTabIndexElement);
+
+        if (currentTabIndexElement != null) {
+            currentTabIndexElement.focus();
+        }
+    }
+
+    public native Element getActiveElement(Document doc) /*-{
+        return doc.activeElement;
+    }-*/;
 
     private Element addSeparator() {
         final Element separator = createSeparator();
@@ -307,6 +365,8 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
 
     @Override
     public void onBrowserEvent(final Event event) {
+//        GWT.log("onBrowserEvent " + event.getType());
+
         if (Event.ONKEYDOWN == event.getTypeInt()) {
             if (event.getKeyCode() == KeyCodes.KEY_ESCAPE) {
                 if (keyboardSelectedTab != null) {
@@ -359,6 +419,8 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
 
                 if (targetObject == currentTargetObject) {
                     if (getTabSelector().getElement().isOrHasChild(target)) {
+                        switchTabIndexElement(getTabSelector().getElement());
+                        focusTabIndexElement();
                         showTabSelector(getTabSelector().getElement());
 
                     } else {
@@ -409,6 +471,9 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
                 fireTabCloseRequest(targetTabData);
 
             } else if (targetTabData != selectedTab) {
+                switchTabIndexElement(tab.getElement());
+                focusTabIndexElement();
+
                 // If this tab isn't currently selected then
                 // request it is selected.
                 keyboardSelectTab(targetTabData);
@@ -502,7 +567,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
                     .build());
         }
 
-        ShowMenuEvent.fire(this, menuItems, popupPosition, () -> getElement().focus(), element);
+        ShowMenuEvent.fire(this, menuItems, popupPosition, () -> currentTabIndexElement.focus(), element);
     }
 
     private void fireTabSelection(final TabData tabData) {

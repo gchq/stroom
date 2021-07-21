@@ -26,7 +26,6 @@ public class LinkTabBar extends AbstractTabBar {
     public LinkTabBar() {
         final Element element = DOM.createDiv();
         element.setClassName("linkTabBar");
-        element.setTabIndex(0);
 
         final Element text = DOM.createDiv();
         text.setClassName("linkTabBar-hiddenText");

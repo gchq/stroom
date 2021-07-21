@@ -32,7 +32,9 @@ public class CurveTabSelector extends AbstractTabSelector {
 
     public CurveTabSelector() {
         final DivElement element = binder.createAndBindUi(this);
-        arrows.setInnerHTML(Images.DOUBLE_ARROW);
+        arrows.setInnerHTML(SvgImage.MONO_DOUBLE_ARROW);
+
+        element.setAttribute("aria-label", "Tab Selector");
         setElement(element);
     }
 

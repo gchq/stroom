@@ -47,7 +47,7 @@ public class CurveTabLayoutViewImpl extends ViewWithUiHandlers<CurveTabLayoutUiH
     @Inject
     public CurveTabLayoutViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        menu.getElement().setInnerHTML(Images.MENU);
+        menu.getElement().setInnerHTML(SvgImage.MONO_MENU);
     }
 
     @Override

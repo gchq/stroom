@@ -32,6 +32,7 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import com.google.gwt.inject.client.AsyncProvider;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -66,23 +67,31 @@ public class ManageUserPlugin extends NodeToolsPlugin {
     @Override
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
+            final Command command = () ->
+                    usersAndGroupsPresenterProvider.get(new AsyncCallback<UsersAndGroupsPresenter>() {
+                        @Override
+                        public void onSuccess(final UsersAndGroupsPresenter presenter) {
+                            final PopupSize popupSize = PopupSize.resizable(800, 600);
+                            ShowPopupEvent.fire(ManageUserPlugin.this,
+                                    presenter,
+                                    PopupType.CLOSE_DIALOG,
+                                    null,
+                                    popupSize,
+                                    "User Permissions",
+                                    null,
+                                    null);
+                        }
+
+                        @Override
+                        public void onFailure(final Throwable caught) {
+                        }
+                    });
             event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
                     new IconMenuItem.Builder()
                             .priority(1)
                             .icon(SvgPresets.USER)
                             .text("User Permissions")
-                            .command(() -> usersAndGroupsPresenterProvider.get(new AsyncCallback<UsersAndGroupsPresenter>() {
-                                @Override
-                                public void onSuccess(final UsersAndGroupsPresenter presenter) {
-                                    final PopupSize popupSize = PopupSize.resizable(800, 600);
-                                    ShowPopupEvent.fire(ManageUserPlugin.this, presenter,
-                                            PopupType.CLOSE_DIALOG, null, popupSize, "User Permissions", null, null);
-                                }
-
-                                @Override
-                                public void onFailure(final Throwable caught) {
-                                }
-                            }))
+                            .command(command)
                             .build());
         }
     }

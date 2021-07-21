@@ -16,6 +16,8 @@
 
     <!-- Generated code --> 
     <suppress files="[\\/]db[\\/]jooq[\\/]" checks=".*"/>
+    <!-- stroom.widget.tab.client.view.SvgImage.java -->
+    <suppress files="[\\/]stroom[\\/]widget[\\/]tab[\\/]client[\\/]view[\\/]SvgImage.java" checks=".*"/>
 
     <!-- Legacy code so best left alone --> 
     <suppress files="[\\/]stroom[\\/]legacy[\\/]" checks=".*"/>
