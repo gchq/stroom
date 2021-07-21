@@ -41,8 +41,9 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     private ProxyRequestConfig proxyRequestConfig = new ProxyRequestConfig();
 
     @AssertTrue(
-            message = "proxyConfig." + PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE + " is set to false. If there is " +
-                    "invalid configuration the system may behave in unexpected ways. This setting is not advised.",
+            message = "proxyConfig." + PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE + " is set to false. " +
+                    "If there is invalid configuration the system may behave in unexpected ways. This setting is " +
+                    "not advised.",
             payload = ValidationSeverity.Warning.class)
     @JsonProperty(PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE)
     @JsonPropertyDescription("If true, Stroom-Proxy will halt on start up if any errors are found in the YAML " +

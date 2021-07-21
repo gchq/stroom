@@ -19,7 +19,6 @@ package stroom.config.global.impl;
 
 
 import stroom.config.app.AppConfig;
-import stroom.util.config.AppConfigValidator;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.ConfigPropertyValidationException;
 import stroom.config.global.shared.GlobalConfigCriteria;
@@ -28,6 +27,7 @@ import stroom.config.global.shared.ListConfigResponse;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
+import stroom.util.config.AppConfigValidator;
 import stroom.util.config.ConfigValidator;
 import stroom.util.config.PropertyUtil;
 import stroom.util.filter.FilterFieldMapper;
