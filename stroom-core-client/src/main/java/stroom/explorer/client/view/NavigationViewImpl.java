@@ -25,11 +25,13 @@ import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.tab.client.view.SvgImage;
 import stroom.widget.util.client.MouseUtil;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -56,7 +58,23 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
     public NavigationViewImpl(final NavigationViewImpl.Binder binder,
                               final UiConfigCache uiConfigCache) {
         widget = binder.createAndBindUi(this);
-        logo.getElement().setInnerHTML(SvgImage.MONO_LOGO);
+
+
+        final Element logoImage = DOM.createDiv();
+        logoImage.setClassName("navigation-logo-image");
+        logoImage.setInnerHTML(SvgImage.MONO_LOGO);
+        final Element arrowImage = DOM.createDiv();
+        arrowImage.setClassName("navigation-arrow-image");
+        arrowImage.setInnerHTML(SvgImage.MONO_ARROW_DOWN);
+
+        final Element div = DOM.createDiv();
+        div.setClassName("navigation-menu-content");
+        div.appendChild(logoImage);
+        div.appendChild(arrowImage);
+
+        logo.getElement().appendChild(div);
+
+//        logo.getElement().setInnerHTML(SvgImage.MONO_LOGO);
         menu.getElement().setInnerHTML(SvgImage.MONO_MENU);
 
         uiConfigCache.get()

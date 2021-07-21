@@ -39,9 +39,7 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
 import stroom.widget.button.client.SvgButton;
 import stroom.widget.menu.client.presenter.HasChildren;
-import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.MenuItem;
 import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -51,10 +49,8 @@ import stroom.widget.tab.client.event.MaximiseEvent;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.MouseDownEvent;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -441,45 +437,47 @@ public class NavigationPresenter
 
     private void refreshAll() {
         final FlowPanel flowPanel = new FlowPanel();
+        flowPanel.add(createButtons());
+        flowPanel.add(explorerTree);
 
-        if (explorerTree != null) {
-            explorerTree.asWidget().getElement().getChild(0).getChild(0);
+//        if (explorerTree != null) {
+//            explorerTree.asWidget().getElement().getChild(0).getChild(0);
+//
+//            flowPanel.add(new NavigationPanel("Explorer", explorerTree, createButtons(), true));
+//        }
 
-            flowPanel.add(new NavigationPanel("Explorer", explorerTree, createButtons(), true));
-        }
-
-        allItems.keySet().stream().sorted(new MenuItems.ItemComparator()).forEach(item -> {
-            boolean include = true;
-            if (item instanceof MenuItem && ((MenuItem) item).getText().equals("Item")) {
-                include = false;
-            }
-
-            if (include) {
-                FlowPanel fp = new FlowPanel();
-                fp.setStyleName("navigation-list");
-
-                final List<Item> children = allItems.get(item);
-                for (final Item child : children) {
-                    if (child instanceof IconMenuItem) {
-                        final IconMenuItem iconMenuItem = (IconMenuItem) child;
-                        FlowPanel fpItem = new FlowPanel();
-                        fpItem.setStyleName("navigation-item");
-                        fpItem.add(iconMenuItem.getEnabledIcon().asWidget());
-                        fpItem.add(new Label(iconMenuItem.getText()));
-                        fp.add(fpItem);
-
-                        final Command command = iconMenuItem.getCommand();
-                        if (command != null) {
-                            fpItem.addDomHandler(e -> command.execute(), MouseDownEvent.getType());
-                        }
-                    }
-                }
-
-                if (item instanceof MenuItem) {
-                    flowPanel.add(new NavigationPanel(((MenuItem) item).getText(), fp, null, false));
-                }
-            }
-        });
+//        allItems.keySet().stream().sorted(new MenuItems.ItemComparator()).forEach(item -> {
+//            boolean include = true;
+//            if (item instanceof MenuItem && ((MenuItem) item).getText().equals("Item")) {
+//                include = false;
+//            }
+//
+//            if (include) {
+//                FlowPanel fp = new FlowPanel();
+//                fp.setStyleName("navigation-list");
+//
+//                final List<Item> children = allItems.get(item);
+//                for (final Item child : children) {
+//                    if (child instanceof IconMenuItem) {
+//                        final IconMenuItem iconMenuItem = (IconMenuItem) child;
+//                        FlowPanel fpItem = new FlowPanel();
+//                        fpItem.setStyleName("navigation-item");
+//                        fpItem.add(iconMenuItem.getEnabledIcon().asWidget());
+//                        fpItem.add(new Label(iconMenuItem.getText()));
+//                        fp.add(fpItem);
+//
+//                        final Command command = iconMenuItem.getCommand();
+//                        if (command != null) {
+//                            fpItem.addDomHandler(e -> command.execute(), MouseDownEvent.getType());
+//                        }
+//                    }
+//                }
+//
+//                if (item instanceof MenuItem) {
+//                    flowPanel.add(new NavigationPanel(((MenuItem) item).getText(), fp, null, false));
+//                }
+//            }
+//        });
 
         getView().setNavigationWidget(flowPanel);
     }

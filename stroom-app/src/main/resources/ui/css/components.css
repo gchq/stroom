@@ -1592,9 +1592,23 @@
     color: white;
 }
 
-.navigation-logo svg {
+.navigation-menu-content {
+    display: flex;
+    justify-content: space-between;
+    align-content: space-between;
+    align-items: center;
+    flex-grow: 1;
+}
+
+.navigation-logo-image svg {
     width: 146px;
     height: 35px;
+}
+
+.navigation-arrow-image svg {
+    width: 16px;
+    height: 16px;
+    margin-top: .25rem;
 }
 
 /*
@@ -1697,14 +1711,10 @@
 .navigation-header-buttons {
     flex-grow: 0;
     flex-shrink: 0;
-    opacity: 0.9;
     display: flex;
     align-items: center;
-    opacity: 0;
-}
-
-.navigation-header:hover .navigation-header-buttons {
-    opacity: 1;
+    margin: 0.25rem;
+    margin-top: 0;
 }
 
 .navigation-header-button {
