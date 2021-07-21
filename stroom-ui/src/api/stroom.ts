@@ -1798,6 +1798,17 @@ export interface Node {
   version?: number;
 }
 
+export interface NodeSetJobsEnabledRequest {
+  enabled?: boolean;
+  excludeJobs?: string[];
+  includeJobs?: string[];
+}
+
+export interface NodeSetJobsEnabledResponse {
+  /** @format int32 */
+  modifiedCount?: number;
+}
+
 export interface NodeStatusResult {
   master?: boolean;
   node?: Node;
@@ -6346,6 +6357,25 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
     setNodePriority: (nodeName: string, data: number, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/node/v1/priority/${nodeName}`,
+        method: "PUT",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Nodes
+     * @name SetNodeJobsEnabled
+     * @summary Sets the enabled state of jobs for the selected node. If both `includeJobs` and `excludeJobs` are unspecified or empty, this action will apply to ALL jobs.
+     * @request PUT:/node/v1/setJobsEnabled/{nodeName}
+     * @secure
+     */
+    setNodeJobsEnabled: (nodeName: string, data: NodeSetJobsEnabledRequest, params: RequestParams = {}) =>
+      this.request<any, NodeSetJobsEnabledResponse>({
+        path: `/node/v1/setJobsEnabled/${nodeName}`,
         method: "PUT",
         body: data,
         secure: true,
