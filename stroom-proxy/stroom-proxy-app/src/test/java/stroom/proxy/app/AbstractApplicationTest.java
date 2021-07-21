@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -34,13 +35,29 @@ public abstract class AbstractApplicationTest {
         config.getProxyConfig()
                 .getForwardStreamConfig()
                 .getForwardDestinations()
-                .forEach(forwardDestinationConfig -> forwardDestinationConfig.setSslConfig(null));
+                .forEach(forwardDestinationConfig ->
+                        forwardDestinationConfig.setSslConfig(null));
 
         config.getProxyConfig()
                 .getRestClientConfig()
                 .setTlsConfiguration(null);
-    }
 
+        // If the home/temp paths don't exist then startup will exit, killing the rest of the tests
+        final Path proxyHomeDir = Paths.get(config.getProxyConfig().getProxyPathConfig().getHome());
+        final Path proxyTempDir = Paths.get(config.getProxyConfig().getProxyPathConfig().getTemp());
+
+        try {
+            Files.createDirectories(proxyHomeDir);
+        } catch (IOException e) {
+            LOGGER.error("Error creating home directory {}", proxyHomeDir.toAbsolutePath(), e);
+        }
+
+        try {
+            Files.createDirectories(proxyTempDir);
+        } catch (IOException e) {
+            LOGGER.error("Error creating temp directory {}", proxyTempDir.toAbsolutePath(), e);
+        }
+    }
 
     static Config getConfig() {
         return config;
