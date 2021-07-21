@@ -39,7 +39,7 @@ class TestProxyConfig {
     @Test
     void testValidation() throws IOException {
         Files.createDirectories(Path.of("/tmp/stroom-proxy"));
-       
+
         final Injector injector = Guice.createInjector(new ValidationModule());
 
         final ProxyConfigValidator proxyConfigValidator = injector.getInstance(ProxyConfigValidator.class);

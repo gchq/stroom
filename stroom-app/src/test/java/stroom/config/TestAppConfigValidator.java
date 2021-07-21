@@ -1,8 +1,8 @@
 package stroom.config;
 
 import stroom.config.app.AppConfig;
-import stroom.util.config.AppConfigValidator;
 import stroom.test.AbstractCoreIntegrationTest;
+import stroom.util.config.AppConfigValidator;
 import stroom.util.config.ConfigValidator;
 import stroom.util.shared.AbstractConfig;
 

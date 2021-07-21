@@ -1,13 +1,13 @@
 package stroom.config;
 
 import stroom.config.app.AppConfig;
-import stroom.util.config.ConfigLocation;
 import stroom.config.app.YamlUtil;
 import stroom.config.global.impl.AppConfigMonitor;
 import stroom.config.global.impl.GlobalConfigService;
-import stroom.util.config.AppConfigValidator;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.config.AbstractFileChangeMonitor;
+import stroom.util.config.AppConfigValidator;
+import stroom.util.config.ConfigLocation;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LogUtil;
 
