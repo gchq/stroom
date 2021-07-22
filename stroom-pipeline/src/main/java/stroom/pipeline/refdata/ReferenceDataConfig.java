@@ -7,6 +7,7 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.validation.ValidFilePath;
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.annotation.Nonnull;
@@ -15,6 +16,8 @@ import javax.validation.constraints.Min;
 
 @Singleton
 public class ReferenceDataConfig extends AbstractConfig {
+
+    public static final String LOCAL_DIR_PROP_NAME = "localDir";
 
     private String localDir = "reference_data";
     private String lmdbSystemLibraryPath = null;
@@ -31,6 +34,7 @@ public class ReferenceDataConfig extends AbstractConfig {
 
     @Nonnull
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
+    @JsonProperty(LOCAL_DIR_PROP_NAME)
     @JsonPropertyDescription("The path relative to the home directory to use for storing the reference data store. " +
             "It MUST be on local disk, NOT network storage, due to use of memory mapped files. " +
             "The directory will be created if it doesn't exist." +

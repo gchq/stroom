@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2331** : Remove unused config properties `stroom.ui.url.(apiKeys|changepassword|users)`.
 
+Improve error handling during reference data initialisation.
+
 
 ## [v7.0-beta.137] - 2021-07-02
 
