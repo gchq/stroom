@@ -16,61 +16,256 @@
 
 package stroom.explorer.client.presenter;
 
-import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
-import stroom.data.table.client.CellTableView;
-import stroom.data.table.client.CellTableViewImpl;
+import stroom.data.grid.client.DataGridViewImpl;
+import stroom.data.table.client.CellTableViewImpl.DefaultResources;
+import stroom.explorer.client.presenter.TypeFilterPresenter.TypeFilterView;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.explorer.shared.DocumentTypes;
+import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.popup.client.presenter.PopupPosition.HorizontalLocation;
+import stroom.widget.popup.client.presenter.PopupPosition.VerticalLocation;
+import stroom.widget.popup.client.presenter.PopupUiHandlers;
+import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.util.client.MySingleSelectionModel;
 
-import com.google.gwt.cell.client.SafeHtmlCell;
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.BrowserEvents;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Style.Cursor;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.user.cellview.client.CellTable;
+import com.google.gwt.user.cellview.client.CellTable.Resources;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class TypeFilterPresenter extends MyPresenterWidget<CellTableView<DocumentType>>
-        implements HasDataSelectionHandlers<TypeFilterPresenter> {
-
-    private final EventBus eventBus;
+public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
+        implements HasDataSelectionHandlers<TypeFilterPresenter>,
+        DocumentTypeSelectionModel {
 
     private final Set<String> selected = new HashSet<>();
     private List<DocumentType> visibleTypes;
 
     private static final String SELECT_ALL_OR_NONE_TEXT = "All/none";
-    private static final String SELECT_ALL_OR_NONE_ICON = "document/SelectAllOrNone.svg";
+    private static final String SELECT_ALL_OR_NONE_ICON = "svgIcon-document svgIcon-document-SelectAllOrNone";
     private static final DocumentType SELECT_ALL_OR_NONE_DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.SYSTEM, SELECT_ALL_OR_NONE_TEXT, SELECT_ALL_OR_NONE_TEXT, SELECT_ALL_OR_NONE_ICON);
 
+    private final CellTable<DocumentType> cellTable;
+
+    private final MySingleSelectionModel<DocumentType> selectionModel = new MySingleSelectionModel<>();
+    private int mouseOverRow = -1;
+
     @Inject
-    public TypeFilterPresenter(final EventBus eventBus) {
-        super(eventBus, new CellTableViewImpl<>(false));
-        this.eventBus = eventBus;
+    public TypeFilterPresenter(final EventBus eventBus, final TypeFilterView view) {
+        super(eventBus, view);
 
-        getView().addColumn(getTickBoxColumn());
-        getView().addColumn(getIconColumn());
-        getView().addColumn(getTextColumn());
+        final Resources resources = GWT.create(DefaultResources.class);
+        cellTable = new CellTable<>(DataGridViewImpl.DEFAULT_LIST_PAGE_SIZE, resources);
+        cellTable.setWidth("100%");
+        cellTable.getElement().setClassName("menuCellTable");
+        cellTable.setLoadingIndicator(null);
 
-        final Style style = getView().asWidget().getElement().getStyle();
-        style.setPaddingLeft(1, Unit.PX);
-        style.setPaddingRight(3, Unit.PX);
-        style.setPaddingTop(2, Unit.PX);
-        style.setPaddingBottom(1, Unit.PX);
+        // Sink events.
+        final int mouseMove = Event.getTypeInt(BrowserEvents.MOUSEMOVE);
+        cellTable.sinkEvents(mouseMove);
+
+        cellTable.getElement().getStyle().setProperty("minWidth", 50 + "px");
+        cellTable.getElement().getStyle().setProperty("maxWidth", 600 + "px");
+
+        cellTable.addColumn(getTickBoxColumn());
+        cellTable.setSkipRowHoverCheck(true);
+
+        cellTable.setSelectionModel(selectionModel);
+        cellTable.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.ENABLED);
+        cellTable.getRowContainer().getStyle().setCursor(Cursor.POINTER);
+
+        view.setWidget(cellTable);
     }
+
+    @Override
+    protected void onBind() {
+        // We need to set this to prevent default keyboard behaviour.
+        cellTable.setKeyboardSelectionHandler(e -> {
+//            GWT.log("KSH: " + e.getNativeEvent().getType() + " " + e.getValue());
+        });
+
+        registerHandler(cellTable.addCellPreviewHandler(e -> {
+            final NativeEvent nativeEvent = e.getNativeEvent();
+            final String type = nativeEvent.getType();
+
+            if ("keydown".equals(type)) {
+                final List<DocumentType> items = cellTable.getVisibleItems();
+
+                if (items.size() > 0) {
+                    final DocumentType selected = selectionModel.getSelectedObject();
+                    int originalRow = -1;
+                    if (selected != null) {
+                        originalRow = items.indexOf(selected);
+                    }
+
+                    int row = originalRow;
+                    int keyCode = nativeEvent.getKeyCode();
+                    if (keyCode == KeyCodes.KEY_UP) {
+                        for (int i = row - 1; i >= 0; i--) {
+                            final DocumentType item = items.get(i);
+                            if (isSelectable(item)) {
+                                row = i;
+                                break;
+                            }
+                        }
+
+                    } else if (keyCode == KeyCodes.KEY_DOWN) {
+                        for (int i = row + 1; i < items.size(); i++) {
+                            final DocumentType item = items.get(i);
+                            if (isSelectable(item)) {
+                                row = i;
+                                break;
+                            }
+                        }
+
+                    } else if (keyCode == KeyCodes.KEY_ESCAPE) {
+                        escape();
+                        row = -1;
+
+                    } else if (keyCode == KeyCodes.KEY_ENTER) {
+                        execute(selected);
+                        row = -1;
+                    }
+
+                    if (row >= 0) {
+                        if (row != originalRow) {
+                            selectRow(row);
+                        }
+                    }
+                }
+
+            } else if ("click".equals(type)) {
+                final DocumentType item = e.getValue();
+                if (isSelectable(item)) {
+                    final int row = cellTable.getVisibleItems().indexOf(item);
+                    selectRow(row);
+                    execute(item);
+                }
+
+            } else if ("mousemove".equals(type)) {
+                final DocumentType item = e.getValue();
+                if (isSelectable(item)) {
+                    final int row = cellTable.getVisibleItems().indexOf(item);
+                    if (row != mouseOverRow) {
+                        selectRow(row);
+                        mouseOverRow = row;
+                    }
+                }
+            } else if ("blur".equals(type)) {
+                final DocumentType item = e.getValue();
+                if (isSelectable(item)) {
+                    mouseOverRow = -1;
+                }
+            }
+        }));
+    }
+
+    private boolean isSelectable(final DocumentType item) {
+        return true;
+    }
+
+    public void escape() {
+        hideSelf();
+    }
+
+    public void show(final Element element) {
+        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+            @Override
+            public void onShow() {
+                selectFirstItem();
+            }
+
+            @Override
+            public void onHideRequest(final boolean autoClose, final boolean ok) {
+                hideSelf();
+            }
+
+            @Override
+            public void onHide(final boolean autoClose, final boolean ok) {
+                element.focus();
+            }
+        };
+
+        final PopupPosition popupPosition = new PopupPosition(
+                element.getAbsoluteRight() + 5,
+                element.getAbsoluteRight() + 5,
+                element.getAbsoluteTop() - 5,
+                element.getAbsoluteTop() - 5,
+                HorizontalLocation.RIGHT,
+                VerticalLocation.BELOW);
+
+        ShowPopupEvent.fire(this, this, PopupType.POPUP,
+                popupPosition, popupUiHandlers, element);
+    }
+
+    private void hideSelf() {
+        HidePopupEvent.fire(this, this);
+    }
+
+    public void execute(final DocumentType documentType) {
+        toggle(documentType);
+        refreshView();
+    }
+
+    public void setData(final List<DocumentType> items) {
+        cellTable.setRowData(0, items);
+        cellTable.setRowCount(items.size());
+    }
+
+    public void selectFirstItem() {
+        int row = getFirstSelectableRow();
+        if (row >= 0) {
+            final List<DocumentType> items = cellTable.getVisibleItems();
+            final DocumentType item = items.get(row);
+            selectRow(row);
+        }
+    }
+
+    public void focus() {
+        int row = getFirstSelectableRow();
+        if (row >= 0) {
+            selectRow(row);
+        }
+    }
+
+    private void selectRow(final int row) {
+        final List<DocumentType> items = cellTable.getVisibleItems();
+        if (row >= 0 && row < items.size()) {
+            final DocumentType item = items.get(row);
+            selectionModel.setSelected(item, true);
+            cellTable.setKeyboardSelectedRow(row, true);
+        }
+    }
+
+    private int getFirstSelectableRow() {
+        return 0;
+    }
+
 
     public void setDocumentTypes(final DocumentTypes documentTypes) {
         visibleTypes = documentTypes.getVisibleTypes();
@@ -84,7 +279,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<CellTableView<Documen
 
     @Override
     public HandlerRegistration addDataSelectionHandler(final DataSelectionHandler<TypeFilterPresenter> handler) {
-        return eventBus.addHandlerToSource(DataSelectionEvent.getType(), this, handler);
+        return getEventBus().addHandlerToSource(DataSelectionEvent.getType(), this, handler);
     }
 
     private void showAll() {
@@ -103,77 +298,59 @@ public class TypeFilterPresenter extends MyPresenterWidget<CellTableView<Documen
         selectableTypes.add(0, SELECT_ALL_OR_NONE_DOCUMENT_TYPE);
 
         // To refresh the view we need to set the row data again.
-        getView().setRowData(0, selectableTypes);
-        getView().setRowCount(selectableTypes.size());
+        cellTable.setRowData(0, selectableTypes);
+        cellTable.setRowCount(selectableTypes.size());
     }
 
-    private Column<DocumentType, TickBoxState> getTickBoxColumn() {
-        final Column<DocumentType, TickBoxState> checkedColumn = new Column<DocumentType, TickBoxState>(
-                TickBoxCell.create(false, true)) {
-            @Override
-            public TickBoxState getValue(final DocumentType documentType) {
-                // If we're checking the TickBoxState of 'All/none' then we need some logic for half-ticks.
-                if (documentType.equals(SELECT_ALL_OR_NONE_DOCUMENT_TYPE)) {
-                    if (selected.size() == 0) {
-                        return TickBoxState.UNTICK;
-                    } else if (selected.size() < visibleTypes.size()) {
-                        return TickBoxState.HALF_TICK;
-                    } else {
-                        return TickBoxState.TICK;
-                    }
-                } else {
-                    return TickBoxState.fromBoolean(selected.contains(documentType.getType()));
-                }
-            }
-        };
-        checkedColumn.setFieldUpdater((index, object, value) -> {
-            if (object.equals(SELECT_ALL_OR_NONE_DOCUMENT_TYPE)) {
-                if (value.toBoolean()) {
-                    showAll();
-                } else {
-                    hideAll();
-                }
+    private void toggle(final DocumentType type) {
+        if (type.equals(SELECT_ALL_OR_NONE_DOCUMENT_TYPE)) {
+            if (selected.size() == visibleTypes.size()) {
+                hideAll();
             } else {
-                if (selected.contains(object.getType())) {
-                    selected.remove(object.getType());
-                } else {
-                    selected.add(object.getType());
-                }
+                showAll();
             }
-            // We need to refresh the view here otherwise a selection change wouldn't mean a change
-            // to the TickBoxState of the 'All/none' TickBox.
-            refreshView();
-            DataSelectionEvent.fire(
-                    TypeFilterPresenter.this,
-                    TypeFilterPresenter.this,
-                    false);
-        });
+        } else {
+            if (selected.contains(type.getType())) {
+                selected.remove(type.getType());
+            } else {
+                selected.add(type.getType());
+            }
+        }
 
-        return checkedColumn;
+        refreshView();
+        DataSelectionEvent.fire(
+                TypeFilterPresenter.this,
+                TypeFilterPresenter.this,
+                false);
     }
 
-    private Column<DocumentType, SafeHtml> getIconColumn() {
-        return new Column<DocumentType, SafeHtml>(new SafeHtmlCell()) {
+    @Override
+    public TickBoxState getState(final DocumentType type) {
+        if (type.equals(SELECT_ALL_OR_NONE_DOCUMENT_TYPE)) {
+            if (selected.size() == 0) {
+                return TickBoxState.UNTICK;
+            } else if (selected.size() == visibleTypes.size()) {
+                return TickBoxState.TICK;
+            } else {
+                return TickBoxState.HALF_TICK;
+            }
+        } else if (selected.contains(type.getType())) {
+            return TickBoxState.TICK;
+        }
+        return TickBoxState.UNTICK;
+    }
+
+    private Column<DocumentType, DocumentType> getTickBoxColumn() {
+        return new Column<DocumentType, DocumentType>(new DocumentTypeCell(this)) {
             @Override
-            public SafeHtml getValue(final DocumentType documentType) {
-                return SafeHtmlUtils.fromTrustedString("<div style=\"width:16px;height:16px;padding:2px\" class=\"" +
-                        documentType.getIconClassName() +
-                        "\"></div>");
+            public DocumentType getValue(final DocumentType documentType) {
+                return documentType;
             }
         };
     }
 
-    private Column<DocumentType, SafeHtml> getTextColumn() {
-        return new Column<DocumentType, SafeHtml>(new SafeHtmlCell()) {
-            @Override
-            public SafeHtml getValue(final DocumentType object) {
-                // We want to make the 'All/none' entry bold, so we'll use some SafeHtml.
-                if (object.getType().equalsIgnoreCase(SELECT_ALL_OR_NONE_TEXT)) {
-                    return SafeHtmlUtils.fromTrustedString("<strong>" + object.getType() + "</strong>");
-                } else {
-                    return SafeHtmlUtils.fromTrustedString(object.getType());
-                }
-            }
-        };
+    public interface TypeFilterView extends View {
+
+        void setWidget(Widget widget);
     }
 }

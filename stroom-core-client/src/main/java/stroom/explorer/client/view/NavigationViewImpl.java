@@ -19,10 +19,10 @@ package stroom.explorer.client.view;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
 import stroom.explorer.client.presenter.NavigationUiHandlers;
 import stroom.explorer.shared.ExplorerTreeFilter;
+import stroom.svg.client.SvgImages;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
-import stroom.widget.tab.client.view.SvgImage;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.dom.client.Element;
@@ -33,7 +33,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -50,7 +50,9 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
     @UiField
     QuickFilter nameFilter;
     @UiField
-    ScrollPanel scrollPanel;
+    FlowPanel buttonContainer;
+    @UiField
+    SimplePanel scrollPanel;
     @UiField
     SimplePanel activityPanel;
 
@@ -59,13 +61,12 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
                               final UiConfigCache uiConfigCache) {
         widget = binder.createAndBindUi(this);
 
-
         final Element logoImage = DOM.createDiv();
         logoImage.setClassName("navigation-logo-image");
-        logoImage.setInnerHTML(SvgImage.MONO_LOGO);
+        logoImage.setInnerHTML(SvgImages.MONO_LOGO);
         final Element arrowImage = DOM.createDiv();
         arrowImage.setClassName("navigation-arrow-image");
-        arrowImage.setInnerHTML(SvgImage.MONO_ARROW_DOWN);
+        arrowImage.setInnerHTML(SvgImages.MONO_ARROW_DOWN);
 
         final Element div = DOM.createDiv();
         div.setClassName("navigation-menu-content");
@@ -75,7 +76,7 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
         logo.getElement().appendChild(div);
 
 //        logo.getElement().setInnerHTML(SvgImage.MONO_LOGO);
-        menu.getElement().setInnerHTML(SvgImage.MONO_MENU);
+        menu.getElement().setInnerHTML(SvgImages.MONO_MENU);
 
         uiConfigCache.get()
                 .onSuccess(uiConfig ->
@@ -108,6 +109,11 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
         if (MouseUtil.isPrimary(event)) {
             getUiHandlers().maximise();
         }
+    }
+
+    @Override
+    public FlowPanel getButtonContainer() {
+        return buttonContainer;
     }
 
     @Override

@@ -838,3 +838,7 @@ input[type="file"]:disabled {
 .w-100 {
   width: 100% !important;
 }
+
+.scrollable {
+    overflow: auto;
+}

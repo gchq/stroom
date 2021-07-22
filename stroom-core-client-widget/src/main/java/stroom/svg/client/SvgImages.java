@@ -1,6 +1,6 @@
-package stroom.widget.tab.client.view;
+package stroom.svg.client;
 
-public class SvgImage {
+public class SvgImages {
 
     public static String ADD = "" +
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
@@ -3402,6 +3402,24 @@ public class SvgImage {
             "</svg>\n" +
             "";
 
+    public static String MONO_ARROW_RIGHT = "" +
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1427.7665\" height=\"1427.7665\" vie" +
+            "wBox=\"0 0 1427.7665 1427.7665\">\n" +
+            "    <g style=\"stroke:currentColor;stroke-width:167.567\">\n" +
+            "        <path d=\"m 415.05387,83.70929 c -39.92654,0.4303 -75.41463,48.3887 -40.0" +
+            "468,81.9121 C 567.552,348.69899 760.75555,531.15431 953.73208,713.82391 760.7555" +
+            "5,896.49341 567.552,1078.9486 375.00707,1262.0262 c -46.19471,43.7855 28.48812,1" +
+            "12.1966 76.0571,67.1681 195.93558,-185.823 392.95261,-370.82479 587.98693,-557.5" +
+            "2749 5.6117,-4.8034 10.4633,-10.2473 14.4855,-16.1231 9.643,-12.4844 13.9638,-27" +
+            ".0796 13.6909,-41.7198 0.2729,-14.6402 -4.0479,-29.2354 -13.6909,-41.7198 -4.022" +
+            "2,-5.8758 -8.8738,-11.3198 -14.4855,-16.1231 C 844.01678,469.27821 646.99975,284" +
+            ".27629 451.06417,98.45319 439.91519,87.89979 427.27628,83.57749 415.05387,83.709" +
+            "29 Z\"/>\n" +
+            "    </g>\n" +
+            "</svg>\n" +
+            "";
+
     public static String MONO_CLOSE = "" +
             "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
@@ -3503,6 +3521,16 @@ public class SvgImage {
             "z\"/>\n" +
             "    </g>\n" +
             "</svg>\n" +
+            "";
+
+    public static String MONO_TICK = "" +
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 512 512\"><!-- Font Awesome " +
+            "Free 5.15.3 by @fontawesome - https://fontawesome.com License - https://fontawes" +
+            "ome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) -" +
+            "-><path d=\"M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.2" +
+            "03-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.99" +
+            "7 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 2" +
+            "94.401c-9.998 9.997-26.207 9.997-36.204-.001z\"/></svg>\n" +
             "";
 
     public static String MOVE = "" +

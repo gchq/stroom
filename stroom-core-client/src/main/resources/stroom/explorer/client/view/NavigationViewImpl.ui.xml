@@ -8,7 +8,10 @@
             <g:Button ui:field="menu" title="Hide Sidebar" styleName="navigation-menu-button focus-without-border"/>
         </g:FlowPanel>
         <v:QuickFilter ui:field="nameFilter" addStyleNames="dock-min explorerTreeViewImpl-nameFilter"/>
-        <g:ScrollPanel ui:field="scrollPanel" styleName="dock-max"/>
+        <g:FlowPanel ui:field="buttonContainer" styleName="dock-min"/>
+        <g:SimplePanel styleName="dock-max">
+            <g:SimplePanel ui:field="scrollPanel" styleName="max"/>
+        </g:SimplePanel>
         <g:SimplePanel ui:field="activityPanel" styleName="dock-min"/>
     </g:FlowPanel>
 </ui:UiBinder> 

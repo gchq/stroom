@@ -44,6 +44,9 @@ import stroom.explorer.client.presenter.ExplorerTreePresenter.ExplorerTreeView;
 import stroom.explorer.client.presenter.NavigationPresenter;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationProxy;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
+import stroom.explorer.client.presenter.TypeFilterPresenter;
+import stroom.explorer.client.presenter.TypeFilterPresenter.TypeFilterView;
+import stroom.explorer.client.presenter.TypeFilterViewImpl;
 import stroom.explorer.client.view.EntityCheckTreeViewImpl;
 import stroom.explorer.client.view.EntityTreeViewImpl;
 import stroom.explorer.client.view.ExplorerTreeViewImpl;
@@ -118,6 +121,7 @@ public class AppModule extends AbstractPresenterModule {
 
         bindPresenter(ExplorerTreePresenter.class, ExplorerTreeView.class, ExplorerTreeViewImpl.class,
                 ExplorerTreeProxy.class);
+        bindPresenterWidget(TypeFilterPresenter.class, TypeFilterView.class, TypeFilterViewImpl.class);
 
         bindPresenter(AboutPresenter.class, AboutView.class, AboutViewImpl.class, AboutProxy.class);
 

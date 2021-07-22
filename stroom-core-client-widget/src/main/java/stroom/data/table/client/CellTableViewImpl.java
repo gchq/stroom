@@ -48,10 +48,6 @@ public class CellTableViewImpl<R> extends ViewImpl implements CellTableView<R> {
     CellTable<R> cellTable;
     private Widget widget;
 
-    public CellTableViewImpl() {
-        this(false);
-    }
-
     public CellTableViewImpl(final boolean supportsSelection) {
         this(supportsSelection, "basicCellTable");
     }

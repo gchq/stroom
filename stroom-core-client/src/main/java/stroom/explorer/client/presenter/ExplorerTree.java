@@ -26,6 +26,7 @@ import stroom.util.shared.EqualsUtil;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.spinner.client.SpinnerSmall;
 import stroom.widget.util.client.DoubleSelectTester;
+import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectEvent.Handler;
@@ -73,7 +74,7 @@ public class ExplorerTree extends AbstractExplorerTree {
         spinnerSmall.getElement().getStyle().setRight(5, Style.Unit.PX);
         spinnerSmall.getElement().getStyle().setTop(5, Style.Unit.PX);
 
-        final ExplorerCell explorerCell = new ExplorerCell();
+        final ExplorerCell explorerCell = new ExplorerCell(null);
         expanderClassName = explorerCell.getExpanderClassName();
 
         final Resources resources = GWT.create(DefaultResources.class);
@@ -245,9 +246,7 @@ public class ExplorerTree extends AbstractExplorerTree {
                             final String className = element.getClassName();
 
                             // Expander
-                            if ((className != null && className.contains(expanderClassName))
-                                    || (element.getParentElement().getClassName() != null
-                                    && element.getParentElement().getClassName().contains(expanderClassName))) {
+                            if ((ElementUtil.hasClassName(element, expanderClassName, 0, 5))) {
                                 treeModel.toggleOpenState(selectedItem);
                             } else {
                                 final boolean doubleClick = doubleClickTest.test(selectedItem);

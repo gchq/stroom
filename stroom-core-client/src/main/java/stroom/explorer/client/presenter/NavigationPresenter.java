@@ -44,6 +44,8 @@ import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.popup.client.presenter.PopupPosition.HorizontalLocation;
+import stroom.widget.popup.client.presenter.PopupPosition.VerticalLocation;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tab.client.event.MaximiseEvent;
 
@@ -263,16 +265,7 @@ public class NavigationPresenter
 
     public void showTypeFilter(final MouseDownEvent event) {
         final Element target = event.getNativeEvent().getEventTarget().cast();
-
-        final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft() - 1,
-                target.getAbsoluteTop() + target.getClientHeight() + 2);
-        ShowPopupEvent.fire(
-                this,
-                typeFilterPresenter,
-                PopupType.POPUP,
-                popupPosition,
-                null,
-                target);
+        typeFilterPresenter.show(target);
     }
 
     @ProxyEvent
@@ -340,27 +333,28 @@ public class NavigationPresenter
 
     public void refresh() {
         explorerTree.getTreeModel().refresh();
-        // Sort the menu items by priority.
-        currentMenuItems.sort(new MenuItems.ItemComparator());
-        for (final Item item : currentMenuItems) {
-            // Add the item to the view.
-            if (item instanceof HasChildren) {
-                final HasChildren hasChildren = (HasChildren) item;
-                hasChildren.getChildren().onSuccess(children -> {
-                    if (children != null && children.size() > 0) {
-                        allItems.put(item, children);
-                        refreshAll();
-                    }
-                });
-            }
-        }
+//        // Sort the menu items by priority.
+//        currentMenuItems.sort(new MenuItems.ItemComparator());
+//        for (final Item item : currentMenuItems) {
+//            // Add the item to the view.
+//            if (item instanceof HasChildren) {
+//                final HasChildren hasChildren = (HasChildren) item;
+//                hasChildren.getChildren().onSuccess(children -> {
+//                    if (children != null && children.size() > 0) {
+//                        allItems.put(item, children);
+//                        refreshAll();
+//                    }
+//                });
+//            }
+//        }
     }
 
 
     @Override
     protected void revealInParent() {
         explorerTree.getTreeModel().refresh();
-        refreshAll();
+        createButtons();
+        getView().setNavigationWidget(explorerTree);
         RevealContentEvent.fire(this, MainPresenter.EXPLORER, this);
     }
 
@@ -435,10 +429,10 @@ public class NavigationPresenter
 //    }
 
 
-    private void refreshAll() {
-        final FlowPanel flowPanel = new FlowPanel();
-        flowPanel.add(createButtons());
-        flowPanel.add(explorerTree);
+//    private void refreshAll() {
+//        final FlowPanel flowPanel = new FlowPanel();
+//        flowPanel.add(createButtons());
+//        flowPanel.add(explorerTree);
 
 //        if (explorerTree != null) {
 //            explorerTree.asWidget().getElement().getChild(0).getChild(0);
@@ -478,11 +472,11 @@ public class NavigationPresenter
 //                }
 //            }
 //        });
+//
+//        getView().setNavigationWidget(flowPanel);
+//    }
 
-        getView().setNavigationWidget(flowPanel);
-    }
-
-    private FlowPanel createButtons() {
+    private void createButtons() {
         add = SvgButton.create(new Preset("navigation-header-button navigation-header-button-add",
                 "New",
                 false));
@@ -497,13 +491,11 @@ public class NavigationPresenter
         delete.addMouseDownHandler(e -> deleteItem());
         filter.addMouseDownHandler(this::showTypeFilter);
 
-        final FlowPanel buttons = new FlowPanel();
+        final FlowPanel buttons = getView().getButtonContainer();
         buttons.setStyleName("navigation-header-buttons");
         buttons.add(add);
         buttons.add(delete);
         buttons.add(filter);
-
-        return buttons;
     }
 
     @ProxyCodeSplit
@@ -512,6 +504,7 @@ public class NavigationPresenter
     }
 
     public interface NavigationView extends View, HasUiHandlers<NavigationUiHandlers> {
+        FlowPanel getButtonContainer();
 
         void setNavigationWidget(Widget widget);
 

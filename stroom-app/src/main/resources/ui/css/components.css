@@ -87,12 +87,13 @@
 }
 
 .menuItem-outer {
-    padding: 4px 6px;
     min-width: 180px;
     border: 1px solid transparent;
     border-radius: .2rem;
     display: flex;
     align-items: center;
+    padding: var(--vertical-padding) var(--horizontal-padding);
+    gap: var(--horizontal-padding);
 }
 
 .cellTableSelectedRow .menuItem-outer {
@@ -111,8 +112,6 @@
 }
 
 .menuItem-highlight {
-	width: 100%;
-	padding: 4px;
 	background-color: var(--code-editor-highlight-background-color);
 	color: var(--selected-row-text-color);
 }
@@ -127,7 +126,6 @@
 }
 
 .menuItem-text {
-    margin: 0 .4rem;
 }
 
 .menuItem-simpleText {
@@ -139,11 +137,10 @@
 }
 
 .menuItem-shortcut {
-	display: inline-block;
-	vertical-align: top;
-	padding-top: 1px;
-	float: right;
-	padding-left: 15px;
+    padding-left: 15px;
+    white-space: nowrap;
+    text-align: right;
+    flex-grow: 1;
 }
 
 .basicTabSelector {
@@ -1715,6 +1712,7 @@
     align-items: center;
     margin: 0.25rem;
     margin-top: 0;
+    justify-content: flex-end;
 }
 
 .navigation-header-button {

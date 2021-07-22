@@ -19,11 +19,12 @@ package stroom.explorer.client.presenter;
 import stroom.data.table.client.CellTableViewImpl.DefaultResources;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.event.ShowExplorerMenuEvent;
-import stroom.explorer.client.view.ExplorerTickBoxCell;
+import stroom.explorer.client.view.ExplorerCell;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNode.NodeState;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.widget.spinner.client.SpinnerSmall;
+import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectEvent;
 
@@ -61,7 +62,7 @@ public class ExplorerTickBoxTree extends AbstractExplorerTree {
 
         selectionModel = new TickBoxSelectionModel();
 
-        final ExplorerTickBoxCell explorerCell = new ExplorerTickBoxCell(selectionModel);
+        final ExplorerCell explorerCell = new ExplorerCell(selectionModel);
         expanderClassName = explorerCell.getExpanderClassName();
         tickBoxClassName = explorerCell.getTickBoxClassName();
 
@@ -133,22 +134,6 @@ public class ExplorerTickBoxTree extends AbstractExplorerTree {
 
     public void refresh() {
         treeModel.refresh();
-    }
-
-    private boolean hasClassName(final Element element, final String className, final int depth, final int maxDepth) {
-        if (element == null) {
-            return false;
-        }
-
-        if (element.hasClassName(className)) {
-            return true;
-        }
-
-        if (depth < maxDepth) {
-            return hasClassName(element.getParentElement(), className, depth + 1, maxDepth);
-        }
-
-        return false;
     }
 
     private void onKeyDown(final int keyCode) {
@@ -305,7 +290,7 @@ public class ExplorerTickBoxTree extends AbstractExplorerTree {
                     if (MouseUtil.isPrimary(nativeEvent)) {
                         final Element element = event.getNativeEvent().getEventTarget().cast();
 
-                        if (hasClassName(element, tickBoxClassName, 0, 5)) {
+                        if (ElementUtil.hasClassName(element, tickBoxClassName, 0, 5)) {
                             toggleSelection(selectedItem);
                             super.onCellPreview(event);
                             refresh();
@@ -314,7 +299,7 @@ public class ExplorerTickBoxTree extends AbstractExplorerTree {
                             toggleSelection(selectedItem);
                             super.onCellPreview(event);
 
-                        } else if (hasClassName(element, expanderClassName, 0, 1)) {
+                        } else if (ElementUtil.hasClassName(element, expanderClassName, 0, 1)) {
                             super.onCellPreview(event);
 
                             treeModel.toggleOpenState(selectedItem);

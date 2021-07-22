@@ -35,9 +35,7 @@ import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
-import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.util.client.SelectionType;
 
@@ -194,16 +192,7 @@ public class ExplorerTreePresenter
     @Override
     public void showTypeFilter(final MouseDownEvent event) {
         final Element target = event.getNativeEvent().getEventTarget().cast();
-
-        final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft() - 1,
-                target.getAbsoluteTop() + target.getClientHeight() + 2);
-        ShowPopupEvent.fire(
-                this,
-                typeFilterPresenter,
-                PopupType.POPUP,
-                popupPosition,
-                null,
-                target);
+        typeFilterPresenter.show(target);
     }
 
     @ProxyEvent

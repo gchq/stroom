@@ -16,6 +16,7 @@
 
 package stroom.widget.tab.client.view;
 
+import stroom.svg.client.SvgImages;
 import stroom.widget.tab.client.presenter.CurveTabLayoutView;
 import stroom.widget.tab.client.presenter.TabBar;
 
@@ -47,7 +48,7 @@ public class CurveTabLayoutViewImpl extends ViewWithUiHandlers<CurveTabLayoutUiH
     @Inject
     public CurveTabLayoutViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        menu.getElement().setInnerHTML(SvgImage.MONO_MENU);
+        menu.getElement().setInnerHTML(SvgImages.MONO_MENU);
     }
 
     @Override

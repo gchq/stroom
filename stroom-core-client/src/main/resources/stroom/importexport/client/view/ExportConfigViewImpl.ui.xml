@@ -5,7 +5,7 @@
              xmlns:v="urn:import:stroom.widget.dropdowntree.client.view">
     <g:FlowPanel styleName="max default-min-sizes dock-container-vertical">
         <g:Label text="Select the items to export:" addStyleNames="dock-min exportConfigViewImpl-label"/>
-        <g:FlowPanel styleName="dock-min dock-container-horizontal stroom-content stroom-border exportConfigViewImpl-filter">
+        <g:FlowPanel styleName="dock-min dock-container-horizontal stroom-content exportConfigViewImpl-filter">
             <v:QuickFilter ui:field="nameFilter" addStyleNames="dock-max exportConfigViewImpl-nameFilter"/>
             <g:FlowPanel addStyleNames="dock-min button-container">
                 <p:SvgButton ui:field="typeFilter"/>

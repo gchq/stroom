@@ -16,6 +16,8 @@
 
 package stroom.widget.tab.client.view;
 
+import stroom.svg.client.SvgImages;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -32,7 +34,7 @@ public class CurveTabSelector extends AbstractTabSelector {
 
     public CurveTabSelector() {
         final DivElement element = binder.createAndBindUi(this);
-        arrows.setInnerHTML(SvgImage.MONO_DOUBLE_ARROW);
+        arrows.setInnerHTML(SvgImages.MONO_DOUBLE_ARROW);
 
         element.setAttribute("aria-label", "Tab Selector");
         setElement(element);

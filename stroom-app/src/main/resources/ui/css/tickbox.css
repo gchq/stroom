@@ -14,127 +14,51 @@
  * limitations under the License.
  */
 
-
-
 .tickBox {
-	display: inline-block;
-	text-align: left;
-	padding-top: 2px;
-	padding-bottom: 2px;
+    width: 16px;
+    height: 16px;
+    background-color: var(--control__background-color);
+    border: 1px solid var(--control__border-color);
+    border-radius: .25rem;
+    fill: white;
+    overflow: hidden;
 }
-/*
-.tickBox img {
-	vertical-align: top !important;
-	margin-top: 1px;
-}
-*/
+
 .tickBox-text {
 	display: inline-block;
 	margin-left: 4px;
 	cursor: pointer;
 }
 
-
 .tickBox-tick {
-    background-image: url("../images/tickbox/tick.png");
-    width: 13px;
-    height: 13px;
-}
-
-.tickBox-tickNB {
-    background-image: url("../images/tickbox/tickNB.png");
-    width: 13px;
-    height: 13px;
+    background-color: var(--primary);
+    border: 3px solid var(--primary);
 }
 
 .tickBox-halfTick {
-    background-image: url("../images/tickbox/halfTick.png");
-    width: 13px;
-    height: 13px;
+    padding: 3px;
 }
 
-.tickBox-halfTickNB {
-    background-image: url("../images/tickbox/halfTickNB.png");
-    width: 13px;
-    height: 13px;
+.tickBox-halfTick-inner {
+    background-color: var(--primary);
+    width: 100%;
+    height: 100%;
 }
 
 .tickBox-untick {
-    background-image: url("../images/tickbox/untick.png");
-    width: 13px;
-    height: 13px;
 }
 
-.tickBox-untickNB {
-    background-image: url("../images/tickbox/untickNB.png");
-    width: 13px;
-    height: 13px;
+.tickBox-tick+.tickBox-noBorder {
+    border: 3px solid var(--primary);
 }
 
-.tickBox-tickDisabled {
-    background-image: url("../images/tickbox/tickDisabled.png");
-    width: 13px;
-    height: 13px;
+.tickBox-noBorder {
+    border: 3px solid transparent;
 }
 
-.tickBox-halfTickDisabled {
-    background-image: url("../images/tickbox/halfTickDisabled.png");
-    width: 13px;
-    height: 13px;
+.tickBox-disabled {
+    opacity: 0.5;
 }
-
-.tickBox-untickDisabled {
-    background-image: url("../images/tickbox/untickDisabled.png");
-    width: 13px;
-    height: 13px;
-}
-
-
-.stroom-theme-dark .tickBox-halfTick {
-    background-image: url("../images/tickbox/halfTick-dark.png");
-}
-
-.stroom-theme-dark .tickBox-halfTickDisabled {
-    background-image: url("../images/tickbox/halfTickDisabled-dark.png");
-}
-
-.stroom-theme-dark .tickBox-untick {
-    background-image: url("../images/tickbox/untick-dark.png");
-}
-
-.stroom-theme-dark .tickBox-untickDisabled {
-    background-image: url("../images/tickbox/untickDisabled-dark.png");
-}
-
-
-.stroom-theme-dark2 .tickBox-tick {
-    background-image: url("../images/tickbox/tick-dark2.png");
-}
-
-.stroom-theme-dark2 .tickBox-tickNB {
-    background-image: url("../images/tickbox/tickNB-dark2.png");
-}
-
-.stroom-theme-dark2 .tickBox-halfTick {
-    background-image: url("../images/tickbox/halfTick-dark2.png");
-}
-
-.stroom-theme-dark2 .tickBox-halfTickNB {
-    background-image: url("../images/tickbox/halfTickNB-dark2.png");
-}
-
-.stroom-theme-dark2 .tickBox-halfTickDisabled {
-    background-image: url("../images/tickbox/halfTickDisabled-dark2.png");
-}
-
-.stroom-theme-dark2 .tickBox-untick {
-    background-image: url("../images/tickbox/untick-dark2.png");
-}
-
-.stroom-theme-dark2 .tickBox-untickDisabled {
-    background-image: url("../images/tickbox/untickDisabled-dark2.png");
-}
-
 
 
 

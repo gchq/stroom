@@ -18,6 +18,7 @@ package stroom.cell.valuespinner.client;
 
 import stroom.cell.valuespinner.shared.Editable;
 import stroom.cell.valuespinner.shared.HasSpinnerConstraints;
+import stroom.widget.util.client.ElementUtil;
 
 import com.google.gwt.cell.client.AbstractEditableCell;
 import com.google.gwt.cell.client.ValueUpdater;
@@ -345,13 +346,13 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
 
     private InputElement getInputElement(final Element parent) {
         Element vsDiv = null;
-        if (parent.hasTagName("div") && parent.hasClassName("valueSpinner")) {
+        if (parent.hasTagName("div") && ElementUtil.hasClassName(parent, "valueSpinner")) {
             vsDiv = parent;
         } else {
             final NodeList<Element> divs = parent.getElementsByTagName("div");
             for (int i = 0; i < divs.getLength(); i++) {
                 final Element div = divs.getItem(i);
-                if (div.hasClassName("valueSpinner")) {
+                if (ElementUtil.hasClassName(div, "valueSpinner")) {
                     vsDiv = div;
                     break;
                 }

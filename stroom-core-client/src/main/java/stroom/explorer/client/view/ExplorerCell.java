@@ -1,6 +1,10 @@
 package stroom.explorer.client.view;
 
+import stroom.cell.tickbox.client.TickBoxCell;
+import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.explorer.client.presenter.TickBoxSelectionModel;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.svg.client.SvgImages;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
@@ -10,19 +14,36 @@ import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.view.client.SelectionModel;
 
 public class ExplorerCell extends AbstractCell<ExplorerNode> {
 
     private static Template template;
+    private final SelectionModel<ExplorerNode> selectionModel;
+    private TickBoxCell tickBoxCell;
 
-    public ExplorerCell() {
+    public ExplorerCell(final SelectionModel<ExplorerNode> selectionModel) {
+        this.selectionModel = selectionModel;
+
+        if (selectionModel != null && selectionModel instanceof TickBoxSelectionModel) {
+            tickBoxCell = TickBoxCell.create(true, false);
+        }
+
         if (template == null) {
             template = GWT.create(Template.class);
         }
     }
 
+    private String getCellClassName() {
+        return "explorerCell";
+    }
+
     public String getExpanderClassName() {
-        return "explorerCell-expanderIcon";
+        return getCellClassName() + "-expander";
+    }
+
+    public String getTickBoxClassName() {
+        return getCellClassName() + "-tickBox";
     }
 
     @Override
@@ -31,36 +52,25 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
 
             int expanderPadding = 4;
 
-            SafeHtml expanderIcon = null;
+            SafeHtml expanderIcon = SafeHtmlUtils.EMPTY_SAFE_HTML;
             if (item.getNodeState() != null) {
                 switch (item.getNodeState()) {
                     case LEAF:
-                        expanderIcon = SafeHtmlUtils.EMPTY_SAFE_HTML;
-                        expanderPadding += 13;
+                        expanderIcon = SafeHtmlUtils.fromTrustedString("<svg></svg>");
                         break;
                     case OPEN:
-                        expanderIcon = template.icon(
-                                "svgIcon explorerCell-expanderIcon explorerCell-treeOpen");
+                        expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_ARROW_DOWN);
                         break;
                     case CLOSED:
-                        expanderIcon = template.icon(
-                                "svgIcon explorerCell-expanderIcon explorerCell-treeClosed");
+                        expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_ARROW_RIGHT);
                         break;
                     default:
                         throw new RuntimeException("Unexpected state " + item.getNodeState());
                 }
             }
-//            else {
-//                expanderIcon = getImageHtml(resources.leaf());
-//            }
 
             int indent = item.getDepth();
-//            if (item.isLeaf()) {
-//                indent++;
-//            }
             indent = expanderPadding + (indent * 17);
-
-//            final SafeHtml indentHtml = template.indent(style.indent(), indent);
 
             SafeHtml expanderHtml = SafeHtmlUtils.EMPTY_SAFE_HTML;
             SafeHtml iconHtml = SafeHtmlUtils.EMPTY_SAFE_HTML;
@@ -68,29 +78,51 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
 
             if (expanderIcon != null) {
                 final SafeStyles paddingLeft = SafeStylesUtils.fromTrustedString("padding-left:" + indent + "px;");
-                expanderHtml = template.expander("explorerCell-expander", paddingLeft, expanderIcon);
+                expanderHtml = template.expander(getCellClassName() + "-expander", paddingLeft, expanderIcon);
             }
 
             if (item.getIconClassName() != null) {
-                iconHtml = template.icon("explorerCell-icon " + item.getIconClassName());
+                iconHtml = template.icon(getCellClassName() + "-icon " + item.getIconClassName());
             }
 
             if (item.getDisplayValue() != null) {
-                textHtml = template.text("explorerCell-text", SafeHtmlUtils.fromString(item.getDisplayValue()));
+                textHtml = template.div(getCellClassName() + "-text", SafeHtmlUtils.fromString(item.getDisplayValue()));
             }
 
             final SafeHtmlBuilder content = new SafeHtmlBuilder();
             content.append(expanderHtml);
+
+            if (tickBoxCell != null) {
+                final SafeHtmlBuilder tb = new SafeHtmlBuilder();
+                tickBoxCell.render(context, getValue(item), tb);
+
+                final SafeHtml tickBoxHtml = template.div(getCellClassName() + "-tickBox", tb.toSafeHtml());
+                content.append(tickBoxHtml);
+            }
+
             content.append(iconHtml);
             content.append(textHtml);
 
-            sb.append(template.outer("explorerCell-outer", content.toSafeHtml()));
+            sb.append(template.div(getCellClassName() + "-outer", content.toSafeHtml()));
+        }
+    }
+
+    private TickBoxState getValue(final ExplorerNode item) {
+        if (selectionModel == null) {
+            return TickBoxState.UNTICK;
+        } else if (selectionModel instanceof TickBoxSelectionModel) {
+            final TickBoxSelectionModel tickBoxSelectionModel = (TickBoxSelectionModel) selectionModel;
+            return tickBoxSelectionModel.getState(item);
+        } else {
+            if (selectionModel.isSelected(item)) {
+                return TickBoxState.TICK;
+            } else {
+                return TickBoxState.UNTICK;
+            }
         }
     }
 
     interface Template extends SafeHtmlTemplates {
-//        @Template("<div class=\"{0}\" style=\"width:{1}px\"></div>")
-//        SafeHtml indent(String indentClass, int indent);
 
         @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
         SafeHtml expander(String iconClass, SafeStyles styles, SafeHtml icon);
@@ -99,15 +131,6 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
         SafeHtml icon(String iconClass);
 
         @Template("<div class=\"{0}\">{1}</div>")
-        SafeHtml text(String textClass, SafeHtml text);
-
-        @Template("<div class=\"{0}\">{1}</div>")
-        SafeHtml outer(String outerClass, SafeHtml content);
-
-        /**
-         * The wrapper around the image vertically aligned to the middle.
-         */
-        @Template("")
-        SafeHtml imageWrapperMiddle(SafeStyles styles, SafeHtml image);
+        SafeHtml div(String className, SafeHtml content);
     }
 }

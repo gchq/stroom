@@ -139,21 +139,21 @@ public class TickBox extends Composite
                 if (enabled) {
                     image.getElement().setClassName("form-check-input flatButton tickBox-tick");
                 } else {
-                    image.getElement().setClassName("form-check-input flatButton tickBox-tickDisabled");
+                    image.getElement().setClassName("form-check-input flatButton tickBox-tick tickBox-disabled");
                 }
                 break;
             case HALF_TICK:
                 if (enabled) {
                     image.getElement().setClassName("form-check-input flatButton tickBox-halfTick");
                 } else {
-                    image.getElement().setClassName("form-check-input flatButton tickBox-halfTickDisabled");
+                    image.getElement().setClassName("form-check-input flatButton tickBox-halfTick tickBox-dDisabled");
                 }
                 break;
             case UNTICK:
                 if (enabled) {
                     image.getElement().setClassName("form-check-input flatButton tickBox-untick");
                 } else {
-                    image.getElement().setClassName("form-check-input flatButton tickBox-untickDisabled");
+                    image.getElement().setClassName("form-check-input flatButton tickBox-untick tickBox-disabled");
                 }
                 break;
         }

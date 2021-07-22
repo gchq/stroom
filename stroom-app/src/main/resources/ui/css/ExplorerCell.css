@@ -3,8 +3,9 @@
     align-items: center;
     white-space: nowrap;
     border: 1px solid transparent;
-    border-radius: .2rem;
-    padding: var(--layout-padding-explorer);
+    border-radius: .25rem;
+    padding: var(--vertical-padding) var(--horizontal-padding);
+    gap: var(--horizontal-padding);
 }
 
 .cellTableSelectedRow .explorerCell-outer {
@@ -32,17 +33,18 @@
     white-space: nowrap;
 }
 
+.explorerCell-expander svg {
+    width: .7rem;
+    height: .7rem;
+}
+
 .explorerCell-expanderIcon.svgIcon {
 }
 
 .explorerCell-icon {
-    margin-left: .3rem;
 }
 
 .explorerCell-text {
-    padding: var(--layout-padding-explorer);
-    padding-left: .4rem;
-    padding-right: .4rem;
 }
 
 .explorerCell-treeOpen {

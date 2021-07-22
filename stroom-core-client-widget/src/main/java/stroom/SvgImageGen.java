@@ -62,8 +62,8 @@ public class SvgImageGen {
         }
 
         final StringBuilder sb = new StringBuilder();
-        sb.append("package stroom.widget.tab.client.view;\n\n");
-        sb.append("public class SvgImage {\n\n");
+        sb.append("package stroom.svg.client;\n\n");
+        sb.append("public class SvgImages {\n\n");
         entries.keySet().stream().sorted().forEach(key -> {
             sb.append("    public static String ");
             sb.append(key);
@@ -114,7 +114,7 @@ public class SvgImageGen {
 //        }
         sb.append("}\n");
 
-        final Path outPath = widgetPath.resolve("src/main/java/stroom/widget/tab/client/view/SvgImage.java");
+        final Path outPath = widgetPath.resolve("src/main/java/stroom/svg/client/SvgImages.java");
         try (final OutputStream outputStream = Files.newOutputStream(outPath)) {
             outputStream.write(sb.toString().getBytes(StandardCharsets.UTF_8));
         } catch (final IOException e) {

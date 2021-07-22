@@ -152,14 +152,14 @@ public class MenuItemCell extends AbstractCell<Item> {
                             SafeHtmlUtils.fromTrustedString(value.getShortcut())));
                 }
 
-                final String disabledClass = value.isEnabled()
+                String className = "menuItem-outer";
+                className += value.isHighlight()
+                        ? " menuItem-highlight"
+                        : "";
+                className += value.isEnabled()
                         ? ""
                         : " menuItem-disabled";
-                if (value.isHighlight()) {
-                    sb.append(TEMPLATE.outer("menuItem-highlight" + disabledClass, styles, inner.toSafeHtml()));
-                } else {
-                    sb.append(TEMPLATE.outer("menuItem-outer" + disabledClass, styles, inner.toSafeHtml()));
-                }
+                sb.append(TEMPLATE.outer(className, styles, inner.toSafeHtml()));
             }
         }
 
