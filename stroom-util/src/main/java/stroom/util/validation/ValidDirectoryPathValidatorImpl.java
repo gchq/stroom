@@ -1,5 +1,6 @@
 package stroom.util.validation;
 
+import stroom.util.io.FileUtil;
 import stroom.util.shared.validation.ValidDirectoryPath;
 import stroom.util.shared.validation.ValidDirectoryPathValidator;
 
@@ -32,14 +33,18 @@ public class ValidDirectoryPathValidatorImpl implements ValidDirectoryPathValida
      * This method can be accessed concurrently, thread-safety must be ensured
      * by the implementation.
      *
-     * @param value   object to validate
+     * @param dir     object to validate
      * @param context context in which the constraint is evaluated
      * @return {@code false} if {@code value} does not pass the constraint
      */
     @Override
-    public boolean isValid(final String value, final ConstraintValidatorContext context) {
-        if (value != null) {
-            return Files.isDirectory(Path.of(value));
+    public boolean isValid(final String dir, final ConstraintValidatorContext context) {
+        if (dir != null) {
+            // Ideally here we would call PathCreator.replaceSystemProperties() and .makeAbsolute()
+            // but PathCreator needs to know the
+            // replace '~' with value of user.home
+            final String modifiedDir = FileUtil.replaceHome(dir);
+            return Files.isDirectory(Path.of(modifiedDir));
         } else {
             return true;
         }
