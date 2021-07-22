@@ -9,12 +9,14 @@ import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.annotation.Nonnull;
 import javax.inject.Singleton;
 import javax.validation.constraints.Min;
 
 @Singleton
+@JsonPropertyOrder(alphabetic = true)
 public class ReferenceDataConfig extends AbstractConfig {
 
     public static final String LOCAL_DIR_PROP_NAME = "localDir";
