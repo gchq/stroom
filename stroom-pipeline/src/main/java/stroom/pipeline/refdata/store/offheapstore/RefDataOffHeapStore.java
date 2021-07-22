@@ -240,18 +240,23 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             LOGGER.info("Extracting bundled LMDB binary to " + dbDir);
         }
 
-        final Env<ByteBuffer> env = Env.create()
-                .setMaxReaders(maxReaders)
-                .setMapSize(maxSize.getBytes())
-                .setMaxDbs(7) //should equal the number of DBs we create which is fixed at compile time
-                .open(dbDir.toFile(), envFlags);
+        try {
+            final Env<ByteBuffer> env = Env.create()
+                    .setMaxReaders(maxReaders)
+                    .setMapSize(maxSize.getBytes())
+                    .setMaxDbs(7) //should equal the number of DBs we create which is fixed at compile time
+                    .open(dbDir.toFile(), envFlags);
 
-        LOGGER.info("Existing databases: [{}]",
-                env.getDbiNames()
-                        .stream()
-                        .map(Bytes::toString)
-                        .collect(Collectors.joining(",")));
-        return env;
+            LOGGER.info("Existing databases: [{}]",
+                    env.getDbiNames()
+                            .stream()
+                            .map(Bytes::toString)
+                            .collect(Collectors.joining(",")));
+            return env;
+        } catch (Exception e) {
+            throw new RuntimeException("Error initialising LMDB environment for reference data at " +
+                    dbDir.toAbsolutePath().normalize(), e);
+        }
     }
 
     @Override
@@ -845,6 +850,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         return list(limit, refStoreEntry -> true);
     }
 
+    @Override
     public List<RefStoreEntry> list(final int limit,
                                     final Predicate<RefStoreEntry> filter) {
 
@@ -1026,7 +1032,12 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         storeDirStr = pathCreator.makeAbsolute(storeDirStr);
         Path storeDir;
         if (storeDirStr == null) {
-            LOGGER.info("Off heap store dir is not set, falling back to {}", tempDirProvider.get());
+            LOGGER.warn("Off heap store dir is not set ({}), falling back to temporary directory {}. " +
+                            "If your temporary directory is cleared on host restart then all reference data will " +
+                            "also be lost.",
+                    referenceDataConfig.getFullPath(ReferenceDataConfig.LOCAL_DIR_PROP_NAME),
+                    tempDirProvider.get());
+
             storeDir = tempDirProvider.get();
             Objects.requireNonNull(storeDir, "Temp dir is not set");
             storeDir = storeDir.resolve(DEFAULT_STORE_SUB_DIR_NAME);
@@ -1037,10 +1048,29 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         }
 
         try {
-            LOGGER.debug("Ensuring directory {}", storeDir);
+            LOGGER.info("Ensuring directory {} exists (from configuration property {})",
+                    storeDir.toAbsolutePath(),
+                    referenceDataConfig.getFullPath(ReferenceDataConfig.LOCAL_DIR_PROP_NAME));
             Files.createDirectories(storeDir);
         } catch (IOException e) {
-            throw new RuntimeException(LogUtil.message("Error ensuring store directory {} exists", storeDirStr), e);
+            throw new RuntimeException(
+                    LogUtil.message("Error ensuring directory {} exists (from configuration property {})",
+                            storeDir.toAbsolutePath(),
+                            referenceDataConfig.getFullPath(ReferenceDataConfig.LOCAL_DIR_PROP_NAME)), e);
+        }
+
+        if (!Files.isReadable(storeDir)) {
+            throw new RuntimeException(
+                    LogUtil.message("Directory {} (from configuration property {}) is not readable",
+                            storeDir.toAbsolutePath(),
+                            referenceDataConfig.getFullPath(ReferenceDataConfig.LOCAL_DIR_PROP_NAME)));
+        }
+
+        if (!Files.isWritable(storeDir)) {
+            throw new RuntimeException(
+                    LogUtil.message("Directory {} (from configuration property {}) is not writable",
+                            storeDir.toAbsolutePath(),
+                            referenceDataConfig.getFullPath(ReferenceDataConfig.LOCAL_DIR_PROP_NAME)));
         }
 
         return storeDir;

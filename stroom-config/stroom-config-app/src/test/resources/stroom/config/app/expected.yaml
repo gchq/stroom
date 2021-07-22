@@ -365,16 +365,16 @@ appConfig:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
     referenceData:
-      localDir: "reference_data"
-      lmdbSystemLibraryPath: null
-      maxPutsBeforeCommit: 0
-      maxReaders: 100
-      maxStoreSize: "50G"
-      purgeAge: "P30D"
       effectiveStreamCache:
         maximumSize: 1000
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
+      lmdbSystemLibraryPath: null
+      localDir: "reference_data"
+      maxPutsBeforeCommit: 0
+      maxReaders: 100
+      maxStoreSize: "50G"
+      purgeAge: "P30D"
       readAheadEnabled: true
     xmlSchema:
       cache:
