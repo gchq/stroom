@@ -35,7 +35,6 @@ public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerNode> 
     private final HashMap<ExplorerNode, TickBoxState> stateMap = new HashMap<>();
     private final Set<ExplorerNode> stateChanges = new HashSet<>();
 
-    private List<ExplorerNode> roots;
     private Map<ExplorerNode, ExplorerNode> parents;
     private final Map<ExplorerNode, Set<ExplorerNode>> descendants = new HashMap<>();
 
@@ -192,7 +191,6 @@ public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerNode> 
     }
 
     public void setRoots(final List<ExplorerNode> roots) {
-        this.roots = roots;
         this.parents = new HashMap<>();
 
         // Once the tree structure changes ensure we auto select descendants of selected ancestors.

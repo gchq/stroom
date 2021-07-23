@@ -101,6 +101,11 @@
     color: var(--selected-row-text-color);
 }
 
+.cellTableCell div:focus-visible .menuItem-outer {
+    border-color: var(--focussed-row-border-color);
+}
+
+/*
 .cellTableRow:focus-within .menuItem-outer {
     border-color: var(--focussed-row-border-color);
 }
@@ -110,7 +115,7 @@
     color: var(--selected-row-text-color);
     border-color: var(--focussed-row-border-color);
 }
-
+*/
 .menuItem-highlight {
 	background-color: var(--code-editor-highlight-background-color);
 	color: var(--selected-row-text-color);

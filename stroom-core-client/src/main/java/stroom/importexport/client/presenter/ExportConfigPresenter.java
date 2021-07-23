@@ -98,7 +98,7 @@ public class ExportConfigPresenter
         if (event.getSelection() != null) {
             for (final ExplorerNode node : event.getSelection()) {
                 treePresenter.getTreeModel().setEnsureVisible(new HashSet<>(event.getSelection()));
-                treePresenter.getSelectionModel().setSelected(node, true);
+                treePresenter.setSelected(node, true);
             }
         }
 
@@ -133,7 +133,7 @@ public class ExportConfigPresenter
         // Disable the popup ok/cancel buttons before we attempt export.
         DisablePopupEvent.fire(this, this);
 
-        final Set<ExplorerNode> dataItems = treePresenter.getSelectionModel().getSelectedSet();
+        final Set<ExplorerNode> dataItems = treePresenter.getSelectedSet();
         if (dataItems == null || dataItems.size() == 0) {
             // Let the user know that they didn't select anything to export.
             AlertEvent.fireWarn(this, "No folders have been selected for export", null);

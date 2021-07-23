@@ -163,8 +163,12 @@ public class EntityCheckTreePresenter extends MyPresenterWidget<EntityCheckTreeP
         return explorerTree.getTreeModel();
     }
 
-    public TickBoxSelectionModel getSelectionModel() {
-        return explorerTree.getSelectionModel();
+    public void setSelected(final ExplorerNode explorerNode, final boolean selected) {
+        explorerTree.setSelected(explorerNode, selected);
+    }
+
+    public Set<ExplorerNode> getSelectedSet() {
+        return explorerTree.getSelectedSet();
     }
 
     @Override

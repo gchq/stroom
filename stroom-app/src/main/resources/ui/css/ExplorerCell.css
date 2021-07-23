@@ -13,19 +13,38 @@
     color: var(--selected-row-text-color);
 }
 
-.cellTableOddRow:focus-within .explorerCell-outer {
+
+
+
+
+.cellTableCell div:focus-visible .explorerCell-outer {
     border-color: var(--focussed-row-border-color);
 }
 
-.cellTableEvenRow:focus-within .explorerCell-outer {
+/*
+.cellTableEvenRow>div>div:focus:not(:focus-visible) .explorerCell-outer {
+    border-color: var(--focussed-row-border-color);
+}
+*/
+
+/*
+
+
+
+.cellTableOddRow:focus-within:not(:focus-visible) .explorerCell-outer {
     border-color: var(--focussed-row-border-color);
 }
 
-.cellTableSelectedRow:focus-within .explorerCell-outer {
+.cellTableEvenRow:focus-within:not(:focus-visible) .explorerCell-outer {
+    border-color: var(--focussed-row-border-color);
+}
+
+.cellTableSelectedRow:focus-within:not(:focus-visible) .explorerCell-outer {
     background-color: var(--selected-row-background-color);
     color: var(--selected-row-text-color);
     border-color: var(--focussed-row-border-color);
 }
+*/
 
 .explorerCell-outer * {
     display: flex;

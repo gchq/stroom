@@ -49,6 +49,7 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
     @Override
     public void render(final Context context, final ExplorerNode item, final SafeHtmlBuilder sb) {
         if (item != null) {
+            final SafeHtmlBuilder content = new SafeHtmlBuilder();
 
             int expanderPadding = 4;
 
@@ -71,37 +72,30 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
 
             int indent = item.getDepth();
             indent = expanderPadding + (indent * 17);
+            final SafeStyles paddingLeft = SafeStylesUtils.fromTrustedString("padding-left:" + indent + "px;");
 
-            SafeHtml expanderHtml = SafeHtmlUtils.EMPTY_SAFE_HTML;
-            SafeHtml iconHtml = SafeHtmlUtils.EMPTY_SAFE_HTML;
-            SafeHtml textHtml = SafeHtmlUtils.EMPTY_SAFE_HTML;
-
-            if (expanderIcon != null) {
-                final SafeStyles paddingLeft = SafeStylesUtils.fromTrustedString("padding-left:" + indent + "px;");
-                expanderHtml = template.expander(getCellClassName() + "-expander", paddingLeft, expanderIcon);
-            }
-
-            if (item.getIconClassName() != null) {
-                iconHtml = template.icon(getCellClassName() + "-icon " + item.getIconClassName());
-            }
-
-            if (item.getDisplayValue() != null) {
-                textHtml = template.div(getCellClassName() + "-text", SafeHtmlUtils.fromString(item.getDisplayValue()));
-            }
-
-            final SafeHtmlBuilder content = new SafeHtmlBuilder();
-            content.append(expanderHtml);
+            // Add expander.
+            content.append(template.expander(getCellClassName() + "-expander", paddingLeft, expanderIcon));
 
             if (tickBoxCell != null) {
                 final SafeHtmlBuilder tb = new SafeHtmlBuilder();
                 tickBoxCell.render(context, getValue(item), tb);
 
                 final SafeHtml tickBoxHtml = template.div(getCellClassName() + "-tickBox", tb.toSafeHtml());
+                // Add tickbox
                 content.append(tickBoxHtml);
             }
 
-            content.append(iconHtml);
-            content.append(textHtml);
+            if (item.getIconClassName() != null) {
+                // Add icon
+                content.append(template.icon(getCellClassName() + "-icon " + item.getIconClassName()));
+            }
+
+            if (item.getDisplayValue() != null) {
+                // Add text
+                content.append(template.div(getCellClassName() + "-text",
+                        SafeHtmlUtils.fromString(item.getDisplayValue())));
+            }
 
             sb.append(template.div(getCellClassName() + "-outer", content.toSafeHtml()));
         }

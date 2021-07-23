@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,413 @@
 
 package stroom.explorer.client.presenter;
 
+import stroom.data.table.client.CellTableViewImpl.DefaultResources;
+import stroom.dispatch.client.RestFactory;
+import stroom.explorer.client.event.ShowExplorerMenuEvent;
+import stroom.explorer.client.view.ExplorerCell;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerNode.NodeState;
+import stroom.explorer.shared.FetchExplorerNodeResult;
+import stroom.util.shared.EqualsUtil;
+import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.spinner.client.SpinnerSmall;
+import stroom.widget.util.client.DoubleSelectTester;
+import stroom.widget.util.client.ElementUtil;
+import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.MultiSelectEvent;
+import stroom.widget.util.client.MultiSelectEvent.Handler;
+import stroom.widget.util.client.MultiSelectionModel;
+import stroom.widget.util.client.MultiSelectionModelImpl;
+import stroom.widget.util.client.Selection;
+import stroom.widget.util.client.SelectionType;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.TableRowElement;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.cellview.client.CellTable;
+import com.google.gwt.user.cellview.client.CellTable.Resources;
+import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.MaxScrollPanel;
+import com.google.gwt.view.client.CellPreviewEvent;
 
 import java.util.List;
+import java.util.Set;
 
-public abstract class AbstractExplorerTree extends Composite {
+public class AbstractExplorerTree extends Composite {
 
-    /**
-     * Called by the model after refresh to select the initial item.
-     */
-    abstract void setInitialSelectedItem(ExplorerNode selection);
+    private final ExplorerTreeModel treeModel;
+    private final MultiSelectionModel<ExplorerNode> selectionModel;
+    private final MaxScrollPanel scrollPanel;
+    final CellTable<ExplorerNode> cellTable;
+    private final DoubleSelectTester doubleClickTest = new DoubleSelectTester();
+    private final boolean allowMultiSelect;
+    private final String expanderClassName;
 
-    /**
-     * Called by the model on refresh to set data.
-     */
-    abstract void setData(List<ExplorerNode> rows);
+    // Required for multiple selection using shift and control key modifiers.
+    private ExplorerNode multiSelectStart;
+    private List<ExplorerNode> rows;
+
+    AbstractExplorerTree(final RestFactory restFactory, final boolean allowMultiSelect) {
+        this.allowMultiSelect = allowMultiSelect;
+
+        final SpinnerSmall spinnerSmall = new SpinnerSmall();
+        spinnerSmall.getElement().getStyle().setPosition(Style.Position.ABSOLUTE);
+        spinnerSmall.getElement().getStyle().setRight(5, Style.Unit.PX);
+        spinnerSmall.getElement().getStyle().setTop(5, Style.Unit.PX);
+
+        final ExplorerCell explorerCell = new ExplorerCell(getTickBoxSelectionModel());
+        expanderClassName = explorerCell.getExpanderClassName();
+
+        final Resources resources = GWT.create(DefaultResources.class);
+        cellTable = new CellTable<>(Integer.MAX_VALUE, resources);
+        cellTable.getElement().setClassName("explorerTree");
+        cellTable.addColumn(new Column<ExplorerNode, ExplorerNode>(explorerCell) {
+            @Override
+            public ExplorerNode getValue(ExplorerNode object) {
+                return object;
+            }
+        });
+
+        cellTable.setLoadingIndicator(null);
+
+        final MultiSelectionModelImpl<ExplorerNode> multiSelectionModel = new MultiSelectionModelImpl<ExplorerNode>() {
+            @Override
+            public HandlerRegistration addSelectionHandler(final Handler handler) {
+                return addHandler(handler, MultiSelectEvent.getType());
+            }
+
+            @Override
+            protected void fireChange(final SelectionType selectionType) {
+                MultiSelectEvent.fire(AbstractExplorerTree.this, selectionType);
+            }
+        };
+        cellTable.setSelectionModel(multiSelectionModel);
+        selectionModel = multiSelectionModel;
+        cellTable.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.ENABLED);
+        cellTable.getRowContainer().getStyle().setCursor(Style.Cursor.POINTER);
+
+        treeModel = new ExplorerTreeModel(this, spinnerSmall, restFactory) {
+            @Override
+            protected void onDataChanged(final FetchExplorerNodeResult result) {
+                onData(result);
+                super.onDataChanged(result);
+            }
+        };
+
+        scrollPanel = new MaxScrollPanel();
+        scrollPanel.setWidget(cellTable);
+
+        final FlowPanel flowPanel = new FlowPanel();
+        flowPanel.getElement().getStyle().setPosition(Style.Position.RELATIVE);
+        flowPanel.setWidth("100%");
+        flowPanel.setHeight("100%");
+        flowPanel.add(scrollPanel);
+        flowPanel.add(spinnerSmall);
+
+        // We need to set this to prevent default keyboard behaviour.
+        cellTable.setKeyboardSelectionHandler(e -> {
+//            GWT.log("KSH: " + e.getNativeEvent().getType() + " " + e.getValue());
+        });
+
+        cellTable.addCellPreviewHandler(e -> {
+            final NativeEvent nativeEvent = e.getNativeEvent();
+            final String type = nativeEvent.getType();
+//            GWT.log("CELL PREVIEW: " + type + " " + e.getValue());
+
+            if ("keydown".equals(type) || "focus".equals(type)) {
+                final List<ExplorerNode> items = cellTable.getVisibleItems();
+                if (items.size() > 0) {
+                    final int keyCode = e.getNativeEvent().getKeyCode();
+
+                    if (keyCode == KeyCodes.KEY_UP) {
+                        onUp(e);
+
+                    } else if (keyCode == KeyCodes.KEY_DOWN) {
+                        onDown(e);
+
+                    } else if (keyCode == KeyCodes.KEY_RIGHT) {
+                        onRight(e);
+
+                    } else if (keyCode == KeyCodes.KEY_LEFT) {
+                        onLeft(e);
+
+                        // Default behaviour uses space for selection anyway.
+//                    } else if (keyCode == KeyCodes.KEY_SPACE) {
+//                        selectionModel.setSelected(item, !selectionModel.isSelected(item));
+
+                    } else if (keyCode == KeyCodes.KEY_ENTER) {
+                        onEnter(e);
+
+                    } else if (keyCode == KeyCodes.KEY_ALT) {
+                        onMenu(e);
+                    }
+                }
+
+
+            } else if ("mousedown".equals(type)) {
+                // We set focus here so that we can use the keyboard to navigate once we have focus.
+                cellTable.setFocus(true);
+                final int row = cellTable.getVisibleItems().indexOf(e.getValue());
+                if (row >= 0) {
+                    cellTable.setKeyboardSelectedRow(row);
+                }
+
+                if (MouseUtil.isSecondary(nativeEvent)) {
+                    onMenu(e);
+
+                } else if (MouseUtil.isPrimary(nativeEvent)) {
+                    onClick(e);
+                }
+            }
+        });
+
+
+        initWidget(flowPanel);
+    }
+
+    void onData(final FetchExplorerNodeResult result) {
+    }
+
+    void onUp(final CellPreviewEvent<ExplorerNode> e) {
+        final int originalRow = cellTable.getKeyboardSelectedRow();
+        int row = originalRow - 1;
+        row = Math.max(0, row);
+        if (row != originalRow) {
+            cellTable.setKeyboardSelectedRow(row, true);
+        }
+    }
+
+    void onDown(final CellPreviewEvent<ExplorerNode> e) {
+        final int originalRow = cellTable.getKeyboardSelectedRow();
+        int row = originalRow + 1;
+        row = Math.min(cellTable.getVisibleItemCount() - 1, row);
+        if (row != originalRow) {
+            cellTable.setKeyboardSelectedRow(row, true);
+        }
+    }
+
+    void onRight(final CellPreviewEvent<ExplorerNode> e) {
+        treeModel.setItemOpen(e.getValue(), true);
+    }
+
+    void onLeft(final CellPreviewEvent<ExplorerNode> e) {
+        treeModel.setItemOpen(e.getValue(), false);
+    }
+
+    void onEnter(final CellPreviewEvent<ExplorerNode> e) {
+        final NativeEvent nativeEvent = e.getNativeEvent();
+        final ExplorerNode item = e.getValue();
+        doSelect(item,
+                new SelectionType(true,
+                        false,
+                        allowMultiSelect,
+                        nativeEvent.getCtrlKey(),
+                        nativeEvent.getShiftKey()));
+    }
+
+    void onMenu(final CellPreviewEvent<ExplorerNode> e) {
+        final NativeEvent nativeEvent = e.getNativeEvent();
+        final ExplorerNode item = e.getValue();
+
+        final int row = cellTable.getVisibleItems().indexOf(e.getValue());
+        if (row >= 0) {
+            cellTable.setKeyboardSelectedRow(row);
+        }
+
+        PopupPosition popupPosition = null;
+        if ("mousedown".equals(e.getNativeEvent().getType())) {
+            popupPosition = new PopupPosition(nativeEvent.getClientX(), nativeEvent.getClientY());
+        } else {
+            final Element element = cellTable.getRowElement(row);
+            if (element != null) {
+                popupPosition = new PopupPosition(element.getAbsoluteRight(), element.getAbsoluteTop());
+            }
+        }
+
+        if (popupPosition != null) {
+            // If the item clicked is already selected then don't change the selection.
+            if (!selectionModel.isSelected(item)) {
+                // Change the selection.
+                doSelect(item,
+                        new SelectionType(false,
+                                true,
+                                false,
+                                nativeEvent.getCtrlKey(),
+                                nativeEvent.getShiftKey()));
+            }
+
+            final Runnable closeHandler = () ->
+                    cellTable.setKeyboardSelectedRow(row, true);
+            ShowExplorerMenuEvent.fire(
+                    AbstractExplorerTree.this,
+                    selectionModel,
+                    closeHandler,
+                    popupPosition);
+        }
+    }
+
+    void onClick(final CellPreviewEvent<ExplorerNode> e) {
+        final NativeEvent nativeEvent = e.getNativeEvent();
+        final ExplorerNode selectedItem = e.getValue();
+        if (selectedItem != null && MouseUtil.isPrimary(nativeEvent)) {
+            if (NodeState.LEAF.equals(selectedItem.getNodeState())) {
+                final boolean doubleClick = doubleClickTest.test(selectedItem);
+                doSelect(selectedItem,
+                        new SelectionType(doubleClick,
+                                false,
+                                allowMultiSelect,
+                                nativeEvent.getCtrlKey(),
+                                nativeEvent.getShiftKey()));
+            } else {
+                final Element element = nativeEvent.getEventTarget().cast();
+
+                // Expander
+                if ((ElementUtil.hasClassName(element, expanderClassName, 0, 5))) {
+                    treeModel.toggleOpenState(selectedItem);
+                } else {
+                    final boolean doubleClick = doubleClickTest.test(selectedItem);
+                    doSelect(selectedItem,
+                            new SelectionType(doubleClick,
+                                    false,
+                                    allowMultiSelect,
+                                    nativeEvent.getCtrlKey(),
+                                    nativeEvent.getShiftKey()));
+                }
+            }
+        }
+    }
+
+    void setData(final List<ExplorerNode> rows) {
+        this.rows = rows;
+        cellTable.setRowData(0, rows);
+        cellTable.setRowCount(rows.size(), true);
+    }
+
+    public void setIncludedTypeSet(final Set<String> types) {
+        treeModel.setIncludedTypeSet(types);
+        refresh();
+    }
+
+    public void changeNameFilter(final String name) {
+        treeModel.changeNameFilter(name);
+    }
+
+    public void refresh() {
+        treeModel.refresh();
+    }
+
+    private int getItemIndex(ExplorerNode item) {
+        final List<ExplorerNode> items = cellTable.getVisibleItems();
+        if (items != null) {
+            for (int i = 0; i < items.size(); i++) {
+                if (EqualsUtil.isEquals(items.get(i), item)) {
+                    return i;
+                }
+            }
+        }
+
+        return -1;
+    }
+
+    protected void setInitialSelectedItem(final ExplorerNode selection) {
+        selectionModel.clear();
+        setSelectedItem(selection);
+        scrollSelectedIntoView();
+    }
+
+    private void scrollSelectedIntoView() {
+        final ExplorerNode selected = selectionModel.getSelected();
+        if (selected != null) {
+            final int index = getItemIndex(selected);
+            if (index > 0) {
+                final TableRowElement tableRowElement = cellTable.getRowElement(index);
+                tableRowElement.scrollIntoView();
+                scrollPanel.scrollToLeft();
+            }
+        }
+    }
+
+    void setSelectedItem(ExplorerNode selection) {
+        if (treeModel.isIncludeNullSelection() && selection == null) {
+            selection = ExplorerTreeModel.NULL_SELECTION;
+        }
+
+        doSelect(selection, new SelectionType(false, false));
+    }
+
+    void doSelect(final ExplorerNode row, final SelectionType selectionType) {
+        final Selection<ExplorerNode> selection = selectionModel.getSelection();
+
+        if (allowMultiSelect) {
+            if (row == null) {
+                multiSelectStart = null;
+                selection.clear();
+            } else if (selectionType.isAllowMultiSelect() && selectionType.isShiftPressed() && multiSelectStart != null) {
+                // If control isn't pressed as well as shift then we are selecting a new range so clear.
+                if (!selectionType.isControlPressed()) {
+                    selection.clear();
+                }
+
+                final int index1 = rows.indexOf(multiSelectStart);
+                final int index2 = rows.indexOf(row);
+                if (index1 != -1 && index2 != -1) {
+                    final int start = Math.min(index1, index2);
+                    final int end = Math.max(index1, index2);
+                    for (int i = start; i <= end; i++) {
+                        selection.setSelected(rows.get(i), true);
+                    }
+                } else if (selectionType.isControlPressed()) {
+                    multiSelectStart = row;
+                    selection.setSelected(row, !selection.isSelected(row));
+                } else {
+                    multiSelectStart = row;
+                    selection.setSelected(row);
+                }
+            } else if (selectionType.isAllowMultiSelect() && selectionType.isControlPressed()) {
+                multiSelectStart = row;
+                selection.setSelected(row, !selection.isSelected(row));
+            } else {
+                multiSelectStart = row;
+                selection.setSelected(row);
+            }
+
+            selectionModel.setSelection(selection, selectionType);
+
+        } else if (selectionModel.isSelected(row)) {
+            selectionModel.clear();
+
+        } else {
+            selectionModel.clear();
+            selectionModel.setSelected(row);
+        }
+
+        MultiSelectEvent.fire(AbstractExplorerTree.this, selectionType);
+    }
+
+    public ExplorerTreeModel getTreeModel() {
+        return treeModel;
+    }
+
+    public MultiSelectionModel<ExplorerNode> getSelectionModel() {
+        return selectionModel;
+    }
+
+    public HandlerRegistration addContextMenuHandler(final ShowExplorerMenuEvent.Handler handler) {
+        return addHandler(handler, ShowExplorerMenuEvent.getType());
+    }
+
+    public void setFocus(final boolean focused) {
+        cellTable.setFocus(focused);
+    }
+
+    TickBoxSelectionModel getTickBoxSelectionModel() {
+        return null;
+    }
 }
