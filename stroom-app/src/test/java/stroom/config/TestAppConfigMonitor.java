@@ -43,7 +43,14 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
                 .resolve("stroom-app")
                 .resolve("dev.yml");
 
+        LOGGER.info("Testing with config file {}", devYamlFile.toAbsolutePath().normalize());
+
+        Assertions.assertThat(devYamlFile)
+                .isRegularFile();
+
         final Path devYamlCopyPath = getCurrentTestDir().resolve(devYamlFile.getFileName());
+
+        LOGGER.info("devYamlCopyPath {}", devYamlCopyPath.toAbsolutePath().normalize());
 
         // Make a copy of dev.yml so we can hack about with it
         Files.copy(devYamlFile, devYamlCopyPath);
@@ -51,6 +58,11 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
         // We need to craft our own instances of these classes rather than use guice
         // so that we can use our own config file
         final AppConfig appConfig = YamlUtil.readAppConfig(devYamlCopyPath);
+
+        // Create the dirs so validation doesn't fail
+        Files.createDirectories(Path.of(appConfig.getPathConfig().getTemp()));
+        Files.createDirectories(Path.of(appConfig.getPathConfig().getHome()));
+
         final ConfigLocation configLocation = new ConfigLocation(devYamlCopyPath);
         final AppConfigValidator appConfigValidator = new AppConfigValidator(validator);
 

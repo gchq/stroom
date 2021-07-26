@@ -41,8 +41,8 @@ class TestProxyConfig {
     @Test
     void testValidation(@TempDir Path tempDir) throws IOException {
 
-        final TestingHomeAndTempProvidersModule testingHomeAndTempProvidersModule = new TestingHomeAndTempProvidersModule(
-                tempDir);
+        final TestingHomeAndTempProvidersModule testingHomeAndTempProvidersModule =
+                new TestingHomeAndTempProvidersModule(tempDir);
 
         final Injector injector = Guice.createInjector(
                 testingHomeAndTempProvidersModule,
