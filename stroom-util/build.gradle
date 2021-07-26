@@ -26,6 +26,7 @@ dependencies {
     compile libs.validation_api
     compile libs.ws_rs_api
 
+    testCompile project(':stroom-test-common')
     testCompile libs.assertj_core
     testCompile libs.classgraph
     testCompile libs.commons_lang

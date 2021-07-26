@@ -1,5 +1,6 @@
 package stroom.util.validation;
 
+import stroom.test.common.util.test.TestingHomeAndTempProvidersModule;
 import stroom.util.config.AppConfigValidator;
 import stroom.util.config.ConfigValidator;
 import stroom.util.logging.LambdaLogger;
@@ -13,8 +14,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
+import java.nio.file.Path;
 import javax.inject.Inject;
 import javax.validation.constraints.AssertTrue;
 import javax.validation.constraints.Min;
@@ -26,11 +30,16 @@ public class TestAppConfigValidator {
     @Inject
     private AppConfigValidator appConfigValidator;
 
+    @BeforeEach
+    void beforeEach(@TempDir Path tempDir) {
+        final Injector injector = Guice.createInjector(
+                new TestingHomeAndTempProvidersModule(tempDir),
+                new ValidationModule());
+        injector.injectMembers(this);
+    }
+
     @Test
     void testMyPojo_good() {
-
-        final Injector injector = Guice.createInjector(new ValidationModule());
-        injector.injectMembers(this);
 
         var myPojo = new MyPojoErrors();
 
@@ -49,8 +58,8 @@ public class TestAppConfigValidator {
     @Test
     void testMyPojo_errors_recursive() {
 
-        final Injector injector = Guice.createInjector(new ValidationModule());
-        injector.injectMembers(this);
+//        final Injector injector = Guice.createInjector(new ValidationModule());
+//        injector.injectMembers(this);
 
         var myPojo = new MyPojoErrors();
         myPojo.setBooleanValue(false);
@@ -77,8 +86,8 @@ public class TestAppConfigValidator {
     @Test
     void testMyPojo_errors_nonRecursive() {
 
-        final Injector injector = Guice.createInjector(new ValidationModule());
-        injector.injectMembers(this);
+//        final Injector injector = Guice.createInjector(new ValidationModule());
+//        injector.injectMembers(this);
 
         var myPojo = new MyPojoErrors();
         myPojo.setBooleanValue(false);
@@ -105,8 +114,8 @@ public class TestAppConfigValidator {
     @Test
     void testMyPojo_warnings() {
 
-        final Injector injector = Guice.createInjector(new ValidationModule());
-        injector.injectMembers(this);
+//        final Injector injector = Guice.createInjector(new ValidationModule());
+//        injector.injectMembers(this);
 
         var myPojo = new MyPojoWarnings();
         myPojo.setBooleanValue(false);
