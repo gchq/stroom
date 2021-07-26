@@ -89,7 +89,7 @@ public class App extends Application<Config> {
 
     // Needed for DropwizardExtensionsSupport
     public App() {
-        configFile = Paths.get("PATH_NOT_SUPPLIED");
+        configFile = Paths.get("proxy-dev.yml");
         validationOnlyInjector = createValidationInjector();
     }
 
