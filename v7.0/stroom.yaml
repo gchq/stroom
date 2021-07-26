@@ -10556,8 +10556,6 @@ components:
           $ref: '#/components/schemas/ThemeConfig'
         uiPreferences:
           $ref: '#/components/schemas/UiPreferences'
-        url:
-          $ref: '#/components/schemas/UrlConfig'
         welcomeHtml:
           type: string
     UiPreferences:
@@ -10606,15 +10604,6 @@ components:
         metaData:
           type: string
         streamTypeName:
-          type: string
-    UrlConfig:
-      type: object
-      properties:
-        apiKeys:
-          type: string
-        changepassword:
-          type: string
-        users:
           type: string
     UrlResponse:
       type: object
