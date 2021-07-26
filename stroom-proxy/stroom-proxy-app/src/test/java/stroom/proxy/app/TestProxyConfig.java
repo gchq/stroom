@@ -1,6 +1,7 @@
 package stroom.proxy.app;
 
 import stroom.docref.DocRef;
+import stroom.test.common.util.test.TestingHomeAndTempProvidersModule;
 import stroom.util.config.ConfigValidator.Result;
 import stroom.util.config.PropertyUtil;
 import stroom.util.logging.LambdaLogger;
@@ -14,6 +15,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,14 +39,26 @@ class TestProxyConfig {
     );
 
     @Test
-    void testValidation() throws IOException {
-        Files.createDirectories(Path.of("/tmp/stroom-proxy"));
+    void testValidation(@TempDir Path tempDir) throws IOException {
 
-        final Injector injector = Guice.createInjector(new ValidationModule());
+        final TestingHomeAndTempProvidersModule testingHomeAndTempProvidersModule = new TestingHomeAndTempProvidersModule(
+                tempDir);
+
+        final Injector injector = Guice.createInjector(
+                testingHomeAndTempProvidersModule,
+                new ValidationModule());
 
         final ProxyConfigValidator proxyConfigValidator = injector.getInstance(ProxyConfigValidator.class);
 
         final ProxyConfig proxyConfig = new ProxyConfig();
+        proxyConfig.getProxyPathConfig()
+                .setHome(testingHomeAndTempProvidersModule.getHomeDir().toAbsolutePath().toString());
+        proxyConfig.getProxyPathConfig()
+                .setTemp(tempDir.toAbsolutePath().toString());
+
+        // create the dirs so they validate ok
+        Files.createDirectories(tempDir);
+        Files.createDirectories(testingHomeAndTempProvidersModule.getHomeDir());
 
         final Result<IsProxyConfig> result = proxyConfigValidator.validateRecursively(proxyConfig);
 

@@ -19,7 +19,15 @@ public class TestingHomeAndTempProvidersModule extends AbstractModule {
     protected void configure() {
         super.configure();
 
-        bind(HomeDirProvider.class).toInstance(() -> tempDir.resolve("home"));
-        bind(TempDirProvider.class).toInstance(() -> tempDir);
+        bind(HomeDirProvider.class).toInstance(this::getHomeDir);
+        bind(TempDirProvider.class).toInstance(this::getTempDir);
+    }
+
+    public Path getHomeDir() {
+        return tempDir.resolve("home");
+    }
+
+    public Path getTempDir() {
+        return tempDir;
     }
 }
