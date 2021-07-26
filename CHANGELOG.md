@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Change proxy and stroom config validation to cope with relative paths and `~`.
 
+Improve error handling during reference data initialisation.
+
 
 ## [v7.0-beta.137] - 2021-07-02
 

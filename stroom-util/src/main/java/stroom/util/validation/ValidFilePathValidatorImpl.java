@@ -58,7 +58,8 @@ public class ValidFilePathValidatorImpl implements ValidFilePathValidator {
             final String modifiedFile = pathCreator.makeAbsolute(pathCreator.replaceSystemProperties(file));
 
             LOGGER.debug("Validating file {} (modified to {})", file, modifiedFile);
-            isValid = Files.isRegularFile(Path.of(modifiedFile));
+            final Path path = Path.of(modifiedFile);
+            isValid = Files.isRegularFile(path) && Files.isReadable(path);
             if (!isValid) {
                 String msg = context.getDefaultConstraintMessageTemplate();
                 if (!modifiedFile.equals(file)) {
