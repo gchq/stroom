@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2343** : The OIDC back channel `redirect_uri` now uses the same URI stored when making the front channel request. 
+
 * Issue **gchq/stroom-resources#104** : Expose `stroom.ui.helpUrl` in the config.yml so the docs served by nginx can be accessed.
 
 * Issue **#2331** : Remove unused config properties `stroom.ui.url.(apiKeys|changepassword|users)`.
