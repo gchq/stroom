@@ -26,6 +26,7 @@ import stroom.explorer.client.presenter.TypeFilterPresenter.TypeFilterView;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.explorer.shared.DocumentTypes;
+import stroom.widget.menu.client.presenter.FocusBehaviour;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -64,6 +65,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
 
     private final Set<String> selected = new HashSet<>();
     private List<DocumentType> visibleTypes;
+    private FocusBehaviour focusBehaviour;
 
     private static final String SELECT_ALL_OR_NONE_TEXT = "All/none";
     private static final String SELECT_ALL_OR_NONE_ICON = "svgIcon-document svgIcon-document-SelectAllOrNone";
@@ -191,13 +193,20 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
 
     public void escape() {
         hideSelf();
+        if (focusBehaviour != null) {
+            focusBehaviour.refocus();
+        }
     }
 
-    public void show(final Element element) {
+    public void show(final FocusBehaviour focusBehaviour, final Element element) {
+        this.focusBehaviour = focusBehaviour;
+
         final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
             @Override
             public void onShow() {
-                selectFirstItem();
+                if (focusBehaviour.switchFocus()) {
+                    selectFirstItem();
+                }
             }
 
             @Override

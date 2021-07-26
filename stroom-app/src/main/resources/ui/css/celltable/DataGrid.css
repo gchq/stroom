@@ -176,8 +176,8 @@
 }
 
 .dataGridSelectedRow {
-	background: var(--selected-row-background-color) none repeat scroll 0 0 !important;
-	color: var(--selected-row-text-color) !important;
+	background: var(--row__background-color--selected) none repeat scroll 0 0 !important;
+	color: var(--row__text-color--selected) !important;
 }
 
 .dataGridSelectedRowCell {

@@ -215,14 +215,14 @@
   //}
 
   .tr:hover {
-    background-color: var(--hovered-row-background-color) !important;
-    /*color: var(--selected-row-text-color) !important;*/
+    background-color: var(--row__background-color--hovered) !important;
+    /*color: var(--row__text-color--selected) !important;*/
     /*background-color: rgba(184,	218, 255, .5);*/
   }
 
   .tr.selected {
-    background-color: var(--selected-row-background-color) !important;
-    color: var(--selected-row-text-color) !important;
+    background-color: var(--row__background-color--selected) !important;
+    color: var(--row__text-color--selected) !important;
   }
 
   .th,

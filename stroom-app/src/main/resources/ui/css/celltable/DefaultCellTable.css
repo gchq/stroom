@@ -26,35 +26,36 @@
 }
 
 .cellTableFooter {
-	display: none;
-  border-top: 1px solid var(--border-color);
-  padding: 0px;
-  padding-left: 2px;
-  padding-right: 2px;
-  text-align: left;
-  
-  background-color: var(--app-background-color);
-  color: black;
-  overflow: hidden;
-  white-space: nowrap;
-  font-weight: normal;
+    display: none;
+    border-top: 1px solid var(--border-color);
+    padding: 0px;
+    padding-left: 2px;
+    padding-right: 2px;
+    text-align: left;
+
+    background-color: var(--app-background-color);
+    color: black;
+    overflow: hidden;
+    white-space: nowrap;
+    font-weight: normal;
 }
 
 .cellTableHeader {
-  border-bottom: 1px solid var(--border-color);
-  padding: 0px;
-  padding-left: 2px;
-  padding-right: 2px;
-  text-align: left;
-  background-color: var(--app-background-color);
-  color: black;
-  overflow: hidden;
-  white-space: nowrap;
-  font-weight: normal;
+    border-bottom: 1px solid var(--border-color);
+    padding: 0px;
+    padding-left: 2px;
+    padding-right: 2px;
+    text-align: left;
+    background-color: var(--app-background-color);
+    color: black;
+    overflow: hidden;
+    white-space: nowrap;
+    font-weight: normal;
 }
 
 .cellTableCell {
-  overflow: hidden;
+    overflow: hidden;
+    padding: var(--padding--vertical) var(--padding--horizontal);
 }
 
 .cellTableFirstColumnFooter {
@@ -80,7 +81,7 @@
 }
 
 .cellTableSortableHeader:hover {
-  color: var(--selected-row-text-color);
+  color: var(--row__text-color--selected);
 }
 
 .cellTableSortedHeaderAscending {
@@ -91,23 +92,17 @@
 
 }
 
-.cellTableEvenRow {
-  background: var(--even-row-background-color);
+.cellTableEvenRow.
+.cellTableOddRow {
+    background: none;
 }
 
-.cellTableEvenRow:hover {
-  background: var(--hovered-row-background-color);
+.cellTableEvenRow:hover,
+.cellTableOddRow:hover {
+  background: var(--row__background-color--hovered);
 }
 
 .cellTableEvenRowCell {
-}
-
-.cellTableOddRow {
-  background: var(--odd-row-background-color);
-}
-
-.cellTableOddRow:hover {
-  background: var(--hovered-row-background-color);
 }
 
 .cellTableOddRowCell {
@@ -119,7 +114,15 @@
 .cellTableKeyboardSelectedRowCell {
 }
 
-.cellTableSelectedRow {
+.cellTableEvenRow.cellTableSelectedRow,
+.cellTableOddRow.cellTableSelectedRow {
+    background-color: var(--row__background-color--selected);
+    color: var(--row__text-color--selected);
+}
+
+.cellTableEvenRow.cellTableSelectedRow:hover,
+.cellTableOddRow.cellTableSelectedRow:hover {
+    background-color: var(--row__background-color--selected-hovered);
 }
 
 .cellTableSelectedRow:focus-within {

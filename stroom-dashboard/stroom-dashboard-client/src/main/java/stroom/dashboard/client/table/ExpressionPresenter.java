@@ -30,6 +30,8 @@ import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.menu.client.presenter.FocusBehaviour;
+import stroom.widget.menu.client.presenter.FocusBehaviourImpl;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.menu.client.presenter.SimpleMenuItem;
@@ -297,10 +299,11 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     public void showMenu(final ClickEvent event, final List<Item> menuItems) {
         if (MouseUtil.isPrimary(event)) {
             final com.google.gwt.dom.client.Element target = event.getNativeEvent().getEventTarget().cast();
+            final FocusBehaviour focusBehaviour = new FocusBehaviourImpl(event);
             final PopupPosition popupPosition = new PopupPosition(
                     target.getAbsoluteLeft() - 3,
                     target.getAbsoluteTop() + target.getClientHeight() + 1);
-            ShowMenuEvent.fire(this, menuItems, popupPosition, target::focus);
+            ShowMenuEvent.fire(this, menuItems, focusBehaviour, popupPosition);
         }
     }
 

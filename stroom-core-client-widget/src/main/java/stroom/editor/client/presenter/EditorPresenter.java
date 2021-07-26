@@ -60,8 +60,12 @@ public class EditorPresenter
         view.setTheme(getTheme(currentTheme.getTheme(), currentTheme.getEditorTheme()));
 
 //        registerHandler(view.addMouseDownHandler(event -> contextMenu.hide()));
+
         registerHandler(view.addContextMenuHandler(event ->
-                contextMenu.show(EditorPresenter.this, event.getX(), event.getY())));
+                contextMenu.show(
+                        EditorPresenter.this,
+                        event.getFocusBehaviour(),
+                        event.getPopupPosition())));
         registerHandler(view.addKeyDownHandler(event -> {
             if (event.isAltKeyDown() || event.isControlKeyDown()) {
                 eventBus.fireEvent(event);

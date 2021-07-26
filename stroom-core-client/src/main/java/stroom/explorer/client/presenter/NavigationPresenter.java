@@ -38,18 +38,17 @@ import stroom.svg.client.Preset;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
 import stroom.widget.button.client.SvgButton;
+import stroom.widget.menu.client.presenter.FocusBehaviour;
+import stroom.widget.menu.client.presenter.FocusBehaviourImpl;
 import stroom.widget.menu.client.presenter.HasChildren;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
-import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupPosition.HorizontalLocation;
-import stroom.widget.popup.client.presenter.PopupPosition.VerticalLocation;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tab.client.event.MaximiseEvent;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -219,10 +218,12 @@ public class NavigationPresenter
         });
     }
 
-    public void newItem(final Element element) {
+    public void newItem(final NativeEvent event, final Element element) {
+        final FocusBehaviour focusBehaviour = new FocusBehaviourImpl(event);
         final int x = element.getAbsoluteLeft() - 1;
         final int y = element.getAbsoluteTop() + element.getOffsetHeight() + 1;
-        ShowNewMenuEvent.fire(this, element, new PopupPosition(x, y));
+        final PopupPosition popupPosition = new PopupPosition(x, y);
+        ShowNewMenuEvent.fire(this, element, focusBehaviour, popupPosition);
     }
 
     public void deleteItem() {
@@ -242,30 +243,33 @@ public class NavigationPresenter
     }
 
     @Override
-    public void showMenu(final Element target) {
+    public void showMenu(final NativeEvent event, final Element target) {
+        final FocusBehaviour focusBehaviour = new FocusBehaviourImpl(event);
+        final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft(),
+                target.getAbsoluteBottom() + 10);
         showMenuItems(
                 currentMenuItems,
-                target.getAbsoluteLeft(),
-                target.getAbsoluteBottom() + 10,
+                focusBehaviour,
+                popupPosition,
                 target);
     }
 
     public void showMenuItems(final List<Item> children,
-                              final int x,
-                              final int y,
+                              final FocusBehaviour focusBehaviour,
+                              final PopupPosition popupPosition,
                               final Element autoHidePartner) {
 //        if (menu.isShowing()) {
 //            menu.hide();
 //        } else
 
         if (children != null && children.size() > 0) {
-            ShowMenuEvent.fire(this, children, new PopupPosition(x, y), autoHidePartner::focus, autoHidePartner);
+            ShowMenuEvent.fire(this, children, focusBehaviour, popupPosition, autoHidePartner);
         }
     }
 
     public void showTypeFilter(final MouseDownEvent event) {
         final Element target = event.getNativeEvent().getEventTarget().cast();
-        typeFilterPresenter.show(target);
+        typeFilterPresenter.show(new FocusBehaviourImpl(event), target);
     }
 
     @ProxyEvent
@@ -487,7 +491,7 @@ public class NavigationPresenter
                 "Filter",
                 true));
 
-        add.addMouseDownHandler(e -> newItem(add.getElement()));
+        add.addMouseDownHandler(e -> newItem(e.getNativeEvent(), add.getElement()));
         delete.addMouseDownHandler(e -> deleteItem());
         filter.addMouseDownHandler(this::showTypeFilter);
 
@@ -504,6 +508,7 @@ public class NavigationPresenter
     }
 
     public interface NavigationView extends View, HasUiHandlers<NavigationUiHandlers> {
+
         FlowPanel getButtonContainer();
 
         void setNavigationWidget(Widget widget);

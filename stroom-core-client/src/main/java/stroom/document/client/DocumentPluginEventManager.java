@@ -339,8 +339,8 @@ public class DocumentPluginEventManager extends Plugin {
                         ShowMenuEvent.fire(
                                 this,
                                 children,
+                                event.getFocusBehaviour(),
                                 event.getPopupPosition(),
-                                () -> event.getElement().focus(),
                                 event.getElement()));
             }
         }));
@@ -365,8 +365,8 @@ public class DocumentPluginEventManager extends Plugin {
                                     ShowMenuEvent.fire(
                                             this,
                                             menuItems,
-                                            event.getPopupPosition(),
-                                            event.getCloseHandler());
+                                            event.getFocusBehaviour(),
+                                            event.getPopupPosition());
 
 //                            menuPresenter.setData(menuItems);
 //                            menuPresenter.selectFirstItem();

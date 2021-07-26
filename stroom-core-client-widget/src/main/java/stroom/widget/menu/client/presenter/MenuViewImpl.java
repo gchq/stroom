@@ -130,7 +130,7 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
 
                     if (row >= 0) {
                         if (row != originalRow) {
-                            selectRow(row);
+                            selectRow(row, true);
                         }
 
                         final Item item = items.get(row);
@@ -145,7 +145,7 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
                 final Item item = e.getValue();
                 if (isSelectable(item)) {
                     final int row = cellTable.getVisibleItems().indexOf(item);
-                    selectRow(row);
+                    selectRow(row, false);
 
                     if (item instanceof MenuItem && ((MenuItem) item).getCommand() != null) {
                         execute((MenuItem) item);
@@ -162,7 +162,7 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
                 if (isSelectable(item)) {
                     final int row = cellTable.getVisibleItems().indexOf(item);
                     if (row != mouseOverRow) {
-                        selectRow(row);
+                        selectRow(row, false);
                         showSubMenu(item);
                         mouseOverRow = row;
                     }
@@ -229,12 +229,12 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
     }
 
     @Override
-    public void selectFirstItem() {
+    public void selectFirstItem(final boolean stealFocus) {
         int row = getFirstSelectableRow();
         if (row >= 0) {
             final List<Item> items = cellTable.getVisibleItems();
             final Item item = items.get(row);
-            selectRow(row);
+            selectRow(row, stealFocus);
             showSubMenu(item);
         }
     }
@@ -243,11 +243,11 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
     public void focus() {
         int row = getFirstSelectableRow();
         if (row >= 0) {
-            selectRow(row);
+            selectRow(row, true);
         }
     }
 
-    private void selectRow(final int row) {
+    private void selectRow(final int row, final boolean stealFocus) {
         final List<Item> items = cellTable.getVisibleItems();
         if (row >= 0 && row < items.size()) {
             final Item item = items.get(row);

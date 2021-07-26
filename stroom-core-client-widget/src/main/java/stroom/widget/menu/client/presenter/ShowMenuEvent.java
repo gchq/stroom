@@ -10,22 +10,23 @@ import com.google.gwt.event.shared.HasHandlers;
 
 import java.util.List;
 
-public class ShowMenuEvent extends GwtEvent<ShowMenuEvent.Handler> {
+public class ShowMenuEvent
+        extends GwtEvent<ShowMenuEvent.Handler> {
 
     private static Type<Handler> TYPE;
 
-    public final List<Item> items;
-    public final PopupPosition popupPosition;
-    public final Runnable closeHandler;
-    public final Element[] autoHidePartner;
+    private final List<Item> items;
+    private final FocusBehaviour focusBehaviour;
+    private final PopupPosition popupPosition;
+    private final Element[] autoHidePartner;
 
     public static <T> void fire(final HasHandlers source,
                                 final List<Item> items,
+                                final FocusBehaviour focusBehaviour,
                                 final PopupPosition popupPosition,
-                                final Runnable closeHandler,
                                 final Element... autoHidePartner) {
         if (TYPE != null) {
-            ShowMenuEvent event = new ShowMenuEvent(items, popupPosition, closeHandler, autoHidePartner);
+            ShowMenuEvent event = new ShowMenuEvent(items, focusBehaviour, popupPosition, autoHidePartner);
             source.fireEvent(event);
         }
     }
@@ -38,12 +39,12 @@ public class ShowMenuEvent extends GwtEvent<ShowMenuEvent.Handler> {
     }
 
     private ShowMenuEvent(final List<Item> items,
+                          final FocusBehaviour focusBehaviour,
                           final PopupPosition popupPosition,
-                          final Runnable closeHandler,
                           final Element[] autoHidePartner) {
         this.items = items;
+        this.focusBehaviour = focusBehaviour;
         this.popupPosition = popupPosition;
-        this.closeHandler = closeHandler;
         this.autoHidePartner = autoHidePartner;
     }
 
@@ -56,12 +57,12 @@ public class ShowMenuEvent extends GwtEvent<ShowMenuEvent.Handler> {
         return items;
     }
 
-    public PopupPosition getPopupPosition() {
-        return popupPosition;
+    public FocusBehaviour getFocusBehaviour() {
+        return focusBehaviour;
     }
 
-    public Runnable getCloseHandler() {
-        return closeHandler;
+    public PopupPosition getPopupPosition() {
+        return popupPosition;
     }
 
     public Element[] getAutoHidePartner() {

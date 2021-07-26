@@ -927,8 +927,8 @@ a, a:visited, a:hover {
   color: #888888;
 }
 .datePickerDayIsValue {
-    background: var(--selected-row-background-color);/*#2196F3;*/
-    color: var(--selected-row-text-color);/*white;*/
+    background: var(--row__background-color--selected);/*#2196F3;*/
+    color: var(--row__text-color--selected);/*white;*/
     font-weight: 500;
     border-radius: 4px;
 }
@@ -937,13 +937,13 @@ a, a:visited, a:hover {
   font-style: italic;
 }
 .datePickerDayIsHighlighted {
-  background: var(--hovered-row-background-color);/*#BBDEFB;*/
+  background: var(--row__background-color--hovered);/*#BBDEFB;*/
   border-radius: 4px;
 }
 .datePickerDayIsValueAndHighlighted {
 }
 .datePickerDayIsValue.datePickerDayIsHighlighted {
-    background: var(--hovered-row-background-color);/*#42A5F5;*/
+    background: var(--row__background-color--hovered);/*#42A5F5;*/
     color: var(--text-color);/*white;*/
     font-weight: 500;
     border-radius: 4px;

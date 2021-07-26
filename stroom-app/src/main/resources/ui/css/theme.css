@@ -15,10 +15,15 @@
     --header-border-color: #dddddd;
     --even-row-background-color: #ebebeb;
     --odd-row-background-color: #fff;
-    --hovered-row-background-color: #e6f4ff;
-    --focussed-row-border-color: black;
-    --selected-row-background-color: #bbdefb;
-    --selected-row-text-color: #000;
+
+    --row__background-color--hovered: #e6f4ff;
+    --row__background-color--selected: #bbdefb;
+    --row__background-color--selected-hovered: #bbdefb;
+    --row__text-color--selected: #000;
+    --row__border-color--focussed: rgba(0, 0, 0, 0.1);
+    --row__box-shadow--focussed: inset 0 1px 1px rgba(var(--black-rgb), .08), 0 0 8px rgba(var(--blue-500-rgb), .6);
+    --row__border-color--selected-focussed: var(--blue-500);
+    --row__box-shadow--selected-focussed: inset 0 1px 1px rgba(var(--black-rgb), .08), 0 0 8px rgba(var(--blue-500-rgb), .6);
 
     --menu-separator-color: #bfbfbf;
 
@@ -222,10 +227,15 @@
     --header-border-color: #333;
     --even-row-background-color: #282c31;
     --odd-row-background-color: #1a1d21;
-    --hovered-row-background-color: rgb(255 255 255 / 15%);
-    --focussed-row-border-color: white;
-    --selected-row-background-color: #0065a7;
-    --selected-row-text-color: #fff;
+
+    --row__background-color--hovered: rgb(255 255 255 / 15%);
+    --row__background-color--selected: #0065a7;
+    --row__background-color--selected-hovered: #0078c7;
+    --row__text-color--selected: #fff;
+    --row__border-color--focussed: rgb(77, 82, 80);
+    --row__box-shadow--focussed: inset 0 1px 1px rgba(77, 82, 80, .08), 0 0 8px rgba(77, 82, 80, .6);
+    --row__border-color--selected-focussed: var(--blue-500);
+    --row__box-shadow--selected-focussed: inset 0 1px 1px rgba(var(--black-rgb), .08), 0 0 8px rgba(var(--blue-500-rgb), .6);
 
     --menu-separator-color: rgb(255 255 255 / 20%);
 
@@ -404,10 +414,15 @@
     --header-border-color: #14161b;
     --even-row-background-color: #15161b;
     --odd-row-background-color: #22252c;
-    --hovered-row-background-color: #2d2f35;
-    --focussed-row-border-color: white;
-    --selected-row-background-color: #0065a7;
-    --selected-row-text-color: #fff;
+
+    --row__background-color--hovered: #2d2f35;
+    --row__background-color--selected: #0065a7;
+    --row__background-color--selected-hovered: #0078c7;
+    --row__text-color--selected: #fff;
+    --row__border-color--focussed: rgb(77, 82, 80);
+    --row__box-shadow--focussed: inset 0 1px 1px rgba(77, 82, 80, .08), 0 0 8px rgba(77, 82, 80, .6);
+    --row__border-color--selected-focussed: var(--blue-500);
+    --row__box-shadow--selected-focussed: inset 0 1px 1px rgba(var(--black-rgb), .08), 0 0 8px rgba(var(--blue-500-rgb), .6);
 
     --menu-separator-color: rgb(255 255 255 / 20%);
 

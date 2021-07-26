@@ -25,6 +25,8 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.svg.client.Preset;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.menu.client.presenter.FocusBehaviour;
+import stroom.widget.menu.client.presenter.FocusBehaviourImpl;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -117,11 +119,13 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGrid
     }
 
     private void showActionMenu(final DataRetentionRule row, final NativeEvent event) {
+        final FocusBehaviour focusBehaviour = new FocusBehaviourImpl(event, () -> getWidget().getElement().focus());
+        final PopupPosition popupPosition = new PopupPosition(event.getClientX() + 10, event.getClientY());
         final List<Item> items = actionMenuItemProvider.apply(row);
         ShowMenuEvent.fire(this,
                 items,
-                new PopupPosition(event.getClientX() + 10, event.getClientY()),
-                () -> getWidget().getElement().focus());
+                focusBehaviour,
+                popupPosition);
     }
 
     private void addTickBoxColumn(final String name,

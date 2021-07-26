@@ -294,7 +294,11 @@ public class FlexLayout extends Composite {
                             changeHandler.onDirty();
 
                         } else if (tabManager != null) {
-                            tabManager.onMouseUp(mouseTarget.tabWidget, this, tabLayout, mouseTarget.tabIndex);
+                            tabManager.onMouseUp(event,
+                                    mouseTarget.tabWidget,
+                                    this,
+                                    tabLayout,
+                                    mouseTarget.tabIndex);
                         }
                     }
                 }

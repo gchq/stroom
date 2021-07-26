@@ -33,8 +33,8 @@
 }
 
  .cellListSelectedItem {
-	background: var(--selected-row-background-color) none repeat scroll 0 0;
-	color: var(--selected-row-text-color);
+	background: var(--row__background-color--selected) none repeat scroll 0 0;
+	color: var(--row__text-color--selected);
 	height: auto;
 	overflow: visible;
 }

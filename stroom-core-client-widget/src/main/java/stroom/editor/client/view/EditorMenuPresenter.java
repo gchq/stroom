@@ -19,6 +19,7 @@ package stroom.editor.client.view;
 import stroom.editor.client.presenter.Action;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.Option;
+import stroom.widget.menu.client.presenter.FocusBehaviour;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -36,12 +37,14 @@ public class EditorMenuPresenter {
 
     private EditorPresenter xmlEditorPresenter;
 
-    public void show(final EditorPresenter xmlEditorPresenter, final int x, final int y) {
+    public void show(final EditorPresenter xmlEditorPresenter,
+                     final FocusBehaviour focusBehaviour,
+                     final PopupPosition popupPosition) {
         this.xmlEditorPresenter = xmlEditorPresenter;
         ShowMenuEvent.fire(xmlEditorPresenter,
                 getMenuItems(),
-                new PopupPosition(x, y),
-                xmlEditorPresenter::focus);
+                focusBehaviour,
+                popupPosition);
     }
 
     /**

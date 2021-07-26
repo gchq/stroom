@@ -70,6 +70,7 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
 
         final Element div = DOM.createDiv();
         div.setClassName("navigation-menu-content");
+        div.setTabIndex(-1);
         div.appendChild(logoImage);
         div.appendChild(arrowImage);
 
@@ -100,7 +101,7 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
     @UiHandler("logo")
     void onLogo(final ClickEvent event) {
         if (MouseUtil.isPrimary(event)) {
-            getUiHandlers().showMenu(logo.getElement());
+            getUiHandlers().showMenu(event.getNativeEvent(), logo.getElement());
         }
     }
 

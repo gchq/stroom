@@ -17,6 +17,8 @@
 package stroom.widget.tab.client.view;
 
 import stroom.util.shared.EqualsUtil;
+import stroom.widget.menu.client.presenter.FocusBehaviour;
+import stroom.widget.menu.client.presenter.FocusBehaviourImpl;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -29,6 +31,7 @@ import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -404,7 +407,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
                 if (keyboardSelectedTab != null) {
                     fireTabSelection(keyboardSelectedTab);
                 } else {
-                    showTabSelector(getTabSelector().getElement());
+                    showTabSelector(event, getTabSelector().getElement());
                 }
             }
         } else if (Event.ONMOUSEDOWN == event.getTypeInt()) {
@@ -421,7 +424,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
                     if (getTabSelector().getElement().isOrHasChild(target)) {
                         switchTabIndexElement(getTabSelector().getElement());
                         focusTabIndexElement();
-                        showTabSelector(getTabSelector().getElement());
+                        showTabSelector(event, getTabSelector().getElement());
 
                     } else {
                         select(target);
@@ -520,7 +523,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
         return null;
     }
 
-    private void showTabSelector(final Element element) {
+    private void showTabSelector(final NativeEvent nativeEvent, final Element element) {
         final int left = element.getAbsoluteLeft() + 5;
         final int right = left + element.getOffsetWidth();
         final int top = element.getAbsoluteTop();
@@ -567,7 +570,12 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
                     .build());
         }
 
-        ShowMenuEvent.fire(this, menuItems, popupPosition, () -> currentTabIndexElement.focus(), element);
+        final FocusBehaviour focusBehaviour = new FocusBehaviourImpl(nativeEvent, currentTabIndexElement);
+        ShowMenuEvent.fire(this,
+                menuItems,
+                focusBehaviour,
+                popupPosition,
+                element);
     }
 
     private void fireTabSelection(final TabData tabData) {

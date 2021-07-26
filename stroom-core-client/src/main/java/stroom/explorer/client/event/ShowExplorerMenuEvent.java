@@ -17,6 +17,7 @@
 package stroom.explorer.client.event;
 
 import stroom.explorer.shared.ExplorerNode;
+import stroom.widget.menu.client.presenter.FocusBehaviour;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.util.client.MultiSelectionModel;
 
@@ -28,22 +29,22 @@ public class ShowExplorerMenuEvent extends GwtEvent<ShowExplorerMenuEvent.Handle
 
     private static Type<Handler> TYPE;
     private final MultiSelectionModel<ExplorerNode> selectionModel;
-    private final Runnable closeHandler;
+    private final FocusBehaviour focusBehaviour;
     private final PopupPosition popupPosition;
 
     private ShowExplorerMenuEvent(final MultiSelectionModel<ExplorerNode> selectionModel,
-                                  final Runnable closeHandler,
+                                  final FocusBehaviour focusBehaviour,
                                   final PopupPosition popupPosition) {
         this.selectionModel = selectionModel;
-        this.closeHandler = closeHandler;
+        this.focusBehaviour = focusBehaviour;
         this.popupPosition = popupPosition;
     }
 
     public static void fire(final HasHandlers handlers,
                             final MultiSelectionModel<ExplorerNode> selectionModel,
-                            final Runnable closeHandler,
+                            final FocusBehaviour focusBehaviour,
                             final PopupPosition popupPosition) {
-        handlers.fireEvent(new ShowExplorerMenuEvent(selectionModel, closeHandler, popupPosition));
+        handlers.fireEvent(new ShowExplorerMenuEvent(selectionModel, focusBehaviour, popupPosition));
     }
 
     public static Type<Handler> getType() {
@@ -67,8 +68,8 @@ public class ShowExplorerMenuEvent extends GwtEvent<ShowExplorerMenuEvent.Handle
         return selectionModel;
     }
 
-    public Runnable getCloseHandler() {
-        return closeHandler;
+    public FocusBehaviour getFocusBehaviour() {
+        return focusBehaviour;
     }
 
     public PopupPosition getPopupPosition() {

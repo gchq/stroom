@@ -23,6 +23,8 @@ import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
 import stroom.svg.client.SvgPresets;
+import stroom.widget.menu.client.presenter.FocusBehaviour;
+import stroom.widget.menu.client.presenter.FocusBehaviourImpl;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -31,6 +33,7 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.VerticalLocation;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Provider;
@@ -56,7 +59,8 @@ public class TabManager {
         this.dashboardPresenter = dashboardPresenter;
     }
 
-    public void onMouseUp(final Widget tabWidget,
+    public void onMouseUp(final Event event,
+                          final Widget tabWidget,
                           final FlexLayout flexLayout,
                           final TabLayout tabLayout,
                           final int index) {
@@ -73,6 +77,8 @@ public class TabManager {
                 @Override
                 public void run() {
                     final Element target = tabWidget.getElement();
+                    final FocusBehaviour focusBehaviour = new FocusBehaviourImpl(event, () ->
+                            tabWidget.getElement().focus());
                     final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft(),
                             target.getAbsoluteRight(), target.getAbsoluteTop(), target.getAbsoluteBottom(), null,
                             VerticalLocation.BELOW);
@@ -82,8 +88,8 @@ public class TabManager {
                             nameChangeConsumer);
                     ShowMenuEvent.fire(dashboardPresenter,
                             menuItems,
-                            popupPosition,
-                            () -> tabWidget.getElement().focus());
+                            focusBehaviour,
+                            popupPosition);
                 }
             }.schedule(0);
         }

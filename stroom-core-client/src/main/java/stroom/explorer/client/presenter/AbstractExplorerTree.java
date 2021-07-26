@@ -24,14 +24,14 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNode.NodeState;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.util.shared.EqualsUtil;
+import stroom.widget.menu.client.presenter.FocusBehaviour;
+import stroom.widget.menu.client.presenter.FocusBehaviourImpl;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.spinner.client.SpinnerSmall;
 import stroom.widget.util.client.DoubleSelectTester;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectEvent;
-import stroom.widget.util.client.MultiSelectEvent.Handler;
-import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.Selection;
 import stroom.widget.util.client.SelectionType;
@@ -55,10 +55,10 @@ import com.google.gwt.view.client.CellPreviewEvent;
 import java.util.List;
 import java.util.Set;
 
-public class AbstractExplorerTree extends Composite {
+public abstract class AbstractExplorerTree extends Composite {
 
     private final ExplorerTreeModel treeModel;
-    private final MultiSelectionModel<ExplorerNode> selectionModel;
+    private final MultiSelectionModelImpl<ExplorerNode> selectionModel;
     private final MaxScrollPanel scrollPanel;
     final CellTable<ExplorerNode> cellTable;
     private final DoubleSelectTester doubleClickTest = new DoubleSelectTester();
@@ -91,20 +91,8 @@ public class AbstractExplorerTree extends Composite {
         });
 
         cellTable.setLoadingIndicator(null);
-
-        final MultiSelectionModelImpl<ExplorerNode> multiSelectionModel = new MultiSelectionModelImpl<ExplorerNode>() {
-            @Override
-            public HandlerRegistration addSelectionHandler(final Handler handler) {
-                return addHandler(handler, MultiSelectEvent.getType());
-            }
-
-            @Override
-            protected void fireChange(final SelectionType selectionType) {
-                MultiSelectEvent.fire(AbstractExplorerTree.this, selectionType);
-            }
-        };
-        cellTable.setSelectionModel(multiSelectionModel);
-        selectionModel = multiSelectionModel;
+        selectionModel = getSelectionModel();
+        cellTable.setSelectionModel(selectionModel);
         cellTable.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.ENABLED);
         cellTable.getRowContainer().getStyle().setCursor(Style.Cursor.POINTER);
 
@@ -187,6 +175,8 @@ public class AbstractExplorerTree extends Composite {
         initWidget(flowPanel);
     }
 
+    abstract MultiSelectionModelImpl<ExplorerNode> getSelectionModel();
+
     void onData(final FetchExplorerNodeResult result) {
     }
 
@@ -246,7 +236,7 @@ public class AbstractExplorerTree extends Composite {
             }
         }
 
-        if (popupPosition != null) {
+        if (selectionModel != null && popupPosition != null) {
             // If the item clicked is already selected then don't change the selection.
             if (!selectionModel.isSelected(item)) {
                 // Change the selection.
@@ -258,12 +248,12 @@ public class AbstractExplorerTree extends Composite {
                                 nativeEvent.getShiftKey()));
             }
 
-            final Runnable closeHandler = () ->
-                    cellTable.setKeyboardSelectedRow(row, true);
+            final FocusBehaviour focusBehaviour = new FocusBehaviourImpl(nativeEvent, () ->
+                    cellTable.setKeyboardSelectedRow(row, true));
             ShowExplorerMenuEvent.fire(
                     AbstractExplorerTree.this,
                     selectionModel,
-                    closeHandler,
+                    focusBehaviour,
                     popupPosition);
         }
     }
@@ -332,19 +322,23 @@ public class AbstractExplorerTree extends Composite {
     }
 
     protected void setInitialSelectedItem(final ExplorerNode selection) {
-        selectionModel.clear();
+        if (selectionModel != null) {
+            selectionModel.clear();
+        }
         setSelectedItem(selection);
         scrollSelectedIntoView();
     }
 
     private void scrollSelectedIntoView() {
-        final ExplorerNode selected = selectionModel.getSelected();
-        if (selected != null) {
-            final int index = getItemIndex(selected);
-            if (index > 0) {
-                final TableRowElement tableRowElement = cellTable.getRowElement(index);
-                tableRowElement.scrollIntoView();
-                scrollPanel.scrollToLeft();
+        if (selectionModel != null) {
+            final ExplorerNode selected = selectionModel.getSelected();
+            if (selected != null) {
+                final int index = getItemIndex(selected);
+                if (index > 0) {
+                    final TableRowElement tableRowElement = cellTable.getRowElement(index);
+                    tableRowElement.scrollIntoView();
+                    scrollPanel.scrollToLeft();
+                }
             }
         }
     }
@@ -358,60 +352,60 @@ public class AbstractExplorerTree extends Composite {
     }
 
     void doSelect(final ExplorerNode row, final SelectionType selectionType) {
-        final Selection<ExplorerNode> selection = selectionModel.getSelection();
+        if (selectionModel != null) {
+            final Selection<ExplorerNode> selection = selectionModel.getSelection();
 
-        if (allowMultiSelect) {
-            if (row == null) {
-                multiSelectStart = null;
-                selection.clear();
-            } else if (selectionType.isAllowMultiSelect() && selectionType.isShiftPressed() && multiSelectStart != null) {
-                // If control isn't pressed as well as shift then we are selecting a new range so clear.
-                if (!selectionType.isControlPressed()) {
+            if (allowMultiSelect) {
+                if (row == null) {
+                    multiSelectStart = null;
                     selection.clear();
-                }
-
-                final int index1 = rows.indexOf(multiSelectStart);
-                final int index2 = rows.indexOf(row);
-                if (index1 != -1 && index2 != -1) {
-                    final int start = Math.min(index1, index2);
-                    final int end = Math.max(index1, index2);
-                    for (int i = start; i <= end; i++) {
-                        selection.setSelected(rows.get(i), true);
+                } else if (selectionType.isAllowMultiSelect() &&
+                        selectionType.isShiftPressed() &&
+                        multiSelectStart != null) {
+                    // If control isn't pressed as well as shift then we are selecting a new range so clear.
+                    if (!selectionType.isControlPressed()) {
+                        selection.clear();
                     }
-                } else if (selectionType.isControlPressed()) {
+
+                    final int index1 = rows.indexOf(multiSelectStart);
+                    final int index2 = rows.indexOf(row);
+                    if (index1 != -1 && index2 != -1) {
+                        final int start = Math.min(index1, index2);
+                        final int end = Math.max(index1, index2);
+                        for (int i = start; i <= end; i++) {
+                            selection.setSelected(rows.get(i), true);
+                        }
+                    } else if (selectionType.isControlPressed()) {
+                        multiSelectStart = row;
+                        selection.setSelected(row, !selection.isSelected(row));
+                    } else {
+                        multiSelectStart = row;
+                        selection.setSelected(row);
+                    }
+                } else if (selectionType.isAllowMultiSelect() && selectionType.isControlPressed()) {
                     multiSelectStart = row;
                     selection.setSelected(row, !selection.isSelected(row));
                 } else {
                     multiSelectStart = row;
                     selection.setSelected(row);
                 }
-            } else if (selectionType.isAllowMultiSelect() && selectionType.isControlPressed()) {
-                multiSelectStart = row;
-                selection.setSelected(row, !selection.isSelected(row));
+
+                selectionModel.setSelection(selection, selectionType);
+
+            } else if (selectionModel.isSelected(row)) {
+                selectionModel.clear();
+
             } else {
-                multiSelectStart = row;
-                selection.setSelected(row);
+                selectionModel.clear();
+                selectionModel.setSelected(row);
             }
 
-            selectionModel.setSelection(selection, selectionType);
-
-        } else if (selectionModel.isSelected(row)) {
-            selectionModel.clear();
-
-        } else {
-            selectionModel.clear();
-            selectionModel.setSelected(row);
+            MultiSelectEvent.fire(AbstractExplorerTree.this, selectionType);
         }
-
-        MultiSelectEvent.fire(AbstractExplorerTree.this, selectionType);
     }
 
     public ExplorerTreeModel getTreeModel() {
         return treeModel;
-    }
-
-    public MultiSelectionModel<ExplorerNode> getSelectionModel() {
-        return selectionModel;
     }
 
     public HandlerRegistration addContextMenuHandler(final ShowExplorerMenuEvent.Handler handler) {

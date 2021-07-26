@@ -436,8 +436,8 @@ border: 1px solid var(--control__border-color);
   cursor: default;
 }
 .gwt-SuggestBoxPopup .item-selected {
-  background: var(--selected-row-background-color);
-  color: var(--selected-row-text-color);
+  background: var(--row__background-color--selected);
+  color: var(--row__text-color--selected);
 }
 .gwt-SuggestBoxPopup .suggestPopupContent {
   background: var(--control__background-color);

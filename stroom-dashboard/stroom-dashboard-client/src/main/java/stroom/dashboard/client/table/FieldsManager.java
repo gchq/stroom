@@ -24,6 +24,8 @@ import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
+import stroom.widget.menu.client.presenter.FocusBehaviour;
+import stroom.widget.menu.client.presenter.FocusBehaviourImpl;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -97,6 +99,20 @@ public class FieldsManager implements HeadingListener {
 //                        } else {
                         currentColIndex = colIndex;
                         final Element target = heading.getElement();
+
+                        final List<Item> menuItems = getMenuItems(field);
+
+                        Element element = event.getEventTarget().cast();
+                        while (!element.getTagName().equalsIgnoreCase("th")) {
+                            element = element.getParentElement();
+                        }
+                        final Element e = element;
+
+                        final FocusBehaviour focusBehaviour = new FocusBehaviourImpl(event, () -> {
+                            busy = false;
+                            currentColIndex = -1;
+                            e.focus();
+                        });
                         final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft(),
                                 target.getAbsoluteRight(),
                                 target.getAbsoluteTop(),
@@ -116,19 +132,9 @@ public class FieldsManager implements HeadingListener {
 //                            }
 //                        };
 
-                        final List<Item> menuItems = getMenuItems(field);
 
-                        Element element = event.getEventTarget().cast();
-                        while (!element.getTagName().equalsIgnoreCase("th")) {
-                            element = element.getParentElement();
-                        }
-                        final Element e = element;
 
-                        ShowMenuEvent.fire(tablePresenter, menuItems, popupPosition, () -> {
-                            busy = false;
-                            currentColIndex = -1;
-                            e.focus();
-                        }, element);
+                        ShowMenuEvent.fire(tablePresenter, menuItems, focusBehaviour, popupPosition, element);
 //                        }
                     }
                 }.schedule(0);

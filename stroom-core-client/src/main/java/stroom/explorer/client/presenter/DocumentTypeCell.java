@@ -60,7 +60,7 @@ public class DocumentTypeCell extends AbstractCell<DocumentType> {
             content.append(iconHtml);
             content.append(textHtml);
 
-            sb.append(template.outer("explorerCell-outer", content.toSafeHtml()));
+            sb.append(template.outer(content.toSafeHtml()));
         }
     }
 
@@ -72,7 +72,7 @@ public class DocumentTypeCell extends AbstractCell<DocumentType> {
         @Template("<div class=\"{0}\">{1}</div>")
         SafeHtml text(String textClass, SafeHtml text);
 
-        @Template("<div class=\"{0}\">{1}</div>")
-        SafeHtml outer(String outerClass, SafeHtml content);
+        @Template("<div class=\"explorerCell\">{0}</div>")
+        SafeHtml outer(SafeHtml content);
     }
 }

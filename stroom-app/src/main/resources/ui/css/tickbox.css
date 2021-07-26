@@ -15,6 +15,7 @@
  */
 
 .tickBox {
+    display: flex;
     width: 16px;
     height: 16px;
     background-color: var(--control__background-color);

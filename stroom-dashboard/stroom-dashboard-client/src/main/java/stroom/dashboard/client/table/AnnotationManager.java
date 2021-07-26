@@ -25,6 +25,8 @@ import stroom.dashboard.shared.IndexConstants;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.query.api.v2.Field;
 import stroom.svg.client.SvgPresets;
+import stroom.widget.menu.client.presenter.FocusBehaviour;
+import stroom.widget.menu.client.presenter.FocusBehaviourImpl;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -62,12 +64,13 @@ public class AnnotationManager {
         this.selectedItems = selectedItems;
 
         final Element target = event.getEventTarget().cast();
+        final FocusBehaviour focusBehaviour = new FocusBehaviourImpl(event);
         final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft(),
                 target.getAbsoluteRight(), target.getAbsoluteTop(), target.getAbsoluteBottom(), null,
                 VerticalLocation.BELOW);
 
         final List<Item> menuItems = getMenuItems(tableComponentSettings, selectedItems);
-        ShowMenuEvent.fire(changeStatusPresenter, menuItems, popupPosition, target::focus);
+        ShowMenuEvent.fire(changeStatusPresenter, menuItems, focusBehaviour, popupPosition);
     }
 
     private List<Item> getMenuItems(final TableComponentSettings tableComponentSettings,

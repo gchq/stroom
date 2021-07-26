@@ -46,6 +46,7 @@ public class MenuPresenter
     private MenuPresenter currentMenu;
     private MenuItem currentItem;
     private MenuPresenter parent;
+    private FocusBehaviour focusBehaviour;
 
     @Inject
     public MenuPresenter(final EventBus eventBus,
@@ -69,7 +70,7 @@ public class MenuPresenter
         if (currentItem == null || !currentItem.equals(menuItem)) {
             // We are changing the highlighted item so close the current popup
             // if it is open.
-            hideChildren();
+            hideChildren(false);
 
             if (menuItem instanceof HasChildren) {
                 // Try and get some sub items.
@@ -79,7 +80,7 @@ public class MenuPresenter
                     if (children != null && children.size() > 0) {
                         // We are changing the highlighted item so close the current popup
                         // if it is open.
-                        hideChildren();
+                        hideChildren(false);
 
                         final MenuPresenter presenter = menuPresenterProvider.get();
                         presenter.setParent(MenuPresenter.this);
@@ -94,8 +95,8 @@ public class MenuPresenter
                         final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
                             @Override
                             public void onHideRequest(final boolean autoClose, final boolean ok) {
-                                presenter.hideChildren();
-                                presenter.hideSelf();
+                                presenter.hideChildren(false);
+                                presenter.hideSelf(false);
                                 currentMenu = null;
                                 currentItem = null;
                             }
@@ -122,21 +123,25 @@ public class MenuPresenter
         }
     }
 
+    public void setFocusBehaviour(final FocusBehaviour focusBehaviour) {
+        this.focusBehaviour = focusBehaviour;
+    }
+
     @Override
     public void focusSubMenu() {
         if (currentMenu != null) {
-            currentMenu.selectFirstItem();
+            currentMenu.selectFirstItem(true);
         }
     }
 
-    public void selectFirstItem() {
-        getView().selectFirstItem();
+    public void selectFirstItem(final boolean stealFocus) {
+        getView().selectFirstItem(stealFocus);
     }
 
     @Override
     public void focusParent() {
         if (parent != null) {
-            hideChildren();
+            hideChildren(false);
             parent.getView().focus();
         }
     }
@@ -144,7 +149,7 @@ public class MenuPresenter
     @Override
     public void execute(final MenuItem menuItem) {
         if (menuItem != null && menuItem.getCommand() != null) {
-            hideAll();
+            hideAll(false);
             TaskStartEvent.fire(MenuPresenter.this);
             Scheduler.get().scheduleDeferred(() -> {
                 try {
@@ -156,37 +161,40 @@ public class MenuPresenter
         }
     }
 
-    private void hideSelf() {
+    private void hideSelf(final boolean switchFocus) {
         HidePopupEvent.fire(this, this);
+        if (switchFocus && focusBehaviour != null) {
+            focusBehaviour.refocus();
+        }
     }
 
-    private void hideChildren() {
+    private void hideChildren(final boolean switchFocus) {
         // First make sure all children are hidden.
         if (currentMenu != null) {
-            currentMenu.hideChildren();
-            currentMenu.hideSelf();
+            currentMenu.hideChildren(switchFocus);
+            currentMenu.hideSelf(switchFocus);
             currentMenu = null;
             currentItem = null;
         }
     }
 
-    private void hideParent() {
+    private void hideParent(final boolean switchFocus) {
         // First make sure all children are hidden.
         if (parent != null) {
-            parent.hideSelf();
-            parent.hideParent();
+            parent.hideSelf(switchFocus);
+            parent.hideParent(switchFocus);
         }
     }
 
     @Override
     public void escape() {
-        hideAll();
+        hideAll(true);
     }
 
-    public void hideAll() {
-        hideChildren();
-        hideSelf();
-        hideParent();
+    public void hideAll(final boolean switchFocus) {
+        hideChildren(switchFocus);
+        hideSelf(switchFocus);
+        hideParent(switchFocus);
     }
 
     public void setParent(final MenuPresenter parent) {
@@ -203,7 +211,7 @@ public class MenuPresenter
 
         void setData(List<Item> items);
 
-        void selectFirstItem();
+        void selectFirstItem(boolean stealFocus);
 
         void focus();
     }

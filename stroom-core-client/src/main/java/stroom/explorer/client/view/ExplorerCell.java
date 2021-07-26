@@ -97,7 +97,7 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
                         SafeHtmlUtils.fromString(item.getDisplayValue())));
             }
 
-            sb.append(template.div(getCellClassName() + "-outer", content.toSafeHtml()));
+            sb.append(template.outer(content.toSafeHtml()));
         }
     }
 
@@ -126,5 +126,8 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
 
         @Template("<div class=\"{0}\">{1}</div>")
         SafeHtml div(String className, SafeHtml content);
+
+        @Template("<div class=\"explorerCell\">{0}</div>")
+        SafeHtml outer(SafeHtml content);
     }
 }

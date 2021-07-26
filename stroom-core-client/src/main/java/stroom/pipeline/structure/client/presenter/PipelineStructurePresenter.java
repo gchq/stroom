@@ -47,6 +47,8 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.EqualsUtil;
+import stroom.widget.menu.client.presenter.FocusBehaviour;
+import stroom.widget.menu.client.presenter.FocusBehaviourImpl;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -211,8 +213,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
             if (advancedMode && selectedElement != null) {
                 final List<Item> menuItems = addPipelineActionsToMenu();
                 if (menuItems != null && menuItems.size() > 0) {
-                    final PopupPosition popupPosition = new PopupPosition(event.getX(), event.getY());
-                    showMenu(popupPosition, menuItems);
+                    showMenu(menuItems, event.getFocusBehaviour(), event.getPopupPosition());
                 }
             }
         }));
@@ -462,13 +463,17 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
 
     private void showMenu(final ClickEvent event, final List<Item> menuItems) {
         final com.google.gwt.dom.client.Element target = event.getNativeEvent().getEventTarget().cast();
+        final FocusBehaviour focusBehaviour = new FocusBehaviourImpl(event.getNativeEvent(), () ->
+                getWidget().getElement().focus());
         final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft() - 3, target.getAbsoluteRight(),
                 target.getAbsoluteTop(), target.getAbsoluteBottom() + 3, null, VerticalLocation.BELOW);
-        showMenu(popupPosition, menuItems);
+        showMenu(menuItems, focusBehaviour, popupPosition);
     }
 
-    private void showMenu(final PopupPosition popupPosition, final List<Item> menuItems) {
-        ShowMenuEvent.fire(this, menuItems, popupPosition, () -> getWidget().getElement().focus());
+    private void showMenu(final List<Item> menuItems,
+                          final FocusBehaviour focusBehaviour,
+                          final PopupPosition popupPosition) {
+        ShowMenuEvent.fire(this, menuItems, focusBehaviour, popupPosition);
     }
 
     private List<PipelineElement> getExistingElements() {

@@ -49,105 +49,6 @@
     padding: 2px;*/
 }
 
-.contextMenu-layout {
-	cursor: pointer;
-}
-
-.contextMenu-selected {
-    background: #93c2f1;
-}
-
-.contextMenu-text {
-	margin: 1px;
-	padding: 2px;
-	background: transparent;
-	cursor: pointer;
-}
-
-.contextMenu-separator {
-	width: 100%;
-	height: 1px;
-	background-color: black;
-}
-
-.menuItem-separator {
-    margin-left: 2px;
-    margin-right: 2px;
-	border-top: 1px solid var(--menu-separator-color);
-	cursor: default;
-}
-
-.menuItem-groupHeading {
-	padding: 6px 0 3px 6px;
-	opacity: 0.8;
-	font-size: var(--font-size-13);
-	text-transform: uppercase;
-	display: block;
-	cursor: default;
-}
-
-.menuItem-outer {
-    min-width: 180px;
-    border: 1px solid transparent;
-    border-radius: .2rem;
-    display: flex;
-    align-items: center;
-    padding: var(--vertical-padding) var(--horizontal-padding);
-    gap: var(--horizontal-padding);
-}
-
-.cellTableSelectedRow .menuItem-outer {
-    background-color: var(--selected-row-background-color);
-    color: var(--selected-row-text-color);
-}
-
-.cellTableCell div:focus-visible .menuItem-outer {
-    border-color: var(--focussed-row-border-color);
-}
-
-/*
-.cellTableRow:focus-within .menuItem-outer {
-    border-color: var(--focussed-row-border-color);
-}
-
-.cellTableSelectedRow:focus-within .menuItem-outer {
-    background-color: var(--selected-row-background-color);
-    color: var(--selected-row-text-color);
-    border-color: var(--focussed-row-border-color);
-}
-*/
-.menuItem-highlight {
-	background-color: var(--code-editor-highlight-background-color);
-	color: var(--selected-row-text-color);
-}
-
-.menuItem-icon {
-	display: flex;
-}
-
-.menuItem-disabled {
-	cursor: default;
-	opacity: 0.4;
-}
-
-.menuItem-text {
-}
-
-.menuItem-simpleText {
-	display: inline-block;
-	vertical-align: top;
-	padding-top: 1px;
-	margin-left: 5px;
-	margin-right: 5px;
-}
-
-.menuItem-shortcut {
-    padding-left: 15px;
-    white-space: nowrap;
-    text-align: right;
-    flex-grow: 1;
-}
-
 .basicTabSelector {
     position: absolute;
     left: 0;
@@ -1425,7 +1326,7 @@
 }
 
 .explorerTreeViewImpl-nameFilter {
-    border: none !important;
+    padding: .5rem;
 }
 
 .chooserViewImpl-container {
@@ -1511,7 +1412,7 @@
 }
 
 .exportConfigViewImpl-filter {
-    border-bottom: none !important;
+    padding: .5rem 0;
 }
 
 .exportConfigViewImpl-nameFilter {
@@ -1572,7 +1473,7 @@
 }
 
 .focus-without-border:focus-visible:focus {
-    border-color: var(--focussed-row-border-color);
+    border-color: var(--row__border-color--focussed);
 }
 
 .navigation {
@@ -1647,7 +1548,7 @@
 }
 
 .navigation-header:hover {
-    background-color: var(--hovered-row-background-color);
+    background-color: var(--row__background-color--hovered);
 }
 
 .navigation-header-text {
@@ -1707,7 +1608,7 @@
 }
 
 .navigation-item:hover {
-    background-color: var(--hovered-row-background-color);
+    background-color: var(--row__background-color--hovered);
 }
 
 .navigation-header-buttons {

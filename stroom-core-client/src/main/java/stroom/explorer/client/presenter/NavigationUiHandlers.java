@@ -17,6 +17,7 @@
 package stroom.explorer.client.presenter;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface NavigationUiHandlers extends UiHandlers {
@@ -25,5 +26,5 @@ public interface NavigationUiHandlers extends UiHandlers {
 
     void maximise();
 
-    void showMenu(Element target);
+    void showMenu(NativeEvent event, Element target);
 }

@@ -32,6 +32,7 @@ import stroom.importexport.shared.ContentResource;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.DocRefs;
 import stroom.util.shared.ResourceGeneration;
+import stroom.widget.menu.client.presenter.FocusBehaviourImpl;
 import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -163,7 +164,7 @@ public class ExportConfigPresenter
     @Override
     public void showTypeFilter(final MouseDownEvent event) {
         final Element target = event.getNativeEvent().getEventTarget().cast();
-        typeFilterPresenter.show(target);
+        typeFilterPresenter.show(new FocusBehaviourImpl(event), target);
     }
 
     public interface ExportConfigView extends View, HasUiHandlers<ExportConfigUiHandlers> {

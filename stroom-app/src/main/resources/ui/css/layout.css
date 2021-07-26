@@ -1,11 +1,15 @@
 :root {
-    --horizontal-padding: .4rem;
-    --vertical-padding: .25rem;
+    --padding--horizontal: .4rem;
+    --padding--vertical: .4rem;
+    --gap--horizontal: .4rem;
+    --gap--vertical: .25rem;
     --layout-padding-data: .24rem .12rem;
 }
 
 .stroom-density-compact {
-    --horizontal-padding: .4rem;
-    --vertical-padding: .1rem;
+    --padding--horizontal: .1rem;
+    --padding--vertical: .1rem;
+    --gap--horizontal: .4rem;
+    --gap--vertical: .1rem;
     --layout-padding-data: .12rem .06rem;
 }

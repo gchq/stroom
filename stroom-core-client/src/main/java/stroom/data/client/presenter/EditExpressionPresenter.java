@@ -29,6 +29,7 @@ import stroom.query.client.ExpressionUiHandlers;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.menu.client.presenter.FocusBehaviour;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -89,9 +90,8 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         registerHandler(expressionPresenter.addDataSelectionHandler(event -> setButtonsEnabled()));
         registerHandler(expressionPresenter.addContextMenuHandler(event -> {
             final List<Item> menuItems = addExpressionActionsToMenu();
-            if (menuItems != null && menuItems.size() > 0) {
-                final PopupPosition popupPosition = new PopupPosition(event.getX(), event.getY());
-                showMenu(popupPosition, menuItems);
+            if (menuItems.size() > 0) {
+                showMenu(menuItems, event.getFocusBehaviour(), event.getPopupPosition());
             }
         }));
         registerHandler(addOperatorButton.addClickHandler(event -> {
@@ -215,8 +215,10 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         return null;
     }
 
-    private void showMenu(final PopupPosition popupPosition, final List<Item> menuItems) {
-        ShowMenuEvent.fire(this, menuItems, popupPosition, () -> getWidget().getElement().focus());
+    private void showMenu(final List<Item> menuItems,
+                          final FocusBehaviour focusBehaviour,
+                          final PopupPosition popupPosition) {
+        ShowMenuEvent.fire(this, menuItems, focusBehaviour, popupPosition);
     }
 
     public void setDirty(final boolean dirty) {

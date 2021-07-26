@@ -13,42 +13,71 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
- .explorerTree {
-    width: 100%;
- }
+.menuItem-separator {
+    margin-left: 2px;
+    margin-right: 2px;
+	border-top: 1px solid var(--menu-separator-color);
+	cursor: default;
+}
 
-.explorerCell {
+.menuItem-groupHeading {
+	padding: 6px 0 3px 6px;
+	opacity: 0.8;
+	font-size: var(--font-size-13);
+	text-transform: uppercase;
+	display: block;
+	cursor: default;
+}
+
+.menuItem-outer {
     display: flex;
     align-items: center;
     cursor: pointer;
     gap: var(--gap--horizontal);
     border: 1px solid transparent;
     border-radius: .25rem;
+    min-width: 180px;
 }
 
-.cellTableCell div:focus-visible .explorerCell {
+.cellTableCell div:focus-visible .menuItem-outer {
     border-color: var(--row__border-color--focussed);
     box-shadow: var(--row__box-shadow--focussed);
 }
 
-.cellTableSelectedRow .cellTableCell div:focus-visible .explorerCell {
+.cellTableSelectedRow .cellTableCell div:focus-visible .menuItem-outer {
     border-color: var(--row__border-color--selected-focussed);
     box-shadow: var(--row__box-shadow--selected-focussed);
 }
 
-.explorerCell-expander {
+.menuItem-highlight {
+	background-color: var(--code-editor-highlight-background-color);
+	color: var(--row__text-color--selected);
+}
+
+.menuItem-icon {
 	display: flex;
 }
 
-.explorerCell-expander svg {
-    width: .7rem;
-    height: .7rem;
+.menuItem-disabled {
+	cursor: default;
+	opacity: 0.4;
 }
 
-.explorerCell-icon {
-	display: flex;
-}
-
-.explorerCell-text {
+.menuItem-text {
     white-space: nowrap;
+}
+
+.menuItem-simpleText {
+	display: inline-block;
+	vertical-align: top;
+	padding-top: 1px;
+	margin-left: 5px;
+	margin-right: 5px;
+}
+
+.menuItem-shortcut {
+    padding-left: 15px;
+    white-space: nowrap;
+    text-align: right;
+    flex-grow: 1;
 }

@@ -20,6 +20,9 @@ import stroom.data.grid.client.MouseHelper;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent;
 import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
+import stroom.widget.menu.client.presenter.FocusBehaviour;
+import stroom.widget.menu.client.presenter.FocusBehaviourImpl;
+import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.dom.client.Element;
@@ -218,7 +221,9 @@ public abstract class DraggableTreePanel<E> extends Composite implements HasCont
     }
 
     private void onContextMenu(final Event event) {
-        ContextMenuEvent.fire(this, event.getClientX(), event.getClientY());
+        final FocusBehaviour focusBehaviour = new FocusBehaviourImpl(event);
+        final PopupPosition popupPosition = new PopupPosition(event.getClientX(), event.getClientY());
+        ContextMenuEvent.fire(this, focusBehaviour, popupPosition);
     }
 
     private void updateHotspot(final Box<E> target) {

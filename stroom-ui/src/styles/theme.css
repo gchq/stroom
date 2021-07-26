@@ -15,9 +15,9 @@
     --header-border-color: #dddddd;
     --even-row-background-color: #ebebeb;
     --odd-row-background-color: #fff;
-    --hovered-row-background-color: #e6f4ff;
-    --selected-row-background-color: #bbdefb;
-    --selected-row-text-color: #000;
+    --row__background-color--hovered: #e6f4ff;
+    --row__background-color--selected: #bbdefb;
+    --row__text-color--selected: #000;
 
     --menu-separator-color: #bfbfbf;
 
@@ -220,9 +220,9 @@
     --header-border-color: #333;
     --even-row-background-color: #282c31;
     --odd-row-background-color: #1a1d21;
-    --hovered-row-background-color: rgb(255 255 255 / 15%);
-    --selected-row-background-color: #1164a3;
-    --selected-row-text-color: #fff;
+    --row__background-color--hovered: rgb(255 255 255 / 15%);
+    --row__background-color--selected: #1164a3;
+    --row__text-color--selected: #fff;
 
     --menu-separator-color: rgb(255 255 255 / 20%);
 
@@ -401,9 +401,9 @@
     --header-border-color: #14161b;
     --even-row-background-color: #15161b;
     --odd-row-background-color: #22252c;
-    --hovered-row-background-color: #2d2f35;
-    --selected-row-background-color: #3498db;
-    --selected-row-text-color: #fff;
+    --row__background-color--hovered: #2d2f35;
+    --row__background-color--selected: #3498db;
+    --row__text-color--selected: #fff;
 
     --menu-separator-color: rgb(255 255 255 / 20%);
 

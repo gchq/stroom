@@ -16,46 +16,39 @@
 
 package stroom.explorer.client.presenter;
 
-import stroom.data.table.client.CellTableViewImpl.DefaultResources;
 import stroom.dispatch.client.RestFactory;
-import stroom.explorer.client.event.ShowExplorerMenuEvent;
-import stroom.explorer.client.view.ExplorerCell;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.explorer.shared.ExplorerNode.NodeState;
-import stroom.util.shared.EqualsUtil;
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.spinner.client.SpinnerSmall;
-import stroom.widget.util.client.DoubleSelectTester;
-import stroom.widget.util.client.ElementUtil;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectEvent.Handler;
-import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
-import stroom.widget.util.client.Selection;
 import stroom.widget.util.client.SelectionType;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.TableRowElement;
-import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.cellview.client.CellTable;
-import com.google.gwt.user.cellview.client.CellTable.Resources;
-import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
-import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.MaxScrollPanel;
-
-import java.util.List;
-import java.util.Set;
 
 public class ExplorerTree extends AbstractExplorerTree {
 
+    private MultiSelectionModelImpl<ExplorerNode> multiSelectionModel;
+
     public ExplorerTree(final RestFactory restFactory, final boolean allowMultiSelect) {
         super(restFactory, allowMultiSelect);
+    }
+
+    @Override
+    MultiSelectionModelImpl<ExplorerNode> getSelectionModel() {
+        if (multiSelectionModel == null) {
+            multiSelectionModel = new MultiSelectionModelImpl<ExplorerNode>() {
+                @Override
+                public HandlerRegistration addSelectionHandler(final Handler handler) {
+                    return addHandler(handler, MultiSelectEvent.getType());
+                }
+
+                @Override
+                protected void fireChange(final SelectionType selectionType) {
+                    MultiSelectEvent.fire(ExplorerTree.this, selectionType);
+                }
+            };
+        }
+        return multiSelectionModel;
     }
 
     //
@@ -94,7 +87,8 @@ public class ExplorerTree extends AbstractExplorerTree {
 //
 //        cellTable.setLoadingIndicator(null);
 //
-//        final MultiSelectionModelImpl<ExplorerNode> multiSelectionModel = new MultiSelectionModelImpl<ExplorerNode>() {
+//        final MultiSelectionModelImpl<ExplorerNode> multiSelectionModel =
+//        new MultiSelectionModelImpl<ExplorerNode>() {
 //            @Override
 //            public HandlerRegistration addSelectionHandler(final Handler handler) {
 //                return addHandler(handler, MultiSelectEvent.getType());
@@ -454,7 +448,8 @@ public class ExplorerTree extends AbstractExplorerTree {
 //        cellTable.setFocus(focused);
 //    }
 //
-////    private class MySelectionEventManager extends AbstractCellTable.CellTableKeyboardSelectionHandler<ExplorerNode> {
+////    private class MySelectionEventManager extends
+// AbstractCellTable.CellTableKeyboardSelectionHandler<ExplorerNode> {
 ////
 ////        MySelectionEventManager(AbstractCellTable<ExplorerNode> table) {
 ////            super(table);

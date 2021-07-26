@@ -72,6 +72,7 @@ import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResourceGeneration;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.menu.client.presenter.FocusBehaviour;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -214,8 +215,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         registerHandler(expressionPresenter.addContextMenuHandler(event -> {
             final List<Item> menuItems = addExpressionActionsToMenu();
             if (menuItems.size() > 0) {
-                final PopupPosition popupPosition = new PopupPosition(event.getX(), event.getY());
-                showMenu(popupPosition, menuItems);
+                showMenu(menuItems, event.getFocusBehaviour(), event.getPopupPosition());
             }
         }));
         registerHandler(addOperatorButton.addClickHandler(event -> {
@@ -790,8 +790,10 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         return null;
     }
 
-    private void showMenu(final PopupPosition popupPosition, final List<Item> menuItems) {
-        ShowMenuEvent.fire(this, menuItems, popupPosition, () -> getWidget().getElement().focus());
+    private void showMenu(final List<Item> menuItems,
+                          final FocusBehaviour focusBehaviour,
+                          final PopupPosition popupPosition) {
+        ShowMenuEvent.fire(this, menuItems, focusBehaviour, popupPosition);
     }
 
     private void downloadQuery() {

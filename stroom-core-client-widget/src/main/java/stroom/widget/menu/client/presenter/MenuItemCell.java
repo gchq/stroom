@@ -20,8 +20,6 @@ import stroom.svg.client.Icon;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.safecss.shared.SafeStyles;
-import com.google.gwt.safecss.shared.SafeStylesUtils;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -109,8 +107,6 @@ public class MenuItemCell extends AbstractCell<Item> {
     public static class IconMenuItemAppearance implements Appearance<IconMenuItem> {
 
         private static final Template TEMPLATE = GWT.create(Template.class);
-        private static final SafeStyles NORMAL = SafeStylesUtils.fromTrustedString("cursor:pointer;");
-        private static final SafeStyles DISABLED = SafeStylesUtils.fromTrustedString("cursor:default;");
 
         @Override
         public void render(final MenuItemCell cell,
@@ -118,12 +114,6 @@ public class MenuItemCell extends AbstractCell<Item> {
                            final IconMenuItem value,
                            final SafeHtmlBuilder sb) {
             if (value.getText() != null) {
-                SafeStyles styles = NORMAL;
-
-                if (!value.isEnabled()) {
-                    styles = DISABLED;
-                }
-
                 final SafeHtmlBuilder inner = new SafeHtmlBuilder();
                 final Icon enabledIcon = value.getEnabledIcon();
                 final Icon disabledIcon = value.getDisabledIcon();
@@ -159,14 +149,14 @@ public class MenuItemCell extends AbstractCell<Item> {
                 className += value.isEnabled()
                         ? ""
                         : " menuItem-disabled";
-                sb.append(TEMPLATE.outer(className, styles, inner.toSafeHtml()));
+                sb.append(TEMPLATE.outer(className, inner.toSafeHtml()));
             }
         }
 
         public interface Template extends SafeHtmlTemplates {
 
-            @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
-            SafeHtml outer(String className, SafeStyles styles, SafeHtml inner);
+            @Template("<div class=\"{0}\" tabindex=\"-1\">{1}</div>")
+            SafeHtml outer(String className, SafeHtml inner);
 
             @Template("<div class=\"{0}\">{1}</div>")
             SafeHtml inner(String className, SafeHtml icon);
@@ -182,8 +172,6 @@ public class MenuItemCell extends AbstractCell<Item> {
     public static class SimpleMenuItemAppearance implements Appearance<SimpleMenuItem> {
 
         private static final Template TEMPLATE = GWT.create(Template.class);
-        private static final SafeStyles NORMAL = SafeStylesUtils.fromTrustedString("cursor:pointer;");
-        private static final SafeStyles DISABLED = SafeStylesUtils.fromTrustedString("cursor:default;");
 
         @Override
         public void render(final MenuItemCell cell,
@@ -191,12 +179,6 @@ public class MenuItemCell extends AbstractCell<Item> {
                            final SimpleMenuItem value,
                            final SafeHtmlBuilder sb) {
             if (value.getText() != null) {
-                SafeStyles styles = NORMAL;
-
-                if (!value.isEnabled()) {
-                    styles = DISABLED;
-                }
-
                 final SafeHtmlBuilder inner = new SafeHtmlBuilder();
 
                 inner.append(
@@ -209,17 +191,18 @@ public class MenuItemCell extends AbstractCell<Item> {
                             SafeHtmlUtils.fromTrustedString(value.getShortcut())));
                 }
 
-                final String disabledClass = value.isEnabled()
+                String className = "menuItem-outer";
+                className += value.isEnabled()
                         ? ""
                         : " menuItem-disabled";
-                sb.append(TEMPLATE.outer("menuItem-outer" + disabledClass, styles, inner.toSafeHtml()));
+                sb.append(TEMPLATE.outer(className, inner.toSafeHtml()));
             }
         }
 
         public interface Template extends SafeHtmlTemplates {
 
-            @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
-            SafeHtml outer(String className, SafeStyles styles, SafeHtml inner);
+            @Template("<div class=\"{0}\" tabindex=\"-1\">{1}</div>")
+            SafeHtml outer(String className, SafeHtml inner);
 
             @Template("<div class=\"{0}\">{1}</div>")
             SafeHtml inner(String className, SafeHtml icon);
@@ -253,7 +236,7 @@ public class MenuItemCell extends AbstractCell<Item> {
 
         public interface Template extends SafeHtmlTemplates {
 
-            @Template("<div class=\"{0}\">{1}</div>")
+            @Template("<div class=\"{0}\" tabindex=\"-1\">{1}</div>")
             SafeHtml outer(String className, SafeHtml inner);
 
             @Template("<div class=\"{0}\">{1}</div>")

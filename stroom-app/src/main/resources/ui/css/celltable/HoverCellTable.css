@@ -21,7 +21,7 @@
 }
 
 .hoverCellTable .cellTableSelectedRow {
-  background: var(--selected-row-background-color) none repeat scroll 0 0 !important;
+  background: var(--row__background-color--selected) none repeat scroll 0 0 !important;
   height: auto;
   overflow: auto;
 }

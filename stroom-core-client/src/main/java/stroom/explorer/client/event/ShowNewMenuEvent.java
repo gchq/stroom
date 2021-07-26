@@ -16,6 +16,7 @@
 
 package stroom.explorer.client.event;
 
+import stroom.widget.menu.client.presenter.FocusBehaviour;
 import stroom.widget.popup.client.presenter.PopupPosition;
 
 import com.google.gwt.dom.client.Element;
@@ -27,15 +28,22 @@ public class ShowNewMenuEvent extends GwtEvent<ShowNewMenuEvent.Handler> {
 
     private static Type<Handler> TYPE;
     private final Element element;
+    private final FocusBehaviour focusBehaviour;
     private final PopupPosition popupPosition;
 
-    private ShowNewMenuEvent(final Element element, final PopupPosition popupPosition) {
+    private ShowNewMenuEvent(final Element element,
+                             final FocusBehaviour focusBehaviour,
+                             final PopupPosition popupPosition) {
         this.element = element;
+        this.focusBehaviour = focusBehaviour;
         this.popupPosition = popupPosition;
     }
 
-    public static void fire(final HasHandlers handlers, final Element element, final PopupPosition popupPosition) {
-        handlers.fireEvent(new ShowNewMenuEvent(element, popupPosition));
+    public static void fire(final HasHandlers handlers,
+                            final Element element,
+                            final FocusBehaviour focusBehaviour,
+                            final PopupPosition popupPosition) {
+        handlers.fireEvent(new ShowNewMenuEvent(element, focusBehaviour, popupPosition));
     }
 
     public static Type<Handler> getType() {
@@ -57,6 +65,10 @@ public class ShowNewMenuEvent extends GwtEvent<ShowNewMenuEvent.Handler> {
 
     public Element getElement() {
         return element;
+    }
+
+    public FocusBehaviour getFocusBehaviour() {
+        return focusBehaviour;
     }
 
     public PopupPosition getPopupPosition() {

@@ -35,7 +35,7 @@ public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerNode> 
     private final HashMap<ExplorerNode, TickBoxState> stateMap = new HashMap<>();
     private final Set<ExplorerNode> stateChanges = new HashSet<>();
 
-    private Map<ExplorerNode, ExplorerNode> parents;
+    private final Map<ExplorerNode, ExplorerNode> parents = new HashMap<>();
     private final Map<ExplorerNode, Set<ExplorerNode>> descendants = new HashMap<>();
 
     public TickBoxSelectionModel() {
@@ -184,35 +184,46 @@ public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerNode> 
     }
 
     private ExplorerNode getParent(final ExplorerNode object) {
-        if (parents != null) {
-            return parents.get(object);
-        }
-        return null;
+        return parents.get(object);
     }
 
     public void setRoots(final List<ExplorerNode> roots) {
-        this.parents = new HashMap<>();
+        parents.clear();
 
         // Once the tree structure changes ensure we auto select descendants of selected ancestors.
+        final Set<ExplorerNode> selectedSet = getSelectedSet();
+        stateMap.clear();
+
         if (roots != null) {
-            addChildren(null, roots, false, getSelectedSet());
+            addChildren(null, roots);
+            selectChildren(null, roots, false, selectedSet);
         }
     }
 
     private void addChildren(final ExplorerNode parent,
-                             final List<ExplorerNode> children,
-                             final boolean select,
-                             final Set<ExplorerNode> selected) {
+                             final List<ExplorerNode> children) {
         if (children == null) {
             return;
         }
 
         for (final ExplorerNode child : children) {
             parents.put(child, parent);
+            addChildren(child, child.getChildren());
+        }
+    }
 
-            final boolean selectChildren = select || selected.contains(parent) || selected.contains(child);
+    private void selectChildren(final ExplorerNode parent,
+                                final List<ExplorerNode> children,
+                                final boolean select,
+                                final Set<ExplorerNode> selectedSet) {
+        if (children == null) {
+            return;
+        }
+
+        for (final ExplorerNode child : children) {
+            final boolean selectChildren = select || selectedSet.contains(parent) || selectedSet.contains(child);
             setSelected(child, selectChildren);
-            addChildren(child, child.getChildren(), selectChildren, selected);
+            selectChildren(child, child.getChildren(), selectChildren, selectedSet);
         }
     }
 }
