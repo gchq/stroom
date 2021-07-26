@@ -26,17 +26,22 @@ import stroom.proxy.app.guice.ProxyModule;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.config.ConfigValidator;
 import stroom.util.config.PropertyPathDecorator;
+import stroom.util.io.HomeDirProvider;
+import stroom.util.io.HomeDirProviderImpl;
+import stroom.util.io.PathConfig;
+import stroom.util.io.TempDirProvider;
+import stroom.util.io.TempDirProviderImpl;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.validation.ValidationModule;
 
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Module;
 import io.dropwizard.Application;
-import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
-import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.servlets.tasks.LogConfigurationTask;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
@@ -45,6 +50,7 @@ import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
@@ -100,12 +106,9 @@ public class App extends Application<Config> {
 
     @Override
     public void initialize(final Bootstrap<Config> bootstrap) {
-        // This allows us to use templating in the YAML configuration.
-        bootstrap.setConfigurationSourceProvider(
-                new ProxyConfigurationSourceProvider(
-                        new SubstitutingSourceProvider(
-                                bootstrap.getConfigurationSourceProvider(),
-                                new EnvironmentVariableSubstitutor(false))));
+        // This allows us to use env var templating and relative (to proxy home) paths in the YAML configuration.
+        bootstrap.setConfigurationSourceProvider(ProxyYamlUtil.createConfigurationSourceProvider(
+                bootstrap.getConfigurationSourceProvider(), true));
 //        bootstrap.addBundle(new AssetsBundle("/ui", ResourcePaths.ROOT_PATH, "index.html", "ui"));
 
         // If we want to use javax.validation on our rest resources with our own custom validation annotations
@@ -211,7 +214,28 @@ public class App extends Application<Config> {
     }
 
     private Injector createValidationInjector() {
-        return Guice.createInjector(new ValidationModule());
+        try {
+            // We need to read the AppConfig in the same way that dropwiz will so we can get the
+            // possibly substituted values for stroom.(home|temp) for use with PathCreator
+            LOGGER.info("Parsing config file to establish home and temp");
+            final ProxyConfig proxyConfig = ProxyYamlUtil.readProxyConfig(configFile);
+
+            final Module pathConfigModule = new AbstractModule() {
+                @Override
+                protected void configure() {
+                    bind(PathConfig.class).toInstance(proxyConfig.getProxyPathConfig());
+                    bind(HomeDirProvider.class).to(HomeDirProviderImpl.class);
+                    bind(TempDirProvider.class).to(TempDirProviderImpl.class);
+                }
+            };
+
+            return Guice.createInjector(
+                    new ValidationModule(),
+                    pathConfigModule);
+
+        } catch (IOException e) {
+            throw new RuntimeException("Error parsing config file " + configFile.toAbsolutePath().normalize());
+        }
     }
 
     private void validateAppConfig(final Config config, final Path configFile) {

@@ -16,8 +16,6 @@
 
 package stroom.proxy.app;
 
-import stroom.proxy.app.Config;
-import stroom.proxy.app.ProxyConfig;
 import stroom.util.logging.LogUtil;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -85,7 +83,7 @@ public class ProxyYamlUtil {
         return realConfigFile;
     }
 
-    public static ProxyConfig readAppConfig(final Path configFile) throws IOException {
+    public static ProxyConfig readProxyConfig(final Path configFile) throws IOException {
         return readConfig(configFile).getProxyConfig();
     }
 
@@ -95,9 +93,9 @@ public class ProxyYamlUtil {
      * @throws IOException
      */
     public static Config readConfig(final Path configFile) throws IOException {
-        final ConfigurationSourceProvider configurationSourceProvider = new SubstitutingSourceProvider(
-                new FileConfigurationSourceProvider(),
-                new EnvironmentVariableSubstitutor(false));
+
+        final ConfigurationSourceProvider configurationSourceProvider = createConfigurationSourceProvider(
+                new FileConfigurationSourceProvider(), false);
 
         final ConfigurationFactoryFactory<Config> configurationFactoryFactory =
                 new DefaultConfigurationFactoryFactory<>();
@@ -118,6 +116,16 @@ public class ProxyYamlUtil {
         }
 
         return config;
+    }
+
+    public static ConfigurationSourceProvider createConfigurationSourceProvider(
+            final ConfigurationSourceProvider baseConfigurationSourceProvider,
+            final boolean logChanges) {
+
+        return new ProxyConfigurationSourceProvider(
+                new SubstitutingSourceProvider(
+                        baseConfigurationSourceProvider,
+                        new EnvironmentVariableSubstitutor(false)), logChanges);
     }
 
     public static void writeConfig(final Config config, final OutputStream outputStream) throws IOException {

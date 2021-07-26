@@ -125,7 +125,7 @@ class TestProxyYamlUtil {
         Path path = getStroomProxyAppFile(filename);
 
         try {
-            return ProxyYamlUtil.readAppConfig(path);
+            return ProxyYamlUtil.readProxyConfig(path);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }

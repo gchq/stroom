@@ -144,7 +144,7 @@ public class GenerateProxyDistributionConfig {
         // Ensures the output file can be read into the appConfig tree
         final ProxyConfig proxyConfig;
         try {
-            proxyConfig = ProxyYamlUtil.readAppConfig(configFile);
+            proxyConfig = ProxyYamlUtil.readProxyConfig(configFile);
             Assertions.assertThat(proxyConfig)
                     .isNotNull();
         } catch (IOException e) {

@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2331** : Remove unused config properties `stroom.ui.url.(apiKeys|changepassword|users)`.
 
+* Issue **#1469** : Add hot loading of config to proxy.
+
+* Change proxy and stroom config validation to cope with relative paths and `~`.
+
 
 ## [v7.0-beta.137] - 2021-07-02
 

@@ -1,14 +1,27 @@
 package stroom.util.validation;
 
-import stroom.util.io.FileUtil;
+import stroom.util.io.PathCreator;
 import stroom.util.shared.validation.ValidDirectoryPath;
 import stroom.util.shared.validation.ValidDirectoryPathValidator;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
+import javax.inject.Inject;
 import javax.validation.ConstraintValidatorContext;
 
 public class ValidDirectoryPathValidatorImpl implements ValidDirectoryPathValidator {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ValidDirectoryPathValidatorImpl.class);
+
+    private final PathCreator pathCreator;
+
+    @Inject
+    public ValidDirectoryPathValidatorImpl(final PathCreator pathCreator) {
+        this.pathCreator = pathCreator;
+    }
 
     /**
      * Initializes the validator in preparation for
@@ -43,7 +56,13 @@ public class ValidDirectoryPathValidatorImpl implements ValidDirectoryPathValida
             // Ideally here we would call PathCreator.replaceSystemProperties() and .makeAbsolute()
             // but PathCreator needs to know the
             // replace '~' with value of user.home
-            final String modifiedDir = FileUtil.replaceHome(dir);
+//            final String modifiedDir = FileUtil.replaceHome(dir);
+
+            // Use the PathCreator so we can interpret relative paths and paths with '~' in.
+            final String modifiedDir = pathCreator.makeAbsolute(pathCreator.replaceSystemProperties(dir));
+
+            LOGGER.debug("Validating dir {} (modified to {})", dir, modifiedDir);
+
             return Files.isDirectory(Path.of(modifiedDir));
         } else {
             return true;
