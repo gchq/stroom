@@ -1,9 +1,7 @@
 package stroom.data.client.presenter;
 
 import stroom.data.client.presenter.CharacterNavigatorPresenter.CharacterNavigatorView;
-import stroom.util.shared.DataRange;
 import stroom.util.shared.HasCharacterData;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.progress.client.presenter.ProgressPresenter;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -77,27 +75,11 @@ public class CharacterNavigatorPresenter extends MyPresenterWidget<CharacterNavi
     }
 
     private void handleLabelClick(ClickEvent clickEvent) {
-
         final CharacterRangeSelectionPresenter characterRangeSelectionPresenter = getCharacterRangeSelectionPresenter();
         characterRangeSelectionPresenter.setDataRange(display.getDataRange());
 
         characterRangeSelectionPresenter.setTotalCharsCount(display.getTotalChars());
-
-        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                characterRangeSelectionPresenter.hide(autoClose, ok);
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    final DataRange dataRange = characterRangeSelectionPresenter.getDataRange();
-                    display.setDataRange(dataRange);
-                }
-            }
-        };
-        characterRangeSelectionPresenter.show(popupUiHandlers);
+        characterRangeSelectionPresenter.show(dataRange -> display.setDataRange(dataRange));
     }
 
     public interface CharacterNavigatorView extends View {

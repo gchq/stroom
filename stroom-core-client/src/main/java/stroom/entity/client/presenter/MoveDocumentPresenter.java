@@ -29,6 +29,7 @@ import stroom.explorer.shared.PermissionInheritance;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -86,7 +87,7 @@ public class MoveDocumentPresenter
         }
         getView().setPermissionInheritance(PermissionInheritance.DESTINATION);
 
-        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(this) {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
@@ -108,11 +109,10 @@ public class MoveDocumentPresenter
                             destinationFolderRef,
                             getView().getPermissionInheritance());
                 } else {
-                    HidePopupEvent.fire(MoveDocumentPresenter.this, MoveDocumentPresenter.this, autoClose, ok);
+                    hide(autoClose, ok);
                 }
             }
         };
-
         final PopupSize popupSize = PopupSize.resizable(400, 550);
         ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, caption, popupUiHandlers);
     }

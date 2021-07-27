@@ -47,8 +47,7 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.EqualsUtil;
-import stroom.widget.menu.client.presenter.FocusBehaviour;
-import stroom.widget.menu.client.presenter.FocusBehaviourImpl;
+import stroom.widget.menu.client.presenter.CurrentFocus;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -56,6 +55,7 @@ import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.VerticalLocation;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -213,7 +213,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
             if (advancedMode && selectedElement != null) {
                 final List<Item> menuItems = addPipelineActionsToMenu();
                 if (menuItems != null && menuItems.size() > 0) {
-                    showMenu(menuItems, event.getFocusBehaviour(), event.getPopupPosition());
+                    showMenu(menuItems, event.getPopupPosition());
                 }
             }
         }));
@@ -463,17 +463,15 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
 
     private void showMenu(final ClickEvent event, final List<Item> menuItems) {
         final com.google.gwt.dom.client.Element target = event.getNativeEvent().getEventTarget().cast();
-        final FocusBehaviour focusBehaviour = new FocusBehaviourImpl(event.getNativeEvent(), () ->
-                getWidget().getElement().focus());
+        CurrentFocus.push(() -> getWidget().getElement().focus());
         final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft() - 3, target.getAbsoluteRight(),
                 target.getAbsoluteTop(), target.getAbsoluteBottom() + 3, null, VerticalLocation.BELOW);
-        showMenu(menuItems, focusBehaviour, popupPosition);
+        showMenu(menuItems, popupPosition);
     }
 
     private void showMenu(final List<Item> menuItems,
-                          final FocusBehaviour focusBehaviour,
                           final PopupPosition popupPosition) {
-        ShowMenuEvent.fire(this, menuItems, focusBehaviour, popupPosition);
+        ShowMenuEvent.fire(this, menuItems, popupPosition);
     }
 
     private List<PipelineElement> getExistingElements() {
@@ -514,17 +512,16 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
             xmlEditor.getView().asWidget().getElement().addClassName("default-min-sizes");
 
             final PopupSize popupSize = PopupSize.resizable(600, 400);
-            final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+            final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(xmlEditor) {
                 @Override
                 public void onHideRequest(final boolean autoClose, final boolean ok) {
                     if (ok) {
                         querySave(xmlEditor);
                     } else {
-                        HidePopupEvent.fire(PipelineStructurePresenter.this, xmlEditor, autoClose, ok);
+                        hide(autoClose, ok);
                     }
                 }
             };
-
             final Rest<FetchPipelineXmlResponse> rest = restFactory.create();
             rest
                     .onSuccess(result -> {
@@ -667,7 +664,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
         public void execute() {
             final PipelineElement selectedElement = pipelineTreePresenter.getSelectionModel().getSelectedObject();
             if (selectedElement != null && elementType != null) {
-                final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+                final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(newElementPresenter) {
                     @Override
                     public void onHideRequest(final boolean autoClose, final boolean ok) {
                         if (ok) {
@@ -685,8 +682,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                                         null);
                             }
                         }
-
-                        newElementPresenter.hide();
+                        hide();
                     }
                 };
 

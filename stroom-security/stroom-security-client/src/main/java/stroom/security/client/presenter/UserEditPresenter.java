@@ -18,8 +18,8 @@ package stroom.security.client.presenter;
 
 import stroom.security.client.presenter.UserEditPresenter.UserEditView;
 import stroom.security.shared.User;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView;
@@ -56,19 +56,14 @@ public class UserEditPresenter extends MyPresenterWidget<UserEditView>
         super.onBind();
     }
 
-    public void show(final User userRef, final PopupUiHandlers popupUiHandlers) {
+    public void show(final User userRef, final Runnable closeRunnable) {
         read(userRef);
 
-        final PopupUiHandlers internalPopupUiHandlers = new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                HidePopupEvent.fire(UserEditPresenter.this, UserEditPresenter.this);
-                popupUiHandlers.onHideRequest(autoClose, ok);
-            }
-
+        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(this) {
             @Override
             public void onHide(final boolean autoClose, final boolean ok) {
-                popupUiHandlers.onHide(autoClose, ok);
+                restoreFocus();
+                closeRunnable.run();
             }
         };
         final PopupSize popupSize = PopupSize.builder()
@@ -86,8 +81,13 @@ public class UserEditPresenter extends MyPresenterWidget<UserEditView>
                         .build())
                 .build();
         final String caption = "User - " + userRef.getName();
-        ShowPopupEvent.fire(UserEditPresenter.this, UserEditPresenter.this, PopupView.PopupType.CLOSE_DIALOG,
-                popupSize, caption, internalPopupUiHandlers);
+        ShowPopupEvent.fire(
+                UserEditPresenter.this,
+                UserEditPresenter.this,
+                PopupView.PopupType.CLOSE_DIALOG,
+                popupSize,
+                caption,
+                popupUiHandlers);
     }
 
     private void read(User userRef) {

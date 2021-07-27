@@ -26,13 +26,11 @@ import stroom.explorer.client.presenter.TypeFilterPresenter.TypeFilterView;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.explorer.shared.DocumentTypes;
-import stroom.widget.menu.client.presenter.FocusBehaviour;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.HorizontalLocation;
 import stroom.widget.popup.client.presenter.PopupPosition.VerticalLocation;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.util.client.MySingleSelectionModel;
 
@@ -64,8 +62,8 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
         DocumentTypeSelectionModel {
 
     private final Set<String> selected = new HashSet<>();
+    private final DefaultPopupUiHandlers popupUiHandlers;
     private List<DocumentType> visibleTypes;
-    private FocusBehaviour focusBehaviour;
 
     private static final String SELECT_ALL_OR_NONE_TEXT = "All/none";
     private static final String SELECT_ALL_OR_NONE_ICON = "svgIcon-document svgIcon-document-SelectAllOrNone";
@@ -80,6 +78,13 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
     @Inject
     public TypeFilterPresenter(final EventBus eventBus, final TypeFilterView view) {
         super(eventBus, view);
+
+        popupUiHandlers = new DefaultPopupUiHandlers(this) {
+            @Override
+            public void onShow() {
+                selectFirstItem();
+            }
+        };
 
         final Resources resources = GWT.create(DefaultResources.class);
         cellTable = new CellTable<>(DataGridViewImpl.DEFAULT_LIST_PAGE_SIZE, resources);
@@ -193,33 +198,9 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
 
     public void escape() {
         hideSelf();
-        if (focusBehaviour != null) {
-            focusBehaviour.refocus();
-        }
     }
 
-    public void show(final FocusBehaviour focusBehaviour, final Element element) {
-        this.focusBehaviour = focusBehaviour;
-
-        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-            @Override
-            public void onShow() {
-                if (focusBehaviour.switchFocus()) {
-                    selectFirstItem();
-                }
-            }
-
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                hideSelf();
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                element.focus();
-            }
-        };
-
+    public void show(final Element element) {
         final PopupPosition popupPosition = new PopupPosition(
                 element.getAbsoluteRight() + 5,
                 element.getAbsoluteRight() + 5,
@@ -233,7 +214,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
     }
 
     private void hideSelf() {
-        HidePopupEvent.fire(this, this);
+        popupUiHandlers.hide();
     }
 
     public void execute(final DocumentType documentType) {

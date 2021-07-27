@@ -2,7 +2,6 @@ package stroom.data.client.presenter;
 
 import stroom.data.client.presenter.ItemNavigatorPresenter.ItemNavigatorView;
 import stroom.util.shared.HasItems;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -51,17 +50,9 @@ public class ItemNavigatorPresenter extends MyPresenterWidget<ItemNavigatorView>
     }
 
     private void handleLabelClick(ClickEvent clickEvent) {
-
         final ItemSelectionPresenter itemSelectionPresenter = getItemSelectionPresenter();
         itemSelectionPresenter.setDisplay(display);
-
-        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                itemSelectionPresenter.hide(autoClose, ok);
-            }
-        };
-        itemSelectionPresenter.show(popupUiHandlers);
+        itemSelectionPresenter.show();
     }
 
     public interface ItemNavigatorView extends View {

@@ -32,7 +32,7 @@ import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.cell.client.TextCell;
@@ -59,7 +59,6 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView
 
     private boolean readOnly = true;
 
-    @SuppressWarnings("unchecked")
     @Inject
     public StatisticsFieldListPresenter(final EventBus eventBus,
                                         final StatisticsFieldEditPresenter statisticsFieldEditPresenter) {
@@ -148,27 +147,23 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView
             final List<StatisticField> otherFields = statisticsDataSourceData.getFields();
 
             statisticsFieldEditPresenter.read(statisticField, otherFields);
-            statisticsFieldEditPresenter.show("New Field", new PopupUiHandlers() {
-                @Override
-                public void onHideRequest(final boolean autoClose, final boolean ok) {
-                    if (ok) {
-                        if (statisticsFieldEditPresenter.write(statisticField)) {
-                            statisticsDataSourceData.addStatisticField(statisticField);
-                            reComputeRollUpBitMask(oldStatisticsDataSourceData, statisticsDataSourceData);
-                            refresh();
-                            statisticsFieldEditPresenter.hide();
-                            DirtyEvent.fire(StatisticsFieldListPresenter.this, true);
+            statisticsFieldEditPresenter.show("New Field",
+                    new DefaultPopupUiHandlers(statisticsFieldEditPresenter) {
+                        @Override
+                        public void onHideRequest(final boolean autoClose, final boolean ok) {
+                            if (ok) {
+                                if (statisticsFieldEditPresenter.write(statisticField)) {
+                                    statisticsDataSourceData.addStatisticField(statisticField);
+                                    reComputeRollUpBitMask(oldStatisticsDataSourceData, statisticsDataSourceData);
+                                    refresh();
+                                    hide(autoClose, ok);
+                                    DirtyEvent.fire(StatisticsFieldListPresenter.this, true);
+                                }
+                            } else {
+                                hide(autoClose, ok);
+                            }
                         }
-                    } else {
-                        statisticsFieldEditPresenter.hide();
-                    }
-                }
-
-                @Override
-                public void onHide(final boolean autoClose, final boolean ok) {
-                    // Ignore.
-                }
-            });
+                    });
         }
     }
 
@@ -186,27 +181,23 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView
                 otherFields.remove(statisticField);
 
                 statisticsFieldEditPresenter.read(statisticField, otherFields);
-                statisticsFieldEditPresenter.show("Edit Field", new PopupUiHandlers() {
-                    @Override
-                    public void onHideRequest(final boolean autoClose, final boolean ok) {
-                        if (ok) {
-                            if (statisticsFieldEditPresenter.write(statisticField)) {
-                                statisticsDataSourceData.reOrderStatisticFields();
-                                reComputeRollUpBitMask(oldStatisticsDataSourceData, statisticsDataSourceData);
-                                refresh();
-                                statisticsFieldEditPresenter.hide();
-                                DirtyEvent.fire(StatisticsFieldListPresenter.this, true);
+                statisticsFieldEditPresenter.show("Edit Field",
+                        new DefaultPopupUiHandlers(statisticsFieldEditPresenter) {
+                            @Override
+                            public void onHideRequest(final boolean autoClose, final boolean ok) {
+                                if (ok) {
+                                    if (statisticsFieldEditPresenter.write(statisticField)) {
+                                        statisticsDataSourceData.reOrderStatisticFields();
+                                        reComputeRollUpBitMask(oldStatisticsDataSourceData, statisticsDataSourceData);
+                                        refresh();
+                                        hide(autoClose, ok);
+                                        DirtyEvent.fire(StatisticsFieldListPresenter.this, true);
+                                    }
+                                } else {
+                                    hide(autoClose, ok);
+                                }
                             }
-                        } else {
-                            statisticsFieldEditPresenter.hide();
-                        }
-                    }
-
-                    @Override
-                    public void onHide(final boolean autoClose, final boolean ok) {
-                        // Ignore.
-                    }
-                });
+                        });
             }
         }
     }

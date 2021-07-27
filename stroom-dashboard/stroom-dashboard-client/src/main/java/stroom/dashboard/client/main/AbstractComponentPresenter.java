@@ -25,8 +25,8 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.svg.client.Icon;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -110,7 +110,7 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
             settingsPresenter = (SettingsPresenter) settingsPresenterProvider.get();
         }
 
-        final PopupUiHandlers uiHandlers = new PopupUiHandlers() {
+        final PopupUiHandlers uiHandlers = new DefaultPopupUiHandlers(settingsPresenter) {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
@@ -122,16 +122,11 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
                             changeSettings();
                         }
 
-                        HidePopupEvent.fire(AbstractComponentPresenter.this, settingsPresenter);
+                        hide(autoClose, ok);
                     }
                 } else {
-                    HidePopupEvent.fire(AbstractComponentPresenter.this, settingsPresenter);
+                    hide(autoClose, ok);
                 }
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                // Do nothing.
             }
         };
 

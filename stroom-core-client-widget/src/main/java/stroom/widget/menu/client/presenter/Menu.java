@@ -1,7 +1,7 @@
 package stroom.widget.menu.client.presenter;
 
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
@@ -29,31 +29,29 @@ public class Menu {
 
     private void show(final ShowMenuEvent event) {
         if (event.getItems() == currentItems) {
-            hide();
+            hide(false, false);
 
         } else {
-            hide();
+            hide(false, false);
 
             menuPresenter = menuPresenterProvider.get();
             menuPresenter.setData(event.getItems());
-            menuPresenter.setFocusBehaviour(event.getFocusBehaviour());
             currentItems = event.getItems();
 
-            final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+            final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(menuPresenter) {
                 @Override
                 public void onShow() {
-                    menuPresenter.selectFirstItem(event.getFocusBehaviour().switchFocus());
-                }
-
-                @Override
-                public void onHideRequest(final boolean autoClose, final boolean ok) {
-                    HidePopupEvent.fire(menuPresenter, menuPresenter, true, true);
+                    menuPresenter.selectFirstItem(true);
                 }
 
                 @Override
                 public void onHide(final boolean autoClose, final boolean ok) {
                     menuPresenter = null;
                     currentItems = null;
+
+                    if (autoClose) {
+                        restoreFocus();
+                    }
                 }
             };
 
@@ -62,9 +60,9 @@ public class Menu {
         }
     }
 
-    private void hide() {
+    private void hide(final boolean autoClose, final boolean ok) {
         if (menuPresenter != null) {
-            menuPresenter.hideAll(false);
+            menuPresenter.hideAll(autoClose, ok);
             menuPresenter = null;
             currentItems = null;
         }

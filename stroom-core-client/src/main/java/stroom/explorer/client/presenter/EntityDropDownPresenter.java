@@ -20,19 +20,23 @@ import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.widget.dropdowntree.client.presenter.DropDownPresenter;
+import stroom.widget.dropdowntree.client.view.DropDownUiHandlers;
+import stroom.widget.dropdowntree.client.view.DropDownView;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 
-public class EntityDropDownPresenter extends DropDownPresenter implements HasDataSelectionHandlers<ExplorerNode> {
+public class EntityDropDownPresenter extends MyPresenterWidget<DropDownView>
+        implements DropDownUiHandlers, HasDataSelectionHandlers<ExplorerNode> {
 
     private final ExplorerDropDownTreePresenter explorerDropDownTreePresenter;
     private boolean enabled = true;
 
     @Inject
-    public EntityDropDownPresenter(final EventBus eventBus, final DropDrownView view,
+    public EntityDropDownPresenter(final EventBus eventBus,
+                                   final DropDownView view,
                                    final ExplorerDropDownTreePresenter explorerDropDownTreePresenter) {
         super(eventBus, view);
         this.explorerDropDownTreePresenter = explorerDropDownTreePresenter;

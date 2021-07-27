@@ -339,7 +339,6 @@ public class DocumentPluginEventManager extends Plugin {
                         ShowMenuEvent.fire(
                                 this,
                                 children,
-                                event.getFocusBehaviour(),
                                 event.getPopupPosition(),
                                 event.getElement()));
             }
@@ -365,7 +364,6 @@ public class DocumentPluginEventManager extends Plugin {
                                     ShowMenuEvent.fire(
                                             this,
                                             menuItems,
-                                            event.getFocusBehaviour(),
                                             event.getPopupPosition());
 
 //                            menuPresenter.setData(menuItems);

@@ -20,6 +20,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView;
@@ -32,11 +33,27 @@ import java.util.function.Consumer;
 
 public class SelectGroupPresenter extends AbstractDataUserListPresenter {
 
+    private PopupUiHandlers popupUiHandlers;
+
     @Inject
     public SelectGroupPresenter(final EventBus eventBus,
                                 final UserListView userListView,
                                 final RestFactory restFactory) {
         super(eventBus, userListView, restFactory);
+    }
+
+    @Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(getSelectionModel().addSelectionHandler(event -> {
+            if (event.getSelectionType().isDoubleSelect()) {
+                if (popupUiHandlers != null &&
+                        getFindUserCriteria() != null &&
+                        getFindUserCriteria().getRelatedUser() == null) {
+                    popupUiHandlers.onHideRequest(false, true);
+                }
+            }
+        }));
     }
 
     public void show(final Consumer<User> groupConsumer) {
@@ -60,14 +77,10 @@ public class SelectGroupPresenter extends AbstractDataUserListPresenter {
                         .resizable(true)
                         .build())
                 .build();
-        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(boolean autoClose, boolean ok) {
-                hide();
-            }
-
+        popupUiHandlers = new DefaultPopupUiHandlers(this) {
             @Override
             public void onHide(boolean autoClose, boolean ok) {
+                restoreFocus();
                 if (ok) {
                     final User selected = getSelectionModel().getSelected();
                     if (selected != null) {

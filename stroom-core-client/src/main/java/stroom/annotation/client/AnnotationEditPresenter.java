@@ -35,6 +35,7 @@ import stroom.security.shared.UserResource;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.RenamePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
@@ -288,24 +289,14 @@ public class AnnotationEditPresenter
             }
         }
 
-        final PopupUiHandlers internalPopupUiHandlers = new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                hide();
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-            }
-        };
-
+        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(this);
         final PopupSize popupSize = PopupSize.resizable(800, 600);
         ShowPopupEvent.fire(this,
                 this,
                 PopupType.CLOSE_DIALOG,
                 null,
                 popupSize, getCaption(annotationDetail),
-                internalPopupUiHandlers,
+                popupUiHandlers,
                 false);
 
         getView().focusComment();
@@ -316,12 +307,6 @@ public class AnnotationEditPresenter
             return "Create Annotation";
         }
         return "Edit Annotation #" + annotationDetail.getAnnotation().getId();
-    }
-
-    private void hide() {
-        HidePopupEvent.fire(
-                AnnotationEditPresenter.this,
-                AnnotationEditPresenter.this);
     }
 
     private void read(final AnnotationDetail annotationDetail) {

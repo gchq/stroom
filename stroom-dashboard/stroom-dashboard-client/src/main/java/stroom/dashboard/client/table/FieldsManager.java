@@ -24,16 +24,13 @@ import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
-import stroom.widget.menu.client.presenter.FocusBehaviour;
-import stroom.widget.menu.client.presenter.FocusBehaviourImpl;
+import stroom.widget.menu.client.presenter.CurrentFocus;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.VerticalLocation;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -108,7 +105,7 @@ public class FieldsManager implements HeadingListener {
                         }
                         final Element e = element;
 
-                        final FocusBehaviour focusBehaviour = new FocusBehaviourImpl(event, () -> {
+                        CurrentFocus.push(() -> {
                             busy = false;
                             currentColIndex = -1;
                             e.focus();
@@ -133,8 +130,7 @@ public class FieldsManager implements HeadingListener {
 //                        };
 
 
-
-                        ShowMenuEvent.fire(tablePresenter, menuItems, focusBehaviour, popupPosition, element);
+                        ShowMenuEvent.fire(tablePresenter, menuItems, popupPosition, element);
 //                        }
                     }
                 }.schedule(0);

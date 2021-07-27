@@ -18,6 +18,7 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -143,17 +144,11 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
                 PopupType.CLOSE_DIALOG,
                 popupSize,
                 "Linked Events",
-                new PopupUiHandlers() {
-                    @Override
-                    public void onHideRequest(final boolean autoClose, final boolean ok) {
-                        HidePopupEvent.fire(
-                                LinkedEventPresenter.this,
-                                LinkedEventPresenter.this);
-                    }
-
+                new DefaultPopupUiHandlers(this) {
                     @Override
                     public void onHide(final boolean autoClose, final boolean ok) {
                         consumer.accept(dirty);
+                        restoreFocus();
                     }
                 });
     }

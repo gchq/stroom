@@ -38,7 +38,7 @@ import stroom.search.solr.shared.SolrIndexResource;
 import stroom.search.solr.shared.SolrSynchState;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.cell.client.TextCell;
@@ -212,7 +212,7 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
 
         fetchFieldTypes(fieldTypes -> {
             indexFieldEditPresenter.read(new SolrIndexField(), otherNames, fieldTypes);
-            indexFieldEditPresenter.show("New Field", new PopupUiHandlers() {
+            indexFieldEditPresenter.show("New Field", new DefaultPopupUiHandlers(indexFieldEditPresenter) {
                 @Override
                 public void onHideRequest(final boolean autoClose, final boolean ok) {
                     if (ok) {
@@ -224,17 +224,12 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
                             dataGridView.getSelectionModel().setSelected(indexField);
                             refresh();
 
-                            indexFieldEditPresenter.hide();
+                            hide(autoClose, ok);
                             DirtyEvent.fire(SolrIndexFieldListPresenter.this, true);
                         }
                     } else {
-                        indexFieldEditPresenter.hide();
+                        hide(autoClose, ok);
                     }
-                }
-
-                @Override
-                public void onHide(final boolean autoClose, final boolean ok) {
-                    // Ignore.
                 }
             });
         });
@@ -250,7 +245,7 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
 
             fetchFieldTypes(fieldTypes -> {
                 indexFieldEditPresenter.read(existingField, otherNames, fieldTypes);
-                indexFieldEditPresenter.show("Edit Field", new PopupUiHandlers() {
+                indexFieldEditPresenter.show("Edit Field", new DefaultPopupUiHandlers(indexFieldEditPresenter) {
                     @Override
                     public void onHideRequest(final boolean autoClose, final boolean ok) {
                         if (ok) {
@@ -264,20 +259,15 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
                                     dataGridView.getSelectionModel().setSelected(indexField);
                                     refresh();
 
-                                    indexFieldEditPresenter.hide();
+                                    hide(autoClose, ok);
                                     DirtyEvent.fire(SolrIndexFieldListPresenter.this, true);
                                 } else {
-                                    indexFieldEditPresenter.hide();
+                                    hide(autoClose, ok);
                                 }
                             }
                         } else {
-                            indexFieldEditPresenter.hide();
+                            hide(autoClose, ok);
                         }
-                    }
-
-                    @Override
-                    public void onHide(final boolean autoClose, final boolean ok) {
-                        // Ignore.
                     }
                 });
             });

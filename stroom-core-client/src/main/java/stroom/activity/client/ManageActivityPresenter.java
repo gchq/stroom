@@ -32,6 +32,7 @@ import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -199,7 +200,7 @@ public class ManageActivityPresenter extends
             listPresenter.refresh();
         }
 
-        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(this) {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 hide();
@@ -207,6 +208,7 @@ public class ManageActivityPresenter extends
 
             @Override
             public void onHide(final boolean autoClose, final boolean ok) {
+                restoreFocus();
                 final Activity activity = getSelected();
                 currentActivity.setActivity(activity);
                 consumer.accept(getSelected());

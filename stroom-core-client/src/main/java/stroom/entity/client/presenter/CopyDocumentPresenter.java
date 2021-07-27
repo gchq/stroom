@@ -27,8 +27,8 @@ import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -46,8 +46,9 @@ import java.util.stream.Collectors;
 
 public class CopyDocumentPresenter
         extends MyPresenter<CopyDocumentView, CopyDocumentProxy>
-        implements ShowCopyDocumentDialogEvent.Handler, PopupUiHandlers {
+        implements ShowCopyDocumentDialogEvent.Handler {
 
+    private final PopupUiHandlers popupUiHandlers;
     private final EntityTreePresenter entityTreePresenter;
     private List<ExplorerNode> explorerNodeList;
 
@@ -55,6 +56,32 @@ public class CopyDocumentPresenter
     public CopyDocumentPresenter(final EventBus eventBus, final CopyDocumentView view, final CopyDocumentProxy proxy,
                                  final EntityTreePresenter entityTreePresenter) {
         super(eventBus, view, proxy);
+        popupUiHandlers = new DefaultPopupUiHandlers(this) {
+            @Override
+            public void onHideRequest(final boolean autoClose, final boolean ok) {
+                if (ok) {
+                    final ExplorerNode folder = entityTreePresenter.getSelectedItem();
+
+                    DocRef destinationFolderRef = null;
+                    if (folder != null) {
+                        destinationFolderRef = folder.getDocRef();
+                    }
+
+                    final List<DocRef> docRefs = explorerNodeList.stream()
+                            .map(ExplorerNode::getDocRef)
+                            .collect(Collectors.toList());
+
+                    CopyDocumentEvent.fire(
+                            CopyDocumentPresenter.this,
+                            CopyDocumentPresenter.this,
+                            docRefs,
+                            destinationFolderRef,
+                            getView().getPermissionInheritance());
+                } else {
+                    hide(autoClose, ok);
+                }
+            }
+        };
         this.entityTreePresenter = entityTreePresenter;
         view.setFolderView(entityTreePresenter.getView());
 
@@ -87,32 +114,12 @@ public class CopyDocumentPresenter
         getView().setPermissionInheritance(PermissionInheritance.DESTINATION);
 
         final PopupSize popupSize = PopupSize.resizable(400, 550);
-        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, caption, this);
-    }
-
-    @Override
-    public void onHideRequest(final boolean autoClose, final boolean ok) {
-        if (ok) {
-            final ExplorerNode folder = entityTreePresenter.getSelectedItem();
-
-            DocRef destinationFolderRef = null;
-            if (folder != null) {
-                destinationFolderRef = folder.getDocRef();
-            }
-
-            final List<DocRef> docRefs = explorerNodeList.stream()
-                    .map(ExplorerNode::getDocRef)
-                    .collect(Collectors.toList());
-
-            CopyDocumentEvent.fire(
-                    this,
-                    this,
-                    docRefs,
-                    destinationFolderRef,
-                    getView().getPermissionInheritance());
-        } else {
-            HidePopupEvent.fire(this, this, autoClose, ok);
-        }
+        ShowPopupEvent.fire(this,
+                this,
+                PopupType.OK_CANCEL_DIALOG,
+                popupSize,
+                caption,
+                popupUiHandlers);
     }
 
     public interface CopyDocumentView extends View {

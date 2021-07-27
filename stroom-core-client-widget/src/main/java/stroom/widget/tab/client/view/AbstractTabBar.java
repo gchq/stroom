@@ -17,8 +17,7 @@
 package stroom.widget.tab.client.view;
 
 import stroom.util.shared.EqualsUtil;
-import stroom.widget.menu.client.presenter.FocusBehaviour;
-import stroom.widget.menu.client.presenter.FocusBehaviourImpl;
+import stroom.widget.menu.client.presenter.CurrentFocus;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -570,10 +569,9 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
                     .build());
         }
 
-        final FocusBehaviour focusBehaviour = new FocusBehaviourImpl(nativeEvent, currentTabIndexElement);
+        CurrentFocus.push(() -> currentTabIndexElement.focus());
         ShowMenuEvent.fire(this,
                 menuItems,
-                focusBehaviour,
                 popupPosition,
                 element);
     }

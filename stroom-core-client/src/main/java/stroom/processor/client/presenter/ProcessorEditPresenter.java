@@ -16,6 +16,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -71,7 +72,7 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
         final QueryData queryData = getOrCreateQueryData(filter);
         read(queryData.getExpression(), MetaFields.STREAM_STORE_DOC_REF, MetaFields.getFields());
 
-        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(this) {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
@@ -94,13 +95,9 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
                     }
 
                 } else {
-                    hide(null);
+                    consumer.accept(null);
+                    hide();
                 }
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                // Do nothing.
             }
         };
 

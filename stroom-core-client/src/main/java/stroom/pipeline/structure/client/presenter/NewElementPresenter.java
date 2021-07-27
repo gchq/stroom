@@ -66,10 +66,6 @@ public class NewElementPresenter extends MyPresenterWidget<NewElementPresenter.N
         getView().focus();
     }
 
-    public void hide() {
-        HidePopupEvent.fire(NewElementPresenter.this, NewElementPresenter.this);
-    }
-
     public PipelineElementType getElementInfo() {
         return elementType;
     }

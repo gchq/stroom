@@ -4,8 +4,8 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.presenter.CharacterRangeSelectionPresenter.CharacterRangeSelectionView;
 import stroom.util.shared.Count;
 import stroom.util.shared.DataRange;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
@@ -13,6 +13,8 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+
+import java.util.function.Consumer;
 
 public class CharacterRangeSelectionPresenter extends MyPresenterWidget<CharacterRangeSelectionView> {
 
@@ -44,28 +46,26 @@ public class CharacterRangeSelectionPresenter extends MyPresenterWidget<Characte
         getView().setDataRange(dataRange);
     }
 
-    public void show(final PopupUiHandlers popupUiHandlers) {
+    public void show(final Consumer<DataRange> dataRangeConsumer) {
         read();
+        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(this) {
+            @Override
+            public void onHideRequest(final boolean autoClose, final boolean ok) {
+                if (!ok || isDataRangeValid()) {
+                    if (ok) {
+                        write();
+                        dataRangeConsumer.accept(getDataRange());
+                    }
+                    hide(autoClose, ok);
+                }
+            }
+        };
         ShowPopupEvent.fire(
                 this,
                 this,
                 PopupType.OK_CANCEL_DIALOG,
                 "Set Source Range",
                 popupUiHandlers);
-    }
-
-    public void hide(final boolean autoClose, final boolean ok) {
-
-        if (!ok || isDataRangeValid()) {
-            if (ok) {
-                write();
-            }
-            HidePopupEvent.fire(
-                    CharacterRangeSelectionPresenter.this,
-                    CharacterRangeSelectionPresenter.this,
-                    autoClose,
-                    ok);
-        }
     }
 
     private boolean isDataRangeValid() {

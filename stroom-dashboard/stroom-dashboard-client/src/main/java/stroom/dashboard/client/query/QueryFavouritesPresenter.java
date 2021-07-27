@@ -35,6 +35,7 @@ import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -63,6 +64,8 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
     private ExpressionOperator currentExpression;
     private String currentDashboardUuid;
     private DocRef currentDataSource;
+
+    private PopupUiHandlers popupUiHandlers;
 
     @Inject
     public QueryFavouritesPresenter(final EventBus eventBus,
@@ -109,7 +112,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
         registerHandler(selectionModel.addDoubleSelectHandler(event -> close(true)));
         registerHandler(createButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
-                final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+                final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(namePresenter) {
                     @Override
                     public void onHideRequest(final boolean autoClose, final boolean ok) {
                         if (ok) {
@@ -136,12 +139,8 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
                                 create(queryEntity, autoClose, ok);
                             }
                         } else {
-                            HidePopupEvent.fire(QueryFavouritesPresenter.this, namePresenter, autoClose, ok);
+                            hide(autoClose, ok);
                         }
-                    }
-
-                    @Override
-                    public void onHide(final boolean autoClose, final boolean ok) {
                     }
                 };
 
@@ -157,7 +156,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
             if (MouseUtil.isPrimary(event)) {
                 final StoredQuery query = selectionModel.getSelectedObject();
                 if (query != null) {
-                    final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+                    final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(namePresenter) {
                         @Override
                         public void onHideRequest(final boolean autoClose, final boolean ok) {
                             if (ok) {
@@ -176,12 +175,8 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
                                     update(query, autoClose, ok);
                                 }
                             } else {
-                                HidePopupEvent.fire(QueryFavouritesPresenter.this, namePresenter, autoClose, ok);
+                                hide(autoClose, ok);
                             }
-                        }
-
-                        @Override
-                        public void onHide(final boolean autoClose, final boolean ok) {
                         }
                     };
 
@@ -235,20 +230,27 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
                     getView().getCellList().setRowCount(result.size(), true);
 
                     if (showAfterRefresh) {
-                        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+                        popupUiHandlers = new DefaultPopupUiHandlers(queryPresenter) {
                             @Override
                             public void onHideRequest(final boolean autoClose, final boolean ok) {
-                                close(ok);
-                            }
-
-                            @Override
-                            public void onHide(final boolean autoClose, final boolean ok) {
+                                if (ok) {
+                                    final StoredQuery query = selectionModel.getSelectedObject();
+                                    if (query != null && query.getQuery() != null &&
+                                            query.getQuery().getExpression() != null) {
+                                        queryPresenter.setExpression(query.getQuery().getExpression());
+                                    }
+                                }
+                                hide(autoClose, ok);
                             }
                         };
 
                         final PopupSize popupSize = PopupSize.resizable(500, 400);
-                        ShowPopupEvent.fire(queryPresenter, QueryFavouritesPresenter.this, PopupType.OK_CANCEL_DIALOG,
-                                popupSize, "Query Favourites", popupUiHandlers);
+                        ShowPopupEvent.fire(queryPresenter,
+                                QueryFavouritesPresenter.this,
+                                PopupType.OK_CANCEL_DIALOG,
+                                popupSize,
+                                "Query Favourites",
+                                popupUiHandlers);
                     }
                 })
                 .call(STORED_QUERY_RESOURCE)
@@ -256,14 +258,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
     }
 
     private void close(final boolean ok) {
-        if (ok) {
-            final StoredQuery query = selectionModel.getSelectedObject();
-            if (query != null && query.getQuery() != null && query.getQuery().getExpression() != null) {
-                queryPresenter.setExpression(query.getQuery().getExpression());
-            }
-        }
-
-        HidePopupEvent.fire(queryPresenter, QueryFavouritesPresenter.this);
+        popupUiHandlers.onHideRequest(false, ok);
     }
 
     private void create(final StoredQuery query, final boolean autoClose, final boolean ok) {

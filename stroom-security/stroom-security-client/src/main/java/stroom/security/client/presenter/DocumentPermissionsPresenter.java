@@ -30,8 +30,8 @@ import stroom.security.shared.CopyPermissionsFromParentRequest;
 import stroom.security.shared.DocPermissionResource;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.FetchAllDocumentPermissionsRequest;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView;
@@ -160,7 +160,7 @@ public class DocumentPermissionsPresenter
                                 true,
                                 changes);
 
-                        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+                        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(this) {
                             @Override
                             public void onHideRequest(final boolean autoClose, final boolean ok) {
                                 if (ok) {
@@ -176,12 +176,7 @@ public class DocumentPermissionsPresenter
                                     hide(autoClose, ok);
                                 }
                             }
-
-                            @Override
-                            public void onHide(boolean autoClose, boolean ok) {
-                            }
                         };
-
                         PopupSize popupSize;
                         if (DocumentTypes.isFolder(explorerNode.getType())) {
                             popupSize = PopupSize.builder()
@@ -234,10 +229,6 @@ public class DocumentPermissionsPresenter
         }
 
         return documentPermissionsListPresenterProvider.get();
-    }
-
-    private void hide(boolean autoClose, boolean ok) {
-        HidePopupEvent.fire(this, this, autoClose, ok);
     }
 
     public interface DocumentPermissionsView extends View {

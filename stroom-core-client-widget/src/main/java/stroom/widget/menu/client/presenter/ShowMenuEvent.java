@@ -16,17 +16,15 @@ public class ShowMenuEvent
     private static Type<Handler> TYPE;
 
     private final List<Item> items;
-    private final FocusBehaviour focusBehaviour;
     private final PopupPosition popupPosition;
     private final Element[] autoHidePartner;
 
     public static <T> void fire(final HasHandlers source,
                                 final List<Item> items,
-                                final FocusBehaviour focusBehaviour,
                                 final PopupPosition popupPosition,
                                 final Element... autoHidePartner) {
         if (TYPE != null) {
-            ShowMenuEvent event = new ShowMenuEvent(items, focusBehaviour, popupPosition, autoHidePartner);
+            ShowMenuEvent event = new ShowMenuEvent(items, popupPosition, autoHidePartner);
             source.fireEvent(event);
         }
     }
@@ -39,11 +37,9 @@ public class ShowMenuEvent
     }
 
     private ShowMenuEvent(final List<Item> items,
-                          final FocusBehaviour focusBehaviour,
                           final PopupPosition popupPosition,
                           final Element[] autoHidePartner) {
         this.items = items;
-        this.focusBehaviour = focusBehaviour;
         this.popupPosition = popupPosition;
         this.autoHidePartner = autoHidePartner;
     }
@@ -55,10 +51,6 @@ public class ShowMenuEvent
 
     public List<Item> getItems() {
         return items;
-    }
-
-    public FocusBehaviour getFocusBehaviour() {
-        return focusBehaviour;
     }
 
     public PopupPosition getPopupPosition() {

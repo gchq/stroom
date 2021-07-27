@@ -24,8 +24,7 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNode.NodeState;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.util.shared.EqualsUtil;
-import stroom.widget.menu.client.presenter.FocusBehaviour;
-import stroom.widget.menu.client.presenter.FocusBehaviourImpl;
+import stroom.widget.menu.client.presenter.CurrentFocus;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.spinner.client.SpinnerSmall;
 import stroom.widget.util.client.DoubleSelectTester;
@@ -37,6 +36,7 @@ import stroom.widget.util.client.Selection;
 import stroom.widget.util.client.SelectionType;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
@@ -226,13 +226,15 @@ public abstract class AbstractExplorerTree extends Composite {
             cellTable.setKeyboardSelectedRow(row);
         }
 
-        PopupPosition popupPosition = null;
+        final PopupPosition popupPosition;
         if ("mousedown".equals(e.getNativeEvent().getType())) {
             popupPosition = new PopupPosition(nativeEvent.getClientX(), nativeEvent.getClientY());
         } else {
             final Element element = cellTable.getRowElement(row);
             if (element != null) {
                 popupPosition = new PopupPosition(element.getAbsoluteRight(), element.getAbsoluteTop());
+            } else {
+                popupPosition = null;
             }
         }
 
@@ -248,13 +250,14 @@ public abstract class AbstractExplorerTree extends Composite {
                                 nativeEvent.getShiftKey()));
             }
 
-            final FocusBehaviour focusBehaviour = new FocusBehaviourImpl(nativeEvent, () ->
-                    cellTable.setKeyboardSelectedRow(row, true));
-            ShowExplorerMenuEvent.fire(
-                    AbstractExplorerTree.this,
-                    selectionModel,
-                    focusBehaviour,
-                    popupPosition);
+            cellTable.setKeyboardSelectedRow(row, true);
+            Scheduler.get().scheduleDeferred(() -> {
+                CurrentFocus.push(() -> cellTable.setKeyboardSelectedRow(row, true));
+                ShowExplorerMenuEvent.fire(
+                        AbstractExplorerTree.this,
+                        selectionModel,
+                        popupPosition);
+            });
         }
     }
 

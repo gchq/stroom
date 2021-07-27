@@ -43,8 +43,8 @@ import stroom.svg.client.SvgPresets;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -182,7 +182,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
                     MetaFields.STREAM_STORE_DOC_REF,
                     MetaFields.getAllFields());
 
-            final PopupUiHandlers streamFilterPUH = new PopupUiHandlers() {
+            final PopupUiHandlers streamFilterPUH = new DefaultPopupUiHandlers(presenter) {
                 @Override
                 public void onHideRequest(final boolean autoClose, final boolean ok) {
                     if (ok) {
@@ -196,7 +196,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
                                         confirm -> {
                                             if (confirm) {
                                                 setExpression(expression);
-                                                HidePopupEvent.fire(MetaPresenter.this, presenter);
+                                                hide(autoClose, ok);
                                             } else {
                                                 // Don't hide
                                             }
@@ -204,16 +204,16 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
 
                             } else {
                                 setExpression(expression);
-                                HidePopupEvent.fire(MetaPresenter.this, presenter);
+                                hide(autoClose, ok);
                             }
 
                         } else {
                             // Nothing changed!
-                            HidePopupEvent.fire(MetaPresenter.this, presenter);
+                            hide(autoClose, ok);
                         }
 
                     } else {
-                        HidePopupEvent.fire(MetaPresenter.this, presenter);
+                        hide(autoClose, ok);
                     }
                 }
 

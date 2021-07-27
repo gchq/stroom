@@ -19,8 +19,8 @@ package stroom.dashboard.client.main;
 import stroom.dashboard.client.flexlayout.TabLayout;
 import stroom.dashboard.client.main.RenameTabPresenter.RenameTabView;
 import stroom.util.shared.EqualsUtil;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -35,8 +35,9 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.function.Consumer;
 
-public class RenameTabPresenter extends MyPresenterWidget<RenameTabView> implements PopupUiHandlers {
+public class RenameTabPresenter extends MyPresenterWidget<RenameTabView> {
 
+    private final PopupUiHandlers popupUiHandlers;
     private DashboardPresenter dashboardPresenter;
     private TabLayout tabLayout;
     private String componentName;
@@ -45,6 +46,28 @@ public class RenameTabPresenter extends MyPresenterWidget<RenameTabView> impleme
     @Inject
     public RenameTabPresenter(final EventBus eventBus, final RenameTabView view) {
         super(eventBus, view);
+        popupUiHandlers = new DefaultPopupUiHandlers(this) {
+            @Override
+            public void onShow() {
+                getView().focus();
+            }
+
+            @Override
+            public void onHideRequest(final boolean autoClose, final boolean ok) {
+                if (ok) {
+                    final String name = getView().getName().getText();
+                    if (name != null && !name.trim().isEmpty() && !EqualsUtil.isEquals(name, componentName)) {
+                        nameChangeConsumer.accept(name);
+
+//                tabLayout.clear();
+                        tabLayout.refresh();
+                        dashboardPresenter.onDirty();
+                    }
+                }
+
+                hide(autoClose, ok);
+            }
+        };
     }
 
     @Override
@@ -53,7 +76,7 @@ public class RenameTabPresenter extends MyPresenterWidget<RenameTabView> impleme
 
         registerHandler(getView().getNameBox().addKeyDownHandler(event -> {
             if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
-                onHideRequest(false, true);
+                popupUiHandlers.onHideRequest(false, true);
             }
         }));
     }
@@ -70,28 +93,13 @@ public class RenameTabPresenter extends MyPresenterWidget<RenameTabView> impleme
         getView().getName().setText(componentName);
 
         final PopupSize popupSize = PopupSize.resizableX();
-        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, "Rename Tab", this);
-        getView().focus();
-    }
-
-    @Override
-    public void onHideRequest(final boolean autoClose, final boolean ok) {
-        if (ok) {
-            final String name = getView().getName().getText();
-            if (name != null && !name.trim().isEmpty() && !EqualsUtil.isEquals(name, componentName)) {
-                nameChangeConsumer.accept(name);
-
-//                tabLayout.clear();
-                tabLayout.refresh();
-                dashboardPresenter.onDirty();
-            }
-        }
-
-        HidePopupEvent.fire(dashboardPresenter, this);
-    }
-
-    @Override
-    public void onHide(final boolean autoClose, final boolean ok) {
+        ShowPopupEvent.fire(
+                this,
+                this,
+                PopupType.OK_CANCEL_DIALOG,
+                popupSize,
+                "Rename Tab",
+                popupUiHandlers);
     }
 
     public String getName() {

@@ -32,7 +32,7 @@ import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreEntityData;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.cell.client.TextCell;
@@ -59,7 +59,6 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<DataGr
 
     private boolean readOnly = true;
 
-    @SuppressWarnings("unchecked")
     @Inject
     public StroomStatsStoreFieldListPresenter(
             final EventBus eventBus,
@@ -151,27 +150,23 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<DataGr
             final List<StatisticField> otherFields = stroomStatsStoreEntityData.getFields();
 
             stroomStatsStoreFieldEditPresenter.read(statisticField, otherFields);
-            stroomStatsStoreFieldEditPresenter.show("New Field", new PopupUiHandlers() {
-                @Override
-                public void onHideRequest(final boolean autoClose, final boolean ok) {
-                    if (ok) {
-                        if (stroomStatsStoreFieldEditPresenter.write(statisticField)) {
-                            stroomStatsStoreEntityData.addStatisticField(statisticField);
-                            reComputeRollUpBitMask(oldStroomStatsStoreEntityData, stroomStatsStoreEntityData);
-                            refresh();
-                            stroomStatsStoreFieldEditPresenter.hide();
-                            DirtyEvent.fire(StroomStatsStoreFieldListPresenter.this, true);
+            stroomStatsStoreFieldEditPresenter.show("New Field",
+                    new DefaultPopupUiHandlers(stroomStatsStoreFieldEditPresenter) {
+                        @Override
+                        public void onHideRequest(final boolean autoClose, final boolean ok) {
+                            if (ok) {
+                                if (stroomStatsStoreFieldEditPresenter.write(statisticField)) {
+                                    stroomStatsStoreEntityData.addStatisticField(statisticField);
+                                    reComputeRollUpBitMask(oldStroomStatsStoreEntityData, stroomStatsStoreEntityData);
+                                    refresh();
+                                    hide(autoClose, ok);
+                                    DirtyEvent.fire(StroomStatsStoreFieldListPresenter.this, true);
+                                }
+                            } else {
+                                hide(autoClose, ok);
+                            }
                         }
-                    } else {
-                        stroomStatsStoreFieldEditPresenter.hide();
-                    }
-                }
-
-                @Override
-                public void onHide(final boolean autoClose, final boolean ok) {
-                    // Ignore.
-                }
-            });
+                    });
         }
     }
 
@@ -189,27 +184,24 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<DataGr
                 otherFields.remove(statisticField);
 
                 stroomStatsStoreFieldEditPresenter.read(statisticField, otherFields);
-                stroomStatsStoreFieldEditPresenter.show("Edit Field", new PopupUiHandlers() {
-                    @Override
-                    public void onHideRequest(final boolean autoClose, final boolean ok) {
-                        if (ok) {
-                            if (stroomStatsStoreFieldEditPresenter.write(statisticField)) {
-                                stroomStatsStoreEntityData.reOrderStatisticFields();
-                                reComputeRollUpBitMask(oldStroomStatsStoreEntityData, stroomStatsStoreEntityData);
-                                refresh();
-                                stroomStatsStoreFieldEditPresenter.hide();
-                                DirtyEvent.fire(StroomStatsStoreFieldListPresenter.this, true);
+                stroomStatsStoreFieldEditPresenter.show("Edit Field",
+                        new DefaultPopupUiHandlers(stroomStatsStoreFieldEditPresenter) {
+                            @Override
+                            public void onHideRequest(final boolean autoClose, final boolean ok) {
+                                if (ok) {
+                                    if (stroomStatsStoreFieldEditPresenter.write(statisticField)) {
+                                        stroomStatsStoreEntityData.reOrderStatisticFields();
+                                        reComputeRollUpBitMask(oldStroomStatsStoreEntityData,
+                                                stroomStatsStoreEntityData);
+                                        refresh();
+                                        hide(autoClose, ok);
+                                        DirtyEvent.fire(StroomStatsStoreFieldListPresenter.this, true);
+                                    }
+                                } else {
+                                    hide(autoClose, ok);
+                                }
                             }
-                        } else {
-                            stroomStatsStoreFieldEditPresenter.hide();
-                        }
-                    }
-
-                    @Override
-                    public void onHide(final boolean autoClose, final boolean ok) {
-                        // Ignore.
-                    }
-                });
+                        });
             }
         }
     }

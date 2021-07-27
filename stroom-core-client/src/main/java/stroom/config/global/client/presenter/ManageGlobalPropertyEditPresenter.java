@@ -31,6 +31,7 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
@@ -147,8 +148,7 @@ public final class ManageGlobalPropertyEditPresenter
             clusterValuesPresenter.show(
                     getEntity(),
                     effectiveValueToNodeSourcesMap,
-                    offsetPopupPosition,
-                    null);
+                    offsetPopupPosition);
         }
     }
 
@@ -156,12 +156,12 @@ public final class ManageGlobalPropertyEditPresenter
         return securityContext;
     }
 
-    void showEntity(final ConfigProperty configProperty, final PopupUiHandlers popupUiHandlers) {
+    void showEntity(final ConfigProperty configProperty, final Runnable hideRunnable) {
         if (configProperty.getId() != null) {
-            updateValuesFromResource(configProperty.getName().toString(), popupUiHandlers);
+            updateValuesFromResource(configProperty.getName().toString(), hideRunnable);
         } else {
             // new configProperty
-            show(configProperty, popupUiHandlers);
+            show(configProperty, hideRunnable);
         }
     }
 
@@ -198,11 +198,11 @@ public final class ManageGlobalPropertyEditPresenter
         }
     }
 
-    private void updateValuesFromResource(final String propertyName, final PopupUiHandlers popupUiHandlers) {
+    private void updateValuesFromResource(final String propertyName, final Runnable hideRunnable) {
         final Rest<ConfigProperty> rest = restFactory.create();
         rest
                 .onSuccess(configProperty ->
-                        show(configProperty, popupUiHandlers))
+                        show(configProperty, hideRunnable))
                 .onFailure(throwable ->
                         showError(throwable, "Error fetching property " + propertyName))
                 .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
@@ -320,7 +320,7 @@ public final class ManageGlobalPropertyEditPresenter
     }
 
     private void show(final ConfigProperty configProperty,
-                      final PopupUiHandlers popupUiHandlers) {
+                      final Runnable hideRunnable) {
         setEntity(configProperty);
         // find out the yaml values for each node in the cluster
         refreshYamlOverrideForAllNodes();
@@ -329,7 +329,7 @@ public final class ManageGlobalPropertyEditPresenter
         final String caption = getEntityDisplayType() + " - " + configProperty.getName();
         final PopupType popupType = PopupType.OK_CANCEL_DIALOG;
 
-        final PopupUiHandlers internalPopupUiHandlers = new PopupUiHandlers() {
+        final PopupUiHandlers internalPopupUiHandlers = new DefaultPopupUiHandlers(this) {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
@@ -337,20 +337,19 @@ public final class ManageGlobalPropertyEditPresenter
                 } else {
                     hide();
                 }
-
-                popupUiHandlers.onHideRequest(autoClose, ok);
             }
 
             @Override
             public void onHide(final boolean autoClose, final boolean ok) {
-                popupUiHandlers.onHide(autoClose, ok);
+                restoreFocus();
+                hideRunnable.run();
             }
         };
 
         read();
         ShowPopupEvent.fire(
-                ManageGlobalPropertyEditPresenter.this,
-                ManageGlobalPropertyEditPresenter.this,
+                this,
+                this,
                 popupType,
                 getPopupSize(),
                 caption,

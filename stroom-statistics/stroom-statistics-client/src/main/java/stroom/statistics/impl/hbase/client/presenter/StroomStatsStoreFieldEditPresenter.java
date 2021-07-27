@@ -98,10 +98,6 @@ public class StroomStatsStoreFieldEditPresenter
         ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, caption, uiHandlers);
     }
 
-    void hide() {
-        HidePopupEvent.fire(this, this);
-    }
-
     private void setFieldNamePattern(final String fieldNamePattern) {
         this.fieldNamePattern = fieldNamePattern;
     }

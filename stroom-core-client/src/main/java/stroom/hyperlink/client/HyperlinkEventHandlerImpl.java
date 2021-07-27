@@ -19,6 +19,7 @@ import stroom.util.shared.TextRange;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.RenamePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -241,16 +242,12 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
         presenter.setUrl(hyperlink.getHref());
         presenter.setCustomTitle(customTitle);
 
-        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                HidePopupEvent.fire(HyperlinkEventHandlerImpl.this, presenter, autoClose, ok);
-            }
-
+        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(presenter) {
             @Override
             public void onHide(final boolean autoClose, final boolean ok) {
                 handlerRegistration.removeHandler();
                 presenter.close();
+                restoreFocus();
             }
         };
 

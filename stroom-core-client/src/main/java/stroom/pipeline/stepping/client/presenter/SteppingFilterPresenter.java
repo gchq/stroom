@@ -27,6 +27,7 @@ import stroom.util.shared.Severity;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -127,7 +128,7 @@ public class SteppingFilterPresenter extends
 
     private void addXPathFilter() {
         final XPathFilter xPathFilter = new XPathFilter();
-        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(xPathFilterPresenter) {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
@@ -136,12 +137,7 @@ public class SteppingFilterPresenter extends
 
                     xPathListPresenter.getSelectionModel().setSelected(xPathFilter);
                 }
-                HidePopupEvent.fire(SteppingFilterPresenter.this, xPathFilterPresenter);
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                // Do nothing.
+                hide();
             }
         };
         xPathFilterPresenter.add(xPathFilter, popupUiHandlers);
@@ -150,19 +146,14 @@ public class SteppingFilterPresenter extends
     private void editXPathFilter() {
         final List<XPathFilter> list = xPathListPresenter.getSelectionModel().getSelectedItems();
         if (list.size() == 1) {
-            final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+            final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(xPathFilterPresenter) {
                 @Override
                 public void onHideRequest(final boolean autoClose, final boolean ok) {
                     if (ok) {
                         xPathFilterPresenter.write();
                         xPathListPresenter.refresh();
                     }
-                    HidePopupEvent.fire(SteppingFilterPresenter.this, xPathFilterPresenter);
-                }
-
-                @Override
-                public void onHide(final boolean autoClose, final boolean ok) {
-                    // Do nothing.
+                    hide();
                 }
             };
             xPathFilterPresenter.edit(list.get(0), popupUiHandlers);
@@ -197,18 +188,16 @@ public class SteppingFilterPresenter extends
             update(elementId);
         }
 
-        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(this) {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
                     update(null);
                     consumer.accept(settingsMap);
                 }
-
-                HidePopupEvent.fire(SteppingFilterPresenter.this, SteppingFilterPresenter.this);
+                hide();
             }
         };
-
         final PopupSize popupSize = PopupSize.resizable(850, 550);
         ShowPopupEvent.fire(this,
                 this,

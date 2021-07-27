@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.widget.dropdowntree.client.presenter;
+package stroom.widget.dropdowntree.client.view;
 
 import com.gwtplatform.mvp.client.UiHandlers;
 

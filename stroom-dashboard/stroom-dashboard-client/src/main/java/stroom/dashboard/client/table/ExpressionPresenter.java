@@ -30,16 +30,16 @@ import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.menu.client.presenter.FocusBehaviour;
-import stroom.widget.menu.client.presenter.FocusBehaviourImpl;
+import stroom.widget.menu.client.presenter.CurrentFocus;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.menu.client.presenter.SimpleMenuItem;
 import stroom.widget.menu.client.presenter.SimpleParentMenuItem;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
+import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.util.client.MouseUtil;
 
@@ -51,7 +51,6 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceCompletion;
@@ -82,6 +81,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     private final EditorPresenter editorPresenter;
     private final List<AceCompletion> functionCompletions = new ArrayList<>();
     private final UiConfigCache clientPropertyCache;
+    private final PopupUiHandlers popupUiHandlers;
     private AceCompletionProvider functionsCompletionProvider;
     private List<Item> functionsMenuItems;
     private List<Item> fieldsMenuItems;
@@ -99,7 +99,6 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         this.restFactory = restFactory;
         this.editorPresenter = editorPresenter;
         this.clientPropertyCache = clientPropertyCache;
-        view.setUiHandlers(this);
         view.setEditor(editorPresenter.getView());
 
         final ButtonView addFunctionButton = view.addButton(SvgPresets.FUNCTION
@@ -113,6 +112,58 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         addFunctionButton.addClickHandler(this::onAddFunction);
         addFieldButton.addClickHandler(this::onAddField);
         helpButton.addClickHandler(this::onShowHelp);
+
+        popupUiHandlers = new DefaultPopupUiHandlers(tablePresenter) {
+            @Override
+            public void onShow() {
+                Scheduler.get().scheduleDeferred(editorPresenter::focus);
+
+                // If this is done without the scheduler then we get weired behaviour when you click
+                // in the text area if line wrap is set to on.  If it is initially set to off and the user
+                // manually sets it to on all is fine. Confused.
+                Scheduler.get().scheduleDeferred(() -> setupEditor());
+            }
+
+            @Override
+            public void onHideRequest(final boolean autoClose, final boolean ok) {
+                if (ok) {
+                    final String expression = editorPresenter.getText();
+                    if (EqualsUtil.isEquals(expression, field.getExpression())) {
+                        hide(autoClose, ok);
+                    } else {
+                        if (expression == null) {
+                            fieldChangeConsumer.accept(field, field.copy().expression(null).build());
+                            hide(autoClose, ok);
+                        } else {
+                            // Check the validity of the expression.
+                            final Rest<ValidateExpressionResult> rest = restFactory.create();
+                            rest
+                                    .onSuccess(result -> {
+                                        if (result.isOk()) {
+                                            fieldChangeConsumer.accept(field, field
+                                                    .copy()
+                                                    .expression(expression)
+                                                    .build());
+                                            hide(autoClose, ok);
+                                        } else {
+                                            AlertEvent.fireError(tablePresenter, result.getString(), null);
+                                        }
+                                    })
+                                    .call(DASHBOARD_RESOURCE)
+                                    .validateExpression(expression);
+                        }
+                    }
+                } else {
+                    hide(autoClose, ok);
+                }
+            }
+
+            @Override
+            public void onHide(final boolean autoClose, final boolean ok) {
+                editorPresenter.deRegisterCompletionProviders();
+                restoreFocus();
+            }
+        };
     }
 
     private void buildMenusAndCompletions() {
@@ -245,51 +296,9 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
                 PopupType.OK_CANCEL_DIALOG,
                 popupSize,
                 "Set Expression For '" + field.getName() + "'",
-                this);
-
-        Scheduler.get().scheduleDeferred(editorPresenter::focus);
-
-        // If this is done without the scheduler then we get weired behaviour when you click
-        // in the text area if line wrap is set to on.  If it is initially set to off and the user
-        // manually sets it to on all is fine. Confused.
-        Scheduler.get().scheduleDeferred(this::setupEditor);
+                popupUiHandlers);
     }
 
-    @Override
-    public void onHideRequest(final boolean autoClose, final boolean ok) {
-        if (ok) {
-            final String expression = editorPresenter.getText();
-            if (EqualsUtil.isEquals(expression, field.getExpression())) {
-                HidePopupEvent.fire(tablePresenter, this);
-            } else {
-                if (expression == null) {
-                    fieldChangeConsumer.accept(field, field.copy().expression(null).build());
-                    HidePopupEvent.fire(tablePresenter, this);
-                } else {
-                    // Check the validity of the expression.
-                    final Rest<ValidateExpressionResult> rest = restFactory.create();
-                    rest
-                            .onSuccess(result -> {
-                                if (result.isOk()) {
-                                    fieldChangeConsumer.accept(field, field.copy().expression(expression).build());
-                                    HidePopupEvent.fire(tablePresenter, ExpressionPresenter.this);
-                                } else {
-                                    AlertEvent.fireError(tablePresenter, result.getString(), null);
-                                }
-                            })
-                            .call(DASHBOARD_RESOURCE)
-                            .validateExpression(expression);
-                }
-            }
-        } else {
-            HidePopupEvent.fire(tablePresenter, this);
-        }
-    }
-
-    @Override
-    public void onHide(final boolean autoClose, final boolean ok) {
-        editorPresenter.deRegisterCompletionProviders();
-    }
 
     @Override
     public void onAddFunction(final ClickEvent event) {
@@ -299,11 +308,11 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     public void showMenu(final ClickEvent event, final List<Item> menuItems) {
         if (MouseUtil.isPrimary(event)) {
             final com.google.gwt.dom.client.Element target = event.getNativeEvent().getEventTarget().cast();
-            final FocusBehaviour focusBehaviour = new FocusBehaviourImpl(event);
+            CurrentFocus.push();
             final PopupPosition popupPosition = new PopupPosition(
                     target.getAbsoluteLeft() - 3,
                     target.getAbsoluteTop() + target.getClientHeight() + 1);
-            ShowMenuEvent.fire(this, menuItems, focusBehaviour, popupPosition);
+            ShowMenuEvent.fire(this, menuItems, popupPosition);
         }
     }
 
@@ -350,7 +359,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
 
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    public interface ExpressionView extends View, HasUiHandlers<ExpressionUiHandlers> {
+    public interface ExpressionView extends View {
 
         void setEditor(final EditorView editor);
 

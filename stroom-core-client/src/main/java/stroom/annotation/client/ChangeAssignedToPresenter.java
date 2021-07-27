@@ -25,6 +25,7 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.UserResource;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -41,8 +42,9 @@ import java.util.List;
 import java.util.Objects;
 
 public class ChangeAssignedToPresenter extends MyPresenterWidget<ChangeAssignedToView>
-        implements PopupUiHandlers, ChangeAssignedToUiHandlers {
+        implements ChangeAssignedToUiHandlers {
 
+    private final PopupUiHandlers popupUiHandlers;
     private final RestFactory restFactory;
     private final ChooserPresenter assignedToPresenter;
     private final ClientSecurityContext clientSecurityContext;
@@ -56,6 +58,21 @@ public class ChangeAssignedToPresenter extends MyPresenterWidget<ChangeAssignedT
                                      final ChooserPresenter assignedToPresenter,
                                      final ClientSecurityContext clientSecurityContext) {
         super(eventBus, view);
+        popupUiHandlers = new DefaultPopupUiHandlers(this) {
+            @Override
+            public void onHideRequest(final boolean autoClose, final boolean ok) {
+                if (ok) {
+                    final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
+                    final Rest<Integer> rest = restFactory.create();
+
+                    final SetAssignedToRequest request = new SetAssignedToRequest(annotationIdList, currentAssignedTo);
+                    rest.onSuccess(values -> GWT.log("Updated " + values + " annotations"))
+                            .call(annotationResource)
+                            .setAssignedTo(request);
+                }
+                hide(autoClose, ok);
+            }
+        };
         this.restFactory = restFactory;
         this.assignedToPresenter = assignedToPresenter;
         this.clientSecurityContext = clientSecurityContext;
@@ -75,7 +92,7 @@ public class ChangeAssignedToPresenter extends MyPresenterWidget<ChangeAssignedT
     public void show(final List<Long> annotationIdList) {
         this.annotationIdList = annotationIdList;
         ShowPopupEvent.fire(this, this,
-                PopupType.OK_CANCEL_DIALOG, "Change Assigned To", this);
+                PopupType.OK_CANCEL_DIALOG, "Change Assigned To", popupUiHandlers);
     }
 
     private void changeAssignedTo(final String selected) {
@@ -108,24 +125,6 @@ public class ChangeAssignedToPresenter extends MyPresenterWidget<ChangeAssignedT
     @Override
     public void assignYourself() {
         changeAssignedTo(clientSecurityContext.getUserId());
-    }
-
-    @Override
-    public void onHideRequest(final boolean autoClose, final boolean ok) {
-        if (ok) {
-            final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-            final Rest<Integer> rest = restFactory.create();
-
-            final SetAssignedToRequest request = new SetAssignedToRequest(annotationIdList, currentAssignedTo);
-            rest.onSuccess(values -> GWT.log("Updated " + values + " annotations"))
-                    .call(annotationResource)
-                    .setAssignedTo(request);
-        }
-        HidePopupEvent.fire(this, this);
-    }
-
-    @Override
-    public void onHide(final boolean autoClose, final boolean ok) {
     }
 
     public interface ChangeAssignedToView extends View, HasUiHandlers<ChangeAssignedToUiHandlers> {

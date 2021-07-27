@@ -25,8 +25,8 @@ import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.event.LogoutEvent;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.SplashConfig;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -69,7 +69,7 @@ public class SplashPresenter extends MyPresenterWidget<SplashPresenter.SplashVie
                 final String body = splashConfig.getBody();
                 final String version = splashConfig.getVersion();
                 setHtml(body);
-                final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+                final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(this) {
                     @Override
                     public void onHideRequest(final boolean autoClose, final boolean ok) {
                         if (ok) {
@@ -88,6 +88,7 @@ public class SplashPresenter extends MyPresenterWidget<SplashPresenter.SplashVie
 
                     @Override
                     public void onHide(final boolean autoClose, final boolean ok) {
+                        restoreFocus();
                         if (!ok) {
                             LogoutEvent.fire(SplashPresenter.this);
                         }
@@ -98,8 +99,8 @@ public class SplashPresenter extends MyPresenterWidget<SplashPresenter.SplashVie
 //                Scheduler.get().scheduleFixedDelay(this::testScroll, 2000);
 
                 final PopupSize popupSize = PopupSize.resizable(800, 600);
-                ShowPopupEvent.fire(SplashPresenter.this,
-                        SplashPresenter.this,
+                ShowPopupEvent.fire(this,
+                        this,
                         PopupType.ACCEPT_REJECT_DIALOG,
                         null,
                         popupSize,
@@ -111,10 +112,6 @@ public class SplashPresenter extends MyPresenterWidget<SplashPresenter.SplashVie
                 consumer.accept(true);
             }
         });
-    }
-
-    private void hide(final boolean autoClose, final boolean ok) {
-        HidePopupEvent.fire(SplashPresenter.this, SplashPresenter.this, autoClose, ok);
     }
 
     public void setHtml(final String html) {

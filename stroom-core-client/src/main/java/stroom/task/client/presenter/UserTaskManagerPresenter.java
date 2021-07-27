@@ -32,8 +32,8 @@ import stroom.task.shared.TaskProgressResponse;
 import stroom.task.shared.TaskResource;
 import stroom.task.shared.TerminateTaskProgressRequest;
 import stroom.util.shared.ResultPage;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
@@ -107,14 +107,13 @@ public class UserTaskManagerPresenter
         refreshing.clear();
         visible = true;
 
-        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(this) {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 refreshTimer.cancel();
                 refreshing.clear();
                 visible = false;
-
-                HidePopupEvent.fire(UserTaskManagerPresenter.this, UserTaskManagerPresenter.this);
+                hide(autoClose, ok);
             }
         };
 

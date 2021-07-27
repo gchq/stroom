@@ -82,10 +82,6 @@ public class IndexFieldEditPresenter extends MyPresenterWidget<IndexFieldEditVie
         ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, caption, uiHandlers);
     }
 
-    public void hide() {
-        HidePopupEvent.fire(this, this);
-    }
-
     public interface IndexFieldEditView extends View {
 
         IndexFieldType getFieldUse();

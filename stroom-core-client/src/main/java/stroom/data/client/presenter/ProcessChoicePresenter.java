@@ -1,8 +1,7 @@
 package stroom.data.client.presenter;
 
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import com.google.inject.Inject;
@@ -20,7 +19,7 @@ public class ProcessChoicePresenter extends MyPresenterWidget<ProcessChoicePrese
 
     public void show(final ProcessChoiceUiHandler processorChoiceUiHandler) {
         ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, "Create Processors",
-                new PopupUiHandlers() {
+                new DefaultPopupUiHandlers(this) {
                     @Override
                     public void onHideRequest(final boolean autoClose, final boolean ok) {
                         if (ok) {
@@ -31,13 +30,9 @@ public class ProcessChoicePresenter extends MyPresenterWidget<ProcessChoicePrese
                                     getView().isEnabled());
                             processorChoiceUiHandler.onChoice(processChoice);
                         }
-                        hide();
+                        hide(autoClose, ok);
                     }
                 });
-    }
-
-    private void hide() {
-        HidePopupEvent.fire(ProcessChoicePresenter.this, ProcessChoicePresenter.this, false, true);
     }
 
     public interface ProcessChoiceView extends View {

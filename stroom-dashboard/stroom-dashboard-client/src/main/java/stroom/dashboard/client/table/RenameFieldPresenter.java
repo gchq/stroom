@@ -19,8 +19,8 @@ package stroom.dashboard.client.table;
 import stroom.alert.client.event.AlertEvent;
 import stroom.query.api.v2.Field;
 import stroom.util.shared.EqualsUtil;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -36,17 +36,58 @@ import com.gwtplatform.mvp.client.View;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 
-public class RenameFieldPresenter
-        extends MyPresenterWidget<RenameFieldPresenter.RenameFieldView>
-        implements PopupUiHandlers {
+public class RenameFieldPresenter extends MyPresenterWidget<RenameFieldPresenter.RenameFieldView> {
 
     private TablePresenter tablePresenter;
     private Field field;
     private BiConsumer<Field, Field> fieldChangeConsumer;
+    private final PopupUiHandlers popupUiHandlers;
 
     @Inject
     public RenameFieldPresenter(final EventBus eventBus, final RenameFieldView view) {
         super(eventBus, view);
+
+        popupUiHandlers = new DefaultPopupUiHandlers(this) {
+            @Override
+            public void onShow() {
+                getView().focus();
+            }
+
+            @Override
+            public void onHideRequest(final boolean autoClose, final boolean ok) {
+                if (ok) {
+                    final String newFieldName = getView().getName().getText();
+                    if (newFieldName != null
+                            && !newFieldName.trim().isEmpty()
+                            && !EqualsUtil.isEquals(newFieldName, field.getName())) {
+
+                        // Need to ensure any conditional formatting rules that use this field name
+                        // are renamed too.
+                        tablePresenter.handleFieldRename(field.getName(), newFieldName);
+
+                        final boolean isNameInUse = tablePresenter.getTableSettings()
+                                .getFields()
+                                .stream()
+                                .map(Field::getName)
+                                .anyMatch(name -> Objects.equals(name, newFieldName));
+
+                        if (isNameInUse) {
+                            AlertEvent.fireError(
+                                    tablePresenter,
+                                    "Field name \"" + newFieldName + "\" is already in use",
+                                    null);
+                        } else {
+                            fieldChangeConsumer.accept(field, field.copy().name(newFieldName).build());
+                            hide(autoClose, ok);
+                        }
+                    } else {
+                        hide(autoClose, ok);
+                    }
+                } else {
+                    hide(autoClose, ok);
+                }
+            }
+        };
     }
 
     @Override
@@ -55,7 +96,7 @@ public class RenameFieldPresenter
 
         registerHandler(getView().getNameBox().addKeyDownHandler(event -> {
             if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
-                onHideRequest(false, true);
+                popupUiHandlers.onHideRequest(false, true);
             }
         }));
     }
@@ -70,54 +111,14 @@ public class RenameFieldPresenter
         getView().getName().setText(field.getName());
 
         final PopupSize popupSize = PopupSize.resizableX();
+
         ShowPopupEvent.fire(
                 this,
                 this,
                 PopupType.OK_CANCEL_DIALOG,
                 popupSize,
                 "Rename Field",
-                this);
-
-        getView().focus();
-    }
-
-    @Override
-    public void onHideRequest(final boolean autoClose, final boolean ok) {
-        if (ok) {
-            final String newFieldName = getView().getName().getText();
-            if (newFieldName != null
-                    && !newFieldName.trim().isEmpty()
-                    && !EqualsUtil.isEquals(newFieldName, field.getName())) {
-
-                // Need to ensure any conditional formatting rules that use this field name
-                // are renamed too.
-                tablePresenter.handleFieldRename(field.getName(), newFieldName);
-
-                final boolean isNameInUse = tablePresenter.getTableSettings()
-                        .getFields()
-                        .stream()
-                        .map(Field::getName)
-                        .anyMatch(name -> Objects.equals(name, newFieldName));
-
-                if (isNameInUse) {
-                    AlertEvent.fireError(
-                            tablePresenter,
-                            "Field name \"" + newFieldName + "\" is already in use",
-                            null);
-                } else {
-                    fieldChangeConsumer.accept(field, field.copy().name(newFieldName).build());
-                    HidePopupEvent.fire(tablePresenter, RenameFieldPresenter.this);
-                }
-            } else {
-                HidePopupEvent.fire(tablePresenter, RenameFieldPresenter.this);
-            }
-        } else {
-            HidePopupEvent.fire(tablePresenter, RenameFieldPresenter.this);
-        }
-    }
-
-    @Override
-    public void onHide(final boolean autoClose, final boolean ok) {
+                popupUiHandlers);
     }
 
     public String getName() {

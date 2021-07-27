@@ -18,7 +18,6 @@
 package stroom.security.client.presenter;
 
 import stroom.entity.client.presenter.NameDocumentView;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
@@ -46,10 +45,6 @@ public class ManageNewEntityPresenter extends MyPresenterWidget<NameDocumentView
                 "New",
                 popupUiHandlers);
         getView().focus();
-    }
-
-    public void hide() {
-        HidePopupEvent.fire(this, this);
     }
 
     public String getName() {

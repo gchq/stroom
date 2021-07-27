@@ -19,6 +19,8 @@ package stroom.dashboard.client.table;
 import stroom.query.api.v2.Format.Type;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
-public interface FormatUihandlers extends PopupUiHandlers {
+import com.gwtplatform.mvp.client.UiHandlers;
+
+public interface FormatUihandlers extends UiHandlers {
     void onTypeChange(Type type);
 }

@@ -21,6 +21,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.entity.client.presenter.NameDocumentView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
@@ -38,7 +39,7 @@ public class NewIndexVolumeGroupPresenter extends MyPresenterWidget<NameDocument
     }
 
     public void show(final String name, final Consumer<String> consumer) {
-        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(this) {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
@@ -53,7 +54,6 @@ public class NewIndexVolumeGroupPresenter extends MyPresenterWidget<NameDocument
                 }
             }
         };
-
         getView().setUiHandlers(popupUiHandlers);
         getView().setName(name);
         ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, "New", popupUiHandlers);

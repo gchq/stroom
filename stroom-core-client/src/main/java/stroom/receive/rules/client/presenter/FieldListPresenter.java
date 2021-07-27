@@ -33,7 +33,7 @@ import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.cell.client.TextCell;
@@ -186,7 +186,7 @@ public class FieldListPresenter extends MyPresenterWidget<DataGridView<AbstractF
         final Set<String> otherNames = fields.stream().map(AbstractField::getName).collect(Collectors.toSet());
 
         fieldEditPresenter.read(new TextField(""), otherNames);
-        fieldEditPresenter.show("New Field", new PopupUiHandlers() {
+        fieldEditPresenter.show("New Field", new DefaultPopupUiHandlers(fieldEditPresenter) {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
@@ -194,17 +194,12 @@ public class FieldListPresenter extends MyPresenterWidget<DataGridView<AbstractF
                     if (newField != null) {
                         fields.add(newField);
                         refresh();
-                        fieldEditPresenter.hide();
+                        hide(autoClose, ok);
                         DirtyEvent.fire(FieldListPresenter.this, true);
                     }
                 } else {
-                    fieldEditPresenter.hide();
+                    hide(autoClose, ok);
                 }
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                // Ignore.
             }
         });
     }
@@ -216,7 +211,7 @@ public class FieldListPresenter extends MyPresenterWidget<DataGridView<AbstractF
             otherNames.remove(field.getName());
 
             fieldEditPresenter.read(field, otherNames);
-            fieldEditPresenter.show("Edit Field", new PopupUiHandlers() {
+            fieldEditPresenter.show("Edit Field", new DefaultPopupUiHandlers(fieldEditPresenter) {
                 @Override
                 public void onHideRequest(final boolean autoClose, final boolean ok) {
                     if (ok) {
@@ -227,17 +222,12 @@ public class FieldListPresenter extends MyPresenterWidget<DataGridView<AbstractF
                             fields.add(index, newField);
 
                             refresh();
-                            fieldEditPresenter.hide();
+                            hide(autoClose, ok);
                             DirtyEvent.fire(FieldListPresenter.this, true);
                         }
                     } else {
-                        fieldEditPresenter.hide();
+                        hide(autoClose, ok);
                     }
-                }
-
-                @Override
-                public void onHide(final boolean autoClose, final boolean ok) {
-                    // Ignore.
                 }
             });
         }

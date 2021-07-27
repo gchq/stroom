@@ -30,10 +30,9 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuBuilder;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import com.google.gwt.core.client.GWT;
@@ -486,12 +485,12 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
 
         final PopupSize popupSize = PopupSize.resizable(800, 400);
         ShowPopupEvent.fire(
-                DataRetentionPolicyPresenter.this,
+                this,
                 editRulePresenter,
                 PopupType.OK_CANCEL_DIALOG,
                 popupSize,
                 "Add New Rule",
-                new PopupUiHandlers() {
+                new DefaultPopupUiHandlers(editRulePresenter) {
                     @Override
                     public void onHideRequest(final boolean autoClose, final boolean ok) {
                         if (ok) {
@@ -502,13 +501,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
                             setDirty(true);
                             listPresenter.getSelectionModel().setSelected(visibleRules.get(0));
                         }
-
-                        HidePopupEvent.fire(DataRetentionPolicyPresenter.this, editRulePresenter);
-                    }
-
-                    @Override
-                    public void onHide(final boolean autoClose, final boolean ok) {
-                        // Do nothing.
+                        hide(autoClose, ok);
                     }
                 });
     }
@@ -519,12 +512,12 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
 
         final PopupSize popupSize = PopupSize.resizable(800, 400);
         ShowPopupEvent.fire(
-                DataRetentionPolicyPresenter.this,
+                this,
                 editRulePresenter,
                 PopupType.OK_CANCEL_DIALOG,
                 popupSize,
                 "Edit Rule",
-                new PopupUiHandlers() {
+                new DefaultPopupUiHandlers(editRulePresenter) {
                     @Override
                     public void onHideRequest(final boolean autoClose, final boolean ok) {
                         if (ok) {
@@ -542,12 +535,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
                             listPresenter.getSelectionModel().setSelected(visibleRules.get(index));
                         }
 
-                        HidePopupEvent.fire(DataRetentionPolicyPresenter.this, editRulePresenter);
-                    }
-
-                    @Override
-                    public void onHide(final boolean autoClose, final boolean ok) {
-                        // Do nothing.
+                        hide(autoClose, ok);
                     }
                 });
     }

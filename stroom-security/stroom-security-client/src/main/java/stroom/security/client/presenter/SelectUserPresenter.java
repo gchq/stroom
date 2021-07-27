@@ -30,6 +30,7 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView;
@@ -112,7 +113,7 @@ public class SelectUserPresenter extends MyPresenterWidget<UserListView> impleme
     }
 
     private void onNew() {
-        final PopupUiHandlers hidePopupUiHandlers = new PopupUiHandlers() {
+        final PopupUiHandlers hidePopupUiHandlers = new DefaultPopupUiHandlers(newPresenter) {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
@@ -125,15 +126,9 @@ public class SelectUserPresenter extends MyPresenterWidget<UserListView> impleme
                                 true);
                     }
                 }
-                newPresenter.hide();
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                // Ignore hide.
+                hide(autoClose, ok);
             }
         };
-
         newPresenter.show(hidePopupUiHandlers);
     }
 
@@ -164,18 +159,10 @@ public class SelectUserPresenter extends MyPresenterWidget<UserListView> impleme
         setup(findUserCriteria);
 
         final PopupSize popupSize = PopupSize.resizable(400, 400);
-        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(boolean autoClose, boolean ok) {
-                HidePopupEvent.fire(
-                        SelectUserPresenter.this,
-                        SelectUserPresenter.this,
-                        autoClose,
-                        ok);
-            }
-
+        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(this) {
             @Override
             public void onHide(boolean autoClose, boolean ok) {
+                restoreFocus();
                 if (ok) {
                     final String selected = getSelected();
                     if (selected != null) {

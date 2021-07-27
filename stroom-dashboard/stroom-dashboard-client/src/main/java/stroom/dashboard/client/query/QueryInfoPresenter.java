@@ -20,10 +20,9 @@ import stroom.activity.client.CurrentActivity;
 import stroom.alert.client.event.AlertEvent;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.QueryConfig;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import com.google.inject.Inject;
@@ -78,7 +77,7 @@ public class QueryInfoPresenter extends MyPresenterWidget<QueryInfoPresenter.Que
                         this,
                         PopupType.OK_CANCEL_DIALOG,
                         popupSize, queryInfoPopupTitle,
-                        new PopupUiHandlers() {
+                        new DefaultPopupUiHandlers(this) {
                             @Override
                             public void onHideRequest(final boolean autoClose, final boolean ok) {
                                 if (ok) {
@@ -94,9 +93,7 @@ public class QueryInfoPresenter extends MyPresenterWidget<QueryInfoPresenter.Que
                                     }
 
                                     if (valid) {
-                                        HidePopupEvent.fire(
-                                                QueryInfoPresenter.this,
-                                                QueryInfoPresenter.this);
+                                        hide(autoClose, ok);
                                         consumer.accept(new State(getView().getQueryInfo(), true));
                                     } else {
                                         AlertEvent.fireWarn(QueryInfoPresenter.this,
@@ -104,15 +101,9 @@ public class QueryInfoPresenter extends MyPresenterWidget<QueryInfoPresenter.Que
                                                 null);
                                     }
                                 } else {
-                                    HidePopupEvent.fire(
-                                            QueryInfoPresenter.this,
-                                            QueryInfoPresenter.this);
+                                    hide(autoClose, ok);
                                     consumer.accept(new State(getView().getQueryInfo(), false));
                                 }
-                            }
-
-                            @Override
-                            public void onHide(final boolean autoClose, final boolean ok) {
                             }
                         });
             } else {

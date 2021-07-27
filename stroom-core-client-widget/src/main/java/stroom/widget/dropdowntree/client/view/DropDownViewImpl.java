@@ -16,8 +16,6 @@
 
 package stroom.widget.dropdowntree.client.view;
 
-import stroom.widget.dropdowntree.client.presenter.DropDownPresenter;
-import stroom.widget.dropdowntree.client.presenter.DropDownUiHandlers;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.event.dom.client.MouseDownEvent;
@@ -31,7 +29,7 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class DropDownViewImpl extends ViewWithUiHandlers<DropDownUiHandlers>
-        implements DropDownPresenter.DropDrownView {
+        implements DropDownView {
 
     private final Widget widget;
     @UiField

@@ -20,7 +20,6 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.search.solr.client.presenter.SolrIndexFieldEditPresenter.SolrIndexFieldEditView;
 import stroom.search.solr.shared.SolrIndexField;
 import stroom.search.solr.shared.SolrIndexFieldType;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
@@ -120,10 +119,6 @@ public class SolrIndexFieldEditPresenter extends MyPresenterWidget<SolrIndexFiel
     public void show(final String caption, final PopupUiHandlers uiHandlers) {
         final PopupSize popupSize = PopupSize.resizableX();
         ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, caption, uiHandlers);
-    }
-
-    public void hide() {
-        HidePopupEvent.fire(this, this);
     }
 
     public interface SolrIndexFieldEditView extends View {

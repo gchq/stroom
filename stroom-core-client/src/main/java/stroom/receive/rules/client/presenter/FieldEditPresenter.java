@@ -29,7 +29,6 @@ import stroom.datasource.api.v2.IdField;
 import stroom.datasource.api.v2.IntegerField;
 import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.TextField;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
@@ -76,10 +75,6 @@ public class FieldEditPresenter extends MyPresenterWidget<FieldEditPresenter.Fie
     public void show(final String caption, final PopupUiHandlers uiHandlers) {
         final PopupSize popupSize = PopupSize.resizableX();
         ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, caption, uiHandlers);
-    }
-
-    public void hide() {
-        HidePopupEvent.fire(this, this);
     }
 
     public interface FieldEditView extends View {

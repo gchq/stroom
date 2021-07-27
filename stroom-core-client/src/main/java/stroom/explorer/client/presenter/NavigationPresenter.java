@@ -38,8 +38,7 @@ import stroom.svg.client.Preset;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
 import stroom.widget.button.client.SvgButton;
-import stroom.widget.menu.client.presenter.FocusBehaviour;
-import stroom.widget.menu.client.presenter.FocusBehaviourImpl;
+import stroom.widget.menu.client.presenter.CurrentFocus;
 import stroom.widget.menu.client.presenter.HasChildren;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItems;
@@ -218,12 +217,12 @@ public class NavigationPresenter
         });
     }
 
-    public void newItem(final NativeEvent event, final Element element) {
-        final FocusBehaviour focusBehaviour = new FocusBehaviourImpl(event);
+    public void newItem(final Element element) {
+        CurrentFocus.push();
         final int x = element.getAbsoluteLeft() - 1;
         final int y = element.getAbsoluteTop() + element.getOffsetHeight() + 1;
         final PopupPosition popupPosition = new PopupPosition(x, y);
-        ShowNewMenuEvent.fire(this, element, focusBehaviour, popupPosition);
+        ShowNewMenuEvent.fire(this, element, popupPosition);
     }
 
     public void deleteItem() {
@@ -244,18 +243,16 @@ public class NavigationPresenter
 
     @Override
     public void showMenu(final NativeEvent event, final Element target) {
-        final FocusBehaviour focusBehaviour = new FocusBehaviourImpl(event);
+        CurrentFocus.push();
         final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft(),
                 target.getAbsoluteBottom() + 10);
         showMenuItems(
                 currentMenuItems,
-                focusBehaviour,
                 popupPosition,
                 target);
     }
 
     public void showMenuItems(final List<Item> children,
-                              final FocusBehaviour focusBehaviour,
                               final PopupPosition popupPosition,
                               final Element autoHidePartner) {
 //        if (menu.isShowing()) {
@@ -263,13 +260,14 @@ public class NavigationPresenter
 //        } else
 
         if (children != null && children.size() > 0) {
-            ShowMenuEvent.fire(this, children, focusBehaviour, popupPosition, autoHidePartner);
+            ShowMenuEvent.fire(this, children, popupPosition, autoHidePartner);
         }
     }
 
     public void showTypeFilter(final MouseDownEvent event) {
         final Element target = event.getNativeEvent().getEventTarget().cast();
-        typeFilterPresenter.show(new FocusBehaviourImpl(event), target);
+        CurrentFocus.push();
+        typeFilterPresenter.show(target);
     }
 
     @ProxyEvent
@@ -491,7 +489,7 @@ public class NavigationPresenter
                 "Filter",
                 true));
 
-        add.addMouseDownHandler(e -> newItem(e.getNativeEvent(), add.getElement()));
+        add.addMouseDownHandler(e -> newItem(add.getElement()));
         delete.addMouseDownHandler(e -> deleteItem());
         filter.addMouseDownHandler(this::showTypeFilter);
 

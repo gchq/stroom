@@ -67,9 +67,9 @@ import stroom.iframe.client.presenter.IFramePresenter;
 import stroom.iframe.client.presenter.IFramePresenter.IFrameView;
 import stroom.iframe.client.view.IFrameContentViewImpl;
 import stroom.iframe.client.view.IFrameViewImpl;
-import stroom.widget.dropdowntree.client.presenter.DropDownPresenter;
-import stroom.widget.dropdowntree.client.presenter.DropDownTreePresenter;
+import stroom.widget.dropdowntree.client.view.DropDownTreeView;
 import stroom.widget.dropdowntree.client.view.DropDownTreeViewImpl;
+import stroom.widget.dropdowntree.client.view.DropDownView;
 import stroom.widget.dropdowntree.client.view.DropDownViewImpl;
 import stroom.widget.progress.client.presenter.ProgressPresenter;
 import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
@@ -104,8 +104,8 @@ public class DashboardAppModule extends AbstractPresenterModule {
                 DashboardMainViewImpl.class,
                 DashboardMainProxy.class);
 
-        bindSharedView(DropDownPresenter.DropDrownView.class, DropDownViewImpl.class);
-        bindSharedView(DropDownTreePresenter.DropDownTreeView.class, DropDownTreeViewImpl.class);
+        bindSharedView(DropDownView.class, DropDownViewImpl.class);
+        bindSharedView(DropDownTreeView.class, DropDownTreeViewImpl.class);
 
         bindPresenterWidget(
                 EntityTreePresenter.class,

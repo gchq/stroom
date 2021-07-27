@@ -41,6 +41,7 @@ import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 import com.google.gwt.cell.client.Cell.Context;
@@ -289,14 +290,10 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
                 jobNodeInfo.getLastExecutedTime(),
                 jobNode.getSchedule());
 
-        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                schedulePresenter.hide(autoClose, ok);
-            }
-
+        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(schedulePresenter) {
             @Override
             public void onHide(final boolean autoClose, final boolean ok) {
+                restoreFocus();
                 if (ok) {
                     final String schedule = schedulePresenter.getScheduleString();
                     jobNode.setSchedule(schedule);
@@ -309,7 +306,6 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
                 }
             }
         };
-
         schedulePresenter.show(popupUiHandlers);
     }
 

@@ -26,6 +26,7 @@ import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.util.client.MouseUtil;
 
@@ -160,54 +161,40 @@ public class UsersAndGroupsTabPresenter extends
 
     private void onNew() {
         if (criteria.isGroup()) {
-            final PopupUiHandlers hidePopupUiHandlers = new PopupUiHandlers() {
+            final PopupUiHandlers hidePopupUiHandlers = new DefaultPopupUiHandlers(newPresenter) {
                 @Override
                 public void onHideRequest(final boolean autoClose, final boolean ok) {
                     if (ok) {
                         final Rest<User> rest = restFactory.create();
                         rest
                                 .onSuccess(result -> {
-                                    newPresenter.hide();
+                                    hide(autoClose, ok);
                                     edit(result);
                                 })
                                 .call(USER_RESOURCE)
                                 .create(newPresenter.getName(), criteria.isGroup());
                     } else {
-                        newPresenter.hide();
+                        hide(autoClose, ok);
                     }
                 }
-
-                @Override
-                public void onHide(final boolean autoClose, final boolean ok) {
-                    // Ignore hide.
-                }
             };
-
             newPresenter.show(hidePopupUiHandlers);
 
         } else {
-
             selectUserPresenterProvider.get().show(this::edit);
         }
     }
 
     private void edit(final User userRef) {
-        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                listPresenter.refresh();
-            }
-        };
-
         if (userRef.isGroup()) {
             if (groupEditPresenterProvider != null) {
                 final GroupEditPresenter groupEditPresenter = groupEditPresenterProvider.get();
-                groupEditPresenter.show(userRef, popupUiHandlers);
+                groupEditPresenter.show(userRef, listPresenter::refresh);
             }
         } else {
             if (userEditPresenterProvider != null) {
                 final UserEditPresenter userEditPresenter = userEditPresenterProvider.get();
-                userEditPresenter.show(userRef, popupUiHandlers);
+                userEditPresenter.show(userRef, listPresenter::refresh);
             }
         }
     }

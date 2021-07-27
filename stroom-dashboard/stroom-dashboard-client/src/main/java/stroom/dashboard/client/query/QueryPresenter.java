@@ -72,14 +72,12 @@ import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResourceGeneration;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.menu.client.presenter.FocusBehaviour;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.util.client.MouseUtil;
 
@@ -215,7 +213,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         registerHandler(expressionPresenter.addContextMenuHandler(event -> {
             final List<Item> menuItems = addExpressionActionsToMenu();
             if (menuItems.size() > 0) {
-                showMenu(menuItems, event.getFocusBehaviour(), event.getPopupPosition());
+                showMenu(menuItems, event.getPopupPosition());
             }
         }));
         registerHandler(addOperatorButton.addClickHandler(event -> {
@@ -487,7 +485,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         processorLimitsPresenter.setTimeLimitMins(defaultProcessorTimeLimit);
         processorLimitsPresenter.setRecordLimit(defaultProcessorRecordLimit);
         ShowPopupEvent.fire(this, processorLimitsPresenter, PopupType.OK_CANCEL_DIALOG,
-                "Process Search Results", new PopupUiHandlers() {
+                "Process Search Results", new DefaultPopupUiHandlers(processorLimitsPresenter) {
                     @Override
                     public void onHideRequest(final boolean autoClose, final boolean ok) {
                         if (ok) {
@@ -501,11 +499,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                             queryData.setLimits(limits);
                             openEditor(queryData, pipeline);
                         }
-                        HidePopupEvent.fire(QueryPresenter.this, processorLimitsPresenter);
-                    }
-
-                    @Override
-                    public void onHide(final boolean autoClose, final boolean ok) {
+                        hide(autoClose, ok);
                     }
                 });
     }
@@ -791,9 +785,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     private void showMenu(final List<Item> menuItems,
-                          final FocusBehaviour focusBehaviour,
                           final PopupPosition popupPosition) {
-        ShowMenuEvent.fire(this, menuItems, focusBehaviour, popupPosition);
+        ShowMenuEvent.fire(this, menuItems, popupPosition);
     }
 
     private void downloadQuery() {

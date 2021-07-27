@@ -24,9 +24,10 @@ import stroom.query.api.v2.FormatSettings;
 import stroom.query.api.v2.NumberFormatSettings;
 import stroom.query.api.v2.TimeZone;
 import stroom.util.shared.EqualsUtil;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
+import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import com.google.inject.Inject;
@@ -40,15 +41,28 @@ import java.util.function.BiConsumer;
 
 public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatView> implements FormatUihandlers {
 
+    private final PopupUiHandlers popupUiHandlers;
     private final TimeZones timeZones;
     private Type type;
-    private TablePresenter tablePresenter;
     private Field field;
     private BiConsumer<Field, Field> fieldChangeConsumer;
 
     @Inject
     public FormatPresenter(final EventBus eventBus, final FormatView view, final TimeZones timeZones) {
         super(eventBus, view);
+        popupUiHandlers = new DefaultPopupUiHandlers(this) {
+            @Override
+            public void onHideRequest(final boolean autoClose, final boolean ok) {
+                if (ok) {
+                    final Format format = getFormat();
+                    if (!EqualsUtil.isEquals(format, field.getFormat())) {
+                        fieldChangeConsumer.accept(field, field.copy().format(format).build());
+                    }
+                }
+
+                hide(autoClose, ok);
+            }
+        };
         this.timeZones = timeZones;
 
         view.setUiHandlers(this);
@@ -59,7 +73,6 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
     public void show(final TablePresenter tablePresenter,
                      final Field field,
                      final BiConsumer<Field, Field> fieldChangeConsumer) {
-        this.tablePresenter = tablePresenter;
         this.field = field;
         this.fieldChangeConsumer = fieldChangeConsumer;
 
@@ -76,23 +89,7 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
 
         final PopupSize popupSize = PopupSize.resizable(450, 350);
         ShowPopupEvent.fire(tablePresenter, this, PopupType.OK_CANCEL_DIALOG, popupSize,
-                "Format '" + field.getName() + "'", this);
-    }
-
-    @Override
-    public void onHideRequest(final boolean autoClose, final boolean ok) {
-        if (ok) {
-            final Format format = getFormat();
-            if (!EqualsUtil.isEquals(format, field.getFormat())) {
-                fieldChangeConsumer.accept(field, field.copy().format(format).build());
-            }
-        }
-
-        HidePopupEvent.fire(tablePresenter, this);
-    }
-
-    @Override
-    public void onHide(final boolean autoClose, final boolean ok) {
+                "Format '" + field.getName() + "'", popupUiHandlers);
     }
 
     @Override

@@ -10,6 +10,7 @@ import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.client.SafeHtmlUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
@@ -58,16 +59,13 @@ public class SelectionSummaryPresenter extends MyPresenterWidget<CommonAlertView
         }
 
         ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, caption,
-                new PopupUiHandlers() {
+                new DefaultPopupUiHandlers(this) {
                     @Override
                     public void onHideRequest(final boolean autoClose, final boolean ok) {
                         if (ok) {
                             runnable.run();
                         }
-                        HidePopupEvent.fire(SelectionSummaryPresenter.this,
-                                SelectionSummaryPresenter.this,
-                                autoClose,
-                                ok);
+                        hide(autoClose, ok);
                     }
                 });
     }

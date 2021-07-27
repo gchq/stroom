@@ -16,9 +16,6 @@
 
 package stroom.widget.dropdowntree.client.view;
 
-import stroom.widget.dropdowntree.client.presenter.DropDownTreePresenter.DropDownTreeView;
-import stroom.widget.dropdowntree.client.presenter.DropDownTreeUiHandlers;
-
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;

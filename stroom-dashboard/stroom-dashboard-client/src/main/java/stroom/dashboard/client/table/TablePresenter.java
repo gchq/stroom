@@ -84,14 +84,13 @@ import stroom.util.shared.RandomId;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.Version;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.menu.client.presenter.FocusBehaviour;
-import stroom.widget.menu.client.presenter.FocusBehaviourImpl;
+import stroom.widget.menu.client.presenter.CurrentFocus;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItem;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.menu.client.presenter.SimpleMenuItem;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -371,12 +370,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             }
 
             final com.google.gwt.dom.client.Element target = event.getNativeEvent().getEventTarget().cast();
-
-            final FocusBehaviour focusBehaviour = new FocusBehaviourImpl(event);
+            CurrentFocus.push();
             final PopupPosition popupPosition = new PopupPosition(
                     target.getAbsoluteLeft() - 3,
                     target.getAbsoluteTop() + target.getClientHeight() + 1);
-            ShowMenuEvent.fire(this, menuItems, focusBehaviour, popupPosition);
+            ShowMenuEvent.fire(this, menuItems, popupPosition);
         }
     }
 
@@ -395,7 +393,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             final Search activeSearch = currentSearchModel.getActiveSearch();
             final DashboardQueryKey queryKey = currentSearchModel.getCurrentQueryKey();
             if (activeSearch != null && queryKey != null) {
-                final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+                final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(downloadPresenter) {
                     @Override
                     public void onHideRequest(final boolean autoClose, final boolean ok) {
                         if (ok) {
@@ -445,11 +443,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                     .downloadSearchResults(downloadSearchResultsRequest);
                         }
 
-                        HidePopupEvent.fire(TablePresenter.this, downloadPresenter);
-                    }
-
-                    @Override
-                    public void onHide(final boolean autoClose, final boolean ok) {
+                        hide(autoClose, ok);
                     }
                 };
 

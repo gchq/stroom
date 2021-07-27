@@ -3,8 +3,8 @@ package stroom.data.client.presenter;
 import stroom.data.client.presenter.ItemSelectionPresenter.ItemSelectionView;
 import stroom.util.shared.Count;
 import stroom.util.shared.HasItems;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
@@ -39,7 +39,16 @@ public class ItemSelectionPresenter extends MyPresenterWidget<ItemSelectionView>
         getView().setTotalItemsCount(display.getTotalItemsCount());
     }
 
-    public void show(final PopupUiHandlers popupUiHandlers) {
+    public void show() {
+        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(this) {
+            @Override
+            public void onHideRequest(final boolean autoClose, final boolean ok) {
+                if (ok) {
+                    write();
+                }
+                hide(autoClose, ok);
+            }
+        };
         read();
         ShowPopupEvent.fire(
                 this,
@@ -47,17 +56,6 @@ public class ItemSelectionPresenter extends MyPresenterWidget<ItemSelectionView>
                 PopupType.OK_CANCEL_DIALOG,
                 "Select " + display.getName(),
                 popupUiHandlers);
-    }
-
-    public void hide(final boolean autoClose, final boolean ok) {
-        if (ok) {
-            write();
-        }
-        HidePopupEvent.fire(
-                ItemSelectionPresenter.this,
-                ItemSelectionPresenter.this,
-                autoClose,
-                ok);
     }
 
     public interface ItemSelectionView extends View {

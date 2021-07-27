@@ -17,8 +17,8 @@
 
 package stroom.entity.client.view;
 
+import stroom.widget.popup.client.presenter.HideUiHandlers;
 import stroom.entity.client.presenter.NameDocumentView;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -30,7 +30,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class NameDocumentViewImpl extends ViewWithUiHandlers<PopupUiHandlers> implements NameDocumentView {
+public class NameDocumentViewImpl extends ViewWithUiHandlers<HideUiHandlers> implements NameDocumentView {
 
     private final Widget widget;
     @UiField

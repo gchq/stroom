@@ -40,6 +40,7 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -360,7 +361,7 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
             final NewPropertyPresenter editor = newPropertyPresenter.get();
             editor.edit(defaultProperty, inheritedProperty, editing, source);
 
-            final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+            final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(editor) {
                 @Override
                 public void onHideRequest(final boolean autoClose, final boolean ok) {
                     if (ok) {
@@ -390,12 +391,7 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
                         }
                     }
 
-                    HidePopupEvent.fire(PropertyListPresenter.this, editor);
-                }
-
-                @Override
-                public void onHide(final boolean autoClose, final boolean ok) {
-                    // Do nothing.
+                    hide();
                 }
             };
 

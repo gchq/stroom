@@ -37,10 +37,9 @@ import stroom.document.client.event.HasDirtyHandlers;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.RandomId;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import com.google.gwt.core.client.GWT;
@@ -227,7 +226,7 @@ public class SelectionHandlersPresenter
                     PopupType.OK_CANCEL_DIALOG,
                     popupSize,
                     "Add New Selection Handler",
-                    new PopupUiHandlers() {
+                    new DefaultPopupUiHandlers(editSelectionHandlerPresenter) {
                         @Override
                         public void onHideRequest(final boolean autoClose, final boolean ok) {
                             if (ok) {
@@ -237,13 +236,7 @@ public class SelectionHandlersPresenter
                                 listPresenter.getSelectionModel().setSelected(rule);
                                 setDirty(true);
                             }
-
-                            HidePopupEvent.fire(SelectionHandlersPresenter.this, editSelectionHandlerPresenter);
-                        }
-
-                        @Override
-                        public void onHide(final boolean autoClose, final boolean ok) {
-                            // Do nothing.
+                            hide(autoClose, ok);
                         }
                     });
         });
@@ -251,7 +244,6 @@ public class SelectionHandlersPresenter
 
     private void edit(final ComponentSelectionHandler existingRule) {
         loadFields(fields -> {
-
             final SelectionHandlerPresenter editSelectionHandlerPresenter = editRulePresenterProvider.get();
 
             editSelectionHandlerPresenter.read(existingRule, componentList, fields);
@@ -263,8 +255,7 @@ public class SelectionHandlersPresenter
                     PopupType.OK_CANCEL_DIALOG,
                     popupSize,
                     "Edit Selection Handler",
-                    new PopupUiHandlers() {
-
+                    new DefaultPopupUiHandlers(editSelectionHandlerPresenter) {
                         @Override
                         public void onHideRequest(final boolean autoClose, final boolean ok) {
                             if (ok) {
@@ -281,16 +272,9 @@ public class SelectionHandlersPresenter
                                     setDirty(true);
                                 }
                             }
-
-                            HidePopupEvent.fire(SelectionHandlersPresenter.this, editSelectionHandlerPresenter);
-                        }
-
-                        @Override
-                        public void onHide(final boolean autoClose, final boolean ok) {
-                            // Do nothing.
+                            hide(autoClose, ok);
                         }
                     });
-
         });
     }
 

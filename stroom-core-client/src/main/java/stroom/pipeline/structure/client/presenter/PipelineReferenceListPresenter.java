@@ -39,6 +39,7 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -284,7 +285,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
             final NewPipelineReferencePresenter editor = newPipelineReferencePresenter.get();
             editor.read(pipelineReference);
 
-            final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+            final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(editor) {
                 @Override
                 public void onHideRequest(final boolean autoClose, final boolean ok) {
                     if (ok) {
@@ -306,7 +307,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
 
                             setDirty(isNew || editor.isDirty());
                             refresh();
-                            HidePopupEvent.fire(PipelineReferenceListPresenter.this, editor);
+                            hide();
                         }
                     } else {
                         // User has cancelled edit so add the reference back to
@@ -317,13 +318,8 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
                             }
                         }
 
-                        HidePopupEvent.fire(PipelineReferenceListPresenter.this, editor);
+                        hide();
                     }
-                }
-
-                @Override
-                public void onHide(final boolean autoClose, final boolean ok) {
-                    // Do nothing.
                 }
             };
 

@@ -28,8 +28,7 @@ import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 import stroom.util.shared.TextRange;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent;
-import stroom.widget.menu.client.presenter.FocusBehaviour;
-import stroom.widget.menu.client.presenter.FocusBehaviourImpl;
+import stroom.widget.menu.client.presenter.CurrentFocus;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
 import stroom.widget.util.client.MouseUtil;
@@ -145,10 +144,9 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
 
     private void handleMouseDown(final MouseDownEvent event) {
         if (MouseUtil.isSecondary(event)) {
-            final FocusBehaviour focusBehaviour = new FocusBehaviourImpl(event.getNativeEvent(), this::focus);
             final PopupPosition popupPosition = new PopupPosition(event.getClientX(), event.getClientY());
-
-            ContextMenuEvent.fire(this, focusBehaviour, popupPosition);
+            CurrentFocus.push(this::focus);
+            ContextMenuEvent.fire(this, popupPosition);
         } else {
             indicatorPopup.hide();
             MouseDownEvent.fireNativeEvent(event.getNativeEvent(), this);

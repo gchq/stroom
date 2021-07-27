@@ -40,6 +40,7 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToggleButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -289,26 +290,18 @@ public class DataRetentionImpactPresenter
 
         final PopupSize popupSize = PopupSize.resizable(800, 400);
         ShowPopupEvent.fire(
-                DataRetentionImpactPresenter.this,
+                this,
                 editExpressionPresenter,
                 PopupType.OK_CANCEL_DIALOG,
                 popupSize,
                 "Query Filter",
-                new PopupUiHandlers() {
+                new DefaultPopupUiHandlers(editExpressionPresenter) {
                     @Override
                     public void onHideRequest(final boolean autoClose, final boolean ok) {
                         if (ok) {
                             criteria.setExpression(editExpressionPresenter.write());
                         }
-
-                        HidePopupEvent.fire(
-                                DataRetentionImpactPresenter.this,
-                                editExpressionPresenter);
-                    }
-
-                    @Override
-                    public void onHide(final boolean autoClose, final boolean ok) {
-                        // Do nothing.
+                        hide(autoClose, ok);
                     }
                 });
     }

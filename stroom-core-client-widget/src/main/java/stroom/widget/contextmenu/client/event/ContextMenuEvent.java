@@ -16,7 +16,6 @@
 
 package stroom.widget.contextmenu.client.event;
 
-import stroom.widget.menu.client.presenter.FocusBehaviour;
 import stroom.widget.popup.client.presenter.PopupPosition;
 
 import com.google.gwt.event.shared.EventHandler;
@@ -25,20 +24,16 @@ import com.google.gwt.event.shared.GwtEvent;
 public class ContextMenuEvent extends GwtEvent<ContextMenuEvent.Handler> {
 
     private static Type<Handler> TYPE;
-    private final FocusBehaviour focusBehaviour;
     private final PopupPosition popupPosition;
 
-    protected ContextMenuEvent(final FocusBehaviour focusBehaviour,
-                               final PopupPosition popupPosition) {
-        this.focusBehaviour = focusBehaviour;
+    protected ContextMenuEvent(final PopupPosition popupPosition) {
         this.popupPosition = popupPosition;
     }
 
     public static <I> void fire(final HasContextMenuHandlers source,
-                                final FocusBehaviour focusBehaviour,
                                 final PopupPosition popupPosition) {
         if (TYPE != null) {
-            source.fireEvent(new ContextMenuEvent(focusBehaviour, popupPosition));
+            source.fireEvent(new ContextMenuEvent(popupPosition));
         }
     }
 
@@ -57,10 +52,6 @@ public class ContextMenuEvent extends GwtEvent<ContextMenuEvent.Handler> {
     @Override
     protected void dispatch(final Handler handler) {
         handler.onContextMenu(this);
-    }
-
-    public FocusBehaviour getFocusBehaviour() {
-        return focusBehaviour;
     }
 
     public PopupPosition getPopupPosition() {

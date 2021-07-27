@@ -64,7 +64,6 @@ public class EditorPresenter
         registerHandler(view.addContextMenuHandler(event ->
                 contextMenu.show(
                         EditorPresenter.this,
-                        event.getFocusBehaviour(),
                         event.getPopupPosition())));
         registerHandler(view.addKeyDownHandler(event -> {
             if (event.isAltKeyDown() || event.isControlKeyDown()) {
