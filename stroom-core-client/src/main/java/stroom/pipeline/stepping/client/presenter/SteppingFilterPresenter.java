@@ -83,7 +83,7 @@ public class SteppingFilterPresenter extends
         removeXPath.setEnabled(false);
 
 
-        elementChooser = new CellTableViewImpl<>(true, "hoverCellTable");
+        elementChooser = new CellTableViewImpl<>(true);
 
         // Text.
         final Column<String, SafeHtml> textColumn = new Column<String, SafeHtml>(new SafeHtmlCell()) {

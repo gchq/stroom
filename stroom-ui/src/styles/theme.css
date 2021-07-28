@@ -7,10 +7,6 @@
     --app-background-color: #fff;/*#d50101;*/
     --page-background-color: #fff;
     --border-color: #c5cde2;
-    --input-background-color: #fff;
-    --input-border-color: #c5cde2;
-    --input-background-color-disabled: #eee;
-    --input-border-color-disabled: #ccc;
 
     --header-border-color: #dddddd;
     --even-row-background-color: #ebebeb;
@@ -212,10 +208,6 @@
     --app-background-color: #000;/*#19171d;*/
     --page-background-color: #19171d;
     --border-color: #555;
-    --input-background-color: #333;
-    --input-border-color: #555;
-    --input-background-color-disabled: #222427;
-    --input-border-color-disabled: #3c3c3c;
 
     --header-border-color: #333;
     --even-row-background-color: #282c31;
@@ -393,10 +385,6 @@
     --app-background-color: #000;
     --page-background-color: #1b1d24;
     --border-color: #14161b;
-    --input-background-color: #262a32;
-    --input-border-color: #191c21;
-    --input-background-color-disabled: #1f2229;
-    --input-border-color-disabled: #191c21;
 
     --header-border-color: #14161b;
     --even-row-background-color: #15161b;

@@ -40,6 +40,7 @@ import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TableRowElement;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -210,9 +211,35 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
 
             dataGrid.setSelectionModel(multiSelectionModel, new MySelectionEventManager(dataGrid));
             selectionModel = multiSelectionModel;
-            dataGrid.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
-
+            dataGrid.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.ENABLED);
+            // We need to set this to prevent default keyboard behaviour.
+            dataGrid.setKeyboardSelectionHandler(event -> {
+            });
             dataGrid.getRowContainer().getStyle().setCursor(Cursor.POINTER);
+
+
+
+            dataGrid.addCellPreviewHandler(event -> {
+                final NativeEvent nativeEvent = event.getNativeEvent();
+                final String type = nativeEvent.getType();
+            GWT.log("CELL PREVIEW: " + type + " " + event.getValue());
+
+                if ("keydown".equals(type)) {
+                    final int keyCode = nativeEvent.getKeyCode();
+                    switch (keyCode) {
+                        case KeyCodes.KEY_UP:
+                            onUp();
+                            break;
+                        case KeyCodes.KEY_DOWN:
+                            onDown();
+                            break;
+                        case KeyCodes.KEY_ENTER:
+                            onEnter();
+                            break;
+                    }
+                }
+            });
+
         } else {
             selectionModel = null;
             dataGrid.getRowContainer().getStyle().setCursor(Cursor.DEFAULT);
@@ -221,9 +248,72 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
         return dataGrid;
     }
 
+
+//    private void selectRow(final int row) {
+//        final List<R> items = dataGrid.getVisibleItems();
+//        if (row >= 0 && row < items.size()) {
+//            final R item = items.get(row);
+//            selectionModel.setSelected(item, true);
+//            dataGrid.setKeyboardSelectedRow(row, true);
+//        }
+//    }
+
+    void onUp() {
+        final int originalRow = dataGrid.getKeyboardSelectedRow();
+        int row = originalRow - 1;
+        row = Math.max(0, row);
+        if (row != originalRow) {
+            dataGrid.setKeyboardSelectedRow(row, true);
+        }
+    }
+
+    void onDown() {
+        final int originalRow = dataGrid.getKeyboardSelectedRow();
+        int row = originalRow + 1;
+        row = Math.min(dataGrid.getVisibleItemCount() - 1, row);
+        if (row != originalRow) {
+            dataGrid.setKeyboardSelectedRow(row, true);
+        }
+    }
+
+    void onEnter() {
+        final int row = dataGrid.getKeyboardSelectedRow();
+        final List<R> items = dataGrid.getVisibleItems();
+        if (row >= 0 && row < items.size()) {
+            final R item = items.get(row);
+            selectionModel.setSelected(item);
+        }
+
+//        doSelect(item,
+//                new SelectionType(true,
+//                        false,
+//                        allowMultiSelect,
+//                        nativeEvent.getCtrlKey(),
+//                        nativeEvent.getShiftKey()));
+    }
+
     @Override
     public void onPreviewNativeEvent(final NativePreviewEvent nativePreviewEvent) {
+        GWT.log("onPreviewNativeEvent");
+
         final NativeEvent event = nativePreviewEvent.getNativeEvent();
+        final String type = event.getType();
+//        if ("keydown".equals(type)) {
+//
+//            final int keyCode = event.getKeyCode();
+//            switch (keyCode) {
+//                case KeyCodes.KEY_UP:
+//                    onUp();
+//                    break;
+//                case KeyCodes.KEY_DOWN:
+//                    onDown();
+//                    break;
+//                case KeyCodes.KEY_ENTER:
+//                    onEnter();
+//                    break;
+//            }
+//
+//        } else
 
         if (Event.ONMOUSEMOVE == nativePreviewEvent.getTypeInt()) {
             if (!isBusy()) {
@@ -788,6 +878,15 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
             final String type = nativeEvent.getType();
 
             if ("mousedown".equals(type)) {
+                if (event.getValue() != null) {
+                    final List<R> rows = dataGrid.getVisibleItems();
+                    final int index = rows.indexOf(event.getValue());
+                    if (index != -1) {
+                        dataGrid.setKeyboardSelectedRow(index);
+                    }
+                }
+
+
                 // Find out if the cell consumes this event because if it does then we won't use it to select the row.
                 boolean consumed = false;
 

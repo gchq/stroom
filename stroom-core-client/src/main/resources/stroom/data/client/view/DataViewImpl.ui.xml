@@ -2,7 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:tab="urn:import:stroom.widget.tab.client.view">
-    <g:FlowPanel styleName="max dock-container-vertical stroom-content">
+    <g:FlowPanel styleName="max dock-container-vertical">
         <g:FlowPanel styleName="dock-container-horizontal dock-min">
             <g:FlowPanel styleName="dock-max dataViewImpl-tabBarOuter">
                 <tab:LinkTabBar ui:field="tabBar"

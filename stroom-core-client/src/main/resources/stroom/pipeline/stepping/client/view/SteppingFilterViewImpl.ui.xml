@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
     <g:MySplitLayoutPanel styleName="steppingFilterViewImpl  max">
         <g:west size="220">
-            <g:MaxScrollPanel styleName="max stroom-content stroom-border">
+            <g:MaxScrollPanel styleName="max stroom-control">
                 <g:SimplePanel ui:field="elementChooser" />
             </g:MaxScrollPanel>
         </g:west>
@@ -23,7 +23,7 @@
                         </g:customCell>
                     </g:row>
                 </g:Grid>
-                <g:SimplePanel ui:field="xPathList" addStyleNames="dock-max stroom-border"/>
+                <g:SimplePanel ui:field="xPathList" addStyleNames="dock-max stroom-control"/>
             </g:FlowPanel>
         </g:center>
     </g:MySplitLayoutPanel>

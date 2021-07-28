@@ -48,7 +48,7 @@ public class ChooserPresenter extends MyPresenterWidget<ChooserView> implements 
 
         view.setUiHandlers(this);
 
-        table = new CellTableViewImpl<>(true, "hoverCellTable");
+        table = new CellTableViewImpl<>(true);
         view.setBottomView(table);
 
         // Text.

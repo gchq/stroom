@@ -97,11 +97,6 @@
     background: none;
 }
 
-.cellTableEvenRow:hover,
-.cellTableOddRow:hover {
-  background: var(--row__background-color--hovered);
-}
-
 .cellTableEvenRowCell {
 }
 
@@ -112,20 +107,6 @@
 }
 
 .cellTableKeyboardSelectedRowCell {
-}
-
-.cellTableEvenRow.cellTableSelectedRow,
-.cellTableOddRow.cellTableSelectedRow {
-    background-color: var(--row__background-color--selected);
-    color: var(--row__text-color--selected);
-}
-
-.cellTableEvenRow.cellTableSelectedRow:hover,
-.cellTableOddRow.cellTableSelectedRow:hover {
-    background-color: var(--row__background-color--selected-hovered);
-}
-
-.cellTableSelectedRow:focus-within {
 }
 
 .cellTableSelectedRowCell {
@@ -139,4 +120,27 @@
 
 .cellTableLoading {
   margin: 30px;
+}
+
+.cellTableSelectedRow {
+	background-color: var(--row__background-color--selected);
+	color: var(--row__text-color--selected);
+}
+
+.cellTableOddRow:hover,
+.cellTableEvenRow:hover {
+    background-color: var(--row__background-color--hovered);
+}
+
+.cellTableSelectedRow:hover {
+    background-color: var(--row__background-color--selected-hovered);
+}
+
+.cellTableOddRow:focus-within,
+.cellTableEvenRow:focus-within {
+    background-color: var(--row__background-color--focussed);
+}
+
+.cellTableSelectedRow:focus-within {
+    background-color: var(--row__background-color--selected-focussed);
 }

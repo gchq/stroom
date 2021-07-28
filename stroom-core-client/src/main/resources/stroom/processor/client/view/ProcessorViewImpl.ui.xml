@@ -4,10 +4,10 @@
     <g:MySplitLayoutPanel vSplits="0.5" styleName="max">
         <g:north size="200">
             <g:SimplePanel ui:field="processorList"
-                                    addStyleNames="max stroom-content stroom-border-bottom"/>
+                                    addStyleNames="max stroom-border-bottom"/>
         </g:north>
         <g:center>
-            <g:MaxScrollPanel addStyleNames="max stroom-content stroom-border-top">
+            <g:MaxScrollPanel addStyleNames="max stroom-border-top">
                 <g:SimplePanel ui:field="details"/>
             </g:MaxScrollPanel>
         </g:center>

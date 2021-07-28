@@ -41,10 +41,8 @@
 @import url("ResizableDialog.css");
 @import url("PopupSupport.css");
 
-@import url("celltable/BasicCellTable.css");
 @import url("celltable/DefaultCellTable.css");
 @import url("celltable/ExplorerTree.css");
-@import url("celltable/HoverCellTable.css");
 @import url("celltable/Menu.css");
 @import url("celltable/DataGrid.css");
 @import url("QuickFilter.css");

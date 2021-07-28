@@ -176,8 +176,26 @@
 }
 
 .dataGridSelectedRow {
-	background: var(--row__background-color--selected) none repeat scroll 0 0 !important;
-	color: var(--row__text-color--selected) !important;
+	background-color: var(--row__background-color--selected);
+	color: var(--row__text-color--selected);
+}
+
+.dataGridOddRow:hover,
+.dataGridEvenRow:hover {
+    background-color: var(--row__background-color--hovered);
+}
+
+.dataGridSelectedRow:hover {
+    background-color: var(--row__background-color--selected-hovered);
+}
+
+.dataGridOddRow:focus-within,
+.dataGridEvenRow:focus-within {
+    background-color: var(--row__background-color--focussed);
+}
+
+.dataGridSelectedRow:focus-within {
+    background-color: var(--row__background-color--selected-focussed);
 }
 
 .dataGridSelectedRowCell {

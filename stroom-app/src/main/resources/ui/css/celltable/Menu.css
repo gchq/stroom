@@ -39,16 +39,6 @@
     min-width: 180px;
 }
 
-.cellTableCell div:focus-visible .menuItem-outer {
-    border-color: var(--row__border-color--focussed);
-    box-shadow: var(--row__box-shadow--focussed);
-}
-
-.cellTableSelectedRow .cellTableCell div:focus-visible .menuItem-outer {
-    border-color: var(--row__border-color--selected-focussed);
-    box-shadow: var(--row__box-shadow--selected-focussed);
-}
-
 .menuItem-highlight {
 	background-color: var(--code-editor-highlight-background-color);
 	color: var(--row__text-color--selected);

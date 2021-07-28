@@ -141,33 +141,12 @@ public class NavigationPresenter
         uiConfigCache.get().onSuccess(uiConfig -> {
             final ActivityConfig activityConfig = uiConfig.getActivity();
             if (activityConfig.isEnabled()) {
-
                 updateActivitySummary();
                 activityButton.setStyleName("activityButton");
                 activityOuter.setStyleName("activityOuter");
                 activityOuter.setWidget(activityButton);
 
                 getView().setActivityWidget(activityOuter);
-
-//                final SimplePanel activityOuter = new SimplePanel();
-//                activityOuter.setStyleName("dock-min activityOuter");
-//                activityOuter.setWidget(activityButton);
-
-
-//                final SimplePanel treeContainer = new SimplePanel();
-//                treeContainer.setStyleName("dock-max stroom-content");
-//                treeContainer.setWidget(explorerTree);
-//
-//                final FlowPanel explorerWrapper = new FlowPanel();
-//                explorerWrapper.setStyleName("dock-container-vertical explorerWrapper");
-//                explorerWrapper.add(treeContainer);
-//                explorerWrapper.add(activityOuter);
-//
-//                view.setCellTree(explorerWrapper);
-
-
-            } else {
-//                view.setCellTree(explorerTree);
             }
         });
     }

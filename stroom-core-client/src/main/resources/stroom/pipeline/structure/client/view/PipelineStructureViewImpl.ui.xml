@@ -16,17 +16,17 @@
         <g:MySplitLayoutPanel vSplits="0.4" styleName="dock-max">
             <g:north size="200">
                 <g:MaxScrollPanel ui:field="treeContainer"
-                                  addStyleNames="stroom-content stroom-border-bottom pipelineStructureViewImpl-treeContainer"/>
+                                  addStyleNames="stroom-border-bottom pipelineStructureViewImpl-treeContainer"/>
             </g:north>
             <g:center>
                 <g:MySplitLayoutPanel vSplits="0.5" styleName="max stroom-border-top">
                     <g:north size="200">
                         <g:SimplePanel ui:field="properties"
-                                       styleName="stroom-content stroom-border-bottom"/>
+                                       styleName="stroom-border-bottom"/>
                     </g:north>
                     <g:center>
                         <g:SimplePanel ui:field="pipelineReferences"
-                                       styleName="stroom-content stroom-border-top"/>
+                                       styleName="stroom-border-top"/>
                     </g:center>
                 </g:MySplitLayoutPanel>
             </g:center>

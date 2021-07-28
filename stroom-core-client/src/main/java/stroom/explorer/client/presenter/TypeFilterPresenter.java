@@ -105,6 +105,9 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
 
         cellTable.setSelectionModel(selectionModel, null);
         cellTable.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.ENABLED);
+        // We need to set this to prevent default keyboard behaviour.
+        cellTable.setKeyboardSelectionHandler(event -> {
+        });
         cellTable.getRowContainer().getStyle().setCursor(Cursor.POINTER);
 
         view.setWidget(cellTable);
@@ -112,11 +115,6 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
 
     @Override
     protected void onBind() {
-        // We need to set this to prevent default keyboard behaviour.
-        cellTable.setKeyboardSelectionHandler(e -> {
-//            GWT.log("KSH: " + e.getNativeEvent().getType() + " " + e.getValue());
-        });
-
         registerHandler(cellTable.addCellPreviewHandler(e -> {
             final NativeEvent nativeEvent = e.getNativeEvent();
             final String type = nativeEvent.getType();

@@ -57,6 +57,6 @@
         <g:Label text="Data Retention Expression (matching data will be deleted):"
                  addStyleNames="dock-min solrIndexSettingsViewImpl-label w-100"/>
         <g:SimplePanel ui:field="retentionExpressionPanel"
-                       styleName="dock-max stroom-content stroom-border"/>
+                       styleName="dock-max stroom-border"/>
     </g:FlowPanel>
 </ui:UiBinder> 

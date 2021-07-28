@@ -93,6 +93,9 @@ public abstract class AbstractExplorerTree extends Composite {
         selectionModel = getSelectionModel();
         cellTable.setSelectionModel(selectionModel);
         cellTable.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.ENABLED);
+        // We need to set this to prevent default keyboard behaviour.
+        cellTable.setKeyboardSelectionHandler(event -> {
+        });
         cellTable.getRowContainer().getStyle().setCursor(Style.Cursor.POINTER);
 
         treeModel = new ExplorerTreeModel(this, spinnerSmall, restFactory) {
@@ -112,11 +115,6 @@ public abstract class AbstractExplorerTree extends Composite {
         flowPanel.setHeight("100%");
         flowPanel.add(scrollPanel);
         flowPanel.add(spinnerSmall);
-
-        // We need to set this to prevent default keyboard behaviour.
-        cellTable.setKeyboardSelectionHandler(e -> {
-//            GWT.log("KSH: " + e.getNativeEvent().getType() + " " + e.getValue());
-        });
 
         cellTable.addCellPreviewHandler(e -> {
             final NativeEvent nativeEvent = e.getNativeEvent();

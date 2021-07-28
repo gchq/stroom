@@ -41,14 +41,17 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import javax.inject.Provider;
 
 public class MetaRelationListPresenter extends AbstractMetaListPresenter {
 
     private final Map<Long, MetaRow> streamMap = new HashMap<>();
+    private final Set<Long> hasChildren = new HashSet<>();
     private int maxDepth = -1;
 
     private Column<MetaRow, Expander> expanderColumn;
@@ -141,6 +144,7 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
                 if (meta.getParentMetaId() != null) {
                     final MetaRow thisParent = streamMap.get(meta.getParentMetaId());
                     if (thisParent != null && thisParent.equals(parent)) {
+                        hasChildren.add(meta.getParentMetaId());
                         newData.add(row);
                         addChildren(row, data, newData, depth + 1);
 
@@ -215,7 +219,7 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
     }
 
     private Expander buildExpander(final MetaRow row) {
-        return new Expander(getDepth(row), true, true);
+        return new Expander(getDepth(row), true, !hasChildren.contains(row.getMeta().getId()));
     }
 
     private int getDepth(final MetaRow row) {

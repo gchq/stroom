@@ -1,7 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
-    <g:FlowPanel styleName="dock-container-vertical stroom-content">
+    <g:FlowPanel styleName="dock-container-vertical">
         <g:SimplePanel ui:field="dataGrid" styleName="dock-max"/>
         <g:MaxScrollPanel styleName="dock-min">
             <g:HTML ui:field="statusMessage" styleName="elasticFieldListView-statusMessage"/>

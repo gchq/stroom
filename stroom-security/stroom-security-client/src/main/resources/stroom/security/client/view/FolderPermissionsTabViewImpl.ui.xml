@@ -12,13 +12,13 @@
                 <g:north size="110">
                     <g:FlowPanel styleName="dock-container-vertical">
                         <g:Label ui:field="permissionsLabel" text="Permissions:" styleName="dock-min"/>
-                        <g:ScrollPanel ui:field="permissions" styleName="dock-max stroom-content stroom-border"/>
+                        <g:ScrollPanel ui:field="permissions" styleName="dock-max stroom-border"/>
                     </g:FlowPanel>
                 </g:north>
                 <g:center>
                     <g:FlowPanel styleName="dock-container-vertical">
                         <g:Label ui:field="createPermissionsLabel" text="Create Permissions:" styleName="dock-min"/>
-                        <g:ScrollPanel ui:field="createPermissions" styleName="dock-max stroom-content stroom-border"/>
+                        <g:ScrollPanel ui:field="createPermissions" styleName="dock-max stroom-border"/>
                     </g:FlowPanel>
                 </g:center>
             </g:MySplitLayoutPanel>

@@ -32,6 +32,6 @@
                 </g:row>
             </g:Grid>
         </g:SimplePanel>
-        <g:SimplePanel ui:field="expression" styleName="dock-max stroom-content stroom-border"/>
+        <g:SimplePanel ui:field="expression" styleName="dock-max stroom-border"/>
     </g:FlowPanel>
 </ui:UiBinder>

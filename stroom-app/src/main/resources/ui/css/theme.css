@@ -2,10 +2,6 @@
  * Vars
  */
 :root {
-    /*
-    --row__border-color--focussed: rgb(77, 82, 80);
-    --row__box-shadow--focussed: inset 0 1px 1px rgba(77, 82, 80, .08), 0 0 8px rgba(77, 82, 80, .6);
-    */
     --focus-border: var(--blue-500);
     --focus-shadow: inset 0 1px 1px rgba(var(--black-rgb), .08), 0 0 8px rgba(var(--blue-500-rgb), .6); /* blue-500*/
     --focus-border--valid: var(--valid);
@@ -20,10 +16,6 @@
     --app-background-color: #fff;/*#d50101;*/
     --page-background-color: #fff;
     --border-color: #c5cde2;
-    --input-background-color: #fff;
-    --input-border-color: #c5cde2;
-    --input-background-color-disabled: #eee;
-    --input-border-color-disabled: #ccc;
 
     --header-border-color: #dddddd;
     --even-row-background-color: #ebebeb;
@@ -33,10 +25,6 @@
     --row__background-color--selected: #bbdefb;
     --row__background-color--selected-hovered: #bbdefb;
     --row__text-color--selected: #000;
-    --row__border-color--focussed: var(--focus-border);
-    --row__box-shadow--focussed: var(--focus-shadow);
-    --row__border-color--selected-focussed: var(--focus-border);
-    --row__box-shadow--selected-focussed: var(--focus-shadow);
 
     --menu-separator-color: #bfbfbf;
 
@@ -220,10 +208,6 @@
     --app-background-color: #000;/*#19171d;*/
     --page-background-color: #19171d;
     --border-color: #555;
-    --input-background-color: #333;
-    --input-border-color: #555;
-    --input-background-color-disabled: #222427;
-    --input-border-color-disabled: #3c3c3c;
 
     --header-border-color: #333;
     --even-row-background-color: #282c31;
@@ -233,10 +217,6 @@
     --row__background-color--selected: #0065a7;
     --row__background-color--selected-hovered: #0078c7;
     --row__text-color--selected: #fff;
-    --row__border-color--focussed: var(--focus-border);
-    --row__box-shadow--focussed: var(--focus-shadow);
-    --row__border-color--selected-focussed: var(--focus-border);
-    --row__box-shadow--selected-focussed: var(--focus-shadow);
 
     --menu-separator-color: rgb(255 255 255 / 20%);
 
@@ -407,23 +387,17 @@
     --app-background-color: #1a1d21;
     --page-background-color: #1a1d21;
     --border-color: #14161b;
-    --input-background-color: #262a32;
-    --input-border-color: #191c21;
-    --input-background-color-disabled: #1f2229;
-    --input-border-color-disabled: #191c21;
 
     --header-border-color: #14161b;
     --even-row-background-color: #15161b;
     --odd-row-background-color: #22252c;
 
-    --row__background-color--hovered: #2d2f35;
-    --row__background-color--selected: #0065a7;
-    --row__background-color--selected-hovered: #0078c7;
+    --row__background-color--hovered: rgb(45, 47, 53);
+    --row__background-color--selected: rgb(0, 101, 167);
+    --row__background-color--selected-hovered: rgb(0,120,199);
+    --row__background-color--focussed: rgba(0,120,199,.5);
+    --row__background-color--selected-focussed: rgb(0,120,199);
     --row__text-color--selected: #fff;
-    --row__border-color--focussed: var(--focus-border);
-    --row__box-shadow--focussed: var(--focus-shadow);
-    --row__border-color--selected-focussed: var(--focus-border);
-    --row__box-shadow--selected-focussed: var(--focus-shadow);
 
     --menu-separator-color: rgb(255 255 255 / 20%);
 

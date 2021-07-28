@@ -2,8 +2,8 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:btn="urn:import:stroom.widget.button.client">
-    <g:FlowPanel styleName="SourceViewImpl max dock-container-vertical stroom-content">
-        <g:FlowPanel styleName="dock-min dock-container-vertical stroom-content">
+    <g:FlowPanel styleName="SourceViewImpl max dock-container-vertical">
+        <g:FlowPanel styleName="dock-min dock-container-vertical">
             <g:FlowPanel styleName="dock-max">
                 <g:Label styleName="sourceViewImpl-titleHeading">Feed:</g:Label>
                 <g:Label ui:field="lblFeed" styleName="sourceViewImpl-titleText"/>

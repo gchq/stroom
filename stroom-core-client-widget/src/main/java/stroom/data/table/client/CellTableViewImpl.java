@@ -49,14 +49,9 @@ public class CellTableViewImpl<R> extends ViewImpl implements CellTableView<R> {
     private Widget widget;
 
     public CellTableViewImpl(final boolean supportsSelection) {
-        this(supportsSelection, "basicCellTable");
-    }
-
-    public CellTableViewImpl(final boolean supportsSelection, final String className) {
         final Resources resources = GWT.create(DefaultResources.class);
         cellTable = new CellTable<>(DataGridViewImpl.DEFAULT_LIST_PAGE_SIZE, resources);
         cellTable.setWidth("100%");
-        cellTable.getElement().setClassName(className);
         cellTable.setLoadingIndicator(null);
 
         setSupportsSelection(supportsSelection);
@@ -76,6 +71,9 @@ public class CellTableViewImpl<R> extends ViewImpl implements CellTableView<R> {
         if (supportsSelection) {
             cellTable.setSelectionModel(new MySingleSelectionModel<>());
             cellTable.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.ENABLED);
+            // We need to set this to prevent default keyboard behaviour.
+            cellTable.setKeyboardSelectionHandler(event -> {
+            });
             cellTable.getRowContainer().getStyle().setCursor(Cursor.POINTER);
         } else {
             cellTable.setSelectionModel(null);

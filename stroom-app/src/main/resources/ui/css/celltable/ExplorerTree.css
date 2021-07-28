@@ -22,18 +22,6 @@
     align-items: center;
     cursor: pointer;
     gap: var(--gap--horizontal);
-    border: 1px solid transparent;
-    border-radius: .25rem;
-}
-
-.cellTableCell div:focus-visible .explorerCell {
-    border-color: var(--row__border-color--focussed);
-    box-shadow: var(--row__box-shadow--focussed);
-}
-
-.cellTableSelectedRow .cellTableCell div:focus-visible .explorerCell {
-    border-color: var(--row__border-color--selected-focussed);
-    box-shadow: var(--row__box-shadow--selected-focussed);
 }
 
 .explorerCell-expander {

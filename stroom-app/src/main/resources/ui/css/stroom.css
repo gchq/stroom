@@ -581,7 +581,7 @@ td {
 .gwt-ListBox,
 .gwt-DateBox,
 .stroom-DropDownTree,
-.stroom-input,
+.stroom-control,
 select option,
 textarea,
 input,
@@ -600,7 +600,7 @@ input[type="file"] {
 .gwt-ListBox:disabled,
 .gwt-DateBox:disabled,
 .stroom-DropDownTree:disabled,
-.stroom-input:disabled,
+.stroom-control:disabled,
 select option:disabled,
 textarea:disabled,
 input:disabled,
@@ -625,12 +625,6 @@ input[type="file"]:disabled {
   background: var(--control__background-color) !important;
   color: var(--control__text-color);
 }
-
-/*
-.stroom-content {
-	background-color: var(--main-background-color);
-}
-*/
 
 .gwt-ListBox {
 	/* Hide drop down arrow on Firefox */

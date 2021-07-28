@@ -2,10 +2,10 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui">
   <g:MySplitLayoutPanel styleName="max">
     <g:north size="400">
-      <g:SimplePanel ui:field="jobList" styleName="max stroom-content stroom-border-bottom" />
+      <g:SimplePanel ui:field="jobList" styleName="max stroom-border-bottom" />
     </g:north>
     <g:center>
-      <g:SimplePanel ui:field="jobNodeList" styleName="max stroom-content stroom-border-top stroom-border-bottom" />
+      <g:SimplePanel ui:field="jobNodeList" styleName="max stroom-border-top stroom-border-bottom" />
     </g:center>
   </g:MySplitLayoutPanel>
 </ui:UiBinder>

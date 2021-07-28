@@ -61,6 +61,9 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
 
         cellTable.setSelectionModel(selectionModel, null);
         cellTable.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.ENABLED);
+        // We need to set this to prevent default keyboard behaviour.
+        cellTable.setKeyboardSelectionHandler(event -> {
+        });
         cellTable.getRowContainer().getStyle().setCursor(Cursor.POINTER);
 
         widget = scrollPanel;
@@ -68,11 +71,6 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
 
     @Override
     public HandlerRegistration bind() {
-        // We need to set this to prevent default keyboard behaviour.
-        cellTable.setKeyboardSelectionHandler(e -> {
-//            GWT.log("KSH: " + e.getNativeEvent().getType() + " " + e.getValue());
-        });
-
         return cellTable.addCellPreviewHandler(e -> {
             final NativeEvent nativeEvent = e.getNativeEvent();
             final String type = nativeEvent.getType();

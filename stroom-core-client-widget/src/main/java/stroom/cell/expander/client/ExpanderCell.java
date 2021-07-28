@@ -16,6 +16,7 @@
 
 package stroom.cell.expander.client;
 
+import stroom.svg.client.SvgImages;
 import stroom.util.shared.Expander;
 
 import com.google.gwt.cell.client.AbstractCell;
@@ -82,19 +83,19 @@ public class ExpanderCell extends AbstractCell<Expander> {
             final int padding = depth * 10;
             final SafeStyles style = SafeStylesUtils.fromTrustedString("padding-left:" + padding + "px;");
             String className = "";
-            SafeHtml icon = null;
 
+            SafeHtml expanderIcon;
             if (value.isLeaf()) {
-                icon = template.icon("expanderCell-expanderIcon explorerCell-treeLeaf");
+                expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_DOT);
             } else if (value.isExpanded()) {
-                icon = template.icon("expanderCell-expanderIcon explorerCell-treeOpen");
-                className = "expanderCell-active";
+                expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_ARROW_DOWN);
+                className = " expanderCell-active";
             } else {
-                icon = template.icon("expanderCell-expanderIcon explorerCell-treeClosed");
-                className = "expanderCell-active";
+                expanderIcon = SafeHtmlUtils.fromTrustedString(SvgImages.MONO_ARROW_RIGHT);
+                className = " expanderCell-active";
             }
 
-            sb.append(template.outerDiv(className, style, icon));
+            sb.append(template.expander("expanderCell-expanderIcon" + className, style, expanderIcon));
 
         } else {
             sb.append(SafeHtmlUtils.fromSafeConstant("<br/>"));
@@ -104,9 +105,6 @@ public class ExpanderCell extends AbstractCell<Expander> {
     interface Template extends SafeHtmlTemplates {
 
         @Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
-        SafeHtml outerDiv(String className, SafeStyles style, SafeHtml icon);
-
-        @Template("<div class=\"{0}\"></div>")
-        SafeHtml icon(String iconClass);
+        SafeHtml expander(String iconClass, SafeStyles styles, SafeHtml icon);
     }
 }

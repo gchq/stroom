@@ -3433,6 +3433,14 @@ public class SvgImages {
             "</svg>\n" +
             "";
 
+    public static String MONO_DOT = "" +
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1427.7665\" height=\"1427.7665\" vie" +
+            "wBox=\"0 0 1427.7665 1427.7665\">\n" +
+            "    <circle style=\"fill:currentColor\" cx=\"713.88324\" cy=\"713.88324\" r=\"400\"/>\n" +
+            "</svg>\n" +
+            "";
+
     public static String MONO_DOUBLE_ARROW = "" +
             "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1656.0414\" height=\"1430.6364\" vie" +

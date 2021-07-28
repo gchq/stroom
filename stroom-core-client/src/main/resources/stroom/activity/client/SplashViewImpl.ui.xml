@@ -18,7 +18,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
     <!-- Add a focus panel as the root so we can catch all keyboard events. -->
-    <g:ScrollPanel styleName="max default-min-sizes stroom-content stroom-border" ui:field="scrollPanel">
+    <g:ScrollPanel styleName="max default-min-sizes stroom-border" ui:field="scrollPanel">
         <g:HTML ui:field="html" styleName="splashViewImpl-content"/>
     </g:ScrollPanel>
 </ui:UiBinder>

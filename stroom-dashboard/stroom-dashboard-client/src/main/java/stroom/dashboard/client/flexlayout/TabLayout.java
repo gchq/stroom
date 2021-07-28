@@ -16,7 +16,6 @@
 
 package stroom.dashboard.client.flexlayout;
 
-import stroom.core.client.StroomStyleNames;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.shared.DashboardConfig.TabVisibility;
 import stroom.dashboard.shared.TabConfig;
@@ -67,7 +66,7 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
         panel.add(contentOuter);
 
         final FlowPanel contentInner = new FlowPanel();
-        contentInner.setStyleName("tabLayout-contentInner" + " " + StroomStyleNames.STROOM_CONTENT);
+        contentInner.setStyleName("tabLayout-contentInner");
         contentOuter.add(contentInner);
 
         final FlowPanel barOuter = new FlowPanel();
