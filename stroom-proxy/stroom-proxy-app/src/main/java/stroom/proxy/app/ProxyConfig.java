@@ -7,30 +7,19 @@ import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.LogStreamConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.proxy.repo.ProxyRepoFileScannerConfig;
-import stroom.util.io.PathConfig;
+import stroom.util.shared.IsProxyConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.dropwizard.client.JerseyClientConfiguration;
 
-@JsonPropertyOrder({
-        "path",
-        "receiptPolicy",
-        "repository",
-        "scanner",
-        "aggregator",
-        "forwarder",
-        "logStream",
-        "contentDir",
-        "contentSync",
-        "useDefaultOpenIdCredentials",
-        "feedStatus",
-        "jerseyClient"
-})
-public class ProxyConfig {
+import javax.inject.Singleton;
 
-    private PathConfig pathConfig = new PathConfig();
+@Singleton
+@JsonPropertyOrder(alphabetic = true)
+public class ProxyConfig implements IsProxyConfig {
+
+    private ProxyPathConfig pathConfig = new ProxyPathConfig();
     private ReceiptPolicyConfig receiptPolicyConfig = new ReceiptPolicyConfig();
     private ProxyRepoConfig proxyRepoConfig = new ProxyRepoConfig();
     private ProxyRepoFileScannerConfig proxyRepoFileScannerConfig = new ProxyRepoFileScannerConfig();
@@ -41,14 +30,15 @@ public class ProxyConfig {
     private ContentSyncConfig contentSyncConfig = new ContentSyncConfig();
     private boolean useDefaultOpenIdCredentials = true;
     private FeedStatusConfig feedStatusConfig = new FeedStatusConfig();
-    private JerseyClientConfiguration jerseyClientConfig = new JerseyClientConfiguration();
+    private RestClientConfig restClientConfig = new RestClientConfig();
 
     @JsonProperty("path")
-    public PathConfig getPathConfig() {
+    public ProxyPathConfig getProxyPathConfig() {
         return pathConfig;
     }
 
-    public void setPathConfig(final PathConfig pathConfig) {
+    @SuppressWarnings("unused")
+    public void setProxyPathConfig(final ProxyPathConfig pathConfig) {
         this.pathConfig = pathConfig;
     }
 
@@ -151,13 +141,13 @@ public class ProxyConfig {
         this.feedStatusConfig = feedStatusConfig;
     }
 
-    @JsonProperty("jerseyClient")
-    public JerseyClientConfiguration getJerseyClientConfiguration() {
-        return jerseyClientConfig;
+    @JsonProperty("restClient")
+    public RestClientConfig getRestClientConfig() {
+        return restClientConfig;
     }
 
-    @JsonProperty("jerseyClient")
-    public void setJerseyClientConfiguration(final JerseyClientConfiguration jerseyClientConfig) {
-        this.jerseyClientConfig = jerseyClientConfig;
+    @JsonProperty("restClient")
+    public void setRestClientConfig(final RestClientConfig restClientConfig) {
+        this.restClientConfig = restClientConfig;
     }
 }

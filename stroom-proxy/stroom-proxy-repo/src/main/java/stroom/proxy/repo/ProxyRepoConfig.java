@@ -2,6 +2,7 @@ package stroom.proxy.repo;
 
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.config.annotations.RequiresRestart.RestartScope;
+import stroom.util.shared.IsProxyConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -11,16 +12,8 @@ import java.time.Duration;
 import javax.inject.Singleton;
 
 @Singleton
-@JsonPropertyOrder({
-        "storingEnabled",
-        "repoDir",
-        "dbDir",
-        "format",
-        "cleanupFrequency",
-        "lockDeleteAge",
-        "dirCleanDelay"
-})
-public class ProxyRepoConfig implements RepoConfig {
+@JsonPropertyOrder(alphabetic = true)
+public class ProxyRepoConfig implements RepoConfig, IsProxyConfig {
 
     private boolean storingEnabled = false;
     private String repoDir = "repo";

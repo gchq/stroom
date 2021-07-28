@@ -61,7 +61,7 @@ run_migrations() {
 
   # Set up the JVM heap dump options if not already set
   # shellcheck disable=SC2153
-  local java_opts="${JAVA_OPTS}"
+  local java_opts="${JAVA_OPTS:- -Xms50m -Xmx2g}"
   if [[ ! "${java_opts}" =~ -XX:\+HeapDumpOnOutOfMemoryError ]]; then
     java_opts="${java_opts} -XX:+HeapDumpOnOutOfMemoryError"
   fi

@@ -1,18 +1,16 @@
 package stroom.proxy.app.forwarder;
 
 import stroom.util.cert.SSLConfig;
+import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsProxyConfig;
+import stroom.util.shared.NotInjectableConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({
-        "forwardUrl",
-        "forwardTimeoutMs",
-        "forwardDelayMs",
-        "forwardChunkSize",
-        "sslConfig"
-})
-public class ForwardDestinationConfig {
+@JsonPropertyOrder(alphabetic = true)
+@NotInjectableConfig
+public class ForwardDestinationConfig extends AbstractConfig implements IsProxyConfig {
 
     private String forwardUrl;
     private Integer forwardTimeoutMs = 30000;

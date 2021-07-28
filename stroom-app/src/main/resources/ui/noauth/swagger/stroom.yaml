@@ -11018,8 +11018,6 @@ components:
           $ref: '#/components/schemas/SplashConfig'
         theme:
           $ref: '#/components/schemas/ThemeConfig'
-        url:
-          $ref: '#/components/schemas/UrlConfig'
         welcomeHtml:
           type: string
     UpdateAccountRequest:
@@ -11063,15 +11061,6 @@ components:
         metaData:
           type: string
         streamTypeName:
-          type: string
-    UrlConfig:
-      type: object
-      properties:
-        apiKeys:
-          type: string
-        changepassword:
-          type: string
-        users:
           type: string
     UrlResponse:
       type: object

@@ -48,6 +48,7 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathCreator;
 import stroom.util.io.StreamUtil;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;

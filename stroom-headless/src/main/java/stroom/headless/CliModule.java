@@ -36,7 +36,9 @@ import stroom.util.entityevent.EntityEventBus;
 import stroom.util.io.BasicStreamCloser;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.HomeDirProviderImpl;
+import stroom.util.io.PathConfig;
 import stroom.util.io.StreamCloser;
+import stroom.util.io.StroomPathConfig;
 import stroom.util.io.TempDirProvider;
 import stroom.util.io.TempDirProviderImpl;
 import stroom.util.pipeline.scope.PipelineScopeModule;
@@ -101,6 +103,7 @@ public class CliModule extends AbstractModule {
         bind(InternalStatisticsReceiver.class).to(HeadlessInternalStatisticsReceiver.class);
         bind(StreamCloser.class).to(BasicStreamCloser.class).in(PipelineScoped.class);
 
+        bind(PathConfig.class).to(StroomPathConfig.class);
         bind(HomeDirProvider.class).to(HomeDirProviderImpl.class);
         bind(TempDirProvider.class).to(TempDirProviderImpl.class);
     }

@@ -24,7 +24,10 @@ public class ProxyAggregationConfig extends AbstractConfig implements RepoConfig
 
     @Override
     @JsonProperty
-    @JsonPropertyDescription("Tee location of a proxy repository that we want to aggregate data from")
+    @JsonPropertyDescription("The location of a proxy repository that we want to aggregate data from. " +
+            "Typically this directory " +
+            "will belong to the stroom-proxy that is populating the repository in it. If the value is a " +
+            "relative path then it will be treated as being relative to stroom.path.home.")
     public String getRepoDir() {
         return repoDir;
     }

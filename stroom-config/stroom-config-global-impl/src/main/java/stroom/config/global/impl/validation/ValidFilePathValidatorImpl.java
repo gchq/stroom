@@ -32,14 +32,15 @@ public class ValidFilePathValidatorImpl implements ValidFilePathValidator {
      * This method can be accessed concurrently, thread-safety must be ensured
      * by the implementation.
      *
-     * @param value   object to validate
+     * @param fileStr object to validate
      * @param context context in which the constraint is evaluated
      * @return {@code false} if {@code value} does not pass the constraint
      */
     @Override
-    public boolean isValid(final String value, final ConstraintValidatorContext context) {
-        if (value != null) {
-            return Files.isRegularFile(Path.of(value));
+    public boolean isValid(final String fileStr, final ConstraintValidatorContext context) {
+        if (fileStr != null) {
+            final Path file = Path.of(fileStr);
+            return Files.isRegularFile(file) && Files.isReadable(file);
         } else {
             return true;
         }

@@ -75,8 +75,8 @@ logging:
 proxyConfig:
 
   path:
-    home: "~/.stroom-proxy"
-    temp: "/tmp/stroom-proxy"
+    home: "~/.stroom-proxy/v7"
+    temp: "/tmp/stroom-proxy/v7"
 
   # If you want to use a receipt policy then the RuleSet must exist
   # in Stroom and have the UUID as specified below in receiptPolicyUuid
@@ -134,7 +134,7 @@ proxyConfig:
   feedStatus:
     url: "https://localhost/api/feedStatus/v1"
 
-  jerseyClient:
+  restClient:
     timeout: 500ms
     connectionTimeout: 500ms
     timeToLive: 1h
@@ -143,7 +143,7 @@ proxyConfig:
     maxConnectionsPerRoute: 1024
     keepAlive: 0ms
     retries: 0
-#    userAgent: Stroom-Proxy (Jersey)
+    #    userAgent: Stroom-Proxy (Jersey)
     tls:
       protocol: TLSv1.2
       verifyHostname: true
@@ -154,8 +154,8 @@ proxyConfig:
       trustStorePassword: password
       trustStoreType: JKS
       trustSelfSignedCertificates: false
-#      supportedProtocols:
-#        - TLSv1.1
-#        - TLSv1.2
-#      supportedCipherSuites:
-#        - TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256
+  #      supportedProtocols:
+  #        - TLSv1.1
+  #        - TLSv1.2
+  #      supportedCipherSuites:
+  #        - TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256

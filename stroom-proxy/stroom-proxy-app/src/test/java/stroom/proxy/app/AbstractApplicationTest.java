@@ -38,7 +38,7 @@ public abstract class AbstractApplicationTest {
                 .forEach(forwardDestinationConfig -> forwardDestinationConfig.setSslConfig(null));
 
         config.getProxyConfig()
-                .getJerseyClientConfiguration()
+                .getRestClientConfig()
                 .setTlsConfiguration(null);
     }
 

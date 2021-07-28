@@ -23,6 +23,7 @@ import stroom.app.commands.ResetPasswordCommand;
 import stroom.app.guice.AppModule;
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
+import stroom.config.app.SuperDevUtil;
 import stroom.config.app.YamlUtil;
 import stroom.config.global.impl.ConfigMapper;
 import stroom.config.global.impl.validation.ConfigValidator;
@@ -36,7 +37,6 @@ import stroom.dropwizard.common.SessionListeners;
 import stroom.dropwizard.common.StroomConfigurationSourceProvider;
 import stroom.event.logging.rs.api.RestResourceAutoLogger;
 import stroom.security.impl.AuthenticationConfig;
-import stroom.security.impl.ContentSecurityConfig;
 import stroom.util.ColouredStringBuilder;
 import stroom.util.ConsoleColour;
 import stroom.util.date.DateUtil;
@@ -80,10 +80,8 @@ public class App extends Application<Config> {
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
 
     private static final String APP_NAME = "Stroom";
-    private static final String GWT_SUPER_DEV_SYSTEM_PROP_NAME = "gwtSuperDevMode";
     public static final String SESSION_COOKIE_NAME = "STROOM_SESSION_ID";
     private static final boolean SUPER_DEV_AUTHENTICATION_REQUIRED_VALUE = false;
-    private static final String SUPER_DEV_CONTENT_SECURITY_POLICY_VALUE = "";
 
     @Inject
     private HealthChecks healthChecks;
@@ -143,7 +141,8 @@ public class App extends Application<Config> {
         // This allows us to use templating in the YAML configuration.
         bootstrap.setConfigurationSourceProvider(
                 new StroomConfigurationSourceProvider(
-                        new SubstitutingSourceProvider(bootstrap.getConfigurationSourceProvider(),
+                        new SubstitutingSourceProvider(
+                                bootstrap.getConfigurationSourceProvider(),
                                 new EnvironmentVariableSubstitutor(false))
                 )
         );
@@ -202,8 +201,8 @@ public class App extends Application<Config> {
                         LoggingFeature.Verbosity.PAYLOAD_ANY,
                         LoggingFeature.DEFAULT_MAX_ENTITY_SIZE));
 
-        // Check if we are running GWT Super Dev Mode
-        checkForSuperDev(configuration.getAppConfig());
+        // Check if we are running GWT Super Dev Mode, if so relax security
+        SuperDevUtil.relaxSecurityInSuperDevMode(configuration.getAppConfig());
 
         // Add useful logging setup.
         registerLogConfiguration(environment);
@@ -315,7 +314,7 @@ public class App extends Application<Config> {
 
         if (result.hasErrors() && appConfig.isHaltBootOnConfigValidationFailure()) {
             LOGGER.error("Application configuration is invalid. Stopping Stroom. To run Stroom with invalid " +
-                            "configuration, set {} to false. This is not advised!",
+                            "configuration, set {} to false, however this is not advised!",
                     appConfig.getFullPath(AppConfig.PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE));
             System.exit(1);
         }
@@ -363,33 +362,6 @@ public class App extends Application<Config> {
         environment.admin().addTask(new LogConfigurationTask());
     }
 
-    @SuppressWarnings("checkstyle:LineLength")
-    private void checkForSuperDev(final AppConfig appConfig) {
-        // If sys prop gwtSuperDevMode=true then override other config props
-        // i.e. use a run configuration with arg '-DgwtSuperDevMode=true'
-        if (Boolean.getBoolean(GWT_SUPER_DEV_SYSTEM_PROP_NAME)) {
-            LOGGER.warn("" + ConsoleColour.red(
-                    "" +
-                            "\n                                      _                                  _      " +
-                            "\n                                     | |                                | |     " +
-                            "\n      ___ _   _ _ __   ___ _ __    __| | _____   __  _ __ ___   ___   __| | ___ " +
-                            "\n     / __| | | | '_ \\ / _ \\ '__|  / _` |/ _ \\ \\ / / | '_ ` _ \\ / _ \\ / _` |/ _ \\" +
-                            "\n     \\__ \\ |_| | |_) |  __/ |    | (_| |  __/\\ V /  | | | | | | (_) | (_| |  __/" +
-                            "\n     |___/\\__,_| .__/ \\___|_|     \\__,_|\\___| \\_/   |_| |_| |_|\\___/ \\__,_|\\___|" +
-                            "\n               | |                                                              " +
-                            "\n               |_|                                                              " +
-                            "\n"));
-
-//            disableAuthentication(appConfig);
-
-            // Super Dev Mode isn't compatible with HTTPS so ensure cookies are not secure.
-            appConfig.getSessionCookieConfig().setSecure(false);
-
-            // The standard content security policy is incompatible with GWT super dev mode
-            disableContentSecurity(appConfig);
-        }
-    }
-
     private void disableAuthentication(final AppConfig appConfig) {
         LOGGER.warn("\n" + ConsoleColour.red(
                 "" +
@@ -412,20 +384,6 @@ public class App extends Application<Config> {
 
         LOGGER.warn(msg);
         authenticationConfig.setAuthenticationRequired(SUPER_DEV_AUTHENTICATION_REQUIRED_VALUE);
-    }
-
-    private void disableContentSecurity(final AppConfig appConfig) {
-        final ContentSecurityConfig contentSecurityConfig = appConfig.getSecurityConfig().getContentSecurityConfig();
-        final String msg = new ColouredStringBuilder()
-                .appendRed("In GWT Super Dev Mode, overriding ")
-                .appendCyan(ContentSecurityConfig.PROP_NAME_CONTENT_SECURITY_POLICY)
-                .appendRed(" to [")
-                .appendCyan(SUPER_DEV_CONTENT_SECURITY_POLICY_VALUE)
-                .appendRed("] in appConfig")
-                .toString();
-
-        LOGGER.warn(msg);
-        contentSecurityConfig.setContentSecurityPolicy(SUPER_DEV_CONTENT_SECURITY_POLICY_VALUE);
     }
 
     private Injector createValidationInjector() {

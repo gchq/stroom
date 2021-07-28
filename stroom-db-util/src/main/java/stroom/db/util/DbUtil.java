@@ -29,13 +29,13 @@ public class DbUtil {
 
     public static void validate(final ConnectionConfig connectionConfig) {
         Preconditions.checkNotNull(connectionConfig.getClassName(),
-                "The JDBC driver class has not been supplied");
+                "The JDBC driver class has not been supplied. %s", connectionConfig);
         Preconditions.checkNotNull(connectionConfig.getUrl(),
-                "The JDBC URL has not been supplied");
+                "The JDBC URL has not been supplied. %s", connectionConfig);
         Preconditions.checkNotNull(connectionConfig.getUser(),
-                "The JDBC username has not been supplied");
+                "The JDBC username has not been supplied. %s", connectionConfig);
         Preconditions.checkNotNull(connectionConfig.getPassword(),
-                "The JDBC password has not been supplied");
+                "The JDBC password has not been supplied. %s", connectionConfig);
 
         try {
             Class.forName(connectionConfig.getClassName());

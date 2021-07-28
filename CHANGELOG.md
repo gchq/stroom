@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2343** : The OIDC back channel `redirect_uri` now uses the same URI stored when making the front channel request.
+
+* Issue **gchq/stroom-resources#104** : Expose `stroom.ui.helpUrl` in the config.yml so the docs served by nginx can be accessed.
+
+* Issue **#2331** : Remove unused config properties `stroom.ui.url.(apiKeys|changepassword|users)`.
+
+Improve error handling during reference data initialisation.
+
+* Improve exception handling when node name is not configured.
+
+* Fixed issue where annotation menu button did not show when existing annotation was selected.
+
+* Fix problem with merging DB connection configs when values not supplied.
+
+* Make relative proxy file paths be relative to configured proxy home directory.
+
+* Make proxy logger file paths support `~` and relative paths be relative to proxy home.
+
+* Remove redundant items from stroom and proxy distribution config yaml files.
+
+* Rename `jerseyClient` key in proxy config.yml to `restClient`.
+
+* Add `remotecertexpiry` to the default config value for `proxyConfig.logStream.metaKeys`.
+
 * Added layout density user preference.
 
 * Issue **#2288** : Added export content menu item.

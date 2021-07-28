@@ -36,7 +36,7 @@ import stroom.searchable.impl.SearchableConfig;
 import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
-import stroom.util.io.PathConfig;
+import stroom.util.io.StroomPathConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.validation.ValidationSeverity;
 
@@ -125,7 +125,7 @@ public class AppConfig extends AbstractConfig {
     private LifecycleConfig lifecycleConfig = new LifecycleConfig();
     private NodeConfig nodeConfig = new NodeConfig();
     private NodeUriConfig nodeUri = new NodeUriConfig();
-    private PathConfig pathConfig = new PathConfig();
+    private StroomPathConfig pathConfig = new StroomPathConfig();
     private PipelineConfig pipelineConfig = new PipelineConfig();
     private ProcessorConfig processorConfig = new ProcessorConfig();
     private PropertyServiceConfig propertyServiceConfig = new PropertyServiceConfig();
@@ -402,12 +402,12 @@ public class AppConfig extends AbstractConfig {
     }
 
     @JsonProperty(PROP_NAME_PATH)
-    public PathConfig getPathConfig() {
+    public StroomPathConfig getPathConfig() {
         return pathConfig;
     }
 
     @SuppressWarnings("unused")
-    public void setPathConfig(final PathConfig pathConfig) {
+    public void setPathConfig(final StroomPathConfig pathConfig) {
         this.pathConfig = pathConfig;
     }
 

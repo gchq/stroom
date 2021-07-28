@@ -33,31 +33,22 @@ public class ApiKeysPlugin extends NodeToolsPlugin {
                     .onSuccess(result -> {
                         final IconMenuItem apiKeysMenuItem;
                         final Preset icon = SvgPresets.KEY;
-                        final String apiKeysUi = result.getUrl().getApiKeys();
-                        if (apiKeysUi != null && apiKeysUi.trim().length() > 0) {
-                            apiKeysMenuItem = new IconMenuItem(5, icon, null, "API Keys", null, true, () -> {
-                                postMessage("manageTokens");
-
-//                                final Hyperlink hyperlink = new Builder()
-//                                        .text("API Keys")
-//                                        .href(apiKeysUi)
-//                                        .type(HyperlinkType.TAB + "|API Keys")
-//                                        .icon(icon)
-//                                        .build();
-//                                HyperlinkEvent.fire(this, hyperlink);
-                            });
-                        } else {
-                            apiKeysMenuItem = new IconMenuItem(5,
-                                    icon,
-                                    icon,
-                                    "API Keys is not configured!",
-                                    null,
-                                    false,
-                                    null);
-                        }
+                        apiKeysMenuItem = new IconMenuItem(
+                                5,
+                                icon,
+                                null,
+                                "API Keys",
+                                null,
+                                true,
+                                () ->
+                                        postMessage("manageTokens"));
                         event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, apiKeysMenuItem);
                     })
-                    .onFailure(caught -> AlertEvent.fireError(ApiKeysPlugin.this, caught.getMessage(), null));
+                    .onFailure(caught ->
+                            AlertEvent.fireError(
+                                    ApiKeysPlugin.this,
+                                    caught.getMessage(),
+                                    null));
         }
     }
 }

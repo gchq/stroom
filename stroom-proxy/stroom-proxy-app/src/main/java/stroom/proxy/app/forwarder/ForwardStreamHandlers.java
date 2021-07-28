@@ -2,7 +2,6 @@ package stroom.proxy.app.forwarder;
 
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
-import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.proxy.repo.LogStream;
 import stroom.receive.common.StreamHandler;

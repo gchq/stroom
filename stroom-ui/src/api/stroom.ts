@@ -3392,7 +3392,6 @@ export interface UiConfig {
   source?: SourceConfig;
   splash?: SplashConfig;
   theme?: ThemeConfig;
-  url?: UrlConfig;
   welcomeHtml?: string;
 }
 
@@ -3416,12 +3415,6 @@ export interface UploadDataRequest {
   key?: ResourceKey;
   metaData?: string;
   streamTypeName?: string;
-}
-
-export interface UrlConfig {
-  apiKeys?: string;
-  changepassword?: string;
-  users?: string;
 }
 
 export interface UrlResponse {

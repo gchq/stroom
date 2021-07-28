@@ -36,28 +36,15 @@ public class ChangePasswordPlugin extends Plugin {
                 .onSuccess(result -> {
                     final IconMenuItem changePasswordMenuItem;
                     final Preset icon = SvgPresets.PASSWORD;
-                    final String changePasswordUiUrl = result.getUrl().getChangepassword();
-                    if (changePasswordUiUrl != null && changePasswordUiUrl.trim().length() > 0) {
-                        changePasswordMenuItem = new IconMenuItem(5, icon, null, "Change password", null, true, () -> {
-//                            final Hyperlink hyperlink = new Builder()
-//                                    .text("Change password")
-//                                    .href(changePasswordUiUrl)
-//                                    .type(HyperlinkType.TAB + "|Change password")
-//                                    .icon(icon)
-//                                    .build();
-//                            HyperlinkEvent.fire(this, hyperlink);
-                            postMessage("changePassword");
-
-                        });
-                    } else {
-                        changePasswordMenuItem = new IconMenuItem(5,
-                                icon,
-                                icon,
-                                "'Change Password' is not configured!",
-                                null,
-                                false,
-                                null);
-                    }
+                    changePasswordMenuItem = new IconMenuItem(
+                            5,
+                            icon,
+                            null,
+                            "Change password",
+                            null,
+                            true,
+                            () ->
+                                    postMessage("changePassword"));
 
                     event.getMenuItems().addMenuItem(MenuKeys.USER_MENU, changePasswordMenuItem);
                 })

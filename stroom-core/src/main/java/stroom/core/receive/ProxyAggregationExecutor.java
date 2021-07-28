@@ -117,6 +117,22 @@ public class ProxyAggregationExecutor {
         }
     }
 
+//    private String getAbsoluteProxyDir(final String proxyDir) {
+//        if (proxyDir == null) {
+//            return null;
+//        } else {
+//            // handle any things like ${stroom.home} or turn relative paths into absolute
+//            // paths based on the stroom home location.
+//            // This dir is normally owned by stroom-proxy as it writes to it and we
+//            // consume from it
+//            // It could be theoretically be something like
+//            // ../../stroom-proxy/stroom-proxy-vX.Y.Z/repo
+//            String absoluteProxyDir = pathCreator.replaceSystemProperties(proxyDir);
+//            absoluteProxyDir = pathCreator.makeAbsolute(absoluteProxyDir);
+//            return absoluteProxyDir;
+//        }
+//    }
+
     public void exec() {
         exec(false, false);
     }

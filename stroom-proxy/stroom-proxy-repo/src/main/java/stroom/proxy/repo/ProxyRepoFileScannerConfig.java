@@ -1,5 +1,7 @@
 package stroom.proxy.repo;
 
+import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsProxyConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -9,11 +11,8 @@ import java.time.Duration;
 import javax.inject.Singleton;
 
 @Singleton
-@JsonPropertyOrder({
-        "scanningEnabled",
-        "scanFrequency"
-})
-public class ProxyRepoFileScannerConfig {
+@JsonPropertyOrder(alphabetic = true)
+public class ProxyRepoFileScannerConfig extends AbstractConfig implements IsProxyConfig {
 
     private boolean scanningEnabled;
     private StroomDuration scanFrequency = StroomDuration.of(Duration.ofSeconds(10));

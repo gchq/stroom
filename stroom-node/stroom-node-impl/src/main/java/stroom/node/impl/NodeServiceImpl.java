@@ -275,25 +275,29 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
     }
 
     private synchronized void refreshNode() {
-        // Ensure the DB node record has the right endpoint url
-        thisNode = nodeDao.getNode(nodeInfo.getThisNodeName());
 
+        final String nodeName = nodeInfo.getThisNodeName();
+        if (nodeName == null || nodeName.isEmpty()) {
+            throw new RuntimeException("Node name is not configured");
+        }
+        // See if we have a node record in the DB, we won't on first boot
+        thisNode = nodeDao.getNode(nodeName);
+
+        // Get the node endpoint URL from config or determine it
         final String endpointUrl = uriFactory.nodeUri("").toString();
         if (thisNode == null) {
             // This will start a new mini transaction to create the node record
             final Node node = new Node();
-            node.setName(nodeInfo.getThisNodeName());
+            node.setName(nodeName);
             node.setUrl(endpointUrl);
             LOGGER.info("Creating node record for {} with endpoint url {}",
                     node.getName(), node.getUrl());
             thisNode = nodeDao.create(node);
-
-        } else {
-            if (!endpointUrl.equals(thisNode.getUrl())) {
-                thisNode.setUrl(endpointUrl);
-                LOGGER.info("Updating node endpoint url to {} for node {}", endpointUrl, thisNode.getName());
-                update(thisNode);
-            }
+        } else if (!endpointUrl.equals(thisNode.getUrl())) {
+            // Endpoint URL in the DB is out of date so update it
+            thisNode.setUrl(endpointUrl);
+            LOGGER.info("Updating node endpoint url to {} for node {}", endpointUrl, thisNode.getName());
+            update(thisNode);
         }
     }
 

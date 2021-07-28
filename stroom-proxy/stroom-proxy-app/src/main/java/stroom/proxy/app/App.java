@@ -75,11 +75,10 @@ public class App extends Application<Config> {
     public void initialize(final Bootstrap<Config> bootstrap) {
         // This allows us to use templating in the YAML configuration.
         bootstrap.setConfigurationSourceProvider(
-                new StroomConfigurationSourceProvider(
-                        new SubstitutingSourceProvider(bootstrap.getConfigurationSourceProvider(),
-                                new EnvironmentVariableSubstitutor(false))
-                )
-        );
+                new ProxyConfigurationSourceProvider(
+                        new SubstitutingSourceProvider(
+                                bootstrap.getConfigurationSourceProvider(),
+                                new EnvironmentVariableSubstitutor(false))));
     }
 
     @Override

@@ -1,19 +1,13 @@
 package stroom.util.cert;
 
+import stroom.util.shared.IsProxyConfig;
+import stroom.util.shared.NotInjectableConfig;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({
-        "keyStorePath",
-        "keyStoreType",
-        "keyStorePassword",
-        "trustStorePath",
-        "trustStoreType",
-        "trustStorePassword",
-        "isHostnameVerificationEnabled",
-        "sslProtocol"
-})
-public class SSLConfig {
+@NotInjectableConfig
+public class SSLConfig implements IsProxyConfig {
 
     private String keyStorePath;
     private String keyStoreType = "JKS";

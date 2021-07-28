@@ -2,6 +2,7 @@ package stroom.config.global.impl;
 
 import stroom.config.app.AppConfig;
 import stroom.config.app.ConfigLocation;
+import stroom.config.app.SuperDevUtil;
 import stroom.config.app.YamlUtil;
 import stroom.config.global.impl.validation.ConfigValidator;
 import stroom.util.HasHealthCheck;
@@ -141,10 +142,10 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
                         if (event == null) {
                             LOGGER.debug("Event is null");
                         } else {
-                            String name = event.kind() != null
+                            final String name = event.kind() != null
                                     ? event.kind().name()
                                     : "kind==null";
-                            String type = event.kind() != null
+                            final String type = event.kind() != null
                                     ? event.kind().type().getSimpleName()
                                     : "kind==null";
                             LOGGER.debug("Dir watch event {}, {}, {}", name, type, event.context());
@@ -213,6 +214,9 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
         try {
             LOGGER.info("Reading updated config file");
             newAppConfig = YamlUtil.readAppConfig(configFile);
+
+            // Check if we are running GWT Super Dev Mode, if so relax security
+            SuperDevUtil.relaxSecurityInSuperDevMode(newAppConfig);
 
             final ConfigValidator.Result result = validateNewConfig(newAppConfig);
 

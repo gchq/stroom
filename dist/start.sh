@@ -117,7 +117,7 @@ start_stroom() {
 
   # Set up the JVM heap dump options if not already set
   # shellcheck disable=SC2153
-  local java_opts="${JAVA_OPTS}"
+  local java_opts="${JAVA_OPTS:- -Xms50m -Xmx2g}"
   if [[ ! "${java_opts}" =~ -XX:\+HeapDumpOnOutOfMemoryError ]]; then
     java_opts="${java_opts} -XX:+HeapDumpOnOutOfMemoryError"
   fi
@@ -166,9 +166,9 @@ start_stroom() {
     # Tail the log files in the background
     tail -F "${path_to_start_log}" "${path_to_app_log}" 2>/dev/null &
 
-    # STROOM_ADMIN_PORT is exported in scripts.env
+    # ADMIN_(PORT|PATH) are exported in scripts.env
     wait_for_200_response \
-      "http://localhost:${STROOM_ADMIN_PORT}/stroomAdmin/healthcheck"
+      "http://localhost:${ADMIN_PORT}/${ADMIN_PATH}/healthcheck"
 
     kill_log_tailing
 
@@ -283,4 +283,5 @@ main() {
 }
 
 main "$@"
-# vim:sw=2:ts=2:et:
+
+# vim: set tabstop=2 shiftwidth=2 expandtab:

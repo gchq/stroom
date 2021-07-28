@@ -1,6 +1,7 @@
 package stroom.proxy.repo;
 
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.time.StroomDuration;
 
@@ -13,14 +14,8 @@ import java.time.Duration;
 import javax.inject.Singleton;
 
 @Singleton
-@JsonPropertyOrder({
-        "enabled",
-        "maxItemsPerAggregate",
-        "maxUncompressedByteSize",
-        "maxAggregateAge",
-        "aggregationFrequency"
-})
-public class AggregatorConfig extends AbstractConfig {
+@JsonPropertyOrder(alphabetic = true)
+public class AggregatorConfig extends AbstractConfig implements IsProxyConfig {
 
     private boolean enabled = true;
     private int maxItemsPerAggregate = 1000;
