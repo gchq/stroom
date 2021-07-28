@@ -17,8 +17,8 @@
 
 package stroom.entity.client.view;
 
-import stroom.widget.popup.client.presenter.HideUiHandlers;
 import stroom.entity.client.presenter.NameDocumentView;
+import stroom.widget.popup.client.presenter.HideUiHandlers;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.KeyDownEvent;

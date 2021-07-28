@@ -18,9 +18,9 @@
 package stroom.entity.client.view;
 
 import stroom.entity.client.presenter.CreateDocumentPresenter.CreateDocumentView;
-import stroom.widget.popup.client.presenter.HideUiHandlers;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.item.client.ItemListBox;
+import stroom.widget.popup.client.presenter.HideUiHandlers;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.KeyDownEvent;
