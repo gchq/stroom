@@ -168,11 +168,9 @@ public class TaskManagerListPresenter
      * Add the columns to the table.
      */
     private void initTableColumns() {
-        final TickBoxCell.MarginAppearance tickBoxAppearance = GWT.create(TickBoxCell.MarginAppearance.class);
-
         // Select Column
         final Column<TaskProgress, TickBoxState> column = new Column<TaskProgress, TickBoxState>(
-                TickBoxCell.create(tickBoxAppearance, false, false)) {
+                TickBoxCell.create(false, false)) {
             @Override
             public TickBoxState getValue(final TaskProgress object) {
                 return TickBoxState.fromBoolean(selectedTaskProgress.contains(object));

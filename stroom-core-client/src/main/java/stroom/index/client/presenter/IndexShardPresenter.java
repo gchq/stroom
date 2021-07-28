@@ -166,11 +166,9 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     }
 
     private void addSelectedColumn() {
-        final TickBoxCell.MarginAppearance tickBoxAppearance = GWT.create(TickBoxCell.MarginAppearance.class);
-
         // Select Column
         final Column<IndexShard, TickBoxState> column = new Column<IndexShard, TickBoxState>(
-                TickBoxCell.create(tickBoxAppearance, false, false)) {
+                TickBoxCell.create(false, false)) {
             @Override
             public TickBoxState getValue(final IndexShard indexShard) {
                 final boolean match = selectionCriteria.getIndexShardIdSet().isMatch(indexShard.getId());
@@ -178,9 +176,8 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
             }
 
         };
-        final Header<TickBoxState> header = new Header<TickBoxState>(TickBoxCell.create(tickBoxAppearance,
-                false,
-                false)) {
+        final Header<TickBoxState> header = new Header<TickBoxState>(
+                TickBoxCell.create(false, false)) {
             @Override
             public TickBoxState getValue() {
                 if (selectionCriteria.getIndexShardIdSet().isMatchAll()) {

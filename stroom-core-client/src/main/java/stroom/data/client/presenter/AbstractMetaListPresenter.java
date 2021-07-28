@@ -236,11 +236,9 @@ public abstract class AbstractMetaListPresenter
     protected abstract void addColumns(boolean allowSelectAll);
 
     void addSelectedColumn(final boolean allowSelectAll) {
-        final TickBoxCell.MarginAppearance tickBoxAppearance = GWT.create(TickBoxCell.MarginAppearance.class);
-
         // Select Column
         final Column<MetaRow, TickBoxState> column = new Column<MetaRow, TickBoxState>(
-                TickBoxCell.create(tickBoxAppearance, false, false)) {
+                TickBoxCell.create(false, false)) {
             @Override
             public TickBoxState getValue(final MetaRow object) {
                 return TickBoxState.fromBoolean(selection.isMatch(object.getMeta().getId()));
@@ -248,7 +246,7 @@ public abstract class AbstractMetaListPresenter
         };
         if (allowSelectAll) {
             final Header<TickBoxState> header = new Header<TickBoxState>(
-                    TickBoxCell.create(tickBoxAppearance, false, false)) {
+                    TickBoxCell.create(false, false)) {
                 @Override
                 public TickBoxState getValue() {
                     if (selection.isMatchAll()) {

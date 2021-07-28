@@ -253,11 +253,4 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
             super("tickBox-noBorder");
         }
     }
-
-    public static class MarginAppearance extends DefaultAppearance {
-
-        public MarginAppearance() {
-            super("tickBoxCell-margin");
-        }
-    }
 }

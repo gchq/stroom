@@ -51,7 +51,6 @@ import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import stroom.widget.tooltip.client.presenter.TooltipUtil.Builder;
 
 import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.shared.GWT;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.client.ui.Widget;
@@ -193,11 +192,10 @@ public class ImportConfigConfirmPresenter extends
     }
 
     private void addSelectedColumn() {
-        final TickBoxCell.MarginAppearance tickBoxAppearance = GWT.create(TickBoxCell.MarginAppearance.class);
 
         // Select Column
         final Column<ImportState, TickBoxState> column = new Column<ImportState, TickBoxState>(
-                TickBoxCell.create(tickBoxAppearance, false, false)) {
+                TickBoxCell.create(false, false)) {
             @Override
             public TickBoxState getValue(final ImportState object) {
                 final Severity severity = object.getSeverity();
@@ -208,9 +206,8 @@ public class ImportConfigConfirmPresenter extends
                 return TickBoxState.fromBoolean(object.isAction());
             }
         };
-        final Header<TickBoxState> header = new Header<TickBoxState>(TickBoxCell.create(tickBoxAppearance,
-                false,
-                false)) {
+        final Header<TickBoxState> header = new Header<TickBoxState>(
+                TickBoxCell.create(false, false)) {
             @Override
             public TickBoxState getValue() {
                 return getHeaderState();
