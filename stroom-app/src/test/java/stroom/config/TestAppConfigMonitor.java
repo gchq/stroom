@@ -8,6 +8,7 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.config.AbstractFileChangeMonitor;
 import stroom.util.config.AppConfigValidator;
 import stroom.util.config.ConfigLocation;
+import stroom.util.io.FileUtil;
 import stroom.util.logging.LogUtil;
 
 import org.assertj.core.api.Assertions;
@@ -59,11 +60,11 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
         final AppConfig appConfig = YamlUtil.readAppConfig(devYamlCopyPath);
 
         // Create the dirs so validation doesn't fail
-        final Path tempDir = Path.of(appConfig.getPathConfig().getTemp());
+        final Path tempDir = Path.of(FileUtil.replaceHome(appConfig.getPathConfig().getTemp()));
         LOGGER.info("Ensuring temp directory {}", tempDir.toAbsolutePath().normalize());
         Files.createDirectories(tempDir);
 
-        final Path homeDir = Path.of(appConfig.getPathConfig().getHome());
+        final Path homeDir = Path.of(FileUtil.replaceHome(appConfig.getPathConfig().getHome()));
         LOGGER.info("Ensuring home directory {}", homeDir.toAbsolutePath().normalize());
         Files.createDirectories(homeDir);
 
