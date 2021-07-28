@@ -55,7 +55,8 @@ public class ValidFilePathValidatorImpl implements ValidFilePathValidator {
         final boolean isValid;
         if (file != null) {
             // Use the PathCreator so we can interpret relative paths and paths with '~' in.
-            final String modifiedFile = pathCreator.makeAbsolute(pathCreator.replaceSystemProperties(file));
+            final String modifiedFile = pathCreator.makeAbsolute(
+                    pathCreator.replaceSystemProperties(file));
 
             LOGGER.debug("Validating file {} (modified to {})", file, modifiedFile);
             final Path path = Path.of(modifiedFile);

@@ -8,7 +8,6 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.config.AbstractFileChangeMonitor;
 import stroom.util.config.AppConfigValidator;
 import stroom.util.config.ConfigLocation;
-import stroom.util.io.FileUtil;
 import stroom.util.logging.LogUtil;
 
 import org.assertj.core.api.Assertions;
@@ -60,8 +59,13 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
         final AppConfig appConfig = YamlUtil.readAppConfig(devYamlCopyPath);
 
         // Create the dirs so validation doesn't fail
-        Files.createDirectories(Path.of(appConfig.getPathConfig().getTemp()));
-        Files.createDirectories(Path.of(appConfig.getPathConfig().getHome()));
+        final Path tempDir = Path.of(appConfig.getPathConfig().getTemp());
+        LOGGER.info("Ensuring temp directory {}", tempDir.toAbsolutePath().normalize());
+        Files.createDirectories(tempDir);
+
+        final Path homeDir = Path.of(appConfig.getPathConfig().getHome());
+        LOGGER.info("Ensuring home directory {}", homeDir.toAbsolutePath().normalize());
+        Files.createDirectories(homeDir);
 
         final ConfigLocation configLocation = new ConfigLocation(devYamlCopyPath);
         final AppConfigValidator appConfigValidator = new AppConfigValidator(validator);
@@ -94,12 +98,19 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
     private void doFileUpdateTest(final Path devYamlCopyPath,
                                   final AppConfig appConfig) throws IOException, InterruptedException {
 
-        final String newPathValue = FileUtil.getCanonicalPath(Files.createTempDirectory("test"));
+        final Path newPath = Files.createTempDirectory("test")
+                .toAbsolutePath()
+                .normalize();
+        final String newPathStr = newPath.toString();
+
+        Assertions.assertThat(newPath)
+                .isDirectory();
+
         LOGGER.info("---------------------------------------------------------------");
-        LOGGER.info("Updating value in file to {}", newPathValue);
+        LOGGER.info("Updating value in file to {}", newPathStr);
 
         Assertions.assertThat(appConfig.getPathConfig().getTemp())
-                .isNotEqualTo(newPathValue);
+                .isNotEqualTo(newPathStr);
 
         final Pattern pattern = Pattern.compile("temp:\\s*\"[^\"]+\"");
         final String devYamlStr = Files.readString(devYamlCopyPath);
@@ -133,7 +144,7 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
 
         // Update the config file with our new value
         final String updatedDevYamlStr = pattern.matcher(devYamlStr)
-                .replaceAll("temp: \"" + newPathValue + "\"");
+                .replaceAll("temp: \"" + newPathStr + "\"");
 
         // Ensure the replace worked by compare old file content to new
         Assertions.assertThat(updatedDevYamlStr).isNotEqualTo(devYamlStr);
@@ -148,7 +159,7 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
         // Now keep checking if the appConfig has been updated, or we timeout
         Instant startTime = Instant.now();
         Instant timeOutTime = startTime.plusSeconds(10);
-        while (!appConfig.getPathConfig().getTemp().equals(newPathValue)
+        while (!appConfig.getPathConfig().getTemp().equals(newPathStr)
                 && Instant.now().isBefore(timeOutTime)) {
 
             LOGGER.debug("value {}", appConfig.getPathConfig().getTemp());
@@ -156,8 +167,8 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
         }
 
         Assertions.assertThat(appConfig.getPathConfig().getTemp())
-                .isEqualTo(newPathValue);
+                .isEqualTo(newPathStr);
 
-        Files.deleteIfExists(Path.of(newPathValue));
+        Files.deleteIfExists(Path.of(newPathStr));
     }
 }

@@ -52,6 +52,7 @@ public class ValidDirectoryPathValidatorImpl implements ValidDirectoryPathValida
      */
     @Override
     public boolean isValid(final String dir, final ConstraintValidatorContext context) {
+        final boolean isValid;
         if (dir != null) {
             // Ideally here we would call PathCreator.replaceSystemProperties() and .makeAbsolute()
             // but PathCreator needs to know the
@@ -59,13 +60,25 @@ public class ValidDirectoryPathValidatorImpl implements ValidDirectoryPathValida
 //            final String modifiedDir = FileUtil.replaceHome(dir);
 
             // Use the PathCreator so we can interpret relative paths and paths with '~' in.
-            final String modifiedDir = pathCreator.makeAbsolute(pathCreator.replaceSystemProperties(dir));
+            final String modifiedDir = pathCreator.makeAbsolute(
+                    pathCreator.replaceSystemProperties(dir));
 
             LOGGER.debug("Validating dir {} (modified to {})", dir, modifiedDir);
-
-            return Files.isDirectory(Path.of(modifiedDir));
+            final Path path = Path.of(modifiedDir);
+            isValid = Files.isDirectory(path) && Files.isReadable(path);
+            if (!isValid) {
+                String msg = context.getDefaultConstraintMessageTemplate();
+                if (!modifiedDir.equals(dir)) {
+                    msg += " (as absolute path: [" + modifiedDir + "]";
+                }
+                context.disableDefaultConstraintViolation();
+                context
+                        .buildConstraintViolationWithTemplate(msg)
+                        .addConstraintViolation();
+            }
         } else {
-            return true;
+            isValid = true;
         }
+        return isValid;
     }
 }
