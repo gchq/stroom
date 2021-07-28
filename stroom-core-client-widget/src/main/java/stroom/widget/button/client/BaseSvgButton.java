@@ -168,23 +168,29 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
             final char keyCode = (char) event.getKeyCode();
             switch (type) {
                 case Event.ONKEYDOWN:
-                    if (keyCode == ' ') {
-                        isFocusing = true;
-                        onClickStart();
-                    }
-                    break;
-                case Event.ONKEYUP:
-                    if (isFocusing && keyCode == ' ') {
-                        isFocusing = false;
+                    if (keyCode == ' ' || keyCode == '\n' || keyCode == '\r') {
                         onClick();
                     }
                     break;
-                case Event.ONKEYPRESS:
-                    if (keyCode == '\n' || keyCode == '\r') {
-                        onClickStart();
-                        onClick();
-                    }
-                    break;
+
+//                case Event.ONKEYDOWN:
+//                    if (keyCode == ' ') {
+//                        isFocusing = true;
+//                        onClickStart();
+//                    }
+//                    break;
+//                case Event.ONKEYUP:
+//                    if (isFocusing && keyCode == ' ') {
+//                        isFocusing = false;
+//                        onClick();
+//                    }
+//                    break;
+//                case Event.ONKEYPRESS:
+//                    if (keyCode == '\n' || keyCode == '\r') {
+//                        onClickStart();
+//                        onClick();
+//                    }
+//                    break;
                 default:
                     // Ignore events we don't care about
             }

@@ -148,7 +148,6 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
                     @Override
                     public void onHide(final boolean autoClose, final boolean ok) {
                         consumer.accept(dirty);
-                        restoreFocus();
                     }
                 });
     }

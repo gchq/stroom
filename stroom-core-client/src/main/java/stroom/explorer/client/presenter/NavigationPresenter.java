@@ -38,7 +38,6 @@ import stroom.svg.client.Preset;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
 import stroom.widget.button.client.SvgButton;
-import stroom.widget.menu.client.presenter.CurrentFocus;
 import stroom.widget.menu.client.presenter.HasChildren;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItems;
@@ -48,7 +47,6 @@ import stroom.widget.tab.client.event.MaximiseEvent;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -64,9 +62,7 @@ import com.gwtplatform.mvp.client.proxy.Proxy;
 import com.gwtplatform.mvp.client.proxy.RevealContentEvent;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class NavigationPresenter
         extends
@@ -87,11 +83,9 @@ public class NavigationPresenter
     private final MenuItems menuItems;
     private final List<Item> currentMenuItems = new ArrayList<>();
 
-    private final Map<Item, List<Item>> allItems = new HashMap<>();
-
-    private SvgButton add;
-    private SvgButton delete;
-    private SvgButton filter;
+    private final SvgButton add;
+    private final SvgButton delete;
+    private final SvgButton filter;
 
 
 //    private LayerContainerImpl explorer;
@@ -123,6 +117,21 @@ public class NavigationPresenter
         this.documentTypeCache = documentTypeCache;
         this.typeFilterPresenter = typeFilterPresenter;
         this.currentActivity = currentActivity;
+
+        add = SvgButton.create(new Preset("navigation-header-button navigation-header-button-add",
+                "New",
+                false));
+        delete = SvgButton.create(new Preset("navigation-header-button navigation-header-button-delete",
+                "Delete",
+                false));
+        filter = SvgButton.create(new Preset("navigation-header-button navigation-header-button-filter",
+                "Filter",
+                true));
+        final FlowPanel buttons = getView().getButtonContainer();
+        buttons.setStyleName("navigation-header-buttons");
+        buttons.add(add);
+        buttons.add(delete);
+        buttons.add(filter);
 
         view.setUiHandlers(this);
 
@@ -166,6 +175,13 @@ public class NavigationPresenter
     @Override
     protected void onBind() {
         super.onBind();
+
+        registerHandler(add.addClickHandler((e) ->
+                newItem(add.getElement())));
+        registerHandler(delete.addClickHandler((e) ->
+                deleteItem()));
+        registerHandler(filter.addClickHandler((e) ->
+                showTypeFilter(filter.getElement())));
 
         // Register for refresh events.
         registerHandler(getEventBus().addHandler(RefreshExplorerTreeEvent.getType(), this));
@@ -218,7 +234,6 @@ public class NavigationPresenter
     }
 
     public void newItem(final Element element) {
-        CurrentFocus.push();
         final int x = element.getAbsoluteLeft() - 1;
         final int y = element.getAbsoluteTop() + element.getOffsetHeight() + 1;
         final PopupPosition popupPosition = new PopupPosition(x, y);
@@ -243,7 +258,6 @@ public class NavigationPresenter
 
     @Override
     public void showMenu(final NativeEvent event, final Element target) {
-        CurrentFocus.push();
         final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft(),
                 target.getAbsoluteBottom() + 10);
         showMenuItems(
@@ -264,9 +278,7 @@ public class NavigationPresenter
         }
     }
 
-    public void showTypeFilter(final MouseDownEvent event) {
-        final Element target = event.getNativeEvent().getEventTarget().cast();
-        CurrentFocus.push();
+    public void showTypeFilter(final Element target) {
         typeFilterPresenter.show(target);
     }
 
@@ -355,7 +367,6 @@ public class NavigationPresenter
     @Override
     protected void revealInParent() {
         explorerTree.getTreeModel().refresh();
-        createButtons();
         getView().setNavigationWidget(explorerTree);
         RevealContentEvent.fire(this, MainPresenter.EXPLORER, this);
     }
@@ -477,28 +488,6 @@ public class NavigationPresenter
 //
 //        getView().setNavigationWidget(flowPanel);
 //    }
-
-    private void createButtons() {
-        add = SvgButton.create(new Preset("navigation-header-button navigation-header-button-add",
-                "New",
-                false));
-        delete = SvgButton.create(new Preset("navigation-header-button navigation-header-button-delete",
-                "Delete",
-                false));
-        filter = SvgButton.create(new Preset("navigation-header-button navigation-header-button-filter",
-                "Filter",
-                true));
-
-        add.addMouseDownHandler(e -> newItem(add.getElement()));
-        delete.addMouseDownHandler(e -> deleteItem());
-        filter.addMouseDownHandler(this::showTypeFilter);
-
-        final FlowPanel buttons = getView().getButtonContainer();
-        buttons.setStyleName("navigation-header-buttons");
-        buttons.add(add);
-        buttons.add(delete);
-        buttons.add(filter);
-    }
 
     @ProxyCodeSplit
     public interface NavigationProxy extends Proxy<NavigationPresenter> {

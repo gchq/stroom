@@ -293,7 +293,6 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
         final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(schedulePresenter) {
             @Override
             public void onHide(final boolean autoClose, final boolean ok) {
-                restoreFocus();
                 if (ok) {
                     final String schedule = schedulePresenter.getScheduleString();
                     jobNode.setSchedule(schedule);

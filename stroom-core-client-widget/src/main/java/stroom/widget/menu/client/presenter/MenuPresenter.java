@@ -144,11 +144,10 @@ public class MenuPresenter
     @Override
     public void execute(final MenuItem menuItem) {
         if (menuItem != null && menuItem.getCommand() != null) {
-            hideAll(false, false);
-            CurrentFocus.retain();
             TaskStartEvent.fire(MenuPresenter.this);
             Scheduler.get().scheduleDeferred(() -> {
                 try {
+                    hideAll(false, false);
                     menuItem.getCommand().execute();
                 } finally {
                     TaskEndEvent.fire(MenuPresenter.this);

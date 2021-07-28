@@ -84,7 +84,6 @@ import stroom.util.shared.RandomId;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.Version;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.menu.client.presenter.CurrentFocus;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItem;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -370,7 +369,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             }
 
             final com.google.gwt.dom.client.Element target = event.getNativeEvent().getEventTarget().cast();
-            CurrentFocus.push();
             final PopupPosition popupPosition = new PopupPosition(
                     target.getAbsoluteLeft() - 3,
                     target.getAbsoluteTop() + target.getClientHeight() + 1);

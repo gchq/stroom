@@ -162,7 +162,6 @@ public class SelectUserPresenter extends MyPresenterWidget<UserListView> impleme
         final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(this) {
             @Override
             public void onHide(boolean autoClose, boolean ok) {
-                restoreFocus();
                 if (ok) {
                     final String selected = getSelected();
                     if (selected != null) {

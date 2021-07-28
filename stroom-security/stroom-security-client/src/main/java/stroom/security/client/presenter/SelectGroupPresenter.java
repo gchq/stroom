@@ -80,7 +80,6 @@ public class SelectGroupPresenter extends AbstractDataUserListPresenter {
         popupUiHandlers = new DefaultPopupUiHandlers(this) {
             @Override
             public void onHide(boolean autoClose, boolean ok) {
-                restoreFocus();
                 if (ok) {
                     final User selected = getSelectionModel().getSelected();
                     if (selected != null) {

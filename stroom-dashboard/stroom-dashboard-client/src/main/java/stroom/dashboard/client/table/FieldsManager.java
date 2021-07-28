@@ -24,7 +24,6 @@ import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
-import stroom.widget.menu.client.presenter.CurrentFocus;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -105,11 +104,6 @@ public class FieldsManager implements HeadingListener {
                         }
                         final Element e = element;
 
-                        CurrentFocus.push(() -> {
-                            busy = false;
-                            currentColIndex = -1;
-                            e.focus();
-                        });
                         final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft(),
                                 target.getAbsoluteRight(),
                                 target.getAbsoluteTop(),

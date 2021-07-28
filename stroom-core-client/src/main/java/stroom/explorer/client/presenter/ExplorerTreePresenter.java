@@ -35,7 +35,6 @@ import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
-import stroom.widget.menu.client.presenter.CurrentFocus;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.util.client.SelectionType;
@@ -176,7 +175,6 @@ public class ExplorerTreePresenter
         final Element element = event.getEventTarget().cast();
         final int x = element.getAbsoluteLeft() - 1;
         final int y = element.getAbsoluteTop() + element.getOffsetHeight() + 1;
-        CurrentFocus.push();
         final PopupPosition popupPosition = new PopupPosition(x, y);
         ShowNewMenuEvent.fire(this, element, popupPosition);
     }
@@ -196,7 +194,6 @@ public class ExplorerTreePresenter
     @Override
     public void showTypeFilter(final NativeEvent event) {
         final Element target = event.getEventTarget().cast();
-        CurrentFocus.push();
         typeFilterPresenter.show(target);
     }
 

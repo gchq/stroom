@@ -68,16 +68,19 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
         arrowImage.setClassName("navigation-arrow-image");
         arrowImage.setInnerHTML(SvgImages.MONO_ARROW_DOWN);
 
-        final Element div = DOM.createDiv();
-        div.setClassName("navigation-menu-content");
-        div.setTabIndex(-1);
-        div.appendChild(logoImage);
-        div.appendChild(arrowImage);
+        final Element menuContent = DOM.createDiv();
+        menuContent.setClassName("navigation-menu-content");
+        menuContent.setTabIndex(-1);
+        menuContent.appendChild(logoImage);
+        menuContent.appendChild(arrowImage);
 
-        logo.getElement().appendChild(div);
+        logo.getElement().appendChild(menuContent);
 
-//        logo.getElement().setInnerHTML(SvgImage.MONO_LOGO);
-        menu.getElement().setInnerHTML(SvgImages.MONO_MENU);
+        final Element menuContent2 = DOM.createDiv();
+        menuContent2.setClassName("navigation-menu-content");
+        menuContent2.setTabIndex(-1);
+        menuContent2.setInnerHTML(SvgImages.MONO_MENU);
+        menu.getElement().appendChild(menuContent2);
 
         uiConfigCache.get()
                 .onSuccess(uiConfig ->

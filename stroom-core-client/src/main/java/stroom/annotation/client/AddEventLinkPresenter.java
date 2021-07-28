@@ -47,6 +47,7 @@ public class AddEventLinkPresenter extends MyPresenterWidget<AddEventLinkView> {
         popupUiHandlers = new DefaultPopupUiHandlers(this) {
             @Override
             public void onShow() {
+                super.onShow();
                 getView().focus();
             }
 

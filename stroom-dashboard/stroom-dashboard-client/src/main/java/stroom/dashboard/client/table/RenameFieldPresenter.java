@@ -50,6 +50,7 @@ public class RenameFieldPresenter extends MyPresenterWidget<RenameFieldPresenter
         popupUiHandlers = new DefaultPopupUiHandlers(this) {
             @Override
             public void onShow() {
+                super.onShow();
                 getView().focus();
             }
 

@@ -54,7 +54,6 @@ public class GroupEditPresenter extends MyPresenterWidget<UserGroupEditView> {
         final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(this) {
             @Override
             public void onHide(final boolean autoClose, final boolean ok) {
-                restoreFocus();
                 closeRunnable.run();
             }
         };

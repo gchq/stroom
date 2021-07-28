@@ -41,6 +41,7 @@ public class Menu {
             final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(menuPresenter) {
                 @Override
                 public void onShow() {
+                    super.onShow();
                     menuPresenter.selectFirstItem(true);
                 }
 
@@ -48,10 +49,6 @@ public class Menu {
                 public void onHide(final boolean autoClose, final boolean ok) {
                     menuPresenter = null;
                     currentItems = null;
-
-                    if (autoClose) {
-                        restoreFocus();
-                    }
                 }
             };
 

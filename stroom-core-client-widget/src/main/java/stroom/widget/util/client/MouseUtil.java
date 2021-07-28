@@ -1,5 +1,6 @@
 package stroom.widget.util.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.MouseEvent;
 

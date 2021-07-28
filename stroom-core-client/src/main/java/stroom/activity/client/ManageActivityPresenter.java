@@ -208,7 +208,6 @@ public class ManageActivityPresenter extends
 
             @Override
             public void onHide(final boolean autoClose, final boolean ok) {
-                restoreFocus();
                 final Activity activity = getSelected();
                 currentActivity.setActivity(activity);
                 consumer.accept(getSelected());

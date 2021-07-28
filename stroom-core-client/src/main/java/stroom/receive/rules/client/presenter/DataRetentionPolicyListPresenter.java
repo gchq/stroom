@@ -25,7 +25,6 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.svg.client.Preset;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.menu.client.presenter.CurrentFocus;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -118,7 +117,6 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGrid
     }
 
     private void showActionMenu(final DataRetentionRule row, final NativeEvent event) {
-        CurrentFocus.push(() -> getWidget().getElement().focus());
         final PopupPosition popupPosition = new PopupPosition(event.getClientX() + 10, event.getClientY());
         final List<Item> items = actionMenuItemProvider.apply(row);
         ShowMenuEvent.fire(this, items, popupPosition);

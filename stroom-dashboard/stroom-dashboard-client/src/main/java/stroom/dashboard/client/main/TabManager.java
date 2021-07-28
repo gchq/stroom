@@ -23,7 +23,6 @@ import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
 import stroom.svg.client.SvgPresets;
-import stroom.widget.menu.client.presenter.CurrentFocus;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -76,7 +75,6 @@ public class TabManager {
                 @Override
                 public void run() {
                     final Element target = tabWidget.getElement();
-                    CurrentFocus.push(() -> tabWidget.getElement().focus());
                     final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft(),
                             target.getAbsoluteRight(), target.getAbsoluteTop(), target.getAbsoluteBottom(), null,
                             VerticalLocation.BELOW);

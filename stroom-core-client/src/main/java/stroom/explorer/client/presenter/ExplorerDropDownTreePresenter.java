@@ -64,6 +64,7 @@ class ExplorerDropDownTreePresenter
         popupUiHandlers = new DefaultPopupUiHandlers(this) {
             @Override
             public void onShow() {
+                super.onShow();
                 explorerTree.setFocus(true);
             }
 

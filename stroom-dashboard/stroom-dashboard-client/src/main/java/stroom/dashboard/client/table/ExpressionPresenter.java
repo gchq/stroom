@@ -30,7 +30,6 @@ import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.menu.client.presenter.CurrentFocus;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.menu.client.presenter.SimpleMenuItem;
@@ -116,6 +115,8 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         popupUiHandlers = new DefaultPopupUiHandlers(tablePresenter) {
             @Override
             public void onShow() {
+                super.onShow();
+
                 Scheduler.get().scheduleDeferred(editorPresenter::focus);
 
                 // If this is done without the scheduler then we get weired behaviour when you click
@@ -161,7 +162,6 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
             @Override
             public void onHide(final boolean autoClose, final boolean ok) {
                 editorPresenter.deRegisterCompletionProviders();
-                restoreFocus();
             }
         };
     }
@@ -308,7 +308,6 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     public void showMenu(final ClickEvent event, final List<Item> menuItems) {
         if (MouseUtil.isPrimary(event)) {
             final com.google.gwt.dom.client.Element target = event.getNativeEvent().getEventTarget().cast();
-            CurrentFocus.push();
             final PopupPosition popupPosition = new PopupPosition(
                     target.getAbsoluteLeft() - 3,
                     target.getAbsoluteTop() + target.getClientHeight() + 1);

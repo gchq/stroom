@@ -50,7 +50,6 @@ import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.RandomId;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.menu.client.presenter.CurrentFocus;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.menu.client.presenter.SimpleMenuItem;
@@ -167,7 +166,6 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     private void onAdd(final ClickEvent event) {
         final com.google.gwt.dom.client.Element target = event.getNativeEvent().getEventTarget().cast();
 
-        CurrentFocus.push();
         final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft() - 3,
                 target.getAbsoluteTop() + target.getClientHeight() + 1);
 

@@ -247,7 +247,6 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
             public void onHide(final boolean autoClose, final boolean ok) {
                 handlerRegistration.removeHandler();
                 presenter.close();
-                restoreFocus();
             }
         };
 

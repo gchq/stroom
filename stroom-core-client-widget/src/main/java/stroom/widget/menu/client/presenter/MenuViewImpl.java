@@ -59,7 +59,7 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
         cellTable.addColumn(iconColumn);
         cellTable.setSkipRowHoverCheck(true);
 
-        cellTable.setSelectionModel(selectionModel);
+        cellTable.setSelectionModel(selectionModel, null);
         cellTable.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.ENABLED);
         cellTable.getRowContainer().getStyle().setCursor(Cursor.POINTER);
 

@@ -24,7 +24,6 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNode.NodeState;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.util.shared.EqualsUtil;
-import stroom.widget.menu.client.presenter.CurrentFocus;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.spinner.client.SpinnerSmall;
 import stroom.widget.util.client.DoubleSelectTester;
@@ -252,7 +251,6 @@ public abstract class AbstractExplorerTree extends Composite {
 
             cellTable.setKeyboardSelectedRow(row, true);
             Scheduler.get().scheduleDeferred(() -> {
-                CurrentFocus.push(() -> cellTable.setKeyboardSelectedRow(row, true));
                 ShowExplorerMenuEvent.fire(
                         AbstractExplorerTree.this,
                         selectionModel,

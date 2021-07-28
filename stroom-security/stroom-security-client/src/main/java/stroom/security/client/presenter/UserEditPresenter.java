@@ -62,7 +62,6 @@ public class UserEditPresenter extends MyPresenterWidget<UserEditView>
         final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(this) {
             @Override
             public void onHide(final boolean autoClose, final boolean ok) {
-                restoreFocus();
                 closeRunnable.run();
             }
         };

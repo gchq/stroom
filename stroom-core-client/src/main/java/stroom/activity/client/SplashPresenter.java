@@ -88,7 +88,6 @@ public class SplashPresenter extends MyPresenterWidget<SplashPresenter.SplashVie
 
                     @Override
                     public void onHide(final boolean autoClose, final boolean ok) {
-                        restoreFocus();
                         if (!ok) {
                             LogoutEvent.fire(SplashPresenter.this);
                         }

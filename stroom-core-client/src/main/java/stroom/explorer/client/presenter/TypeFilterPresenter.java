@@ -82,6 +82,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
         popupUiHandlers = new DefaultPopupUiHandlers(this) {
             @Override
             public void onShow() {
+                super.onShow();
                 selectFirstItem();
             }
         };
@@ -102,7 +103,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
         cellTable.addColumn(getTickBoxColumn());
         cellTable.setSkipRowHoverCheck(true);
 
-        cellTable.setSelectionModel(selectionModel);
+        cellTable.setSelectionModel(selectionModel, null);
         cellTable.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.ENABLED);
         cellTable.getRowContainer().getStyle().setCursor(Cursor.POINTER);
 
@@ -119,7 +120,6 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
         registerHandler(cellTable.addCellPreviewHandler(e -> {
             final NativeEvent nativeEvent = e.getNativeEvent();
             final String type = nativeEvent.getType();
-
             if ("keydown".equals(type)) {
                 final List<DocumentType> items = cellTable.getVisibleItems();
 
@@ -218,8 +218,10 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
     }
 
     public void execute(final DocumentType documentType) {
-        toggle(documentType);
-        refreshView();
+        if (documentType != null) {
+            toggle(documentType);
+            refreshView();
+        }
     }
 
     public void setData(final List<DocumentType> items) {

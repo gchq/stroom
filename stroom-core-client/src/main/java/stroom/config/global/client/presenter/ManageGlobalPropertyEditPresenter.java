@@ -341,7 +341,6 @@ public final class ManageGlobalPropertyEditPresenter
 
             @Override
             public void onHide(final boolean autoClose, final boolean ok) {
-                restoreFocus();
                 hideRunnable.run();
             }
         };

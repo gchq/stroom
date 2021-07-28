@@ -47,7 +47,6 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.EqualsUtil;
-import stroom.widget.menu.client.presenter.CurrentFocus;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -463,7 +462,6 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
 
     private void showMenu(final ClickEvent event, final List<Item> menuItems) {
         final com.google.gwt.dom.client.Element target = event.getNativeEvent().getEventTarget().cast();
-        CurrentFocus.push(() -> getWidget().getElement().focus());
         final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft() - 3, target.getAbsoluteRight(),
                 target.getAbsoluteTop(), target.getAbsoluteBottom() + 3, null, VerticalLocation.BELOW);
         showMenu(menuItems, popupPosition);

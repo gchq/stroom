@@ -100,6 +100,7 @@ public class PopupSupportImpl implements PopupSupport {
         }
 
         // Attach the popup to the DOM.
+        CurrentFocus.push();
         popupPanel.show();
         // Defer the command to position and make visible because we need the
         // popup to size first.
@@ -281,8 +282,8 @@ public class PopupSupportImpl implements PopupSupport {
         if (popup != null) {
             popup.forceHide(autoClose);
             popup = null;
-
             popupUiHandlers.onHide(autoClose, ok);
+            CurrentFocus.pop();
         }
     }
 

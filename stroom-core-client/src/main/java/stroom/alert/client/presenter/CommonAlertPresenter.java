@@ -45,8 +45,6 @@ public class CommonAlertPresenter extends MyPresenterWidget<CommonAlertPresenter
         popupUiHandlers = new DefaultPopupUiHandlers(this) {
             @Override
             public void onHide(final boolean autoClose, final boolean ok) {
-                restoreFocus();
-
                 try {
                     final CommonAlertEvent<?> event = stack.get(0);
 

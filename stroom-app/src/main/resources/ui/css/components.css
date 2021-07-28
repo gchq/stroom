@@ -1474,6 +1474,7 @@
 
 .focus-without-border:focus-visible:focus {
     border-color: var(--row__border-color--focussed);
+    box-shadow: var(--row__box-shadow--focussed);
 }
 
 .navigation {

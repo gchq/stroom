@@ -72,7 +72,6 @@ public class NameDocumentPresenter extends MyPresenter<NameDocumentView, NameDoc
 
             @Override
             public void onHide(final boolean autoClose, final boolean ok) {
-                restoreFocus();
                 // If there are any more entities that are to be renamed then go through the whole process again.
                 renameNextEntity();
             }

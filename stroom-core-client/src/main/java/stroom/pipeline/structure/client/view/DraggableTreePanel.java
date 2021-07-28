@@ -20,7 +20,6 @@ import stroom.data.grid.client.MouseHelper;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent;
 import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
 import stroom.widget.htree.client.treelayout.util.DefaultTreeForTreeLayout;
-import stroom.widget.menu.client.presenter.CurrentFocus;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.util.client.MouseUtil;
 
@@ -220,7 +219,6 @@ public abstract class DraggableTreePanel<E> extends Composite implements HasCont
     }
 
     private void onContextMenu(final Event event) {
-        CurrentFocus.push();
         final PopupPosition popupPosition = new PopupPosition(event.getClientX(), event.getClientY());
         ContextMenuEvent.fire(this, popupPosition);
     }
