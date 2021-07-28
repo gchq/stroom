@@ -34,6 +34,7 @@ import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.FocusFlowPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -43,6 +44,8 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
 
     private final Widget widget;
 
+    @UiField(provided = true)
+    FocusFlowPanel layout;
     @UiField
     Button logo;
     @UiField
@@ -59,6 +62,12 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
     @Inject
     public NavigationViewImpl(final NavigationViewImpl.Binder binder,
                               final UiConfigCache uiConfigCache) {
+        layout = new FocusFlowPanel() {
+            @Override
+            public void focus() {
+                menu.setFocus(true);
+            }
+        };
         widget = binder.createAndBindUi(this);
 
         final Element logoImage = DOM.createDiv();

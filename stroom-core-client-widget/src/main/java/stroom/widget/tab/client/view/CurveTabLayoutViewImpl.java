@@ -26,6 +26,7 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.FocusFlowPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -36,6 +37,8 @@ public class CurveTabLayoutViewImpl extends ViewWithUiHandlers<CurveTabLayoutUiH
 
     private final Widget widget;
 
+    @UiField(provided = true)
+    FocusFlowPanel layout;
     @UiField
     Button menu;
     @UiField
@@ -47,6 +50,12 @@ public class CurveTabLayoutViewImpl extends ViewWithUiHandlers<CurveTabLayoutUiH
 
     @Inject
     public CurveTabLayoutViewImpl(final Binder binder) {
+        layout = new FocusFlowPanel() {
+            @Override
+            public void focus() {
+                menu.setFocus(true);
+            }
+        };
         widget = binder.createAndBindUi(this);
         menu.getElement().setInnerHTML(SvgImages.MONO_MENU);
     }

@@ -2,7 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:tab="urn:import:stroom.widget.tab.client.view">
-    <g:FlowPanel styleName="curveTabLayoutViewImpl-layout">
+    <g:FocusFlowPanel ui:field="layout" styleName="curveTabLayoutViewImpl-layout">
         <g:FlowPanel ui:field="tabBarContainer"  styleName="tabBarContainer">
             <g:Button ui:field="menu" title="Show Sidebar" styleName="navigation-menu-button focus-without-border"/>
             <g:SimplePanel ui:field="tabBarOuter"
@@ -14,5 +14,5 @@
                        styleName="curveTabLayoutViewImpl-layerContainerOuter">
             <tab:LayerContainerImpl ui:field="layerContainer" styleName="stroom-main-content-container"/>
         </g:SimplePanel>
-    </g:FlowPanel>
+    </g:FocusFlowPanel>
 </ui:UiBinder> 

@@ -25,6 +25,7 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.MySplitLayoutPanel;
 import com.google.gwt.user.client.ui.ResizeLayoutPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -92,15 +93,21 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
 
                 // Clear the split panel.
                 hideSplit();
-
                 maximisedWidget = centerWidget;
+
+                if (maximisedWidget instanceof Focus) {
+                    ((Focus) maximisedWidget).focus();
+                }
             } else {
                 centerWidget.getElement().removeClassName("maximised");
 
                 // Restore the view.
                 showSplit();
-
                 maximisedWidget = null;
+
+                if (westWidget instanceof Focus) {
+                    ((Focus) westWidget).focus();
+                }
             }
 
         } else {
@@ -116,13 +123,19 @@ public class MainViewImpl extends ViewImpl implements MainPresenter.MainView {
 
                 // Clear the split panel.
                 hideSplit();
-
                 maximisedWidget = widget;
+
+                if (maximisedWidget instanceof Focus) {
+                    ((Focus) maximisedWidget).focus();
+                }
             } else {
                 // Restore the view.
                 showSplit();
-
                 maximisedWidget = null;
+
+                if (westWidget instanceof Focus) {
+                    ((Focus) westWidget).focus();
+                }
             }
         }
     }

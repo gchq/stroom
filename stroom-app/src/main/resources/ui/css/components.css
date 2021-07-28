@@ -121,7 +121,8 @@
 }
 */
 .curveTab-keyboardSelected:focus {
-    border-color: rgba(255,255,255,1);
+    border-color: var(--focus-border);
+    box-shadow: var(--focus-shadow);
 }
 
 .curveTab .curveTab-background {
@@ -257,7 +258,8 @@
 }
 */
 .curveTabSelector-keyboardSelected:focus {
-    border-color: rgba(255,255,255,1);
+    border-color: var(--focus-border);
+    box-shadow: var(--focus-shadow);
 }
 
 /* Content. */
@@ -1473,8 +1475,8 @@
 }
 
 .focus-without-border:focus-visible:focus {
-    border-color: var(--row__border-color--focussed);
-    box-shadow: var(--row__box-shadow--focussed);
+    border-color: var(--focus-border);
+    box-shadow: var(--focus-shadow);
 }
 
 .navigation {

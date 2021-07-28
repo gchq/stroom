@@ -2,6 +2,19 @@
  * Vars
  */
 :root {
+    /*
+    --row__border-color--focussed: rgb(77, 82, 80);
+    --row__box-shadow--focussed: inset 0 1px 1px rgba(77, 82, 80, .08), 0 0 8px rgba(77, 82, 80, .6);
+    */
+    --focus-border: var(--blue-500);
+    --focus-shadow: inset 0 1px 1px rgba(var(--black-rgb), .08), 0 0 8px rgba(var(--blue-500-rgb), .6); /* blue-500*/
+    --focus-border--valid: var(--valid);
+    --focus-shadow--valid: inset 0 1px 1px rgba(var(--black-rgb), .08), 0 0 8px rgba(var(--valid-rgb), .6); /* --bootstrap-success*/
+    --focus-border--invalid: var(--invalid);
+    --focus-shadow--invalid: inset 0 1px 1px rgba(var(--black-rgb), .08), 0 0 8px rgba(var(--invalid-rgb), .6); /* --bootstrap-error*/
+    --focus-border--secondary: var(--pink-500);
+    --focus-shadow--secondary: inset 0 1px 1px rgba(var(--black-rgb), .075), 0 0 8px rgba(var(--pink-500-rgb), .6); /* pink-500*/
+
     --text-color: #000;
     --text-color-disabled: #666;
     --app-background-color: #fff;/*#d50101;*/
@@ -20,10 +33,10 @@
     --row__background-color--selected: #bbdefb;
     --row__background-color--selected-hovered: #bbdefb;
     --row__text-color--selected: #000;
-    --row__border-color--focussed: rgba(0, 0, 0, 0.1);
-    --row__box-shadow--focussed: inset 0 1px 1px rgba(var(--black-rgb), .08), 0 0 8px rgba(var(--blue-500-rgb), .6);
-    --row__border-color--selected-focussed: var(--blue-500);
-    --row__box-shadow--selected-focussed: inset 0 1px 1px rgba(var(--black-rgb), .08), 0 0 8px rgba(var(--blue-500-rgb), .6);
+    --row__border-color--focussed: var(--focus-border);
+    --row__box-shadow--focussed: var(--focus-shadow);
+    --row__border-color--selected-focussed: var(--focus-border);
+    --row__box-shadow--selected-focussed: var(--focus-shadow);
 
     --menu-separator-color: #bfbfbf;
 
@@ -199,18 +212,6 @@
     --valid: var(--bootstrap-success);
     --invalid: var(--bootstrap-error);
     --feedback: var(--bootstrap-error);
-
-    --focus-border: var(--blue-500);
-    --focus-shadow: inset 0 1px 1px rgba(var(--black-rgb), .08), 0 0 8px rgba(var(--blue-500-rgb), .6); /* blue-500*/
-
-    --focus-border--valid: var(--valid);
-    --focus-shadow--valid: inset 0 1px 1px rgba(var(--black-rgb), .08), 0 0 8px rgba(var(--valid-rgb), .6); /* --bootstrap-success*/
-
-    --focus-border--invalid: var(--invalid);
-    --focus-shadow--invalid: inset 0 1px 1px rgba(var(--black-rgb), .08), 0 0 8px rgba(var(--invalid-rgb), .6); /* --bootstrap-error*/
-
-    --focus-border--secondary: var(--pink-500);
-    --focus-shadow--secondary: inset 0 1px 1px rgba(var(--black-rgb), .075), 0 0 8px rgba(var(--pink-500-rgb), .6); /* pink-500*/
 }
 
 .stroom-theme-dark {
@@ -232,10 +233,10 @@
     --row__background-color--selected: #0065a7;
     --row__background-color--selected-hovered: #0078c7;
     --row__text-color--selected: #fff;
-    --row__border-color--focussed: rgb(77, 82, 80);
-    --row__box-shadow--focussed: inset 0 1px 1px rgba(77, 82, 80, .08), 0 0 8px rgba(77, 82, 80, .6);
-    --row__border-color--selected-focussed: var(--blue-500);
-    --row__box-shadow--selected-focussed: inset 0 1px 1px rgba(var(--black-rgb), .08), 0 0 8px rgba(var(--blue-500-rgb), .6);
+    --row__border-color--focussed: var(--focus-border);
+    --row__box-shadow--focussed: var(--focus-shadow);
+    --row__border-color--selected-focussed: var(--focus-border);
+    --row__box-shadow--selected-focussed: var(--focus-shadow);
 
     --menu-separator-color: rgb(255 255 255 / 20%);
 
@@ -419,10 +420,10 @@
     --row__background-color--selected: #0065a7;
     --row__background-color--selected-hovered: #0078c7;
     --row__text-color--selected: #fff;
-    --row__border-color--focussed: rgb(77, 82, 80);
-    --row__box-shadow--focussed: inset 0 1px 1px rgba(77, 82, 80, .08), 0 0 8px rgba(77, 82, 80, .6);
-    --row__border-color--selected-focussed: var(--blue-500);
-    --row__box-shadow--selected-focussed: inset 0 1px 1px rgba(var(--black-rgb), .08), 0 0 8px rgba(var(--blue-500-rgb), .6);
+    --row__border-color--focussed: var(--focus-border);
+    --row__box-shadow--focussed: var(--focus-shadow);
+    --row__border-color--selected-focussed: var(--focus-border);
+    --row__box-shadow--selected-focussed: var(--focus-shadow);
 
     --menu-separator-color: rgb(255 255 255 / 20%);
 
