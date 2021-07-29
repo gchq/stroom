@@ -44,8 +44,8 @@ public class CreateApiKeyCommand extends AbstractStroomAccountConfiguredCommand 
     private static final String COMMAND_DESCRIPTION = "Creates an API key for a user in the local identity provider";
 
     private static final String USER_ID_ARG_NAME = "user";
-    private static final String EXPIRY_DAYS_ARG_NAME = "expires-days";
-    private static final String OUTPUT_FILE_PATH_ARG_NAME = "out-file";
+    private static final String EXPIRY_DAYS_ARG_NAME = "expiresDays";
+    private static final String OUTPUT_FILE_PATH_ARG_NAME = "outFile";
 
     private static final String CLI_USER = "Stroom CLI";
 
