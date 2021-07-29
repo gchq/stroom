@@ -69,7 +69,7 @@ public class CreateAccountCommand extends AbstractStroomAccountConfiguredCommand
         subparser.addArgument("-p", "--" + PASSWORD_ARG_NAME)
                 .dest(PASSWORD_ARG_NAME)
                 .type(String.class)
-                .required(true)
+                .required(false)
                 .help("The password for the account");
 
         subparser.addArgument("-e", "--" + EMAIL_ARG_NAME)

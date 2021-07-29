@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2335** : Added CLI command `create_api_key` to create an API key for a specified user.
+
 * Added layout density user preference.
 
 * Issue **#2288** : Added export content menu item.
