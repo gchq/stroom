@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -183,6 +184,9 @@ public class CreateApiKeyCommand extends AbstractStroomAccountConfiguredCommand 
                 BufferedWriter writer = new BufferedWriter(new FileWriter(path));
                 writer.write(token.getData());
                 writer.close();
+
+                final File fileInfo = new File(path);
+                LOGGER.info("Wrote API key for user '{}' to file '{}'", token.getUserId(), fileInfo.getAbsolutePath());
             } catch (IOException e) {
                 LOGGER.error("API key for user '{}' could not be written to file. {}",
                         token.getUserId(), e.getMessage());
