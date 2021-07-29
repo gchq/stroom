@@ -27,6 +27,7 @@ import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -61,7 +62,7 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
         this.appearance = appearance;
         this.dependsOnSelection = dependsOnSelection;
         this.handlesSelection = handlesSelection;
-        this.clickable = consumedEvents.contains("click");
+        this.clickable = consumedEvents.contains("mousedown");
     }
 
     public static TickBoxCell create(final boolean dependsOnSelection, final boolean handlesSelection) {
@@ -80,7 +81,8 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
                                      final boolean clickable) {
         final Set<String> consumedEvents = new HashSet<>();
         if (clickable) {
-            consumedEvents.add("click");
+            consumedEvents.add("mousedown");
+            consumedEvents.add("keydown");
         }
 
         return new TickBoxCell(appearance, dependsOnSelection, handlesSelection, consumedEvents);
@@ -110,11 +112,13 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
             super.onBrowserEvent(context, parent, value, event, valueUpdater);
             final String type = event.getType();
 
-            final Element target = event.getEventTarget().cast();
-            if ("div".equalsIgnoreCase(target.getTagName())
-                    && clickable
-                    && "click".equals(type)
-                    && MouseUtil.isPrimary(event)) {
+            GWT.log(type);
+            if (clickable &&
+                    ("mousedown".equals(type) ||
+                            ("keydown".equals(type) && event.getKeyCode() == KeyCodes.KEY_SPACE)) &&
+                    MouseUtil.isPrimary(event)) {
+                event.preventDefault();
+
                 TickBoxState state = value;
 
                 // Toggle the value if the enter key was pressed and the cell

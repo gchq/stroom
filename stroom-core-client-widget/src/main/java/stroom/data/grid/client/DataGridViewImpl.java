@@ -217,29 +217,6 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
             });
             dataGrid.getRowContainer().getStyle().setCursor(Cursor.POINTER);
 
-
-
-            dataGrid.addCellPreviewHandler(event -> {
-                final NativeEvent nativeEvent = event.getNativeEvent();
-                final String type = nativeEvent.getType();
-            GWT.log("CELL PREVIEW: " + type + " " + event.getValue());
-
-                if ("keydown".equals(type)) {
-                    final int keyCode = nativeEvent.getKeyCode();
-                    switch (keyCode) {
-                        case KeyCodes.KEY_UP:
-                            onUp();
-                            break;
-                        case KeyCodes.KEY_DOWN:
-                            onDown();
-                            break;
-                        case KeyCodes.KEY_ENTER:
-                            onEnter();
-                            break;
-                    }
-                }
-            });
-
         } else {
             selectionModel = null;
             dataGrid.getRowContainer().getStyle().setCursor(Cursor.DEFAULT);
@@ -247,16 +224,6 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
 
         return dataGrid;
     }
-
-
-//    private void selectRow(final int row) {
-//        final List<R> items = dataGrid.getVisibleItems();
-//        if (row >= 0 && row < items.size()) {
-//            final R item = items.get(row);
-//            selectionModel.setSelected(item, true);
-//            dataGrid.setKeyboardSelectedRow(row, true);
-//        }
-//    }
 
     void onUp() {
         final int originalRow = dataGrid.getKeyboardSelectedRow();
@@ -877,7 +844,20 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
             final NativeEvent nativeEvent = event.getNativeEvent();
             final String type = nativeEvent.getType();
 
-            if ("mousedown".equals(type)) {
+            if ("keydown".equals(type)) {
+                final int keyCode = nativeEvent.getKeyCode();
+                switch (keyCode) {
+                    case KeyCodes.KEY_UP:
+                        onUp();
+                        break;
+                    case KeyCodes.KEY_DOWN:
+                        onDown();
+                        break;
+                    case KeyCodes.KEY_ENTER:
+                        onEnter();
+                        break;
+                }
+            } else if ("mousedown".equals(type)) {
                 if (event.getValue() != null) {
                     final List<R> rows = dataGrid.getVisibleItems();
                     final int index = rows.indexOf(event.getValue());

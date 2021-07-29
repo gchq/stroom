@@ -16,6 +16,8 @@
 
 package com.google.gwt.user.client.ui;
 
+import stroom.widget.util.client.MouseUtil;
+
 import com.google.gwt.aria.client.PressedValue;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Document;
@@ -411,7 +413,7 @@ public abstract class MyCustomButton extends ButtonBase {
                 }
                 break;
             case Event.ONMOUSEDOWN:
-                if (event.getButton() == Event.BUTTON_LEFT) {
+                if (MouseUtil.isPrimary(event)) {
                     setFocus(true);
                     onClickStart();
                     DOM.setCapture(getElement());
@@ -424,7 +426,7 @@ public abstract class MyCustomButton extends ButtonBase {
                 if (isCapturing) {
                     isCapturing = false;
                     DOM.releaseCapture(getElement());
-                    if (isHovering() && event.getButton() == Event.BUTTON_LEFT) {
+                    if (isHovering() && MouseUtil.isPrimary(event)) {
                         onClick();
                     }
                 }

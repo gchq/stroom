@@ -17,6 +17,7 @@
 package stroom.widget.button.client;
 
 import stroom.svg.client.Preset;
+import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -102,7 +103,7 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
                 }
                 break;
             case Event.ONMOUSEDOWN:
-                if (event.getButton() == Event.BUTTON_LEFT) {
+                if (MouseUtil.isPrimary(event)) {
                     setFocus(true);
                     onClickStart();
                     DOM.setCapture(getElement());
@@ -115,7 +116,7 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
                 if (isCapturing) {
                     isCapturing = false;
                     DOM.releaseCapture(getElement());
-                    if (event.getButton() == Event.BUTTON_LEFT) {
+                    if (MouseUtil.isPrimary(event)) {
                         onClick();
                     }
                 }

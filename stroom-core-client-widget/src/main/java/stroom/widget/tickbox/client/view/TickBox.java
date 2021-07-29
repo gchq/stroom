@@ -18,6 +18,7 @@ package stroom.widget.tickbox.client.view;
 
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.util.shared.HasBooleanValue;
+import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -163,7 +164,8 @@ public class TickBox extends Composite
     public void onBrowserEvent(final Event event) {
         final Element target = DOM.eventGetTarget(event);
 
-        if (enabled && event.getTypeInt() == Event.ONMOUSEDOWN && event.getButton() == Event.BUTTON_LEFT
+        if (enabled && event.getTypeInt() == Event.ONMOUSEDOWN
+                && MouseUtil.isPrimary(event)
                 && getElement().isOrHasChild(target)) {
             if (state == TickBoxState.TICK) {
                 setValue(TickBoxState.UNTICK, true);

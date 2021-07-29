@@ -18,6 +18,7 @@ package stroom.widget.popup.client.view;
 
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
@@ -266,7 +267,7 @@ public class Dialog extends AbstractPopupPanel {
 
         @Override
         public void onMouseDown(final MouseDownEvent event) {
-            if ((Event.BUTTON_LEFT & event.getNativeButton()) != 0) {
+            if (MouseUtil.isPrimary(event)) {
                 beginDragging(event);
             }
         }
