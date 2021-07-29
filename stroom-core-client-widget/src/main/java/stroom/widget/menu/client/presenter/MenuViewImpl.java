@@ -1,20 +1,16 @@
 package stroom.widget.menu.client.presenter;
 
 import stroom.data.grid.client.DataGridViewImpl;
-import stroom.data.table.client.CellTableViewImpl.DefaultResources;
+import stroom.data.table.client.MyCellTable;
 import stroom.widget.menu.client.presenter.MenuPresenter.MenuView;
 import stroom.widget.util.client.MySingleSelectionModel;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.cellview.client.CellTable;
-import com.google.gwt.user.cellview.client.CellTable.Resources;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -32,11 +28,8 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
     private int mouseOverRow = -1;
 
     public MenuViewImpl() {
-        final Resources resources = GWT.create(DefaultResources.class);
-        cellTable = new CellTable<>(DataGridViewImpl.DEFAULT_LIST_PAGE_SIZE, resources);
-        cellTable.setWidth("100%");
+        cellTable = new MyCellTable<>(DataGridViewImpl.DEFAULT_LIST_PAGE_SIZE);
         cellTable.getElement().setClassName("menuCellTable");
-        cellTable.setLoadingIndicator(null);
 
         // Sink events.
         final int mouseMove = Event.getTypeInt(BrowserEvents.MOUSEMOVE);
@@ -60,11 +53,6 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
         cellTable.setSkipRowHoverCheck(true);
 
         cellTable.setSelectionModel(selectionModel, new MenuSelectionEventManager());
-        cellTable.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.ENABLED);
-        // We need to set this to prevent default keyboard behaviour.
-        cellTable.setKeyboardSelectionHandler(event -> {
-        });
-        cellTable.getRowContainer().getStyle().setCursor(Cursor.POINTER);
 
         widget = scrollPanel;
     }

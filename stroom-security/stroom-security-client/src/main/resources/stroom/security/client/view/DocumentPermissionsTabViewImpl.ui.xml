@@ -10,7 +10,7 @@
         <g:center>
             <g:FlowPanel styleName="dock-container-vertical">
                 <g:Label ui:field="permissionsLabel" text="Permissions:" styleName="dock-min"/>
-                <g:ScrollPanel ui:field="permissions" styleName="dock-max stroom-border"/>
+                <g:ScrollPanel ui:field="permissions" styleName="dock-max stroom-control"/>
             </g:FlowPanel>
         </g:center>
     </g:MySplitLayoutPanel>

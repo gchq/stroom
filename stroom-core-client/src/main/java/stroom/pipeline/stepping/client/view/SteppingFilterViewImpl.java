@@ -62,8 +62,8 @@ public class SteppingFilterViewImpl extends ViewImpl implements SteppingFilterVi
     }
 
     @Override
-    public void setElementChooser(final View view) {
-        elementChooser.setWidget(view.asWidget());
+    public void setElementChooser(final Widget view) {
+        elementChooser.setWidget(view);
     }
 
     @Override

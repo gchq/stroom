@@ -18,18 +18,21 @@ package stroom.security.client.presenter;
 
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.table.client.CellTableView;
-import stroom.data.table.client.CellTableViewImpl;
+import stroom.data.grid.client.DataGridViewImpl;
+import stroom.data.table.client.MyCellTable;
 import stroom.security.shared.Changes;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.User;
 
 import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.gwtplatform.mvp.client.View;
 
 import java.util.HashSet;
 import java.util.List;
@@ -37,7 +40,9 @@ import java.util.Set;
 import javax.inject.Inject;
 
 public class PermissionsListPresenter
-        extends MyPresenterWidget<CellTableView<String>> {
+        extends MyPresenterWidget<PermissionsListPresenter.PermissionsListView> {
+
+    private final CellTable<String> cellTable;
 
     private DocumentPermissions documentPermissions;
     private List<String> permissions;
@@ -45,21 +50,23 @@ public class PermissionsListPresenter
     private User currentUser;
 
     @Inject
-    public PermissionsListPresenter(final EventBus eventBus) {
-        super(eventBus, new CellTableViewImpl<>(
-                false));
+    public PermissionsListPresenter(final EventBus eventBus, final PermissionsListView view) {
+        super(eventBus, view);
 
         final boolean updateable = true;
         final TickBoxCell.Appearance appearance = updateable
                 ? new TickBoxCell.DefaultAppearance()
                 : new TickBoxCell.NoBorderAppearance();
 
-        getView().addColumn(new Column<String, String>(new TextCell()) {
+        cellTable = new MyCellTable<>(DataGridViewImpl.DEFAULT_LIST_PAGE_SIZE);
+        final Column<String, String> column = new Column<String, String>(new TextCell()) {
             @Override
             public String getValue(final String row) {
                 return row;
             }
-        }, 250);
+        };
+        cellTable.addColumn(column);
+        cellTable.setColumnWidth(column, 250, Unit.PX);
 
         // Selection.
         final Column<String, TickBoxState> selectionColumn = new Column<String, TickBoxState>(
@@ -109,8 +116,11 @@ public class PermissionsListPresenter
                 }
             });
         }
-        getView().addColumn(selectionColumn, 50);
-        getView().asWidget().setWidth("auto");
+        cellTable.addColumn(selectionColumn);
+        cellTable.setColumnWidth(selectionColumn, 50, Unit.PX);
+        cellTable.setWidth("auto");
+
+        view.setTable(cellTable);
     }
 
     public void addPermission(final String userUuid, final String permission) {
@@ -147,10 +157,15 @@ public class PermissionsListPresenter
 
     private void refresh() {
         if (currentUser != null) {
-            getView().setRowData(0, permissions);
-            getView().setRowCount(permissions.size());
+            cellTable.setRowData(0, permissions);
+            cellTable.setRowCount(permissions.size());
         } else {
-            getView().setRowCount(0);
+            cellTable.setRowCount(0);
         }
+    }
+
+    public interface PermissionsListView extends View {
+
+        void setTable(Widget widget);
     }
 }

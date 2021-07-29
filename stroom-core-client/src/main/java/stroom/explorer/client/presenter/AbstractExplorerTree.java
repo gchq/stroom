@@ -16,7 +16,7 @@
 
 package stroom.explorer.client.presenter;
 
-import stroom.data.table.client.CellTableViewImpl.DefaultResources;
+import stroom.data.table.client.MyCellTable;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.event.ShowExplorerMenuEvent;
 import stroom.explorer.client.view.ExplorerCell;
@@ -34,7 +34,6 @@ import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.Selection;
 import stroom.widget.util.client.SelectionType;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -43,9 +42,7 @@ import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.cellview.client.CellTable;
-import com.google.gwt.user.cellview.client.CellTable.Resources;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.MaxScrollPanel;
@@ -79,8 +76,7 @@ public abstract class AbstractExplorerTree extends Composite {
         final ExplorerCell explorerCell = new ExplorerCell(getTickBoxSelectionModel());
         expanderClassName = explorerCell.getExpanderClassName();
 
-        final Resources resources = GWT.create(DefaultResources.class);
-        cellTable = new CellTable<>(Integer.MAX_VALUE, resources);
+        cellTable = new MyCellTable<>(Integer.MAX_VALUE);
         cellTable.getElement().setClassName("explorerTree");
         cellTable.addColumn(new Column<ExplorerNode, ExplorerNode>(explorerCell) {
             @Override
@@ -88,15 +84,8 @@ public abstract class AbstractExplorerTree extends Composite {
                 return object;
             }
         });
-
-        cellTable.setLoadingIndicator(null);
         selectionModel = getSelectionModel();
         cellTable.setSelectionModel(selectionModel, new ExplorerTreeSelectionEventManager());
-        cellTable.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.ENABLED);
-        // We need to set this to prevent default keyboard behaviour.
-        cellTable.setKeyboardSelectionHandler(event -> {
-        });
-        cellTable.getRowContainer().getStyle().setCursor(Style.Cursor.POINTER);
 
         treeModel = new ExplorerTreeModel(this, spinnerSmall, restFactory) {
             @Override

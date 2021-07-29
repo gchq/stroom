@@ -16,8 +16,7 @@
 
 package stroom.pipeline.stepping.client.presenter;
 
-import stroom.data.table.client.CellTableView;
-import stroom.data.table.client.CellTableViewImpl;
+import stroom.data.table.client.MyCellTable;
 import stroom.pipeline.shared.XPathFilter;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter.SteppingFilterView;
@@ -25,17 +24,19 @@ import stroom.svg.client.SvgPresets;
 import stroom.util.shared.OutputState;
 import stroom.util.shared.Severity;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.util.client.BasicSelectionEventManager;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.SingleSelectionModel;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -56,7 +57,7 @@ public class SteppingFilterPresenter extends
     private List<XPathFilter> xPathFilters;
 
     private final SingleSelectionModel<String> elementSelectionModel = new SingleSelectionModel<>();
-    private final CellTableView<String> elementChooser;
+    private final CellTable<String> elementChooser;
     private final ButtonView addXPath;
     private final ButtonView editXPath;
     private final ButtonView removeXPath;
@@ -83,7 +84,7 @@ public class SteppingFilterPresenter extends
         removeXPath.setEnabled(false);
 
 
-        elementChooser = new CellTableViewImpl<>(true);
+        elementChooser = new MyCellTable<>(Integer.MAX_VALUE);
 
         // Text.
         final Column<String, SafeHtml> textColumn = new Column<String, SafeHtml>(new SafeHtmlCell()) {
@@ -97,8 +98,7 @@ public class SteppingFilterPresenter extends
             }
         };
         elementChooser.addColumn(textColumn);
-        elementChooser.setSupportsSelection(true);
-        elementChooser.setSelectionModel(elementSelectionModel);
+        elementChooser.setSelectionModel(elementSelectionModel, new BasicSelectionEventManager<>(elementChooser));
 
         getView().setElementChooser(elementChooser);
         getView().setXPathList(xPathListPresenter.getView());
@@ -236,7 +236,7 @@ public class SteppingFilterPresenter extends
 
     public interface SteppingFilterView extends View {
 
-        void setElementChooser(View view);
+        void setElementChooser(Widget widget);
 
         Severity getSkipToErrors();
 

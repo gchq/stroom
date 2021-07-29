@@ -17,15 +17,21 @@
 package stroom.annotation.client;
 
 import stroom.annotation.client.ChooserPresenter.ChooserView;
-import stroom.data.table.client.CellTableView;
-import stroom.data.table.client.CellTableViewImpl;
+import stroom.data.table.client.MyCellTable;
+import stroom.widget.util.client.BasicSelectionEventManager;
+import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.MySingleSelectionModel;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.SelectionChangeEvent;
-import com.google.gwt.view.client.SingleSelectionModel;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -38,8 +44,8 @@ import java.util.function.Consumer;
 
 public class ChooserPresenter extends MyPresenterWidget<ChooserView> implements ChooserUiHandlers {
 
-    private final SingleSelectionModel<String> selectionModel = new SingleSelectionModel<>();
-    private final CellTableView<String> table;
+    private final MySingleSelectionModel<String> selectionModel = new MySingleSelectionModel<>();
+    private final CellTable<String> cellTable;
     private DataSupplier dataSupplier;
 
     @Inject
@@ -48,8 +54,9 @@ public class ChooserPresenter extends MyPresenterWidget<ChooserView> implements 
 
         view.setUiHandlers(this);
 
-        table = new CellTableViewImpl<>(true);
-        view.setBottomView(table);
+        cellTable = new MyCellTable<>(Integer.MAX_VALUE);
+        cellTable.setSelectionModel(selectionModel, new BasicSelectionEventManager<>(cellTable));
+        view.setBottomWidget(cellTable);
 
         // Text.
         final Column<String, SafeHtml> textColumn = new Column<String, SafeHtml>(new SafeHtmlCell()) {
@@ -62,9 +69,7 @@ public class ChooserPresenter extends MyPresenterWidget<ChooserView> implements 
                 return builder.toSafeHtml();
             }
         };
-        table.addColumn(textColumn);
-        table.setSupportsSelection(true);
-        table.setSelectionModel(selectionModel);
+        cellTable.addColumn(textColumn);
     }
 
     void clearFilter() {
@@ -92,8 +97,8 @@ public class ChooserPresenter extends MyPresenterWidget<ChooserView> implements 
         if (dataSupplier != null) {
             dataSupplier.onChange(filter, values -> {
                 if (values != null) {
-                    table.setRowData(0, values);
-                    table.setRowCount(values.size());
+                    cellTable.setRowData(0, values);
+                    cellTable.setRowCount(values.size());
                 }
             });
         }
@@ -116,7 +121,7 @@ public class ChooserPresenter extends MyPresenterWidget<ChooserView> implements 
 
     public interface ChooserView extends View, HasUiHandlers<ChooserUiHandlers> {
 
-        void setBottomView(View view);
+        void setBottomWidget(Widget widget);
 
         void clearFilter();
 

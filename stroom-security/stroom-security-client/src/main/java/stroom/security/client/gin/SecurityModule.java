@@ -27,11 +27,14 @@ import stroom.security.client.presenter.DocumentPermissionsPresenter;
 import stroom.security.client.presenter.DocumentPermissionsTabPresenter;
 import stroom.security.client.presenter.FolderPermissionsTabPresenter;
 import stroom.security.client.presenter.GroupEditPresenter;
+import stroom.security.client.presenter.PermissionsListPresenter;
+import stroom.security.client.presenter.PermissionsListPresenter.PermissionsListView;
 import stroom.security.client.presenter.UserEditPresenter;
 import stroom.security.client.presenter.UserListView;
 import stroom.security.client.view.DocumentPermissionsTabViewImpl;
 import stroom.security.client.view.DocumentPermissionsViewImpl;
 import stroom.security.client.view.FolderPermissionsTabViewImpl;
+import stroom.security.client.view.PermissionsListViewImpl;
 import stroom.security.client.view.UserEditViewImpl;
 import stroom.security.client.view.UserGroupEditViewImpl;
 import stroom.security.client.view.UserListViewImpl;
@@ -55,6 +58,9 @@ public class SecurityModule extends PluginModule {
         bindSharedView(UserEditPresenter.UserEditView.class, UserEditViewImpl.class);
         bindSharedView(GroupEditPresenter.UserGroupEditView.class, UserGroupEditViewImpl.class);
 
+        bindPresenterWidget(PermissionsListPresenter.class,
+                PermissionsListView.class,
+                PermissionsListViewImpl.class);
         bindPresenterWidget(DocumentPermissionsPresenter.class,
                 DocumentPermissionsPresenter.DocumentPermissionsView.class,
                 DocumentPermissionsViewImpl.class);
