@@ -32,12 +32,12 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.HorizontalLocation;
 import stroom.widget.popup.client.presenter.PopupPosition.VerticalLocation;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.util.client.CheckListSelectionEventManager;
 import stroom.widget.util.client.MySingleSelectionModel;
 
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.Event;
@@ -69,8 +69,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
 
     private final CellTable<DocumentType> cellTable;
 
-    private final MySingleSelectionModel<DocumentType> selectionModel = new MySingleSelectionModel<>();
-    private int mouseOverRow = -1;
+    private final TypeFilterSelectionEventManager typeFilterSelectionEventManager;
 
     @Inject
     public TypeFilterPresenter(final EventBus eventBus, final TypeFilterView view) {
@@ -97,13 +96,11 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
         cellTable.addColumn(getTickBoxColumn());
         cellTable.setSkipRowHoverCheck(true);
 
-        cellTable.setSelectionModel(selectionModel, new TypeFilterSelectionEventManager());
+        MySingleSelectionModel<DocumentType> selectionModel = new MySingleSelectionModel<>();
+        typeFilterSelectionEventManager = new TypeFilterSelectionEventManager(cellTable);
+        cellTable.setSelectionModel(selectionModel, typeFilterSelectionEventManager);
 
         view.setWidget(cellTable);
-    }
-
-    private boolean isSelectable(final DocumentType item) {
-        return true;
     }
 
     public void escape() {
@@ -130,7 +127,6 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
     public void execute(final DocumentType documentType) {
         if (documentType != null) {
             toggle(documentType);
-            refreshView();
         }
     }
 
@@ -140,34 +136,12 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
     }
 
     public void selectFirstItem() {
-        int row = getFirstSelectableRow();
-        if (row >= 0) {
-            final List<DocumentType> items = cellTable.getVisibleItems();
-            final DocumentType item = items.get(row);
-            selectRow(row);
-        }
+        typeFilterSelectionEventManager.selectFirstItem();
     }
 
     public void focus() {
-        int row = getFirstSelectableRow();
-        if (row >= 0) {
-            selectRow(row);
-        }
+        typeFilterSelectionEventManager.selectFirstItem();
     }
-
-    private void selectRow(final int row) {
-        final List<DocumentType> items = cellTable.getVisibleItems();
-        if (row >= 0 && row < items.size()) {
-            final DocumentType item = items.get(row);
-            selectionModel.setSelected(item, true);
-            cellTable.setKeyboardSelectedRow(row, true);
-        }
-    }
-
-    private int getFirstSelectableRow() {
-        return 0;
-    }
-
 
     public void setDocumentTypes(final DocumentTypes documentTypes) {
         visibleTypes = documentTypes.getVisibleTypes();
@@ -256,90 +230,20 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
         void setWidget(Widget widget);
     }
 
-    private class TypeFilterSelectionEventManager implements CellPreviewEvent.Handler<DocumentType> {
+    private class TypeFilterSelectionEventManager extends CheckListSelectionEventManager<DocumentType> {
+
+        public TypeFilterSelectionEventManager(final AbstractHasData<DocumentType> cellTable) {
+            super(cellTable);
+        }
 
         @Override
-        public void onCellPreview(final CellPreviewEvent<DocumentType> e) {
-            final NativeEvent nativeEvent = e.getNativeEvent();
-            final String type = nativeEvent.getType();
-            if ("keydown".equals(type)) {
-                // Stop space affecting the scroll position.
-                nativeEvent.preventDefault();
+        protected void onToggle(final DocumentType item) {
+            execute(item);
+        }
 
-                final List<DocumentType> items = cellTable.getVisibleItems();
-
-                if (items.size() > 0) {
-                    final DocumentType selected = selectionModel.getSelectedObject();
-                    int originalRow = -1;
-                    if (selected != null) {
-                        originalRow = items.indexOf(selected);
-                    }
-
-                    int row = originalRow;
-                    final int keyCode = nativeEvent.getKeyCode();
-                    switch (keyCode) {
-                        case KeyCodes.KEY_UP:
-                            for (int i = row - 1; i >= 0; i--) {
-                                final DocumentType item = items.get(i);
-                                if (isSelectable(item)) {
-                                    row = i;
-                                    break;
-                                }
-                            }
-                            break;
-
-                        case KeyCodes.KEY_DOWN:
-                            for (int i = row + 1; i < items.size(); i++) {
-                                final DocumentType item = items.get(i);
-                                if (isSelectable(item)) {
-                                    row = i;
-                                    break;
-                                }
-                            }
-                            break;
-
-                        case KeyCodes.KEY_ESCAPE:
-                            escape();
-                            row = -1;
-                            break;
-
-                        case KeyCodes.KEY_ENTER:
-                        case KeyCodes.KEY_SPACE:
-                            execute(selected);
-                            row = -1;
-                            break;
-                    }
-
-                    if (row >= 0) {
-                        if (row != originalRow) {
-                            selectRow(row);
-                        }
-                    }
-                }
-
-            } else if ("click".equals(type)) {
-                final DocumentType item = e.getValue();
-                if (isSelectable(item)) {
-                    final int row = cellTable.getVisibleItems().indexOf(item);
-                    selectRow(row);
-                    execute(item);
-                }
-
-            } else if ("mousemove".equals(type)) {
-                final DocumentType item = e.getValue();
-                if (isSelectable(item)) {
-                    final int row = cellTable.getVisibleItems().indexOf(item);
-                    if (row != mouseOverRow) {
-                        selectRow(row);
-                        mouseOverRow = row;
-                    }
-                }
-            } else if ("blur".equals(type)) {
-                final DocumentType item = e.getValue();
-                if (isSelectable(item)) {
-                    mouseOverRow = -1;
-                }
-            }
+        @Override
+        protected void onEscape(final CellPreviewEvent<DocumentType> e) {
+            escape();
         }
     }
 }

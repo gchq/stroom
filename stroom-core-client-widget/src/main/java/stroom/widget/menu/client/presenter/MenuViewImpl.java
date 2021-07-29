@@ -3,12 +3,12 @@ package stroom.widget.menu.client.presenter;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.table.client.MyCellTable;
 import stroom.widget.menu.client.presenter.MenuPresenter.MenuView;
+import stroom.widget.util.client.AbstractSelectionEventManager;
 import stroom.widget.util.client.MySingleSelectionModel;
 
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.Event;
@@ -52,7 +52,7 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
         cellTable.addColumn(iconColumn);
         cellTable.setSkipRowHoverCheck(true);
 
-        cellTable.setSelectionModel(selectionModel, new MenuSelectionEventManager());
+        cellTable.setSelectionModel(selectionModel, new MenuSelectionEventManager(cellTable));
 
         widget = scrollPanel;
     }
@@ -154,124 +154,100 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
         return row;
     }
 
-    private class MenuSelectionEventManager implements CellPreviewEvent.Handler<Item> {
+    private class MenuSelectionEventManager
+            extends AbstractSelectionEventManager<Item> {
+
+        public MenuSelectionEventManager(final AbstractHasData<Item> cellTable) {
+            super(cellTable);
+        }
 
         @Override
-        public void onCellPreview(final CellPreviewEvent<Item> e) {
-            final NativeEvent nativeEvent = e.getNativeEvent();
-            final String type = nativeEvent.getType();
-//            GWT.log("CELL PREVIEW: " + type + " " + e.getValue());
+        protected void onRight(final CellPreviewEvent<Item> e) {
+            final Item selected = selectionModel.getSelectedObject();
+            if (selected instanceof MenuItem) {
+                showSubMenu(selected);
+                focusSubMenu();
+            }
+        }
 
-            if ("keydown".equals(type)) {
-                // Stop space affecting the scroll position.
-                nativeEvent.preventDefault();
+        @Override
+        protected void onLeft(final CellPreviewEvent<Item> e) {
+            focusParent();
+        }
 
-                final List<Item> items = cellTable.getVisibleItems();
+        @Override
+        protected void onEscape(final CellPreviewEvent<Item> e) {
+            escape();
+        }
 
-                if (items.size() > 0) {
-                    final Item selected = selectionModel.getSelectedObject();
-                    int originalRow = -1;
-                    if (selected != null) {
-                        originalRow = items.indexOf(selected);
-                    }
+        @Override
+        protected void onEnter(final CellPreviewEvent<Item> e) {
+            onSpace(e);
+        }
 
-                    int row = originalRow;
-                    final int keyCode = nativeEvent.getKeyCode();
-                    switch (keyCode) {
-                        case KeyCodes.KEY_UP:
-                            for (int i = row - 1; i >= 0; i--) {
-                                final Item item = items.get(i);
-                                if (isSelectable(item)) {
-                                    row = i;
-                                    break;
-                                }
-                            }
-                            break;
+        @Override
+        protected void onSpace(final CellPreviewEvent<Item> e) {
+            final Item selected = selectionModel.getSelectedObject();
+            if (selected instanceof MenuItem) {
+                execute((MenuItem) selected);
+            }
+        }
 
-                        case KeyCodes.KEY_DOWN:
-                            for (int i = row + 1; i < items.size(); i++) {
-                                final Item item = items.get(i);
-                                if (isSelectable(item)) {
-                                    row = i;
-                                    break;
-                                }
-                            }
-                            break;
+        @Override
+        protected void onMouseDown(final CellPreviewEvent<Item> e) {
+            final Item item = e.getValue();
+            if (isSelectable(item)) {
+                final int row = cellTable.getVisibleItems().indexOf(item);
+                selectRow(row, false);
 
-                        case KeyCodes.KEY_RIGHT:
-                            if (selected instanceof MenuItem) {
-                                showSubMenu(selected);
-                                focusSubMenu();
-                                row = -1;
-                            }
-                            break;
-
-                        case KeyCodes.KEY_LEFT:
-                            focusParent();
-                            row = -1;
-                            break;
-
-                        case KeyCodes.KEY_ESCAPE:
-                            escape();
-                            row = -1;
-                            break;
-
-                        case KeyCodes.KEY_ENTER:
-                        case KeyCodes.KEY_SPACE:
-                            if (selected instanceof MenuItem) {
-                                execute((MenuItem) selected);
-                            }
-                            row = -1;
-                            break;
-                    }
-
-                    if (row >= 0) {
-                        if (row != originalRow) {
-                            selectRow(row, true);
-                        }
-
-                        final Item item = items.get(row);
-                        if (item instanceof MenuItem) {
-//                            selectionModel.setSelected(item, true);
-                            showSubMenu(item);
-                        }
-                    }
-                }
-
-            } else if ("click".equals(type)) {
-                final Item item = e.getValue();
-                if (isSelectable(item)) {
-                    final int row = cellTable.getVisibleItems().indexOf(item);
-                    selectRow(row, false);
-
-                    if (item instanceof MenuItem && ((MenuItem) item).getCommand() != null) {
-                        execute((MenuItem) item);
-                    } else {
-                        showSubMenu(item);
+                if (item instanceof MenuItem && ((MenuItem) item).getCommand() != null) {
+                    execute((MenuItem) item);
+                } else {
+                    showSubMenu(item);
 //                        focusSubMenu();
-                    }
                 }
+            }
+        }
 
-            } else if ("mousemove".equals(type)) {
+        @Override
+        protected void onMouseMove(final CellPreviewEvent<Item> e) {
 //                GWT.log("MOUSEMOVE: " + mouseOverRow);
 
-                final Item item = e.getValue();
-                if (isSelectable(item)) {
-                    final int row = cellTable.getVisibleItems().indexOf(item);
-                    if (row != mouseOverRow) {
-                        selectRow(row, false);
-                        showSubMenu(item);
-                        mouseOverRow = row;
-                    }
+            final Item item = e.getValue();
+            if (isSelectable(item)) {
+                final int row = cellTable.getVisibleItems().indexOf(item);
+                if (row != mouseOverRow) {
+                    selectRow(row, false);
+                    showSubMenu(item);
+                    mouseOverRow = row;
                 }
-            } else if ("blur".equals(type)) {
-                final Item item = e.getValue();
-                if (isSelectable(item)) {
-                    mouseOverRow = -1;
-                }
+            }
+        }
+
+        @Override
+        protected void onBlur(final CellPreviewEvent<Item> e) {
+            final Item item = e.getValue();
+            if (isSelectable(item)) {
+                mouseOverRow = -1;
+            }
 
 //                GWT.log("BLUR: " + mouseOverRow);
+        }
+
+        @Override
+        protected void onKeyboardSelectRow(final int row, final boolean stealFocus) {
+            selectRow(row, true);
+            final List<Item> items = cellTable.getVisibleItems();
+            final Item item = items.get(row);
+            if (item instanceof MenuItem) {
+                //                            selectionModel.setSelected(item, true);
+                showSubMenu(item);
             }
+        }
+
+        @Override
+        protected boolean isSelectable(final Item item) {
+            return item instanceof MenuItem && ((MenuItem) item).isEnabled();
         }
     }
 }

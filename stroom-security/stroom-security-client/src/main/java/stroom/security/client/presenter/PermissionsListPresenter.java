@@ -24,11 +24,16 @@ import stroom.security.shared.Changes;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.User;
+import stroom.widget.util.client.CheckListSelectionEventManager;
+import stroom.widget.util.client.MySingleSelectionModel;
 
 import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -53,8 +58,8 @@ public class PermissionsListPresenter
     public PermissionsListPresenter(final EventBus eventBus, final PermissionsListView view) {
         super(eventBus, view);
 
-        final boolean updateable = true;
-        final TickBoxCell.Appearance appearance = updateable
+        final boolean updatable = true;
+        final TickBoxCell.Appearance appearance = updatable
                 ? new TickBoxCell.DefaultAppearance()
                 : new TickBoxCell.NoBorderAppearance();
 
@@ -70,7 +75,7 @@ public class PermissionsListPresenter
 
         // Selection.
         final Column<String, TickBoxState> selectionColumn = new Column<String, TickBoxState>(
-                TickBoxCell.create(appearance, false, false, updateable)) {
+                TickBoxCell.create(appearance, false, false, updatable)) {
             @Override
             public TickBoxState getValue(final String permission) {
                 TickBoxState tickBoxState = TickBoxState.UNTICK;
@@ -103,18 +108,13 @@ public class PermissionsListPresenter
                 return tickBoxState;
             }
         };
-        if (updateable) {
-            selectionColumn.setFieldUpdater((index, permission, value) -> {
-                if (currentUser != null) {
-                    final String userUuid = currentUser.getUuid();
-                    if (value.toBoolean()) {
-                        addPermission(userUuid, permission);
-                    } else {
-                        removePermission(userUuid, permission);
-                    }
-                    refresh();
-                }
-            });
+        if (updatable) {
+            final int mouseMove = Event.getTypeInt(BrowserEvents.MOUSEMOVE);
+            cellTable.sinkEvents(mouseMove);
+            final MySingleSelectionModel<String> selectionModel = new MySingleSelectionModel<>();
+            final PermissionsListSelectionEventManager selectionEventManager =
+                    new PermissionsListSelectionEventManager(cellTable);
+            cellTable.setSelectionModel(selectionModel, selectionEventManager);
         }
         cellTable.addColumn(selectionColumn);
         cellTable.setColumnWidth(selectionColumn, 50, Unit.PX);
@@ -139,6 +139,29 @@ public class PermissionsListPresenter
         final Set<String> permissions = documentPermissions.getPermissions().get(userUuid);
         if (permissions != null) {
             permissions.remove(permission);
+        }
+    }
+
+    public void toggle(final String userUuid, final String permission) {
+        // Determine if it is present in the model
+        boolean hasPermission = false;
+        final Set<String> permissions = documentPermissions.getPermissions().get(userUuid);
+        if (permissions != null) {
+            hasPermission = permissions.contains(permission);
+        }
+
+        if (hasPermission) {
+            removePermission(userUuid, permission);
+        } else {
+            addPermission(userUuid, permission);
+        }
+    }
+
+    private void toggle(final String permission) {
+        if (permission != null && currentUser != null) {
+            final String userUuid = currentUser.getUuid();
+            toggle(userUuid, permission);
+            refresh();
         }
     }
 
@@ -167,5 +190,17 @@ public class PermissionsListPresenter
     public interface PermissionsListView extends View {
 
         void setTable(Widget widget);
+    }
+
+    private class PermissionsListSelectionEventManager extends CheckListSelectionEventManager<String> {
+
+        public PermissionsListSelectionEventManager(final AbstractHasData<String> cellTable) {
+            super(cellTable);
+        }
+
+        @Override
+        protected void onToggle(final String item) {
+            toggle(item);
+        }
     }
 }

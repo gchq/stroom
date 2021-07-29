@@ -26,6 +26,7 @@ import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.spinner.client.SpinnerSmall;
+import stroom.widget.util.client.AbstractSelectionEventManager;
 import stroom.widget.util.client.DoubleSelectTester;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
@@ -39,8 +40,8 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.TableRowElement;
-import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.ui.Composite;
@@ -56,7 +57,7 @@ public abstract class AbstractExplorerTree extends Composite {
     private final ExplorerTreeModel treeModel;
     private final MultiSelectionModelImpl<ExplorerNode> selectionModel;
     private final MaxScrollPanel scrollPanel;
-    final CellTable<ExplorerNode> cellTable;
+    private final CellTable<ExplorerNode> cellTable;
     private final DoubleSelectTester doubleClickTest = new DoubleSelectTester();
     private final boolean allowMultiSelect;
     private final String expanderClassName;
@@ -85,7 +86,8 @@ public abstract class AbstractExplorerTree extends Composite {
             }
         });
         selectionModel = getSelectionModel();
-        cellTable.setSelectionModel(selectionModel, new ExplorerTreeSelectionEventManager());
+        final ExplorerTreeSelectionEventManager selectionEventManager = new ExplorerTreeSelectionEventManager(cellTable);
+        cellTable.setSelectionModel(selectionModel, selectionEventManager);
 
         treeModel = new ExplorerTreeModel(this, spinnerSmall, restFactory) {
             @Override
@@ -111,117 +113,6 @@ public abstract class AbstractExplorerTree extends Composite {
     abstract MultiSelectionModelImpl<ExplorerNode> getSelectionModel();
 
     void onData(final FetchExplorerNodeResult result) {
-    }
-
-    void onUp(final CellPreviewEvent<ExplorerNode> e) {
-        final int originalRow = cellTable.getKeyboardSelectedRow();
-        int row = originalRow - 1;
-        row = Math.max(0, row);
-        if (row != originalRow) {
-            cellTable.setKeyboardSelectedRow(row, true);
-        }
-    }
-
-    void onDown(final CellPreviewEvent<ExplorerNode> e) {
-        final int originalRow = cellTable.getKeyboardSelectedRow();
-        int row = originalRow + 1;
-        row = Math.min(cellTable.getVisibleItemCount() - 1, row);
-        if (row != originalRow) {
-            cellTable.setKeyboardSelectedRow(row, true);
-        }
-    }
-
-    void onRight(final CellPreviewEvent<ExplorerNode> e) {
-        treeModel.setItemOpen(e.getValue(), true);
-    }
-
-    void onLeft(final CellPreviewEvent<ExplorerNode> e) {
-        treeModel.setItemOpen(e.getValue(), false);
-    }
-
-    void onEnter(final CellPreviewEvent<ExplorerNode> e) {
-        final NativeEvent nativeEvent = e.getNativeEvent();
-        final ExplorerNode item = e.getValue();
-        doSelect(item,
-                new SelectionType(true,
-                        false,
-                        allowMultiSelect,
-                        nativeEvent.getCtrlKey(),
-                        nativeEvent.getShiftKey()));
-    }
-
-    void onMenu(final CellPreviewEvent<ExplorerNode> e) {
-        final NativeEvent nativeEvent = e.getNativeEvent();
-        final ExplorerNode item = e.getValue();
-
-        final int row = cellTable.getVisibleItems().indexOf(e.getValue());
-        if (row >= 0) {
-            cellTable.setKeyboardSelectedRow(row);
-        }
-
-        final PopupPosition popupPosition;
-        if ("mousedown".equals(e.getNativeEvent().getType())) {
-            popupPosition = new PopupPosition(nativeEvent.getClientX(), nativeEvent.getClientY());
-        } else {
-            final Element element = cellTable.getRowElement(row);
-            if (element != null) {
-                popupPosition = new PopupPosition(element.getAbsoluteRight(), element.getAbsoluteTop());
-            } else {
-                popupPosition = null;
-            }
-        }
-
-        if (selectionModel != null && popupPosition != null) {
-            // If the item clicked is already selected then don't change the selection.
-            if (!selectionModel.isSelected(item)) {
-                // Change the selection.
-                doSelect(item,
-                        new SelectionType(false,
-                                true,
-                                false,
-                                nativeEvent.getCtrlKey(),
-                                nativeEvent.getShiftKey()));
-            }
-
-            cellTable.setKeyboardSelectedRow(row, true);
-            Scheduler.get().scheduleDeferred(() -> {
-                ShowExplorerMenuEvent.fire(
-                        AbstractExplorerTree.this,
-                        selectionModel,
-                        popupPosition);
-            });
-        }
-    }
-
-    void onClick(final CellPreviewEvent<ExplorerNode> e) {
-        final NativeEvent nativeEvent = e.getNativeEvent();
-        final ExplorerNode selectedItem = e.getValue();
-        if (selectedItem != null && MouseUtil.isPrimary(nativeEvent)) {
-            if (NodeState.LEAF.equals(selectedItem.getNodeState())) {
-                final boolean doubleClick = doubleClickTest.test(selectedItem);
-                doSelect(selectedItem,
-                        new SelectionType(doubleClick,
-                                false,
-                                allowMultiSelect,
-                                nativeEvent.getCtrlKey(),
-                                nativeEvent.getShiftKey()));
-            } else {
-                final Element element = nativeEvent.getEventTarget().cast();
-
-                // Expander
-                if ((ElementUtil.hasClassName(element, expanderClassName, 0, 5))) {
-                    treeModel.toggleOpenState(selectedItem);
-                } else {
-                    final boolean doubleClick = doubleClickTest.test(selectedItem);
-                    doSelect(selectedItem,
-                            new SelectionType(doubleClick,
-                                    false,
-                                    allowMultiSelect,
-                                    nativeEvent.getCtrlKey(),
-                                    nativeEvent.getShiftKey()));
-                }
-            }
-        }
     }
 
     void setData(final List<ExplorerNode> rows) {
@@ -355,65 +246,139 @@ public abstract class AbstractExplorerTree extends Composite {
         return null;
     }
 
-    private class ExplorerTreeSelectionEventManager implements CellPreviewEvent.Handler<ExplorerNode> {
+    void showMenu(final CellPreviewEvent<ExplorerNode> e) {
+        final NativeEvent nativeEvent = e.getNativeEvent();
+        final ExplorerNode item = e.getValue();
+
+        final int row = cellTable.getVisibleItems().indexOf(e.getValue());
+        if (row >= 0) {
+            cellTable.setKeyboardSelectedRow(row);
+        }
+
+        final PopupPosition popupPosition;
+        if ("mousedown".equals(e.getNativeEvent().getType())) {
+            popupPosition = new PopupPosition(nativeEvent.getClientX(), nativeEvent.getClientY());
+        } else {
+            final Element element = cellTable.getRowElement(row);
+            if (element != null) {
+                popupPosition = new PopupPosition(element.getAbsoluteRight(), element.getAbsoluteTop());
+            } else {
+                popupPosition = null;
+            }
+        }
+
+        if (selectionModel != null && popupPosition != null) {
+            // If the item clicked is already selected then don't change the selection.
+            if (!selectionModel.isSelected(item)) {
+                // Change the selection.
+                doSelect(item,
+                        new SelectionType(false,
+                                true,
+                                false,
+                                nativeEvent.getCtrlKey(),
+                                nativeEvent.getShiftKey()));
+            }
+
+            cellTable.setKeyboardSelectedRow(row, true);
+            Scheduler.get().scheduleDeferred(() -> {
+                ShowExplorerMenuEvent.fire(
+                        AbstractExplorerTree.this,
+                        selectionModel,
+                        popupPosition);
+            });
+        }
+    }
+
+    private class ExplorerTreeSelectionEventManager extends AbstractSelectionEventManager<ExplorerNode> {
+
+        public ExplorerTreeSelectionEventManager(final AbstractHasData<ExplorerNode> cellTable) {
+            super(cellTable);
+        }
 
         @Override
-        public void onCellPreview(final CellPreviewEvent<ExplorerNode> e) {
+        protected void onRight(final CellPreviewEvent<ExplorerNode> e) {
+            treeModel.setItemOpen(e.getValue(), true);
+        }
+
+        @Override
+        protected void onLeft(final CellPreviewEvent<ExplorerNode> e) {
+            treeModel.setItemOpen(e.getValue(), false);
+        }
+
+        @Override
+        protected void onEnter(final CellPreviewEvent<ExplorerNode> e) {
             final NativeEvent nativeEvent = e.getNativeEvent();
-            final String type = nativeEvent.getType();
-            if ("keydown".equals(type)) {
-                // Stop space affecting the scroll position.
-                nativeEvent.preventDefault();
+            final ExplorerNode item = e.getValue();
+            doSelect(item,
+                    new SelectionType(true,
+                            false,
+                            allowMultiSelect,
+                            nativeEvent.getCtrlKey(),
+                            nativeEvent.getShiftKey()));
+        }
 
-                final List<ExplorerNode> items = cellTable.getVisibleItems();
-                if (items.size() > 0) {
-                    final int keyCode = e.getNativeEvent().getKeyCode();
-                    switch (keyCode) {
-                        case KeyCodes.KEY_UP:
-                            onUp(e);
-                            break;
-                        case KeyCodes.KEY_DOWN:
-                            onDown(e);
-                            break;
-                        case KeyCodes.KEY_RIGHT:
-                            onRight(e);
-                            break;
-                        case KeyCodes.KEY_LEFT:
-                            onLeft(e);
-                            break;
+        @Override
+        protected void onSpace(final CellPreviewEvent<ExplorerNode> e) {
+            final NativeEvent nativeEvent = e.getNativeEvent();
+            // Change the selection.
+            doSelect(e.getValue(),
+                    new SelectionType(false,
+                            false,
+                            true,
+                            nativeEvent.getCtrlKey(),
+                            nativeEvent.getShiftKey()));
+        }
 
-                        case KeyCodes.KEY_SPACE:
-                            // Change the selection.
-                            doSelect(e.getValue(),
-                                    new SelectionType(false,
-                                            false,
-                                            true,
-                                            nativeEvent.getCtrlKey(),
-                                            nativeEvent.getShiftKey()));
+        @Override
+        protected void onAlt(final CellPreviewEvent<ExplorerNode> e) {
+            showMenu(e);
+        }
 
-                            break;
-                        case KeyCodes.KEY_ENTER:
-                            onEnter(e);
-                            break;
-                        case KeyCodes.KEY_ALT:
-                            onMenu(e);
-                            break;
+        @Override
+        protected void onMouseDown(final CellPreviewEvent<ExplorerNode> e) {
+            final NativeEvent nativeEvent = e.getNativeEvent();
+            // We set focus here so that we can use the keyboard to navigate once we have focus.
+            cellTable.setFocus(true);
+            final int row = cellTable.getVisibleItems().indexOf(e.getValue());
+            if (row >= 0) {
+                cellTable.setKeyboardSelectedRow(row);
+            }
+
+            if (MouseUtil.isSecondary(nativeEvent)) {
+                showMenu(e);
+
+            } else if (MouseUtil.isPrimary(nativeEvent)) {
+                select(e);
+            }
+        }
+
+        private void select(final CellPreviewEvent<ExplorerNode> e) {
+            final NativeEvent nativeEvent = e.getNativeEvent();
+            final ExplorerNode selectedItem = e.getValue();
+            if (selectedItem != null && MouseUtil.isPrimary(nativeEvent)) {
+                if (NodeState.LEAF.equals(selectedItem.getNodeState())) {
+                    final boolean doubleClick = doubleClickTest.test(selectedItem);
+                    doSelect(selectedItem,
+                            new SelectionType(doubleClick,
+                                    false,
+                                    allowMultiSelect,
+                                    nativeEvent.getCtrlKey(),
+                                    nativeEvent.getShiftKey()));
+                } else {
+                    final Element element = nativeEvent.getEventTarget().cast();
+
+                    // Expander
+                    if ((ElementUtil.hasClassName(element, expanderClassName, 0, 5))) {
+                        treeModel.toggleOpenState(selectedItem);
+                    } else {
+                        final boolean doubleClick = doubleClickTest.test(selectedItem);
+                        doSelect(selectedItem,
+                                new SelectionType(doubleClick,
+                                        false,
+                                        allowMultiSelect,
+                                        nativeEvent.getCtrlKey(),
+                                        nativeEvent.getShiftKey()));
                     }
-                }
-
-            } else if ("mousedown".equals(type)) {
-                // We set focus here so that we can use the keyboard to navigate once we have focus.
-                cellTable.setFocus(true);
-                final int row = cellTable.getVisibleItems().indexOf(e.getValue());
-                if (row >= 0) {
-                    cellTable.setKeyboardSelectedRow(row);
-                }
-
-                if (MouseUtil.isSecondary(nativeEvent)) {
-                    onMenu(e);
-
-                } else if (MouseUtil.isPrimary(nativeEvent)) {
-                    onClick(e);
                 }
             }
         }

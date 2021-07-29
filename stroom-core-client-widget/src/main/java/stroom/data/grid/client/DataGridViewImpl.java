@@ -24,6 +24,7 @@ import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToggleButtonView;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
+import stroom.widget.util.client.AbstractSelectionEventManager;
 import stroom.widget.util.client.DoubleSelectTester;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectEvent;
@@ -40,7 +41,6 @@ import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TableRowElement;
-import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -225,63 +225,11 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
         return dataGrid;
     }
 
-    void onUp() {
-        final int originalRow = dataGrid.getKeyboardSelectedRow();
-        int row = originalRow - 1;
-        row = Math.max(0, row);
-        if (row != originalRow) {
-            dataGrid.setKeyboardSelectedRow(row, true);
-        }
-    }
-
-    void onDown() {
-        final int originalRow = dataGrid.getKeyboardSelectedRow();
-        int row = originalRow + 1;
-        row = Math.min(dataGrid.getVisibleItemCount() - 1, row);
-        if (row != originalRow) {
-            dataGrid.setKeyboardSelectedRow(row, true);
-        }
-    }
-
-    void onEnter() {
-        final int row = dataGrid.getKeyboardSelectedRow();
-        final List<R> items = dataGrid.getVisibleItems();
-        if (row >= 0 && row < items.size()) {
-            final R item = items.get(row);
-            selectionModel.setSelected(item);
-        }
-
-//        doSelect(item,
-//                new SelectionType(true,
-//                        false,
-//                        allowMultiSelect,
-//                        nativeEvent.getCtrlKey(),
-//                        nativeEvent.getShiftKey()));
-    }
-
     @Override
     public void onPreviewNativeEvent(final NativePreviewEvent nativePreviewEvent) {
         GWT.log("onPreviewNativeEvent");
 
         final NativeEvent event = nativePreviewEvent.getNativeEvent();
-        final String type = event.getType();
-//        if ("keydown".equals(type)) {
-//
-//            final int keyCode = event.getKeyCode();
-//            switch (keyCode) {
-//                case KeyCodes.KEY_UP:
-//                    onUp();
-//                    break;
-//                case KeyCodes.KEY_DOWN:
-//                    onDown();
-//                    break;
-//                case KeyCodes.KEY_ENTER:
-//                    onEnter();
-//                    break;
-//            }
-//
-//        } else
-
         if (Event.ONMOUSEMOVE == nativePreviewEvent.getTypeInt()) {
             if (!isBusy()) {
                 final ResizeHandle<R> resizeHandle = getResizeHandle();
@@ -833,94 +781,103 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
         }
     }
 
-    private class DataGridSelectionEventManager extends AbstractCellTable.CellTableKeyboardSelectionHandler<R> {
+    private class DataGridSelectionEventManager extends AbstractSelectionEventManager<R> {
 
         DataGridSelectionEventManager(AbstractCellTable<R> table) {
             super(table);
         }
 
+//
+//        @Override
+//        protected void onUp(final CellPreviewEvent<R> e) {
+//            super.onUp(e);
+//        }
+//
+//        @Override
+//        protected void onDown(final CellPreviewEvent<R> e) {
+//            super.onDown(e);
+//        }
+
         @Override
-        public void onCellPreview(CellPreviewEvent<R> event) {
+        protected void onEnter(final CellPreviewEvent<R> e) {
+            final int row = dataGrid.getKeyboardSelectedRow();
+            final List<R> items = dataGrid.getVisibleItems();
+            if (row >= 0 && row < items.size()) {
+                final R item = items.get(row);
+                selectionModel.setSelected(item);
+            }
+
+//        doSelect(item,
+//                new SelectionType(true,
+//                        false,
+//                        allowMultiSelect,
+//                        nativeEvent.getCtrlKey(),
+//                        nativeEvent.getShiftKey()));
+        }
+
+
+        @Override
+        protected void onMouseDown(final CellPreviewEvent<R> event) {
             final NativeEvent nativeEvent = event.getNativeEvent();
-            final String type = nativeEvent.getType();
-
-            if ("keydown".equals(type)) {
-                // Stop space affecting the scroll position.
-                nativeEvent.preventDefault();
-
-                final int keyCode = nativeEvent.getKeyCode();
-                switch (keyCode) {
-                    case KeyCodes.KEY_UP:
-                        onUp();
-                        break;
-                    case KeyCodes.KEY_DOWN:
-                        onDown();
-                        break;
-                    case KeyCodes.KEY_ENTER:
-                        onEnter();
-                        break;
+            if (event.getValue() != null) {
+                final List<R> rows = dataGrid.getVisibleItems();
+                final int index = rows.indexOf(event.getValue());
+                if (index != -1) {
+                    dataGrid.setKeyboardSelectedRow(index);
                 }
-            } else if ("mousedown".equals(type)) {
-                if (event.getValue() != null) {
-                    final List<R> rows = dataGrid.getVisibleItems();
-                    final int index = rows.indexOf(event.getValue());
-                    if (index != -1) {
-                        dataGrid.setKeyboardSelectedRow(index);
+            }
+
+
+            // Find out if the cell consumes this event because if it does then we won't use it to select the row.
+            boolean consumed = false;
+
+            String parentTag = null;
+            Element target = event.getNativeEvent().getEventTarget().cast();
+            if (target.getParentElement() != null) {
+                parentTag = target.getParentElement().getTagName();
+            }
+
+            // If the user has clicked on a link then consume the event.
+            if (target.hasTagName("u")) {
+                final String link = target.getAttribute("link");
+                if (link != null) {
+                    final Hyperlink hyperlink = Hyperlink.create(link);
+                    if (hyperlink != null) {
+                        consumed = true;
+                        HyperlinkEvent.fire(dataGrid, hyperlink);
                     }
                 }
+            }
 
-
-                // Find out if the cell consumes this event because if it does then we won't use it to select the row.
-                boolean consumed = false;
-
-                String parentTag = null;
-                Element target = event.getNativeEvent().getEventTarget().cast();
-                if (target.getParentElement() != null) {
-                    parentTag = target.getParentElement().getTagName();
-                }
-
-                // If the user has clicked on a link then consume the event.
-                if (target.hasTagName("u")) {
-                    final String link = target.getAttribute("link");
-                    if (link != null) {
-                        final Hyperlink hyperlink = Hyperlink.create(link);
-                        if (hyperlink != null) {
+            if (!consumed) {
+                // Since all of the controls we care about will not have interactive elements that are
+                // direct children of the td we can assume that the cell will not consume the event if
+                // the parent of the target is the td.
+                if (!"td".equalsIgnoreCase(parentTag)) {
+                    final Cell<?> cell = dataGrid.getColumn(event.getColumn()).getCell();
+                    if (cell != null && cell.getConsumedEvents() != null) {
+                        if (cell.getConsumedEvents().contains("click")
+                                || cell.getConsumedEvents().contains("mousedown")
+                                || cell.getConsumedEvents().contains("mouseup")) {
                             consumed = true;
-                            HyperlinkEvent.fire(dataGrid, hyperlink);
                         }
                     }
                 }
+            }
 
-                if (!consumed) {
-                    // Since all of the controls we care about will not have interactive elements that are
-                    // direct children of the td we can assume that the cell will not consume the event if
-                    // the parent of the target is the td.
-                    if (!"td".equalsIgnoreCase(parentTag)) {
-                        final Cell<?> cell = dataGrid.getColumn(event.getColumn()).getCell();
-                        if (cell != null && cell.getConsumedEvents() != null) {
-                            if (cell.getConsumedEvents().contains("click")
-                                    || cell.getConsumedEvents().contains("mousedown")
-                                    || cell.getConsumedEvents().contains("mouseup")) {
-                                consumed = true;
-                            }
-                        }
-                    }
-                }
+            if (!consumed) {
+                // We set focus here so that we can use the keyboard to navigate once we have focus.
+                dataGrid.setFocus(true);
 
-                if (!consumed) {
-                    // We set focus here so that we can use the keyboard to navigate once we have focus.
-                    dataGrid.setFocus(true);
-
-                    final R row = event.getValue();
-                    if (row != null && MouseUtil.isPrimary(nativeEvent)) {
-                        final boolean doubleClick = doubleClickTest.test(row);
-                        doSelect(row, new SelectionType(
-                                doubleClick,
-                                false,
-                                allowMultiSelect,
-                                event.getNativeEvent().getCtrlKey(),
-                                event.getNativeEvent().getShiftKey()));
-                    }
+                final R row = event.getValue();
+                if (row != null && MouseUtil.isPrimary(nativeEvent)) {
+                    final boolean doubleClick = doubleClickTest.test(row);
+                    doSelect(row, new SelectionType(
+                            doubleClick,
+                            false,
+                            allowMultiSelect,
+                            event.getNativeEvent().getCtrlKey(),
+                            event.getNativeEvent().getShiftKey()));
                 }
             }
         }
