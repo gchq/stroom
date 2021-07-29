@@ -55,7 +55,7 @@
 
 .cellTableCell {
     overflow: hidden;
-    padding: var(--padding--vertical) var(--padding--horizontal);
+    padding: var(--row__padding--vertical) var(--row__padding--horizontal);
 }
 
 .cellTableFirstColumnFooter {

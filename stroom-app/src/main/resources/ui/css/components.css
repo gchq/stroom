@@ -1165,7 +1165,7 @@
 
 .userListViewImpl-nameFilter {
     border-bottom: none !important;
-    margin: .5rem 0;
+    margin: var(--control__padding--vertical) 0;
 }
 
 .createDocumentViewImpl-label {
@@ -1329,7 +1329,7 @@
 }
 
 .explorerTreeViewImpl-nameFilter {
-    margin: .5rem;
+    margin: var(--control__padding--vertical) var(--control__padding--horizontal);
 }
 
 .chooserViewImpl-container {

@@ -21,7 +21,7 @@
     display: flex;
     align-items: center;
     cursor: pointer;
-    gap: var(--gap--horizontal);
+    gap: var(--row__gap--horizontal);
 }
 
 .explorerCell-expander {

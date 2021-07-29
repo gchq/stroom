@@ -45,7 +45,7 @@
 }
 
 .dataGridHeader {
-	padding: var(--layout-padding-data);
+	padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
     vertical-align: middle;
 	text-align: left;
 	overflow: hidden;
@@ -62,7 +62,7 @@
 }
 
 .dataGridCell {
-	padding: var(--layout-padding-data);
+	padding: var(--row__padding--vertical) 0 var(--row__padding--vertical) var(--row__padding--horizontal);
 	vertical-align: middle;
 	text-align: left;
 	overflow: hidden;

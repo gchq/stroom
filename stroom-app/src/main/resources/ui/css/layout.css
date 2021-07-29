@@ -1,15 +1,17 @@
 :root {
-    --padding--horizontal: .4rem;
-    --padding--vertical: .4rem;
-    --gap--horizontal: .4rem;
-    --gap--vertical: .25rem;
-    --layout-padding-data: .24rem .12rem;
+    --row__padding--horizontal: .4rem;
+    --row__padding--vertical: .4rem;
+    --row__gap--horizontal: .4rem;
+    --row__gap--vertical: .25rem;
+    --control__padding--horizontal: .4rem;
+    --control__padding--vertical: .4rem;
 }
 
 .stroom-density-compact {
-    --padding--horizontal: .1rem;
-    --padding--vertical: .1rem;
-    --gap--horizontal: .4rem;
-    --gap--vertical: .1rem;
-    --layout-padding-data: .12rem .06rem;
+    --row__padding--horizontal: .1rem;
+    --row__padding--vertical: .1rem;
+    --row__gap--horizontal: .4rem;
+    --row__gap--vertical: .1rem;
+    --control__padding--horizontal: .4rem;
+    --control__padding--vertical: .4rem;
 }
