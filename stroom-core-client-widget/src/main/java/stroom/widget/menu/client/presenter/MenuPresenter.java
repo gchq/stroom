@@ -31,7 +31,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
@@ -54,12 +53,6 @@ public class MenuPresenter
         super(eventBus, view);
         this.menuPresenterProvider = menuPresenterProvider;
         view.setUiHandlers(this);
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(getView().bind());
     }
 
     @Override
@@ -198,8 +191,6 @@ public class MenuPresenter
     }
 
     public interface MenuView extends View, HasUiHandlers<MenuUiHandlers> {
-
-        HandlerRegistration bind();
 
         void setData(List<Item> items);
 

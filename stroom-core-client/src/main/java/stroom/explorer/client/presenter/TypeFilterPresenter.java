@@ -46,6 +46,7 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -103,7 +104,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
         cellTable.addColumn(getTickBoxColumn());
         cellTable.setSkipRowHoverCheck(true);
 
-        cellTable.setSelectionModel(selectionModel, null);
+        cellTable.setSelectionModel(selectionModel, new TypeFilterSelectionEventManager());
         cellTable.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.ENABLED);
         // We need to set this to prevent default keyboard behaviour.
         cellTable.setKeyboardSelectionHandler(event -> {
@@ -111,83 +112,6 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
         cellTable.getRowContainer().getStyle().setCursor(Cursor.POINTER);
 
         view.setWidget(cellTable);
-    }
-
-    @Override
-    protected void onBind() {
-        registerHandler(cellTable.addCellPreviewHandler(e -> {
-            final NativeEvent nativeEvent = e.getNativeEvent();
-            final String type = nativeEvent.getType();
-            if ("keydown".equals(type)) {
-                final List<DocumentType> items = cellTable.getVisibleItems();
-
-                if (items.size() > 0) {
-                    final DocumentType selected = selectionModel.getSelectedObject();
-                    int originalRow = -1;
-                    if (selected != null) {
-                        originalRow = items.indexOf(selected);
-                    }
-
-                    int row = originalRow;
-                    int keyCode = nativeEvent.getKeyCode();
-                    if (keyCode == KeyCodes.KEY_UP) {
-                        for (int i = row - 1; i >= 0; i--) {
-                            final DocumentType item = items.get(i);
-                            if (isSelectable(item)) {
-                                row = i;
-                                break;
-                            }
-                        }
-
-                    } else if (keyCode == KeyCodes.KEY_DOWN) {
-                        for (int i = row + 1; i < items.size(); i++) {
-                            final DocumentType item = items.get(i);
-                            if (isSelectable(item)) {
-                                row = i;
-                                break;
-                            }
-                        }
-
-                    } else if (keyCode == KeyCodes.KEY_ESCAPE) {
-                        escape();
-                        row = -1;
-
-                    } else if (keyCode == KeyCodes.KEY_ENTER) {
-                        execute(selected);
-                        row = -1;
-                    }
-
-                    if (row >= 0) {
-                        if (row != originalRow) {
-                            selectRow(row);
-                        }
-                    }
-                }
-
-            } else if ("click".equals(type)) {
-                final DocumentType item = e.getValue();
-                if (isSelectable(item)) {
-                    final int row = cellTable.getVisibleItems().indexOf(item);
-                    selectRow(row);
-                    execute(item);
-                }
-
-            } else if ("mousemove".equals(type)) {
-                final DocumentType item = e.getValue();
-                if (isSelectable(item)) {
-                    final int row = cellTable.getVisibleItems().indexOf(item);
-                    if (row != mouseOverRow) {
-                        selectRow(row);
-                        mouseOverRow = row;
-                    }
-                }
-            } else if ("blur".equals(type)) {
-                final DocumentType item = e.getValue();
-                if (isSelectable(item)) {
-                    mouseOverRow = -1;
-                }
-            }
-        }));
     }
 
     private boolean isSelectable(final DocumentType item) {
@@ -342,5 +266,92 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
     public interface TypeFilterView extends View {
 
         void setWidget(Widget widget);
+    }
+
+    private class TypeFilterSelectionEventManager implements CellPreviewEvent.Handler<DocumentType> {
+
+        @Override
+        public void onCellPreview(final CellPreviewEvent<DocumentType> e) {
+            final NativeEvent nativeEvent = e.getNativeEvent();
+            final String type = nativeEvent.getType();
+            if ("keydown".equals(type)) {
+                // Stop space affecting the scroll position.
+                nativeEvent.preventDefault();
+
+                final List<DocumentType> items = cellTable.getVisibleItems();
+
+                if (items.size() > 0) {
+                    final DocumentType selected = selectionModel.getSelectedObject();
+                    int originalRow = -1;
+                    if (selected != null) {
+                        originalRow = items.indexOf(selected);
+                    }
+
+                    int row = originalRow;
+                    final int keyCode = nativeEvent.getKeyCode();
+                    switch (keyCode) {
+                        case KeyCodes.KEY_UP:
+                            for (int i = row - 1; i >= 0; i--) {
+                                final DocumentType item = items.get(i);
+                                if (isSelectable(item)) {
+                                    row = i;
+                                    break;
+                                }
+                            }
+                            break;
+
+                        case KeyCodes.KEY_DOWN:
+                            for (int i = row + 1; i < items.size(); i++) {
+                                final DocumentType item = items.get(i);
+                                if (isSelectable(item)) {
+                                    row = i;
+                                    break;
+                                }
+                            }
+                            break;
+
+                        case KeyCodes.KEY_ESCAPE:
+                            escape();
+                            row = -1;
+                            break;
+
+                        case KeyCodes.KEY_ENTER:
+                        case KeyCodes.KEY_SPACE:
+                            execute(selected);
+                            row = -1;
+                            break;
+                    }
+
+                    if (row >= 0) {
+                        if (row != originalRow) {
+                            selectRow(row);
+                        }
+                    }
+                }
+
+            } else if ("click".equals(type)) {
+                final DocumentType item = e.getValue();
+                if (isSelectable(item)) {
+                    final int row = cellTable.getVisibleItems().indexOf(item);
+                    selectRow(row);
+                    execute(item);
+                }
+
+            } else if ("mousemove".equals(type)) {
+                final DocumentType item = e.getValue();
+                if (isSelectable(item)) {
+                    final int row = cellTable.getVisibleItems().indexOf(item);
+                    if (row != mouseOverRow) {
+                        selectRow(row);
+                        mouseOverRow = row;
+                    }
+                }
+            } else if ("blur".equals(type)) {
+                final DocumentType item = e.getValue();
+                if (isSelectable(item)) {
+                    mouseOverRow = -1;
+                }
+            }
+        }
     }
 }

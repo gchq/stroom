@@ -91,7 +91,7 @@ public abstract class AbstractExplorerTree extends Composite {
 
         cellTable.setLoadingIndicator(null);
         selectionModel = getSelectionModel();
-        cellTable.setSelectionModel(selectionModel, null);
+        cellTable.setSelectionModel(selectionModel, new ExplorerTreeSelectionEventManager());
         cellTable.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.ENABLED);
         // We need to set this to prevent default keyboard behaviour.
         cellTable.setKeyboardSelectionHandler(event -> {
@@ -115,68 +115,6 @@ public abstract class AbstractExplorerTree extends Composite {
         flowPanel.setHeight("100%");
         flowPanel.add(scrollPanel);
         flowPanel.add(spinnerSmall);
-
-        cellTable.addCellPreviewHandler(e -> {
-            final NativeEvent nativeEvent = e.getNativeEvent();
-            final String type = nativeEvent.getType();
-//            GWT.log("CELL PREVIEW: " + type + " " + e.getValue());
-
-            if ("keydown".equals(type)) {
-                final List<ExplorerNode> items = cellTable.getVisibleItems();
-                if (items.size() > 0) {
-                    final int keyCode = e.getNativeEvent().getKeyCode();
-                    switch (keyCode) {
-                        case KeyCodes.KEY_UP:
-                            onUp(e);
-                            break;
-                        case KeyCodes.KEY_DOWN:
-                            onDown(e);
-                            break;
-                        case KeyCodes.KEY_RIGHT:
-                            onRight(e);
-                            break;
-                        case KeyCodes.KEY_LEFT:
-                            onLeft(e);
-                            break;
-
-                        case KeyCodes.KEY_SPACE:
-                            // Stop space affecting the scroll position.
-                            e.getNativeEvent().preventDefault();
-                            // Change the selection.
-                            doSelect(e.getValue(),
-                                    new SelectionType(false,
-                                            false,
-                                            true,
-                                            nativeEvent.getCtrlKey(),
-                                            nativeEvent.getShiftKey()));
-
-                            break;
-                        case KeyCodes.KEY_ENTER:
-                            onEnter(e);
-                            break;
-                        case KeyCodes.KEY_ALT:
-                            onMenu(e);
-                            break;
-                    }
-                }
-
-            } else if ("mousedown".equals(type)) {
-                // We set focus here so that we can use the keyboard to navigate once we have focus.
-                cellTable.setFocus(true);
-                final int row = cellTable.getVisibleItems().indexOf(e.getValue());
-                if (row >= 0) {
-                    cellTable.setKeyboardSelectedRow(row);
-                }
-
-                if (MouseUtil.isSecondary(nativeEvent)) {
-                    onMenu(e);
-
-                } else if (MouseUtil.isPrimary(nativeEvent)) {
-                    onClick(e);
-                }
-            }
-        });
-
 
         initWidget(flowPanel);
     }
@@ -426,5 +364,69 @@ public abstract class AbstractExplorerTree extends Composite {
 
     TickBoxSelectionModel getTickBoxSelectionModel() {
         return null;
+    }
+
+    private class ExplorerTreeSelectionEventManager implements CellPreviewEvent.Handler<ExplorerNode> {
+
+        @Override
+        public void onCellPreview(final CellPreviewEvent<ExplorerNode> e) {
+            final NativeEvent nativeEvent = e.getNativeEvent();
+            final String type = nativeEvent.getType();
+            if ("keydown".equals(type)) {
+                // Stop space affecting the scroll position.
+                nativeEvent.preventDefault();
+
+                final List<ExplorerNode> items = cellTable.getVisibleItems();
+                if (items.size() > 0) {
+                    final int keyCode = e.getNativeEvent().getKeyCode();
+                    switch (keyCode) {
+                        case KeyCodes.KEY_UP:
+                            onUp(e);
+                            break;
+                        case KeyCodes.KEY_DOWN:
+                            onDown(e);
+                            break;
+                        case KeyCodes.KEY_RIGHT:
+                            onRight(e);
+                            break;
+                        case KeyCodes.KEY_LEFT:
+                            onLeft(e);
+                            break;
+
+                        case KeyCodes.KEY_SPACE:
+                            // Change the selection.
+                            doSelect(e.getValue(),
+                                    new SelectionType(false,
+                                            false,
+                                            true,
+                                            nativeEvent.getCtrlKey(),
+                                            nativeEvent.getShiftKey()));
+
+                            break;
+                        case KeyCodes.KEY_ENTER:
+                            onEnter(e);
+                            break;
+                        case KeyCodes.KEY_ALT:
+                            onMenu(e);
+                            break;
+                    }
+                }
+
+            } else if ("mousedown".equals(type)) {
+                // We set focus here so that we can use the keyboard to navigate once we have focus.
+                cellTable.setFocus(true);
+                final int row = cellTable.getVisibleItems().indexOf(e.getValue());
+                if (row >= 0) {
+                    cellTable.setKeyboardSelectedRow(row);
+                }
+
+                if (MouseUtil.isSecondary(nativeEvent)) {
+                    onMenu(e);
+
+                } else if (MouseUtil.isPrimary(nativeEvent)) {
+                    onClick(e);
+                }
+            }
+        }
     }
 }

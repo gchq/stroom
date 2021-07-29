@@ -209,7 +209,7 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
                 }
             };
 
-            dataGrid.setSelectionModel(multiSelectionModel, new MySelectionEventManager(dataGrid));
+            dataGrid.setSelectionModel(multiSelectionModel, new DataGridSelectionEventManager(dataGrid));
             selectionModel = multiSelectionModel;
             dataGrid.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.ENABLED);
             // We need to set this to prevent default keyboard behaviour.
@@ -833,9 +833,9 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
         }
     }
 
-    private class MySelectionEventManager extends AbstractCellTable.CellTableKeyboardSelectionHandler<R> {
+    private class DataGridSelectionEventManager extends AbstractCellTable.CellTableKeyboardSelectionHandler<R> {
 
-        MySelectionEventManager(AbstractCellTable<R> table) {
+        DataGridSelectionEventManager(AbstractCellTable<R> table) {
             super(table);
         }
 
@@ -845,6 +845,9 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
             final String type = nativeEvent.getType();
 
             if ("keydown".equals(type)) {
+                // Stop space affecting the scroll position.
+                nativeEvent.preventDefault();
+
                 final int keyCode = nativeEvent.getKeyCode();
                 switch (keyCode) {
                     case KeyCodes.KEY_UP:
