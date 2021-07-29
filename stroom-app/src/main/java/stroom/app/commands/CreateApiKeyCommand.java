@@ -157,9 +157,10 @@ public class CreateApiKeyCommand extends AbstractStroomAccountConfiguredCommand 
                 .subject(account.getUserId());
 
         final Token tokenParams = new Token();
-        tokenParams.setCreateTimeMs(now.toEpochSecond(ZoneOffset.UTC));
+        final long nowMillis = now.toInstant(ZoneOffset.UTC).toEpochMilli();
+        tokenParams.setCreateTimeMs(nowMillis);
         tokenParams.setCreateUser(CLI_USER);
-        tokenParams.setUpdateTimeMs(now.toEpochSecond(ZoneOffset.UTC));
+        tokenParams.setUpdateTimeMs(nowMillis);
         tokenParams.setUpdateUser(CLI_USER);
         tokenParams.setUserId(account.getUserId());
         tokenParams.setUserEmail(account.getUserId());
