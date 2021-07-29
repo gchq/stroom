@@ -5,7 +5,7 @@ import com.google.gwt.view.client.CellPreviewEvent;
 
 import java.util.List;
 
-public class CheckListSelectionEventManager<T>
+public abstract class CheckListSelectionEventManager<T>
         extends AbstractSelectionEventManager<T> {
 
     private final AbstractHasData<T> cellTable;

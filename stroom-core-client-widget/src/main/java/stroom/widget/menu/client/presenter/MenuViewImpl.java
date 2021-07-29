@@ -211,8 +211,6 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
 
         @Override
         protected void onMouseMove(final CellPreviewEvent<Item> e) {
-//                GWT.log("MOUSEMOVE: " + mouseOverRow);
-
             final Item item = e.getValue();
             if (isSelectable(item)) {
                 final int row = cellTable.getVisibleItems().indexOf(item);
@@ -230,8 +228,6 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
             if (isSelectable(item)) {
                 mouseOverRow = -1;
             }
-
-//                GWT.log("BLUR: " + mouseOverRow);
         }
 
         @Override
@@ -240,7 +236,6 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
             final List<Item> items = cellTable.getVisibleItems();
             final Item item = items.get(row);
             if (item instanceof MenuItem) {
-                //                            selectionModel.setSelected(item, true);
                 showSubMenu(item);
             }
         }

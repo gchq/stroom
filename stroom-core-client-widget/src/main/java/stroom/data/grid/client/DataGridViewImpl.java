@@ -787,17 +787,6 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
             super(table);
         }
 
-//
-//        @Override
-//        protected void onUp(final CellPreviewEvent<R> e) {
-//            super.onUp(e);
-//        }
-//
-//        @Override
-//        protected void onDown(final CellPreviewEvent<R> e) {
-//            super.onDown(e);
-//        }
-
         @Override
         protected void onEnter(final CellPreviewEvent<R> e) {
             final int row = dataGrid.getKeyboardSelectedRow();
@@ -806,15 +795,7 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
                 final R item = items.get(row);
                 selectionModel.setSelected(item);
             }
-
-//        doSelect(item,
-//                new SelectionType(true,
-//                        false,
-//                        allowMultiSelect,
-//                        nativeEvent.getCtrlKey(),
-//                        nativeEvent.getShiftKey()));
         }
-
 
         @Override
         protected void onMouseDown(final CellPreviewEvent<R> event) {

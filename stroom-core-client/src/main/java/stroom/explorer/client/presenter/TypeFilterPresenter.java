@@ -245,5 +245,25 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
         protected void onEscape(final CellPreviewEvent<DocumentType> e) {
             escape();
         }
+
+        @Override
+        protected void onSelectAll(final CellPreviewEvent<DocumentType> e) {
+            showAll();
+            refreshView();
+            DataSelectionEvent.fire(
+                    TypeFilterPresenter.this,
+                    TypeFilterPresenter.this,
+                    false);
+        }
+
+        @Override
+        protected void onDeselectAll(final CellPreviewEvent<DocumentType> e) {
+            hideAll();
+            refreshView();
+            DataSelectionEvent.fire(
+                    TypeFilterPresenter.this,
+                    TypeFilterPresenter.this,
+                    false);
+        }
     }
 }

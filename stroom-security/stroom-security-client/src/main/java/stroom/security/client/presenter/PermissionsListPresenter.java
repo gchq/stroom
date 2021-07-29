@@ -35,6 +35,7 @@ import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
@@ -165,6 +166,30 @@ public class PermissionsListPresenter
         }
     }
 
+    private void selectAll(final boolean select) {
+        if (currentUser != null) {
+            final String userUuid = currentUser.getUuid();
+            final Set<String> currentPermissions = documentPermissions.getPermissions().get(userUuid);
+            for (final String permission : permissions) {
+                boolean hasPermission = false;
+                if (currentPermissions != null) {
+                    hasPermission = currentPermissions.contains(permission);
+                }
+
+                if (select) {
+                    if (!hasPermission) {
+                        addPermission(userUuid, permission);
+                    }
+                } else {
+                    if (hasPermission) {
+                        removePermission(userUuid, permission);
+                    }
+                }
+            }
+            refresh();
+        }
+    }
+
     public void setDocumentPermissions(final DocumentPermissions documentPermissions,
                                        final List<String> permissions,
                                        final Changes changes) {
@@ -201,6 +226,16 @@ public class PermissionsListPresenter
         @Override
         protected void onToggle(final String item) {
             toggle(item);
+        }
+
+        @Override
+        protected void onSelectAll(final CellPreviewEvent<String> e) {
+            selectAll(true);
+        }
+
+        @Override
+        protected void onDeselectAll(final CellPreviewEvent<String> e) {
+            selectAll(false);
         }
     }
 }

@@ -11,7 +11,7 @@ import java.util.List;
 public abstract class AbstractSelectionEventManager<T>
         implements CellPreviewEvent.Handler<T> {
 
-    private int pageSize = 10;
+    private static final int PAGE_SIZE = 10;
 
     private final AbstractHasData<T> cellTable;
 
@@ -77,6 +77,17 @@ public abstract class AbstractSelectionEventManager<T>
                         onAlt(event);
                         handledEvent(event);
                         break;
+                    case KeyCodes.KEY_A:
+                        if (nativeEvent.getCtrlKey()) {
+                            if (nativeEvent.getShiftKey()) {
+                                onDeselectAll(event);
+                            } else {
+                                onSelectAll(event);
+                            }
+                            handledEvent(event);
+                        }
+
+                        break;
                 }
             }
 
@@ -105,11 +116,11 @@ public abstract class AbstractSelectionEventManager<T>
     }
 
     protected void onPageUp(final CellPreviewEvent<T> e) {
-        move(e, cellTable.getKeyboardSelectedRow() - pageSize, -1, pageSize);
+        move(e, cellTable.getKeyboardSelectedRow() - PAGE_SIZE, -1, PAGE_SIZE);
     }
 
     protected void onPageDown(final CellPreviewEvent<T> e) {
-        move(e, cellTable.getKeyboardSelectedRow() + pageSize, 1, pageSize);
+        move(e, cellTable.getKeyboardSelectedRow() + PAGE_SIZE, 1, PAGE_SIZE);
     }
 
     protected void onHome(final CellPreviewEvent<T> e) {
@@ -162,6 +173,12 @@ public abstract class AbstractSelectionEventManager<T>
     }
 
     protected void onAlt(final CellPreviewEvent<T> e) {
+    }
+
+    protected void onSelectAll(final CellPreviewEvent<T> e) {
+    }
+
+    protected void onDeselectAll(final CellPreviewEvent<T> e) {
     }
 
     protected void onMouseDown(final CellPreviewEvent<T> e) {
