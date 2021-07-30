@@ -16,6 +16,7 @@
 
 package stroom.explorer.client.presenter;
 
+import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.FetchExplorerNodeResult;
@@ -24,11 +25,13 @@ import stroom.widget.util.client.SelectionType;
 
 import com.google.gwt.view.client.CellPreviewEvent;
 
+import java.util.List;
 import java.util.Set;
 
 public class ExplorerTickBoxTree extends AbstractExplorerTree {
 
     private TickBoxSelectionModel tickBoxSelectionModel;
+    private List<ExplorerNode> rootNodes;
 
     public ExplorerTickBoxTree(final RestFactory restFactory) {
         super(restFactory, false);
@@ -49,6 +52,7 @@ public class ExplorerTickBoxTree extends AbstractExplorerTree {
 
     @Override
     void onData(final FetchExplorerNodeResult result) {
+        rootNodes = result.getRootNodes();
         tickBoxSelectionModel.setRoots(result.getRootNodes());
         super.onData(result);
     }
@@ -65,6 +69,15 @@ public class ExplorerTickBoxTree extends AbstractExplorerTree {
         refresh();
     }
 
+    @Override
+    void selectAll() {
+        if (rootNodes != null && rootNodes.size() == 1) {
+            final ExplorerNode rootNode = rootNodes.get(0);
+            toggleSelection(rootNode);
+            refresh();
+        }
+    }
+
     public void setSelected(final ExplorerNode explorerNode, final boolean selected) {
         tickBoxSelectionModel.setSelected(explorerNode, selected);
         refresh();
@@ -76,7 +89,8 @@ public class ExplorerTickBoxTree extends AbstractExplorerTree {
 
     private void toggleSelection(final ExplorerNode selection) {
         if (selection != null) {
-            tickBoxSelectionModel.setSelected(selection, !tickBoxSelectionModel.isSelected(selection));
+            tickBoxSelectionModel.setSelected(selection,
+                    tickBoxSelectionModel.getState(selection) != TickBoxState.TICK);
         }
     }
 }

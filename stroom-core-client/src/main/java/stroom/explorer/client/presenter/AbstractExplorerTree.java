@@ -289,6 +289,9 @@ public abstract class AbstractExplorerTree extends Composite {
         }
     }
 
+    void selectAll() {
+    }
+
     private class ExplorerTreeSelectionEventManager extends AbstractSelectionEventManager<ExplorerNode> {
 
         public ExplorerTreeSelectionEventManager(final AbstractHasData<ExplorerNode> cellTable) {
@@ -332,6 +335,11 @@ public abstract class AbstractExplorerTree extends Composite {
         @Override
         protected void onAlt(final CellPreviewEvent<ExplorerNode> e) {
             showMenu(e);
+        }
+
+        @Override
+        protected void onSelectAll(final CellPreviewEvent<ExplorerNode> e) {
+            selectAll();
         }
 
         @Override
