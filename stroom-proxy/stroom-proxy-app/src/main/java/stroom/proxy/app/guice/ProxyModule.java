@@ -61,6 +61,7 @@ import stroom.util.io.PathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.io.TempDirProviderImpl;
 import stroom.util.shared.BuildInfo;
+import stroom.util.validation.ValidationModule;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -111,6 +112,7 @@ public class ProxyModule extends AbstractModule {
 
         install(new ProxyConfigModule(proxyConfigHolder));
         install(new MockCollectionModule());
+        install(new ValidationModule());
 
         install(new DictionaryModule());
         // Allow discovery of feed status from other proxies.

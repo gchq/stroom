@@ -2,10 +2,13 @@ package stroom.util.config;
 
 import stroom.util.config.PropertyUtil.Prop;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.HasPropertyPath;
 import stroom.util.shared.PropertyPath;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -13,12 +16,17 @@ import java.util.Map;
 
 public class PropertyPathDecorator {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(PropertyPathDecorator.class);
+
     private PropertyPathDecorator() {
     }
 
-    public static void decoratePaths(final AbstractConfig config,
+    public static void decoratePaths(final HasPropertyPath config,
                                      final PropertyPath propertyPath) {
 
+        LOGGER.info("Decorating {} with path {}",
+                config.getClass().getSimpleName(),
+                propertyPath);
         // Set the path of this config object
         config.setBasePath(propertyPath);
 
@@ -38,9 +46,9 @@ public class PropertyPathDecorator {
                             : propSpecifiedName;
                     final PropertyPath propPath = propertyPath.merge(propName);
 
-                    if (AbstractConfig.class.isAssignableFrom(propValueType)) {
+                    if (HasPropertyPath.class.isAssignableFrom(propValueType)) {
                         if (propValue != null) {
-                            AbstractConfig childConfigObject = (AbstractConfig) propValue;
+                            HasPropertyPath childConfigObject = (HasPropertyPath) propValue;
                             decoratePaths(childConfigObject, propPath);
                         }
                     }

@@ -3,6 +3,7 @@ package stroom.proxy.app.guice;
 import stroom.proxy.app.ContentSyncConfig;
 import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.ProxyConfigHolder;
+import stroom.proxy.app.ProxyConfigMonitor;
 import stroom.proxy.app.ProxyPathConfig;
 import stroom.proxy.app.RestClientConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
@@ -12,11 +13,14 @@ import stroom.proxy.app.handler.ProxyRequestConfig;
 import stroom.proxy.repo.ProxyRepositoryConfig;
 import stroom.proxy.repo.ProxyRepositoryReaderConfig;
 import stroom.util.config.ConfigLocation;
+import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.HasHealthCheckBinder;
 import stroom.util.io.PathConfig;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.IsProxyConfig;
 
 import com.google.inject.AbstractModule;
+import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +42,14 @@ public class ProxyConfigModule extends AbstractModule {
     protected void configure() {
         // Bind the application config.
         bind(ProxyConfig.class).toInstance(proxyConfigHolder.getProxyConfig());
+
+        bind(ProxyConfigMonitor.class).asEagerSingleton();
+
+        HasHealthCheckBinder.create(binder())
+                .bind(ProxyConfigMonitor.class);
+
+        GuiceUtil.buildMultiBinder(binder(), Managed.class)
+                .addBinding(ProxyConfigMonitor.class);
 
         // Holder for the location of the yaml config file so the AppConfigMonitor can
         // get hold of it via guice

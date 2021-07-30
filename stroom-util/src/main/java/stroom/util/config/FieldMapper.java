@@ -109,6 +109,8 @@ public class FieldMapper {
                         ? prop.getGetter().invoke(vanillaObject)
                         : null;
 
+                // TODO this doesn't work for props that are collections of stroom classes,
+                //  e.g. List<ForwardDestination>
                 if (prop.getValueClass().getName().startsWith("stroom")) {
                     // property is another stroom pojo
                     if (sourcePropValue == null && destPropValue == null) {

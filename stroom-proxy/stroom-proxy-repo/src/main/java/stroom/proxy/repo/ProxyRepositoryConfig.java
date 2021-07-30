@@ -2,6 +2,7 @@ package stroom.proxy.repo;
 
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
+import stroom.util.shared.validation.ValidSimpleCron;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -68,6 +69,7 @@ public class ProxyRepositoryConfig extends AbstractConfig implements IsProxyConf
     /**
      * Interval to roll any writing repositories.
      */
+    @ValidSimpleCron
     @JsonProperty
     public String getRollCron() {
         return rollCron;

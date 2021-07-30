@@ -41,7 +41,7 @@ public abstract class AbstractFileChangeMonitor implements HasHealthCheck {
     private final AtomicBoolean isFileReadScheduled = new AtomicBoolean(false);
     private final List<String> errors = new ArrayList<>();
 
-    private static final long DELAY_BEFORE_FILE_READ_MS = 1_000;
+    private static final long DELAY_BEFORE_FILE_READ_MS = 2_000;
 
     public AbstractFileChangeMonitor(final Path monitoredFile) {
         this.monitoredFile = Objects.requireNonNull(monitoredFile);
