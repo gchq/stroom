@@ -20,6 +20,7 @@ import stroom.svg.client.Icon;
 import stroom.svg.client.Preset;
 import stroom.widget.util.client.Future;
 import stroom.widget.util.client.FutureImpl;
+import stroom.widget.util.client.KeyBinding.Action;
 
 import java.util.List;
 import java.util.Objects;
@@ -33,11 +34,11 @@ public class KeyedParentMenuItem extends IconMenuItem implements HasChildren {
                         final Icon enabledIcon,
                         final Icon disabledIcon,
                         final String text,
-                        final String shortcut,
+                        final Action action,
                         final boolean enabled,
                         final MenuItems menuItems,
                         final MenuKey menuKey) {
-        super(priority, enabledIcon, disabledIcon, text, shortcut, enabled, null, false);
+        super(priority, enabledIcon, disabledIcon, text, action, enabled, null, false);
         this.menuItems = menuItems;
         this.menuKey = menuKey;
     }
@@ -95,7 +96,7 @@ public class KeyedParentMenuItem extends IconMenuItem implements HasChildren {
                     enabledIcon,
                     disabledIcon,
                     text,
-                    shortcut,
+                    action,
                     enabled,
                     menuItems,
                     menuKey);

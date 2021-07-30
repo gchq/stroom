@@ -17,6 +17,7 @@
 package stroom.widget.menu.client.presenter;
 
 import stroom.svg.client.Icon;
+import stroom.widget.util.client.KeyBinding;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
@@ -137,9 +138,12 @@ public class MenuItemCell extends AbstractCell<Item> {
                 inner.append(
                         TEMPLATE.inner("menuItem-text", SafeHtmlUtils.fromTrustedString(value.getText())));
 
-                if (value.getShortcut() != null) {
-                    inner.append(TEMPLATE.inner("menuItem-shortcut",
-                            SafeHtmlUtils.fromTrustedString(value.getShortcut())));
+                if (value.getAction() != null) {
+                    final String shortcut = KeyBinding.getShortcut(value.getAction());
+                    if (shortcut != null) {
+                        inner.append(TEMPLATE.inner("menuItem-shortcut",
+                                SafeHtmlUtils.fromTrustedString(shortcut)));
+                    }
                 }
 
                 String className = "menuItem-outer";
@@ -186,9 +190,12 @@ public class MenuItemCell extends AbstractCell<Item> {
                                 "menuItem-simpleText",
                                 SafeHtmlUtils.fromTrustedString(value.getText())));
 
-                if (value.getShortcut() != null) {
-                    inner.append(TEMPLATE.inner("menuItem-shortcut",
-                            SafeHtmlUtils.fromTrustedString(value.getShortcut())));
+                if (value.getAction() != null) {
+                    final String shortcut = KeyBinding.getShortcut(value.getAction());
+                    if (shortcut != null) {
+                        inner.append(TEMPLATE.inner("menuItem-shortcut",
+                                SafeHtmlUtils.fromTrustedString(shortcut)));
+                    }
                 }
 
                 String className = "menuItem-outer";

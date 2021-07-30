@@ -22,8 +22,6 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.core.client.HasSave;
 import stroom.core.client.HasSaveRegistry;
-import stroom.core.client.KeyboardInterceptor;
-import stroom.core.client.KeyboardInterceptor.KeyTest;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.Plugin;
 import stroom.dispatch.client.Rest;
@@ -85,6 +83,8 @@ import stroom.widget.tab.client.event.RequestCloseTabEvent;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.util.client.Future;
 import stroom.widget.util.client.FutureImpl;
+import stroom.widget.util.client.KeyBinding;
+import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.core.client.GWT;
@@ -108,35 +108,32 @@ import javax.inject.Singleton;
 public class DocumentPluginEventManager extends Plugin {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
-    private static final KeyTest CTRL_S = event ->
-            event.getCtrlKey() && !event.getShiftKey() && event.getKeyCode() == 'S';
-    private static final KeyTest CTRL_SHIFT_S = event ->
-            event.getCtrlKey() && event.getShiftKey() && event.getKeyCode() == 'S';
-    private static final KeyTest ALT_W = event ->
-            event.getAltKey() && !event.getShiftKey() && event.getKeyCode() == 'W';
-    private static final KeyTest ALT_SHIFT_W = event ->
-            event.getAltKey() && event.getShiftKey() && event.getKeyCode() == 'W';
+//    private static final KeyTest CTRL_S = event ->
+//            event.getCtrlKey() && !event.getShiftKey() && event.getKeyCode() == 'S';
+//    private static final KeyTest CTRL_SHIFT_S = event ->
+//            event.getCtrlKey() && event.getShiftKey() && event.getKeyCode() == 'S';
+//    private static final KeyTest ALT_W = event ->
+//            event.getAltKey() && !event.getShiftKey() && event.getKeyCode() == 'W';
+//    private static final KeyTest ALT_SHIFT_W = event ->
+//            event.getAltKey() && event.getShiftKey() && event.getKeyCode() == 'W';
 
     private final HasSaveRegistry hasSaveRegistry;
     private final RestFactory restFactory;
     private final DocumentTypeCache documentTypeCache;
     private final DocumentPluginRegistry documentPluginRegistry;
     private final ClientSecurityContext securityContext;
-    private final KeyboardInterceptor keyboardInterceptor;
     private TabData selectedTab;
     private MultiSelectionModel<ExplorerNode> selectionModel;
 
     @Inject
     public DocumentPluginEventManager(final EventBus eventBus,
                                       final HasSaveRegistry hasSaveRegistry,
-                                      final KeyboardInterceptor keyboardInterceptor,
                                       final RestFactory restFactory,
                                       final DocumentTypeCache documentTypeCache,
                                       final DocumentPluginRegistry documentPluginRegistry,
                                       final ClientSecurityContext securityContext) {
         super(eventBus);
         this.hasSaveRegistry = hasSaveRegistry;
-        this.keyboardInterceptor = keyboardInterceptor;
         this.restFactory = restFactory;
         this.documentTypeCache = documentTypeCache;
         this.documentPluginRegistry = documentPluginRegistry;
@@ -767,13 +764,13 @@ public class DocumentPluginEventManager extends Plugin {
             }
         };
 
-        keyboardInterceptor.addKeyTest(ALT_W, command);
+        KeyBinding.addCommand(Action.ITEM_CLOSE, command);
 
         return new IconMenuItem.Builder()
                 .priority(3)
                 .icon(SvgPresets.CLOSE)
                 .text("Close")
-                .shortcut("Alt+W")
+                .action(Action.ITEM_CLOSE)
                 .enabled(enabled)
                 .command(command)
                 .build();
@@ -786,13 +783,13 @@ public class DocumentPluginEventManager extends Plugin {
             }
         };
 
-        keyboardInterceptor.addKeyTest(ALT_SHIFT_W, command);
+        KeyBinding.addCommand(Action.ITEM_CLOSE_ALL, command);
 
         return new IconMenuItem.Builder()
                 .priority(4)
                 .icon(SvgPresets.CLOSE)
                 .text("Close All")
-                .shortcut("Alt+Shift+W")
+                .action(Action.ITEM_CLOSE_ALL)
                 .enabled(enabled)
                 .command(command)
                 .build();
@@ -806,13 +803,13 @@ public class DocumentPluginEventManager extends Plugin {
             }
         };
 
-        keyboardInterceptor.addKeyTest(CTRL_S, command);
+        KeyBinding.addCommand(Action.ITEM_SAVE, command);
 
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgPresets.SAVE)
                 .text("Save")
-                .shortcut("Ctrl+S")
+                .action(Action.ITEM_SAVE)
                 .enabled(enabled)
                 .command(command)
                 .build();
@@ -821,13 +818,13 @@ public class DocumentPluginEventManager extends Plugin {
     private MenuItem createSaveAllMenuItem(final int priority, final boolean enabled) {
         final Command command = hasSaveRegistry::save;
 
-        keyboardInterceptor.addKeyTest(CTRL_SHIFT_S, command);
+        KeyBinding.addCommand(Action.ITEM_SAVE_ALL, command);
 
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgPresets.SAVE)
                 .text("Save All")
-                .shortcut("Ctrl+Shift+S")
+                .action(Action.ITEM_SAVE_ALL)
                 .enabled(enabled)
                 .command(command)
                 .build();

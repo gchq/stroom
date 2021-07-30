@@ -246,7 +246,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
         }
 
         @Override
-        protected void onEscape(final CellPreviewEvent<DocumentType> e) {
+        protected void onClose(final CellPreviewEvent<DocumentType> e) {
             escape();
         }
 

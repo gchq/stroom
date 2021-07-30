@@ -17,6 +17,8 @@
 package stroom.widget.button.client;
 
 import stroom.svg.client.Preset;
+import stroom.widget.util.client.KeyBinding;
+import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.dom.client.Document;
@@ -166,11 +168,12 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
         // Synthesize clicks based on keyboard events AFTER the normal key
         // handling.
         if ((event.getTypeInt() & Event.KEYEVENTS) != 0) {
-            final char keyCode = (char) event.getKeyCode();
             switch (type) {
                 case Event.ONKEYDOWN:
-                    if (keyCode == ' ' || keyCode == '\n' || keyCode == '\r') {
-                        onClick();
+                    if (!KeyBinding.isCommand(event)) {
+                        if (KeyBinding.is(event, Action.SELECT, Action.EXECUTE)) {
+                            onClick();
+                        }
                     }
                     break;
 
@@ -192,8 +195,8 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
 //                        onClick();
 //                    }
 //                    break;
-                default:
-                    // Ignore events we don't care about
+//                default:
+//                    // Ignore events we don't care about
             }
         }
     }

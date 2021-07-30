@@ -18,7 +18,6 @@ package stroom.main.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.content.client.event.RefreshCurrentContentTabEvent;
-import stroom.core.client.KeyboardInterceptor;
 import stroom.core.client.presenter.CorePresenter;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
@@ -27,9 +26,11 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.UiConfig;
 import stroom.widget.tab.client.event.MaximiseEvent;
 import stroom.widget.util.client.DoubleSelectTester;
+import stroom.widget.util.client.KeyBinding;
 
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.dom.client.HasDoubleClickHandlers;
+import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.gwt.http.client.UrlBuilder;
 import com.google.gwt.user.client.Timer;
@@ -47,7 +48,7 @@ import com.gwtplatform.mvp.client.proxy.RevealContentHandler;
 
 public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPresenter.MainProxy> {
 
-//    @ContentSlot
+    //    @ContentSlot
 //    public static final Type<RevealContentHandler<?>> MENUBAR = new Type<>();
     @ContentSlot
     public static final Type<RevealContentHandler<?>> EXPLORER = new Type<>();
@@ -60,12 +61,12 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
     public MainPresenter(final EventBus eventBus,
                          final MainView view,
                          final MainProxy proxy,
-                         final KeyboardInterceptor keyboardInterceptor,
                          final UiConfigCache uiConfigCache) {
         super(eventBus, view, proxy);
 
         // Handle key presses.
-        keyboardInterceptor.register(view.asWidget());
+        view.asWidget().addDomHandler(event ->
+                KeyBinding.isCommand(event.getNativeEvent()), KeyDownEvent.getType());
 
         addRegisteredHandler(TaskStartEvent.getType(), event -> {
             // DebugPane.debug("taskStart:" + event.getTaskCount());

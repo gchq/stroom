@@ -19,11 +19,11 @@ public abstract class CheckListSelectionEventManager<T>
     }
 
     @Override
-    protected void onEnter(final CellPreviewEvent<T> e) {
-        onSpace(e);
+    protected void onExecute(final CellPreviewEvent<T> e) {
+        onSelect(e);
     }
 
-    protected void onSpace(final CellPreviewEvent<T> e) {
+    protected void onSelect(final CellPreviewEvent<T> e) {
         final List<T> items = cellTable.getVisibleItems();
         final int originalRow = cellTable.getKeyboardSelectedRow();
         if (originalRow >= 0 && originalRow < items.size()) {

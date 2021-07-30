@@ -162,7 +162,7 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
         }
 
         @Override
-        protected void onRight(final CellPreviewEvent<Item> e) {
+        protected void onMoveRight(final CellPreviewEvent<Item> e) {
             final Item selected = selectionModel.getSelectedObject();
             if (selected instanceof MenuItem) {
                 showSubMenu(selected);
@@ -171,22 +171,22 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
         }
 
         @Override
-        protected void onLeft(final CellPreviewEvent<Item> e) {
+        protected void onMoveLeft(final CellPreviewEvent<Item> e) {
             focusParent();
         }
 
         @Override
-        protected void onEscape(final CellPreviewEvent<Item> e) {
+        protected void onClose(final CellPreviewEvent<Item> e) {
             escape();
         }
 
         @Override
-        protected void onEnter(final CellPreviewEvent<Item> e) {
-            onSpace(e);
+        protected void onExecute(final CellPreviewEvent<Item> e) {
+            onSelect(e);
         }
 
         @Override
-        protected void onSpace(final CellPreviewEvent<Item> e) {
+        protected void onSelect(final CellPreviewEvent<Item> e) {
             final Item selected = selectionModel.getSelectedObject();
             if (selected instanceof MenuItem) {
                 execute((MenuItem) selected);

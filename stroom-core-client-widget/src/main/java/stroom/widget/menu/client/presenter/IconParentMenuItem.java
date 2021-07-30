@@ -20,6 +20,7 @@ import stroom.svg.client.Icon;
 import stroom.svg.client.Preset;
 import stroom.widget.util.client.Future;
 import stroom.widget.util.client.FutureImpl;
+import stroom.widget.util.client.KeyBinding.Action;
 
 import java.util.List;
 
@@ -31,11 +32,11 @@ public class IconParentMenuItem extends IconMenuItem implements HasChildren {
                        final Icon enabledIcon,
                        final Icon disabledIcon,
                        final String text,
-                       final String shortcut,
+                       final Action action,
                        final boolean enabled,
                        final boolean highlight,
                        final Future<List<Item>> children) {
-        super(priority, enabledIcon, disabledIcon, text, shortcut, enabled, null, highlight);
+        super(priority, enabledIcon, disabledIcon, text, action, enabled, null, highlight);
         this.children = children;
     }
 
@@ -74,7 +75,7 @@ public class IconParentMenuItem extends IconMenuItem implements HasChildren {
                     enabledIcon,
                     disabledIcon,
                     text,
-                    shortcut,
+                    action,
                     enabled,
                     highlight,
                     children);

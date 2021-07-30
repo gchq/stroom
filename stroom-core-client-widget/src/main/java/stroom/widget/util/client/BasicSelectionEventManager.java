@@ -14,13 +14,13 @@ public class BasicSelectionEventManager<T>
     }
 
     @Override
-    protected void onSpace(final CellPreviewEvent<T> e) {
+    protected void onSelect(final CellPreviewEvent<T> e) {
         // Do the same as on enter.
-        onEnter(e);
+        onExecute(e);
     }
 
     @Override
-    protected void onEnter(final CellPreviewEvent<T> e) {
+    protected void onExecute(final CellPreviewEvent<T> e) {
         final T item = e.getValue();
         cellTable.getSelectionModel().setSelected(item, true);
     }

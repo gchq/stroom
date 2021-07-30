@@ -24,7 +24,6 @@ import stroom.content.client.presenter.ContentTabPanePresenter;
 import stroom.content.client.presenter.ContentTabPanePresenter.ContentTabPaneProxy;
 import stroom.core.client.ContentManager;
 import stroom.core.client.HasSaveRegistry;
-import stroom.core.client.KeyboardInterceptor;
 import stroom.core.client.LocationManager;
 import stroom.core.client.NameTokens;
 import stroom.core.client.gin.InactivePlaceManager;
@@ -94,8 +93,6 @@ public class AppModule extends AbstractPresenterModule {
         bind(PlaceManager.class).to(InactivePlaceManager.class).in(Singleton.class);
         // bind(PlaceManager.class).to(AppPlaceManager.class).in(Singleton.class);
         // install(new DefaultModule(AppPlaceManager.class));
-
-        bind(KeyboardInterceptor.class).asEagerSingleton();
 
         bind(HyperlinkEventHandlerImpl.class).asEagerSingleton();
 

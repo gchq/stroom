@@ -16,6 +16,8 @@
 
 package stroom.widget.button.client;
 
+import stroom.widget.util.client.KeyBinding;
+import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.dom.client.Document;
@@ -149,26 +151,33 @@ public class FabButton extends ButtonBase {
         // Synthesize clicks based on keyboard events AFTER the normal key
         // handling.
         if ((event.getTypeInt() & Event.KEYEVENTS) != 0) {
-            final char keyCode = (char) event.getKeyCode();
             switch (type) {
                 case Event.ONKEYDOWN:
-                    if (keyCode == ' ') {
-                        isFocusing = true;
-                        onClickStart();
+                    if (!KeyBinding.isCommand(event)) {
+                        if (KeyBinding.is(event, Action.SELECT, Action.EXECUTE)) {
+                            onClick();
+                        }
                     }
                     break;
-                case Event.ONKEYUP:
-                    if (isFocusing && keyCode == ' ') {
-                        isFocusing = false;
-                        onClick();
-                    }
-                    break;
-                case Event.ONKEYPRESS:
-                    if (keyCode == '\n' || keyCode == '\r') {
-                        onClickStart();
-                        onClick();
-                    }
-                    break;
+
+//                case Event.ONKEYDOWN:
+//                    if (keyCode == ' ') {
+//                        isFocusing = true;
+//                        onClickStart();
+//                    }
+//                    break;
+//                case Event.ONKEYUP:
+//                    if (isFocusing && keyCode == ' ') {
+//                        isFocusing = false;
+//                        onClick();
+//                    }
+//                    break;
+//                case Event.ONKEYPRESS:
+//                    if (keyCode == '\n' || keyCode == '\r') {
+//                        onClickStart();
+//                        onClick();
+//                    }
+//                    break;
             }
         }
     }

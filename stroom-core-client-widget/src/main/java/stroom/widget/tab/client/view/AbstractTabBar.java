@@ -25,6 +25,8 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tab.client.event.RequestCloseTabEvent;
 import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.util.client.KeyBinding;
+import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.dom.client.Document;
@@ -32,7 +34,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.Visibility;
-import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -367,47 +368,52 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
     @Override
     public void onBrowserEvent(final Event event) {
 //        GWT.log("onBrowserEvent " + event.getType());
-
         if (Event.ONKEYDOWN == event.getTypeInt()) {
-            if (event.getKeyCode() == KeyCodes.KEY_ESCAPE) {
-                if (keyboardSelectedTab != null) {
-                    fireTabCloseRequest(keyboardSelectedTab);
-                }
-            } else if (event.getKeyCode() == KeyCodes.KEY_RIGHT) {
-                TabData tabData = null;
-                if (visibleTabs.size() > 0) {
-                    if (keyboardSelectedTab == null) {
-                        tabData = visibleTabs.get(0);
-                    } else {
-                        int index = visibleTabs.indexOf(keyboardSelectedTab);
-                        if (index >= 0 && index < visibleTabs.size() - 1) {
-                            tabData = visibleTabs.get(index + 1);
+            if (!KeyBinding.isCommand(event)) {
+                if (KeyBinding.is(event, Action.CLOSE)) {
+                    if (keyboardSelectedTab != null) {
+                        fireTabCloseRequest(keyboardSelectedTab);
+                    }
+
+                } else if (KeyBinding.is(event, Action.MOVE_RIGHT)) {
+                    TabData tabData = null;
+                    if (visibleTabs.size() > 0) {
+                        if (keyboardSelectedTab == null) {
+                            tabData = visibleTabs.get(0);
+                        } else {
+                            int index = visibleTabs.indexOf(keyboardSelectedTab);
+                            if (index >= 0 && index < visibleTabs.size() - 1) {
+                                tabData = visibleTabs.get(index + 1);
+                            }
                         }
                     }
-                }
-                keyboardSelectTab(tabData);
-            } else if (event.getKeyCode() == KeyCodes.KEY_LEFT) {
-                TabData tabData = null;
-                if (visibleTabs.size() > 0) {
-                    if (keyboardSelectedTab == null) {
-                        tabData = visibleTabs.get(visibleTabs.size() - 1);
-                    } else {
-                        int index = visibleTabs.indexOf(keyboardSelectedTab);
-                        if (index > 0) {
-                            tabData = visibleTabs.get(index - 1);
-                        } else if (overflowTabCount == 0) {
+                    keyboardSelectTab(tabData);
+
+                } else if (KeyBinding.is(event, Action.MOVE_LEFT)) {
+                    TabData tabData = null;
+                    if (visibleTabs.size() > 0) {
+                        if (keyboardSelectedTab == null) {
                             tabData = visibleTabs.get(visibleTabs.size() - 1);
+                        } else {
+                            int index = visibleTabs.indexOf(keyboardSelectedTab);
+                            if (index > 0) {
+                                tabData = visibleTabs.get(index - 1);
+                            } else if (overflowTabCount == 0) {
+                                tabData = visibleTabs.get(visibleTabs.size() - 1);
+                            }
                         }
                     }
-                }
-                keyboardSelectTab(tabData);
-            } else if (event.getKeyCode() == KeyCodes.KEY_SPACE || event.getKeyCode() == KeyCodes.KEY_ENTER) {
-                if (keyboardSelectedTab != null) {
-                    fireTabSelection(keyboardSelectedTab);
-                } else {
-                    showTabSelector(event, getTabSelector().getElement());
+                    keyboardSelectTab(tabData);
+
+                } else if (KeyBinding.is(event, Action.SELECT, Action.EXECUTE)) {
+                    if (keyboardSelectedTab != null) {
+                        fireTabSelection(keyboardSelectedTab);
+                    } else {
+                        showTabSelector(event, getTabSelector().getElement());
+                    }
                 }
             }
+
         } else if (Event.ONMOUSEDOWN == event.getTypeInt()) {
             if (MouseUtil.isPrimary(event)) {
                 currentTargetObject = getTargetObject(event);

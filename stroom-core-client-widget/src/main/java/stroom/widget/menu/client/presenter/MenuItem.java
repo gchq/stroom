@@ -16,23 +16,25 @@
 
 package stroom.widget.menu.client.presenter;
 
+import stroom.widget.util.client.KeyBinding.Action;
+
 import com.google.gwt.user.client.Command;
 
 public abstract class MenuItem extends Item {
 
     private final String text;
-    private final String shortcut;
+    private final Action action;
     private final Command command;
     private final boolean enabled;
 
     protected MenuItem(final int priority,
                        final String text,
-                       final String shortcut,
+                       final Action action,
                        final boolean enabled,
                        final Command command) {
         super(priority);
         this.text = text;
-        this.shortcut = shortcut;
+        this.action = action;
         this.enabled = enabled;
         this.command = command;
     }
@@ -41,8 +43,8 @@ public abstract class MenuItem extends Item {
         return text;
     }
 
-    public String getShortcut() {
-        return shortcut;
+    public Action getAction() {
+        return action;
     }
 
     public boolean isEnabled() {
@@ -57,7 +59,7 @@ public abstract class MenuItem extends Item {
             extends Item.AbstractBuilder<T, B> {
 
         protected String text;
-        protected String shortcut;
+        protected Action action;
         protected Command command;
         protected boolean enabled = true;
 
@@ -66,8 +68,8 @@ public abstract class MenuItem extends Item {
             return self();
         }
 
-        public B shortcut(final String shortcut) {
-            this.shortcut = shortcut;
+        public B action(final Action action) {
+            this.action = action;
             return self();
         }
 

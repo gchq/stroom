@@ -18,12 +18,7 @@ package stroom.explorer.client.presenter;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.widget.util.client.MultiSelectEvent;
-import stroom.widget.util.client.MultiSelectEvent.Handler;
 import stroom.widget.util.client.MultiSelectionModelImpl;
-import stroom.widget.util.client.SelectionType;
-
-import com.google.gwt.event.shared.HandlerRegistration;
 
 public class ExplorerTree extends AbstractExplorerTree {
 
@@ -36,17 +31,7 @@ public class ExplorerTree extends AbstractExplorerTree {
     @Override
     MultiSelectionModelImpl<ExplorerNode> getSelectionModel() {
         if (multiSelectionModel == null) {
-            multiSelectionModel = new MultiSelectionModelImpl<ExplorerNode>() {
-                @Override
-                public HandlerRegistration addSelectionHandler(final Handler handler) {
-                    return addHandler(handler, MultiSelectEvent.getType());
-                }
-
-                @Override
-                protected void fireChange(final SelectionType selectionType) {
-                    MultiSelectEvent.fire(ExplorerTree.this, selectionType);
-                }
-            };
+            multiSelectionModel = new MultiSelectionModelImpl<>(this);
         }
         return multiSelectionModel;
     }

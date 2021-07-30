@@ -28,7 +28,6 @@ import stroom.widget.tab.client.view.GlobalResizeObserver;
 import stroom.widget.util.client.AbstractSelectionEventManager;
 import stroom.widget.util.client.DoubleSelectTester;
 import stroom.widget.util.client.MouseUtil;
-import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.Selection;
@@ -203,18 +202,7 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
         e.getStyle().setPropertyPx("minHeight", 5);
 
         if (supportsSelection) {
-            final MultiSelectionModelImpl<R> multiSelectionModel = new MultiSelectionModelImpl<R>() {
-                @Override
-                public HandlerRegistration addSelectionHandler(final MultiSelectEvent.Handler handler) {
-                    return dataGrid.addHandler(handler, MultiSelectEvent.getType());
-                }
-
-                @Override
-                protected void fireChange(final SelectionType selectionType) {
-                    MultiSelectEvent.fire(dataGrid, selectionType);
-                }
-            };
-
+            final MultiSelectionModelImpl<R> multiSelectionModel = new MultiSelectionModelImpl<R>(dataGrid);
             selectionEventManager = new DataGridSelectionEventManager(dataGrid);
             dataGrid.setSelectionModel(multiSelectionModel, selectionEventManager);
             selectionModel = multiSelectionModel;
@@ -804,7 +792,7 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
         }
 
         @Override
-        protected void onEnter(final CellPreviewEvent<R> e) {
+        protected void onExecute(final CellPreviewEvent<R> e) {
             final int row = dataGrid.getKeyboardSelectedRow();
             final List<R> items = dataGrid.getVisibleItems();
             if (row >= 0 && row < items.size()) {

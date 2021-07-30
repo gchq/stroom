@@ -1,8 +1,9 @@
 package stroom.widget.util.client;
 
+import stroom.widget.util.client.KeyBinding.Action;
+
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.google.gwt.view.client.CellPreviewEvent;
 
@@ -25,65 +26,46 @@ public abstract class AbstractSelectionEventManager<T>
         final String type = nativeEvent.getType();
         if (BrowserEvents.KEYDOWN.equals(type)) {
             final List<T> items = cellTable.getVisibleItems();
-
-            if (items.size() > 0) {
-                final int keyCode = nativeEvent.getKeyCode();
-                switch (keyCode) {
-                    case KeyCodes.KEY_UP:
-                        onUp(event);
-                        handledEvent(event);
-                        break;
-                    case KeyCodes.KEY_DOWN:
-                        onDown(event);
-                        handledEvent(event);
-                        break;
-                    case KeyCodes.KEY_PAGEDOWN:
-                        onPageDown(event);
-                        handledEvent(event);
-                        return;
-                    case KeyCodes.KEY_PAGEUP:
-                        onPageUp(event);
-                        handledEvent(event);
-                        return;
-                    case KeyCodes.KEY_HOME:
-                        onHome(event);
-                        handledEvent(event);
-                        return;
-                    case KeyCodes.KEY_END:
-                        onEnd(event);
-                        handledEvent(event);
-                        return;
-                    case KeyCodes.KEY_RIGHT:
-                        onRight(event);
-                        handledEvent(event);
-                        break;
-                    case KeyCodes.KEY_LEFT:
-                        onLeft(event);
-                        handledEvent(event);
-                        break;
-                    case KeyCodes.KEY_ESCAPE:
-                        onEscape(event);
-                        handledEvent(event);
-                        break;
-                    case KeyCodes.KEY_ENTER:
-                        onEnter(event);
-                        handledEvent(event);
-                        break;
-                    case KeyCodes.KEY_SPACE:
-                        onSpace(event);
-                        handledEvent(event);
-                        break;
-                    case KeyCodes.KEY_ALT:
-                        onAlt(event);
-                        handledEvent(event);
-                        break;
-                    case KeyCodes.KEY_A:
-                        if (nativeEvent.getCtrlKey()) {
-                            onSelectAll(event);
-                            handledEvent(event);
-                        }
-
-                        break;
+            if (!KeyBinding.isCommand(nativeEvent) && items.size() > 0) {
+                if (KeyBinding.is(nativeEvent, Action.MOVE_UP)) {
+                    onMoveUp(event);
+                    handledEvent(event);
+                } else if (KeyBinding.is(nativeEvent, Action.MOVE_DOWN)) {
+                    onMoveDown(event);
+                    handledEvent(event);
+                } else if (KeyBinding.is(nativeEvent, Action.MOVE_PAGE_DOWN)) {
+                    onMovePageDown(event);
+                    handledEvent(event);
+                } else if (KeyBinding.is(nativeEvent, Action.MOVE_PAGE_UP)) {
+                    onMovePageUp(event);
+                    handledEvent(event);
+                } else if (KeyBinding.is(nativeEvent, Action.MOVE_START)) {
+                    onMoveStart(event);
+                    handledEvent(event);
+                } else if (KeyBinding.is(nativeEvent, Action.MOVE_END)) {
+                    onMoveEnd(event);
+                    handledEvent(event);
+                } else if (KeyBinding.is(nativeEvent, Action.MOVE_RIGHT)) {
+                    onMoveRight(event);
+                    handledEvent(event);
+                } else if (KeyBinding.is(nativeEvent, Action.MOVE_LEFT)) {
+                    onMoveLeft(event);
+                    handledEvent(event);
+                } else if (KeyBinding.is(nativeEvent, Action.CLOSE)) {
+                    onClose(event);
+                    handledEvent(event);
+                } else if (KeyBinding.is(nativeEvent, Action.EXECUTE)) {
+                    onExecute(event);
+                    handledEvent(event);
+                } else if (KeyBinding.is(nativeEvent, Action.SELECT)) {
+                    onSelect(event);
+                    handledEvent(event);
+                } else if (KeyBinding.is(nativeEvent, Action.SELECT_ALL)) {
+                    onSelectAll(event);
+                    handledEvent(event);
+                } else if (KeyBinding.is(nativeEvent, Action.MENU)) {
+                    onMenu(event);
+                    handledEvent(event);
                 }
             }
 
@@ -103,27 +85,27 @@ public abstract class AbstractSelectionEventManager<T>
         event.getNativeEvent().preventDefault();
     }
 
-    protected void onUp(final CellPreviewEvent<T> e) {
+    protected void onMoveUp(final CellPreviewEvent<T> e) {
         move(e, cellTable.getKeyboardSelectedRow() - 1, -1, 1);
     }
 
-    protected void onDown(final CellPreviewEvent<T> e) {
+    protected void onMoveDown(final CellPreviewEvent<T> e) {
         move(e, cellTable.getKeyboardSelectedRow() + 1, 1, 1);
     }
 
-    protected void onPageUp(final CellPreviewEvent<T> e) {
+    protected void onMovePageUp(final CellPreviewEvent<T> e) {
         move(e, cellTable.getKeyboardSelectedRow() - PAGE_SIZE, -1, PAGE_SIZE);
     }
 
-    protected void onPageDown(final CellPreviewEvent<T> e) {
+    protected void onMovePageDown(final CellPreviewEvent<T> e) {
         move(e, cellTable.getKeyboardSelectedRow() + PAGE_SIZE, 1, PAGE_SIZE);
     }
 
-    protected void onHome(final CellPreviewEvent<T> e) {
+    protected void onMoveStart(final CellPreviewEvent<T> e) {
         move(e, 0, 1, 1);
     }
 
-    protected void onEnd(final CellPreviewEvent<T> e) {
+    protected void onMoveEnd(final CellPreviewEvent<T> e) {
         move(e, cellTable.getVisibleItemCount() - 1, -1, 1);
     }
 
@@ -153,22 +135,22 @@ public abstract class AbstractSelectionEventManager<T>
     }
 
 
-    protected void onRight(final CellPreviewEvent<T> e) {
+    protected void onMoveRight(final CellPreviewEvent<T> e) {
     }
 
-    protected void onLeft(final CellPreviewEvent<T> e) {
+    protected void onMoveLeft(final CellPreviewEvent<T> e) {
     }
 
-    protected void onEscape(final CellPreviewEvent<T> e) {
+    protected void onClose(final CellPreviewEvent<T> e) {
     }
 
-    protected void onEnter(final CellPreviewEvent<T> e) {
+    protected void onExecute(final CellPreviewEvent<T> e) {
     }
 
-    protected void onSpace(final CellPreviewEvent<T> e) {
+    protected void onSelect(final CellPreviewEvent<T> e) {
     }
 
-    protected void onAlt(final CellPreviewEvent<T> e) {
+    protected void onMenu(final CellPreviewEvent<T> e) {
     }
 
     protected void onSelectAll(final CellPreviewEvent<T> e) {
@@ -186,7 +168,7 @@ public abstract class AbstractSelectionEventManager<T>
             }
 
             if (MouseUtil.isPrimary(e.getNativeEvent())) {
-                onEnter(e);
+                onExecute(e);
             }
         }
     }

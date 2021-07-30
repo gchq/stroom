@@ -1,5 +1,7 @@
 package stroom.widget.menu.client.presenter;
 
+import stroom.widget.util.client.KeyBinding.Action;
+
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.Command;
 
@@ -8,10 +10,10 @@ public class InfoMenuItem extends MenuItem {
     private final SafeHtml safeHtml;
 
     public InfoMenuItem(final SafeHtml safeHtml,
-                        final String shortcut,
+                        final Action action,
                         final Boolean enabled,
                         final Command command) {
-        super(0, "", shortcut, enabled, command);
+        super(0, "", action, enabled, command);
         this.safeHtml = safeHtml;
     }
 
@@ -26,7 +28,7 @@ public class InfoMenuItem extends MenuItem {
     public static class Builder {
 
         private SafeHtml safeHtml = null;
-        private String shortcut = null;
+        private Action action = null;
         private Command command = null;
         private boolean enabled = true;
 
@@ -38,8 +40,8 @@ public class InfoMenuItem extends MenuItem {
             return this;
         }
 
-        public Builder withShortcut(final String shortcut) {
-            this.shortcut = shortcut;
+        public Builder action(final Action action) {
+            this.action = action;
             return this;
         }
 
@@ -61,7 +63,7 @@ public class InfoMenuItem extends MenuItem {
         public Item build() {
             return new InfoMenuItem(
                     safeHtml,
-                    shortcut,
+                    action,
                     enabled,
                     command);
         }

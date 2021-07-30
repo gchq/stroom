@@ -18,6 +18,8 @@ package stroom.cell.tickbox.client;
 
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.svg.client.SvgImages;
+import stroom.widget.util.client.KeyBinding;
+import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.cell.client.AbstractEditableCell;
@@ -28,7 +30,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -115,9 +116,10 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
 
 //            GWT.log(type);
             if (clickable &&
-                    (BrowserEvents.MOUSEDOWN.equals(type) ||
-                            (BrowserEvents.KEYDOWN.equals(type) && event.getKeyCode() == KeyCodes.KEY_SPACE)) &&
-                    MouseUtil.isPrimary(event)) {
+                    ((BrowserEvents.MOUSEDOWN.equals(type) && MouseUtil.isPrimary(event)) ||
+                            (BrowserEvents.KEYDOWN.equals(type) &&
+                                    !KeyBinding.isCommand(event) &&
+                                    KeyBinding.is(event, Action.SELECT)))) {
                 event.preventDefault();
 
                 TickBoxState state = value;

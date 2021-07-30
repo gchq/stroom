@@ -150,12 +150,12 @@ public class Dialog extends AbstractPopupPanel {
     }
 
     @Override
-    protected void onEscapeKeyPressed() {
+    protected void onCloseAction() {
         hide(false);
     }
 
     @Override
-    protected void onEnterKeyPressed() {
+    protected void onOkAction() {
         popupUiHandlers.onHideRequest(false, true);
     }
 

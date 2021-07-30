@@ -18,6 +18,7 @@ package stroom.widget.menu.client.presenter;
 
 import stroom.svg.client.Icon;
 import stroom.svg.client.Preset;
+import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.user.client.Command;
 
@@ -31,11 +32,11 @@ public class IconMenuItem extends MenuItem {
                            final Icon enabledIcon,
                            final Icon disabledIcon,
                            final String text,
-                           final String shortcut,
+                           final Action action,
                            final boolean enabled,
                            final Command command,
                            final boolean highlight) {
-        super(priority, text, shortcut, enabled, command);
+        super(priority, text, action, enabled, command);
         this.enabledIcon = enabledIcon;
         this.disabledIcon = disabledIcon;
         this.highlight = highlight;
@@ -97,7 +98,7 @@ public class IconMenuItem extends MenuItem {
                     enabledIcon,
                     disabledIcon,
                     text,
-                    shortcut,
+                    action,
                     enabled,
                     command,
                     highlight);

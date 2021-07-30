@@ -300,17 +300,17 @@ public abstract class AbstractExplorerTree extends Composite {
         }
 
         @Override
-        protected void onRight(final CellPreviewEvent<ExplorerNode> e) {
+        protected void onMoveRight(final CellPreviewEvent<ExplorerNode> e) {
             treeModel.setItemOpen(e.getValue(), true);
         }
 
         @Override
-        protected void onLeft(final CellPreviewEvent<ExplorerNode> e) {
+        protected void onMoveLeft(final CellPreviewEvent<ExplorerNode> e) {
             treeModel.setItemOpen(e.getValue(), false);
         }
 
         @Override
-        protected void onEnter(final CellPreviewEvent<ExplorerNode> e) {
+        protected void onExecute(final CellPreviewEvent<ExplorerNode> e) {
             final NativeEvent nativeEvent = e.getNativeEvent();
             final ExplorerNode item = e.getValue();
             doSelect(item,
@@ -322,7 +322,7 @@ public abstract class AbstractExplorerTree extends Composite {
         }
 
         @Override
-        protected void onSpace(final CellPreviewEvent<ExplorerNode> e) {
+        protected void onSelect(final CellPreviewEvent<ExplorerNode> e) {
             final NativeEvent nativeEvent = e.getNativeEvent();
             // Change the selection.
             doSelect(e.getValue(),
@@ -334,7 +334,7 @@ public abstract class AbstractExplorerTree extends Composite {
         }
 
         @Override
-        protected void onAlt(final CellPreviewEvent<ExplorerNode> e) {
+        protected void onMenu(final CellPreviewEvent<ExplorerNode> e) {
             showMenu(e);
         }
 
