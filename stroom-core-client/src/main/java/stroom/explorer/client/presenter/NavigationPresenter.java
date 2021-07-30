@@ -38,10 +38,8 @@ import stroom.svg.client.Preset;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
 import stroom.widget.button.client.SvgButton;
-import stroom.widget.menu.client.presenter.HasChildren;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItems;
-import stroom.widget.menu.client.presenter.MenuItems.ItemComparator;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tab.client.event.MaximiseEvent;
@@ -62,7 +60,6 @@ import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 import com.gwtplatform.mvp.client.proxy.RevealContentEvent;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class NavigationPresenter
@@ -82,26 +79,10 @@ public class NavigationPresenter
     private final Button activityButton = new Button();
 
     private final MenuItems menuItems;
-    private final List<Item> currentMenuItems = new ArrayList<>();
 
     private final SvgButton add;
     private final SvgButton delete;
     private final SvgButton filter;
-
-
-//    private LayerContainerImpl explorer;
-
-//    @Inject
-//    public NavigationPresenter(final EventBus eventBus,
-//                               final NavigationView view,
-//                               final NavigationProxy proxy,
-//                               final MenuItems menuItems,
-//                               final Provider<MenuListPresenter> menuListPresenterProvider) {
-//        super(eventBus, view, proxy);
-//        this.menuItems = menuItems;
-//        this.menuListPresenterProvider = menuListPresenterProvider;
-//    }
-
 
     @Inject
     public NavigationPresenter(final EventBus eventBus,
@@ -241,20 +222,19 @@ public class NavigationPresenter
         final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft(),
                 target.getAbsoluteBottom() + 10);
         showMenuItems(
-                currentMenuItems,
                 popupPosition,
                 target);
     }
 
-    public void showMenuItems(final List<Item> children,
-                              final PopupPosition popupPosition,
+    public void showMenuItems(final PopupPosition popupPosition,
                               final Element autoHidePartner) {
-//        if (menu.isShowing()) {
-//            menu.hide();
-//        } else
-
-        if (children != null && children.size() > 0) {
-            ShowMenuEvent.fire(this, children, popupPosition, autoHidePartner);
+        // Clear the current menus.
+        menuItems.clear();
+        // Tell all plugins to add new menu items.
+        BeforeRevealMenubarEvent.fire(this, menuItems);
+        final List<Item> items = menuItems.getMenuItems(MenuKeys.MAIN_MENU);
+        if (items != null && items.size() > 0) {
+            ShowMenuEvent.fire(this, items, popupPosition, autoHidePartner);
         }
     }
 
@@ -273,45 +253,9 @@ public class NavigationPresenter
         explorerTree.getTreeModel().setRequiredPermissions(DocumentPermissionNames.READ);
         explorerTree.getTreeModel().setIncludedTypeSet(null);
 
-
-        // Clear the current menus.
-        menuItems.clear();
-
-        // Tell all plugins to add new menu items.
-        BeforeRevealMenubarEvent.fire(this, menuItems);
-
-        // Remove all current menu items.
-        currentMenuItems.clear();
-
-        // Get items from the providers.
-        final List<Item> items = menuItems.getMenuItems(MenuKeys.MAIN_MENU);
-        if (items != null) {
-            for (final Item item : items) {
-                if (item instanceof HasChildren) {
-                    final HasChildren hasChildren = (HasChildren) item;
-                    hasChildren.getChildren().onSuccess(children -> {
-                        if (children != null && children.size() > 0) {
-                            currentMenuItems.add(item);
-                            refresh();
-                        }
-                    });
-                } else {
-                    currentMenuItems.add(item);
-                    refresh();
-                }
-            }
-        }
-
-
         // Show the tree.
         forceReveal();
     }
-//
-//    @Override
-//    protected void revealInParent() {
-//        explorerTree.getTreeModel().refresh();
-//        OpenExplorerTabEvent.fire(this, this, this);
-//    }
 
     @Override
     public void onHighlight(final HighlightExplorerNodeEvent event) {
@@ -327,22 +271,7 @@ public class NavigationPresenter
 
     public void refresh() {
         explorerTree.getTreeModel().refresh();
-//        // Sort the menu items by priority.
-//        currentMenuItems.sort(new MenuItems.ItemComparator());
-//        for (final Item item : currentMenuItems) {
-//            // Add the item to the view.
-//            if (item instanceof HasChildren) {
-//                final HasChildren hasChildren = (HasChildren) item;
-//                hasChildren.getChildren().onSuccess(children -> {
-//                    if (children != null && children.size() > 0) {
-//                        allItems.put(item, children);
-//                        refreshAll();
-//                    }
-//                });
-//            }
-//        }
     }
-
 
     @Override
     protected void revealInParent() {
@@ -350,124 +279,6 @@ public class NavigationPresenter
         getView().setNavigationWidget(explorerTree);
         RevealContentEvent.fire(this, MainPresenter.EXPLORER, this);
     }
-
-//    @ProxyEvent
-//    @Override
-//    public void onOpen(final OpenExplorerTabEvent event) {
-//        // Make sure this tab pane is revealed before we try and reveal child
-//        // tabs.
-//        revealInParent();
-//
-//        explorer = new LayerContainerImpl();
-//        explorer.show(event.getLayer());
-//
-//        refreshAll();
-//
-////        getView().add(explorer, "Explorer", 20);
-//
-////        final TabData tabData = event.getTabData();
-////        if (tabData != null && openItems.contains(tabData)) {
-////            selectTab(tabData);
-////        } else {
-////            openItems.add(tabData);
-////            add(tabData, event.getLayer());
-////        }
-//    }
-//
-//    @ProxyEvent
-//    @Override
-//    public void onClose(final CloseExplorerTabEvent event) {
-//        final TabData tabData = event.getTabData();
-//
-////        // Remove from sets.
-////        openItems.remove(tabData);
-////
-////        // Remove from display.
-////        remove(tabData);
-//    }
-//
-//    @ProxyEvent
-//    @Override
-//    public void onCurrentUserChanged(final CurrentUserChangedEvent event) {
-//        // Clear the current menus.
-//        menuItems.clear();
-//
-//        // Tell all plugins to add new menu items.
-//        BeforeRevealMenubarEvent.fire(this, menuItems);
-//
-//        // Remove all current menu items.
-//        currentMenuItems.clear();
-//
-//        // Get items from the providers.
-//        final List<Item> items = menuItems.getMenuItems(MenuKeys.MAIN_MENU);
-//        if (items != null) {
-//            for (final Item item : items) {
-//                if (item instanceof HasChildren) {
-//                    final HasChildren hasChildren = (HasChildren) item;
-//                    hasChildren.getChildren().onSuccess(children -> {
-//                        if (children != null && children.size() > 0) {
-//                            currentMenuItems.add(item);
-//                            refresh();
-//                        }
-//                    });
-//                } else {
-//                    currentMenuItems.add(item);
-//                    refresh();
-//                }
-//            }
-//        }
-////
-////        // Show the menubar.
-////        forceReveal();
-//    }
-
-
-//    private void refreshAll() {
-//        final FlowPanel flowPanel = new FlowPanel();
-//        flowPanel.add(createButtons());
-//        flowPanel.add(explorerTree);
-
-//        if (explorerTree != null) {
-//            explorerTree.asWidget().getElement().getChild(0).getChild(0);
-//
-//            flowPanel.add(new NavigationPanel("Explorer", explorerTree, createButtons(), true));
-//        }
-
-//        allItems.keySet().stream().sorted(new MenuItems.ItemComparator()).forEach(item -> {
-//            boolean include = true;
-//            if (item instanceof MenuItem && ((MenuItem) item).getText().equals("Item")) {
-//                include = false;
-//            }
-//
-//            if (include) {
-//                FlowPanel fp = new FlowPanel();
-//                fp.setStyleName("navigation-list");
-//
-//                final List<Item> children = allItems.get(item);
-//                for (final Item child : children) {
-//                    if (child instanceof IconMenuItem) {
-//                        final IconMenuItem iconMenuItem = (IconMenuItem) child;
-//                        FlowPanel fpItem = new FlowPanel();
-//                        fpItem.setStyleName("navigation-item");
-//                        fpItem.add(iconMenuItem.getEnabledIcon().asWidget());
-//                        fpItem.add(new Label(iconMenuItem.getText()));
-//                        fp.add(fpItem);
-//
-//                        final Command command = iconMenuItem.getCommand();
-//                        if (command != null) {
-//                            fpItem.addDomHandler(e -> command.execute(), MouseDownEvent.getType());
-//                        }
-//                    }
-//                }
-//
-//                if (item instanceof MenuItem) {
-//                    flowPanel.add(new NavigationPanel(((MenuItem) item).getText(), fp, null, false));
-//                }
-//            }
-//        });
-//
-//        getView().setNavigationWidget(flowPanel);
-//    }
 
     @ProxyCodeSplit
     public interface NavigationProxy extends Proxy<NavigationPresenter> {
