@@ -22,6 +22,7 @@ import stroom.proxy.app.ContentSyncService;
 import stroom.proxy.app.ProxyConfigHealthCheck;
 import stroom.proxy.app.ProxyConfigHolder;
 import stroom.proxy.app.RestClientConfig;
+import stroom.proxy.app.RestClientConfigConverter;
 import stroom.proxy.app.handler.ForwardStreamHandlerFactory;
 import stroom.proxy.app.handler.ProxyRequestHandler;
 import stroom.proxy.app.handler.RemoteFeedStatusService;
@@ -187,10 +188,12 @@ public class ProxyModule extends AbstractModule {
     Client provideJerseyClient(final RestClientConfig restClientConfig,
                                final Environment environment,
                                final Provider<BuildInfo> buildInfoProvider,
-                               final PathCreator pathCreator) {
+                               final PathCreator pathCreator,
+                               final RestClientConfigConverter restClientConfigConverter) {
 
         // RestClientConfig is really just JerseyClientConfiguration
-        final JerseyClientConfiguration jerseyClientConfiguration = restClientConfig;
+        final JerseyClientConfiguration jerseyClientConfiguration = restClientConfigConverter.convert(
+                restClientConfig);
 
         // If the userAgent has not been explicitly set in the config then set it based
         // on the build version

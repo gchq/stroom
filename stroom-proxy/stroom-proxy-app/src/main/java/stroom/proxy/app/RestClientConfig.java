@@ -1,51 +1,114 @@
 package stroom.proxy.app;
 
+import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
-import stroom.util.shared.PropertyPath;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.dropwizard.client.JerseyClientConfiguration;
+import io.dropwizard.validation.ValidationMethod;
 
-import java.util.Objects;
 import javax.inject.Singleton;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 
+/**
+ * This class is essentially a copy of
+ * {@link io.dropwizard.client.JerseyClientConfiguration}
+ * so that we can extend {@link AbstractConfig} and have an equals method
+ */
 @Singleton
 @JsonPropertyOrder(alphabetic = true)
-public class RestClientConfig extends JerseyClientConfiguration implements IsProxyConfig {
+public class RestClientConfig extends HttpClientConfig implements IsProxyConfig {
 
-    // This class makes it easier for us to use/bind the JerseyClientConfiguration in our config tree
-    // and makes it easier to find its usages in IJ
+    @Min(1)
+    @Max(16 * 1024)
+    private int minThreads = 1;
 
-    // Held in part form to reduce memory overhead as some parts will be used
-    // many times over all the config objects
-    @JsonIgnore
-    private PropertyPath basePropertyPath = PropertyPath.blank();
+    @Min(1)
+    @Max(16 * 1024)
+    private int maxThreads = 128;
 
-    /**
-     * @return The base property path, e.g. "stroom.node" for this config object
-     */
-    @Override
-    @JsonIgnore
-    public String getBasePath() {
-        Objects.requireNonNull(basePropertyPath);
-        return basePropertyPath.toString();
+    @Min(1)
+    @Max(16 * 1024)
+    private int workQueueSize = 8;
+
+    private boolean gzipEnabled = true;
+
+    private boolean gzipEnabledForRequests = true;
+
+    private boolean chunkedEncodingEnabled = true;
+
+    @JsonProperty
+    public int getMinThreads() {
+        return minThreads;
     }
 
-    /**
-     * @return The full property path, e.g. "stroom.node.status" for the named property on this config
-     * object
-     */
-    @Override
-    public String getFullPath(final String propertyName) {
-        Objects.requireNonNull(basePropertyPath);
-        Objects.requireNonNull(propertyName);
-        return basePropertyPath.merge(propertyName).toString();
+    @JsonProperty
+    public void setMinThreads(int minThreads) {
+        this.minThreads = minThreads;
     }
 
-    @Override
+    @JsonProperty
+    public int getMaxThreads() {
+        return maxThreads;
+    }
+
+    @JsonProperty
+    public void setMaxThreads(int maxThreads) {
+        this.maxThreads = maxThreads;
+    }
+
+    @JsonProperty
+    public boolean isGzipEnabled() {
+        return gzipEnabled;
+    }
+
+    @JsonProperty
+    public void setGzipEnabled(boolean enabled) {
+        this.gzipEnabled = enabled;
+    }
+
+    @JsonProperty
+    public boolean isGzipEnabledForRequests() {
+        return gzipEnabledForRequests;
+    }
+
+    @JsonProperty
+    public void setGzipEnabledForRequests(boolean enabled) {
+        this.gzipEnabledForRequests = enabled;
+    }
+
+    @JsonProperty
+    public boolean isChunkedEncodingEnabled() {
+        return chunkedEncodingEnabled;
+    }
+
+    @JsonProperty
+    public void setChunkedEncodingEnabled(final boolean chunkedEncodingEnabled) {
+        this.chunkedEncodingEnabled = chunkedEncodingEnabled;
+    }
+
+    @JsonProperty
+    public int getWorkQueueSize() {
+        return workQueueSize;
+    }
+
+    @JsonProperty
+    public void setWorkQueueSize(int workQueueSize) {
+        this.workQueueSize = workQueueSize;
+    }
+
     @JsonIgnore
-    public void setBasePath(final PropertyPath basePropertyPath) {
-        this.basePropertyPath = basePropertyPath;
+    @ValidationMethod(message = ".minThreads must be less than or equal to maxThreads")
+    public boolean isThreadPoolSizedCorrectly() {
+        return minThreads <= maxThreads;
+    }
+
+    @JsonIgnore
+    @ValidationMethod(message = ".gzipEnabledForRequests requires gzipEnabled set to true")
+    public boolean isCompressionConfigurationValid() {
+        return !gzipEnabledForRequests || gzipEnabled;
     }
 }
