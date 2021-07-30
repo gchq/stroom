@@ -79,11 +79,7 @@ public abstract class AbstractSelectionEventManager<T>
                         break;
                     case KeyCodes.KEY_A:
                         if (nativeEvent.getCtrlKey()) {
-                            if (nativeEvent.getShiftKey()) {
-                                onDeselectAll(event);
-                            } else {
-                                onSelectAll(event);
-                            }
+                            onSelectAll(event);
                             handledEvent(event);
                         }
 
@@ -176,9 +172,6 @@ public abstract class AbstractSelectionEventManager<T>
     }
 
     protected void onSelectAll(final CellPreviewEvent<T> e) {
-    }
-
-    protected void onDeselectAll(final CellPreviewEvent<T> e) {
     }
 
     protected void onMouseDown(final CellPreviewEvent<T> e) {

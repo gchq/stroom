@@ -145,7 +145,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
 
     public void setDocumentTypes(final DocumentTypes documentTypes) {
         visibleTypes = documentTypes.getVisibleTypes();
-        showAll();
+        selectAll();
         refreshView();
     }
 
@@ -158,13 +158,13 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
         return getEventBus().addHandlerToSource(DataSelectionEvent.getType(), this, handler);
     }
 
-    private void showAll() {
+    private void selectAll() {
         for (final DocumentType documentType : visibleTypes) {
             selected.add(documentType.getType());
         }
     }
 
-    private void hideAll() {
+    private void selectNone() {
         selected.clear();
     }
 
@@ -178,13 +178,17 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
         cellTable.setRowCount(selectableTypes.size());
     }
 
+    private void toggleSelectAll() {
+        if (selected.size() == visibleTypes.size()) {
+            selectNone();
+        } else {
+            selectAll();
+        }
+    }
+
     private void toggle(final DocumentType type) {
         if (type.equals(SELECT_ALL_OR_NONE_DOCUMENT_TYPE)) {
-            if (selected.size() == visibleTypes.size()) {
-                hideAll();
-            } else {
-                showAll();
-            }
+            toggleSelectAll();
         } else {
             if (selected.contains(type.getType())) {
                 selected.remove(type.getType());
@@ -248,17 +252,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
 
         @Override
         protected void onSelectAll(final CellPreviewEvent<DocumentType> e) {
-            showAll();
-            refreshView();
-            DataSelectionEvent.fire(
-                    TypeFilterPresenter.this,
-                    TypeFilterPresenter.this,
-                    false);
-        }
-
-        @Override
-        protected void onDeselectAll(final CellPreviewEvent<DocumentType> e) {
-            hideAll();
+            toggleSelectAll();
             refreshView();
             DataSelectionEvent.fire(
                     TypeFilterPresenter.this,

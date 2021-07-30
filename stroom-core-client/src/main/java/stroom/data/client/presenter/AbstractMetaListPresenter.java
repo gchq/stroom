@@ -158,14 +158,17 @@ public abstract class AbstractMetaListPresenter
                 super.changeData(onProcessData(data));
             }
         };
+    }
 
-        getView().addColumnSortHandler(event -> {
+    @Override
+    protected void onBind() {
+        registerHandler(getView().addColumnSortHandler(event -> {
             if (event.getColumn() instanceof OrderByColumn<?, ?>) {
                 final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
                 criteria.setSort(orderByColumn.getField(), !event.isSortAscending(), orderByColumn.isIgnoreCase());
                 refresh();
             }
-        });
+        }));
     }
 
     protected ResultPage<MetaRow> onProcessData(final ResultPage<MetaRow> data) {
@@ -235,6 +238,24 @@ public abstract class AbstractMetaListPresenter
 
     protected abstract void addColumns(boolean allowSelectAll);
 
+    private void selectAll() {
+            selection.clear();
+            selection.setMatchAll(true);
+        if (dataProvider != null) {
+            dataProvider.updateRowData(dataProvider.getRanges()[0].getStart(), resultPage.getValues());
+        }
+        DataSelectionEvent.fire(AbstractMetaListPresenter.this, selection, false);
+    }
+
+    private void selectNone() {
+        selection.clear();
+        selection.setMatchAll(false);
+        if (dataProvider != null) {
+            dataProvider.updateRowData(dataProvider.getRanges()[0].getStart(), resultPage.getValues());
+        }
+        DataSelectionEvent.fire(AbstractMetaListPresenter.this, selection, false);
+    }
+
     void addSelectedColumn(final boolean allowSelectAll) {
         // Select Column
         final Column<MetaRow, TickBoxState> column = new Column<MetaRow, TickBoxState>(
@@ -262,18 +283,19 @@ public abstract class AbstractMetaListPresenter
 
             header.setUpdater(value -> {
                 if (value.equals(TickBoxState.UNTICK)) {
-                    selection.clear();
-                    selection.setMatchAll(false);
+                    selectNone();
+                } else if (value.equals(TickBoxState.TICK)) {
+                    selectAll();
                 }
-                if (value.equals(TickBoxState.TICK)) {
-                    selection.clear();
-                    selection.setMatchAll(true);
-                }
-                if (dataProvider != null) {
-                    dataProvider.updateRowData(dataProvider.getRanges()[0].getStart(), resultPage.getValues());
-                }
-                DataSelectionEvent.fire(AbstractMetaListPresenter.this, selection, false);
             });
+
+            registerHandler(getView().getSelectionEventManager().addSelectAllHandler(event -> {
+                if (selection.isMatchAll()) {
+                    selectNone();
+                } else {
+                    selectAll();
+                }
+            }));
 
         } else {
             getView().addColumn(column, "", ColumnSizeConstants.CHECKBOX_COL);

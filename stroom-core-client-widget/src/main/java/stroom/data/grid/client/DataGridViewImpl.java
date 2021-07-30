@@ -16,6 +16,7 @@
 
 package stroom.data.grid.client;
 
+import stroom.data.client.event.SelectAllEvent;
 import stroom.data.pager.client.Pager;
 import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
@@ -41,8 +42,10 @@ import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.TableRowElement;
+import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -90,7 +93,10 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
     Pager pager;
     @UiField
     ButtonPanel buttonPanel;
+
     private MultiSelectionModel<R> selectionModel;
+    private DataGridSelectionEventManager selectionEventManager;
+
     // Required for multiple selection using shift and control key modifiers.
     private R multiSelectStart;
     private final Widget widget;
@@ -209,7 +215,8 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
                 }
             };
 
-            dataGrid.setSelectionModel(multiSelectionModel, new DataGridSelectionEventManager(dataGrid));
+            selectionEventManager = new DataGridSelectionEventManager(dataGrid);
+            dataGrid.setSelectionModel(multiSelectionModel, selectionEventManager);
             selectionModel = multiSelectionModel;
             dataGrid.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.ENABLED);
             // We need to set this to prevent default keyboard behaviour.
@@ -675,6 +682,11 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
     }
 
     @Override
+    public DataGridSelectionEventManager getSelectionEventManager() {
+        return selectionEventManager;
+    }
+
+    @Override
     public void clearColumnSortList() {
         if (dataGrid != null && dataGrid.getColumnSortList() != null) {
             dataGrid.getColumnSortList().clear();
@@ -781,7 +793,11 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
         }
     }
 
-    private class DataGridSelectionEventManager extends AbstractSelectionEventManager<R> {
+    public class DataGridSelectionEventManager
+            extends AbstractSelectionEventManager<R>
+            implements SelectAllEvent.HasSelectAllHandlers {
+
+        private final EventBus eventBus = new SimpleEventBus();
 
         DataGridSelectionEventManager(AbstractCellTable<R> table) {
             super(table);
@@ -795,6 +811,11 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
                 final R item = items.get(row);
                 selectionModel.setSelected(item);
             }
+        }
+
+        @Override
+        protected void onSelectAll(final CellPreviewEvent<R> e) {
+            SelectAllEvent.fire(this);
         }
 
         @Override
@@ -861,6 +882,16 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
                             event.getNativeEvent().getShiftKey()));
                 }
             }
+        }
+
+        @Override
+        public HandlerRegistration addSelectAllHandler(final SelectAllEvent.Handler handler) {
+            return eventBus.addHandler(SelectAllEvent.getType(), handler);
+        }
+
+        @Override
+        public void fireEvent(final GwtEvent<?> event) {
+            eventBus.fireEvent(event);
         }
     }
 }

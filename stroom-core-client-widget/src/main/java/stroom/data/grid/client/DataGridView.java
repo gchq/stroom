@@ -16,6 +16,7 @@
 
 package stroom.data.grid.client;
 
+import stroom.data.grid.client.DataGridViewImpl.DataGridSelectionEventManager;
 import stroom.data.grid.client.DataGridViewImpl.HeadingListener;
 import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.svg.client.Preset;
@@ -79,6 +80,8 @@ public interface DataGridView<R> extends View, HasRows {
     HasData<R> getDataDisplay();
 
     MultiSelectionModel<R> getSelectionModel();
+
+    DataGridSelectionEventManager getSelectionEventManager();
 
     void clearColumnSortList();
 }

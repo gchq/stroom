@@ -166,10 +166,12 @@ public class PermissionsListPresenter
         }
     }
 
-    private void selectAll(final boolean select) {
+    private void toggleSelectAll() {
         if (currentUser != null) {
             final String userUuid = currentUser.getUuid();
             final Set<String> currentPermissions = documentPermissions.getPermissions().get(userUuid);
+            final boolean select = currentPermissions == null || currentPermissions.size() < permissions.size();
+
             for (final String permission : permissions) {
                 boolean hasPermission = false;
                 if (currentPermissions != null) {
@@ -230,12 +232,7 @@ public class PermissionsListPresenter
 
         @Override
         protected void onSelectAll(final CellPreviewEvent<String> e) {
-            selectAll(true);
-        }
-
-        @Override
-        protected void onDeselectAll(final CellPreviewEvent<String> e) {
-            selectAll(false);
+            toggleSelectAll();
         }
     }
 }
