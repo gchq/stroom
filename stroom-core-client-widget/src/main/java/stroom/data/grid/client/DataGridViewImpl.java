@@ -820,6 +820,9 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
 
         @Override
         protected void onMouseDown(final CellPreviewEvent<R> event) {
+            // We set focus here so that we can use the keyboard to navigate once we have focus.
+            dataGrid.setFocus(true);
+
             final NativeEvent nativeEvent = event.getNativeEvent();
             if (event.getValue() != null) {
                 final List<R> rows = dataGrid.getVisibleItems();
@@ -828,7 +831,6 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
                     dataGrid.setKeyboardSelectedRow(index);
                 }
             }
-
 
             // Find out if the cell consumes this event because if it does then we won't use it to select the row.
             boolean consumed = false;
@@ -868,9 +870,6 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
             }
 
             if (!consumed) {
-                // We set focus here so that we can use the keyboard to navigate once we have focus.
-                dataGrid.setFocus(true);
-
                 final R row = event.getValue();
                 if (row != null && MouseUtil.isPrimary(nativeEvent)) {
                     final boolean doubleClick = doubleClickTest.test(row);
