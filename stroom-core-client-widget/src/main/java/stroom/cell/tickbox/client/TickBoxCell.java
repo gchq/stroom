@@ -25,6 +25,7 @@ import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -81,8 +82,8 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
                                      final boolean clickable) {
         final Set<String> consumedEvents = new HashSet<>();
         if (clickable) {
-            consumedEvents.add("mousedown");
-            consumedEvents.add("keydown");
+            consumedEvents.add(BrowserEvents.MOUSEDOWN);
+            consumedEvents.add(BrowserEvents.KEYDOWN);
         }
 
         return new TickBoxCell(appearance, dependsOnSelection, handlesSelection, consumedEvents);
@@ -112,10 +113,10 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
             super.onBrowserEvent(context, parent, value, event, valueUpdater);
             final String type = event.getType();
 
-            GWT.log(type);
+//            GWT.log(type);
             if (clickable &&
-                    ("mousedown".equals(type) ||
-                            ("keydown".equals(type) && event.getKeyCode() == KeyCodes.KEY_SPACE)) &&
+                    (BrowserEvents.MOUSEDOWN.equals(type) ||
+                            (BrowserEvents.KEYDOWN.equals(type) && event.getKeyCode() == KeyCodes.KEY_SPACE)) &&
                     MouseUtil.isPrimary(event)) {
                 event.preventDefault();
 

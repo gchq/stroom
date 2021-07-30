@@ -238,18 +238,9 @@ public abstract class AbstractMetaListPresenter
 
     protected abstract void addColumns(boolean allowSelectAll);
 
-    private void selectAll() {
-            selection.clear();
-            selection.setMatchAll(true);
-        if (dataProvider != null) {
-            dataProvider.updateRowData(dataProvider.getRanges()[0].getStart(), resultPage.getValues());
-        }
-        DataSelectionEvent.fire(AbstractMetaListPresenter.this, selection, false);
-    }
-
-    private void selectNone() {
+    private void setMatchAll(final boolean select) {
         selection.clear();
-        selection.setMatchAll(false);
+        selection.setMatchAll(select);
         if (dataProvider != null) {
             dataProvider.updateRowData(dataProvider.getRanges()[0].getStart(), resultPage.getValues());
         }
@@ -283,19 +274,14 @@ public abstract class AbstractMetaListPresenter
 
             header.setUpdater(value -> {
                 if (value.equals(TickBoxState.UNTICK)) {
-                    selectNone();
+                    setMatchAll(false);
                 } else if (value.equals(TickBoxState.TICK)) {
-                    selectAll();
+                    setMatchAll(true);
                 }
             });
 
-            registerHandler(getView().getSelectionEventManager().addSelectAllHandler(event -> {
-                if (selection.isMatchAll()) {
-                    selectNone();
-                } else {
-                    selectAll();
-                }
-            }));
+            registerHandler(getView().getSelectionEventManager().addSelectAllHandler(event ->
+                    setMatchAll(!selection.isMatchAll())));
 
         } else {
             getView().addColumn(column, "", ColumnSizeConstants.CHECKBOX_COL);

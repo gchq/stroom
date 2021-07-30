@@ -22,6 +22,7 @@ import stroom.util.shared.Expander;
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
@@ -38,7 +39,8 @@ import java.util.Set;
 
 public class ExpanderCell extends AbstractCell<Expander> {
 
-    private static final Set<String> ENABLED_EVENTS = new HashSet<>(Arrays.asList("click", "keydown"));
+    private static final Set<String> ENABLED_EVENTS = new HashSet<>(
+            Arrays.asList(BrowserEvents.CLICK, BrowserEvents.KEYDOWN));
     private static volatile Template template;
 
     public ExpanderCell() {

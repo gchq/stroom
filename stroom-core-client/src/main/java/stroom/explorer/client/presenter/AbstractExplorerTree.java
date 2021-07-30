@@ -86,7 +86,8 @@ public abstract class AbstractExplorerTree extends Composite {
             }
         });
         selectionModel = getSelectionModel();
-        final ExplorerTreeSelectionEventManager selectionEventManager = new ExplorerTreeSelectionEventManager(cellTable);
+        final ExplorerTreeSelectionEventManager selectionEventManager =
+                new ExplorerTreeSelectionEventManager(cellTable);
         cellTable.setSelectionModel(selectionModel, selectionEventManager);
 
         treeModel = new ExplorerTreeModel(this, spinnerSmall, restFactory) {
