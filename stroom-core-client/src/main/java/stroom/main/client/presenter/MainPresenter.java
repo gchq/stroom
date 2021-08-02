@@ -66,7 +66,7 @@ public class MainPresenter extends MyPresenter<MainPresenter.MainView, MainPrese
 
         // Handle key presses.
         view.asWidget().addDomHandler(event ->
-                KeyBinding.isCommand(event.getNativeEvent()), KeyDownEvent.getType());
+                KeyBinding.getAction(event.getNativeEvent()), KeyDownEvent.getType());
 
         addRegisteredHandler(TaskStartEvent.getType(), event -> {
             // DebugPane.debug("taskStart:" + event.getTaskCount());

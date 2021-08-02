@@ -25,47 +25,61 @@ public abstract class AbstractSelectionEventManager<T>
         final NativeEvent nativeEvent = event.getNativeEvent();
         final String type = nativeEvent.getType();
         if (BrowserEvents.KEYDOWN.equals(type)) {
+            final Action action = KeyBinding.getAction(nativeEvent);
             final List<T> items = cellTable.getVisibleItems();
-            if (!KeyBinding.isCommand(nativeEvent) && items.size() > 0) {
-                if (KeyBinding.is(nativeEvent, Action.MOVE_UP)) {
-                    onMoveUp(event);
-                    handledEvent(event);
-                } else if (KeyBinding.is(nativeEvent, Action.MOVE_DOWN)) {
-                    onMoveDown(event);
-                    handledEvent(event);
-                } else if (KeyBinding.is(nativeEvent, Action.MOVE_PAGE_DOWN)) {
-                    onMovePageDown(event);
-                    handledEvent(event);
-                } else if (KeyBinding.is(nativeEvent, Action.MOVE_PAGE_UP)) {
-                    onMovePageUp(event);
-                    handledEvent(event);
-                } else if (KeyBinding.is(nativeEvent, Action.MOVE_START)) {
-                    onMoveStart(event);
-                    handledEvent(event);
-                } else if (KeyBinding.is(nativeEvent, Action.MOVE_END)) {
-                    onMoveEnd(event);
-                    handledEvent(event);
-                } else if (KeyBinding.is(nativeEvent, Action.MOVE_RIGHT)) {
-                    onMoveRight(event);
-                    handledEvent(event);
-                } else if (KeyBinding.is(nativeEvent, Action.MOVE_LEFT)) {
-                    onMoveLeft(event);
-                    handledEvent(event);
-                } else if (KeyBinding.is(nativeEvent, Action.CLOSE)) {
-                    onClose(event);
-                    handledEvent(event);
-                } else if (KeyBinding.is(nativeEvent, Action.EXECUTE)) {
-                    onExecute(event);
-                    handledEvent(event);
-                } else if (KeyBinding.is(nativeEvent, Action.SELECT)) {
-                    onSelect(event);
-                    handledEvent(event);
-                } else if (KeyBinding.is(nativeEvent, Action.SELECT_ALL)) {
-                    onSelectAll(event);
-                    handledEvent(event);
-                } else if (KeyBinding.is(nativeEvent, Action.MENU)) {
-                    onMenu(event);
-                    handledEvent(event);
+            if (action != null && items.size() > 0) {
+                switch (action) {
+                    case MOVE_UP:
+                        onMoveUp(event);
+                        handledEvent(event);
+                        break;
+                    case MOVE_DOWN:
+                        onMoveDown(event);
+                        handledEvent(event);
+                        break;
+                    case MOVE_PAGE_DOWN:
+                        onMovePageDown(event);
+                        handledEvent(event);
+                        break;
+                    case MOVE_PAGE_UP:
+                        handledEvent(event);
+                        break;
+                    case MOVE_START:
+                        onMoveStart(event);
+                        handledEvent(event);
+                        break;
+                    case MOVE_END:
+                        onMoveEnd(event);
+                        handledEvent(event);
+                        break;
+                    case MOVE_RIGHT:
+                        onMoveRight(event);
+                        handledEvent(event);
+                        break;
+                    case MOVE_LEFT:
+                        onMoveLeft(event);
+                        handledEvent(event);
+                        break;
+                    case CLOSE:
+                        onClose(event);
+                        handledEvent(event);
+                        break;
+                    case EXECUTE:
+                        onExecute(event);
+                        handledEvent(event);
+                        break;
+                    case SELECT:
+                        onSelect(event);
+                        handledEvent(event);
+                        break;
+                    case SELECT_ALL:
+                        onSelectAll(event);
+                        handledEvent(event);
+                        break;
+                    case MENU:
+                        onMenu(event);
+                        handledEvent(event);
+                        break;
                 }
             }
 
@@ -80,7 +94,8 @@ public abstract class AbstractSelectionEventManager<T>
         }
     }
 
-    void handledEvent(CellPreviewEvent<?> event) {
+    void handledEvent(CellPreviewEvent<
+            ?> event) {
 //        event.setCanceled(true);
         event.getNativeEvent().preventDefault();
     }
@@ -94,11 +109,17 @@ public abstract class AbstractSelectionEventManager<T>
     }
 
     protected void onMovePageUp(final CellPreviewEvent<T> e) {
-        move(e, cellTable.getKeyboardSelectedRow() - PAGE_SIZE, -1, PAGE_SIZE);
+        move(e,
+                cellTable.getKeyboardSelectedRow() - PAGE_SIZE,
+                -1,
+                PAGE_SIZE);
     }
 
     protected void onMovePageDown(final CellPreviewEvent<T> e) {
-        move(e, cellTable.getKeyboardSelectedRow() + PAGE_SIZE, 1, PAGE_SIZE);
+        move(e,
+                cellTable.getKeyboardSelectedRow() + PAGE_SIZE,
+                1,
+                PAGE_SIZE);
     }
 
     protected void onMoveStart(final CellPreviewEvent<T> e) {

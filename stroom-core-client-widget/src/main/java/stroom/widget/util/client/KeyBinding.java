@@ -1,21 +1,18 @@
 package stroom.widget.util.client;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.Command;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 
 public class KeyBinding {
 
-    private static final Map<Action, List<Binding>> BINDINGS = new HashMap<>();
+    private static final List<Binding> BINDINGS = new ArrayList<>();
     private static final Map<Action, Command> COMMANDS = new HashMap<>();
 
     static {
@@ -46,17 +43,16 @@ public class KeyBinding {
     }
 
     public static String getShortcut(final Action action) {
-        final List<Binding> list = BINDINGS.get(action);
-        if (list != null && list.size() > 0) {
-            final Binding binding = list.get(0);
-            return binding.toString();
+        for (final Binding binding : BINDINGS) {
+            if (binding.action == action) {
+                return binding.shortcut.toString();
+            }
         }
         return null;
     }
 
-    public static boolean is(final NativeEvent e,
-                             final Action... actions) {
-        final Binding eventAsBinding = new Builder()
+    public static Action getAction(final NativeEvent e) {
+        final Shortcut shortcut = new Builder()
                 .keyCode(e.getKeyCode())
                 .shift(e.getShiftKey())
                 .ctrl(e.getCtrlKey())
@@ -64,67 +60,118 @@ public class KeyBinding {
                 .meta(e.getMetaKey())
                 .build();
 
-        for (final Action action : actions) {
-            final boolean matchesAction = matchesAction(eventAsBinding, action);
-            if (matchesAction) {
+//        GWT.log("SHORTCUT = " + shortcut);
+
+        final Binding binding = getBinding(shortcut);
+        if (binding != null) {
+
+//            GWT.log("BINDING = " + binding);
+
+            final Action action = binding.action;
+            final Command command = COMMANDS.get(action);
+            if (command != null) {
+//                GWT.log("EXECUTE = " + action);
+
                 e.preventDefault();
                 e.stopPropagation();
-                return true;
+                command.execute();
+            } else {
+                return action;
+            }
+        }
+        return null;
+    }
+
+    private static Binding getBinding(final Shortcut shortcut) {
+        // Favour exact matches
+        for (final Binding binding : BINDINGS) {
+            if (binding.shortcut.equals(shortcut)) {
+                return binding;
             }
         }
 
-        return false;
-    }
-
-    public static boolean isCommand(final NativeEvent e) {
-        final Binding eventAsBinding = new Builder()
-                .keyCode(e.getKeyCode())
-                .shift(e.getShiftKey())
-                .ctrl(e.getCtrlKey())
-                .alt(e.getAltKey())
-                .meta(e.getMetaKey())
-                .build();
-
-        // Check to see if the keypress is supposed to execute a command.
-        if (eventAsBinding.hasModifiers()) {
-            for (final Entry<Action, Command> entry : COMMANDS.entrySet()) {
-                final boolean matchesAction = matchesAction(eventAsBinding, entry.getKey());
-                if (matchesAction) {
-                    GWT.log("Execute command: " + getShortcut(entry.getKey()));
-                    entry.getValue().execute();
-                    e.preventDefault();
-                    e.stopPropagation();
-                    return true;
-                }
+        // If we have a binding that isn't exact but has the same keycode without specifying modifiers then
+        // return the bound action.
+        for (final Binding binding : BINDINGS) {
+            if (!binding.shortcut.hasModifiers() && binding.shortcut.keyCode == shortcut.keyCode) {
+                return binding;
             }
         }
-        return false;
+
+        return null;
     }
 
-
-    private static boolean matchesAction(final Binding eventAsBinding, final Action action) {
-        final List<Binding> bindings = BINDINGS.get(action);
-        if (bindings != null) {
-            for (final Binding binding : bindings) {
-                // If the binding requires the use of modifiers then test the modifiers that are present on the
-                // event.
-                if (binding.hasModifiers()) {
-                    if (eventAsBinding.equals(binding)) {
-                        GWT.log(action.toString());
-                        GWT.log("eventAsBinding: " + eventAsBinding);
-                        GWT.log("binding: " + binding);
-                        return true;
-                    }
-                } else if (binding.keyCode == eventAsBinding.keyCode) {
-                    GWT.log(action.toString());
-                    GWT.log("eventAsBinding: " + eventAsBinding);
-                    GWT.log("binding: " + binding);
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
+//    public static boolean is(final NativeEvent e,
+//                             final Action... actions) {
+//        final Shortcut eventAsBinding = new Builder()
+//                .keyCode(e.getKeyCode())
+//                .shift(e.getShiftKey())
+//                .ctrl(e.getCtrlKey())
+//                .alt(e.getAltKey())
+//                .meta(e.getMetaKey())
+//                .build();
+//
+//        for (final Action action : actions) {
+//            final boolean matchesAction = matchesAction(eventAsBinding, action);
+//            if (matchesAction) {
+//                e.preventDefault();
+//                e.stopPropagation();
+//                return true;
+//            }
+//        }
+//
+//        return false;
+//    }
+//
+//    public static boolean isCommand(final NativeEvent e) {
+//        final Shortcut eventAsBinding = new Builder()
+//                .keyCode(e.getKeyCode())
+//                .shift(e.getShiftKey())
+//                .ctrl(e.getCtrlKey())
+//                .alt(e.getAltKey())
+//                .meta(e.getMetaKey())
+//                .build();
+//
+//        // Check to see if the keypress is supposed to execute a command.
+//        if (eventAsBinding.hasModifiers()) {
+//            for (final Entry<Action, Command> entry : COMMANDS.entrySet()) {
+//                final boolean matchesAction = matchesAction(eventAsBinding, entry.getKey());
+//                if (matchesAction) {
+//                    GWT.log("Execute command: " + getShortcut(entry.getKey()));
+//                    entry.getValue().execute();
+//                    e.preventDefault();
+//                    e.stopPropagation();
+//                    return true;
+//                }
+//            }
+//        }
+//        return false;
+//    }
+//
+//
+//    private static boolean matchesAction(final Shortcut eventAsBinding, final Action action) {
+//        final List<Shortcut> bindings = BINDINGS.get(action);
+//        if (bindings != null) {
+//            for (final Shortcut binding : bindings) {
+//                // If the binding requires the use of modifiers then test the modifiers that are present on the
+//                // event.
+//                if (binding.hasModifiers()) {
+//                    if (eventAsBinding.equals(binding)) {
+//                        GWT.log(action.toString());
+//                        GWT.log("eventAsBinding: " + eventAsBinding);
+//                        GWT.log("binding: " + binding);
+//                        return true;
+//                    }
+//                } else if (binding.keyCode == eventAsBinding.keyCode) {
+//                    GWT.log(action.toString());
+//                    GWT.log("eventAsBinding: " + eventAsBinding);
+//                    GWT.log("binding: " + binding);
+//                    return true;
+//                }
+//            }
+//        }
+//        return false;
+//    }
 
     public enum Action {
         MOVE_UP,
@@ -162,12 +209,53 @@ public class KeyBinding {
         }
     }
 
-    static void add(final Action action, final Binding... bindings) {
-        final List<Binding> set = BINDINGS.computeIfAbsent(action, k -> new ArrayList<>());
-        set.addAll(Arrays.asList(bindings));
+    static void add(final Action action, final Shortcut... shortcuts) {
+        for (final Shortcut shortcut : shortcuts) {
+            BINDINGS.add(new Binding.Builder().shortcut(shortcut).action(action).build());
+        }
     }
 
     private static class Binding {
+
+        private final Shortcut shortcut;
+        private final Action action;
+
+        private Binding(final Shortcut shortcut,
+                        final Action action) {
+            this.shortcut = shortcut;
+            this.action = action;
+        }
+
+        @Override
+        public String toString() {
+            return "Binding{" +
+                    "shortcut=" + shortcut +
+                    ", action=" + action +
+                    '}';
+        }
+
+        public static class Builder {
+
+            private Shortcut shortcut;
+            private Action action;
+
+            public Builder shortcut(final Shortcut shortcut) {
+                this.shortcut = shortcut;
+                return this;
+            }
+
+            public Builder action(final Action action) {
+                this.action = action;
+                return this;
+            }
+
+            public Binding build() {
+                return new Binding(shortcut, action);
+            }
+        }
+    }
+
+    private static class Shortcut {
 
         private final int keyCode;
         private final boolean shift;
@@ -175,11 +263,11 @@ public class KeyBinding {
         private final boolean alt;
         private final boolean meta;
 
-        public Binding(final int keyCode,
-                       final boolean shift,
-                       final boolean ctrl,
-                       final boolean alt,
-                       final boolean meta) {
+        public Shortcut(final int keyCode,
+                        final boolean shift,
+                        final boolean ctrl,
+                        final boolean alt,
+                        final boolean meta) {
             this.keyCode = keyCode;
             this.shift = shift;
             this.ctrl = ctrl;
@@ -195,7 +283,7 @@ public class KeyBinding {
             if (o == null || getClass() != o.getClass()) {
                 return false;
             }
-            final Binding binding = (Binding) o;
+            final Shortcut binding = (Shortcut) o;
             return keyCode == binding.keyCode &&
                     shift == binding.shift &&
                     ctrl == binding.ctrl &&
@@ -280,8 +368,8 @@ public class KeyBinding {
             return this;
         }
 
-        public Binding build() {
-            return new Binding(keyCode, shift, ctrl, alt, meta);
+        public Shortcut build() {
+            return new Shortcut(keyCode, shift, ctrl, alt, meta);
         }
     }
 }

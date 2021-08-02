@@ -369,48 +369,54 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
     public void onBrowserEvent(final Event event) {
 //        GWT.log("onBrowserEvent " + event.getType());
         if (Event.ONKEYDOWN == event.getTypeInt()) {
-            if (!KeyBinding.isCommand(event)) {
-                if (KeyBinding.is(event, Action.CLOSE)) {
-                    if (keyboardSelectedTab != null) {
-                        fireTabCloseRequest(keyboardSelectedTab);
-                    }
+            final Action action = KeyBinding.getAction(event);
+            TabData tabData = null;
+            if (action != null) {
+                switch (action) {
+                    case CLOSE:
+                        if (keyboardSelectedTab != null) {
+                            fireTabCloseRequest(keyboardSelectedTab);
+                        }
+                        break;
 
-                } else if (KeyBinding.is(event, Action.MOVE_RIGHT)) {
-                    TabData tabData = null;
-                    if (visibleTabs.size() > 0) {
-                        if (keyboardSelectedTab == null) {
-                            tabData = visibleTabs.get(0);
-                        } else {
-                            int index = visibleTabs.indexOf(keyboardSelectedTab);
-                            if (index >= 0 && index < visibleTabs.size() - 1) {
-                                tabData = visibleTabs.get(index + 1);
+                    case MOVE_RIGHT:
+                        if (visibleTabs.size() > 0) {
+                            if (keyboardSelectedTab == null) {
+                                tabData = visibleTabs.get(0);
+                            } else {
+                                int index = visibleTabs.indexOf(keyboardSelectedTab);
+                                if (index >= 0 && index < visibleTabs.size() - 1) {
+                                    tabData = visibleTabs.get(index + 1);
+                                }
                             }
                         }
-                    }
-                    keyboardSelectTab(tabData);
+                        keyboardSelectTab(tabData);
+                        break;
 
-                } else if (KeyBinding.is(event, Action.MOVE_LEFT)) {
-                    TabData tabData = null;
-                    if (visibleTabs.size() > 0) {
-                        if (keyboardSelectedTab == null) {
-                            tabData = visibleTabs.get(visibleTabs.size() - 1);
-                        } else {
-                            int index = visibleTabs.indexOf(keyboardSelectedTab);
-                            if (index > 0) {
-                                tabData = visibleTabs.get(index - 1);
-                            } else if (overflowTabCount == 0) {
+                    case MOVE_LEFT:
+                        if (visibleTabs.size() > 0) {
+                            if (keyboardSelectedTab == null) {
                                 tabData = visibleTabs.get(visibleTabs.size() - 1);
+                            } else {
+                                int index = visibleTabs.indexOf(keyboardSelectedTab);
+                                if (index > 0) {
+                                    tabData = visibleTabs.get(index - 1);
+                                } else if (overflowTabCount == 0) {
+                                    tabData = visibleTabs.get(visibleTabs.size() - 1);
+                                }
                             }
                         }
-                    }
-                    keyboardSelectTab(tabData);
+                        keyboardSelectTab(tabData);
+                        break;
 
-                } else if (KeyBinding.is(event, Action.SELECT, Action.EXECUTE)) {
-                    if (keyboardSelectedTab != null) {
-                        fireTabSelection(keyboardSelectedTab);
-                    } else {
-                        showTabSelector(event, getTabSelector().getElement());
-                    }
+                    case SELECT:
+                    case EXECUTE:
+                        if (keyboardSelectedTab != null) {
+                            fireTabSelection(keyboardSelectedTab);
+                        } else {
+                            showTabSelector(event, getTabSelector().getElement());
+                        }
+                        break;
                 }
             }
 

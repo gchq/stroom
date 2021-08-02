@@ -170,10 +170,9 @@ abstract class BaseSvgButton extends ButtonBase implements ButtonView {
         if ((event.getTypeInt() & Event.KEYEVENTS) != 0) {
             switch (type) {
                 case Event.ONKEYDOWN:
-                    if (!KeyBinding.isCommand(event)) {
-                        if (KeyBinding.is(event, Action.SELECT, Action.EXECUTE)) {
-                            onClick();
-                        }
+                    final Action action = KeyBinding.getAction(event);
+                    if (action == Action.SELECT || action == Action.EXECUTE) {
+                        onClick();
                     }
                     break;
 

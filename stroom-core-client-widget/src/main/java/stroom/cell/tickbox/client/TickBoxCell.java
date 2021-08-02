@@ -118,8 +118,7 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
             if (clickable &&
                     ((BrowserEvents.MOUSEDOWN.equals(type) && MouseUtil.isPrimary(event)) ||
                             (BrowserEvents.KEYDOWN.equals(type) &&
-                                    !KeyBinding.isCommand(event) &&
-                                    KeyBinding.is(event, Action.SELECT)))) {
+                                    KeyBinding.getAction(event) == Action.SELECT))) {
                 event.preventDefault();
 
                 TickBoxState state = value;

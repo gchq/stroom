@@ -125,6 +125,11 @@ public class DocumentPluginEventManager extends Plugin {
     private TabData selectedTab;
     private MultiSelectionModel<ExplorerNode> selectionModel;
 
+    private final Command itemCloseCommand;
+    private final Command itemCloseAllCommand;
+    private final Command itemSaveCommand;
+    private final Command itemSaveAllCommand;
+
     @Inject
     public DocumentPluginEventManager(final EventBus eventBus,
                                       final HasSaveRegistry hasSaveRegistry,
@@ -138,6 +143,31 @@ public class DocumentPluginEventManager extends Plugin {
         this.documentTypeCache = documentTypeCache;
         this.documentPluginRegistry = documentPluginRegistry;
         this.securityContext = securityContext;
+
+        itemCloseCommand = () -> {
+            if (isTabItemSelected(selectedTab)) {
+                RequestCloseTabEvent.fire(DocumentPluginEventManager.this, selectedTab);
+            }
+        };
+        KeyBinding.addCommand(Action.ITEM_CLOSE, itemCloseCommand);
+
+        itemCloseAllCommand = () -> {
+            if (isTabItemSelected(selectedTab)) {
+                RequestCloseAllTabsEvent.fire(DocumentPluginEventManager.this);
+            }
+        };
+        KeyBinding.addCommand(Action.ITEM_CLOSE_ALL, itemCloseAllCommand);
+
+        itemSaveCommand = () -> {
+            if (isDirty(selectedTab)) {
+                final HasSave hasSave = (HasSave) selectedTab;
+                hasSave.save();
+            }
+        };
+        KeyBinding.addCommand(Action.ITEM_SAVE, itemSaveCommand);
+
+        itemSaveAllCommand = hasSaveRegistry::save;
+        KeyBinding.addCommand(Action.ITEM_SAVE_ALL, itemSaveAllCommand);
     }
 
     @Override
@@ -758,75 +788,46 @@ public class DocumentPluginEventManager extends Plugin {
     }
 
     private MenuItem createCloseMenuItem(final boolean enabled) {
-        final Command command = () -> {
-            if (isTabItemSelected(selectedTab)) {
-                RequestCloseTabEvent.fire(DocumentPluginEventManager.this, selectedTab);
-            }
-        };
-
-        KeyBinding.addCommand(Action.ITEM_CLOSE, command);
-
         return new IconMenuItem.Builder()
                 .priority(3)
                 .icon(SvgPresets.CLOSE)
                 .text("Close")
                 .action(Action.ITEM_CLOSE)
                 .enabled(enabled)
-                .command(command)
+                .command(itemCloseCommand)
                 .build();
     }
 
     private MenuItem createCloseAllMenuItem(final boolean enabled) {
-        final Command command = () -> {
-            if (isTabItemSelected(selectedTab)) {
-                RequestCloseAllTabsEvent.fire(DocumentPluginEventManager.this);
-            }
-        };
-
-        KeyBinding.addCommand(Action.ITEM_CLOSE_ALL, command);
-
         return new IconMenuItem.Builder()
                 .priority(4)
                 .icon(SvgPresets.CLOSE)
                 .text("Close All")
                 .action(Action.ITEM_CLOSE_ALL)
                 .enabled(enabled)
-                .command(command)
+                .command(itemCloseAllCommand)
                 .build();
     }
 
     private MenuItem createSaveMenuItem(final int priority, final boolean enabled) {
-        final Command command = () -> {
-            if (isDirty(selectedTab)) {
-                final HasSave hasSave = (HasSave) selectedTab;
-                hasSave.save();
-            }
-        };
-
-        KeyBinding.addCommand(Action.ITEM_SAVE, command);
-
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgPresets.SAVE)
                 .text("Save")
                 .action(Action.ITEM_SAVE)
                 .enabled(enabled)
-                .command(command)
+                .command(itemSaveCommand)
                 .build();
     }
 
     private MenuItem createSaveAllMenuItem(final int priority, final boolean enabled) {
-        final Command command = hasSaveRegistry::save;
-
-        KeyBinding.addCommand(Action.ITEM_SAVE_ALL, command);
-
         return new IconMenuItem.Builder()
                 .priority(priority)
                 .icon(SvgPresets.SAVE)
                 .text("Save All")
                 .action(Action.ITEM_SAVE_ALL)
                 .enabled(enabled)
-                .command(command)
+                .command(itemSaveAllCommand)
                 .build();
     }
 

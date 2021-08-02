@@ -53,12 +53,15 @@ public abstract class AbstractPopupPanel extends PopupPanel implements Popup {
 
         if (event.getTypeInt() == Event.ONKEYDOWN) {
             final NativeEvent nativeEvent = event.getNativeEvent();
-
-            if (!KeyBinding.isCommand(nativeEvent)) {
-                if (KeyBinding.is(nativeEvent, Action.DIALOG_CLOSE)) {
-                    onCloseAction();
-                } else if (KeyBinding.is(nativeEvent, Action.DIALOG_OK)) {
-                    onOkAction();
+            final Action action = KeyBinding.getAction(nativeEvent);
+            if (action != null) {
+                switch (action) {
+                    case DIALOG_CLOSE:
+                        onCloseAction();
+                        break;
+                    case DIALOG_OK:
+                        onOkAction();
+                        break;
                 }
             }
         }
