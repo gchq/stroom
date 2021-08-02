@@ -19,11 +19,11 @@ package stroom.data.store.impl.fs.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
+import stroom.data.grid.client.WrapperView;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
-import stroom.data.grid.client.WrapperView;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;

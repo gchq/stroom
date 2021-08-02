@@ -18,6 +18,7 @@
 package stroom.script.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.data.grid.client.WrapperView;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
@@ -27,7 +28,6 @@ import stroom.entity.client.presenter.HasWrite;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.explorer.client.presenter.EntityChooser;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.data.grid.client.WrapperView;
 import stroom.script.shared.ScriptDoc;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.svg.client.SvgPresets;

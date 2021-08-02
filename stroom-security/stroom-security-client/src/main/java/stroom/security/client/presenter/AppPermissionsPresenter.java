@@ -18,8 +18,8 @@ package stroom.security.client.presenter;
 
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.grid.client.PagerView;
 import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
