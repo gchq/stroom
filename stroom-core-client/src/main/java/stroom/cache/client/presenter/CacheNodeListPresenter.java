@@ -22,9 +22,9 @@ import stroom.cache.shared.CacheResource;
 import stroom.cell.info.client.InfoColumn;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeManager;
@@ -52,12 +52,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<CacheInfo>> {
+public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
 
     private static final CacheResource CACHE_RESOURCE = GWT.create(CacheResource.class);
 
     private static final int SMALL_COL = 90;
     private static final int MEDIUM_COL = 150;
+
+    private final MyDataGrid<CacheInfo> dataGrid;
 
     private final RestFactory restFactory;
     private final TooltipPresenter tooltipPresenter;
@@ -70,10 +72,15 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
 
     @Inject
     public CacheNodeListPresenter(final EventBus eventBus,
+                                  final PagerView view,
                                   final RestFactory restFactory,
                                   final TooltipPresenter tooltipPresenter,
                                   final NodeManager nodeManager) {
-        super(eventBus, new DataGridViewImpl<>(false));
+        super(eventBus, view);
+
+        dataGrid = new MyDataGrid<>();
+        view.setDataWidget(dataGrid);
+
         this.restFactory = restFactory;
         this.tooltipPresenter = tooltipPresenter;
         this.nodeManager = nodeManager;
@@ -82,7 +89,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
         addInfoColumn();
 
         // Node.
-        getView().addResizableColumn(new Column<CacheInfo, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<CacheInfo, String>(new TextCell()) {
             @Override
             public String getValue(final CacheInfo row) {
                 return row.getNodeName();
@@ -90,7 +97,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
         }, "Node", MEDIUM_COL);
 
         // Entries.
-        getView().addResizableColumn(new Column<CacheInfo, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<CacheInfo, String>(new TextCell()) {
             @Override
             public String getValue(final CacheInfo row) {
                 return row.getMap().get("Entries");
@@ -98,7 +105,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
         }, "Entries", SMALL_COL);
 
         // Max Entries.
-        getView().addResizableColumn(new Column<CacheInfo, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<CacheInfo, String>(new TextCell()) {
             @Override
             public String getValue(final CacheInfo row) {
                 return row.getMap().get("MaximumSize");
@@ -106,7 +113,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
         }, "Max Entries", SMALL_COL);
 
         // Expiry.
-        getView().addResizableColumn(new Column<CacheInfo, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<CacheInfo, String>(new TextCell()) {
             @Override
             public String getValue(final CacheInfo row) {
                 String expiry = row.getMap().get("ExpireAfterAccess");
@@ -128,9 +135,9 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
             final Rest<Boolean> rest = restFactory.create();
             rest.call(CACHE_RESOURCE).clear(row.getName(), row.getNodeName());
         });
-        getView().addColumn(clearColumn, "</br>", 80);
+        dataGrid.addColumn(clearColumn, "</br>", 80);
 
-        getView().addEndColumn(new EndColumn<>());
+        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void addInfoColumn() {
@@ -150,7 +157,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
                         popupPosition, null);
             }
         };
-        getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
+        dataGrid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
     }
 
     private SafeHtml getInfoHtml(final CacheInfo cacheInfo) {
@@ -184,7 +191,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
                                 fetchTasksForNodes(dataConsumer, throwableConsumer, nodeNames), throwableConsumer);
                     }
                 };
-                dataProvider.addDataDisplay(getView().getDataDisplay());
+                dataProvider.addDataDisplay(dataGrid);
             }
 
             dataProvider.refresh();

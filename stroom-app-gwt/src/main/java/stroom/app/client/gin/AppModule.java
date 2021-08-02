@@ -31,6 +31,8 @@ import stroom.core.client.presenter.CorePresenter;
 import stroom.core.client.presenter.CorePresenter.CoreProxy;
 import stroom.core.client.presenter.CorePresenter.CoreView;
 import stroom.core.client.view.CoreViewImpl;
+import stroom.data.grid.client.PagerView;
+import stroom.data.grid.client.PagerViewImpl;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.view.LinkTabPanelViewImpl;
 import stroom.explorer.client.presenter.EntityCheckTreePresenter;
@@ -139,6 +141,7 @@ public class AppModule extends AbstractPresenterModule {
         // bindSharedView(CellTreeView.class, CellTreeViewImpl.class);
         // bind(LinkTabPanelPresenter.class);
         bindSharedView(CurveTabLayoutView.class, CurveTabLayoutViewImpl.class);
+        bindSharedView(PagerView.class, PagerViewImpl.class);
         bindSharedView(LinkTabPanelView.class, LinkTabPanelViewImpl.class);
         bindSharedView(ListView.class, ListViewImpl.class);
     }

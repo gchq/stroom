@@ -20,12 +20,13 @@ package stroom.dashboard.client.query;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.dashboard.shared.ComponentSelectionHandler;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.svg.client.Preset;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.user.cellview.client.Column;
@@ -36,11 +37,19 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import java.util.List;
 
 public class SelectionHandlerListPresenter
-        extends MyPresenterWidget<DataGridView<ComponentSelectionHandler>> {
+        extends MyPresenterWidget<PagerView> {
+
+    private final MyDataGrid<ComponentSelectionHandler> dataGrid;
+    private final MultiSelectionModelImpl<ComponentSelectionHandler> selectionModel;
 
     @Inject
-    public SelectionHandlerListPresenter(final EventBus eventBus) {
-        super(eventBus, new DataGridViewImpl<>(true, false));
+    public SelectionHandlerListPresenter(final EventBus eventBus,
+                                         final PagerView view) {
+        super(eventBus, view);
+
+        dataGrid = new MyDataGrid<>();
+        selectionModel = dataGrid.addDefaultSelectionModel(false);
+        view.setDataWidget(dataGrid);
 
         // Add a border to the list.
         getWidget().getElement().addClassName("stroom-border");
@@ -60,7 +69,7 @@ public class SelectionHandlerListPresenter
                         return row.getComponentId();
                     }
                 };
-        getView().addResizableColumn(componentColumn, "Component", 200);
+        dataGrid.addResizableColumn(componentColumn, "Component", 200);
 
         // Expression.
         final Column<ComponentSelectionHandler, String> expressionColumn =
@@ -70,7 +79,7 @@ public class SelectionHandlerListPresenter
                         return row.getExpression().toString();
                     }
                 };
-        getView().addResizableColumn(expressionColumn, "Expression", 200);
+        dataGrid.addResizableColumn(expressionColumn, "Expression", 200);
 
         // Enabled.
         final Column<ComponentSelectionHandler, TickBoxState> enabledColumn =
@@ -88,18 +97,18 @@ public class SelectionHandlerListPresenter
                         return TickBoxState.fromBoolean(row.isEnabled());
                     }
                 };
-        getView().addColumn(enabledColumn, "Enabled", 50);
+        dataGrid.addColumn(enabledColumn, "Enabled", 50);
 
-        getView().addEndColumn(new EndColumn<>());
+        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     public void setData(final List<ComponentSelectionHandler> data) {
-        getView().setRowData(0, data);
-        getView().setRowCount(data.size());
+        dataGrid.setRowData(0, data);
+        dataGrid.setRowCount(data.size());
     }
 
     public MultiSelectionModel<ComponentSelectionHandler> getSelectionModel() {
-        return getView().getSelectionModel();
+        return selectionModel;
     }
 
     public ButtonView add(final Preset preset) {

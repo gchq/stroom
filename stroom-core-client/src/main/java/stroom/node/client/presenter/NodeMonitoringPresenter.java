@@ -24,9 +24,9 @@ import stroom.cell.valuespinner.client.ValueSpinnerCell;
 import stroom.cell.valuespinner.shared.EditableInteger;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
 import stroom.node.client.NodeManager;
 import stroom.node.shared.ClusterNodeInfo;
@@ -60,11 +60,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
-public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<NodeStatusResult>>
+public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
         implements Refreshable {
 
     private static final NumberFormat THOUSANDS_FORMATTER = NumberFormat.getFormat("#,###");
 
+    private final MyDataGrid<NodeStatusResult> dataGrid;
     private final NodeManager nodeManager;
     private final TooltipPresenter tooltipPresenter;
     private final DateTimeFormatter dateTimeFormatter;
@@ -74,10 +75,15 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
 
     @Inject
     public NodeMonitoringPresenter(final EventBus eventBus,
+                                   final PagerView view,
                                    final NodeManager nodeManager,
                                    final TooltipPresenter tooltipPresenter,
                                    final DateTimeFormatter dateTimeFormatter) {
-        super(eventBus, new DataGridViewImpl<>(true));
+        super(eventBus, view);
+
+        dataGrid = new MyDataGrid<>();
+        view.setDataWidget(dataGrid);
+
         this.nodeManager = nodeManager;
         this.tooltipPresenter = tooltipPresenter;
         this.dateTimeFormatter = dateTimeFormatter;
@@ -107,7 +113,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                 super.changeData(data);
             }
         };
-        dataProvider.addDataDisplay(getView().getDataDisplay());
+        dataProvider.addDataDisplay(dataGrid);
     }
 
     /**
@@ -124,7 +130,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                         caught -> showNodeInfoError(caught, x, y));
             }
         };
-        getView().addColumn(infoColumn, "<br/>", 20);
+        dataGrid.addColumn(infoColumn, "<br/>", 20);
 
         // Name.
         final Column<NodeStatusResult, String> nameColumn = new Column<NodeStatusResult, String>(new TextCell()) {
@@ -136,7 +142,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                 return row.getNode().getName();
             }
         };
-        getView().addResizableColumn(nameColumn, "Name", 100);
+        dataGrid.addResizableColumn(nameColumn, "Name", 100);
 
         // Host Name.
         final Column<NodeStatusResult, String> hostNameColumn = new Column<NodeStatusResult, String>(new TextCell()) {
@@ -148,7 +154,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                 return row.getNode().getUrl();
             }
         };
-        getView().addResizableColumn(hostNameColumn, "Cluster Base Endpoint URL", 400);
+        dataGrid.addResizableColumn(hostNameColumn, "Cluster Base Endpoint URL", 400);
 
         // Ping (ms)
         final Column<NodeStatusResult, SafeHtml> safeHtmlColumn = DataGridUtil.safeHtmlColumn(row -> {
@@ -204,7 +210,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
             }
             return SafeHtmlUtil.getSafeHtml("-");
         });
-        getView().addResizableColumn(safeHtmlColumn, "Ping (ms)", 300);
+        dataGrid.addResizableColumn(safeHtmlColumn, "Ping (ms)", 300);
 
         // Master.
         final Column<NodeStatusResult, TickBoxState> masterColumn = new Column<NodeStatusResult, TickBoxState>(
@@ -218,7 +224,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
             }
         };
         masterColumn.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-        getView().addColumn(masterColumn, "Master", 50);
+        dataGrid.addColumn(masterColumn, "Master", 50);
 
         // Priority.
         final Column<NodeStatusResult, Number> priorityColumn = new Column<NodeStatusResult, Number>(
@@ -236,7 +242,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                         row.getNode().getName(),
                         value.intValue(),
                         result -> refresh()));
-        getView().addColumn(priorityColumn, "Priority", 55);
+        dataGrid.addColumn(priorityColumn, "Priority", 55);
 
         // Enabled
         final Column<NodeStatusResult, TickBoxState> enabledColumn = new Column<NodeStatusResult, TickBoxState>(
@@ -256,9 +262,9 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                         value.toBoolean(),
                         result -> refresh()));
 
-        getView().addColumn(enabledColumn, "Enabled", 60);
+        dataGrid.addColumn(enabledColumn, "Enabled", 60);
 
-        getView().addEndColumn(new EndColumn<>());
+        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void showNodeInfoResult(final Node node, final ClusterNodeInfo result, final int x, final int y) {

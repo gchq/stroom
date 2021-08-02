@@ -18,9 +18,9 @@
 package stroom.statistics.impl.sql.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -30,7 +30,6 @@ import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
-import stroom.statistics.impl.sql.client.presenter.StatisticsCustomMaskListPresenter.MaskHolder;
 import stroom.statistics.impl.sql.shared.CustomRollUpMask;
 import stroom.statistics.impl.sql.shared.StatisticField;
 import stroom.statistics.impl.sql.shared.StatisticRollupResource;
@@ -40,6 +39,7 @@ import stroom.statistics.impl.sql.shared.StatisticsDataSourceFieldChangeRequest;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.core.client.GWT;
@@ -57,32 +57,38 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGridView<MaskHolder>>
+public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<PagerView>
         implements HasDocumentRead<StatisticStoreDoc>, HasWrite<StatisticStoreDoc>, HasDirtyHandlers,
         ReadOnlyChangeHandler {
 
     private static final StatisticRollupResource STATISTIC_ROLLUP_RESOURCE = GWT.create(StatisticRollupResource.class);
+
+    private final MyDataGrid<MaskHolder> dataGrid;
+    private final MultiSelectionModelImpl<MaskHolder> selectionModel;
 
     private final ButtonView newButton;
     private final ButtonView removeButton;
     private final ButtonView autoGenerateButton;
     private final List<Column<MaskHolder, ?>> columns = new ArrayList<>();
     private final RestFactory restFactory;
-    private MaskHolder selectedElement;
     private StatisticStoreDoc statisticsDataSource;
     private MaskHolderList maskList = new MaskHolderList();
 
     private boolean readOnly = true;
 
-    @SuppressWarnings("unchecked")
     @Inject
     public StatisticsCustomMaskListPresenter(final EventBus eventBus,
+                                             final PagerView view,
                                              final RestFactory restFactory) {
-        super(eventBus, new DataGridViewImpl<>(true, true));
+        super(eventBus, view);
 
-        newButton = getView().addButton(SvgPresets.NEW_ITEM);
-        autoGenerateButton = getView().addButton(SvgPresets.GENERATE);
-        removeButton = getView().addButton(SvgPresets.REMOVE);
+        dataGrid = new MyDataGrid<>();
+        selectionModel = dataGrid.addDefaultSelectionModel(true);
+        view.setDataWidget(dataGrid);
+
+        newButton = view.addButton(SvgPresets.NEW_ITEM);
+        autoGenerateButton = view.addButton(SvgPresets.GENERATE);
+        removeButton = view.addButton(SvgPresets.REMOVE);
 
         maskList = new MaskHolderList();
 
@@ -113,7 +119,7 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
             }
         }));
 
-        registerHandler(getView().getSelectionModel().addSelectionHandler(event -> enableButtons()));
+        registerHandler(selectionModel.addSelectionHandler(event -> enableButtons()));
     }
 
     private void enableButtons() {
@@ -121,7 +127,7 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
         autoGenerateButton.setEnabled(!readOnly);
 
         if (maskList != null && maskList.size() > 0) {
-            selectedElement = getView().getSelectionModel().getSelected();
+            MaskHolder selectedElement = selectionModel.getSelected();
             removeButton.setEnabled(!readOnly && selectedElement != null);
 
         } else {
@@ -147,14 +153,14 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
 
         final EndColumn<MaskHolder> endColumn = new EndColumn<>();
 
-        getView().addEndColumn(endColumn);
+        dataGrid.addEndColumn(endColumn);
 
         columns.add(endColumn);
     }
 
     private void removeAllColumns() {
         for (final Column<MaskHolder, ?> column : columns) {
-            getView().removeColumn(column);
+            dataGrid.removeColumn(column);
         }
     }
 
@@ -173,7 +179,7 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
             DirtyEvent.fire(StatisticsCustomMaskListPresenter.this, true);
         });
 
-        getView().addResizableColumn(rolledUpColumn, fieldname, 100);
+        dataGrid.addResizableColumn(rolledUpColumn, fieldname, 100);
         columns.add(rolledUpColumn);
     }
 
@@ -206,11 +212,11 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
     }
 
     private void onRemove(final ClickEvent event) {
-        final List<MaskHolder> list = getView().getSelectionModel().getSelectedItems();
+        final List<MaskHolder> list = selectionModel.getSelectedItems();
         if (maskList != null && list != null && list.size() > 0) {
             maskList.removeAll(list);
 
-            getView().getSelectionModel().clear();
+            selectionModel.clear();
             // dataProvider.refresh();
             refreshModel();
 
@@ -236,8 +242,8 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
     }
 
     public void refreshModel() {
-        getView().setRowData(0, maskList);
-        getView().setRowCount(maskList.size(), true);
+        dataGrid.setRowData(0, maskList);
+        dataGrid.setRowCount(maskList.size(), true);
     }
 
     @Override

@@ -21,8 +21,8 @@ import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.GlobalConfigCriteria;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.ListConfigResponse;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeManager;
@@ -30,6 +30,7 @@ import stroom.svg.client.Preset;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.PageRequest;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -52,7 +53,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ManageGlobalPropertyListPresenter
-        extends MyPresenterWidget<DataGridView<ManageGlobalPropertyListPresenter.ConfigPropertyRow>>
+        extends MyPresenterWidget<PagerView>
         implements ColumnSortEvent.Handler {
 
     private static final String NODES_UNAVAILABLE_MSG = "[Error getting values]";
@@ -64,6 +65,8 @@ public class ManageGlobalPropertyListPresenter
 
     private static final GlobalConfigResource GLOBAL_CONFIG_RESOURCE_RESOURCE = GWT.create(GlobalConfigResource.class);
 
+    private final MyDataGrid<ConfigPropertyRow> dataGrid;
+    private final MultiSelectionModelImpl<ConfigPropertyRow> selectionModel;
     private final ListDataProvider<ConfigPropertyRow> dataProvider;
     private final RestFactory restFactory;
     private final NodeManager nodeManager;
@@ -101,16 +104,22 @@ public class ManageGlobalPropertyListPresenter
 
     @Inject
     public ManageGlobalPropertyListPresenter(final EventBus eventBus,
+                                             final PagerView view,
                                              final RestFactory restFactory,
                                              final NodeManager nodeManager) {
-        super(eventBus, new DataGridViewImpl<>(true));
+        super(eventBus, view);
+
+        dataGrid = new MyDataGrid<>();
+        selectionModel = dataGrid.addDefaultSelectionModel(false);
+        view.setDataWidget(dataGrid);
+
         this.restFactory = restFactory;
         this.nodeManager = nodeManager;
 
         initColumns();
 
         dataProvider = new ListDataProvider<>();
-        dataProvider.addDataDisplay(getView().getDataDisplay());
+        dataProvider.addDataDisplay(dataGrid);
         dataProvider.setListUpdater(this::refreshTable);
     }
 
@@ -161,8 +170,8 @@ public class ManageGlobalPropertyListPresenter
         final Rest<ListConfigResponse> listPropertiesRest = restFactory.create();
 
         criteria.setPageRequest(new PageRequest(
-                getView().getVisibleRange().getStart(),
-                getView().getVisibleRange().getLength()));
+                dataGrid.getVisibleRange().getStart(),
+                dataGrid.getVisibleRange().getLength()));
 
         listPropertiesRest
                 .onSuccess(listConfigResponse -> {
@@ -257,7 +266,7 @@ public class ManageGlobalPropertyListPresenter
                 })
                 .collect(Collectors.toList());
         // We are not changing the total so re-use the existing one
-        dataProvider.setPartialList(newRows, getView().getDataDisplay().getRowCount());
+        dataProvider.setPartialList(newRows, dataGrid.getRowCount());
     }
 
     private void updatePropertyKeyedMaps() {
@@ -291,53 +300,53 @@ public class ManageGlobalPropertyListPresenter
 
     private void initColumns() {
         // Name.
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(ConfigPropertyRow::getNameAsString, SafeHtmlUtils::fromString)
                         .topAligned()
                         .withSorting(GlobalConfigResource.FIELD_DEF_NAME.getDisplayName())
-                        .withStyleName(getView().getResources().dataGridStyle().dataGridCellVerticalTop())
+                        .withStyleName(MyDataGrid.RESOURCES.dataGridStyle().dataGridCellVerticalTop())
                         .build(),
                 GlobalConfigResource.FIELD_DEF_NAME.getDisplayName(),
                 450);
 
         // Effective Value
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(
                         DataGridUtil.highlightedCellExtractor(
                                 ConfigPropertyRow::getEffectiveValueAsString,
                                 (ConfigPropertyRow row) -> MULTIPLE_VALUES_MSG.equals(row.getEffectiveValueAsString()),
                                 ERROR_CSS_COLOUR))
                         .withSorting(GlobalConfigResource.FIELD_DEF_VALUE.getDisplayName())
-                        .withStyleName(getView().getResources().dataGridStyle().dataGridCellVerticalTop())
+                        .withStyleName(MyDataGrid.RESOURCES.dataGridStyle().dataGridCellVerticalTop())
                         .build(),
                 GlobalConfigResource.FIELD_DEF_VALUE.getDisplayName(),
                 300);
 
         // Source
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(
                         DataGridUtil.highlightedCellExtractor(
                                 ConfigPropertyRow::getSourceAsString,
                                 (ConfigPropertyRow row) -> MULTIPLE_SOURCES_MSG.equals(row.getSourceAsString()),
                                 ERROR_CSS_COLOUR))
                         .withSorting(GlobalConfigResource.FIELD_DEF_SOURCE.getDisplayName())
-                        .withStyleName(getView().getResources().dataGridStyle().dataGridCellVerticalTop())
+                        .withStyleName(MyDataGrid.RESOURCES.dataGridStyle().dataGridCellVerticalTop())
                         .build(),
                 GlobalConfigResource.FIELD_DEF_SOURCE.getDisplayName(),
                 75);
 
         // Description
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(ConfigPropertyRow::getDescription, SafeHtmlUtils::fromString)
                         .topAligned()
-                        .withStyleName(getView().getResources().dataGridStyle().dataGridCellWrapText())
-                        .withStyleName(getView().getResources().dataGridStyle().dataGridCellVerticalTop())
+                        .withStyleName(MyDataGrid.RESOURCES.dataGridStyle().dataGridCellWrapText())
+                        .withStyleName(MyDataGrid.RESOURCES.dataGridStyle().dataGridCellVerticalTop())
                         .build(),
                 GlobalConfigResource.FIELD_DEF_DESCRIPTION.getDisplayName(),
                 750);
 
-        DataGridUtil.addEndColumn(getView());
-        DataGridUtil.addColumnSortHandler(getView(), criteria, this::refresh);
+        DataGridUtil.addEndColumn(dataGrid);
+        DataGridUtil.addColumnSortHandler(dataGrid, criteria, this::refresh);
     }
 
     public ButtonView addButton(final Preset preset) {
@@ -355,7 +364,7 @@ public class ManageGlobalPropertyListPresenter
     }
 
     public ConfigProperty getSelectedItem() {
-        return getView().getSelectionModel().getSelected().getConfigProperty();
+        return selectionModel.getSelected().getConfigProperty();
     }
 
     void setPartialName(final String partialName) {
@@ -384,6 +393,10 @@ public class ManageGlobalPropertyListPresenter
 
     public HandlerRegistration addErrorHandler(final ErrorEvent.Handler handler) {
         return this.addHandlerToSource(ErrorEvent.getType(), handler);
+    }
+
+    public MultiSelectionModelImpl<ConfigPropertyRow> getSelectionModel() {
+        return selectionModel;
     }
 
     public static class ConfigPropertyRow {
@@ -448,8 +461,8 @@ public class ManageGlobalPropertyListPresenter
             if (!Objects.equals(filter, criteria.getQuickFilterInput())) {
                 criteria.setQuickFilterInput(filter);
                 // Need to reset the range else the name criteria can push us outside the page we are on
-                Range range = getView().getVisibleRange();
-                getView().getDataDisplay().setVisibleRange(0, range.getLength());
+                Range range = dataGrid.getVisibleRange();
+                dataGrid.setVisibleRange(0, range.getLength());
                 refresh();
             }
         }

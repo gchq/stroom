@@ -17,7 +17,7 @@
 package stroom.data.client.presenter;
 
 import stroom.core.client.LocationManager;
-import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.presenter.EntityChooser;
 import stroom.meta.shared.DataRetentionFields;
@@ -58,6 +58,7 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
 
     @Inject
     public MetaRelationListPresenter(final EventBus eventBus,
+                                     final PagerView view,
                                      final RestFactory restFactory,
                                      final TooltipPresenter tooltipPresenter,
                                      final LocationManager locationManager,
@@ -66,6 +67,7 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
                                      final Provider<ProcessChoicePresenter> processChoicePresenterProvider,
                                      final Provider<EntityChooser> pipelineSelection) {
         super(eventBus,
+                view,
                 restFactory,
                 tooltipPresenter,
                 locationManager,
@@ -116,9 +118,9 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
         // Set the width of the expander column so that all expanders
         // can be seen.
         if (maxDepth >= 0) {
-            getView().setColumnWidth(expanderColumn, 16 + (maxDepth * 10), Unit.PX);
+            dataGrid.setColumnWidth(expanderColumn, 16 + (maxDepth * 10), Unit.PX);
         } else {
-            getView().setColumnWidth(expanderColumn, 0, Unit.PX);
+            dataGrid.setColumnWidth(expanderColumn, 0, Unit.PX);
         }
 
         return super.onProcessData(new ResultPage<>(newData, data.getPageResponse()));
@@ -162,7 +164,7 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
         addSelectedColumn(allowSelectAll);
 
         expanderColumn = DataGridUtil.expanderColumn(this::buildExpander);
-        getView().addColumn(expanderColumn, "<br/>", 0);
+        dataGrid.addColumn(expanderColumn, "<br/>", 0);
 
         addInfoColumn();
 
@@ -215,7 +217,7 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
                 Function.identity(),
                 ColumnSizeConstants.SMALL_COL);
 
-        getView().addEndColumn(new EndColumn<>());
+        addEndColumn();
     }
 
     private Expander buildExpander(final MetaRow row) {

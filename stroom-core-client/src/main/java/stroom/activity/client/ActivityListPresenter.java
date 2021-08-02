@@ -20,9 +20,9 @@ import stroom.activity.shared.Activity;
 import stroom.activity.shared.Activity.Prop;
 import stroom.activity.shared.ActivityResource;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -30,6 +30,7 @@ import stroom.svg.client.Preset;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
@@ -43,19 +44,28 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import java.util.function.Consumer;
 
 public class ActivityListPresenter
-        extends MyPresenterWidget<DataGridView<Activity>>
+        extends MyPresenterWidget<PagerView>
         implements Refreshable {
 
     private static final ActivityResource ACTIVITY_RESOURCE = GWT.create(ActivityResource.class);
+
+    private final MyDataGrid<Activity> dataGrid;
+    private final MultiSelectionModelImpl<Activity> selectionModel;
     protected RestDataProvider<Activity, ResultPage<Activity>> dataProvider;
 
     private String name;
 
     @Inject
-    public ActivityListPresenter(final EventBus eventBus, final RestFactory restFactory) {
-        super(eventBus, new DataGridViewImpl<Activity>(true));
+    public ActivityListPresenter(final EventBus eventBus,
+                                 final PagerView view,
+                                 final RestFactory restFactory) {
+        super(eventBus, view);
 
-        getView().addResizableColumn(new Column<Activity, SafeHtml>(new SafeHtmlCell()) {
+        dataGrid = new MyDataGrid<>();
+        selectionModel = dataGrid.addDefaultSelectionModel(true);
+        view.setDataWidget(dataGrid);
+
+        dataGrid.addResizableColumn(new Column<Activity, SafeHtml>(new SafeHtmlCell()) {
             @Override
             public SafeHtml getValue(final Activity activity) {
                 if (activity == null
@@ -85,7 +95,7 @@ public class ActivityListPresenter
                 return builder.toSafeHtml();
             }
         }, "Activity", 600);
-        getView().addEndColumn(new EndColumn<Activity>());
+        dataGrid.addEndColumn(new EndColumn<Activity>());
 
         dataProvider = new RestDataProvider<Activity, ResultPage<Activity>>(eventBus) {
             @Override
@@ -99,7 +109,7 @@ public class ActivityListPresenter
                         .list(name);
             }
         };
-        dataProvider.addDataDisplay(getView().getDataDisplay());
+        dataProvider.addDataDisplay(dataGrid);
     }
 
     public ButtonView addButton(final Preset preset) {
@@ -112,7 +122,7 @@ public class ActivityListPresenter
     }
 
     MultiSelectionModel<Activity> getSelectionModel() {
-        return getView().getSelectionModel();
+        return selectionModel;
     }
 
     void setCriteria(final String name) {

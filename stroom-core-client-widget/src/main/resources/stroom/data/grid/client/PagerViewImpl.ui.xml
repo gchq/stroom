@@ -9,6 +9,6 @@
             <b:ButtonPanel ui:field="buttonPanel" addStyleNames="dock-max"/>
             <p:Pager ui:field="pager" addStyleNames="dock-min"/>
         </g:FlowPanel>
-        <c:DataGrid ui:field="dataGrid" addStyleNames="dock-max"/>
+        <g:SimplePanel ui:field="listContainer" addStyleNames="dock-max"/>
     </g:FlowPanel>
 </ui:UiBinder>

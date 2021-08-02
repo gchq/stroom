@@ -18,8 +18,8 @@ package stroom.importexport.client.presenter;
 
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -47,7 +47,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Dependency>> {
+public class DependenciesPresenter extends MyPresenterWidget<PagerView> {
 
     private static final ContentResource CONTENT_RESOURCE = GWT.create(ContentResource.class);
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
@@ -59,13 +59,20 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
     private final RestFactory restFactory;
     private final DependencyCriteria criteria;
     private final RestDataProvider<Dependency, ResultPage<Dependency>> dataProvider;
+    private final MyDataGrid<Dependency> dataGrid;
 
     // Holds all the doc type icons
     private Map<String, Preset> typeToSvgMap = new HashMap<>();
 
     @Inject
-    public DependenciesPresenter(final EventBus eventBus, final RestFactory restFactory) {
-        super(eventBus, new DataGridViewImpl<>(false, 100));
+    public DependenciesPresenter(final EventBus eventBus,
+                                 final PagerView view,
+                                 final RestFactory restFactory) {
+        super(eventBus, view);
+
+        dataGrid = new MyDataGrid<>(100);
+        view.setDataWidget(dataGrid);
+
         this.restFactory = restFactory;
         criteria = new DependencyCriteria();
 
@@ -86,21 +93,21 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
                         .fetchDependencies(criteria);
             }
         };
-        dataProvider.addDataDisplay(getView().getDataDisplay());
+        dataProvider.addDataDisplay(dataGrid);
         initColumns();
     }
 
     private void initColumns() {
 
         // From (Icon)
-        getView().addColumn(DataGridUtil.svgPresetColumnBuilder(false, (Dependency row) ->
+        dataGrid.addColumn(DataGridUtil.svgPresetColumnBuilder(false, (Dependency row) ->
                         getDocTypeIcon(row.getFrom()))
                         .build(),
                 "<br/>",
                 ColumnSizeConstants.ICON_COL);
 
         // From (Type)
-        getView().addResizableColumn(DataGridUtil.textColumnBuilder((Dependency row) ->
+        dataGrid.addResizableColumn(DataGridUtil.textColumnBuilder((Dependency row) ->
                         getValue(row, Dependency::getFrom, DocRef::getType))
                         .withSorting(DependencyCriteria.FIELD_FROM_TYPE, true)
                         .build(),
@@ -108,7 +115,7 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
                 COL_WIDTH_TYPE);
 
         // From (Name)
-        getView().addResizableColumn(DataGridUtil.textColumnBuilder((Dependency row) ->
+        dataGrid.addResizableColumn(DataGridUtil.textColumnBuilder((Dependency row) ->
                         getValue(row, Dependency::getFrom, DocRef::getName))
                         .withSorting(DependencyCriteria.FIELD_FROM_NAME, true)
                         .build(),
@@ -116,21 +123,21 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
                 COL_WIDTH_NAME);
 
         // From (UUID)
-        getView().addResizableColumn(DataGridUtil.htmlColumnBuilder((Dependency row) ->
+        dataGrid.addResizableColumn(DataGridUtil.htmlColumnBuilder((Dependency row) ->
                         getUUID(row, Dependency::getFrom))
                         .build(),
                 DependencyCriteria.FIELD_FROM_UUID,
                 COL_WIDTH_UUID);
 
         // To (Icon)
-        getView().addColumn(DataGridUtil.svgPresetColumnBuilder(false, (Dependency row) ->
+        dataGrid.addColumn(DataGridUtil.svgPresetColumnBuilder(false, (Dependency row) ->
                         getDocTypeIcon(row.getTo()))
                         .build(),
                 "<br/>",
                 ColumnSizeConstants.ICON_COL);
 
         // To (Type)
-        getView().addResizableColumn(DataGridUtil.textColumnBuilder((Dependency row) ->
+        dataGrid.addResizableColumn(DataGridUtil.textColumnBuilder((Dependency row) ->
                         getValue(row, Dependency::getTo, DocRef::getType))
                         .withSorting(DependencyCriteria.FIELD_TO_TYPE, true)
                         .build(),
@@ -138,7 +145,7 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
                 COL_WIDTH_TYPE);
 
         // To (Name)
-        getView().addResizableColumn(DataGridUtil.textColumnBuilder((Dependency row) ->
+        dataGrid.addResizableColumn(DataGridUtil.textColumnBuilder((Dependency row) ->
                         getValue(row, Dependency::getTo, DocRef::getName))
                         .withSorting(DependencyCriteria.FIELD_TO_NAME, true)
                         .build(),
@@ -146,22 +153,22 @@ public class DependenciesPresenter extends MyPresenterWidget<DataGridView<Depend
                 COL_WIDTH_NAME);
 
         // To (UUID)
-        getView().addResizableColumn(DataGridUtil.htmlColumnBuilder((Dependency row) ->
+        dataGrid.addResizableColumn(DataGridUtil.htmlColumnBuilder((Dependency row) ->
                         getUUID(row, Dependency::getTo))
                         .build(),
                 DependencyCriteria.FIELD_TO_UUID,
                 COL_WIDTH_UUID);
 
         // Status
-        getView().addResizableColumn(DataGridUtil.htmlColumnBuilder(this::getStatusValue)
+        dataGrid.addResizableColumn(DataGridUtil.htmlColumnBuilder(this::getStatusValue)
                         .withSorting(DependencyCriteria.FIELD_STATUS, false)
                         .centerAligned()
                         .build(),
                 DataGridUtil.createCenterAlignedHeader(DependencyCriteria.FIELD_STATUS),
                 60);
 
-        DataGridUtil.addEndColumn(getView());
-        DataGridUtil.addColumnSortHandler(getView(), criteria, dataProvider::refresh);
+        DataGridUtil.addEndColumn(dataGrid);
+        DataGridUtil.addColumnSortHandler(dataGrid, criteria, dataProvider::refresh);
     }
 
     private void refreshDocTypeIcons() {

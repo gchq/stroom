@@ -16,8 +16,6 @@
 
 package stroom.data.grid.client;
 
-import stroom.data.grid.client.DataGridViewImpl.Heading;
-
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 

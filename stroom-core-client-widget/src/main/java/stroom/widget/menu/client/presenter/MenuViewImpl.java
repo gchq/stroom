@@ -1,6 +1,6 @@
 package stroom.widget.menu.client.presenter;
 
-import stroom.data.grid.client.DataGridViewImpl;
+import stroom.data.grid.client.MyDataGrid;
 import stroom.data.table.client.MyCellTable;
 import stroom.widget.menu.client.presenter.MenuPresenter.MenuView;
 import stroom.widget.util.client.AbstractSelectionEventManager;
@@ -28,7 +28,7 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
     private int mouseOverRow = -1;
 
     public MenuViewImpl() {
-        cellTable = new MyCellTable<>(DataGridViewImpl.DEFAULT_LIST_PAGE_SIZE);
+        cellTable = new MyCellTable<>(MyDataGrid.DEFAULT_LIST_PAGE_SIZE);
         cellTable.getElement().setClassName("menuCellTable");
 
         // Sink events.

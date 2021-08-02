@@ -17,10 +17,10 @@
 package stroom.data.client.presenter;
 
 import stroom.cell.info.client.InfoColumn;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
+import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -58,12 +58,13 @@ import java.util.ArrayList;
 import java.util.function.Consumer;
 
 public class ProcessorTaskListPresenter
-        extends MyPresenterWidget<DataGridView<ProcessorTask>>
+        extends MyPresenterWidget<PagerView>
         implements HasDocumentRead<Object> {
 
     private static final ProcessorTaskResource PROCESSOR_TASK_RESOURCE = GWT.create(ProcessorTaskResource.class);
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
 
+    private final MyDataGrid<ProcessorTask> dataGrid;
     private final TooltipPresenter tooltipPresenter;
     private final DateTimeFormatter dateTimeFormatter;
     private final RestDataProvider<ProcessorTask, ResultPage<ProcessorTask>> dataProvider;
@@ -72,10 +73,15 @@ public class ProcessorTaskListPresenter
 
     @Inject
     public ProcessorTaskListPresenter(final EventBus eventBus,
+                                      final PagerView view,
                                       final RestFactory restFactory,
                                       final TooltipPresenter tooltipPresenter,
                                       final DateTimeFormatter dateTimeFormatter) {
-        super(eventBus, new DataGridViewImpl<>(false));
+        super(eventBus, view);
+
+        dataGrid = new MyDataGrid<>();
+        view.setDataWidget(dataGrid);
+
         this.tooltipPresenter = tooltipPresenter;
         this.dateTimeFormatter = dateTimeFormatter;
 
@@ -98,7 +104,7 @@ public class ProcessorTaskListPresenter
         };
 
         // Info column.
-        getView().addColumn(new InfoColumn<ProcessorTask>() {
+        dataGrid.addColumn(new InfoColumn<ProcessorTask>() {
             @Override
             protected void showInfo(final ProcessorTask row, final int x, final int y) {
                 final Rest<ResultPage<MetaRow>> rest = restFactory.create();
@@ -114,7 +120,7 @@ public class ProcessorTaskListPresenter
             }
         }, "<br/>", ColumnSizeConstants.ICON_COL);
 
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 new OrderByColumn<ProcessorTask, String>(
                         new TextCell(),
                         ProcessorTaskFields.FIELD_CREATE_TIME,
@@ -125,7 +131,7 @@ public class ProcessorTaskListPresenter
                     }
                 }, "Create", ColumnSizeConstants.DATE_COL);
 
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 new OrderByColumn<ProcessorTask, String>(
                         new TextCell(),
                         ProcessorTaskFields.FIELD_STATUS,
@@ -136,7 +142,7 @@ public class ProcessorTaskListPresenter
                     }
                 }, "Status", 80);
 
-        getView()
+        dataGrid
                 .addResizableColumn(new OrderByColumn<ProcessorTask, String>(
                         new TextCell(), ProcessorTaskFields.FIELD_NODE, true) {
                     @Override
@@ -148,7 +154,7 @@ public class ProcessorTaskListPresenter
                         }
                     }
                 }, "Node", ColumnSizeConstants.MEDIUM_COL);
-        getView()
+        dataGrid
                 .addResizableColumn(new OrderByColumn<ProcessorTask, String>(
                         new TextCell(), ProcessorTaskFields.FIELD_FEED, true) {
                     @Override
@@ -160,7 +166,7 @@ public class ProcessorTaskListPresenter
                         }
                     }
                 }, "Feed", ColumnSizeConstants.BIG_COL);
-        getView().addResizableColumn(new OrderByColumn<ProcessorTask, String>(
+        dataGrid.addResizableColumn(new OrderByColumn<ProcessorTask, String>(
                 new TextCell(), ProcessorTaskFields.FIELD_PRIORITY, false) {
             @Override
             public String getValue(final ProcessorTask row) {
@@ -171,7 +177,7 @@ public class ProcessorTaskListPresenter
                 return "";
             }
         }, "Priority", 60);
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 new Column<ProcessorTask, String>(new TextCell()) {
                     @Override
                     public String getValue(final ProcessorTask row) {
@@ -184,7 +190,7 @@ public class ProcessorTaskListPresenter
 
                     }
                 }, "Pipeline", ColumnSizeConstants.BIG_COL);
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 new OrderByColumn<ProcessorTask, String>(
                         new TextCell(), ProcessorTaskFields.FIELD_START_TIME, false) {
                     @Override
@@ -192,7 +198,7 @@ public class ProcessorTaskListPresenter
                         return dateTimeFormatter.format(row.getStartTimeMs());
                     }
                 }, "Start Time", ColumnSizeConstants.DATE_COL);
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 new OrderByColumn<ProcessorTask, String>(
                         new TextCell(), ProcessorTaskFields.FIELD_END_TIME_DATE, false) {
                     @Override
@@ -201,9 +207,9 @@ public class ProcessorTaskListPresenter
                     }
                 }, "End Time", ColumnSizeConstants.DATE_COL);
 
-        getView().addEndColumn(new EndColumn<>());
+        dataGrid.addEndColumn(new EndColumn<>());
 
-        getView().addColumnSortHandler(event -> {
+        dataGrid.addColumnSortHandler(event -> {
             if (event.getColumn() instanceof OrderByColumn<?, ?>) {
                 final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
                 criteria.setSort(orderByColumn.getField(), !event.isSortAscending(), orderByColumn.isIgnoreCase());
@@ -295,14 +301,14 @@ public class ProcessorTaskListPresenter
     }
 
     public void clear() {
-        getView().setRowData(0, new ArrayList<>(0));
-        getView().setRowCount(0, true);
+        dataGrid.setRowData(0, new ArrayList<>(0));
+        dataGrid.setRowCount(0, true);
     }
 
     public void refresh() {
         if (!initialised) {
             initialised = true;
-            dataProvider.addDataDisplay(getView().getDataDisplay());
+            dataProvider.addDataDisplay(dataGrid);
         } else {
             dataProvider.refresh();
         }

@@ -14,7 +14,7 @@ public abstract class AbstractSelectionEventManager<T>
 
     private static final int PAGE_SIZE = 10;
 
-    private final AbstractHasData<T> cellTable;
+    protected final AbstractHasData<T> cellTable;
 
     public AbstractSelectionEventManager(final AbstractHasData<T> cellTable) {
         this.cellTable = cellTable;
@@ -180,7 +180,7 @@ public abstract class AbstractSelectionEventManager<T>
     }
 
     protected boolean isSelectable(final T item) {
-        return true;
+        return item != null;
     }
 
     protected void onKeyboardSelectRow(final int row, final boolean stealFocus) {

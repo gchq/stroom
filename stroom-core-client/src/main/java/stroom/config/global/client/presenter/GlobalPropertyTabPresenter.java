@@ -69,7 +69,7 @@ public class GlobalPropertyTabPresenter extends ContentTabPresenter<GlobalProper
 
     @Override
     protected void onBind() {
-        registerHandler(listPresenter.getView().getSelectionModel().addSelectionHandler(event -> {
+        registerHandler(listPresenter.getSelectionModel().addSelectionHandler(event -> {
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
                 onOpen();

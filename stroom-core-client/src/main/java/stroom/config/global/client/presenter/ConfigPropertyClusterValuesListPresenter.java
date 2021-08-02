@@ -1,9 +1,9 @@
 package stroom.config.global.client.presenter;
 
 import stroom.cell.expander.client.ExpanderCell;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.util.shared.Expander;
 
@@ -24,24 +24,30 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class ConfigPropertyClusterValuesListPresenter
-        extends MyPresenterWidget<DataGridView<ClusterValuesRow>> {
+        extends MyPresenterWidget<PagerView> {
 
     private Column<ClusterValuesRow, Expander> expanderColumn;
     private final ListDataProvider<ClusterValuesRow> dataProvider;
     private final ClusterValuesTreeAction treeAction = new ClusterValuesTreeAction();
+    private final MyDataGrid<ClusterValuesRow> dataGrid;
 
     private Map<String, Set<NodeSource>> effectiveValueToNodeSourcesMap;
 
     @Inject
-    public ConfigPropertyClusterValuesListPresenter(final EventBus eventBus) {
-        super(eventBus, new DataGridViewImpl<>(false, 1000));
-        this.dataProvider = new ListDataProvider<>();
+    public ConfigPropertyClusterValuesListPresenter(final EventBus eventBus,
+                                                    final PagerView view) {
+        super(eventBus, view);
+
+        dataGrid = new MyDataGrid<>(1000);
+        view.setDataWidget(dataGrid);
+
+        dataProvider = new ListDataProvider<>();
         initTableColumns();
 
-        dataProvider.addDataDisplay(getView().getDataDisplay());
+        dataProvider.addDataDisplay(dataGrid);
 
 //         Handle use of the expander column.
-        dataProvider.setTreeRowHandler(new TreeRowHandler<>(treeAction, getView(), expanderColumn));
+        dataProvider.setTreeRowHandler(new TreeRowHandler<>(treeAction, dataGrid, expanderColumn));
     }
 
     // For DEV testing only, when you don't have two nodes
@@ -83,7 +89,7 @@ public class ConfigPropertyClusterValuesListPresenter
             @Override
             public String getCellStyleNames(Cell.Context context, ClusterValuesRow object) {
                 return super.getCellStyleNames(context, object) + " "
-                        + getView().getResources().dataGridStyle().dataGridCellVerticalTop();
+                        + MyDataGrid.RESOURCES.dataGridStyle().dataGridCellVerticalTop();
             }
         };
         expanderColumn.setFieldUpdater((index, row, value) -> {
@@ -91,12 +97,12 @@ public class ConfigPropertyClusterValuesListPresenter
             refresh();
         });
 
-        getView().addColumn(expanderColumn, "");
-        getView().addResizableColumn(buildEffectiveValueColumn(), "Effective Value", 475);
-        getView().addResizableColumn(buildNodeCountColumn(), "Count", 50);
-        getView().addResizableColumn(buildBasicColumn(ClusterValuesRow::getSource), "Source", 75);
-        getView().addResizableColumn(buildBasicColumn(ClusterValuesRow::getNodeName), "Node", 250);
-        getView().addEndColumn(new EndColumn<>());
+        dataGrid.addColumn(expanderColumn, "");
+        dataGrid.addResizableColumn(buildEffectiveValueColumn(), "Effective Value", 475);
+        dataGrid.addResizableColumn(buildNodeCountColumn(), "Count", 50);
+        dataGrid.addResizableColumn(buildBasicColumn(ClusterValuesRow::getSource), "Source", 75);
+        dataGrid.addResizableColumn(buildBasicColumn(ClusterValuesRow::getNodeName), "Node", 250);
+        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private Column<ClusterValuesRow, String> buildNodeCountColumn() {
@@ -107,7 +113,7 @@ public class ConfigPropertyClusterValuesListPresenter
     }
 
     private Column<ClusterValuesRow, String> buildBasicColumn(final Function<ClusterValuesRow, String> valueFunc) {
-        final Column<ClusterValuesRow, String> column = new Column<ClusterValuesRow, String>(new TextCell()) {
+        return new Column<ClusterValuesRow, String>(new TextCell()) {
             @Override
             public String getValue(final ClusterValuesRow row) {
                 if (row == null) {
@@ -116,11 +122,10 @@ public class ConfigPropertyClusterValuesListPresenter
                 return valueFunc.apply(row);
             }
         };
-        return column;
     }
 
     private Column<ClusterValuesRow, String> buildEffectiveValueColumn() {
-        final Column<ClusterValuesRow, String> column = new Column<ClusterValuesRow, String>(new TextCell()) {
+        return new Column<ClusterValuesRow, String>(new TextCell()) {
             @Override
             public String getValue(final ClusterValuesRow row) {
                 if (row == null) {
@@ -132,10 +137,9 @@ public class ConfigPropertyClusterValuesListPresenter
             @Override
             public String getCellStyleNames(Cell.Context context, ClusterValuesRow object) {
                 return super.getCellStyleNames(context, object) + " "
-                        + getView().getResources().dataGridStyle().dataGridCellWrapText();
+                        + MyDataGrid.RESOURCES.dataGridStyle().dataGridCellWrapText();
             }
         };
-        return column;
     }
 
     private Expander buildExpander(final ClusterValuesRow row) {

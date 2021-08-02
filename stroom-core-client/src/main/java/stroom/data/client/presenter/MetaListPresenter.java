@@ -17,7 +17,7 @@
 package stroom.data.client.presenter;
 
 import stroom.core.client.LocationManager;
-import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.presenter.EntityChooser;
 import stroom.meta.shared.DataRetentionFields;
@@ -36,6 +36,7 @@ public class MetaListPresenter extends AbstractMetaListPresenter {
 
     @Inject
     public MetaListPresenter(final EventBus eventBus,
+                             final PagerView view,
                              final RestFactory restFactory,
                              final TooltipPresenter tooltipPresenter,
                              final LocationManager locationManager,
@@ -44,6 +45,7 @@ public class MetaListPresenter extends AbstractMetaListPresenter {
                              final Provider<ProcessChoicePresenter> processChoicePresenterProvider,
                              final Provider<EntityChooser> pipelineSelection) {
         super(eventBus,
+                view,
                 restFactory,
                 tooltipPresenter,
                 locationManager,
@@ -111,28 +113,6 @@ public class MetaListPresenter extends AbstractMetaListPresenter {
                 Function.identity(),
                 ColumnSizeConstants.SMALL_COL);
 
-        getView().addEndColumn(new EndColumn<>());
+        addEndColumn();
     }
-
-
-//        try {
-//        if (StreamAttributeFieldUse.COUNT_IN_DURATION_FIELD.equals(use)) {
-//            valueString = ModelStringUtil.formatCsv(Long.valueOf(valueString));
-//
-//        } else if (StreamAttributeFieldUse.SIZE_FIELD.equals(use)) {
-//            valueString = ModelStringUtil.formatIECByteSizeString(Long.valueOf(valueString));
-//
-//        } else if (StreamAttributeFieldUse.NUMERIC_FIELD.equals(use)) {
-//            valueString = ModelStringUtil.formatCsv(Long.valueOf(valueString));
-//
-//        } else if (StreamAttributeFieldUse.DURATION_FIELD.equals(use)) {
-//            final long valueLong = Long.valueOf(valueString);
-//
-//            valueString = ModelStringUtil.formatDurationString(valueLong) + " ("
-//                    + ModelStringUtil.formatCsv(valueLong) + " ms)";
-//        }
-//    } catch (final RuntimeException e) {
-//    }
-//
-//        return valueString;
 }

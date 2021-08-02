@@ -19,9 +19,9 @@ package stroom.receive.rules.client.presenter;
 import stroom.cell.info.client.ActionCell;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.svg.client.Preset;
 import stroom.widget.button.client.ButtonView;
@@ -30,6 +30,7 @@ import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import stroom.widget.util.client.MultiSelectionModel;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.cell.client.SafeHtmlCell;
@@ -48,14 +49,21 @@ import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGridView<DataRetentionRule>> {
+public class DataRetentionPolicyListPresenter extends MyPresenterWidget<PagerView> {
 
+    private final MyDataGrid<DataRetentionRule> dataGrid;
+    private final MultiSelectionModelImpl<DataRetentionRule> selectionModel;
     private BiConsumer<DataRetentionRule, Boolean> enabledStateHandler;
     private Function<DataRetentionRule, List<Item>> actionMenuItemProvider;
 
     @Inject
-    public DataRetentionPolicyListPresenter(final EventBus eventBus) {
-        super(eventBus, new DataGridViewImpl<>(true, false));
+    public DataRetentionPolicyListPresenter(final EventBus eventBus,
+                                            final PagerView view) {
+        super(eventBus, view);
+
+        dataGrid = new MyDataGrid<>();
+        selectionModel = dataGrid.addDefaultSelectionModel(false);
+        view.setDataWidget(dataGrid);
 
         // Add a border to the list.
         getWidget().getElement().addClassName("stroom-border");
@@ -74,7 +82,7 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGrid
         addColumn("Retention", 90, DataRetentionRule::getAgeString);
         addColumn("Expression", 500, row -> row.getExpression().toString());
         addActionButtonColumn("", 20);
-        getView().addEndColumn(new EndColumn<>());
+        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void addColumn(final String name,
@@ -88,7 +96,7 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGrid
                 return getSafeHtml(valueFunc.apply(rule), rule);
             }
         };
-        getView().addResizableColumn(expressionColumn, name, width);
+        dataGrid.addResizableColumn(expressionColumn, name, width);
     }
 
     private void addActionButtonColumn(final String name,
@@ -113,7 +121,7 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGrid
                         GWT.log("Rule " + rule.getRuleNumber() + " clicked, event " + event.getType());
                     }
                 };
-        getView().addResizableColumn(expressionColumn, name, width);
+        dataGrid.addResizableColumn(expressionColumn, name, width);
     }
 
     private void showActionMenu(final DataRetentionRule row, final NativeEvent event) {
@@ -143,7 +151,7 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGrid
                 enabledStateHandler.accept(rule, value.toBoolean());
             }
         });
-        getView().addColumn(enabledColumn, name, width);
+        dataGrid.addColumn(enabledColumn, name, width);
     }
 
     private boolean isDefaultRule(final DataRetentionRule rule) {
@@ -165,13 +173,13 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<DataGrid
     }
 
     public void setData(final List<DataRetentionRule> data) {
-        getView().setRowData(0, data);
-        getView().setRowCount(data.size());
+        dataGrid.setRowData(0, data);
+        dataGrid.setRowCount(data.size());
 
     }
 
     public MultiSelectionModel<DataRetentionRule> getSelectionModel() {
-        return getView().getSelectionModel();
+        return selectionModel;
     }
 
     public ButtonView add(final Preset preset) {

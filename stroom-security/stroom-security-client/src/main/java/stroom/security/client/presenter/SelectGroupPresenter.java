@@ -16,6 +16,7 @@
 
 package stroom.security.client.presenter;
 
+import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
@@ -38,8 +39,9 @@ public class SelectGroupPresenter extends AbstractDataUserListPresenter {
     @Inject
     public SelectGroupPresenter(final EventBus eventBus,
                                 final UserListView userListView,
+                                final PagerView pagerView,
                                 final RestFactory restFactory) {
-        super(eventBus, userListView, restFactory);
+        super(eventBus, userListView, pagerView, restFactory);
     }
 
     @Override

@@ -107,7 +107,7 @@ public class ManageActivityPresenter extends
     protected void onBind() {
         getView().setTooltipContentSupplier(this::getQuickFilterTooltipSupplier);
 
-        registerHandler(listPresenter.getView().getSelectionModel().addSelectionHandler(event -> {
+        registerHandler(listPresenter.getSelectionModel().addSelectionHandler(event -> {
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
                 hide();
@@ -278,7 +278,7 @@ public class ManageActivityPresenter extends
                             rest
                                     .onSuccess(success -> {
                                         listPresenter.refresh();
-                                        listPresenter.getView().getSelectionModel().clear();
+                                        listPresenter.getSelectionModel().clear();
                                         updateQuickFilterTooltipContentSupplier();
                                     })
                                     .call(ACTIVITY_RESOURCE)

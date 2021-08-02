@@ -28,7 +28,6 @@ import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 
 public class ImportConfigConfirmViewImpl extends ViewImpl implements ImportConfigConfirmView {
@@ -57,8 +56,8 @@ public class ImportConfigConfirmViewImpl extends ViewImpl implements ImportConfi
     }
 
     @Override
-    public void setDataGridView(final View view) {
-        dataGridView.setWidget(view.asWidget());
+    public void setDataGrid(final Widget widget) {
+        dataGridView.setWidget(widget);
     }
 
     @Override

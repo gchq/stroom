@@ -18,14 +18,15 @@ package stroom.cache.client.presenter;
 
 import stroom.cache.shared.CacheResource;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.util.shared.ResultPage;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.MultiSelectionModel;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.ButtonCell;
 import com.google.gwt.cell.client.TextCell;
@@ -38,20 +39,25 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class CacheListPresenter extends MyPresenterWidget<DataGridView<String>> {
+public class CacheListPresenter extends MyPresenterWidget<PagerView> {
 
     private static final CacheResource CACHE_RESOURCE = GWT.create(CacheResource.class);
 
-    private final RestDataProvider<String, ResultPage<String>> dataProvider;
+    private final MultiSelectionModelImpl<String> selectionModel;
 
     @Inject
     public CacheListPresenter(final EventBus eventBus,
+                              final PagerView view,
                               final RestFactory restFactory,
                               final TooltipPresenter tooltipPresenter) {
-        super(eventBus, new DataGridViewImpl<>(true));
+        super(eventBus, view);
+
+        final MyDataGrid<String> dataGrid = new MyDataGrid<>();
+        selectionModel = dataGrid.addDefaultSelectionModel(false);
+        view.setDataWidget(dataGrid);
 
         // Name
-        getView().addResizableColumn(new Column<String, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<String, String>(new TextCell()) {
             @Override
             public String getValue(final String row) {
                 return row;
@@ -69,11 +75,12 @@ public class CacheListPresenter extends MyPresenterWidget<DataGridView<String>> 
             final Rest<Boolean> rest = restFactory.create();
             rest.call(CACHE_RESOURCE).clear(row, null);
         });
-        getView().addColumn(clearColumn, "</br>", 80);
+        dataGrid.addColumn(clearColumn, "</br>", 80);
 
-        getView().addEndColumn(new EndColumn<>());
+        dataGrid.addEndColumn(new EndColumn<>());
 
-        dataProvider = new RestDataProvider<String, ResultPage<String>>(eventBus) {
+        RestDataProvider<String, ResultPage<String>> dataProvider = new RestDataProvider<String, ResultPage<String>>(
+                eventBus) {
             @Override
             protected void exec(final Consumer<ResultPage<String>> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {
@@ -86,10 +93,10 @@ public class CacheListPresenter extends MyPresenterWidget<DataGridView<String>> 
                         .call(CACHE_RESOURCE).list();
             }
         };
-        dataProvider.addDataDisplay(getView().getDataDisplay());
+        dataProvider.addDataDisplay(dataGrid);
     }
 
     public MultiSelectionModel<String> getSelectionModel() {
-        return getView().getSelectionModel();
+        return selectionModel;
     }
 }

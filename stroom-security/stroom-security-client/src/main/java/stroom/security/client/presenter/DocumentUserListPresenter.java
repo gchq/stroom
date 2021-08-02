@@ -16,6 +16,7 @@
 
 package stroom.security.client.presenter;
 
+import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.shared.DocPermissionResource;
@@ -43,8 +44,9 @@ public class DocumentUserListPresenter extends AbstractUserListPresenter {
     @Inject
     public DocumentUserListPresenter(final EventBus eventBus,
                                      final UserListView userListView,
+                                     final PagerView pagerView,
                                      final RestFactory restFactory) {
-        super(eventBus, userListView);
+        super(eventBus, userListView, pagerView);
         this.restFactory = restFactory;
     }
 
@@ -79,16 +81,16 @@ public class DocumentUserListPresenter extends AbstractUserListPresenter {
     }
 
     private void updateGrid(final List<User> users) {
-        final User selected = getDataGridView().getSelectionModel().getSelected();
-        getDataGridView().getSelectionModel().clear();
+        final User selected = getSelectionModel().getSelected();
+        getSelectionModel().clear();
 
         users.sort(Comparator.comparing(User::getName));
 
-        getDataGridView().setRowData(0, users);
-        getDataGridView().setRowCount(users.size());
+        getDataGrid().setRowData(0, users);
+        getDataGrid().setRowCount(users.size());
 
         if (selected != null && users.contains(selected)) {
-            getDataGridView().getSelectionModel().setSelected(selected);
+            getSelectionModel().setSelected(selected);
         }
     }
 

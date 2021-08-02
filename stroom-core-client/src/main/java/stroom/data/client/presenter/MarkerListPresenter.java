@@ -18,9 +18,9 @@ package stroom.data.client.presenter;
 
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.cell.info.client.SvgCell;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.WrapperView;
 import stroom.pipeline.shared.FetchMarkerResult;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
@@ -49,16 +49,20 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
-public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>> {
+public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
 
     private static final HashSet<Severity> ALL_SEVERITIES = new HashSet<>(Arrays.asList(Severity.SEVERITIES));
 
+    private final MyDataGrid<Marker> dataGrid;
     private HashSet<Severity> expandedSeverities;
     private DataPresenter dataPresenter;
 
     @Inject
-    public MarkerListPresenter(final EventBus eventBus) {
-        super(eventBus, new DataGridViewImpl<>(false, DataGridViewImpl.DEFAULT_LIST_PAGE_SIZE, null));
+    public MarkerListPresenter(final EventBus eventBus,
+                               final WrapperView view) {
+        super(eventBus, view);
+        dataGrid = new MyDataGrid<>();
+        view.setWidget(dataGrid);
 
         addExpanderColumn();
         addSeverityColumn();
@@ -67,7 +71,7 @@ public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>>
         addLine();
         addCol();
         addMessage();
-        getView().addEndColumn(new EndColumn<>());
+        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void addExpanderColumn() {
@@ -93,11 +97,11 @@ public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>>
 
             dataPresenter.update(true);
         });
-        getView().addColumn(expanderColumn, "<br/>", ColumnSizeConstants.CHECKBOX_COL);
+        dataGrid.addColumn(expanderColumn, "<br/>", ColumnSizeConstants.CHECKBOX_COL);
     }
 
     private void addSeverityColumn() {
-        getView().addColumn(new Column<Marker, Preset>(new SvgCell()) {
+        dataGrid.addColumn(new Column<Marker, Preset>(new SvgCell()) {
             @Override
             public Preset getValue(final Marker marker) {
                 switch (marker.getSeverity()) {
@@ -117,7 +121,7 @@ public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>>
     }
 
     private void addElementId() {
-        getView().addResizableColumn(new Column<Marker, SafeHtml>(new SafeHtmlCell()) {
+        dataGrid.addResizableColumn(new Column<Marker, SafeHtml>(new SafeHtmlCell()) {
             @Override
             public SafeHtml getValue(final Marker marker) {
                 if (marker instanceof StoredError) {
@@ -170,7 +174,7 @@ public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>>
     }
 
     private void addStream() {
-        getView().addResizableColumn(new Column<Marker, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<Marker, String>(new TextCell()) {
             @Override
             public String getValue(final Marker marker) {
                 if (marker instanceof StoredError) {
@@ -188,7 +192,7 @@ public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>>
     }
 
     private void addLine() {
-        getView().addResizableColumn(new Column<Marker, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<Marker, String>(new TextCell()) {
             @Override
             public String getValue(final Marker marker) {
                 if (marker instanceof StoredError) {
@@ -203,7 +207,7 @@ public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>>
     }
 
     private void addCol() {
-        getView().addResizableColumn(new Column<Marker, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<Marker, String>(new TextCell()) {
             @Override
             public String getValue(final Marker marker) {
                 if (marker instanceof StoredError) {
@@ -218,7 +222,7 @@ public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>>
     }
 
     private void addMessage() {
-        getView().addResizableColumn(new Column<Marker, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<Marker, String>(new TextCell()) {
             @Override
             public String getValue(final Marker marker) {
                 if (marker instanceof StoredError) {
@@ -234,23 +238,23 @@ public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>>
     public void setData(final List<Marker> markers, final int start, final int count) {
         if (markers == null) {
             // Reset visible range.
-            getView().setRowData(0, new ArrayList<>());
-            getView().setRowCount(0);
+            dataGrid.setRowData(0, new ArrayList<>());
+            dataGrid.setRowCount(0);
         } else {
-            getView().setRowData(start, markers);
-            getView().setRowCount(count);
+            dataGrid.setRowData(start, markers);
+            dataGrid.setRowCount(count);
 
             // Make summary rows span multiple columns.
             for (int i = 0; i < markers.size(); i++) {
                 if (markers.get(i) instanceof Summary) {
-                    getView().getRowElement(i).getCells().getItem(2).setColSpan(5);
+                    dataGrid.getRowElement(i).getCells().getItem(2).setColSpan(5);
                 }
             }
         }
     }
 
     public HandlerRegistration addRangeChangeHandler(final RangeChangeEvent.Handler handler) {
-        return getView().addRangeChangeHandler(handler);
+        return dataGrid.addRangeChangeHandler(handler);
     }
 
     public Severity[] getExpandedSeverities() {

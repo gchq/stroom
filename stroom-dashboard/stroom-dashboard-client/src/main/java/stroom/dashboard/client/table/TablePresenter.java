@@ -42,8 +42,8 @@ import stroom.dashboard.shared.IndexConstants;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableResultRequest;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.FieldTypes;
@@ -94,6 +94,7 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
@@ -146,7 +147,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private final TimeZones timeZones;
     private final UserPreferencesManager userPreferencesManager;
     private final FieldsManager fieldsManager;
-    private final DataGridView<TableRow> dataGrid;
+    private final MyDataGrid<TableRow> dataGrid;
+    private final MultiSelectionModelImpl<TableRow> selectionModel;
     private final Column<TableRow, Expander> expanderColumn;
 
     private int expanderColumnWidth;
@@ -158,6 +160,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     @Inject
     public TablePresenter(final EventBus eventBus,
                           final TableView view,
+                          final PagerView pagerView,
                           final ClientSecurityContext securityContext,
                           final LocationManager locationManager,
                           final Provider<RenameFieldPresenter> renameFieldPresenterProvider,
@@ -180,20 +183,23 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         this.applicationInstanceIdProvider = applicationInstanceIdProvider;
         this.timeZones = timeZones;
         this.userPreferencesManager = userPreferencesManager;
-        this.dataGrid = new DataGridViewImpl<>(true, true);
 
-        view.setTableView(dataGrid);
+        dataGrid = new MyDataGrid<>();
+        selectionModel = dataGrid.addDefaultSelectionModel(true);
+        pagerView.setDataWidget(dataGrid);
+
+        view.setTableView(pagerView);
 
         // Add the 'add field' button.
-        addFieldButton = dataGrid.addButton(SvgPresets.ADD);
+        addFieldButton = pagerView.addButton(SvgPresets.ADD);
         addFieldButton.setTitle("Add Field");
 
         // Download
-        downloadButton = dataGrid.addButton(SvgPresets.DOWNLOAD);
+        downloadButton = pagerView.addButton(SvgPresets.DOWNLOAD);
         downloadButton.setVisible(securityContext.hasAppPermission(PermissionNames.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
 
         // Annotate
-        annotateButton = dataGrid.addButton(SvgPresets.ANNOTATE);
+        annotateButton = pagerView.addButton(SvgPresets.ANNOTATE);
         annotateButton.setVisible(securityContext.hasAppPermission(PermissionNames.ANNOTATIONS));
         annotateButton.setEnabled(false);
 
@@ -242,7 +248,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(dataGrid.getSelectionModel().addSelectionHandler(event -> {
+        registerHandler(selectionModel.addSelectionHandler(event -> {
             enableAnnotate();
             getComponents().fireComponentChangeEvent(this);
         }));
@@ -284,7 +290,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             if (MouseUtil.isPrimary(event)) {
                 annotationManager.showAnnotationMenu(event.getNativeEvent(),
                         getTableSettings(),
-                        dataGrid.getSelectionModel().getSelectedItems());
+                        selectionModel.getSelectedItems());
             }
         }));
     }
@@ -463,9 +469,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     private void enableAnnotate() {
         final List<EventId> eventIdList = annotationManager.getEventIdList(getTableSettings(),
-                dataGrid.getSelectionModel().getSelectedItems());
+                selectionModel.getSelectedItems());
         final List<Long> annotationIdList = annotationManager.getAnnotationIdList(getTableSettings(),
-                dataGrid.getSelectionModel().getSelectedItems());
+                selectionModel.getSelectedItems());
         final boolean enabled = eventIdList.size() > 0 || annotationIdList.size() > 0;
         annotateButton.setEnabled(enabled);
     }
@@ -529,7 +535,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 dataGrid.setRowData(0, new ArrayList<>());
                 dataGrid.setRowCount(0, true);
 
-                dataGrid.getSelectionModel().clear();
+                selectionModel.clear();
             }
         } catch (final RuntimeException e) {
             GWT.log(e.getMessage());
@@ -987,7 +993,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     public List<TableRow> getSelectedRows() {
-        return dataGrid.getSelectionModel().getSelectedItems();
+        return selectionModel.getSelectedItems();
     }
 
     private TableComponentSettings createSettings() {

@@ -14,11 +14,24 @@
  * limitations under the License.
  */
 
-package stroom.node.client.view;
+package stroom.data.grid.client;
 
+import stroom.svg.client.Preset;
+import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.ToggleButtonView;
+
+import com.google.gwt.user.cellview.client.AbstractHasData;
+import com.google.gwt.view.client.HasRows;
 import com.gwtplatform.mvp.client.View;
 
-public interface WrapperView extends View {
+public interface PagerView extends View {
 
-    void setView(View view);
+    ButtonView addButton(Preset preset);
+
+    ToggleButtonView addToggleButton(final Preset primaryPreset,
+                                     final Preset secondaryPreset);
+
+    void setRefreshing(boolean refreshing);
+
+    void setDataWidget(final AbstractHasData<?> widget);
 }

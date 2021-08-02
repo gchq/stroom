@@ -16,11 +16,12 @@
 
 package stroom.dictionary.client.presenter;
 
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
 import stroom.widget.util.client.MultiSelectionModel;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.user.cellview.client.Column;
@@ -30,15 +31,22 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.List;
 
-public class DocRefListPresenter extends MyPresenterWidget<DataGridView<DocRef>> {
-//    private final SelectionModel<Volume> selectionModel;
+public class DocRefListPresenter extends MyPresenterWidget<PagerView> {
+
+    private final MyDataGrid<DocRef> dataGrid;
+    private final MultiSelectionModelImpl<DocRef> selectionModel;
 
     @Inject
-    public DocRefListPresenter(final EventBus eventBus) {
-        super(eventBus, new DataGridViewImpl<>(true, true));
+    public DocRefListPresenter(final EventBus eventBus,
+                               final PagerView view) {
+        super(eventBus, view);
+
+        dataGrid = new MyDataGrid<>();
+        selectionModel = dataGrid.addDefaultSelectionModel(true);
+        view.setDataWidget(dataGrid);
 
 //        selectionModel = new MySingleSelectionModel<>();
-//        getView().setSelectionModel(selectionModel);
+//        dataGrid.setSelectionModel(selectionModel);
 
         // Add a border to the list.
         getWidget().getElement().addClassName("stroom-border");
@@ -60,25 +68,25 @@ public class DocRefListPresenter extends MyPresenterWidget<DataGridView<DocRef>>
                 return row.getName();
             }
         };
-        getView().addResizableColumn(nameColumn, "Name", 400);
+        dataGrid.addResizableColumn(nameColumn, "Name", 400);
 
-        getView().addEndColumn(new EndColumn<>());
+        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     public void setData(final List<DocRef> docRefs) {
-        getView().setRowData(0, docRefs);
-        getView().setRowCount(docRefs.size());
+        dataGrid.setRowData(0, docRefs);
+        dataGrid.setRowCount(docRefs.size());
     }
 
 //    public HandlerRegistration addSelectionHandler(DataGridSelectEvent.Handler handler) {
-//        return getView().addSelectionHandler(handler);
+//        return dataGrid.addSelectionHandler(handler);
 //    }
 
     public MultiSelectionModel<DocRef> getSelectionModel() {
-        return getView().getSelectionModel();
+        return selectionModel;
     }
 //
 //    public void setSelectionModel(final SelectionModel<Volume> selectionModel) {
-//        getView().setSelectionModel(selectionModel);
+//        dataGrid.setSelectionModel(selectionModel);
 //    }
 }

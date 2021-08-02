@@ -19,9 +19,9 @@ package stroom.search.solr.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -40,6 +40,7 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
@@ -63,7 +64,8 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
 
     private static final SolrIndexResource SOLR_INDEX_RESOURCE = GWT.create(SolrIndexResource.class);
 
-    private final DataGridView<SolrIndexField> dataGridView;
+    private final MyDataGrid<SolrIndexField> dataGrid;
+    private final MultiSelectionModelImpl<SolrIndexField> selectionModel;
     private final SolrIndexFieldEditPresenter indexFieldEditPresenter;
     private final RestFactory restFactory;
     private final DateTimeFormatter dateTimeFormatter;
@@ -79,6 +81,7 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
     @Inject
     public SolrIndexFieldListPresenter(final EventBus eventBus,
                                        final SolrIndexFieldListView view,
+                                       final PagerView pagerView,
                                        final SolrIndexFieldEditPresenter indexFieldEditPresenter,
                                        final RestFactory restFactory,
                                        final DateTimeFormatter dateTimeFormatter) {
@@ -87,11 +90,14 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
 
-        dataGridView = new DataGridViewImpl<>(true, true);
-        view.setDataGridView(dataGridView);
-        newButton = dataGridView.addButton(SvgPresets.NEW_ITEM);
-        editButton = dataGridView.addButton(SvgPresets.EDIT);
-        removeButton = dataGridView.addButton(SvgPresets.DELETE);
+        dataGrid = new MyDataGrid<>();
+        selectionModel = dataGrid.addDefaultSelectionModel(true);
+        pagerView.setDataWidget(dataGrid);
+
+        view.setDataGridView(pagerView);
+        newButton = pagerView.addButton(SvgPresets.NEW_ITEM);
+        editButton = pagerView.addButton(SvgPresets.EDIT);
+        removeButton = pagerView.addButton(SvgPresets.DELETE);
 
         addColumns();
         enableButtons();
@@ -122,7 +128,7 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
                 }
             }
         }));
-        registerHandler(dataGridView.getSelectionModel().addSelectionHandler(event -> {
+        registerHandler(selectionModel.addSelectionHandler(event -> {
             if (!readOnly) {
                 enableButtons();
                 if (event.getSelectionType().isDoubleSelect()) {
@@ -135,7 +141,7 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
     private void enableButtons() {
         newButton.setEnabled(!readOnly);
         if (!readOnly && fields != null) {
-            final SolrIndexField selectedElement = dataGridView.getSelectionModel().getSelected();
+            final SolrIndexField selectedElement = selectionModel.getSelected();
             final boolean enabled = selectedElement != null;
             editButton.setEnabled(enabled);
             removeButton.setEnabled(enabled);
@@ -175,7 +181,7 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
         addBooleanColumn("Term Payloads", SolrIndexField::isTermPayloads);
         addBooleanColumn("Sort Missing First", SolrIndexField::isSortMissingFirst);
         addBooleanColumn("Sort Missing Last", SolrIndexField::isSortMissingLast);
-        dataGridView.addEndColumn(new EndColumn<>());
+        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void addStringColumn(final String name, final Function<SolrIndexField, String> function) {
@@ -183,7 +189,7 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
     }
 
     private void addStringColumn(final String name, final int width, final Function<SolrIndexField, String> function) {
-        dataGridView.addResizableColumn(new Column<SolrIndexField, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<SolrIndexField, String>(new TextCell()) {
             @Override
             public String getValue(final SolrIndexField row) {
                 return function.apply(row);
@@ -192,7 +198,7 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
     }
 
     private void addBooleanColumn(final String name, final Function<SolrIndexField, Boolean> function) {
-        dataGridView.addResizableColumn(new Column<SolrIndexField, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<SolrIndexField, String>(new TextCell()) {
             @Override
             public String getValue(final SolrIndexField row) {
                 return getYesNoString(function.apply(row));
@@ -221,7 +227,7 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
                             fields.add(indexField);
                             fields.sort(Comparator.comparing(SolrIndexField::getFieldName,
                                     String.CASE_INSENSITIVE_ORDER));
-                            dataGridView.getSelectionModel().setSelected(indexField);
+                            selectionModel.setSelected(indexField);
                             refresh();
 
                             hide(autoClose, ok);
@@ -236,7 +242,7 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
     }
 
     private void onEdit() {
-        final SolrIndexField existingField = dataGridView.getSelectionModel().getSelected();
+        final SolrIndexField existingField = selectionModel.getSelected();
         if (existingField != null) {
             final Set<String> otherNames = fields.stream()
                     .map(SolrIndexField::getFieldName)
@@ -256,7 +262,7 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
                                     fields.add(indexField);
                                     fields.sort(Comparator.comparing(SolrIndexField::getFieldName,
                                             String.CASE_INSENSITIVE_ORDER));
-                                    dataGridView.getSelectionModel().setSelected(indexField);
+                                    selectionModel.setSelected(indexField);
                                     refresh();
 
                                     hide(autoClose, ok);
@@ -287,7 +293,7 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
     }
 
     private void onRemove() {
-        final List<SolrIndexField> list = dataGridView.getSelectionModel().getSelectedItems();
+        final List<SolrIndexField> list = selectionModel.getSelectedItems();
         if (list != null && list.size() > 0) {
             String message = "Are you sure you want to delete the selected field?";
             if (list.size() > 1) {
@@ -303,7 +309,7 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
                     }
                     index.getDeletedFields().addAll(list);
 
-                    dataGridView.getSelectionModel().clear();
+                    selectionModel.clear();
                     refresh();
                     DirtyEvent.fire(SolrIndexFieldListPresenter.this, true);
                 }
@@ -317,7 +323,7 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
         }
         if (dataProvider == null) {
             this.dataProvider = new SolrIndexFieldDataProvider<>();
-            dataProvider.addDataDisplay(dataGridView.getDataDisplay());
+            dataProvider.addDataDisplay(dataGrid);
         }
         dataProvider.setList(fields);
         dataProvider.refresh();

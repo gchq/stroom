@@ -14,28 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.node.client.view;
+package stroom.data.grid.client;
 
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewImpl;
 
-public class WrapperViewImpl extends ViewImpl implements WrapperView {
+public interface WrapperView extends View {
 
-    private final SimplePanel widget;
+    void setView(View view);
 
-    public WrapperViewImpl() {
-        widget = new SimplePanel();
-        widget.setSize("100%", "100%");
-    }
-
-    @Override
-    public Widget asWidget() {
-        return widget;
-    }
-
-    public void setView(final View view) {
-        widget.setWidget(view.asWidget());
-    }
+    void setWidget(Widget widget);
 }

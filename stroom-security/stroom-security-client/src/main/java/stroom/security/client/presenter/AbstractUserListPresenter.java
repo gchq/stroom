@@ -17,33 +17,43 @@
 package stroom.security.client.presenter;
 
 import stroom.cell.info.client.SvgCell;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.security.shared.User;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 public abstract class AbstractUserListPresenter extends MyPresenterWidget<UserListView> implements UserListUiHandlers {
 
-    private final DataGridView<User> dataGridView;
+    private final MyDataGrid<User> dataGrid;
+    private final MultiSelectionModelImpl<User> selectionModel;
+    private final PagerView pagerView;
 
-    public AbstractUserListPresenter(final EventBus eventBus, final UserListView userListView) {
+    public AbstractUserListPresenter(final EventBus eventBus,
+                                     final UserListView userListView,
+                                     final PagerView pagerView) {
         super(eventBus, userListView);
+        this.pagerView = pagerView;
 
-        dataGridView = new DataGridViewImpl<>(true);
-        userListView.setDatGridView(dataGridView);
+        dataGrid = new MyDataGrid<>();
+        selectionModel = dataGrid.addDefaultSelectionModel(false);
+        pagerView.setDataWidget(dataGrid);
+
+        userListView.setDatGridView(pagerView);
         userListView.setUiHandlers(this);
 
         // Icon
-        dataGridView.addColumn(new Column<User, Preset>(new SvgCell()) {
+        dataGrid.addColumn(new Column<User, Preset>(new SvgCell()) {
             @Override
             public Preset getValue(final User userRef) {
                 if (userRef.isEnabled()) {
@@ -63,18 +73,18 @@ public abstract class AbstractUserListPresenter extends MyPresenterWidget<UserLi
         }, "</br>", 20);
 
         // Name.
-        dataGridView.addResizableColumn(new Column<User, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<User, String>(new TextCell()) {
             @Override
             public String getValue(final User userRef) {
                 return userRef.getName();
             }
         }, "Name", 350);
 
-        dataGridView.addEndColumn(new EndColumn<>());
+        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     public ButtonView addButton(final Preset preset) {
-        return dataGridView.addButton(preset);
+        return pagerView.addButton(preset);
     }
 
     @Override
@@ -83,10 +93,10 @@ public abstract class AbstractUserListPresenter extends MyPresenterWidget<UserLi
     }
 
     public MultiSelectionModel<User> getSelectionModel() {
-        return dataGridView.getSelectionModel();
+        return selectionModel;
     }
 
-    public DataGridView<User> getDataGridView() {
-        return dataGridView;
+    public DataGrid<User> getDataGrid() {
+        return dataGrid;
     }
 }

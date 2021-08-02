@@ -18,7 +18,8 @@ package stroom.security.client.presenter;
 
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.grid.client.DataGridViewImpl;
+import stroom.data.grid.client.PagerView;
+import stroom.data.grid.client.MyDataGrid;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
@@ -42,12 +43,13 @@ import java.util.List;
 import java.util.Set;
 
 public class AppPermissionsPresenter extends
-        MyPresenterWidget<DataGridViewImpl<String>> {
+        MyPresenterWidget<PagerView> {
 
     private static final AppPermissionResource APP_PERMISSION_RESOURCE = GWT.create(AppPermissionResource.class);
 
     private final RestFactory restFactory;
     private final ClientSecurityContext securityContext;
+    private final MyDataGrid<String> dataGrid;
 
     private UserAndPermissions userAppPermissions;
     private List<String> allPermissions;
@@ -56,10 +58,15 @@ public class AppPermissionsPresenter extends
 
     @Inject
     public AppPermissionsPresenter(final EventBus eventBus,
-                                   final RestFactory restFactory, final ClientSecurityContext securityContext) {
-        super(eventBus, new DataGridViewImpl<>());
+                                   final PagerView view,
+                                   final RestFactory restFactory,
+                                   final ClientSecurityContext securityContext) {
+        super(eventBus, view);
         this.restFactory = restFactory;
         this.securityContext = securityContext;
+
+        dataGrid = new MyDataGrid<>();
+        view.setDataWidget(dataGrid);
 
         addColumns();
     }
@@ -73,8 +80,8 @@ public class AppPermissionsPresenter extends
         if (relatedUser == null) {
             userAppPermissions = null;
             final List<String> features = new ArrayList<>();
-            getView().setRowData(0, features);
-            getView().setRowCount(features.size(), true);
+            dataGrid.setRowData(0, features);
+            dataGrid.setRowCount(features.size(), true);
 
         } else {
             // Fetch permissions and populate table.
@@ -91,8 +98,8 @@ public class AppPermissionsPresenter extends
 
     private void updateAllPermissions() {
         if (this.allPermissions != null) {
-            getView().setRowData(0, allPermissions);
-            getView().setRowCount(allPermissions.size(), true);
+            dataGrid.setRowData(0, allPermissions);
+            dataGrid.setRowCount(allPermissions.size(), true);
 
         } else {
             final Rest<List<String>> rest = restFactory.create();
@@ -101,8 +108,8 @@ public class AppPermissionsPresenter extends
                         Collections.sort(allPermissions);
                         this.allPermissions = allPermissions;
 
-                        getView().setRowData(0, allPermissions);
-                        getView().setRowCount(allPermissions.size(), true);
+                        dataGrid.setRowData(0, allPermissions);
+                        dataGrid.setRowCount(allPermissions.size(), true);
                     })
                     .call(APP_PERMISSION_RESOURCE)
                     .fetchAllPermissions();
@@ -115,7 +122,7 @@ public class AppPermissionsPresenter extends
                 ? new TickBoxCell.DefaultAppearance()
                 : new TickBoxCell.NoBorderAppearance();
 
-        getView().addColumn(new Column<String, String>(new TextCell()) {
+        dataGrid.addColumn(new Column<String, String>(new TextCell()) {
             @Override
             public String getValue(final String row) {
                 return row;
@@ -152,7 +159,7 @@ public class AppPermissionsPresenter extends
                         .changeUser(request);
             });
         }
-        getView().addColumn(selectionColumn, "<br/>", 50);
+        dataGrid.addColumn(selectionColumn, "<br/>", 50);
     }
 
     protected boolean isCurrentUserUpdate() {

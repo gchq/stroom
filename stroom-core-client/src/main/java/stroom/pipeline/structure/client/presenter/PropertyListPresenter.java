@@ -17,9 +17,9 @@
 
 package stroom.pipeline.structure.client.presenter;
 
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -38,13 +38,13 @@ import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
@@ -67,7 +67,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class PropertyListPresenter extends MyPresenterWidget<DataGridView<PipelineProperty>>
+public class PropertyListPresenter extends MyPresenterWidget<PagerView>
         implements HasDirtyHandlers, ReadOnlyChangeHandler {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
@@ -76,6 +76,9 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
     private static final String REMOVED = "pipelineStructureViewImpl-property-removed";
     private static final String INHERITED = "pipelineStructureViewImpl-property-inherited";
     private static final String DEFAULT = "pipelineStructureViewImpl-property-default";
+
+    private final MyDataGrid<PipelineProperty> dataGrid;
+    private final MultiSelectionModelImpl<PipelineProperty> selectionModel;
     private final ButtonView editButton;
     private final Provider<NewPropertyPresenter> newPropertyPresenter;
     private final RestFactory restFactory;
@@ -89,13 +92,19 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
 
     @Inject
     public PropertyListPresenter(final EventBus eventBus,
+                                 final PagerView view,
                                  final Provider<NewPropertyPresenter> newPropertyPresenter,
                                  final RestFactory restFactory) {
-        super(eventBus, new DataGridViewImpl<>(true));
+        super(eventBus, view);
+
+        dataGrid = new MyDataGrid<>();
+        selectionModel = dataGrid.addDefaultSelectionModel(false);
+        view.setDataWidget(dataGrid);
+
         this.newPropertyPresenter = newPropertyPresenter;
         this.restFactory = restFactory;
 
-        editButton = getView().addButton(SvgPresets.EDIT);
+        editButton = view.addButton(SvgPresets.EDIT);
 
         addColumns();
         enableButtons();
@@ -103,15 +112,15 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
 
     @Override
     protected void onBind() {
-        registerHandler(getView().getSelectionModel().addSelectionHandler(event -> {
+        registerHandler(selectionModel.addSelectionHandler(event -> {
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
-                onEdit(getView().getSelectionModel().getSelected());
+                onEdit(selectionModel.getSelected());
             }
         }));
         registerHandler(editButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
-                onEdit(getView().getSelectionModel().getSelected());
+                onEdit(selectionModel.getSelected());
             }
         }));
     }
@@ -130,7 +139,7 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
 
     private void addNameColumn() {
         // Name.
-        getView().addResizableColumn(new Column<PipelineProperty, SafeHtml>(new SafeHtmlCell()) {
+        dataGrid.addResizableColumn(new Column<PipelineProperty, SafeHtml>(new SafeHtmlCell()) {
             @Override
             public SafeHtml getValue(final PipelineProperty property) {
                 return getSafeHtmlWithState(property, property.getName(), false);
@@ -140,7 +149,7 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
 
     private void addValueColumn() {
         // Value.
-        getView().addResizableColumn(new Column<PipelineProperty, SafeHtml>(new SafeHtmlCell()) {
+        dataGrid.addResizableColumn(new Column<PipelineProperty, SafeHtml>(new SafeHtmlCell()) {
             @Override
             public SafeHtml getValue(final PipelineProperty property) {
                 final String value = getVal(property);
@@ -150,7 +159,7 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
     }
 
     private void addSourceColumn() {
-        getView().addResizableColumn(new Column<PipelineProperty, SafeHtml>(new SafeHtmlCell()) {
+        dataGrid.addResizableColumn(new Column<PipelineProperty, SafeHtml>(new SafeHtmlCell()) {
             @Override
             public SafeHtml getValue(final PipelineProperty property) {
                 final Source source = getSource(property);
@@ -203,7 +212,7 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
 
     private void addInheritedValueColumn() {
         // Default Value.
-        getView().addResizableColumn(new Column<PipelineProperty, SafeHtml>(new SafeHtmlCell()) {
+        dataGrid.addResizableColumn(new Column<PipelineProperty, SafeHtml>(new SafeHtmlCell()) {
             @Override
             public SafeHtml getValue(final PipelineProperty property) {
                 final PipelineProperty inheritedProperty = getInheritedProperty(property);
@@ -220,7 +229,7 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
 
     private void addInheritedFromColumn() {
         // Default Value.
-        getView().addResizableColumn(new Column<PipelineProperty, SafeHtml>(new SafeHtmlCell()) {
+        dataGrid.addResizableColumn(new Column<PipelineProperty, SafeHtml>(new SafeHtmlCell()) {
             @Override
             public SafeHtml getValue(final PipelineProperty property) {
                 final PipelineProperty inheritedProperty = getInheritedProperty(property);
@@ -237,7 +246,7 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
 
     private void addDefaultValueColumn() {
         // Default Value.
-        getView().addResizableColumn(new Column<PipelineProperty, SafeHtml>(new SafeHtmlCell()) {
+        dataGrid.addResizableColumn(new Column<PipelineProperty, SafeHtml>(new SafeHtmlCell()) {
             @Override
             public SafeHtml getValue(final PipelineProperty property) {
                 return getSafeHtml(property.getPropertyType().getDefaultValue());
@@ -247,7 +256,7 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
 
     private void addDescriptionColumn() {
         // Default Value.
-        getView().addResizableColumn(new Column<PipelineProperty, SafeHtml>(new SafeHtmlCell()) {
+        dataGrid.addResizableColumn(new Column<PipelineProperty, SafeHtml>(new SafeHtmlCell()) {
             @Override
             public SafeHtml getValue(final PipelineProperty property) {
                 return getSafeHtml(property.getPropertyType().getDescription());
@@ -296,7 +305,7 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
     }
 
     private void addEndColumn() {
-        getView().addEndColumn(new EndColumn<>());
+        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     public void setPipeline(final PipelineDoc pipelineDoc) {
@@ -463,13 +472,13 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
     }
 
     private void setData(final List<PipelineProperty> propertyList) {
-        getView().getSelectionModel().clear();
-        getView().setRowData(0, propertyList);
-        getView().setRowCount(propertyList.size());
+        selectionModel.clear();
+        dataGrid.setRowData(0, propertyList);
+        dataGrid.setRowCount(propertyList.size());
     }
 
     private void enableButtons() {
-        final PipelineProperty selected = getView().getSelectionModel().getSelected();
+        final PipelineProperty selected = selectionModel.getSelected();
         editButton.setEnabled(!readOnly && selected != null);
 
         if (readOnly) {

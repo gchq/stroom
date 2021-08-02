@@ -23,7 +23,7 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.IndexVolumeGroupResource;
-import stroom.node.client.view.WrapperView;
+import stroom.data.grid.client.WrapperView;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;

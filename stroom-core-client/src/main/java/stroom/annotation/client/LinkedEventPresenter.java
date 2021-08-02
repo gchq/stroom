@@ -8,20 +8,19 @@ import stroom.annotation.shared.EventLink;
 import stroom.data.client.presenter.ClassificationWrappedDataPresenter;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.DisplayMode;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
@@ -36,12 +35,14 @@ import javax.inject.Inject;
 
 public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
 
+    private final MyDataGrid<EventId> dataGrid;
+    private final MultiSelectionModelImpl<EventId> selectionModel;
+
     private final RestFactory restFactory;
 
     private final ButtonView addEventButton;
     private final ButtonView removeEventButton;
 
-    private final DataGridView<EventId> eventList;
     private final ClassificationWrappedDataPresenter dataPresenter;
     private final AddEventLinkPresenter addEventLinkPresenter;
 
@@ -55,10 +56,16 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
     @Inject
     public LinkedEventPresenter(final EventBus eventBus,
                                 final LinkedEventView view,
+                                final PagerView pagerView,
                                 final RestFactory restFactory,
                                 final ClassificationWrappedDataPresenter dataPresenter,
                                 final AddEventLinkPresenter addEventLinkPresenter) {
         super(eventBus, view);
+
+        dataGrid = new MyDataGrid<>();
+        selectionModel = dataGrid.addDefaultSelectionModel(false);
+        pagerView.setDataWidget(dataGrid);
+
         this.restFactory = restFactory;
         this.dataPresenter = dataPresenter;
         dataPresenter.setNavigationControlsVisible(false);
@@ -73,11 +80,10 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
         removeEventButton = view.addButton(SvgPresets.DELETE);
         removeEventButton.setEnabled(false);
 
-        eventList = new DataGridViewImpl<>(true);
-        view.setEventListView(eventList);
+        view.setEventListView(pagerView);
         view.setDataView(dataPresenter.getView());
 
-        eventList.addResizableColumn(new Column<EventId, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<EventId, String>(new TextCell()) {
             @Override
             public String getValue(final EventId eventId) {
                 return eventId.toString();
@@ -88,7 +94,7 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(eventList.getSelectionModel().addSelectionHandler(e -> onSelection()));
+        registerHandler(selectionModel.addSelectionHandler(e -> onSelection()));
 
         registerHandler(addEventButton.addClickHandler(e -> addEventLinkPresenter.show(eventId -> {
             if (eventId != null) {
@@ -103,7 +109,7 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
         })));
 
         registerHandler(removeEventButton.addClickHandler(e -> {
-            final EventId selected = eventList.getSelectionModel().getSelected();
+            final EventId selected = selectionModel.getSelected();
             if (selected != null) {
                 dirty = true;
 
@@ -154,21 +160,21 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
 
     private void setData(final List<EventId> data) {
         this.currentData = data;
-        eventList.setRowData(0, data);
-        eventList.setRowCount(data.size());
+        dataGrid.setRowData(0, data);
+        dataGrid.setRowCount(data.size());
 
         // Change the selection if we need to.
         if (data.size() > 0) {
-            final EventId currentSelection = eventList.getSelectionModel().getSelected();
+            final EventId currentSelection = selectionModel.getSelected();
             if (nextSelection != null && data.contains(nextSelection)) {
-                eventList.getSelectionModel().setSelected(nextSelection);
+                selectionModel.setSelected(nextSelection);
             } else if (currentSelection == null) {
-                eventList.getSelectionModel().setSelected(data.get(0));
+                selectionModel.setSelected(data.get(0));
             } else if (!data.contains(currentSelection)) {
-                eventList.getSelectionModel().setSelected(data.get(0));
+                selectionModel.setSelected(data.get(0));
             }
         } else {
-            eventList.getSelectionModel().clear();
+            selectionModel.clear();
         }
         nextSelection = null;
 
@@ -176,7 +182,7 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
     }
 
     private void onSelection() {
-        final EventId selected = eventList.getSelectionModel().getSelected();
+        final EventId selected = selectionModel.getSelected();
         if (selected != null) {
             final SourceLocation sourceLocation = SourceLocation.builder(selected.getStreamId())
                     .withPartIndex(0L)

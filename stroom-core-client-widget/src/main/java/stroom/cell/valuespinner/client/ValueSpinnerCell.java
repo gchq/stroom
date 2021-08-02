@@ -23,6 +23,7 @@ import stroom.widget.util.client.ElementUtil;
 import com.google.gwt.cell.client.AbstractEditableCell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.NativeEvent;
@@ -59,7 +60,15 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
     }
 
     public ValueSpinnerCell(final long min, final long max, final int step, final int maxStep) {
-        super("focus", "blur", "keydown", "keyup", "change", "mouseover", "mouseout", "mousedown", "mouseup");
+        super(BrowserEvents.FOCUS,
+                BrowserEvents.BLUR,
+                BrowserEvents.KEYDOWN,
+                BrowserEvents.KEYUP,
+                BrowserEvents.CHANGE,
+                BrowserEvents.MOUSEOVER,
+                BrowserEvents.MOUSEOUT,
+                BrowserEvents.MOUSEDOWN,
+                BrowserEvents.MOUSEUP);
         this.min = min;
         this.max = max;
         this.step = step;
@@ -133,18 +142,18 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
                 downArrow = nodes.getItem(1).cast();
 
                 if (upArrow.isOrHasChild(target)) {
-                    if ("mouseover".equals(eventType)) {
+                    if (BrowserEvents.MOUSEOVER.equals(eventType)) {
                         upArrow.setClassName("valueSpinner-arrowUpHover");
 
-                    } else if ("mouseout".equals(eventType)) {
+                    } else if (BrowserEvents.MOUSEOUT.equals(eventType)) {
                         upArrow.setClassName("valueSpinner-arrowUp");
                         stopSpinning(context, parent, value, valueUpdater);
 
-                    } else if ("mouseup".equals(eventType)) {
+                    } else if (BrowserEvents.MOUSEUP.equals(eventType)) {
                         upArrow.setClassName("valueSpinner-arrowUpHover");
                         stopSpinning(context, parent, value, valueUpdater);
 
-                    } else if ("mousedown".equals(eventType)) {
+                    } else if (BrowserEvents.MOUSEDOWN.equals(eventType)) {
                         upArrow.setClassName("valueSpinner-arrowUpPressed");
                         ensureSpinner();
 
@@ -164,18 +173,18 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
                         }
                     }
                 } else if (downArrow.isOrHasChild(target)) {
-                    if ("mouseover".equals(eventType)) {
+                    if (BrowserEvents.MOUSEOVER.equals(eventType)) {
                         downArrow.setClassName("valueSpinner-arrowDownHover");
 
-                    } else if ("mouseout".equals(eventType)) {
+                    } else if (BrowserEvents.MOUSEOUT.equals(eventType)) {
                         downArrow.setClassName("valueSpinner-arrowDown");
                         stopSpinning(context, parent, value, valueUpdater);
 
-                    } else if ("mouseup".equals(eventType)) {
+                    } else if (BrowserEvents.MOUSEUP.equals(eventType)) {
                         downArrow.setClassName("valueSpinner-arrowDownHover");
                         stopSpinning(context, parent, value, valueUpdater);
 
-                    } else if ("mousedown".equals(eventType)) {
+                    } else if (BrowserEvents.MOUSEDOWN.equals(eventType)) {
                         downArrow.setClassName("valueSpinner-arrowDownPressed");
                         ensureSpinner();
 

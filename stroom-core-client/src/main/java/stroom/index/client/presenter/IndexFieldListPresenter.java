@@ -19,9 +19,9 @@ package stroom.index.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
@@ -35,6 +35,7 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.user.cellview.client.Column;
@@ -48,9 +49,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<IndexField>>
+public class IndexFieldListPresenter extends MyPresenterWidget<PagerView>
         implements HasDocumentRead<IndexDoc>, HasWrite<IndexDoc>, HasDirtyHandlers, ReadOnlyChangeHandler {
 
+    private final MyDataGrid<IndexField> dataGrid;
+    private final MultiSelectionModelImpl<IndexField> selectionModel;
     private final IndexFieldEditPresenter indexFieldEditPresenter;
     private final ButtonView newButton;
     private final ButtonView editButton;
@@ -64,8 +67,14 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
 
     @Inject
     public IndexFieldListPresenter(final EventBus eventBus,
+                                   final PagerView view,
                                    final IndexFieldEditPresenter indexFieldEditPresenter) {
-        super(eventBus, new DataGridViewImpl<>(true, true));
+        super(eventBus, view);
+
+        dataGrid = new MyDataGrid<>();
+        selectionModel = dataGrid.addDefaultSelectionModel(true);
+        view.setDataWidget(dataGrid);
+
         this.indexFieldEditPresenter = indexFieldEditPresenter;
 
         newButton = getView().addButton(SvgPresets.NEW_ITEM);
@@ -117,7 +126,7 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
                 }
             }
         }));
-        registerHandler(getView().getSelectionModel().addSelectionHandler(event -> {
+        registerHandler(selectionModel.addSelectionHandler(event -> {
             if (!readOnly) {
                 enableButtons();
                 if (event.getSelectionType().isDoubleSelect()) {
@@ -131,7 +140,7 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
         newButton.setEnabled(!readOnly);
         if (!readOnly && indexFields != null) {
             final List<IndexField> fieldList = indexFields;
-            final IndexField selectedElement = getView().getSelectionModel().getSelected();
+            final IndexField selectedElement = selectionModel.getSelected();
             final boolean enabled = selectedElement != null;
             editButton.setEnabled(enabled);
             removeButton.setEnabled(enabled);
@@ -173,11 +182,11 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
         addTermVectorColumn();
         addAnalyzerColumn();
         addCaseSensitiveColumn();
-        getView().addEndColumn(new EndColumn<>());
+        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void addNameColumn() {
-        getView().addResizableColumn(new Column<IndexField, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<IndexField, String>(new TextCell()) {
             @Override
             public String getValue(final IndexField row) {
                 return row.getFieldName();
@@ -186,7 +195,7 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
     }
 
     private void addTypeColumn() {
-        getView().addResizableColumn(new Column<IndexField, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<IndexField, String>(new TextCell()) {
             @Override
             public String getValue(final IndexField row) {
                 return row.getFieldType().getDisplayValue();
@@ -195,7 +204,7 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
     }
 
     private void addStoreColumn() {
-        getView().addResizableColumn(new Column<IndexField, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<IndexField, String>(new TextCell()) {
             @Override
             public String getValue(final IndexField row) {
                 return getYesNoString(row.isStored());
@@ -204,7 +213,7 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
     }
 
     private void addIndexColumn() {
-        getView().addResizableColumn(new Column<IndexField, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<IndexField, String>(new TextCell()) {
             @Override
             public String getValue(final IndexField row) {
                 return getYesNoString(row.isIndexed());
@@ -213,7 +222,7 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
     }
 
     private void addTermVectorColumn() {
-        getView().addResizableColumn(new Column<IndexField, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<IndexField, String>(new TextCell()) {
             @Override
             public String getValue(final IndexField row) {
                 return getYesNoString(row.isTermPositions());
@@ -222,7 +231,7 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
     }
 
     private void addAnalyzerColumn() {
-        getView().addResizableColumn(new Column<IndexField, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<IndexField, String>(new TextCell()) {
             @Override
             public String getValue(final IndexField row) {
                 return row.getAnalyzerType().getDisplayValue();
@@ -231,7 +240,7 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
     }
 
     private void addCaseSensitiveColumn() {
-        getView().addResizableColumn(new Column<IndexField, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<IndexField, String>(new TextCell()) {
             @Override
             public String getValue(final IndexField row) {
                 return String.valueOf(row.isCaseSensitive());
@@ -261,7 +270,7 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
                     try {
                         final IndexField indexField = indexFieldEditPresenter.write();
                         indexFields.add(indexField);
-                        getView().getSelectionModel().setSelected(indexField);
+                        selectionModel.setSelected(indexField);
                         refresh();
 
                         hide(autoClose, ok);
@@ -278,7 +287,7 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
     }
 
     private void onEdit() {
-        final IndexField existingField = getView().getSelectionModel().getSelected();
+        final IndexField existingField = selectionModel.getSelected();
         if (existingField != null) {
             final Set<String> otherNames = getFieldNames();
             otherNames.remove(existingField.getFieldName());
@@ -295,7 +304,7 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
                                 final int index = fieldList.indexOf(existingField);
                                 fieldList.remove(index);
                                 fieldList.add(index, indexField);
-                                getView().getSelectionModel().setSelected(indexField);
+                                selectionModel.setSelected(indexField);
                                 refresh();
 
                                 hide(autoClose, ok);
@@ -316,7 +325,7 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
     }
 
     private void onRemove() {
-        final List<IndexField> list = getView().getSelectionModel().getSelectedItems();
+        final List<IndexField> list = selectionModel.getSelectedItems();
         if (list != null && list.size() > 0) {
             String message = "Are you sure you want to delete the selected field?";
             if (list.size() > 1) {
@@ -326,7 +335,7 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
             ConfirmEvent.fire(this, message, result -> {
                 if (result) {
                     indexFields.removeAll(list);
-                    getView().getSelectionModel().clear();
+                    selectionModel.clear();
                     refresh();
                     DirtyEvent.fire(IndexFieldListPresenter.this, true);
                 }
@@ -335,7 +344,7 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
     }
 
     private void moveSelectedFieldUp() {
-        final IndexField selected = getView().getSelectionModel().getSelected();
+        final IndexField selected = selectionModel.getSelected();
         final List<IndexField> fieldList = indexFields;
         if (selected != null) {
             final int index = fieldList.indexOf(selected);
@@ -351,7 +360,7 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
     }
 
     private void moveSelectedFieldDown() {
-        final IndexField selected = getView().getSelectionModel().getSelected();
+        final IndexField selected = selectionModel.getSelected();
         final List<IndexField> fieldList = indexFields;
         if (selected != null) {
             final int index = fieldList.indexOf(selected);
@@ -372,7 +381,7 @@ public class IndexFieldListPresenter extends MyPresenterWidget<DataGridView<Inde
         }
         if (dataProvider == null) {
             this.dataProvider = new IndexFieldDataProvider<>();
-            dataProvider.addDataDisplay(getView().getDataDisplay());
+            dataProvider.addDataDisplay(dataGrid);
         }
         dataProvider.setList(indexFields);
         dataProvider.refresh();

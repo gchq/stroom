@@ -91,7 +91,7 @@ public class UsersAndGroupsTabPresenter extends
 
     @Override
     protected void onBind() {
-        registerHandler(listPresenter.getDataGridView().getSelectionModel().addSelectionHandler(event -> {
+        registerHandler(listPresenter.getSelectionModel().addSelectionHandler(event -> {
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
                 onOpen();
@@ -132,7 +132,6 @@ public class UsersAndGroupsTabPresenter extends
         onEdit(e);
     }
 
-    @SuppressWarnings("unchecked")
     public void onEdit(final User userRef) {
         if (userRef != null) {
             edit(userRef);

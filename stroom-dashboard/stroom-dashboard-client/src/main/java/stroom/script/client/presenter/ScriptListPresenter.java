@@ -16,11 +16,12 @@
 
 package stroom.script.client.presenter;
 
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
 import stroom.widget.util.client.MultiSelectionModel;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.user.cellview.client.Column;
@@ -30,11 +31,19 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.List;
 
-public class ScriptListPresenter extends MyPresenterWidget<DataGridView<DocRef>> {
+public class ScriptListPresenter extends MyPresenterWidget<PagerView> {
+
+    private final MyDataGrid<DocRef> dataGrid;
+    private final MultiSelectionModelImpl<DocRef> selectionModel;
 
     @Inject
-    public ScriptListPresenter(final EventBus eventBus) {
-        super(eventBus, new DataGridViewImpl<>(true, true));
+    public ScriptListPresenter(final EventBus eventBus,
+                               final PagerView view) {
+        super(eventBus, view);
+
+        dataGrid = new MyDataGrid<>();
+        selectionModel = dataGrid.addDefaultSelectionModel(true);
+        view.setDataWidget(dataGrid);
 
         // Add a border to the list.
         getWidget().getElement().addClassName("stroom-border");
@@ -53,16 +62,16 @@ public class ScriptListPresenter extends MyPresenterWidget<DataGridView<DocRef>>
                 return docRef.getName();
             }
         };
-        getView().addResizableColumn(nameColumn, "Name", 250);
-        getView().addEndColumn(new EndColumn<>());
+        dataGrid.addResizableColumn(nameColumn, "Name", 250);
+        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     public void setData(final List<DocRef> scripts) {
-        getView().setRowData(0, scripts);
-        getView().setRowCount(scripts.size());
+        dataGrid.setRowData(0, scripts);
+        dataGrid.setRowCount(scripts.size());
     }
 
     public MultiSelectionModel<DocRef> getSelectionModel() {
-        return getView().getSelectionModel();
+        return selectionModel;
     }
 }

@@ -18,13 +18,14 @@
 package stroom.receive.rules.client.presenter;
 
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.receive.rules.shared.ReceiveDataRule;
 import stroom.svg.client.Preset;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -36,11 +37,19 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import java.util.List;
 import java.util.function.Function;
 
-public class RuleSetListPresenter extends MyPresenterWidget<DataGridView<ReceiveDataRule>> {
+public class RuleSetListPresenter extends MyPresenterWidget<PagerView> {
+
+    private final MyDataGrid<ReceiveDataRule> dataGrid;
+    private final MultiSelectionModelImpl<ReceiveDataRule> selectionModel;
 
     @Inject
-    public RuleSetListPresenter(final EventBus eventBus) {
-        super(eventBus, new DataGridViewImpl<>(true, false));
+    public RuleSetListPresenter(final EventBus eventBus,
+                                final PagerView view) {
+        super(eventBus, view);
+
+        dataGrid = new MyDataGrid<>();
+        selectionModel = dataGrid.addDefaultSelectionModel(false);
+        view.setDataWidget(dataGrid);
 
         // Add a border to the list.
         getWidget().getElement().addClassName("stroom-border");
@@ -53,7 +62,7 @@ public class RuleSetListPresenter extends MyPresenterWidget<DataGridView<Receive
      */
     private void initTableColumns() {
         // Rule.
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 DataGridUtil.htmlColumnBuilder((ReceiveDataRule row) ->
                         getSafeHtml(row, row2 -> Integer.toString(row2.getRuleNumber())))
                         .rightAligned()
@@ -62,7 +71,7 @@ public class RuleSetListPresenter extends MyPresenterWidget<DataGridView<Receive
                 40);
 
         // Name.
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 DataGridUtil.htmlColumnBuilder((ReceiveDataRule row) ->
                         getSafeHtml(row, ReceiveDataRule::getName))
                         .build(),
@@ -70,7 +79,7 @@ public class RuleSetListPresenter extends MyPresenterWidget<DataGridView<Receive
                 ColumnSizeConstants.MEDIUM_COL);
 
         // Expression.
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 DataGridUtil.htmlColumnBuilder((ReceiveDataRule row) ->
                         getSafeHtml(row, row2 -> row2.getExpression().toString()))
                         .build(),
@@ -78,22 +87,22 @@ public class RuleSetListPresenter extends MyPresenterWidget<DataGridView<Receive
                 500);
 
         // Action.
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 DataGridUtil.safeHtmlColumn((ReceiveDataRule row) ->
                         getSafeHtml(row, row2 -> row2.getAction().getDisplayValue())),
                 "Action",
                 ColumnSizeConstants.SMALL_COL);
 
-        DataGridUtil.addEndColumn(getView());
+        DataGridUtil.addEndColumn(dataGrid);
     }
 
     public void setData(final List<ReceiveDataRule> data) {
-        getView().setRowData(0, data);
-        getView().setRowCount(data.size());
+        dataGrid.setRowData(0, data);
+        dataGrid.setRowCount(data.size());
     }
 
     public MultiSelectionModel<ReceiveDataRule> getSelectionModel() {
-        return getView().getSelectionModel();
+        return selectionModel;
     }
 
     public ButtonView add(final Preset preset) {

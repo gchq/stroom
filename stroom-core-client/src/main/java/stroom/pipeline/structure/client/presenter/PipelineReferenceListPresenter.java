@@ -18,9 +18,9 @@
 package stroom.pipeline.structure.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -37,13 +37,13 @@ import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.cell.client.TextCell;
@@ -69,13 +69,16 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridView<PipelineReference>>
+public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
         implements HasDirtyHandlers, ReadOnlyChangeHandler {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
     private static final String ADDED = "pipelineStructureViewImpl-property-added";
     private static final String REMOVED = "pipelineStructureViewImpl-property-removed";
     private static final String INHERITED = "pipelineStructureViewImpl-property-inherited";
+
+    private final MyDataGrid<PipelineReference> dataGrid;
+    private final MultiSelectionModelImpl<PipelineReference> selectionModel;
     private final ButtonView addButton;
     private final ButtonView editButton;
     private final ButtonView removeButton;
@@ -94,15 +97,21 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
 
     @Inject
     public PipelineReferenceListPresenter(final EventBus eventBus,
+                                          final PagerView view,
                                           final Provider<NewPipelineReferencePresenter> newPipelineReferencePresenter,
                                           final RestFactory restFactory) {
-        super(eventBus, new DataGridViewImpl<>(true));
+        super(eventBus, view);
+
+        dataGrid = new MyDataGrid<>();
+        selectionModel = dataGrid.addDefaultSelectionModel(false);
+        view.setDataWidget(dataGrid);
+
         this.newPipelineReferencePresenter = newPipelineReferencePresenter;
         this.restFactory = restFactory;
 
-        addButton = getView().addButton(SvgPresets.NEW_ITEM);
-        editButton = getView().addButton(SvgPresets.EDIT);
-        removeButton = getView().addButton(SvgPresets.REMOVE);
+        addButton = view.addButton(SvgPresets.NEW_ITEM);
+        editButton = view.addButton(SvgPresets.EDIT);
+        removeButton = view.addButton(SvgPresets.REMOVE);
 
         addColumns();
 
@@ -111,10 +120,10 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
 
     @Override
     protected void onBind() {
-        registerHandler(getView().getSelectionModel().addSelectionHandler(event -> {
+        registerHandler(selectionModel.addSelectionHandler(event -> {
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
-                onEdit(getView().getSelectionModel().getSelected());
+                onEdit(selectionModel.getSelected());
             }
         }));
         registerHandler(addButton.addClickHandler(event -> {
@@ -124,7 +133,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
         }));
         registerHandler(editButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
-                onEdit(getView().getSelectionModel().getSelected());
+                onEdit(selectionModel.getSelected());
             }
         }));
         registerHandler(removeButton.addClickHandler(event -> {
@@ -145,7 +154,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
 
     private void addPipelineColumn() {
         // Pipeline.
-        getView().addResizableColumn(new Column<PipelineReference, SafeHtml>(new SafeHtmlCell()) {
+        dataGrid.addResizableColumn(new Column<PipelineReference, SafeHtml>(new SafeHtmlCell()) {
             @Override
             public SafeHtml getValue(final PipelineReference pipelineReference) {
                 if (pipelineReference.getPipeline() == null) {
@@ -158,7 +167,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
 
     private void addFeedColumn() {
         // Feed.
-        getView().addResizableColumn(new Column<PipelineReference, SafeHtml>(new SafeHtmlCell()) {
+        dataGrid.addResizableColumn(new Column<PipelineReference, SafeHtml>(new SafeHtmlCell()) {
             @Override
             public SafeHtml getValue(final PipelineReference pipelineReference) {
                 if (pipelineReference.getFeed() == null) {
@@ -171,7 +180,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
 
     private void addStreamTypeColumn() {
         // Stream type.
-        getView().addResizableColumn(new Column<PipelineReference, SafeHtml>(new SafeHtmlCell()) {
+        dataGrid.addResizableColumn(new Column<PipelineReference, SafeHtml>(new SafeHtmlCell()) {
             @Override
             public SafeHtml getValue(final PipelineReference pipelineReference) {
                 if (pipelineReference.getStreamType() == null) {
@@ -184,7 +193,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
 
     private void addInheritedFromColumn() {
         // Default Value.
-        getView().addResizableColumn(new Column<PipelineReference, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<PipelineReference, String>(new TextCell()) {
             @Override
             public String getValue(final PipelineReference pipelineReference) {
                 if (pipelineReference.getSourcePipeline() == null
@@ -197,7 +206,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
     }
 
     private void addEndColumn() {
-        getView().addEndColumn(new EndColumn<>());
+        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private SafeHtml getSafeHtmlWithState(final PipelineReference pipelineReference, final String string) {
@@ -335,7 +344,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
     }
 
     private void onRemove() {
-        final PipelineReference selected = getView().getSelectionModel().getSelected();
+        final PipelineReference selected = selectionModel.getSelected();
         if (selected != null) {
             if (pipelineModel.getPipelineData().getAddedPipelineReferences().contains(selected)) {
                 pipelineModel.getPipelineData().getAddedPipelineReferences().remove(selected);
@@ -357,7 +366,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
     private void refresh() {
         referenceStateMap.clear();
         references.clear();
-        getView().getSelectionModel().clear();
+        selectionModel.clear();
 
         if (currentElement != null) {
             final String id = currentElement.getId();
@@ -437,15 +446,15 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
     }
 
     private void setData(final List<PipelineReference> references) {
-        getView().setRowData(0, references);
-        getView().setRowCount(references.size());
+        dataGrid.setRowData(0, references);
+        dataGrid.setRowCount(references.size());
         enableButtons();
     }
 
     protected void enableButtons() {
         addButton.setEnabled(!readOnly && propertyType != null);
 
-        final PipelineReference selected = getView().getSelectionModel().getSelected();
+        final PipelineReference selected = selectionModel.getSelected();
         final State state = referenceStateMap.get(selected);
 
         editButton.setEnabled(!readOnly && State.ADDED.equals(state));

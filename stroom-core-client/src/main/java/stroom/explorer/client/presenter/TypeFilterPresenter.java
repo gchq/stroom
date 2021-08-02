@@ -20,7 +20,7 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
-import stroom.data.grid.client.DataGridViewImpl;
+import stroom.data.grid.client.MyDataGrid;
 import stroom.data.table.client.MyCellTable;
 import stroom.explorer.client.presenter.TypeFilterPresenter.TypeFilterView;
 import stroom.explorer.shared.DocumentType;
@@ -83,7 +83,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
             }
         };
 
-        cellTable = new MyCellTable<>(DataGridViewImpl.DEFAULT_LIST_PAGE_SIZE);
+        cellTable = new MyCellTable<>(MyDataGrid.DEFAULT_LIST_PAGE_SIZE);
         cellTable.getElement().setClassName("menuCellTable");
 
         // Sink events.

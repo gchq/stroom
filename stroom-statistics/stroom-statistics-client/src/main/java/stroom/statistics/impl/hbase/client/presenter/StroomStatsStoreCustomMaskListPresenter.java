@@ -18,9 +18,9 @@
 package stroom.statistics.impl.hbase.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -40,6 +40,7 @@ import stroom.svg.client.SvgPresets;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.core.client.GWT;
@@ -58,12 +59,15 @@ import java.util.List;
 import java.util.Set;
 
 public class StroomStatsStoreCustomMaskListPresenter
-        extends MyPresenterWidget<DataGridView<StroomStatsStoreCustomMaskListPresenter.MaskHolder>>
+        extends MyPresenterWidget<PagerView>
         implements HasDocumentRead<StroomStatsStoreDoc>, HasWrite<StroomStatsStoreDoc>, HasDirtyHandlers,
         ReadOnlyChangeHandler {
 
     private static final StatsStoreRollupResource STATS_STORE_ROLLUP_RESOURCE =
             GWT.create(StatsStoreRollupResource.class);
+
+    private final MyDataGrid<StroomStatsStoreCustomMaskListPresenter.MaskHolder> dataGrid;
+    private final MultiSelectionModelImpl<StroomStatsStoreCustomMaskListPresenter.MaskHolder> selectionModel;
 
     private final ButtonView newButton;
     private final ButtonView removeButton;
@@ -77,13 +81,20 @@ public class StroomStatsStoreCustomMaskListPresenter
     private boolean readOnly = true;
 
     @Inject
-    public StroomStatsStoreCustomMaskListPresenter(final EventBus eventBus, final RestFactory restFactory) {
-        super(eventBus, new DataGridViewImpl<>(true, true));
+    public StroomStatsStoreCustomMaskListPresenter(final EventBus eventBus,
+                                                   final PagerView view,
+                                                   final RestFactory restFactory) {
+        super(eventBus, view);
+
+        dataGrid = new MyDataGrid<>();
+        selectionModel = dataGrid.addDefaultSelectionModel(true);
+        view.setDataWidget(dataGrid);
+
         this.restFactory = restFactory;
 
-        newButton = getView().addButton(SvgPresets.NEW_ITEM);
-        autoGenerateButton = getView().addButton(SvgPresets.GENERATE);
-        removeButton = getView().addButton(SvgPresets.REMOVE);
+        newButton = view.addButton(SvgPresets.NEW_ITEM);
+        autoGenerateButton = view.addButton(SvgPresets.GENERATE);
+        removeButton = view.addButton(SvgPresets.REMOVE);
 
         maskList = new MaskHolderList();
 
@@ -113,7 +124,7 @@ public class StroomStatsStoreCustomMaskListPresenter
             }
         }));
 
-        registerHandler(getView().getSelectionModel().addSelectionHandler(event -> enableButtons()));
+        registerHandler(selectionModel.addSelectionHandler(event -> enableButtons()));
     }
 
     private void enableButtons() {
@@ -121,7 +132,7 @@ public class StroomStatsStoreCustomMaskListPresenter
         autoGenerateButton.setEnabled(!readOnly);
 
         if (maskList != null && maskList.size() > 0) {
-            selectedElement = getView().getSelectionModel().getSelected();
+            selectedElement = selectionModel.getSelected();
             removeButton.setEnabled(!readOnly && selectedElement != null);
 
         } else {
@@ -147,14 +158,14 @@ public class StroomStatsStoreCustomMaskListPresenter
 
         final EndColumn<MaskHolder> endColumn = new EndColumn<>();
 
-        getView().addEndColumn(endColumn);
+        dataGrid.addEndColumn(endColumn);
 
         columns.add(endColumn);
     }
 
     private void removeAllColumns() {
         for (final Column<MaskHolder, ?> column : columns) {
-            getView().removeColumn(column);
+            dataGrid.removeColumn(column);
         }
     }
 
@@ -173,7 +184,7 @@ public class StroomStatsStoreCustomMaskListPresenter
             DirtyEvent.fire(StroomStatsStoreCustomMaskListPresenter.this, true);
         });
 
-        getView().addResizableColumn(rolledUpColumn, fieldname, 100);
+        dataGrid.addResizableColumn(rolledUpColumn, fieldname, 100);
         columns.add(rolledUpColumn);
     }
 
@@ -206,11 +217,11 @@ public class StroomStatsStoreCustomMaskListPresenter
     }
 
     private void onRemove(final ClickEvent event) {
-        final List<MaskHolder> list = getView().getSelectionModel().getSelectedItems();
+        final List<MaskHolder> list = selectionModel.getSelectedItems();
         if (maskList != null && list != null && list.size() > 0) {
             maskList.removeAll(list);
 
-            getView().getSelectionModel().clear();
+            selectionModel.clear();
             // dataProvider.refresh();
             refreshModel();
 
@@ -236,8 +247,8 @@ public class StroomStatsStoreCustomMaskListPresenter
     }
 
     private void refreshModel() {
-        getView().setRowData(0, maskList);
-        getView().setRowCount(maskList.size(), true);
+        dataGrid.setRowData(0, maskList);
+        dataGrid.setRowCount(maskList.size(), true);
     }
 
     @Override

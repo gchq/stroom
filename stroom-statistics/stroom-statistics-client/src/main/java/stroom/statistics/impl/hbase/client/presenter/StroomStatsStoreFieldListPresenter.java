@@ -17,9 +17,9 @@
 
 package stroom.statistics.impl.hbase.client.presenter;
 
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
@@ -34,6 +34,7 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.user.cellview.client.Column;
@@ -45,9 +46,12 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import java.util.ArrayList;
 import java.util.List;
 
-public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<DataGridView<StatisticField>>
+public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<PagerView>
         implements HasDocumentRead<StroomStatsStoreDoc>, HasWrite<StroomStatsStoreDoc>, HasDirtyHandlers,
         ReadOnlyChangeHandler {
+
+    private final MyDataGrid<StatisticField> dataGrid;
+    private final MultiSelectionModelImpl<StatisticField> selectionModel;
 
     private final StroomStatsStoreFieldEditPresenter stroomStatsStoreFieldEditPresenter;
     private final ButtonView newButton;
@@ -62,14 +66,20 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<DataGr
     @Inject
     public StroomStatsStoreFieldListPresenter(
             final EventBus eventBus,
+            final PagerView view,
             final StroomStatsStoreFieldEditPresenter stroomStatsStoreFieldEditPresenter) {
 
-        super(eventBus, new DataGridViewImpl<>(true, true));
+        super(eventBus, view);
+
+        dataGrid = new MyDataGrid<>();
+        selectionModel = dataGrid.addDefaultSelectionModel(true);
+        view.setDataWidget(dataGrid);
+
         this.stroomStatsStoreFieldEditPresenter = stroomStatsStoreFieldEditPresenter;
 
-        newButton = getView().addButton(SvgPresets.NEW_ITEM);
-        editButton = getView().addButton(SvgPresets.EDIT);
-        removeButton = getView().addButton(SvgPresets.REMOVE);
+        newButton = view.addButton(SvgPresets.NEW_ITEM);
+        editButton = view.addButton(SvgPresets.EDIT);
+        removeButton = view.addButton(SvgPresets.REMOVE);
 
         addColumns();
 
@@ -98,7 +108,7 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<DataGr
             }
         }));
 
-        registerHandler(getView().getSelectionModel().addSelectionHandler(event -> {
+        registerHandler(selectionModel.addSelectionHandler(event -> {
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
                 onEdit();
@@ -109,7 +119,7 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<DataGr
     private void enableButtons() {
         newButton.setEnabled(!readOnly);
         if (stroomStatsStoreEntityData != null && stroomStatsStoreEntityData.getFields() != null) {
-            StatisticField selected = getView().getSelectionModel().getSelected();
+            StatisticField selected = selectionModel.getSelected();
             final boolean enabled = !readOnly && selected != null;
             editButton.setEnabled(enabled);
             removeButton.setEnabled(enabled);
@@ -131,11 +141,11 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<DataGr
 
     private void addColumns() {
         addNameColumn();
-        getView().addEndColumn(new EndColumn<>());
+        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void addNameColumn() {
-        getView().addResizableColumn(new Column<StatisticField, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<StatisticField, String>(new TextCell()) {
             @Override
             public String getValue(final StatisticField row) {
                 return row.getFieldName();
@@ -172,7 +182,7 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<DataGr
 
     private void onEdit() {
         if (!readOnly) {
-            final StatisticField statisticField = getView().getSelectionModel().getSelected();
+            final StatisticField statisticField = selectionModel.getSelected();
             if (statisticField != null) {
                 final StroomStatsStoreEntityData oldStroomStatsStoreEntityData = stroomStatsStoreEntityData.deepCopy();
 
@@ -208,12 +218,12 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<DataGr
 
     private void onRemove() {
         if (!readOnly) {
-            final List<StatisticField> list = getView().getSelectionModel().getSelectedItems();
+            final List<StatisticField> list = selectionModel.getSelectedItems();
             if (list != null && list.size() > 0) {
                 final StroomStatsStoreEntityData oldStroomStatsStoreEntityData = stroomStatsStoreEntityData.deepCopy();
 
                 stroomStatsStoreEntityData.getFields().removeAll(list);
-                getView().getSelectionModel().clear();
+                selectionModel.clear();
                 reComputeRollUpBitMask(oldStroomStatsStoreEntityData, stroomStatsStoreEntityData);
                 refresh();
                 DirtyEvent.fire(StroomStatsStoreFieldListPresenter.this, true);
@@ -234,8 +244,8 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<DataGr
             stroomStatsStoreEntityData = new StroomStatsStoreEntityData();
         }
 
-        getView().setRowData(0, new ArrayList<>(stroomStatsStoreEntityData.getFields()));
-        getView().setRowCount(stroomStatsStoreEntityData.getFields().size(), true);
+        dataGrid.setRowData(0, new ArrayList<>(stroomStatsStoreEntityData.getFields()));
+        dataGrid.setRowCount(stroomStatsStoreEntityData.getFields().size(), true);
     }
 
     @Override

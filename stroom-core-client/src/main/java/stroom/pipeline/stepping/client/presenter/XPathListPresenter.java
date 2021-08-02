@@ -18,19 +18,17 @@ package stroom.pipeline.stepping.client.presenter;
 
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
 import stroom.pipeline.shared.XPathFilter;
 import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.SvgButton;
 import stroom.widget.util.client.MultiSelectionModel;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.inject.Inject;
@@ -39,18 +37,26 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
 
-public class XPathListPresenter extends MyPresenterWidget<DataGridView<XPathFilter>>
+public class XPathListPresenter extends MyPresenterWidget<PagerView>
         implements Refreshable {
 
+    private final MyDataGrid<XPathFilter> dataGrid;
+    private final MultiSelectionModelImpl<XPathFilter> selectionModel;
     private final ListDataProvider<XPathFilter> dataProvider;
 
     @Inject
-    public XPathListPresenter(final EventBus eventBus) {
-        super(eventBus, new DataGridViewImpl<>(true, true));
+    public XPathListPresenter(final EventBus eventBus,
+                              final PagerView view) {
+        super(eventBus, view);
+
+        dataGrid = new MyDataGrid<>();
+        selectionModel = dataGrid.addDefaultSelectionModel(true);
+        view.setDataWidget(dataGrid);
+
         initTableColumns();
 
         dataProvider = new ListDataProvider<>(new ArrayList<>());
-        dataProvider.addDataDisplay(getView().getDataDisplay());
+        dataProvider.addDataDisplay(dataGrid);
     }
 
     ButtonView addButton(Preset preset) {
@@ -68,7 +74,7 @@ public class XPathListPresenter extends MyPresenterWidget<DataGridView<XPathFilt
                 return filter.getPath();
             }
         };
-        getView().addResizableColumn(xPathColumn, "XPath", 200);
+        dataGrid.addResizableColumn(xPathColumn, "XPath", 200);
 
         // Condition.
         final Column<XPathFilter, String> conditionColumn = new Column<XPathFilter, String>(new TextCell()) {
@@ -77,7 +83,7 @@ public class XPathListPresenter extends MyPresenterWidget<DataGridView<XPathFilt
                 return filter.getMatchType().getDisplayValue();
             }
         };
-        getView().addResizableColumn(conditionColumn, "Condition", 80);
+        dataGrid.addResizableColumn(conditionColumn, "Condition", 80);
 
         // Value.
         final Column<XPathFilter, String> valueColumn = new Column<XPathFilter, String>(new TextCell()) {
@@ -86,7 +92,7 @@ public class XPathListPresenter extends MyPresenterWidget<DataGridView<XPathFilt
                 return filter.getValue();
             }
         };
-        getView().addResizableColumn(valueColumn, "Value", 150);
+        dataGrid.addResizableColumn(valueColumn, "Value", 150);
 
         // Ignore case.
         final Column<XPathFilter, TickBoxState> ignoreCaseColumn = new Column<XPathFilter, TickBoxState>(
@@ -96,8 +102,8 @@ public class XPathListPresenter extends MyPresenterWidget<DataGridView<XPathFilt
                 return TickBoxState.fromBoolean(filter.isIgnoreCase());
             }
         };
-        getView().addResizableColumn(ignoreCaseColumn, "Ignore Case", 100);
-        getView().addEndColumn(new EndColumn<>());
+        dataGrid.addResizableColumn(ignoreCaseColumn, "Ignore Case", 100);
+        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     @Override
@@ -110,6 +116,6 @@ public class XPathListPresenter extends MyPresenterWidget<DataGridView<XPathFilt
     }
 
     public MultiSelectionModel<XPathFilter> getSelectionModel() {
-        return getView().getSelectionModel();
+        return selectionModel;
     }
 }

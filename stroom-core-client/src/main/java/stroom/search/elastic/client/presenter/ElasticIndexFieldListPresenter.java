@@ -17,15 +17,16 @@
 
 package stroom.search.elastic.client.presenter;
 
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.search.elastic.client.presenter.ElasticIndexFieldListPresenter.ElasticIndexFieldListView;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.user.cellview.client.Column;
@@ -43,7 +44,8 @@ import java.util.stream.Collectors;
 public class ElasticIndexFieldListPresenter extends MyPresenterWidget<ElasticIndexFieldListView>
         implements HasDocumentRead<ElasticIndexDoc> {
 
-    private final DataGridView<ElasticIndexField> dataGridView;
+    private final MyDataGrid<ElasticIndexField> dataGrid;
+    private final MultiSelectionModelImpl<ElasticIndexField> selectionModel;
     private final DateTimeFormatter dateTimeFormatter;
     private List<ElasticIndexField> fields;
     private ElasticIndexFieldDataProvider<ElasticIndexField> dataProvider;
@@ -51,12 +53,16 @@ public class ElasticIndexFieldListPresenter extends MyPresenterWidget<ElasticInd
     @Inject
     public ElasticIndexFieldListPresenter(final EventBus eventBus,
                                           final ElasticIndexFieldListView view,
+                                          final PagerView pagerView,
                                           final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
         this.dateTimeFormatter = dateTimeFormatter;
 
-        dataGridView = new DataGridViewImpl<>(true, true);
-        view.setDataGridView(dataGridView);
+        dataGrid = new MyDataGrid<>();
+        selectionModel = dataGrid.addDefaultSelectionModel(true);
+        pagerView.setDataWidget(dataGrid);
+
+        view.setDataGridView(pagerView);
 
         addColumns();
     }
@@ -71,7 +77,7 @@ public class ElasticIndexFieldListPresenter extends MyPresenterWidget<ElasticInd
         addStringColumn("Use", row -> row.getFieldUse().getDisplayValue());
         addStringColumn("Type", ElasticIndexField::getFieldType);
         addBooleanColumn("Stored", ElasticIndexField::isStored);
-        dataGridView.addEndColumn(new EndColumn<>());
+        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void addStringColumn(final String name, final Function<ElasticIndexField, String> function) {
@@ -80,9 +86,8 @@ public class ElasticIndexFieldListPresenter extends MyPresenterWidget<ElasticInd
 
     private void addStringColumn(final String name,
                                  final int width,
-                                 final Function<ElasticIndexField, String> function
-    ) {
-        dataGridView.addResizableColumn(new Column<ElasticIndexField, String>(new TextCell()) {
+                                 final Function<ElasticIndexField, String> function) {
+        dataGrid.addResizableColumn(new Column<ElasticIndexField, String>(new TextCell()) {
             @Override
             public String getValue(final ElasticIndexField row) {
                 return function.apply(row);
@@ -91,7 +96,7 @@ public class ElasticIndexFieldListPresenter extends MyPresenterWidget<ElasticInd
     }
 
     private void addBooleanColumn(final String name, final Function<ElasticIndexField, Boolean> function) {
-        dataGridView.addResizableColumn(new Column<ElasticIndexField, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<ElasticIndexField, String>(new TextCell()) {
             @Override
             public String getValue(final ElasticIndexField row) {
                 return getYesNoString(function.apply(row));
@@ -113,7 +118,7 @@ public class ElasticIndexFieldListPresenter extends MyPresenterWidget<ElasticInd
 
         if (dataProvider == null) {
             this.dataProvider = new ElasticIndexFieldDataProvider<>();
-            dataProvider.addDataDisplay(dataGridView.getDataDisplay());
+            dataProvider.addDataDisplay(dataGrid);
         }
 
         dataProvider.setList(fields);

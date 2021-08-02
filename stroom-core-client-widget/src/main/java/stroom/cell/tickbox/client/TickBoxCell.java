@@ -64,7 +64,7 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
         this.appearance = appearance;
         this.dependsOnSelection = dependsOnSelection;
         this.handlesSelection = handlesSelection;
-        this.clickable = consumedEvents.contains("mousedown");
+        this.clickable = consumedEvents.contains(BrowserEvents.MOUSEDOWN);
     }
 
     public static TickBoxCell create(final boolean dependsOnSelection, final boolean handlesSelection) {

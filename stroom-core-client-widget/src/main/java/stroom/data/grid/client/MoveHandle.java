@@ -16,17 +16,12 @@
 
 package stroom.data.grid.client;
 
-import stroom.data.grid.client.DataGridViewImpl.ColSettings;
-import stroom.data.grid.client.DataGridViewImpl.DefaultResources;
-import stroom.data.grid.client.DataGridViewImpl.Heading;
-
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.Visibility;
-import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -39,8 +34,7 @@ public class MoveHandle<R> extends Widget {
     public static final int LINE_WIDTH = 2;
     public static final int HALF_LINE_WIDTH = LINE_WIDTH / 2;
 
-    private final DataGridViewImpl<R> dataGridView;
-    private final DataGrid<R> dataGrid;
+    private final MyDataGrid<R> dataGrid;
     private final List<ColSettings> colSettings;
     private final DefaultResources resources;
 
@@ -53,9 +47,9 @@ public class MoveHandle<R> extends Widget {
     private boolean moving;
     private Glass glass;
 
-    public MoveHandle(final DataGridViewImpl<R> dataGridView, final DataGrid<R> dataGrid,
-                      final List<ColSettings> colSettings, final DefaultResources resources) {
-        this.dataGridView = dataGridView;
+    public MoveHandle(final MyDataGrid<R> dataGrid,
+                      final List<ColSettings> colSettings,
+                      final DefaultResources resources) {
         this.dataGrid = dataGrid;
         this.colSettings = colSettings;
         this.resources = resources;
@@ -100,7 +94,7 @@ public class MoveHandle<R> extends Widget {
     public void endMove(final NativeEvent event) {
         final int pos = insertPos;
         if (pos >= 0 && pos != heading.getColIndex()) {
-            dataGridView.moveColumn(heading.getColIndex(), pos);
+            dataGrid.moveColumn(heading.getColIndex(), pos);
         }
 
         reset();

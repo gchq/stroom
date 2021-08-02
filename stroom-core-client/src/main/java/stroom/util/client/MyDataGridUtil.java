@@ -3,8 +3,8 @@ package stroom.util.client;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.cell.info.client.SvgCell;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.docref.HasDisplayValue;
 import stroom.svg.client.Preset;
@@ -19,7 +19,6 @@ import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.Column;
-import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.cellview.client.SafeHtmlHeader;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
@@ -36,11 +35,11 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-public class DataGridUtil {
+public class MyDataGridUtil {
 
     private static final String LOW_LIGHT_COLOUR = "#666666";
 
-    private DataGridUtil() {
+    private MyDataGridUtil() {
     }
 
 
@@ -211,7 +210,6 @@ public class DataGridUtil {
 //        view.addResizableColumn(safeHtmlColumn(cellValueExtractor), name, width);
 //    }
 
-
     public static <T_VIEW extends MyDataGrid<T_ROW>, T_ROW> void addExpanderColumn(
             final T_VIEW view,
             final Function<T_ROW, Expander> expanderExtractor,
@@ -257,29 +255,6 @@ public class DataGridUtil {
     }
 
     public static void addColumnSortHandler(final MyDataGrid<?> view,
-                                            final BaseCriteria criteria,
-                                            final Runnable onSortChange) {
-
-        view.addColumnSortHandler(event -> {
-            if (event != null
-                    && event.getColumn() instanceof OrderByColumn<?, ?>
-                    && event.getColumn().isSortable()) {
-
-                final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
-                criteria.setSort(
-                        orderByColumn.getField(),
-                        !event.isSortAscending(),
-                        orderByColumn.isIgnoreCase());
-                onSortChange.run();
-            }
-        });
-    }
-
-    public static void addEndColumn(final DataGrid<?> view) {
-        view.addColumn(new EndColumn<>());
-    }
-
-    public static void addColumnSortHandler(final DataGrid<?> view,
                                             final BaseCriteria criteria,
                                             final Runnable onSortChange) {
 

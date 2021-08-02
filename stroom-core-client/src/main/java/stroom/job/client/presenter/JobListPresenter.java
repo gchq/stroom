@@ -21,9 +21,9 @@ import stroom.cell.info.client.InfoHelpLinkColumn;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
+import stroom.data.grid.client.PagerView;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.job.shared.Job;
@@ -33,6 +33,7 @@ import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.ResultPage;
 import stroom.widget.util.client.MultiSelectionModel;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
@@ -46,18 +47,55 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
+public class JobListPresenter extends MyPresenterWidget<PagerView> {
 
     private static final JobResource JOB_RESOURCE = GWT.create(JobResource.class);
 
+    private final MultiSelectionModelImpl<Job> selectionModel;
+
     @Inject
     public JobListPresenter(final EventBus eventBus,
+                            final PagerView view,
                             final RestFactory restFactory,
                             final UiConfigCache clientPropertyCache) {
-        super(eventBus, new DataGridViewImpl<>(true));
+        super(eventBus, view);
+
+        final MyDataGrid<Job> dataGrid = new MyDataGrid<>();
+        selectionModel = dataGrid.addDefaultSelectionModel(true);
+        view.setDataWidget(dataGrid);
+
+        // Enabled.
+        final Column<Job, TickBoxState> enabledColumn = new Column<Job, TickBoxState>(
+                TickBoxCell.create(false, false)) {
+
+            @Override
+            public TickBoxState getValue(final Job row) {
+                if (row != null) {
+                    return TickBoxState.fromBoolean(row.isEnabled());
+                }
+                return null;
+            }
+        };
+        enabledColumn.setFieldUpdater((index, row, value) -> {
+            row.setEnabled(value.toBoolean());
+            final Rest<Job> rest = restFactory.create();
+            rest.call(JOB_RESOURCE).setEnabled(row.getId(), value.toBoolean());
+        });
+        dataGrid.addColumn(enabledColumn, "Enabled", 80);
+
+        // Job name.
+        dataGrid.addResizableColumn(new Column<Job, String>(new TextCell()) {
+            @Override
+            public String getValue(final Job row) {
+                if (row != null) {
+                    return row.getName();
+                }
+                return null;
+            }
+        }, "Job", 200);
 
         // Help
-        getView().addColumn(new InfoHelpLinkColumn<Job>() {
+        dataGrid.addColumn(new InfoHelpLinkColumn<Job>() {
             @Override
             public Preset getValue(final Job row) {
                 if (row != null) {
@@ -68,6 +106,7 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
 
             @Override
             protected void showHelp(final Job row) {
+
                 clientPropertyCache.get()
                         .onSuccess(result -> {
                             final String helpUrl = result.getHelpUrl();
@@ -92,37 +131,7 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
 
         }, "<br/>", 20);
 
-        // Enabled.
-        final Column<Job, TickBoxState> enabledColumn = new Column<Job, TickBoxState>(
-                TickBoxCell.create(false, false)) {
-
-            @Override
-            public TickBoxState getValue(final Job row) {
-                if (row != null) {
-                    return TickBoxState.fromBoolean(row.isEnabled());
-                }
-                return null;
-            }
-        };
-        enabledColumn.setFieldUpdater((index, row, value) -> {
-            row.setEnabled(value.toBoolean());
-            final Rest<Job> rest = restFactory.create();
-            rest.call(JOB_RESOURCE).setEnabled(row.getId(), value.toBoolean());
-        });
-        getView().addColumn(enabledColumn, "Enabled", 80);
-
-        // Job name.
-        getView().addColumn(new Column<Job, String>(new TextCell()) {
-            @Override
-            public String getValue(final Job row) {
-                if (row != null) {
-                    return row.getName();
-                }
-                return null;
-            }
-        }, "Job");
-
-        getView().addColumn(new Column<Job, String>(new TextCell()) {
+        dataGrid.addResizableColumn(new Column<Job, String>(new TextCell()) {
             @Override
             public String getValue(final Job row) {
                 if (row != null) {
@@ -132,7 +141,7 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
             }
         }, "Description", 800);
 
-        getView().addEndColumn(new EndColumn<>());
+        dataGrid.addEndColumn(new EndColumn<>());
 
         final RestDataProvider<Job, ResultPage<Job>> dataProvider = new RestDataProvider<Job, ResultPage<Job>>(
                 eventBus) {
@@ -165,10 +174,10 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
                 super.changeData(modifiedData);
             }
         };
-        dataProvider.addDataDisplay(getView().getDataDisplay());
+        dataProvider.addDataDisplay(dataGrid);
     }
 
     public MultiSelectionModel<Job> getSelectionModel() {
-        return getView().getSelectionModel();
+        return selectionModel;
     }
 }

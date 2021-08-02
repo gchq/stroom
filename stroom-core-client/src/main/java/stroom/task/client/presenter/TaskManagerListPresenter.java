@@ -26,10 +26,10 @@ import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
+import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -75,7 +75,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class TaskManagerListPresenter
-        extends MyPresenterWidget<DataGridView<TaskProgress>>
+        extends MyPresenterWidget<PagerView>
         implements HasDataSelectionHandlers<Set<String>>, Refreshable {
 
     private static final TaskResource TASK_RESOURCE = GWT.create(TaskResource.class);
@@ -91,6 +91,7 @@ public class TaskManagerListPresenter
     private final NameFilterTimer timer = new NameFilterTimer();
     private final Map<String, List<TaskProgress>> responseMap = new HashMap<>();
     private final RestDataProvider<TaskProgress, TaskProgressResponse> dataProvider;
+    private final MyDataGrid<TaskProgress> dataGrid;
 
     private final ButtonView expandAllButton;
     private final ButtonView collapseAllButton;
@@ -101,16 +102,20 @@ public class TaskManagerListPresenter
 
     @Inject
     public TaskManagerListPresenter(final EventBus eventBus,
+                                    final PagerView view,
                                     final TooltipPresenter tooltipPresenter,
                                     final RestFactory restFactory,
                                     final NodeManager nodeManager,
                                     final DateTimeFormatter dateTimeFormatter) {
-        super(eventBus, new DataGridViewImpl<>(false, 1000));
+        super(eventBus, view);
         this.tooltipPresenter = tooltipPresenter;
         this.restFactory = restFactory;
         this.nodeManager = nodeManager;
         this.criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, true, false);
         this.dateTimeFormatter = dateTimeFormatter;
+
+        dataGrid = new MyDataGrid<>(1000);
+        view.setDataWidget(dataGrid);
 
         final ButtonView terminateButton = getView().addButton(SvgPresets.DELETE.with("Terminate Task", true));
         terminateButton.addClickHandler(event -> endSelectedTask());
@@ -129,12 +134,12 @@ public class TaskManagerListPresenter
                 fetchNodes(dataConsumer, throwableConsumer);
             }
         };
-        dataProvider.addDataDisplay(getView().getDataDisplay());
+        dataProvider.addDataDisplay(dataGrid);
 
         // Handle use of the expander column.
-        dataProvider.setTreeRowHandler(new TreeRowHandler<TaskProgress>(treeAction, getView(), expanderColumn));
+        dataProvider.setTreeRowHandler(new TreeRowHandler<TaskProgress>(treeAction, dataGrid, expanderColumn));
 
-        getView().addColumnSortHandler(event -> {
+        dataGrid.addColumnSortHandler(event -> {
             if (event.getColumn() instanceof OrderByColumn<?, ?>) {
                 final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
                 criteria.setSort(orderByColumn.getField(), !event.isSortAscending(), orderByColumn.isIgnoreCase());
@@ -177,7 +182,7 @@ public class TaskManagerListPresenter
             }
         };
 
-        getView().addColumn(column, "", ColumnSizeConstants.CHECKBOX_COL);
+        dataGrid.addColumn(column, "", ColumnSizeConstants.CHECKBOX_COL);
 
         // Expander column.
         expanderColumn = new Column<TaskProgress, Expander>(new ExpanderCell()) {
@@ -186,7 +191,7 @@ public class TaskManagerListPresenter
                 return buildExpander(row);
             }
         };
-        getView().addColumn(expanderColumn, "");
+        dataGrid.addColumn(expanderColumn, "");
 
         expanderColumn.setFieldUpdater((index, row, value) -> {
             treeAction.setRowExpanded(row, !value.isExpanded());
@@ -209,7 +214,7 @@ public class TaskManagerListPresenter
                         popupPosition, null);
             }
         };
-        getView().addColumn(furtherInfoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
+        dataGrid.addColumn(furtherInfoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
 
         // Add Handlers
         column.setFieldUpdater((index, object, value) -> {
@@ -223,7 +228,7 @@ public class TaskManagerListPresenter
         });
 
         // Node.
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(getColouredCellFunc(taskProgress ->
                         taskProgress.getNodeName() != null
                                 ? taskProgress.getNodeName()
@@ -234,7 +239,7 @@ public class TaskManagerListPresenter
                 150);
 
         // Name.
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(getColouredCellFunc(TaskProgress::getTaskName))
                         .withSorting(FindTaskProgressCriteria.FIELD_NAME)
                         .build(),
@@ -242,7 +247,7 @@ public class TaskManagerListPresenter
                 150);
 
         // User.
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(getColouredCellFunc(TaskProgress::getUserName))
                         .withSorting(FindTaskProgressCriteria.FIELD_USER)
                         .build(),
@@ -250,7 +255,7 @@ public class TaskManagerListPresenter
                 80);
 
         // Submit Time.
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(getColouredCellFunc(taskProgress ->
                         dateTimeFormatter.format(taskProgress.getSubmitTimeMs())))
                         .withSorting(FindTaskProgressCriteria.FIELD_SUBMIT_TIME)
@@ -259,7 +264,7 @@ public class TaskManagerListPresenter
                 ColumnSizeConstants.DATE_COL);
 
         // Age.
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(getColouredCellFunc(taskProgress ->
                         ModelStringUtil.formatDurationString(taskProgress.getAgeMs())))
                         .withSorting(FindTaskProgressCriteria.FIELD_AGE)
@@ -268,14 +273,14 @@ public class TaskManagerListPresenter
                 ColumnSizeConstants.SMALL_COL);
 
         // Info
-        getView().addResizableColumn(
+        dataGrid.addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(getColouredCellFunc(TaskProgress::getTaskInfo))
                         .withSorting(FindTaskProgressCriteria.FIELD_INFO)
                         .build(),
                 FindTaskProgressCriteria.FIELD_INFO,
                 1000);
 
-        getView().addEndColumn(new EndColumn<>());
+        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private SafeHtml buildTooltipHtml(final TaskProgress row) {

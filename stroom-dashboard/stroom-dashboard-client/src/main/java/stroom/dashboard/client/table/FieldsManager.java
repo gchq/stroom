@@ -17,8 +17,8 @@
 package stroom.dashboard.client.table;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.data.grid.client.DataGridViewImpl.Heading;
-import stroom.data.grid.client.DataGridViewImpl.HeadingListener;
+import stroom.data.grid.client.Heading;
+import stroom.data.grid.client.HeadingListener;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Sort;
 import stroom.query.api.v2.Sort.SortDirection;

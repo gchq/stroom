@@ -18,9 +18,9 @@ package stroom.index.client.presenter;
 
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
+import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.shared.ExpressionCriteria;
@@ -30,6 +30,7 @@ import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.util.client.MultiSelectionModel;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
@@ -40,10 +41,12 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.function.Consumer;
 
-public class IndexVolumeStatusListPresenter extends MyPresenterWidget<DataGridView<IndexVolume>> {
+public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView> {
 
     private static final IndexVolumeResource INDEX_VOLUME_RESOURCE = GWT.create(IndexVolumeResource.class);
 
+    private final MyDataGrid<IndexVolume> dataGrid;
+    private final MultiSelectionModelImpl<IndexVolume> selectionModel;
     private final RestFactory restFactory;
     private final DateTimeFormatter dateTimeFormatter;
 
@@ -52,9 +55,15 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<DataGridVi
 
     @Inject
     public IndexVolumeStatusListPresenter(final EventBus eventBus,
+                                          final PagerView view,
                                           final RestFactory restFactory,
                                           final DateTimeFormatter dateTimeFormatter) {
-        super(eventBus, new DataGridViewImpl<>(true, true));
+        super(eventBus, view);
+
+        dataGrid = new MyDataGrid<>();
+        selectionModel = dataGrid.addDefaultSelectionModel(true);
+        view.setDataWidget(dataGrid);
+
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
 
@@ -75,7 +84,7 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<DataGridVi
                 return volume.getPath();
             }
         };
-        getView().addResizableColumn(volumeColumn, "Path", 300);
+        dataGrid.addResizableColumn(volumeColumn, "Path", 300);
 
         // Node.
         final Column<IndexVolume, String> nodeColumn = new Column<IndexVolume, String>(new TextCell()) {
@@ -84,7 +93,7 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<DataGridVi
                 return volume.getNodeName();
             }
         };
-        getView().addResizableColumn(nodeColumn, "Node", 90);
+        dataGrid.addResizableColumn(nodeColumn, "Node", 90);
 
         // State.
         final Column<IndexVolume, String> streamStatusColumn = new Column<IndexVolume, String>(new TextCell()) {
@@ -93,7 +102,7 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<DataGridVi
                 return volume.getState().getDisplayValue();
             }
         };
-        getView().addResizableColumn(streamStatusColumn, "State", 90);
+        dataGrid.addResizableColumn(streamStatusColumn, "State", 90);
 
         // Total.
         final Column<IndexVolume, String> totalColumn = new Column<IndexVolume, String>(new TextCell()) {
@@ -102,7 +111,7 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<DataGridVi
                 return getSizeString(volume.getBytesTotal());
             }
         };
-        getView().addResizableColumn(totalColumn, "Total", ColumnSizeConstants.SMALL_COL);
+        dataGrid.addResizableColumn(totalColumn, "Total", ColumnSizeConstants.SMALL_COL);
 
         // Limit.
         final Column<IndexVolume, String> limitColumn = new Column<IndexVolume, String>(new TextCell()) {
@@ -114,7 +123,7 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<DataGridVi
                 return getSizeString(volume.getBytesLimit());
             }
         };
-        getView().addResizableColumn(limitColumn, "Limit", ColumnSizeConstants.SMALL_COL);
+        dataGrid.addResizableColumn(limitColumn, "Limit", ColumnSizeConstants.SMALL_COL);
 
         // Used.
         final Column<IndexVolume, String> usedColumn = new Column<IndexVolume, String>(new TextCell()) {
@@ -123,7 +132,7 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<DataGridVi
                 return getSizeString(volume.getBytesUsed());
             }
         };
-        getView().addResizableColumn(usedColumn, "Used", ColumnSizeConstants.SMALL_COL);
+        dataGrid.addResizableColumn(usedColumn, "Used", ColumnSizeConstants.SMALL_COL);
 
         // Free.
         final Column<IndexVolume, String> freeColumn = new Column<IndexVolume, String>(new TextCell()) {
@@ -132,7 +141,7 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<DataGridVi
                 return getSizeString(volume.getBytesFree());
             }
         };
-        getView().addResizableColumn(freeColumn, "Free", ColumnSizeConstants.SMALL_COL);
+        dataGrid.addResizableColumn(freeColumn, "Free", ColumnSizeConstants.SMALL_COL);
 
         // Use%.
         final Column<IndexVolume, String> usePercentColumn = new Column<IndexVolume, String>(new TextCell()) {
@@ -141,7 +150,7 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<DataGridVi
                 return getPercentString(volume.getPercentUsed());
             }
         };
-        getView().addResizableColumn(usePercentColumn, "Use%", ColumnSizeConstants.SMALL_COL);
+        dataGrid.addResizableColumn(usePercentColumn, "Use%", ColumnSizeConstants.SMALL_COL);
 
         // Usage Date.
         final Column<IndexVolume, String> usageDateColumn = new Column<IndexVolume, String>(new TextCell()) {
@@ -150,9 +159,9 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<DataGridVi
                 return dateTimeFormatter.format(volume.getUpdateTimeMs());
             }
         };
-        getView().addResizableColumn(usageDateColumn, "Usage Date", ColumnSizeConstants.DATE_COL);
+        dataGrid.addResizableColumn(usageDateColumn, "Usage Date", ColumnSizeConstants.DATE_COL);
 
-        getView().addEndColumn(new EndColumn<>());
+        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private String getSizeString(final Long size) {
@@ -172,7 +181,7 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<DataGridVi
     }
 
     public MultiSelectionModel<IndexVolume> getSelectionModel() {
-        return getView().getSelectionModel();
+        return selectionModel;
     }
 
     public void refresh() {
@@ -200,6 +209,6 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<DataGridVi
                         .find(criteria);
             }
         };
-        dataProvider.addDataDisplay(getView().getDataDisplay());
+        dataProvider.addDataDisplay(dataGrid);
     }
 }

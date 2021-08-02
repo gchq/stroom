@@ -22,9 +22,8 @@ import stroom.cell.info.client.InfoColumn;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.grid.client.DataGridView;
-import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.MyDataGrid;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
@@ -76,7 +75,7 @@ public class ImportConfigConfirmPresenter extends
     private final PopupUiHandlers popupUiHandlers;
     private final TooltipPresenter tooltipPresenter;
     private final ImportConfigConfirmView view;
-    private final DataGridView<ImportState> dataGridView;
+    private final MyDataGrid<ImportState> dataGrid;
     private final RestFactory restFactory;
     private ResourceKey resourceKey;
     private List<ImportState> confirmList;
@@ -145,10 +144,9 @@ public class ImportConfigConfirmPresenter extends
 
         this.view = view;
 
-        this.dataGridView = new DataGridViewImpl<>(false,
-                DataGridViewImpl.MASSIVE_LIST_PAGE_SIZE);
+        dataGrid = new MyDataGrid<>(MyDataGrid.MASSIVE_LIST_PAGE_SIZE);
 
-        view.setDataGridView(this.dataGridView);
+        view.setDataGrid(dataGrid);
         view.setEnableFilters(true);
 
         addColumns();
@@ -161,10 +159,10 @@ public class ImportConfigConfirmPresenter extends
         confirmList = event.getConfirmList();
 
         if (confirmList == null) {
-            dataGridView.setRowCount(0);
+            dataGrid.setRowCount(0);
         } else {
-            dataGridView.setRowData(0, confirmList);
-            dataGridView.setRowCount(confirmList.size());
+            dataGrid.setRowData(0, confirmList);
+            dataGrid.setRowCount(confirmList.size());
         }
         forceReveal();
     }
@@ -188,7 +186,7 @@ public class ImportConfigConfirmPresenter extends
         addTypeColumn();
         addSourcePathColumn();
         addDestPathColumn();
-        dataGridView.addEndColumn(new EndColumn<>());
+        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void addSelectedColumn() {
@@ -213,7 +211,7 @@ public class ImportConfigConfirmPresenter extends
                 return getHeaderState();
             }
         };
-        dataGridView.addColumn(column, header, ColumnSizeConstants.CHECKBOX_COL);
+        dataGrid.addColumn(column, header, ColumnSizeConstants.CHECKBOX_COL);
 
         // Add Handlers
         column.setFieldUpdater((index, row, value) -> row.setAction(value.toBoolean()));
@@ -230,8 +228,8 @@ public class ImportConfigConfirmPresenter extends
                     }
                 }
                 // Refresh list
-                dataGridView.setRowData(0, confirmList);
-                dataGridView.setRowCount(confirmList.size());
+                dataGrid.setRowData(0, confirmList);
+                dataGrid.setRowCount(confirmList.size());
             }
         });
     }
@@ -320,7 +318,7 @@ public class ImportConfigConfirmPresenter extends
                         null);
             }
         };
-        dataGridView.addColumn(infoColumn, "<br/>", 18);
+        dataGrid.addColumn(infoColumn, "<br/>", 18);
     }
 
     private void addActionColumn() {
@@ -334,7 +332,7 @@ public class ImportConfigConfirmPresenter extends
                 return "Error";
             }
         };
-        dataGridView.addResizableColumn(column, "Action", 50);
+        dataGrid.addResizableColumn(column, "Action", 50);
     }
 
     private void addTypeColumn() {
@@ -345,7 +343,7 @@ public class ImportConfigConfirmPresenter extends
                 return action.getDocRef().getType();
             }
         };
-        dataGridView.addResizableColumn(column, "Type", 100);
+        dataGrid.addResizableColumn(column, "Type", 100);
     }
 
     private void addSourcePathColumn() {
@@ -356,7 +354,7 @@ public class ImportConfigConfirmPresenter extends
                 return action.getSourcePath();
             }
         };
-        dataGridView.addResizableColumn(column, "Source Path", 300);
+        dataGrid.addResizableColumn(column, "Source Path", 300);
     }
 
     private void addDestPathColumn() {
@@ -367,7 +365,7 @@ public class ImportConfigConfirmPresenter extends
                 return action.getDestPath();
             }
         };
-        dataGridView.addResizableColumn(column, "Destination Path", 300);
+        dataGrid.addResizableColumn(column, "Destination Path", 300);
     }
 
     public void abortImport() {
@@ -429,7 +427,7 @@ public class ImportConfigConfirmPresenter extends
 
     public interface ImportConfigConfirmView extends View {
 
-        void setDataGridView(View view);
+        void setDataGrid(Widget widget);
 
         Long getEnableFromDate();
 

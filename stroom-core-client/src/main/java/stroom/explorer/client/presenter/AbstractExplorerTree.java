@@ -36,6 +36,7 @@ import stroom.widget.util.client.Selection;
 import stroom.widget.util.client.SelectionType;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
@@ -257,7 +258,7 @@ public abstract class AbstractExplorerTree extends Composite {
         }
 
         final PopupPosition popupPosition;
-        if ("mousedown".equals(e.getNativeEvent().getType())) {
+        if (BrowserEvents.MOUSEDOWN.equals(e.getNativeEvent().getType())) {
             popupPosition = new PopupPosition(nativeEvent.getClientX(), nativeEvent.getClientY());
         } else {
             final Element element = cellTable.getRowElement(row);
