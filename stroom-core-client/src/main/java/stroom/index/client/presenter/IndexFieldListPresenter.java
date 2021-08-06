@@ -33,7 +33,6 @@ import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -263,25 +262,22 @@ public class IndexFieldListPresenter extends MyPresenterWidget<PagerView>
         final Set<String> otherNames = getFieldNames();
 
         indexFieldEditPresenter.read(IndexField.builder().build(), otherNames);
-        indexFieldEditPresenter.show("New Field", new DefaultPopupUiHandlers(indexFieldEditPresenter) {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    try {
-                        final IndexField indexField = indexFieldEditPresenter.write();
-                        indexFields.add(indexField);
-                        selectionModel.setSelected(indexField);
-                        refresh();
+        indexFieldEditPresenter.show("New Field", event -> {
+            if (event.isOk()) {
+                try {
+                    final IndexField indexField = indexFieldEditPresenter.write();
+                    indexFields.add(indexField);
+                    selectionModel.setSelected(indexField);
+                    refresh();
 
-                        hide(autoClose, ok);
-                        DirtyEvent.fire(IndexFieldListPresenter.this, true);
+                    event.hide();
+                    DirtyEvent.fire(IndexFieldListPresenter.this, true);
 
-                    } catch (final RuntimeException e) {
-                        AlertEvent.fireError(IndexFieldListPresenter.this, e.getMessage(), null);
-                    }
-                } else {
-                    hide(autoClose, ok);
+                } catch (final RuntimeException e) {
+                    AlertEvent.fireError(IndexFieldListPresenter.this, e.getMessage(), null);
                 }
+            } else {
+                event.hide();
             }
         });
     }
@@ -293,32 +289,29 @@ public class IndexFieldListPresenter extends MyPresenterWidget<PagerView>
             otherNames.remove(existingField.getFieldName());
 
             indexFieldEditPresenter.read(existingField, otherNames);
-            indexFieldEditPresenter.show("Edit Field", new DefaultPopupUiHandlers(indexFieldEditPresenter) {
-                @Override
-                public void onHideRequest(final boolean autoClose, final boolean ok) {
-                    if (ok) {
-                        try {
-                            final IndexField indexField = indexFieldEditPresenter.write();
-                            if (!indexField.equals(existingField)) {
-                                final List<IndexField> fieldList = indexFields;
-                                final int index = fieldList.indexOf(existingField);
-                                fieldList.remove(index);
-                                fieldList.add(index, indexField);
-                                selectionModel.setSelected(indexField);
-                                refresh();
+            indexFieldEditPresenter.show("Edit Field", event -> {
+                if (event.isOk()) {
+                    try {
+                        final IndexField indexField = indexFieldEditPresenter.write();
+                        if (!indexField.equals(existingField)) {
+                            final List<IndexField> fieldList = indexFields;
+                            final int index = fieldList.indexOf(existingField);
+                            fieldList.remove(index);
+                            fieldList.add(index, indexField);
+                            selectionModel.setSelected(indexField);
+                            refresh();
 
-                                hide(autoClose, ok);
-                                DirtyEvent.fire(IndexFieldListPresenter.this, true);
-                            } else {
-                                hide(autoClose, ok);
-                            }
-
-                        } catch (final RuntimeException e) {
-                            AlertEvent.fireError(IndexFieldListPresenter.this, e.getMessage(), null);
+                            event.hide();
+                            DirtyEvent.fire(IndexFieldListPresenter.this, true);
+                        } else {
+                            event.hide();
                         }
-                    } else {
-                        hide(autoClose, ok);
+
+                    } catch (final RuntimeException e) {
+                        AlertEvent.fireError(IndexFieldListPresenter.this, e.getMessage(), null);
                     }
+                } else {
+                    event.hide();
                 }
             });
         }

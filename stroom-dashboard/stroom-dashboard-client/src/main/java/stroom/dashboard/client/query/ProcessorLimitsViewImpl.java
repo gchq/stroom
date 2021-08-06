@@ -52,6 +52,11 @@ public class ProcessorLimitsViewImpl extends ViewImpl implements ProcessorLimits
     }
 
     @Override
+    public void focus() {
+        recordLimit.focus();
+    }
+
+    @Override
     public Long getRecordLimit() {
         return Long.valueOf(recordLimit.getValue());
     }

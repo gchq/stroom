@@ -17,9 +17,8 @@ import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
@@ -144,18 +143,13 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
         setData(data);
 
         final PopupSize popupSize = PopupSize.resizable(800, 600);
-        ShowPopupEvent.fire(
-                this,
-                this,
-                PopupType.CLOSE_DIALOG,
-                popupSize,
-                "Linked Events",
-                new DefaultPopupUiHandlers(this) {
-                    @Override
-                    public void onHide(final boolean autoClose, final boolean ok) {
-                        consumer.accept(dirty);
-                    }
-                });
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.CLOSE_DIALOG)
+                .popupSize(popupSize)
+                .caption("Linked Events")
+                .onShow(e -> dataGrid.setFocus(true))
+                .onHide(e -> consumer.accept(dirty))
+                .fire();
     }
 
     private void setData(final List<EventId> data) {

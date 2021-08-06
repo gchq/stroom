@@ -22,22 +22,19 @@ import stroom.item.client.StringListBox;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.widget.customdatebox.client.MyDateBox;
 
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FileUpload;
 import com.google.gwt.user.client.ui.FormPanel;
-import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-public class StreamUploadViewImpl extends ViewImpl implements DataUploadView {
+public class DataUploadViewImpl extends ViewImpl implements DataUploadView {
 
     private final Widget widget;
-    @UiField
-    Grid grid;
+
     @UiField(provided = true)
     StringListBox type;
     @UiField
@@ -50,9 +47,9 @@ public class StreamUploadViewImpl extends ViewImpl implements DataUploadView {
     TextArea metaData;
 
     @Inject
-    public StreamUploadViewImpl(final Binder binder,
-                                final DataTypeUiManager streamTypeUiManager,
-                                final UserPreferencesManager userPreferencesManager) {
+    public DataUploadViewImpl(final Binder binder,
+                              final DataTypeUiManager streamTypeUiManager,
+                              final UserPreferencesManager userPreferencesManager) {
         effective = new MyDateBox(userPreferencesManager.isUtc());
         type = new StringListBox();
 
@@ -60,13 +57,16 @@ public class StreamUploadViewImpl extends ViewImpl implements DataUploadView {
             type.addItem(st);
         }
         widget = binder.createAndBindUi(this);
-
-        grid.getRowFormatter().getElement(0).getStyle().setHeight(100, Unit.PCT);
     }
 
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    @Override
+    public void focus() {
+        metaData.setFocus(true);
     }
 
     @Override
@@ -94,7 +94,7 @@ public class StreamUploadViewImpl extends ViewImpl implements DataUploadView {
         return metaData.getText();
     }
 
-    public interface Binder extends UiBinder<Widget, StreamUploadViewImpl> {
+    public interface Binder extends UiBinder<Widget, DataUploadViewImpl> {
 
     }
 }

@@ -38,10 +38,9 @@ import stroom.pipeline.shared.data.PipelineReference;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -294,52 +293,51 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
             final NewPipelineReferencePresenter editor = newPipelineReferencePresenter.get();
             editor.read(pipelineReference);
 
-            final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(editor) {
-                @Override
-                public void onHideRequest(final boolean autoClose, final boolean ok) {
-                    if (ok) {
-                        editor.write(pipelineReference);
+            final HidePopupRequestEvent.Handler handler = e -> {
+                if (e.isOk()) {
+                    editor.write(pipelineReference);
 
-                        if (pipelineReference.getPipeline() == null) {
-                            AlertEvent.fireError(PipelineReferenceListPresenter.this,
-                                    "You must specify a pipeline to use.", null);
-                        } else if (pipelineReference.getFeed() == null) {
-                            AlertEvent.fireError(PipelineReferenceListPresenter.this, "You must specify a feed to use.",
-                                    null);
-                        } else if (pipelineReference.getStreamType() == null) {
-                            AlertEvent.fireError(PipelineReferenceListPresenter.this,
-                                    "You must specify a stream type to use.", null);
-                        } else {
-                            if (!added.contains(pipelineReference)) {
-                                added.add(pipelineReference);
-                            }
-
-                            setDirty(isNew || editor.isDirty());
-                            refresh();
-                            hide();
-                        }
+                    if (pipelineReference.getPipeline() == null) {
+                        AlertEvent.fireError(PipelineReferenceListPresenter.this,
+                                "You must specify a pipeline to use.", null);
+                    } else if (pipelineReference.getFeed() == null) {
+                        AlertEvent.fireError(PipelineReferenceListPresenter.this, "You must specify a feed to use.",
+                                null);
+                    } else if (pipelineReference.getStreamType() == null) {
+                        AlertEvent.fireError(PipelineReferenceListPresenter.this,
+                                "You must specify a stream type to use.", null);
                     } else {
-                        // User has cancelled edit so add the reference back to
-                        // the list if this was an existing reference
-                        if (!isNew) {
-                            if (!added.contains(pipelineReference)) {
-                                added.add(pipelineReference);
-                            }
+                        if (!added.contains(pipelineReference)) {
+                            added.add(pipelineReference);
                         }
 
-                        hide();
+                        setDirty(isNew || editor.isDirty());
+                        refresh();
+                        e.hide();
                     }
+                } else {
+                    // User has cancelled edit so add the reference back to
+                    // the list if this was an existing reference
+                    if (!isNew) {
+                        if (!added.contains(pipelineReference)) {
+                            added.add(pipelineReference);
+                        }
+                    }
+
+                    e.hide();
                 }
             };
 
             final PopupSize popupSize = PopupSize.resizableX();
-            if (isNew) {
-                ShowPopupEvent.fire(this, editor, PopupType.OK_CANCEL_DIALOG, popupSize, "New Pipeline Reference",
-                        popupUiHandlers);
-            } else {
-                ShowPopupEvent.fire(this, editor, PopupType.OK_CANCEL_DIALOG, popupSize, "Edit Pipeline Reference",
-                        popupUiHandlers);
-            }
+            ShowPopupEvent.builder(editor)
+                    .popupType(PopupType.OK_CANCEL_DIALOG)
+                    .popupSize(popupSize)
+                    .caption(isNew
+                            ? "New Pipeline Reference"
+                            : "Edit Pipeline Reference")
+                    .onShow(e -> editor.focus())
+                    .onHideRequest(handler)
+                    .fire();
         }
     }
 

@@ -32,16 +32,15 @@ import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -54,8 +53,9 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import javax.inject.Inject;
 
-public class ManageActivityPresenter extends
-        MyPresenterWidget<ManageActivityView> implements ManageActivityUiHandlers, HasHandlers {
+public class ManageActivityPresenter
+        extends MyPresenterWidget<ManageActivityView>
+        implements ManageActivityUiHandlers, HasHandlers {
 
     private static final ActivityResource ACTIVITY_RESOURCE = GWT.create(ActivityResource.class);
     public static final String LIST = "LIST";
@@ -200,30 +200,27 @@ public class ManageActivityPresenter extends
             listPresenter.refresh();
         }
 
-        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(this) {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                hide();
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                final Activity activity = getSelected();
-                currentActivity.setActivity(activity);
-                consumer.accept(getSelected());
-            }
-        };
         uiConfigCache.get().onSuccess(uiConfig -> {
             final String title = uiConfig.getActivity().getManagerTitle();
             final PopupSize popupSize = PopupSize.resizable(1000, 600);
-            ShowPopupEvent.fire(ManageActivityPresenter.this, ManageActivityPresenter.this,
-                    PopupType.CLOSE_DIALOG, null, popupSize, title, popupUiHandlers, null);
+            ShowPopupEvent.builder(this)
+                    .popupType(PopupType.CLOSE_DIALOG)
+                    .popupSize(popupSize)
+                    .caption(title)
+                    .onShow(e -> getView().focus())
+                    .onHide(e -> {
+                        final Activity selected = getSelected();
+                        currentActivity.setActivity(selected);
+                        consumer.accept(getSelected());
+                    })
+                    .fire();
+
             enableButtons();
         });
     }
 
     public void hide() {
-        HidePopupEvent.fire(ManageActivityPresenter.this, ManageActivityPresenter.this);
+        HidePopupEvent.builder(this).fire();
     }
 
     private void enableButtons() {
@@ -235,9 +232,9 @@ public class ManageActivityPresenter extends
         openButton.setEnabled(enabled);
         deleteButton.setEnabled(enabled);
         if (enabled) {
-            EnablePopupEvent.fire(this, this);
+            EnablePopupEvent.builder(this).fire();
         } else {
-            DisablePopupEvent.fire(this, this);
+            DisablePopupEvent.builder(this).fire();
         }
     }
 
@@ -318,7 +315,7 @@ public class ManageActivityPresenter extends
         return quickFilterTooltipSupplier.get();
     }
 
-    interface ManageActivityView extends View, HasUiHandlers<ManageActivityUiHandlers> {
+    interface ManageActivityView extends View, Focus, HasUiHandlers<ManageActivityUiHandlers> {
 
         void setTooltipContentSupplier(final Supplier<SafeHtml> tooltipSupplier);
     }

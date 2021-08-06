@@ -69,6 +69,10 @@ public class ConfigPropertyClusterValuesListPresenter
         return demoMap;
     }
 
+    public void focus() {
+        dataGrid.setFocus(true);
+    }
+
     public void setData(final Map<String, Set<NodeSource>> effectiveValueToNodesMap) {
 
         // For DEV testing only, when you don't have two nodes

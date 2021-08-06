@@ -19,6 +19,9 @@ public class ConfigPropertyClusterValuesViewImpl
     @UiField
     SimplePanel dataGrid;
 
+
+    private Widget list;
+
     @Inject
     ConfigPropertyClusterValuesViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -31,6 +34,7 @@ public class ConfigPropertyClusterValuesViewImpl
 
     @Override
     public void setList(final Widget widget) {
+        this.list = widget;
         dataGrid.setWidget(widget);
     }
 

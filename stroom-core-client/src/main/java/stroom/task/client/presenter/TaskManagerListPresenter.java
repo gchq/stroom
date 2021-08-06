@@ -50,9 +50,6 @@ import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
@@ -206,12 +203,7 @@ public class TaskManagerListPresenter
             @Override
             protected void showInfo(final TaskProgress row, final int x, final int y) {
                 final SafeHtml tooltipHtml = buildTooltipHtml(row);
-
-                tooltipPresenter.setHTML(tooltipHtml);
-
-                final PopupPosition popupPosition = new PopupPosition(x, y);
-                ShowPopupEvent.fire(TaskManagerListPresenter.this, tooltipPresenter, PopupType.POPUP,
-                        popupPosition, null);
+                tooltipPresenter.show(tooltipHtml, x, y);
             }
         };
         dataGrid.addColumn(furtherInfoColumn, "<br/>", ColumnSizeConstants.ICON_COL);

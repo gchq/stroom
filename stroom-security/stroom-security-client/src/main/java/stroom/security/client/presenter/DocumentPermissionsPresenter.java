@@ -31,10 +31,9 @@ import stroom.security.shared.DocPermissionResource;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.FetchAllDocumentPermissionsRequest;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView;
+import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.presenter.Size;
 import stroom.widget.tab.client.presenter.LinkTabsPresenter;
 import stroom.widget.tab.client.presenter.TabData;
@@ -160,23 +159,6 @@ public class DocumentPermissionsPresenter
                                 true,
                                 changes);
 
-                        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(this) {
-                            @Override
-                            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                                if (ok) {
-                                    final Rest<Boolean> rest = restFactory.create();
-                                    rest
-                                            .onSuccess(result -> hide(autoClose, ok))
-                                            .call(DOC_PERMISSION_RESOURCE)
-                                            .changeDocumentPermissions(new ChangeDocumentPermissionsRequest(
-                                                    docRef,
-                                                    changes,
-                                                    getView().getCascade().getSelectedItem()));
-                                } else {
-                                    hide(autoClose, ok);
-                                }
-                            }
-                        };
                         PopupSize popupSize;
                         if (DocumentTypes.isFolder(explorerNode.getType())) {
                             popupSize = PopupSize.builder()
@@ -210,17 +192,32 @@ public class DocumentPermissionsPresenter
                                     .build();
                         }
 
-                        ShowPopupEvent.fire(
-                                DocumentPermissionsPresenter.this,
-                                DocumentPermissionsPresenter.this,
-                                PopupView.PopupType.OK_CANCEL_DIALOG,
-                                popupSize,
-                                "Set " + explorerNode.getType() + " Permissions",
-                                popupUiHandlers);
+                        ShowPopupEvent.builder(this)
+                                .popupType(PopupType.OK_CANCEL_DIALOG)
+                                .popupSize(popupSize)
+                                .caption("Set " + explorerNode.getType() + " Permissions")
+                                .onShow(e -> groupsPresenter.focus())
+                                .onHideRequest(e -> onHideRequest(e, docRef))
+                                .fire();
                     })
                     .call(DOC_PERMISSION_RESOURCE)
                     .fetchAllDocumentPermissions(new FetchAllDocumentPermissionsRequest(explorerNode.getDocRef()));
         });
+    }
+
+    private void onHideRequest(final HidePopupRequestEvent e, final DocRef docRef) {
+        if (e.isOk()) {
+            final Rest<Boolean> rest = restFactory.create();
+            rest
+                    .onSuccess(result -> e.hide())
+                    .call(DOC_PERMISSION_RESOURCE)
+                    .changeDocumentPermissions(new ChangeDocumentPermissionsRequest(
+                            docRef,
+                            changes,
+                            getView().getCascade().getSelectedItem()));
+        } else {
+            e.hide();
+        }
     }
 
     private DocumentPermissionsTabPresenter getTabPresenter(final ExplorerNode entity) {

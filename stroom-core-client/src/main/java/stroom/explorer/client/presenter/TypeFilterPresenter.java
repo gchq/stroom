@@ -26,12 +26,12 @@ import stroom.explorer.client.presenter.TypeFilterPresenter.TypeFilterView;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.DocumentTypeGroup;
 import stroom.explorer.shared.DocumentTypes;
+import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.HorizontalLocation;
 import stroom.widget.popup.client.presenter.PopupPosition.VerticalLocation;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.CheckListSelectionEventManager;
 import stroom.widget.util.client.MySingleSelectionModel;
 
@@ -59,7 +59,6 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
         DocumentTypeSelectionModel {
 
     private final Set<String> selected = new HashSet<>();
-    private final DefaultPopupUiHandlers popupUiHandlers;
     private List<DocumentType> visibleTypes;
 
     private static final String SELECT_ALL_OR_NONE_TEXT = "All/none";
@@ -74,14 +73,6 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
     @Inject
     public TypeFilterPresenter(final EventBus eventBus, final TypeFilterView view) {
         super(eventBus, view);
-
-        popupUiHandlers = new DefaultPopupUiHandlers(this) {
-            @Override
-            public void onShow() {
-                super.onShow();
-                selectFirstItem();
-            }
-        };
 
         cellTable = new MyCellTable<>(MyDataGrid.DEFAULT_LIST_PAGE_SIZE);
         cellTable.getElement().setClassName("menuCellTable");
@@ -116,12 +107,17 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
                 HorizontalLocation.RIGHT,
                 VerticalLocation.BELOW);
 
-        ShowPopupEvent.fire(this, this, PopupType.POPUP,
-                popupPosition, popupUiHandlers, element);
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.POPUP)
+                .popupPosition(popupPosition)
+                .addAutoHidePartner(element)
+                .onShow(e -> selectFirstItem())
+                .fire();
     }
 
     private void hideSelf() {
-        popupUiHandlers.hide();
+        HidePopupEvent.builder(this)
+                .fire();
     }
 
     public void execute(final DocumentType documentType) {

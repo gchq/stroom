@@ -16,16 +16,17 @@
 
 package stroom.widget.popup.client.presenter;
 
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
+import stroom.widget.popup.client.event.ShowPopupEvent;
 
 public interface PopupSupport {
 
-    void show(final PopupType popupType, final PopupPosition popupPosition, final PopupSize popupSize,
-              final PopupUiHandlers hidePopupUiHandlers);
+    void show(ShowPopupEvent event);
 
-    void hide();
+    void hideRequest(HidePopupRequestEvent event);
 
-    void hide(boolean autoClose, boolean ok);
+    void hide(HidePopupEvent event);
 
     void setEnabled(boolean enabled);
 

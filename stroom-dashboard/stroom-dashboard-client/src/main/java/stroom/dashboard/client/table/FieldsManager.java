@@ -254,7 +254,7 @@ public class FieldsManager implements HeadingListener {
     }
 
     public void showFormat(final Field field) {
-        formatPresenter.show(tablePresenter, field, (oldField, newField) -> {
+        formatPresenter.show(field, (oldField, newField) -> {
             replaceField(oldField, newField);
             tablePresenter.setDirty(true);
             tablePresenter.clear();

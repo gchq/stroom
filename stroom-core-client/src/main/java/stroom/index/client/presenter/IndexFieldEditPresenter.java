@@ -20,12 +20,12 @@ import stroom.index.client.presenter.IndexFieldEditPresenter.IndexFieldEditView;
 import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldType;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -77,12 +77,18 @@ public class IndexFieldEditPresenter extends MyPresenterWidget<IndexFieldEditVie
                 .build();
     }
 
-    public void show(final String caption, final PopupUiHandlers uiHandlers) {
+    public void show(final String caption, final HidePopupRequestEvent.Handler handler) {
         final PopupSize popupSize = PopupSize.resizableX();
-        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, caption, uiHandlers);
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption(caption)
+                .onShow(e -> getView().focus())
+                .onHideRequest(handler)
+                .fire();
     }
 
-    public interface IndexFieldEditView extends View {
+    public interface IndexFieldEditView extends View, Focus {
 
         IndexFieldType getFieldUse();
 

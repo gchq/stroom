@@ -34,12 +34,12 @@ import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.menu.client.presenter.SimpleMenuItem;
 import stroom.widget.menu.client.presenter.SimpleParentMenuItem;
+import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
@@ -69,8 +69,9 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.ExpressionView>
-        implements ExpressionUiHandlers {
+public class ExpressionPresenter
+        extends MyPresenterWidget<ExpressionPresenter.ExpressionView>
+        implements ExpressionUiHandlers, ShowPopupEvent.Handler, HidePopupRequestEvent.Handler, HidePopupEvent.Handler {
 
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
     private static final int DEFAULT_COMPLETION_SCORE = 300; // Not sure what the range of scores is
@@ -80,7 +81,6 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     private final EditorPresenter editorPresenter;
     private final List<AceCompletion> functionCompletions = new ArrayList<>();
     private final UiConfigCache clientPropertyCache;
-    private final PopupUiHandlers popupUiHandlers;
     private AceCompletionProvider functionsCompletionProvider;
     private List<Item> functionsMenuItems;
     private List<Item> fieldsMenuItems;
@@ -111,59 +111,6 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         addFunctionButton.addClickHandler(this::onAddFunction);
         addFieldButton.addClickHandler(this::onAddField);
         helpButton.addClickHandler(this::onShowHelp);
-
-        popupUiHandlers = new DefaultPopupUiHandlers(tablePresenter) {
-            @Override
-            public void onShow() {
-                super.onShow();
-
-                Scheduler.get().scheduleDeferred(editorPresenter::focus);
-
-                // If this is done without the scheduler then we get weired behaviour when you click
-                // in the text area if line wrap is set to on.  If it is initially set to off and the user
-                // manually sets it to on all is fine. Confused.
-                Scheduler.get().scheduleDeferred(() -> setupEditor());
-            }
-
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    final String expression = editorPresenter.getText();
-                    if (EqualsUtil.isEquals(expression, field.getExpression())) {
-                        hide(autoClose, ok);
-                    } else {
-                        if (expression == null) {
-                            fieldChangeConsumer.accept(field, field.copy().expression(null).build());
-                            hide(autoClose, ok);
-                        } else {
-                            // Check the validity of the expression.
-                            final Rest<ValidateExpressionResult> rest = restFactory.create();
-                            rest
-                                    .onSuccess(result -> {
-                                        if (result.isOk()) {
-                                            fieldChangeConsumer.accept(field, field
-                                                    .copy()
-                                                    .expression(expression)
-                                                    .build());
-                                            hide(autoClose, ok);
-                                        } else {
-                                            AlertEvent.fireError(tablePresenter, result.getString(), null);
-                                        }
-                                    })
-                                    .call(DASHBOARD_RESOURCE)
-                                    .validateExpression(expression);
-                        }
-                    }
-                } else {
-                    hide(autoClose, ok);
-                }
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                editorPresenter.deRegisterCompletionProviders();
-            }
-        };
     }
 
     private void buildMenusAndCompletions() {
@@ -290,15 +237,64 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         }
 
         final PopupSize popupSize = PopupSize.resizable(700, 300);
-        ShowPopupEvent.fire(
-                tablePresenter,
-                this,
-                PopupType.OK_CANCEL_DIALOG,
-                popupSize,
-                "Set Expression For '" + field.getName() + "'",
-                popupUiHandlers);
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Set Expression For '" + field.getName() + "'")
+                .onShow(this)
+                .onHideRequest(this)
+                .onHide(this)
+                .fire();
     }
 
+    @Override
+    public void onShow(final ShowPopupEvent e) {
+        editorPresenter.focus();
+
+        // If this is done without the scheduler then we get weird behaviour when you click
+        // in the text area if line wrap is set to on.  If it is initially set to off and the user
+        // manually sets it to on all is fine. Confused.
+        Scheduler.get().scheduleDeferred(this::setupEditor);
+    }
+
+    @Override
+    public void onHideRequest(final HidePopupRequestEvent e) {
+        if (e.isOk()) {
+            final String expression = editorPresenter.getText();
+            if (EqualsUtil.isEquals(expression, field.getExpression())) {
+                e.hide();
+            } else {
+                if (expression == null) {
+                    fieldChangeConsumer.accept(field, field.copy().expression(null).build());
+                    e.hide();
+                } else {
+                    // Check the validity of the expression.
+                    final Rest<ValidateExpressionResult> rest = restFactory.create();
+                    rest
+                            .onSuccess(result -> {
+                                if (result.isOk()) {
+                                    fieldChangeConsumer.accept(field, field
+                                            .copy()
+                                            .expression(expression)
+                                            .build());
+                                    e.hide();
+                                } else {
+                                    AlertEvent.fireError(tablePresenter, result.getString(), null);
+                                }
+                            })
+                            .call(DASHBOARD_RESOURCE)
+                            .validateExpression(expression);
+                }
+            }
+        } else {
+            e.hide();
+        }
+    }
+
+    @Override
+    public void onHide(final HidePopupEvent e) {
+        editorPresenter.deRegisterCompletionProviders();
+    }
 
     @Override
     public void onAddFunction(final ClickEvent event) {

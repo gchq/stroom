@@ -41,8 +41,6 @@ import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.cell.client.TextCell;
@@ -296,23 +294,15 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerView> {
                 jobNodeInfo.getScheduleReferenceTime(),
                 jobNodeInfo.getLastExecutedTime(),
                 jobNode.getSchedule());
-
-        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(schedulePresenter) {
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    final String schedule = schedulePresenter.getScheduleString();
-                    jobNode.setSchedule(schedule);
-                    final Rest<JobNode> rest = restFactory.create();
-                    rest
-                            .onSuccess(result ->
-                                    dataProvider.refresh())
-                            .call(JOB_NODE_RESOURCE)
-                            .setSchedule(jobNode.getId(), schedule);
-                }
-            }
-        };
-        schedulePresenter.show(popupUiHandlers);
+        schedulePresenter.show(schedule -> {
+            jobNode.setSchedule(schedule);
+            final Rest<JobNode> rest = restFactory.create();
+            rest
+                    .onSuccess(result ->
+                            dataProvider.refresh())
+                    .call(JOB_NODE_RESOURCE)
+                    .setSchedule(jobNode.getId(), schedule);
+        });
     }
 
     public void read(final Job job) {

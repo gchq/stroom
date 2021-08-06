@@ -40,6 +40,11 @@ public class InfoDocumentViewImpl extends ViewImpl implements InfoDocumentPresen
     }
 
     @Override
+    public void focus() {
+        widget.setFocus(true);
+    }
+
+    @Override
     public void setInfo(final String string) {
         widget.setText(string);
     }

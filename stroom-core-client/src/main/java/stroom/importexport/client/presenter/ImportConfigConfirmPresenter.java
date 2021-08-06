@@ -39,12 +39,10 @@ import stroom.util.shared.Severity;
 import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import stroom.widget.tooltip.client.presenter.TooltipUtil.Builder;
@@ -67,12 +65,12 @@ import java.util.List;
 public class ImportConfigConfirmPresenter extends
         MyPresenter<ImportConfigConfirmPresenter.ImportConfigConfirmView,
                 ImportConfigConfirmPresenter.ImportConfirmProxy>
-        implements ImportConfigConfirmEvent.Handler {
+        implements ImportConfigConfirmEvent.Handler,
+        HidePopupRequestEvent.Handler {
 
     private static final ContentResource CONTENT_RESOURCE =
             com.google.gwt.core.client.GWT.create(ContentResource.class);
 
-    private final PopupUiHandlers popupUiHandlers;
     private final TooltipPresenter tooltipPresenter;
     private final ImportConfigConfirmView view;
     private final MyDataGrid<ImportState> dataGrid;
@@ -87,57 +85,6 @@ public class ImportConfigConfirmPresenter extends
                                         final TooltipPresenter tooltipPresenter,
                                         final RestFactory restFactory) {
         super(eventBus, view, proxy);
-        popupUiHandlers = new DefaultPopupUiHandlers(this) {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                // Disable the popup ok/cancel buttons before we attempt import.
-                DisablePopupEvent.fire(
-                        ImportConfigConfirmPresenter.this,
-                        ImportConfigConfirmPresenter.this);
-
-                if (ok) {
-                    boolean warnings = false;
-                    int count = 0;
-                    for (final ImportState importState : confirmList) {
-                        importState.setEnableTime(getView().getEnableFromDate());
-                        importState.setEnable(getView().isEnableFilters());
-                        if (importState.isAction()) {
-                            count++;
-                            if (importState.getSeverity().greaterThan(Severity.INFO)) {
-                                warnings = true;
-                            }
-                        }
-                    }
-
-                    if (count == 0) {
-                        AlertEvent.fireWarn(
-                                ImportConfigConfirmPresenter.this,
-                                "No items are selected for import", () -> {
-                                    // Re-enable popup buttons.
-                                    EnablePopupEvent.fire(ImportConfigConfirmPresenter.this,
-                                            ImportConfigConfirmPresenter.this);
-                                });
-                    } else if (warnings) {
-                        ConfirmEvent.fireWarn(ImportConfigConfirmPresenter.this,
-                                "There are warnings in the items selected.  Are you sure you want to import?.",
-                                result -> {
-                                    if (result) {
-                                        importData();
-                                    } else {
-                                        // Re-enable popup buttons.
-                                        EnablePopupEvent.fire(ImportConfigConfirmPresenter.this,
-                                                ImportConfigConfirmPresenter.this);
-                                    }
-                                });
-
-                    } else {
-                        importData();
-                    }
-                } else {
-                    abortImport();
-                }
-            }
-        };
 
         this.tooltipPresenter = tooltipPresenter;
         this.restFactory = restFactory;
@@ -150,6 +97,52 @@ public class ImportConfigConfirmPresenter extends
         view.setEnableFilters(true);
 
         addColumns();
+    }
+
+    @Override
+    public void onHideRequest(final HidePopupRequestEvent e) {
+        // Disable the popup ok/cancel buttons before we attempt import.
+        DisablePopupEvent.builder(this).fire();
+
+        if (e.isOk()) {
+            boolean warnings = false;
+            int count = 0;
+            for (final ImportState importState : confirmList) {
+                importState.setEnableTime(getView().getEnableFromDate());
+                importState.setEnable(getView().isEnableFilters());
+                if (importState.isAction()) {
+                    count++;
+                    if (importState.getSeverity().greaterThan(Severity.INFO)) {
+                        warnings = true;
+                    }
+                }
+            }
+
+            if (count == 0) {
+                AlertEvent.fireWarn(
+                        ImportConfigConfirmPresenter.this,
+                        "No items are selected for import", () -> {
+                            // Re-enable popup buttons.
+                            EnablePopupEvent.builder(this).fire();
+                        });
+            } else if (warnings) {
+                ConfirmEvent.fireWarn(ImportConfigConfirmPresenter.this,
+                        "There are warnings in the items selected.  Are you sure you want to import?.",
+                        result -> {
+                            if (result) {
+                                importData();
+                            } else {
+                                // Re-enable popup buttons.
+                                EnablePopupEvent.builder(this).fire();
+                            }
+                        });
+
+            } else {
+                importData();
+            }
+        } else {
+            abortImport();
+        }
     }
 
     @ProxyEvent
@@ -170,13 +163,13 @@ public class ImportConfigConfirmPresenter extends
     @Override
     protected void revealInParent() {
         final PopupSize popupSize = PopupSize.resizable(800, 400);
-        ShowPopupEvent.fire(
-                this,
-                this,
-                PopupType.OK_CANCEL_DIALOG,
-                popupSize,
-                "Confirm Import",
-                popupUiHandlers);
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Confirm Import")
+                .onShow(e -> dataGrid.setFocus(true))
+                .onHideRequest(this)
+                .fire();
     }
 
     private void addColumns() {
@@ -307,15 +300,7 @@ public class ImportConfigConfirmPresenter extends
                     builder.addHeading("Fields Updated:");
                     action.getUpdatedFieldList().forEach(builder::addLine);
                 }
-                tooltipPresenter.setHTML(builder.build());
-
-                final PopupPosition popupPosition = new PopupPosition(x, y);
-                ShowPopupEvent.fire(
-                        ImportConfigConfirmPresenter.this,
-                        tooltipPresenter,
-                        PopupType.POPUP,
-                        popupPosition,
-                        null);
+                tooltipPresenter.show(builder.build(), x, y);
             }
         };
         dataGrid.addColumn(infoColumn, "<br/>", 18);
@@ -374,12 +359,10 @@ public class ImportConfigConfirmPresenter extends
         rest
                 .onSuccess(result2 -> AlertEvent.fireWarn(ImportConfigConfirmPresenter.this,
                         "Import Aborted",
-                        () -> HidePopupEvent.fire(ImportConfigConfirmPresenter.this,
-                                ImportConfigConfirmPresenter.this, false, false)))
+                        () -> HidePopupEvent.builder(ImportConfigConfirmPresenter.this).ok(false).fire()))
                 .onFailure(caught -> AlertEvent.fireError(ImportConfigConfirmPresenter.this,
                         caught.getMessage(),
-                        () -> HidePopupEvent.fire(ImportConfigConfirmPresenter.this,
-                                ImportConfigConfirmPresenter.this, false, false)))
+                        () -> HidePopupEvent.builder(ImportConfigConfirmPresenter.this).ok(false).fire()))
                 .call(CONTENT_RESOURCE)
                 .importContent(new ImportConfigRequest(resourceKey, new ArrayList<>()));
     }
@@ -391,10 +374,7 @@ public class ImportConfigConfirmPresenter extends
                         AlertEvent.fireInfo(
                                 ImportConfigConfirmPresenter.this,
                                 "Import Complete", () -> {
-                                    HidePopupEvent.fire(ImportConfigConfirmPresenter.this,
-                                            ImportConfigConfirmPresenter.this,
-                                            false,
-                                            true);
+                                    HidePopupEvent.builder(ImportConfigConfirmPresenter.this).fire();
                                     RefreshExplorerTreeEvent.fire(ImportConfigConfirmPresenter.this);
 
                                     // We might have loaded a new visualisation or updated
@@ -402,10 +382,7 @@ public class ImportConfigConfirmPresenter extends
                                     clearCaches();
                                 }))
                 .onFailure(caught -> {
-                    HidePopupEvent.fire(ImportConfigConfirmPresenter.this,
-                            ImportConfigConfirmPresenter.this,
-                            false,
-                            true);
+                    HidePopupEvent.builder(ImportConfigConfirmPresenter.this).fire();
                     // Even if the import was error we should refresh the tree in
                     // case it got part done.
                     RefreshExplorerTreeEvent.fire(ImportConfigConfirmPresenter.this);

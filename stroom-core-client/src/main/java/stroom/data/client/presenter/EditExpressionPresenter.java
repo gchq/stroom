@@ -35,6 +35,7 @@ import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.util.client.MouseUtil;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -45,7 +46,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPresenter.EditExpressionView>
-        implements HasDirtyHandlers {
+        implements HasDirtyHandlers, Focus {
 
     private final ExpressionTreePresenter expressionPresenter;
 
@@ -113,6 +114,11 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
                 delete();
             }
         }));
+    }
+
+    @Override
+    public void focus() {
+        addTermButton.focus();
     }
 
     public void init(final RestFactory restFactory, final DocRef dataSource, final List<AbstractField> fields) {

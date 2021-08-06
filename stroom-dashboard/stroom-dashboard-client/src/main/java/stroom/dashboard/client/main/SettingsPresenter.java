@@ -21,6 +21,7 @@ import stroom.widget.tab.client.presenter.LinkTabsLayoutView;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.Layer;
@@ -30,7 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-public class SettingsPresenter extends MyPresenterWidget<LinkTabsLayoutView> {
+public class SettingsPresenter extends MyPresenterWidget<LinkTabsLayoutView> implements Focus {
 
     private final Map<TabData, Layer> tabViewMap = new HashMap<>();
     private final Map<TabData, ComponentDataModifier> modifiers = new HashMap<>();
@@ -43,6 +44,18 @@ public class SettingsPresenter extends MyPresenterWidget<LinkTabsLayoutView> {
     public SettingsPresenter(final EventBus eventBus, final LinkTabsLayoutView view) {
         super(eventBus, view);
         getWidget().getElement().addClassName("default-min-sizes");
+    }
+
+    @Override
+    public void focus() {
+        if (firstTab != null) {
+            final Layer layer = tabViewMap.get(firstTab);
+            if (layer instanceof Focus) {
+                ((Focus) layer).focus();
+            }
+        } else {
+            getView().getTabBar().focus();
+        }
     }
 
     public TabData addTab(final String text, final Layer layer) {
@@ -76,7 +89,7 @@ public class SettingsPresenter extends MyPresenterWidget<LinkTabsLayoutView> {
                 changeSelectedTab(tab);
             }
         }));
-        registerHandler(getView().getTabBar().addShowMenuHandler((e) -> getEventBus().fireEvent(e)));
+        registerHandler(getView().getTabBar().addShowMenuHandler(e -> getEventBus().fireEvent(e)));
     }
 
     public void setComponents(final Components components) {

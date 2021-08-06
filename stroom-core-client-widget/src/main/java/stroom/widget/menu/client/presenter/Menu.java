@@ -1,9 +1,7 @@
 package stroom.widget.menu.client.presenter;
 
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -38,22 +36,18 @@ public class Menu {
             menuPresenter.setData(event.getItems());
             currentItems = event.getItems();
 
-            final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(menuPresenter) {
-                @Override
-                public void onShow() {
-                    super.onShow();
-                    menuPresenter.selectFirstItem(true);
-                }
-
-                @Override
-                public void onHide(final boolean autoClose, final boolean ok) {
-                    menuPresenter = null;
-                    currentItems = null;
-                }
-            };
-
-            ShowPopupEvent.fire(menuPresenter, menuPresenter, PopupType.POPUP,
-                    event.getPopupPosition(), popupUiHandlers, event.getAutoHidePartner());
+            ShowPopupEvent.builder(menuPresenter)
+                    .popupType(PopupType.POPUP)
+                    .popupPosition(event.getPopupPosition())
+                    .addAutoHidePartner(event.getAutoHidePartner())
+                    .onShow(e -> {
+                        menuPresenter.selectFirstItem(true);
+                    })
+                    .onHide(e -> {
+                        menuPresenter = null;
+                        currentItems = null;
+                    })
+                    .fire();
         }
     }
 

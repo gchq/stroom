@@ -35,9 +35,6 @@ import stroom.processor.shared.ProcessorTaskResource;
 import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -116,15 +113,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
                                     .addRow("Status", row.getStatus())
                                     .build();
                         });
-
-                tooltipPresenter.setHTML(builder.build());
-
-                final PopupPosition popupPosition = new PopupPosition(x, y);
-                ShowPopupEvent.fire(ProcessorTaskSummaryPresenter.this,
-                        tooltipPresenter,
-                        PopupType.POPUP,
-                        popupPosition,
-                        null);
+                tooltipPresenter.show(builder.build(), x, y);
             }
         };
         dataGrid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);

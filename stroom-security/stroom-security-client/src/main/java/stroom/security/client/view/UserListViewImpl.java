@@ -59,6 +59,11 @@ public class UserListViewImpl extends ViewWithUiHandlers<UserListUiHandlers> imp
     }
 
     @Override
+    public void focus() {
+        nameFilter.focus();
+    }
+
+    @Override
     public void setDatGridView(View view) {
         dataGrid.setWidget(view.asWidget());
     }

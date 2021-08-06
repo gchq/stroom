@@ -30,10 +30,8 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView;
+import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -109,34 +107,22 @@ public class SelectUserPresenter extends MyPresenterWidget<UserListView> impleme
             if (event.getSelectionType().isDoubleSelect()) {
                 selected = selectionModel.getSelected();
                 if (selected != null && selected.length() > 0) {
-                    HidePopupEvent.fire(
-                            SelectUserPresenter.this,
-                            SelectUserPresenter.this,
-                            false,
-                            true);
+                    HidePopupEvent.builder(SelectUserPresenter.this).fire();
                 }
             }
         }));
     }
 
     private void onNew() {
-        final PopupUiHandlers hidePopupUiHandlers = new DefaultPopupUiHandlers(newPresenter) {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    selected = newPresenter.getName();
-                    if (selected != null && selected.length() > 0) {
-                        HidePopupEvent.fire(
-                                SelectUserPresenter.this,
-                                SelectUserPresenter.this,
-                                false,
-                                true);
-                    }
+        newPresenter.show(e -> {
+            if (e.isOk()) {
+                selected = newPresenter.getName();
+                if (selected != null && selected.length() > 0) {
+                    HidePopupEvent.builder(this).fire();
                 }
-                hide(autoClose, ok);
             }
-        };
-        newPresenter.show(hidePopupUiHandlers);
+            e.hide();
+        });
     }
 
     @Override
@@ -166,29 +152,24 @@ public class SelectUserPresenter extends MyPresenterWidget<UserListView> impleme
         setup(findUserCriteria);
 
         final PopupSize popupSize = PopupSize.resizable(400, 400);
-        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(this) {
-            @Override
-            public void onHide(boolean autoClose, boolean ok) {
-                if (ok) {
-                    final String selected = getSelected();
-                    if (selected != null) {
-                        final Rest<User> rest = restFactory.create();
-                        rest
-                                .onSuccess(userConsumer)
-                                .call(USER_RESOURCE)
-                                .create(selected, false);
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Choose User To Add")
+                .onShow(e -> getView().focus())
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        final String selected = getSelected();
+                        if (selected != null) {
+                            final Rest<User> rest = restFactory.create();
+                            rest
+                                    .onSuccess(userConsumer)
+                                    .call(USER_RESOURCE)
+                                    .create(selected, false);
+                        }
                     }
-                }
-            }
-        };
-
-        ShowPopupEvent.fire(
-                SelectUserPresenter.this,
-                SelectUserPresenter.this,
-                PopupView.PopupType.OK_CANCEL_DIALOG,
-                popupSize,
-                "Choose User To Add",
-                popupUiHandlers);
+                })
+                .fire();
     }
 
     public void setup(final FindUserNameCriteria findUserCriteria) {

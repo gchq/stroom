@@ -18,10 +18,11 @@
 package stroom.security.client.presenter;
 
 import stroom.entity.client.presenter.NameDocumentView;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.popup.client.view.DefaultHideRequestUiHandlers;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -34,17 +35,17 @@ public class ManageNewEntityPresenter extends MyPresenterWidget<NameDocumentView
         super(eventBus, view);
     }
 
-    public void show(final PopupUiHandlers popupUiHandlers) {
-        getView().setUiHandlers(popupUiHandlers);
+    public void show(final HidePopupRequestEvent.Handler handler) {
+        getView().setUiHandlers(new DefaultHideRequestUiHandlers(this));
         getView().setName("");
         final PopupSize popupSize = PopupSize.resizableX();
-        ShowPopupEvent.fire(this,
-                this,
-                PopupType.OK_CANCEL_DIALOG,
-                popupSize,
-                "New",
-                popupUiHandlers);
-        getView().focus();
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("New")
+                .onShow(e -> getView().focus())
+                .onHideRequest(handler)
+                .fire();
     }
 
     public String getName() {

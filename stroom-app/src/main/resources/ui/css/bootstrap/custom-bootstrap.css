@@ -62,7 +62,9 @@
 .allow-focus:focus-visible {
 }
 
-
+.form-group {
+  margin-bottom: .4rem;
+}
 
 .form-control.is-invalid {
   // border-color: #dc354;
@@ -172,11 +174,12 @@ label {
 
 .invalid-feedback {
   display: block;
-  min-height: 16px;
+  /*min-height: 16px;*/
 }
 
 .label,label,.form-label {
   margin-bottom: .25rem;
+  font-weight: 500;
 }
 
 .col {

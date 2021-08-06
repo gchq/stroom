@@ -33,7 +33,6 @@ import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -66,7 +65,6 @@ public class FieldListPresenter extends MyPresenterWidget<PagerView>
 
     private boolean readOnly = true;
 
-    @SuppressWarnings("unchecked")
     @Inject
     public FieldListPresenter(final EventBus eventBus,
                               final PagerView view,
@@ -196,20 +194,17 @@ public class FieldListPresenter extends MyPresenterWidget<PagerView>
         final Set<String> otherNames = fields.stream().map(AbstractField::getName).collect(Collectors.toSet());
 
         fieldEditPresenter.read(new TextField(""), otherNames);
-        fieldEditPresenter.show("New Field", new DefaultPopupUiHandlers(fieldEditPresenter) {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    final AbstractField newField = fieldEditPresenter.write();
-                    if (newField != null) {
-                        fields.add(newField);
-                        refresh();
-                        hide(autoClose, ok);
-                        DirtyEvent.fire(FieldListPresenter.this, true);
-                    }
-                } else {
-                    hide(autoClose, ok);
+        fieldEditPresenter.show("New Field", e -> {
+            if (e.isOk()) {
+                final AbstractField newField = fieldEditPresenter.write();
+                if (newField != null) {
+                    fields.add(newField);
+                    refresh();
+                    e.hide();
+                    DirtyEvent.fire(FieldListPresenter.this, true);
                 }
+            } else {
+                e.hide();
             }
         });
     }
@@ -221,23 +216,20 @@ public class FieldListPresenter extends MyPresenterWidget<PagerView>
             otherNames.remove(field.getName());
 
             fieldEditPresenter.read(field, otherNames);
-            fieldEditPresenter.show("Edit Field", new DefaultPopupUiHandlers(fieldEditPresenter) {
-                @Override
-                public void onHideRequest(final boolean autoClose, final boolean ok) {
-                    if (ok) {
-                        final AbstractField newField = fieldEditPresenter.write();
-                        if (newField != null) {
-                            final int index = fields.indexOf(field);
-                            fields.remove(index);
-                            fields.add(index, newField);
+            fieldEditPresenter.show("Edit Field", e -> {
+                if (e.isOk()) {
+                    final AbstractField newField = fieldEditPresenter.write();
+                    if (newField != null) {
+                        final int index = fields.indexOf(field);
+                        fields.remove(index);
+                        fields.add(index, newField);
 
-                            refresh();
-                            hide(autoClose, ok);
-                            DirtyEvent.fire(FieldListPresenter.this, true);
-                        }
-                    } else {
-                        hide(autoClose, ok);
+                        refresh();
+                        e.hide();
+                        DirtyEvent.fire(FieldListPresenter.this, true);
                     }
+                } else {
+                    e.hide();
                 }
             });
         }

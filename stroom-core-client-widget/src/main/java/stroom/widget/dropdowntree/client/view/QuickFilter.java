@@ -137,6 +137,10 @@ public class QuickFilter extends FlowPanel
         return eventBus;
     }
 
+    public void focus() {
+        textBox.setFocus(true);
+    }
+
     @Override
     public void fireEvent(final GwtEvent<?> event) {
         eventBus.fireEvent(event);

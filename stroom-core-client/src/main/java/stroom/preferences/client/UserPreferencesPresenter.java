@@ -26,12 +26,11 @@ import stroom.security.shared.PermissionNames;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.ui.config.shared.UserPreferences.Builder;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -47,7 +46,6 @@ public final class UserPreferencesPresenter
         implements UserPreferencesUiHandlers {
 
     private final UserPreferencesManager userPreferencesManager;
-    private final PopupUiHandlers popupUiHandlers;
     private UserPreferences originalPreferences;
 
     @Inject
@@ -58,25 +56,6 @@ public final class UserPreferencesPresenter
             final ClientSecurityContext clientSecurityContext) {
         super(eventBus, view);
         this.userPreferencesManager = userPreferencesManager;
-
-        this.popupUiHandlers = new DefaultPopupUiHandlers(this) {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    final UserPreferences userPreferences = write();
-                    userPreferencesManager.setCurrentPreferences(userPreferences);
-                    if (!Objects.equals(userPreferences, originalPreferences)) {
-                        userPreferencesManager.update(userPreferences, (result) -> hide(autoClose, ok));
-                    } else {
-                        hide(autoClose, ok);
-                    }
-                } else {
-                    userPreferencesManager.setCurrentPreferences(originalPreferences);
-                    hide(autoClose, ok);
-                }
-            }
-        };
-
         view.setUiHandlers(this);
         view.setAsDefaultVisible(clientSecurityContext.hasAppPermission(PermissionNames.MANAGE_PROPERTIES_PERMISSION));
     }
@@ -151,23 +130,31 @@ public final class UserPreferencesPresenter
 
     public void show() {
         final String caption = "User Preferences";
-        final PopupType popupType = PopupType.OK_CANCEL_DIALOG;
 
         userPreferencesManager.fetch(userPreferences -> {
             originalPreferences = userPreferences;
             read(userPreferences);
-            ShowPopupEvent.fire(
-                    UserPreferencesPresenter.this,
-                    UserPreferencesPresenter.this,
-                    popupType,
-                    getPopupSize(),
-                    caption,
-                    popupUiHandlers);
+            ShowPopupEvent.builder(this)
+                    .popupType(PopupType.OK_CANCEL_DIALOG)
+                    .popupSize(PopupSize.resizableX())
+                    .caption(caption)
+                    .onShow(e -> getView().focus())
+                    .onHideRequest(e -> {
+                        if (e.isOk()) {
+                            final UserPreferences newUserPreferences = write();
+                            userPreferencesManager.setCurrentPreferences(newUserPreferences);
+                            if (!Objects.equals(newUserPreferences, originalPreferences)) {
+                                userPreferencesManager.update(newUserPreferences, (result) -> e.hide());
+                            } else {
+                                e.hide();
+                            }
+                        } else {
+                            userPreferencesManager.setCurrentPreferences(originalPreferences);
+                            e.hide();
+                        }
+                    })
+                    .fire();
         });
-    }
-
-    private PopupSize getPopupSize() {
-        return PopupSize.resizableX();
     }
 
     private void read(final UserPreferences userPreferences) {
@@ -212,7 +199,7 @@ public final class UserPreferencesPresenter
                 .build();
     }
 
-    public interface UserPreferencesView extends View, HasUiHandlers<UserPreferencesUiHandlers> {
+    public interface UserPreferencesView extends View, Focus, HasUiHandlers<UserPreferencesUiHandlers> {
 
         String getTheme();
 

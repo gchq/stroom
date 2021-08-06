@@ -22,6 +22,7 @@ import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.ListBox;
 
 import java.util.ArrayList;
@@ -30,7 +31,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class ItemListBox<T extends HasDisplayValue> extends Composite implements ItemListBoxDisplay<T> {
+public class ItemListBox<T extends HasDisplayValue>
+        extends Composite
+        implements ItemListBoxDisplay<T>, Focus {
 
     private final ListBox listBox;
     private final List<T> items;
@@ -58,6 +61,11 @@ public class ItemListBox<T extends HasDisplayValue> extends Composite implements
         listBox.addChangeHandler(event -> fireUpdate());
 
         initWidget(listBox);
+    }
+
+    @Override
+    public void focus() {
+        listBox.setFocus(true);
     }
 
     private void fireUpdate() {

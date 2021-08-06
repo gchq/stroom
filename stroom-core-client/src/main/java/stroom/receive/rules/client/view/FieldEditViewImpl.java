@@ -48,6 +48,11 @@ public class FieldEditViewImpl extends ViewImpl implements FieldEditView {
     }
 
     @Override
+    public void focus() {
+        type.setFocus(true);
+    }
+
+    @Override
     public String getType() {
         return type.getSelected();
     }

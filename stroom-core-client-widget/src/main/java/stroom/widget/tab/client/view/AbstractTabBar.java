@@ -281,6 +281,11 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
         }
     }
 
+    @Override
+    public void focus() {
+        focusTabIndexElement();
+    }
+
     private boolean hasFocus(final Element element) {
         if (element != null) {
             final Element activeElement = getActiveElement(Document.get());

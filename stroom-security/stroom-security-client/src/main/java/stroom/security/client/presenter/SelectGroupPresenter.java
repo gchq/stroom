@@ -20,11 +20,10 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView;
+import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.presenter.Size;
 
 import com.google.inject.Inject;
@@ -33,8 +32,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.function.Consumer;
 
 public class SelectGroupPresenter extends AbstractDataUserListPresenter {
-
-    private PopupUiHandlers popupUiHandlers;
 
     @Inject
     public SelectGroupPresenter(final EventBus eventBus,
@@ -49,10 +46,9 @@ public class SelectGroupPresenter extends AbstractDataUserListPresenter {
         super.onBind();
         registerHandler(getSelectionModel().addSelectionHandler(event -> {
             if (event.getSelectionType().isDoubleSelect()) {
-                if (popupUiHandlers != null &&
-                        getFindUserCriteria() != null &&
+                if (getFindUserCriteria() != null &&
                         getFindUserCriteria().getRelatedUser() == null) {
-                    popupUiHandlers.onHideRequest(false, true);
+                    HidePopupRequestEvent.builder(this).fire();
                 }
             }
         }));
@@ -79,22 +75,20 @@ public class SelectGroupPresenter extends AbstractDataUserListPresenter {
                         .resizable(true)
                         .build())
                 .build();
-        popupUiHandlers = new DefaultPopupUiHandlers(this) {
-            @Override
-            public void onHide(boolean autoClose, boolean ok) {
-                if (ok) {
-                    final User selected = getSelectionModel().getSelected();
-                    if (selected != null) {
-                        groupConsumer.accept(selected);
+
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Choose Group To Add")
+                .onShow(e -> getView().focus())
+                .onHide(e -> {
+                    if (e.isOk()) {
+                        final User selected = getSelectionModel().getSelected();
+                        if (selected != null) {
+                            groupConsumer.accept(selected);
+                        }
                     }
-                }
-            }
-        };
-        ShowPopupEvent.fire(this,
-                this,
-                PopupView.PopupType.OK_CANCEL_DIALOG,
-                popupSize,
-                "Choose Group To Add",
-                popupUiHandlers);
+                })
+                .fire();
     }
 }

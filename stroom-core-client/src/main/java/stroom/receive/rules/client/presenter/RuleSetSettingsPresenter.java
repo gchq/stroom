@@ -35,9 +35,8 @@ import stroom.receive.rules.shared.RuleAction;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MultiSelectEvent;
 
 import com.google.gwt.dom.client.Style.BorderStyle;
@@ -290,23 +289,19 @@ public class RuleSetSettingsPresenter
 
     private void showRulePresenter(final RulePresenter rulePresenter,
                                    final Runnable okHandler) {
-
         final PopupSize popupSize = PopupSize.resizable(800, 400);
-        ShowPopupEvent.fire(
-                this,
-                rulePresenter,
-                PopupType.OK_CANCEL_DIALOG,
-                popupSize,
-                "Edit Rule",
-                new DefaultPopupUiHandlers(rulePresenter) {
-                    @Override
-                    public void onHideRequest(final boolean autoClose, final boolean ok) {
-                        if (ok) {
-                            okHandler.run();
-                        }
-                        hide(autoClose, ok);
+        ShowPopupEvent.builder(rulePresenter)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Edit Rule")
+                .onShow(e -> listPresenter.focus())
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        okHandler.run();
                     }
-                });
+                    e.hide();
+                })
+                .fire();
     }
 
     @Override

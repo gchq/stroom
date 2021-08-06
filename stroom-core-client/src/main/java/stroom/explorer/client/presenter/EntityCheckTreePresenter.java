@@ -22,6 +22,7 @@ import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.shared.ExplorerNode;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -32,7 +33,7 @@ import com.gwtplatform.mvp.client.View;
 import java.util.Set;
 
 public class EntityCheckTreePresenter extends MyPresenterWidget<EntityCheckTreePresenter.EntityCheckTreeView>
-        implements HasDataSelectionHandlers<Set<ExplorerNode>> {
+        implements HasDataSelectionHandlers<Set<ExplorerNode>>, Focus {
 
     //    private final TickBoxSelectionModel<ExplorerNode> selectionModel;
     private final ExplorerTickBoxTree explorerTree;
@@ -123,6 +124,11 @@ public class EntityCheckTreePresenter extends MyPresenterWidget<EntityCheckTreeP
         explorerTree = new ExplorerTickBoxTree(restFactory);
 
         view.setCellTree(explorerTree);
+    }
+
+    @Override
+    public void focus() {
+        explorerTree.setFocus(true);
     }
 
     public void setIncludedTypes(final String... includedTypes) {

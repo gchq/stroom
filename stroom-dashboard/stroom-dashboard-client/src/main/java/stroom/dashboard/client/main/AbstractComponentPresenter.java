@@ -26,10 +26,8 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.svg.client.Icon;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -110,31 +108,32 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
             settingsPresenter = (SettingsPresenter) settingsPresenterProvider.get();
         }
 
-        final PopupUiHandlers uiHandlers = new DefaultPopupUiHandlers(settingsPresenter) {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    if (settingsPresenter.validate()) {
-                        final boolean dirty = settingsPresenter.isDirty(componentConfig);
-                        componentConfig = settingsPresenter.write(componentConfig);
-
-                        if (dirty) {
-                            changeSettings();
-                        }
-
-                        hide(autoClose, ok);
-                    }
-                } else {
-                    hide(autoClose, ok);
-                }
-            }
-        };
-
         settingsPresenter.setComponents(components);
         settingsPresenter.read(componentConfig);
 
         final PopupSize popupSize = PopupSize.resizable(550, 450);
-        ShowPopupEvent.fire(this, settingsPresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Settings", uiHandlers);
+        ShowPopupEvent.builder(settingsPresenter)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Settings")
+                .onShow(e -> settingsPresenter.focus())
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        if (settingsPresenter.validate()) {
+                            final boolean dirty = settingsPresenter.isDirty(componentConfig);
+                            componentConfig = settingsPresenter.write(componentConfig);
+
+                            if (dirty) {
+                                changeSettings();
+                            }
+
+                            e.hide();
+                        }
+                    } else {
+                        e.hide();
+                    }
+                })
+                .fire();
     }
 
     protected void changeSettings() {

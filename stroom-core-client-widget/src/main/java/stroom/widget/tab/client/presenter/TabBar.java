@@ -20,13 +20,15 @@ import stroom.widget.menu.client.presenter.ShowMenuEvent.HasShowMenuHandlers;
 import stroom.widget.tab.client.event.HasRequestCloseTabHandlers;
 
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
+import com.google.gwt.user.client.ui.Focus;
 
 import java.util.List;
 
 public interface TabBar extends
         HasSelectionHandlers<TabData>,
         HasRequestCloseTabHandlers,
-        HasShowMenuHandlers {
+        HasShowMenuHandlers,
+        Focus {
 
     void addTab(TabData tab);
 

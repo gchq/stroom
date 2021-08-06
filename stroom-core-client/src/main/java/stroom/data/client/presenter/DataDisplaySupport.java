@@ -21,8 +21,9 @@ import stroom.data.client.SourceTabPlugin;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
@@ -49,7 +50,6 @@ public class DataDisplaySupport {
         this.sourceTabPluginProvider = sourceTabPluginProvider;
 
         eventBus.addHandler(ShowDataEvent.getType(), showDataEvent -> {
-
             switch (showDataEvent.getDisplayMode()) {
                 case DIALOG:
                     openPopupDialog(showDataEvent);
@@ -78,6 +78,7 @@ public class DataDisplaySupport {
         final ClassificationWrapperPresenter presenter;
         final String caption;
 
+        final Focus focus;
         if (DataViewType.PREVIEW.equals(showDataEvent.getDataViewType())) {
             final ClassificationWrappedDataPresenter dataPresenter = dataPresenterProvider.get();
             dataPresenter.setDisplayMode(showDataEvent.getDisplayMode());
@@ -85,21 +86,22 @@ public class DataDisplaySupport {
             presenter = dataPresenter;
             caption = "Stream "
                     + sourceLocation.getMetaId();
+            focus = dataPresenter;
         } else {
             final ClassificationWrappedSourcePresenter sourcePresenter = sourcePresenterProvider.get();
             sourcePresenter.setSourceLocationUsingHighlight(sourceLocation);
             presenter = sourcePresenter;
             // Convert to one based for UI;
             caption = "Stream " + sourceLocation.getIdentifierString();
+            focus = sourcePresenter;
         }
 
         final PopupSize popupSize = PopupSize.resizable(1400, 800);
-        ShowPopupEvent.fire(
-                presenter,
-                presenter,
-                PopupType.OK_CANCEL_DIALOG,
-                popupSize,
-                caption,
-                null);
+        ShowPopupEvent.builder(presenter)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption(caption)
+                .onShow(e -> focus.focus())
+                .fire();
     }
 }

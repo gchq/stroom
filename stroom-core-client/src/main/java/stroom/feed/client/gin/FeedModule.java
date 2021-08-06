@@ -19,7 +19,7 @@ package stroom.feed.client.gin;
 import stroom.core.client.gin.PluginModule;
 import stroom.data.client.presenter.DataUploadPresenter;
 import stroom.data.client.presenter.DataUploadPresenter.DataUploadView;
-import stroom.data.client.view.StreamUploadViewImpl;
+import stroom.data.client.view.DataUploadViewImpl;
 import stroom.feed.client.FeedPlugin;
 import stroom.feed.client.presenter.FeedPresenter;
 import stroom.feed.client.presenter.FeedSettingsPresenter;
@@ -37,6 +37,6 @@ public class FeedModule extends PluginModule {
         bindSharedView(FeedSettingsView.class, FeedSettingsViewImpl.class);
         bind(FeedSettingsPresenter.class);
 
-        bindPresenterWidget(DataUploadPresenter.class, DataUploadView.class, StreamUploadViewImpl.class);
+        bindPresenterWidget(DataUploadPresenter.class, DataUploadView.class, DataUploadViewImpl.class);
     }
 }

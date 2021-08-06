@@ -20,7 +20,7 @@ package stroom.entity.client.view;
 import stroom.entity.client.presenter.CopyDocumentPresenter.CopyDocumentView;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.item.client.ItemListBox;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
+import stroom.widget.popup.client.view.HideRequestUiHandlers;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -30,7 +30,7 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class CopyDocumentViewImpl extends ViewWithUiHandlers<PopupUiHandlers> implements CopyDocumentView {
+public class CopyDocumentViewImpl extends ViewWithUiHandlers<HideRequestUiHandlers> implements CopyDocumentView {
 
     private final Widget widget;
     @UiField

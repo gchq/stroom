@@ -3,11 +3,9 @@ package stroom.config.global.client.presenter;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.data.table.client.Refreshable;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -49,17 +47,15 @@ public class ConfigPropertyClusterValuesPresenter
         this.listPresenter.setData(effectiveValueToNodesMap);
 
         final String caption = getEntityDisplayType() + " - " + configProperty.getName();
-        final PopupView.PopupType popupType = PopupView.PopupType.CLOSE_DIALOG;
+        final PopupType popupType = PopupType.CLOSE_DIALOG;
 
-        final PopupUiHandlers internalPopupUiHandlers = new DefaultPopupUiHandlers(this);
-        ShowPopupEvent.fire(
-                this,
-                this,
-                popupType,
-                getPopupSize(),
-                popupPosition,
-                caption,
-                internalPopupUiHandlers);
+        ShowPopupEvent.builder(this)
+                .popupType(popupType)
+                .popupSize(getPopupSize())
+                .popupPosition(popupPosition)
+                .caption(caption)
+                .onShow(e -> listPresenter.focus())
+                .fire();
     }
 
     protected PopupSize getPopupSize() {

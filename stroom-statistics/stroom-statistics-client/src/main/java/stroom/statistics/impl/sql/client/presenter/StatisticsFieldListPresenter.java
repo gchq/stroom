@@ -32,7 +32,6 @@ import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -157,23 +156,19 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<PagerView>
             final List<StatisticField> otherFields = statisticsDataSourceData.getFields();
 
             statisticsFieldEditPresenter.read(statisticField, otherFields);
-            statisticsFieldEditPresenter.show("New Field",
-                    new DefaultPopupUiHandlers(statisticsFieldEditPresenter) {
-                        @Override
-                        public void onHideRequest(final boolean autoClose, final boolean ok) {
-                            if (ok) {
-                                if (statisticsFieldEditPresenter.write(statisticField)) {
-                                    statisticsDataSourceData.addStatisticField(statisticField);
-                                    reComputeRollUpBitMask(oldStatisticsDataSourceData, statisticsDataSourceData);
-                                    refresh();
-                                    hide(autoClose, ok);
-                                    DirtyEvent.fire(StatisticsFieldListPresenter.this, true);
-                                }
-                            } else {
-                                hide(autoClose, ok);
-                            }
-                        }
-                    });
+            statisticsFieldEditPresenter.show("New Field", e -> {
+                if (e.isOk()) {
+                    if (statisticsFieldEditPresenter.write(statisticField)) {
+                        statisticsDataSourceData.addStatisticField(statisticField);
+                        reComputeRollUpBitMask(oldStatisticsDataSourceData, statisticsDataSourceData);
+                        refresh();
+                        e.hide();
+                        DirtyEvent.fire(StatisticsFieldListPresenter.this, true);
+                    }
+                } else {
+                    e.hide();
+                }
+            });
         }
     }
 
@@ -191,23 +186,19 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<PagerView>
                 otherFields.remove(statisticField);
 
                 statisticsFieldEditPresenter.read(statisticField, otherFields);
-                statisticsFieldEditPresenter.show("Edit Field",
-                        new DefaultPopupUiHandlers(statisticsFieldEditPresenter) {
-                            @Override
-                            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                                if (ok) {
-                                    if (statisticsFieldEditPresenter.write(statisticField)) {
-                                        statisticsDataSourceData.reOrderStatisticFields();
-                                        reComputeRollUpBitMask(oldStatisticsDataSourceData, statisticsDataSourceData);
-                                        refresh();
-                                        hide(autoClose, ok);
-                                        DirtyEvent.fire(StatisticsFieldListPresenter.this, true);
-                                    }
-                                } else {
-                                    hide(autoClose, ok);
-                                }
-                            }
-                        });
+                statisticsFieldEditPresenter.show("Edit Field", e -> {
+                    if (e.isOk()) {
+                        if (statisticsFieldEditPresenter.write(statisticField)) {
+                            statisticsDataSourceData.reOrderStatisticFields();
+                            reComputeRollUpBitMask(oldStatisticsDataSourceData, statisticsDataSourceData);
+                            refresh();
+                            e.hide();
+                            DirtyEvent.fire(StatisticsFieldListPresenter.this, true);
+                        }
+                    } else {
+                        e.hide();
+                    }
+                });
             }
         }
     }

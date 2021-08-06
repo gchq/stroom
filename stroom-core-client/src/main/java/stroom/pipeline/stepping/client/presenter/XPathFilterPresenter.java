@@ -19,10 +19,11 @@ package stroom.pipeline.stepping.client.presenter;
 import stroom.pipeline.shared.XPathFilter;
 import stroom.pipeline.shared.XPathFilter.MatchType;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -66,19 +67,31 @@ public class XPathFilterPresenter extends MyPresenterWidget<XPathFilterPresenter
         }
     }
 
-    public void add(final XPathFilter xPathFilter, final PopupUiHandlers popupUiHandlers) {
+    public void add(final XPathFilter xPathFilter, final HidePopupRequestEvent.Handler handler) {
         this.xPathFilter = xPathFilter;
         read(xPathFilter);
-        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, "Add XPath Filter", popupUiHandlers);
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Add XPath Filter")
+                .onShow(e -> getView().focus())
+                .onHideRequest(handler)
+                .fire();
     }
 
-    public void edit(final XPathFilter xPathFilter, final PopupUiHandlers popupUiHandlers) {
+    public void edit(final XPathFilter xPathFilter, final HidePopupRequestEvent.Handler handler) {
         this.xPathFilter = xPathFilter;
         read(xPathFilter);
-        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, "Edit XPath Filter", popupUiHandlers);
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Edit XPath Filter")
+                .onShow(e -> getView().focus())
+                .onHideRequest(handler)
+                .fire();
     }
 
-    public interface XPathFilterView extends View {
+    public interface XPathFilterView extends View, Focus {
 
         String getXPath();
 

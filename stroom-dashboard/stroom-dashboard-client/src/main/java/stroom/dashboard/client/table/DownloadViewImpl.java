@@ -34,6 +34,7 @@ import com.gwtplatform.mvp.client.ViewImpl;
 public class DownloadViewImpl extends ViewImpl implements DownloadView {
 
     private final Widget widget;
+
     @UiField
     ItemListBox<DownloadSearchResultFileType> fileType;
     @UiField
@@ -60,6 +61,11 @@ public class DownloadViewImpl extends ViewImpl implements DownloadView {
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    @Override
+    public void focus() {
+        fileType.focus();
     }
 
     @Override

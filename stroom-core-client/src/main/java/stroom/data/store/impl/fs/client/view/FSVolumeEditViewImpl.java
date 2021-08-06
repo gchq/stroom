@@ -31,6 +31,7 @@ import com.gwtplatform.mvp.client.ViewImpl;
 public class FSVolumeEditViewImpl extends ViewImpl implements VolumeEditView {
 
     private final Widget widget;
+
     @UiField
     TextBox path;
     @UiField
@@ -49,6 +50,11 @@ public class FSVolumeEditViewImpl extends ViewImpl implements VolumeEditView {
     }
 
     @Override
+    public void focus() {
+        path.setFocus(true);
+    }
+
+    @Override
     public HasText getPath() {
         return path;
     }
@@ -64,6 +70,5 @@ public class FSVolumeEditViewImpl extends ViewImpl implements VolumeEditView {
     }
 
     public interface Binder extends UiBinder<Widget, FSVolumeEditViewImpl> {
-
     }
 }

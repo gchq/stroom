@@ -21,10 +21,10 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.QueryConfig;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -73,52 +73,49 @@ public class QueryInfoPresenter extends MyPresenterWidget<QueryInfoPresenter.Que
             if (queryInfoPopupEnabled && required) {
                 getView().setQueryInfo(queryInfo);
                 final PopupSize popupSize = PopupSize.resizable(640, 480);
-                ShowPopupEvent.fire(this,
-                        this,
-                        PopupType.OK_CANCEL_DIALOG,
-                        popupSize, queryInfoPopupTitle,
-                        new DefaultPopupUiHandlers(this) {
-                            @Override
-                            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                                if (ok) {
-                                    boolean valid = true;
-                                    if (queryInfoPopupValidationRegex != null
-                                            && !queryInfoPopupValidationRegex.isEmpty()) {
-                                        valid = false;
-                                        try {
-                                            valid = getView().getQueryInfo().matches(queryInfoPopupValidationRegex);
-                                        } catch (final RuntimeException e) {
-                                            AlertEvent.fireErrorFromException(QueryInfoPresenter.this, e, null);
-                                        }
+                ShowPopupEvent.builder(this)
+                        .popupType(PopupType.OK_CANCEL_DIALOG)
+                        .popupSize(popupSize)
+                        .caption(queryInfoPopupTitle)
+                        .onShow(e -> getView().focus())
+                        .onHideRequest(event -> {
+                            if (event.isOk()) {
+                                boolean valid = true;
+                                if (queryInfoPopupValidationRegex != null
+                                        && !queryInfoPopupValidationRegex.isEmpty()) {
+                                    valid = false;
+                                    try {
+                                        valid = getView().getQueryInfo().matches(queryInfoPopupValidationRegex);
+                                    } catch (final RuntimeException e) {
+                                        AlertEvent.fireErrorFromException(QueryInfoPresenter.this, e, null);
                                     }
-
-                                    if (valid) {
-                                        hide(autoClose, ok);
-                                        consumer.accept(new State(getView().getQueryInfo(), true));
-                                    } else {
-                                        AlertEvent.fireWarn(QueryInfoPresenter.this,
-                                                "The text entered is not valid",
-                                                null);
-                                    }
-                                } else {
-                                    hide(autoClose, ok);
-                                    consumer.accept(new State(getView().getQueryInfo(), false));
                                 }
+
+                                if (valid) {
+                                    event.hide();
+                                    consumer.accept(new State(getView().getQueryInfo(), true));
+                                } else {
+                                    AlertEvent.fireWarn(QueryInfoPresenter.this,
+                                            "The text entered is not valid",
+                                            null);
+                                }
+                            } else {
+                                event.hide();
+                                consumer.accept(new State(getView().getQueryInfo(), false));
                             }
-                        });
+                        })
+                        .fire();
             } else {
                 consumer.accept(new State(null, true));
             }
         });
     }
 
-    public interface QueryInfoView extends View {
+    public interface QueryInfoView extends View, Focus {
 
         String getQueryInfo();
 
         void setQueryInfo(String queryInfo);
-
-        void focus();
     }
 
     public class State {

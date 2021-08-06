@@ -28,13 +28,14 @@ import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
-import stroom.widget.popup.client.presenter.HideUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.popup.client.view.DefaultHideRequestUiHandlers;
+import stroom.widget.popup.client.view.HideRequestUiHandlers;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -48,9 +49,9 @@ import java.util.function.Consumer;
 
 public class CreateDocumentPresenter
         extends MyPresenter<CreateDocumentView, CreateDocumentProxy>
-        implements ShowCreateDocumentDialogEvent.Handler {
+        implements ShowCreateDocumentDialogEvent.Handler,
+        HidePopupRequestEvent.Handler {
 
-    private final PopupUiHandlers popupUiHandlers;
     private final EntityTreePresenter entityTreePresenter;
     private String docType;
     private String caption;
@@ -64,39 +65,9 @@ public class CreateDocumentPresenter
                                    final CreateDocumentProxy proxy,
                                    final EntityTreePresenter entityTreePresenter) {
         super(eventBus, view, proxy);
-        popupUiHandlers = new DefaultPopupUiHandlers(this) {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    final DocRef destinationFolderRef = getFolder();
-                    if (!allowNullFolder && destinationFolderRef == null) {
-                        AlertEvent.fireWarn(CreateDocumentPresenter.this, "No parent folder has been selected", null);
-                    } else {
-                        String docName = getView().getName();
-                        if (docName != null) {
-                            docName = docName.trim();
-                        }
 
-                        if (docName == null || docName.length() == 0) {
-                            AlertEvent.fireWarn(CreateDocumentPresenter.this,
-                                    "You must provide a name for the new " + docType.toLowerCase(), null);
-                        } else {
-                            CreateDocumentEvent.fire(CreateDocumentPresenter.this,
-                                    CreateDocumentPresenter.this,
-                                    docType,
-                                    docName,
-                                    destinationFolderRef,
-                                    getView().getPermissionInheritance(),
-                                    newDocConsumer);
-                        }
-                    }
-                } else {
-                    hide(autoClose, ok);
-                }
-            }
-        };
         this.entityTreePresenter = entityTreePresenter;
-        view.setUiHandlers(popupUiHandlers);
+        view.setUiHandlers(new DefaultHideRequestUiHandlers(this));
         view.setFolderView(entityTreePresenter.getView());
 
         entityTreePresenter.setIncludedTypes(DocumentTypes.FOLDER_TYPES);
@@ -130,8 +101,45 @@ public class CreateDocumentPresenter
         getView().setPermissionInheritance(PermissionInheritance.DESTINATION);
 
         final PopupSize popupSize = PopupSize.resizable(400, 550);
-        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, caption, popupUiHandlers);
-        getView().focus();
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption(caption)
+                .onShow(e -> getView().focus())
+                .onHideRequest(this)
+                .fire();
+    }
+
+    @Override
+    public void onHideRequest(final HidePopupRequestEvent e) {
+        if (e.isOk()) {
+            final DocRef destinationFolderRef = getFolder();
+            if (!allowNullFolder && destinationFolderRef == null) {
+                AlertEvent.fireWarn(CreateDocumentPresenter.this,
+                        "No parent folder has been selected",
+                        null);
+            } else {
+                String docName = getView().getName();
+                if (docName != null) {
+                    docName = docName.trim();
+                }
+
+                if (docName == null || docName.length() == 0) {
+                    AlertEvent.fireWarn(CreateDocumentPresenter.this,
+                            "You must provide a name for the new " + docType.toLowerCase(), null);
+                } else {
+                    CreateDocumentEvent.fire(CreateDocumentPresenter.this,
+                            CreateDocumentPresenter.this,
+                            docType,
+                            docName,
+                            destinationFolderRef,
+                            getView().getPermissionInheritance(),
+                            newDocConsumer);
+                }
+            }
+        } else {
+            e.hide();
+        }
     }
 
     private DocRef getFolder() {
@@ -143,7 +151,7 @@ public class CreateDocumentPresenter
         return null;
     }
 
-    public interface CreateDocumentView extends View, HasUiHandlers<HideUiHandlers> {
+    public interface CreateDocumentView extends View, Focus, HasUiHandlers<HideRequestUiHandlers> {
 
         String getName();
 
@@ -152,8 +160,6 @@ public class CreateDocumentPresenter
         void setFolderView(View view);
 
         void setFoldersVisible(final boolean visible);
-
-        void focus();
 
         PermissionInheritance getPermissionInheritance();
 

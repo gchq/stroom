@@ -28,6 +28,7 @@ import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
@@ -38,7 +39,7 @@ import com.gwtplatform.mvp.client.LayerContainer;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DynamicSettingsPane extends Composite implements Layer, HasReadAndWrite<JSONObject> {
+public class DynamicSettingsPane extends Composite implements Layer, HasReadAndWrite<JSONObject>, Focus {
 
     private final boolean utc;
     private final SimplePanel outer;
@@ -50,6 +51,13 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
         this.utc = utc;
         outer = new SimplePanel();
         initWidget(outer);
+    }
+
+    @Override
+    public void focus() {
+        if (controls.size() > 0) {
+            controls.get(0).focus();
+        }
     }
 
     public void addControls(final JSONArray controls) {
@@ -160,6 +168,11 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
 
         final HasReadAndWrite<JSONObject> hasReadAndWrite = new HasReadAndWrite<JSONObject>() {
             @Override
+            public void focus() {
+                ctrl.setFocus(true);
+            }
+
+            @Override
             public void read(final JSONObject settings) {
                 final String val = JSONUtil.getString(settings.get(id));
                 if (val != null) {
@@ -185,6 +198,11 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
         ctrl.getElement().getStyle().setWidth(100, Unit.PCT);
 
         final HasReadAndWrite<JSONObject> hasReadAndWrite = new HasReadAndWrite<JSONObject>() {
+            @Override
+            public void focus() {
+                ctrl.setFocus(true);
+            }
+
             @Override
             public void read(final JSONObject settings) {
                 final String val = JSONUtil.getString(settings.get(id));
@@ -212,6 +230,11 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
 
         final HasReadAndWrite<JSONObject> hasReadAndWrite = new HasReadAndWrite<JSONObject>() {
             @Override
+            public void focus() {
+                ctrl.focus();
+            }
+
+            @Override
             public void read(final JSONObject settings) {
                 ctrl.setValue(JSONUtil.getString(settings.get(id)));
             }
@@ -234,6 +257,11 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
         ctrl.getElement().getStyle().setWidth(100, Unit.PCT);
 
         final HasReadAndWrite<JSONObject> hasReadAndWrite = new HasReadAndWrite<JSONObject>() {
+            @Override
+            public void focus() {
+                ctrl.focus();
+            }
+
             @Override
             public void read(final JSONObject settings) {
                 final Long l = getLong(JSONUtil.getString(settings.get(id)));
@@ -258,6 +286,11 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
         ctrl.getElement().getStyle().setWidth(100, Unit.PCT);
 
         final HasReadAndWrite<JSONObject> hasReadAndWrite = new HasReadAndWrite<JSONObject>() {
+            @Override
+            public void focus() {
+                ctrl.focus();
+            }
+
             @Override
             public void read(final JSONObject settings) {
                 final Boolean b = getBoolean(JSONUtil.getString(settings.get(id)));

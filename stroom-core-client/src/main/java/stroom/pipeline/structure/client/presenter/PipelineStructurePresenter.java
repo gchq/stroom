@@ -53,13 +53,12 @@ import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.VerticalLocation;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -510,16 +509,6 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
             xmlEditor.getView().asWidget().getElement().addClassName("default-min-sizes");
 
             final PopupSize popupSize = PopupSize.resizable(600, 400);
-            final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(xmlEditor) {
-                @Override
-                public void onHideRequest(final boolean autoClose, final boolean ok) {
-                    if (ok) {
-                        querySave(xmlEditor);
-                    } else {
-                        hide(autoClose, ok);
-                    }
-                }
-            };
             final Rest<FetchPipelineXmlResponse> rest = restFactory.create();
             rest
                     .onSuccess(result -> {
@@ -528,8 +517,19 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                             text = result.getXml();
                         }
                         xmlEditor.setText(text, true);
-                        ShowPopupEvent.fire(PipelineStructurePresenter.this, xmlEditor, PopupType.OK_CANCEL_DIALOG,
-                                popupSize, "Pipeline Source", popupUiHandlers);
+                        ShowPopupEvent.builder(xmlEditor)
+                                .popupType(PopupType.OK_CANCEL_DIALOG)
+                                .popupSize(popupSize)
+                                .caption("Pipeline Source")
+                                .onShow(e -> xmlEditor.focus())
+                                .onHideRequest(e -> {
+                                    if (e.isOk()) {
+                                        querySave(xmlEditor);
+                                    } else {
+                                        e.hide();
+                                    }
+                                })
+                                .fire();
                     })
                     .call(PIPELINE_RESOURCE)
                     .fetchPipelineXml(docRef);
@@ -542,7 +542,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                     if (ok) {
                         doActualSave(xmlEditor);
                     } else {
-                        HidePopupEvent.fire(PipelineStructurePresenter.this, xmlEditor, false, false);
+                        HidePopupEvent.builder(xmlEditor).ok(false).fire();
                     }
                 });
     }
@@ -552,7 +552,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
         rest
                 .onSuccess(result -> {
                     // Hide the popup.
-                    HidePopupEvent.fire(PipelineStructurePresenter.this, xmlEditor, false, true);
+                    HidePopupEvent.builder(xmlEditor).fire();
                     // Reload the entity.
                     RefreshDocumentEvent.fire(PipelineStructurePresenter.this, docRef);
                 })
@@ -662,29 +662,26 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
         public void execute() {
             final PipelineElement selectedElement = pipelineTreePresenter.getSelectionModel().getSelectedObject();
             if (selectedElement != null && elementType != null) {
-                final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(newElementPresenter) {
-                    @Override
-                    public void onHideRequest(final boolean autoClose, final boolean ok) {
-                        if (ok) {
-                            final String id = newElementPresenter.getElementId();
-                            final PipelineElementType elementType = newElementPresenter.getElementInfo();
-                            try {
-                                final PipelineElement newElement = pipelineModel.addElement(selectedElement,
-                                        elementType, id);
-                                pipelineTreePresenter.getSelectionModel().setSelected(newElement, true);
-                                setDirty(true);
-                            } catch (final RuntimeException e) {
-                                AlertEvent.fireError(
-                                        PipelineStructurePresenter.this,
-                                        e.getMessage(),
-                                        null);
-                            }
+                final HidePopupRequestEvent.Handler handler = event -> {
+                    if (event.isOk()) {
+                        final String id = newElementPresenter.getElementId();
+                        final PipelineElementType elementType = newElementPresenter.getElementInfo();
+                        try {
+                            final PipelineElement newElement = pipelineModel.addElement(selectedElement,
+                                    elementType, id);
+                            pipelineTreePresenter.getSelectionModel().setSelected(newElement, true);
+                            setDirty(true);
+                        } catch (final RuntimeException e) {
+                            AlertEvent.fireError(
+                                    PipelineStructurePresenter.this,
+                                    e.getMessage(),
+                                    null);
                         }
-                        hide();
                     }
+                    event.hide();
                 };
 
-                newElementPresenter.show(elementType, popupUiHandlers);
+                newElementPresenter.show(elementType, handler);
             }
         }
     }

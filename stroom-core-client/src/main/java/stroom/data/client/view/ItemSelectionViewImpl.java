@@ -47,6 +47,11 @@ public class ItemSelectionViewImpl
         return widget;
     }
 
+    @Override
+    public void focus() {
+        itemNoSpinner.focus();
+    }
+
     private long toOneBased(final long zeroBasedValue) {
         return zeroBasedValue + 1;
     }

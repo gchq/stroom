@@ -18,11 +18,13 @@ package stroom.data.client.presenter;
 
 import stroom.pipeline.shared.SourceLocation;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 public class ClassificationWrappedSourcePresenter
-        extends ClassificationWrapperPresenter {
+        extends ClassificationWrapperPresenter
+        implements Focus {
 
     private final SourcePresenter sourcePresenter;
 //    private SourceLocation sourceLocation;
@@ -36,6 +38,11 @@ public class ClassificationWrappedSourcePresenter
         sourcePresenter.setClassificationUiHandlers(this);
 
         setInSlot(ClassificationWrapperView.CONTENT, sourcePresenter);
+    }
+
+    @Override
+    public void focus() {
+        sourcePresenter.focus();
     }
 
     public void clear() {

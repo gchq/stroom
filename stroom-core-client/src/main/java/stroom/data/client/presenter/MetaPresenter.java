@@ -43,11 +43,10 @@ import stroom.svg.client.SvgPresets;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.inject.Inject;
@@ -61,7 +60,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class MetaPresenter extends MyPresenterWidget<MetaView>
-        implements HasDataSelectionHandlers<Selection<Long>>, HasDocumentRead<Object>, BeginSteppingHandler {
+        implements HasDataSelectionHandlers<Selection<Long>>,
+        HasDocumentRead<Object>,
+        BeginSteppingHandler {
 
     public static final String DATA = "DATA";
     public static final String STREAM_RELATION_LIST = "STREAM_RELATION_LIST";
@@ -178,69 +179,53 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
 
         registerHandler(streamListFilter.addClickHandler(event -> {
             final ExpressionPresenter presenter = streamListFilterPresenter.get();
+
+            final HidePopupRequestEvent.Handler HidePopupRequestEventHandler = e -> {
+                if (e.isOk()) {
+                    final ExpressionOperator expression = presenter.write();
+                    if (!expression.equals(getCriteria().getExpression())) {
+                        if (hasAdvancedCriteria(expression)) {
+                            ConfirmEvent.fire(MetaPresenter.this,
+                                    "You are setting advanced filters!  It is recommended you constrain " +
+                                            "your filter (e.g. by 'Created') to avoid an expensive query.  "
+                                            + "Are you sure you want to apply this advanced filter?",
+                                    confirm -> {
+                                        if (confirm) {
+                                            setExpression(expression);
+                                            e.hide();
+                                        } else {
+                                            // Don't hide
+                                        }
+                                    });
+
+                        } else {
+                            setExpression(expression);
+                            e.hide();
+                        }
+
+                    } else {
+                        // Nothing changed!
+                        e.hide();
+                    }
+
+                } else {
+                    e.hide();
+                }
+            };
+
             presenter.read(getCriteria().getExpression(),
                     MetaFields.STREAM_STORE_DOC_REF,
                     MetaFields.getAllFields());
 
-            final PopupUiHandlers streamFilterPUH = new DefaultPopupUiHandlers(presenter) {
-                @Override
-                public void onHideRequest(final boolean autoClose, final boolean ok) {
-                    if (ok) {
-                        final ExpressionOperator expression = presenter.write();
-                        if (!expression.equals(getCriteria().getExpression())) {
-                            if (hasAdvancedCriteria(expression)) {
-                                ConfirmEvent.fire(MetaPresenter.this,
-                                        "You are setting advanced filters!  It is recommended you constrain " +
-                                                "your filter (e.g. by 'Created') to avoid an expensive query.  "
-                                                + "Are you sure you want to apply this advanced filter?",
-                                        confirm -> {
-                                            if (confirm) {
-                                                setExpression(expression);
-                                                hide(autoClose, ok);
-                                            } else {
-                                                // Don't hide
-                                            }
-                                        });
-
-                            } else {
-                                setExpression(expression);
-                                hide(autoClose, ok);
-                            }
-
-                        } else {
-                            // Nothing changed!
-                            hide(autoClose, ok);
-                        }
-
-                    } else {
-                        hide(autoClose, ok);
-                    }
-                }
-
-                private void setExpression(final ExpressionOperator expression) {
-                    // Copy new filter settings back.
-                    getCriteria().setExpression(expression);
-                    // Reset the page offset.
-                    getCriteria().obtainPageRequest().setOffset(0);
-
-                    // Init the buttons
-                    setStreamListSelectableEnabled(metaListPresenter.getSelection());
-
-                    // Clear the current selection and get a new list of streams.
-                    metaListPresenter.getSelectionModel().clear();
-                    metaListPresenter.refresh();
-                }
-            };
-
             presenter.getWidget().getElement().addClassName("default-min-sizes");
             final PopupSize popupSize = PopupSize.resizable(800, 600);
-            ShowPopupEvent.fire(
-                    MetaPresenter.this,
-                    presenter,
-                    PopupType.OK_CANCEL_DIALOG,
-                    popupSize,
-                    "Filter Streams",
-                    streamFilterPUH);
+            ShowPopupEvent.builder(presenter)
+                    .popupType(PopupType.OK_CANCEL_DIALOG)
+                    .popupSize(popupSize)
+                    .caption("Filter Streams")
+                    .onShow(e -> presenter.focus())
+                    .onHideRequest(HidePopupRequestEventHandler)
+                    .fire();
         }));
 
         // Some button's may not exist due to permissions
@@ -310,6 +295,20 @@ public class MetaPresenter extends MyPresenterWidget<MetaView>
                 }
             }));
         }
+    }
+
+    private void setExpression(final ExpressionOperator expression) {
+        // Copy new filter settings back.
+        getCriteria().setExpression(expression);
+        // Reset the page offset.
+        getCriteria().obtainPageRequest().setOffset(0);
+
+        // Init the buttons
+        setStreamListSelectableEnabled(metaListPresenter.getSelection());
+
+        // Clear the current selection and get a new list of streams.
+        metaListPresenter.getSelectionModel().clear();
+        metaListPresenter.refresh();
     }
 
     public boolean hasAdvancedCriteria(final ExpressionOperator expression) {

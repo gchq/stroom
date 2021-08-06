@@ -33,12 +33,13 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 public class TickBox extends Composite
-        implements HasValue<TickBoxState>, HasValueChangeHandlers<TickBoxState>, HasBooleanValue {
+        implements HasValue<TickBoxState>, HasValueChangeHandlers<TickBoxState>, HasBooleanValue, Focus {
 
     private static volatile Binder binder;
     @UiField
@@ -78,6 +79,11 @@ public class TickBox extends Composite
         }
 
         image.getElement().setAttribute("role", "tickbox");
+    }
+
+    @Override
+    public void focus() {
+        image.setFocus(true);
     }
 
     @Override

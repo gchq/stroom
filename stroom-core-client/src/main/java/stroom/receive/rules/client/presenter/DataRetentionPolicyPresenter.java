@@ -31,9 +31,8 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuBuilder;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.BorderStyle;
@@ -484,26 +483,23 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
         editRulePresenter.read(newRule);
 
         final PopupSize popupSize = PopupSize.resizable(800, 400);
-        ShowPopupEvent.fire(
-                this,
-                editRulePresenter,
-                PopupType.OK_CANCEL_DIALOG,
-                popupSize,
-                "Add New Rule",
-                new DefaultPopupUiHandlers(editRulePresenter) {
-                    @Override
-                    public void onHideRequest(final boolean autoClose, final boolean ok) {
-                        if (ok) {
-                            final DataRetentionRule rule = editRulePresenter.write();
-                            visibleRules.add(ruleNumber, rule);
+        ShowPopupEvent.builder(editRulePresenter)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Add New Rule")
+                .onShow(e -> editRulePresenter.focus())
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        final DataRetentionRule rule = editRulePresenter.write();
+                        visibleRules.add(ruleNumber, rule);
 
-                            update();
-                            setDirty(true);
-                            listPresenter.getSelectionModel().setSelected(visibleRules.get(0));
-                        }
-                        hide(autoClose, ok);
+                        update();
+                        setDirty(true);
+                        listPresenter.getSelectionModel().setSelected(visibleRules.get(0));
                     }
-                });
+                    e.hide();
+                })
+                .fire();
     }
 
     private void edit(final DataRetentionRule existingRule) {
@@ -511,33 +507,30 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
         editRulePresenter.read(existingRule);
 
         final PopupSize popupSize = PopupSize.resizable(800, 400);
-        ShowPopupEvent.fire(
-                this,
-                editRulePresenter,
-                PopupType.OK_CANCEL_DIALOG,
-                popupSize,
-                "Edit Rule",
-                new DefaultPopupUiHandlers(editRulePresenter) {
-                    @Override
-                    public void onHideRequest(final boolean autoClose, final boolean ok) {
-                        if (ok) {
-                            final DataRetentionRule rule = editRulePresenter.write();
-                            final int index = visibleRules.indexOf(existingRule);
-                            visibleRules.remove(index);
-                            visibleRules.add(index, rule);
+        ShowPopupEvent.builder(editRulePresenter)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Edit Rule")
+                .onShow(e -> listPresenter.focus())
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        final DataRetentionRule rule = editRulePresenter.write();
+                        final int index = visibleRules.indexOf(existingRule);
+                        visibleRules.remove(index);
+                        visibleRules.add(index, rule);
 
-                            update();
-                            // Only mark the policies as dirty if the rule was actually changed.
-                            if (!existingRule.equals(rule)) {
-                                setDirty(true);
-                            }
-
-                            listPresenter.getSelectionModel().setSelected(visibleRules.get(index));
+                        update();
+                        // Only mark the policies as dirty if the rule was actually changed.
+                        if (!existingRule.equals(rule)) {
+                            setDirty(true);
                         }
 
-                        hide(autoClose, ok);
+                        listPresenter.getSelectionModel().setSelected(visibleRules.get(index));
                     }
-                });
+
+                    e.hide();
+                })
+                .fire();
     }
 
     private void update() {

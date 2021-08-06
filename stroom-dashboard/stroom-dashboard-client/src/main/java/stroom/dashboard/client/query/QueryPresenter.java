@@ -76,9 +76,8 @@ import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
@@ -484,24 +483,25 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private void setProcessorLimits(final QueryData queryData, final DocRef pipeline) {
         processorLimitsPresenter.setTimeLimitMins(defaultProcessorTimeLimit);
         processorLimitsPresenter.setRecordLimit(defaultProcessorRecordLimit);
-        ShowPopupEvent.fire(this, processorLimitsPresenter, PopupType.OK_CANCEL_DIALOG,
-                "Process Search Results", new DefaultPopupUiHandlers(processorLimitsPresenter) {
-                    @Override
-                    public void onHideRequest(final boolean autoClose, final boolean ok) {
-                        if (ok) {
-                            final Limits limits = new Limits();
-                            if (processorLimitsPresenter.getRecordLimit() != null) {
-                                limits.setEventCount(processorLimitsPresenter.getRecordLimit());
-                            }
-                            if (processorLimitsPresenter.getTimeLimitMins() != null) {
-                                limits.setDurationMs(processorLimitsPresenter.getTimeLimitMins() * 60 * 1000);
-                            }
-                            queryData.setLimits(limits);
-                            openEditor(queryData, pipeline);
+        ShowPopupEvent.builder(processorLimitsPresenter)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .caption("Process Search Results")
+                .onShow(e -> processorLimitsPresenter.getView().focus())
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        final Limits limits = new Limits();
+                        if (processorLimitsPresenter.getRecordLimit() != null) {
+                            limits.setEventCount(processorLimitsPresenter.getRecordLimit());
                         }
-                        hide(autoClose, ok);
+                        if (processorLimitsPresenter.getTimeLimitMins() != null) {
+                            limits.setDurationMs(processorLimitsPresenter.getTimeLimitMins() * 60 * 1000);
+                        }
+                        queryData.setLimits(limits);
+                        openEditor(queryData, pipeline);
                     }
-                });
+                    e.hide();
+                })
+                .fire();
     }
 
     private void openEditor(final QueryData queryData, final DocRef pipeline) {

@@ -64,6 +64,11 @@ public class SelectionHandlerViewImpl extends ViewWithUiHandlers<SelectionHandle
     }
 
     @Override
+    public void focus() {
+        component.focus();
+    }
+
+    @Override
     public void setComponentList(final List<Component> componentList) {
         final HasDisplayValue component = this.component.getSelectedItem();
 

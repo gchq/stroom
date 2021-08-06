@@ -164,6 +164,11 @@ public final class UserPreferencesViewImpl
     }
 
     @Override
+    public void focus() {
+        theme.setFocus(true);
+    }
+
+    @Override
     public String getTheme() {
         return theme.getSelected();
     }

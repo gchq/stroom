@@ -21,12 +21,13 @@ import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 public class ClassificationWrappedDataPresenter
         extends ClassificationWrapperPresenter
-        implements BeginSteppingHandler {
+        implements BeginSteppingHandler, Focus {
 
     private final DataPresenter dataPresenter;
     private SourceLocation sourceLocation;
@@ -41,6 +42,11 @@ public class ClassificationWrappedDataPresenter
         dataPresenter.setBeginSteppingHandler(this);
 
         setInSlot(ClassificationWrapperView.CONTENT, dataPresenter);
+    }
+
+    @Override
+    public void focus() {
+        dataPresenter.focus();
     }
 
     public void fetchData(final SourceLocation sourceLocation) {

@@ -31,13 +31,14 @@ import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.List;
 
-public class RuleListPresenter extends MyPresenterWidget<PagerView> {
+public class RuleListPresenter extends MyPresenterWidget<PagerView> implements Focus {
 
     private final MyDataGrid<ConditionalFormattingRule> dataGrid;
     private final MultiSelectionModelImpl<ConditionalFormattingRule> selectionModel;
@@ -55,6 +56,11 @@ public class RuleListPresenter extends MyPresenterWidget<PagerView> {
         getWidget().getElement().addClassName("stroom-border");
 
         initTableColumns();
+    }
+
+    @Override
+    public void focus() {
+        dataGrid.setFocus(true);
     }
 
     /**

@@ -96,7 +96,7 @@ public class DataRetentionPresenter extends ContentTabPresenter<DataRetentionPre
 
         registerHandler(getView().getTabBar().addSelectionHandler(event ->
                 selectTab(event.getSelectedItem())));
-        registerHandler(getView().getTabBar().addShowMenuHandler((e) -> getEventBus().fireEvent(e)));
+        registerHandler(getView().getTabBar().addShowMenuHandler(e -> getEventBus().fireEvent(e)));
     }
 
     protected void getContent(final TabData tab, final ContentCallback callback) {

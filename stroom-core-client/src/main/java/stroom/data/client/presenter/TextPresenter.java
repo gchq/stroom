@@ -26,6 +26,7 @@ import stroom.util.shared.TextRange;
 
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -36,7 +37,7 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 
 import java.util.List;
 
-public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> {
+public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> implements Focus {
 
     private final EditorPresenter editorPresenter;
 
@@ -65,6 +66,11 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> {
         editorPresenter.getFormatAction().setAvailable(false);
 
         view.setTextView(editorPresenter.getView());
+    }
+
+    @Override
+    public void focus() {
+        editorPresenter.focus();
     }
 
     public void setUiHandlers(final TextUiHandlers uiHandlers) {

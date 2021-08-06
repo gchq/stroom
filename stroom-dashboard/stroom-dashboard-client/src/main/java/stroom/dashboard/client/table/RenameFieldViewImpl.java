@@ -44,7 +44,7 @@ public class RenameFieldViewImpl extends ViewImpl implements RenameFieldPresente
 
     @Override
     public void focus() {
-        Scheduler.get().scheduleDeferred(() -> name.setFocus(true));
+        name.setFocus(true);
     }
 
     @Override

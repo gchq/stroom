@@ -35,7 +35,7 @@ public class CurveTabBar extends AbstractTabBar {
     @Override
     protected void onAttach() {
         super.onAttach();
-        GlobalResizeObserver.addListener(element, (e) -> onResize());
+        GlobalResizeObserver.addListener(element, e -> onResize());
     }
 
     @Override

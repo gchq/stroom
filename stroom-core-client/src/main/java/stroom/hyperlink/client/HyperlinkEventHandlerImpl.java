@@ -16,13 +16,10 @@ import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.TextRange;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.RenamePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
@@ -238,26 +235,19 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
         final PopupSize popupSize = PopupSize.resizable(800, 600);
         final IFramePresenter presenter = iFramePresenterProvider.get();
         final HandlerRegistration handlerRegistration = presenter.addDirtyHandler(event1 ->
-                RenamePopupEvent.fire(this, presenter, presenter.getLabel()));
+                RenamePopupEvent.builder(presenter).caption(presenter.getLabel()).fire());
         presenter.setUrl(hyperlink.getHref());
         presenter.setCustomTitle(customTitle);
 
-        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(presenter) {
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                handlerRegistration.removeHandler();
-                presenter.close();
-            }
-        };
-
-        ShowPopupEvent.fire(this,
-                presenter,
-                PopupType.CLOSE_DIALOG,
-                null,
-                popupSize,
-                presenter.getLabel(),
-                popupUiHandlers,
-                null);
+        ShowPopupEvent.builder(presenter)
+                .popupType(PopupType.CLOSE_DIALOG)
+                .popupSize(popupSize)
+                .caption(presenter.getLabel())
+                .onHide(e -> {
+                    handlerRegistration.removeHandler();
+                    presenter.close();
+                })
+                .fire();
     }
 
     private void openTab(final Hyperlink hyperlink, final String customTitle) {

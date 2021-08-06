@@ -31,13 +31,12 @@ import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.FileUpload;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
 import com.google.inject.Inject;
@@ -141,27 +140,29 @@ public class DataUploadPresenter extends MyPresenterWidget<DataUploadPresenter.D
         this.metaPresenter = streamPresenter;
         this.feedRef = feedRef;
 
-        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(this) {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    if (valid()) {
-                        // Disable popup buttons as we are submitting.
-                        disableButtons();
-                        submit();
-                    }
-                } else {
-                    hide();
-                }
-            }
-        };
-
         final PopupSize popupSize = PopupSize.resizable();
-        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, "Upload", popupUiHandlers);
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Upload")
+                .onShow(e -> getView().focus())
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        if (valid()) {
+                            // Disable popup buttons as we are submitting.
+                            disableButtons();
+                            submit();
+                        }
+                    } else {
+                        e.hide();
+                    }
+                })
+                .fire();
     }
 
     private void hide() {
-        HidePopupEvent.fire(this, this);
+        HidePopupEvent.builder(this)
+                .fire();
         enableButtons();
     }
 
@@ -170,14 +171,14 @@ public class DataUploadPresenter extends MyPresenterWidget<DataUploadPresenter.D
     }
 
     private void disableButtons() {
-        DisablePopupEvent.fire(this, this);
+        DisablePopupEvent.builder(this).fire();
     }
 
     private void enableButtons() {
-        EnablePopupEvent.fire(this, this);
+        EnablePopupEvent.builder(this).fire();
     }
 
-    public interface DataUploadView extends View {
+    public interface DataUploadView extends View, Focus {
 
         FormPanel getForm();
 

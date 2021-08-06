@@ -38,7 +38,6 @@ import stroom.search.solr.shared.SolrIndexResource;
 import stroom.search.solr.shared.SolrSynchState;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -218,24 +217,21 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
 
         fetchFieldTypes(fieldTypes -> {
             indexFieldEditPresenter.read(new SolrIndexField(), otherNames, fieldTypes);
-            indexFieldEditPresenter.show("New Field", new DefaultPopupUiHandlers(indexFieldEditPresenter) {
-                @Override
-                public void onHideRequest(final boolean autoClose, final boolean ok) {
-                    if (ok) {
-                        final SolrIndexField indexField = new SolrIndexField();
-                        if (indexFieldEditPresenter.write(indexField)) {
-                            fields.add(indexField);
-                            fields.sort(Comparator.comparing(SolrIndexField::getFieldName,
-                                    String.CASE_INSENSITIVE_ORDER));
-                            selectionModel.setSelected(indexField);
-                            refresh();
+            indexFieldEditPresenter.show("New Field", e -> {
+                if (e.isOk()) {
+                    final SolrIndexField indexField = new SolrIndexField();
+                    if (indexFieldEditPresenter.write(indexField)) {
+                        fields.add(indexField);
+                        fields.sort(Comparator.comparing(SolrIndexField::getFieldName,
+                                String.CASE_INSENSITIVE_ORDER));
+                        selectionModel.setSelected(indexField);
+                        refresh();
 
-                            hide(autoClose, ok);
-                            DirtyEvent.fire(SolrIndexFieldListPresenter.this, true);
-                        }
-                    } else {
-                        hide(autoClose, ok);
+                        e.hide();
+                        DirtyEvent.fire(SolrIndexFieldListPresenter.this, true);
                     }
+                } else {
+                    e.hide();
                 }
             });
         });
@@ -251,29 +247,26 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
 
             fetchFieldTypes(fieldTypes -> {
                 indexFieldEditPresenter.read(existingField, otherNames, fieldTypes);
-                indexFieldEditPresenter.show("Edit Field", new DefaultPopupUiHandlers(indexFieldEditPresenter) {
-                    @Override
-                    public void onHideRequest(final boolean autoClose, final boolean ok) {
-                        if (ok) {
-                            final SolrIndexField indexField = new SolrIndexField();
-                            if (indexFieldEditPresenter.write(indexField)) {
-                                if (!indexField.equals(existingField)) {
-                                    fields.remove(existingField);
-                                    fields.add(indexField);
-                                    fields.sort(Comparator.comparing(SolrIndexField::getFieldName,
-                                            String.CASE_INSENSITIVE_ORDER));
-                                    selectionModel.setSelected(indexField);
-                                    refresh();
+                indexFieldEditPresenter.show("Edit Field", e -> {
+                    if (e.isOk()) {
+                        final SolrIndexField indexField = new SolrIndexField();
+                        if (indexFieldEditPresenter.write(indexField)) {
+                            if (!indexField.equals(existingField)) {
+                                fields.remove(existingField);
+                                fields.add(indexField);
+                                fields.sort(Comparator.comparing(SolrIndexField::getFieldName,
+                                        String.CASE_INSENSITIVE_ORDER));
+                                selectionModel.setSelected(indexField);
+                                refresh();
 
-                                    hide(autoClose, ok);
-                                    DirtyEvent.fire(SolrIndexFieldListPresenter.this, true);
-                                } else {
-                                    hide(autoClose, ok);
-                                }
+                                e.hide();
+                                DirtyEvent.fire(SolrIndexFieldListPresenter.this, true);
+                            } else {
+                                e.hide();
                             }
-                        } else {
-                            hide(autoClose, ok);
                         }
+                    } else {
+                        e.hide();
                     }
                 });
             });

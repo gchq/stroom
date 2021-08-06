@@ -19,11 +19,10 @@ package stroom.dashboard.client.table;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Filter;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -33,26 +32,12 @@ import java.util.function.BiConsumer;
 
 public class FilterPresenter extends MyPresenterWidget<FilterPresenter.FilterView> {
 
-    private final PopupUiHandlers popupUiHandlers;
     private Field field;
     private BiConsumer<Field, Field> fieldChangeConsumer;
 
     @Inject
     public FilterPresenter(final EventBus eventBus, final FilterView view) {
         super(eventBus, view);
-        popupUiHandlers = new DefaultPopupUiHandlers(this) {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    final Filter filter = getFilter();
-                    if ((filter == null && field.getFilter() != null)
-                            || (filter != null && !filter.equals(field.getFilter()))) {
-                        fieldChangeConsumer.accept(field, field.copy().filter(filter).build());
-                    }
-                }
-                hide(autoClose, ok);
-            }
-        };
     }
 
     public void show(final TablePresenter tablePresenter,
@@ -77,8 +62,22 @@ public class FilterPresenter extends MyPresenterWidget<FilterPresenter.FilterVie
         getView().setExcludes(excludes);
 
         final PopupSize popupSize = PopupSize.resizable(400, 500);
-        ShowPopupEvent.fire(tablePresenter, this, PopupType.OK_CANCEL_DIALOG, popupSize,
-                "Filter '" + field.getName() + "'", popupUiHandlers);
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Filter '" + field.getName() + "'")
+                .onShow(e -> getView().focus())
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        final Filter filter = getFilter();
+                        if ((filter == null && field.getFilter() != null)
+                                || (filter != null && !filter.equals(field.getFilter()))) {
+                            fieldChangeConsumer.accept(field, field.copy().filter(filter).build());
+                        }
+                    }
+                    e.hide();
+                })
+                .fire();
     }
 
     private Filter getFilter() {
@@ -98,7 +97,7 @@ public class FilterPresenter extends MyPresenterWidget<FilterPresenter.FilterVie
         return filter;
     }
 
-    public interface FilterView extends View {
+    public interface FilterView extends View, Focus {
 
         String getIncludes();
 

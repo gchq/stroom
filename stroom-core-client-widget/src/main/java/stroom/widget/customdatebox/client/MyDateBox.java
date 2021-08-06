@@ -73,6 +73,11 @@ public class MyDateBox extends Composite implements DateBoxView {
     }
 
     @Override
+    public void focus() {
+        textBox.setFocus(true);
+    }
+
+    @Override
     public Long getMilliseconds() {
         return ClientDateUtil.fromISOString(getValue());
     }

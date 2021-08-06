@@ -27,19 +27,19 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
+import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.SelectElement;
 import com.google.gwt.dom.client.TextAreaElement;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -59,7 +59,6 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
     private boolean activityRecordingEnabled;
     private String activityEditorTitle;
     private String activityEditorBody;
-    private DefaultPopupUiHandlers popupUiHandlers;
 
     private Activity activity;
 
@@ -87,32 +86,27 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
         if (activityRecordingEnabled) {
             getView().getHtml().setHTML(activityEditorBody);
 
-            // Set the properties.
-            Scheduler.get().scheduleDeferred(this::read);
-
-            popupUiHandlers = new DefaultPopupUiHandlers(this) {
-                @Override
-                public void onHideRequest(final boolean autoClose, final boolean ok) {
-                    if (ok) {
-                        write(consumer);
-                    } else {
-                        consumer.accept(activity);
-                        hide();
-                    }
-                }
-            };
-
             final PopupSize popupSize = PopupSize.resizable(640, 480);
-            ShowPopupEvent.fire(this,
-                    this,
-                    PopupType.OK_CANCEL_DIALOG,
-                    popupSize, activityEditorTitle,
-                    popupUiHandlers);
+            ShowPopupEvent.builder(this)
+                    .popupType(PopupType.OK_CANCEL_DIALOG)
+                    .popupSize(popupSize)
+                    .caption(activityEditorTitle)
+                    .onShow(e -> read())
+                    .onHideRequest(e -> {
+                        if (e.isOk()) {
+                            write(consumer);
+                        } else {
+                            consumer.accept(activity);
+                            e.hide();
+                        }
+                    })
+                    .fire();
         }
     }
 
     private void hide() {
-        popupUiHandlers.hide();
+        HidePopupEvent.builder(this)
+                .fire();
     }
 
     protected void read() {
@@ -402,7 +396,7 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
         return true;
     }
 
-    public interface ActivityEditView extends View {
+    public interface ActivityEditView extends View, Focus {
 
         HTML getHtml();
     }

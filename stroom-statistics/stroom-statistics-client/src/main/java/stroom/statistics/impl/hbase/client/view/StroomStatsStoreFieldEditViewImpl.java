@@ -29,6 +29,7 @@ public class StroomStatsStoreFieldEditViewImpl extends ViewImpl
         implements StroomStatsStoreFieldEditPresenter.StroomStatsStoreFieldEditView {
 
     private final Widget widget;
+
     @UiField
     TextBox name;
 
@@ -40,6 +41,11 @@ public class StroomStatsStoreFieldEditViewImpl extends ViewImpl
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    @Override
+    public void focus() {
+        name.setFocus(true);
     }
 
     @Override

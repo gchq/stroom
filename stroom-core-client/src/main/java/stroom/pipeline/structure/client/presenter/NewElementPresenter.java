@@ -18,14 +18,14 @@ package stroom.pipeline.structure.client.presenter;
 
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.util.shared.ModelStringUtil;
-import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -35,7 +35,7 @@ import com.gwtplatform.mvp.client.View;
 public class NewElementPresenter extends MyPresenterWidget<NewElementPresenter.NewElementView> {
 
     private PipelineElementType elementType;
-    private PopupUiHandlers popupUiHandlers;
+    private HidePopupRequestEvent.Handler handler;
 
     @Inject
     public NewElementPresenter(final EventBus eventBus, final NewElementView view) {
@@ -48,22 +48,26 @@ public class NewElementPresenter extends MyPresenterWidget<NewElementPresenter.N
 
         registerHandler(getView().getIdBox().addKeyDownHandler(event -> {
             if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
-                if (popupUiHandlers != null) {
-                    popupUiHandlers.onHideRequest(false, true);
+                if (handler != null) {
+                    HidePopupRequestEvent.builder(this).fire();
                 }
             }
         }));
     }
 
-    public void show(final PipelineElementType elementType, final PopupUiHandlers popupUiHandlers) {
+    public void show(final PipelineElementType elementType, final HidePopupRequestEvent.Handler handler) {
         this.elementType = elementType;
-        this.popupUiHandlers = popupUiHandlers;
-
+        this.handler = handler;
         getView().getId().setText(ModelStringUtil.toCamelCase(elementType.getType()));
 
         final PopupSize popupSize = PopupSize.resizableX();
-        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, "Create Element", popupUiHandlers);
-        getView().focus();
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Create Element")
+                .onShow(e -> getView().focus())
+                .onHideRequest(handler)
+                .fire();
     }
 
     public PipelineElementType getElementInfo() {
@@ -74,12 +78,10 @@ public class NewElementPresenter extends MyPresenterWidget<NewElementPresenter.N
         return getView().getId().getText();
     }
 
-    public interface NewElementView extends View {
+    public interface NewElementView extends View, Focus {
 
         HasText getId();
 
         HasKeyDownHandlers getIdBox();
-
-        void focus();
     }
 }

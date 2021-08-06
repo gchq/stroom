@@ -8,11 +8,8 @@ import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.SelectionSummary;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.client.SafeHtmlUtil;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -58,16 +55,16 @@ public class SelectionSummaryPresenter extends MyPresenterWidget<CommonAlertView
                     .getSelectionSummary(criteria);
         }
 
-        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, caption,
-                new DefaultPopupUiHandlers(this) {
-                    @Override
-                    public void onHideRequest(final boolean autoClose, final boolean ok) {
-                        if (ok) {
-                            runnable.run();
-                        }
-                        hide(autoClose, ok);
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .caption(caption)
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        runnable.run();
                     }
-                });
+                    e.hide();
+                })
+                .fire();
     }
 
     private void update(final String postAction, final String action, final SelectionSummary result) {

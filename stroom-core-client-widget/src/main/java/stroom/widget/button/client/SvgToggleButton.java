@@ -39,6 +39,11 @@ public class SvgToggleButton extends BaseSvgButton implements ToggleButtonView {
         });
     }
 
+    @Override
+    public void focus() {
+        getElement().focus();
+    }
+
     /**
      * @param onPreset  The face to display when in the ON state, e.g. an OFF icon
      * @param offPreset The face to display when in the OFF state, e.g. an ON icon

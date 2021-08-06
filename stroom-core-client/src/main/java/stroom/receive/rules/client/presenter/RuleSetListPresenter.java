@@ -30,6 +30,7 @@ import stroom.widget.util.client.MultiSelectionModelImpl;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -37,7 +38,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import java.util.List;
 import java.util.function.Function;
 
-public class RuleSetListPresenter extends MyPresenterWidget<PagerView> {
+public class RuleSetListPresenter extends MyPresenterWidget<PagerView> implements Focus {
 
     private final MyDataGrid<ReceiveDataRule> dataGrid;
     private final MultiSelectionModelImpl<ReceiveDataRule> selectionModel;
@@ -55,6 +56,11 @@ public class RuleSetListPresenter extends MyPresenterWidget<PagerView> {
         getWidget().getElement().addClassName("stroom-border");
 
         initTableColumns();
+    }
+
+    @Override
+    public void focus() {
+        dataGrid.setFocus(true);
     }
 
     /**

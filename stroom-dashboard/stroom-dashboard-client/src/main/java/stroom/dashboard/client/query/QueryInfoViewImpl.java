@@ -45,7 +45,7 @@ public class QueryInfoViewImpl extends ViewWithUiHandlers implements QueryInfoVi
 
     @Override
     public void focus() {
-        Scheduler.get().scheduleDeferred(() -> queryInfo.setFocus(true));
+        queryInfo.setFocus(true);
     }
 
     @Override

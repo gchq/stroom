@@ -39,10 +39,9 @@ import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -370,42 +369,45 @@ public class PropertyListPresenter extends MyPresenterWidget<PagerView>
             final NewPropertyPresenter editor = newPropertyPresenter.get();
             editor.edit(defaultProperty, inheritedProperty, editing, source);
 
-            final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(editor) {
-                @Override
-                public void onHideRequest(final boolean autoClose, final boolean ok) {
-                    if (ok) {
-                        if (editor.isDirty()) {
-                            setDirty(true);
+            final HidePopupRequestEvent.Handler handler = e -> {
+                if (e.isOk()) {
+                    if (editor.isDirty()) {
+                        setDirty(true);
 
-                            editor.write(editing);
+                        editor.write(editing);
 
-                            // Remove the property locally.
-                            pipelineModel.getPipelineData().getAddedProperties().remove(editing);
-                            pipelineModel.getPipelineData().getRemovedProperties().remove(editing);
+                        // Remove the property locally.
+                        pipelineModel.getPipelineData().getAddedProperties().remove(editing);
+                        pipelineModel.getPipelineData().getRemovedProperties().remove(editing);
 
-                            switch (editor.getSource()) {
-                                case LOCAL:
-                                    pipelineModel.getPipelineData().getAddedProperties().add(editing);
-                                    break;
+                        switch (editor.getSource()) {
+                            case LOCAL:
+                                pipelineModel.getPipelineData().getAddedProperties().add(editing);
+                                break;
 
-                                case DEFAULT:
-                                    pipelineModel.getPipelineData().getRemovedProperties().add(editing);
-                                    break;
+                            case DEFAULT:
+                                pipelineModel.getPipelineData().getRemovedProperties().add(editing);
+                                break;
 
-                                case INHERIT:
-                                    // Do nothing as we have already removed it.
-                            }
-
-                            refresh();
+                            case INHERIT:
+                                // Do nothing as we have already removed it.
                         }
-                    }
 
-                    hide();
+                        refresh();
+                    }
                 }
+
+                e.hide();
             };
 
             final PopupSize popupSize = PopupSize.resizableX();
-            ShowPopupEvent.fire(this, editor, PopupType.OK_CANCEL_DIALOG, popupSize, "Edit Property", popupUiHandlers);
+            ShowPopupEvent.builder(editor)
+                    .popupType(PopupType.OK_CANCEL_DIALOG)
+                    .popupSize(popupSize)
+                    .caption("Edit Property")
+                    .onShow(e -> editor.getView().focus())
+                    .onHideRequest(handler)
+                    .fire();
         }
     }
 

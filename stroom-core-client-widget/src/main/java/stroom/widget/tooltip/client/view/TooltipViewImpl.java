@@ -38,6 +38,11 @@ public class TooltipViewImpl extends ViewImpl implements TooltipView {
     }
 
     @Override
+    public void focus() {
+        content.getElement().focus();
+    }
+
+    @Override
     public void setHTML(final SafeHtml html) {
         content.setHTML(html);
     }

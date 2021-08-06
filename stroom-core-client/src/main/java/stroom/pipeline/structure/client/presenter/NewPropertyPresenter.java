@@ -34,6 +34,7 @@ import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
@@ -376,7 +377,7 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
         setDirty(dirty, true);
     }
 
-    public interface NewPropertyView extends View {
+    public interface NewPropertyView extends View, Focus {
 
         void setElement(String element);
 

@@ -26,6 +26,7 @@ import stroom.datasource.api.v2.AbstractField;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.RandomId;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -38,7 +39,7 @@ import java.util.Optional;
 
 public class SelectionHandlerPresenter
         extends MyPresenterWidget<SelectionHandlerView>
-        implements SelectionHandlerUiHandlers {
+        implements SelectionHandlerUiHandlers, Focus {
 
     private final EditExpressionPresenter editExpressionPresenter;
     private ComponentSelectionHandler originalHandler;
@@ -54,6 +55,11 @@ public class SelectionHandlerPresenter
         this.editExpressionPresenter = editExpressionPresenter;
         view.setExpressionView(editExpressionPresenter.getView());
         view.setUiHandlers(this);
+    }
+
+    @Override
+    public void focus() {
+        getView().focus();
     }
 
     void read(final ComponentSelectionHandler componentSelectionHandler,
@@ -131,7 +137,7 @@ public class SelectionHandlerPresenter
         }
     }
 
-    public interface SelectionHandlerView extends View, HasUiHandlers<SelectionHandlerUiHandlers> {
+    public interface SelectionHandlerView extends View, Focus, HasUiHandlers<SelectionHandlerUiHandlers> {
 
         void setComponentList(List<Component> componentList);
 

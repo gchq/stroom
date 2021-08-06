@@ -16,8 +16,6 @@
 
 package stroom.widget.popup.client.view;
 
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -28,7 +26,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
-public class AcceptRejectContent extends Composite implements HasEnabled {
+public class AcceptRejectContent extends Composite implements DialogButtons {
 
     private static final Binder binder = GWT.create(Binder.class);
 
@@ -36,7 +34,7 @@ public class AcceptRejectContent extends Composite implements HasEnabled {
 
     }
 
-    private final PopupUiHandlers popupUiHandlers;
+    private final HideRequestUiHandlers uiHandlers;
 
     @UiField
     Button accept;
@@ -45,9 +43,9 @@ public class AcceptRejectContent extends Composite implements HasEnabled {
     @UiField
     SimplePanel content;
 
-    public AcceptRejectContent(final PopupUiHandlers popupUiHandlers) {
+    public AcceptRejectContent(final HideRequestUiHandlers uiHandlers) {
         initWidget(binder.createAndBindUi(this));
-        this.popupUiHandlers = popupUiHandlers;
+        this.uiHandlers = uiHandlers;
     }
 
     public void setContent(final Widget widget) {
@@ -56,14 +54,19 @@ public class AcceptRejectContent extends Composite implements HasEnabled {
         reject.setEnabled(true);
     }
 
+    @Override
+    public void focus() {
+        reject.setFocus(true);
+    }
+
     @UiHandler("accept")
     public void onAcceptClick(final ClickEvent event) {
-        popupUiHandlers.onHideRequest(false, true);
+        uiHandlers.hideRequest(new HideRequest(false, true));
     }
 
     @UiHandler("reject")
     public void onRejectClick(final ClickEvent event) {
-        popupUiHandlers.onHideRequest(false, false);
+        uiHandlers.hideRequest(new HideRequest(false, false));
     }
 
     @Override

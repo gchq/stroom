@@ -35,10 +35,8 @@ import stroom.util.shared.ResourceGeneration;
 import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -114,31 +112,32 @@ public class ExportConfigPresenter
         treePresenter.setRequiredPermissions(DocumentPermissionNames.READ);
         treePresenter.refresh();
 
-        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(this) {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    export();
-                } else {
-                    hide();
-                }
-            }
-        };
-
         final PopupSize popupSize = PopupSize.resizable(500, 600);
-        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, "Export", popupUiHandlers);
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Export")
+                .onHide(e -> treePresenter.focus())
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        export();
+                    } else {
+                        e.hide();
+                    }
+                })
+                .fire();
     }
 
     private void export() {
         // Disable the popup ok/cancel buttons before we attempt export.
-        DisablePopupEvent.fire(this, this);
+        DisablePopupEvent.builder(this).fire();
 
         final Set<ExplorerNode> dataItems = treePresenter.getSelectedSet();
         if (dataItems == null || dataItems.size() == 0) {
             // Let the user know that they didn't select anything to export.
             AlertEvent.fireWarn(this, "No folders have been selected for export", null);
             // Re-enable buttons on this popup.
-            EnablePopupEvent.fire(this, this);
+            EnablePopupEvent.builder(this).fire();
 
         } else {
             final Set<DocRef> docRefs = new HashSet<>();

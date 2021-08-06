@@ -30,9 +30,6 @@ import stroom.dispatch.client.RestFactory;
 import stroom.node.client.NodeManager;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
@@ -151,10 +148,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
             @Override
             protected void showInfo(final CacheInfo row, final int x, final int y) {
                 final SafeHtml html = getInfoHtml(row);
-                tooltipPresenter.setHTML(html);
-                final PopupPosition popupPosition = new PopupPosition(x, y);
-                ShowPopupEvent.fire(CacheNodeListPresenter.this, tooltipPresenter, PopupType.POPUP,
-                        popupPosition, null);
+                tooltipPresenter.show(html, x, y);
             }
         };
         dataGrid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);

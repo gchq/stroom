@@ -26,8 +26,6 @@ import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
@@ -160,24 +158,20 @@ public class UsersAndGroupsTabPresenter extends
 
     private void onNew() {
         if (criteria.isGroup()) {
-            final PopupUiHandlers hidePopupUiHandlers = new DefaultPopupUiHandlers(newPresenter) {
-                @Override
-                public void onHideRequest(final boolean autoClose, final boolean ok) {
-                    if (ok) {
-                        final Rest<User> rest = restFactory.create();
-                        rest
-                                .onSuccess(result -> {
-                                    hide(autoClose, ok);
-                                    edit(result);
-                                })
-                                .call(USER_RESOURCE)
-                                .create(newPresenter.getName(), criteria.isGroup());
-                    } else {
-                        hide(autoClose, ok);
-                    }
+            newPresenter.show(e -> {
+                if (e.isOk()) {
+                    final Rest<User> rest = restFactory.create();
+                    rest
+                            .onSuccess(result -> {
+                                e.hide();
+                                edit(result);
+                            })
+                            .call(USER_RESOURCE)
+                            .create(newPresenter.getName(), criteria.isGroup());
+                } else {
+                    e.hide();
                 }
-            };
-            newPresenter.show(hidePopupUiHandlers);
+            });
 
         } else {
             selectUserPresenterProvider.get().show(this::edit);

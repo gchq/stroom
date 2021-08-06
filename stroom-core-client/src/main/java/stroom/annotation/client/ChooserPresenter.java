@@ -19,18 +19,14 @@ package stroom.annotation.client;
 import stroom.annotation.client.ChooserPresenter.ChooserView;
 import stroom.data.table.client.MyCellTable;
 import stroom.widget.util.client.BasicSelectionEventManager;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MySingleSelectionModel;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -70,6 +66,10 @@ public class ChooserPresenter extends MyPresenterWidget<ChooserView> implements 
             }
         };
         cellTable.addColumn(textColumn);
+    }
+
+    void focus() {
+        cellTable.setFocus(true);
     }
 
     void clearFilter() {

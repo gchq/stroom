@@ -29,18 +29,17 @@ import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -329,36 +328,21 @@ public final class ManageGlobalPropertyEditPresenter
         final String caption = getEntityDisplayType() + " - " + configProperty.getName();
         final PopupType popupType = PopupType.OK_CANCEL_DIALOG;
 
-        final PopupUiHandlers internalPopupUiHandlers = new DefaultPopupUiHandlers(this) {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    write(true);
-                } else {
-                    hide();
-                }
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                hideRunnable.run();
-            }
-        };
-
         read();
-        ShowPopupEvent.fire(
-                this,
-                this,
-                popupType,
-                getPopupSize(),
-                caption,
-                internalPopupUiHandlers);
-    }
-
-    protected void hide() {
-        HidePopupEvent.fire(
-                ManageGlobalPropertyEditPresenter.this,
-                ManageGlobalPropertyEditPresenter.this);
+        ShowPopupEvent.builder(this)
+                .popupType(popupType)
+                .popupSize(getPopupSize())
+                .caption(caption)
+                .onShow(e -> getView().focus())
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        write(true, e);
+                    } else {
+                        e.hide();
+                    }
+                })
+                .onHide(e -> hideRunnable.run())
+                .fire();
     }
 
     private ConfigProperty getEntity() {
@@ -443,7 +427,7 @@ public final class ManageGlobalPropertyEditPresenter
         getView().setEditable(getEntity().isEditable());
     }
 
-    private void write(final boolean hideOnSave) {
+    private void write(final boolean hideOnSave, final HidePopupRequestEvent event) {
         refreshValuesOnChange();
 
         ConfigProperty configPropertyToSave = getEntity();
@@ -453,7 +437,7 @@ public final class ManageGlobalPropertyEditPresenter
                 .onSuccess(savedConfigProperty -> {
                     setEntity(savedConfigProperty);
                     if (hideOnSave) {
-                        hide();
+                        event.hide();
                         // Refresh client properties in case they were affected by this change.
                         clientPropertyCache.refresh();
                     }
@@ -546,7 +530,7 @@ public final class ManageGlobalPropertyEditPresenter
         return "#" + name.replace(" ", "-").toLowerCase();
     }
 
-    public interface GlobalPropertyEditView extends View, HasUiHandlers<ManageGlobalPropertyEditUiHandlers> {
+    public interface GlobalPropertyEditView extends View, Focus, HasUiHandlers<ManageGlobalPropertyEditUiHandlers> {
 
         HasText getName();
 

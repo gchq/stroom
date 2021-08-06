@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.query;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -44,7 +45,7 @@ public class ProcessorLimitsPresenter extends MyPresenterWidget<ProcessorLimitsP
         getView().setRecordLimit(value);
     }
 
-    public interface ProcessorLimitsView extends View {
+    public interface ProcessorLimitsView extends View, Focus {
 
         Long getTimeLimitMins();
 

@@ -32,12 +32,11 @@ import stroom.widget.dropdowntree.client.view.DropDownTreeView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.SelectionType;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -45,9 +44,8 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 class ExplorerDropDownTreePresenter
         extends MyPresenterWidget<DropDownTreeView>
-        implements DropDownTreeUiHandlers, HasDataSelectionHandlers<ExplorerNode> {
+        implements DropDownTreeUiHandlers, HasDataSelectionHandlers<ExplorerNode>, Focus {
 
-    private final PopupUiHandlers popupUiHandlers;
     private final ExtendedExplorerTree explorerTree;
     private boolean allowFolderSelection;
     private String caption = "Choose item";
@@ -60,31 +58,6 @@ class ExplorerDropDownTreePresenter
                                   final UiConfigCache uiConfigCache) {
         super(eventBus, view);
         getView().setUiHandlers(this);
-
-        popupUiHandlers = new DefaultPopupUiHandlers(this) {
-            @Override
-            public void onShow() {
-                super.onShow();
-                explorerTree.setFocus(true);
-            }
-
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    final ExplorerNode selected = getSelectedEntityData();
-                    if (isSelectionAllowed(selected)) {
-                        DataSelectionEvent.fire(ExplorerDropDownTreePresenter.this, selected, false);
-                        selectedExplorerNode = selected;
-                        hide(autoClose, ok);
-                    } else {
-                        AlertEvent.fireError(ExplorerDropDownTreePresenter.this,
-                                "You must choose a valid item.", null);
-                    }
-                } else {
-                    hide(autoClose, ok);
-                }
-            }
-        };
 
         explorerTree = new ExtendedExplorerTree(this, restFactory);
         setIncludeNullSelection(true);
@@ -100,16 +73,36 @@ class ExplorerDropDownTreePresenter
                                 uiConfig.getHelpUrl())));
     }
 
+    @Override
+    public void focus() {
+        getView().focus();
+    }
+
     public void show() {
         getView().clearFilter();
         refresh();
         final PopupSize popupSize = PopupSize.resizable(400, 550);
-        ShowPopupEvent.fire(this,
-                this,
-                PopupType.OK_CANCEL_DIALOG,
-                popupSize,
-                caption,
-                popupUiHandlers);
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption(caption)
+                .onShow(e -> focus())
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        final ExplorerNode selected = getSelectedEntityData();
+                        if (isSelectionAllowed(selected)) {
+                            DataSelectionEvent.fire(ExplorerDropDownTreePresenter.this, selected, false);
+                            selectedExplorerNode = selected;
+                            e.hide();
+                        } else {
+                            AlertEvent.fireError(ExplorerDropDownTreePresenter.this,
+                                    "You must choose a valid item.", null);
+                        }
+                    } else {
+                        e.hide();
+                    }
+                })
+                .fire();
     }
 
     protected void setIncludeNullSelection(final boolean includeNullSelection) {
@@ -128,7 +121,7 @@ class ExplorerDropDownTreePresenter
             } else if (selectionType.isDoubleSelect()) {
                 DataSelectionEvent.fire(this, selectedItem, true);
                 this.selectedExplorerNode = selectedItem;
-                HidePopupEvent.fire(this, this, true, true);
+                HidePopupEvent.builder(this).fire();
             }
         }
     }

@@ -24,6 +24,11 @@ public class SvgButton extends BaseSvgButton implements ButtonView {
         super(preset);
     }
 
+    @Override
+    public void focus() {
+        getElement().focus();
+    }
+
     public static SvgButton create(final Preset preset) {
         final SvgButton button = new SvgButton(preset);
         return button;

@@ -16,10 +16,11 @@
 
 package stroom.security.client.presenter;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
-public interface UserListView extends View, HasUiHandlers<UserListUiHandlers> {
+public interface UserListView extends View, Focus, HasUiHandlers<UserListUiHandlers> {
 
     void setDatGridView(View view);
 }

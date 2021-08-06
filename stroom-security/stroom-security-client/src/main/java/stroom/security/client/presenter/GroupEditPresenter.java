@@ -19,10 +19,8 @@ package stroom.security.client.presenter;
 import stroom.security.client.presenter.GroupEditPresenter.UserGroupEditView;
 import stroom.security.shared.User;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView;
+import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.presenter.Size;
 
 import com.google.inject.Inject;
@@ -51,12 +49,6 @@ public class GroupEditPresenter extends MyPresenterWidget<UserGroupEditView> {
     public void show(final User userRef, final Runnable closeRunnable) {
         read(userRef);
 
-        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(this) {
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                closeRunnable.run();
-            }
-        };
         final PopupSize popupSize = PopupSize.builder()
                 .width(Size
                         .builder()
@@ -72,12 +64,13 @@ public class GroupEditPresenter extends MyPresenterWidget<UserGroupEditView> {
                         .build())
                 .build();
         final String caption = "Group - " + userRef.getName();
-        ShowPopupEvent.fire(GroupEditPresenter.this,
-                GroupEditPresenter.this,
-                PopupView.PopupType.CLOSE_DIALOG,
-                popupSize,
-                caption,
-                popupUiHandlers);
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.CLOSE_DIALOG)
+                .popupSize(popupSize)
+                .caption(caption)
+                .onShow(e -> addRemoveUsersPresenter.getView().focus())
+                .onHide(e -> closeRunnable.run())
+                .fire();
     }
 
     private void read(User userRef) {

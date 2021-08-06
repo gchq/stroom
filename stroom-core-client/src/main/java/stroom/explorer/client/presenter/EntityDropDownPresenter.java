@@ -23,13 +23,14 @@ import stroom.explorer.shared.ExplorerNode;
 import stroom.widget.dropdowntree.client.view.DropDownUiHandlers;
 import stroom.widget.dropdowntree.client.view.DropDownView;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 public class EntityDropDownPresenter extends MyPresenterWidget<DropDownView>
-        implements DropDownUiHandlers, HasDataSelectionHandlers<ExplorerNode> {
+        implements DropDownUiHandlers, HasDataSelectionHandlers<ExplorerNode>, Focus {
 
     private final ExplorerDropDownTreePresenter explorerDropDownTreePresenter;
     private boolean enabled = true;
@@ -48,6 +49,11 @@ public class EntityDropDownPresenter extends MyPresenterWidget<DropDownView>
         super.onBind();
         registerHandler(explorerDropDownTreePresenter.addDataSelectionHandler(event ->
                 changeSelection(event.getSelectedItem())));
+    }
+
+    @Override
+    public void focus() {
+        explorerDropDownTreePresenter.focus();
     }
 
     public void setIncludedTypes(final String... includedTypes) {

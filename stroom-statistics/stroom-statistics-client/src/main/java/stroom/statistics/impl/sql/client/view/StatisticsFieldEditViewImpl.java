@@ -42,6 +42,11 @@ public class StatisticsFieldEditViewImpl extends ViewImpl implements StatisticsF
     }
 
     @Override
+    public void focus() {
+        name.setFocus(true);
+    }
+
+    @Override
     public String getFieldName() {
         return name.getText();
     }

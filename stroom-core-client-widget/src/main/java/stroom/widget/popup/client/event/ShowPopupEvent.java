@@ -18,24 +18,28 @@ package stroom.widget.popup.client.event;
 
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HasHandlers;
 import com.gwtplatform.mvp.client.PresenterWidget;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
 
     private static Type<Handler> TYPE;
+
     private final PresenterWidget<?> presenterWidget;
     private final PopupType popupType;
     private final PopupPosition popupPosition;
     private final PopupSize popupSize;
     private final String caption;
-    private final PopupUiHandlers popupUiHandlers;
+    private final ShowPopupEvent.Handler showHandler;
+    private final HidePopupRequestEvent.Handler hideRequestHandler;
+    private final HidePopupEvent.Handler hideHandler;
     private final Boolean modal;
     private final Element[] autoHidePartners;
 
@@ -44,7 +48,9 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
                            final PopupPosition popupPosition,
                            final PopupSize popupSize,
                            final String caption,
-                           final PopupUiHandlers popupUiHandlers,
+                           final ShowPopupEvent.Handler showHandler,
+                           final HidePopupRequestEvent.Handler hideRequestHandler,
+                           final HidePopupEvent.Handler hideHandler,
                            final Boolean modal,
                            final Element... autoHidePartners) {
         this.presenterWidget = presenterWidget;
@@ -52,156 +58,15 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
         this.popupPosition = popupPosition;
         this.popupSize = popupSize;
         this.caption = caption;
-        this.popupUiHandlers = popupUiHandlers;
+        this.showHandler = showHandler;
+        this.hideRequestHandler = hideRequestHandler;
+        this.hideHandler = hideHandler;
         this.modal = modal;
         this.autoHidePartners = autoHidePartners;
     }
 
-    /**
-     * Show a popup center of the screen and sized to it's content without a
-     * handler.
-     */
-    public static void fire(final HasHandlers handlers,
-                            final PresenterWidget<?> presenterWidget,
-                            final PopupType popupType,
-                            final String caption,
-                            final Element... autoHidePartner) {
-        fire(
-                handlers,
-                presenterWidget,
-                popupType,
-                null,
-                null,
-                caption,
-                null,
-                null,
-                autoHidePartner);
-    }
-
-    /**
-     * Show a popup center of the screen and sized by the popup size.
-     */
-    public static void fire(final HasHandlers handlers, final PresenterWidget<?> presenterWidget,
-                            final PopupType popupType, final PopupSize popupSize, final String caption,
-                            final PopupUiHandlers popupUiHandlers, final Element... autoHidePartner) {
-        fire(
-                handlers,
-                presenterWidget,
-                popupType,
-                null,
-                popupSize,
-                caption,
-                popupUiHandlers,
-                null,
-                autoHidePartner);
-    }
-
-    public static void fire(final HasHandlers handlers,
-                            final PresenterWidget<?> presenterWidget,
-                            final PopupType popupType,
-                            final PopupSize popupSize,
-                            final PopupPosition popupPosition,
-                            final String caption,
-                            final PopupUiHandlers popupUiHandlers,
-                            final Element... autoHidePartner) {
-        fire(
-                handlers,
-                presenterWidget,
-                popupType,
-                popupPosition,
-                popupSize,
-                caption,
-                popupUiHandlers,
-                null,
-                autoHidePartner);
-    }
-
-    /**
-     * Show a popup center of the screen and sized to it's content with optional
-     * modality.
-     */
-    public static void fire(final HasHandlers handlers,
-                            final PresenterWidget<?> presenterWidget,
-                            final PopupType popupType,
-                            final String caption,
-                            final PopupUiHandlers popupUiHandlers,
-                            final Boolean modal,
-                            final Element... autoHidePartner) {
-        fire(
-                handlers,
-                presenterWidget,
-                popupType,
-                null,
-                null,
-                caption,
-                popupUiHandlers,
-                modal,
-                autoHidePartner);
-    }
-
-    /**
-     * Show a popup center of the screen and sized to it's content.
-     */
-    public static void fire(final HasHandlers handlers,
-                            final PresenterWidget<?> presenterWidget,
-                            final PopupType popupType,
-                            final String caption,
-                            final PopupUiHandlers popupUiHandlers,
-                            final Element... autoHidePartner) {
-        fire(
-                handlers,
-                presenterWidget,
-                popupType,
-                null,
-                null,
-                caption,
-                popupUiHandlers,
-                null,
-                autoHidePartner);
-    }
-
-    /**
-     * Show a popup in the specified position and sized to it's content.
-     */
-    public static void fire(final HasHandlers handlers,
-                            final PresenterWidget<?> presenterWidget,
-                            final PopupType popupType,
-                            final PopupPosition popupPosition,
-                            final PopupUiHandlers popupUiHandlers,
-                            final Element... autoHidePartner) {
-        fire(
-                handlers,
-                presenterWidget,
-                popupType,
-                popupPosition,
-                null,
-                null,
-                popupUiHandlers,
-                null,
-                autoHidePartner);
-    }
-
-    /**
-     * Show a popup in the specified position and the specified size.
-     */
-    public static void fire(final HasHandlers handlers,
-                            final PresenterWidget<?> presenterWidget,
-                            final PopupType popupType,
-                            final PopupPosition popupPosition,
-                            final PopupSize popupSize,
-                            final String caption,
-                            final PopupUiHandlers popupUiHandlers,
-                            final Boolean modal,
-                            final Element... autoHidePartners) {
-        handlers.fireEvent(new ShowPopupEvent(
-                presenterWidget,
-                popupType,
-                popupPosition,
-                popupSize,
-                caption,
-                popupUiHandlers,
-                modal,
-                autoHidePartners));
+    public static Builder builder(final PresenterWidget<?> presenterWidget) {
+        return new Builder(presenterWidget);
     }
 
     public static Type<Handler> getType() {
@@ -241,8 +106,16 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
         return caption;
     }
 
-    public PopupUiHandlers getPopupUiHandlers() {
-        return popupUiHandlers;
+    public Handler getShowHandler() {
+        return showHandler;
+    }
+
+    public HidePopupRequestEvent.Handler getHideRequestHandler() {
+        return hideRequestHandler;
+    }
+
+    public HidePopupEvent.Handler getHideHandler() {
+        return hideHandler;
     }
 
     public Boolean getModal() {
@@ -256,5 +129,96 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
     public interface Handler extends EventHandler {
 
         void onShow(ShowPopupEvent event);
+    }
+
+    public static class Builder {
+
+        private final PresenterWidget<?> presenterWidget;
+        private PopupType popupType;
+        private PopupPosition popupPosition;
+        private PopupSize popupSize;
+        private String caption;
+        private ShowPopupEvent.Handler showHandler;
+        private HidePopupRequestEvent.Handler hideRequestHandler;
+        private HidePopupEvent.Handler hideHandler;
+        private Boolean modal;
+        private final List<Element> autoHidePartners = new ArrayList<>();
+
+        public Builder(final PresenterWidget<?> presenterWidget) {
+            this.presenterWidget = presenterWidget;
+        }
+
+        public Builder popupType(final PopupType popupType) {
+            this.popupType = popupType;
+            return this;
+        }
+
+        public Builder popupPosition(final PopupPosition popupPosition) {
+            this.popupPosition = popupPosition;
+            return this;
+        }
+
+        public Builder popupSize(final PopupSize popupSize) {
+            this.popupSize = popupSize;
+            return this;
+        }
+
+        public Builder caption(final String caption) {
+            this.caption = caption;
+            return this;
+        }
+
+        public Builder modal(final Boolean modal) {
+            this.modal = modal;
+            return this;
+        }
+
+        public Builder addAutoHidePartner(final Element... autoHidePartner) {
+            if (autoHidePartner != null) {
+                for (final Element element : autoHidePartner) {
+                    this.autoHidePartners.add(element);
+                }
+            }
+            return this;
+        }
+
+        public Builder onShow(final ShowPopupEvent.Handler handler) {
+            this.showHandler = handler;
+            return this;
+        }
+
+        public Builder onHideRequest(final HidePopupRequestEvent.Handler handler) {
+            this.hideRequestHandler = handler;
+            return this;
+        }
+
+        public Builder onHide(final HidePopupEvent.Handler handler) {
+            this.hideHandler = handler;
+            return this;
+        }
+
+        public void fire() {
+            // By default we will automatically hide popups unless they have a handler that alters the behaviour.
+            if (hideRequestHandler == null) {
+                hideRequestHandler = e -> HidePopupEvent.builder(presenterWidget).fire();
+            }
+
+            Element[] elements = null;
+            if (autoHidePartners.size() > 0) {
+                elements = autoHidePartners.toArray(new Element[0]);
+            }
+
+            presenterWidget.fireEvent(new ShowPopupEvent(
+                    presenterWidget,
+                    popupType,
+                    popupPosition,
+                    popupSize,
+                    caption,
+                    showHandler,
+                    hideRequestHandler,
+                    hideHandler,
+                    modal,
+                    elements));
+        }
     }
 }

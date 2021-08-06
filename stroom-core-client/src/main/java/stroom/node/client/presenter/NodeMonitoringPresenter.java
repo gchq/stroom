@@ -40,9 +40,6 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.client.SafeHtmlUtil;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ModelStringUtil;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
@@ -311,18 +308,11 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<PagerView>
                     .addRow("Cluster URL", node.getUrl(), true)
                     .build());
         }
-
-        tooltipPresenter.setHTML(builder.build());
-        final PopupPosition popupPosition = new PopupPosition(x, y);
-        ShowPopupEvent.fire(NodeMonitoringPresenter.this, tooltipPresenter, PopupType.POPUP,
-                popupPosition, null);
+        tooltipPresenter.show(builder.build(), x, y);
     }
 
     private void showNodeInfoError(final Throwable caught, final int x, final int y) {
-        tooltipPresenter.setHTML(SafeHtmlUtils.fromString(caught.getMessage()));
-        final PopupPosition popupPosition = new PopupPosition(x, y);
-        ShowPopupEvent.fire(NodeMonitoringPresenter.this, tooltipPresenter, PopupType.POPUP,
-                popupPosition, null);
+        tooltipPresenter.show(SafeHtmlUtils.fromString(caught.getMessage()), x, y);
     }
 
     @Override

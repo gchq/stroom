@@ -87,6 +87,11 @@ public class SolrIndexFieldEditViewImpl extends ViewImpl implements SolrIndexFie
     }
 
     @Override
+    public void focus() {
+        fieldUse.focus();
+    }
+
+    @Override
     public SolrIndexFieldType getFieldUse() {
         return fieldUse.getSelectedItem();
     }

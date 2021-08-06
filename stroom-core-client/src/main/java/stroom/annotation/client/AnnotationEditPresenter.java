@@ -35,11 +35,9 @@ import stroom.security.shared.UserResource;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.RenamePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -48,6 +46,7 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
@@ -199,7 +198,7 @@ public class AnnotationEditPresenter
         if (hasChanged(currentStatus, selected)) {
             currentStatus = selected;
             getView().setStatus(selected);
-            HidePopupEvent.fire(this, statusPresenter, true, true);
+            HidePopupEvent.builder(statusPresenter).fire();
 
             if (addEntry && annotationDetail != null) {
                 final CreateEntryRequest request = new CreateEntryRequest(
@@ -214,7 +213,7 @@ public class AnnotationEditPresenter
         if (hasChanged(currentAssignedTo, selected)) {
             currentAssignedTo = selected;
             getView().setAssignedTo(selected);
-            HidePopupEvent.fire(this, assignedToPresenter, true, true);
+            HidePopupEvent.builder(assignedToPresenter).fire();
 
             if (addEntry && annotationDetail != null) {
                 final CreateEntryRequest request = new CreateEntryRequest(
@@ -228,7 +227,7 @@ public class AnnotationEditPresenter
     private void changeComment(final String selected) {
         if (selected != null && hasChanged(getView().getComment(), selected)) {
             getView().setComment(getView().getComment() + selected);
-            HidePopupEvent.fire(this, commentPresenter, true, true);
+            HidePopupEvent.builder(commentPresenter).fire();
         }
     }
 
@@ -289,17 +288,13 @@ public class AnnotationEditPresenter
             }
         }
 
-        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(this);
         final PopupSize popupSize = PopupSize.resizable(800, 600);
-        ShowPopupEvent.fire(this,
-                this,
-                PopupType.CLOSE_DIALOG,
-                null,
-                popupSize, getCaption(annotationDetail),
-                popupUiHandlers,
-                false);
-
-        getView().focusComment();
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.CLOSE_DIALOG)
+                .popupSize(popupSize)
+                .caption(getCaption(annotationDetail))
+                .onShow(e -> getView().focus())
+                .fire();
     }
 
     private String getCaption(final AnnotationDetail annotationDetail) {
@@ -313,7 +308,7 @@ public class AnnotationEditPresenter
         if (annotationDetail != null) {
             if (this.annotationDetail == null) {
                 // If this is an existing annotation then change the dialog caption.
-                RenamePopupEvent.fire(this, this, getCaption(annotationDetail));
+                RenamePopupEvent.builder(this).caption(getCaption(annotationDetail)).fire();
             }
             this.annotationDetail = annotationDetail;
 
@@ -748,13 +743,12 @@ public class AnnotationEditPresenter
         statusPresenter.setSelected(currentStatus);
         final PopupPosition popupPosition = new PopupPosition(element.getAbsoluteLeft() - 1,
                 element.getAbsoluteTop() + element.getClientHeight() + 2);
-        ShowPopupEvent.fire(
-                this,
-                statusPresenter,
-                PopupType.POPUP,
-                popupPosition,
-                null,
-                element);
+        ShowPopupEvent.builder(statusPresenter)
+                .popupType(PopupType.POPUP)
+                .popupPosition(popupPosition)
+                .addAutoHidePartner(element)
+                .onShow(e -> statusPresenter.focus())
+                .fire();
     }
 
     @Override
@@ -776,13 +770,12 @@ public class AnnotationEditPresenter
         assignedToPresenter.setSelected(currentAssignedTo);
         final PopupPosition popupPosition = new PopupPosition(element.getAbsoluteLeft() - 1,
                 element.getAbsoluteTop() + element.getClientHeight() + 2);
-        ShowPopupEvent.fire(
-                this,
-                assignedToPresenter,
-                PopupType.POPUP,
-                popupPosition,
-                null,
-                element);
+        ShowPopupEvent.builder(assignedToPresenter)
+                .popupType(PopupType.POPUP)
+                .popupPosition(popupPosition)
+                .addAutoHidePartner(element)
+                .onShow(e -> assignedToPresenter.focus())
+                .fire();
     }
 
     @Override
@@ -796,13 +789,12 @@ public class AnnotationEditPresenter
         commentPresenter.setSelected(getView().getComment());
         final PopupPosition popupPosition = new PopupPosition(element.getAbsoluteLeft() - 1,
                 element.getAbsoluteTop() + element.getClientHeight() + 2);
-        ShowPopupEvent.fire(
-                this,
-                commentPresenter,
-                PopupType.POPUP,
-                popupPosition,
-                null,
-                element);
+        ShowPopupEvent.builder(commentPresenter)
+                .popupType(PopupType.POPUP)
+                .popupPosition(popupPosition)
+                .addAutoHidePartner(element)
+                .onShow(e -> commentPresenter.focus())
+                .fire();
     }
 
     @Override
@@ -855,7 +847,7 @@ public class AnnotationEditPresenter
         }
     }
 
-    public interface AnnotationEditView extends View, HasUiHandlers<AnnotationEditUiHandlers> {
+    public interface AnnotationEditView extends View, Focus, HasUiHandlers<AnnotationEditUiHandlers> {
 
         String getTitle();
 
@@ -881,6 +873,5 @@ public class AnnotationEditPresenter
 
         void setAssignYourselfVisible(boolean visible);
 
-        void focusComment();
     }
 }

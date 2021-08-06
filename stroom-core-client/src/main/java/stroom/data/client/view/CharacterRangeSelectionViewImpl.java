@@ -153,6 +153,11 @@ public class CharacterRangeSelectionViewImpl
     }
 
     @Override
+    public void focus() {
+        radioLocationToLocation.setFocus(true);
+    }
+
+    @Override
     public DataRange getDataRange() {
         final DataRange.Builder dataRangeBuilder = DataRange.builder();
 

@@ -281,7 +281,7 @@ public class DocumentPluginEventManager extends Plugin {
                         event.getPermissionInheritance(),
                         docRef -> {
                             // Hide the create document presenter.
-                            HidePopupEvent.fire(DocumentPluginEventManager.this, event.getPresenter());
+                            HidePopupEvent.builder(event.getPresenter()).fire();
 
                             highlight(docRef);
 
@@ -293,7 +293,7 @@ public class DocumentPluginEventManager extends Plugin {
         registerHandler(getEventBus().addHandler(CopyDocumentEvent.getType(), event ->
                 copy(event.getDocRefs(), event.getDestinationFolderRef(), event.getPermissionInheritance(), result -> {
                     // Hide the copy document presenter.
-                    HidePopupEvent.fire(DocumentPluginEventManager.this, event.getPresenter());
+                    HidePopupEvent.builder(event.getPresenter()).fire();
 
                     if (result.getMessage().length() > 0) {
                         AlertEvent.fireInfo(DocumentPluginEventManager.this,
@@ -311,7 +311,7 @@ public class DocumentPluginEventManager extends Plugin {
         registerHandler(getEventBus().addHandler(MoveDocumentEvent.getType(), event ->
                 move(event.getDocRefs(), event.getDestinationFolderRef(), event.getPermissionInheritance(), result -> {
                     // Hide the move document presenter.
-                    HidePopupEvent.fire(DocumentPluginEventManager.this, event.getPresenter());
+                    HidePopupEvent.builder(event.getPresenter()).fire();
 
                     if (result.getMessage().length() > 0) {
                         AlertEvent.fireInfo(DocumentPluginEventManager.this,
@@ -328,7 +328,7 @@ public class DocumentPluginEventManager extends Plugin {
         // 9. Handle entity rename events.
         registerHandler(getEventBus().addHandler(RenameDocumentEvent.getType(), event -> {
             // Hide the rename document presenter.
-            HidePopupEvent.fire(DocumentPluginEventManager.this, event.getPresenter());
+            HidePopupEvent.builder(event.getPresenter()).fire();
 
             rename(event.getDocRef(), event.getDocName(), docRef -> {
                 highlight(docRef);

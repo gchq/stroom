@@ -66,6 +66,7 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.LayerContainer;
@@ -81,7 +82,9 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> implements TextUiHandlers {
+public class DataPresenter
+        extends MyPresenterWidget<DataPresenter.DataView>
+        implements TextUiHandlers, Focus {
 
     private static final DataResource DATA_RESOURCE = com.google.gwt.core.shared.GWT.create(DataResource.class);
 
@@ -212,6 +215,11 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         progressPresenter.setVisible(false);
     }
 
+    @Override
+    public void focus() {
+        getView().focus();
+    }
+
     private void setCurrentRecordIndex(final long recordIndex) {
         this.currentSourceLocation = currentSourceLocation.copy()
                 .withRecordIndex(recordIndex)
@@ -265,7 +273,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         registerHandler(getView().getTabBar().addSelectionHandler(event ->
                 onNewTabSelected(event.getSelectedItem())));
-        registerHandler(getView().getTabBar().addShowMenuHandler((e) -> getEventBus().fireEvent(e)));
+        registerHandler(getView().getTabBar().addShowMenuHandler(e -> getEventBus().fireEvent(e)));
     }
 
     private void onNewTabSelected(final TabData tab) {
@@ -1045,7 +1053,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    public interface DataView extends View {
+    public interface DataView extends View, Focus {
 
         void addSourceLinkClickHandler(final ClickHandler clickHandler);
 

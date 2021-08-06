@@ -21,10 +21,11 @@ import stroom.search.solr.client.presenter.SolrIndexFieldEditPresenter.SolrIndex
 import stroom.search.solr.shared.SolrIndexField;
 import stroom.search.solr.shared.SolrIndexFieldType;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -116,12 +117,18 @@ public class SolrIndexFieldEditPresenter extends MyPresenterWidget<SolrIndexFiel
         return true;
     }
 
-    public void show(final String caption, final PopupUiHandlers uiHandlers) {
+    public void show(final String caption, final HidePopupRequestEvent.Handler handler) {
         final PopupSize popupSize = PopupSize.resizableX();
-        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, caption, uiHandlers);
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption(caption)
+                .onShow(e -> getView().focus())
+                .onHideRequest(handler)
+                .fire();
     }
 
-    public interface SolrIndexFieldEditView extends View {
+    public interface SolrIndexFieldEditView extends View, Focus {
 
         SolrIndexFieldType getFieldUse();
 

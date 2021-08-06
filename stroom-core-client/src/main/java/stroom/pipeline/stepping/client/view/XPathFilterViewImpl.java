@@ -53,6 +53,11 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
     }
 
     @Override
+    public void focus() {
+        xPath.setFocus(true);
+    }
+
+    @Override
     public Widget asWidget() {
         return widget;
     }

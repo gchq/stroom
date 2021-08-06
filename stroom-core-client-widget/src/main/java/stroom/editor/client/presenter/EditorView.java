@@ -24,6 +24,7 @@ import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
 import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.event.dom.client.HasMouseDownHandlers;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.gwtplatform.mvp.client.View;
@@ -33,12 +34,10 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 import java.util.List;
 import java.util.function.Function;
 
-public interface EditorView extends View, HasKeyDownHandlers, HasFormatHandlers, HasText, HasMouseDownHandlers,
+public interface EditorView extends View, Focus, HasKeyDownHandlers, HasFormatHandlers, HasText, HasMouseDownHandlers,
         HasContextMenuHandlers, HasValueChangeHandlers<String>, RequiresResize {
 
     String getEditorId();
-
-    void focus();
 
     void setText(final String text);
 

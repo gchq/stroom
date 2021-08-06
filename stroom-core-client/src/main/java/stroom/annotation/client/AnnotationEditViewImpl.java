@@ -184,8 +184,8 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     }
 
     @Override
-    public void focusComment() {
-        Scheduler.get().scheduleDeferred(() -> comment.setFocus(true));
+    public void focus() {
+        comment.setFocus(true);
     }
 
     private void finishTitleEdit() {

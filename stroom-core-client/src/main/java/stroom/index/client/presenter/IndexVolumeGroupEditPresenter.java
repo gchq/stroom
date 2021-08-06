@@ -34,12 +34,11 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -192,43 +191,43 @@ public class IndexVolumeGroupEditPresenter
             this.volumeGroup = volumeGroup;
             getView().setName(volumeGroup.getName());
 
-            final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(this) {
-                @Override
-                public void onHideRequest(final boolean autoClose, final boolean ok) {
-                    if (ok) {
-                        volumeGroup.setName(getView().getName());
-                        try {
-                            final Rest<IndexVolumeGroup> rest = restFactory.create();
-                            rest
-                                    .onSuccess(consumer)
-                                    .call(INDEX_VOLUME_GROUP_RESOURCE)
-                                    .update(volumeGroup.getId(), volumeGroup);
-
-                        } catch (final RuntimeException e) {
-                            AlertEvent.fireError(
-                                    IndexVolumeGroupEditPresenter.this,
-                                    e.getMessage(),
-                                    null);
-                        }
-                    } else {
-                        consumer.accept(null);
-                    }
-                }
-            };
-
             final PopupSize popupSize = PopupSize.resizable(1000, 600);
-            ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, title,
-                    popupUiHandlers);
+            ShowPopupEvent.builder(this)
+                    .popupType(PopupType.OK_CANCEL_DIALOG)
+                    .popupSize(popupSize)
+                    .caption(title)
+                    .onShow(e -> getView().focus())
+                    .onHideRequest(event -> {
+                        if (event.isOk()) {
+                            volumeGroup.setName(getView().getName());
+                            try {
+                                final Rest<IndexVolumeGroup> rest = restFactory.create();
+                                rest
+                                        .onSuccess(consumer)
+                                        .call(INDEX_VOLUME_GROUP_RESOURCE)
+                                        .update(volumeGroup.getId(), volumeGroup);
+
+                            } catch (final RuntimeException e) {
+                                AlertEvent.fireError(
+                                        IndexVolumeGroupEditPresenter.this,
+                                        e.getMessage(),
+                                        null);
+                            }
+                        } else {
+                            consumer.accept(null);
+                        }
+                    })
+                    .fire();
         }
     }
 
     void hide() {
-        HidePopupEvent.fire(this, this, false, true);
+        HidePopupEvent.builder(this).fire();
         open = false;
         opening = false;
     }
 
-    public interface IndexVolumeGroupEditView extends View {
+    public interface IndexVolumeGroupEditView extends View, Focus {
 
         String getName();
 

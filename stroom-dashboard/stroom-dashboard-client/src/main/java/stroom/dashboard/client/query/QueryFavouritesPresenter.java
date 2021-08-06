@@ -17,7 +17,6 @@
 
 package stroom.dashboard.client.query;
 
-import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dashboard.shared.FindStoredQueryCriteria;
 import stroom.dashboard.shared.StoredQuery;
@@ -35,15 +34,14 @@ import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MySingleSelectionModel;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.CellList;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -64,8 +62,6 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
     private ExpressionOperator currentExpression;
     private String currentDashboardUuid;
     private DocRef currentDataSource;
-
-    private PopupUiHandlers popupUiHandlers;
 
     @Inject
     public QueryFavouritesPresenter(final EventBus eventBus,
@@ -109,82 +105,34 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
                 deleteButton.setEnabled(true);
             }
         }));
-        registerHandler(selectionModel.addDoubleSelectHandler(event -> close(true)));
+        registerHandler(selectionModel.addDoubleSelectHandler(event -> hide()));
         registerHandler(createButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
-                final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(namePresenter) {
-                    @Override
-                    public void onHideRequest(final boolean autoClose, final boolean ok) {
-                        if (ok) {
-                            String entityName = namePresenter.getName();
-                            if (entityName != null) {
-                                entityName = entityName.trim();
-                            }
+                namePresenter.show("", "Create New Favourite", entityName -> {
+                    final Query query = Query.builder()
+                            .dataSource(currentDataSource)
+                            .expression(currentExpression)
+                            .build();
+                    final StoredQuery queryEntity = new StoredQuery();
+                    queryEntity.setQuery(query);
+                    queryEntity.setDashboardUuid(currentDashboardUuid);
+                    queryEntity.setComponentId(queryPresenter.getId());
+                    queryEntity.setName(entityName);
+                    queryEntity.setFavourite(true);
 
-                            if (entityName == null || entityName.length() == 0) {
-                                AlertEvent.fireWarn(QueryFavouritesPresenter.this, "You must provide a name", null);
-
-                            } else {
-                                final Query query = Query.builder()
-                                        .dataSource(currentDataSource)
-                                        .expression(currentExpression)
-                                        .build();
-                                final StoredQuery queryEntity = new StoredQuery();
-                                queryEntity.setQuery(query);
-                                queryEntity.setDashboardUuid(currentDashboardUuid);
-                                queryEntity.setComponentId(queryPresenter.getId());
-                                queryEntity.setName(entityName);
-                                queryEntity.setFavourite(true);
-
-                                create(queryEntity, autoClose, ok);
-                            }
-                        } else {
-                            hide(autoClose, ok);
-                        }
-                    }
-                };
-
-                namePresenter.setName("");
-                namePresenter.setUihandlers(popupUiHandlers);
-                final PopupSize popupSize = PopupSize.resizableX();
-                ShowPopupEvent.fire(QueryFavouritesPresenter.this, namePresenter, PopupType.OK_CANCEL_DIALOG,
-                        popupSize, "Create New Favourite", popupUiHandlers);
-                namePresenter.getView().focus();
+                    create(queryEntity);
+                });
             }
         }));
         registerHandler(editButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
                 final StoredQuery query = selectionModel.getSelectedObject();
                 if (query != null) {
-                    final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(namePresenter) {
-                        @Override
-                        public void onHideRequest(final boolean autoClose, final boolean ok) {
-                            if (ok) {
-                                String entityName = namePresenter.getName();
-                                if (entityName != null) {
-                                    entityName = entityName.trim();
-                                }
-
-                                if (entityName == null || entityName.length() == 0) {
-                                    AlertEvent.fireWarn(QueryFavouritesPresenter.this, "You must provide a name",
-                                            null);
-
-                                } else {
-                                    query.setName(entityName);
-                                    query.setFavourite(true);
-                                    update(query, autoClose, ok);
-                                }
-                            } else {
-                                hide(autoClose, ok);
-                            }
-                        }
-                    };
-
-                    namePresenter.setName(query.getName());
-                    namePresenter.setUihandlers(popupUiHandlers);
-                    ShowPopupEvent.fire(QueryFavouritesPresenter.this, namePresenter, PopupType.OK_CANCEL_DIALOG,
-                            "Rename Favourite", popupUiHandlers);
-                    // getView().focus();
+                    namePresenter.show(query.getName(), "Rename Favourite", entityName -> {
+                        query.setName(entityName);
+                        query.setFavourite(true);
+                        update(query);
+                    });
                 }
             }
         }));
@@ -230,54 +178,50 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
                     getView().getCellList().setRowCount(result.size(), true);
 
                     if (showAfterRefresh) {
-                        popupUiHandlers = new DefaultPopupUiHandlers(queryPresenter) {
-                            @Override
-                            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                                if (ok) {
-                                    final StoredQuery query = selectionModel.getSelectedObject();
-                                    if (query != null && query.getQuery() != null &&
-                                            query.getQuery().getExpression() != null) {
-                                        queryPresenter.setExpression(query.getQuery().getExpression());
-                                    }
-                                }
-                                hide(autoClose, ok);
-                            }
-                        };
-
                         final PopupSize popupSize = PopupSize.resizable(500, 400);
-                        ShowPopupEvent.fire(queryPresenter,
-                                QueryFavouritesPresenter.this,
-                                PopupType.OK_CANCEL_DIALOG,
-                                popupSize,
-                                "Query Favourites",
-                                popupUiHandlers);
+                        ShowPopupEvent.builder(this)
+                                .popupType(PopupType.OK_CANCEL_DIALOG)
+                                .popupSize(popupSize)
+                                .caption("Query Favourites")
+                                .onShow(e -> getView().focus())
+                                .onHideRequest(e -> {
+                                    if (e.isOk()) {
+                                        final StoredQuery query = selectionModel.getSelectedObject();
+                                        if (query != null && query.getQuery() != null &&
+                                                query.getQuery().getExpression() != null) {
+                                            queryPresenter.setExpression(query.getQuery().getExpression());
+                                        }
+                                    }
+                                    e.hide();
+                                })
+                                .fire();
                     }
                 })
                 .call(STORED_QUERY_RESOURCE)
                 .find(criteria);
     }
 
-    private void close(final boolean ok) {
-        popupUiHandlers.onHideRequest(false, ok);
+    private void hide() {
+        HidePopupEvent.builder(this).fire();
     }
 
-    private void create(final StoredQuery query, final boolean autoClose, final boolean ok) {
+    private void create(final StoredQuery query) {
         final Rest<StoredQuery> rest = restFactory.create();
         rest
                 .onSuccess(result -> {
                     refresh(false);
-                    HidePopupEvent.fire(QueryFavouritesPresenter.this, namePresenter, autoClose, ok);
+                    namePresenter.hide();
                 })
                 .call(STORED_QUERY_RESOURCE)
                 .create(query);
     }
 
-    private void update(final StoredQuery query, final boolean autoClose, final boolean ok) {
+    private void update(final StoredQuery query) {
         final Rest<StoredQuery> rest = restFactory.create();
         rest
                 .onSuccess(result -> {
                     refresh(false);
-                    HidePopupEvent.fire(QueryFavouritesPresenter.this, namePresenter, autoClose, ok);
+                    namePresenter.hide();
                 })
                 .call(STORED_QUERY_RESOURCE)
                 .update(query);
@@ -291,7 +235,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
                 .delete(query);
     }
 
-    public interface QueryFavouritesView extends View {
+    public interface QueryFavouritesView extends View, Focus {
 
         CellList<StoredQuery> getCellList();
 

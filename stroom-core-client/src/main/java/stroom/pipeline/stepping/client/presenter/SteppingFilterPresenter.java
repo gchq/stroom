@@ -25,10 +25,9 @@ import stroom.util.shared.OutputState;
 import stroom.util.shared.Severity;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.BasicSelectionEventManager;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
@@ -128,35 +127,29 @@ public class SteppingFilterPresenter extends
 
     private void addXPathFilter() {
         final XPathFilter xPathFilter = new XPathFilter();
-        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(xPathFilterPresenter) {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    xPathFilterPresenter.write();
-                    xPathFilters.add(xPathFilter);
+        final HidePopupRequestEvent.Handler handler = e -> {
+            if (e.isOk()) {
+                xPathFilterPresenter.write();
+                xPathFilters.add(xPathFilter);
 
-                    xPathListPresenter.getSelectionModel().setSelected(xPathFilter);
-                }
-                hide();
+                xPathListPresenter.getSelectionModel().setSelected(xPathFilter);
             }
+            e.hide();
         };
-        xPathFilterPresenter.add(xPathFilter, popupUiHandlers);
+        xPathFilterPresenter.add(xPathFilter, handler);
     }
 
     private void editXPathFilter() {
         final List<XPathFilter> list = xPathListPresenter.getSelectionModel().getSelectedItems();
         if (list.size() == 1) {
-            final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(xPathFilterPresenter) {
-                @Override
-                public void onHideRequest(final boolean autoClose, final boolean ok) {
-                    if (ok) {
-                        xPathFilterPresenter.write();
-                        xPathListPresenter.refresh();
-                    }
-                    hide();
+            final HidePopupRequestEvent.Handler handler = e -> {
+                if (e.isOk()) {
+                    xPathFilterPresenter.write();
+                    xPathListPresenter.refresh();
                 }
+                e.hide();
             };
-            xPathFilterPresenter.edit(list.get(0), popupUiHandlers);
+            xPathFilterPresenter.edit(list.get(0), handler);
         }
     }
 
@@ -188,23 +181,20 @@ public class SteppingFilterPresenter extends
             update(elementId);
         }
 
-        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(this) {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    update(null);
-                    consumer.accept(settingsMap);
-                }
-                hide();
-            }
-        };
         final PopupSize popupSize = PopupSize.resizable(850, 550);
-        ShowPopupEvent.fire(this,
-                this,
-                PopupType.OK_CANCEL_DIALOG,
-                popupSize,
-                "Change Filters",
-                popupUiHandlers);
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Change Filters")
+                .onShow(e -> elementChooser.setFocus(true))
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        update(null);
+                        consumer.accept(settingsMap);
+                    }
+                    e.hide();
+                })
+                .fire();
     }
 
     private void update(final String elementId) {

@@ -20,9 +20,9 @@ package stroom.entity.client.view;
 import stroom.entity.client.presenter.CreateDocumentPresenter.CreateDocumentView;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.item.client.ItemListBox;
-import stroom.widget.popup.client.presenter.HideUiHandlers;
+import stroom.widget.popup.client.view.HideRequest;
+import stroom.widget.popup.client.view.HideRequestUiHandlers;
 
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -34,7 +34,7 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class CreateDocumentViewImpl extends ViewWithUiHandlers<HideUiHandlers> implements CreateDocumentView {
+public class CreateDocumentViewImpl extends ViewWithUiHandlers<HideRequestUiHandlers> implements CreateDocumentView {
 
     private final Widget widget;
     @UiField
@@ -96,13 +96,13 @@ public class CreateDocumentViewImpl extends ViewWithUiHandlers<HideUiHandlers> i
     @UiHandler("name")
     void onKeyDown(final KeyDownEvent event) {
         if (event.getNativeKeyCode() == '\r') {
-            getUiHandlers().onHideRequest(false, true);
+            getUiHandlers().hideRequest(new HideRequest(false, true));
         }
     }
 
     @Override
     public void focus() {
-        Scheduler.get().scheduleDeferred(() -> name.setFocus(true));
+        name.setFocus(true);
     }
 
     public interface Binder extends UiBinder<Widget, CreateDocumentViewImpl> {

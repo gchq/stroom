@@ -20,10 +20,10 @@ package stroom.index.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.entity.client.presenter.NameDocumentView;
 import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.popup.client.view.DefaultHideRequestUiHandlers;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -31,7 +31,11 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.function.Consumer;
 
-public class NewIndexVolumeGroupPresenter extends MyPresenterWidget<NameDocumentView> {
+public class NewIndexVolumeGroupPresenter
+        extends MyPresenterWidget<NameDocumentView>
+        implements HidePopupRequestEvent.Handler {
+
+    private Consumer<String> consumer;
 
     @Inject
     public NewIndexVolumeGroupPresenter(final EventBus eventBus, final NameDocumentView view) {
@@ -39,28 +43,33 @@ public class NewIndexVolumeGroupPresenter extends MyPresenterWidget<NameDocument
     }
 
     public void show(final String name, final Consumer<String> consumer) {
-        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(this) {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    final String name = getView().getName().trim();
-                    if (name.length() == 0) {
-                        AlertEvent.fireError(NewIndexVolumeGroupPresenter.this, "You must provide a name", null);
-                    } else {
-                        consumer.accept(name);
-                    }
-                } else {
-                    consumer.accept(null);
-                }
-            }
-        };
-        getView().setUiHandlers(popupUiHandlers);
+        this.consumer = consumer;
+        getView().setUiHandlers(new DefaultHideRequestUiHandlers(this));
         getView().setName(name);
-        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, "New", popupUiHandlers);
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .caption("New")
+                .onShow(e -> getView().focus())
+                .onHideRequest(this)
+                .fire();
         getView().focus();
     }
 
+    @Override
+    public void onHideRequest(final HidePopupRequestEvent e) {
+        if (e.isOk()) {
+            final String newName = getView().getName().trim();
+            if (newName.length() == 0) {
+                AlertEvent.fireError(NewIndexVolumeGroupPresenter.this, "You must provide a name", null);
+            } else {
+                consumer.accept(newName);
+            }
+        } else {
+            consumer.accept(null);
+        }
+    }
+
     public void hide() {
-        HidePopupEvent.fire(this, this);
+        HidePopupEvent.builder(this).fire();
     }
 }

@@ -70,6 +70,11 @@ public class ScheduleViewImpl extends ViewImpl implements ScheduleView {
     }
 
     @Override
+    public void focus() {
+        txtScheduleString.setFocus(true);
+    }
+
+    @Override
     public HasText getLastExecutedTime() {
         return lblLastExecutedTime;
     }

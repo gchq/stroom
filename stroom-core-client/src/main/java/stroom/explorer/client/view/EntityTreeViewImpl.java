@@ -60,6 +60,11 @@ public class EntityTreeViewImpl extends ViewWithUiHandlers<EntityTreeUiHandlers>
         return widget;
     }
 
+    @Override
+    public void focus() {
+        nameFilter.focus();
+    }
+
     @UiHandler("nameFilter")
     void onFilterChange(final ValueChangeEvent<String> event) {
         getUiHandlers().changeFilter(nameFilter.getText());

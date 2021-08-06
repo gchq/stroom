@@ -31,9 +31,8 @@ import stroom.svg.client.SvgPresets;
 import stroom.util.shared.RandomId;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.inject.Inject;
@@ -196,24 +195,22 @@ public class RulesPresenter
         editRulePresenter.read(newRule, fields);
 
         final PopupSize popupSize = PopupSize.resizable(800, 400);
-        ShowPopupEvent.fire(RulesPresenter.this,
-                editRulePresenter,
-                PopupType.OK_CANCEL_DIALOG,
-                popupSize,
-                "Add New Rule",
-                new DefaultPopupUiHandlers(editRulePresenter) {
-                    @Override
-                    public void onHideRequest(final boolean autoClose, final boolean ok) {
-                        if (ok) {
-                            final ConditionalFormattingRule rule = editRulePresenter.write();
-                            rules.add(rule);
-                            update();
-                            listPresenter.getSelectionModel().setSelected(rule);
-                            setDirty(true);
-                        }
-                        hide(autoClose, ok);
+        ShowPopupEvent.builder(editRulePresenter)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Add New Rule")
+                .onShow(e -> listPresenter.focus())
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        final ConditionalFormattingRule rule = editRulePresenter.write();
+                        rules.add(rule);
+                        update();
+                        listPresenter.getSelectionModel().setSelected(rule);
+                        setDirty(true);
                     }
-                });
+                    e.hide();
+                })
+                .fire();
     }
 
     private void edit(final ConditionalFormattingRule existingRule) {
@@ -221,32 +218,29 @@ public class RulesPresenter
         editRulePresenter.read(existingRule, fields);
 
         final PopupSize popupSize = PopupSize.resizable(800, 400);
-        ShowPopupEvent.fire(
-                RulesPresenter.this,
-                editRulePresenter,
-                PopupType.OK_CANCEL_DIALOG,
-                popupSize,
-                "Edit Rule",
-                new DefaultPopupUiHandlers(editRulePresenter) {
-                    @Override
-                    public void onHideRequest(final boolean autoClose, final boolean ok) {
-                        if (ok) {
-                            final ConditionalFormattingRule rule = editRulePresenter.write();
-                            final int index = rules.indexOf(existingRule);
-                            rules.remove(index);
-                            rules.add(index, rule);
+        ShowPopupEvent.builder(editRulePresenter)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Edit Rule")
+                .onShow(e -> listPresenter.focus())
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        final ConditionalFormattingRule rule = editRulePresenter.write();
+                        final int index = rules.indexOf(existingRule);
+                        rules.remove(index);
+                        rules.add(index, rule);
 
-                            update();
-                            listPresenter.getSelectionModel().setSelected(rule);
+                        update();
+                        listPresenter.getSelectionModel().setSelected(rule);
 
-                            // Only mark the policies as dirty if the rule was actually changed.
-                            if (!existingRule.equals(rule)) {
-                                setDirty(true);
-                            }
+                        // Only mark the policies as dirty if the rule was actually changed.
+                        if (!existingRule.equals(rule)) {
+                            setDirty(true);
                         }
-                        hide(autoClose, ok);
                     }
-                });
+                    e.hide();
+                })
+                .fire();
     }
 
 

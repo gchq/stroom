@@ -23,10 +23,8 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -42,10 +40,8 @@ import java.util.Objects;
 public class ChangeStatusPresenter extends MyPresenterWidget<ChangeStatusView>
         implements ChangeStatusUiHandlers {
 
-    private final PopupUiHandlers popupUiHandlers;
     private final RestFactory restFactory;
     private final ChooserPresenter statusPresenter;
-    private List<Long> annotationIdList;
     private String currentStatus;
 
     @Inject
@@ -54,21 +50,6 @@ public class ChangeStatusPresenter extends MyPresenterWidget<ChangeStatusView>
                                  final RestFactory restFactory,
                                  final ChooserPresenter statusPresenter) {
         super(eventBus, view);
-        popupUiHandlers = new DefaultPopupUiHandlers(this) {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-                    final Rest<Integer> rest = restFactory.create();
-
-                    final SetStatusRequest request = new SetStatusRequest(annotationIdList, currentStatus);
-                    rest.onSuccess(values -> GWT.log("Updated " + values + " annotations"))
-                            .call(annotationResource)
-                            .setStatus(request);
-                }
-                hide(autoClose, ok);
-            }
-        };
         this.restFactory = restFactory;
         this.statusPresenter = statusPresenter;
         getView().setUiHandlers(this);
@@ -85,8 +66,6 @@ public class ChangeStatusPresenter extends MyPresenterWidget<ChangeStatusView>
     }
 
     public void show(final List<Long> annotationIdList) {
-        this.annotationIdList = annotationIdList;
-
         if (currentStatus == null) {
             final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
             final Rest<List<String>> rest = restFactory.create();
@@ -97,14 +76,29 @@ public class ChangeStatusPresenter extends MyPresenterWidget<ChangeStatusView>
             }).call(annotationResource).getStatus(null);
         }
 
-        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, "Change Status", popupUiHandlers);
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .caption("Change Status")
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
+                        final Rest<Integer> rest = restFactory.create();
+
+                        final SetStatusRequest request = new SetStatusRequest(annotationIdList, currentStatus);
+                        rest.onSuccess(values -> GWT.log("Updated " + values + " annotations"))
+                                .call(annotationResource)
+                                .setStatus(request);
+                    }
+                    e.hide();
+                })
+                .fire();
     }
 
     private void changeStatus(final String selected) {
         if (!Objects.equals(currentStatus, selected)) {
             currentStatus = selected;
             getView().setStatus(selected);
-            HidePopupEvent.fire(this, statusPresenter, true, true);
+            HidePopupEvent.builder(statusPresenter).fire();
         }
     }
 
@@ -119,7 +113,12 @@ public class ChangeStatusPresenter extends MyPresenterWidget<ChangeStatusView>
         statusPresenter.setSelected(currentStatus);
         final PopupPosition popupPosition = new PopupPosition(element.getAbsoluteLeft() - 1,
                 element.getAbsoluteTop() + element.getClientHeight() + 2);
-        ShowPopupEvent.fire(this, statusPresenter, PopupType.POPUP, popupPosition, null, element);
+        ShowPopupEvent.builder(statusPresenter)
+                .popupType(PopupType.POPUP)
+                .popupPosition(popupPosition)
+                .addAutoHidePartner(element)
+                .onShow(e -> statusPresenter.focus())
+                .fire();
     }
 
     public interface ChangeStatusView extends View, HasUiHandlers<ChangeStatusUiHandlers> {

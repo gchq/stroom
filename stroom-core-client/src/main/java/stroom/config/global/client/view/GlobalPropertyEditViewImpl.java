@@ -122,6 +122,11 @@ public final class GlobalPropertyEditViewImpl
     }
 
     @Override
+    public void focus() {
+        description.setFocus(true);
+    }
+
+    @Override
     public HasText getName() {
         return name;
     }

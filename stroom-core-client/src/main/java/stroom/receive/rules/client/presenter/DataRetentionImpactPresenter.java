@@ -39,9 +39,8 @@ import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToggleButtonView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -168,7 +167,6 @@ public class DataRetentionImpactPresenter
                 .onSuccess(response -> {
                     // check we are expecting the results
                     if (isQueryRunning && currentQueryId.equals(response.getQueryId())) {
-
                         this.sourceData = response.getValues() != null
                                 ? response.getValues()
                                 : Collections.emptyList();
@@ -296,21 +294,18 @@ public class DataRetentionImpactPresenter
         editExpressionPresenter.init(restFactory, MetaFields.STREAM_STORE_DOC_REF, FILTERABLE_FIELDS);
 
         final PopupSize popupSize = PopupSize.resizable(800, 400);
-        ShowPopupEvent.fire(
-                this,
-                editExpressionPresenter,
-                PopupType.OK_CANCEL_DIALOG,
-                popupSize,
-                "Query Filter",
-                new DefaultPopupUiHandlers(editExpressionPresenter) {
-                    @Override
-                    public void onHideRequest(final boolean autoClose, final boolean ok) {
-                        if (ok) {
-                            criteria.setExpression(editExpressionPresenter.write());
-                        }
-                        hide(autoClose, ok);
+        ShowPopupEvent.builder(editExpressionPresenter)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Query Filter")
+                .onShow(e -> editExpressionPresenter.focus())
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        criteria.setExpression(editExpressionPresenter.write());
                     }
-                });
+                    e.hide();
+                })
+                .fire();
     }
 
     public void setDataRetentionRules(final DataRetentionRules dataRetentionRules) {

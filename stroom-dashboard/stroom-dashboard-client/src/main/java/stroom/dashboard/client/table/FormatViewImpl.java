@@ -62,6 +62,7 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
 
     private static final int ROW_COUNT = 9;
     private final Widget widget;
+
     @UiField
     Grid grid;
     @UiField
@@ -125,6 +126,11 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    @Override
+    public void focus() {
+        type.focus();
     }
 
     @Override

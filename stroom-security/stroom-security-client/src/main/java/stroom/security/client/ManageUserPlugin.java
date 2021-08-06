@@ -28,10 +28,8 @@ import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.inject.client.AsyncProvider;
 import com.google.gwt.user.client.Command;
@@ -74,15 +72,12 @@ public class ManageUserPlugin extends NodeToolsPlugin {
                         @Override
                         public void onSuccess(final UsersAndGroupsPresenter presenter) {
                             final PopupSize popupSize = PopupSize.resizable(800, 600);
-                            final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(presenter);
-                            ShowPopupEvent.fire(ManageUserPlugin.this,
-                                    presenter,
-                                    PopupType.CLOSE_DIALOG,
-                                    null,
-                                    popupSize,
-                                    "User Permissions",
-                                    popupUiHandlers,
-                                    null);
+                            ShowPopupEvent.builder(presenter)
+                                    .popupType(PopupType.CLOSE_DIALOG)
+                                    .popupSize(popupSize)
+                                    .caption("User Permissions")
+                                    .onShow(e -> presenter.focus())
+                                    .fire();
                         }
 
                         @Override

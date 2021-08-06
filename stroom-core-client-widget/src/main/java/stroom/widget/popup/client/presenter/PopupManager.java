@@ -19,6 +19,7 @@ package stroom.widget.popup.client.presenter;
 import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.RenamePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.view.PopupSupportImpl;
@@ -36,16 +37,12 @@ public class PopupManager {
 
     @Inject
     public PopupManager(final EventBus eventBus) {
-        eventBus.addHandler(ShowPopupEvent.getType(), event ->
-                show(event));
-        eventBus.addHandler(HidePopupEvent.getType(), event ->
-                hide(event.getPresenterWidget(), event.isAutoClose(), event.isOk()));
-        eventBus.addHandler(DisablePopupEvent.getType(), event ->
-                disable(event.getPresenterWidget()));
-        eventBus.addHandler(EnablePopupEvent.getType(), event ->
-                enable(event.getPresenterWidget()));
-        eventBus.addHandler(RenamePopupEvent.getType(), event ->
-                rename(event.getPresenterWidget(), event.getCaption()));
+        eventBus.addHandler(ShowPopupEvent.getType(), this::show);
+        eventBus.addHandler(HidePopupRequestEvent.getType(), this::hideRequest);
+        eventBus.addHandler(HidePopupEvent.getType(), this::hide);
+        eventBus.addHandler(DisablePopupEvent.getType(), this::disable);
+        eventBus.addHandler(EnablePopupEvent.getType(), this::enable);
+        eventBus.addHandler(RenamePopupEvent.getType(), this::rename);
     }
 
     private void show(final ShowPopupEvent event) {
@@ -57,7 +54,7 @@ public class PopupManager {
 
         // Toggle popup visibility if we are asked to show twice.
         if (popupMap.containsKey(presenterWidget)) {
-            hide(presenterWidget, true, false);
+            hide(HidePopupEvent.builder(presenterWidget).autoClose(true).ok(false).build());
 
         } else {
             final PopupSupport popupSupport = new PopupSupportImpl(presenterWidget.getView(), event.getCaption(),
@@ -65,52 +62,53 @@ public class PopupManager {
 
             popupMap.put(presenterWidget, popupSupport);
 
-            // Create popup UI handlers if none have been provided to perform
-            // default hide behaviour.
-            PopupUiHandlers popupUiHandlers = event.getPopupUiHandlers();
-            if (popupUiHandlers == null) {
-                // By default always hide a popup when requested to do so.
-                popupUiHandlers = new DefaultPopupUiHandlers(presenterWidget);
-            }
-
             presenterWidget.bind();
-            popupSupport.show(event.getPopupType(), event.getPopupPosition(), event.getPopupSize(), popupUiHandlers);
+            popupSupport.show(event);
         }
     }
 
-    private void hide(final PresenterWidget<?> presenterWidget, final boolean autoClose, final boolean ok) {
+    private void hideRequest(final HidePopupRequestEvent event) {
         if (popupMap != null) {
-            final PopupSupport popupSupport = popupMap.remove(presenterWidget);
+            final PopupSupport popupSupport = popupMap.get(event.getPresenterWidget());
             if (popupSupport != null) {
-                presenterWidget.unbind();
-                popupSupport.hide(autoClose, ok);
+                popupSupport.hideRequest(event);
             }
         }
     }
 
-    private void disable(final PresenterWidget<?> presenterWidget) {
+    private void hide(final HidePopupEvent event) {
         if (popupMap != null) {
-            final PopupSupport popupSupport = popupMap.get(presenterWidget);
+            final PopupSupport popupSupport = popupMap.remove(event.getPresenterWidget());
+            if (popupSupport != null) {
+                event.getPresenterWidget().unbind();
+                popupSupport.hide(event);
+            }
+        }
+    }
+
+    private void disable(final DisablePopupEvent event) {
+        if (popupMap != null) {
+            final PopupSupport popupSupport = popupMap.get(event.getPresenterWidget());
             if (popupSupport != null) {
                 popupSupport.setEnabled(false);
             }
         }
     }
 
-    private void enable(final PresenterWidget<?> presenterWidget) {
+    private void enable(final EnablePopupEvent event) {
         if (popupMap != null) {
-            final PopupSupport popupSupport = popupMap.get(presenterWidget);
+            final PopupSupport popupSupport = popupMap.get(event.getPresenterWidget());
             if (popupSupport != null) {
                 popupSupport.setEnabled(true);
             }
         }
     }
 
-    private void rename(final PresenterWidget<?> presenterWidget, final String caption) {
+    private void rename(final RenamePopupEvent event) {
         if (popupMap != null) {
-            final PopupSupport popupSupport = popupMap.get(presenterWidget);
+            final PopupSupport popupSupport = popupMap.get(event.getPresenterWidget());
             if (popupSupport != null) {
-                popupSupport.setCaption(caption);
+                popupSupport.setCaption(event.getCaption());
             }
         }
     }

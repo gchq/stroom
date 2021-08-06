@@ -47,7 +47,7 @@ public class RenameTabViewImpl extends ViewImpl implements RenameTabView {
 
     @Override
     public void focus() {
-        Scheduler.get().scheduleDeferred(() -> name.setFocus(true));
+        name.setFocus(true);
     }
 
     @Override

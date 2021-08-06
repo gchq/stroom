@@ -38,9 +38,8 @@ import stroom.svg.client.SvgPresets;
 import stroom.util.shared.RandomId;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.BorderStyle;
@@ -221,24 +220,22 @@ public class SelectionHandlersPresenter
             editSelectionHandlerPresenter.read(newRule, componentList, fields);
 
             final PopupSize popupSize = PopupSize.resizable(800, 400);
-            ShowPopupEvent.fire(SelectionHandlersPresenter.this,
-                    editSelectionHandlerPresenter,
-                    PopupType.OK_CANCEL_DIALOG,
-                    popupSize,
-                    "Add New Selection Handler",
-                    new DefaultPopupUiHandlers(editSelectionHandlerPresenter) {
-                        @Override
-                        public void onHideRequest(final boolean autoClose, final boolean ok) {
-                            if (ok) {
-                                final ComponentSelectionHandler rule = editSelectionHandlerPresenter.write();
-                                selectionHandlers.add(rule);
-                                update();
-                                listPresenter.getSelectionModel().setSelected(rule);
-                                setDirty(true);
-                            }
-                            hide(autoClose, ok);
+            ShowPopupEvent.builder(editSelectionHandlerPresenter)
+                    .popupType(PopupType.OK_CANCEL_DIALOG)
+                    .popupSize(popupSize)
+                    .caption("Add New Selection Handler")
+                    .onShow(e -> editSelectionHandlerPresenter.focus())
+                    .onHideRequest(e -> {
+                        if (e.isOk()) {
+                            final ComponentSelectionHandler rule = editSelectionHandlerPresenter.write();
+                            selectionHandlers.add(rule);
+                            update();
+                            listPresenter.getSelectionModel().setSelected(rule);
+                            setDirty(true);
                         }
-                    });
+                        e.hide();
+                    })
+                    .fire();
         });
     }
 
@@ -249,32 +246,29 @@ public class SelectionHandlersPresenter
             editSelectionHandlerPresenter.read(existingRule, componentList, fields);
 
             final PopupSize popupSize = PopupSize.resizable(800, 400);
-            ShowPopupEvent.fire(
-                    SelectionHandlersPresenter.this,
-                    editSelectionHandlerPresenter,
-                    PopupType.OK_CANCEL_DIALOG,
-                    popupSize,
-                    "Edit Selection Handler",
-                    new DefaultPopupUiHandlers(editSelectionHandlerPresenter) {
-                        @Override
-                        public void onHideRequest(final boolean autoClose, final boolean ok) {
-                            if (ok) {
-                                final ComponentSelectionHandler rule = editSelectionHandlerPresenter.write();
-                                final int index = selectionHandlers.indexOf(existingRule);
-                                selectionHandlers.remove(index);
-                                selectionHandlers.add(index, rule);
+            ShowPopupEvent.builder(editSelectionHandlerPresenter)
+                    .popupType(PopupType.OK_CANCEL_DIALOG)
+                    .popupSize(popupSize)
+                    .caption("Edit Selection Handler")
+                    .onShow(e -> editSelectionHandlerPresenter.focus())
+                    .onHideRequest(e -> {
+                        if (e.isOk()) {
+                            final ComponentSelectionHandler rule = editSelectionHandlerPresenter.write();
+                            final int index = selectionHandlers.indexOf(existingRule);
+                            selectionHandlers.remove(index);
+                            selectionHandlers.add(index, rule);
 
-                                update();
-                                listPresenter.getSelectionModel().setSelected(rule);
+                            update();
+                            listPresenter.getSelectionModel().setSelected(rule);
 
-                                // Only mark the policies as dirty if the rule was actually changed.
-                                if (!existingRule.equals(rule)) {
-                                    setDirty(true);
-                                }
+                            // Only mark the policies as dirty if the rule was actually changed.
+                            if (!existingRule.equals(rule)) {
+                                setDirty(true);
                             }
-                            hide(autoClose, ok);
                         }
-                    });
+                        e.hide();
+                    })
+                    .fire();
         });
     }
 

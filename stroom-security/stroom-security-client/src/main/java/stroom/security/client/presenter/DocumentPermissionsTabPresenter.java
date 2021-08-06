@@ -24,6 +24,7 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MouseUtil;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
@@ -37,7 +38,8 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 
 public class DocumentPermissionsTabPresenter
-        extends MyPresenterWidget<DocumentPermissionsTabView> {
+        extends MyPresenterWidget<DocumentPermissionsTabView>
+        implements Focus {
 
     private final DocumentUserListPresenter userListPresenter;
     private final PermissionsListPresenter permissionsListPresenter;
@@ -67,6 +69,11 @@ public class DocumentPermissionsTabPresenter
 
         getView().setUserView(userListPresenter.getView());
         getView().setPermissionsView(permissionsListPresenter.getView());
+    }
+
+    @Override
+    public void focus() {
+        userListPresenter.getView().focus();
     }
 
     @Override

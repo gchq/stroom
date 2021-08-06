@@ -89,10 +89,8 @@ import stroom.widget.menu.client.presenter.MenuItem;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.menu.client.presenter.SimpleMenuItem;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -397,62 +395,61 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             final Search activeSearch = currentSearchModel.getActiveSearch();
             final DashboardQueryKey queryKey = currentSearchModel.getCurrentQueryKey();
             if (activeSearch != null && queryKey != null) {
-                final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(downloadPresenter) {
-                    @Override
-                    public void onHideRequest(final boolean autoClose, final boolean ok) {
-                        if (ok) {
-                            final TableResultRequest tableResultRequest = TableResultRequest
-                                    .builder()
-                                    .componentId(getComponentConfig().getId())
-                                    .requestedRange(new OffsetRange(0, Integer.MAX_VALUE))
-                                    .tableSettings(TablePresenter.this.tableResultRequest.getTableSettings())
-                                    .fetch(Fetch.ALL)
-                                    .build();
+                ShowPopupEvent.builder(downloadPresenter)
+                        .popupType(PopupType.OK_CANCEL_DIALOG)
+                        .caption("Download Options")
+                        .onShow(e -> downloadPresenter.getView().focus())
+                        .onHideRequest(e -> {
+                            if (e.isOk()) {
+                                final TableResultRequest tableResultRequest = TableResultRequest
+                                        .builder()
+                                        .componentId(getComponentConfig().getId())
+                                        .requestedRange(new OffsetRange(0, Integer.MAX_VALUE))
+                                        .tableSettings(TablePresenter.this.tableResultRequest.getTableSettings())
+                                        .fetch(Fetch.ALL)
+                                        .build();
 
-                            final List<ComponentResultRequest> requests = new ArrayList<>();
-                            requests.add(tableResultRequest);
+                                final List<ComponentResultRequest> requests = new ArrayList<>();
+                                requests.add(tableResultRequest);
 
-                            final Search search = Search
-                                    .builder()
-                                    .dataSourceRef(activeSearch.getDataSourceRef())
-                                    .expression(activeSearch.getExpression())
-                                    .componentSettingsMap(activeSearch.getComponentSettingsMap())
-                                    .params(activeSearch.getParams())
-                                    .incremental(true)
-                                    .storeHistory(false)
-                                    .queryInfo(activeSearch.getQueryInfo())
-                                    .build();
+                                final Search search = Search
+                                        .builder()
+                                        .dataSourceRef(activeSearch.getDataSourceRef())
+                                        .expression(activeSearch.getExpression())
+                                        .componentSettingsMap(activeSearch.getComponentSettingsMap())
+                                        .params(activeSearch.getParams())
+                                        .incremental(true)
+                                        .storeHistory(false)
+                                        .queryInfo(activeSearch.getQueryInfo())
+                                        .build();
 
-                            final DashboardSearchRequest searchRequest = new DashboardSearchRequest(
-                                    queryKey,
-                                    search,
-                                    requests,
-                                    getDateTimeSettings());
+                                final DashboardSearchRequest searchRequest = new DashboardSearchRequest(
+                                        queryKey,
+                                        search,
+                                        requests,
+                                        getDateTimeSettings());
 
-                            final DownloadSearchResultsRequest downloadSearchResultsRequest =
-                                    new DownloadSearchResultsRequest(
-                                            applicationInstanceIdProvider.get(),
-                                            searchRequest,
-                                            getComponentConfig().getId(),
-                                            downloadPresenter.getFileType(),
-                                            downloadPresenter.isSample(),
-                                            downloadPresenter.getPercent(),
-                                            timeZones.getLocalTimeZoneId());
-                            final Rest<ResourceGeneration> rest = restFactory.create();
-                            rest
-                                    .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager,
-                                            null,
-                                            result))
-                                    .call(DASHBOARD_RESOURCE)
-                                    .downloadSearchResults(downloadSearchResultsRequest);
-                        }
+                                final DownloadSearchResultsRequest downloadSearchResultsRequest =
+                                        new DownloadSearchResultsRequest(
+                                                applicationInstanceIdProvider.get(),
+                                                searchRequest,
+                                                getComponentConfig().getId(),
+                                                downloadPresenter.getFileType(),
+                                                downloadPresenter.isSample(),
+                                                downloadPresenter.getPercent(),
+                                                timeZones.getLocalTimeZoneId());
+                                final Rest<ResourceGeneration> rest = restFactory.create();
+                                rest
+                                        .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager,
+                                                null,
+                                                result))
+                                        .call(DASHBOARD_RESOURCE)
+                                        .downloadSearchResults(downloadSearchResultsRequest);
+                            }
 
-                        hide(autoClose, ok);
-                    }
-                };
-
-                ShowPopupEvent.fire(this, downloadPresenter, PopupType.OK_CANCEL_DIALOG, "Download Options",
-                        popupUiHandlers);
+                            e.hide();
+                        })
+                        .fire();
             }
         }
     }

@@ -40,6 +40,7 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -49,7 +50,7 @@ import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-public class DataRetentionPolicyListPresenter extends MyPresenterWidget<PagerView> {
+public class DataRetentionPolicyListPresenter extends MyPresenterWidget<PagerView> implements Focus {
 
     private final MyDataGrid<DataRetentionRule> dataGrid;
     private final MultiSelectionModelImpl<DataRetentionRule> selectionModel;
@@ -69,6 +70,11 @@ public class DataRetentionPolicyListPresenter extends MyPresenterWidget<PagerVie
         getWidget().getElement().addClassName("stroom-border");
 
         initTableColumns();
+    }
+
+    @Override
+    public void focus() {
+        dataGrid.setFocus(true);
     }
 
     /**

@@ -29,6 +29,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.receive.rules.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -36,7 +37,7 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
 
-public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionRuleView> {
+public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionRuleView> implements Focus {
 
     private static final DataSourceResource DATA_SOURCE_RESOURCE = GWT.create(DataSourceResource.class);
     private final EditExpressionPresenter editExpressionPresenter;
@@ -60,6 +61,11 @@ public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionR
                                 result))
                 .call(DATA_SOURCE_RESOURCE)
                 .fetchFields(MetaFields.STREAM_STORE_DOC_REF);
+    }
+
+    @Override
+    public void focus() {
+        editExpressionPresenter.focus();
     }
 
     void read(final DataRetentionRule rule) {

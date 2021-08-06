@@ -47,6 +47,11 @@ public class IndexVolumeGroupEditViewImpl extends ViewImpl implements IndexVolum
     }
 
     @Override
+    public void focus() {
+        name.setFocus(true);
+    }
+
+    @Override
     public String getName() {
         return this.name.getText();
     }

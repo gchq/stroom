@@ -52,6 +52,11 @@ public class QueryFavouritesViewImpl extends ViewImpl implements QueryFavourites
     }
 
     @Override
+    public void focus() {
+        cellList.setFocus(true);
+    }
+
+    @Override
     public CellList<StoredQuery> getCellList() {
         return cellList;
     }

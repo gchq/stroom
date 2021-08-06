@@ -17,9 +17,9 @@
 package stroom.dashboard.client.query;
 
 import stroom.dashboard.client.query.NamePresenter.NameView;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
+import stroom.widget.popup.client.view.HideRequest;
+import stroom.widget.popup.client.view.HideRequestUiHandlers;
 
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -29,7 +29,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class NameViewImpl extends ViewWithUiHandlers<PopupUiHandlers> implements NameView {
+public class NameViewImpl extends ViewWithUiHandlers<HideRequestUiHandlers> implements NameView {
 
     private final Widget widget;
     @UiField
@@ -43,7 +43,7 @@ public class NameViewImpl extends ViewWithUiHandlers<PopupUiHandlers> implements
 
     @Override
     public void focus() {
-        Scheduler.get().scheduleDeferred(() -> name.setFocus(true));
+        name.setFocus(true);
     }
 
     @Override
@@ -64,7 +64,7 @@ public class NameViewImpl extends ViewWithUiHandlers<PopupUiHandlers> implements
     @UiHandler("name")
     void onKeyDown(final KeyDownEvent event) {
         if (event.getNativeKeyCode() == '\r') {
-            getUiHandlers().onHideRequest(false, true);
+            getUiHandlers().hideRequest(new HideRequest(false, true));
         }
     }
 

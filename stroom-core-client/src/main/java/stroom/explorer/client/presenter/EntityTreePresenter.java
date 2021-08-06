@@ -19,6 +19,7 @@ package stroom.explorer.client.presenter;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.shared.ExplorerNode;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -27,12 +28,13 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 public class EntityTreePresenter extends MyPresenterWidget<EntityTreePresenter.EntityTreeView>
-        implements EntityTreeUiHandlers {
+        implements EntityTreeUiHandlers, Focus {
 
     private final ExplorerTree explorerTree;
 
     @Inject
-    public EntityTreePresenter(final EventBus eventBus, final EntityTreeView view,
+    public EntityTreePresenter(final EventBus eventBus,
+                               final EntityTreeView view,
                                final RestFactory restFactory) {
         super(eventBus, view);
         view.setUiHandlers(this);
@@ -41,6 +43,11 @@ public class EntityTreePresenter extends MyPresenterWidget<EntityTreePresenter.E
 
         // Add views.
         view.setCellTree(explorerTree);
+    }
+
+    @Override
+    public void focus() {
+        getView().focus();
     }
 
     @Override
@@ -72,7 +79,7 @@ public class EntityTreePresenter extends MyPresenterWidget<EntityTreePresenter.E
         explorerTree.getSelectionModel().setSelected(selection);
     }
 
-    public interface EntityTreeView extends View, HasUiHandlers<EntityTreeUiHandlers> {
+    public interface EntityTreeView extends View, Focus, HasUiHandlers<EntityTreeUiHandlers> {
 
         void setCellTree(Widget cellTree);
     }

@@ -41,9 +41,6 @@ import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskResource;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.ResultPage;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
@@ -266,12 +263,7 @@ public class ProcessorTaskListPresenter
                     }
                     return tableBuilder.build();
                 });
-
-        tooltipPresenter.setHTML(builder.build());
-
-        final PopupPosition popupPosition = new PopupPosition(x, y);
-        ShowPopupEvent.fire(ProcessorTaskListPresenter.this, tooltipPresenter, PopupType.POPUP, popupPosition,
-                null);
+        tooltipPresenter.show(builder.build(), x, y);
     }
 
     private String toDateString(final Long ms) {

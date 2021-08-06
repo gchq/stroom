@@ -46,7 +46,7 @@ public class NewElementViewImpl extends ViewImpl implements NewElementView {
 
     @Override
     public void focus() {
-        Scheduler.get().scheduleDeferred(() -> id.setFocus(true));
+        id.setFocus(true);
     }
 
     @Override

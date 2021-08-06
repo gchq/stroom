@@ -23,11 +23,11 @@ import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.HorizontalLocation;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -84,16 +84,6 @@ public class MenuPresenter
                         currentMenu = presenter;
                         currentItem = menuItem;
 
-                        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-                            @Override
-                            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                                presenter.hideChildren(autoClose, ok);
-                                presenter.hideSelf(autoClose, ok);
-                                currentMenu = null;
-                                currentItem = null;
-                            }
-                        };
-
                         final PopupPosition popupPosition = new PopupPosition(
                                 element.getAbsoluteRight(),
                                 element.getAbsoluteLeft(),
@@ -102,13 +92,17 @@ public class MenuPresenter
                                 HorizontalLocation.RIGHT,
                                 null);
 
-                        ShowPopupEvent.fire(
-                                MenuPresenter.this,
-                                presenter,
-                                PopupType.POPUP,
-                                popupPosition,
-                                popupUiHandlers,
-                                element);
+                        ShowPopupEvent.builder(presenter)
+                                .popupType(PopupType.POPUP)
+                                .popupPosition(popupPosition)
+                                .addAutoHidePartner(element)
+                                .onHideRequest(e -> {
+                                    presenter.hideChildren(e.isAutoClose(), e.isOk());
+                                    presenter.hideSelf(e.isAutoClose(), e.isOk());
+                                    currentMenu = null;
+                                    currentItem = null;
+                                })
+                                .fire();
                     }
                 });
             }
@@ -150,7 +144,7 @@ public class MenuPresenter
     }
 
     private void hideSelf(final boolean autoClose, final boolean ok) {
-        HidePopupEvent.fire(this, this, autoClose, ok);
+        HidePopupEvent.builder(this).autoClose(autoClose).ok(ok).fire();
     }
 
     private void hideChildren(final boolean autoClose, final boolean ok) {
@@ -190,12 +184,10 @@ public class MenuPresenter
         getView().setData(items);
     }
 
-    public interface MenuView extends View, HasUiHandlers<MenuUiHandlers> {
+    public interface MenuView extends View, Focus, HasUiHandlers<MenuUiHandlers> {
 
         void setData(List<Item> items);
 
         void selectFirstItem(boolean stealFocus);
-
-        void focus();
     }
 }

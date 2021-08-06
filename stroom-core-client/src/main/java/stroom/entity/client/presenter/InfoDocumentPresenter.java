@@ -23,8 +23,9 @@ import stroom.document.client.event.ShowInfoDocumentDialogEvent;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenter;
@@ -51,7 +52,12 @@ public class InfoDocumentPresenter
     @Override
     protected void revealInParent() {
         final PopupSize popupSize = PopupSize.resizable(450, 300);
-        ShowPopupEvent.fire(this, this, PopupType.CLOSE_DIALOG, popupSize, "Info", null);
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.CLOSE_DIALOG)
+                .popupSize(popupSize)
+                .caption("Info")
+                .onShow(e -> getView().focus())
+                .fire();
     }
 
     @ProxyEvent
@@ -94,7 +100,7 @@ public class InfoDocumentPresenter
         forceReveal();
     }
 
-    public interface InfoDocumentView extends View {
+    public interface InfoDocumentView extends View, Focus {
 
         void setInfo(String info);
     }

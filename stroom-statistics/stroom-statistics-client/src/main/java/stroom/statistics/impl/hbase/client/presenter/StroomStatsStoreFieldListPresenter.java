@@ -32,7 +32,6 @@ import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreEntityData;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -160,23 +159,19 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<PagerV
             final List<StatisticField> otherFields = stroomStatsStoreEntityData.getFields();
 
             stroomStatsStoreFieldEditPresenter.read(statisticField, otherFields);
-            stroomStatsStoreFieldEditPresenter.show("New Field",
-                    new DefaultPopupUiHandlers(stroomStatsStoreFieldEditPresenter) {
-                        @Override
-                        public void onHideRequest(final boolean autoClose, final boolean ok) {
-                            if (ok) {
-                                if (stroomStatsStoreFieldEditPresenter.write(statisticField)) {
-                                    stroomStatsStoreEntityData.addStatisticField(statisticField);
-                                    reComputeRollUpBitMask(oldStroomStatsStoreEntityData, stroomStatsStoreEntityData);
-                                    refresh();
-                                    hide(autoClose, ok);
-                                    DirtyEvent.fire(StroomStatsStoreFieldListPresenter.this, true);
-                                }
-                            } else {
-                                hide(autoClose, ok);
-                            }
-                        }
-                    });
+            stroomStatsStoreFieldEditPresenter.show("New Field", e -> {
+                if (e.isOk()) {
+                    if (stroomStatsStoreFieldEditPresenter.write(statisticField)) {
+                        stroomStatsStoreEntityData.addStatisticField(statisticField);
+                        reComputeRollUpBitMask(oldStroomStatsStoreEntityData, stroomStatsStoreEntityData);
+                        refresh();
+                        e.hide();
+                        DirtyEvent.fire(StroomStatsStoreFieldListPresenter.this, true);
+                    }
+                } else {
+                    e.hide();
+                }
+            });
         }
     }
 
@@ -194,24 +189,20 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<PagerV
                 otherFields.remove(statisticField);
 
                 stroomStatsStoreFieldEditPresenter.read(statisticField, otherFields);
-                stroomStatsStoreFieldEditPresenter.show("Edit Field",
-                        new DefaultPopupUiHandlers(stroomStatsStoreFieldEditPresenter) {
-                            @Override
-                            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                                if (ok) {
-                                    if (stroomStatsStoreFieldEditPresenter.write(statisticField)) {
-                                        stroomStatsStoreEntityData.reOrderStatisticFields();
-                                        reComputeRollUpBitMask(oldStroomStatsStoreEntityData,
-                                                stroomStatsStoreEntityData);
-                                        refresh();
-                                        hide(autoClose, ok);
-                                        DirtyEvent.fire(StroomStatsStoreFieldListPresenter.this, true);
-                                    }
-                                } else {
-                                    hide(autoClose, ok);
-                                }
-                            }
-                        });
+                stroomStatsStoreFieldEditPresenter.show("Edit Field", e -> {
+                    if (e.isOk()) {
+                        if (stroomStatsStoreFieldEditPresenter.write(statisticField)) {
+                            stroomStatsStoreEntityData.reOrderStatisticFields();
+                            reComputeRollUpBitMask(oldStroomStatsStoreEntityData,
+                                    stroomStatsStoreEntityData);
+                            refresh();
+                            e.hide();
+                            DirtyEvent.fire(StroomStatsStoreFieldListPresenter.this, true);
+                        }
+                    } else {
+                        e.hide();
+                    }
+                });
             }
         }
     }

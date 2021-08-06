@@ -61,6 +61,11 @@ public class IndexFieldEditViewImpl extends ViewImpl implements IndexFieldEditVi
     }
 
     @Override
+    public void focus() {
+        type.focus();
+    }
+
+    @Override
     public IndexFieldType getFieldUse() {
         return type.getSelectedItem();
     }

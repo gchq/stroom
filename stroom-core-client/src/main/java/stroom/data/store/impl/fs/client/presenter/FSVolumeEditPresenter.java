@@ -27,12 +27,11 @@ import stroom.item.client.ItemListBox;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
+import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -68,43 +67,45 @@ public class FSVolumeEditPresenter extends MyPresenterWidget<FSVolumeEditPresent
     void show(final FsVolume volume, final String title, final Consumer<FsVolume> consumer) {
         read(volume);
 
-        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers(this) {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    write();
-                    try {
-                        final Rest<FsVolume> rest = restFactory.create();
-                        if (volume.getId() == null) {
-                            rest
-                                    .onSuccess(consumer)
-                                    .call(FS_VOLUME_RESOURCE)
-                                    .create(volume);
-
-                        } else {
-
-                            rest
-                                    .onSuccess(consumer)
-                                    .call(FS_VOLUME_RESOURCE)
-                                    .update(volume.getId(), volume);
-
-                        }
-
-                    } catch (final RuntimeException e) {
-                        AlertEvent.fireError(FSVolumeEditPresenter.this, e.getMessage(), null);
-                    }
-                } else {
-                    consumer.accept(null);
-                }
-            }
-        };
-
         final PopupSize popupSize = PopupSize.resizableX();
-        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, title, popupUiHandlers);
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption(title)
+                .onShow(event -> getView().focus())
+                .onHideRequest(event -> {
+                    if (event.isOk()) {
+                        write();
+                        try {
+                            final Rest<FsVolume> rest = restFactory.create();
+                            if (volume.getId() == null) {
+                                rest
+                                        .onSuccess(consumer)
+                                        .call(FS_VOLUME_RESOURCE)
+                                        .create(volume);
+
+                            } else {
+
+                                rest
+                                        .onSuccess(consumer)
+                                        .call(FS_VOLUME_RESOURCE)
+                                        .update(volume.getId(), volume);
+
+                            }
+
+                        } catch (final RuntimeException e) {
+                            AlertEvent.fireError(FSVolumeEditPresenter.this, e.getMessage(), null);
+                        }
+                    } else {
+                        consumer.accept(null);
+                    }
+                })
+                .fire();
     }
 
     void hide() {
-        HidePopupEvent.fire(this, this, false, true);
+        HidePopupEvent.builder(this)
+                .fire();
     }
 
     private void read(final FsVolume volume) {
@@ -133,7 +134,7 @@ public class FSVolumeEditPresenter extends MyPresenterWidget<FSVolumeEditPresent
         volume.setByteLimit(bytesLimit);
     }
 
-    public interface VolumeEditView extends View {
+    public interface VolumeEditView extends View, Focus {
 
         HasText getPath();
 
