@@ -16,14 +16,18 @@
 
 package stroom.widget.dropdowntree.client.view;
 
+import stroom.svg.client.SvgImages;
 import stroom.widget.util.client.MouseUtil;
 
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
@@ -37,15 +41,24 @@ public class DropDownViewImpl extends ViewWithUiHandlers<DropDownUiHandlers>
     @UiField
     Label label;
     @UiField
-    Button button;
+    SimplePanel button;
 
     @Inject
     public DropDownViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         widget.addDomHandler(event -> {
-            showPopup(event);
-            event.stopPropagation();
+            if (MouseUtil.isPrimary(event)) {
+                showPopup(event.getNativeEvent());
+            }
         }, MouseDownEvent.getType());
+        widget.addDomHandler(event -> {
+            if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
+                showPopup(event.getNativeEvent());
+            }
+        }, KeyDownEvent.getType());
+        widget.getElement().setTabIndex(0);
+
+        button.getElement().setInnerHTML(SvgImages.MONO_ELLIPSES);
     }
 
     @Override
@@ -59,11 +72,10 @@ public class DropDownViewImpl extends ViewWithUiHandlers<DropDownUiHandlers>
         label.setTitle(text);
     }
 
-    private void showPopup(final MouseDownEvent e) {
-        if (MouseUtil.isPrimary(e)) {
-            if (getUiHandlers() != null) {
-                getUiHandlers().showPopup();
-            }
+    private void showPopup(final NativeEvent e) {
+        e.stopPropagation();
+        if (getUiHandlers() != null) {
+            getUiHandlers().showPopup();
         }
     }
 

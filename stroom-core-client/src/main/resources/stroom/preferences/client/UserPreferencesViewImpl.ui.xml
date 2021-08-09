@@ -3,93 +3,56 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:item="urn:import:stroom.item.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
-             xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client">
-    <g:FlowPanel styleName="max dock-container-vertical stroom-control-page">
-        <g:SimplePanel styleName="dock-max">
-            <g:Grid ui:field="grid" styleName="stroom-control-grid">
-                <!-- Theme -->
-                <g:row>
-                    <g:cell>Theme:</g:cell>
-                    <g:customCell>
-                        <item:StringListBox ui:field="theme" addStyleNames="w-100"/>
-                    </g:customCell>
-                </g:row>
+             xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
+             xmlns:form="urn:import:stroom.widget.form.client">
 
-                <!-- Ace editor theme -->
-                <g:row>
-                    <g:cell>Editor Theme:</g:cell>
-                    <g:customCell>
-                        <item:StringListBox ui:field="editorTheme" addStyleNames="w-100"/>
-                    </g:customCell>
-                </g:row>
+    <g:FlowPanel styleName="max form">
+        <!-- Theme -->
+        <form:FormGroup identity="userPreferencesTheme" label="Theme">
+            <item:StringListBox ui:field="theme" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <!-- Ace editor theme -->
+        <form:FormGroup identity="userPreferencesEditorTheme" label="Editor Theme">
+            <item:StringListBox ui:field="editorTheme" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <!-- Layout Density -->
+        <form:FormGroup identity="userPreferencesLayoutDensity" label="Layout Density">
+            <item:StringListBox ui:field="density" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <!-- Font -->
+        <form:FormGroup identity="userPreferencesFont" label="Font">
+            <item:StringListBox ui:field="font" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <!-- Font Size -->
+        <form:FormGroup identity="userPreferencesFontSize" label="Font Size">
+            <item:StringListBox ui:field="fontSize" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <!-- Date time settings -->
+        <form:FormGroup identity="userPreferencesDateFormat" label="Date and Time Format">
+            <item:StringListBox ui:field="format" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="userPreferencesCustom" label="Custom">
+            <tickbox:CustomCheckBox ui:field="custom"/>
+        </form:FormGroup>
+        <form:FormGroup identity="userPreferencesCustomFormat" label="Custom Format">
+            <g:TextBox ui:field="text" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="userPreferencesTimeZone" label="Time Zone">
+            <item:ItemListBox ui:field="timeZoneUse" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="userPreferencesTimeZoneId" identity="userPreferencesTimeZoneId"
+                        label="Time Zone Id">
+            <item:StringListBox ui:field="timeZoneId" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="userPreferencesTimeZoneOffset" identity="userPreferencesTimeZoneOffset"
+                        label="Time Zone Offset">
+            <g:FlowPanel>
+                <valuespinner:ValueSpinner ui:field="timeZoneOffsetHours"/>
+                <valuespinner:ValueSpinner ui:field="timeZoneOffsetMinutes"/>
+            </g:FlowPanel>
+        </form:FormGroup>
 
-                <!-- Layout Density -->
-                <g:row>
-                    <g:cell>Layout Density:</g:cell>
-                    <g:customCell>
-                        <item:StringListBox ui:field="density" addStyleNames="w-100"/>
-                    </g:customCell>
-                </g:row>
-
-                <!-- Font -->
-                <g:row>
-                    <g:cell>Font:</g:cell>
-                    <g:customCell>
-                        <item:StringListBox ui:field="font" addStyleNames="w-100"/>
-                    </g:customCell>
-                </g:row>
-
-                <!-- Font Size -->
-                <g:row>
-                    <g:cell>Font Size:</g:cell>
-                    <g:customCell>
-                        <item:StringListBox ui:field="fontSize" addStyleNames="w-100"/>
-                    </g:customCell>
-                </g:row>
-
-                <!-- Date time settings -->
-                <g:row>
-                    <g:cell>Date and Time Format:</g:cell>
-                    <g:customCell>
-                        <item:StringListBox ui:field="format" addStyleNames="w-100"/>
-                    </g:customCell>
-                </g:row>
-                <g:row>
-                    <g:cell>Custom:</g:cell>
-                    <g:customCell>
-                        <tickbox:TickBox ui:field="custom" addStyleNames="w-100"/>
-                    </g:customCell>
-                </g:row>
-                <g:row>
-                    <g:cell>Custom Format:</g:cell>
-                    <g:customCell>
-                        <g:TextBox ui:field="text" addStyleNames="w-100"/>
-                    </g:customCell>
-                </g:row>
-                <g:row>
-                    <g:cell>Time Zone:</g:cell>
-                    <g:customCell>
-                        <item:ItemListBox ui:field="timeZoneUse" addStyleNames="w-100"/>
-                    </g:customCell>
-                </g:row>
-                <g:row>
-                    <g:cell>Time Zone Id:</g:cell>
-                    <g:customCell>
-                        <item:StringListBox ui:field="timeZoneId" addStyleNames="w-100"/>
-                    </g:customCell>
-                </g:row>
-                <g:row>
-                    <g:cell>Time Zone Offset:</g:cell>
-                    <g:customCell>
-                        <g:FlowPanel>
-                            <valuespinner:ValueSpinner ui:field="timeZoneOffsetHours"/>
-                            <valuespinner:ValueSpinner ui:field="timeZoneOffsetMinutes"/>
-                        </g:FlowPanel>
-                    </g:customCell>
-                </g:row>
-            </g:Grid>
-        </g:SimplePanel>
-        <g:FlowPanel styleName="dock-min button-container preferencesViewImpl-buttons">
+        <g:FlowPanel styleName="preferencesViewImpl-buttons">
             <g:Button ui:field="setAsDefault" text="Set As Default"/>
             <g:Button ui:field="revertToDefault" text="Revert To Default"/>
         </g:FlowPanel>

@@ -1,8 +1,8 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
-    <g:FlowPanel ui:field="container" styleName="dropDownView-container stroom-border">
+    <g:FlowPanel ui:field="container" styleName="dropDownView-container stroom-control allow-focus">
         <g:Label ui:field="label" styleName="dropDownView-label"/>
-        <g:Button ui:field="button" styleName="dropDownView-button"/>
+        <g:SimplePanel ui:field="button" styleName="dropDownView-button"/>
     </g:FlowPanel>
 </ui:UiBinder>

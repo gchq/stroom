@@ -4,7 +4,7 @@
     <g:FlowPanel styleName="max dock-container-vertical">
         <g:Label text="Select the parent group:" addStyleNames="dock-min moveDocumentViewImpl-label"/>
         <g:SimplePanel ui:field="foldersOuter" styleName="dock-max moveDocumentViewImpl-foldersOuter">
-            <g:SimplePanel ui:field="foldersInner" styleName="max default-min-sizes itemCheckList"/>
+            <g:SimplePanel ui:field="foldersInner" styleName="max default-min-sizes stroom-control"/>
         </g:SimplePanel>
         <g:Grid styleName="dock-min stroom-control-grid">
             <g:row>

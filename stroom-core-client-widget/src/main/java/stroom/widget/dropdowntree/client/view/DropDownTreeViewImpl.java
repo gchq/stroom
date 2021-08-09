@@ -49,11 +49,6 @@ public class DropDownTreeViewImpl extends ViewWithUiHandlers<DropDownTreeUiHandl
     }
 
     @Override
-    public void focus() {
-        nameFilter.focus();
-    }
-
-    @Override
     public void setCellTree(final Widget widget) {
         treeContainer.setWidget(widget);
     }

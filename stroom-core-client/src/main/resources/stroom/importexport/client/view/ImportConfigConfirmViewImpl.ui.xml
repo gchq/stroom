@@ -7,7 +7,7 @@
             <g:row>
                 <g:cell>Enable Processor Filters:</g:cell>
                 <g:customCell>
-                    <g:CheckBox styleName="itemCheckList" ui:field="enableFilters"/>
+                    <g:CheckBox styleName="stroom-control" ui:field="enableFilters"/>
                 </g:customCell>
             </g:row>
             <g:row>
@@ -18,6 +18,6 @@
             </g:row>
         </g:Grid>
         <g:Label text="(or leave blank to process from first stream)" addStyleNames="dock-min"/>
-        <g:SimplePanel ui:field="dataGridView" styleName="dock-max itemCheckList"/>
+        <g:SimplePanel ui:field="dataGridView" styleName="dock-max stroom-control"/>
     </g:FlowPanel>
 </ui:UiBinder> 

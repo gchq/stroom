@@ -16,13 +16,13 @@
 
 package stroom.preferences.client;
 
-import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.item.client.ItemListBox;
 import stroom.item.client.StringListBox;
 import stroom.preferences.client.UserPreferencesPresenter.UserPreferencesView;
 import stroom.query.api.v2.TimeZone;
 import stroom.query.api.v2.TimeZone.Use;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.form.client.FormGroup;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -33,8 +33,6 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.Grid;
-import com.google.gwt.user.client.ui.HTMLTable.RowFormatter;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -66,7 +64,9 @@ public final class UserPreferencesViewImpl
     private final Widget widget;
 
     @UiField
-    Grid grid;
+    FormGroup userPreferencesTimeZoneId;
+    @UiField
+    FormGroup userPreferencesTimeZoneOffset;
     @UiField
     StringListBox theme;
     @UiField
@@ -80,7 +80,7 @@ public final class UserPreferencesViewImpl
     @UiField
     StringListBox format;
     @UiField
-    TickBox custom;
+    CustomCheckBox custom;
     @UiField
     TextBox text;
     @UiField
@@ -243,7 +243,7 @@ public final class UserPreferencesViewImpl
 
     @Override
     public String getPattern() {
-        if (custom.getBooleanValue()) {
+        if (custom.getValue()) {
             return text.getText();
         }
 
@@ -262,7 +262,7 @@ public final class UserPreferencesViewImpl
         }
 
         final boolean custom = this.format.getSelectedIndex() == -1;
-        this.custom.setBooleanValue(custom);
+        this.custom.setValue(custom);
         this.text.setEnabled(custom);
         this.text.setText(text);
     }
@@ -331,14 +331,13 @@ public final class UserPreferencesViewImpl
 
 
     public void changeVisible() {
-        final RowFormatter formatter = grid.getRowFormatter();
-        formatter.setVisible(9, TimeZone.Use.ID.equals(this.timeZoneUse.getSelectedItem()));
-        formatter.setVisible(10, TimeZone.Use.OFFSET.equals(this.timeZoneUse.getSelectedItem()));
+        userPreferencesTimeZoneId.setVisible(TimeZone.Use.ID.equals(this.timeZoneUse.getSelectedItem()));
+        userPreferencesTimeZoneOffset.setVisible(TimeZone.Use.OFFSET.equals(this.timeZoneUse.getSelectedItem()));
     }
 
     @UiHandler("custom")
-    public void onTickBoxClick(final ValueChangeEvent<TickBoxState> event) {
-        text.setEnabled(custom.getBooleanValue());
+    public void onTickBoxClick(final ValueChangeEvent<Boolean> event) {
+        text.setEnabled(custom.getValue());
     }
 
     @UiHandler("format")

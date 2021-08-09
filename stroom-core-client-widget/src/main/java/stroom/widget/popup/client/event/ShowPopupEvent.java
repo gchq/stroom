@@ -200,7 +200,10 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
         public void fire() {
             // By default we will automatically hide popups unless they have a handler that alters the behaviour.
             if (hideRequestHandler == null) {
-                hideRequestHandler = e -> HidePopupEvent.builder(presenterWidget).fire();
+                hideRequestHandler = e -> HidePopupEvent.builder(presenterWidget)
+                        .autoClose(e.isAutoClose())
+                        .ok(e.isOk())
+                        .fire();
             }
 
             Element[] elements = null;

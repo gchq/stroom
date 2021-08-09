@@ -75,7 +75,7 @@ class ExplorerDropDownTreePresenter
 
     @Override
     public void focus() {
-        getView().focus();
+        explorerTree.focus();
     }
 
     public void show() {

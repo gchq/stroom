@@ -1,32 +1,20 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:i="urn:import:stroom.item.client">
-    <g:SimplePanel styleName="max default-min-sizes">
-        <g:Grid styleName="stroom-control-grid w-100">
-            <g:row>
-                <g:cell>Id:</g:cell>
-                <g:customCell>
-                    <g:Label ui:field="id" addStyleNames="stroom-control-label"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Name:</g:cell>
-                <g:customCell>
-                    <g:TextBox ui:field="name" addStyleNames="w-100"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Table:</g:cell>
-                <g:customCell>
-                    <i:ItemListBox ui:field="table" addStyleNames="w-100"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Visualisation:</g:cell>
-                <g:customCell>
-                    <g:SimplePanel ui:field="visualisation" addStyleNames="w-100"/>
-                </g:customCell>
-            </g:row>
-        </g:Grid>
-    </g:SimplePanel>
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:i="urn:import:stroom.item.client"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="pt-3 max default-min-sizes form">
+        <form:FormGroup identity="basicVisSettingsId" label="Id">
+            <g:Label ui:field="id" addStyleNames="w-100 stroom-control-label"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicVisSettingsName" label="Name">
+            <g:TextBox ui:field="name" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicVisSettingsTable" label="Table">
+            <i:ItemListBox ui:field="table" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicVisSettingsVisualisation" label="Visualisation">
+            <g:SimplePanel ui:field="visualisation" addStyleNames="w-100"/>
+        </form:FormGroup>
+    </g:FlowPanel>
 </ui:UiBinder> 

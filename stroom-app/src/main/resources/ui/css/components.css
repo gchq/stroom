@@ -479,20 +479,17 @@
 
 .dropDownView-button {
     position: absolute;
-    background-image: url("../images/ellipses-grey.svg");
-	background-size: contain;
-	background-color: transparent;
+    display: flex;
     bottom: 0;
     right: 4px;
 	width: 15px;
 	height: 15px;
     cursor: pointer;
-    border: none;
 }
 
-.stroom-theme-dark .dropDownView-button,
-.stroom-theme-dark2 .dropDownView-button {
-	background-image: url("../images/ellipses-grey-dark.svg");
+.dropDownView-button svg {
+	width: 15px;
+	height: 15px;
 }
 
 .tabBarContainer {
@@ -1102,9 +1099,6 @@
     min-width: 100%;
 }
 
-.okCancelContent-cancel {
-}
-
 .editExpressionViewImpl-expressionTree {
     padding-left: 5px;
 }
@@ -1158,9 +1152,6 @@
 .characterNavigator-button {
     padding: 1px;
     text-align: center;
-}
-
-.resizableOkCancelContent-cancel {
 }
 
 .userListViewImpl-nameFilter {
@@ -1674,9 +1665,9 @@
 }
 
 .form-control:disabled, .form-control[readonly] {
-  background-color: var(--control__background-color);
-  border-color: var(--control__border-color);
-  color: var(--text-color-disabled);
+  background-color: var(--control__background-color--disabled);
+  border-color: var(--control__border-color--disabled);
+  color: var(--control__text-color--disabled);
 }
 
 .form-control.hide-background-image {
@@ -1698,4 +1689,17 @@
 
 .form-control.length-indicator-padding {
   padding-right: 4.5rem;
+}
+
+.form-group {
+    display: flex;
+    margin-bottom: 0;
+    flex-direction: column;
+}
+
+.form {
+    display: flex;
+    gap: var(--control__gap--vertical);
+    flex-direction: column;
+    flex-wrap: wrap;
 }

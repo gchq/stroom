@@ -10,9 +10,9 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Iterator;
 
-public class FormRow extends Composite implements HasWidgets {
+public class FormGroup extends Composite implements HasWidgets {
 
-    private final SimplePanel formRow = new SimplePanel();
+//    private final SimplePanel formRow = new SimplePanel();
     private final FlowPanel formGroup = new FlowPanel();
     private final Lbl lbl = new Lbl();
     private final SimplePanel inputContainer = new SimplePanel();
@@ -21,20 +21,20 @@ public class FormRow extends Composite implements HasWidgets {
     private String id;
     private Widget widget;
 
-    public FormRow() {
+    public FormGroup() {
         lbl.setStyleName("form-label");
         inputContainer.setStyleName("FormField__input-container");
         feedback.setStyleName("invalid-feedback");
 
-        formGroup.setStyleName("form-group col");
+        formGroup.setStyleName("form-group");
         formGroup.add(lbl);
         formGroup.add(inputContainer);
         formGroup.add(feedback);
 
-        formRow.setStyleName("form-row");
-        formRow.setWidget(formGroup);
+//        formRow.setStyleName("form-row");
+//        formRow.setWidget(formGroup);
 
-        initWidget(formRow);
+        initWidget(formGroup);
     }
 
     public void setIdentity(final String id) {

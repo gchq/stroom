@@ -62,6 +62,11 @@ public class BasicVisSettingsViewImpl extends ViewWithUiHandlers<BasicVisSetting
     }
 
     @Override
+    public void focus() {
+        name.setFocus(true);
+    }
+
+    @Override
     public void setId(final String id) {
         this.id.setText(id);
     }

@@ -26,6 +26,7 @@ import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.security.shared.DocumentPermissionNames;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
@@ -35,7 +36,9 @@ import java.util.List;
 import java.util.Objects;
 
 public class BasicTableSettingsPresenter
-        extends BasicSettingsTabPresenter<BasicTableSettingsPresenter.BasicTableSettingsView> {
+        extends BasicSettingsTabPresenter<BasicTableSettingsPresenter.BasicTableSettingsView>
+        implements Focus {
+
     private final EntityDropDownPresenter pipelinePresenter;
 
     @Inject
@@ -48,6 +51,11 @@ public class BasicTableSettingsPresenter
         pipelinePresenter.setRequiredPermissions(DocumentPermissionNames.USE);
 
         view.setPipelineView(pipelinePresenter.getView());
+    }
+
+    @Override
+    public void focus() {
+        getView().focus();
     }
 
     private void setQueryList(final List<Component> list) {
@@ -185,6 +193,7 @@ public class BasicTableSettingsPresenter
     }
 
     public interface BasicTableSettingsView extends BasicSettingsTabPresenter.SettingsView {
+
         void setQueryList(List<Component> queryList);
 
         Component getQuery();

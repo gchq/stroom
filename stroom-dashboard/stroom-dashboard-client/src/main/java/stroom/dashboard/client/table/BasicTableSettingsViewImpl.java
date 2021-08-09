@@ -19,7 +19,7 @@ package stroom.dashboard.client.table;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.table.BasicTableSettingsPresenter.BasicTableSettingsView;
 import stroom.item.client.ItemListBox;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -45,13 +45,13 @@ public class BasicTableSettingsViewImpl extends ViewImpl implements BasicTableSe
     @UiField
     ItemListBox<Component> query;
     @UiField
-    TickBox extractValues;
+    CustomCheckBox extractValues;
     @UiField
     SimplePanel pipeline;
     @UiField
     TextBox maxResults;
     @UiField
-    TickBox showDetail;
+    CustomCheckBox showDetail;
 
     @Inject
     public BasicTableSettingsViewImpl(final Binder binder) {
@@ -61,6 +61,11 @@ public class BasicTableSettingsViewImpl extends ViewImpl implements BasicTableSe
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    @Override
+    public void focus() {
+        name.setFocus(true);
     }
 
     @Override
@@ -101,12 +106,12 @@ public class BasicTableSettingsViewImpl extends ViewImpl implements BasicTableSe
 
     @Override
     public boolean isExtractValues() {
-        return this.extractValues.getBooleanValue();
+        return this.extractValues.getValue();
     }
 
     @Override
     public void setExtractValues(final boolean extractValues) {
-        this.extractValues.setBooleanValue(extractValues);
+        this.extractValues.setValue(extractValues);
     }
 
     @Override
@@ -128,12 +133,12 @@ public class BasicTableSettingsViewImpl extends ViewImpl implements BasicTableSe
 
     @Override
     public boolean isShowDetail() {
-        return this.showDetail.getBooleanValue();
+        return this.showDetail.getValue();
     }
 
     @Override
     public void setShowDetail(final boolean showDetail) {
-        this.showDetail.setBooleanValue(showDetail);
+        this.showDetail.setValue(showDetail);
     }
 
     public void onResize() {

@@ -16,16 +16,21 @@
 
 package stroom.widget.valuespinner.client;
 
+import stroom.svg.client.SvgImages;
+
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseDownHandler;
+import com.google.gwt.event.dom.client.MouseOutEvent;
 import com.google.gwt.event.dom.client.MouseOutHandler;
+import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseOverHandler;
+import com.google.gwt.event.dom.client.MouseUpEvent;
 import com.google.gwt.event.dom.client.MouseUpHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -36,8 +41,8 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 public class Spinner implements HasHandlers {
 
     private static final int INITIAL_SPEED = 7;
-    private final Button decrementArrow = new Button();
-    private final Button incrementArrow = new Button();
+    private final SimplePanel decrementArrow = new SimplePanel();
+    private final SimplePanel incrementArrow = new SimplePanel();
     private final EventBus eventBus = new SimpleEventBus();
     private final boolean constrained = true;
     private int step = 1;
@@ -48,6 +53,7 @@ public class Spinner implements HasHandlers {
     private long min = 0;
     private long max = 100;
     private boolean increment;
+
     private final Timer timer = new Timer() {
         private int counter = 0;
         private int speed = 7;
@@ -83,11 +89,11 @@ public class Spinner implements HasHandlers {
             if (enabled) {
                 final Widget sender = (Widget) event.getSource();
                 if (sender == incrementArrow) {
-                    sender.getElement().setClassName("valueSpinner-arrowUpPressed");
+                    sender.getElement().setClassName("valueSpinner-arrow valueSpinner-arrowUpPressed");
                     increment = true;
                     increase();
                 } else {
-                    sender.getElement().setClassName("valueSpinner-arrowDownPressed");
+                    sender.getElement().setClassName("valueSpinner-arrow valueSpinner-arrowDownPressed");
                     increment = false;
                     decrease();
                 }
@@ -99,9 +105,9 @@ public class Spinner implements HasHandlers {
         if (enabled) {
             final Widget sender = (Widget) event.getSource();
             if (sender == incrementArrow) {
-                sender.getElement().setClassName("valueSpinner-arrowUpHover");
+                sender.getElement().setClassName("valueSpinner-arrow valueSpinner-arrowUpHover");
             } else {
-                sender.getElement().setClassName("valueSpinner-arrowDownHover");
+                sender.getElement().setClassName("valueSpinner-arrow valueSpinner-arrowDownHover");
             }
         }
     };
@@ -118,16 +124,18 @@ public class Spinner implements HasHandlers {
 
     public Spinner() {
         this.initialSpeed = INITIAL_SPEED;
-        incrementArrow.addMouseUpHandler(mouseUpHandler);
-        incrementArrow.addMouseDownHandler(mouseDownHandler);
-        incrementArrow.addMouseOverHandler(mouseOverHandler);
-        incrementArrow.addMouseOutHandler(mouseOutHandler);
-        incrementArrow.getElement().setClassName("valueSpinner-arrowUp");
-        decrementArrow.addMouseUpHandler(mouseUpHandler);
-        decrementArrow.addMouseDownHandler(mouseDownHandler);
-        decrementArrow.addMouseOverHandler(mouseOverHandler);
-        decrementArrow.addMouseOutHandler(mouseOutHandler);
-        decrementArrow.getElement().setClassName("valueSpinner-arrowDown");
+        incrementArrow.getElement().setInnerHTML(SvgImages.MONO_ARROW_UP);
+        incrementArrow.addDomHandler(mouseUpHandler, MouseUpEvent.getType());
+        incrementArrow.addDomHandler(mouseDownHandler, MouseDownEvent.getType());
+        incrementArrow.addDomHandler(mouseOverHandler, MouseOverEvent.getType());
+        incrementArrow.addDomHandler(mouseOutHandler, MouseOutEvent.getType());
+        incrementArrow.getElement().setClassName("valueSpinner-arrow valueSpinner-arrowUp");
+        decrementArrow.getElement().setInnerHTML(SvgImages.MONO_ARROW_DOWN);
+        decrementArrow.addDomHandler(mouseUpHandler, MouseUpEvent.getType());
+        decrementArrow.addDomHandler(mouseDownHandler, MouseDownEvent.getType());
+        decrementArrow.addDomHandler(mouseOverHandler, MouseOverEvent.getType());
+        decrementArrow.addDomHandler(mouseOutHandler, MouseOutEvent.getType());
+        decrementArrow.getElement().setClassName("valueSpinner-arrow valueSpinner-arrowDown");
 
         SpinnerEvent.fire(this, value);
     }
@@ -139,14 +147,14 @@ public class Spinner implements HasHandlers {
     /**
      * @return the image representing the decreasing arrow
      */
-    public Button getDecrementArrow() {
+    public SimplePanel getDecrementArrow() {
         return decrementArrow;
     }
 
     /**
      * @return the image representing the increasing arrow
      */
-    public Button getIncrementArrow() {
+    public SimplePanel getIncrementArrow() {
         return incrementArrow;
     }
 
@@ -237,11 +245,11 @@ public class Spinner implements HasHandlers {
     public void setEnabled(final boolean enabled) {
         this.enabled = enabled;
         if (enabled) {
-            incrementArrow.getElement().setClassName("valueSpinner-arrowUp");
-            decrementArrow.getElement().setClassName("valueSpinner-arrowDown");
+            incrementArrow.getElement().setClassName("valueSpinner-arrow valueSpinner-arrowUp");
+            decrementArrow.getElement().setClassName("valueSpinner-arrow valueSpinner-arrowDown");
         } else {
-            incrementArrow.getElement().setClassName("valueSpinner-arrowUpDisabled");
-            decrementArrow.getElement().setClassName("valueSpinner-arrowDownDisabled");
+            incrementArrow.getElement().setClassName("valueSpinner-arrow valueSpinner-arrowUpDisabled");
+            decrementArrow.getElement().setClassName("valueSpinner-arrow valueSpinner-arrowDownDisabled");
         }
         if (!enabled) {
             timer.cancel();
@@ -294,9 +302,9 @@ public class Spinner implements HasHandlers {
     private void cancelTimer(final Widget sender) {
         step = minStep;
         if (sender == incrementArrow) {
-            sender.getElement().setClassName("valueSpinner-arrowUp");
+            sender.getElement().setClassName("valueSpinner-arrow valueSpinner-arrowUp");
         } else {
-            sender.getElement().setClassName("valueSpinner-arrowDown");
+            sender.getElement().setClassName("valueSpinner-arrow valueSpinner-arrowDown");
         }
         timer.cancel();
     }

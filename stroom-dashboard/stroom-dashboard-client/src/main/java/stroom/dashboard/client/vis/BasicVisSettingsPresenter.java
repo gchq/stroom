@@ -38,6 +38,7 @@ import stroom.widget.tab.client.presenter.TabData;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -51,7 +52,7 @@ import java.util.Map;
 import java.util.Objects;
 
 public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVisSettingsPresenter.BasicVisSettingsView>
-        implements BasicVisSettingsUiHandlers {
+        implements BasicVisSettingsUiHandlers, Focus {
 
     private static final VisualisationResource VISUALISATION_RESOURCE = GWT.create(VisualisationResource.class);
 
@@ -80,6 +81,11 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
         visualisationPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
 
         view.setVisualisationView(visualisationPresenter.getView());
+    }
+
+    @Override
+    public void focus() {
+        getView().focus();
     }
 
     @Override

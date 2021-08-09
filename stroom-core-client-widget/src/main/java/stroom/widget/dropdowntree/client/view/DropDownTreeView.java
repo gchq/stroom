@@ -8,7 +8,7 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.function.Supplier;
 
-public interface DropDownTreeView extends View, Focus, HasUiHandlers<DropDownTreeUiHandlers> {
+public interface DropDownTreeView extends View, HasUiHandlers<DropDownTreeUiHandlers> {
 
     void setCellTree(Widget widget);
 

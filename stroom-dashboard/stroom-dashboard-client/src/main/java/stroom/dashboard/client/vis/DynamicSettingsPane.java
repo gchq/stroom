@@ -20,17 +20,16 @@ import stroom.entity.client.presenter.HasReadAndWrite;
 import stroom.item.client.StringListBox;
 import stroom.util.client.JSONUtil;
 import stroom.widget.customdatebox.client.MyDateBox;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.form.client.FormGroup;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
-import com.google.gwt.user.client.ui.Grid;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.Layer;
@@ -42,14 +41,15 @@ import java.util.List;
 public class DynamicSettingsPane extends Composite implements Layer, HasReadAndWrite<JSONObject>, Focus {
 
     private final boolean utc;
-    private final SimplePanel outer;
+    private final FlowPanel outer;
     private final List<StringListBox> fieldControls = new ArrayList<>();
     private final List<HasReadAndWrite<JSONObject>> controls = new ArrayList<>();
     private double opacity;
 
     public DynamicSettingsPane(final boolean utc) {
         this.utc = utc;
-        outer = new SimplePanel();
+        outer = new FlowPanel();
+        outer.setStyleName("pt-3 max default-min-sizes form");
         initWidget(outer);
     }
 
@@ -61,20 +61,18 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
     }
 
     public void addControls(final JSONArray controls) {
-        final Grid grid = new Grid(controls.size(), 2);
-        grid.setStyleName("stroom-control-grid");
-
         for (int i = 0; i < controls.size(); i++) {
             final JSONObject control = JSONUtil.getObject(controls.get(i));
 
             final String label = JSONUtil.getString(control.get("label"));
             final Widget widget = createWidget(control);
 
-            grid.setText(i, 0, label + ":");
-            grid.setWidget(i, 1, widget);
-        }
+            final FormGroup formGroup = new FormGroup();
+            formGroup.setLabel(label);
+            formGroup.add(widget);
 
-        outer.setWidget(grid);
+            outer.add(formGroup);
+        }
     }
 
     private Widget createWidget(final JSONObject control) {
@@ -148,13 +146,13 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
                 }
             }
         } else if ("boolean".equals(type)) {
-            final TickBox ctrl = createBooleanBox(id);
+            final CustomCheckBox ctrl = createBooleanBox(id);
             widget = ctrl;
 
             if (defaultValue != null) {
                 final Boolean b = getBoolean(defaultValue);
                 if (b != null) {
-                    ctrl.setBooleanValue(b);
+                    ctrl.setValue(b);
                 }
             }
         }
@@ -164,7 +162,7 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
 
     private StringListBox createStringListBox(final String id) {
         final StringListBox ctrl = new StringListBox();
-        ctrl.getElement().getStyle().setWidth(100, Unit.PCT);
+        ctrl.addStyleName("w-100");
 
         final HasReadAndWrite<JSONObject> hasReadAndWrite = new HasReadAndWrite<JSONObject>() {
             @Override
@@ -195,7 +193,7 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
 
     private TextBox createTextBox(final String id) {
         final TextBox ctrl = new TextBox();
-        ctrl.getElement().getStyle().setWidth(100, Unit.PCT);
+        ctrl.addStyleName("w-100");
 
         final HasReadAndWrite<JSONObject> hasReadAndWrite = new HasReadAndWrite<JSONObject>() {
             @Override
@@ -226,7 +224,7 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
 
     private MyDateBox createDateBox(final String id) {
         final MyDateBox ctrl = new MyDateBox(utc);
-        ctrl.getElement().getStyle().setWidth(100, Unit.PCT);
+        ctrl.addStyleName("w-100");
 
         final HasReadAndWrite<JSONObject> hasReadAndWrite = new HasReadAndWrite<JSONObject>() {
             @Override
@@ -254,7 +252,7 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
 
     private ValueSpinner createNumberBox(final String id) {
         final ValueSpinner ctrl = new ValueSpinner();
-        ctrl.getElement().getStyle().setWidth(100, Unit.PCT);
+        ctrl.addStyleName("w-100");
 
         final HasReadAndWrite<JSONObject> hasReadAndWrite = new HasReadAndWrite<JSONObject>() {
             @Override
@@ -281,27 +279,26 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
         return ctrl;
     }
 
-    private TickBox createBooleanBox(final String id) {
-        final TickBox ctrl = new TickBox();
-        ctrl.getElement().getStyle().setWidth(100, Unit.PCT);
+    private CustomCheckBox createBooleanBox(final String id) {
+        final CustomCheckBox ctrl = new CustomCheckBox();
 
         final HasReadAndWrite<JSONObject> hasReadAndWrite = new HasReadAndWrite<JSONObject>() {
             @Override
             public void focus() {
-                ctrl.focus();
+                ctrl.setFocus(true);
             }
 
             @Override
             public void read(final JSONObject settings) {
                 final Boolean b = getBoolean(JSONUtil.getString(settings.get(id)));
                 if (b != null) {
-                    ctrl.setBooleanValue(b);
+                    ctrl.setValue(b);
                 }
             }
 
             @Override
             public void write(final JSONObject settings) {
-                final boolean b = ctrl.getBooleanValue();
+                final boolean b = ctrl.getValue();
                 settings.put(id, new JSONString(Boolean.toString(b)));
             }
         };

@@ -4,7 +4,7 @@
     <g:FlowPanel styleName="max dock-container-vertical">
         <g:SimplePanel ui:field="content" styleName="dialog-content"/>
         <g:FlowPanel styleName="dialog-buttons">
-            <g:Button ui:field="close" text="Close"/>
+            <g:Button ui:field="close" addStyleNames="allow-focus" text="Close"/>
         </g:FlowPanel>
     </g:FlowPanel>
 </ui:UiBinder> 

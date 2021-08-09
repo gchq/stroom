@@ -6,18 +6,18 @@
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FormPanel ui:field="form">
         <g:FlowPanel styleName="stroom-control-page">
-            <form:FormRow identity="dataUploadMetaData" label="Meta Data">
+            <form:FormGroup identity="dataUploadMetaData" label="Meta Data">
                 <g:TextArea ui:field="metaData" addStyleNames="w-100"/>
-            </form:FormRow>
-            <form:FormRow identity="dataUploadType" label="Type">
+            </form:FormGroup>
+            <form:FormGroup identity="dataUploadType" label="Type">
                 <l:StringListBox ui:field="type" addStyleNames="w-100"/>
-            </form:FormRow>
-            <form:FormRow identity="dataUploadEffectiveDate" label="Effective Date">
+            </form:FormGroup>
+            <form:FormGroup identity="dataUploadEffectiveDate" label="Effective Date">
                 <c:MyDateBox ui:field="effective" addStyleNames="w-100"/>
-            </form:FormRow>
-            <form:FormRow identity="dataUploadFile" label="File">
-                <g:FileUpload ui:field="fileUpload" addStyleNames="itemCheckList w-100" name="fileUpload"/>
-            </form:FormRow>
+            </form:FormGroup>
+            <form:FormGroup identity="dataUploadFile" label="File">
+                <g:FileUpload ui:field="fileUpload" addStyleNames="stroom-control w-100" name="fileUpload"/>
+            </form:FormGroup>
         </g:FlowPanel>
     </g:FormPanel>
 </ui:UiBinder>

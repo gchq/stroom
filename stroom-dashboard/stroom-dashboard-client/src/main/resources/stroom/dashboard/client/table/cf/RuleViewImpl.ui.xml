@@ -2,36 +2,23 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
->
-    <g:FlowPanel styleName="max default-min-sizes dock-container-vertical">
-        <g:SimplePanel styleName="dock-min ruleView-bottom">
-            <g:Grid ui:field="grid" styleName="stroom-control-grid w-100">
-                <g:row>
-                    <g:cell>Hide:</g:cell>
-                    <g:customCell>
-                        <tickbox:TickBox ui:field="hide"/>
-                    </g:customCell>
-                </g:row>
-                <g:row>
-                    <g:cell>Background Color:</g:cell>
-                    <g:customCell>
-                        <g:TextBox ui:field="backgroundColor" addStyleNames="w-100"/>
-                    </g:customCell>
-                </g:row>
-                <g:row>
-                    <g:cell>Text Color:</g:cell>
-                    <g:customCell>
-                        <g:TextBox ui:field="textColor" addStyleNames="w-100"/>
-                    </g:customCell>
-                </g:row>
-                <g:row>
-                    <g:cell>Enabled:</g:cell>
-                    <g:customCell>
-                        <tickbox:TickBox ui:field="enabled"/>
-                    </g:customCell>
-                </g:row>
-            </g:Grid>
-        </g:SimplePanel>
-        <g:SimplePanel ui:field="expression" styleName="dock-max stroom-border"/>
+             xmlns:form="urn:import:stroom.widget.form.client">
+
+    <g:FlowPanel styleName="max default-min-sizes dock-container-vertical form">
+        <g:SimplePanel ui:field="expression" styleName="dock-max stroom-control"/>
+        <g:FlowPanel styleName="dock-min ruleView-bottom form">
+            <form:FormGroup identity="cfRuleHide" label="Hide">
+                <tickbox:CustomCheckBox ui:field="hide"/>
+            </form:FormGroup>
+            <form:FormGroup identity="cfRuleBackgroundColor" label="Background Color">
+                <g:TextBox ui:field="backgroundColor" addStyleNames="w-100"/>
+            </form:FormGroup>
+            <form:FormGroup identity="cfRuleTextColor" label="Text Color">
+                <g:TextBox ui:field="textColor" addStyleNames="w-100"/>
+            </form:FormGroup>
+            <form:FormGroup identity="cfRuleEnabled" label="Enabled">
+                <tickbox:CustomCheckBox ui:field="enabled"/>
+            </form:FormGroup>
+        </g:FlowPanel>
     </g:FlowPanel>
 </ui:UiBinder>

@@ -27,6 +27,7 @@ import stroom.explorer.shared.StandardTagNames;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.ModelStringUtil;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
@@ -34,7 +35,8 @@ import com.gwtplatform.mvp.client.View;
 import java.util.Objects;
 
 public class BasicQuerySettingsPresenter
-        extends BasicSettingsTabPresenter<BasicQuerySettingsPresenter.BasicQuerySettingsView> {
+        extends BasicSettingsTabPresenter<BasicQuerySettingsPresenter.BasicQuerySettingsView>
+        implements Focus {
 
     private final EntityDropDownPresenter dataSourceSelectionPresenter;
 
@@ -51,6 +53,11 @@ public class BasicQuerySettingsPresenter
         dataSourceSelectionPresenter.setTags(StandardTagNames.DATA_SOURCE);
         dataSourceSelectionPresenter.setRequiredPermissions(DocumentPermissionNames.USE);
 //        dataSourceSelectionPresenter.setSelectionTypes(types);
+    }
+
+    @Override
+    public void focus() {
+        getView().focus();
     }
 
     DocRef getDataSource() {

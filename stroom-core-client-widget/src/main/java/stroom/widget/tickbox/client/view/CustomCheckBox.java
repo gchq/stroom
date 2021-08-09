@@ -90,7 +90,7 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
     private LeafValueEditor<Boolean> editor;
     private boolean valueChangeHandlerInitialized;
 
-    protected CustomCheckBox() {
+    public CustomCheckBox() {
         super(DOM.createSpan());
         setStyleName("SimpleTickBox");
 

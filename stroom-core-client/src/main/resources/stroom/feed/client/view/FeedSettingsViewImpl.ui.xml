@@ -4,27 +4,27 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:l="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <g:FlowPanel styleName="stroom-control-page">
-        <form:FormRow identity="feedSettingsDescription" label="Description">
+    <g:FlowPanel styleName="stroom-control-page form">
+        <form:FormGroup identity="feedSettingsDescription" label="Description">
             <g:TextArea ui:field="description" width="400px"/>
-        </form:FormRow>
-        <form:FormRow identity="feedSettingsClassification" label="Classification">
+        </form:FormGroup>
+        <form:FormGroup identity="feedSettingsClassification" label="Classification">
             <g:TextBox ui:field="classification" width="400px"/>
-        </form:FormRow>
-        <form:FormRow identity="feedSettingsReferenceFeed" label="Reference Feed">
+        </form:FormGroup>
+        <form:FormGroup identity="feedSettingsReferenceFeed" label="Reference Feed">
             <tickbox:CustomCheckBox ui:field="reference"/>
-        </form:FormRow>
-        <form:FormRow identity="feedSettingsFeedStatus" label="Feed Status">
+        </form:FormGroup>
+        <form:FormGroup identity="feedSettingsFeedStatus" label="Feed Status">
             <l:ItemListBox ui:field="feedStatus"/>
-        </form:FormRow>
-        <form:FormRow identity="feedSettingsReceivedType" label="Received Type">
+        </form:FormGroup>
+        <form:FormGroup identity="feedSettingsReceivedType" label="Received Type">
             <l:StringListBox ui:field="receivedType"/>
-        </form:FormRow>
-        <form:FormRow identity="feedSettingsDataEncoding" label="Data Encoding">
+        </form:FormGroup>
+        <form:FormGroup identity="feedSettingsDataEncoding" label="Data Encoding">
             <l:StringListBox ui:field="dataEncoding"/>
-        </form:FormRow>
-        <form:FormRow identity="feedSettingsContextEncoding" label="Context Encoding">
+        </form:FormGroup>
+        <form:FormGroup identity="feedSettingsContextEncoding" label="Context Encoding">
             <l:StringListBox ui:field="contextEncoding"/>
-        </form:FormRow>
+        </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

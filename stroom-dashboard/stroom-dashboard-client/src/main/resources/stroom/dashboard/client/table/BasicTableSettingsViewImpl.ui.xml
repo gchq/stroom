@@ -1,51 +1,29 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:i="urn:import:stroom.item.client"
-             xmlns:v="urn:import:stroom.widget.tickbox.client.view">
-    <g:SimplePanel styleName="max default-min-sizes">
-        <g:Grid styleName="stroom-control-grid w-100">
-            <g:row>
-                <g:cell>Id:</g:cell>
-                <g:customCell>
-                    <g:Label ui:field="id" addStyleNames="stroom-control-label"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Name:</g:cell>
-                <g:customCell>
-                    <g:TextBox ui:field="name" addStyleNames="w-100"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Query:</g:cell>
-                <g:customCell>
-                    <i:ItemListBox ui:field="query" addStyleNames="w-100"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Extract Values:</g:cell>
-                <g:customCell>
-                    <v:TickBox ui:field="extractValues"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Extraction Pipeline:</g:cell>
-                <g:customCell>
-                    <g:SimplePanel ui:field="pipeline" addStyleNames="w-100"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Maximum Results:</g:cell>
-                <g:customCell>
-                    <g:TextBox ui:field="maxResults" addStyleNames="w-100"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Show Group Detail:</g:cell>
-                <g:customCell>
-                    <v:TickBox ui:field="showDetail"/>
-                </g:customCell>
-            </g:row>
-        </g:Grid>
-    </g:SimplePanel>
+             xmlns:v="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="pt-3 max default-min-sizes form">
+        <form:FormGroup identity="basicTableSettingsId" label="Id">
+            <g:Label ui:field="id" addStyleNames="w-100 stroom-control-label"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTableSettingsName" label="Name">
+            <g:TextBox ui:field="name" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTableSettingsQuery" label="Query">
+            <i:ItemListBox ui:field="query" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTableSettingsExtractValues" label="Extract Values">
+            <v:CustomCheckBox ui:field="extractValues"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTableSettingsExtractionPipeline" label="Extraction Pipeline">
+            <g:SimplePanel ui:field="pipeline" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTableSettingsMaximumResults" label="Maximum Results">
+            <g:TextBox ui:field="maxResults" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTableSettingsShowGroupDetail" label="Show Group Detail">
+            <v:CustomCheckBox ui:field="showDetail"/>
+        </form:FormGroup>
+    </g:FlowPanel>
 </ui:UiBinder> 

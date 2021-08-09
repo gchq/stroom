@@ -38,10 +38,21 @@ public class ValueSpinner extends Composite implements Focus {
         spinner = new Spinner();
         spinner.addSpinnerHandler(handler);
 
+        valueBox.addStyleName("allow-focus");
         valueBox.addBlurHandler(event -> updateSpinner());
         valueBox.addKeyDownHandler(event -> {
             if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
                 updateSpinner();
+                event.preventDefault();
+                event.stopPropagation();
+            } else if (event.getNativeKeyCode() == KeyCodes.KEY_UP) {
+                spinner.increase();
+                event.preventDefault();
+                event.stopPropagation();
+            } else if (event.getNativeKeyCode() == KeyCodes.KEY_DOWN) {
+                spinner.decrease();
+                event.preventDefault();
+                event.stopPropagation();
             }
         });
 

@@ -33,6 +33,7 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.FormPanel;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -107,6 +108,7 @@ public class ImportConfigPresenter
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .caption("Import")
+                .onShow(e -> getView().focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         // Disable popup buttons as we are submitting.
@@ -147,7 +149,7 @@ public class ImportConfigPresenter
         show();
     }
 
-    public interface ImportConfigView extends View {
+    public interface ImportConfigView extends View, Focus {
 
         FormPanel getForm();
     }

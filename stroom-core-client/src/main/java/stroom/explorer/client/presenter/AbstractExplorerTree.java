@@ -47,13 +47,14 @@ import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.MaxScrollPanel;
 import com.google.gwt.view.client.CellPreviewEvent;
 
 import java.util.List;
 import java.util.Set;
 
-public abstract class AbstractExplorerTree extends Composite {
+public abstract class AbstractExplorerTree extends Composite implements Focus {
 
     private final ExplorerTreeModel treeModel;
     private final MultiSelectionModelImpl<ExplorerNode> selectionModel;
@@ -110,6 +111,11 @@ public abstract class AbstractExplorerTree extends Composite {
         flowPanel.add(spinnerSmall);
 
         initWidget(flowPanel);
+    }
+
+    @Override
+    public void focus() {
+        cellTable.setFocus(true);
     }
 
     abstract MultiSelectionModelImpl<ExplorerNode> getSelectionModel();

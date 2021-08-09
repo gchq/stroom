@@ -40,6 +40,7 @@ public class EntityDropDownPresenter extends MyPresenterWidget<DropDownView>
                                    final DropDownView view,
                                    final ExplorerDropDownTreePresenter explorerDropDownTreePresenter) {
         super(eventBus, view);
+        view.setUiHandlers(this);
         this.explorerDropDownTreePresenter = explorerDropDownTreePresenter;
         changeSelection(null);
     }
