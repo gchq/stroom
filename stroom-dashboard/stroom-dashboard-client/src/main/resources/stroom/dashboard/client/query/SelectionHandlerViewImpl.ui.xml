@@ -2,21 +2,19 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
-             xmlns:i="urn:import:stroom.item.client">
-    <g:FlowPanel ui:field="layout" styleName="max large-min-sizes dock-container-vertical">
-        <g:Grid ui:field="grid" styleName="dock-min selectionHandlerViewImpl-bottom stroom-control-grid w-100">
-            <g:row>
-                <g:cell>Component:</g:cell>
-                <g:customCell>
-                    <i:ItemListBox ui:field="component" addStyleNames="w-100"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Enabled:</g:cell>
-                <g:customCell>
-                    <tickbox:TickBox ui:field="enabled"/>
-                </g:customCell>
-            </g:row>
-        </g:Grid>
+             xmlns:i="urn:import:stroom.item.client"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form dock-container-vertical">
+        <form:FormGroup addStyleNames="dock-min" identity="selectionHandlerComponent" label="Component">
+            <i:ItemListBox ui:field="component" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup addStyleNames="dock-min" identity="selectionHandlerEnabled" label="Enabled">
+            <tickbox:CustomCheckBox ui:field="enabled"/>
+        </form:FormGroup>
+        <form:FormGroup addStyleNames="dock-max" identity="selectionHandlerExpression"
+                        label="Additional Query Expression">
+            <g:SimplePanel ui:field="layout" styleName="dock-max stroom-control">
+            </g:SimplePanel>
+        </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

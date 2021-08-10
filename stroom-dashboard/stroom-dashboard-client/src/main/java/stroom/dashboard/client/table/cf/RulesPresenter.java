@@ -35,6 +35,7 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.dom.client.Style.BorderStyle;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -47,7 +48,7 @@ import java.util.stream.Collectors;
 
 public class RulesPresenter
         extends AbstractSettingsTabPresenter<RulesPresenter.RulesView>
-        implements HasDirtyHandlers {
+        implements HasDirtyHandlers, Focus {
 
     private final RuleListPresenter listPresenter;
     private final Provider<RulePresenter> editRulePresenterProvider;
@@ -87,6 +88,11 @@ public class RulesPresenter
         listPresenter.getView().asWidget().getElement().getStyle().setBorderStyle(BorderStyle.NONE);
 
         updateButtons();
+    }
+
+    @Override
+    public void focus() {
+        addButton.focus();
     }
 
     @Override
@@ -199,7 +205,7 @@ public class RulesPresenter
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .caption("Add New Rule")
-                .onShow(e -> listPresenter.focus())
+                .onShow(e -> addButton.focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         final ConditionalFormattingRule rule = editRulePresenter.write();
@@ -222,7 +228,7 @@ public class RulesPresenter
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .caption("Edit Rule")
-                .onShow(e -> listPresenter.focus())
+                .onShow(e -> addButton.focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         final ConditionalFormattingRule rule = editRulePresenter.write();

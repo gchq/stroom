@@ -48,8 +48,8 @@ public class SettingsPresenter extends MyPresenterWidget<LinkTabsLayoutView> imp
 
     @Override
     public void focus() {
-        if (firstTab != null) {
-            final Layer layer = tabViewMap.get(firstTab);
+        if (selectedTab != null) {
+            final Layer layer = tabViewMap.get(selectedTab);
             if (layer instanceof Focus) {
                 ((Focus) layer).focus();
             }

@@ -21,11 +21,11 @@ import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.query.SelectionHandlerPresenter.SelectionHandlerView;
 import stroom.docref.HasDisplayValue;
 import stroom.item.client.ItemListBox;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
@@ -42,11 +42,11 @@ public class SelectionHandlerViewImpl extends ViewWithUiHandlers<SelectionHandle
     private final Widget widget;
 
     @UiField
-    FlowPanel layout;
+    SimplePanel layout;
     @UiField
     ItemListBox<HasDisplayValue> component;
     @UiField
-    TickBox enabled;
+    CustomCheckBox enabled;
 
     @Inject
     public SelectionHandlerViewImpl(final Binder binder) {
@@ -109,12 +109,12 @@ public class SelectionHandlerViewImpl extends ViewWithUiHandlers<SelectionHandle
 
     @Override
     public boolean isEnabled() {
-        return this.enabled.getBooleanValue();
+        return this.enabled.getValue();
     }
 
     @Override
     public void setEnabled(final boolean enabled) {
-        this.enabled.setBooleanValue(enabled);
+        this.enabled.setValue(enabled);
     }
 
     public interface Binder extends UiBinder<Widget, SelectionHandlerViewImpl> {

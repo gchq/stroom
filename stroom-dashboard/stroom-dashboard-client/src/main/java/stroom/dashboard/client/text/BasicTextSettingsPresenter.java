@@ -27,6 +27,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.query.api.v2.Field;
 import stroom.security.shared.DocumentPermissionNames;
 
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -38,7 +39,7 @@ import java.util.Objects;
 
 public class BasicTextSettingsPresenter
         extends BasicSettingsTabPresenter<BasicTextSettingsPresenter.BasicTextSettingsView>
-        implements BasicTextSettingsUiHandlers {
+        implements BasicTextSettingsUiHandlers, Focus {
 
     private final EntityDropDownPresenter pipelinePresenter;
     private List<Component> tableList;
@@ -56,6 +57,11 @@ public class BasicTextSettingsPresenter
 
         view.setPipelineView(pipelinePresenter.getView());
         view.setUiHandlers(this);
+    }
+
+    @Override
+    public void focus() {
+        getView().focus();
     }
 
     private void setTableList(final List<Component> list) {

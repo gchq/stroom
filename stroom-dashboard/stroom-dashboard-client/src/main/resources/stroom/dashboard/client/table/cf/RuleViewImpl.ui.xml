@@ -3,22 +3,22 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:form="urn:import:stroom.widget.form.client">
-
     <g:FlowPanel styleName="max default-min-sizes dock-container-vertical form">
-        <g:SimplePanel ui:field="expression" styleName="dock-max stroom-control"/>
-        <g:FlowPanel styleName="dock-min ruleView-bottom form">
-            <form:FormGroup identity="cfRuleHide" label="Hide">
-                <tickbox:CustomCheckBox ui:field="hide"/>
-            </form:FormGroup>
-            <form:FormGroup identity="cfRuleBackgroundColor" label="Background Color">
-                <g:TextBox ui:field="backgroundColor" addStyleNames="w-100"/>
-            </form:FormGroup>
-            <form:FormGroup identity="cfRuleTextColor" label="Text Color">
-                <g:TextBox ui:field="textColor" addStyleNames="w-100"/>
-            </form:FormGroup>
-            <form:FormGroup identity="cfRuleEnabled" label="Enabled">
-                <tickbox:CustomCheckBox ui:field="enabled"/>
-            </form:FormGroup>
-        </g:FlowPanel>
+        <form:FormGroup addStyleNames="dock-max" identity="cfRuleExpression" label="Row Match Expression">
+            <g:SimplePanel ui:field="expression" styleName="dock-max stroom-control">
+            </g:SimplePanel>
+        </form:FormGroup>
+        <form:FormGroup addStyleNames="dock-min" identity="cfRuleHide" label="Hide">
+            <tickbox:CustomCheckBox ui:field="hide"/>
+        </form:FormGroup>
+        <form:FormGroup addStyleNames="dock-min" identity="cfRuleBackgroundColor" label="Background Color">
+            <g:TextBox ui:field="backgroundColor" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup addStyleNames="dock-min" identity="cfRuleTextColor" label="Text Color">
+            <g:TextBox ui:field="textColor" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup addStyleNames="dock-min" identity="cfRuleEnabled" label="Enabled">
+            <tickbox:CustomCheckBox ui:field="enabled"/>
+        </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

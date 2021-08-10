@@ -5,17 +5,16 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HasWidgets;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.Collections;
 import java.util.Iterator;
 
 public class FormGroup extends Composite implements HasWidgets {
 
-//    private final SimplePanel formRow = new SimplePanel();
+    //    private final SimplePanel formRow = new SimplePanel();
     private final FlowPanel formGroup = new FlowPanel();
     private final Lbl lbl = new Lbl();
-    private final SimplePanel inputContainer = new SimplePanel();
     private final Label feedback = new Label();
 
     private String id;
@@ -23,17 +22,8 @@ public class FormGroup extends Composite implements HasWidgets {
 
     public FormGroup() {
         lbl.setStyleName("form-label");
-        inputContainer.setStyleName("FormField__input-container");
         feedback.setStyleName("invalid-feedback");
-
         formGroup.setStyleName("form-group");
-        formGroup.add(lbl);
-        formGroup.add(inputContainer);
-        formGroup.add(feedback);
-
-//        formRow.setStyleName("form-row");
-//        formRow.setWidget(formGroup);
-
         initWidget(formGroup);
     }
 
@@ -93,23 +83,35 @@ public class FormGroup extends Composite implements HasWidgets {
         }
 
         w.addStyleName("allow-focus");
-        inputContainer.add(w);
+        formGroup.clear();
+
+        formGroup.add(lbl);
+        formGroup.add(w);
+        formGroup.add(feedback);
     }
 
     @Override
     public void clear() {
         widget = null;
-        inputContainer.clear();
+
+        formGroup.clear();
+        formGroup.add(lbl);
+        formGroup.add(feedback);
     }
 
     @Override
     public Iterator<Widget> iterator() {
-        return inputContainer.iterator();
+        return Collections.singleton(widget).iterator();
     }
 
     @Override
     public boolean remove(final Widget w) {
-        return inputContainer.remove(w);
+        if (widget == w) {
+            clear();
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public static class Lbl extends Widget {

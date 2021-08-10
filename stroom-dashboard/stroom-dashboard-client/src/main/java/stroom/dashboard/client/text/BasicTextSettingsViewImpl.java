@@ -21,6 +21,7 @@ import stroom.dashboard.client.text.BasicTextSettingsPresenter.BasicTextSettings
 import stroom.docref.HasDisplayValue;
 import stroom.item.client.ItemListBox;
 import stroom.query.api.v2.Field;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.tickbox.client.view.TickBox;
 
 import com.google.gwt.dom.client.Style.Unit;
@@ -70,9 +71,9 @@ public class BasicTextSettingsViewImpl extends ViewWithUiHandlers<BasicTextSetti
     @UiField
     SimplePanel pipeline;
     @UiField
-    TickBox showAsHtml;
+    CustomCheckBox showAsHtml;
     @UiField
-    TickBox showStepping;
+    CustomCheckBox showStepping;
 
     @Inject
     public BasicTextSettingsViewImpl(final Binder binder) {
@@ -252,22 +253,22 @@ public class BasicTextSettingsViewImpl extends ViewWithUiHandlers<BasicTextSetti
 
     @Override
     public boolean isShowAsHtml() {
-        return this.showAsHtml.getBooleanValue();
+        return this.showAsHtml.getValue();
     }
 
     @Override
     public void setShowAsHtml(final boolean showAsHtml) {
-        this.showAsHtml.setBooleanValue(showAsHtml);
+        this.showAsHtml.setValue(showAsHtml);
     }
 
     @Override
     public boolean isShowStepping() {
-        return this.showStepping.getBooleanValue();
+        return this.showStepping.getValue();
     }
 
     @Override
     public void setShowStepping(final boolean showStepping) {
-        this.showStepping.setBooleanValue(showStepping);
+        this.showStepping.setValue(showStepping);
     }
 
     public void onResize() {

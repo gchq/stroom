@@ -43,6 +43,7 @@ import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.BorderStyle;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -56,7 +57,7 @@ import java.util.stream.Collectors;
 
 public class SelectionHandlersPresenter
         extends AbstractSettingsTabPresenter<SelectionHandlersView>
-        implements HasDirtyHandlers {
+        implements HasDirtyHandlers, Focus {
 
     private static final DataSourceResource DATA_SOURCE_RESOURCE = GWT.create(DataSourceResource.class);
 
@@ -109,6 +110,11 @@ public class SelectionHandlersPresenter
         listPresenter.getView().asWidget().getElement().getStyle().setBorderStyle(BorderStyle.NONE);
 
         updateButtons();
+    }
+
+    @Override
+    public void focus() {
+        addButton.focus();
     }
 
     public void setBasicQuerySettingsPresenter(final BasicQuerySettingsPresenter basicQuerySettingsPresenter) {

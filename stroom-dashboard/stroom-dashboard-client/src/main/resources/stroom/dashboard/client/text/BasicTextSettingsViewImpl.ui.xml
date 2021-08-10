@@ -2,87 +2,47 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:v="urn:import:stroom.widget.tickbox.client.view"
-             xmlns:i="urn:import:stroom.item.client">
-    <g:SimplePanel styleName="max default-min-sizes">
-        <g:Grid styleName="stroom-control-grid w-100">
-            <g:row>
-                <g:cell>Id:</g:cell>
-                <g:customCell>
-                    <g:Label ui:field="id" addStyleNames="stroom-control-label"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Name:</g:cell>
-                <g:customCell>
-                    <g:TextBox ui:field="name" addStyleNames="w-100"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Table:</g:cell>
-                <g:customCell>
-                    <i:ItemListBox ui:field="table" addStyleNames="w-100"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Stream Id Field:</g:cell>
-                <g:customCell>
-                    <i:ItemListBox ui:field="streamIdField" addStyleNames="w-100"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Part No Field:</g:cell>
-                <g:customCell>
-                    <i:ItemListBox ui:field="partNoField" addStyleNames="w-100"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Record No Field:</g:cell>
-                <g:customCell>
-                    <i:ItemListBox ui:field="recordNoField" addStyleNames="w-100"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Line From Field:</g:cell>
-                <g:customCell>
-                    <i:ItemListBox ui:field="lineFromField" addStyleNames="w-100"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Col From Field:</g:cell>
-                <g:customCell>
-                    <i:ItemListBox ui:field="colFromField" addStyleNames="w-100"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Line To Field:</g:cell>
-                <g:customCell>
-                    <i:ItemListBox ui:field="lineToField" addStyleNames="w-100"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Col To Field:</g:cell>
-                <g:customCell>
-                    <i:ItemListBox ui:field="colToField" addStyleNames="w-100"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Pipeline:</g:cell>
-                <g:customCell>
-                    <g:SimplePanel ui:field="pipeline" addStyleNames="w-100"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Show As HTML:</g:cell>
-                <g:customCell>
-                    <v:TickBox ui:field="showAsHtml"/>
-                </g:customCell>
-            </g:row>
-            <g:row>
-                <g:cell>Show Stepping:</g:cell>
-                <g:customCell>
-                    <v:TickBox ui:field="showStepping"/>
-                </g:customCell>
-            </g:row>
-        </g:Grid>
-    </g:SimplePanel>
+             xmlns:i="urn:import:stroom.item.client"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="pt-3 max default-min-sizes form">
+        <form:FormGroup identity="basicTextSettingsId" label="Id">
+            <g:Label ui:field="id" addStyleNames="w-100 stroom-control-label"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTextSettingsName" label="Name">
+            <g:TextBox ui:field="name" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTextSettingsTable" label="Table">
+            <i:ItemListBox ui:field="table" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTextSettingsStreamIdField" label="Stream Id Field">
+            <i:ItemListBox ui:field="streamIdField" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTextSettingsPartNoField" label="Part No Field">
+            <i:ItemListBox ui:field="partNoField" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTextSettingsRecordNoField" label="Record No Field">
+            <i:ItemListBox ui:field="recordNoField" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTextSettingsLineFromField" label="Line From Field">
+            <i:ItemListBox ui:field="lineFromField" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTextSettingsColFromField" label="Col From Field">
+            <i:ItemListBox ui:field="colFromField" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTextSettingsLineToField" label="Line To Field">
+            <i:ItemListBox ui:field="lineToField" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTextSettingsColToField" label="Col To Field">
+            <i:ItemListBox ui:field="colToField" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTextSettingsPipeline" label="Pipeline">
+            <g:SimplePanel ui:field="pipeline" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTextSettingsShowAsHTML" label="Show As HTML">
+            <v:CustomCheckBox ui:field="showAsHtml"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTextSettingsShowStepping" label="Show Stepping">
+            <v:CustomCheckBox ui:field="showStepping"/>
+        </form:FormGroup>
+    </g:FlowPanel>
 </ui:UiBinder> 
