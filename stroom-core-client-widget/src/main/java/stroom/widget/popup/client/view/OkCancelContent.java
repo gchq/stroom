@@ -51,7 +51,7 @@ public class OkCancelContent extends Composite implements DialogButtons {
 
     @Override
     public void focus() {
-        ok.setFocus(true);
+        cancel.setFocus(true);
     }
 
     @UiHandler("ok")
