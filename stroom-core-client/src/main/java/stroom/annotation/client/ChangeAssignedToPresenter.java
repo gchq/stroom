@@ -26,10 +26,12 @@ import stroom.security.shared.UserResource;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -73,7 +75,9 @@ public class ChangeAssignedToPresenter extends MyPresenterWidget<ChangeAssignedT
     public void show(final List<Long> annotationIdList) {
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(PopupSize.resizableX(500))
                 .caption("Change Assigned To")
+                .onShow(e -> getView().focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
@@ -127,7 +131,7 @@ public class ChangeAssignedToPresenter extends MyPresenterWidget<ChangeAssignedT
         changeAssignedTo(clientSecurityContext.getUserId());
     }
 
-    public interface ChangeAssignedToView extends View, HasUiHandlers<ChangeAssignedToUiHandlers> {
+    public interface ChangeAssignedToView extends View, Focus, HasUiHandlers<ChangeAssignedToUiHandlers> {
 
         void setAssignedTo(String assignedTo);
     }

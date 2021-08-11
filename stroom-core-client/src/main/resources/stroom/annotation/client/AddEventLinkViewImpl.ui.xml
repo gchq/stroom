@@ -7,7 +7,7 @@
         <g:Label text="Event:" width="50px" />
       </g:customCell>
       <g:customCell>
-        <g:TextBox ui:field="event" addStyleNames="w-100" />
+        <g:TextBox ui:field="event" addStyleNames="w-100 allow-focus" />
       </g:customCell>
     </g:row>
   </g:Grid>

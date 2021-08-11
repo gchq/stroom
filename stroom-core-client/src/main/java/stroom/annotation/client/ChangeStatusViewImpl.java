@@ -17,13 +17,13 @@
 package stroom.annotation.client;
 
 import stroom.annotation.client.ChangeStatusPresenter.ChangeStatusView;
-import stroom.svg.client.Preset;
-import stroom.widget.button.client.SvgButton;
+import stroom.svg.client.SvgImages;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -31,26 +31,29 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class ChangeStatusViewImpl extends ViewWithUiHandlers<ChangeStatusUiHandlers> implements ChangeStatusView {
 
-    private static final Preset CHANGE_STATUS = new Preset("images/tree-open.svg", "Change Status", true);
-
     private final Widget widget;
 
     @UiField
     Label statusLabel;
-    @UiField(provided = true)
-    SvgButton statusIcon;
+    @UiField
+    Button statusIcon;
     @UiField
     Label status;
 
     @Inject
     public ChangeStatusViewImpl(final Binder binder) {
-        statusIcon = SvgButton.create(CHANGE_STATUS);
         widget = binder.createAndBindUi(this);
+        statusIcon.getElement().setInnerHTML(SvgImages.MONO_ARROW_DOWN);
     }
 
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    @Override
+    public void focus() {
+        statusIcon.setFocus(true);
     }
 
     @Override
