@@ -18,6 +18,7 @@ package stroom.annotation.client;
 
 import stroom.annotation.client.ChooserPresenter.ChooserView;
 import stroom.data.table.client.MyCellTable;
+import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.util.client.BasicSelectionEventManager;
 import stroom.widget.util.client.MySingleSelectionModel;
 
@@ -53,6 +54,12 @@ public class ChooserPresenter extends MyPresenterWidget<ChooserView> implements 
 
         cellTable = new MyCellTable<>(Integer.MAX_VALUE);
         cellTable.setSelectionModel(selectionModel, new BasicSelectionEventManager<String>(cellTable) {
+            @Override
+            protected void onClose(final CellPreviewEvent<String> e) {
+                super.onClose(e);
+                HidePopupEvent.builder(ChooserPresenter.this).autoClose(true).ok(false).fire();
+            }
+
             @Override
             protected void onExecute(final CellPreviewEvent<String> e) {
                 super.onExecute(e);
