@@ -47,15 +47,8 @@
 }
 
 .annotationRight {
-    display: flex;
-    flex-flow: column;
-    flex-grow: 1;
-    overflow: auto;
-    min-width: 0;
+    flex-shrink: 1;
 }
-
-
-
 
 .annotationTitleContainer {
     padding-bottom: 2px;
@@ -68,19 +61,18 @@
 
 .annotationTextBox {
     opacity: 0.8;
-    border: 1px solid transparent;
-    border-radius: 5px;
+    border-color: transparent !important;
     cursor: pointer;
 }
 
 .annotationTextBox:focus {
-    border-color: var(--control__border-color);
     opacity: 1 !important;
- }
+    border-color: var(--focus-border) !important;
+}
 
 .annotationTextBox:hover {
     opacity: 1;
- }
+}
 
 
 
@@ -143,14 +135,10 @@
 }
 
 .annotationHistory {
-    width: 100%;
-    height: 100%;
 }
 
 .annotationComment {
     flex-grow: 1;
-    border: 1px solid var(--border-color);
-    border-radius: 5px;
     padding: 5px;
 }
 
@@ -158,10 +146,6 @@
     flex-shrink: 0;
     text-align: right;
     padding-top: 10px;
-}
-
-.annotationDropDownIcon {
-    margin-top: -2px;
 }
 
 .annotationAssignYourself {
@@ -181,10 +165,6 @@
 }
 
 .annotationHistoryContainer {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    height: 100%;
 }
 
 .annotationHistoryOuter {

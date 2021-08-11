@@ -37,11 +37,6 @@ public class ActivityEditViewImpl extends ViewImpl implements ActivityEditView {
     }
 
     @Override
-    public void focus() {
-        html.getElement().focus();
-    }
-
-    @Override
     public HTML getHtml() {
         return html;
     }

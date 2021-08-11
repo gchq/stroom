@@ -126,6 +126,30 @@ public class AnnotationEditPresenter
         this.clientSecurityContext = clientSecurityContext;
         this.dateTimeFormatter = dateTimeFormatter;
         getView().setUiHandlers(this);
+
+        statusPresenter.setDataSupplier((filter, consumer) -> {
+            final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
+            final Rest<List<String>> rest = restFactory.create();
+            rest
+                    .onSuccess(consumer)
+                    .call(annotationResource)
+                    .getStatus(filter);
+        });
+
+        assignedToPresenter.setDataSupplier((filter, consumer) -> {
+            final UserResource userResource = GWT.create(UserResource.class);
+            final Rest<List<String>> rest = restFactory.create();
+            rest
+                    .onSuccess(consumer)
+                    .call(userResource)
+                    .getAssociates(filter);
+        });
+
+        commentPresenter.setDataSupplier((filter, consumer) -> {
+            final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
+            final Rest<List<String>> rest = restFactory.create();
+            rest.onSuccess(consumer).call(annotationResource).getComment(filter);
+        });
     }
 
     @Override
@@ -134,11 +158,11 @@ public class AnnotationEditPresenter
 
         registerHandler(statusPresenter.addDataSelectionHandler(e -> {
             final String selected = statusPresenter.getSelected();
-            changeStatus(selected, true);
+            changeStatus(selected);
         }));
         registerHandler(assignedToPresenter.addDataSelectionHandler(e -> {
             final String selected = assignedToPresenter.getSelected();
-            changeAssignedTo(selected, true);
+            changeAssignedTo(selected);
         }));
         registerHandler(commentPresenter.addDataSelectionHandler(e -> {
             final String selected = commentPresenter.getSelected();
@@ -153,12 +177,11 @@ public class AnnotationEditPresenter
                 .getComment(null);
     }
 
-    private void changeTitle(final String selected, final boolean addEntry) {
+    private void changeTitle(final String selected) {
         if (hasChanged(currentTitle, selected)) {
-            currentTitle = selected;
-            getView().setTitle(selected);
+            setTitle(selected);
 
-            if (addEntry && annotationDetail != null) {
+            if (annotationDetail != null) {
                 final CreateEntryRequest request = new CreateEntryRequest(
                         annotationDetail.getAnnotation(),
                         Annotation.TITLE,
@@ -168,12 +191,16 @@ public class AnnotationEditPresenter
         }
     }
 
-    private void changeSubject(final String selected, final boolean addEntry) {
-        if (hasChanged(currentSubject, selected)) {
-            currentSubject = selected;
-            getView().setSubject(selected);
+    private void setTitle(final String title) {
+        currentTitle = title;
+        getView().setTitle(title);
+    }
 
-            if (addEntry && annotationDetail != null) {
+    private void changeSubject(final String selected) {
+        if (hasChanged(currentSubject, selected)) {
+            setSubject(selected);
+
+            if (annotationDetail != null) {
                 final CreateEntryRequest request = new CreateEntryRequest(
                         annotationDetail.getAnnotation(),
                         Annotation.SUBJECT,
@@ -181,6 +208,11 @@ public class AnnotationEditPresenter
                 addEntry(request);
             }
         }
+    }
+
+    private void setSubject(final String subject) {
+        currentSubject = subject;
+        getView().setSubject(subject);
     }
 
     private boolean hasChanged(final String oldValue, final String newValue) {
@@ -194,13 +226,13 @@ public class AnnotationEditPresenter
                         : newValue));
     }
 
-    private void changeStatus(final String selected, final boolean addEntry) {
-        if (hasChanged(currentStatus, selected)) {
-            currentStatus = selected;
-            getView().setStatus(selected);
-            HidePopupEvent.builder(statusPresenter).fire();
+    private void changeStatus(final String selected) {
+        HidePopupEvent.builder(statusPresenter).fire();
 
-            if (addEntry && annotationDetail != null) {
+        if (hasChanged(currentStatus, selected)) {
+            setStatus(selected);
+
+            if (annotationDetail != null) {
                 final CreateEntryRequest request = new CreateEntryRequest(
                         annotationDetail.getAnnotation(),
                         Annotation.STATUS, selected);
@@ -209,19 +241,38 @@ public class AnnotationEditPresenter
         }
     }
 
-    private void changeAssignedTo(final String selected, final boolean addEntry) {
-        if (hasChanged(currentAssignedTo, selected)) {
-            currentAssignedTo = selected;
-            getView().setAssignedTo(selected);
-            HidePopupEvent.builder(assignedToPresenter).fire();
+    private void setStatus(final String status) {
+        currentStatus = status;
+        getView().setStatus(status);
+        statusPresenter.clearFilter();
+        statusPresenter.setSelected(currentStatus);
+    }
 
-            if (addEntry && annotationDetail != null) {
+    private void changeAssignedTo(final String selected) {
+        HidePopupEvent.builder(assignedToPresenter).fire();
+
+        if (hasChanged(currentAssignedTo, selected)) {
+            setAssignedTo(selected);
+
+            if (annotationDetail != null) {
                 final CreateEntryRequest request = new CreateEntryRequest(
                         annotationDetail.getAnnotation(),
                         Annotation.ASSIGNED_TO, selected);
                 addEntry(request);
             }
         }
+    }
+
+    private void setAssignedTo(final String assignedTo) {
+        currentAssignedTo = assignedTo;
+        getView().setAssignedTo(assignedTo);
+        if (currentAssignedTo == null) {
+            assignedToPresenter.setClearSelectionText(null);
+        } else {
+            assignedToPresenter.setClearSelectionText("Clear");
+        }
+        assignedToPresenter.clearFilter();
+        assignedToPresenter.setSelected(currentAssignedTo);
     }
 
     private void changeComment(final String selected) {
@@ -328,7 +379,7 @@ public class AnnotationEditPresenter
             rest
                     .onSuccess(values -> {
                         if (currentStatus == null && values != null && values.size() > 0) {
-                            changeStatus(values.get(0), false);
+                            setStatus(values.get(0));
                         }
                     })
                     .call(annotationResource)
@@ -336,11 +387,11 @@ public class AnnotationEditPresenter
         }
 
         if (currentTitle == null || currentTitle.trim().length() == 0) {
-            changeTitle(null, false);
+            setTitle(null);
         }
 
         if (currentSubject == null || currentSubject.trim().length() == 0) {
-            changeSubject(null, false);
+            setSubject(null);
         }
     }
 
@@ -367,7 +418,7 @@ public class AnnotationEditPresenter
                 html.appendHtmlConstant(HISTORY_INNER_END);
 
                 final HTML panel = new HTML(html.toSafeHtml());
-                panel.setStyleName("annotationHistoryOuter");
+                panel.setStyleName("dock-max annotationHistoryOuter");
                 panel.addMouseDownHandler(e -> {
                     // If the user has clicked on a link then consume the event.
                     final Element target = e.getNativeEvent().getEventTarget().cast();
@@ -383,15 +434,15 @@ public class AnnotationEditPresenter
                 });
 
                 final TextArea textCopy = new TextArea();
+                textCopy.setTabIndex(-2);
                 textCopy.setStyleName("annotationHistoryText");
                 textCopy.setText(text.toString());
 
                 final Button copyToClipboard = new Button("Copy History");
-                copyToClipboard.addStyleName("annotationHistoryCopyButton");
+                copyToClipboard.addStyleName("dock-min allow-focus annotationHistoryCopyButton");
                 copyToClipboard.addClickHandler(e -> {
-                    textCopy.setFocus(true);
                     textCopy.selectAll();
-                    boolean success = copy();
+                    boolean success = copy(textCopy.getElement());
                     if (!success) {
                         AlertEvent.fireError(
                                 AnnotationEditPresenter.this,
@@ -401,7 +452,7 @@ public class AnnotationEditPresenter
                 });
 
                 final FlowPanel verticalPanel = new FlowPanel();
-                verticalPanel.setStyleName("annotationHistoryContainer");
+                verticalPanel.setStyleName("max dock-container-vertical annotationHistoryContainer");
                 verticalPanel.add(panel);
                 verticalPanel.add(textCopy);
                 verticalPanel.add(copyToClipboard);
@@ -596,8 +647,14 @@ public class AnnotationEditPresenter
         }
     }
 
-    private static native boolean copy() /*-{
-        return $doc.execCommand('copy');
+    private static native boolean copy(final Element element) /*-{
+        var activeElement = $doc.activeElement;
+        element.focus();
+        var success = $doc.execCommand('copy');
+        if (activeElement) {
+            activeElement.focus();
+        }
+        return success;
     }-*/;
 
     private void bold(final SafeHtmlBuilder builder, final String value) {
@@ -652,14 +709,10 @@ public class AnnotationEditPresenter
 
     private void readAnnotation(final Annotation annotation) {
         currentId = annotation.getId();
-        currentTitle = annotation.getTitle();
-        currentSubject = annotation.getSubject();
-        currentStatus = annotation.getStatus();
-        currentAssignedTo = annotation.getAssignedTo();
-        getView().setTitle(currentTitle);
-        getView().setSubject(currentSubject);
-        getView().setStatus(currentStatus);
-        getView().setAssignedTo(currentAssignedTo);
+        setTitle(annotation.getTitle());
+        setSubject(annotation.getSubject());
+        setStatus(annotation.getStatus());
+        setAssignedTo(annotation.getAssignedTo());
         getView().setAssignYourselfVisible(hasChanged(currentAssignedTo, clientSecurityContext.getUserId()));
     }
 
@@ -721,26 +774,16 @@ public class AnnotationEditPresenter
 
     @Override
     public void onTitleChange() {
-        changeTitle(getView().getTitle(), true);
+        changeTitle(getView().getTitle());
     }
 
     @Override
     public void onSubjectChange() {
-        changeSubject(getView().getSubject(), true);
+        changeSubject(getView().getSubject());
     }
 
     @Override
     public void showStatusChooser(final Element element) {
-        statusPresenter.setDataSupplier((filter, consumer) -> {
-            final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-            final Rest<List<String>> rest = restFactory.create();
-            rest
-                    .onSuccess(consumer)
-                    .call(annotationResource)
-                    .getStatus(filter);
-        });
-        statusPresenter.clearFilter();
-        statusPresenter.setSelected(currentStatus);
         final PopupPosition popupPosition = new PopupPosition(element.getAbsoluteLeft() - 1,
                 element.getAbsoluteTop() + element.getClientHeight() + 2);
         ShowPopupEvent.builder(statusPresenter)
@@ -753,21 +796,6 @@ public class AnnotationEditPresenter
 
     @Override
     public void showAssignedToChooser(final Element element) {
-        if (currentAssignedTo == null) {
-            assignedToPresenter.setClearSelectionText(null);
-        } else {
-            assignedToPresenter.setClearSelectionText("Clear");
-        }
-        assignedToPresenter.setDataSupplier((filter, consumer) -> {
-            final UserResource userResource = GWT.create(UserResource.class);
-            final Rest<List<String>> rest = restFactory.create();
-            rest
-                    .onSuccess(consumer)
-                    .call(userResource)
-                    .getAssociates(filter);
-        });
-        assignedToPresenter.clearFilter();
-        assignedToPresenter.setSelected(currentAssignedTo);
         final PopupPosition popupPosition = new PopupPosition(element.getAbsoluteLeft() - 1,
                 element.getAbsoluteTop() + element.getClientHeight() + 2);
         ShowPopupEvent.builder(assignedToPresenter)
@@ -780,11 +808,6 @@ public class AnnotationEditPresenter
 
     @Override
     public void showCommentChooser(final Element element) {
-        commentPresenter.setDataSupplier((filter, consumer) -> {
-            final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-            final Rest<List<String>> rest = restFactory.create();
-            rest.onSuccess(consumer).call(annotationResource).getComment(filter);
-        });
         commentPresenter.clearFilter();
         commentPresenter.setSelected(getView().getComment());
         final PopupPosition popupPosition = new PopupPosition(element.getAbsoluteLeft() - 1,
@@ -799,7 +822,7 @@ public class AnnotationEditPresenter
 
     @Override
     public void assignYourself() {
-        changeAssignedTo(clientSecurityContext.getUserId(), true);
+        changeAssignedTo(clientSecurityContext.getUserId());
     }
 
     @Override

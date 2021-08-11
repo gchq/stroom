@@ -155,15 +155,28 @@ public class PopupSupportImpl implements PopupSupport {
     }
 
     private int getSize(final int current, Size size) {
-        int newSize = current;
+        final int newSize;
         if (size != null) {
-            if (size.getMin() == null) {
-                size.setMin(current);
-            }
+            final int initial;
             if (size.getInitial() != null) {
-                newSize = Math.max(current, Math.max(size.getMin(), size.getInitial()));
+                initial = size.getInitial();
+            } else {
+                initial = current;
             }
+
+            final int min;
+            if (size.getMin() != null) {
+                min = size.getMin();
+            } else {
+                min = Math.min(current, initial);
+            }
+
+            newSize = Math.max(min, initial);
+
+        } else {
+            newSize = current;
         }
+
         return newSize;
     }
 

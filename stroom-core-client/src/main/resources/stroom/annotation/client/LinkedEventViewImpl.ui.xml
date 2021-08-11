@@ -6,9 +6,9 @@
         <b:ButtonPanel ui:field="buttonPanel" addStyleNames="dock-min"/>
         <g:FlowPanel styleName="dock-max dock-container-horizontal">
             <g:SimplePanel ui:field="eventList"
-                           styleName="dock-min stroom-border"/>
+                           styleName="dock-min stroom-control"/>
             <g:SimplePanel ui:field="data"
-                           styleName="dock-max linkEventViewImpl-data stroom-border"/>
+                           styleName="dock-max linkEventViewImpl-data stroom-control"/>
         </g:FlowPanel>
     </g:FlowPanel>
 </ui:UiBinder>

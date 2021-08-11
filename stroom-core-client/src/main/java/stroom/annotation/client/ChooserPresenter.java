@@ -27,6 +27,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -51,7 +52,13 @@ public class ChooserPresenter extends MyPresenterWidget<ChooserView> implements 
         view.setUiHandlers(this);
 
         cellTable = new MyCellTable<>(Integer.MAX_VALUE);
-        cellTable.setSelectionModel(selectionModel, new BasicSelectionEventManager<>(cellTable));
+        cellTable.setSelectionModel(selectionModel, new BasicSelectionEventManager<String>(cellTable) {
+            @Override
+            protected void onExecute(final CellPreviewEvent<String> e) {
+                super.onExecute(e);
+                SelectionChangeEvent.fire(selectionModel);
+            }
+        });
         view.setBottomWidget(cellTable);
 
         // Text.

@@ -17,8 +17,7 @@
 package stroom.annotation.client;
 
 import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
-import stroom.svg.client.Preset;
-import stroom.widget.button.client.SvgButton;
+import stroom.svg.client.SvgImages;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.BlurEvent;
@@ -40,30 +39,21 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiHandlers> implements AnnotationEditView {
 
-    public interface Binder extends UiBinder<Widget, AnnotationEditViewImpl> {
-
-    }
-
-    private static final Preset CHANGE_STATUS = new Preset("images/tree-open.svg", "Change Status", true);
-    private static final Preset CHANGE_ASSIGNED_TO = new Preset("images/tree-open.svg",
-            "Change Assigned To",
-            true);
-    private static final Preset CHOOSE_COMMENT = new Preset("images/tree-open.svg", "Choose Comment", true);
-
+    private final Widget widget;
     @UiField
     TextBox titleTextBox;
     @UiField
     TextBox subjectTextBox;
     @UiField
     Label statusLabel;
-    @UiField(provided = true)
-    SvgButton statusIcon;
+    @UiField
+    Button statusIcon;
     @UiField
     Label status;
     @UiField
     Label assignedToLabel;
-    @UiField(provided = true)
-    SvgButton assignedToIcon;
+    @UiField
+    Button assignedToIcon;
     @UiField
     Label assignedTo;
     @UiField
@@ -72,8 +62,8 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     FlowPanel commentFlowPanel;
     @UiField
     Label commentLabel;
-    @UiField(provided = true)
-    SvgButton commentIcon;
+    @UiField
+    Button commentIcon;
     @UiField
     Button create;
     @UiField
@@ -83,16 +73,15 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     @UiField
     Label showLinkedEvents;
 
-    private final Widget widget;
-
     @Inject
     public AnnotationEditViewImpl(final Binder binder) {
-        statusIcon = SvgButton.create(CHANGE_STATUS);
-        assignedToIcon = SvgButton.create(CHANGE_ASSIGNED_TO);
-        commentIcon = SvgButton.create(CHOOSE_COMMENT);
         widget = binder.createAndBindUi(this);
         titleTextBox.getElement().setAttribute("placeholder", "Title");
         subjectTextBox.getElement().setAttribute("placeholder", "Subject");
+
+        statusIcon.getElement().setInnerHTML(SvgImages.MONO_ARROW_DOWN);
+        assignedToIcon.getElement().setInnerHTML(SvgImages.MONO_ARROW_DOWN);
+        commentIcon.getElement().setInnerHTML(SvgImages.MONO_ARROW_DOWN);
 
         setTitle(null);
         setSubject(null);
@@ -185,7 +174,11 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
 
     @Override
     public void focus() {
-        comment.setFocus(true);
+        if (titleTextBox.getText() == null || titleTextBox.getText().isEmpty()) {
+            titleTextBox.setFocus(true);
+        } else {
+            comment.setFocus(true);
+        }
     }
 
     private void finishTitleEdit() {
@@ -202,15 +195,15 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
         }
     }
 
-//    @UiHandler("titleTextBox")
-//    public void onTitleFocus(final FocusEvent e) {
-//        startTitleEdit();
-//    }
-
     @UiHandler("titleTextBox")
     public void onTitleBlur(final BlurEvent e) {
         finishTitleEdit();
     }
+
+//    @UiHandler("titleTextBox")
+//    public void onTitleFocus(final FocusEvent e) {
+//        startTitleEdit();
+//    }
 
     @UiHandler("titleTextBox")
     public void onTitleReturn(final KeyDownEvent e) {
@@ -220,15 +213,15 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
         }
     }
 
-//    @UiHandler("subjectTextBox")
-//    public void onSubjectFocus(final FocusEvent e) {
-//        startSubjectEdit();
-//    }
-
     @UiHandler("subjectTextBox")
     public void onSubjectBlur(final BlurEvent e) {
         finishSubjectEdit();
     }
+
+//    @UiHandler("subjectTextBox")
+//    public void onSubjectFocus(final FocusEvent e) {
+//        startSubjectEdit();
+//    }
 
     @UiHandler("subjectTextBox")
     public void onSubjectReturn(final KeyDownEvent e) {
@@ -327,5 +320,9 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
             commentLabel.removeStyleName("clickable");
             commentFlowPanel.removeStyleName("clickable");
         }
+    }
+
+    public interface Binder extends UiBinder<Widget, AnnotationEditViewImpl> {
+
     }
 }

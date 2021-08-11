@@ -39,7 +39,6 @@ import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.SelectElement;
 import com.google.gwt.dom.client.TextAreaElement;
-import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -396,7 +395,7 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
         return true;
     }
 
-    public interface ActivityEditView extends View, Focus {
+    public interface ActivityEditView extends View {
 
         HTML getHtml();
     }
