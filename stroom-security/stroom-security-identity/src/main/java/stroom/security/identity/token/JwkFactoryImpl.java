@@ -15,9 +15,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
 
-public class JsonWebKeyFactoryImpl implements JsonWebKeyFactory {
+public class JwkFactoryImpl implements JsonWebKeyFactory {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(JsonWebKeyFactoryImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(JwkFactoryImpl.class);
 
     private static final int BITS = 2048;
 

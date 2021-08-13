@@ -36,7 +36,7 @@ public class TokenBuilder {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TokenBuilder.class);
 
-    private Instant expiryDate;
+    private Instant expirationTime;
     private String issuer;
     private String algorithm = AlgorithmIdentifiers.RSA_USING_SHA256;
 
@@ -81,19 +81,19 @@ public class TokenBuilder {
         return this;
     }
 
-    public TokenBuilder expiryDate(Instant expiryDate) {
-        this.expiryDate = expiryDate;
+    public TokenBuilder expirationTime(Instant expirationTime) {
+        this.expirationTime = expirationTime;
         return this;
     }
 
-    public Instant getExpiryDate() {
-        return this.expiryDate;
+    public Instant getExpirationTime() {
+        return this.expirationTime;
     }
 
     public String build() {
         final JwtClaims claims = new JwtClaims();
-        if (expiryDate != null) {
-            claims.setExpirationTime(NumericDate.fromSeconds(expiryDate.getEpochSecond()));
+        if (expirationTime != null) {
+            claims.setExpirationTime(NumericDate.fromSeconds(expirationTime.getEpochSecond()));
         }
         claims.setSubject(subject);
         claims.setIssuer(issuer);

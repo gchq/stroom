@@ -8,9 +8,9 @@ import stroom.security.identity.account.AccountService;
 import stroom.security.identity.authenticate.api.AuthenticationService;
 import stroom.security.identity.config.IdentityConfig;
 import stroom.security.identity.config.PasswordPolicyConfig;
+import stroom.security.identity.config.TokenConfig;
 import stroom.security.identity.exceptions.BadRequestException;
-import stroom.security.identity.token.Token;
-import stroom.security.identity.token.TokenService;
+import stroom.security.identity.token.TokenBuilderFactory;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdClientFactory;
 import stroom.util.cert.CertificateUtil;
@@ -20,6 +20,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import event.logging.AuthenticateOutcomeReason;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -39,31 +40,34 @@ class AuthenticationServiceImpl implements AuthenticationService {
 
     private final UriFactory uriFactory;
     private final IdentityConfig config;
-    private final TokenService tokenService;
     private final EmailSender emailSender;
     private final AccountDao accountDao;
     private final AccountService accountService;
     private final SecurityContext securityContext;
     private final OpenIdClientFactory openIdClientDetailsFactory;
+    private final TokenBuilderFactory tokenBuilderFactory;
+    private final TokenConfig tokenConfig;
 
     @Inject
     public AuthenticationServiceImpl(
             final UriFactory uriFactory,
             @NotNull final IdentityConfig config,
-            final TokenService tokenService,
             final EmailSender emailSender,
             final AccountDao accountDao,
             final AccountService accountService,
             final SecurityContext securityContext,
-            final OpenIdClientFactory openIdClientDetailsFactory) {
+            final OpenIdClientFactory openIdClientDetailsFactory,
+            final TokenBuilderFactory tokenBuilderFactory,
+            final TokenConfig tokenConfig) {
         this.uriFactory = uriFactory;
         this.config = config;
-        this.tokenService = tokenService;
         this.emailSender = emailSender;
         this.accountDao = accountDao;
         this.accountService = accountService;
         this.securityContext = securityContext;
         this.openIdClientDetailsFactory = openIdClientDetailsFactory;
+        this.tokenBuilderFactory = tokenBuilderFactory;
+        this.tokenConfig = tokenConfig;
     }
 
     public AuthenticationState getAuthenticationState(final HttpServletRequest request) {
@@ -174,7 +178,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
                             System.currentTimeMillis());
                     setAuthState(request.getSession(true), newState);
 
-                        // Reset last access, login failures, etc...
+                    // Reset last access, login failures, etc...
                     accountDao.recordSuccessfulLogin(userId);
 
                     return new AuthStatusImpl(newState, true);
@@ -296,11 +300,20 @@ class AuthenticationServiceImpl implements AuthenticationService {
     public boolean resetEmail(final String emailAddress) {
         final Account account = accountService.read(emailAddress).orElseThrow(() -> new RuntimeException(
                 "Account not found for email: " + emailAddress));
-        final Token token = tokenService.createResetEmailToken(account,
+        final String token = createResetEmailToken(account,
                 openIdClientDetailsFactory.getClient().getClientId());
-        final String resetToken = token.getData();
-        emailSender.send(emailAddress, account.getFirstName(), account.getLastName(), resetToken);
+        emailSender.send(emailAddress, account.getFirstName(), account.getLastName(), token);
         return true;
+    }
+
+    private String createResetEmailToken(final Account account, final String clientId) {
+        return tokenBuilderFactory
+                .builder()
+                .expirationTime(Instant.now()
+                        .plus(tokenConfig.getEmailResetTokenExpiryTime()))
+                .clientId(clientId)
+                .subject(account.getUserId())
+                .build();
     }
 
     public ChangePasswordResponse resetPassword(final HttpServletRequest request,
@@ -456,6 +469,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     private static class AuthStatusImpl implements AuthStatus {
+
         private final AuthState state;
         private final BadRequestException error;
         private final boolean isNew;

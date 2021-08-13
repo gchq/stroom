@@ -30,7 +30,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 //   possible
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
-public class Token implements HasIntegerId {
+public class ApiKey implements HasIntegerId {
 
     @JsonProperty
     private Integer id;
@@ -50,7 +50,7 @@ public class Token implements HasIntegerId {
     @JsonProperty
     private String userEmail;
     @JsonProperty
-    private String tokenType;
+    private String type;
     @JsonProperty
     private String data;
     @JsonProperty
@@ -60,23 +60,23 @@ public class Token implements HasIntegerId {
     @JsonProperty
     private boolean enabled;
 
-    public Token() {
+    public ApiKey() {
     }
 
     @JsonCreator
-    public Token(@JsonProperty("id") final Integer id,
-                 @JsonProperty("version") final Integer version,
-                 @JsonProperty("createTimeMs") final Long createTimeMs,
-                 @JsonProperty("updateTimeMs") final Long updateTimeMs,
-                 @JsonProperty("createUser") final String createUser,
-                 @JsonProperty("updateUser") final String updateUser,
-                 @JsonProperty("userId") final String userId,
-                 @JsonProperty("userEmail") final String userEmail,
-                 @JsonProperty("tokenType") final String tokenType,
-                 @JsonProperty("data") final String data,
-                 @JsonProperty("expiresOnMs") final Long expiresOnMs,
-                 @JsonProperty("comments") final String comments,
-                 @JsonProperty("enabled") final boolean enabled) {
+    public ApiKey(@JsonProperty("id") final Integer id,
+                  @JsonProperty("version") final Integer version,
+                  @JsonProperty("createTimeMs") final Long createTimeMs,
+                  @JsonProperty("updateTimeMs") final Long updateTimeMs,
+                  @JsonProperty("createUser") final String createUser,
+                  @JsonProperty("updateUser") final String updateUser,
+                  @JsonProperty("userId") final String userId,
+                  @JsonProperty("userEmail") final String userEmail,
+                  @JsonProperty("type") final String type,
+                  @JsonProperty("data") final String data,
+                  @JsonProperty("expiresOnMs") final Long expiresOnMs,
+                  @JsonProperty("comments") final String comments,
+                  @JsonProperty("enabled") final boolean enabled) {
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;
@@ -85,7 +85,7 @@ public class Token implements HasIntegerId {
         this.updateUser = updateUser;
         this.userId = userId;
         this.userEmail = userEmail;
-        this.tokenType = tokenType;
+        this.type = type;
         this.data = data;
         this.expiresOnMs = expiresOnMs;
         this.comments = comments;
@@ -157,12 +157,12 @@ public class Token implements HasIntegerId {
         this.userEmail = userEmail;
     }
 
-    public String getTokenType() {
-        return tokenType;
+    public String getType() {
+        return type;
     }
 
-    public void setTokenType(final String tokenType) {
-        this.tokenType = tokenType;
+    public void setType(final String type) {
+        this.type = type;
     }
 
     public String getData() {
@@ -196,96 +196,4 @@ public class Token implements HasIntegerId {
     public void setEnabled(final boolean enabled) {
         this.enabled = enabled;
     }
-
-//    @JsonIgnore
-//    public String getStatus() {
-//        return enabled
-//                ? "Enable"
-//                : "Disabled";
-//    }
-
-    //
-//    public static final class TokenBuilder {
-//        private Integer id;
-//        private Integer version;
-//        private Long createTimeMs;
-//        private Long updateTimeMs;
-//        private String createUser;
-//        private String updateUser;
-//
-//        private String userEmail;
-//        private String tokenType;
-//        private String data;
-//        private Long expiresOnMs;
-//        private String comments;
-//        private boolean enabled;
-//
-//        public TokenBuilder() {
-//        }
-//
-//        public TokenBuilder id(int id) {
-//            this.id = id;
-//            return this;
-//        }
-//
-//        public TokenBuilder userEmail(String userEmail) {
-//            this.userEmail = userEmail;
-//            return this;
-//        }
-//
-//        public TokenBuilder tokenType(String tokenType) {
-//            this.tokenType = tokenType;
-//            return this;
-//        }
-//
-//        public TokenBuilder data(String token) {
-//            this.token = token;
-//            return this;
-//        }
-//
-//        public TokenBuilder expiresOn(String expiresOn) {
-//            this.expiresOn = expiresOn;
-//            return this;
-//        }
-//
-//        public TokenBuilder issuedOn(String issuedOn) {
-//            this.issuedOn = issuedOn;
-//            return this;
-//        }
-//
-//        public TokenBuilder issuedByUser(String issuedByUser) {
-//            this.issuedByUser = issuedByUser;
-//            return this;
-//        }
-//
-//        public TokenBuilder enabled(boolean enabled) {
-//            this.enabled = enabled;
-//            return this;
-//        }
-//
-//        public TokenBuilder updatedOn(String updatedOn) {
-//            this.updatedOn = updatedOn;
-//            return this;
-//        }
-//
-//        public TokenBuilder updatedByUser(String updatedByUser) {
-//            this.updatedByUser = updatedByUser;
-//            return this;
-//        }
-//
-//        public Token build() {
-//            Token token = new Token();
-//            token.setId(id);
-//            token.setUserEmail(userEmail);
-//            token.setTokenType(tokenType);
-//            token.setToken(this.token);
-//            token.setExpiresOn(expiresOn);
-//            token.setIssuedOn(issuedOn);
-//            token.setIssuedByUser(issuedByUser);
-//            token.setEnabled(enabled);
-//            token.setUpdatedOn(updatedOn);
-//            token.setUpdatedByUser(updatedByUser);
-//            return token;
-//        }
-//    }
 }

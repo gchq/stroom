@@ -16,6 +16,7 @@
 
 package stroom.task.impl;
 
+import stroom.security.api.HasSessionId;
 import stroom.security.api.UserIdentity;
 import stroom.task.api.TaskContext;
 import stroom.task.shared.TaskId;
@@ -77,8 +78,8 @@ public class TaskContextImpl implements TaskContext {
     }
 
     String getSessionId() {
-        if (userIdentity != null) {
-            return userIdentity.getSessionId();
+        if (userIdentity instanceof HasSessionId) {
+            return ((HasSessionId) userIdentity).getSessionId();
         }
         return null;
     }

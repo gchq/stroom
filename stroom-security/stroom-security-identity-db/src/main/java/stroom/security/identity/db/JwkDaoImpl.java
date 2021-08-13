@@ -3,8 +3,6 @@ package stroom.security.identity.db;
 import stroom.db.util.JooqUtil;
 import stroom.security.identity.db.jooq.tables.records.JsonWebKeyRecord;
 import stroom.security.identity.token.JwkDao;
-import stroom.security.identity.token.TokenType;
-import stroom.security.identity.token.TokenTypeDao;
 import stroom.security.openid.api.JsonWebKeyFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -29,14 +27,11 @@ class JwkDaoImpl implements JwkDao {
 
     private final IdentityDbConnProvider identityDbConnProvider;
     private final JsonWebKeyFactory jsonWebKeyFactory;
-    private final TokenTypeDao tokenTypeDao;
 
     @Inject
     JwkDaoImpl(final IdentityDbConnProvider identityDbConnProvider,
-               final TokenTypeDao tokenTypeDao,
                final JsonWebKeyFactory jsonWebKeyFactory) {
         this.identityDbConnProvider = identityDbConnProvider;
-        this.tokenTypeDao = tokenTypeDao;
         this.jsonWebKeyFactory = jsonWebKeyFactory;
     }
 
@@ -129,7 +124,6 @@ class JwkDaoImpl implements JwkDao {
         final String uuid = UUID.randomUUID().toString();
         // We need to set up the jwkId so we know which JWTs were signed by which JWKs.
         final PublicJsonWebKey publicJsonWebKey = jsonWebKeyFactory.createPublicKey();
-        final int tokenTypeId = tokenTypeDao.getTokenTypeId(TokenType.API.getText().toLowerCase());
 
         JooqUtil.context(identityDbConnProvider, context -> {
             LOGGER.debug(() -> LogUtil.message("Creating a {}", JSON_WEB_KEY.getName()));
@@ -140,7 +134,6 @@ class JwkDaoImpl implements JwkDao {
             record.setCreateUser("admin");
             record.setUpdateTimeMs(now);
             record.setUpdateUser("admin");
-            record.setFkTokenTypeId(tokenTypeId);
             record.setEnabled(true);
             record.store();
         });

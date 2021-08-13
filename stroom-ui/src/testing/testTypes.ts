@@ -13,7 +13,7 @@ import { DataSourceType } from "components/ExpressionBuilder/types";
 import { IndexVolumeGroup } from "components/IndexVolumes/indexVolumeGroupApi";
 import { IndexVolume } from "components/IndexVolumes/indexVolumeApi";
 import { StreamTaskType } from "components/Processing/types";
-import { Account, Token } from "api/stroom";
+import { Account, ApiKey } from "api/stroom";
 
 export interface UserGroupMembership {
   userUuid: string;
@@ -52,7 +52,7 @@ export interface TestData {
   docPermissionByType: {
     [docType: string]: string[];
   };
-  tokens: Token[];
+  tokens: ApiKey[];
   users: Account[];
   userDocPermission: UserDocPermission[];
 }

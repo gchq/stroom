@@ -495,6 +495,177 @@ paths:
       summary: Unlinks an annotation from an event
       tags:
       - Annotations
+  /apikey/v1:
+    delete:
+      operationId: deleteAllApiKeys
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int32
+          description: default response
+      summary: Delete all API keys.
+      tags:
+      - Api Keys
+    post:
+      operationId: createApiKey
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateApiKeyRequest'
+        description: CreateApiKeyRequest
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKey'
+          description: default response
+      summary: Create a new API key.
+      tags:
+      - Api Keys
+  /apikey/v1/byData/{data}:
+    delete:
+      operationId: deleteApiKeyByData
+      parameters:
+      - in: path
+        name: data
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int32
+          description: default response
+      summary: Delete an API key by the data itself.
+      tags:
+      - Api Keys
+    get:
+      operationId: fetchApiKeyByData
+      parameters:
+      - in: path
+        name: data
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKey'
+          description: default response
+      summary: Read a API key by the data itself.
+      tags:
+      - Api Keys
+  /apikey/v1/noauth/getDefaultApiKeyExpirySeconds:
+    get:
+      operationId: getDefaultApiKeyExpirySeconds
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int64
+          description: default response
+      summary: Get the default time taken for API keys to expire
+      tags:
+      - Api Keys
+  /apikey/v1/search:
+    post:
+      operationId: searchApiKeys
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchApiKeyRequest'
+        description: SearchRequest
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKeyResultPage'
+          description: default response
+      summary: Submit a search request for API keys
+      tags:
+      - Api Keys
+  /apikey/v1/{id}:
+    delete:
+      operationId: deleteApiKey
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int32
+          description: default response
+      summary: Delete a API key by ID.
+      tags:
+      - Api Keys
+    get:
+      operationId: fetchApiKey
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKey'
+          description: default response
+      summary: Read a API key by ID.
+      tags:
+      - Api Keys
+  /apikey/v1/{id}/enabled:
+    get:
+      operationId: toggleApiKeyEnabled
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int32
+      - in: query
+        name: enabled
+        required: true
+        schema:
+          type: boolean
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int32
+          description: default response
+      summary: Enable or disable the state of an API key.
+      tags:
+      - Api Keys
   /authentication/v1/needsPasswordChange:
     get:
       operationId: needsPasswordChange
@@ -5012,202 +5183,6 @@ paths:
       summary: Update a text converter doc
       tags:
       - Text Converters
-  /token/v1:
-    delete:
-      operationId: deleteAllTokens
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: integer
-                format: int32
-          description: default response
-      summary: Delete all tokens.
-      tags:
-      - Api Keys
-    get:
-      operationId: listTokens
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TokenResultPage'
-          description: default response
-      summary: Get all tokens.
-      tags:
-      - Api Keys
-    post:
-      operationId: createToken
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateTokenRequest'
-        description: CreateTokenRequest
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Token'
-          description: default response
-      summary: Create a new token.
-      tags:
-      - Api Keys
-  /token/v1/byToken/{token}:
-    delete:
-      operationId: deleteTokenByContent
-      parameters:
-      - in: path
-        name: token
-        required: true
-        schema:
-          type: string
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: integer
-                format: int32
-          description: default response
-      summary: Delete a token by the token string itself.
-      tags:
-      - Api Keys
-    get:
-      operationId: fetchTokenByContent
-      parameters:
-      - in: path
-        name: token
-        required: true
-        schema:
-          type: string
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Token'
-          description: default response
-      summary: Read a token by the token string itself.
-      tags:
-      - Api Keys
-  /token/v1/noauth/fetchTokenConfig:
-    get:
-      operationId: fetchTokenConfig
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TokenConfig'
-          description: default response
-      summary: Get the token configuration
-      tags:
-      - Api Keys
-  /token/v1/publickey:
-    get:
-      operationId: getPublicKey
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: string
-          description: default response
-      summary: Provides access to this service's current public key. A client may
-        use these keys to verify JWTs issued by this service.
-      tags:
-      - Api Keys
-  /token/v1/search:
-    post:
-      operationId: searchTokens
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SearchTokenRequest'
-        description: SearchRequest
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TokenResultPage'
-          description: default response
-      summary: Submit a search request for tokens
-      tags:
-      - Api Keys
-  /token/v1/{id}:
-    delete:
-      operationId: deleteToken
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: integer
-          format: int32
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: integer
-                format: int32
-          description: default response
-      summary: Delete a token by ID.
-      tags:
-      - Api Keys
-    get:
-      operationId: fetchToken
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: integer
-          format: int32
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Token'
-          description: default response
-      summary: Read a token by ID.
-      tags:
-      - Api Keys
-  /token/v1/{id}/enabled:
-    get:
-      operationId: toggleTokenEnabled
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: integer
-          format: int32
-      - in: query
-        name: enabled
-        required: true
-        schema:
-          type: boolean
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: integer
-                format: int32
-          description: default response
-      summary: Enable or disable the state of a token.
-      tags:
-      - Api Keys
   /userNames/v1/find:
     post:
       operationId: findUserNames
@@ -5828,6 +5803,49 @@ components:
         version:
           type: integer
           format: int32
+    ApiKey:
+      type: object
+      properties:
+        comments:
+          type: string
+        createTimeMs:
+          type: integer
+          format: int64
+        createUser:
+          type: string
+        data:
+          type: string
+        enabled:
+          type: boolean
+        expiresOnMs:
+          type: integer
+          format: int64
+        id:
+          type: integer
+          format: int32
+        type:
+          type: string
+        updateTimeMs:
+          type: integer
+          format: int64
+        updateUser:
+          type: string
+        userEmail:
+          type: string
+        userId:
+          type: string
+        version:
+          type: integer
+          format: int32
+    ApiKeyResultPage:
+      type: object
+      properties:
+        pageResponse:
+          $ref: '#/components/schemas/PageResponse'
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiKey'
     Arg:
       type: object
       properties:
@@ -6250,6 +6268,24 @@ components:
           type: string
         userId:
           type: string
+    CreateApiKeyRequest:
+      type: object
+      properties:
+        comments:
+          type: string
+        enabled:
+          type: boolean
+        expiresOnMs:
+          type: integer
+          format: int64
+        tokenType:
+          type: string
+          pattern: ^user$|^api$|^email_reset$
+        userId:
+          type: string
+      required:
+      - tokenType
+      - userId
     CreateEntryRequest:
       type: object
       properties:
@@ -6289,24 +6325,6 @@ components:
           format: int32
         queryData:
           $ref: '#/components/schemas/QueryData'
-    CreateTokenRequest:
-      type: object
-      properties:
-        comments:
-          type: string
-        enabled:
-          type: boolean
-        expiresOnMs:
-          type: integer
-          format: int64
-        tokenType:
-          type: string
-          pattern: ^user$|^api$|^email_reset$
-        userId:
-          type: string
-      required:
-      - tokenType
-      - userId
     CriteriaFieldSort:
       type: object
       properties:
@@ -9739,6 +9757,20 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CriteriaFieldSort'
+    SearchApiKeyRequest:
+      type: object
+      properties:
+        pageRequest:
+          $ref: '#/components/schemas/PageRequest'
+        quickFilter:
+          type: string
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: '#/components/schemas/CriteriaFieldSort'
     SearchBusPollRequest:
       type: object
       properties:
@@ -9831,20 +9863,6 @@ components:
       - highlights
       xml:
         name: searchResponse
-    SearchTokenRequest:
-      type: object
-      properties:
-        pageRequest:
-          $ref: '#/components/schemas/PageRequest'
-        quickFilter:
-          type: string
-        sort:
-          type: string
-          writeOnly: true
-        sortList:
-          type: array
-          items:
-            $ref: '#/components/schemas/CriteriaFieldSort'
     SelectionIndexShardStatus:
       type: object
       properties:
@@ -10897,59 +10915,6 @@ components:
           - Offset
       required:
       - use
-    Token:
-      type: object
-      properties:
-        comments:
-          type: string
-        createTimeMs:
-          type: integer
-          format: int64
-        createUser:
-          type: string
-        data:
-          type: string
-        enabled:
-          type: boolean
-        expiresOnMs:
-          type: integer
-          format: int64
-        id:
-          type: integer
-          format: int32
-        tokenType:
-          type: string
-        updateTimeMs:
-          type: integer
-          format: int64
-        updateUser:
-          type: string
-        userEmail:
-          type: string
-        userId:
-          type: string
-        version:
-          type: integer
-          format: int32
-    TokenConfig:
-      type: object
-      properties:
-        algorithm:
-          type: string
-        defaultApiKeyExpiryInMinutes:
-          type: integer
-          format: int64
-        jwsIssuer:
-          type: string
-        timeUntilExpirationForEmailResetToken:
-          type: string
-        timeUntilExpirationForUserToken:
-          type: string
-      required:
-      - algorithm
-      - jwsIssuer
-      - timeUntilExpirationForEmailResetToken
-      - timeUntilExpirationForUserToken
     TokenRequest:
       type: object
       properties:
@@ -10970,22 +10935,16 @@ components:
           type: string
         expires_in:
           type: integer
-          format: int32
+          format: int64
         id_token:
           type: string
         refresh_token:
           type: string
+        refresh_token_expires_in:
+          type: integer
+          format: int64
         token_type:
           type: string
-    TokenResultPage:
-      type: object
-      properties:
-        pageResponse:
-          $ref: '#/components/schemas/PageResponse'
-        values:
-          type: array
-          items:
-            $ref: '#/components/schemas/Token'
     UiConfig:
       type: object
       properties:

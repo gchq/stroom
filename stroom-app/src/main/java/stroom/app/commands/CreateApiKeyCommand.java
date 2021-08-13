@@ -5,11 +5,11 @@ import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
 import stroom.security.identity.account.Account;
 import stroom.security.identity.account.AccountService;
-import stroom.security.identity.token.Token;
+import stroom.security.identity.token.ApiKey;
+import stroom.security.identity.token.ApiKeyDao;
+import stroom.security.identity.token.ApiKeyType;
 import stroom.security.identity.token.TokenBuilder;
 import stroom.security.identity.token.TokenBuilderFactory;
-import stroom.security.identity.token.TokenDao;
-import stroom.security.identity.token.TokenType;
 import stroom.security.openid.api.OpenIdClientFactory;
 import stroom.util.logging.LogUtil;
 
@@ -56,7 +56,7 @@ public class CreateApiKeyCommand extends AbstractStroomAccountConfiguredCommand 
     @Inject
     private OpenIdClientFactory openIdClientDetailsFactory;
     @Inject
-    private TokenDao tokenDao;
+    private ApiKeyDao apiKeyDao;
     @Inject
     private AccountService accountService;
     @Inject
@@ -108,8 +108,8 @@ public class CreateApiKeyCommand extends AbstractStroomAccountConfiguredCommand 
                 accountService.read(userId)
                         .ifPresentOrElse(
                                 account -> {
-                                    final Token token = createApiKey(namespace, account);
-                                    if (outputToken(token, outputPath)) {
+                                    final ApiKey apiKey = createApiKey(namespace, account);
+                                    if (outputApiKey(apiKey, outputPath)) {
                                         final String msg = LogUtil.message("API key successfully created for user '{}'",
                                                 userId);
                                         LOGGER.info(msg);
@@ -137,69 +137,70 @@ public class CreateApiKeyCommand extends AbstractStroomAccountConfiguredCommand 
         }
     }
 
-    private Token createApiKey(final Namespace namespace, final Account account) {
+    private ApiKey createApiKey(final Namespace namespace, final Account account) {
         final Integer lifetimeDays = namespace.getInt(EXPIRY_DAYS_ARG_NAME);
         final LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
 
         LOGGER.info("Creating API key for user '{}'", account.getUserId());
 
-        Instant expiry;
+        Instant expirationTime;
         if (lifetimeDays != null) {
-            expiry = now.plusDays(lifetimeDays).toInstant(ZoneOffset.UTC);
+            expirationTime = now.plusDays(lifetimeDays).toInstant(ZoneOffset.UTC);
         } else {
-            expiry = new Date(Long.MAX_VALUE).toInstant();
+            expirationTime = new Date(Long.MAX_VALUE).toInstant();
         }
 
         final TokenBuilder tokenBuilder = tokenBuilderFactory
-                .expiryDateForApiKeys(expiry)
-                .newBuilder(TokenType.API)
+                .builder()
+                .expirationTime(expirationTime)
                 .clientId(openIdClientDetailsFactory.getClient().getClientId())
                 .subject(account.getUserId());
 
-        final Token tokenParams = new Token();
+        final ApiKey apiKey = new ApiKey();
         final long nowMillis = now.toInstant(ZoneOffset.UTC).toEpochMilli();
-        tokenParams.setCreateTimeMs(nowMillis);
-        tokenParams.setCreateUser(CLI_USER);
-        tokenParams.setUpdateTimeMs(nowMillis);
-        tokenParams.setUpdateUser(CLI_USER);
-        tokenParams.setUserId(account.getUserId());
-        tokenParams.setUserEmail(account.getUserId());
-        tokenParams.setTokenType(TokenType.API.getText());
-        tokenParams.setData(tokenBuilder.build());
-        tokenParams.setExpiresOnMs(tokenBuilder.getExpiryDate().toEpochMilli());
-        tokenParams.setEnabled(true);
+        apiKey.setCreateTimeMs(nowMillis);
+        apiKey.setCreateUser(CLI_USER);
+        apiKey.setUpdateTimeMs(nowMillis);
+        apiKey.setUpdateUser(CLI_USER);
+        apiKey.setUserId(account.getUserId());
+        apiKey.setUserEmail(account.getUserId());
+        apiKey.setType(ApiKeyType.USER.getText());
+        apiKey.setData(tokenBuilder.build());
+        apiKey.setExpiresOnMs(tokenBuilder.getExpirationTime().toEpochMilli());
+        apiKey.setEnabled(true);
 
-        // Register the token
-        return tokenDao.create(account.getId(), tokenParams);
+        // Register the API keu
+        return apiKeyDao.create(account.getId(), apiKey);
     }
 
     /**
      * Emit the API key token data to the console, or if an output file path was specified, to that file.
      * If the file write fails, the token will be deleted.
+     *
      * @return Whether the token was successfully written
      */
-    private boolean outputToken(final Token token, final String path) {
+    private boolean outputApiKey(final ApiKey apiKey, final String path) {
         if (path != null) {
-            // Output the token to a file path specified by the CLI user
+            // Output the API key to a file path specified by the CLI user
             try {
                 BufferedWriter writer = new BufferedWriter(new FileWriter(path));
-                writer.write(token.getData());
+                writer.write(apiKey.getData());
                 writer.close();
 
                 final File fileInfo = new File(path);
-                LOGGER.info("Wrote API key for user '{}' to file '{}'", token.getUserId(), fileInfo.getAbsolutePath());
+                LOGGER.info("Wrote API key for user '{}' to file '{}'", apiKey.getUserId(), fileInfo.getAbsolutePath());
             } catch (IOException e) {
                 LOGGER.error("API key for user '{}' could not be written to file. {}",
-                        token.getUserId(), e.getMessage());
+                        apiKey.getUserId(), e.getMessage());
 
-                // Destroy the created token
-                tokenDao.deleteTokenById(token.getId());
+                // Destroy the created API key
+                apiKeyDao.deleteTokenById(apiKey.getId());
 
                 return false;
             }
         } else {
-            // Output token to standard out
-            LOGGER.info("Generated API key for user '{}': {}", token.getUserId(), token.getData());
+            // Output API key to standard out
+            LOGGER.info("Generated API key for user '{}': {}", apiKey.getUserId(), apiKey.getData());
         }
 
         return true;

@@ -2,17 +2,17 @@ package stroom.security.identity.db;
 
 import stroom.db.util.JooqUtil;
 import stroom.security.identity.db.jooq.tables.TokenType;
-import stroom.security.identity.token.TokenTypeDao;
+import stroom.security.identity.token.ApiKeyTypeDao;
 
 import java.util.Optional;
 import javax.inject.Inject;
 
-class TokenTypeDaoImpl implements TokenTypeDao {
+class ApiKeyTypeDaoImpl implements ApiKeyTypeDao {
 
     private final IdentityDbConnProvider identityDbConnProvider;
 
     @Inject
-    TokenTypeDaoImpl(final IdentityDbConnProvider identityDbConnProvider) {
+    ApiKeyTypeDaoImpl(final IdentityDbConnProvider identityDbConnProvider) {
         this.identityDbConnProvider = identityDbConnProvider;
     }
 

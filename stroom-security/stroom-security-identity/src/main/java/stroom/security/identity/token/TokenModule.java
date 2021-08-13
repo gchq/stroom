@@ -27,15 +27,15 @@ public final class TokenModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(TokenService.class).to(TokenServiceImpl.class);
-        bind(TokenEventLog.class).to(TokenEventLogImpl.class);
-        bind(JsonWebKeyFactory.class).to(JsonWebKeyFactoryImpl.class);
+        bind(ApiKeyService.class).to(ApiKeyServiceImpl.class);
+        bind(ApiKeyEventLog.class).to(ApiKeyEventLogImpl.class);
+        bind(JsonWebKeyFactory.class).to(JwkFactoryImpl.class);
         bind(PublicJsonWebKeyProvider.class).to(JwkCache.class);
 
         RestResourcesBinder.create(binder())
-                .bind(TokenResourceImpl.class);
+                .bind(ApiKeyResourceImpl.class);
 
         HasHealthCheckBinder.create(binder())
-                .bind(TokenServiceImpl.class);
+                .bind(ApiKeyServiceImpl.class);
     }
 }

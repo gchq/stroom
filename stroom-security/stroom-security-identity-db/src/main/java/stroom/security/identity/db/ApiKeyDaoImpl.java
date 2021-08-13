@@ -21,13 +21,13 @@ package stroom.security.identity.db;
 import stroom.db.util.JooqUtil;
 import stroom.security.identity.account.Account;
 import stroom.security.identity.db.jooq.tables.records.TokenRecord;
-import stroom.security.identity.token.SearchTokenRequest;
-import stroom.security.identity.token.Token;
-import stroom.security.identity.token.TokenDao;
-import stroom.security.identity.token.TokenResource;
-import stroom.security.identity.token.TokenResultPage;
-import stroom.security.identity.token.TokenType;
-import stroom.security.identity.token.TokenTypeDao;
+import stroom.security.identity.token.ApiKey;
+import stroom.security.identity.token.ApiKeyDao;
+import stroom.security.identity.token.ApiKeyResource;
+import stroom.security.identity.token.ApiKeyResultPage;
+import stroom.security.identity.token.ApiKeyType;
+import stroom.security.identity.token.ApiKeyTypeDao;
+import stroom.security.identity.token.SearchApiKeyRequest;
 import stroom.util.ResultPageFactory;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
@@ -60,41 +60,41 @@ import static java.util.Map.entry;
 import static stroom.security.identity.db.jooq.tables.TokenType.TOKEN_TYPE;
 
 @Singleton
-class TokenDaoImpl implements TokenDao {
+class ApiKeyDaoImpl implements ApiKeyDao {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AccountDaoImpl.class);
 
-    private static final Function<Record, Token> RECORD_TO_TOKEN_MAPPER = record -> {
-        final Token token = new Token();
-        token.setId(record.get(stroom.security.identity.db.jooq.tables.Token.TOKEN.ID));
-        token.setVersion(record.get(stroom.security.identity.db.jooq.tables.Token.TOKEN.VERSION));
-        token.setCreateTimeMs(record.get(stroom.security.identity.db.jooq.tables.Token.TOKEN.CREATE_TIME_MS));
-        token.setUpdateTimeMs(record.get(stroom.security.identity.db.jooq.tables.Token.TOKEN.UPDATE_TIME_MS));
-        token.setCreateUser(record.get(stroom.security.identity.db.jooq.tables.Token.TOKEN.CREATE_USER));
-        token.setUpdateUser(record.get(stroom.security.identity.db.jooq.tables.Token.TOKEN.UPDATE_USER));
+    private static final Function<Record, ApiKey> RECORD_TO_TOKEN_MAPPER = record -> {
+        final ApiKey apiKey = new ApiKey();
+        apiKey.setId(record.get(stroom.security.identity.db.jooq.tables.Token.TOKEN.ID));
+        apiKey.setVersion(record.get(stroom.security.identity.db.jooq.tables.Token.TOKEN.VERSION));
+        apiKey.setCreateTimeMs(record.get(stroom.security.identity.db.jooq.tables.Token.TOKEN.CREATE_TIME_MS));
+        apiKey.setUpdateTimeMs(record.get(stroom.security.identity.db.jooq.tables.Token.TOKEN.UPDATE_TIME_MS));
+        apiKey.setCreateUser(record.get(stroom.security.identity.db.jooq.tables.Token.TOKEN.CREATE_USER));
+        apiKey.setUpdateUser(record.get(stroom.security.identity.db.jooq.tables.Token.TOKEN.UPDATE_USER));
         try {
-            token.setUserId(record.get(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.USER_ID));
+            apiKey.setUserId(record.get(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.USER_ID));
         } catch (final IllegalArgumentException e) {
             // Ignore
         }
         try {
-            token.setUserEmail(record.get(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.EMAIL));
+            apiKey.setUserEmail(record.get(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.EMAIL));
         } catch (final IllegalArgumentException e) {
             // Ignore
         }
         try {
-            token.setTokenType(record.get(TOKEN_TYPE.TYPE));
+            apiKey.setType(record.get(TOKEN_TYPE.TYPE));
         } catch (final IllegalArgumentException e) {
             // Ignore
         }
-        token.setData(record.get(stroom.security.identity.db.jooq.tables.Token.TOKEN.DATA));
-        token.setExpiresOnMs(record.get(stroom.security.identity.db.jooq.tables.Token.TOKEN.EXPIRES_ON_MS));
-        token.setComments(record.get(stroom.security.identity.db.jooq.tables.Token.TOKEN.COMMENTS));
-        token.setEnabled(record.get(stroom.security.identity.db.jooq.tables.Token.TOKEN.ENABLED));
-        return token;
+        apiKey.setData(record.get(stroom.security.identity.db.jooq.tables.Token.TOKEN.DATA));
+        apiKey.setExpiresOnMs(record.get(stroom.security.identity.db.jooq.tables.Token.TOKEN.EXPIRES_ON_MS));
+        apiKey.setComments(record.get(stroom.security.identity.db.jooq.tables.Token.TOKEN.COMMENTS));
+        apiKey.setEnabled(record.get(stroom.security.identity.db.jooq.tables.Token.TOKEN.ENABLED));
+        return apiKey;
     };
 
-    private static final BiFunction<Token, TokenRecord, TokenRecord> TOKEN_TO_RECORD_MAPPER = (token, record) -> {
+    private static final BiFunction<ApiKey, TokenRecord, TokenRecord> TOKEN_TO_RECORD_MAPPER = (token, record) -> {
         record.setId(token.getId());
         record.setVersion(token.getVersion());
         record.setCreateTimeMs(token.getCreateTimeMs());
@@ -125,53 +125,53 @@ class TokenDaoImpl implements TokenDao {
             entry("comments", stroom.security.identity.db.jooq.tables.Token.TOKEN.COMMENTS),
             entry("enabled", stroom.security.identity.db.jooq.tables.Token.TOKEN.ENABLED));
 
-    private static final FilterFieldMappers<Token> FIELD_MAPPERS = FilterFieldMappers.of(
+    private static final FilterFieldMappers<ApiKey> FIELD_MAPPERS = FilterFieldMappers.of(
             FilterFieldMapper.of(
-                    TokenResource.FIELD_DEF_USER_ID,
-                    Token::getUserId),
+                    ApiKeyResource.FIELD_DEF_USER_ID,
+                    ApiKey::getUserId),
             FilterFieldMapper.of(
-                    TokenResource.FIELD_DEF_STATUS,
+                    ApiKeyResource.FIELD_DEF_STATUS,
                     token -> token.isEnabled()
                             ? "Enabled"
                             : "Disabled"));
 
-    private static final Map<String, Comparator<Token>> FIELD_COMPARATORS = Map.of(
-            TokenResource.FIELD_DEF_USER_ID.getDisplayName(),
-            CompareUtil.getNullSafeCaseInsensitiveComparator(Token::getUserId),
-            TokenResource.FIELD_DEF_STATUS.getDisplayName(),
+    private static final Map<String, Comparator<ApiKey>> FIELD_COMPARATORS = Map.of(
+            ApiKeyResource.FIELD_DEF_USER_ID.getDisplayName(),
+            CompareUtil.getNullSafeCaseInsensitiveComparator(ApiKey::getUserId),
+            ApiKeyResource.FIELD_DEF_STATUS.getDisplayName(),
             CompareUtil.getNullSafeCaseInsensitiveComparator(token ->
                     token.isEnabled()
                             ? "Enabled"
                             : "Disabled"),
             "expiresOnMs",
-            Comparator.nullsFirst(Comparator.comparingLong(Token::getExpiresOnMs)),
+            Comparator.nullsFirst(Comparator.comparingLong(ApiKey::getExpiresOnMs)),
             "createTimeMs",
-            Comparator.nullsFirst(Comparator.comparingLong(Token::getCreateTimeMs)));
+            Comparator.nullsFirst(Comparator.comparingLong(ApiKey::getCreateTimeMs)));
 
     private final IdentityDbConnProvider identityDbConnProvider;
-    private final TokenTypeDao tokenTypeDao;
+    private final ApiKeyTypeDao apiKeyTypeDao;
 
     @Inject
-    TokenDaoImpl(final IdentityDbConnProvider identityDbConnProvider,
-                 final TokenTypeDao tokenTypeDao) {
+    ApiKeyDaoImpl(final IdentityDbConnProvider identityDbConnProvider,
+                  final ApiKeyTypeDao apiKeyTypeDao) {
         this.identityDbConnProvider = identityDbConnProvider;
-        this.tokenTypeDao = tokenTypeDao;
+        this.apiKeyTypeDao = apiKeyTypeDao;
     }
 
     @Override
-    public TokenResultPage list() {
-        final List<Token> list = JooqUtil.contextResult(identityDbConnProvider, context -> context
+    public ApiKeyResultPage list() {
+        final List<ApiKey> list = JooqUtil.contextResult(identityDbConnProvider, context -> context
                 .selectFrom(stroom.security.identity.db.jooq.tables.Token.TOKEN)
                 .where(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_TOKEN_TYPE_ID
-                        .eq(tokenTypeDao.getTokenTypeId(TokenType.USER.getText().toLowerCase())))
+                        .eq(apiKeyTypeDao.getTokenTypeId(ApiKeyType.USER.getText().toLowerCase())))
                 .orderBy(stroom.security.identity.db.jooq.tables.Token.TOKEN.CREATE_TIME_MS)
                 .fetch()
                 .map(RECORD_TO_TOKEN_MAPPER::apply));
-        return ResultPageFactory.createUnboundedList(list, TokenResultPage::new);
+        return ResultPageFactory.createUnboundedList(list, ApiKeyResultPage::new);
     }
 
     @Override
-    public TokenResultPage search(final SearchTokenRequest request) {
+    public ApiKeyResultPage search(final SearchApiKeyRequest request) {
         final Condition condition = createCondition(request);
 
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(
@@ -199,7 +199,7 @@ class TokenDaoImpl implements TokenDao {
                 final int limit = JooqUtil.getLimit(request.getPageRequest(), false);
                 final int offset = JooqUtil.getOffset(request.getPageRequest(), limit, count);
 
-                final List<Token> list = context
+                final List<ApiKey> list = context
                         .select(
                                 stroom.security.identity.db.jooq.tables.Token.TOKEN.ID,
                                 stroom.security.identity.db.jooq.tables.Token.TOKEN.VERSION,
@@ -233,7 +233,7 @@ class TokenDaoImpl implements TokenDao {
                         list.size(),
                         (long) count,
                         true);
-                return new TokenResultPage(list, pageResponse);
+                return new ApiKeyResultPage(list, pageResponse);
 
             } else {
                 try (final Stream<Record12<Integer, Integer, Long, Long, String, String,
@@ -261,47 +261,47 @@ class TokenDaoImpl implements TokenDao {
                         .where(condition)
                         .stream()) {
 
-                    final Comparator<Token> comparator = buildComparator(request).orElse(null);
+                    final Comparator<ApiKey> comparator = buildComparator(request).orElse(null);
 
                     return QuickFilterPredicateFactory.filterStream(
                             request.getQuickFilter(),
                             FIELD_MAPPERS,
                             stream.map(RECORD_TO_TOKEN_MAPPER),
                             comparator
-                    ).collect(ResultPageFactory.collector(request.getPageRequest(), TokenResultPage::new));
+                    ).collect(ResultPageFactory.collector(request.getPageRequest(), ApiKeyResultPage::new));
                 }
             }
         });
     }
 
-    private Optional<Comparator<Token>> buildComparator(final SearchTokenRequest searchTokenRequest) {
-        if (searchTokenRequest != null
-                && searchTokenRequest.getSortList() != null
-                && !searchTokenRequest.getSortList().isEmpty()) {
-            return Optional.of(CompareUtil.buildCriteriaComparator(FIELD_COMPARATORS, searchTokenRequest));
+    private Optional<Comparator<ApiKey>> buildComparator(final SearchApiKeyRequest request) {
+        if (request != null
+                && request.getSortList() != null
+                && !request.getSortList().isEmpty()) {
+            return Optional.of(CompareUtil.buildCriteriaComparator(FIELD_COMPARATORS, request));
         } else {
             return Optional.empty();
         }
     }
 
     @Override
-    public Token create(final int accountId, final Token token) {
-        final String tokenType = token.getTokenType().toLowerCase();
-        final int tokenTypeId = tokenTypeDao.getTokenTypeId(tokenType);
+    public ApiKey create(final int accountId, final ApiKey apiKey) {
+        final String type = apiKey.getType().toLowerCase();
+        final int typeId = apiKeyTypeDao.getTokenTypeId(type);
 
         return JooqUtil.contextResult(identityDbConnProvider, context -> {
             LOGGER.debug(() -> LogUtil.message("Creating a {}",
                     stroom.security.identity.db.jooq.tables.Token.TOKEN.getName()));
-            final TokenRecord record = TOKEN_TO_RECORD_MAPPER.apply(token,
+            final TokenRecord record = TOKEN_TO_RECORD_MAPPER.apply(apiKey,
                     context.newRecord(stroom.security.identity.db.jooq.tables.Token.TOKEN));
             record.setFkAccountId(accountId);
-            record.setFkTokenTypeId(tokenTypeId);
+            record.setFkTokenTypeId(typeId);
             record.store();
 
-            final Token newToken = RECORD_TO_TOKEN_MAPPER.apply(record);
-            newToken.setUserEmail(token.getUserEmail());
-            newToken.setTokenType(token.getTokenType());
-            newToken.setUserId(token.getUserId());
+            final ApiKey newToken = RECORD_TO_TOKEN_MAPPER.apply(record);
+            newToken.setUserEmail(apiKey.getUserEmail());
+            newToken.setType(apiKey.getType());
+            newToken.setUserId(apiKey.getUserId());
             return newToken;
         });
     }
@@ -432,7 +432,7 @@ class TokenDaoImpl implements TokenDao {
     }
 
     @Override
-    public List<Token> getTokensForAccount(final int accountId) {
+    public List<ApiKey> getTokensForAccount(final int accountId) {
         return JooqUtil.contextResult(identityDbConnProvider, context -> context
                 .select(
                         stroom.security.identity.db.jooq.tables.Token.TOKEN.ID,
@@ -461,7 +461,7 @@ class TokenDaoImpl implements TokenDao {
     }
 
     @Override
-    public Optional<Token> readById(int tokenId) {
+    public Optional<ApiKey> readById(int tokenId) {
         return JooqUtil.contextResult(identityDbConnProvider, context -> context
                 .select(
                         stroom.security.identity.db.jooq.tables.Token.TOKEN.ID,
@@ -491,7 +491,7 @@ class TokenDaoImpl implements TokenDao {
 
 
     @Override
-    public Optional<Token> readByToken(String token) {
+    public Optional<ApiKey> readByToken(String token) {
         return JooqUtil.contextResult(identityDbConnProvider, context -> context
                 .select(
                         stroom.security.identity.db.jooq.tables.Token.TOKEN.ID,
@@ -531,7 +531,7 @@ class TokenDaoImpl implements TokenDao {
                 .execute());
     }
 
-    private Condition createCondition(final SearchTokenRequest request) {
+    private Condition createCondition(final SearchApiKeyRequest request) {
         Condition condition = null;
 //        if (request.getQuickFilter() != null) {
 //            condition = ACCOUNT.USER_ID.contains(request.getQuickFilter());

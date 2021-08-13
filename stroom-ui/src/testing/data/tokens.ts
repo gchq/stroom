@@ -1,9 +1,9 @@
 import { loremIpsum } from "lorem-ipsum";
-import { Token } from "api/stroom";
+import { ApiKey } from "api/stroom";
 import { now } from "moment";
 
 const lr = (count: number) => loremIpsum({ count, units: "words" });
-const getToken = (): Token => {
+const getToken = (): ApiKey => {
   return {
     id: Math.floor(Math.random() * 1000),
     version: 1,
@@ -12,7 +12,7 @@ const getToken = (): Token => {
     updateTimeMs: now(),
     updateUser: lr(1),
     userId: lr(1),
-    tokenType: "user",
+    type: "user",
     data: lr(1),
     expiresOnMs: now(),
     comments: lr(1),

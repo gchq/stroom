@@ -16,11 +16,12 @@
 
 package stroom.security.identity.account;
 
+import stroom.security.api.HasJws;
 import stroom.security.api.UserIdentity;
 
 import java.util.Objects;
 
-public class ProcessingUserIdentity implements UserIdentity {
+public class ProcessingUserIdentity implements UserIdentity, HasJws {
 
     private String id;
     private String jws;
@@ -44,22 +45,15 @@ public class ProcessingUserIdentity implements UserIdentity {
     }
 
     @Override
-    public String getSessionId() {
-        return null;
-    }
-
-    @SuppressWarnings("checkstyle:needbraces")
-    @Override
     public boolean equals(final Object o) {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof UserIdentity)) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final UserIdentity that = (UserIdentity) o;
-        return Objects.equals(id, that.getId()) &&
-                Objects.equals(jws, that.getJws());
+        final ProcessingUserIdentity that = (ProcessingUserIdentity) o;
+        return Objects.equals(id, that.id) && Objects.equals(jws, that.jws);
     }
 
     @Override

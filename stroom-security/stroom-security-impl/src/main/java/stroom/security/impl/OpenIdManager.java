@@ -4,6 +4,7 @@ import stroom.security.api.UserIdentity;
 import stroom.security.impl.exception.AuthenticationException;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.TokenRequest;
+import stroom.security.openid.api.TokenResponse;
 import stroom.security.shared.User;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.io.StreamUtil;
@@ -128,35 +129,20 @@ class OpenIdManager {
             final HttpSession session = request.getSession(false);
             UserAgentSessionUtil.set(request);
 
+            final ObjectMapper mapper = getMapper();
             final String tokenEndpoint = openIdConfig.getTokenEndpoint();
-            String idToken = null;
-
-            final ObjectMapper mapper = new ObjectMapper();
-            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
-            String authorization = openIdConfig.getClientId() + ":" + openIdConfig.getClientSecret();
-            authorization = Base64.getEncoder().encodeToString(authorization.getBytes(StandardCharsets.UTF_8));
-            authorization = "Basic " + authorization;
-
             final HttpPost httpPost = new HttpPost(tokenEndpoint);
 
             // AWS requires form content and not a JSON object.
             if (openIdConfig.isFormTokenRequest()) {
-                try {
-                    final List<NameValuePair> nvps = new ArrayList<>();
-                    nvps.add(new BasicNameValuePair(OpenId.CODE, code));
-                    nvps.add(new BasicNameValuePair(OpenId.GRANT_TYPE, OpenId.GRANT_TYPE__AUTHORIZATION_CODE));
-                    nvps.add(new BasicNameValuePair(OpenId.CLIENT_ID, openIdConfig.getClientId()));
-                    nvps.add(new BasicNameValuePair(OpenId.CLIENT_SECRET, openIdConfig.getClientSecret()));
-                    nvps.add(new BasicNameValuePair(OpenId.REDIRECT_URI, postAuthRedirectUri));
+                final List<NameValuePair> nvps = new ArrayList<>();
+                nvps.add(new BasicNameValuePair(OpenId.CODE, code));
+                nvps.add(new BasicNameValuePair(OpenId.GRANT_TYPE, OpenId.GRANT_TYPE__AUTHORIZATION_CODE));
+                nvps.add(new BasicNameValuePair(OpenId.CLIENT_ID, openIdConfig.getClientId()));
+                nvps.add(new BasicNameValuePair(OpenId.CLIENT_SECRET, openIdConfig.getClientSecret()));
+                nvps.add(new BasicNameValuePair(OpenId.REDIRECT_URI, postAuthRedirectUri));
+                setFormParams(httpPost, nvps);
 
-                    httpPost.setHeader(HttpHeaders.AUTHORIZATION, authorization);
-                    httpPost.setHeader(HttpHeaders.ACCEPT, "*/*");
-                    httpPost.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
-                    httpPost.setEntity(new UrlEncodedFormEntity(nvps));
-                } catch (final UnsupportedEncodingException e) {
-                    throw new AuthenticationException(e.getMessage(), e);
-                }
             } else {
                 try {
                     final TokenRequest tokenRequest = TokenRequest.builder()
@@ -174,30 +160,17 @@ class OpenIdManager {
                 }
             }
 
-            try (final CloseableHttpClient httpClient = httpClientProvider.get()) {
-                try (final CloseableHttpResponse response = httpClient.execute(httpPost)) {
-                    if (HttpServletResponse.SC_OK == response.getStatusLine().getStatusCode()) {
-                        final String msg = getMessage(response);
-                        final TokenResponse tokenResponse = mapper.readValue(msg, TokenResponse.class);
-                        idToken = tokenResponse.getIdToken();
-                    } else {
-                        throw new AuthenticationException("Received status " +
-                                response.getStatusLine() +
-                                " from " +
-                                tokenEndpoint);
-                    }
-                }
-            } catch (final IOException e) {
-                LOGGER.debug(e::getMessage, e);
-            }
+            final TokenResponse tokenResponse = getTokenResponse(mapper, httpPost, tokenEndpoint);
+            final Optional<JwtContext> optionalJwtContext = jwtContextFactory.getJwtContext(tokenResponse.getIdToken());
+            final JwtClaims jwtClaims = optionalJwtContext
+                    .map(JwtContext::getJwtClaims)
+                    .orElseThrow(() -> new RuntimeException("Unable to extract JWT claims"));
 
-            if (idToken == null) {
-                throw new AuthenticationException("'" +
-                        OpenId.ID_TOKEN +
-                        "' not provided in response");
-            }
-
-            final UserIdentityImpl token = createUIToken(session, state, idToken);
+            final UserIdentityImpl token = createUIToken(
+                    session,
+                    state,
+                    tokenResponse,
+                    jwtClaims);
             if (token != null) {
                 // Set the token in the session.
                 UserIdentitySessionUtil.set(session, token);
@@ -214,6 +187,86 @@ class OpenIdManager {
         return redirectUri;
     }
 
+    public void refreshToken(final UserIdentityImpl userIdentity) {
+        LOGGER.debug("Refreshing token " + userIdentity);
+
+        if (userIdentity.getTokenResponse().getRefreshToken() == null) {
+            throw new NullPointerException("Unable to refresh token as no refresh token is available");
+        }
+
+        final ObjectMapper mapper = getMapper();
+        final String tokenEndpoint = openIdConfig.getTokenEndpoint();
+        final HttpPost httpPost = new HttpPost(tokenEndpoint);
+
+        // AWS requires form content and not a JSON object.
+        if (openIdConfig.isFormTokenRequest()) {
+            final List<NameValuePair> nvps = new ArrayList<>();
+            nvps.add(new BasicNameValuePair(OpenId.GRANT_TYPE, OpenId.REFRESH_TOKEN));
+            nvps.add(new BasicNameValuePair(OpenId.REFRESH_TOKEN,
+                    userIdentity.getTokenResponse().getRefreshToken()));
+            nvps.add(new BasicNameValuePair(OpenId.CLIENT_ID, openIdConfig.getClientId()));
+            nvps.add(new BasicNameValuePair(OpenId.CLIENT_SECRET, openIdConfig.getClientSecret()));
+            setFormParams(httpPost, nvps);
+
+        } else {
+            throw new UnsupportedOperationException("JSON not supported for token refresh");
+        }
+
+        final TokenResponse tokenResponse = getTokenResponse(mapper, httpPost, tokenEndpoint);
+        final Optional<JwtContext> optionalJwtContext = jwtContextFactory.getJwtContext(tokenResponse.getIdToken());
+        final JwtClaims jwtClaims = optionalJwtContext
+                .map(JwtContext::getJwtClaims)
+                .orElseThrow(() -> new RuntimeException("Unable to extract JWT claims"));
+
+        userIdentity.setTokenResponse(tokenResponse);
+        userIdentity.setJwtClaims(jwtClaims);
+    }
+
+    private void setFormParams(final HttpPost httpPost,
+                               final List<NameValuePair> nvps) {
+        try {
+            String authorization = openIdConfig.getClientId() + ":" + openIdConfig.getClientSecret();
+            authorization = Base64.getEncoder().encodeToString(authorization.getBytes(StandardCharsets.UTF_8));
+            authorization = "Basic " + authorization;
+
+            httpPost.setHeader(HttpHeaders.AUTHORIZATION, authorization);
+            httpPost.setHeader(HttpHeaders.ACCEPT, "*/*");
+            httpPost.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
+            httpPost.setEntity(new UrlEncodedFormEntity(nvps));
+        } catch (final UnsupportedEncodingException e) {
+            throw new AuthenticationException(e.getMessage(), e);
+        }
+    }
+
+    private TokenResponse getTokenResponse(final ObjectMapper mapper,
+                                           final HttpPost httpPost,
+                                           final String tokenEndpoint) {
+        TokenResponse tokenResponse = null;
+        try (final CloseableHttpClient httpClient = httpClientProvider.get()) {
+            try (final CloseableHttpResponse response = httpClient.execute(httpPost)) {
+                if (HttpServletResponse.SC_OK == response.getStatusLine().getStatusCode()) {
+                    final String msg = getMessage(response);
+                    tokenResponse = mapper.readValue(msg, TokenResponse.class);
+                } else {
+                    throw new AuthenticationException("Received status " +
+                            response.getStatusLine() +
+                            " from " +
+                            tokenEndpoint);
+                }
+            }
+        } catch (final IOException e) {
+            LOGGER.debug(e::getMessage, e);
+        }
+
+        if (tokenResponse == null || tokenResponse.getIdToken() == null) {
+            throw new AuthenticationException("'" +
+                    OpenId.ID_TOKEN +
+                    "' not provided in response");
+        }
+
+        return tokenResponse;
+    }
+
     private String getMessage(final CloseableHttpResponse response) {
         String msg = "";
         try {
@@ -227,30 +280,28 @@ class OpenIdManager {
         return msg;
     }
 
-    /**
-     * This method must create the token.
-     * It does this by enacting the OpenId exchange of accessCode for idToken.
-     */
+    private ObjectMapper getMapper() {
+        final ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        return mapper;
+    }
+
     private UserIdentityImpl createUIToken(final HttpSession session,
                                            final AuthenticationState state,
-                                           final String idToken) {
+                                           final TokenResponse tokenResponse,
+                                           final JwtClaims jwtClaims) {
         UserIdentityImpl token = null;
-
-        final String sessionId = session.getId();
-        final Optional<JwtContext> optionalJwtContext = jwtContextFactory.getJwtContext(idToken);
-        final JwtClaims jwtClaims = optionalJwtContext
-                .map(JwtContext::getJwtClaims)
-                .orElseThrow(() -> new RuntimeException("Unable to extract JWT claims"));
 
         final String nonce = (String) jwtClaims.getClaimsMap().get(OpenId.NONCE);
         final boolean match = nonce != null && nonce.equals(state.getNonce());
         if (match) {
+            final String sessionId = session.getId();
             LOGGER.info(() -> "User is authenticated for sessionId " + sessionId);
             final String userId = getUserId(jwtClaims);
             final Optional<User> optionalUser = userCache.get(userId);
             final User user = optionalUser.orElseThrow(() ->
                     new AuthenticationException("Unable to find user: " + userId));
-            token = new UserIdentityImpl(user.getUuid(), userId, idToken, sessionId);
+            token = new UserIdentityImpl(user.getUuid(), userId, sessionId, tokenResponse, jwtClaims);
 
         } else {
             // If the nonces don't match we need to redirect to log in again.
@@ -298,20 +349,29 @@ class OpenIdManager {
         if (userIdentity.isEmpty()) {
             LOGGER.debug(() -> "Cannot get a valid JWS for API request to " + request.getRequestURI() + ". " +
                     "This may be due to Stroom being left open in a browser after Stroom was restarted.");
+        }
 
+        return userIdentity;
+    }
+
+    public Optional<UserIdentity> getOrSetSessionUser(final HttpServletRequest request,
+                                                       final Optional<UserIdentity> userIdentity) {
+        Optional<UserIdentity> result = userIdentity;
+
+        if (userIdentity.isEmpty()) {
             // Provide identity from the session if we are allowing this to happen.
-            userIdentity = UserIdentitySessionUtil.get(request.getSession(false));
+            result = UserIdentitySessionUtil.get(request.getSession(false));
 
         } else if (UserIdentitySessionUtil.requestHasSessionCookie(request)) {
             // Set the user ref in the session.
             UserIdentitySessionUtil.set(request.getSession(true), userIdentity.get());
         }
 
-        return userIdentity;
+        return result;
     }
 
-    private Optional<UserIdentityImpl> getUserIdentity(final HttpServletRequest request,
-                                                       final JwtContext jwtContext) {
+    private Optional<UserIdentity> getUserIdentity(final HttpServletRequest request,
+                                                   final JwtContext jwtContext) {
         LOGGER.debug(() -> "Getting user identity from jwtContext=" + jwtContext);
 
         String sessionId = null;
@@ -337,7 +397,10 @@ class OpenIdManager {
                         new AuthenticationException("Unable to find user: " + userId));
             }
 
-            return Optional.of(new UserIdentityImpl(user.getUuid(), userId, jwtContext.getJwt(), sessionId));
+            return Optional.of(new ApiUserIdentity(user.getUuid(),
+                    userId,
+                    sessionId,
+                    jwtContext));
 
         } catch (final MalformedClaimException e) {
             LOGGER.error(() -> "Error extracting claims from token in request " + request.getRequestURI());
@@ -371,7 +434,8 @@ class OpenIdManager {
                 .queryParam(OpenId.RESPONSE_TYPE, OpenId.CODE)
                 .queryParam(OpenId.CLIENT_ID, clientId)
                 .queryParam(OpenId.REDIRECT_URI, redirectUri)
-                .queryParam(OpenId.SCOPE, OpenId.SCOPE__OPENID + " " + OpenId.SCOPE__EMAIL)
+                .queryParam(OpenId.SCOPE,
+                        OpenId.SCOPE__OPENID + " " + OpenId.SCOPE__EMAIL + " " + OpenId.SCOPE__OFFLINE_ACCESS)
                 .queryParam(OpenId.STATE, state.getId())
                 .queryParam(OpenId.NONCE, state.getNonce());
 

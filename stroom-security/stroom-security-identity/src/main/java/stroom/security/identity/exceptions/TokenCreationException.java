@@ -18,11 +18,11 @@
 
 package stroom.security.identity.exceptions;
 
-import stroom.security.identity.token.TokenType;
+import stroom.security.identity.token.ApiKeyType;
 
 public class TokenCreationException extends RuntimeException {
 
-    private TokenType tokenType;
+    private ApiKeyType apiKeyType;
     private String errorMessage;
 
     public TokenCreationException(Exception e) {
@@ -33,8 +33,8 @@ public class TokenCreationException extends RuntimeException {
         this.errorMessage = errorMessage;
     }
 
-    public TokenCreationException(TokenType tokenType, String errorMessage) {
-        this.tokenType = tokenType;
+    public TokenCreationException(ApiKeyType apiKeyType, String errorMessage) {
+        this.apiKeyType = apiKeyType;
         this.errorMessage = errorMessage;
     }
 }

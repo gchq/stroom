@@ -12,10 +12,16 @@ import javax.inject.Singleton;
 public class OpenIdConfig extends AbstractConfig {
 
     public static final String PROP_NAME_ACCESS_CODE_CACHE = "accessCodeCache";
+    public static final String PROP_NAME_REFRESH_TOKEN_CACHE = "refreshTokenCache";
 
     private CacheConfig accessCodeCache = CacheConfig.builder()
             .maximumSize(1000L)
             .expireAfterAccess(StroomDuration.ofMinutes(10))
+            .build();
+
+    private CacheConfig refreshTokenCache = CacheConfig.builder()
+            .maximumSize(10000L)
+            .expireAfterAccess(StroomDuration.ofDays(1))
             .build();
 
     @JsonProperty(PROP_NAME_ACCESS_CODE_CACHE)
@@ -25,5 +31,14 @@ public class OpenIdConfig extends AbstractConfig {
 
     public void setAccessCodeCache(final CacheConfig accessCodeCache) {
         this.accessCodeCache = accessCodeCache;
+    }
+
+    @JsonProperty(PROP_NAME_REFRESH_TOKEN_CACHE)
+    public CacheConfig getRefreshTokenCache() {
+        return refreshTokenCache;
+    }
+
+    public void setRefreshTokenCache(final CacheConfig refreshTokenCache) {
+        this.refreshTokenCache = refreshTokenCache;
     }
 }

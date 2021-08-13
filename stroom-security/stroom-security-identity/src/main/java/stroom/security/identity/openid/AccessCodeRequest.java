@@ -18,6 +18,8 @@
 
 package stroom.security.identity.openid;
 
+import stroom.security.openid.api.TokenResponse;
+
 class AccessCodeRequest {
 
     private final String scope;
@@ -27,7 +29,7 @@ class AccessCodeRequest {
     private final String nonce;
     private final String state;
     private final String prompt;
-    private final String token;
+    private final TokenResponse tokenResponse;
 
     AccessCodeRequest(final String scope,
                       final String responseType,
@@ -36,7 +38,7 @@ class AccessCodeRequest {
                       final String nonce,
                       final String state,
                       final String prompt,
-                      final String token) {
+                      final TokenResponse tokenResponse) {
         this.scope = scope;
         this.responseType = responseType;
         this.clientId = clientId;
@@ -44,7 +46,7 @@ class AccessCodeRequest {
         this.nonce = nonce;
         this.state = state;
         this.prompt = prompt;
-        this.token = token;
+        this.tokenResponse = tokenResponse;
     }
 
     public String getScope() {
@@ -75,7 +77,7 @@ class AccessCodeRequest {
         return prompt;
     }
 
-    public String getToken() {
-        return token;
+    public TokenResponse getTokenResponse() {
+        return tokenResponse;
     }
 }

@@ -147,7 +147,7 @@ public final class IdentityConfig extends AbstractConfig implements HasDbConfig 
         this.failedLoginLockThreshold = failedLoginLockThreshold;
     }
 
-    @Nullable
+    @NotNull
     @JsonProperty(PROP_NAME_TOKEN)
     public TokenConfig getTokenConfig() {
         return tokenConfig;

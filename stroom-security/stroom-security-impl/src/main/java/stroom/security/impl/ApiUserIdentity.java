@@ -4,34 +4,30 @@ import stroom.docref.HasUuid;
 import stroom.security.api.HasJws;
 import stroom.security.api.HasSessionId;
 import stroom.security.api.UserIdentity;
-import stroom.security.openid.api.TokenResponse;
 
-import org.jose4j.jwt.JwtClaims;
+import org.jose4j.jwt.consumer.JwtContext;
 
 import java.util.Objects;
-import java.util.concurrent.locks.ReentrantLock;
 
-class UserIdentityImpl implements UserIdentity, HasSessionId, HasJws, HasUuid {
+class ApiUserIdentity implements UserIdentity, HasSessionId, HasUuid, HasJws {
 
     private final String userUuid;
     private final String id;
     private final String sessionId;
+    private final JwtContext jwtContext;
 
-    private final ReentrantLock lock = new ReentrantLock();
-    private volatile TokenResponse tokenResponse;
-    private volatile JwtClaims jwtClaims;
-
-    UserIdentityImpl(final String userUuid,
-                     final String id,
-                     final String sessionId,
-                     final TokenResponse tokenResponse,
-                     final JwtClaims jwtClaims) {
+    ApiUserIdentity(final String userUuid,
+                    final String id,
+                    final String sessionId,
+                    final JwtContext jwtContext) {
         this.userUuid = userUuid;
         this.id = id;
         this.sessionId = sessionId;
+        this.jwtContext = jwtContext;
+    }
 
-        this.tokenResponse = tokenResponse;
-        this.jwtClaims = jwtClaims;
+    public String getUserUuid() {
+        return userUuid;
     }
 
     @Override
@@ -46,7 +42,7 @@ class UserIdentityImpl implements UserIdentity, HasSessionId, HasJws, HasUuid {
 
     @Override
     public String getJws() {
-        return tokenResponse.getIdToken();
+        return jwtContext.getJwt();
     }
 
     @Override
@@ -54,26 +50,7 @@ class UserIdentityImpl implements UserIdentity, HasSessionId, HasJws, HasUuid {
         return sessionId;
     }
 
-    public ReentrantLock getLock() {
-        return lock;
-    }
-
-    public TokenResponse getTokenResponse() {
-        return tokenResponse;
-    }
-
-    public void setTokenResponse(final TokenResponse tokenResponse) {
-        this.tokenResponse = tokenResponse;
-    }
-
-    public JwtClaims getJwtClaims() {
-        return jwtClaims;
-    }
-
-    public void setJwtClaims(final JwtClaims jwtClaims) {
-        this.jwtClaims = jwtClaims;
-    }
-
+    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -82,7 +59,7 @@ class UserIdentityImpl implements UserIdentity, HasSessionId, HasJws, HasUuid {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final UserIdentityImpl that = (UserIdentityImpl) o;
+        final ApiUserIdentity that = (ApiUserIdentity) o;
         return Objects.equals(userUuid, that.userUuid) && Objects.equals(id,
                 that.id) && Objects.equals(sessionId, that.sessionId);
     }

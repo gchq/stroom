@@ -1,5 +1,8 @@
 package stroom.security.impl;
 
+import stroom.docref.HasUuid;
+import stroom.security.api.ClientSecurityUtil;
+import stroom.security.api.HasJws;
 import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
@@ -9,15 +12,23 @@ import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
 import stroom.util.shared.PermissionException;
 
+import org.jose4j.jwt.MalformedClaimException;
+import org.jose4j.jwt.NumericDate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import javax.ws.rs.client.Invocation;
 
 @Singleton
 class SecurityContextImpl implements SecurityContext {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(SecurityContextImpl.class);
 
     private final ThreadLocal<Boolean> checkTypeThreadLocal = ThreadLocal.withInitial(() -> Boolean.TRUE);
 
@@ -26,6 +37,7 @@ class SecurityContextImpl implements SecurityContext {
     private final UserAppPermissionsCache userAppPermissionsCache;
     private final UserCache userCache;
     private final ProcessingUserIdentityProvider processingUserIdentityProvider;
+    private final OpenIdManager openIdManager;
 
     @Inject
     SecurityContextImpl(
@@ -33,12 +45,14 @@ class SecurityContextImpl implements SecurityContext {
             final UserGroupsCache userGroupsCache,
             final UserAppPermissionsCache userAppPermissionsCache,
             final UserCache userCache,
-            final ProcessingUserIdentityProvider processingUserIdentityProvider) {
+            final ProcessingUserIdentityProvider processingUserIdentityProvider,
+            final OpenIdManager openIdManager) {
         this.userDocumentPermissionsCache = userDocumentPermissionsCache;
         this.userGroupsCache = userGroupsCache;
         this.userAppPermissionsCache = userAppPermissionsCache;
         this.userCache = userCache;
         this.processingUserIdentityProvider = processingUserIdentityProvider;
+        this.openIdManager = openIdManager;
     }
 
     @Override
@@ -62,7 +76,7 @@ class SecurityContextImpl implements SecurityContext {
         if (optional.isEmpty()) {
             throw new AuthenticationException("Unable to find user with id=" + userId);
         }
-        return new UserIdentityImpl(optional.get().getUuid(), userId, null, null);
+        return new BasicUserIdentity(optional.get().getUuid(), userId);
     }
 
     @Override
@@ -90,13 +104,16 @@ class SecurityContextImpl implements SecurityContext {
     }
 
     String getUserUuid(final UserIdentity userIdentity) {
-        if (!(userIdentity instanceof UserIdentityImpl)) {
+        if (!(userIdentity instanceof HasUuid)) {
             throw new AuthenticationException("Expecting a real user identity");
         }
-        return ((UserIdentityImpl) userIdentity).getUserUuid();
+        return ((HasUuid) userIdentity).getUuid();
     }
 
     private void pushUser(final UserIdentity userIdentity) {
+        // Before we push the user see if we need to refresh the user token.
+        refreshUserToken(userIdentity);
+        // Push the user.
         CurrentUserState.push(userIdentity);
     }
 
@@ -260,18 +277,7 @@ class SecurityContextImpl implements SecurityContext {
      */
     @Override
     public <T> T asProcessingUserResult(final Supplier<T> supplier) {
-        T result;
-        boolean success = false;
-        try {
-            pushUser(processingUserIdentityProvider.get());
-            success = true;
-            result = supplier.get();
-        } finally {
-            if (success) {
-                popUser();
-            }
-        }
-        return result;
+        return asUserResult(processingUserIdentityProvider.get(), supplier);
     }
 
     /**
@@ -279,16 +285,23 @@ class SecurityContextImpl implements SecurityContext {
      */
     @Override
     public void asProcessingUser(final Runnable runnable) {
-        boolean success = false;
-        try {
-            pushUser(processingUserIdentityProvider.get());
-            success = true;
-            runnable.run();
-        } finally {
-            if (success) {
-                popUser();
-            }
-        }
+        asUser(processingUserIdentityProvider.get(), runnable);
+    }
+
+    /**
+     * Run the supplied code as an admin user.
+     */
+    @Override
+    public <T> T asAdminUserResult(final Supplier<T> supplier) {
+        return asUserResult(createIdentity(User.ADMIN_USER_NAME), supplier);
+    }
+
+    /**
+     * Run the supplied code as an admin user.
+     */
+    @Override
+    public void asAdminUser(final Runnable runnable) {
+        asUser(createIdentity(User.ADMIN_USER_NAME), runnable);
     }
 
     /**
@@ -517,5 +530,56 @@ class SecurityContextImpl implements SecurityContext {
         } finally {
             checkTypeThreadLocal.set(currentCheckType);
         }
+    }
+
+    @Override
+    public void addAuthorisationHeader(final Invocation.Builder builder) {
+        final UserIdentity userIdentity = getUserIdentity();
+        if (userIdentity == null) {
+            LOGGER.debug("No user is currently logged in");
+
+        } else if (!(userIdentity instanceof HasJws)) {
+            LOGGER.debug("Current user has no JWS");
+            throw new RuntimeException("Current user has no token");
+
+        } else {
+            refreshUserToken(userIdentity);
+            final String jws = ((HasJws) userIdentity).getJws();
+            if (jws == null) {
+                LOGGER.debug("The JWS is null for user '{}'", userIdentity.getId());
+            } else {
+                LOGGER.debug("The JWS is '{}' for user '{}'", jws, userIdentity.getId());
+                ClientSecurityUtil.addAuthorisationHeader(builder, jws);
+            }
+        }
+    }
+
+    private void refreshUserToken(final UserIdentity userIdentity) {
+        // Check to see if the user needs a token refresh.
+        if (userIdentity instanceof UserIdentityImpl) {
+            final UserIdentityImpl identity = (UserIdentityImpl) userIdentity;
+            if (hasTokenExpired(identity)) {
+                identity.getLock().lock();
+                try {
+                    if (hasTokenExpired(identity)) {
+                        openIdManager.refreshToken(identity);
+                    }
+                } finally {
+                    identity.getLock().unlock();
+                }
+            }
+        }
+    }
+
+    private boolean hasTokenExpired(final UserIdentityImpl userIdentity) {
+        try {
+            final NumericDate expirationTime = userIdentity.getJwtClaims().getExpirationTime();
+            expirationTime.addSeconds(10);
+            final NumericDate now = NumericDate.now();
+            return expirationTime.isBefore(now);
+        } catch (final MalformedClaimException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+        return false;
     }
 }

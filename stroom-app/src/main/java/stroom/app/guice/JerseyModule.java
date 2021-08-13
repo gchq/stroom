@@ -3,7 +3,6 @@ package stroom.app.guice;
 import stroom.app.errors.NodeCallExceptionMapper;
 import stroom.dropwizard.common.PermissionExceptionMapper;
 import stroom.dropwizard.common.TokenExceptionMapper;
-import stroom.security.api.ClientSecurityUtil;
 import stroom.security.api.SecurityContext;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.jersey.WebTargetFactory;
@@ -79,21 +78,21 @@ public class JerseyModule extends AbstractModule {
                 @Override
                 public Builder request() {
                     final Builder builder = super.request();
-                    ClientSecurityUtil.addAuthorisationHeader(builder, securityContext);
+                    securityContext.addAuthorisationHeader(builder);
                     return builder;
                 }
 
                 @Override
                 public Builder request(final String... acceptedResponseTypes) {
                     final Builder builder = super.request(acceptedResponseTypes);
-                    ClientSecurityUtil.addAuthorisationHeader(builder, securityContext);
+                    securityContext.addAuthorisationHeader(builder);
                     return builder;
                 }
 
                 @Override
                 public Builder request(final MediaType... acceptedResponseTypes) {
                     final Builder builder = super.request(acceptedResponseTypes);
-                    ClientSecurityUtil.addAuthorisationHeader(builder, securityContext);
+                    securityContext.addAuthorisationHeader(builder);
                     return builder;
                 }
             };

@@ -12,15 +12,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
-public class SearchTokenRequest extends BaseCriteria {
+public class SearchApiKeyRequest extends BaseCriteria {
 
     @JsonProperty
     private final String quickFilter;
 
     @JsonCreator
-    public SearchTokenRequest(@JsonProperty("pageRequest") final PageRequest pageRequest,
-                              @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
-                              @JsonProperty("quickFilter") final String quickFilter) {
+    public SearchApiKeyRequest(@JsonProperty("pageRequest") final PageRequest pageRequest,
+                               @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
+                               @JsonProperty("quickFilter") final String quickFilter) {
         super(pageRequest, sortList);
         this.quickFilter = quickFilter;
     }

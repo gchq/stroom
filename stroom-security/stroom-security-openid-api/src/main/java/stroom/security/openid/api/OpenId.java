@@ -29,6 +29,7 @@ public class OpenId {
     public static final String NONCE = "nonce";
     public static final String PROMPT = "prompt";
     public static final String REDIRECT_URI = "redirect_uri";
+    public static final String REFRESH_TOKEN = "refresh_token";
     public static final String RESPONSE_TYPE = "response_type";
     public static final String SCOPE = "scope";
     public static final String STATE = "state";
@@ -37,6 +38,7 @@ public class OpenId {
     public static final String RESPONSE_TYPE__CODE = "code";
     public static final String SCOPE__OPENID = "openid";
     public static final String SCOPE__EMAIL = "email";
+    public static final String SCOPE__OFFLINE_ACCESS = "offline_access";
 
     public static final String ID_TOKEN = "id_token";
 

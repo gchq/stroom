@@ -2,15 +2,15 @@ package stroom.security.identity.token;
 
 import stroom.util.shared.ResultPage;
 
-public class TokenEventLogImpl implements TokenEventLog {
+public class ApiKeyEventLogImpl implements ApiKeyEventLog {
 
     @Override
-    public void search(final SearchTokenRequest request, final ResultPage<Token> response, final Throwable ex) {
+    public void search(final SearchApiKeyRequest request, final ResultPage<ApiKey> response, final Throwable ex) {
         //        stroomEventLoggingService.createAction("SearchTokens", "The user searched for an API token");
     }
 
     @Override
-    public void create(final CreateTokenRequest request, final Token token, final Throwable ex) {
+    public void create(final CreateApiKeyRequest request, final ApiKey apiKey, final Throwable ex) {
 //        stroomEventLoggingService.createAction("CreateUser", "Create a user");
     }
 
@@ -30,12 +30,12 @@ public class TokenEventLogImpl implements TokenEventLog {
     }
 
     @Override
-    public void read(final String data, final Token token, final Throwable ex) {
+    public void read(final String data, final ApiKey apiKey, final Throwable ex) {
 //        stroomEventLoggingService.createAction("ReadApiToken", "Read a token by the string value of the token.");
     }
 
     @Override
-    public void read(final int tokenId, final Token token, final Throwable ex) {
+    public void read(final int tokenId, final ApiKey apiKey, final Throwable ex) {
 //        stroomEventLoggingService.createAction("ReadApiToken", "Read a token by the token ID.");
     }
 

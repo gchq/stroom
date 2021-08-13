@@ -38,27 +38,21 @@ public class TokenConfig extends AbstractConfig {
     @NotNull
     @JsonProperty
     @JsonPropertyDescription("The time before a user token will expire.")
-    private StroomDuration timeUntilExpirationForUserToken = StroomDuration.ofDays(30);
+    private StroomDuration tokenExpiryTime = StroomDuration.ofMinutes(10);
 
     @NotNull
     @JsonProperty
     @JsonPropertyDescription("The time before an email reset token will expire.")
-    private StroomDuration timeUntilExpirationForEmailResetToken = StroomDuration.ofMinutes(5);
+    private StroomDuration emailResetTokenExpiryTime = StroomDuration.ofMinutes(5);
 
     @JsonProperty
     @JsonPropertyDescription("The default API key expiry time")
-    private Long defaultApiKeyExpiryInMinutes = 525600L;
+    private StroomDuration defaultApiKeyExpiryTime = StroomDuration.ofDays(365);
 
     @NotNull
     @JsonProperty
     @JsonPropertyDescription("The Issuer value used in Json Web Tokens.")
     private String jwsIssuer = "stroom";
-
-    // TODO is this needed?
-//    @NotNull
-//    @JsonProperty
-//    @JsonPropertyDescription("The Issuer value used in Json Web Tokens.")
-//    private boolean requireExpirationTime = false;
 
     @NotNull
     @JsonProperty
@@ -73,43 +67,41 @@ public class TokenConfig extends AbstractConfig {
     @SuppressWarnings("checkstyle:LineLength")
     @JsonCreator
     public TokenConfig(
-            @JsonProperty("timeUntilExpirationForUserToken") final StroomDuration timeUntilExpirationForUserToken,
-            @JsonProperty("timeUntilExpirationForEmailResetToken") final StroomDuration timeUntilExpirationForEmailResetToken,
-            @JsonProperty("defaultApiKeyExpiryInMinutes") final Long defaultApiKeyExpiryInMinutes,
+            @JsonProperty("tokenExpiryTime") final StroomDuration tokenExpiryTime,
+            @JsonProperty("emailResetTokenExpiryTime") final StroomDuration emailResetTokenExpiryTime,
+            @JsonProperty("defaultApiKeyExpiryTime") final StroomDuration defaultApiKeyExpiryTime,
             @JsonProperty("jwsIssuer") final String jwsIssuer,
             @JsonProperty("algorithm") final String algorithm) {
 
-        this.timeUntilExpirationForUserToken = timeUntilExpirationForUserToken;
-        this.timeUntilExpirationForEmailResetToken = timeUntilExpirationForEmailResetToken;
-        this.defaultApiKeyExpiryInMinutes = defaultApiKeyExpiryInMinutes;
+        this.tokenExpiryTime = tokenExpiryTime;
+        this.emailResetTokenExpiryTime = emailResetTokenExpiryTime;
+        this.defaultApiKeyExpiryTime = defaultApiKeyExpiryTime;
         this.jwsIssuer = jwsIssuer;
         this.algorithm = algorithm;
     }
 
-    public StroomDuration getTimeUntilExpirationForUserToken() {
-        return timeUntilExpirationForUserToken;
+    public StroomDuration getTokenExpiryTime() {
+        return tokenExpiryTime;
     }
 
-    @SuppressWarnings("unused")
-    public void setTimeUntilExpirationForUserToken(final StroomDuration timeUntilExpirationForUserToken) {
-        this.timeUntilExpirationForUserToken = timeUntilExpirationForUserToken;
+    public void setTokenExpiryTime(final StroomDuration tokenExpiryTime) {
+        this.tokenExpiryTime = tokenExpiryTime;
     }
 
-    public StroomDuration getTimeUntilExpirationForEmailResetToken() {
-        return timeUntilExpirationForEmailResetToken;
+    public StroomDuration getEmailResetTokenExpiryTime() {
+        return emailResetTokenExpiryTime;
     }
 
-    @SuppressWarnings("unused")
-    public void setTimeUntilExpirationForEmailResetToken(final StroomDuration timeUntilExpirationForEmailResetToken) {
-        this.timeUntilExpirationForEmailResetToken = timeUntilExpirationForEmailResetToken;
+    public void setEmailResetTokenExpiryTime(final StroomDuration emailResetTokenExpiryTime) {
+        this.emailResetTokenExpiryTime = emailResetTokenExpiryTime;
     }
 
-    public Long getDefaultApiKeyExpiryInMinutes() {
-        return defaultApiKeyExpiryInMinutes;
+    public StroomDuration getDefaultApiKeyExpiryTime() {
+        return defaultApiKeyExpiryTime;
     }
 
-    public void setDefaultApiKeyExpiryInMinutes(final Long defaultApiKeyExpiryInMinutes) {
-        this.defaultApiKeyExpiryInMinutes = defaultApiKeyExpiryInMinutes;
+    public void setDefaultApiKeyExpiryTime(final StroomDuration defaultApiKeyExpiryTime) {
+        this.defaultApiKeyExpiryTime = defaultApiKeyExpiryTime;
     }
 
     public String getJwsIssuer() {
@@ -120,15 +112,6 @@ public class TokenConfig extends AbstractConfig {
     public void setJwsIssuer(String jwsIssuer) {
         this.jwsIssuer = jwsIssuer;
     }
-
-//    public boolean isRequireExpirationTime() {
-//        return requireExpirationTime;
-//    }
-
-//    @SuppressWarnings("unused")
-//    public void setRequireExpirationTime(boolean requireExpirationTime) {
-//        this.requireExpirationTime = requireExpirationTime;
-//    }
 
     public String getAlgorithm() {
         return algorithm;

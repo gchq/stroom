@@ -5,19 +5,19 @@ import stroom.security.identity.account.Account;
 import java.util.List;
 import java.util.Optional;
 
-public interface TokenDao {
+public interface ApiKeyDao {
 
-    TokenResultPage list();
+    ApiKeyResultPage list();
 
-    TokenResultPage search(SearchTokenRequest request);
+    ApiKeyResultPage search(SearchApiKeyRequest request);
 
-    Token create(int accountId, Token token);
+    ApiKey create(int accountId, ApiKey apiKey);
 
-    Optional<Token> readById(int tokenId);
+    Optional<ApiKey> readById(int tokenId);
 
-    Optional<Token> readByToken(String token);
+    Optional<ApiKey> readByToken(String token);
 
-    List<Token> getTokensForAccount(int accountId);
+    List<ApiKey> getTokensForAccount(int accountId);
 
     int enableOrDisableToken(int tokenId, boolean enabled, Account updatingAccount);
 

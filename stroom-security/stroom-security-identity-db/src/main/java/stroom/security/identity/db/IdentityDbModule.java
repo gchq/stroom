@@ -6,8 +6,8 @@ import stroom.security.identity.account.AccountDao;
 import stroom.security.identity.config.IdentityConfig;
 import stroom.security.identity.openid.OpenIdClientDao;
 import stroom.security.identity.token.JwkDao;
-import stroom.security.identity.token.TokenDao;
-import stroom.security.identity.token.TokenTypeDao;
+import stroom.security.identity.token.ApiKeyDao;
+import stroom.security.identity.token.ApiKeyTypeDao;
 
 import javax.sql.DataSource;
 
@@ -21,10 +21,10 @@ public class IdentityDbModule extends AbstractFlyWayDbModule<IdentityConfig, Ide
     protected void configure() {
         super.configure();
 
-        bind(TokenDao.class).to(TokenDaoImpl.class);
+        bind(ApiKeyDao.class).to(ApiKeyDaoImpl.class);
         bind(AccountDao.class).to(AccountDaoImpl.class);
         bind(JwkDao.class).to(JwkDaoImpl.class);
-        bind(TokenTypeDao.class).to(TokenTypeDaoImpl.class);
+        bind(ApiKeyTypeDao.class).to(ApiKeyTypeDaoImpl.class);
         bind(OpenIdClientDao.class).to(OpenIdClientDaoImpl.class);
     }
 

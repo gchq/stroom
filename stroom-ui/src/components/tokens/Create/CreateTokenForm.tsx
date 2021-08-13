@@ -20,8 +20,7 @@ import { DatePicker } from "antd";
 import styled from "styled-components";
 import moment from "moment";
 import { useEffect, useState } from "react";
-import { TokenConfig } from "../api/types";
-import { useApi } from "../api";
+import { useStroomApi } from "lib/useStroomApi/useStroomApi";
 
 const Field = styled.div`
   display: flex;
@@ -43,24 +42,19 @@ const CreateTokenForm: React.FunctionComponent<{
   onSubmit: (userId: string, expiryDate: string) => void;
   onBack: () => void;
 }> = ({ onSubmit, onBack }) => {
-  const { fetchTokenConfig } = useApi();
-
-  // Get token config
-  const [tokenConfig, setTokenConfig] = useState<TokenConfig>({
-    defaultApiKeyExpiryInMinutes: 525600,
-  });
+  const { exec } = useStroomApi();
+  const [expiryTime, setExpiryTime] = useState<number>(525600); // 365 days
   useEffect(() => {
-    fetchTokenConfig().then((tokenConfig: TokenConfig) => {
-      setTokenConfig(tokenConfig);
-    });
-  }, [fetchTokenConfig, setTokenConfig]);
+    if (expiryTime === undefined) {
+      exec(
+        (api) => api.apikey.getDefaultApiKeyExpirySeconds(),
+        (response: number) => setExpiryTime(response),
+      );
+    }
+  }, [expiryTime, setExpiryTime, exec]);
 
   // TODO: make default validity customisable
-  // const { defaultApiKeyExpiryInMinutes } = useConfig();
-  const initialExpiryDate = moment().add(
-    tokenConfig.defaultApiKeyExpiryInMinutes,
-    "m",
-  );
+  const initialExpiryDate = moment().add(expiryTime, "s");
   const [expiryDate, setExpiryDate] = React.useState(initialExpiryDate);
   const [selectedUser] = React.useState("");
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {

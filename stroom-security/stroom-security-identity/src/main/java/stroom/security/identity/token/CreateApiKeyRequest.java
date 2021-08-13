@@ -27,7 +27,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class CreateTokenRequest {
+public class CreateApiKeyRequest {
 
     @NotNull
     @JsonProperty
@@ -54,13 +54,13 @@ public class CreateTokenRequest {
     private boolean enabled = true;
 
     // Needed for serialisation
-    public CreateTokenRequest() {
+    public CreateApiKeyRequest() {
     }
 
-    public CreateTokenRequest(final String userId,
-                              final String tokenType,
-                              final boolean enabled,
-                              final String comments) {
+    public CreateApiKeyRequest(final String userId,
+                               final String tokenType,
+                               final boolean enabled,
+                               final String comments) {
         this.userId = userId;
         this.tokenType = tokenType;
         this.enabled = enabled;
@@ -68,11 +68,11 @@ public class CreateTokenRequest {
     }
 
     @JsonCreator
-    public CreateTokenRequest(@JsonProperty("userId") final String userId,
-                              @JsonProperty("tokenType") final String tokenType,
-                              @JsonProperty("enabled") final boolean enabled,
-                              @JsonProperty("comments") final String comments,
-                              @JsonProperty("expiresOnMs") final Long expiresOnMs) {
+    public CreateApiKeyRequest(@JsonProperty("userId") final String userId,
+                               @JsonProperty("tokenType") final String tokenType,
+                               @JsonProperty("enabled") final boolean enabled,
+                               @JsonProperty("comments") final String comments,
+                               @JsonProperty("expiresOnMs") final Long expiresOnMs) {
         this.userId = userId;
         this.tokenType = tokenType;
         this.enabled = enabled;

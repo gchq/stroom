@@ -64,17 +64,6 @@ class InternalJwtContextFactory implements JwtContextFactory {
             LOGGER.debug(() -> "Verifying token...");
             final JwtConsumer jwtConsumer = newJwtConsumer();
             final JwtContext jwtContext = jwtConsumer.process(jws);
-
-            // TODO : @66 Check against blacklist to see if token has been revoked. Blacklist
-            //  is a list of JWI (JWT IDs) on auth service. Only tokens with `jwi` claims are API
-            //  keys so only those tokens need checking against the blacklist cache.
-
-//            if (checkTokenRevocation) {
-//                LOGGER.debug(() -> "Checking token revocation status in remote auth service...");
-//                final String userId = getUserIdFromToken(jws);
-//                isRevoked = userId == null;
-//            }
-
             return Optional.ofNullable(jwtContext);
 
         } catch (final RuntimeException | InvalidJwtException e) {
