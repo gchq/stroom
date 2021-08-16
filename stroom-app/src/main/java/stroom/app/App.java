@@ -17,6 +17,7 @@
 package stroom.app;
 
 import stroom.app.commands.CreateAccountCommand;
+import stroom.app.commands.CreateApiKeyCommand;
 import stroom.app.commands.DbMigrationCommand;
 import stroom.app.commands.ManageUsersCommand;
 import stroom.app.commands.ResetPasswordCommand;
@@ -177,6 +178,7 @@ public class App extends Application<Config> {
         // http server
         bootstrap.addCommand(new DbMigrationCommand(configFile));
         bootstrap.addCommand(new CreateAccountCommand(configFile));
+        bootstrap.addCommand(new CreateApiKeyCommand(configFile));
         bootstrap.addCommand(new ResetPasswordCommand(configFile));
         bootstrap.addCommand(new ManageUsersCommand(configFile));
     }

@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2331** : Remove unused config properties `stroom.ui.url.(apiKeys|changepassword|users)`.
 
-Improve error handling during reference data initialisation.
+* Improve error handling during reference data initialisation.
 
 * Improve exception handling when node name is not configured.
 
@@ -30,6 +30,10 @@ Improve error handling during reference data initialisation.
 * Rename `jerseyClient` key in proxy config.yml to `restClient`.
 
 * Add `remotecertexpiry` to the default config value for `proxyConfig.logStream.metaKeys`.
+
+* Included Leaflet.draw Javascript plugin within UI bundle.
+
+* Issue **#2335** : Added CLI command `create_api_key` to create an API key for a specified user.
 
 * Added layout density user preference.
 
