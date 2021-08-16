@@ -233,23 +233,30 @@ main() {
   # shellcheck disable=SC1091
   source "${script_dir}/${PATH_TO_UTIL_SCRIPT}"
 
+
+  local -r stroom_home_dir="${STROOM_HOME:-${script_dir}}"
+
   # UPPERCASE vars defined in config/scripts.env as relative paths so
   # assign them to local variables as children of script_dir
 
   # shellcheck disable=SC2153
   local -r path_to_start_log="${script_dir}/${PATH_TO_START_LOG}"
   # shellcheck disable=SC2153
-  local -r path_to_app_log="${script_dir}/${PATH_TO_APP_LOG}"
-  # shellcheck disable=SC2153
-  local -r path_to_migration_log="${script_dir}/${PATH_TO_MIGRATION_LOG}"
-  # shellcheck disable=SC2153
-  local -r stroom_pid_file="${script_dir}/${STROOM_PID_FILE}"
-  # shellcheck disable=SC2153
   local -r path_to_config="${script_dir}/${PATH_TO_CONFIG}"
   # shellcheck disable=SC2153
   local -r path_to_jar="${script_dir}/${PATH_TO_JAR}"
+
+  # UPPERCASE vars defined in config/scripts.env as relative paths so
+  # assign them to local variables as children of stroom_home_dir
+
   # shellcheck disable=SC2153
-  local -r heap_dump_dir="${script_dir}/${HEAP_DUMP_DIR}"
+  local -r path_to_app_log="${stroom_home_dir}/${PATH_TO_APP_LOG}"
+  # shellcheck disable=SC2153
+  local -r path_to_migration_log="${stroom_home_dir}/${PATH_TO_MIGRATION_LOG}"
+  # shellcheck disable=SC2153
+  local -r stroom_pid_file="${stroom_home_dir}/${STROOM_PID_FILE}"
+  # shellcheck disable=SC2153
+  local -r heap_dump_dir="${stroom_home_dir}/${HEAP_DUMP_DIR}"
 
   local -r maxWaitSecs=240
   local do_tailing=true
