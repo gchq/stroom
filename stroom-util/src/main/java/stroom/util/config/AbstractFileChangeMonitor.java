@@ -1,7 +1,9 @@
 package stroom.util.config;
 
 import stroom.util.HasHealthCheck;
+import stroom.util.config.PropertyUtil.Prop;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.HasPropertyPath;
 
 import com.codahale.metrics.health.HealthCheck;
 import org.slf4j.Logger;
@@ -203,6 +205,32 @@ public abstract class AbstractFileChangeMonitor implements HasHealthCheck {
                         }
                     });
         }
+    }
+
+    protected void logUpdate(final Object destParent,
+                             final Prop prop,
+                             final Object sourcePropValue,
+                             final Object destPropValue) {
+        final String fullPath = ((HasPropertyPath) destParent).getFullPath(prop.getName());
+        if (LOGGER.isInfoEnabled()) {
+            if (isStringTooLong(sourcePropValue) || isStringTooLong(destPropValue)) {
+                LOGGER.info("  Updating config value of {} (class: {}) from:\n{}\nto:\n{}",
+                        fullPath,
+                        destParent.getClass().getSimpleName(),
+                        destPropValue,
+                        sourcePropValue);
+            } else {
+                LOGGER.info("  Updating config value of {} (class: {}) from: [{}] to: [{}]",
+                        fullPath,
+                        destParent.getClass().getSimpleName(),
+                        destPropValue,
+                        sourcePropValue);
+            }
+        }
+    }
+
+    protected boolean isStringTooLong(final Object value) {
+        return value != null && value.toString().length() > 20;
     }
 
     /**

@@ -25,6 +25,7 @@ logging:
   level: ${STROOM_PROXY_LOGGING_LEVEL:- WARN}
   loggers:
     stroom: INFO
+    stroom.util.config.ConfigValidator: DEBUG
     io.dropwizard: INFO
     org.eclipse.jetty: INFO
     org.flywaydb: INFO
@@ -98,7 +99,7 @@ proxyConfig:
           hostnameVerificationEnabled: true
       - forwardUrl: "http://localhost/stroom/datafeed"
   restClient:
-    timeout: 500ms
+    timeout: 501ms
     connectionTimeout: 500ms
     timeToLive: 1h
     cookiesEnabled: false

@@ -1,16 +1,31 @@
 package stroom.proxy.app;
 
+import stroom.util.io.DirProvidersModule;
+import stroom.util.io.PathConfig;
+import stroom.util.io.PathCreator;
 import stroom.util.time.StroomDuration;
 
+import com.google.inject.AbstractModule;
 import io.dropwizard.client.JerseyClientConfiguration;
+import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
+import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+import javax.inject.Inject;
+
+@ExtendWith(GuiceExtension.class)
+@IncludeModule(DirProvidersModule.class)
+@IncludeModule(TestRestClientConfigConverter.TestModule.class)
 class TestRestClientConfigConverter {
+
+    @Inject
+    PathCreator pathCreator;
 
     @Test
     void test() {
-        final RestClientConfigConverter restClientConfigConverter = new RestClientConfigConverter();
+        final RestClientConfigConverter restClientConfigConverter = new RestClientConfigConverter(pathCreator);
 
         final RestClientConfig restClientConfig = new RestClientConfig();
 
@@ -36,5 +51,12 @@ class TestRestClientConfigConverter {
 
     }
 
+    static class TestModule extends AbstractModule {
+
+        @Override
+        protected void configure() {
+            bind(PathConfig.class).toInstance(new ProxyPathConfig());
+        }
+    }
 
 }

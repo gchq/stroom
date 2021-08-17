@@ -2,6 +2,7 @@ package stroom.proxy.app;
 
 import stroom.util.config.PropertyUtil;
 import stroom.util.config.PropertyUtil.Prop;
+import stroom.util.io.PathCreator;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
 
@@ -11,11 +12,12 @@ import io.dropwizard.util.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Function;
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
 // Singleton so we only have to discover all the getters/setters once
@@ -29,9 +31,12 @@ public class RestClientConfigConverter {
             HttpClientTlsConfig.class, TlsConfiguration.class);
 
     private final Map<Class<?>, Map<Method, Method>> methodMap = new HashMap<>();
-    private final Map<Class<?>, Function<Object, Object>> converterMap = new HashMap<>();
+    private final PathCreator pathCreator;
 
-    public RestClientConfigConverter() {
+    @Inject
+    public RestClientConfigConverter(final PathCreator pathCreator) {
+        this.pathCreator = pathCreator;
+
         mapMethods(RestClientConfig.class);
         LOGGER.debug("Completed initialisation of RestClientConfigConverter");
     }
@@ -59,8 +64,6 @@ public class RestClientConfigConverter {
                                     destProps.get(name).getSetter());
                 }
             });
-
-            converterMap.put(sourceClass, this::convertObject);
         } catch (InstantiationException
                 | IllegalAccessException
                 | InvocationTargetException
@@ -96,13 +99,16 @@ public class RestClientConfigConverter {
                             } else {
                                 if (sourcePropValue.getClass().equals(StroomDuration.class)) {
                                     destSetter.invoke(destObj, convertDuration((StroomDuration) sourcePropValue));
+                                } else if (destSetter.getParameterTypes()[0].equals(File.class)) {
+                                    destSetter.invoke(destObj, convertFile((String) sourcePropValue));
                                 } else {
                                     destSetter.invoke(destObj, sourcePropValue);
                                 }
                             }
-                        } catch (IllegalAccessException
-                                | InvocationTargetException e) {
-                            throw new RuntimeException(e);
+                        } catch (Exception e) {
+                            throw new RuntimeException("Error converting getter " +
+                                    sourceClass.getSimpleName() + "." + sourceGetter.getName() +
+                                    " to " + destSetter, e);
                         }
                     });
             return destObj;
@@ -130,5 +136,10 @@ public class RestClientConfigConverter {
             // Fall back to conversion using millis with possible loss of precision
             return Duration.milliseconds(stroomDuration.toMillis());
         }
+    }
+
+    private File convertFile(final String path) {
+        return new File(pathCreator.makeAbsolute(
+                pathCreator.replaceSystemProperties(path)));
     }
 }

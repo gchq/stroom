@@ -58,12 +58,7 @@ public class ProxyConfigMonitor extends AbstractFileChangeMonitor implements Man
                     final AtomicInteger updateCount = new AtomicInteger(0);
                     final FieldMapper.UpdateAction updateAction =
                             (destParent, prop, sourcePropValue, destPropValue) -> {
-                                final String fullPath = ((IsProxyConfig) destParent).getFullPath(prop.getName());
-                                LOGGER.info("  Updating config value of {} (class: {}) from:\n{}\nto:\n{}",
-                                        fullPath,
-                                        destParent.getClass().getSimpleName(),
-                                        destPropValue,
-                                        sourcePropValue);
+                                logUpdate(destParent, prop, sourcePropValue, destPropValue);
                                 updateCount.incrementAndGet();
                             };
 
@@ -84,6 +79,7 @@ public class ProxyConfigMonitor extends AbstractFileChangeMonitor implements Man
                     configFile.toAbsolutePath().normalize(), e);
         }
     }
+
 
     private ConfigValidator.Result<IsProxyConfig> validateNewConfig(final ProxyConfig newProxyConfig) {
         // Decorate the new config tree so it has all the paths,

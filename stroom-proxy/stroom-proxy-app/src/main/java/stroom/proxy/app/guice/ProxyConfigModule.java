@@ -15,11 +15,8 @@ import stroom.proxy.repo.ProxyRepositoryReaderConfig;
 import stroom.util.config.ConfigLocation;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasHealthCheckBinder;
-import stroom.util.io.HomeDirProvider;
-import stroom.util.io.HomeDirProviderImpl;
+import stroom.util.io.DirProvidersModule;
 import stroom.util.io.PathConfig;
-import stroom.util.io.TempDirProvider;
-import stroom.util.io.TempDirProviderImpl;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.validation.ValidationModule;
@@ -50,9 +47,7 @@ public class ProxyConfigModule extends AbstractModule {
 
         bind(ProxyConfigMonitor.class).asEagerSingleton();
 
-        bind(HomeDirProvider.class).to(HomeDirProviderImpl.class);
-        bind(TempDirProvider.class).to(TempDirProviderImpl.class);
-
+        install(new DirProvidersModule());
         install(new ValidationModule());
 
         HasHealthCheckBinder.create(binder())

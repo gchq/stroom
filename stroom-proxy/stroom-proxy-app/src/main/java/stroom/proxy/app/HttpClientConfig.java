@@ -9,7 +9,6 @@ import org.hibernate.validator.valuehandling.UnwrapValidatedValue;
 
 import java.util.Optional;
 import javax.annotation.Nullable;
-import javax.validation.Valid;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
@@ -68,7 +67,7 @@ public class HttpClientConfig extends AbstractConfig implements IsProxyConfig {
         return keepAlive;
     }
 
-    @Valid
+    //    @Valid
     @Nullable
     private HttpClientTlsConfig tlsConfiguration;
 

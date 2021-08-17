@@ -71,9 +71,7 @@ public class AppConfigMonitor extends AbstractFileChangeMonitor implements Manag
                     final AtomicInteger updateCount = new AtomicInteger(0);
                     final FieldMapper.UpdateAction updateAction =
                             (destParent, prop, sourcePropValue, destPropValue) -> {
-                                final String fullPath = ((AbstractConfig) destParent).getFullPath(prop.getName());
-                                LOGGER.info("  Updating config value of {} from [{}] to [{}]",
-                                        fullPath, destPropValue, sourcePropValue);
+                                logUpdate(destParent, prop, sourcePropValue, destPropValue);
                                 updateCount.incrementAndGet();
                             };
 

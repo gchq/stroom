@@ -26,11 +26,8 @@ import stroom.proxy.app.guice.ProxyModule;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.config.ConfigValidator;
 import stroom.util.config.PropertyPathDecorator;
-import stroom.util.io.HomeDirProvider;
-import stroom.util.io.HomeDirProviderImpl;
+import stroom.util.io.DirProvidersModule;
 import stroom.util.io.PathConfig;
-import stroom.util.io.TempDirProvider;
-import stroom.util.io.TempDirProviderImpl;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.IsProxyConfig;
@@ -225,13 +222,12 @@ public class App extends Application<Config> {
                 @Override
                 protected void configure() {
                     bind(PathConfig.class).toInstance(proxyConfig.getProxyPathConfig());
-                    bind(HomeDirProvider.class).to(HomeDirProviderImpl.class);
-                    bind(TempDirProvider.class).to(TempDirProviderImpl.class);
                 }
             };
 
             return Guice.createInjector(
                     new ValidationModule(),
+                    new DirProvidersModule(),
                     pathConfigModule);
 
         } catch (IOException e) {

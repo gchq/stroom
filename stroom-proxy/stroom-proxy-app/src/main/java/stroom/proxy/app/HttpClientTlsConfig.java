@@ -3,13 +3,13 @@ package stroom.proxy.app;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
+import stroom.util.shared.validation.ValidFilePath;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
 import io.dropwizard.validation.ValidationMethod;
 import org.hibernate.validator.constraints.NotEmpty;
 
-import java.io.File;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -17,6 +17,8 @@ import javax.annotation.Nullable;
  * This class is essentially a copy of
  * {@link io.dropwizard.client.ssl.TlsConfiguration}
  * so that we can extend {@link AbstractConfig} and have an equals method
+ * Also {@link java.io.File} has been replaced with {@link String} for consistency
+ * with our other config
  */
 @NotInjectableConfig
 public class HttpClientTlsConfig extends AbstractConfig implements IsProxyConfig {
@@ -28,7 +30,7 @@ public class HttpClientTlsConfig extends AbstractConfig implements IsProxyConfig
     private String provider;
 
     @Nullable
-    private File keyStorePath;
+    private String keyStorePath;
 
     @Nullable
     private String keyStorePassword;
@@ -37,7 +39,7 @@ public class HttpClientTlsConfig extends AbstractConfig implements IsProxyConfig
     private String keyStoreType = "JKS";
 
     @Nullable
-    private File trustStorePath;
+    private String trustStorePath;
 
     @Nullable
     private String trustStorePassword;
@@ -68,14 +70,15 @@ public class HttpClientTlsConfig extends AbstractConfig implements IsProxyConfig
         return trustSelfSignedCertificates;
     }
 
+    @ValidFilePath
     @JsonProperty
     @Nullable
-    public File getKeyStorePath() {
+    public String getKeyStorePath() {
         return keyStorePath;
     }
 
     @JsonProperty
-    public void setKeyStorePath(File keyStorePath) {
+    public void setKeyStorePath(String keyStorePath) {
         this.keyStorePath = keyStorePath;
     }
 
@@ -110,14 +113,15 @@ public class HttpClientTlsConfig extends AbstractConfig implements IsProxyConfig
         this.trustStoreType = trustStoreType;
     }
 
+    @ValidFilePath
     @JsonProperty
     @Nullable
-    public File getTrustStorePath() {
+    public String getTrustStorePath() {
         return trustStorePath;
     }
 
     @JsonProperty
-    public void setTrustStorePath(File trustStorePath) {
+    public void setTrustStorePath(String trustStorePath) {
         this.trustStorePath = trustStorePath;
     }
 
