@@ -3,7 +3,6 @@ package stroom.proxy.app;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
-import stroom.util.shared.validation.ValidFilePath;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
@@ -37,7 +36,6 @@ public class HttpClientTlsConfig extends AbstractConfig implements IsProxyConfig
     @NotEmpty
     private String keyStoreType = "JKS";
 
-    @ValidFilePath
     @Nullable
     private File trustStorePath;
 
