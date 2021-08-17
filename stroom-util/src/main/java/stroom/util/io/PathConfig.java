@@ -9,10 +9,10 @@ public abstract class PathConfig extends AbstractConfig {
     private String home;
     private String temp;
 
-    public PathConfig(final String home, final String temp) {
-        this.home = home;
-        this.temp = temp;
-    }
+//    public PathConfig(final String home, final String temp) {
+//        this.home = home;
+//        this.temp = temp;
+//    }
 
     public String getHome() {
         return home;

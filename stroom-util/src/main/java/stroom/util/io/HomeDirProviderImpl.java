@@ -31,7 +31,7 @@ public class HomeDirProviderImpl implements HomeDirProvider {
             Path path = null;
 
             String dir = pathConfig.getHome();
-            if (dir != null) {
+            if (dir != null && !dir.isEmpty()) {
                 dir = FileUtil.replaceHome(dir);
                 path = Paths.get(dir);
             }

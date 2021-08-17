@@ -10,12 +10,12 @@ import javax.inject.Singleton;
 @Singleton
 public class StroomPathConfig extends PathConfig {
 
-    private static final String DEFAULT_HOME_DIR = ".";
-    private static final String DEFAULT_TEMP_DIR = "/tmp/stroom";
-
-    public StroomPathConfig() {
-        super(DEFAULT_HOME_DIR, DEFAULT_TEMP_DIR);
-    }
+//    private static final String DEFAULT_HOME_DIR = ".";
+//    private static final String DEFAULT_TEMP_DIR = "/tmp/stroom";
+//
+//    public StroomPathConfig() {
+//        super(DEFAULT_HOME_DIR, DEFAULT_TEMP_DIR);
+//    }
 
     @Override
     @ReadOnly

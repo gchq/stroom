@@ -30,14 +30,23 @@ public class TempDirProviderImpl implements TempDirProvider {
             Path path = null;
 
             String dir = pathConfig.getTemp();
-            if (dir != null) {
+            if (dir != null && !dir.isEmpty()) {
                 dir = FileUtil.replaceHome(dir);
                 path = Paths.get(dir);
             }
 
             if (path == null) {
+                final String systemTempDir = System.getProperty("java.io.tmpdir");
+                if (systemTempDir != null) {
+                    // i.e. /tmp/stroom
+                    path = Path.of(systemTempDir).resolve("stroom");
+                }
+            }
+
+            if (path == null) {
                 throw new NullPointerException("Temp dir is null");
             }
+
             try {
                 Files.createDirectories(path);
             } catch (IOException e) {
