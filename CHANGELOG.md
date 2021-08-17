@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v7.0-beta.139] - 2021-08-17
+
 * Issue **#2355** : Jobs are no longer enabled by default on bootstrap.
 
 * Issue **#2358** : Changed default stroom home and stroom temp config paths to be null by default so they are resolved relative to the jar or use java tmp respectively.
@@ -3597,7 +3600,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.138...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.139...HEAD
+[v7.0-beta.139]: https://github.com/gchq/stroom/compare/v7.0-beta.138...v7.0-beta.139
 [v7.0-beta.138]: https://github.com/gchq/stroom/compare/v7.0-beta.137...v7.0-beta.138
 [v7.0-beta.137]: https://github.com/gchq/stroom/compare/v7.0-beta.136...v7.0-beta.137
 [v7.0-beta.136]: https://github.com/gchq/stroom/compare/v7.0-beta.135...v7.0-beta.136
