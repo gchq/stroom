@@ -277,7 +277,7 @@ appConfig:
         maxLifetime: "PT30M"
         minimumIdle: 10
         maxPoolSize: 30
-    enableDistributedJobsOnBootstrap: true
+    enableJobsOnBootstrap: false
   kafka:
     skeletonConfigContent: "# The following properties are taken from the v2.2 documentation\n\
       # for the Kafka Producer and can be uncommented and set as required.\n# NOTE\
