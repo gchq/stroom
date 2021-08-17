@@ -56,13 +56,8 @@ import stroom.util.guice.HasHealthCheckBinder;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.guice.ServletBinder;
 import stroom.util.io.BufferFactory;
-import stroom.util.io.HomeDirProvider;
-import stroom.util.io.HomeDirProviderImpl;
 import stroom.util.io.PathCreator;
-import stroom.util.io.TempDirProvider;
-import stroom.util.io.TempDirProviderImpl;
 import stroom.util.shared.BuildInfo;
-import stroom.util.validation.ValidationModule;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -113,7 +108,6 @@ public class ProxyModule extends AbstractModule {
 
         install(new ProxyConfigModule(proxyConfigHolder));
         install(new MockCollectionModule());
-        install(new ValidationModule());
 
         install(new DictionaryModule());
         // Allow discovery of feed status from other proxies.
@@ -135,9 +129,6 @@ public class ProxyModule extends AbstractModule {
         bind(Serialiser2Factory.class).to(Serialiser2FactoryImpl.class);
         bind(StoreFactory.class).to(StoreFactoryImpl.class);
         bind(StreamHandlerFactory.class).to(ForwardStreamHandlerFactory.class);
-
-        bind(HomeDirProvider.class).to(HomeDirProviderImpl.class);
-        bind(TempDirProvider.class).to(TempDirProviderImpl.class);
 
         HasHealthCheckBinder.create(binder())
                 .bind(ContentSyncService.class)

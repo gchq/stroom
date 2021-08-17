@@ -43,7 +43,8 @@ class TestProxyConfigModule {
                 proxyConfig,
                 Path.of("/dummy/path/to/config.yml")));
 
-        final Injector injector = Guice.createInjector(proxyConfigModule);
+        final Injector injector = Guice.createInjector(
+                proxyConfigModule);
 
         Predicate<String> packageNameFilter = name ->
                 name.startsWith(STROOM_PACKAGE_PREFIX) && !name.contains("shaded");

@@ -33,11 +33,11 @@ public class RestClientConfigConverter {
 
     public RestClientConfigConverter() {
         mapMethods(RestClientConfig.class);
-        LOGGER.info("Completed initialisation of RestClientConfigConverter");
+        LOGGER.debug("Completed initialisation of RestClientConfigConverter");
     }
 
     private void mapMethods(final Class<?> sourceClass) {
-        LOGGER.info("Recursing into {}", sourceClass.getSimpleName());
+        LOGGER.debug("Recursing into {}", sourceClass.getSimpleName());
         final Class<?> destClass = CLASS_MAP.get(sourceClass);
         try {
             final Object vanillaSourceObj = sourceClass.getConstructor().newInstance();
@@ -76,7 +76,7 @@ public class RestClientConfigConverter {
             final Object destObj = destClass
                     .getConstructor()
                     .newInstance();
-            LOGGER.info("converting {} to {}",
+            LOGGER.debug("converting {} to {}",
                     sourceClass.getSimpleName(),
                     destClass.getSimpleName());
 
@@ -131,5 +131,4 @@ public class RestClientConfigConverter {
             return Duration.milliseconds(stroomDuration.toMillis());
         }
     }
-
 }
