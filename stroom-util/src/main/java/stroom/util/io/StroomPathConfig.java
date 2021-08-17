@@ -3,11 +3,13 @@ package stroom.util.io;
 import stroom.util.config.annotations.ReadOnly;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.annotation.Nonnull;
 import javax.inject.Singleton;
 
 @Singleton
+@JsonPropertyOrder(alphabetic = true)
 public class StroomPathConfig extends PathConfig {
 
 //    private static final String DEFAULT_HOME_DIR = ".";

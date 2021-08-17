@@ -16,6 +16,9 @@ public class HomeDirProviderImpl implements HomeDirProvider {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(HomeDirProviderImpl.class);
 
+//    private static final String PROP_STROOM_HOME = "stroom.home";
+//    private static final String ENV_STROOM_HOME = "STROOM_HOME";
+
     private final PathConfig pathConfig;
 
     private Path homeDir;
@@ -30,8 +33,24 @@ public class HomeDirProviderImpl implements HomeDirProvider {
         if (homeDir == null) {
             Path path = null;
 
+//            String dir = System.getProperty(PROP_STROOM_HOME);
+//            if (dir != null) {
+//                LOGGER.info("Using stroom.home system property: {}", dir);
+//            } else {
+//                dir = System.getenv(ENV_STROOM_HOME);
+//                if (dir != null) {
+//                    LOGGER.info("Using STROOM_HOME environment variable: {}", dir);
+//                } else {
+//                    dir = pathConfig.getHome();
+//                    if (dir != null) {
+//                        LOGGER.info("Using home path configuration property: {}", dir);
+//                    }
+//                }
+//            }
+
             String dir = pathConfig.getHome();
             if (dir != null && !dir.isEmpty()) {
+                LOGGER.info("Using home path configuration property: {}", dir);
                 dir = FileUtil.replaceHome(dir);
                 path = Paths.get(dir);
             }

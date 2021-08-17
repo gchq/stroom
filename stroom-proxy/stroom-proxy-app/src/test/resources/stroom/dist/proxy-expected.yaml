@@ -15,8 +15,8 @@ proxyConfig:
   logStreamConfig:
     metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn,remotecertexpiry"
   path:
-    home: "."
-    temp: "/tmp/stroom-proxy"
+    home: null
+    temp: null
   proxyContentDir: "content"
   proxyRepositoryConfig:
     format: "${pathId}/${id}"
