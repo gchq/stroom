@@ -2,9 +2,12 @@ package stroom.proxy.app;
 
 import stroom.util.config.PropertyUtil;
 import stroom.util.config.PropertyUtil.Prop;
+import stroom.util.shared.AbstractConfig;
+import stroom.util.time.StroomDuration;
 
 import io.dropwizard.client.JerseyClientConfiguration;
 import io.dropwizard.client.ssl.TlsConfiguration;
+import io.dropwizard.util.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,9 +16,9 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import javax.inject.Singleton;
 
+// Singleton so we only have to discover all the getters/setters once
 @Singleton
 public class RestClientConfigConverter {
 
@@ -30,6 +33,7 @@ public class RestClientConfigConverter {
 
     public RestClientConfigConverter() {
         mapMethods(RestClientConfig.class);
+        LOGGER.info("Completed initialisation of RestClientConfigConverter");
     }
 
     private void mapMethods(final Class<?> sourceClass) {
@@ -44,10 +48,12 @@ public class RestClientConfigConverter {
 
             sourceProps.forEach((name, sourceProp) -> {
                 final Class<?> valueClass = sourceProp.getValueClass();
-                if (valueClass.getName().startsWith("stroom")) {
+                if (isConfigClass(valueClass)) {
                     // recurse
                     mapMethods(valueClass);
-                } else if (destProps.containsKey(name)) {
+                }
+
+                if (destProps.containsKey(name)) {
                     methodMap.computeIfAbsent(sourceClass, k -> new HashMap<>())
                             .put(sourceProps.get(name).getGetter(),
                                     destProps.get(name).getSetter());
@@ -55,7 +61,10 @@ public class RestClientConfigConverter {
             });
 
             converterMap.put(sourceClass, this::convertObject);
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+        } catch (InstantiationException
+                | IllegalAccessException
+                | InvocationTargetException
+                | NoSuchMethodException e) {
             throw new RuntimeException(e);
         }
     }
@@ -78,25 +87,49 @@ public class RestClientConfigConverter {
                             LOGGER.debug("method: {}, sourcePropValue: {}",
                                     sourceGetter.getName(),
                                     sourcePropValue);
-                            if (sourcePropValue.getClass().getName().startsWith("stroom")) {
+                            if (sourcePropValue == null) {
+                                destSetter.invoke(destObj, sourcePropValue);
+                            } else if (isConfigClass(sourcePropValue.getClass())) {
                                 // branch so recurse
                                 final Object destPropValue = convertObject(sourcePropValue);
                                 destSetter.invoke(destObj, destPropValue);
                             } else {
-                                destSetter.invoke(destObj, sourcePropValue);
+                                if (sourcePropValue.getClass().equals(StroomDuration.class)) {
+                                    destSetter.invoke(destObj, convertDuration((StroomDuration) sourcePropValue));
+                                } else {
+                                    destSetter.invoke(destObj, sourcePropValue);
+                                }
                             }
-                        } catch (IllegalAccessException | InvocationTargetException e) {
+                        } catch (IllegalAccessException
+                                | InvocationTargetException e) {
                             throw new RuntimeException(e);
                         }
                     });
             return destObj;
-        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException | InstantiationException e) {
+        } catch (IllegalAccessException
+                | InvocationTargetException
+                | NoSuchMethodException
+                | InstantiationException e) {
             throw new RuntimeException(e);
         }
     }
 
     public JerseyClientConfiguration convert(final RestClientConfig restClientConfig) {
         return (JerseyClientConfiguration) convertObject(restClientConfig);
-    };
+    }
+
+    private boolean isConfigClass(final Class<?> clazz) {
+        return AbstractConfig.class.isAssignableFrom(clazz);
+    }
+
+    private Duration convertDuration(final StroomDuration stroomDuration) {
+        try {
+            // May fail due to overflow
+            return Duration.nanoseconds(stroomDuration.toNanos());
+        } catch (ArithmeticException e) {
+            // Fall back to conversion using millis with possible loss of precision
+            return Duration.milliseconds(stroomDuration.toMillis());
+        }
+    }
 
 }

@@ -35,24 +35,23 @@ proxyConfig:
     receiptPolicyUuid: null
   restClient:
     chunkedEncodingEnabled: true
-    connectionRequestTimeout: "500 milliseconds"
-    connectionTimeout: "500 milliseconds"
+    connectionRequestTimeout: "PT0.5S"
+    connectionTimeout: "PT0.5S"
     cookiesEnabled: false
     gzipEnabled: true
     gzipEnabledForRequests: true
-    keepAlive: "0 milliseconds"
+    keepAlive: "PT0S"
     maxConnections: 1024
     maxConnectionsPerRoute: 1024
     maxThreads: 128
     minThreads: 1
-    proxy: null
     retries: 0
-    timeToLive: "1 hour"
-    timeout: "500 milliseconds"
+    timeToLive: "PT1H"
+    timeout: "PT0.5S"
     tls: null
     userAgent:
       empty: true
       present: false
-    validateAfterInactivityPeriod: "0 microseconds"
+    validateAfterInactivityPeriod: "PT0S"
     workQueueSize: 8
   useDefaultOpenIdCredentials: true

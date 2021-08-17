@@ -6,7 +6,6 @@ import stroom.util.shared.IsProxyConfig;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.dropwizard.client.JerseyClientConfiguration;
 import io.dropwizard.validation.ValidationMethod;
 
 import javax.inject.Singleton;
@@ -17,6 +16,10 @@ import javax.validation.constraints.Min;
  * This class is essentially a copy of
  * {@link io.dropwizard.client.JerseyClientConfiguration}
  * so that we can extend {@link AbstractConfig} and have an equals method
+ * All uses of {@link io.dropwizard.util.Duration} have been replaced with {@link stroom.util.time.StroomDuration}
+ * for consistency with the rest of the config.
+ * Conversion between this and {@link io.dropwizard.client.JerseyClientConfiguration} is done using
+ * {@link RestClientConfigConverter} so it is key that the method names match.
  */
 @Singleton
 @JsonPropertyOrder(alphabetic = true)

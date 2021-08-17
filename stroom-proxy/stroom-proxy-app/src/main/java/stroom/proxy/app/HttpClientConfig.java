@@ -2,9 +2,9 @@ package stroom.proxy.app;
 
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
+import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.dropwizard.util.Duration;
 import org.hibernate.validator.valuehandling.UnwrapValidatedValue;
 
 import java.util.Optional;
@@ -16,20 +16,23 @@ import javax.validation.constraints.NotNull;
 
 /**
  * This class is essentially a copy of {@link io.dropwizard.client.HttpClientConfiguration}
- * so that we can extend {@link AbstractConfig} and have an equals method
+ * so that we can extend {@link AbstractConfig} and have an equals method.
+ * All uses of {@link io.dropwizard.util.Duration} have been replaced with {@link StroomDuration}
+ * for consistency with the rest of the config.
  */
 public class HttpClientConfig extends AbstractConfig implements IsProxyConfig {
-    @NotNull
-    private Duration timeout = Duration.milliseconds(500);
 
     @NotNull
-    private Duration connectionTimeout = Duration.milliseconds(500);
+    private StroomDuration timeout = StroomDuration.ofMillis(500);
 
     @NotNull
-    private Duration connectionRequestTimeout = Duration.milliseconds(500);
+    private StroomDuration connectionTimeout = StroomDuration.ofMillis(500);
 
     @NotNull
-    private Duration timeToLive = Duration.hours(1);
+    private StroomDuration connectionRequestTimeout = StroomDuration.ofMillis(500);
+
+    @NotNull
+    private StroomDuration timeToLive = StroomDuration.ofHours(1);
 
     private boolean cookiesEnabled = false;
 
@@ -42,7 +45,7 @@ public class HttpClientConfig extends AbstractConfig implements IsProxyConfig {
     private int maxConnectionsPerRoute = 1024;
 
     @NotNull
-    private Duration keepAlive = Duration.milliseconds(0);
+    private StroomDuration keepAlive = StroomDuration.ofMillis(0);
 
     @Min(0)
     @Max(1000)
@@ -59,9 +62,9 @@ public class HttpClientConfig extends AbstractConfig implements IsProxyConfig {
 //    private ProxyConfiguration proxyConfiguration;
 
     @NotNull
-    private Duration validateAfterInactivityPeriod = Duration.microseconds(0);
+    private StroomDuration validateAfterInactivityPeriod = StroomDuration.ZERO;
 
-    public Duration getKeepAlive() {
+    public StroomDuration getKeepAlive() {
         return keepAlive;
     }
 
@@ -70,7 +73,7 @@ public class HttpClientConfig extends AbstractConfig implements IsProxyConfig {
     private HttpClientTlsConfig tlsConfiguration;
 
     @JsonProperty
-    public void setKeepAlive(Duration keepAlive) {
+    public void setKeepAlive(StroomDuration keepAlive) {
         this.keepAlive = keepAlive;
     }
 
@@ -85,17 +88,17 @@ public class HttpClientConfig extends AbstractConfig implements IsProxyConfig {
     }
 
     @JsonProperty
-    public Duration getTimeout() {
+    public StroomDuration getTimeout() {
         return timeout;
     }
 
     @JsonProperty
-    public Duration getConnectionTimeout() {
+    public StroomDuration getConnectionTimeout() {
         return connectionTimeout;
     }
 
     @JsonProperty
-    public Duration getTimeToLive() {
+    public StroomDuration getTimeToLive() {
         return timeToLive;
     }
 
@@ -105,27 +108,27 @@ public class HttpClientConfig extends AbstractConfig implements IsProxyConfig {
     }
 
     @JsonProperty
-    public void setTimeout(Duration duration) {
+    public void setTimeout(StroomDuration duration) {
         this.timeout = duration;
     }
 
     @JsonProperty
-    public void setConnectionTimeout(Duration duration) {
+    public void setConnectionTimeout(StroomDuration duration) {
         this.connectionTimeout = duration;
     }
 
     @JsonProperty
-    public Duration getConnectionRequestTimeout() {
+    public StroomDuration getConnectionRequestTimeout() {
         return connectionRequestTimeout;
     }
 
     @JsonProperty
-    public void setConnectionRequestTimeout(Duration connectionRequestTimeout) {
+    public void setConnectionRequestTimeout(StroomDuration connectionRequestTimeout) {
         this.connectionRequestTimeout = connectionRequestTimeout;
     }
 
     @JsonProperty
-    public void setTimeToLive(Duration timeToLive) {
+    public void setTimeToLive(StroomDuration timeToLive) {
         this.timeToLive = timeToLive;
     }
 
@@ -178,12 +181,12 @@ public class HttpClientConfig extends AbstractConfig implements IsProxyConfig {
 //    }
 
     @JsonProperty
-    public Duration getValidateAfterInactivityPeriod() {
+    public StroomDuration getValidateAfterInactivityPeriod() {
         return validateAfterInactivityPeriod;
     }
 
     @JsonProperty
-    public void setValidateAfterInactivityPeriod(Duration validateAfterInactivityPeriod) {
+    public void setValidateAfterInactivityPeriod(StroomDuration validateAfterInactivityPeriod) {
         this.validateAfterInactivityPeriod = validateAfterInactivityPeriod;
     }
 

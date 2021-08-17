@@ -191,7 +191,8 @@ public class ProxyModule extends AbstractModule {
                                final PathCreator pathCreator,
                                final RestClientConfigConverter restClientConfigConverter) {
 
-        // RestClientConfig is really just JerseyClientConfiguration
+        // RestClientConfig is really just a copy of JerseyClientConfiguration
+        // so do the conversion
         final JerseyClientConfiguration jerseyClientConfiguration = restClientConfigConverter.convert(
                 restClientConfig);
 

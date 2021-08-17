@@ -1,7 +1,9 @@
 package stroom.proxy.app;
 
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
+import stroom.util.shared.validation.ValidFilePath;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
@@ -18,7 +20,8 @@ import javax.annotation.Nullable;
  * so that we can extend {@link AbstractConfig} and have an equals method
  */
 @NotInjectableConfig
-public class HttpClientTlsConfig {
+public class HttpClientTlsConfig extends AbstractConfig implements IsProxyConfig {
+
     @NotEmpty
     private String protocol = "TLSv1.2";
 
@@ -34,6 +37,7 @@ public class HttpClientTlsConfig {
     @NotEmpty
     private String keyStoreType = "JKS";
 
+    @ValidFilePath
     @Nullable
     private File trustStorePath;
 
@@ -97,6 +101,7 @@ public class HttpClientTlsConfig {
     public void setKeyStoreType(String keyStoreType) {
         this.keyStoreType = keyStoreType;
     }
+
     @JsonProperty
     public String getTrustStoreType() {
         return trustStoreType;
@@ -200,6 +205,7 @@ public class HttpClientTlsConfig {
 
     @ValidationMethod(message = "trustStorePassword should not be null or empty if trustStorePath not null")
     public boolean isValidTrustStorePassword() {
-        return trustStorePath == null || trustStoreType.startsWith("Windows-") || !Strings.isNullOrEmpty(trustStorePassword);
+        return trustStorePath == null || trustStoreType.startsWith("Windows-") || !Strings.isNullOrEmpty(
+                trustStorePassword);
     }
 }
