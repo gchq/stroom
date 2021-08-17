@@ -30,7 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
-import java.util.Optional;
 
 public class TokenBuilder {
 
@@ -41,8 +40,8 @@ public class TokenBuilder {
     private String algorithm = AlgorithmIdentifiers.RSA_USING_SHA256;
 
     private String subject;
-    private Optional<String> nonce = Optional.empty();
-    private Optional<String> state = Optional.empty();
+    private String nonce;
+    private String state;
     private PublicJsonWebKey publicJsonWebKey;
     private String clientId;
 
@@ -67,12 +66,12 @@ public class TokenBuilder {
     }
 
     public TokenBuilder nonce(String nonce) {
-        this.nonce = Optional.of(nonce);
+        this.nonce = nonce;
         return this;
     }
 
     public TokenBuilder state(String state) {
-        this.state = Optional.of(state);
+        this.state = state;
         return this;
     }
 
@@ -98,9 +97,12 @@ public class TokenBuilder {
         claims.setSubject(subject);
         claims.setIssuer(issuer);
         claims.setAudience(clientId);
-
-        nonce.ifPresent(nonce -> claims.setClaim(OpenId.NONCE, nonce));
-        state.ifPresent(state -> claims.setClaim(OpenId.STATE, state));
+        if (nonce != null) {
+            claims.setClaim(OpenId.NONCE, nonce);
+        }
+        if (state != null) {
+            claims.setClaim(OpenId.STATE, state);
+        }
 
         JsonWebSignature jws = new JsonWebSignature();
         jws.setPayload(claims.toJson());

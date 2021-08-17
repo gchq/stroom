@@ -3,7 +3,6 @@ package stroom.security.identity.openid;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
 import stroom.security.identity.config.OpenIdConfig;
-import stroom.security.openid.api.TokenResponse;
 
 import java.util.Optional;
 import javax.inject.Inject;
@@ -14,7 +13,7 @@ class RefreshTokenCache {
 
     private static final String CACHE_NAME = "Refresh Token Cache";
 
-    private final ICache<String, TokenResponse> cache;
+    private final ICache<String, TokenProperties> cache;
 
     @Inject
     RefreshTokenCache(final CacheManager cacheManager,
@@ -22,13 +21,13 @@ class RefreshTokenCache {
         cache = cacheManager.create(CACHE_NAME, config::getRefreshTokenCache);
     }
 
-    Optional<TokenResponse> getAndRemove(final String code) {
-        final Optional<TokenResponse> optionalAccessCodeRequest = cache.getOptional(code);
-        cache.remove(code);
+    Optional<TokenProperties> getAndRemove(final String refreshToken) {
+        final Optional<TokenProperties> optionalAccessCodeRequest = cache.getOptional(refreshToken);
+        cache.remove(refreshToken);
         return optionalAccessCodeRequest;
     }
 
-    void put(final String code, final TokenResponse accessCodeRequest) {
-        cache.put(code, accessCodeRequest);
+    void put(final String refreshToken, final TokenProperties properties) {
+        cache.put(refreshToken, properties);
     }
 }

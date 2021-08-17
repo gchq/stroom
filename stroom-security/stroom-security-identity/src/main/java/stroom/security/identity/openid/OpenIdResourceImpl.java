@@ -10,7 +10,6 @@ import stroom.security.identity.exceptions.BadRequestException;
 import stroom.security.identity.openid.OpenIdService.AuthResult;
 import stroom.security.openid.api.OpenIdConfigurationResponse;
 import stroom.security.openid.api.PublicJsonWebKeyProvider;
-import stroom.security.openid.api.TokenRequest;
 import stroom.security.openid.api.TokenResponse;
 
 import com.codahale.metrics.annotation.Timed;
@@ -42,6 +41,7 @@ import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.RedirectionException;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response.Status;
 
 @AutoLogged
@@ -130,18 +130,21 @@ class OpenIdResourceImpl implements OpenIdResource {
     @Timed
     @Override
     @AutoLogged(OperationType.UNLOGGED)
-    public TokenResponse token(final TokenRequest tokenRequest) {
+    public TokenResponse token(final MultivaluedMap<String, String> formParams) {
         try {
-            return openIdServiceProvider.get().token(tokenRequest);
-        } catch (final BadRequestException ex) {
+            LOGGER.debug("token() " + formParams);
+            return openIdServiceProvider.get().token(formParams);
+        } catch (final BadRequestException e) {
+            LOGGER.debug(e.getMessage(), e);
+
             //Normally unlogged, but always log token failures
-            final AuthenticateOutcomeReason reason = ex.getReason();
-            final String message = ex.getMessage();
+            final AuthenticateOutcomeReason reason = e.getReason();
+            final String message = e.getMessage();
             final AuthenticateEventAction.Builder<Void> eventBuilder = event.logging.AuthenticateEventAction.builder()
                     .withAction(AuthenticateAction.LOGON)
                     .withLogonType(AuthenticateLogonType.INTERACTIVE)
                     .withAuthenticationEntity(event.logging.User.builder()
-                            .withId(ex.getSubject()).build())
+                            .withId(e.getSubject()).build())
                     .withOutcome(AuthenticateOutcome.builder()
                             .withSuccess(false)
                             .withPermitted(false)
@@ -157,8 +160,11 @@ class OpenIdResourceImpl implements OpenIdResource {
                     "OpenIdResourceImpl.token",
                     "Stroom token authentication",
                     eventBuilder.build());
-            LOGGER.debug(ex.getMessage(), ex);
-            throw new WebApplicationException(ex.getMessage(), ex);
+
+            throw new WebApplicationException(e.getMessage(), e);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
+            throw e;
         }
     }
 

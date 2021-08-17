@@ -9,7 +9,6 @@ import stroom.security.identity.token.TokenBuilderFactory;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdClient;
 import stroom.security.openid.api.OpenIdClientFactory;
-import stroom.security.openid.api.TokenRequest;
 import stroom.security.openid.api.TokenResponse;
 
 import com.google.common.base.Objects;
@@ -28,6 +27,7 @@ import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriBuilder;
 
 
@@ -132,26 +132,16 @@ class OpenIdService {
 
                         // We need to make sure we record this access code request.
                         final String accessCode = createAccessCode();
-                        final TemporalAmount expiresIn =
-                                identityConfig.getTokenConfig().getTokenExpiryTime();
-
-                        final TokenResponse tokenResponse = createTokenResponse(
-                                clientId,
-                                authState.getSubject(),
-                                nonce,
-                                state,
-                                scope,
-                                expiresIn);
 
                         final AccessCodeRequest accessCodeRequest = new AccessCodeRequest(
                                 scope,
                                 responseType,
                                 clientId,
                                 redirectUri,
+                                authState.getSubject(),
                                 nonce,
                                 state,
-                                prompt,
-                                tokenResponse);
+                                prompt);
                         accessCodeCache.put(accessCode, accessCodeRequest);
 
                         result = buildRedirectionUrl(redirectUri, accessCode, state);
@@ -175,22 +165,22 @@ class OpenIdService {
         return Base64.getUrlEncoder().encodeToString(bytes);
     }
 
-    public TokenResponse token(final TokenRequest tokenRequest) {
-        final String grantType = tokenRequest.getGrantType();
+    public TokenResponse token(final MultivaluedMap<String, String> formParams) {
+        final String grantType = formParams.getFirst(OpenId.GRANT_TYPE);
         if (OpenId.GRANT_TYPE__AUTHORIZATION_CODE.equals(grantType)) {
-            return getIdToken(tokenRequest);
+            return getIdToken(formParams);
         } else if (OpenId.REFRESH_TOKEN.equals(grantType)) {
-            return refreshIdToken(tokenRequest);
+            return refreshIdToken(formParams);
         }
         throw new BadRequestException("Unknown grant type",
                 AuthenticateOutcomeReason.OTHER, "Unknown grant type " + grantType);
     }
 
-    public TokenResponse getIdToken(final TokenRequest tokenRequest) {
-        final String clientId = tokenRequest.getClientId();
-        final String clientSecret = tokenRequest.getClientSecret();
-        final String redirectUri = tokenRequest.getRedirectUri();
-        final String code = tokenRequest.getCode();
+    public TokenResponse getIdToken(final MultivaluedMap<String, String> formParams) {
+        final String clientId = formParams.getFirst(OpenId.CLIENT_ID);
+        final String clientSecret = formParams.getFirst(OpenId.CLIENT_SECRET);
+        final String redirectUri = formParams.getFirst(OpenId.REDIRECT_URI);
+        final String code = formParams.getFirst(OpenId.CODE);
 
         final Optional<AccessCodeRequest> optionalAccessCodeRequest = accessCodeCache.getAndRemove(code);
         if (optionalAccessCodeRequest.isEmpty()) {
@@ -222,36 +212,37 @@ class OpenIdService {
                     "Redirect URI is not allowed");
         }
 
-        return accessCodeRequest.getTokenResponse();
+        final TemporalAmount expiresIn =
+                identityConfig.getTokenConfig().getTokenExpiryTime();
+
+        final TokenResponse tokenResponse = createTokenResponse(
+                clientId,
+                accessCodeRequest.getSubject(),
+                accessCodeRequest.getNonce(),
+                accessCodeRequest.getState(),
+                accessCodeRequest.getScope(),
+                expiresIn);
+
+        refreshTokenCache.put(tokenResponse.getRefreshToken(),
+                new TokenProperties(accessCodeRequest.getClientId(), accessCodeRequest.getSubject()));
+
+        return tokenResponse;
     }
 
-    public TokenResponse refreshIdToken(final TokenRequest tokenRequest) {
-        final String clientId = tokenRequest.getClientId();
-        final String clientSecret = tokenRequest.getClientSecret();
-        final String redirectUri = tokenRequest.getRedirectUri();
-        final String code = tokenRequest.getCode();
+    public TokenResponse refreshIdToken(final MultivaluedMap<String, String> formParams) {
+        final String clientId = formParams.getFirst(OpenId.CLIENT_ID);
+        final String clientSecret = formParams.getFirst(OpenId.CLIENT_SECRET);
+        final String refreshToken = formParams.getFirst(OpenId.REFRESH_TOKEN);
 
-//        nvps.add(new BasicNameValuePair(OpenId.GRANT_TYPE, OpenId.REFRESH_TOKEN));
-//        nvps.add(new BasicNameValuePair(OpenId.REFRESH_TOKEN,
-//                userIdentity.getTokenResponse().getRefreshToken()));
-//        nvps.add(new BasicNameValuePair(OpenId.CLIENT_ID, openIdConfig.getClientId()));
-//        nvps.add(new BasicNameValuePair(OpenId.CLIENT_SECRET, openIdConfig.getClientSecret()));
-
-        final Optional<AccessCodeRequest> optionalAccessCodeRequest = accessCodeCache.getAndRemove(code);
-        if (optionalAccessCodeRequest.isEmpty()) {
-            throw new BadRequestException(UNKNOWN_SUBJECT,
-                    AuthenticateOutcomeReason.OTHER, "No access code request found");
+        if (refreshToken == null) {
+            throw new BadRequestException("Null refresh token",
+                    AuthenticateOutcomeReason.OTHER, "No refresh token has been supplied");
         }
 
-        final AccessCodeRequest accessCodeRequest = optionalAccessCodeRequest.get();
-        if (!Objects.equal(clientId, accessCodeRequest.getClientId())) {
-            throw new BadRequestException(UNKNOWN_SUBJECT, AuthenticateOutcomeReason.OTHER,
-                    "Unexpected client id");
-        }
-
-        if (!Objects.equal(redirectUri, accessCodeRequest.getRedirectUri())) {
-            throw new BadRequestException(UNKNOWN_SUBJECT, AuthenticateOutcomeReason.OTHER,
-                    "Unexpected redirect URI");
+        final Optional<TokenProperties> tokenPropertiesOptional = refreshTokenCache.getAndRemove(refreshToken);
+        if (tokenPropertiesOptional.isEmpty()) {
+            throw new BadRequestException("Unknown refresh token",
+                    AuthenticateOutcomeReason.OTHER, "Refresh token already used or no longer remembered");
         }
 
         final OpenIdClient oAuth2Client = openIdClientDetailsFactory.getClient(clientId);
@@ -261,13 +252,21 @@ class OpenIdService {
                     "Incorrect secret");
         }
 
-        final Pattern pattern = Pattern.compile(oAuth2Client.getUriPattern());
-        if (!pattern.matcher(redirectUri).matches()) {
-            throw new BadRequestException(oAuth2Client.getName(), AuthenticateOutcomeReason.OTHER,
-                    "Redirect URI is not allowed");
-        }
+        final TemporalAmount expiresIn =
+                identityConfig.getTokenConfig().getTokenExpiryTime();
+        final TokenProperties tokenProperties = tokenPropertiesOptional.get();
+        final TokenResponse tokenResponse = createTokenResponse(
+                tokenProperties.getClientId(),
+                tokenProperties.getSubject(),
+                null,
+                null,
+                OpenId.SCOPE__OFFLINE_ACCESS,
+                expiresIn);
 
-        return accessCodeRequest.getTokenResponse();
+        refreshTokenCache.put(tokenResponse.getRefreshToken(),
+                new TokenProperties(tokenProperties.getClientId(), tokenProperties.getSubject()));
+
+        return tokenResponse;
     }
 
     private URI buildRedirectionUrl(String redirectUri, String code, String state) {

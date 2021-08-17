@@ -61,7 +61,7 @@ public class OpenIdConfig extends AbstractConfig {
     /**
      * Some OpenId providers, e.g. AWS Cognito, require a form to be used for token requests.
      */
-    private boolean formTokenRequest;
+    private boolean formTokenRequest = true;
 
     /**
      * Optionally choose a class to resolve JWT claims

@@ -559,13 +559,8 @@ class SecurityContextImpl implements SecurityContext {
         if (userIdentity instanceof UserIdentityImpl) {
             final UserIdentityImpl identity = (UserIdentityImpl) userIdentity;
             if (hasTokenExpired(identity)) {
-                identity.getLock().lock();
-                try {
-                    if (hasTokenExpired(identity)) {
-                        openIdManager.refreshToken(identity);
-                    }
-                } finally {
-                    identity.getLock().unlock();
+                if (hasTokenExpired(identity)) {
+                    openIdManager.refreshToken(identity);
                 }
             }
         }

@@ -188,38 +188,51 @@ class OpenIdManager {
     }
 
     public void refreshToken(final UserIdentityImpl userIdentity) {
-        LOGGER.debug("Refreshing token " + userIdentity);
+        TokenResponse tokenResponse = null;
+        JwtClaims jwtClaims = null;
 
-        if (userIdentity.getTokenResponse().getRefreshToken() == null) {
-            throw new NullPointerException("Unable to refresh token as no refresh token is available");
+        userIdentity.getLock().lock();
+        try {
+            LOGGER.debug("Refreshing token " + userIdentity);
+
+            if (userIdentity.getTokenResponse().getRefreshToken() == null) {
+                throw new NullPointerException("Unable to refresh token as no refresh token is available");
+            }
+
+            final ObjectMapper mapper = getMapper();
+            final String tokenEndpoint = openIdConfig.getTokenEndpoint();
+            final HttpPost httpPost = new HttpPost(tokenEndpoint);
+
+            // AWS requires form content and not a JSON object.
+            if (openIdConfig.isFormTokenRequest()) {
+                final List<NameValuePair> nvps = new ArrayList<>();
+                nvps.add(new BasicNameValuePair(OpenId.GRANT_TYPE, OpenId.REFRESH_TOKEN));
+                nvps.add(new BasicNameValuePair(OpenId.REFRESH_TOKEN,
+                        userIdentity.getTokenResponse().getRefreshToken()));
+                nvps.add(new BasicNameValuePair(OpenId.CLIENT_ID, openIdConfig.getClientId()));
+                nvps.add(new BasicNameValuePair(OpenId.CLIENT_SECRET, openIdConfig.getClientSecret()));
+                setFormParams(httpPost, nvps);
+
+            } else {
+                throw new UnsupportedOperationException("JSON not supported for token refresh");
+            }
+
+            tokenResponse = getTokenResponse(mapper, httpPost, tokenEndpoint);
+            final Optional<JwtContext> optionalJwtContext = jwtContextFactory.getJwtContext(tokenResponse.getIdToken());
+            jwtClaims = optionalJwtContext
+                    .map(JwtContext::getJwtClaims)
+                    .orElseThrow(() -> new RuntimeException("Unable to extract JWT claims"));
+
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
+            userIdentity.invalidateSession();
+            throw e;
+
+        } finally {
+            userIdentity.setTokenResponse(tokenResponse);
+            userIdentity.setJwtClaims(jwtClaims);
+            userIdentity.getLock().unlock();
         }
-
-        final ObjectMapper mapper = getMapper();
-        final String tokenEndpoint = openIdConfig.getTokenEndpoint();
-        final HttpPost httpPost = new HttpPost(tokenEndpoint);
-
-        // AWS requires form content and not a JSON object.
-        if (openIdConfig.isFormTokenRequest()) {
-            final List<NameValuePair> nvps = new ArrayList<>();
-            nvps.add(new BasicNameValuePair(OpenId.GRANT_TYPE, OpenId.REFRESH_TOKEN));
-            nvps.add(new BasicNameValuePair(OpenId.REFRESH_TOKEN,
-                    userIdentity.getTokenResponse().getRefreshToken()));
-            nvps.add(new BasicNameValuePair(OpenId.CLIENT_ID, openIdConfig.getClientId()));
-            nvps.add(new BasicNameValuePair(OpenId.CLIENT_SECRET, openIdConfig.getClientSecret()));
-            setFormParams(httpPost, nvps);
-
-        } else {
-            throw new UnsupportedOperationException("JSON not supported for token refresh");
-        }
-
-        final TokenResponse tokenResponse = getTokenResponse(mapper, httpPost, tokenEndpoint);
-        final Optional<JwtContext> optionalJwtContext = jwtContextFactory.getJwtContext(tokenResponse.getIdToken());
-        final JwtClaims jwtClaims = optionalJwtContext
-                .map(JwtContext::getJwtClaims)
-                .orElseThrow(() -> new RuntimeException("Unable to extract JWT claims"));
-
-        userIdentity.setTokenResponse(tokenResponse);
-        userIdentity.setJwtClaims(jwtClaims);
     }
 
     private void setFormParams(final HttpPost httpPost,
@@ -301,7 +314,7 @@ class OpenIdManager {
             final Optional<User> optionalUser = userCache.get(userId);
             final User user = optionalUser.orElseThrow(() ->
                     new AuthenticationException("Unable to find user: " + userId));
-            token = new UserIdentityImpl(user.getUuid(), userId, sessionId, tokenResponse, jwtClaims);
+            token = new UserIdentityImpl(user.getUuid(), userId, session, tokenResponse, jwtClaims);
 
         } else {
             // If the nonces don't match we need to redirect to log in again.
@@ -355,7 +368,7 @@ class OpenIdManager {
     }
 
     public Optional<UserIdentity> getOrSetSessionUser(final HttpServletRequest request,
-                                                       final Optional<UserIdentity> userIdentity) {
+                                                      final Optional<UserIdentity> userIdentity) {
         Optional<UserIdentity> result = userIdentity;
 
         if (userIdentity.isEmpty()) {

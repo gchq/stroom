@@ -10,25 +10,25 @@ import org.jose4j.jwt.JwtClaims;
 
 import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
+import javax.servlet.http.HttpSession;
 
 class UserIdentityImpl implements UserIdentity, HasSessionId, HasJws, HasUuid {
 
     private final String userUuid;
     private final String id;
-    private final String sessionId;
-
+    private final HttpSession httpSession;
     private final ReentrantLock lock = new ReentrantLock();
     private volatile TokenResponse tokenResponse;
     private volatile JwtClaims jwtClaims;
 
     UserIdentityImpl(final String userUuid,
                      final String id,
-                     final String sessionId,
+                     final HttpSession httpSession,
                      final TokenResponse tokenResponse,
                      final JwtClaims jwtClaims) {
         this.userUuid = userUuid;
         this.id = id;
-        this.sessionId = sessionId;
+        this.httpSession = httpSession;
 
         this.tokenResponse = tokenResponse;
         this.jwtClaims = jwtClaims;
@@ -51,7 +51,11 @@ class UserIdentityImpl implements UserIdentity, HasSessionId, HasJws, HasUuid {
 
     @Override
     public String getSessionId() {
-        return sessionId;
+        return httpSession.getId();
+    }
+
+    public void invalidateSession() {
+        httpSession.invalidate();
     }
 
     public ReentrantLock getLock() {
@@ -84,12 +88,12 @@ class UserIdentityImpl implements UserIdentity, HasSessionId, HasJws, HasUuid {
         }
         final UserIdentityImpl that = (UserIdentityImpl) o;
         return Objects.equals(userUuid, that.userUuid) && Objects.equals(id,
-                that.id) && Objects.equals(sessionId, that.sessionId);
+                that.id) && Objects.equals(httpSession.getId(), that.httpSession.getId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(userUuid, id, sessionId);
+        return Objects.hash(userUuid, id, httpSession.getId());
     }
 
     @Override

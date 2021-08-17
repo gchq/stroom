@@ -176,7 +176,7 @@ public class ResolvedOpenIdConfig {
 
     public boolean isFormTokenRequest() {
         if (openIdConfig.isUseInternal()) {
-            return false;
+            return true;
         }
         return openIdConfig.isFormTokenRequest();
     }
