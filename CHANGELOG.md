@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2354** : Old job node records associated with old jobs are now removed for all nodes regardless of what node is performing the job bootstrap activity.
+
 
 ## [v7.0-beta.138] - 2021-07-26
 
