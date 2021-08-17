@@ -2,7 +2,7 @@ package stroom.util.config;
 
 import stroom.util.config.PropertyUtil.Prop;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.AbstractConfig;
+import stroom.util.time.StroomDuration;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -112,7 +112,9 @@ public class FieldMapper {
 
                 // TODO this doesn't work for props that are collections of stroom classes,
                 //  e.g. List<ForwardDestination>
-                if (AbstractConfig.class.isAssignableFrom(prop.getValueClass())) {
+//                if (AbstractConfig.class.isAssignableFrom(prop.getValueClass())) {
+                if (prop.getValueClass().getName().startsWith("stroom")
+                        && !StroomDuration.class.equals(prop.getValueClass())) {
                     // property is another stroom pojo
                     if (sourcePropValue == null && destPropValue == null) {
                         // nothing to do

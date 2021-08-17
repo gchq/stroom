@@ -98,7 +98,7 @@ proxyConfig:
           hostnameVerificationEnabled: true
       - forwardUrl: "http://localhost/stroom/datafeed"
   restClient:
-    timeout: 501ms
+    timeout: 500ms
     connectionTimeout: 500ms
     timeToLive: 1h
     cookiesEnabled: false
