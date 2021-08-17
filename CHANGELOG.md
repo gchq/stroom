@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2355** : Jobs are no longer enabled by default on bootstrap.
+
 
 ## [v7.0-beta.138] - 2021-07-26
 

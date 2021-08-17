@@ -155,14 +155,14 @@ class JobBootstrap {
                     // Get or create the actual parent job record
                     Job job = new Job();
                     job.setName(jobName);
-                    job.setEnabled(jobSystemConfig.isEnableDistributedJobsOnBootstrap());
+                    job.setEnabled(jobSystemConfig.isEnableJobsOnBootstrap());
                     job = getOrCreateJob(job);
 
                     // Now create the jobNode record for this node
                     final JobNode newJobNode = new JobNode();
                     newJobNode.setJob(job);
                     newJobNode.setNodeName(nodeName);
-                    newJobNode.setEnabled(jobSystemConfig.isEnableDistributedJobsOnBootstrap());
+                    newJobNode.setEnabled(jobSystemConfig.isEnableJobsOnBootstrap());
                     newJobNode.setJobType(JobType.DISTRIBUTED);
 
                     LOGGER.info(() -> "Adding JobNode '" + newJobNode.getJob().getName() +
