@@ -15,13 +15,6 @@ import javax.inject.Singleton;
 @JsonPropertyOrder(alphabetic = true)
 public class ProxyPathConfig extends PathConfig implements IsProxyConfig {
 
-    private static final String DEFAULT_HOME_DIR = ".";
-    private static final String DEFAULT_TEMP_DIR = "/tmp/stroom-proxy";
-
-    public ProxyPathConfig() {
-        super(DEFAULT_HOME_DIR, DEFAULT_TEMP_DIR);
-    }
-
     @Override
     @ReadOnly
     @ValidDirectoryPath

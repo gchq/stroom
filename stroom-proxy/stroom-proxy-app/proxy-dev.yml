@@ -128,8 +128,9 @@ proxyConfig:
     metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn,remotecertexpiry"
   path:
     # Versioned dirs for dev to allow running multiple proxy instances
-    home: "${HOME}/.stroom-proxy/v7"
-    temp: "/tmp/stroom-proxy/v7"
+    home: "${STROOM_PROXY_HOME:-~/.stroom-proxy/v7}"
+    temp: "${STROOM_PROXY_TEMP:-/tmp/stroom-proxy/v7}"
+
   proxyRepositoryConfig:
     storingEnabled: true
     repoDir: "repo"

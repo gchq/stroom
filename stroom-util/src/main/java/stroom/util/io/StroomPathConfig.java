@@ -4,19 +4,14 @@ import stroom.util.config.annotations.ReadOnly;
 import stroom.util.shared.validation.ValidDirectoryPath;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.annotation.Nonnull;
 import javax.inject.Singleton;
 
 @Singleton
+@JsonPropertyOrder(alphabetic = true)
 public class StroomPathConfig extends PathConfig {
-
-    private static final String DEFAULT_HOME_DIR = ".";
-    private static final String DEFAULT_TEMP_DIR = "/tmp/stroom";
-
-    public StroomPathConfig() {
-        super(DEFAULT_HOME_DIR, DEFAULT_TEMP_DIR);
-    }
 
     @Override
     @ReadOnly

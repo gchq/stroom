@@ -7,15 +7,29 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1469** : Add hot loading of config to proxy.
+
+* Change proxy and stroom config validation to cope with relative paths and `~`.
+  
 * Issue **#2353** : Swallow NoSuchFileException in config monitor.
+
+
+## [v7.0-beta.139] - 2021-08-17
+
+* Issue **#2355** : Jobs are no longer enabled by default on bootstrap.
+
+* Issue **#2358** : Changed default stroom home and stroom temp config paths to be null by default so they are resolved relative to the jar or use java tmp respectively.
+
+* Issue **#2354** : Old job node records associated with old jobs are now removed for all nodes regardless of what node is performing the job bootstrap activity.
+
+
+## [v7.0-beta.138] - 2021-07-26
+
+* Issue **#2343** : The OIDC back channel `redirect_uri` now uses the same URI stored when making the front channel request. 
 
 * Issue **gchq/stroom-resources#104** : Expose `stroom.ui.helpUrl` in the config.yml so the docs served by nginx can be accessed.
 
 * Issue **#2331** : Remove unused config properties `stroom.ui.url.(apiKeys|changepassword|users)`.
-
-* Issue **#1469** : Add hot loading of config to proxy.
-
-* Change proxy and stroom config validation to cope with relative paths and `~`.
 
 Improve error handling during reference data initialisation.
 
@@ -3592,7 +3606,9 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.137...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.139...HEAD
+[v7.0-beta.139]: https://github.com/gchq/stroom/compare/v7.0-beta.138...v7.0-beta.139
+[v7.0-beta.138]: https://github.com/gchq/stroom/compare/v7.0-beta.137...v7.0-beta.138
 [v7.0-beta.137]: https://github.com/gchq/stroom/compare/v7.0-beta.136...v7.0-beta.137
 [v7.0-beta.136]: https://github.com/gchq/stroom/compare/v7.0-beta.135...v7.0-beta.136
 [v7.0-beta.135]: https://github.com/gchq/stroom/compare/v7.0-beta.134...v7.0-beta.135
