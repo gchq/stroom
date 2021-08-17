@@ -59,14 +59,18 @@ public class ProxyConfigMonitor extends AbstractFileChangeMonitor implements Man
                     final FieldMapper.UpdateAction updateAction =
                             (destParent, prop, sourcePropValue, destPropValue) -> {
                                 final String fullPath = ((IsProxyConfig) destParent).getFullPath(prop.getName());
-                                LOGGER.info("  Updating config value of {} from [{}] to [{}], class: {}",
-                                        fullPath, destPropValue, sourcePropValue, destParent.getClass().getSimpleName());
+                                LOGGER.info("  Updating config value of {} (class: {}) from:\n{}\nto:\n{}",
+                                        fullPath,
+                                        destParent.getClass().getSimpleName(),
+                                        destPropValue,
+                                        sourcePropValue);
                                 updateCount.incrementAndGet();
                             };
 
                     LOGGER.info("Updating application config from file.");
                     // Copy changed values from the newly modified appConfig into the guice bound one
                     FieldMapper.copy(newProxyConfig, this.proxyConfig, updateAction);
+                    LOGGER.info("Property update count: {}", updateCount.get());
                 } catch (Throwable e) {
                     // Swallow error as we don't want to break the app because the new config is bad
                     // The admins can fix the problem and let it have another go.

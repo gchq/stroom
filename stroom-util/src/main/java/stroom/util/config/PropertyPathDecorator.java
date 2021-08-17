@@ -1,7 +1,6 @@
 package stroom.util.config;
 
 import stroom.util.config.PropertyUtil.Prop;
-import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.HasPropertyPath;
 import stroom.util.shared.PropertyPath;
 
@@ -24,7 +23,7 @@ public class PropertyPathDecorator {
     public static void decoratePaths(final HasPropertyPath config,
                                      final PropertyPath propertyPath) {
 
-        LOGGER.info("Decorating {} with path {}",
+        LOGGER.debug("Decorating {} with path {}",
                 config.getClass().getSimpleName(),
                 propertyPath);
         // Set the path of this config object

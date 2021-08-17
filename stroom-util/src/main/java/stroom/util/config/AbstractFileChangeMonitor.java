@@ -159,15 +159,26 @@ public abstract class AbstractFileChangeMonitor implements HasHealthCheck {
         if (kind.equals(StandardWatchEventKinds.ENTRY_MODIFY)) {
             final Path modifiedFile = dirToWatch.resolve(pathEvent.context());
 
-            try {
-                // we don't care about changes to other files
-                if (Files.isRegularFile(modifiedFile) && Files.isSameFile(monitoredFile, modifiedFile)) {
-                    LOGGER.info("Change detected to file {}", monitoredFile.toAbsolutePath().normalize());
-                    scheduleUpdateIfRequired();
+            LOGGER.debug("Modified file: {}", modifiedFile);
+
+            // Don't need to do anything if we have already scheduled the listener
+            if (!isFileReadScheduled.get()) {
+                try {
+                    // we don't care about changes to other files
+                    if (Files.isRegularFile(modifiedFile) && Files.isSameFile(monitoredFile, modifiedFile)) {
+                        LOGGER.info("Change detected to file {}", monitoredFile.toAbsolutePath().normalize());
+                        scheduleUpdateIfRequired();
+                    } else {
+                        LOGGER.debug("Ignoring change to file {}", modifiedFile);
+                    }
+                } catch (IOException e) {
+                    // Swallow error so future changes can be monitored.
+                    // We may get a NoSuchFileException from isSameFile() due to anisble creating temp files in the
+                    // monitored dir which it then immediately deletes. We don't care about this.
+                    LOGGER.debug("Error comparing paths {} and {}", monitoredFile, modifiedFile, e);
                 }
-            } catch (IOException e) {
-                // Swallow error so future changes can be monitored.
-                LOGGER.error("Error comparing paths {} and {}", monitoredFile, modifiedFile, e);
+            } else {
+                LOGGER.debug("Listener already scheduled");
             }
         }
     }
