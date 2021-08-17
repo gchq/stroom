@@ -77,8 +77,8 @@ appConfig:
     name: node1a
   path:
     # Versioned dirs for dev to allow running multiple stroom instances
-    home: "~/.stroom/v7"
-    temp: "/tmp/stroom/v7"
+    home: "${STROOM_HOME:-~/.stroom/v7}"
+    temp: "${STROOM_TEMP:-/tmp/stroom/v7}"
 
   # Uncomment the following to develop React code with `yarn start`
 #  uiUri:
