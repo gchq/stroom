@@ -122,7 +122,8 @@ public class App extends Application<Config> {
         Objects.requireNonNull(configFile, () ->
                 LogUtil.message("No config YAML file supplied in arguments"));
 
-        LOGGER.info("Using application configuration file {}", configFile.toAbsolutePath().normalize());
+        LOGGER.info("Using application configuration file {}",
+                configFile.toAbsolutePath().normalize());
 
         validateAppConfig(configuration, configFile);
 

@@ -49,7 +49,7 @@ public abstract class AbstractFileChangeMonitor implements HasHealthCheck {
         if (Files.isRegularFile(monitoredFile)) {
             isValidFile = true;
 
-            dirToWatch = monitoredFile.getParent();
+            dirToWatch = monitoredFile.toAbsolutePath().getParent();
             if (!Files.isDirectory(dirToWatch)) {
                 throw new RuntimeException(LogUtil.message("{} is not a directory", dirToWatch));
             }
