@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2355** : Jobs are no longer enabled by default on bootstrap.
+
 * Issue **#2358** : Changed default stroom home and stroom temp config paths to be null by default so they are resolved relative to the jar or use java tmp respectively.
 
 * Issue **#2354** : Old job node records associated with old jobs are now removed for all nodes regardless of what node is performing the job bootstrap activity.
