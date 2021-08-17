@@ -341,8 +341,8 @@ appConfig:
     port: null
     pathPrefix: null
   path:
-    home: "."
-    temp: "/tmp/stroom"
+    home: null
+    temp: null
   pipeline:
     httpClientCache:
       maximumSize: 1000
