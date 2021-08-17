@@ -25,7 +25,6 @@ logging:
   level: ${STROOM_PROXY_LOGGING_LEVEL:- WARN}
   loggers:
     stroom: INFO
-    stroom.util.config.ConfigValidator: DEBUG
     io.dropwizard: INFO
     org.eclipse.jetty: INFO
     org.flywaydb: INFO
