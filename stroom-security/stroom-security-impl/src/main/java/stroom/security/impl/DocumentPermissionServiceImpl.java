@@ -17,12 +17,15 @@
 
 package stroom.security.impl;
 
+import stroom.docref.HasUuid;
 import stroom.security.api.DocumentPermissionService;
+import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.event.AddPermissionEvent;
 import stroom.security.impl.event.ClearDocumentPermissionsEvent;
 import stroom.security.impl.event.PermissionChangeEventBus;
 import stroom.security.impl.event.RemovePermissionEvent;
+import stroom.security.impl.exception.AuthenticationException;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.User;
@@ -46,13 +49,13 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     private final DocumentPermissionDao documentPermissionDao;
     private final UserDao userDao;
     private final PermissionChangeEventBus permissionChangeEventBus;
-    private final SecurityContextImpl securityContext;
+    private final SecurityContext securityContext;
 
     @Inject
     DocumentPermissionServiceImpl(final DocumentPermissionDao documentPermissionDao,
                                   final UserDao userDao,
                                   final PermissionChangeEventBus permissionChangeEventBus,
-                                  final SecurityContextImpl securityContext) {
+                                  final SecurityContext securityContext) {
         this.documentPermissionDao = documentPermissionDao;
         this.userDao = userDao;
         this.permissionChangeEventBus = permissionChangeEventBus;
@@ -134,7 +137,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
 
         // If no user is present then don't create permissions.
         if (userIdentity != null) {
-            final String userUuid = securityContext.getUserUuid(userIdentity);
+            final String userUuid = getUserUuid(userIdentity);
             if (owner || securityContext.hasDocumentPermission(documentUuid, DocumentPermissionNames.OWNER)) {
                 if (owner) {
                     // Make the current user the owner of the new document.
@@ -152,6 +155,13 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                 copyPermissions(sourceUuid, documentUuid);
             }
         }
+    }
+
+    private String getUserUuid(final UserIdentity userIdentity) {
+        if (!(userIdentity instanceof HasUuid)) {
+            throw new AuthenticationException("Expecting a real user identity");
+        }
+        return ((HasUuid) userIdentity).getUuid();
     }
 
     private void copyPermissions(final String sourceUuid, final String destUuid) {

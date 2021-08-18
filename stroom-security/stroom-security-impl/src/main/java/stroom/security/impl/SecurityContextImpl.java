@@ -101,7 +101,7 @@ class SecurityContextImpl implements SecurityContext {
         return processingUserIdentityProvider.isProcessingUser(userIdentity);
     }
 
-    String getUserUuid(final UserIdentity userIdentity) {
+    private String getUserUuid(final UserIdentity userIdentity) {
         if (!(userIdentity instanceof HasUuid)) {
             throw new AuthenticationException("Expecting a real user identity");
         }
