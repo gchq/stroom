@@ -49,11 +49,8 @@ public class HomeDirProviderImpl implements HomeDirProvider {
 //            }
 
             String dir = pathConfig.getHome();
-            if (dir != null) {
+            if (dir != null && !dir.isEmpty()) {
                 LOGGER.info("Using home path configuration property: {}", dir);
-            }
-
-            if (dir != null) {
                 dir = FileUtil.replaceHome(dir);
                 path = Paths.get(dir);
             }
@@ -97,7 +94,11 @@ public class HomeDirProviderImpl implements HomeDirProvider {
 
     private Optional<Path> getApplicationJarDir() {
         try {
-            String codeSourceLocation = this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath();
+            String codeSourceLocation = this.getClass()
+                    .getProtectionDomain()
+                    .getCodeSource()
+                    .getLocation()
+                    .getPath();
             if (Pattern.matches(".*/stroom[^/]*.jar$", codeSourceLocation)) {
                 return Optional.of(Paths.get(codeSourceLocation).getParent());
             } else {

@@ -22,7 +22,7 @@
   {% set proxyHome = '/stroom-proxy' %}
   {% set includeEnvVarSubstitution = true %}
 {% elif distribution == "zip" %}
-  {% set proxyHome = '.' %}
+  {% set proxyHome = '${STROOM_PROXY_HOME:-}' %}
   {% set includeEnvVarSubstitution = false %}
 {% endif %}
 # Stroom Proxy configuration file

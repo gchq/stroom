@@ -39,6 +39,7 @@ import stroom.util.config.AppConfigValidator;
 import stroom.util.config.ConfigValidator;
 import stroom.util.config.PropertyPathDecorator;
 import stroom.util.io.DirProvidersModule;
+import stroom.util.io.FileUtil;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.PathConfig;
 import stroom.util.io.TempDirProvider;
@@ -222,7 +223,12 @@ public class App extends Application<Config> {
 
         final AppModule appModule = new AppModule(configuration, environment, configFile);
 
-        Guice.createInjector(appModule).injectMembers(this);
+        Guice.createInjector(appModule)
+                .injectMembers(this);
+
+        // Ensure we have our home/temp dirs set up
+        FileUtil.ensureDirExists(homeDirProvider.get());
+        FileUtil.ensureDirExists(tempDirProvider.get());
 
         //Register REST Resource Auto Logger to automatically log calls to suitably annotated resources/methods
         //Note that if autologger is not required, and the next line removed, then it will be necessary to
