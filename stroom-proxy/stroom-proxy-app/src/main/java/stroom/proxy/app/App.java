@@ -271,8 +271,8 @@ public class App extends Application<Config> {
                 result.getWarningCount());
 
         if (result.hasErrors() && proxyConfig.isHaltBootOnConfigValidationFailure()) {
-            LOGGER.error("Application configuration is invalid. Stopping Stroom. To run Stroom with invalid " +
-                            "configuration, set {} to false, however this is not advised!",
+            LOGGER.error("Application configuration is invalid. Stopping Stroom Proxy. To run Stroom Proxy with " +
+                            "invalid configuration, set {} to false, however this is not advised!",
                     proxyConfig.getFullPath(ProxyConfig.PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE));
             System.exit(1);
         }
