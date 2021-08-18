@@ -66,7 +66,7 @@ public final class IdentityConfig extends AbstractConfig implements HasDbConfig 
     @ReadOnly
     @JsonProperty()
     @JsonPropertyDescription("If true, stroom will use a set of default authentication credentials to allow" +
-            "API calls from stroom-proxy. For test or demonstration purposes only, set to false for production")
+            "API calls from stroom-proxy. For test or demonstration purposes only, leave as false for production")
     public boolean isUseDefaultOpenIdCredentials() {
         return useDefaultOpenIdCredentials;
     }
