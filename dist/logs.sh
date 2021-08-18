@@ -23,13 +23,10 @@ main() {
   # shellcheck disable=SC1091
   source "${script_dir}/config/scripts.env"
   # shellcheck disable=SC1091
-  source "${script_dir}/${PATH_TO_UTIL_SCRIPT}"
-
-  # shellcheck disable=SC2153
-  local path_to_app_log="${script_dir}/${PATH_TO_APP_LOG}"
+  source "${PATH_TO_UTIL_SCRIPT}"
 
   local app_log_dir
-  app_log_dir="$( dirname "${path_to_app_log}" )"
+  app_log_dir="$( dirname "${PATH_TO_APP_LOG}" )"
 
   while getopts ":mh" arg; do
     # shellcheck disable=SC2034
@@ -52,11 +49,11 @@ main() {
 
   # ensure the app log dir and file exists so we can tail it
   mkdir -p "${app_log_dir}"
-  touch "${path_to_app_log}"
+  touch "${PATH_TO_APP_LOG}"
 
-  info "Tailing log file ${BLUE}${path_to_app_log}${NC}"
+  info "Tailing log file ${BLUE}${PATH_TO_APP_LOG}${NC}"
 
-  tail -F "${path_to_app_log}"
+  tail -F "${PATH_TO_APP_LOG}"
 }
 
 main "$@"
