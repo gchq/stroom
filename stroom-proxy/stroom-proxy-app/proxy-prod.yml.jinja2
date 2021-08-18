@@ -51,14 +51,10 @@ server:
       # Log appender for the web server request logging
     - type: file
       currentLogFilename: logs/access/access.log
-      threshold: ALL
-      queueSize: 256
       discardingThreshold: 0
-      archive: true
       # Rolled and gzipped every minute
       archivedLogFilenamePattern: logs/access/access-%d{yyyy-MM-dd'T'HH:mm}.log.gz
       archivedFileCount: 100
-      timeZone: UTC
       logFormat: '%h %l "%u" [%t] "%r" %s %b "%i{Referer}" "%i{User-Agent}" %D'
 #
 logging:
@@ -75,14 +71,10 @@ logging:
       appenders:
       - type: file
         currentLogFilename: logs/receive/receive.log
-        threshold: ALL
-        queueSize: 256
         discardingThreshold: 0
-        archive: true
         # Rolled and gzipped every minute
         archivedLogFilenamePattern: logs/receive/receive-%d{yyyy-MM-dd'T'HH:mm}.log.gz
         archivedFileCount: 100
-        timeZone: UTC
         logFormat: "%-6level [%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}] [%t] %logger - %X{code} %msg %n"
 #
     # Logger and appender for proxy send audit logs
@@ -92,14 +84,10 @@ logging:
       appenders:
       - type: file
         currentLogFilename: logs/send/send.log
-        threshold: ALL
-        queueSize: 256
         discardingThreshold: 0
-        archive: true
         # Rolled and gzipped every minute
         archivedLogFilenamePattern: logs/send/send-%d{yyyy-MM-dd'T'HH:mm}.log.gz
         archivedFileCount: 100
-        timeZone: UTC
         logFormat: "%-6level [%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}] [%t] %logger - %X{code} %msg %n"
 
   appenders:
@@ -116,14 +104,10 @@ logging:
     # Minute rolled files for stroom/datafeed, will be curl'd/deleted by stroom-log-sender
   - type: file
     currentLogFilename: logs/app/app.log
-    threshold: ALL
-    queueSize: 256
     discardingThreshold: 0
-    archive: true
     archivedLogFilenamePattern: logs/app/app-%d{yyyy-MM-dd'T'HH:mm}.log.gz
     # One week using minute files
     archivedFileCount: 10080
-    timeZone: UTC
     logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
 {% if distribution == "zip" %}
 #
@@ -131,14 +115,10 @@ logging:
     # Un-comment for non-dockered environments
   - type: file
     currentLogFilename: logs/app.log
-    threshold: ALL
-    queueSize: 256
     discardingThreshold: 0
-    archive: true
     archivedLogFilenamePattern: logs/app-%i.log
     archivedFileCount: 10
     maxFileSize: "100MB"
-    timeZone: UTC
     logFormat: "%-6level [%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z'}] [%t] %logger - %X{code} %msg %n"
 {% endif %}
 #
