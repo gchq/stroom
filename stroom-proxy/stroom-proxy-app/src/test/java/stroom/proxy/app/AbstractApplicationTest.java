@@ -7,9 +7,7 @@ import io.dropwizard.configuration.ConfigurationFactory;
 import io.dropwizard.configuration.ConfigurationFactoryFactory;
 import io.dropwizard.configuration.ConfigurationSourceProvider;
 import io.dropwizard.configuration.DefaultConfigurationFactoryFactory;
-import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.FileConfigurationSourceProvider;
-import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.jackson.Jackson;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -34,22 +33,38 @@ public abstract class AbstractApplicationTest {
         config.getProxyConfig()
                 .getForwardStreamConfig()
                 .getForwardDestinations()
-                .forEach(forwardDestinationConfig -> forwardDestinationConfig.setSslConfig(null));
+                .forEach(forwardDestinationConfig ->
+                        forwardDestinationConfig.setSslConfig(null));
 
         config.getProxyConfig()
                 .getRestClientConfig()
                 .setTlsConfiguration(null);
-    }
 
+        // If the home/temp paths don't exist then startup will exit, killing the rest of the tests
+        final Path proxyHomeDir = Paths.get(config.getProxyConfig().getProxyPathConfig().getHome());
+        final Path proxyTempDir = Paths.get(config.getProxyConfig().getProxyPathConfig().getTemp());
+
+        try {
+            Files.createDirectories(proxyHomeDir);
+        } catch (IOException e) {
+            LOGGER.error("Error creating home directory {}", proxyHomeDir.toAbsolutePath(), e);
+        }
+
+        try {
+            Files.createDirectories(proxyTempDir);
+        } catch (IOException e) {
+            LOGGER.error("Error creating temp directory {}", proxyTempDir.toAbsolutePath(), e);
+        }
+    }
 
     static Config getConfig() {
         return config;
     }
 
     private static Config readConfig(final Path configFile) {
-        final ConfigurationSourceProvider configurationSourceProvider = new SubstitutingSourceProvider(
+        final ConfigurationSourceProvider configurationSourceProvider = ProxyYamlUtil.createConfigurationSourceProvider(
                 new FileConfigurationSourceProvider(),
-                new EnvironmentVariableSubstitutor(false));
+                true);
 
         final ConfigurationFactoryFactory<Config> configurationFactoryFactory =
                 new DefaultConfigurationFactoryFactory<>();

@@ -50,9 +50,12 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
     private static final String STROOM_TEMP_JSON_POINTER = PATH_CONFIG_JSON_POINTER + "/temp";
 
     private final ConfigurationSourceProvider delegate;
+    private final boolean logChanges;
 
-    public StroomConfigurationSourceProvider(final ConfigurationSourceProvider delegate) {
+    public StroomConfigurationSourceProvider(final ConfigurationSourceProvider delegate,
+                                             final boolean logChanges) {
         this.delegate = delegate;
+        this.logChanges = logChanges;
     }
 
     @Override
@@ -202,6 +205,9 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
 
     private void log(final String msg, Object... args) {
         // Use system.out as we have no logger at this point
-        System.out.println(LogUtil.message(msg, args));
+        if (logChanges) {
+            // Use system.out as we have no logger at this point
+            System.out.println(LogUtil.message(msg, args));
+        }
     }
 }

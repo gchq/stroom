@@ -23,12 +23,8 @@ import stroom.app.commands.ResetPasswordCommand;
 import stroom.app.guice.AppModule;
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
-import stroom.config.app.StroomConfigurationSourceProvider;
 import stroom.config.app.SuperDevUtil;
 import stroom.config.app.YamlUtil;
-import stroom.config.global.impl.ConfigMapper;
-import stroom.config.global.impl.validation.ConfigValidator;
-import stroom.config.global.impl.validation.ValidationModule;
 import stroom.dropwizard.common.Filters;
 import stroom.dropwizard.common.HealthChecks;
 import stroom.dropwizard.common.ManagedServices;
@@ -39,18 +35,25 @@ import stroom.event.logging.rs.api.RestResourceAutoLogger;
 import stroom.security.impl.AuthenticationConfig;
 import stroom.util.ColouredStringBuilder;
 import stroom.util.ConsoleColour;
+import stroom.util.config.AppConfigValidator;
+import stroom.util.config.ConfigValidator;
+import stroom.util.config.PropertyPathDecorator;
+import stroom.util.io.DirProvidersModule;
 import stroom.util.io.HomeDirProvider;
+import stroom.util.io.PathConfig;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ResourcePaths;
+import stroom.util.validation.ValidationModule;
 
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Module;
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
-import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
-import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.jersey.sessions.SessionFactoryProvider;
 import io.dropwizard.servlets.tasks.LogConfigurationTask;
 import io.dropwizard.setup.Bootstrap;
@@ -61,6 +64,7 @@ import org.glassfish.jersey.logging.LoggingFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
@@ -117,13 +121,13 @@ public class App extends Application<Config> {
     // Needed for DropwizardExtensionsSupport
     public App() {
         configFile = Paths.get("PATH_NOT_SUPPLIED");
-        validationOnlyInjector = createValidationInjector();
+        validationOnlyInjector = createValidationInjector(configFile);
     }
 
 
     App(final Path configFile) {
         this.configFile = configFile;
-        validationOnlyInjector = createValidationInjector();
+        validationOnlyInjector = createValidationInjector(configFile);
     }
 
     public static void main(final String[] args) throws Exception {
@@ -138,14 +142,9 @@ public class App extends Application<Config> {
 
     @Override
     public void initialize(final Bootstrap<Config> bootstrap) {
-        // This allows us to use templating in the YAML configuration.
-        bootstrap.setConfigurationSourceProvider(
-                new StroomConfigurationSourceProvider(
-                        new SubstitutingSourceProvider(
-                                bootstrap.getConfigurationSourceProvider(),
-                                new EnvironmentVariableSubstitutor(false))
-                )
-        );
+        // This allows us to use env var templating and relative (to stroom home) paths in the YAML configuration.
+        bootstrap.setConfigurationSourceProvider(YamlUtil.createConfigurationSourceProvider(
+                bootstrap.getConfigurationSourceProvider(), true));
 
         // Add the GWT UI assets.
         bootstrap.addBundle(new AssetsBundle(
@@ -297,16 +296,18 @@ public class App extends Application<Config> {
 
         final AppConfig appConfig = config.getAppConfig();
 
-        ConfigMapper.decorateWithPropertyPaths(appConfig);
+        // Walk the config tree to decorate it with all the path names
+        // so we can qualify each prop
+        PropertyPathDecorator.decoratePaths(appConfig, AppConfig.ROOT_PROPERTY_PATH);
 
-        final ConfigValidator configValidator = validationOnlyInjector.getInstance(ConfigValidator.class);
+        final AppConfigValidator appConfigValidator = validationOnlyInjector.getInstance(AppConfigValidator.class);
 
         LOGGER.info("Validating application configuration file {}",
                 configFile.toAbsolutePath().normalize().toString());
 
-        final ConfigValidator.Result result = configValidator.validateRecursively(appConfig);
+        final ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validateRecursively(appConfig);
 
-        result.handleViolations(ConfigValidator::logConstraintViolation);
+        result.handleViolations(AppConfigValidator::logConstraintViolation);
 
         LOGGER.info("Completed validation of application configuration, errors: {}, warnings: {}",
                 result.getErrorCount(),
@@ -386,7 +387,31 @@ public class App extends Application<Config> {
         authenticationConfig.setAuthenticationRequired(SUPER_DEV_AUTHENTICATION_REQUIRED_VALUE);
     }
 
-    private Injector createValidationInjector() {
-        return Guice.createInjector(new ValidationModule());
+    /**
+     * Creates a separate guice injector just for doing javax validation on the config
+     */
+    private Injector createValidationInjector(final Path configFile) {
+
+        try {
+            // We need to read the AppConfig in the same way that dropwiz will so we can get the
+            // possibly substituted values for stroom.(home|temp) for use with PathCreator
+            LOGGER.info("Parsing config file to establish home and temp");
+            final AppConfig appConfig = YamlUtil.readAppConfig(configFile);
+
+            final Module pathConfigModule = new AbstractModule() {
+                @Override
+                protected void configure() {
+                    bind(PathConfig.class).toInstance(appConfig.getPathConfig());
+                    install(new DirProvidersModule());
+                }
+            };
+
+            return Guice.createInjector(
+                    new ValidationModule(),
+                    pathConfigModule);
+
+        } catch (IOException e) {
+            throw new RuntimeException("Error parsing config file " + configFile.toAbsolutePath().normalize());
+        }
     }
 }

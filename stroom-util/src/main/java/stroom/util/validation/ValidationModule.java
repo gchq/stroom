@@ -1,5 +1,8 @@
-package stroom.config.global.impl.validation;
+package stroom.util.validation;
 
+import stroom.util.io.HomeDirProvider;
+import stroom.util.io.PathCreator;
+import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -23,6 +26,10 @@ public class ValidationModule extends AbstractModule {
     @Override
     protected void configure() {
         super.configure();
+
+        requireBinding(PathCreator.class);
+        requireBinding(HomeDirProvider.class);
+        requireBinding(TempDirProvider.class);
 
         // Bind each of our custom validators
         // This decouples the validator impls from the pojos to

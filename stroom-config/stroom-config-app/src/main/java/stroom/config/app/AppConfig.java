@@ -36,6 +36,7 @@ import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.io.StroomPathConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.PropertyPath;
 import stroom.util.shared.validation.ValidationSeverity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -50,6 +51,7 @@ import javax.validation.constraints.AssertTrue;
 public class AppConfig extends AbstractConfig {
 
     public static final String NAME = "stroom";
+    public static final PropertyPath ROOT_PROPERTY_PATH = PropertyPath.fromParts(NAME);
 
     public static final String PROP_NAME_ACTIVITY = "activity";
     public static final String PROP_NAME_ANNOTATION = "annotation";

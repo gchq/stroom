@@ -7,6 +7,7 @@ import stroom.proxy.repo.ProxyRepositoryStreamHandlerFactory;
 import stroom.proxy.repo.StreamHandler;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathCreator;
 import stroom.util.shared.BuildInfo;
 
 import org.junit.jupiter.api.Test;
@@ -90,8 +91,14 @@ class TestProxyHandlerFactory extends StroomUnitTest {
         forwardRequestConfig.getForwardDestinations().add(destinationConfig1);
         forwardRequestConfig.getForwardDestinations().add(destinationConfig2);
 
-        final ProxyRepositoryManager proxyRepositoryManager = new ProxyRepositoryManager(() -> tempDir,
-                proxyRepositoryConfig);
+        final PathCreator pathCreator = new PathCreator(
+                () -> tempDir.resolve("home"),
+                () -> tempDir);
+
+        final ProxyRepositoryManager proxyRepositoryManager = new ProxyRepositoryManager(
+                () -> tempDir,
+                proxyRepositoryConfig,
+                pathCreator);
         final Provider<ProxyRepositoryStreamHandler> proxyRepositoryRequestHandlerProvider = () ->
                 new ProxyRepositoryStreamHandler(proxyRepositoryManager);
 
@@ -99,9 +106,10 @@ class TestProxyHandlerFactory extends StroomUnitTest {
         final ProxyRepositoryStreamHandlerFactory proxyRepositoryStreamHandlerFactory =
                 new ProxyRepositoryStreamHandlerFactory(proxyRepositoryConfig, proxyRepositoryRequestHandlerProvider);
 
+
         final BuildInfo buildInfo = new BuildInfo("now", "test version", "now");
         final ForwardStreamHandlerFactory forwardStreamHandlerFactory = new ForwardStreamHandlerFactory(
-                logStream, forwardRequestConfig, proxyRepositoryConfig, () -> buildInfo);
+                logStream, forwardRequestConfig, proxyRepositoryConfig, () -> buildInfo, pathCreator);
 
         return new MasterStreamHandlerFactory(proxyRepositoryStreamHandlerFactory, forwardStreamHandlerFactory);
     }

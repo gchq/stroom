@@ -49,13 +49,17 @@ public class ProxyConfigurationSourceProvider implements ConfigurationSourceProv
     private static final String STROOM_TEMP_JSON_POINTER = PATH_CONFIG_JSON_POINTER + "/temp";
 
     private final ConfigurationSourceProvider delegate;
+    private final boolean logChanges;
 
-    public ProxyConfigurationSourceProvider(final ConfigurationSourceProvider delegate) {
+    public ProxyConfigurationSourceProvider(final ConfigurationSourceProvider delegate,
+                                            final boolean logChanges) {
         this.delegate = delegate;
+        this.logChanges = logChanges;
     }
 
     @Override
     public InputStream open(final String path) throws IOException {
+
         log("Applying path substitutions to Drop Wizard configuration in file {}",
                 Paths.get(path).toAbsolutePath().normalize().toString());
 
@@ -196,7 +200,9 @@ public class ProxyConfigurationSourceProvider implements ConfigurationSourceProv
     }
 
     private void log(final String msg, Object... args) {
-        // Use system.out as we have no logger at this point
-        System.out.println(LogUtil.message(msg, args));
+        if (logChanges) {
+            // Use system.out as we have no logger at this point
+            System.out.println(LogUtil.message(msg, args));
+        }
     }
 }

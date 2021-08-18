@@ -1,4 +1,4 @@
-package stroom.config.app;
+package stroom.util.config;
 
 import java.nio.file.Path;
 import java.util.Objects;

@@ -98,10 +98,9 @@ public class YamlUtil {
      * object tree. The file undergoes substitution and validation.
      */
     public static Config readConfig(final Path configFile) throws IOException {
-        final ConfigurationSourceProvider configurationSourceProvider = new StroomConfigurationSourceProvider(
-                new SubstitutingSourceProvider(
-                        new FileConfigurationSourceProvider(),
-                        new EnvironmentVariableSubstitutor(false)));
+
+        final ConfigurationSourceProvider configurationSourceProvider = createConfigurationSourceProvider(
+                new FileConfigurationSourceProvider(), false);
 
         final ConfigurationFactoryFactory<Config> configurationFactoryFactory =
                 new DefaultConfigurationFactoryFactory<>();
@@ -122,6 +121,17 @@ public class YamlUtil {
         }
 
         return config;
+    }
+
+    public static ConfigurationSourceProvider createConfigurationSourceProvider(
+            final ConfigurationSourceProvider baseConfigurationSourceProvider,
+            final boolean logChanges) {
+
+        return new StroomConfigurationSourceProvider(
+                new SubstitutingSourceProvider(
+                        baseConfigurationSourceProvider,
+                        new EnvironmentVariableSubstitutor(false)),
+                logChanges);
     }
 
     /**

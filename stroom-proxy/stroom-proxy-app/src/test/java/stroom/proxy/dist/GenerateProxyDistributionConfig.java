@@ -1,6 +1,7 @@
 package stroom.proxy.dist;
 
 import stroom.proxy.app.ProxyConfig;
+import stroom.proxy.app.ProxyYamlUtil;
 import stroom.util.io.DiffUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LogUtil;
@@ -143,7 +144,7 @@ public class GenerateProxyDistributionConfig {
         // Ensures the output file can be read into the appConfig tree
         final ProxyConfig proxyConfig;
         try {
-            proxyConfig = ProxyYamlUtil.readAppConfig(configFile);
+            proxyConfig = ProxyYamlUtil.readProxyConfig(configFile);
             Assertions.assertThat(proxyConfig)
                     .isNotNull();
         } catch (IOException e) {

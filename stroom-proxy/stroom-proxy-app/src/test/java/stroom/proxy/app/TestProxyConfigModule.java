@@ -3,6 +3,7 @@ package stroom.proxy.app;
 import stroom.proxy.app.guice.ProxyConfigModule;
 import stroom.util.config.PropertyUtil;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
 
@@ -16,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Modifier;
+import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -31,22 +33,25 @@ class TestProxyConfigModule {
     private static final String STROOM_PACKAGE_PREFIX = "stroom.";
 
     /**
-     * IMPORTANT: This test must be run from stroom-app so it can see all the other modules
+     * IMPORTANT: This test must be run from stroom-proxy-app so it can see all the other modules
      */
     @Test
     void testIsProxyConfigPresence() throws IOException {
 
         ProxyConfig proxyConfig = new ProxyConfig();
-        ProxyConfigModule proxyConfigModule = new ProxyConfigModule(proxyConfig);
+        ProxyConfigModule proxyConfigModule = new ProxyConfigModule(new ProxyConfigHolder(
+                proxyConfig,
+                Path.of("/dummy/path/to/config.yml")));
 
-        final Injector injector = Guice.createInjector(proxyConfigModule);
+        final Injector injector = Guice.createInjector(
+                proxyConfigModule);
 
         Predicate<String> packageNameFilter = name ->
                 name.startsWith(STROOM_PACKAGE_PREFIX) && !name.contains("shaded");
 
-        Predicate<Class<?>> classFilter = clazz ->
+        final Predicate<Class<?>> classFilter = clazz ->
                 clazz.getSimpleName().endsWith("Config")
-                        && !clazz.equals(IsProxyConfig.class)
+                        && !clazz.equals(AbstractConfig.class)
                         && !clazz.equals(ProxyConfig.class);
 
         LOGGER.info("Finding all IsProxyConfig classes");
@@ -76,7 +81,7 @@ class TestProxyConfigModule {
 
         Map<Class<?>, Integer> appConfigTreeClassToIdMap = new HashMap<>();
 
-        // Find all stroom. classes in the AppConfig tree, i.e. config POJOs
+        // Find all stroom. classes in the config tree, i.e. config POJOs
         final Set<Class<?>> appConfigTreeClasses = new HashSet<>();
         PropertyUtil.walkObjectTree(
                 proxyConfig,
@@ -147,8 +152,8 @@ class TestProxyConfigModule {
             classesWithMultipleInstances.stream()
                     .sorted(Comparator.comparing(Class::getName))
                     .forEach(clazz -> {
-                        IsProxyConfig config = (IsProxyConfig) injector.getInstance(clazz);
-                        LOGGER.info("  {}", clazz.getName());
+                        AbstractConfig config = (AbstractConfig) injector.getInstance(clazz);
+                        LOGGER.info("  {}", config.getBasePath());
                     });
         }
 
