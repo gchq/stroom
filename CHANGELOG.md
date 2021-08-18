@@ -7,10 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2350** : Fix distribution start script so it works with a different stroom home dir.
+
 * Issue **#1469** : Add hot loading of config to proxy.
 
 * Change proxy and stroom config validation to cope with relative paths and `~`.
-  
+
 * Issue **#2353** : Swallow NoSuchFileException in config monitor.
 
 
