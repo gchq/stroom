@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2357** : Remove dropwizard logger configuration entries that have default values.
+
 * Issue **#2350** : Fix distribution start script so it works with a different stroom home dir.
 
 * Issue **#1469** : Add hot loading of config to proxy.
