@@ -34,15 +34,15 @@ class OpenIdManager {
                            final String code,
                            final String stateId,
                            final String postAuthRedirectUri) {
-        final String uri = OpenId.removeReservedParams(postAuthRedirectUri);
         String redirectUri = null;
 
         // If we have completed the front channel flow then we will have a state id.
         if (code != null && stateId != null) {
-            redirectUri = backChannelOIDC(request, code, stateId, uri);
+            redirectUri = backChannelOIDC(request, code, stateId);
         }
 
         if (redirectUri == null) {
+            final String uri = OpenId.removeReservedParams(postAuthRedirectUri);
             redirectUri = frontChannelOIDC(request, uri);
         }
 
@@ -64,8 +64,7 @@ class OpenIdManager {
 
     private String backChannelOIDC(final HttpServletRequest request,
                                    final String code,
-                                   final String stateId,
-                                   final String postAuthRedirectUri) {
+                                   final String stateId) {
         Objects.requireNonNull(code, "Null code");
         Objects.requireNonNull(stateId, "Null state Id");
 
@@ -86,7 +85,7 @@ class OpenIdManager {
             UserAgentSessionUtil.set(request);
 
             final Optional<UserIdentity> optionalUserIdentity =
-                    userIdentityFactory.getAuthFlowUserIdentity(request, code, postAuthRedirectUri, state);
+                    userIdentityFactory.getAuthFlowUserIdentity(request, code, state);
 
             if (optionalUserIdentity.isPresent()) {
                 // Set the token in the session.
@@ -146,15 +145,13 @@ class OpenIdManager {
                                  final String redirectUri,
                                  final AuthenticationState state,
                                  final boolean prompt) {
-
         // In some cases we might need to use an external URL as the current incoming one might have been proxied.
         // Use OIDC API.
         UriBuilder authenticationRequest = UriBuilder.fromUri(endpoint)
                 .queryParam(OpenId.RESPONSE_TYPE, OpenId.CODE)
                 .queryParam(OpenId.CLIENT_ID, clientId)
                 .queryParam(OpenId.REDIRECT_URI, redirectUri)
-                .queryParam(OpenId.SCOPE,
-                        OpenId.SCOPE__OPENID + " " + OpenId.SCOPE__EMAIL + " " + OpenId.SCOPE__OFFLINE_ACCESS)
+                .queryParam(OpenId.SCOPE, openIdConfig.getRequestScope())
                 .queryParam(OpenId.STATE, state.getId())
                 .queryParam(OpenId.NONCE, state.getNonce());
 

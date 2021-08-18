@@ -2,6 +2,7 @@ package stroom.security.impl;
 
 import stroom.config.common.UriFactory;
 import stroom.security.impl.exception.AuthenticationException;
+import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdClientFactory;
 import stroom.security.openid.api.OpenIdConfigurationResponse;
 import stroom.security.openid.api.OpenIdConfigurationResponse.Builder;
@@ -42,6 +43,12 @@ public class ResolvedOpenIdConfig {
             OAUTH2_BASE_PATH, "/certs");
     public static final String INTERNAL_LOGOUT_ENDPOINT = ResourcePaths.buildAuthenticatedApiPath(
             AUTHENTICATION_BASE_PATH, "/logout");
+    public static final String DEFAULT_REQUEST_SCOPE = "" +
+            OpenId.SCOPE__OPENID +
+            " " +
+            OpenId.SCOPE__EMAIL +
+            " " +
+            OpenId.SCOPE__OFFLINE_ACCESS;
 
     private final UriFactory uriFactory;
     private final OpenIdConfig openIdConfig;
@@ -179,5 +186,14 @@ public class ResolvedOpenIdConfig {
             return true;
         }
         return openIdConfig.isFormTokenRequest();
+    }
+
+    public String getRequestScope() {
+        if (openIdConfig.isUseInternal() ||
+                openIdConfig.getRequestScope() == null ||
+                openIdConfig.getRequestScope().isBlank()) {
+            return DEFAULT_REQUEST_SCOPE;
+        }
+        return openIdConfig.getRequestScope();
     }
 }

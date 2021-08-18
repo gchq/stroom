@@ -80,17 +80,8 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
         this.httpClientProvider = httpClientProvider;
     }
 
-    private Optional<UserIdentity> getProcessingUser(final JwtContext jwtContext) {
-        try {
-            final JwtClaims jwtClaims = jwtContext.getJwtClaims();
-            final UserIdentity processingUser = processingUserIdentityProvider.get();
-            if (processingUser.getId().equals(jwtClaims.getSubject())) {
-                return Optional.of(processingUserIdentityProvider.get());
-            }
-        } catch (final MalformedClaimException e) {
-            LOGGER.debug(e.getMessage(), e);
-        }
-        return Optional.empty();
+    private boolean useExternalIdentityProvider() {
+        return !openIdConfig.isUseInternal();
     }
 
     @Override
@@ -99,10 +90,11 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
 
         // See if we can login with a token if one is supplied.
         try {
+            // Always try the internal context factory first.
             Optional<JwtContext> optionalContext = internalJwtContextFactory.getJwtContext(request);
             if (optionalContext.isPresent()) {
                 optionalUserIdentity = getProcessingUser(optionalContext.get());
-            } else {
+            } else if (useExternalIdentityProvider()) {
                 optionalContext = standardJwtContextFactory.getJwtContext(request);
             }
 
@@ -128,22 +120,21 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
     @Override
     public Optional<UserIdentity> getAuthFlowUserIdentity(final HttpServletRequest request,
                                                           final String code,
-                                                          final String postAuthRedirectUri,
                                                           final AuthenticationState state) {
         final HttpSession session = request.getSession(false);
 
         final ObjectMapper mapper = getMapper();
-        final String tokenEndpoint = openIdConfig.getTokenEndpoint();
+        final String tokenEndpoint = resolvedOpenIdConfig.getTokenEndpoint();
         final HttpPost httpPost = new HttpPost(tokenEndpoint);
 
         // AWS requires form content and not a JSON object.
-        if (openIdConfig.isFormTokenRequest()) {
+        if (resolvedOpenIdConfig.isFormTokenRequest()) {
             final List<NameValuePair> nvps = new ArrayList<>();
             nvps.add(new BasicNameValuePair(OpenId.CODE, code));
             nvps.add(new BasicNameValuePair(OpenId.GRANT_TYPE, OpenId.GRANT_TYPE__AUTHORIZATION_CODE));
-            nvps.add(new BasicNameValuePair(OpenId.CLIENT_ID, openIdConfig.getClientId()));
-            nvps.add(new BasicNameValuePair(OpenId.CLIENT_SECRET, openIdConfig.getClientSecret()));
-            nvps.add(new BasicNameValuePair(OpenId.REDIRECT_URI, postAuthRedirectUri));
+            nvps.add(new BasicNameValuePair(OpenId.CLIENT_ID, resolvedOpenIdConfig.getClientId()));
+            nvps.add(new BasicNameValuePair(OpenId.CLIENT_SECRET, resolvedOpenIdConfig.getClientSecret()));
+            nvps.add(new BasicNameValuePair(OpenId.REDIRECT_URI, state.getUrl()));
             setFormParams(httpPost, nvps);
 
         } else {
@@ -151,9 +142,9 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
                 final TokenRequest tokenRequest = TokenRequest.builder()
                         .code(code)
                         .grantType(OpenId.GRANT_TYPE__AUTHORIZATION_CODE)
-                        .clientId(openIdConfig.getClientId())
-                        .clientSecret(openIdConfig.getClientSecret())
-                        .redirectUri(postAuthRedirectUri)
+                        .clientId(resolvedOpenIdConfig.getClientId())
+                        .clientSecret(resolvedOpenIdConfig.getClientSecret())
+                        .redirectUri(state.getUrl())
                         .build();
                 final String json = mapper.writeValueAsString(tokenRequest);
 
@@ -165,8 +156,9 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
 
         final TokenResponse tokenResponse = getTokenResponse(mapper, httpPost, tokenEndpoint);
 
+        // Always try the internal context factory first.
         Optional<JwtContext> optionalContext = internalJwtContextFactory.getJwtContext(tokenResponse.getIdToken());
-        if (optionalContext.isEmpty()) {
+        if (optionalContext.isEmpty() && useExternalIdentityProvider()) {
             optionalContext = standardJwtContextFactory.getJwtContext(tokenResponse.getIdToken());
         }
 
@@ -182,76 +174,90 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
     }
 
     @Override
-    public Optional<UserIdentity> refresh(final UserIdentity userIdentity) {
-        Optional<UserIdentity> optionalUserIdentity = Optional.of(userIdentity);
-
+    public void refresh(final UserIdentity userIdentity) {
         if (userIdentity instanceof UserIdentityImpl) {
             final UserIdentityImpl identity = (UserIdentityImpl) userIdentity;
 
             // Check to see if the user needs a token refresh.
             if (hasTokenExpired(identity)) {
-                TokenResponse tokenResponse = null;
-                JwtClaims jwtClaims = null;
-
                 identity.getLock().lock();
                 try {
                     if (hasTokenExpired(identity)) {
-                        LOGGER.debug("Refreshing token " + identity);
-
-                        if (identity.getTokenResponse().getRefreshToken() == null) {
-                            throw new NullPointerException("Unable to refresh token as no refresh token is available");
-                        }
-
-                        final ObjectMapper mapper = getMapper();
-                        final String tokenEndpoint = resolvedOpenIdConfig.getTokenEndpoint();
-                        final HttpPost httpPost = new HttpPost(tokenEndpoint);
-
-                        // AWS requires form content and not a JSON object.
-                        if (resolvedOpenIdConfig.isFormTokenRequest()) {
-                            final List<NameValuePair> nvps = new ArrayList<>();
-                            nvps.add(new BasicNameValuePair(OpenId.GRANT_TYPE, OpenId.REFRESH_TOKEN));
-                            nvps.add(new BasicNameValuePair(OpenId.REFRESH_TOKEN,
-                                    identity.getTokenResponse().getRefreshToken()));
-                            nvps.add(new BasicNameValuePair(OpenId.CLIENT_ID, resolvedOpenIdConfig.getClientId()));
-                            nvps.add(new BasicNameValuePair(OpenId.CLIENT_SECRET,
-                                    resolvedOpenIdConfig.getClientSecret()));
-                            setFormParams(httpPost, nvps);
-
-                        } else {
-                            throw new UnsupportedOperationException("JSON not supported for token refresh");
-                        }
-
-                        tokenResponse = getTokenResponse(mapper, httpPost, tokenEndpoint);
-
-                        Optional<JwtContext> optionalContext =
-                                internalJwtContextFactory.getJwtContext(tokenResponse.getIdToken());
-                        if (optionalContext.isEmpty()) {
-                            optionalContext = standardJwtContextFactory.getJwtContext(tokenResponse.getIdToken());
-                        }
-
-                        jwtClaims = optionalContext
-                                .map(JwtContext::getJwtClaims)
-                                .orElseThrow(() -> new RuntimeException("Unable to extract JWT claims"));
+                        doRefresh(identity);
                     }
-
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e.getMessage(), e);
-                    identity.invalidateSession();
-                    optionalUserIdentity = Optional.empty();
-
                 } finally {
-                    identity.setTokenResponse(tokenResponse);
-                    identity.setJwtClaims(jwtClaims);
                     identity.getLock().unlock();
                 }
             }
         }
-        return optionalUserIdentity;
+    }
+
+    private void doRefresh(final UserIdentityImpl identity) {
+        TokenResponse tokenResponse = null;
+        JwtClaims jwtClaims = null;
+
+        try {
+            LOGGER.debug("Refreshing token " + identity);
+
+            if (identity.getTokenResponse() == null ||
+                    identity.getTokenResponse().getRefreshToken() == null) {
+                throw new NullPointerException("Unable to refresh token as no refresh token is available");
+            }
+
+            final ObjectMapper mapper = getMapper();
+            final String tokenEndpoint = resolvedOpenIdConfig.getTokenEndpoint();
+            final HttpPost httpPost = new HttpPost(tokenEndpoint);
+
+            // AWS requires form content and not a JSON object.
+            if (resolvedOpenIdConfig.isFormTokenRequest()) {
+                final List<NameValuePair> nvps = new ArrayList<>();
+                nvps.add(new BasicNameValuePair(OpenId.GRANT_TYPE, OpenId.REFRESH_TOKEN));
+                nvps.add(new BasicNameValuePair(OpenId.REFRESH_TOKEN,
+                        identity.getTokenResponse().getRefreshToken()));
+                nvps.add(new BasicNameValuePair(OpenId.CLIENT_ID, resolvedOpenIdConfig.getClientId()));
+                nvps.add(new BasicNameValuePair(OpenId.CLIENT_SECRET,
+                        resolvedOpenIdConfig.getClientSecret()));
+                setFormParams(httpPost, nvps);
+
+            } else {
+                throw new UnsupportedOperationException("JSON not supported for token refresh");
+            }
+
+            tokenResponse = getTokenResponse(mapper, httpPost, tokenEndpoint);
+
+            // Always try the internal context factory first.
+            Optional<JwtContext> optionalContext =
+                    internalJwtContextFactory.getJwtContext(tokenResponse.getIdToken());
+            if (optionalContext.isEmpty() && useExternalIdentityProvider()) {
+                optionalContext = standardJwtContextFactory.getJwtContext(tokenResponse.getIdToken());
+            }
+
+            jwtClaims = optionalContext
+                    .map(JwtContext::getJwtClaims)
+                    .orElseThrow(() -> new RuntimeException("Unable to extract JWT claims"));
+
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
+            identity.invalidateSession();
+            throw e;
+
+        } finally {
+            identity.setTokenResponse(tokenResponse);
+            identity.setJwtClaims(jwtClaims);
+        }
     }
 
     private boolean hasTokenExpired(final UserIdentityImpl userIdentity) {
         try {
-            final NumericDate expirationTime = userIdentity.getJwtClaims().getExpirationTime();
+            final JwtClaims jwtClaims = userIdentity.getJwtClaims();
+            if (jwtClaims == null) {
+                throw new NullPointerException("User identity has null claims");
+            }
+            if (jwtClaims.getExpirationTime() == null) {
+                throw new NullPointerException("User identity has null expiration time");
+            }
+
+            final NumericDate expirationTime = jwtClaims.getExpirationTime();
             expirationTime.addSeconds(10);
             final NumericDate now = NumericDate.now();
             return expirationTime.isBefore(now);
@@ -403,5 +409,18 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
         }
 
         return userId;
+    }
+
+    private Optional<UserIdentity> getProcessingUser(final JwtContext jwtContext) {
+        try {
+            final JwtClaims jwtClaims = jwtContext.getJwtClaims();
+            final UserIdentity processingUser = processingUserIdentityProvider.get();
+            if (processingUser.getId().equals(jwtClaims.getSubject())) {
+                return Optional.of(processingUserIdentityProvider.get());
+            }
+        } catch (final MalformedClaimException e) {
+            LOGGER.debug(e.getMessage(), e);
+        }
+        return Optional.empty();
     }
 }
