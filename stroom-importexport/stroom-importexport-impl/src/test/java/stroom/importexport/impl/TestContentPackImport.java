@@ -18,8 +18,6 @@
 package stroom.importexport.impl;
 
 import stroom.security.api.SecurityContext;
-import stroom.security.api.UserIdentity;
-import stroom.security.shared.User;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 
@@ -106,16 +104,12 @@ class TestContentPackImport {
                 .thenReturn(true);
         Mockito
                 .doAnswer(invocation -> {
-                    Runnable runnable = invocation.getArgument(1);
+                    Runnable runnable = invocation.getArgument(0);
                     runnable.run();
                     return null;
                 })
                 .when(securityContext)
-                .asUser(Mockito.any(UserIdentity.class), Mockito.any(Runnable.class));
-
-        Mockito
-                .when(securityContext.createIdentity(Mockito.eq(User.ADMIN_USER_NAME)))
-                .thenReturn(() -> User.ADMIN_USER_NAME);
+                .asAdminUser(Mockito.any(Runnable.class));
     }
 
     private void deleteTestFiles() throws IOException {

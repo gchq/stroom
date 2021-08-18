@@ -36,6 +36,7 @@ class SecurityContextImpl implements SecurityContext {
     private final UserCache userCache;
     private final ProcessingUserIdentityProvider processingUserIdentityProvider;
     private final UserIdentityFactory userIdentityFactory;
+
     @Inject
     SecurityContextImpl(
             final UserDocumentPermissionsCache userDocumentPermissionsCache,

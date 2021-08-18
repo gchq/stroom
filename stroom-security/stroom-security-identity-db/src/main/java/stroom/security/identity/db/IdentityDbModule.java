@@ -5,9 +5,9 @@ import stroom.db.util.DataSourceProxy;
 import stroom.security.identity.account.AccountDao;
 import stroom.security.identity.config.IdentityConfig;
 import stroom.security.identity.openid.OpenIdClientDao;
-import stroom.security.identity.token.JwkDao;
 import stroom.security.identity.token.ApiKeyDao;
 import stroom.security.identity.token.ApiKeyTypeDao;
+import stroom.security.identity.token.JwkDao;
 
 import javax.sql.DataSource;
 

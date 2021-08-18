@@ -538,8 +538,8 @@ appConfig:
         tokenEndpoint: null
         jwksUri: null
         logoutEndpoint: null
-        formTokenRequest: false
-        jwtClaimsResolver: null
+        formTokenRequest: true
+        requestScope: null
         clientId: null
         clientSecret: null
       preventLogin: false
@@ -623,6 +623,10 @@ appConfig:
           maximumSize: 1000
           expireAfterAccess: "PT10M"
           expireAfterWrite: null
+        refreshTokenCache:
+          maximumSize: 10000
+          expireAfterAccess: "P1D"
+          expireAfterWrite: null
       passwordPolicy:
         allowPasswordResets: true
         forcePasswordChangeOnFirstLogin: true
@@ -637,10 +641,10 @@ appConfig:
         unusedAccountDeactivationThreshold: "P90D"
       token:
         algorithm: "RS256"
-        defaultApiKeyExpiryInMinutes: 525600
+        defaultApiKeyExpiryTime: "P365D"
+        emailResetTokenExpiryTime: "PT5M"
         jwsIssuer: "stroom"
-        timeUntilExpirationForEmailResetToken: "PT5M"
-        timeUntilExpirationForUserToken: "P30D"
+        tokenExpiryTime: "PT10M"
       useDefaultOpenIdCredentials: false
   serviceDiscovery:
     enabled: false
