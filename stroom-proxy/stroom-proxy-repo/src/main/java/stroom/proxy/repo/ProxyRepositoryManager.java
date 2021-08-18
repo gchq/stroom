@@ -6,6 +6,7 @@ import stroom.util.HasHealthCheck;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileNameUtil;
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
@@ -45,8 +46,13 @@ public class ProxyRepositoryManager implements HasHealthCheck {
 
     @Inject
     public ProxyRepositoryManager(final TempDirProvider tempDirProvider,
-                                  final ProxyRepositoryConfig proxyRepositoryConfig) {
-        this(getPath(tempDirProvider.get(), proxyRepositoryConfig.getRepoDir()),
+                                  final ProxyRepositoryConfig proxyRepositoryConfig,
+                                  final PathCreator pathCreator) {
+        this(
+                getPath(
+                        tempDirProvider.get(),
+                        proxyRepositoryConfig.getRepoDir(),
+                        pathCreator),
                 getFormat(proxyRepositoryConfig.getFormat()),
                 createScheduler(proxyRepositoryConfig.getRollCron()));
     }
@@ -59,11 +65,14 @@ public class ProxyRepositoryManager implements HasHealthCheck {
         this.scheduler = scheduler;
     }
 
-    private static Path getPath(final Path tempDir, final String repoDir) {
+    private static Path getPath(final Path tempDir,
+                                final String repoDir,
+                                final PathCreator pathCreator) {
         Path path;
 
         if (repoDir != null && !repoDir.isEmpty()) {
-            path = Paths.get(repoDir);
+            path = Paths.get(pathCreator.makeAbsolute(
+                    pathCreator.replaceSystemProperties(repoDir)));
         } else {
             path = tempDir.resolve("stroom-proxy");
             LOGGER.warn("setRepoDir() - Using temp dir as repoDir is not set. " + FileUtil.getCanonicalPath(path));

@@ -1,6 +1,8 @@
 package stroom.proxy.repo;
 
+import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
+import stroom.util.shared.validation.ValidSimpleCron;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -9,7 +11,7 @@ import javax.inject.Singleton;
 
 @Singleton
 @JsonPropertyOrder(alphabetic = true)
-public class ProxyRepositoryConfig implements IsProxyConfig {
+public class ProxyRepositoryConfig extends AbstractConfig implements IsProxyConfig {
 
     private boolean isStoringEnabled = false;
     private String repoDir;
@@ -67,6 +69,7 @@ public class ProxyRepositoryConfig implements IsProxyConfig {
     /**
      * Interval to roll any writing repositories.
      */
+    @ValidSimpleCron
     @JsonProperty
     public String getRollCron() {
         return rollCron;

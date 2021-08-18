@@ -1,5 +1,8 @@
-package stroom.config.global.impl.validation;
+package stroom.util.validation;
 
+import stroom.test.common.util.test.TestingHomeAndTempProvidersModule;
+import stroom.util.config.AppConfigValidator;
+import stroom.util.config.ConfigValidator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.AbstractConfig;
@@ -11,28 +14,36 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
+import java.nio.file.Path;
 import javax.inject.Inject;
 import javax.validation.constraints.AssertTrue;
 import javax.validation.constraints.Min;
 
-public class TestConfigValidator {
+public class TestAppConfigValidator {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ConfigValidator.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AppConfigValidator.class);
 
     @Inject
-    private ConfigValidator configValidator;
+    private AppConfigValidator appConfigValidator;
+
+    @BeforeEach
+    void beforeEach(@TempDir Path tempDir) {
+        final Injector injector = Guice.createInjector(
+                new TestingHomeAndTempProvidersModule(tempDir),
+                new ValidationModule());
+        injector.injectMembers(this);
+    }
 
     @Test
     void testMyPojo_good() {
 
-        final Injector injector = Guice.createInjector(new ValidationModule());
-        injector.injectMembers(this);
-
         var myPojo = new MyPojoErrors();
 
-        ConfigValidator.Result result = configValidator.validateRecursively(myPojo);
+        ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validateRecursively(myPojo);
 
         LOGGER.info(result.toString());
         result.handleViolations((constraintViolation, validationSeverity) ->
@@ -47,8 +58,8 @@ public class TestConfigValidator {
     @Test
     void testMyPojo_errors_recursive() {
 
-        final Injector injector = Guice.createInjector(new ValidationModule());
-        injector.injectMembers(this);
+//        final Injector injector = Guice.createInjector(new ValidationModule());
+//        injector.injectMembers(this);
 
         var myPojo = new MyPojoErrors();
         myPojo.setBooleanValue(false);
@@ -61,7 +72,7 @@ public class TestConfigValidator {
         myPojo.getChild().setCronValue("xxxxxxxxxxxxx");
         myPojo.getChild().setIntValue(0);
 
-        ConfigValidator.Result result = configValidator.validateRecursively(myPojo);
+        ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validateRecursively(myPojo);
 
         LOGGER.info(result.toString());
         result.handleViolations((constraintViolation, validationSeverity) -> {
@@ -75,8 +86,8 @@ public class TestConfigValidator {
     @Test
     void testMyPojo_errors_nonRecursive() {
 
-        final Injector injector = Guice.createInjector(new ValidationModule());
-        injector.injectMembers(this);
+//        final Injector injector = Guice.createInjector(new ValidationModule());
+//        injector.injectMembers(this);
 
         var myPojo = new MyPojoErrors();
         myPojo.setBooleanValue(false);
@@ -89,7 +100,7 @@ public class TestConfigValidator {
         myPojo.getChild().setCronValue("xxxxxxxxxxxxx");
         myPojo.getChild().setIntValue(0);
 
-        ConfigValidator.Result result = configValidator.validate(myPojo);
+        ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validate(myPojo);
 
         LOGGER.info(result.toString());
         result.handleViolations((constraintViolation, validationSeverity) -> {
@@ -103,8 +114,8 @@ public class TestConfigValidator {
     @Test
     void testMyPojo_warnings() {
 
-        final Injector injector = Guice.createInjector(new ValidationModule());
-        injector.injectMembers(this);
+//        final Injector injector = Guice.createInjector(new ValidationModule());
+//        injector.injectMembers(this);
 
         var myPojo = new MyPojoWarnings();
         myPojo.setBooleanValue(false);
@@ -112,7 +123,7 @@ public class TestConfigValidator {
         myPojo.setCronValue("xxxxxxxxxxxxx");
         myPojo.setIntValue(0);
 
-        ConfigValidator.Result result = configValidator.validate(myPojo);
+        ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validate(myPojo);
 
         LOGGER.info(result.toString());
         result.handleViolations((constraintViolation, validationSeverity) -> {

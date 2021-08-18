@@ -263,7 +263,7 @@ ext.libs = [
         stax_api                       : "stax:stax-api:1.0.1",
         swagger_annotations            : "io.swagger.core.v3:swagger-annotations:$versions.swagger",
         unirest                        : "com.mashape.unirest:unirest-java:$versions.unirest",
-        validation_api                 : "javax.validation:validation-api:1.0.0.GA",
+        validation_api                 : "javax.validation:validation-api:1.1.0.Final",
         //hibernate_validator            : "org.hibernate:hibernate-validator", // version controlled by DW BOM
         //hibernate_validator            : "org.hibernate:hibernate-validator:6.1.0.Final",
         hibernate_validator            : "org.hibernate:hibernate-validator:5.4.3.Final",

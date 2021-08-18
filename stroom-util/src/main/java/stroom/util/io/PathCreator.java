@@ -207,4 +207,12 @@ public class PathCreator {
     public String replaceContextVars(String path) {
         return path;
     }
+
+    @Override
+    public String toString() {
+        return "PathCreator{" +
+                "tempDir=" + tempDirProvider.get() +
+                ", homeDir=" + homeDirProvider.get() +
+                '}';
+    }
 }

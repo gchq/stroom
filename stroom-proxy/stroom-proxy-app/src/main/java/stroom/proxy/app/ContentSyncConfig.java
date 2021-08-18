@@ -1,5 +1,6 @@
 package stroom.proxy.app;
 
+import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -10,7 +11,7 @@ import javax.inject.Singleton;
 
 @Singleton
 @JsonPropertyOrder(alphabetic = true)
-public class ContentSyncConfig implements IsProxyConfig {
+public class ContentSyncConfig extends AbstractConfig implements IsProxyConfig {
 
     private boolean isContentSyncEnabled = false;
     private Map<String, String> upstreamUrl;

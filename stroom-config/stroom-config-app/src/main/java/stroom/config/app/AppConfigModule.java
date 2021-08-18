@@ -68,6 +68,7 @@ import stroom.ui.config.shared.SplashConfig;
 import stroom.ui.config.shared.ThemeConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.ui.config.shared.UiPreferences;
+import stroom.util.config.ConfigLocation;
 import stroom.util.io.PathConfig;
 import stroom.util.io.StroomPathConfig;
 import stroom.util.logging.LogUtil;

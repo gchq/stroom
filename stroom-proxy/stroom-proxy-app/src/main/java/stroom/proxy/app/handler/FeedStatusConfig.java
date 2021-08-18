@@ -1,5 +1,6 @@
 package stroom.proxy.app.handler;
 
+import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -9,7 +10,7 @@ import javax.inject.Singleton;
 
 @Singleton
 @JsonPropertyOrder(alphabetic = true)
-public class FeedStatusConfig implements IsProxyConfig {
+public class FeedStatusConfig extends AbstractConfig implements IsProxyConfig {
 
     private String feedStatusUrl;
     private String apiKey;

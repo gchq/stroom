@@ -5,6 +5,7 @@ import stroom.proxy.repo.StreamHandler;
 import stroom.proxy.repo.StreamHandlerFactory;
 import stroom.util.HasHealthCheck;
 import stroom.util.cert.SSLUtil;
+import stroom.util.io.PathCreator;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BuildInfo;
 
@@ -46,7 +47,8 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
     ForwardStreamHandlerFactory(final LogStream logStream,
                                 final ForwardStreamConfig forwardStreamConfig,
                                 final ProxyRepositoryConfig proxyRepositoryConfig,
-                                final Provider<BuildInfo> buildInfoProvider) {
+                                final Provider<BuildInfo> buildInfoProvider,
+                                final PathCreator pathCreator) {
         this.logStream = logStream;
         this.forwardStreamConfig = forwardStreamConfig;
         this.proxyRepositoryConfig = proxyRepositoryConfig;
@@ -69,7 +71,8 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
                         LOGGER.info("Configuring SSLSocketFactory for destination {}", config.getForwardUrl());
                         SSLSocketFactory sslSocketFactory = null;
                         if (config.getSslConfig() != null) {
-                            sslSocketFactory = SSLUtil.createSslSocketFactory(config.getSslConfig());
+                            sslSocketFactory = SSLUtil.createSslSocketFactory(
+                                    config.getSslConfig(), pathCreator);
                         }
                         return new ForwardDestination(config, sslSocketFactory);
                     })

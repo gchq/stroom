@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
+import java.nio.file.Path;
 import java.util.function.Consumer;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
@@ -79,7 +80,10 @@ public class TestProxyGuiceBindings extends AbstractApplicationTest {
         public void run(final Config configuration, final Environment environment) throws Exception {
             LOGGER.info("Here");
 
-            final ProxyModule proxyModule = new ProxyModule(configuration, environment);
+            final ProxyModule proxyModule = new ProxyModule(
+                    configuration,
+                    environment,
+                    Path.of("dummy/path/to/config.yml"));
             injector = Guice.createInjector(proxyModule);
         }
 

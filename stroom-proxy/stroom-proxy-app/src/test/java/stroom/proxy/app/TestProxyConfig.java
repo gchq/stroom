@@ -1,19 +1,28 @@
 package stroom.proxy.app;
 
 import stroom.docref.DocRef;
+import stroom.test.common.util.test.TestingHomeAndTempProvidersModule;
+import stroom.util.config.ConfigValidator.Result;
 import stroom.util.config.PropertyUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
 import stroom.util.time.StroomDuration;
+import stroom.util.validation.ValidationModule;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -28,6 +37,36 @@ class TestProxyConfig {
             LambdaLogger.class,
             StroomDuration.class
     );
+
+    @Test
+    void testValidation(@TempDir Path tempDir) throws IOException {
+
+        final TestingHomeAndTempProvidersModule testingHomeAndTempProvidersModule =
+                new TestingHomeAndTempProvidersModule(tempDir);
+
+        final Injector injector = Guice.createInjector(
+                testingHomeAndTempProvidersModule,
+                new ValidationModule());
+
+        final ProxyConfigValidator proxyConfigValidator = injector.getInstance(ProxyConfigValidator.class);
+
+        final ProxyConfig proxyConfig = new ProxyConfig();
+        proxyConfig.getProxyPathConfig()
+                .setHome(testingHomeAndTempProvidersModule.getHomeDir().toAbsolutePath().toString());
+        proxyConfig.getProxyPathConfig()
+                .setTemp(tempDir.toAbsolutePath().toString());
+
+        // create the dirs so they validate ok
+        Files.createDirectories(tempDir);
+        Files.createDirectories(testingHomeAndTempProvidersModule.getHomeDir());
+
+        final Result<IsProxyConfig> result = proxyConfigValidator.validateRecursively(proxyConfig);
+
+        result.handleViolations(ProxyConfigValidator::logConstraintViolation);
+
+        Assertions.assertThat(result.hasErrorsOrWarnings())
+                .isFalse();
+    }
 
     /**
      * Test to verify that all fields in the config tree of type stroom.*

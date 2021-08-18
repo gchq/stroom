@@ -1,7 +1,9 @@
 package stroom.proxy.repo;
 
+import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.validation.ValidSimpleCron;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -12,7 +14,7 @@ import javax.inject.Singleton;
 
 @Singleton
 @JsonPropertyOrder({"storingEnabled", "repoDir", "format", "rollCron"})
-public class ProxyRepositoryReaderConfig implements IsProxyConfig {
+public class ProxyRepositoryReaderConfig extends AbstractConfig implements IsProxyConfig {
 
     private String readCron;
     private int forwardThreadCount = 3;
@@ -23,6 +25,7 @@ public class ProxyRepositoryReaderConfig implements IsProxyConfig {
 
     @JsonPropertyDescription("Cron style interval (e.g. every hour '0 * *', every half hour '0,30 * *') to read " +
             "any ready repositories (if not defined we read all the time)")
+    @ValidSimpleCron
     @JsonProperty
     public String getReadCron() {
         return readCron;
