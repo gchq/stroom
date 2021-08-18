@@ -16,7 +16,7 @@ public class MockProcessingUserIdentityProvider implements ProcessingUserIdentit
 
     @Override
     public boolean isProcessingUser(final UserIdentity userIdentity) {
-        return UserIdentity.IDENTITY_COMPARATOR.compare(USER_IDENTITY, userIdentity) == 0;
+        return USER_IDENTITY.equals(userIdentity);
     }
 
     private static class MockProcessingUserIdentity implements UserIdentity {

@@ -20,7 +20,6 @@ import javax.inject.Singleton;
 class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvider {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessingUserIdentityProvider.class);
-    private static final String INTERNAL_PROCESSING_USER = "INTERNAL_PROCESSING_USER";
     private static final long ONE_DAY = TimeUnit.DAYS.toMillis(1);
 
     private final TokenBuilderFactory tokenBuilderFactory;
@@ -28,7 +27,6 @@ class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvid
 
     private final AtomicLong lastFetchTime = new AtomicLong(0);
     private volatile UserIdentity userIdentity;
-
 
     @Inject
     ProcessingUserIdentityProviderImpl(final TokenBuilderFactory tokenBuilderFactory,
@@ -45,7 +43,7 @@ class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvid
             synchronized (this) {
                 if (userIdentity == null || lastFetchTime.get() < now - ONE_DAY) {
                     final String token = createToken();
-                    userIdentity = new ProcessingUserIdentity(INTERNAL_PROCESSING_USER, token);
+                    userIdentity = new ProcessingUserIdentity(token);
                     lastFetchTime.set(now);
                 }
             }
@@ -60,7 +58,7 @@ class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvid
         // instance one but this is ok as we are regularly refreshing tokens for the
         // proc user and it has been authenticated at this point.
         if (userIdentity != null) {
-            return UserIdentity.IDENTITY_COMPARATOR.compare(userIdentity, get()) == 0;
+            return userIdentity.equals(get());
         } else {
             LOGGER.debug("Null userIdentity");
             return false;
@@ -73,7 +71,7 @@ class ProcessingUserIdentityProviderImpl implements ProcessingUserIdentityProvid
                 .builder()
                 .expirationTime(timeToExpiryInSeconds)
                 .clientId(openIdClientDetailsFactory.getClient().getClientId())
-                .subject(INTERNAL_PROCESSING_USER);
+                .subject(ProcessingUserIdentity.INTERNAL_PROCESSING_USER);
         return tokenBuilder.build();
     }
 }

@@ -23,20 +23,20 @@ import java.util.Objects;
 
 public class ProcessingUserIdentity implements UserIdentity, HasJws {
 
-    private String id;
+    public static final String INTERNAL_PROCESSING_USER = "INTERNAL_PROCESSING_USER";
+
     private String jws;
 
     public ProcessingUserIdentity() {
     }
 
-    ProcessingUserIdentity(final String id, final String jws) {
-        this.id = id;
+    public ProcessingUserIdentity(final String jws) {
         this.jws = jws;
     }
 
     @Override
     public String getId() {
-        return id;
+        return INTERNAL_PROCESSING_USER;
     }
 
     @Override
@@ -53,12 +53,12 @@ public class ProcessingUserIdentity implements UserIdentity, HasJws {
             return false;
         }
         final ProcessingUserIdentity that = (ProcessingUserIdentity) o;
-        return Objects.equals(id, that.id) && Objects.equals(jws, that.jws);
+        return Objects.equals(getId(), that.getId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, jws);
+        return Objects.hash(getId());
     }
 
     @Override

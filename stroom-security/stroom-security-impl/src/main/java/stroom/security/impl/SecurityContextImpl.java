@@ -12,8 +12,6 @@ import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
 import stroom.util.shared.PermissionException;
 
-import org.jose4j.jwt.MalformedClaimException;
-import org.jose4j.jwt.NumericDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,8 +35,7 @@ class SecurityContextImpl implements SecurityContext {
     private final UserAppPermissionsCache userAppPermissionsCache;
     private final UserCache userCache;
     private final ProcessingUserIdentityProvider processingUserIdentityProvider;
-    private final OpenIdManager openIdManager;
-
+    private final UserIdentityFactory userIdentityFactory;
     @Inject
     SecurityContextImpl(
             final UserDocumentPermissionsCache userDocumentPermissionsCache,
@@ -46,13 +43,13 @@ class SecurityContextImpl implements SecurityContext {
             final UserAppPermissionsCache userAppPermissionsCache,
             final UserCache userCache,
             final ProcessingUserIdentityProvider processingUserIdentityProvider,
-            final OpenIdManager openIdManager) {
+            final UserIdentityFactory userIdentityFactory) {
         this.userDocumentPermissionsCache = userDocumentPermissionsCache;
         this.userGroupsCache = userGroupsCache;
         this.userAppPermissionsCache = userAppPermissionsCache;
         this.userCache = userCache;
         this.processingUserIdentityProvider = processingUserIdentityProvider;
-        this.openIdManager = openIdManager;
+        this.userIdentityFactory = userIdentityFactory;
     }
 
     @Override
@@ -112,7 +109,7 @@ class SecurityContextImpl implements SecurityContext {
 
     private void pushUser(final UserIdentity userIdentity) {
         // Before we push the user see if we need to refresh the user token.
-        refreshUserToken(userIdentity);
+        userIdentityFactory.refresh(userIdentity);
         // Push the user.
         CurrentUserState.push(userIdentity);
     }
@@ -543,7 +540,7 @@ class SecurityContextImpl implements SecurityContext {
             throw new RuntimeException("Current user has no token");
 
         } else {
-            refreshUserToken(userIdentity);
+            userIdentityFactory.refresh(userIdentity);
             final String jws = ((HasJws) userIdentity).getJws();
             if (jws == null) {
                 LOGGER.debug("The JWS is null for user '{}'", userIdentity.getId());
@@ -552,29 +549,5 @@ class SecurityContextImpl implements SecurityContext {
                 ClientSecurityUtil.addAuthorisationHeader(builder, jws);
             }
         }
-    }
-
-    private void refreshUserToken(final UserIdentity userIdentity) {
-        // Check to see if the user needs a token refresh.
-        if (userIdentity instanceof UserIdentityImpl) {
-            final UserIdentityImpl identity = (UserIdentityImpl) userIdentity;
-            if (hasTokenExpired(identity)) {
-                if (hasTokenExpired(identity)) {
-                    openIdManager.refreshToken(identity);
-                }
-            }
-        }
-    }
-
-    private boolean hasTokenExpired(final UserIdentityImpl userIdentity) {
-        try {
-            final NumericDate expirationTime = userIdentity.getJwtClaims().getExpirationTime();
-            expirationTime.addSeconds(10);
-            final NumericDate now = NumericDate.now();
-            return expirationTime.isBefore(now);
-        } catch (final MalformedClaimException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-        return false;
     }
 }

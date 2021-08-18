@@ -1,28 +1,20 @@
 package stroom.security.identity.token;
 
 import stroom.security.api.SecurityContext;
-import stroom.security.api.TokenException;
-import stroom.security.api.TokenVerifier;
 import stroom.security.identity.account.Account;
 import stroom.security.identity.account.AccountDao;
 import stroom.security.identity.account.AccountService;
 import stroom.security.identity.exceptions.NoSuchUserException;
 import stroom.security.openid.api.OpenIdClientFactory;
 import stroom.security.shared.PermissionNames;
-import stroom.util.HasHealthCheck;
 import stroom.util.rest.RestUtil;
 import stroom.util.shared.PermissionException;
-import stroom.util.shared.ResultPage;
-
-import com.codahale.metrics.health.HealthCheck;
 
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import javax.inject.Inject;
 
-public class ApiKeyServiceImpl implements ApiKeyService, HasHealthCheck {
+public class ApiKeyServiceImpl implements ApiKeyService {
 
     private final ApiKeyDao apiKeyDao;
     private final AccountDao accountDao;
@@ -30,7 +22,6 @@ public class ApiKeyServiceImpl implements ApiKeyService, HasHealthCheck {
     private final AccountService accountService;
     private final TokenBuilderFactory tokenBuilderFactory;
     private final OpenIdClientFactory openIdClientDetailsFactory;
-    private final TokenVerifier tokenVerifier;
 
     @Inject
     ApiKeyServiceImpl(final ApiKeyDao apiKeyDao,
@@ -38,15 +29,13 @@ public class ApiKeyServiceImpl implements ApiKeyService, HasHealthCheck {
                       final SecurityContext securityContext,
                       final AccountService accountService,
                       final TokenBuilderFactory tokenBuilderFactory,
-                      final OpenIdClientFactory openIdClientDetailsFactory,
-                      final TokenVerifier tokenVerifier) {
+                      final OpenIdClientFactory openIdClientDetailsFactory) {
         this.apiKeyDao = apiKeyDao;
         this.accountDao = accountDao;
         this.securityContext = securityContext;
         this.accountService = accountService;
         this.tokenBuilderFactory = tokenBuilderFactory;
         this.openIdClientDetailsFactory = openIdClientDetailsFactory;
-        this.tokenVerifier = tokenVerifier;
     }
 
     static Optional<ApiKeyType> getParsedTokenType(final String tokenType) {
@@ -72,19 +61,6 @@ public class ApiKeyServiceImpl implements ApiKeyService, HasHealthCheck {
     public ApiKeyResultPage search(final SearchApiKeyRequest request) {
         checkPermission();
         return apiKeyDao.search(request);
-
-//        // Validate filters
-//        if (searchRequest.getFilters() != null) {
-//            for (String key : searchRequest.getFilters().keySet()) {
-//                switch (key) {
-//                    case "expiresOn":
-//                    case "issuedOn":
-//                    case "updatedOn":
-//                        throw RestUtil.badRequest("Filtering by date is not supported.");
-//                }
-//            }
-//        }
-//        return tokenDao.searchTokens(searchRequest);
     }
 
     @Override
@@ -171,15 +147,6 @@ public class ApiKeyServiceImpl implements ApiKeyService, HasHealthCheck {
         return apiKeyDao.readById(id);
     }
 
-//    @Override
-//    public Optional<String> verifyToken(String token) {
-////        Optional<Token> tokenRecord = dao.readByToken(token);
-////        if (!tokenRecord.isPresent()) {
-////            return Optional.empty();
-////        }
-//        return tokenVerifier.verifyToken(token);
-//    }
-
     @Override
     public int toggleEnabled(int id, boolean isEnabled) {
         checkPermission();
@@ -197,53 +164,4 @@ public class ApiKeyServiceImpl implements ApiKeyService, HasHealthCheck {
             throw new PermissionException(securityContext.getUserId(), "You do not have permission to manage users");
         }
     }
-
-    // It could be argued that the validity of the api key should be a prop in Token
-    // and the API Keys page could display the validity.
-    @Override
-    public HealthCheck.Result getHealth() {
-        // Check all our enabled api keys are valid
-        final ResultPage<ApiKey> resultPage = apiKeyDao.list();
-
-        final HealthCheck.ResultBuilder builder = HealthCheck.Result.builder();
-
-        boolean isHealthy = true;
-
-        final Map<String, Object> invalidDetails = new HashMap<>();
-        for (final ApiKey apiKey : resultPage.getValues()) {
-            if (apiKey.isEnabled()) {
-                try {
-                    tokenVerifier.verifyToken(
-                            apiKey.getData(),
-                            openIdClientDetailsFactory.getClient().getClientId());
-                } catch (TokenException e) {
-                    isHealthy = false;
-                    final Map<String, String> details = new HashMap<>();
-                    details.put("expiry", apiKey.getExpiresOnMs() != null
-                            ? Instant.ofEpochMilli(apiKey.getExpiresOnMs()).toString()
-                            : null);
-                    details.put("error", e.getMessage());
-                    invalidDetails.put(apiKey.getId().toString(), details);
-                }
-            }
-        }
-
-        if (isHealthy) {
-            builder
-                    .healthy()
-                    .withMessage("All enabled API keys are valid");
-        } else {
-            builder
-                    .unhealthy()
-                    .withMessage("Some enabled API keys are invalid")
-                    .withDetail("invalidDetails", invalidDetails);
-        }
-
-        return builder.build();
-    }
-
-//    @Override
-//    public TokenConfig fetchTokenConfig() {
-//        return tokenConfig;
-//    }
 }
