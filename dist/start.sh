@@ -85,7 +85,11 @@ start_stroom() {
 
   # Ensure files and dirs exist for later tailing
   ensure_file_exists "${PATH_TO_START_LOG}" 
-  ensure_file_exists "${PATH_TO_MIGRATION_LOG}" 
+
+  if [[ ! "${APP_NAME}" =~ [Pp]roxy ]]; then
+    ensure_file_exists "${PATH_TO_MIGRATION_LOG}" 
+  fi
+
   ensure_file_exists "${PATH_TO_APP_LOG}" 
   # Ensure dir exists for an OOM heap dumps to go into
   ensure_dir_exists "${HEAP_DUMP_DIR}" 
@@ -274,9 +278,6 @@ main() {
   shift $((OPTIND-1)) # remove parsed options and args from $@ list
 
   setup_colours
-
-  # Ensure IP address has been set in the config yaml
-  check_is_configured "${PATH_TO_CONFIG}"
 
   check_or_create_pid_file
 }
