@@ -94,7 +94,11 @@ public class HomeDirProviderImpl implements HomeDirProvider {
 
     private Optional<Path> getApplicationJarDir() {
         try {
-            String codeSourceLocation = this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath();
+            String codeSourceLocation = this.getClass()
+                    .getProtectionDomain()
+                    .getCodeSource()
+                    .getLocation()
+                    .getPath();
             if (Pattern.matches(".*/stroom[^/]*.jar$", codeSourceLocation)) {
                 return Optional.of(Paths.get(codeSourceLocation).getParent());
             } else {

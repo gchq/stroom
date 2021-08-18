@@ -27,7 +27,10 @@ import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.config.ConfigValidator;
 import stroom.util.config.PropertyPathDecorator;
 import stroom.util.io.DirProvidersModule;
+import stroom.util.io.FileUtil;
+import stroom.util.io.HomeDirProvider;
 import stroom.util.io.PathConfig;
+import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.IsProxyConfig;
@@ -75,6 +78,10 @@ public class App extends Application<Config> {
     private DelegatingExceptionMapper delegatingExceptionMapper;
     @Inject
     private BuildInfo buildInfo;
+    @Inject
+    private HomeDirProvider homeDirProvider;
+    @Inject
+    private TempDirProvider tempDirProvider;
 
     private final Path configFile;
 
@@ -142,6 +149,10 @@ public class App extends Application<Config> {
         final Injector injector = Guice.createInjector(proxyModule);
         injector.injectMembers(this);
 
+        // Ensure we have our home/temp dirs set up
+        FileUtil.ensureDirExists(homeDirProvider.get());
+        FileUtil.ensureDirExists(tempDirProvider.get());
+
         // Add health checks
         healthChecks.register();
 
@@ -162,7 +173,7 @@ public class App extends Application<Config> {
 
         warnAboutDefaultOpenIdCreds(configuration, injector);
 
-        showBuildInfo();
+        showInfo();
     }
 
     private void warnAboutDefaultOpenIdCreds(Config configuration, Injector injector) {
@@ -205,10 +216,13 @@ public class App extends Application<Config> {
         environment.admin().addTask(new LogConfigurationTask());
     }
 
-    private void showBuildInfo() {
+    private void showInfo() {
         Objects.requireNonNull(buildInfo);
-        LOGGER.info("Build version: {}, date: {}",
-                buildInfo.getBuildVersion(), buildInfo.getBuildDate());
+        LOGGER.info(""
+                + "\n  Build version:       " + buildInfo.getBuildVersion()
+                + "\n  Build date:          " + buildInfo.getBuildDate()
+                + "\n  Stroom Proxy home:   " + homeDirProvider.get().toAbsolutePath().normalize()
+                + "\n  Stroom Proxy temp:   " + tempDirProvider.get().toAbsolutePath().normalize());
     }
 
     private Injector createValidationInjector() {
