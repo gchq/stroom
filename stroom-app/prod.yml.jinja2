@@ -30,7 +30,7 @@
   {%- set stroomHome = '/stroom' %}
   {%- set includeEnvVarSubstitution = true %}
 {%- elif distribution == "zip" %}
-  {%- set stroomHome = '.' %}
+  {%- set stroomHome = '${STROOM_HOME:-}' %}
   {%- set includeEnvVarSubstitution = false %}
 {%- endif %}
 # Stroom configuration file

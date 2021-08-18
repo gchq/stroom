@@ -2,10 +2,7 @@ package stroom.util.io;
 
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import javax.inject.Inject;
@@ -16,9 +13,9 @@ public class TempDirProviderImpl implements TempDirProvider {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TempDirProviderImpl.class);
 
-//    private static final String PROP_STROOM_TEMP = "stroom.temp";
+    //    private static final String PROP_STROOM_TEMP = "stroom.temp";
 //    private static final String ENV_STROOM_TEMP = "STROOM_TEMP";
-    private static final String PROP_JAVA_TEMP = "java.io.tmpdir";
+    private static final String DEFAULT_TEMP_SUB_DIR = "temp";
 
     private final PathConfig pathConfig;
     private final HomeDirProvider homeDirProvider;
@@ -58,33 +55,21 @@ public class TempDirProviderImpl implements TempDirProvider {
 //            }
 
             String dir = pathConfig.getTemp();
-            if (dir != null) {
+            if (dir != null && !dir.isEmpty()) {
                 LOGGER.info("Using temp path configuration property: {}", dir);
-            } else {
-                dir = System.getProperty(PROP_JAVA_TEMP);
-                if (dir != null) {
-                    LOGGER.info("Using default Java temp dir: {}", dir);
-                }
-            }
-
-            if (dir != null) {
                 dir = FileUtil.replaceHome(dir);
                 path = Paths.get(dir);
             }
 
             if (path == null) {
-                throw new NullPointerException("Temp dir is null");
-            }
-            try {
-                Files.createDirectories(path);
-            } catch (IOException e) {
-                throw new RuntimeException(LogUtil.message("Error ensuring temp directory {} exits",
-                        path.toAbsolutePath()), e);
+                path = homeDirProvider.get()
+                        .resolve(DEFAULT_TEMP_SUB_DIR);
             }
 
             // If this isn't an absolute path then make it so relative to the home path.
             if (!path.startsWith("/") && !path.startsWith("\\")) {
-                path = homeDirProvider.get().resolve(path);
+                path = homeDirProvider.get()
+                        .resolve(path);
             }
 
             path = path.toAbsolutePath();

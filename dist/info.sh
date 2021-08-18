@@ -48,7 +48,7 @@ main() {
   # shellcheck disable=SC1091
   source "${script_dir}/config/scripts.env"
   # shellcheck disable=SC1091
-  source "${script_dir}/${PATH_TO_UTIL_SCRIPT}"
+  source "${PATH_TO_UTIL_SCRIPT}"
 
   while getopts ":mh" arg; do
     # shellcheck disable=SC2034
