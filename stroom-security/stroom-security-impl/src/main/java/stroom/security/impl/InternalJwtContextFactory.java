@@ -1,6 +1,5 @@
 package stroom.security.impl;
 
-import stroom.security.impl.exception.AuthenticationException;
 import stroom.security.openid.api.OpenIdClientFactory;
 import stroom.security.openid.api.PublicJsonWebKeyProvider;
 import stroom.util.logging.LambdaLogger;
@@ -57,6 +56,8 @@ class InternalJwtContextFactory implements JwtContextFactory {
      */
     @Override
     public Optional<JwtContext> getJwtContext(final String jws) {
+        Optional<JwtContext> optionalJwtContext = Optional.empty();
+
         Objects.requireNonNull(jws, "Null JWS");
         LOGGER.debug(() -> "Found auth header in request. It looks like this: " + jws);
 
@@ -64,12 +65,13 @@ class InternalJwtContextFactory implements JwtContextFactory {
             LOGGER.debug(() -> "Verifying token...");
             final JwtConsumer jwtConsumer = newJwtConsumer();
             final JwtContext jwtContext = jwtConsumer.process(jws);
-            return Optional.ofNullable(jwtContext);
+            optionalJwtContext = Optional.ofNullable(jwtContext);
 
         } catch (final RuntimeException | InvalidJwtException e) {
             LOGGER.debug(() -> "Unable to verify token: " + e.getMessage(), e);
-            throw new AuthenticationException(e.getMessage(), e);
         }
+
+        return optionalJwtContext;
     }
 
     private JwtConsumer newJwtConsumer() {
