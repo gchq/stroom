@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2366** : Fix NPE caused by visualisations that do not define maxValues.
+
 * Issue **#2220** : OpenID connect web tokens can now be refreshed to maintain validity.
 
 * Included Leaflet.draw Javascript plugin within UI bundle.
