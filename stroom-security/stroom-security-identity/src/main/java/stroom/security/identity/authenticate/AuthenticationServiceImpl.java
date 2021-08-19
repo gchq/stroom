@@ -310,7 +310,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
         return tokenBuilderFactory
                 .builder()
                 .expirationTime(Instant.now()
-                        .plus(tokenConfig.getEmailResetTokenExpiryTime()))
+                        .plus(tokenConfig.getEmailResetTokenExpiration()))
                 .clientId(clientId)
                 .subject(account.getUserId())
                 .build();

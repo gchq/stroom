@@ -46,9 +46,7 @@ public class ResolvedOpenIdConfig {
     public static final String DEFAULT_REQUEST_SCOPE = "" +
             OpenId.SCOPE__OPENID +
             " " +
-            OpenId.SCOPE__EMAIL +
-            " " +
-            OpenId.SCOPE__OFFLINE_ACCESS;
+            OpenId.SCOPE__EMAIL;
 
     private final UriFactory uriFactory;
     private final OpenIdConfig openIdConfig;

@@ -640,11 +640,13 @@ appConfig:
           \ than 8 characters."
         unusedAccountDeactivationThreshold: "P90D"
       token:
+        accessTokenExpiration: "PT1H"
         algorithm: "RS256"
-        defaultApiKeyExpiryTime: "P365D"
-        emailResetTokenExpiryTime: "PT5M"
+        defaultApiKeyExpiration: "P365D"
+        emailResetTokenExpiration: "PT10M"
+        idTokenExpiration: "PT1H"
         jwsIssuer: "stroom"
-        tokenExpiryTime: "PT10M"
+        refreshTokenExpiration: "P30D"
       useDefaultOpenIdCredentials: false
   serviceDiscovery:
     enabled: false

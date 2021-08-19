@@ -38,7 +38,6 @@ public class OpenId {
     public static final String RESPONSE_TYPE__CODE = "code";
     public static final String SCOPE__OPENID = "openid";
     public static final String SCOPE__EMAIL = "email";
-    public static final String SCOPE__OFFLINE_ACCESS = "offline_access";
 
     public static final String ID_TOKEN = "id_token";
 

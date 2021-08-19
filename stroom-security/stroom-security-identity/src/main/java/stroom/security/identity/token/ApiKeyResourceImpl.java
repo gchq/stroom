@@ -104,6 +104,6 @@ public class ApiKeyResourceImpl implements ApiKeyResource {
 
     @Override
     public Long getDefaultApiKeyExpirySeconds() {
-        return tokenConfigProvider.get().getDefaultApiKeyExpiryTime().toMillis() / 1000;
+        return tokenConfigProvider.get().getDefaultApiKeyExpiration().toMillis() / 1000;
     }
 }

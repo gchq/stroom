@@ -4,6 +4,7 @@ import stroom.security.identity.authenticate.api.AuthenticationService;
 import stroom.security.identity.authenticate.api.AuthenticationService.AuthState;
 import stroom.security.identity.authenticate.api.AuthenticationService.AuthStatus;
 import stroom.security.identity.config.IdentityConfig;
+import stroom.security.identity.config.TokenConfig;
 import stroom.security.identity.exceptions.BadRequestException;
 import stroom.security.identity.token.TokenBuilderFactory;
 import stroom.security.openid.api.OpenId;
@@ -212,16 +213,11 @@ class OpenIdService {
                     "Redirect URI is not allowed");
         }
 
-        final TemporalAmount expiresIn =
-                identityConfig.getTokenConfig().getTokenExpiryTime();
-
         final TokenResponse tokenResponse = createTokenResponse(
                 clientId,
                 accessCodeRequest.getSubject(),
                 accessCodeRequest.getNonce(),
-                accessCodeRequest.getState(),
-                accessCodeRequest.getScope(),
-                expiresIn);
+                accessCodeRequest.getState());
 
         refreshTokenCache.put(tokenResponse.getRefreshToken(),
                 new TokenProperties(accessCodeRequest.getClientId(), accessCodeRequest.getSubject()));
@@ -252,16 +248,12 @@ class OpenIdService {
                     "Incorrect secret");
         }
 
-        final TemporalAmount expiresIn =
-                identityConfig.getTokenConfig().getTokenExpiryTime();
         final TokenProperties tokenProperties = tokenPropertiesOptional.get();
         final TokenResponse tokenResponse = createTokenResponse(
                 tokenProperties.getClientId(),
                 tokenProperties.getSubject(),
                 null,
-                null,
-                OpenId.SCOPE__OFFLINE_ACCESS,
-                expiresIn);
+                null);
 
         refreshTokenCache.put(tokenResponse.getRefreshToken(),
                 new TokenProperties(tokenProperties.getClientId(), tokenProperties.getSubject()));
@@ -280,13 +272,12 @@ class OpenIdService {
     private TokenResponse createTokenResponse(final String clientId,
                                               final String subject,
                                               final String nonce,
-                                              final String state,
-                                              final String scope,
-                                              final TemporalAmount expiresIn) {
+                                              final String state) {
+        final TokenConfig tokenConfig = identityConfig.getTokenConfig();
         final Instant now = Instant.now();
 
         final String idToken = tokenBuilderFactory.builder()
-                .expirationTime(now.plus(expiresIn))
+                .expirationTime(now.plus(tokenConfig.getIdTokenExpiration()))
                 .clientId(clientId)
                 .subject(subject)
                 .nonce(nonce)
@@ -294,28 +285,24 @@ class OpenIdService {
                 .build();
 
         final String accessToken = tokenBuilderFactory.builder()
-                .expirationTime(now.plus(expiresIn))
+                .expirationTime(now.plus(tokenConfig.getAccessTokenExpiration()))
                 .clientId(clientId)
                 .subject(subject)
                 .nonce(nonce)
                 .state(state)
                 .build();
 
-        String refreshToken = null;
-        Long refreshTokenExpiresInSeconds = null;
-        if (scope.contains(OpenId.SCOPE__OFFLINE_ACCESS)) {
-            final TemporalAmount refreshTokenExpiresIn = Duration.ofDays(1);
-            refreshToken = tokenBuilderFactory.builder()
-                    .expirationTime(now.plus(refreshTokenExpiresIn))
-                    .clientId(clientId)
-                    .subject(subject)
-                    .nonce(nonce)
-                    .state(state)
-                    .build();
-            refreshTokenExpiresInSeconds = Duration.from(refreshTokenExpiresIn).toMillis() / 1000;
-        }
+        final TemporalAmount refreshTokenExpiresIn = tokenConfig.getRefreshTokenExpiration();
+        final String refreshToken = tokenBuilderFactory.builder()
+                .expirationTime(now.plus(refreshTokenExpiresIn))
+                .clientId(clientId)
+                .subject(subject)
+                .nonce(nonce)
+                .state(state)
+                .build();
+        final Long refreshTokenExpiresInSeconds = Duration.from(refreshTokenExpiresIn).toMillis() / 1000;
 
-        final long expiresInSeconds = Duration.from(expiresIn).toMillis() / 1000;
+        final long expiresInSeconds = tokenConfig.getIdTokenExpiration().toMillis() / 1000;
 
         return TokenResponse.builder()
                 .idToken(idToken)

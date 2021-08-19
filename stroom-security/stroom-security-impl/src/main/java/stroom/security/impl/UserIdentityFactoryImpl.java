@@ -242,6 +242,14 @@ class UserIdentityFactoryImpl implements UserIdentityFactory {
             throw e;
 
         } finally {
+            // Some IDPs don't seem to send updated refresh tokens so keep the existing refresh token.
+            if (tokenResponse != null && tokenResponse.getRefreshToken() == null) {
+                tokenResponse = tokenResponse
+                        .copy()
+                        .refreshToken(identity.getTokenResponse().getRefreshToken())
+                        .build();
+            }
+
             identity.setTokenResponse(tokenResponse);
             identity.setJwtClaims(jwtClaims);
         }
