@@ -13,6 +13,7 @@ import stroom.util.config.PropertyUtil;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
+import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.NotInjectableConfig;
 
 import com.google.common.reflect.ClassPath;
@@ -252,7 +253,9 @@ class TestAppConfigModule {
                 .map(ClassPath.ClassInfo::load)
                 .filter(classFilter)
                 .filter(AbstractConfig.class::isAssignableFrom)
-                .filter(clazz -> !IsProxyConfig.class.isAssignableFrom(clazz)) // ignore proxy classes
+                .filter(clazz ->
+                        !IsProxyConfig.class.isAssignableFrom(clazz)
+                                || IsStroomConfig.class.isAssignableFrom(clazz)) // ignore proxy classes
                 .filter(clazz -> {
                     boolean isAbstract = Modifier.isAbstract(clazz.getModifiers());
                     if (isAbstract) {
