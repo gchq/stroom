@@ -59,7 +59,7 @@ class OpenIdManager {
         // Create a state for this authentication request.
         final AuthenticationState state = AuthenticationStateSessionUtil.create(request, postAuthRedirectUri);
         LOGGER.debug(() -> "frontChannelOIDC state=" + state);
-        return createAuthUri(request, endpoint, clientId, postAuthRedirectUri, state, false);
+        return createAuthUri(request, endpoint, clientId, state, false);
     }
 
     private String backChannelOIDC(final HttpServletRequest request,
@@ -95,8 +95,8 @@ class OpenIdManager {
 
             // If we manage to login then redirect to the original URL held in the state.
             if (loggedIn) {
-                LOGGER.info(() -> "Redirecting to initiating URL: " + state.getUrl());
-                redirectUri = state.getUrl();
+                LOGGER.info(() -> "Redirecting to initiating URI: " + state.getUri());
+                redirectUri = state.getUri();
             }
         }
 
@@ -136,13 +136,12 @@ class OpenIdManager {
                 "To make an authentication request the OpenId config 'clientId' must not be null");
         final AuthenticationState state = AuthenticationStateSessionUtil.create(request, redirectUri);
         LOGGER.debug(() -> "logout state=" + state);
-        return createAuthUri(request, endpoint, clientId, redirectUri, state, true);
+        return createAuthUri(request, endpoint, clientId, state, true);
     }
 
     private String createAuthUri(final HttpServletRequest request,
                                  final String endpoint,
                                  final String clientId,
-                                 final String redirectUri,
                                  final AuthenticationState state,
                                  final boolean prompt) {
         // In some cases we might need to use an external URL as the current incoming one might have been proxied.
@@ -150,7 +149,7 @@ class OpenIdManager {
         UriBuilder authenticationRequest = UriBuilder.fromUri(endpoint)
                 .queryParam(OpenId.RESPONSE_TYPE, OpenId.CODE)
                 .queryParam(OpenId.CLIENT_ID, clientId)
-                .queryParam(OpenId.REDIRECT_URI, redirectUri)
+                .queryParam(OpenId.REDIRECT_URI, state.getUri())
                 .queryParam(OpenId.SCOPE, openIdConfig.getRequestScope())
                 .queryParam(OpenId.STATE, state.getId())
                 .queryParam(OpenId.NONCE, state.getNonce());

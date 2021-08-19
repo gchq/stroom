@@ -1,6 +1,7 @@
 package stroom.ui.config.shared;
 
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -15,7 +16,7 @@ import javax.inject.Singleton;
 @Singleton
 @JsonPropertyOrder({"infoPopup"})
 @JsonInclude(Include.NON_NULL)
-public class QueryConfig extends AbstractConfig {
+public class QueryConfig extends AbstractConfig implements IsStroomConfig {
 
     @JsonProperty
     private InfoPopupConfig infoPopup;

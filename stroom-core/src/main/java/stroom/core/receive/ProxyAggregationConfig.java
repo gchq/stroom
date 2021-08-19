@@ -3,6 +3,7 @@ package stroom.core.receive;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.RepoConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -11,12 +12,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import javax.inject.Singleton;
 
 @Singleton
-@JsonPropertyOrder({
-        "repoDir",
-        "dbDir",
-        "aggregator"
-})
-public class ProxyAggregationConfig extends AbstractConfig implements RepoConfig {
+@JsonPropertyOrder(alphabetic = true)
+public class ProxyAggregationConfig extends AbstractConfig implements IsStroomConfig, RepoConfig {
 
     private String repoDir = "proxy_repo";
     private String dbDir = "proxy_repo_db";
@@ -52,5 +49,14 @@ public class ProxyAggregationConfig extends AbstractConfig implements RepoConfig
 
     public void setAggregatorConfig(final AggregatorConfig aggregatorConfig) {
         this.aggregatorConfig = aggregatorConfig;
+    }
+
+    @Override
+    public String toString() {
+        return "ProxyAggregationConfig{" +
+                "repoDir='" + repoDir + '\'' +
+                ", dbDir='" + dbDir + '\'' +
+                ", aggregatorConfig=" + aggregatorConfig +
+                '}';
     }
 }

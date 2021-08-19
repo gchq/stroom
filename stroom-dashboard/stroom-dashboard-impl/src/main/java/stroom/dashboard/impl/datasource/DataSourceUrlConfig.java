@@ -1,13 +1,14 @@
 package stroom.dashboard.impl.datasource;
 
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class DataSourceUrlConfig extends AbstractConfig {
+public class DataSourceUrlConfig extends AbstractConfig implements IsStroomConfig {
 
     // These paths must match the paths in the respective resource classes
     // Not ideal having them defined in two places

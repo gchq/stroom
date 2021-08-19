@@ -1,5 +1,6 @@
 package stroom.util.cert;
 
+import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -10,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Path;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -36,11 +38,13 @@ public class SSLUtil {
     private SSLUtil() {
     }
 
-    public static SSLSocketFactory createSslSocketFactory(final SSLConfig sslConfig) {
+    public static SSLSocketFactory createSslSocketFactory(
+            final SSLConfig sslConfig,
+            final PathCreator pathCreator) {
         Objects.requireNonNull(sslConfig);
 
-        final KeyManager[] keyManagers = createKeyManagers(sslConfig);
-        final TrustManager[] trustManagers = createTrustManagers(sslConfig);
+        final KeyManager[] keyManagers = createKeyManagers(sslConfig, pathCreator);
+        final TrustManager[] trustManagers = createTrustManagers(sslConfig, pathCreator);
 
         final SSLContext sslContext;
         try {
@@ -54,7 +58,10 @@ public class SSLUtil {
         return sslContext.getSocketFactory();
     }
 
-    public static KeyManager[] createKeyManagers(final SSLConfig sslConfig) {
+    public static KeyManager[] createKeyManagers(
+            final SSLConfig sslConfig,
+            final PathCreator pathCreator) {
+
         Objects.requireNonNull(sslConfig);
 
         KeyStore keyStore = null;
@@ -62,8 +69,10 @@ public class SSLUtil {
 
         // Load the keystore
         if (sslConfig.getKeyStorePath() != null) {
+            final Path keyStorePath = pathCreator.toAppPath(sslConfig.getKeyStorePath());
+
             try (final InputStream inputStream = new BufferedInputStream(
-                    new FileInputStream(sslConfig.getKeyStorePath()))) {
+                    new FileInputStream(keyStorePath.toFile()))) {
 
                 keyStore = KeyStore.getInstance(sslConfig.getKeyStoreType());
                 LOGGER.info(() ->
@@ -88,7 +97,9 @@ public class SSLUtil {
         return keyManagerFactory.getKeyManagers();
     }
 
-    public static TrustManager[] createTrustManagers(final SSLConfig sslConfig) {
+    public static TrustManager[] createTrustManagers(
+            final SSLConfig sslConfig,
+            final PathCreator pathCreator) {
         Objects.requireNonNull(sslConfig);
 
         KeyStore trustStore = null;
@@ -96,8 +107,10 @@ public class SSLUtil {
 
         // Load the truststore
         if (sslConfig.getTrustStorePath() != null) {
+            final Path trustStorePath = pathCreator.toAppPath(sslConfig.getTrustStorePath());
+
             try (final InputStream inputStream = new BufferedInputStream(
-                    new FileInputStream(sslConfig.getTrustStorePath()))) {
+                    new FileInputStream(trustStorePath.toFile()))) {
                 trustStore = KeyStore.getInstance(sslConfig.getTrustStoreType());
                 LOGGER.info(() ->
                         "Loading truststore " + sslConfig.getTrustStorePath() +

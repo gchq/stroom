@@ -1,11 +1,11 @@
 package stroom.config.global.impl;
 
-import stroom.config.global.impl.validation.ValidationModule;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasHealthCheckBinder;
 import stroom.util.guice.RestResourcesBinder;
+import stroom.util.validation.ValidationModule;
 
 import com.google.inject.AbstractModule;
 import io.dropwizard.lifecycle.Managed;

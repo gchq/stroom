@@ -1,6 +1,7 @@
 package stroom.meta.impl;
 
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -13,7 +14,7 @@ import javax.validation.constraints.NotNull;
 
 @Singleton
 @JsonPropertyOrder(alphabetic = true)
-public class MetaValueConfig extends AbstractConfig {
+public class MetaValueConfig extends AbstractConfig implements IsStroomConfig {
 
     @NotNull
     @JsonProperty

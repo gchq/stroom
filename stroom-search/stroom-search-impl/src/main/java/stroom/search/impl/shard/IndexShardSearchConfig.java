@@ -2,6 +2,7 @@ package stroom.search.impl.shard;
 
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -9,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import javax.inject.Singleton;
 
 @Singleton
-public class IndexShardSearchConfig extends AbstractConfig {
+public class IndexShardSearchConfig extends AbstractConfig implements IsStroomConfig {
 
     private static final int DEFAULT_MAX_THREADS = 4;
     private static final int DEFAULT_MAX_THREADS_PER_TASK = 2;

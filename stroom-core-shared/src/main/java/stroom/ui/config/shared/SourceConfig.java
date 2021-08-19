@@ -1,6 +1,7 @@
 package stroom.ui.config.shared;
 
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -15,7 +16,7 @@ import javax.validation.constraints.Min;
 @Singleton
 @JsonPropertyOrder({"maxCharactersInPreviewFetch"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class SourceConfig extends AbstractConfig {
+public class SourceConfig extends AbstractConfig implements IsStroomConfig {
 
     @Min(1)
     @JsonProperty

@@ -1,6 +1,7 @@
 package stroom.proxy.dist;
 
 import stroom.proxy.app.ProxyConfig;
+import stroom.proxy.app.ProxyYamlUtil;
 import stroom.util.io.DiffUtil;
 
 import org.junit.jupiter.api.Test;
@@ -124,7 +125,7 @@ class TestProxyYamlUtil {
         Path path = getStroomProxyAppFile(filename);
 
         try {
-            return ProxyYamlUtil.readAppConfig(path);
+            return ProxyYamlUtil.readProxyConfig(path);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }

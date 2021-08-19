@@ -2,6 +2,7 @@ package stroom.security.identity.config;
 
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -9,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import javax.inject.Singleton;
 
 @Singleton
-public class OpenIdConfig extends AbstractConfig {
+public class OpenIdConfig extends AbstractConfig implements IsStroomConfig {
 
     public static final String PROP_NAME_ACCESS_CODE_CACHE = "accessCodeCache";
     public static final String PROP_NAME_REFRESH_TOKEN_CACHE = "refreshTokenCache";

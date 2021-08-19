@@ -4,13 +4,14 @@ import stroom.statistics.impl.InternalStatisticsConfig;
 import stroom.statistics.impl.hbase.internal.HBaseStatisticsConfig;
 import stroom.statistics.impl.sql.SQLStatisticsConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class StatisticsConfig extends AbstractConfig {
+public class StatisticsConfig extends AbstractConfig implements IsStroomConfig {
 
     public static final String PROP_NAME_SQL = "sql";
     public static final String PROP_NAME_HBASE = "hbase";

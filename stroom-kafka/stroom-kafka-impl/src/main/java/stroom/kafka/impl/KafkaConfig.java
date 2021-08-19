@@ -2,6 +2,7 @@ package stroom.kafka.impl;
 
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -10,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import javax.inject.Singleton;
 
 @Singleton
-public class KafkaConfig extends AbstractConfig {
+public class KafkaConfig extends AbstractConfig implements IsStroomConfig {
 
     private String skeletonConfigContent = DEFAULT_SKELETON_CONFIG_CONTENT;
 

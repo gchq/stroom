@@ -1,6 +1,7 @@
 package stroom.core.receive;
 
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.validation.ValidRegex;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -8,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import javax.inject.Singleton;
 
 @Singleton
-public class ReceiveDataConfig extends AbstractConfig {
+public class ReceiveDataConfig extends AbstractConfig implements IsStroomConfig {
 
     private String receiptPolicyUuid;
     private String unknownClassification = "UNKNOWN CLASSIFICATION";

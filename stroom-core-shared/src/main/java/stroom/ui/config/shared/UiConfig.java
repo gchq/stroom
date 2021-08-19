@@ -1,22 +1,24 @@
 /*
  * Copyright 2016 Crown Copyright
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * See the License for the specific language governing permissions and
+ * Unless required by applicable law or agreed to in writing, software
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * You may obtain a copy of the License at
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * import stroom.util.shared.IsStroomConfig;
  * limitations under the License.
+ * you may not use this file except in compliance with the License.
  */
 
 package stroom.ui.config.shared;
 
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.validation.ValidRegex;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -33,7 +35,7 @@ import javax.validation.constraints.Pattern;
 @Singleton
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class UiConfig extends AbstractConfig {
+public class UiConfig extends AbstractConfig implements IsStroomConfig {
 
     @JsonProperty
     @JsonPropertyDescription("The welcome message that is displayed in the welcome tab when logging in to Stroom. " +
@@ -91,9 +93,6 @@ public class UiConfig extends AbstractConfig {
     private ActivityConfig activity;
 
     @JsonProperty
-    private UrlConfig url;
-
-    @JsonProperty
     private SourceConfig source;
 
     @JsonProperty
@@ -123,7 +122,6 @@ public class UiConfig extends AbstractConfig {
                     @JsonProperty("oncontextmenu") final String oncontextmenu,
                     @JsonProperty("splash") final SplashConfig splash,
                     @JsonProperty("activity") final ActivityConfig activity,
-                    @JsonProperty("url") final UrlConfig url,
                     @JsonProperty("source") final SourceConfig source,
                     @JsonProperty("requireReactWrapper") Boolean requireReactWrapper) {
         this.welcomeHtml = welcomeHtml;
@@ -139,7 +137,6 @@ public class UiConfig extends AbstractConfig {
         this.oncontextmenu = oncontextmenu;
         this.splash = splash;
         this.activity = activity;
-        this.url = url;
         this.source = source;
         this.requireReactWrapper = requireReactWrapper;
 
@@ -182,9 +179,6 @@ public class UiConfig extends AbstractConfig {
         }
         if (activity == null) {
             activity = new ActivityConfig();
-        }
-        if (url == null) {
-            url = new UrlConfig();
         }
         if (source == null) {
             source = new SourceConfig();
@@ -282,14 +276,6 @@ public class UiConfig extends AbstractConfig {
         this.activity = activity;
     }
 
-    public UrlConfig getUrl() {
-        return url;
-    }
-
-    public void setUrl(final UrlConfig url) {
-        this.url = url;
-    }
-
     public String getHtmlTitle() {
         return htmlTitle;
     }
@@ -331,20 +317,21 @@ public class UiConfig extends AbstractConfig {
             return false;
         }
         final UiConfig uiConfig = (UiConfig) o;
-        return Objects.equals(welcomeHtml, uiConfig.welcomeHtml) && Objects.equals(aboutHtml,
-                uiConfig.aboutHtml) && Objects.equals(maintenanceMessage,
-                uiConfig.maintenanceMessage) && Objects.equals(defaultMaxResults,
-                uiConfig.defaultMaxResults) && Objects.equals(process,
-                uiConfig.process) && Objects.equals(helpUrl, uiConfig.helpUrl) && Objects.equals(theme,
-                uiConfig.theme) && Objects.equals(query, uiConfig.query) && Objects.equals(namePattern,
-                uiConfig.namePattern) && Objects.equals(htmlTitle,
-                uiConfig.htmlTitle) && Objects.equals(oncontextmenu,
-                uiConfig.oncontextmenu) && Objects.equals(splash, uiConfig.splash) && Objects.equals(
-                activity,
-                uiConfig.activity) && Objects.equals(url, uiConfig.url) &&
-                Objects.equals(source, uiConfig.source) && Objects.equals(
-                requireReactWrapper,
-                uiConfig.requireReactWrapper);
+        return Objects.equals(welcomeHtml, uiConfig.welcomeHtml)
+                && Objects.equals(aboutHtml, uiConfig.aboutHtml)
+                && Objects.equals(maintenanceMessage, uiConfig.maintenanceMessage)
+                && Objects.equals(defaultMaxResults, uiConfig.defaultMaxResults)
+                && Objects.equals(process, uiConfig.process)
+                && Objects.equals(helpUrl, uiConfig.helpUrl)
+                && Objects.equals(theme, uiConfig.theme)
+                && Objects.equals(query, uiConfig.query)
+                && Objects.equals(namePattern, uiConfig.namePattern)
+                && Objects.equals(htmlTitle, uiConfig.htmlTitle)
+                && Objects.equals(oncontextmenu, uiConfig.oncontextmenu)
+                && Objects.equals(splash, uiConfig.splash)
+                && Objects.equals(activity, uiConfig.activity)
+                && Objects.equals(source, uiConfig.source)
+                && Objects.equals(requireReactWrapper, uiConfig.requireReactWrapper);
     }
 
     @Override
@@ -362,7 +349,6 @@ public class UiConfig extends AbstractConfig {
                 oncontextmenu,
                 splash,
                 activity,
-                url,
                 source,
                 requireReactWrapper);
     }
@@ -383,7 +369,6 @@ public class UiConfig extends AbstractConfig {
                 ", oncontextmenu='" + oncontextmenu + '\'' +
                 ", splash=" + splash +
                 ", activity=" + activity +
-                ", url=" + url +
                 ", source=" + source +
                 ", requireReactWrapper=" + requireReactWrapper +
                 '}';

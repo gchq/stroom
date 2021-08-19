@@ -4,6 +4,7 @@ import stroom.cache.api.CacheManager;
 import stroom.cache.impl.CacheManagerImpl;
 import stroom.pipeline.PipelineConfig;
 import stroom.util.cert.SSLConfig;
+import stroom.util.io.PathCreator;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -12,6 +13,9 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import okhttp3.Response;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.fail;
 
@@ -19,7 +23,7 @@ import static org.assertj.core.api.Assertions.fail;
 class TestHttpCall {
 
     @Test
-    void test() throws JsonProcessingException {
+    void test(@TempDir final Path tempDir) throws JsonProcessingException {
         final SSLConfig sslConfig = new SSLConfig();
         sslConfig.setKeyStorePath("/Users/stroomdev66/work/stroom-6.0/stroom-ssl-test/client.jks");
         sslConfig.setKeyStorePassword("password");
@@ -33,8 +37,12 @@ class TestHttpCall {
 
         final String clientConfig = mapper.writeValueAsString(sslConfig);
 
+        final PathCreator pathCreator = new PathCreator(
+                () -> tempDir.resolve("home"),
+                () -> tempDir);
+
         try (final CacheManager cacheManager = new CacheManagerImpl()) {
-            HttpCall httpCall = new HttpCall(new HttpClientCache(cacheManager, new PipelineConfig()));
+            HttpCall httpCall = new HttpCall(new HttpClientCache(cacheManager, new PipelineConfig(), pathCreator));
             try (Response response = httpCall.execute("https://localhost:5443/", "", "", "", clientConfig)) {
                 System.out.println(response.body().string());
 

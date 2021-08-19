@@ -2,6 +2,7 @@ package stroom.search.solr.search;
 
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -9,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import javax.inject.Singleton;
 
 @Singleton
-public class SolrSearchConfig extends AbstractConfig {
+public class SolrSearchConfig extends AbstractConfig implements IsStroomConfig {
 
     /**
      * We don't want to collect more than 10k doc's data into the queue by

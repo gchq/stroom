@@ -5,13 +5,14 @@ import stroom.data.store.impl.fs.DataStoreServiceConfig;
 import stroom.data.store.impl.fs.FsVolumeConfig;
 import stroom.meta.impl.MetaServiceConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class DataConfig extends AbstractConfig {
+public class DataConfig extends AbstractConfig implements IsStroomConfig {
 
     public static final String NAME = "data";
 

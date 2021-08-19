@@ -116,6 +116,12 @@ public class ResolvedOpenIdConfig {
                             if (openIdConfig.getLogoutEndpoint() != null &&
                                     !openIdConfig.getLogoutEndpoint().isBlank()) {
                                 builder = builder.logoutEndpoint(openIdConfig.getLogoutEndpoint());
+                            } else if (openIdConfiguration.getLogoutEndpoint() == null ||
+                                    openIdConfiguration.getLogoutEndpoint().isBlank()) {
+                                // If the IdP doesn't provide a logout endpoint then use the internal one to invalidate
+                                // the session and redirect to perform a a new auth flow.
+                                builder = builder.logoutEndpoint(
+                                        uriFactory.publicUri(INTERNAL_LOGOUT_ENDPOINT).toString());
                             }
                             openIdConfiguration = builder.build();
 

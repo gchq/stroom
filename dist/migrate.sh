@@ -34,19 +34,19 @@ invalid_arguments() {
 
 run_migrations() {
 
-  ensure_file_exists "${path_to_migrate_log}" 
-  ensure_file_exists "${path_to_migration_log}" 
+  ensure_file_exists "${PATH_TO_MIGRATE_LOG}" 
+  ensure_file_exists "${PATH_TO_MIGRATION_LOG}" 
 
   local absolute_path_to_config
   local absoulte_path_to_jar
   if command -v realpath 1>/dev/null; then
     # realpath binary is available so use that
-    absolute_path_to_config="$(realpath "${path_to_config}")"
-    absoulte_path_to_jar="$(realpath "${path_to_jar}")"
+    absolute_path_to_config="$(realpath "${PATH_TO_CONFIG}")"
+    absoulte_path_to_jar="$(realpath "${PATH_TO_JAR}")"
   elif command -v readlink 1>/dev/null; then
     # readlink binary is available
-    absolute_path_to_config="$(readlink -f "${path_to_config}")"
-    absoulte_path_to_jar="$(readlink -f "${path_to_jar}")"
+    absolute_path_to_config="$(readlink -f "${PATH_TO_CONFIG}")"
+    absoulte_path_to_jar="$(readlink -f "${PATH_TO_JAR}")"
   else
     # Binaries to determine absolute path not available so fall back on just
     # using the relative path. Use of an absolute path is not critical so using
@@ -55,18 +55,18 @@ run_migrations() {
       "binaries.${NC}"
     warn "It is recommended to install one of these to help distinguish between" \
       "stroom and stroom-proxy processes.${NC}"
-    absolute_path_to_config="${path_to_config}"
-    absoulte_path_to_jar="${path_to_jar}"
+    absolute_path_to_config="${PATH_TO_CONFIG}"
+    absoulte_path_to_jar="${PATH_TO_JAR}"
   fi
 
   # Set up the JVM heap dump options if not already set
   # shellcheck disable=SC2153
-  local java_opts="${JAVA_OPTS}"
+  local java_opts="${JAVA_OPTS:- -Xms50m -Xmx2g}"
   if [[ ! "${java_opts}" =~ -XX:\+HeapDumpOnOutOfMemoryError ]]; then
     java_opts="${java_opts} -XX:+HeapDumpOnOutOfMemoryError"
   fi
   if [[ ! "${java_opts}" =~ -XX:HeapDumpPath ]]; then
-    java_opts="${java_opts} -XX:HeapDumpPath=${heap_dump_dir}"
+    java_opts="${java_opts} -XX:HeapDumpPath=${HEAP_DUMP_DIR}"
   fi
 
   # change to the script dir so java is relative to there and not where
@@ -85,29 +85,29 @@ run_migrations() {
     -jar "${absoulte_path_to_jar}" \
     migrate \
     "${absolute_path_to_config}" \
-    &> "${path_to_migrate_log}" &
+    &> "${PATH_TO_MIGRATE_LOG}" &
 
   local migrate_pid="$!"
 
   info "Running ${GREEN}${APP_NAME}${NC} database migrations in the background" \
     "with PID ${BLUE}${migrate_pid}${NC}."
   info "Logging to:" \
-    "\n  ${BLUE}${path_to_migrate_log}${NC}" \
-    "\n  ${BLUE}${path_to_migration_log}${NC}" \
-    "\n  ${BLUE}${path_to_app_log}${NC}"
+    "\n  ${BLUE}${PATH_TO_MIGRATE_LOG}${NC}" \
+    "\n  ${BLUE}${PATH_TO_MIGRATION_LOG}${NC}" \
+    "\n  ${BLUE}${PATH_TO_APP_LOG}${NC}"
   echo
   info "Using JVM arguments ${BLUE}${java_opts}${NC}"
 
   if [[ "${do_tailing}" = "true" ]]; then
     info "Tailing log files:" \
-      "\n  ${BLUE}${path_to_migrate_log}${NC}" \
-      "\n  ${BLUE}${path_to_app_log}${NC}"
+      "\n  ${BLUE}${PATH_TO_MIGRATE_LOG}${NC}" \
+      "\n  ${BLUE}${PATH_TO_APP_LOG}${NC}"
     info "Tailing will terminate when the migrate is complete."
     info "Press CTRL-C to terminate log tailing only."
 
     # Tail the log files in the background
     # The app log will show basic progress of the migration
-    tail -F "${path_to_migrate_log}" "${path_to_app_log}" 2>/dev/null &
+    tail -F "${PATH_TO_MIGRATE_LOG}" "${PATH_TO_APP_LOG}" 2>/dev/null &
 
     # Now wait for the migration to complete
     if [ -n "${migrate_pid}" ]; then
@@ -125,17 +125,17 @@ run_migrations() {
     kill_log_tailing
 
     info "For detailed logging of the migration SQL see" \
-      "${BLUE}${path_to_migration_log}${NC}"
+      "${BLUE}${PATH_TO_MIGRATION_LOG}${NC}"
   fi
 
   popd > /dev/null
 }
 
 check_or_create_pid_file() {
-  if [ ! -f "${stroom_pid_file}" ]; then # If there is no pid file
+  if [ ! -f "${STROOM_PID_FILE}" ]; then # If there is no pid file
     run_migrations
   else # If there is a pid file we need to deal with it
-    local -r stroom_pid=$(cat "$stroom_pid_file");
+    local -r stroom_pid=$(cat "$STROOM_PID_FILE");
 
     if [ "${stroom_pid}" = '' ]; then # If the pid file is empty for some reason
       run_migrations
@@ -149,13 +149,13 @@ check_or_create_pid_file() {
         warn "There was an instance of ${APP_NAME} running but it looks like"\
           "it wasn't stopped gracefully. You might want to check the logs." \
           "If you are certain it is not running delete the file" \
-          "${BLUE}${stroom_pid_file}${NC}"
+          "${BLUE}${STROOM_PID_FILE}${NC}"
 
         read -n1 -r -p \
           " - Would you like to run the database migrations? (y/n)" will_run_migrations
         echo -e ''
         if [ "${will_run_migrations}" = 'y' ]; then
-          rm "${stroom_pid_file}"
+          rm "${STROOM_PID_FILE}"
           start
         else 
           info "Ok. I won't run anything."
@@ -166,7 +166,7 @@ check_or_create_pid_file() {
 }
 
 kill_log_tailing() {
-  local cmd="tail -F ${path_to_migrate_log} ${path_to_app_log}"
+  local cmd="tail -F ${PATH_TO_MIGRATE_LOG} ${PATH_TO_APP_LOG}"
   local pid
   pid="$( pgrep -fx "${cmd}" )"
   # kill the log tailing
@@ -197,25 +197,7 @@ main() {
   # shellcheck disable=SC1091
   source "${script_dir}/config/scripts.env"
   # shellcheck disable=SC1091
-  source "${script_dir}/${PATH_TO_UTIL_SCRIPT}"
-
-  # UPPERCASE vars defined in config/scripts.env as relative paths so
-  # assign them to local variables as children of script_dir
-
-  # shellcheck disable=SC2153
-  local -r path_to_migrate_log="${script_dir}/${PATH_TO_MIGRATE_LOG}"
-  # shellcheck disable=SC2153
-  local -r path_to_migration_log="${script_dir}/${PATH_TO_MIGRATION_LOG}"
-  # shellcheck disable=SC2153
-  local -r path_to_app_log="${script_dir}/${PATH_TO_APP_LOG}"
-  # shellcheck disable=SC2153
-  local -r stroom_pid_file="${script_dir}/${STROOM_PID_FILE}"
-  # shellcheck disable=SC2153
-  local -r path_to_jar="${script_dir}/${PATH_TO_JAR}"
-  # shellcheck disable=SC2153
-  local -r heap_dump_dir="${script_dir}/${HEAP_DUMP_DIR}"
-  # shellcheck disable=SC2153
-  local -r path_to_config="${script_dir}/${PATH_TO_CONFIG}"
+  source "${PATH_TO_UTIL_SCRIPT}"
 
   local do_tailing=true
 
@@ -241,7 +223,7 @@ main() {
 
   setup_colours
 
-  check_is_configured "${path_to_config}"
+  check_is_configured "${PATH_TO_CONFIG}"
 
   check_or_create_pid_file
 }

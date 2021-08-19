@@ -3,6 +3,7 @@ package stroom.annotation.impl;
 import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -12,7 +13,7 @@ import java.util.List;
 import javax.inject.Singleton;
 
 @Singleton
-public class AnnotationConfig extends AbstractConfig implements HasDbConfig {
+public class AnnotationConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
 
     private DbConfig dbConfig = new DbConfig();
     private List<String> statusValues = new ArrayList<>();

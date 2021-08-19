@@ -1,6 +1,7 @@
 package stroom.search.elastic;
 
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -8,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import javax.inject.Singleton;
 
 @Singleton
-public class CryptoConfig extends AbstractConfig {
+public class CryptoConfig extends AbstractConfig implements IsStroomConfig {
 
     private static final String PROP_NAME_ENCRYPTION_KEY = "secretEncryptionKey";
 
