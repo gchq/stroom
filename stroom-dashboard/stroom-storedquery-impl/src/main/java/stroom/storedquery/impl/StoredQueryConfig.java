@@ -3,6 +3,7 @@ package stroom.storedquery.impl;
 import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -11,7 +12,7 @@ import javax.inject.Singleton;
 import javax.validation.constraints.Min;
 
 @Singleton
-public class StoredQueryConfig extends AbstractConfig implements HasDbConfig {
+public class StoredQueryConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
 
     private int itemsRetention = 100;
     private int daysRetention = 365;

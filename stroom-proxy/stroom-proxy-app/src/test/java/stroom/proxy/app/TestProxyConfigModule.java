@@ -52,7 +52,8 @@ class TestProxyConfigModule {
         final Predicate<Class<?>> classFilter = clazz ->
                 clazz.getSimpleName().endsWith("Config")
                         && !clazz.equals(AbstractConfig.class)
-                        && !clazz.equals(ProxyConfig.class);
+                        && !clazz.equals(ProxyConfig.class)
+                        && IsProxyConfig.class.isAssignableFrom(clazz);
 
         LOGGER.info("Finding all IsProxyConfig classes");
 
@@ -64,7 +65,6 @@ class TestProxyConfigModule {
                 .filter(classInfo -> packageNameFilter.test(classInfo.getPackageName()))
                 .map(ClassPath.ClassInfo::load)
                 .filter(classFilter)
-                .filter(IsProxyConfig.class::isAssignableFrom)
                 .filter(clazz -> {
                     boolean isAbstract = Modifier.isAbstract(clazz.getModifiers());
                     if (isAbstract) {

@@ -38,6 +38,7 @@ import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.io.StroomPathConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.PropertyPath;
 import stroom.util.shared.validation.ValidationSeverity;
 
@@ -50,7 +51,7 @@ import javax.validation.constraints.AssertTrue;
 
 @JsonRootName(AppConfig.NAME)
 @Singleton
-public class AppConfig extends AbstractConfig {
+public class AppConfig extends AbstractConfig implements IsStroomConfig {
 
     public static final String NAME = "stroom";
     public static final PropertyPath ROOT_PROPERTY_PATH = PropertyPath.fromParts(NAME);

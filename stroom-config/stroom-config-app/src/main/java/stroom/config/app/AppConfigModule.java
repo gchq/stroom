@@ -76,7 +76,7 @@ import stroom.util.config.ConfigLocation;
 import stroom.util.io.PathConfig;
 import stroom.util.io.StroomPathConfig;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 import stroom.util.xml.ParserConfig;
 
 import com.google.inject.AbstractModule;
@@ -341,14 +341,14 @@ public class AppConfigModule extends AbstractModule {
         bindConfig(AppConfig::getVolumeConfig, AppConfig::setVolumeConfig, VolumeConfig.class);
     }
 
-    private <T extends AbstractConfig> void bindConfig(
+    private <T extends IsStroomConfig> void bindConfig(
             final Function<AppConfig, T> configGetter,
             final BiConsumer<AppConfig, T> configSetter,
             final Class<T> clazz) {
         bindConfig(configHolder.getAppConfig(), configGetter, configSetter, clazz, clazz, null);
     }
 
-    private <T extends AbstractConfig> void bindConfig(
+    private <T extends IsStroomConfig> void bindConfig(
             final Function<AppConfig, T> configGetter,
             final BiConsumer<AppConfig, T> configSetter,
             final Class<T> instanceClass,
@@ -356,7 +356,7 @@ public class AppConfigModule extends AbstractModule {
         bindConfig(configHolder.getAppConfig(), configGetter, configSetter, instanceClass, bindClass, null);
     }
 
-    private <T extends AbstractConfig> void bindConfig(
+    private <T extends IsStroomConfig> void bindConfig(
             final Function<AppConfig, T> configGetter,
             final BiConsumer<AppConfig, T> configSetter,
             final Class<T> clazz,
@@ -364,7 +364,7 @@ public class AppConfigModule extends AbstractModule {
         bindConfig(configHolder.getAppConfig(), configGetter, configSetter, clazz, clazz, childConfigConsumer);
     }
 
-    private <X extends AbstractConfig, T extends AbstractConfig> void bindConfig(
+    private <X extends IsStroomConfig, T extends IsStroomConfig> void bindConfig(
             final X parentObject,
             final Function<X, T> configGetter,
             final BiConsumer<X, T> configSetter,
@@ -372,7 +372,7 @@ public class AppConfigModule extends AbstractModule {
         bindConfig(parentObject, configGetter, configSetter, clazz, clazz, null);
     }
 
-    private <X extends AbstractConfig, T extends AbstractConfig> void bindConfig(
+    private <X extends IsStroomConfig, T extends IsStroomConfig> void bindConfig(
             final X parentObject,
             final Function<X, T> configGetter,
             final BiConsumer<X, T> configSetter,
@@ -381,7 +381,7 @@ public class AppConfigModule extends AbstractModule {
         bindConfig(parentObject, configGetter, configSetter, clazz, clazz, childConfigConsumer);
     }
 
-    private <X extends AbstractConfig, T extends AbstractConfig> void bindConfig(
+    private <X extends IsStroomConfig, T extends IsStroomConfig> void bindConfig(
             final X parentObject,
             final Function<X, T> configGetter,
             final BiConsumer<X, T> configSetter,

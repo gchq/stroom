@@ -2,6 +2,7 @@ package stroom.cluster.api;
 
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -9,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import javax.inject.Singleton;
 
 @Singleton
-public class ClusterConfig extends AbstractConfig {
+public class ClusterConfig extends AbstractConfig implements IsStroomConfig {
 
     private boolean clusterCallUseLocal = true;
     private StroomDuration clusterCallReadTimeout = StroomDuration.ofSeconds(30);

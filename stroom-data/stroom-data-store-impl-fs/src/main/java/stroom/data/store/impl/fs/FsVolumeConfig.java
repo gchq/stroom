@@ -3,6 +3,7 @@ package stroom.data.store.impl.fs;
 import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -12,7 +13,7 @@ import javax.inject.Singleton;
 import javax.validation.constraints.Pattern;
 
 @Singleton
-public class FsVolumeConfig extends AbstractConfig {
+public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
 
     private String volumeSelector = "RoundRobin";
 

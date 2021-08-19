@@ -6,13 +6,14 @@ import stroom.security.impl.AuthenticationConfig;
 import stroom.security.impl.AuthorisationConfig;
 import stroom.security.impl.ContentSecurityConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class SecurityConfig extends AbstractConfig {
+public class SecurityConfig extends AbstractConfig implements IsStroomConfig {
 
     public static final String PROP_NAME_IDENTITY = "identity";
 

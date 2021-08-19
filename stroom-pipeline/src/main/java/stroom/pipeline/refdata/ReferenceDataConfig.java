@@ -4,6 +4,7 @@ import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.io.ByteSize;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.validation.ValidFilePath;
 import stroom.util.time.StroomDuration;
 
@@ -17,7 +18,7 @@ import javax.validation.constraints.Min;
 
 @Singleton
 @JsonPropertyOrder(alphabetic = true)
-public class ReferenceDataConfig extends AbstractConfig {
+public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfig {
 
     public static final String LOCAL_DIR_PROP_NAME = "localDir";
 

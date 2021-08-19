@@ -4,6 +4,7 @@ import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.ModelStringUtil;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -15,7 +16,7 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Singleton;
 
 @Singleton
-public class JobSystemConfig extends AbstractConfig implements HasDbConfig {
+public class JobSystemConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JobSystemConfig.class);
 

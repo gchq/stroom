@@ -1,6 +1,7 @@
 package stroom.ui.config.shared;
 
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -15,7 +16,7 @@ import javax.inject.Singleton;
 @Singleton
 @JsonPropertyOrder({"enabled", "chooseOnStartup", "managerTitle", "editorTitle", "editorBody"})
 @JsonInclude(Include.NON_NULL)
-public class ActivityConfig extends AbstractConfig {
+public class ActivityConfig extends AbstractConfig implements IsStroomConfig {
 
     @JsonProperty
     @JsonPropertyDescription("If you would like users to be able to record some info about the activity they " +

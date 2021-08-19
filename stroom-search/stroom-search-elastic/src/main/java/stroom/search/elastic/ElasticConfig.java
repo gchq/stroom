@@ -3,6 +3,7 @@ package stroom.search.elastic;
 import stroom.search.elastic.search.ElasticSearchConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -10,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import javax.inject.Singleton;
 
 @Singleton
-public class ElasticConfig extends AbstractConfig {
+public class ElasticConfig extends AbstractConfig implements IsStroomConfig {
 
     private ElasticSearchConfig elasticSearchConfig = new ElasticSearchConfig();
     private CacheConfig indexClientCache = CacheConfig.builder()

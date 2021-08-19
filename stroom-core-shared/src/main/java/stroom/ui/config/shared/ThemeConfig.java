@@ -1,6 +1,7 @@
 package stroom.ui.config.shared;
 
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -25,7 +26,7 @@ import javax.inject.Singleton;
         "topMenuTextColour",
         "labelColours"})
 @JsonInclude(Include.NON_NULL)
-public class ThemeConfig extends AbstractConfig {
+public class ThemeConfig extends AbstractConfig implements IsStroomConfig {
 
     @JsonProperty
     @JsonPropertyDescription("GUI")

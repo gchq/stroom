@@ -3,13 +3,14 @@ package stroom.config.app;
 import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class PropertyServiceConfig extends AbstractConfig implements HasDbConfig {
+public class PropertyServiceConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
 
     private DbConfig dbConfig = new DbConfig();
 

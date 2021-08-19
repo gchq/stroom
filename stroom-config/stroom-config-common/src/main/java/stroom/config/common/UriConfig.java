@@ -2,6 +2,7 @@ package stroom.config.common;
 
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -11,7 +12,7 @@ import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.Pattern;
 
-public abstract class UriConfig extends AbstractConfig {
+public abstract class UriConfig extends AbstractConfig implements IsStroomConfig {
 
     private static final String PROP_NAME_SCHEME = "scheme";
     private static final String PROP_NAME_HOSTNAME = "hostname";

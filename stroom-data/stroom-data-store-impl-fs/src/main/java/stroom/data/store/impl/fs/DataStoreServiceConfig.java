@@ -3,6 +3,7 @@ package stroom.data.store.impl.fs;
 import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -11,7 +12,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import javax.inject.Singleton;
 
 @Singleton
-public class DataStoreServiceConfig extends AbstractConfig implements HasDbConfig {
+public class DataStoreServiceConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
     private DbConfig dbConfig = new DbConfig();
     private StroomDuration deletePurgeAge = StroomDuration.ofDays(7);
     private int deleteBatchSize = 1000;

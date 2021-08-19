@@ -12,7 +12,6 @@ import stroom.legacy.db.LegacyDbConfig;
 import stroom.util.config.PropertyUtil;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.NotInjectableConfig;
 
@@ -215,47 +214,26 @@ class TestAppConfigModule {
             }
         });
         final Injector injector = Guice.createInjector(appConfigModule);
-//        Injector injector = Guice.createInjector(new AbstractModule() {
-//            @Override
-//            protected void configure() {
-//                install(new AppConfigModule(new ConfigHolder() {
-//                    @Override
-//                    public AppConfig getAppConfig() {
-//                        return new AppConfig();
-//                    }
-//
-//                    @Override
-//                    public Path getConfigFile() {
-//                        return Paths.get("NOT USED");
-//                    }
-//                }));
-//            }
-//        });
 
         Predicate<String> packageNameFilter = name ->
                 name.startsWith(STROOM_PACKAGE_PREFIX) && !name.contains("shaded");
 
-        Predicate<Class<?>> classFilter = clazz -> {
+        Predicate<Class<?>> classFilter = clazz ->
+                clazz.getSimpleName().endsWith("Config")
+                        && !clazz.equals(AbstractConfig.class)
+                        && !clazz.equals(AppConfig.class)
+                        && IsStroomConfig.class.isAssignableFrom(clazz);
 
-            return clazz.getSimpleName().endsWith("Config")
-                    && !clazz.equals(AbstractConfig.class)
-                    && !clazz.equals(AppConfig.class);
-        };
+        LOGGER.info("Finding all stroom config classes");
 
-        LOGGER.info("Finding all AbstractConfig classes");
-
-        // Find all classes that extend AbstractConfig
+        // Find all config classes
         final ClassLoader classLoader = getClass().getClassLoader();
-        final Set<Class<?>> abstractConfigConcreteClasses = ClassPath.from(classLoader)
+        final Set<Class<?>> stroomConfigClasses = ClassPath.from(classLoader)
                 .getAllClasses()
                 .stream()
                 .filter(classInfo -> packageNameFilter.test(classInfo.getPackageName()))
                 .map(ClassPath.ClassInfo::load)
                 .filter(classFilter)
-                .filter(AbstractConfig.class::isAssignableFrom)
-                .filter(clazz ->
-                        !IsProxyConfig.class.isAssignableFrom(clazz)
-                                || IsStroomConfig.class.isAssignableFrom(clazz)) // ignore proxy classes
                 .filter(clazz -> {
                     boolean isAbstract = Modifier.isAbstract(clazz.getModifiers());
                     if (isAbstract) {
@@ -267,6 +245,14 @@ class TestAppConfigModule {
                     LOGGER.debug(clazz.getSimpleName());
                 })
                 .collect(Collectors.toSet());
+
+        // All config classes should extend AbstractConfig and IsStroomConfig
+        assertThat(stroomConfigClasses.stream()
+                .filter(clazz ->
+                        !AbstractConfig.class.isAssignableFrom(clazz)
+                                || !IsStroomConfig.class.isAssignableFrom(clazz))
+                .collect(Collectors.toList()))
+                .isEmpty();
 
         LOGGER.info("Finding all classes in object tree");
 
@@ -303,17 +289,17 @@ class TestAppConfigModule {
         // being public in the config class, else the config class may not be a property in the
         // AppConfig object tree
         Set<Class<?>> remaining = new HashSet<>(appConfigTreeClasses);
-        remaining.removeAll(abstractConfigConcreteClasses);
+        remaining.removeAll(stroomConfigClasses);
         assertThat(remaining).isEmpty();
 
-        remaining = new HashSet<>(abstractConfigConcreteClasses);
+        remaining = new HashSet<>(stroomConfigClasses);
         remaining.removeAll(appConfigTreeClasses);
         assertThat(remaining).isEmpty();
 
         // Now we know the appConfig tree contains all the concrete AbstractConfig classes
         // check that guice will give us the right instance. This ensures
 
-        Map<Class<?>, Integer> injectedInstanceIdMap = abstractConfigConcreteClasses.stream()
+        Map<Class<?>, Integer> injectedInstanceIdMap = stroomConfigClasses.stream()
                 .collect(Collectors.toMap(
                         clazz -> clazz,
                         clazz -> {

@@ -3,6 +3,7 @@ package stroom.query.common.v2;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.io.ByteSize;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.validation.ValidFilePath;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -13,7 +14,7 @@ import javax.inject.Singleton;
 import javax.validation.constraints.Min;
 
 @Singleton
-public class LmdbConfig extends AbstractConfig {
+public class LmdbConfig extends AbstractConfig implements IsStroomConfig {
 
     private String localDir = "search_results";
     private String lmdbSystemLibraryPath = null;

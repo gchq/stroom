@@ -4,6 +4,7 @@ import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -12,7 +13,7 @@ import javax.inject.Singleton;
 import javax.validation.constraints.NotNull;
 
 @Singleton
-public class NodeConfig extends AbstractConfig implements HasDbConfig {
+public class NodeConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
 
     public static final String PROP_NAME_NAME = "name";
     public static final String PROP_NAME_STATUS = "status";

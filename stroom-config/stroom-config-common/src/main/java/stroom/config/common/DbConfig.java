@@ -1,6 +1,7 @@
 package stroom.config.common;
 
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.NotInjectableConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -13,7 +14,7 @@ import java.util.Objects;
         DbConfig.PROP_NAME_CONNECTION,
         DbConfig.PROP_NAME_CONNECTION_POOL
 })
-public class DbConfig extends AbstractConfig {
+public class DbConfig extends AbstractConfig implements IsStroomConfig {
 
     public static final String PROP_NAME_CONNECTION = "connection";
     public static final String PROP_NAME_CONNECTION_POOL = "connectionPool";

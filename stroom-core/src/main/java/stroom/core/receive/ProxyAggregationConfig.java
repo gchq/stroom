@@ -3,6 +3,7 @@ package stroom.core.receive;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.RepoConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -12,7 +13,7 @@ import javax.inject.Singleton;
 
 @Singleton
 @JsonPropertyOrder(alphabetic = true)
-public class ProxyAggregationConfig extends AbstractConfig implements RepoConfig {
+public class ProxyAggregationConfig extends AbstractConfig implements IsStroomConfig, RepoConfig {
 
     private String repoDir = "proxy_repo";
     private String dbDir = "proxy_repo_db";

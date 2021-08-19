@@ -1,6 +1,7 @@
 package stroom.ui.config.shared;
 
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.validation.ValidRegex;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -16,7 +17,7 @@ import javax.inject.Singleton;
 @Singleton
 @JsonPropertyOrder({"enabled", "title", "validationRegex"})
 @JsonInclude(Include.NON_NULL)
-public class InfoPopupConfig extends AbstractConfig {
+public class InfoPopupConfig extends AbstractConfig implements IsStroomConfig {
 
     @JsonProperty
     @JsonPropertyDescription("If you would like users to provide some query info when performing a query " +
