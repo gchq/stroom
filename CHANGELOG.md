@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2220** : OpenID connect web tokens can now be refreshed to maintain validity.
+
 * Included Leaflet.draw Javascript plugin within UI bundle.
 
 * Issue **#2335** : Added CLI command `create_api_key` to create an API key for a specified user.
