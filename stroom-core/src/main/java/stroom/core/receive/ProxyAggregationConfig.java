@@ -11,11 +11,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import javax.inject.Singleton;
 
 @Singleton
-@JsonPropertyOrder({
-        "repoDir",
-        "dbDir",
-        "aggregator"
-})
+@JsonPropertyOrder(alphabetic = true)
 public class ProxyAggregationConfig extends AbstractConfig implements RepoConfig {
 
     private String repoDir = "proxy_repo";
@@ -52,5 +48,14 @@ public class ProxyAggregationConfig extends AbstractConfig implements RepoConfig
 
     public void setAggregatorConfig(final AggregatorConfig aggregatorConfig) {
         this.aggregatorConfig = aggregatorConfig;
+    }
+
+    @Override
+    public String toString() {
+        return "ProxyAggregationConfig{" +
+                "repoDir='" + repoDir + '\'' +
+                ", dbDir='" + dbDir + '\'' +
+                ", aggregatorConfig=" + aggregatorConfig +
+                '}';
     }
 }

@@ -28,8 +28,6 @@ setup_colours() {
 
 setup_colours
 
-mkdir -p logs
-
 ask_about_logs() {
   read -n1 -r -p $'  - Press \e[94mspace\e[0m or \e[94menter\e[0m to see the logs, \e[94manything\e[0m else to return to the command line.' key
 

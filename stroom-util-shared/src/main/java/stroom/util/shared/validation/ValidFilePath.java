@@ -27,7 +27,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Documented
 public @interface ValidFilePath {
 
-    String message() default "path does not exist or is not a regular file";
+    String message() default "path does not exist, is not a regular file or is not readable";
 
     Class<?>[] groups() default {};
 

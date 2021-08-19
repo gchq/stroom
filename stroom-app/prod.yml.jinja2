@@ -20,6 +20,9 @@
 #  To see how this renders run the main method in GenerateDistributionConfig.
 #  That main method is run from gradle when building the distributions.
 #
+#  All empty lines will be removed. You can explicitly add an empty line
+#  by adding a line with just a single comment char (#) in it.
+#
 #  ============================== IMPORTANT ==============================
 #}
 {#- Define all the jinja2 variable values for each distribution type #}
@@ -27,48 +30,43 @@
   {%- set stroomHome = '/stroom' %}
   {%- set includeEnvVarSubstitution = true %}
 {%- elif distribution == "zip" %}
-  {%- set stroomHome = '.' %}
+  {%- set stroomHome = '${STROOM_HOME:-}' %}
   {%- set includeEnvVarSubstitution = false %}
 {%- endif %}
 # Stroom configuration file
 # =========================
-
+#
 # For information on the structure of this configuration file see:
 # https://www.dropwizard.io/en/latest/manual/configuration.html
 # For information on the logback logFormat strings see:
 # http://logback.qos.ch/manual/layouts.html
-
+#
 # This configuration file was made for the {{ distribution }} distribution.
-
+#
 # This section is the DropWizard configuration for Stroom
-
+#
 server:
-  applicationContextPath: "{{ '/' | envVar('APPLICATION_CONTEXT_PATH') }}"
-  adminContextPath: "{{ '/stroomAdmin' | envVar('ADMIN_CONTEXT_PATH') }}"
+  applicationContextPath: "/"
+  adminContextPath: "/stroomAdmin"
   applicationConnectors:
     - type: http
-      port: {{ 8080 | envVar('STROOM_APP_PORT') }}
+      port: 8080
   adminConnectors:
     - type: http
-      port: {{ 8081 | envVar('STROOM_ADMIN_PORT') }}
-
+      port: 8081
   requestLog:
     appenders:
       # Log appender for the web server request logging
     - type: file
       currentLogFilename: logs/access/access.log
-      threshold: ALL
-      queueSize: 256
       discardingThreshold: 0
-      archive: true
       # Rolled and gzipped every minute
       archivedLogFilenamePattern: logs/access/access-%d{yyyy-MM-dd'T'HH:mm}.log.gz
       archivedFileCount: 100
-      timeZone: UTC
       logFormat: '%h %l "%u" [%t] "%r" %s %b "%i{Referer}" "%i{User-Agent}" %D'
-
+#
 logging:
-  level: "{{ 'WARN' | envVar('STROOM_LOGGING_LEVEL') }}"
+  level: WARN
   loggers:
     stroom: INFO
     io.dropwizard: INFO
@@ -88,14 +86,10 @@ logging:
       appenders:
         - type: file
           currentLogFilename: logs/user/user.log
-          threshold: ALL
-          queueSize: 256
           discardingThreshold: 0
-          archive: true
           # Rolled every minute
           archivedLogFilenamePattern: logs/user/user-%d{yyyy-MM-dd'T'HH:mm}.log
           archivedFileCount: 100
-          timeZone: UTC
           logFormat: "%msg%n"
     # Logger and appender for the flyway DB migration SQL output
     org.flywaydb.core.internal.sqlscript:
@@ -104,105 +98,120 @@ logging:
       appenders:
         - type: file
           currentLogFilename: logs/migration/migration.log
-          threshold: ALL
-          queueSize: 256
           discardingThreshold: 0
-          archive: true
           # Rolled every day
           archivedLogFilenamePattern: logs/migration/migration-%d{yyyy-MM-dd}.log
           archivedFileCount: 10
-          timeZone: UTC
           logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
-
+#
   appenders:
-{% if distribution == "docker" %}
 
-  # stdout for docker
+  {% if distribution == "docker" %}
+  #
+    # stdout for docker
   - type: console
     # Multi-coloured log format for console output
     logFormat: "%highlight(%-6level) [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%green(%t)] %cyan(%logger) - %X{code} %msg %n"
     timeZone: UTC
-{% endif %}
-
+  {% endif %}
+#
     # Minute rolled files for stroom/datafeed, will be curl'd/deleted by stroom-log-sender
   - type: file
     currentLogFilename: logs/app/app.log
-    threshold: ALL
-    queueSize: 256
     discardingThreshold: 0
-    archive: true
     # Rolled and gzipped every minute
     archivedLogFilenamePattern: logs/app/app-%d{yyyy-MM-dd'T'HH:mm}.log.gz
     # One week using minute files
     archivedFileCount: 10080
-    timeZone: UTC
     logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
-{% if distribution == "zip" %}
 
-  # Size rolled logs for admins (10x100M), not curl'd to stroom
+  {% if distribution == "zip" %}
+#
+    # Size rolled logs for admins (10x100M), not curl'd to stroom
   - type: file
     currentLogFilename: logs/app.log
-    threshold: ALL
-    queueSize: 256
     discardingThreshold: 0
-    archive: true
     archivedLogFilenamePattern: logs/app-%i.log
     archivedFileCount: 10
     maxFileSize: "100MB"
-    timeZone: UTC
     logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
-{% endif %}
-
-
+  {% endif %}
+#
 # This section contains the Stroom configuration properties
 # For more information see:
 # https://gchq.github.io/stroom-docs/user-guide/properties.html
-
+#
 appConfig:
   commonDbDetails:
     connection:
-      jdbcDriverClassName: "{{ 'com.mysql.cj.jdbc.Driver' | envVar('STROOM_JDBC_DRIVER_CLASS_NAME') }}"
       jdbcDriverUrl: "{{ 'jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8' | envVar('STROOM_JDBC_DRIVER_URL') }}"
       jdbcDriverUsername: "{{ 'stroomuser' | envVar('STROOM_JDBC_DRIVER_USERNAME') }}"
       jdbcDriverPassword: "{{ 'stroompassword1' | envVar('STROOM_JDBC_DRIVER_PASSWORD') }}"
+
+  {% if distribution == "docker" %}
   contentPackImport:
     enabled: {{ false | envVar('STROOM_CONTENT_PACK_IMPORT_ENABLED') }}
-  job:
-    enabled: true
-    enableDistributedJobsOnBootstrap: {{ true | envVar('STROOM_DISTRIBUTED_JOBS_ENABLED_ON_BOOTSTRAP') }}
-    executionInterval: "10s"
+  {% endif %}
+
   node:
     # The name for the node, should be unique to each node in the cluster
-    name: "{{ 'node1a' | envVar('STROOM_NODE') }}"
-  # The address of the this node for inter-node communication
+    name: "node1a"
   nodeUri:
+    # The FQDN of the this node for inter-node communication. Can be private within the stroom cluster.
+    # If not set stroom will try to determine it
+
+    {% if distribution == "docker" %}
     hostname: "{{ 'localhost' | envVar('STROOM_HOST') }}"
+    {% else %}
+    # hostname: ""
+    {% endif %}
+
   path:
+    # By default all files read or written to by stroom will be in directories relative to
+    # the home location. This should be set to an absolute path that differs from the location of
+    # the installed software as it has a different lifecycle.
     home: "{{ stroomHome }}"
-    temp: "/tmp/stroom"
-  # The public address for stroom, typically the public address of nginx
   publicUri:
+    # The public FQDN for stroom, as typed into the browser, typically the public address of nginx
+    # If not set stroom will try to determine it
+
+    {% if distribution == "docker" %}
     hostname: "{{ 'localhost' | envVar('API_GATEWAY_HOST') }}"
     port: "{{ 443 | envVar('API_GATEWAY_PORT') }}"
+    {% else %}
+    # hostname: ""
+    {% endif %}
+
+  {% if distribution == "docker" %}
   security:
-    authentication:
-      preventLogin: false
     identity:
       useDefaultOpenIdCredentials: "{{ 'false' | envVar('USE_DEFAULT_OPEN_ID_CREDENTIALS') }}"
   serviceDiscovery:
     enabled: "{{ 'false' | envVar('STROOM_SERVICE_DISCOVERY_ENABLED') }}"
     zookeeperUrl: "{{ 'localhost:2181' | envVar('STROOM_SERVICE_DISCOVERY_ZOOKEEPER_URL') }}"
+  {% endif %}
+
   statistics:
+
+{% if distribution == "docker" %}
     hbase:
       kafkaConfigUuid:
     internal:
       enabledStoreTypes: {{ '[ \"StatisticStore\" ]' | envVar('STROOM_ENABLED_STAT_STORE_TYPES') }}
+{% endif %}
+
     sql:
       db:
         connection:
-          jdbcDriverClassName: "{{ 'com.mysql.cj.jdbc.Driver' | envVar('STROOM_STATISTICS_JDBC_DRIVER_CLASS_NAME') }}"
           jdbcDriverUrl: "{{ 'jdbc:mysql://localhost:3307/stats?useUnicode=yes&characterEncoding=UTF-8' | envVar('STROOM_STATISTICS_JDBC_DRIVER_URL') }}"
           jdbcDriverUsername: "{{ 'statsuser' | envVar('STROOM_STATISTICS_JDBC_DRIVER_USERNAME') }}"
           jdbcDriverPassword: "{{ 'stroompassword1' | envVar('STROOM_STATISTICS_JDBC_DRIVER_PASSWORD') }}"
-
+  {% if distribution == "docker" %}
+  ui:
+    helpUrl: "https://{{ 'localhost' | envVar('API_GATEWAY_HOST') }}/docs"
+  {% else %}
+  # ui:
+    # helpUrl: "https://<nginx host>/docs"
+  {% endif %}
+#
 # vim: set filetype=yaml tabstop=2 shiftwidth=2 expandtab:

@@ -1,19 +1,17 @@
 package stroom.util.cert;
 
+import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsProxyConfig;
+import stroom.util.shared.NotInjectableConfig;
+import stroom.util.shared.validation.ValidFilePath;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({
-        "keyStorePath",
-        "keyStoreType",
-        "keyStorePassword",
-        "trustStorePath",
-        "trustStoreType",
-        "trustStorePassword",
-        "isHostnameVerificationEnabled",
-        "sslProtocol"
-})
-public class SSLConfig {
+import java.util.Objects;
+
+@NotInjectableConfig
+public class SSLConfig extends AbstractConfig implements IsProxyConfig {
 
     private String keyStorePath;
     private String keyStoreType = "JKS";
@@ -30,6 +28,7 @@ public class SSLConfig {
      * The path to the keystore file that will be used for client authentication during forwarding
      */
     @JsonProperty
+    @ValidFilePath
     public String getKeyStorePath() {
         return keyStorePath;
     }
@@ -69,6 +68,7 @@ public class SSLConfig {
      * The path to the truststore file that will be used for client authentication during forwarding
      */
     @JsonProperty
+    @ValidFilePath
     public String getTrustStorePath() {
         return trustStorePath;
     }
@@ -129,5 +129,50 @@ public class SSLConfig {
     @JsonProperty
     public void setSslProtocol(final String sslProtocol) {
         this.sslProtocol = sslProtocol;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final SSLConfig sslConfig = (SSLConfig) o;
+        return isHostnameVerificationEnabled == sslConfig.isHostnameVerificationEnabled && Objects.equals(
+                keyStorePath,
+                sslConfig.keyStorePath) && Objects.equals(keyStoreType,
+                sslConfig.keyStoreType) && Objects.equals(keyStorePassword,
+                sslConfig.keyStorePassword) && Objects.equals(trustStorePath,
+                sslConfig.trustStorePath) && Objects.equals(trustStoreType,
+                sslConfig.trustStoreType) && Objects.equals(trustStorePassword,
+                sslConfig.trustStorePassword) && Objects.equals(sslProtocol, sslConfig.sslProtocol);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(keyStorePath,
+                keyStoreType,
+                keyStorePassword,
+                trustStorePath,
+                trustStoreType,
+                trustStorePassword,
+                isHostnameVerificationEnabled,
+                sslProtocol);
+    }
+
+    @Override
+    public String toString() {
+        return "SSLConfig{" +
+                "keyStorePath='" + keyStorePath + '\'' +
+                ", keyStoreType='" + keyStoreType + '\'' +
+                ", keyStorePassword='" + keyStorePassword + '\'' +
+                ", trustStorePath='" + trustStorePath + '\'' +
+                ", trustStoreType='" + trustStoreType + '\'' +
+                ", trustStorePassword='" + trustStorePassword + '\'' +
+                ", isHostnameVerificationEnabled=" + isHostnameVerificationEnabled +
+                ", sslProtocol='" + sslProtocol + '\'' +
+                '}';
     }
 }

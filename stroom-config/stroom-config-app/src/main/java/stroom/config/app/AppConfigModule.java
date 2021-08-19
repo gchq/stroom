@@ -72,19 +72,24 @@ import stroom.ui.config.shared.SourceConfig;
 import stroom.ui.config.shared.SplashConfig;
 import stroom.ui.config.shared.ThemeConfig;
 import stroom.ui.config.shared.UiConfig;
-import stroom.ui.config.shared.UrlConfig;
 import stroom.util.io.PathConfig;
+import stroom.util.io.StroomPathConfig;
+import stroom.util.config.ConfigLocation;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.xml.ParserConfig;
 
 import com.google.inject.AbstractModule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class AppConfigModule extends AbstractModule {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AppConfigModule.class);
 
     private final ConfigHolder configHolder;
 
@@ -187,7 +192,8 @@ public class AppConfigModule extends AbstractModule {
                                         StatusConfig::setHeapHistogramConfig,
                                         HeapHistogramConfig.class)));
         bindConfig(AppConfig::getNodeUri, AppConfig::setNodeUri, NodeUriConfig.class);
-        bindConfig(AppConfig::getPathConfig, AppConfig::setPathConfig, PathConfig.class);
+        // Bind it to PathConfig and StroomPathConfig so classes that inject PathConfig work
+        bindConfig(AppConfig::getPathConfig, AppConfig::setPathConfig, StroomPathConfig.class, PathConfig.class);
         bindConfig(AppConfig::getPipelineConfig, AppConfig::setPipelineConfig, PipelineConfig.class, pipelineConfig -> {
             bindConfig(pipelineConfig,
                     PipelineConfig::getAppenderConfig,
@@ -329,7 +335,6 @@ public class AppConfigModule extends AbstractModule {
                             InfoPopupConfig.class));
             bindConfig(uiConfig, UiConfig::getSplash, UiConfig::setSplash, SplashConfig.class);
             bindConfig(uiConfig, UiConfig::getTheme, UiConfig::setTheme, ThemeConfig.class);
-            bindConfig(uiConfig, UiConfig::getUrl, UiConfig::setUrl, UrlConfig.class);
             bindConfig(uiConfig, UiConfig::getSource, UiConfig::setSource, SourceConfig.class);
         });
         bindConfig(AppConfig::getUiUri, AppConfig::setUiUri, UiUriConfig.class);
@@ -340,7 +345,15 @@ public class AppConfigModule extends AbstractModule {
             final Function<AppConfig, T> configGetter,
             final BiConsumer<AppConfig, T> configSetter,
             final Class<T> clazz) {
-        bindConfig(configHolder.getAppConfig(), configGetter, configSetter, clazz, null);
+        bindConfig(configHolder.getAppConfig(), configGetter, configSetter, clazz, clazz, null);
+    }
+
+    private <T extends AbstractConfig> void bindConfig(
+            final Function<AppConfig, T> configGetter,
+            final BiConsumer<AppConfig, T> configSetter,
+            final Class<T> instanceClass,
+            final Class<? super T> bindClass) {
+        bindConfig(configHolder.getAppConfig(), configGetter, configSetter, instanceClass, bindClass, null);
     }
 
     private <T extends AbstractConfig> void bindConfig(
@@ -348,7 +361,7 @@ public class AppConfigModule extends AbstractModule {
             final BiConsumer<AppConfig, T> configSetter,
             final Class<T> clazz,
             final Consumer<T> childConfigConsumer) {
-        bindConfig(configHolder.getAppConfig(), configGetter, configSetter, clazz, childConfigConsumer);
+        bindConfig(configHolder.getAppConfig(), configGetter, configSetter, clazz, clazz, childConfigConsumer);
     }
 
     private <X extends AbstractConfig, T extends AbstractConfig> void bindConfig(
@@ -356,7 +369,7 @@ public class AppConfigModule extends AbstractModule {
             final Function<X, T> configGetter,
             final BiConsumer<X, T> configSetter,
             final Class<T> clazz) {
-        bindConfig(parentObject, configGetter, configSetter, clazz, null);
+        bindConfig(parentObject, configGetter, configSetter, clazz, clazz, null);
     }
 
     private <X extends AbstractConfig, T extends AbstractConfig> void bindConfig(
@@ -365,11 +378,21 @@ public class AppConfigModule extends AbstractModule {
             final BiConsumer<X, T> configSetter,
             final Class<T> clazz,
             final Consumer<T> childConfigConsumer) {
+        bindConfig(parentObject, configGetter, configSetter, clazz, clazz, childConfigConsumer);
+    }
+
+    private <X extends AbstractConfig, T extends AbstractConfig> void bindConfig(
+            final X parentObject,
+            final Function<X, T> configGetter,
+            final BiConsumer<X, T> configSetter,
+            final Class<T> instanceClass,
+            final Class<? super T> bindClass,
+            final Consumer<T> childConfigConsumer) {
 
         if (parentObject == null) {
             throw new RuntimeException(LogUtil.message("Unable to bind config to {} as the parent is null. " +
                             "You may have an empty branch in your config YAML file.",
-                    clazz.getCanonicalName()));
+                    instanceClass.getCanonicalName()));
         }
 
         try {
@@ -379,23 +402,30 @@ public class AppConfigModule extends AbstractModule {
             if (configInstance == null) {
                 // branch with no children in the yaml so just create a default one
                 try {
-                    configInstance = clazz.getConstructor().newInstance();
+                    configInstance = instanceClass.getConstructor().newInstance();
                     // Now set the new instance on the parent
                     configSetter.accept(parentObject, configInstance);
                 } catch (Exception e) {
                     throw new RuntimeException(LogUtil.message(
-                            "Class {} does not have a no args constructor", clazz.getName()));
+                            "Class {} does not have a no args constructor", instanceClass.getName()));
                 }
             }
 
-            bind(clazz).toInstance(configInstance);
+            LOGGER.debug("Binding instance of {} to class {}", instanceClass.getName(), bindClass.getName());
+            bind(bindClass).toInstance(configInstance);
+            if (!bindClass.equals(instanceClass)) {
+                // bind class and instance class differ so bind to both, e.g.
+                // an instance of StroomPathConfig gets bound to PathConfig and ProxyPathConfig
+                LOGGER.debug("Binding instance of {} to class {}", instanceClass.getName(), instanceClass.getName());
+                bind(instanceClass).toInstance(configInstance);
+            }
             if (childConfigConsumer != null) {
                 childConfigConsumer.accept(configInstance);
             }
         } catch (Exception e) {
             throw new RuntimeException(LogUtil.message("Error binding getter on object {} to class {}",
                     parentObject.getClass().getCanonicalName(),
-                    clazz.getCanonicalName()),
+                    bindClass.getCanonicalName()),
                     e);
         }
     }

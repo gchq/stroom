@@ -48,7 +48,7 @@ main() {
   # shellcheck disable=SC1091
   source "${script_dir}/config/scripts.env"
   # shellcheck disable=SC1091
-  source "${script_dir}/${PATH_TO_UTIL_SCRIPT}"
+  source "${PATH_TO_UTIL_SCRIPT}"
 
   while getopts ":mh" arg; do
     # shellcheck disable=SC2034
@@ -83,7 +83,7 @@ main() {
 
   echo
   info "You can access the admin page at the following location:"
-  info "${BLUE}http://localhost:${STROOM_ADMIN_PORT}/stroomAdmin${NC}"
+  info "${BLUE}http://localhost:${ADMIN_PORT}/${ADMIN_PATH}${NC}"
 
   echo
   info "Data can be POSTed to ${APP_NAME} using the following URL (see README" \

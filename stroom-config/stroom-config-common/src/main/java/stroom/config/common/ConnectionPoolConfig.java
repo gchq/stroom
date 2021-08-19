@@ -187,4 +187,19 @@ public class ConnectionPoolConfig extends AbstractConfig {
                 maxLifetime,
                 maxPoolSize);
     }
+
+
+    @Override
+    public String toString() {
+        return "ConnectionPoolConfig{" +
+                "cachePrepStmts=" + cachePrepStmts +
+                ", prepStmtCacheSize=" + prepStmtCacheSize +
+                ", prepStmtCacheSqlLimit=" + prepStmtCacheSqlLimit +
+                ", connectionTimeout=" + connectionTimeout +
+                ", idleTimeout=" + idleTimeout +
+                ", maxLifetime=" + maxLifetime +
+                ", minimumIdle=" + minimumIdle +
+                ", maxPoolSize=" + maxPoolSize +
+                '}';
+    }
 }

@@ -1,4 +1,4 @@
-package stroom.config.global.impl.validation;
+package stroom.util.validation;
 
 import stroom.util.shared.validation.IsSubsetOf;
 import stroom.util.shared.validation.IsSubsetOfValidator;

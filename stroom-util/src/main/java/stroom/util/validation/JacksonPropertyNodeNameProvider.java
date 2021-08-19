@@ -1,4 +1,4 @@
-package stroom.config.global.impl.validation;
+package stroom.util.validation;
 
 //import org.hibernate.validator.spi.nodenameprovider.JavaBeanProperty;
 //import org.hibernate.validator.spi.nodenameprovider.Property;

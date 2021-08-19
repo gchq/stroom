@@ -65,7 +65,6 @@ logging:
 appConfig:
   commonDbDetails:
     connection:
-      jdbcDriverClassName: ${STROOM_JDBC_DRIVER_CLASS_NAME:-com.mysql.cj.jdbc.Driver}
       jdbcDriverUrl: ${STROOM_JDBC_DRIVER_URL:-jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8}
       jdbcDriverUsername: ${STROOM_JDBC_DRIVER_USERNAME:-stroomuser}
       jdbcDriverPassword: ${STROOM_JDBC_DRIVER_PASSWORD:-stroompassword1}
@@ -78,8 +77,8 @@ appConfig:
     name: node1a
   path:
     # Versioned dirs for dev to allow running multiple stroom instances
-    home: "~/.stroom/v7"
-    temp: "/tmp/stroom/v7"
+    home: "${STROOM_HOME:-~/.stroom/v7/node1a}"
+    temp: "${STROOM_TEMP:-/tmp/stroom/v7/node1a}"
 
   # Uncomment the following to develop React code with `yarn start`
 #  uiUri:

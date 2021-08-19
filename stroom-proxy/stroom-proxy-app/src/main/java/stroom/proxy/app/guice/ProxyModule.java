@@ -17,9 +17,14 @@ import stroom.dropwizard.common.PermissionExceptionMapper;
 import stroom.dropwizard.common.TokenExceptionMapper;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.legacy.impex_6_1.LegacyImpexModule;
+import stroom.proxy.app.BufferFactoryImpl;
+import stroom.proxy.app.ProxyConfigHolder;
+import stroom.proxy.app.RestClientConfig;
+import stroom.proxy.app.RestClientConfigConverter;
 import stroom.proxy.app.Config;
 import stroom.proxy.app.ContentSyncService;
 import stroom.proxy.app.ProxyConfigHealthCheck;
+import stroom.proxy.app.handler.ForwardStreamHandlerFactory;
 import stroom.proxy.app.ProxyLifecycle;
 import stroom.proxy.app.forwarder.ForwarderDestinationsImpl;
 import stroom.proxy.app.handler.ProxyRequestHandler;
@@ -27,6 +32,10 @@ import stroom.proxy.app.handler.RemoteFeedStatusService;
 import stroom.proxy.app.servlet.ProxySecurityFilter;
 import stroom.proxy.app.servlet.ProxyStatusServlet;
 import stroom.proxy.app.servlet.ProxyWelcomeServlet;
+import stroom.proxy.repo.ProxyLifecycle;
+import stroom.proxy.repo.ProxyRepositoryManager;
+import stroom.proxy.repo.ProxyRepositoryReader;
+import stroom.proxy.repo.StreamHandlerFactory;
 import stroom.proxy.repo.ErrorReceiver;
 import stroom.proxy.repo.ErrorReceiverImpl;
 import stroom.proxy.repo.ForwarderDestinations;
@@ -57,13 +66,21 @@ import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasHealthCheckBinder;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.guice.ServletBinder;
+import stroom.util.io.BufferFactory;
+import stroom.util.io.HomeDirProvider;
+import stroom.util.io.HomeDirProviderImpl;
+import stroom.util.io.TempDirProvider;
+import stroom.util.io.TempDirProviderImpl;
+import stroom.util.shared.BuildInfo;
+import stroom.util.io.PathCreator;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.HomeDirProviderImpl;
 import stroom.util.io.PathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.io.TempDirProviderImpl;
-import stroom.util.shared.BuildInfo;
+import io.dropwizard.client.ssl.TlsConfiguration;
 
+import java.io.File;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -75,6 +92,7 @@ import org.glassfish.jersey.logging.LoggingFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Path;
 import java.util.Optional;
 import javax.inject.Provider;
 import javax.ws.rs.client.Client;
@@ -90,10 +108,17 @@ public class ProxyModule extends AbstractModule {
 
     private final Config configuration;
     private final Environment environment;
+    private final ProxyConfigHolder proxyConfigHolder;
 
-    public ProxyModule(final Config configuration, final Environment environment) {
+    public ProxyModule(final Config configuration,
+                       final Environment environment,
+                       final Path configFile) {
         this.configuration = configuration;
         this.environment = environment;
+
+        proxyConfigHolder = new ProxyConfigHolder(
+                configuration.getProxyConfig(),
+                configFile);
     }
 
     @Override
@@ -101,7 +126,7 @@ public class ProxyModule extends AbstractModule {
         bind(Config.class).toInstance(configuration);
         bind(Environment.class).toInstance(environment);
 
-        install(new ProxyConfigModule(configuration.getProxyConfig()));
+        install(new ProxyConfigModule(proxyConfigHolder));
         install(new DbModule());
         install(new ProxyRepoDbModule());
         install(new MockCollectionModule());
@@ -125,8 +150,10 @@ public class ProxyModule extends AbstractModule {
         bind(StoreFactory.class).to(StoreFactoryImpl.class);
         bind(ForwarderDestinations.class).to(ForwarderDestinationsImpl.class);
 
+        // MergeTODO Are these two bound somewhere else?
         bind(HomeDirProvider.class).to(HomeDirProviderImpl.class);
         bind(TempDirProvider.class).to(TempDirProviderImpl.class);
+
         bind(RepoDirProvider.class).to(RepoDirProviderImpl.class);
         bind(RepoDbDirProvider.class).to(RepoDbDirProviderImpl.class);
 
@@ -167,27 +194,67 @@ public class ProxyModule extends AbstractModule {
 
     @Provides
     @Singleton
-    Persistence providePersistence(PathCreator pathCreator) {
+    Persistence providePersistence(final PathCreator pathCreator) {
         final String path = configuration.getProxyConfig().getContentDir();
         return new FSPersistence(pathCreator.toAppPath(path));
     }
 
     @Provides
     @Singleton
-    Client provideJerseyClient(final JerseyClientConfiguration jerseyClientConfiguration,
+    Client provideJerseyClient(final RestClientConfig restClientConfig,
                                final Environment environment,
-                               final Provider<BuildInfo> buildInfoProvider) {
+                               final Provider<BuildInfo> buildInfoProvider,
+                               final PathCreator pathCreator,
+                               final RestClientConfigConverter restClientConfigConverter) {
+
+        // RestClientConfig is really just a copy of JerseyClientConfiguration
+        // so do the conversion
+        final JerseyClientConfiguration jerseyClientConfiguration = restClientConfigConverter.convert(
+                restClientConfig);
 
         // If the userAgent has not been explicitly set in the config then set it based
         // on the build version
-        if (!jerseyClientConfiguration.getUserAgent().isPresent()) {
+        if (jerseyClientConfiguration.getUserAgent().isEmpty()) {
             final String userAgent = PROXY_JERSEY_CLIENT_USER_AGENT_PREFIX
                     + buildInfoProvider.get().getBuildVersion();
-            LOGGER.info("Setting jersey client user agent string to [{}]", userAgent);
+            LOGGER.info("Setting rest client user agent string to [{}]", userAgent);
             jerseyClientConfiguration.setUserAgent(Optional.of(userAgent));
         }
 
-        LOGGER.info("Creating jersey client {}", PROXY_JERSEY_CLIENT_NAME);
+        // Mutating the TLS config is not ideal but I'm not sure there is another way.
+        // We need to allow for relative paths (relative to proxy home), '~', and other system
+        // props in the path. Therefore if path creator produces a different path to what was
+        // configured then update the config object.
+        final TlsConfiguration tlsConfiguration = jerseyClientConfiguration.getTlsConfiguration();
+        if (tlsConfiguration != null) {
+            if (tlsConfiguration.getKeyStorePath() != null) {
+                final File modifiedKeyStorePath = new File(pathCreator.makeAbsolute(
+                        pathCreator.replaceSystemProperties(
+                                tlsConfiguration.getKeyStorePath().getPath())));
+
+                if (!modifiedKeyStorePath.getPath().equals(tlsConfiguration.getKeyStorePath().getPath())) {
+                    LOGGER.info("Updating rest client key store path from {} to {}",
+                            tlsConfiguration.getKeyStorePath(),
+                            modifiedKeyStorePath);
+                    tlsConfiguration.setKeyStorePath(modifiedKeyStorePath);
+                }
+            }
+
+            if (tlsConfiguration.getTrustStorePath() != null) {
+                final File modifiedTrustStorePath = new File(pathCreator.makeAbsolute(
+                        pathCreator.replaceSystemProperties(
+                                tlsConfiguration.getTrustStorePath().getPath())));
+
+                if (!modifiedTrustStorePath.getPath().equals(tlsConfiguration.getTrustStorePath().getPath())) {
+                    LOGGER.info("Updating rest client trust store path from {} to {}",
+                            tlsConfiguration.getTrustStorePath(),
+                            modifiedTrustStorePath);
+                    tlsConfiguration.setTrustStorePath(modifiedTrustStorePath);
+                }
+            }
+        }
+
+        LOGGER.info("Creating jersey rest client {}", PROXY_JERSEY_CLIENT_NAME);
         return new JerseyClientBuilder(environment)
                 .using(jerseyClientConfiguration)
                 .build(PROXY_JERSEY_CLIENT_NAME)

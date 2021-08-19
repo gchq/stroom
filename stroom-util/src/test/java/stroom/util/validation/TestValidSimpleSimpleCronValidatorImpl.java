@@ -1,6 +1,6 @@
-package stroom.config.global.impl.validation;
+package stroom.util.validation;
 
-import stroom.util.shared.validation.ValidRegex;
+import stroom.util.shared.validation.ValidSimpleCron;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -10,9 +10,9 @@ import org.slf4j.LoggerFactory;
 import java.util.Set;
 import javax.validation.ConstraintViolation;
 
-class TestValidRegexValidatorImpl extends AbstractValidatorTest {
+class TestValidSimpleSimpleCronValidatorImpl extends AbstractValidatorTest {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestValidRegexValidatorImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestValidSimpleSimpleCronValidatorImpl.class);
 
     @Test
     void test_null() {
@@ -21,19 +21,20 @@ class TestValidRegexValidatorImpl extends AbstractValidatorTest {
 
     @Test
     void test_good() {
-        doValidationTest("^.*$", true);
+        doValidationTest("* * *", true);
     }
 
     @Test
     void test_bad() {
-        doValidationTest("((", false);
+        doValidationTest("xxxxx", false);
     }
 
     void doValidationTest(final String value, boolean expectedResult) {
         var myPojo = new Pojo();
-        myPojo.regex = value;
+        myPojo.simpleCron = value;
 
         final Set<ConstraintViolation<Pojo>> results = validate(myPojo);
+
         results.forEach(violation -> {
             LOGGER.info(violation.getMessage());
         });
@@ -43,8 +44,7 @@ class TestValidRegexValidatorImpl extends AbstractValidatorTest {
 
     private static class Pojo {
 
-        @ValidRegex
-        private String regex;
+        @ValidSimpleCron
+        private String simpleCron;
     }
-
 }

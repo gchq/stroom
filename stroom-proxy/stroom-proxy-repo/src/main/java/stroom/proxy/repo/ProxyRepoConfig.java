@@ -1,34 +1,26 @@
 package stroom.proxy.repo;
 
+import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsProxyConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.config.annotations.RequiresRestart.RestartScope;
 import stroom.util.time.StroomDuration;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.time.Duration;
 import javax.inject.Singleton;
 
 @Singleton
-@JsonPropertyOrder({
-        "storingEnabled",
-        "repoDir",
-        "dbDir",
-        "format",
-        "cleanupFrequency",
-        "lockDeleteAge",
-        "dirCleanDelay"
-})
-public class ProxyRepoConfig implements RepoConfig {
+@JsonPropertyOrder(alphabetic = true)
+public class ProxyRepoConfig extends AbstractConfig implements IsProxyConfig, RepoConfig {
 
     private boolean storingEnabled = false;
     private String repoDir = "repo";
     private String dbDir = "repo";
     private String format = "${pathId}/${id}";
-    private StroomDuration cleanupFrequency = StroomDuration.of(Duration.ofHours(1));
-    private StroomDuration lockDeleteAge = StroomDuration.of(Duration.ofHours(1));
-    private StroomDuration dirCleanDelay = StroomDuration.of(Duration.ofSeconds(10));
+    private StroomDuration cleanupFrequency = StroomDuration.ofHours(1);
+    private StroomDuration lockDeleteAge = StroomDuration.ofHours(1);
+    private StroomDuration dirCleanDelay = StroomDuration.ofSeconds(10);
 
     @JsonProperty
     public boolean isStoringEnabled() {

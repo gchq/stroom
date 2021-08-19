@@ -18,8 +18,19 @@ public class DbConfig extends AbstractConfig {
     public static final String PROP_NAME_CONNECTION = "connection";
     public static final String PROP_NAME_CONNECTION_POOL = "connectionPool";
 
-    private ConnectionConfig connectionConfig = new ConnectionConfig();
-    private ConnectionPoolConfig connectionPoolConfig = new ConnectionPoolConfig();
+    private ConnectionConfig connectionConfig;
+    private ConnectionPoolConfig connectionPoolConfig;
+
+    public DbConfig() {
+        connectionConfig = new ConnectionConfig();
+        connectionPoolConfig = new ConnectionPoolConfig();
+    }
+
+    public DbConfig(final ConnectionConfig connectionConfig,
+                    final ConnectionPoolConfig connectionPoolConfig) {
+        this.connectionConfig = connectionConfig;
+        this.connectionPoolConfig = connectionPoolConfig;
+    }
 
     @JsonProperty(PROP_NAME_CONNECTION)
     public ConnectionConfig getConnectionConfig() {

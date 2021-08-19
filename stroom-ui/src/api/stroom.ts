@@ -223,12 +223,9 @@ export interface Base64EncodedDocumentData {
 export type BooleanField = AbstractField;
 
 export interface BuildInfo {
-  /** @format int64 */
-  buildTime?: number;
+  buildDate?: string;
   buildVersion?: string;
-
-  /** @format int64 */
-  upTime?: number;
+  upDate?: string;
 }
 
 export interface BulkActionResult {
@@ -306,9 +303,7 @@ export interface ClusterLockKey {
 
 export interface ClusterNodeInfo {
   buildInfo?: BuildInfo;
-
-  /** @format int64 */
-  discoverTime?: number;
+  discoverTime?: string;
   endpointUrl?: string;
   error?: string;
   itemList?: ClusterNodeInfoItem[];
@@ -325,8 +320,7 @@ export interface ClusterNodeInfoItem {
 }
 
 export interface ClusterSearchTask {
-  /** The client date/time settings */
-  dateTimeSettings?: DateTimeSettings;
+  dateTimeLocale?: string;
 
   /** A unique key to identify the instance of the search by. This key is used to identify multiple requests for the same search when running in incremental mode. */
   key?: QueryKey;
@@ -354,15 +348,6 @@ export interface ComponentResultRequest {
   componentId: string;
   fetch?: "NONE" | "CHANGES" | "ALL";
   type: string;
-}
-
-export interface ComponentSelectionHandler {
-  componentId?: string;
-  enabled?: boolean;
-
-  /** A logical addOperator term in a query expression tree */
-  expression?: ExpressionOperator;
-  id?: string;
 }
 
 export interface ComponentSettings {
@@ -542,9 +527,7 @@ export interface DashboardQueryKey {
 export interface DashboardSearchRequest {
   componentResultRequests?: ComponentResultRequest[];
   dashboardQueryKey?: DashboardQueryKey;
-
-  /** The client date/time settings */
-  dateTimeSettings?: DateTimeSettings;
+  dateTimeLocale?: string;
   search?: Search;
 }
 
@@ -652,25 +635,7 @@ export type DateField = AbstractField;
 /**
  * The string formatting to apply to a date value
  */
-export type DateTimeFormatSettings = FormatSettings & {
-  pattern?: string;
-  timeZone?: TimeZone;
-  usePreferences?: boolean;
-};
-
-/**
- * The client date/time settings
- */
-export interface DateTimeSettings {
-  /** A date time formatting pattern string conforming to the specification of java.time.format.DateTimeFormatter */
-  dateTimePattern?: string;
-
-  /** The local zone id to use when formatting date values in the search results. The value is the string form of a java.time.ZoneId */
-  localZoneId: string;
-
-  /** The timezone to apply to a date time value */
-  timeZone?: TimeZone;
-}
+export type DateTimeFormatSettings = FormatSettings & { pattern?: string; timeZone?: TimeZone };
 
 export type DefaultLocation = Location;
 
@@ -765,8 +730,10 @@ export interface DocumentPermissions {
 
 export interface DocumentType {
   displayType?: string;
-  group?: "STRUCTURE" | "DATA_PROCESSING" | "TRANSFORMATION" | "SEARCH" | "INDEXING" | "CONFIGURATION" | "SYSTEM";
-  iconClassName?: string;
+  iconUrl?: string;
+
+  /** @format int32 */
+  priority?: number;
   type?: string;
 }
 
@@ -792,86 +759,6 @@ export interface DownloadSearchResultsRequest {
   percent?: number;
   sample?: boolean;
   searchRequest?: DashboardSearchRequest;
-}
-
-export interface ElasticClusterDoc {
-  connection?: ElasticConnectionConfig;
-
-  /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
-  createTimeMs?: number;
-  createUser?: string;
-  description?: string;
-  name?: string;
-  type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
-
-  /** @format int64 */
-  updateTimeMs?: number;
-  updateUser?: string;
-  uuid?: string;
-  version?: string;
-}
-
-export interface ElasticClusterTestResponse {
-  message?: string;
-  ok?: boolean;
-}
-
-export interface ElasticConnectionConfig {
-  apiKeyId?: string;
-  apiKeySecret?: string;
-  caCertificate?: string;
-  connectionUrls?: string[];
-
-  /** @format int32 */
-  socketTimeoutMillis?: number;
-  useAuthentication?: boolean;
-}
-
-export interface ElasticIndexDoc {
-  /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
-  clusterRef?: DocRef;
-
-  /** @format int64 */
-  createTime?: number;
-
-  /** @format int64 */
-  createTimeMs?: number;
-  createUser?: string;
-  description?: string;
-  fields?: ElasticIndexField[];
-  indexName?: string;
-  name?: string;
-
-  /** A logical addOperator term in a query expression tree */
-  retentionExpression?: ExpressionOperator;
-  type?: string;
-
-  /** @format int64 */
-  updateTime?: number;
-
-  /** @format int64 */
-  updateTimeMs?: number;
-  updateUser?: string;
-  uuid?: string;
-  version?: string;
-}
-
-export interface ElasticIndexField {
-  fieldName?: string;
-  fieldType?: string;
-  fieldUse?: "ID" | "BOOLEAN" | "INTEGER" | "LONG" | "FLOAT" | "DOUBLE" | "DATE" | "TEXT";
-  stored?: boolean;
-}
-
-export interface ElasticIndexTestResponse {
-  message?: string;
-  ok?: boolean;
 }
 
 export interface EntityEvent {
@@ -928,7 +815,7 @@ export interface ExplorerNode {
 
   /** @format int32 */
   depth?: number;
-  iconClassName?: string;
+  iconUrl?: string;
   name?: string;
   nodeState?: "OPEN" | "CLOSED" | "LEAF";
   tags?: string;
@@ -1798,17 +1685,6 @@ export interface Node {
   version?: number;
 }
 
-export interface NodeSetJobsEnabledRequest {
-  enabled?: boolean;
-  excludeJobs?: string[];
-  includeJobs?: string[];
-}
-
-export interface NodeSetJobsEnabledResponse {
-  /** @format int32 */
-  modifiedCount?: number;
-}
-
 export interface NodeStatusResult {
   master?: boolean;
   node?: Node;
@@ -2237,7 +2113,6 @@ export type QueryComponentSettings = ComponentSettings & {
   automate?: Automate;
   dataSource?: DocRef;
   expression?: ExpressionOperator;
-  selectionHandlers?: ComponentSelectionHandler[];
 };
 
 export interface QueryConfig {
@@ -2672,8 +2547,8 @@ export interface SearchBusPollRequest {
  * A request for new search or a follow up request for more data for an existing iterative search
  */
 export interface SearchRequest {
-  /** The client date/time settings */
-  dateTimeSettings?: DateTimeSettings;
+  /** The locale to use when formatting date values in the search results. The value is the string form of a java.time.ZoneId */
+  dateTimeLocale: string;
 
   /** If true the response will contain all results found so far, typically no results on the first request. Future requests for the same query key may return more results. Intended for use on longer running searches to allow partial result sets to be returned as soon as they are available rather than waiting for the full result set. */
   incremental: boolean;
@@ -3392,8 +3267,12 @@ export interface UiConfig {
   source?: SourceConfig;
   splash?: SplashConfig;
   theme?: ThemeConfig;
-  url?: UrlConfig;
+  uiPreferences?: UiPreferences;
   welcomeHtml?: string;
+}
+
+export interface UiPreferences {
+  dateFormat?: string;
 }
 
 export interface UpdateAccountRequest {
@@ -3416,12 +3295,6 @@ export interface UploadDataRequest {
   key?: ResourceKey;
   metaData?: string;
   streamTypeName?: string;
-}
-
-export interface UrlConfig {
-  apiKeys?: string;
-  changepassword?: string;
-  users?: string;
 }
 
 export interface UrlResponse {
@@ -3451,19 +3324,6 @@ export interface User {
 export interface UserAndPermissions {
   permissions?: string[];
   userId?: string;
-}
-
-export interface UserPreferences {
-  /** A date time formatting pattern string conforming to the specification of java.time.format.DateTimeFormatter */
-  dateTimePattern?: string;
-  density?: string;
-  editorTheme?: string;
-  font?: string;
-  fontSize?: string;
-  theme?: string;
-
-  /** The timezone to apply to a date time value */
-  timeZone?: TimeZone;
 }
 
 export interface ValidateExpressionResult {
@@ -5141,118 +5001,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         ...params,
       }),
   };
-  elasticCluster = {
-    /**
-     * No description
-     *
-     * @tags Elastic Clusters
-     * @name TestElasticCluster
-     * @summary Test connection to the Elasticsearch cluster
-     * @request POST:/elasticCluster/v1/testCluster
-     * @secure
-     */
-    testElasticCluster: (data: ElasticClusterDoc, params: RequestParams = {}) =>
-      this.request<any, ElasticClusterTestResponse>({
-        path: `/elasticCluster/v1/testCluster`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Elastic Clusters
-     * @name FetchElasticCluster
-     * @summary Fetch an Elasticsearch cluster doc by its UUID
-     * @request GET:/elasticCluster/v1/{uuid}
-     * @secure
-     */
-    fetchElasticCluster: (uuid: string, params: RequestParams = {}) =>
-      this.request<any, ElasticClusterDoc>({
-        path: `/elasticCluster/v1/${uuid}`,
-        method: "GET",
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Elastic Clusters
-     * @name UpdateElasticCluster
-     * @summary Update an Elasticsearch cluster doc
-     * @request PUT:/elasticCluster/v1/{uuid}
-     * @secure
-     */
-    updateElasticCluster: (uuid: string, data: ElasticClusterDoc, params: RequestParams = {}) =>
-      this.request<any, ElasticClusterDoc>({
-        path: `/elasticCluster/v1/${uuid}`,
-        method: "PUT",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-  };
-  elasticIndex = {
-    /**
-     * No description
-     *
-     * @tags Elastic Indices
-     * @name TestElasticIndex
-     * @summary Test the Elasticsearch index
-     * @request POST:/elasticIndex/v1/testIndex
-     * @secure
-     */
-    testElasticIndex: (data: ElasticIndexDoc, params: RequestParams = {}) =>
-      this.request<any, ElasticIndexTestResponse>({
-        path: `/elasticIndex/v1/testIndex`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Elastic Indices
-     * @name FetchElasticIndex
-     * @summary Fetch an Elasticsearch index doc by its UUID
-     * @request GET:/elasticIndex/v1/{uuid}
-     * @secure
-     */
-    fetchElasticIndex: (uuid: string, params: RequestParams = {}) =>
-      this.request<any, ElasticIndexDoc>({
-        path: `/elasticIndex/v1/${uuid}`,
-        method: "GET",
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Elastic Indices
-     * @name UpdateElasticIndex
-     * @summary Update an Elasticsearch index doc
-     * @request PUT:/elasticIndex/v1/{uuid}
-     * @secure
-     */
-    updateElasticIndex: (uuid: string, data: ElasticIndexDoc, params: RequestParams = {}) =>
-      this.request<any, ElasticIndexDoc>({
-        path: `/elasticIndex/v1/${uuid}`,
-        method: "PUT",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-  };
   entityEvent = {
     /**
      * No description
@@ -6363,25 +6111,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         type: ContentType.Json,
         ...params,
       }),
-
-    /**
-     * No description
-     *
-     * @tags Nodes
-     * @name SetNodeJobsEnabled
-     * @summary Sets the enabled state of jobs for the selected node. If both `includeJobs` and `excludeJobs` are unspecified or empty, this action will apply to ALL jobs.
-     * @request PUT:/node/v1/setJobsEnabled/{nodeName}
-     * @secure
-     */
-    setNodeJobsEnabled: (nodeName: string, data: NodeSetJobsEnabledRequest, params: RequestParams = {}) =>
-      this.request<any, NodeSetJobsEnabledResponse>({
-        path: `/node/v1/setJobsEnabled/${nodeName}`,
-        method: "PUT",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
   };
   oauth2 = {
     /**
@@ -6775,79 +6504,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       this.request<any, PipelineDoc>({
         path: `/pipeline/v1/${uuid}`,
         method: "PUT",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-  };
-  preferences = {
-    /**
-     * No description
-     *
-     * @tags Preferences
-     * @name FetchUserPreferences
-     * @summary Fetch user preferences.
-     * @request GET:/preferences/v1
-     * @secure
-     */
-    fetchUserPreferences: (params: RequestParams = {}) =>
-      this.request<any, UserPreferences>({
-        path: `/preferences/v1`,
-        method: "GET",
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Preferences
-     * @name UpdateUserPreferences
-     * @summary Update user preferences
-     * @request POST:/preferences/v1
-     * @secure
-     */
-    updateUserPreferences: (data: UserPreferences, params: RequestParams = {}) =>
-      this.request<any, boolean>({
-        path: `/preferences/v1`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Preferences
-     * @name ResetToDefaultUserPreferences
-     * @summary Resets preferences to the defaults
-     * @request POST:/preferences/v1/resetToDefaultUserPreferences
-     * @secure
-     */
-    resetToDefaultUserPreferences: (params: RequestParams = {}) =>
-      this.request<any, UserPreferences>({
-        path: `/preferences/v1/resetToDefaultUserPreferences`,
-        method: "POST",
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Preferences
-     * @name SetDefaultUserPreferences
-     * @summary Sets the default preferences for all users
-     * @request POST:/preferences/v1/setDefaultUserPreferences
-     * @secure
-     */
-    setDefaultUserPreferences: (data: UserPreferences, params: RequestParams = {}) =>
-      this.request<any, UserPreferences>({
-        path: `/preferences/v1/setDefaultUserPreferences`,
-        method: "POST",
         body: data,
         secure: true,
         type: ContentType.Json,
@@ -7996,64 +7652,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       this.request<any, StoredQuery>({
         path: `/storedQuery/v1/update`,
         method: "PUT",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-  };
-  stroomElasticIndex = {
-    /**
-     * No description
-     *
-     * @tags Elasticsearch Queries
-     * @name GetElasticIndexDataSource
-     * @summary Submit a request for a data source definition, supplying the DocRef for the data source
-     * @request POST:/stroom-elastic-index/v2/dataSource
-     * @secure
-     */
-    getElasticIndexDataSource: (data: DocRef, params: RequestParams = {}) =>
-      this.request<any, DataSource>({
-        path: `/stroom-elastic-index/v2/dataSource`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Elasticsearch Queries
-     * @name DestroyElasticIndexSearch
-     * @summary Destroy a running query
-     * @request POST:/stroom-elastic-index/v2/destroy
-     * @secure
-     */
-    destroyElasticIndexSearch: (data: QueryKey, params: RequestParams = {}) =>
-      this.request<any, boolean>({
-        path: `/stroom-elastic-index/v2/destroy`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Elasticsearch Queries
-     * @name SearchElasticIndex
-     * @summary Submit a search request
-     * @request POST:/stroom-elastic-index/v2/search
-     * @secure
-     */
-    searchElasticIndex: (data: SearchRequest, params: RequestParams = {}) =>
-      this.request<any, SearchResponse>({
-        path: `/stroom-elastic-index/v2/search`,
-        method: "POST",
         body: data,
         secure: true,
         type: ContentType.Json,

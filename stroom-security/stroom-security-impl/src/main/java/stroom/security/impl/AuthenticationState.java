@@ -2,12 +2,12 @@ package stroom.security.impl;
 
 public class AuthenticationState {
     private final String id;
-    private final String url;
+    private final String uri;
     private final String nonce;
 
-    AuthenticationState(final String id, final String url, final String nonce) {
+    AuthenticationState(final String id, final String uri, final String nonce) {
         this.id = id;
-        this.url = url;
+        this.uri = uri;
         this.nonce = nonce;
     }
 
@@ -21,12 +21,12 @@ public class AuthenticationState {
     }
 
     /**
-     * The URL of the originating request that this state is linked to.
+     * The URI of the originating request that this state is linked to.
      *
      * @return The URL of the originating request that this state is linked to.
      */
-    public String getUrl() {
-        return url;
+    public String getUri() {
+        return uri;
     }
 
     /**
@@ -48,7 +48,7 @@ public class AuthenticationState {
     public String toString() {
         return "AuthenticationState{" +
                 "id='" + id + '\'' +
-                ", url='" + url + '\'' +
+                ", uri='" + uri + '\'' +
                 ", nonce='" + nonce + '\'' +
                 '}';
     }

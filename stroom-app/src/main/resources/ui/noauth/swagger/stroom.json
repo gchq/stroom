@@ -2162,192 +2162,6 @@
         "tags" : [ "Dictionaries (v1)" ]
       }
     },
-    "/elasticCluster/v1/testCluster" : {
-      "post" : {
-        "operationId" : "testElasticCluster",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/ElasticClusterDoc"
-              }
-            }
-          },
-          "description" : "elasticClusterDoc",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ElasticClusterTestResponse"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Test connection to the Elasticsearch cluster",
-        "tags" : [ "Elastic Clusters" ]
-      }
-    },
-    "/elasticCluster/v1/{uuid}" : {
-      "get" : {
-        "operationId" : "fetchElasticCluster",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "uuid",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ElasticClusterDoc"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Fetch an Elasticsearch cluster doc by its UUID",
-        "tags" : [ "Elastic Clusters" ]
-      },
-      "put" : {
-        "operationId" : "updateElasticCluster",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "uuid",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/ElasticClusterDoc"
-              }
-            }
-          },
-          "description" : "doc",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ElasticClusterDoc"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Update an Elasticsearch cluster doc",
-        "tags" : [ "Elastic Clusters" ]
-      }
-    },
-    "/elasticIndex/v1/testIndex" : {
-      "post" : {
-        "operationId" : "testElasticIndex",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/ElasticIndexDoc"
-              }
-            }
-          },
-          "description" : "elasticIndexDoc",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ElasticIndexTestResponse"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Test the Elasticsearch index",
-        "tags" : [ "Elastic Indices" ]
-      }
-    },
-    "/elasticIndex/v1/{uuid}" : {
-      "get" : {
-        "operationId" : "fetchElasticIndex",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "uuid",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ElasticIndexDoc"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Fetch an Elasticsearch index doc by its UUID",
-        "tags" : [ "Elastic Indices" ]
-      },
-      "put" : {
-        "operationId" : "updateElasticIndex",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "uuid",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/ElasticIndexDoc"
-              }
-            }
-          },
-          "description" : "doc",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ElasticIndexDoc"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Update an Elasticsearch index doc",
-        "tags" : [ "Elastic Indices" ]
-      }
-    },
     "/entityEvent/v1/{nodeName}" : {
       "put" : {
         "operationId" : "fireEntityEvent",
@@ -4133,44 +3947,6 @@
         "tags" : [ "Nodes" ]
       }
     },
-    "/node/v1/setJobsEnabled/{nodeName}" : {
-      "put" : {
-        "operationId" : "setNodeJobsEnabled",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "nodeName",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/NodeSetJobsEnabledRequest"
-              }
-            }
-          },
-          "description" : "Request parameters",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/NodeSetJobsEnabledResponse"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Sets the enabled state of jobs for the selected node. If both `includeJobs` and `excludeJobs` are unspecified or empty, this action will apply to ALL jobs.",
-        "tags" : [ "Nodes" ]
-      }
-    },
     "/oauth2/v1/noauth/.well-known/openid-configuration" : {
       "get" : {
         "operationId" : "openIdConfiguration",
@@ -4806,98 +4582,6 @@
         },
         "summary" : "Update a pipeline doc",
         "tags" : [ "Pipelines" ]
-      }
-    },
-    "/preferences/v1" : {
-      "get" : {
-        "operationId" : "fetchUserPreferences",
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/UserPreferences"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Fetch user preferences.",
-        "tags" : [ "Preferences" ]
-      },
-      "post" : {
-        "operationId" : "updateUserPreferences",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/UserPreferences"
-              }
-            }
-          }
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "boolean"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Update user preferences",
-        "tags" : [ "Preferences" ]
-      }
-    },
-    "/preferences/v1/resetToDefaultUserPreferences" : {
-      "post" : {
-        "operationId" : "resetToDefaultUserPreferences",
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/UserPreferences"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Resets preferences to the defaults",
-        "tags" : [ "Preferences" ]
-      }
-    },
-    "/preferences/v1/setDefaultUserPreferences" : {
-      "post" : {
-        "operationId" : "setDefaultUserPreferences",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/UserPreferences"
-              }
-            }
-          }
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/UserPreferences"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Sets the default preferences for all users",
-        "tags" : [ "Preferences" ]
       }
     },
     "/processor/v1/{id}" : {
@@ -6756,96 +6440,6 @@
         "tags" : [ "Stored Queries" ]
       }
     },
-    "/stroom-elastic-index/v2/dataSource" : {
-      "post" : {
-        "operationId" : "getElasticIndexDataSource",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/DocRef"
-              }
-            }
-          },
-          "description" : "DocRef",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/DataSource"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Submit a request for a data source definition, supplying the DocRef for the data source",
-        "tags" : [ "Elasticsearch Queries" ]
-      }
-    },
-    "/stroom-elastic-index/v2/destroy" : {
-      "post" : {
-        "operationId" : "destroyElasticIndexSearch",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/QueryKey"
-              }
-            }
-          },
-          "description" : "QueryKey",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "boolean"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Destroy a running query",
-        "tags" : [ "Elasticsearch Queries" ]
-      }
-    },
-    "/stroom-elastic-index/v2/search" : {
-      "post" : {
-        "operationId" : "searchElasticIndex",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/SearchRequest"
-              }
-            }
-          },
-          "description" : "SearchRequest",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/SearchResponse"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Submit a search request",
-        "tags" : [ "Elasticsearch Queries" ]
-      }
-    },
     "/stroom-index/v2/dataSource" : {
       "post" : {
         "operationId" : "getStroomIndexDataSource",
@@ -8573,16 +8167,14 @@
       "BuildInfo" : {
         "type" : "object",
         "properties" : {
-          "buildTime" : {
-            "type" : "integer",
-            "format" : "int64"
+          "buildDate" : {
+            "type" : "string"
           },
           "buildVersion" : {
             "type" : "string"
           },
-          "upTime" : {
-            "type" : "integer",
-            "format" : "int64"
+          "upDate" : {
+            "type" : "string"
           }
         }
       },
@@ -8800,8 +8392,7 @@
             "$ref" : "#/components/schemas/BuildInfo"
           },
           "discoverTime" : {
-            "type" : "integer",
-            "format" : "int64"
+            "type" : "string"
           },
           "endpointUrl" : {
             "type" : "string"
@@ -8841,8 +8432,8 @@
       "ClusterSearchTask" : {
         "type" : "object",
         "properties" : {
-          "dateTimeSettings" : {
-            "$ref" : "#/components/schemas/DateTimeSettings"
+          "dateTimeLocale" : {
+            "type" : "string"
           },
           "key" : {
             "$ref" : "#/components/schemas/QueryKey"
@@ -8911,23 +8502,6 @@
           }
         },
         "required" : [ "componentId", "type" ]
-      },
-      "ComponentSelectionHandler" : {
-        "type" : "object",
-        "properties" : {
-          "componentId" : {
-            "type" : "string"
-          },
-          "enabled" : {
-            "type" : "boolean"
-          },
-          "expression" : {
-            "$ref" : "#/components/schemas/ExpressionOperator"
-          },
-          "id" : {
-            "type" : "string"
-          }
-        }
       },
       "ComponentSettings" : {
         "type" : "object",
@@ -9332,8 +8906,8 @@
           "dashboardQueryKey" : {
             "$ref" : "#/components/schemas/DashboardQueryKey"
           },
-          "dateTimeSettings" : {
-            "$ref" : "#/components/schemas/DateTimeSettings"
+          "dateTimeLocale" : {
+            "type" : "string"
           },
           "search" : {
             "$ref" : "#/components/schemas/Search"
@@ -9579,33 +9153,11 @@
             },
             "timeZone" : {
               "$ref" : "#/components/schemas/TimeZone"
-            },
-            "usePreferences" : {
-              "type" : "boolean",
-              "description" : "Choose if you want to use the user preference to determine the date/time format"
             }
           }
         } ],
         "description" : "The string formatting to apply to a date value",
-        "required" : [ "pattern", "timeZone", "usePreferences" ]
-      },
-      "DateTimeSettings" : {
-        "type" : "object",
-        "description" : "The client date/time settings",
-        "properties" : {
-          "dateTimePattern" : {
-            "type" : "string",
-            "description" : "A date time formatting pattern string conforming to the specification of java.time.format.DateTimeFormatter"
-          },
-          "localZoneId" : {
-            "type" : "string",
-            "description" : "The local zone id to use when formatting date values in the search results. The value is the string form of a java.time.ZoneId"
-          },
-          "timeZone" : {
-            "$ref" : "#/components/schemas/TimeZone"
-          }
-        },
-        "required" : [ "localZoneId" ]
+        "required" : [ "pattern", "timeZone" ]
       },
       "DefaultLocation" : {
         "type" : "object",
@@ -9810,12 +9362,12 @@
           "displayType" : {
             "type" : "string"
           },
-          "group" : {
-            "type" : "string",
-            "enum" : [ "STRUCTURE", "DATA_PROCESSING", "TRANSFORMATION", "SEARCH", "INDEXING", "CONFIGURATION", "SYSTEM" ]
-          },
-          "iconClassName" : {
+          "iconUrl" : {
             "type" : "string"
+          },
+          "priority" : {
+            "type" : "integer",
+            "format" : "int32"
           },
           "type" : {
             "type" : "string"
@@ -9881,175 +9433,6 @@
           },
           "searchRequest" : {
             "$ref" : "#/components/schemas/DashboardSearchRequest"
-          }
-        }
-      },
-      "ElasticClusterDoc" : {
-        "type" : "object",
-        "properties" : {
-          "connection" : {
-            "$ref" : "#/components/schemas/ElasticConnectionConfig"
-          },
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "createTimeMs" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "createUser" : {
-            "type" : "string"
-          },
-          "description" : {
-            "type" : "string"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "type" : {
-            "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "updateTimeMs" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "updateUser" : {
-            "type" : "string"
-          },
-          "uuid" : {
-            "type" : "string"
-          },
-          "version" : {
-            "type" : "string"
-          }
-        }
-      },
-      "ElasticClusterTestResponse" : {
-        "type" : "object",
-        "properties" : {
-          "message" : {
-            "type" : "string"
-          },
-          "ok" : {
-            "type" : "boolean"
-          }
-        }
-      },
-      "ElasticConnectionConfig" : {
-        "type" : "object",
-        "properties" : {
-          "apiKeyId" : {
-            "type" : "string"
-          },
-          "apiKeySecret" : {
-            "type" : "string"
-          },
-          "caCertificate" : {
-            "type" : "string"
-          },
-          "connectionUrls" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            }
-          },
-          "socketTimeoutMillis" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "useAuthentication" : {
-            "type" : "boolean"
-          }
-        }
-      },
-      "ElasticIndexDoc" : {
-        "type" : "object",
-        "properties" : {
-          "clusterRef" : {
-            "$ref" : "#/components/schemas/DocRef"
-          },
-          "createTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "createTimeMs" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "createUser" : {
-            "type" : "string"
-          },
-          "description" : {
-            "type" : "string"
-          },
-          "fields" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/ElasticIndexField"
-            }
-          },
-          "indexName" : {
-            "type" : "string"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "retentionExpression" : {
-            "$ref" : "#/components/schemas/ExpressionOperator"
-          },
-          "type" : {
-            "type" : "string"
-          },
-          "updateTime" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "updateTimeMs" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "updateUser" : {
-            "type" : "string"
-          },
-          "uuid" : {
-            "type" : "string"
-          },
-          "version" : {
-            "type" : "string"
-          }
-        }
-      },
-      "ElasticIndexField" : {
-        "type" : "object",
-        "properties" : {
-          "fieldName" : {
-            "type" : "string"
-          },
-          "fieldType" : {
-            "type" : "string"
-          },
-          "fieldUse" : {
-            "type" : "string",
-            "enum" : [ "ID", "BOOLEAN", "INTEGER", "LONG", "FLOAT", "DOUBLE", "DATE", "TEXT" ]
-          },
-          "stored" : {
-            "type" : "boolean"
-          }
-        }
-      },
-      "ElasticIndexTestResponse" : {
-        "type" : "object",
-        "properties" : {
-          "message" : {
-            "type" : "string"
-          },
-          "ok" : {
-            "type" : "boolean"
           }
         }
       },
@@ -10170,7 +9553,7 @@
             "type" : "integer",
             "format" : "int32"
           },
-          "iconClassName" : {
+          "iconUrl" : {
             "type" : "string"
           },
           "name" : {
@@ -12057,37 +11440,6 @@
           }
         }
       },
-      "NodeSetJobsEnabledRequest" : {
-        "type" : "object",
-        "properties" : {
-          "enabled" : {
-            "type" : "boolean"
-          },
-          "excludeJobs" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            },
-            "uniqueItems" : true
-          },
-          "includeJobs" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            },
-            "uniqueItems" : true
-          }
-        }
-      },
-      "NodeSetJobsEnabledResponse" : {
-        "type" : "object",
-        "properties" : {
-          "modifiedCount" : {
-            "type" : "integer",
-            "format" : "int32"
-          }
-        }
-      },
       "NodeStatusResult" : {
         "type" : "object",
         "properties" : {
@@ -13002,12 +12354,6 @@
             },
             "expression" : {
               "$ref" : "#/components/schemas/ExpressionOperator"
-            },
-            "selectionHandlers" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/components/schemas/ComponentSelectionHandler"
-              }
             }
           }
         } ]
@@ -13828,8 +13174,9 @@
         "type" : "object",
         "description" : "A request for new search or a follow up request for more data for an existing iterative search",
         "properties" : {
-          "dateTimeSettings" : {
-            "$ref" : "#/components/schemas/DateTimeSettings"
+          "dateTimeLocale" : {
+            "type" : "string",
+            "description" : "The locale to use when formatting date values in the search results. The value is the string form of a java.time.ZoneId"
           },
           "incremental" : {
             "type" : "boolean",
@@ -13856,7 +13203,7 @@
             "description" : "Set the maximum time (in ms) for the server to wait for a complete result set. The timeout applies to both incremental and non incremental queries, though the behaviour is slightly different. The timeout will make the server wait for which ever comes first out of the query completing or the timeout period being reached. If no value is supplied then for an incremental query a default value of 0 will be used (i.e. returning immediately) and for a non-incremental query the server's default timeout period will be used. For an incremental query, if the query has not completed by the end of the timeout period, it will return the currently know results with complete=false, however for a non-incremental query it will return no results, complete=false and details of the timeout in the error field"
           }
         },
-        "required" : [ "incremental", "key", "query", "resultRequests" ],
+        "required" : [ "dateTimeLocale", "incremental", "key", "query", "resultRequests" ],
         "xml" : {
           "name" : "searchRequest"
         }
@@ -15490,10 +14837,18 @@
           "theme" : {
             "$ref" : "#/components/schemas/ThemeConfig"
           },
-          "url" : {
-            "$ref" : "#/components/schemas/UrlConfig"
+          "uiPreferences" : {
+            "$ref" : "#/components/schemas/UiPreferences"
           },
           "welcomeHtml" : {
+            "type" : "string"
+          }
+        }
+      },
+      "UiPreferences" : {
+        "type" : "object",
+        "properties" : {
+          "dateFormat" : {
             "type" : "string"
           }
         }
@@ -15548,20 +14903,6 @@
             "type" : "string"
           },
           "streamTypeName" : {
-            "type" : "string"
-          }
-        }
-      },
-      "UrlConfig" : {
-        "type" : "object",
-        "properties" : {
-          "apiKeys" : {
-            "type" : "string"
-          },
-          "changepassword" : {
-            "type" : "string"
-          },
-          "users" : {
             "type" : "string"
           }
         }
@@ -15625,33 +14966,6 @@
           },
           "userId" : {
             "type" : "string"
-          }
-        }
-      },
-      "UserPreferences" : {
-        "type" : "object",
-        "properties" : {
-          "dateTimePattern" : {
-            "type" : "string",
-            "description" : "A date time formatting pattern string conforming to the specification of java.time.format.DateTimeFormatter"
-          },
-          "density" : {
-            "type" : "string"
-          },
-          "editorTheme" : {
-            "type" : "string"
-          },
-          "font" : {
-            "type" : "string"
-          },
-          "fontSize" : {
-            "type" : "string"
-          },
-          "theme" : {
-            "type" : "string"
-          },
-          "timeZone" : {
-            "$ref" : "#/components/schemas/TimeZone"
           }
         }
       },

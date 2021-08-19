@@ -17,11 +17,6 @@ appConfig:
         maxLifetime: "PT30M"
         minimumIdle: 10
         maxPoolSize: 30
-  alerting:
-    timezone: "UTC"
-    rulesFolderList: []
-    reportAllExtractedFieldsEnabled: false
-    additionalFieldsPrefix: "_"
   annotation:
     db:
       connection:
@@ -188,7 +183,6 @@ appConfig:
         expireAfterWrite: null
   dataSourceUrl:
     index: "/api/stroom-index/v2"
-    elasticIndex: "/api/stroom-elastic-index/v2"
     solrIndex: "/api/stroom-solr-index/v2"
     statisticStore: "/api/sqlstatistics/v2"
     searchable: "/api/searchable/v2"
@@ -208,23 +202,6 @@ appConfig:
         maxLifetime: "PT30M"
         minimumIdle: 10
         maxPoolSize: 30
-  elastic:
-    indexClientCache:
-      maximumSize: 100
-      expireAfterAccess: "PT10M"
-      expireAfterWrite: null
-    indexCache:
-      maximumSize: 100
-      expireAfterAccess: null
-      expireAfterWrite: "PT10M"
-    search:
-      maxStoredDataQueueSize: 1000
-      maxBooleanClauseCount: 1024
-      storeSize: "1000000,100,10,1"
-      searchResultCache:
-        maximumSize: 10000
-        expireAfterAccess: "PT10M"
-        expireAfterWrite: null
   explorer:
     db:
       connection:
@@ -300,7 +277,7 @@ appConfig:
         maxLifetime: "PT30M"
         minimumIdle: 10
         maxPoolSize: 30
-    enableDistributedJobsOnBootstrap: true
+    enableJobsOnBootstrap: false
   kafka:
     skeletonConfigContent: "# The following properties are taken from the v2.2 documentation\n\
       # for the Kafka Producer and can be uncommented and set as required.\n# NOTE\
@@ -364,8 +341,8 @@ appConfig:
     port: null
     pathPrefix: null
   path:
-    home: "."
-    temp: "/tmp/stroom"
+    home: null
+    temp: null
   pipeline:
     httpClientCache:
       maximumSize: 1000
@@ -388,16 +365,16 @@ appConfig:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
     referenceData:
-      localDir: "reference_data"
-      lmdbSystemLibraryPath: null
-      maxPutsBeforeCommit: 0
-      maxReaders: 100
-      maxStoreSize: "50G"
-      purgeAge: "P30D"
       effectiveStreamCache:
         maximumSize: 1000
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
+      lmdbSystemLibraryPath: null
+      localDir: "reference_data"
+      maxPutsBeforeCommit: 0
+      maxReaders: 100
+      maxStoreSize: "50G"
+      purgeAge: "P30D"
       readAheadEnabled: true
     xmlSchema:
       cache:
@@ -465,14 +442,13 @@ appConfig:
         minimumIdle: 10
         maxPoolSize: 30
   proxyAggregation:
-    repoDir: "proxy_repo"
-    dbDir: "proxy_repo_db"
-    aggregator:
-      enabled: true
-      maxItemsPerAggregate: 1000
-      maxUncompressedByteSize: "1.0G"
-      maxAggregateAge: "PT10M"
-      aggregationFrequency: "PT1M"
+    proxyDir: "proxy_repo"
+    proxyThreads: 10
+    maxFileScan: 100000
+    maxConcurrentMappedFiles: 100000
+    maxFilesPerAggregate: 10000
+    maxUncompressedFileSize: "1G"
+    buffferSize: 8192
   publicUri:
     scheme: "https"
     hostname: null
@@ -480,6 +456,7 @@ appConfig:
     pathPrefix: null
   receive:
     receiptPolicyUuid: null
+    bufferSize: 8192
     unknownClassification: "UNKNOWN CLASSIFICATION"
     feedNamePattern: "^[A-Z0-9_-]{3,}$"
   search:
@@ -582,8 +559,6 @@ appConfig:
       contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-eval'\
         \ 'unsafe-inline'; img-src 'self' data:; style-src 'self' 'unsafe-inline';\
         \ frame-ancestors 'self';"
-    crypto:
-      secretEncryptionKey: ""
     identity:
       allowCertificateAuthentication: false
       certificateCnCaptureGroupIndex: 1
@@ -671,6 +646,11 @@ appConfig:
         maximumSize: 10000
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
+      extraction:
+        maxStoredDataQueueSize: 1000
+        maxThreads: 4
+        maxThreadsPerTask: 2
+        maxStreamEventMapSize: 1000000
   statistics:
     sql:
       docRefType: "StatisticStore"
@@ -856,10 +836,8 @@ appConfig:
       tubeOpacity: "0.6"
       topMenuTextColour: "#FFFFFF"
       labelColours: "TEST1=#FF0000,TEST2=#FF9900"
-    url:
-      apiKeys: "../../../s/apiKeys"
-      changepassword: "../../../s/changepassword"
-      users: "../../../s/users"
+    uiPreferences:
+      dateFormat: "YYYY-MM-DDTHH:mm:ss.SSS"
     welcomeHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from\
       \ multiple systems.</p>"
   uiUri:
