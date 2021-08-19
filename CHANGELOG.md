@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2365** : Fix to reduce memory used by `BlockGZIPInput`.
+
 * Issue **#2366** : Fix NPE caused by visualisations that do not define maxValues.
 
 * Issue **#2357** : Remove dropwizard logger configuration entries that have default values.
