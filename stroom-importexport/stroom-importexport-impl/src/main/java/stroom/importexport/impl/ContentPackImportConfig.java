@@ -2,13 +2,14 @@ package stroom.importexport.impl;
 
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class ContentPackImportConfig extends AbstractConfig {
+public class ContentPackImportConfig extends AbstractConfig implements IsStroomConfig {
 
     private boolean enabled;
     private String importDirectory = "content_pack_import";

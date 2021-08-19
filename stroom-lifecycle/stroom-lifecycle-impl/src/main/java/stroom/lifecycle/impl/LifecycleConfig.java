@@ -2,13 +2,14 @@ package stroom.lifecycle.impl;
 
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class LifecycleConfig extends AbstractConfig {
+public class LifecycleConfig extends AbstractConfig implements IsStroomConfig {
 
     private boolean enabled = true;
 

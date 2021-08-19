@@ -1,13 +1,14 @@
 package stroom.pipeline.destination;
 
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class AppenderConfig extends AbstractConfig {
+public class AppenderConfig extends AbstractConfig implements IsStroomConfig {
 
     private static final int DEFAULT_MAX_ACTIVE_DESTINATIONS = 100;
 

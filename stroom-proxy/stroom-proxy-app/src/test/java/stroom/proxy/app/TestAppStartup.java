@@ -15,6 +15,7 @@ public class TestAppStartup extends AbstractApplicationTest {
 
     @Test
     public void testAppStartup() {
+
         LOGGER.info("Nothing to test, just making sure proxy spins up without error");
     }
 

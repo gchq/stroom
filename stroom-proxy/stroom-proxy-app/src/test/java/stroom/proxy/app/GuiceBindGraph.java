@@ -30,7 +30,8 @@ public class GuiceBindGraph {
 
         Config config = new Config();
         config.setProxyConfig(new ProxyConfig());
-        Injector injector = Guice.createInjector(new ProxyModule(config, environment));
+        Injector injector = Guice.createInjector(
+                new ProxyModule(config, environment, Path.of("dummy/path/to/config.yml")));
 
         graph(("build/ProxyModule.dot"), injector);
     }

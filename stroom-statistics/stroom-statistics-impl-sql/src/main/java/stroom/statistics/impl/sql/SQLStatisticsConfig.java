@@ -5,6 +5,7 @@ import stroom.config.common.HasDbConfig;
 import stroom.statistics.impl.sql.search.SearchConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -14,7 +15,7 @@ import javax.annotation.Nullable;
 import javax.inject.Singleton;
 
 @Singleton
-public class SQLStatisticsConfig extends AbstractConfig implements HasDbConfig {
+public class SQLStatisticsConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
     private DbConfig dbConfig = new DbConfig();
     private String docRefType = "StatisticStore";
     private SearchConfig searchConfig = new SearchConfig();

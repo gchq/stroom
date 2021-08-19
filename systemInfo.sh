@@ -49,9 +49,9 @@ main(){
       api_token="${TOKEN}"
     else
       # Hard coded token that works with the hard coded default open id creds
-      # for use in dev only
+      # for use in dev only. Expires on 2030-08-18T13:53:50.000Z
       echo -e "${GREEN}Using hard coded token, export ${BLUE}\${TOKEN}${GREEN} to override.${NC}"
-      local api_token="eyJhbGciOiJSUzI1NiIsImtpZCI6IjhhM2I1OGNhLTk2ZTctNGFhNC05ZjA3LTQ0MDBhYWVkMTQ3MSJ9.eyJleHAiOjE2MzY0NDQ1NzcsInN1YiI6ImFkbWluIiwiaXNzIjoic3Ryb29tIiwiYXVkIjoiTlhDbXJyTGpQR2VBMVN4NWNEZkF6OUV2ODdXaTNucHRUbzZSdzVmTC5jbGllbnQtaWQuYXBwcy5zdHJvb20taWRwIn0.YFcNS0W8-whP9F0ANSHoe8MNBUUs3VAhyqB06jF40bPEvdq_gAhQR8KVMdgYaYxK-NcQH3Pi062ve7cbwYJ2p1t6J-PRUyY7SwdMf4z-LgoOQXyyoaFBe5Jy100mXOzrEtlQ28DRtzes8X6A7NDzdtbghG5cpfjSqB29WgLWjHoqQiKYv_s_29xajkooUBQXOvKCDR8se3hA9SKwPoO-qyYHC0sZyvRJ9KgdXA6DkHJPuqjnYY-kjkeDOdI5ufTteTsAaQV0ot44XR2SF9yenD4Bzk7IyfN5H31Ly5Bh30S4E0dRiUghvnGeiD0mKB1zPEV_6ZDss6tOXdwQML4Wfw"
+      local api_token="eyJhbGciOiJSUzI1NiIsImtpZCI6IjFlYzdhOTgzLTMxN2QtNDZjZS1hZTkzLWNlNDJiYzIxN2U1MiJ9.eyJleHAiOjE5MTMyODgwMzAsInN1YiI6ImFkbWluIiwiaXNzIjoic3Ryb29tIiwiYXVkIjoiOEFrN2xUakpBbDdLYm8yWVYxR25mdzV6MW9kOXlpY3hqMEFsU2RkTC5jbGllbnQtaWQuYXBwcy5zdHJvb20taWRwIn0.vapYiXb-OAmyB95er0_pi6wVkU_Cx5Lf-3gATAm-QAMlGUAMlg0Ee_kvo9FZ-yCskFTOFfg8Yd_jDrc7-lyJJsrt2lbScTXHHB5QH6ZMdEJkA5osUzvAyQ5E9CqAcJz_MxTUpSNqpfl1vBaDA1ikFHxwIgc7G82_v2GkmCGwEv05zMWtVtva0eiSoSGW5SSidbO1Eohm8rL0toPflQWIgeHm1s92C7y9ntan0rmyl27m0fZYdQkcpnXWNlbK_rhAz7FhNhlWCCh-2mPIbIu2mibVAoO2weL0ihvmCbDCOLDAiI4nuLiJwXSg0D0SJ25ZJpABbnaSfZjNhUhcyf-pMA"
     fi
 
     http_auth_args="Authorization:Bearer ${api_token}"

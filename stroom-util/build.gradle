@@ -26,11 +26,13 @@ dependencies {
     compile libs.validation_api
     compile libs.ws_rs_api
 
+    testCompile project(':stroom-test-common')
     testCompile libs.assertj_core
-    testCompile libs.commons_lang
-    testCompile libs.junit_jupiter_api
-    testCompile libs.vavr
     testCompile libs.classgraph
+    testCompile libs.commons_lang
+    testCompile libs.guice_extension
+    testCompile libs.junit_jupiter_api
+    testCompile libs.dropwizard_validation
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jaxb_runtime

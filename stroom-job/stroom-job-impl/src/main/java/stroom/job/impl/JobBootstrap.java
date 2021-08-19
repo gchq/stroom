@@ -81,7 +81,7 @@ class JobBootstrap {
         securityContext.asProcessingUser(() -> clusterLockService.lock(LOCK_NAME, () -> {
             final String nodeName = nodeInfo.getThisNodeName();
 
-            final List<JobNode> existingJobList = findAllJobs(nodeName);
+            final List<JobNode> existingJobList = jobNodeDao.find(new FindJobNodeCriteria()).getValues();
             final Map<String, JobNode> existingJobMap = new HashMap<>();
             for (final JobNode jobNode : existingJobList) {
                 existingJobMap.put(jobNode.getJob().getName(), jobNode);
@@ -155,14 +155,14 @@ class JobBootstrap {
                     // Get or create the actual parent job record
                     Job job = new Job();
                     job.setName(jobName);
-                    job.setEnabled(jobSystemConfig.isEnableDistributedJobsOnBootstrap());
+                    job.setEnabled(jobSystemConfig.isEnableJobsOnBootstrap());
                     job = getOrCreateJob(job);
 
                     // Now create the jobNode record for this node
                     final JobNode newJobNode = new JobNode();
                     newJobNode.setJob(job);
                     newJobNode.setNodeName(nodeName);
-                    newJobNode.setEnabled(jobSystemConfig.isEnableDistributedJobsOnBootstrap());
+                    newJobNode.setEnabled(jobSystemConfig.isEnableJobsOnBootstrap());
                     newJobNode.setJobType(JobType.DISTRIBUTED);
 
                     LOGGER.info(() -> "Adding JobNode '" + newJobNode.getJob().getName() +
@@ -182,86 +182,13 @@ class JobBootstrap {
                         LOGGER.info(() -> "Removing old job node " + jobNode.getJob().getName());
                         jobNodeDao.delete(jobNode.getId());
                     });
-//
-//                // Force to delete
-//                this.entityManager.flush();
 
             final int deleteCount = jobDao.deleteOrphans();
-//                final SqlBuilder sql = new SqlBuilder();
-//                sql.append(DELETE_ORPHAN_JOBS_MYSQL);
-//
-//                final Long deleteCount = this.entityManager.executeNativeUpdate(sql);
+
             if (deleteCount > 0) {
                 LOGGER.info(() -> "Removed " + deleteCount + " orphan jobs");
             }
         }));
-    }
-
-//    public JobNode update(final JobNode jobNode) {
-//        // We always want to update a job instance even if we have a stale
-//        // version.
-//        final Optional<JobNode> existing = jobNodeDao.fetch(jobNode.getId());
-//        existing.ifPresent(j -> jobNode.setVersion(j.getVersion()));
-//
-//        // Stop Job Nodes being saved with invalid crons.
-//        if (JobType.CRON.equals(jobNode.getJobType())) {
-//            if (jobNode.getSchedule() != null) {
-//                // This will throw a runtime exception if the expression is
-//                // invalid.
-//                SimpleCron.compile(jobNode.getSchedule());
-//            }
-//        }
-//        if (JobType.FREQUENCY.equals(jobNode.getJobType())) {
-//            if (jobNode.getSchedule() != null) {
-//                // This will throw a runtime exception if the expression is
-//                // invalid.
-//                ModelStringUtil.parseDurationString(jobNode.getSchedule());
-//            }
-//        }
-//
-//        if (existing.isPresent()) {
-//            return jobNodeDao.update(jobNode);
-//        } else {
-//            return jobNodeDao.create(jobNode);
-//        }
-//    }
-//
-//    //    @Override
-//    public JobNode save(final JobNode jobNode) {
-//        // We always want to update a job instance even if we have a stale
-//        // version.
-//        final Optional<JobNode> existing = jobNodeDao.fetch(jobNode.getId());
-//        existing.ifPresent(j -> jobNode.setVersion(j.getVersion()));
-//
-//        // Stop Job Nodes being saved with invalid crons.
-//        if (JobType.CRON.equals(jobNode.getJobType())) {
-//            if (jobNode.getSchedule() != null) {
-//                // This will throw a runtime exception if the expression is
-//                // invalid.
-//                SimpleCron.compile(jobNode.getSchedule());
-//            }
-//        }
-//        if (JobType.FREQUENCY.equals(jobNode.getJobType())) {
-//            if (jobNode.getSchedule() != null) {
-//                // This will throw a runtime exception if the expression is
-//                // invalid.
-//                ModelStringUtil.parseDurationString(jobNode.getSchedule());
-//            }
-//        }
-//
-//        if (existing.isPresent()) {
-//            return jobNodeDao.update(jobNode);
-//        } else {
-//            return jobNodeDao.create(jobNode);
-//        }
-//    }
-
-    private List<JobNode> findAllJobs(final String nodeName) {
-        // See if the job exists in the database.
-        final FindJobNodeCriteria criteria = new FindJobNodeCriteria();
-        criteria.getNodeName().setString(nodeName);
-        return jobNodeDao.find(criteria).getValues();
-
     }
 
     private Job getOrCreateJob(final Job job) {
@@ -291,60 +218,4 @@ class JobBootstrap {
 
         return result;
     }
-
-//    @Override
-//    public Class<JobNode> getEntityClass() {
-//        return JobNode.class;
-//    }
-//
-//    @Override
-//    public FindJobNodeCriteria createCriteria() {
-//        return new FindJobNodeCriteria();
-//    }
-//
-//    @Override
-//    public void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindJobNodeCriteria criteria) {
-//        CriteriaLoggingUtil.appendStringTerm(items, "jobName", criteria.getJobName());
-//        CriteriaLoggingUtil.appendEntityIdSet(items, "jobIdSet", criteria.getJobIdSet());
-//        CriteriaLoggingUtil.appendEntityIdSet(items, "nodeIdSet", criteria.getNodeIdSet());
-//        super.appendCriteria(items, criteria);
-//    }
-//
-//    @Override
-//    protected QueryAppender<JobNode, FindJobNodeCriteria> createQueryAppender(StroomEntityManager entityManager) {
-//        return new JobNodeQueryAppender(entityManager);
-//    }
-//
-//    @Override
-//    protected String permission() {
-//        return PermissionNames.MANAGE_JOBS_PERMISSION;
-//    }
-//
-//    private static class JobNodeQueryAppender extends QueryAppender<JobNode, FindJobNodeCriteria> {
-//        JobNodeQueryAppender(final StroomEntityManager entityManager) {
-//            super(entityManager);
-//        }
-//
-//        @Override
-//        protected void appendBasicJoin(final HqlBuilder sql, final String alias, final Set<String> fetchSet) {
-//            super.appendBasicJoin(sql, alias, fetchSet);
-//            if (fetchSet != null) {
-//                if (fetchSet.contains(Node.ENTITY_TYPE)) {
-//                    sql.append(" INNER JOIN FETCH " + alias + ".node");
-//                }
-//                if (fetchSet.contains(Job.ENTITY_TYPE)) {
-//                    sql.append(" INNER JOIN FETCH " + alias + ".job");
-//                }
-//            }
-//        }
-//
-//        @Override
-//        protected void appendBasicCriteria(final HqlBuilder sql,
-//        final String alias, final FindJobNodeCriteria criteria) {
-//            super.appendBasicCriteria(sql, alias, criteria);
-//            sql.appendEntityIdSetQuery(alias + ".node", criteria.getNodeIdSet());
-//            sql.appendEntityIdSetQuery(alias + ".job", criteria.getJobIdSet());
-//            sql.appendValueQuery(alias + ".job.name", criteria.getJobName());
-//        }
-//    }
 }
