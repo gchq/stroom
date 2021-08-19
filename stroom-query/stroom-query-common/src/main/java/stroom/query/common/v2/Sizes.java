@@ -75,7 +75,12 @@ public class Sizes {
     public static Sizes create(final List<Integer> list, final int defaultSize) {
         int[] sizes = new int[0];
         if (list != null) {
-            sizes = list.stream().mapToInt(i -> i).toArray();
+            sizes = list.stream().mapToInt(i -> {
+                if (i != null) {
+                    return i;
+                }
+                return defaultSize;
+            }).toArray();
         }
 
         return new Sizes(sizes, defaultSize);
