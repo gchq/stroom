@@ -1,11 +1,11 @@
 ---
 proxyConfig:
   aggregator:
+    aggregationFrequency: "PT1M"
     enabled: true
+    maxAggregateAge: "PT10M"
     maxItemsPerAggregate: 1000
     maxUncompressedByteSize: "1.0G"
-    maxAggregateAge: "PT10M"
-    aggregationFrequency: "PT1M"
   contentDir: null
   contentSync:
     apiKey: null
