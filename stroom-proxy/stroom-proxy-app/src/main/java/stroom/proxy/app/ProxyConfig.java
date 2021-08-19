@@ -7,11 +7,10 @@ import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.LogStreamConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.proxy.repo.ProxyRepoFileScannerConfig;
-import stroom.util.io.PathConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
-import stroom.util.shared.validation.ValidationSeverity;
 import stroom.util.shared.PropertyPath;
+import stroom.util.shared.validation.ValidationSeverity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -32,7 +31,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     private boolean haltBootOnConfigValidationFailure = true;
     private String contentDir;
 
-    private PathConfig pathConfig = new ProxyPathConfig();
+    private ProxyPathConfig pathConfig = new ProxyPathConfig();
     private ReceiptPolicyConfig receiptPolicyConfig = new ReceiptPolicyConfig();
     private ProxyRepoConfig proxyRepoConfig = new ProxyRepoConfig();
     private ProxyRepoFileScannerConfig proxyRepoFileScannerConfig = new ProxyRepoFileScannerConfig();
@@ -83,11 +82,11 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     }
 
     @JsonProperty("path")
-    public PathConfig getPathConfig() {
+    public ProxyPathConfig getPathConfig() {
         return pathConfig;
     }
 
-    public void setPathConfig(final PathConfig pathConfig) {
+    public void setPathConfig(final ProxyPathConfig pathConfig) {
         this.pathConfig = pathConfig;
     }
 

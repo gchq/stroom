@@ -22,19 +22,17 @@ import stroom.dropwizard.common.HealthChecks;
 import stroom.dropwizard.common.ManagedServices;
 import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
-import stroom.dropwizard.common.StroomConfigurationSourceProvider;
 import stroom.proxy.app.guice.ProxyModule;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.config.ConfigValidator;
 import stroom.util.config.PropertyPathDecorator;
-import stroom.util.io.DirProvidersModule;
 import stroom.util.date.DateUtil;
+import stroom.util.io.DirProvidersModule;
 import stroom.util.io.FileUtil;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.PathConfig;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LogUtil;
-import stroom.util.date.DateUtil;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.ResourcePaths;
@@ -237,7 +235,7 @@ public class App extends Application<Config> {
             final Module pathConfigModule = new AbstractModule() {
                 @Override
                 protected void configure() {
-                    bind(PathConfig.class).toInstance(proxyConfig.getProxyPathConfig());
+                    bind(PathConfig.class).toInstance(proxyConfig.getPathConfig());
                 }
             };
 

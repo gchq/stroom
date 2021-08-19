@@ -25,7 +25,7 @@ public class ValidFilePathValidatorImpl implements ValidFilePathValidator {
 
     /**
      * Initializes the validator in preparation for
-     * {@link #isValid(Object, ConstraintValidatorContext)} calls.
+     * {@link #isValid(String, ConstraintValidatorContext)} calls.
      * The constraint annotation for a given constraint declaration
      * is passed.
      * <p/>
@@ -55,15 +55,14 @@ public class ValidFilePathValidatorImpl implements ValidFilePathValidator {
         final boolean isValid;
         if (file != null) {
             // Use the PathCreator so we can interpret relative paths and paths with '~' in.
-            final String modifiedFile = pathCreator.makeAbsolute(
-                    pathCreator.replaceSystemProperties(file));
+            final Path modifiedFile = pathCreator.toAppPath(file);
 
             LOGGER.debug("Validating file {} (modified to {})", file, modifiedFile);
-            final Path path = Path.of(modifiedFile);
+            final Path path = modifiedFile;
             isValid = Files.isRegularFile(path) && Files.isReadable(path);
             if (!isValid) {
                 String msg = context.getDefaultConstraintMessageTemplate();
-                if (!modifiedFile.equals(file)) {
+                if (!modifiedFile.toString().equals(file)) {
                     msg += " (as absolute path: [" + modifiedFile + "]";
                 }
                 context.disableDefaultConstraintViolation();

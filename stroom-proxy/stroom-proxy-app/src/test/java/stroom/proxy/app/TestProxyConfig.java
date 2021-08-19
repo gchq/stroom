@@ -51,9 +51,9 @@ class TestProxyConfig {
         final ProxyConfigValidator proxyConfigValidator = injector.getInstance(ProxyConfigValidator.class);
 
         final ProxyConfig proxyConfig = new ProxyConfig();
-        proxyConfig.getProxyPathConfig()
+        proxyConfig.getPathConfig()
                 .setHome(testingHomeAndTempProvidersModule.getHomeDir().toAbsolutePath().toString());
-        proxyConfig.getProxyPathConfig()
+        proxyConfig.getPathConfig()
                 .setTemp(tempDir.toAbsolutePath().toString());
 
         // create the dirs so they validate ok

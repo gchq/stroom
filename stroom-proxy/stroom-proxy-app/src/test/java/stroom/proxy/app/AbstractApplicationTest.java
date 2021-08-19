@@ -1,6 +1,5 @@
 package stroom.proxy.app;
 
-import stroom.dropwizard.common.StroomConfigurationSourceProvider;
 import stroom.util.logging.LogUtil;
 
 import io.dropwizard.configuration.ConfigurationException;
@@ -42,8 +41,8 @@ public abstract class AbstractApplicationTest {
                 .setTlsConfiguration(null);
 
         // If the home/temp paths don't exist then startup will exit, killing the rest of the tests
-        final Path proxyHomeDir = Paths.get(config.getProxyConfig().getProxyPathConfig().getHome());
-        final Path proxyTempDir = Paths.get(config.getProxyConfig().getProxyPathConfig().getTemp());
+        final Path proxyHomeDir = Paths.get(config.getProxyConfig().getPathConfig().getHome());
+        final Path proxyTempDir = Paths.get(config.getProxyConfig().getPathConfig().getTemp());
 
         try {
             Files.createDirectories(proxyHomeDir);

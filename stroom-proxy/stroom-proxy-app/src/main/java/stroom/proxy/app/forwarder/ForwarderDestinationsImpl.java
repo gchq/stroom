@@ -6,6 +6,7 @@ import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.receive.common.StreamHandlers;
 import stroom.util.HasHealthCheck;
 import stroom.util.cert.SSLUtil;
+import stroom.util.io.PathCreator;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BuildInfo;
 
@@ -46,7 +47,8 @@ public class ForwarderDestinationsImpl implements ForwarderDestinations, HasHeal
     public ForwarderDestinationsImpl(final LogStream logStream,
                                      final ForwarderConfig forwarderConfig,
                                      final ProxyRepoConfig proxyRepoConfig,
-                                     final Provider<BuildInfo> buildInfoProvider) {
+                                     final Provider<BuildInfo> buildInfoProvider,
+                                     final PathCreator pathCreator) {
         this.forwarderConfig = forwarderConfig;
         this.buildInfoProvider = buildInfoProvider;
 
@@ -63,7 +65,8 @@ public class ForwarderDestinationsImpl implements ForwarderDestinations, HasHeal
 
             this.providers = forwarderConfig.getForwardDestinations()
                     .stream()
-                    .map(config -> new ForwardStreamHandlers(logStream, userAgentString, config))
+                    .map(config ->
+                            new ForwardStreamHandlers(logStream, userAgentString, config, pathCreator))
                     .collect(Collectors.toMap(f -> f.getConfig().getForwardUrl(), Function.identity()));
         } else {
             LOGGER.info("Forwarding of streams is disabled");

@@ -1,6 +1,7 @@
 package stroom.proxy.repo;
 
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.time.StroomDuration;
 
@@ -20,7 +21,7 @@ import javax.inject.Singleton;
         "maxAggregateAge",
         "aggregationFrequency"
 })
-public class AggregatorConfig extends AbstractConfig {
+public class AggregatorConfig extends AbstractConfig implements IsProxyConfig {
 
     private boolean enabled = true;
     private int maxItemsPerAggregate = 1000;

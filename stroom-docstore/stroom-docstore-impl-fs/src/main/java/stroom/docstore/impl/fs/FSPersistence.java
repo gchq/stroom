@@ -22,7 +22,6 @@ import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
@@ -45,27 +44,15 @@ public class FSPersistence implements Persistence, Clearable {
     private final ObjectMapper objectMapper;
 
     @Inject
-    public FSPersistence(final FSPersistenceConfig config,
-                         final PathCreator pathCreator) {
-        this(config.getPath(), pathCreator);
+    public FSPersistence(final FSPersistenceConfig config, final PathCreator pathCreator) {
+        this(pathCreator.toAppPath(config.getPath()));
     }
 
-    public FSPersistence(final String relativeDir, final PathCreator pathCreator) {
-        try {
-            String absoluteDir = pathCreator.makeAbsolute(relativeDir);
-            absoluteDir = pathCreator.replaceSystemProperties(absoluteDir);
-            LOGGER.debug("Using path {}", absoluteDir);
-            this.dir = Paths.get(absoluteDir);
-            Files.createDirectories(dir);
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
-        }
+//    public FSPersistence(final String dir, final PathCreator pathCreator) {
+//        this(pathCreator.toAppPath(dir));
+//    }
 
-        objectMapper = createMapper();
-    }
-
-    // For testing
-    FSPersistence(final Path absoluteDir) {
+    public FSPersistence(final Path absoluteDir) {
         try {
             this.dir = absoluteDir;
             LOGGER.debug("Using path {}", absoluteDir);

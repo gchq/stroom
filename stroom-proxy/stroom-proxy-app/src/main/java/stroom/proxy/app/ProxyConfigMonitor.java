@@ -87,7 +87,7 @@ public class ProxyConfigMonitor extends AbstractFileChangeMonitor implements Man
         // can log their locations with full paths.
         PropertyPathDecorator.decoratePaths(newProxyConfig, ProxyConfig.ROOT_PROPERTY_PATH);
 
-        LOGGER.info("Validating modified config file (home: {})", newProxyConfig.getProxyPathConfig().getHome());
+        LOGGER.info("Validating modified config file (home: {})", newProxyConfig.getPathConfig().getHome());
         final ConfigValidator.Result<IsProxyConfig> result = proxyConfigValidator.validateRecursively(newProxyConfig);
         result.handleViolations(ProxyConfigValidator::logConstraintViolation);
 

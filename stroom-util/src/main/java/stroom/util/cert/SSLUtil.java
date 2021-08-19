@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Path;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -68,11 +69,10 @@ public class SSLUtil {
 
         // Load the keystore
         if (sslConfig.getKeyStorePath() != null) {
-            final String keyStorePathStr = pathCreator.makeAbsolute(
-                    pathCreator.replaceSystemProperties(sslConfig.getKeyStorePath()));
+            final Path keyStorePath = pathCreator.toAppPath(sslConfig.getKeyStorePath());
 
             try (final InputStream inputStream = new BufferedInputStream(
-                    new FileInputStream(keyStorePathStr))) {
+                    new FileInputStream(keyStorePath.toFile()))) {
 
                 keyStore = KeyStore.getInstance(sslConfig.getKeyStoreType());
                 LOGGER.info(() ->
@@ -107,11 +107,10 @@ public class SSLUtil {
 
         // Load the truststore
         if (sslConfig.getTrustStorePath() != null) {
-            final String trustStorePathStr = pathCreator.makeAbsolute(
-                    pathCreator.replaceSystemProperties(sslConfig.getTrustStorePath()));
+            final Path trustStorePath = pathCreator.toAppPath(sslConfig.getTrustStorePath());
 
             try (final InputStream inputStream = new BufferedInputStream(
-                    new FileInputStream(trustStorePathStr))) {
+                    new FileInputStream(trustStorePath.toFile()))) {
                 trustStore = KeyStore.getInstance(sslConfig.getTrustStoreType());
                 LOGGER.info(() ->
                         "Loading truststore " + sslConfig.getTrustStorePath() +

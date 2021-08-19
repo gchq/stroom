@@ -139,7 +139,6 @@ public class RestClientConfigConverter {
     }
 
     private File convertFile(final String path) {
-        return new File(pathCreator.makeAbsolute(
-                pathCreator.replaceSystemProperties(path)));
+        return pathCreator.toAppPath(path).toFile();
     }
 }

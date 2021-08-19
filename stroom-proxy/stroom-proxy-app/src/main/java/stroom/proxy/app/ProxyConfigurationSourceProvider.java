@@ -77,7 +77,8 @@ public class ProxyConfigurationSourceProvider implements ConfigurationSourceProv
             // section of the yaml
             final PathCreator pathCreator = getPathCreator(rootNode);
             final Function<String, String> logDirMutator = currLogDir ->
-                    pathCreator.makeAbsolute(pathCreator.replaceSystemProperties(currLogDir.trim()));
+                    pathCreator.toAppPath(currLogDir)
+                            .toString();
 
             JSON_POINTERS_TO_INSPECT.forEach(jsonPointerExp ->
                     mutateNodes(rootNode, jsonPointerExp, KEYS_TO_MUTATE, logDirMutator));

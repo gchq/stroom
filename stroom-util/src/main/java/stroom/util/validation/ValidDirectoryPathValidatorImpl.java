@@ -25,7 +25,7 @@ public class ValidDirectoryPathValidatorImpl implements ValidDirectoryPathValida
 
     /**
      * Initializes the validator in preparation for
-     * {@link #isValid(Object, ConstraintValidatorContext)} calls.
+     * {@link #isValid(String, ConstraintValidatorContext)} calls.
      * The constraint annotation for a given constraint declaration
      * is passed.
      * <p/>
@@ -60,15 +60,14 @@ public class ValidDirectoryPathValidatorImpl implements ValidDirectoryPathValida
 //            final String modifiedDir = FileUtil.replaceHome(dir);
 
             // Use the PathCreator so we can interpret relative paths and paths with '~' in.
-            final String modifiedDir = pathCreator.makeAbsolute(
-                    pathCreator.replaceSystemProperties(dir));
+            final Path modifiedDir = pathCreator.toAppPath(dir);
 
             LOGGER.debug("Validating dir {} (modified to {})", dir, modifiedDir);
-            final Path path = Path.of(modifiedDir);
+            final Path path = modifiedDir;
             isValid = Files.isDirectory(path) && Files.isReadable(path);
             if (!isValid) {
                 String msg = context.getDefaultConstraintMessageTemplate();
-                if (!modifiedDir.equals(dir)) {
+                if (!modifiedDir.toString().equals(dir)) {
                     msg += " (as absolute path: [" + modifiedDir + "]";
                 }
                 context.disableDefaultConstraintViolation();

@@ -2,13 +2,13 @@ package stroom.proxy.app.forwarder;
 
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
-import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.proxy.repo.LogStream;
 import stroom.receive.common.StreamHandler;
 import stroom.receive.common.StreamHandlers;
 import stroom.receive.common.StroomStreamException;
 import stroom.util.cert.SSLUtil;
+import stroom.util.io.PathCreator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,13 +29,14 @@ public class ForwardStreamHandlers implements StreamHandlers {
 
     public ForwardStreamHandlers(final LogStream logStream,
                                  final String userAgentString,
-                                 final ForwardDestinationConfig config) {
+                                 final ForwardDestinationConfig config,
+                                 final PathCreator pathCreator) {
         this.logStream = logStream;
         this.userAgentString = userAgentString;
 
         LOGGER.info("Configuring SSLSocketFactory for URL {}", config.getForwardUrl());
         if (config.getSslConfig() != null) {
-            sslSocketFactory = SSLUtil.createSslSocketFactory(config.getSslConfig());
+            sslSocketFactory = SSLUtil.createSslSocketFactory(config.getSslConfig(), pathCreator);
         } else {
             sslSocketFactory = null;
         }

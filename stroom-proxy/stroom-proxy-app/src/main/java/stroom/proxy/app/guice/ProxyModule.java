@@ -17,25 +17,19 @@ import stroom.dropwizard.common.PermissionExceptionMapper;
 import stroom.dropwizard.common.TokenExceptionMapper;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.legacy.impex_6_1.LegacyImpexModule;
-import stroom.proxy.app.BufferFactoryImpl;
-import stroom.proxy.app.ProxyConfigHolder;
-import stroom.proxy.app.RestClientConfig;
-import stroom.proxy.app.RestClientConfigConverter;
 import stroom.proxy.app.Config;
 import stroom.proxy.app.ContentSyncService;
 import stroom.proxy.app.ProxyConfigHealthCheck;
-import stroom.proxy.app.handler.ForwardStreamHandlerFactory;
+import stroom.proxy.app.ProxyConfigHolder;
 import stroom.proxy.app.ProxyLifecycle;
+import stroom.proxy.app.RestClientConfig;
+import stroom.proxy.app.RestClientConfigConverter;
 import stroom.proxy.app.forwarder.ForwarderDestinationsImpl;
 import stroom.proxy.app.handler.ProxyRequestHandler;
 import stroom.proxy.app.handler.RemoteFeedStatusService;
 import stroom.proxy.app.servlet.ProxySecurityFilter;
 import stroom.proxy.app.servlet.ProxyStatusServlet;
 import stroom.proxy.app.servlet.ProxyWelcomeServlet;
-import stroom.proxy.repo.ProxyLifecycle;
-import stroom.proxy.repo.ProxyRepositoryManager;
-import stroom.proxy.repo.ProxyRepositoryReader;
-import stroom.proxy.repo.StreamHandlerFactory;
 import stroom.proxy.repo.ErrorReceiver;
 import stroom.proxy.repo.ErrorReceiverImpl;
 import stroom.proxy.repo.ForwarderDestinations;
@@ -66,32 +60,26 @@ import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasHealthCheckBinder;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.guice.ServletBinder;
-import stroom.util.io.BufferFactory;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.HomeDirProviderImpl;
+import stroom.util.io.PathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.io.TempDirProviderImpl;
 import stroom.util.shared.BuildInfo;
-import stroom.util.io.PathCreator;
-import stroom.util.io.HomeDirProvider;
-import stroom.util.io.HomeDirProviderImpl;
-import stroom.util.io.PathCreator;
-import stroom.util.io.TempDirProvider;
-import stroom.util.io.TempDirProviderImpl;
-import io.dropwizard.client.ssl.TlsConfiguration;
 
-import java.io.File;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import io.dropwizard.client.JerseyClientBuilder;
 import io.dropwizard.client.JerseyClientConfiguration;
+import io.dropwizard.client.ssl.TlsConfiguration;
 import io.dropwizard.lifecycle.Managed;
 import io.dropwizard.setup.Environment;
 import org.glassfish.jersey.logging.LoggingFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.util.Optional;
 import javax.inject.Provider;
@@ -228,9 +216,8 @@ public class ProxyModule extends AbstractModule {
         final TlsConfiguration tlsConfiguration = jerseyClientConfiguration.getTlsConfiguration();
         if (tlsConfiguration != null) {
             if (tlsConfiguration.getKeyStorePath() != null) {
-                final File modifiedKeyStorePath = new File(pathCreator.makeAbsolute(
-                        pathCreator.replaceSystemProperties(
-                                tlsConfiguration.getKeyStorePath().getPath())));
+                final File modifiedKeyStorePath = pathCreator.toAppPath(tlsConfiguration.getKeyStorePath().getPath())
+                        .toFile();
 
                 if (!modifiedKeyStorePath.getPath().equals(tlsConfiguration.getKeyStorePath().getPath())) {
                     LOGGER.info("Updating rest client key store path from {} to {}",
@@ -241,9 +228,8 @@ public class ProxyModule extends AbstractModule {
             }
 
             if (tlsConfiguration.getTrustStorePath() != null) {
-                final File modifiedTrustStorePath = new File(pathCreator.makeAbsolute(
-                        pathCreator.replaceSystemProperties(
-                                tlsConfiguration.getTrustStorePath().getPath())));
+                final File modifiedTrustStorePath = pathCreator.toAppPath(
+                        tlsConfiguration.getTrustStorePath().getPath()).toFile();
 
                 if (!modifiedTrustStorePath.getPath().equals(tlsConfiguration.getTrustStorePath().getPath())) {
                     LOGGER.info("Updating rest client trust store path from {} to {}",
