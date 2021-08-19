@@ -1,10 +1,11 @@
 package stroom.proxy.repo;
 
-import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.IsProxyConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.config.annotations.RequiresRestart.RestartScope;
+import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsProxyConfig;
 import stroom.util.time.StroomDuration;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
