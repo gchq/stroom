@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2366** : Fix NPE caused by visualisations that do not define maxValues.
+
 * Issue **#2357** : Remove dropwizard logger configuration entries that have default values.
 
 * Issue **#2350** : Fix distribution start script so it works with a different stroom home dir.
