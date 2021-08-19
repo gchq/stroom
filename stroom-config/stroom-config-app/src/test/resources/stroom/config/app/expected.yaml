@@ -466,11 +466,11 @@ appConfig:
         maxPoolSize: 30
   proxyAggregation:
     aggregator:
+      aggregationFrequency: "PT1M"
       enabled: true
+      maxAggregateAge: "PT10M"
       maxItemsPerAggregate: 1000
       maxUncompressedByteSize: "1.0G"
-      maxAggregateAge: "PT10M"
-      aggregationFrequency: "PT1M"
     dbDir: "proxy_repo_db"
     repoDir: "proxy_repo"
   publicUri:
