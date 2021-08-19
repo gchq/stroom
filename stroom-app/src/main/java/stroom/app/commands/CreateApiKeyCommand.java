@@ -7,7 +7,7 @@ import stroom.security.identity.account.Account;
 import stroom.security.identity.account.AccountService;
 import stroom.security.identity.token.ApiKey;
 import stroom.security.identity.token.ApiKeyDao;
-import stroom.security.identity.token.ApiKeyType;
+import stroom.security.identity.token.KeyType;
 import stroom.security.identity.token.TokenBuilder;
 import stroom.security.identity.token.TokenBuilderFactory;
 import stroom.security.openid.api.OpenIdClientFactory;
@@ -164,7 +164,7 @@ public class CreateApiKeyCommand extends AbstractStroomAccountConfiguredCommand 
         apiKey.setUpdateUser(CLI_USER);
         apiKey.setUserId(account.getUserId());
         apiKey.setUserEmail(account.getUserId());
-        apiKey.setType(ApiKeyType.USER.getText());
+        apiKey.setType(KeyType.USER.getText());
         apiKey.setData(tokenBuilder.build());
         apiKey.setExpiresOnMs(tokenBuilder.getExpirationTime().toEpochMilli());
         apiKey.setEnabled(true);

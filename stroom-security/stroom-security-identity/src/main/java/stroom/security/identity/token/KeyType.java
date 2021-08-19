@@ -1,11 +1,11 @@
 package stroom.security.identity.token;
 
-public enum ApiKeyType {
+public enum KeyType {
     USER("user");
 
     private final String text;
 
-    ApiKeyType(String text) {
+    KeyType(String text) {
         this.text = text;
     }
 
@@ -13,13 +13,13 @@ public enum ApiKeyType {
         return this.text;
     }
 
-    public static ApiKeyType fromText(final String value) {
+    public static KeyType fromText(final String value) {
         // Not enough values to warrant an EnumMap
         if (value != null) {
             String caseInsensitiveValue = value.toLowerCase();
-            for (final ApiKeyType apiKeyType : ApiKeyType.values()) {
-                if (apiKeyType.getText().equals(caseInsensitiveValue)) {
-                    return apiKeyType;
+            for (final KeyType keyType : KeyType.values()) {
+                if (keyType.getText().equals(caseInsensitiveValue)) {
+                    return keyType;
                 }
             }
         }

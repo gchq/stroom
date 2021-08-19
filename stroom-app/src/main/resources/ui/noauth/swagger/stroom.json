@@ -4525,17 +4525,6 @@
     "/oauth2/v1/noauth/token" : {
       "post" : {
         "operationId" : "openIdToken",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/TokenRequest"
-              }
-            }
-          },
-          "description" : "tokenRequest",
-          "required" : true
-        },
         "responses" : {
           "default" : {
             "content" : {
@@ -4548,7 +4537,7 @@
             "description" : "default response"
           }
         },
-        "summary" : "Get a token from an access code",
+        "summary" : "Get a token from an access code or refresh token",
         "tags" : [ "Authentication" ]
       }
     },
@@ -15345,26 +15334,6 @@
           }
         },
         "required" : [ "use" ]
-      },
-      "TokenRequest" : {
-        "type" : "object",
-        "properties" : {
-          "client_id" : {
-            "type" : "string"
-          },
-          "client_secret" : {
-            "type" : "string"
-          },
-          "code" : {
-            "type" : "string"
-          },
-          "grant_type" : {
-            "type" : "string"
-          },
-          "redirect_uri" : {
-            "type" : "string"
-          }
-        }
       },
       "TokenResponse" : {
         "type" : "object",

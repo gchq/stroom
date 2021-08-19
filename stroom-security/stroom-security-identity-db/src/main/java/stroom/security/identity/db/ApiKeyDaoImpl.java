@@ -25,8 +25,8 @@ import stroom.security.identity.token.ApiKey;
 import stroom.security.identity.token.ApiKeyDao;
 import stroom.security.identity.token.ApiKeyResource;
 import stroom.security.identity.token.ApiKeyResultPage;
-import stroom.security.identity.token.ApiKeyType;
-import stroom.security.identity.token.ApiKeyTypeDao;
+import stroom.security.identity.token.KeyType;
+import stroom.security.identity.token.KeyTypeDao;
 import stroom.security.identity.token.SearchApiKeyRequest;
 import stroom.util.ResultPageFactory;
 import stroom.util.filter.FilterFieldMapper;
@@ -149,13 +149,13 @@ class ApiKeyDaoImpl implements ApiKeyDao {
             Comparator.nullsFirst(Comparator.comparingLong(ApiKey::getCreateTimeMs)));
 
     private final IdentityDbConnProvider identityDbConnProvider;
-    private final ApiKeyTypeDao apiKeyTypeDao;
+    private final KeyTypeDao keyTypeDao;
 
     @Inject
     ApiKeyDaoImpl(final IdentityDbConnProvider identityDbConnProvider,
-                  final ApiKeyTypeDao apiKeyTypeDao) {
+                  final KeyTypeDao keyTypeDao) {
         this.identityDbConnProvider = identityDbConnProvider;
-        this.apiKeyTypeDao = apiKeyTypeDao;
+        this.keyTypeDao = keyTypeDao;
     }
 
     @Override
@@ -163,7 +163,7 @@ class ApiKeyDaoImpl implements ApiKeyDao {
         final List<ApiKey> list = JooqUtil.contextResult(identityDbConnProvider, context -> context
                 .selectFrom(stroom.security.identity.db.jooq.tables.Token.TOKEN)
                 .where(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_TOKEN_TYPE_ID
-                        .eq(apiKeyTypeDao.getTokenTypeId(ApiKeyType.USER.getText().toLowerCase())))
+                        .eq(keyTypeDao.getTypeId(KeyType.USER.getText().toLowerCase())))
                 .orderBy(stroom.security.identity.db.jooq.tables.Token.TOKEN.CREATE_TIME_MS)
                 .fetch()
                 .map(RECORD_TO_TOKEN_MAPPER::apply));
@@ -287,7 +287,7 @@ class ApiKeyDaoImpl implements ApiKeyDao {
     @Override
     public ApiKey create(final int accountId, final ApiKey apiKey) {
         final String type = apiKey.getType().toLowerCase();
-        final int typeId = apiKeyTypeDao.getTokenTypeId(type);
+        final int typeId = keyTypeDao.getTypeId(type);
 
         return JooqUtil.contextResult(identityDbConnProvider, context -> {
             LOGGER.debug(() -> LogUtil.message("Creating a {}",

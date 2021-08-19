@@ -25,7 +25,6 @@ import stroom.security.impl.event.AddPermissionEvent;
 import stroom.security.impl.event.ClearDocumentPermissionsEvent;
 import stroom.security.impl.event.PermissionChangeEventBus;
 import stroom.security.impl.event.RemovePermissionEvent;
-import stroom.security.impl.exception.AuthenticationException;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.User;
@@ -135,9 +134,9 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         // Get the current user.
         final UserIdentity userIdentity = securityContext.getUserIdentity();
 
-        // If no user is present then don't create permissions.
-        if (userIdentity != null) {
-            final String userUuid = getUserUuid(userIdentity);
+        // If no user is present or doesn't have a UUID then don't create permissions.
+        if (userIdentity instanceof HasUuid) {
+            final String userUuid = ((HasUuid) userIdentity).getUuid();
             if (owner || securityContext.hasDocumentPermission(documentUuid, DocumentPermissionNames.OWNER)) {
                 if (owner) {
                     // Make the current user the owner of the new document.
@@ -155,13 +154,6 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                 copyPermissions(sourceUuid, documentUuid);
             }
         }
-    }
-
-    private String getUserUuid(final UserIdentity userIdentity) {
-        if (!(userIdentity instanceof HasUuid)) {
-            throw new AuthenticationException("Expecting a real user identity");
-        }
-        return ((HasUuid) userIdentity).getUuid();
     }
 
     private void copyPermissions(final String sourceUuid, final String destUuid) {

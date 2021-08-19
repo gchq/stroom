@@ -3347,14 +3347,6 @@ export interface TimeZone {
   use: "Local" | "UTC" | "Id" | "Offset";
 }
 
-export interface TokenRequest {
-  client_id?: string;
-  client_secret?: string;
-  code?: string;
-  grant_type?: string;
-  redirect_uri?: string;
-}
-
 export interface TokenResponse {
   access_token?: string;
 
@@ -6604,17 +6596,15 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      *
      * @tags Authentication
      * @name OpenIdToken
-     * @summary Get a token from an access code
+     * @summary Get a token from an access code or refresh token
      * @request POST:/oauth2/v1/noauth/token
      * @secure
      */
-    openIdToken: (data: TokenRequest, params: RequestParams = {}) =>
+    openIdToken: (params: RequestParams = {}) =>
       this.request<any, TokenResponse>({
         path: `/oauth2/v1/noauth/token`,
         method: "POST",
-        body: data,
         secure: true,
-        type: ContentType.Json,
         ...params,
       }),
   };

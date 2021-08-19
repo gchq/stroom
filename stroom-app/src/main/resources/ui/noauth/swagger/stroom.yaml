@@ -3116,13 +3116,6 @@ paths:
   /oauth2/v1/noauth/token:
     post:
       operationId: openIdToken
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TokenRequest'
-        description: tokenRequest
-        required: true
       responses:
         default:
           content:
@@ -3130,7 +3123,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/TokenResponse'
           description: default response
-      summary: Get a token from an access code
+      summary: Get a token from an access code or refresh token
       tags:
       - Authentication
   /permission/app/v1:
@@ -10915,19 +10908,6 @@ components:
           - Offset
       required:
       - use
-    TokenRequest:
-      type: object
-      properties:
-        client_id:
-          type: string
-        client_secret:
-          type: string
-        code:
-          type: string
-        grant_type:
-          type: string
-        redirect_uri:
-          type: string
     TokenResponse:
       type: object
       properties:

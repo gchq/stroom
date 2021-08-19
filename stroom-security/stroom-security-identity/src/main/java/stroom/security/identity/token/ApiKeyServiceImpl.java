@@ -38,13 +38,13 @@ public class ApiKeyServiceImpl implements ApiKeyService {
         this.openIdClientDetailsFactory = openIdClientDetailsFactory;
     }
 
-    static Optional<ApiKeyType> getParsedTokenType(final String tokenType) {
+    static Optional<KeyType> getParsedTokenType(final String tokenType) {
 
         try {
             if (tokenType == null) {
                 return Optional.empty();
             } else {
-                return Optional.of(ApiKeyType.fromText(tokenType));
+                return Optional.of(KeyType.fromText(tokenType));
             }
         } catch (Exception e) {
             return Optional.empty();
@@ -74,8 +74,8 @@ public class ApiKeyServiceImpl implements ApiKeyService {
                 new NoSuchUserException("Cannot find user to associate with this API key!"));
 
         // Parse and validate tokenType
-        final Optional<ApiKeyType> optionalTokenType = getParsedTokenType(createApiKeyRequest.getTokenType());
-        final ApiKeyType apiKeyType = optionalTokenType.orElseThrow(() ->
+        final Optional<KeyType> optionalTokenType = getParsedTokenType(createApiKeyRequest.getTokenType());
+        final KeyType keyType = optionalTokenType.orElseThrow(() ->
                 RestUtil.badRequest("Unknown token type:" + createApiKeyRequest.getTokenType()));
 
         final Instant expiryInstant = createApiKeyRequest.getExpiresOnMs() == null
@@ -103,7 +103,7 @@ public class ApiKeyServiceImpl implements ApiKeyService {
         apiKey.setUpdateTimeMs(now);
         apiKey.setUpdateUser(userId);
         apiKey.setUserId(createApiKeyRequest.getUserId());
-        apiKey.setType(apiKeyType.getText());
+        apiKey.setType(keyType.getText());
         apiKey.setData(data);
         apiKey.setExpiresOnMs(actualExpiryDate.toEpochMilli());
         apiKey.setComments(createApiKeyRequest.getComments());

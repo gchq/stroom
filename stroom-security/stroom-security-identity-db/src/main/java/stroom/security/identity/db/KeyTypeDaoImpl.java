@@ -2,22 +2,22 @@ package stroom.security.identity.db;
 
 import stroom.db.util.JooqUtil;
 import stroom.security.identity.db.jooq.tables.TokenType;
-import stroom.security.identity.token.ApiKeyTypeDao;
+import stroom.security.identity.token.KeyTypeDao;
 
 import java.util.Optional;
 import javax.inject.Inject;
 
-class ApiKeyTypeDaoImpl implements ApiKeyTypeDao {
+class KeyTypeDaoImpl implements KeyTypeDao {
 
     private final IdentityDbConnProvider identityDbConnProvider;
 
     @Inject
-    ApiKeyTypeDaoImpl(final IdentityDbConnProvider identityDbConnProvider) {
+    KeyTypeDaoImpl(final IdentityDbConnProvider identityDbConnProvider) {
         this.identityDbConnProvider = identityDbConnProvider;
     }
 
     @Override
-    public int getTokenTypeId(final String type) {
+    public int getTypeId(final String type) {
         final Optional<Integer> result = get(type);
         if (result.isPresent()) {
             return result.get();
