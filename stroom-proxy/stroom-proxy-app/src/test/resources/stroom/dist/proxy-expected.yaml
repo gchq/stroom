@@ -1,63 +1,63 @@
 ---
 proxyConfig:
-  path:
-    home: "."
-    temp: "/tmp/stroom"
-  receiptPolicy:
-    receiptPolicyUuid: null
-  repository:
-    storingEnabled: false
-    repoDir: "repo"
-    dbDir: "repo"
-    format: "${pathId}/${id}"
-    cleanupFrequency: "PT1H"
-    lockDeleteAge: "PT1H"
-    dirCleanDelay: "PT10S"
-  scanner:
-    scanningEnabled: false
-    scanFrequency: "PT10S"
   aggregator:
     enabled: true
     maxItemsPerAggregate: 1000
     maxUncompressedByteSize: "1.0G"
     maxAggregateAge: "PT10M"
     aggregationFrequency: "PT1M"
-  forwarder:
-    forwardingEnabled: false
-    userAgent: null
-    forwardDestinations: []
-    retryFrequency: "PT1M"
-  logStream:
-    metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn"
   contentDir: null
   contentSync:
-    upstreamUrl: null
-    syncFrequency: 0
     apiKey: null
     contentSyncEnabled: false
-  useDefaultOpenIdCredentials: true
+    syncFrequency: 0
+    upstreamUrl: null
   feedStatus:
-    url: null
     apiKey: null
-  jerseyClient:
-    timeout: "500 milliseconds"
-    connectionTimeout: "500 milliseconds"
-    connectionRequestTimeout: "500 milliseconds"
-    timeToLive: "1 hour"
+    url: null
+  forwarder:
+    forwardDestinations: []
+    forwardingEnabled: false
+    retryFrequency: "PT1M"
+    userAgent: null
+  haltBootOnConfigValidationFailure: true
+  logStream:
+    metaKeys: "guid,feed,system,environment,remotehost,remoteaddress,remotedn,remotecertexpiry"
+  path:
+    home: null
+    temp: null
+  receiptPolicy:
+    receiptPolicyUuid: null
+  repository:
+    cleanupFrequency: "PT1H"
+    dbDir: "repo"
+    dirCleanDelay: "PT10S"
+    format: "${pathId}/${id}"
+    lockDeleteAge: "PT1H"
+    repoDir: "repo"
+    storingEnabled: false
+  restClient:
+    chunkedEncodingEnabled: true
+    connectionRequestTimeout: "PT0.5S"
+    connectionTimeout: "PT0.5S"
     cookiesEnabled: false
+    gzipEnabled: true
+    gzipEnabledForRequests: true
+    keepAlive: "PT0S"
     maxConnections: 1024
     maxConnectionsPerRoute: 1024
-    keepAlive: "0 milliseconds"
+    maxThreads: 128
+    minThreads: 1
     retries: 0
+    timeToLive: "PT1H"
+    timeout: "PT0.5S"
+    tls: null
     userAgent:
       empty: true
       present: false
-    validateAfterInactivityPeriod: "0 microseconds"
-    minThreads: 1
-    maxThreads: 128
+    validateAfterInactivityPeriod: "PT0S"
     workQueueSize: 8
-    gzipEnabled: true
-    gzipEnabledForRequests: true
-    chunkedEncodingEnabled: true
-    proxy: null
-    tls: null
+  scanner:
+    scanningEnabled: false
+    scanFrequency: "PT10S"
+  useDefaultOpenIdCredentials: true
