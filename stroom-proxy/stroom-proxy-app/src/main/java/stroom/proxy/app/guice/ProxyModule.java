@@ -60,11 +60,7 @@ import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasHealthCheckBinder;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.guice.ServletBinder;
-import stroom.util.io.HomeDirProvider;
-import stroom.util.io.HomeDirProviderImpl;
 import stroom.util.io.PathCreator;
-import stroom.util.io.TempDirProvider;
-import stroom.util.io.TempDirProviderImpl;
 import stroom.util.shared.BuildInfo;
 
 import com.google.inject.AbstractModule;
@@ -137,10 +133,6 @@ public class ProxyModule extends AbstractModule {
         bind(Serialiser2Factory.class).to(Serialiser2FactoryImpl.class);
         bind(StoreFactory.class).to(StoreFactoryImpl.class);
         bind(ForwarderDestinations.class).to(ForwarderDestinationsImpl.class);
-
-        // MergeTODO Are these two bound somewhere else?
-        bind(HomeDirProvider.class).to(HomeDirProviderImpl.class);
-        bind(TempDirProvider.class).to(TempDirProviderImpl.class);
 
         bind(RepoDirProvider.class).to(RepoDirProviderImpl.class);
         bind(RepoDbDirProvider.class).to(RepoDbDirProviderImpl.class);
