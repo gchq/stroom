@@ -4,16 +4,16 @@
              xmlns:l="urn:import:stroom.cell.list.client">
     <g:MySplitLayoutPanel styleName="max default-min-sizes">
         <g:south size="120">
-            <g:ScrollPanel styleName="max stroom-border">
+            <g:ScrollPanel styleName="max stroom-control">
                 <g:SimplePanel ui:field="bottom"/>
             </g:ScrollPanel>
         </g:south>
         <g:center>
-            <g:FlowPanel styleName="dock-container-vertical max stroom-border">
+            <g:FlowPanel styleName="dock-container-vertical max stroom-control">
+                <b:ButtonPanel ui:field="buttonPanel" addStyleNames="dock-min"/>
                 <g:ScrollPanel ui:field="top" styleName="dock-max dock-container-vertical">
                     <l:CustomCellList ui:field="cellList" styleName="queryFavouritesViewImpl-cellList"/>
                 </g:ScrollPanel>
-                <b:ButtonPanel ui:field="buttonPanel" addStyleNames="dock-min"/>
             </g:FlowPanel>
         </g:center>
     </g:MySplitLayoutPanel>

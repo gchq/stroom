@@ -38,8 +38,6 @@ public class CreateDocumentViewImpl extends ViewWithUiHandlers<HideRequestUiHand
 
     private final Widget widget;
     @UiField
-    SimplePanel foldersOuter;
-    @UiField
     SimplePanel foldersInner;
     @UiField
     TextBox name;
@@ -80,7 +78,7 @@ public class CreateDocumentViewImpl extends ViewWithUiHandlers<HideRequestUiHand
 
     @Override
     public void setFoldersVisible(final boolean visible) {
-        foldersOuter.setVisible(visible);
+        foldersInner.setVisible(visible);
     }
 
     @Override

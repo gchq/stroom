@@ -75,6 +75,10 @@ body,table td,select {
 	background-color: var(--button-background-color-hover);
 	border-color: var(--button-border-color-hover);
 }
+.gwt-Button:focus:hover {
+    border-color: var(--focus-border);
+    box-shadow: var(--focus-shadow);
+}
 .gwt-Button[disabled] {
   cursor: default;
   color: var(--button-text-color-disabled);

@@ -1,6 +1,5 @@
 package stroom.widget.form.client;
 
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HasWidgets;
@@ -12,16 +11,14 @@ import java.util.Iterator;
 
 public class FormGroup extends Composite implements HasWidgets {
 
-    //    private final SimplePanel formRow = new SimplePanel();
     private final FlowPanel formGroup = new FlowPanel();
-    private final Lbl lbl = new Lbl();
+    private final FormLabel formLabel = new FormLabel();
     private final Label feedback = new Label();
 
     private String id;
     private Widget widget;
 
     public FormGroup() {
-        lbl.setStyleName("form-label");
         feedback.setStyleName("invalid-feedback");
         formGroup.setStyleName("form-group");
         initWidget(formGroup);
@@ -29,47 +26,15 @@ public class FormGroup extends Composite implements HasWidgets {
 
     public void setIdentity(final String id) {
         this.id = id;
-        lbl.getElement().setAttribute("for", id);
+        formLabel.setIdentity(id);
         if (widget != null) {
             widget.getElement().setId(id);
         }
     }
 
     public void setLabel(final String label) {
-        lbl.setTitle(label);
-        lbl.getElement().setInnerText(label);
+        formLabel.setLabel(label);
     }
-
-//    @Override
-//    public Widget getWidget() {
-//        return inputContainer.getWidget();
-//    }
-//
-//    @Override
-//    public void setWidget(final IsWidget w) {
-//        final Widget widget = w.asWidget();
-//        widget.addStyleName("allow-focus");
-//        inputContainer.setWidget(widget);
-//    }
-
-//
-//    @Override
-//    public void setWidget(final Widget widget) {
-//        widget.addStyleName("allow-focus");
-//        inputContainer.setWidget(widget);
-////        super.setWidget(widget);
-//    }
-//
-//    @Override
-//    public void add(final Widget w) {
-//        inputContainer.add(w);
-//    }
-
-    //    @Override
-//    protected Element getContainerElement() {
-//        return inputContainer.getElement();
-//    }
-
 
     @Override
     public void add(final Widget w) {
@@ -85,7 +50,7 @@ public class FormGroup extends Composite implements HasWidgets {
         w.addStyleName("allow-focus");
         formGroup.clear();
 
-        formGroup.add(lbl);
+        formGroup.add(formLabel);
         formGroup.add(w);
         formGroup.add(feedback);
     }
@@ -95,7 +60,7 @@ public class FormGroup extends Composite implements HasWidgets {
         widget = null;
 
         formGroup.clear();
-        formGroup.add(lbl);
+        formGroup.add(formLabel);
         formGroup.add(feedback);
     }
 
@@ -111,13 +76,6 @@ public class FormGroup extends Composite implements HasWidgets {
             return true;
         } else {
             return false;
-        }
-    }
-
-    public static class Lbl extends Widget {
-
-        public Lbl() {
-            setElement((com.google.gwt.dom.client.Element) DOM.createLabel());
         }
     }
 }

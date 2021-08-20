@@ -33,7 +33,6 @@ import stroom.widget.util.client.MySingleSelectionModel;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.CellList;
-import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -132,7 +131,13 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
                                 .popupType(PopupType.OK_CANCEL_DIALOG)
                                 .popupSize(popupSize)
                                 .caption("Query History")
-                                .onShow(e -> getView().focus())
+                                .onShow(e -> {
+                                    if (getView().getCellList().getVisibleItems().size() > 0) {
+                                        final StoredQuery firstItem = getView().getCellList().getVisibleItem(0);
+                                        selectionModel.setSelected(firstItem, true);
+                                        getView().getCellList().setKeyboardSelectedRow(0, true);
+                                    }
+                                })
                                 .onHideRequest(this)
                                 .fire();
                     }
@@ -152,7 +157,7 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
         e.hide();
     }
 
-    public interface QueryHistoryView extends View, Focus {
+    public interface QueryHistoryView extends View {
 
         CellList<StoredQuery> getCellList();
 

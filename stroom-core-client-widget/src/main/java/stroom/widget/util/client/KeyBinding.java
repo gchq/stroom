@@ -29,8 +29,7 @@ public class KeyBinding {
         add(Action.SELECT, KeyCodes.KEY_SPACE);
         add(Action.SELECT_ALL, new Builder().keyCode(KeyCodes.KEY_A).ctrl(true).build());
         add(Action.MENU, KeyCodes.KEY_ALT, KeyCodes.KEY_CONTEXT_MENU);
-        add(Action.DIALOG_OK, true, KeyCodes.KEY_ENTER, KeyCodes.KEY_MAC_ENTER, '\n', '\r');
-        add(Action.DIALOG_CLOSE, KeyCodes.KEY_ESCAPE);
+        add(Action.OK, true, KeyCodes.KEY_ENTER, KeyCodes.KEY_MAC_ENTER, '\n', '\r');
 
         add(Action.ITEM_SAVE, new Builder().keyCode(KeyCodes.KEY_S).ctrl(true).build());
         add(Action.ITEM_SAVE_ALL, new Builder().keyCode(KeyCodes.KEY_S).shift(true).ctrl(true).build());
@@ -187,8 +186,7 @@ public class KeyBinding {
         SELECT,
         MENU,
         SELECT_ALL,
-        DIALOG_OK,
-        DIALOG_CLOSE,
+        OK,
         ITEM_SAVE,
         ITEM_SAVE_ALL,
         ITEM_CLOSE,

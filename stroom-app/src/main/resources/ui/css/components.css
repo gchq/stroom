@@ -442,7 +442,7 @@
     width: 11px;
     height: 11px;
 }
-
+/*
 .entityTreeView-nameFilter {
     width: 100%;
     border: none !important;
@@ -454,9 +454,9 @@
     border: none !important;
     border-bottom: 1px solid var(--border-color) !important;
 }
-
+*/
 .entityTreeView-scrollPanel {
-    background: var(--control__background-color);
+    margin-top: var(--control__gap--vertical);
 }
 
 .dropDownView-container {
@@ -703,14 +703,6 @@
 
 .queryViewImpl-expressionTree {
     padding-left: 5px;
-}
-
-.copyDocumentViewImpl-label {
-    margin-top: 2px;
-}
-
-.copyDocumentViewImpl-foldersOuter {
-    margin-bottom: 5px;
 }
 
 .selectionHandlerViewImpl-bottom {
@@ -1159,14 +1151,6 @@
     margin: var(--control__padding--vertical) 0;
 }
 
-.createDocumentViewImpl-label {
-    margin-top: 2px;
-}
-
-.createDocumentViewImpl-foldersOuter {
-    margin-bottom: 5px;
-}
-
 .mainViewImpl-max {
     position: absolute;
     left: 0px;
@@ -1241,14 +1225,6 @@
     position: absolute;
     background-color: #1e88e5;
     height: 4px;
-}
-
-.moveDocumentViewImpl-label {
-    margin-top: 2px;
-}
-
-.moveDocumentViewImpl-foldersOuter {
-    margin-bottom: 5px;
 }
 
 .solrIndexFieldListViewImpl-synchState {
@@ -1472,8 +1448,9 @@
 }
 
 .navigation {
-   background-color: var(--navigation-background-color);
-   color: var(--navigation-text-color);
+    background-color: var(--navigation-background-color);
+    color: var(--navigation-text-color);
+    border-right: 1px solid var(--navigation-border-color);
 }
 
 .navigation-title-bar {
@@ -1701,5 +1678,4 @@
     display: flex;
     gap: var(--control__gap--vertical);
     flex-direction: column;
-    flex-wrap: wrap;
 }

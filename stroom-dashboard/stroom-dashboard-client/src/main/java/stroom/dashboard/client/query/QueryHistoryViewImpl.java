@@ -46,11 +46,6 @@ public class QueryHistoryViewImpl extends ViewImpl implements QueryHistoryView {
     }
 
     @Override
-    public void focus() {
-        cellList.setFocus(true);
-    }
-
-    @Override
     public CellList<StoredQuery> getCellList() {
         return cellList;
     }

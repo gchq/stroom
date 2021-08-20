@@ -24,6 +24,8 @@
     --row__background-color--hovered: #e6f4ff;
     --row__background-color--selected: #bbdefb;
     --row__background-color--selected-hovered: #bbdefb;
+    --row__background-color--focussed: rgba(0,120,199,.5);
+    --row__background-color--selected-focussed: rgb(0,120,199);
     --row__text-color--selected: #000;
 
     --menu-separator-color: #bfbfbf;
@@ -108,6 +110,7 @@
 
     --navigation-background-color: #d5e9ff;
     --navigation-text-color: #fff;
+    --navigation-border-color: #27252c;
 
 
 
@@ -217,9 +220,11 @@
     --even-row-background-color: #282c31;
     --odd-row-background-color: #1a1d21;
 
-    --row__background-color--hovered: rgb(255 255 255 / 15%);
-    --row__background-color--selected: #0065a7;
-    --row__background-color--selected-hovered: #0078c7;
+    --row__background-color--hovered: rgb(45, 47, 53);
+    --row__background-color--selected: rgb(0, 101, 167);
+    --row__background-color--selected-hovered: rgb(0,120,199);
+    --row__background-color--focussed: rgba(0,120,199,.5);
+    --row__background-color--selected-focussed: rgb(0,120,199);
     --row__text-color--selected: #fff;
 
     --menu-separator-color: rgb(255 255 255 / 20%);
@@ -304,6 +309,7 @@
 
     --navigation-background-color: #19171d;
     --navigation-text-color: #e6e1dc;
+    --navigation-border-color: #27252c;
 
     /**
      * NEW UI VARS
@@ -487,6 +493,7 @@
 
     --navigation-background-color: #19171d;
     --navigation-text-color: #e6e1dc;
+    --navigation-border-color: #27252c;
 
 
 

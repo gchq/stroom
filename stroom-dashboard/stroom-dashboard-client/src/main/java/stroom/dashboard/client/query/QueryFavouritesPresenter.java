@@ -41,7 +41,6 @@ import stroom.widget.util.client.MySingleSelectionModel;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.CellList;
-import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -183,7 +182,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
                                 .popupType(PopupType.OK_CANCEL_DIALOG)
                                 .popupSize(popupSize)
                                 .caption("Query Favourites")
-                                .onShow(e -> getView().focus())
+                                .onShow(e -> createButton.focus())
                                 .onHideRequest(e -> {
                                     if (e.isOk()) {
                                         final StoredQuery query = selectionModel.getSelectedObject();
@@ -235,7 +234,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
                 .delete(query);
     }
 
-    public interface QueryFavouritesView extends View, Focus {
+    public interface QueryFavouritesView extends View {
 
         CellList<StoredQuery> getCellList();
 
