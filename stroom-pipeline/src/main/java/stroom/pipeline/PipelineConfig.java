@@ -6,6 +6,7 @@ import stroom.pipeline.filter.XsltConfig;
 import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
 import stroom.util.xml.ParserConfig;
 
@@ -14,7 +15,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import javax.inject.Singleton;
 
 @Singleton
-public class PipelineConfig extends AbstractConfig {
+public class PipelineConfig extends AbstractConfig implements IsStroomConfig {
 
     private AppenderConfig appenderConfig = new AppenderConfig();
     private ParserConfig parserConfig = new ParserConfig();

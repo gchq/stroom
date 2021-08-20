@@ -17,7 +17,9 @@
 
 package stroom.security.impl;
 
+import stroom.docref.HasUuid;
 import stroom.security.api.DocumentPermissionService;
+import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.event.AddPermissionEvent;
 import stroom.security.impl.event.ClearDocumentPermissionsEvent;
@@ -46,13 +48,13 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     private final DocumentPermissionDao documentPermissionDao;
     private final UserDao userDao;
     private final PermissionChangeEventBus permissionChangeEventBus;
-    private final SecurityContextImpl securityContext;
+    private final SecurityContext securityContext;
 
     @Inject
     DocumentPermissionServiceImpl(final DocumentPermissionDao documentPermissionDao,
                                   final UserDao userDao,
                                   final PermissionChangeEventBus permissionChangeEventBus,
-                                  final SecurityContextImpl securityContext) {
+                                  final SecurityContext securityContext) {
         this.documentPermissionDao = documentPermissionDao;
         this.userDao = userDao;
         this.permissionChangeEventBus = permissionChangeEventBus;
@@ -132,9 +134,9 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         // Get the current user.
         final UserIdentity userIdentity = securityContext.getUserIdentity();
 
-        // If no user is present then don't create permissions.
-        if (userIdentity != null) {
-            final String userUuid = securityContext.getUserUuid(userIdentity);
+        // If no user is present or doesn't have a UUID then don't create permissions.
+        if (userIdentity instanceof HasUuid) {
+            final String userUuid = ((HasUuid) userIdentity).getUuid();
             if (owner || securityContext.hasDocumentPermission(documentUuid, DocumentPermissionNames.OWNER)) {
                 if (owner) {
                     // Make the current user the owner of the new document.

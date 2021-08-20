@@ -15,10 +15,12 @@ import stroom.proxy.repo.ProxyRepositoryStreamHandler;
 import stroom.proxy.repo.ProxyRepositoryStreamHandlers;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathCreator;
 import stroom.util.shared.BuildInfo;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -27,6 +29,7 @@ import org.mockito.quality.Strictness;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.file.Path;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -40,9 +43,10 @@ class TestReceiveStreamHandlers extends StroomUnitTest {
     private ProxyRepo proxyRepo;
 
     @Test
-    void testStoreAndForward() {
+    void testStoreAndForward(@TempDir Path tempDir) {
         final ReceiveStreamHandlers streamHandlers =
                 getProxyHandlerFactory(
+                        tempDir,
                         true,
                         true,
                         List.of("https://url1", "https://url2"));
@@ -53,10 +57,11 @@ class TestReceiveStreamHandlers extends StroomUnitTest {
 
     @SuppressWarnings("checkstyle:Indentation")
     @Test
-    void testForwardOnlySingle() {
+    void testForwardOnlySingle(@TempDir Path tempDir) {
         assertThatThrownBy(() -> {
                     final ReceiveStreamHandlers streamHandlers =
                             getProxyHandlerFactory(
+                                    tempDir,
                                     false,
                                     true,
                                     List.of("https://url1"));
@@ -70,10 +75,11 @@ class TestReceiveStreamHandlers extends StroomUnitTest {
 
     @SuppressWarnings("checkstyle:Indentation")
     @Test
-    void testForwardOnlyMulti() {
+    void testForwardOnlyMulti(@TempDir Path tempDir) {
         assertThatThrownBy(() -> {
                     final ReceiveStreamHandlers streamHandlers =
                             getProxyHandlerFactory(
+                                    tempDir,
                                     false,
                                     true,
                                     List.of("https://url1", "https://url2"));
@@ -86,9 +92,10 @@ class TestReceiveStreamHandlers extends StroomUnitTest {
     }
 
     @Test
-    void testStore() {
+    void testStore(@TempDir Path tempDir) {
         final ReceiveStreamHandlers streamHandlers =
                 getProxyHandlerFactory(
+                        tempDir,
                         true,
                         false,
                         List.of("https://url1", "https://url2"));
@@ -97,7 +104,8 @@ class TestReceiveStreamHandlers extends StroomUnitTest {
                         "Expecting a handler that stores").isTrue());
     }
 
-    private ReceiveStreamHandlers getProxyHandlerFactory(final boolean isStoringEnabled,
+    private ReceiveStreamHandlers getProxyHandlerFactory(final Path tempDir,
+                                                         final boolean isStoringEnabled,
                                                          final boolean isForwardingEnabled,
                                                          final List<String> forwardUrlList) {
         final LogStreamConfig logRequestConfig = new LogStreamConfig();
@@ -129,11 +137,14 @@ class TestReceiveStreamHandlers extends StroomUnitTest {
         final long now = System.currentTimeMillis();
         final BuildInfo buildInfo = new BuildInfo(now, "test version", now);
 
+        final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
+
         final ForwarderDestinations forwarderDestinations = new ForwarderDestinationsImpl(
                 logStream,
                 forwarderConfig,
                 proxyRepoConfig,
-                () -> buildInfo);
+                () -> buildInfo,
+                pathCreator);
 
         return new ReceiveStreamHandlers(
                 proxyRepoConfig,

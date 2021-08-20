@@ -2,6 +2,7 @@ package stroom.feed.impl;
 
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.validation.ValidRegex;
 import stroom.util.time.StroomDuration;
 
@@ -11,7 +12,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import javax.inject.Singleton;
 
 @Singleton
-public class FeedConfig extends AbstractConfig {
+public class FeedConfig extends AbstractConfig implements IsStroomConfig {
 
     public static final String PROP_NAME_FEED_NAME_PATTERN = "feedNamePattern";
     public static final String PROP_NAME_FEED_DOC_CACHE = "feedDocCache";

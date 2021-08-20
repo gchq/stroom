@@ -1,6 +1,7 @@
 package stroom.security.impl;
 
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -8,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import javax.inject.Singleton;
 
 @Singleton
-public class OpenIdConfig extends AbstractConfig {
+public class OpenIdConfig extends AbstractConfig implements IsStroomConfig {
 
     public static final String PROP_NAME_CLIENT_ID = "clientId";
     public static final String PROP_NAME_CLIENT_SECRET = "clientSecret";
@@ -61,21 +62,22 @@ public class OpenIdConfig extends AbstractConfig {
     /**
      * Some OpenId providers, e.g. AWS Cognito, require a form to be used for token requests.
      */
-    private boolean formTokenRequest;
-
-    /**
-     * Optionally choose a class to resolve JWT claims
-     */
-    private String jwtClaimsResolver;
+    private boolean formTokenRequest = true;
 
     /**
      * The client ID used in OpenId authentication.
      */
     private String clientId;
+
     /**
      * The client secret used in OpenId authentication.
      */
     private String clientSecret;
+
+    /**
+     * If a custom auth flow request scope is required then this should be set.
+     */
+    private String requestScope;
 
     /**
      * @return true if Stroom will handle the OpenId authentication, false if an external
@@ -158,18 +160,6 @@ public class OpenIdConfig extends AbstractConfig {
         this.logoutEndpoint = logoutEndpoint;
     }
 
-    @JsonProperty
-    @JsonPropertyDescription("Optionally choose a class to resolve JWT claims")
-    public String getJwtClaimsResolver() {
-        return jwtClaimsResolver;
-    }
-
-    public void setJwtClaimsResolver(final String jwtClaimsResolver) {
-        this.jwtClaimsResolver = jwtClaimsResolver;
-    }
-
-    // TODO Not sure we can add NotNull to this as it has no default and if useInternal is true
-    //  it doesn't need a value
     @JsonProperty(PROP_NAME_CLIENT_ID)
     @JsonPropertyDescription("The client ID used in OpenId authentication.")
     public String getClientId() {
@@ -180,8 +170,6 @@ public class OpenIdConfig extends AbstractConfig {
         this.clientId = clientId;
     }
 
-    // TODO Not sure we can add NotNull to this as it has no default and if useInternal is true
-    //  it doesn't need a value
     @JsonProperty(PROP_NAME_CLIENT_SECRET)
     @JsonPropertyDescription("The client secret used in OpenId authentication.")
     public String getClientSecret() {
@@ -202,6 +190,16 @@ public class OpenIdConfig extends AbstractConfig {
         this.formTokenRequest = formTokenRequest;
     }
 
+    @JsonProperty
+    @JsonPropertyDescription("If a custom auth flow request scope is required then this should be set.")
+    public String getRequestScope() {
+        return requestScope;
+    }
+
+    public void setRequestScope(final String requestScope) {
+        this.requestScope = requestScope;
+    }
+
     @Override
     public String toString() {
         return "OpenIdConfig{" +
@@ -210,12 +208,12 @@ public class OpenIdConfig extends AbstractConfig {
                 ", issuer='" + issuer + '\'' +
                 ", authEndpoint='" + authEndpoint + '\'' +
                 ", tokenEndpoint='" + tokenEndpoint + '\'' +
-                ", logoutEndpoint='" + logoutEndpoint + '\'' +
                 ", jwksUri='" + jwksUri + '\'' +
+                ", logoutEndpoint='" + logoutEndpoint + '\'' +
                 ", formTokenRequest=" + formTokenRequest +
-                ", jwtClaimsResolver='" + jwtClaimsResolver + '\'' +
                 ", clientId='" + clientId + '\'' +
                 ", clientSecret='" + clientSecret + '\'' +
+                ", requestScope='" + requestScope + '\'' +
                 '}';
     }
 }

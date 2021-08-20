@@ -21,6 +21,7 @@ import stroom.cache.api.ICache;
 import stroom.pipeline.PipelineConfig;
 import stroom.util.cert.SSLConfig;
 import stroom.util.cert.SSLUtil;
+import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -47,9 +48,13 @@ public class HttpClientCache {
     private static final String CACHE_NAME = "Http Client Cache";
 
     private final ICache<String, OkHttpClient> cache;
+    private final PathCreator pathCreator;
 
     @Inject
-    public HttpClientCache(final CacheManager cacheManager, final PipelineConfig pipelineConfig) {
+    public HttpClientCache(final CacheManager cacheManager,
+                           final PipelineConfig pipelineConfig,
+                           final PathCreator pathCreator) {
+        this.pathCreator = pathCreator;
         cache = cacheManager.create(CACHE_NAME, pipelineConfig::getHttpClientCache, this::create);
     }
 
@@ -67,8 +72,8 @@ public class HttpClientCache {
                         .readerFor(SSLConfig.class)
                         .readValue(clientConfig);
 
-                final KeyManager[] keyManagers = SSLUtil.createKeyManagers(sslConfig);
-                final TrustManager[] trustManagers = SSLUtil.createTrustManagers(sslConfig);
+                final KeyManager[] keyManagers = SSLUtil.createKeyManagers(sslConfig, pathCreator);
+                final TrustManager[] trustManagers = SSLUtil.createTrustManagers(sslConfig, pathCreator);
 
                 final SSLContext sslContext;
                 try {

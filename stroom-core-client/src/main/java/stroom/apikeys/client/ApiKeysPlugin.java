@@ -36,14 +36,12 @@ public class ApiKeysPlugin extends NodeToolsPlugin {
                     .onSuccess(result -> {
                         final IconMenuItem apiKeysMenuItem;
                         final Preset icon = SvgPresets.KEY;
-                        final String apiKeysUi = result.getUrl().getApiKeys();
-                        if (apiKeysUi != null && apiKeysUi.trim().length() > 0) {
-                            apiKeysMenuItem = new IconMenuItem.Builder()
-                                    .priority(5)
-                                    .icon(icon)
-                                    .text("API Keys")
-                                    .command(() -> {
-                                        postMessage("manageTokens");
+                        apiKeysMenuItem = new IconMenuItem.Builder()
+                                .priority(5)
+                                .icon(icon)
+                                .text("API Keys")
+                                .command(() -> {
+                                    postMessage("manageTokens");
 
 //                                final Hyperlink hyperlink = new Builder()
 //                                        .text("API Keys")
@@ -52,18 +50,15 @@ public class ApiKeysPlugin extends NodeToolsPlugin {
 //                                        .icon(icon)
 //                                        .build();
 //                                HyperlinkEvent.fire(this, hyperlink);
-                                    })
-                                    .build();
-                        } else {
-                            apiKeysMenuItem = new IconMenuItem.Builder()
-                                    .priority(5)
-                                    .icon(icon)
-                                    .text("API Keys is not configured!")
-                                    .build();
-                        }
+                                })
+                                .build();
                         event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, apiKeysMenuItem);
                     })
-                    .onFailure(caught -> AlertEvent.fireError(ApiKeysPlugin.this, caught.getMessage(), null));
+                    .onFailure(caught ->
+                            AlertEvent.fireError(
+                                    ApiKeysPlugin.this,
+                                    caught.getMessage(),
+                                    null));
         }
     }
 }

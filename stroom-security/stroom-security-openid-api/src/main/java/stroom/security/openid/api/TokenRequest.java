@@ -20,7 +20,7 @@ public class TokenRequest {
     private final String code;
 
     @JsonCreator
-    TokenRequest(@JsonProperty(OpenId.GRANT_TYPE) final String grantType,
+    public TokenRequest(@JsonProperty(OpenId.GRANT_TYPE) final String grantType,
                  @JsonProperty(OpenId.CLIENT_ID) final String clientId,
                  @JsonProperty(OpenId.CLIENT_SECRET) final String clientSecret,
                  @JsonProperty(OpenId.REDIRECT_URI) final String redirectUri,

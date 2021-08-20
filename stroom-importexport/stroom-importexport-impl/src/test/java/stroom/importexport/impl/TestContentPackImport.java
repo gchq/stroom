@@ -17,10 +17,7 @@
 
 package stroom.importexport.impl;
 
-
 import stroom.security.api.SecurityContext;
-import stroom.security.api.UserIdentity;
-import stroom.security.shared.User;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 
@@ -89,7 +86,7 @@ class TestContentPackImport {
                     }
                 } catch (final IOException e) {
                     throw new UncheckedIOException(String.format("Error deleting files from %s",
-                            contentPackDir.toAbsolutePath().toString()), e);
+                            contentPackDir.toAbsolutePath()), e);
                 }
             });
         }
@@ -107,31 +104,12 @@ class TestContentPackImport {
                 .thenReturn(true);
         Mockito
                 .doAnswer(invocation -> {
-                    Runnable runnable = invocation.getArgument(1);
+                    Runnable runnable = invocation.getArgument(0);
                     runnable.run();
                     return null;
                 })
                 .when(securityContext)
-                .asUser(Mockito.any(UserIdentity.class), Mockito.any(Runnable.class));
-
-        Mockito
-                .when(securityContext.createIdentity(Mockito.eq(User.ADMIN_USER_NAME)))
-                .thenReturn(new UserIdentity() {
-                    @Override
-                    public String getId() {
-                        return User.ADMIN_USER_NAME;
-                    }
-
-                    @Override
-                    public String getJws() {
-                        return null;
-                    }
-
-                    @Override
-                    public String getSessionId() {
-                        return null;
-                    }
-                });
+                .asAdminUser(Mockito.any(Runnable.class));
     }
 
     private void deleteTestFiles() throws IOException {

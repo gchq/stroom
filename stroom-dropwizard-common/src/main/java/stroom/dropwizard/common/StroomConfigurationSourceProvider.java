@@ -6,6 +6,7 @@ import stroom.util.io.HomeDirProviderImpl;
 import stroom.util.io.PathConfig;
 import stroom.util.io.PathCreator;
 import stroom.util.io.StreamUtil;
+import stroom.util.io.StroomPathConfig;
 import stroom.util.io.TempDirProvider;
 import stroom.util.io.TempDirProviderImpl;
 import stroom.util.logging.LogUtil;
@@ -50,9 +51,12 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
     private static final String PROXY_TEMP_JSON_POINTER = PROXY_CONFIG_JSON_POINTER + "/temp";
 
     private final ConfigurationSourceProvider delegate;
+    private final boolean logChanges;
 
-    public StroomConfigurationSourceProvider(final ConfigurationSourceProvider delegate) {
+    public StroomConfigurationSourceProvider(final ConfigurationSourceProvider delegate,
+                                             final boolean logChanges) {
         this.delegate = delegate;
+        this.logChanges = logChanges;
     }
 
     @Override
@@ -144,7 +148,11 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
                     ((ObjectNode) parent).put(entry.getKey(), newValue);
                 } else {
                     // not our node so recurse into it
-                    mutateNodes(entry.getValue(), names, valueMutator, path + "/" + entry.getKey());
+                    mutateNodes(
+                            entry.getValue(),
+                            names,
+                            valueMutator,
+                            path + "/" + entry.getKey());
                 }
             });
         }
@@ -160,7 +168,7 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
                 .or(() -> getNodeValue(rootNode, PROXY_TEMP_JSON_POINTER));
 
         // A vanilla PathConfig with the hard coded defaults
-        final PathConfig pathConfig = new PathConfig();
+        final PathConfig pathConfig = new StroomPathConfig();
 
         final String homeSource = Objects.equals(pathConfig.getHome(), optHome.orElse(null))
                 ? SOURCE_DEFAULTS
@@ -200,6 +208,9 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
 
     private void log(final String msg, Object... args) {
         // Use system.out as we have no logger at this point
-        System.out.println(LogUtil.message(msg, args));
+        if (logChanges) {
+            // Use system.out as we have no logger at this point
+            System.out.println(LogUtil.message(msg, args));
+        }
     }
 }

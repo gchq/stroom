@@ -4,6 +4,7 @@ import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -12,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import javax.inject.Singleton;
 
 @Singleton
-public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
+public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
 
     private DbConfig dbConfig = new DbConfig();
     private MetaValueConfig metaValueConfig = new MetaValueConfig();

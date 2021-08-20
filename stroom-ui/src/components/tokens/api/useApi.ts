@@ -18,13 +18,13 @@ import { useCallback } from "react";
 import { Filter } from "react-table";
 import useHttpClient from "lib/useHttpClient";
 import useUrlFactory from "lib/useUrlFactory";
-import { SearchConfig, Token, TokenConfig, TokenSearchResponse } from "./types";
+import { SearchConfig, Token, TokenSearchResponse } from "./types";
 
 interface Api {
   deleteToken: (tokenId: string) => Promise<void>;
   createToken: (email: string, expiryDate: string) => Promise<Token>;
   fetchApiKey: (tokenId: string) => Promise<Token>;
-  fetchTokenConfig: () => Promise<TokenConfig>;
+  getDefaultApiKeyExpirySeconds: () => Promise<number>;
   performTokenSearch: (
     tokenSearchRequest: Partial<SearchConfig>,
   ) => Promise<TokenSearchResponse>;
@@ -66,8 +66,8 @@ export const useApi = (): Api => {
       [resource, httpGetJson],
     ),
 
-    fetchTokenConfig: useCallback(
-      () => httpGetJson(`${resource}/noauth/fetchTokenConfig`),
+    getDefaultApiKeyExpirySeconds: useCallback(
+      () => httpGetJson(`${resource}/noauth/getDefaultApiKeyExpirySeconds`),
       [resource, httpGetJson],
     ),
 

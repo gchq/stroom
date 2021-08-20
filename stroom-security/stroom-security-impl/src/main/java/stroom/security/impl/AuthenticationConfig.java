@@ -2,6 +2,7 @@ package stroom.security.impl;
 
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.validation.ValidationSeverity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -11,7 +12,7 @@ import javax.inject.Singleton;
 import javax.validation.constraints.AssertTrue;
 
 @Singleton
-public class AuthenticationConfig extends AbstractConfig {
+public class AuthenticationConfig extends AbstractConfig implements IsStroomConfig {
     public static final String PROP_NAME_AUTHENTICATION_REQUIRED = "authenticationRequired";
     public static final String PROP_NAME_OPENID = "openId";
     public static final String PROP_NAME_PREVENT_LOGIN = "preventLogin";

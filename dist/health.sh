@@ -111,12 +111,12 @@ check_start_is_not_erroring() {
   # Check for a configuration parsing error
   local LOG_ERROR_PATTERN="io.dropwizard.configuration.ConfigurationParsingException"
 
-  if [ -f "${path_to_start_log}" ]; then
-    if grep -q "${LOG_ERROR_PATTERN}" "${path_to_start_log}"; then
+  if [ -f "${PATH_TO_START_LOG}" ]; then
+    if grep -q "${LOG_ERROR_PATTERN}" "${PATH_TO_START_LOG}"; then
       echo -e
       error "It looks like you have a problem with something in" \
-        "${BLUE}${path_to_config}${NC}." \
-        "Look in ${BLUE}${path_to_start_log}${NC} for the details.${NC}"
+        "${BLUE}${PATH_TO_CONFIG}${NC}." \
+        "Look in ${BLUE}${PATH_TO_START_LOG}${NC} for the details.${NC}"
       exit 1
     fi
   fi
@@ -129,12 +129,9 @@ main() {
 
   # shellcheck disable=SC1091
   source "${script_dir}/config/scripts.env"
+
   # shellcheck disable=SC1091
-  source "${script_dir}/${PATH_TO_UTIL_SCRIPT}"
-  # shellcheck disable=SC2153
-  local -r path_to_start_log="${script_dir}/${PATH_TO_START_LOG}"
-  # shellcheck disable=SC2153
-  local -r path_to_config="${script_dir}/${PATH_TO_CONFIG}"
+  source "${PATH_TO_UTIL_SCRIPT}"
 
   while getopts ":mh" arg; do
     # shellcheck disable=SC2034
@@ -159,7 +156,7 @@ main() {
 
   local total_unhealthy_count=0
 
-  check_health "stroom" "localhost" "${STROOM_ADMIN_PORT}" "stroomAdmin"
+  check_health "stroom" "localhost" "${ADMIN_PORT}" "${ADMIN_PATH}"
 
   return ${total_unhealthy_count}
 }

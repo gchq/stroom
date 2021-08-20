@@ -17,8 +17,6 @@
 package stroom.importexport.impl;
 
 import stroom.security.api.SecurityContext;
-import stroom.security.api.UserIdentity;
-import stroom.security.shared.User;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 
@@ -66,9 +64,7 @@ public class ContentPackImport {
             if (config.getImportDirectory() != null) {
                 final Path resolvedPath = pathCreator.toAppPath(config.getImportDirectory());
                 LOGGER.info("Importing from resolved dir '" + resolvedPath + "'");
-
-                final UserIdentity admin = securityContext.createIdentity(User.ADMIN_USER_NAME);
-                securityContext.asUser(admin, () -> doImport(resolvedPath));
+                securityContext.asAdminUser(() -> doImport(resolvedPath));
             } else {
                 LOGGER.warn("Content pack import is enabled but the configured directory is null");
             }

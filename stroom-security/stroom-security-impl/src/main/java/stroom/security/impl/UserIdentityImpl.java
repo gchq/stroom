@@ -1,24 +1,37 @@
 package stroom.security.impl;
 
+import stroom.docref.HasUuid;
+import stroom.security.api.HasJws;
+import stroom.security.api.HasSessionId;
 import stroom.security.api.UserIdentity;
+import stroom.security.openid.api.TokenResponse;
+
+import org.jose4j.jwt.JwtClaims;
 
 import java.util.Objects;
+import java.util.concurrent.locks.ReentrantLock;
+import javax.servlet.http.HttpSession;
 
-class UserIdentityImpl implements UserIdentity {
+class UserIdentityImpl implements UserIdentity, HasSessionId, HasJws, HasUuid {
+
     private final String userUuid;
     private final String id;
-    private final String jws;
-    private final String sessionId;
+    private final HttpSession httpSession;
+    private final ReentrantLock lock = new ReentrantLock();
+    private volatile TokenResponse tokenResponse;
+    private volatile JwtClaims jwtClaims;
 
-    UserIdentityImpl(final String userUuid, final String id, final String jws, final String sessionId) {
+    UserIdentityImpl(final String userUuid,
+                     final String id,
+                     final HttpSession httpSession,
+                     final TokenResponse tokenResponse,
+                     final JwtClaims jwtClaims) {
         this.userUuid = userUuid;
         this.id = id;
-        this.jws = jws;
-        this.sessionId = sessionId;
-    }
+        this.httpSession = httpSession;
 
-    public String getUserUuid() {
-        return userUuid;
+        this.tokenResponse = tokenResponse;
+        this.jwtClaims = jwtClaims;
     }
 
     @Override
@@ -27,29 +40,60 @@ class UserIdentityImpl implements UserIdentity {
     }
 
     @Override
+    public String getUuid() {
+        return userUuid;
+    }
+
+    @Override
     public String getJws() {
-        return jws;
+        return tokenResponse.getIdToken();
     }
 
     @Override
     public String getSessionId() {
-        return sessionId;
+        return httpSession.getId();
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
+    public void invalidateSession() {
+        httpSession.invalidate();
+    }
+
+    public ReentrantLock getLock() {
+        return lock;
+    }
+
+    public TokenResponse getTokenResponse() {
+        return tokenResponse;
+    }
+
+    public void setTokenResponse(final TokenResponse tokenResponse) {
+        this.tokenResponse = tokenResponse;
+    }
+
+    public JwtClaims getJwtClaims() {
+        return jwtClaims;
+    }
+
+    public void setJwtClaims(final JwtClaims jwtClaims) {
+        this.jwtClaims = jwtClaims;
+    }
+
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (!(o instanceof UserIdentity)) return false;
-        final UserIdentity that = (UserIdentity) o;
-        return Objects.equals(id, that.getId()) &&
-                Objects.equals(jws, that.getJws()) &&
-                Objects.equals(sessionId, that.getSessionId());
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final UserIdentityImpl that = (UserIdentityImpl) o;
+        return Objects.equals(userUuid, that.userUuid) && Objects.equals(id,
+                that.id) && Objects.equals(httpSession.getId(), that.httpSession.getId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, jws, sessionId);
+        return Objects.hash(userUuid, id, httpSession.getId());
     }
 
     @Override

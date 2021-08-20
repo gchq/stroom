@@ -32,13 +32,11 @@ public class ChangePasswordPlugin extends Plugin {
                 .onSuccess(result -> {
                     final IconMenuItem changePasswordMenuItem;
                     final Preset icon = SvgPresets.PASSWORD;
-                    final String changePasswordUiUrl = result.getUrl().getChangepassword();
-                    if (changePasswordUiUrl != null && changePasswordUiUrl.trim().length() > 0) {
-                        changePasswordMenuItem = new IconMenuItem.Builder()
-                                .priority(5)
-                                .icon(icon)
-                                .text("Change password")
-                                .command(() -> {
+                    changePasswordMenuItem = new IconMenuItem.Builder()
+                            .priority(5)
+                            .icon(icon)
+                            .text("Change password")
+                            .command(() -> {
 //                            final Hyperlink hyperlink = new Builder()
 //                                    .text("Change password")
 //                                    .href(changePasswordUiUrl)
@@ -46,20 +44,17 @@ public class ChangePasswordPlugin extends Plugin {
 //                                    .icon(icon)
 //                                    .build();
 //                            HyperlinkEvent.fire(this, hyperlink);
-                                    postMessage("changePassword");
+                                postMessage("changePassword");
 
-                                })
-                                .build();
-                    } else {
-                        changePasswordMenuItem = new IconMenuItem.Builder()
-                                .priority(5)
-                                .icon(icon)
-                                .text("'Change Password' is not configured!")
-                                .build();
-                    }
+                            })
+                            .build();
 
                     event.getMenuItems().addMenuItem(MenuKeys.USER_MENU, changePasswordMenuItem);
                 })
-                .onFailure(caught -> AlertEvent.fireError(ChangePasswordPlugin.this, caught.getMessage(), null));
+                .onFailure(caught ->
+                        AlertEvent.fireError(
+                                ChangePasswordPlugin.this,
+                                caught.getMessage(),
+                                null));
     }
 }

@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
-import { SearchTokenRequest, TokenResultPage } from "api/stroom";
+import { SearchApiKeyRequest, ApiKeyResultPage } from "api/stroom";
 import { useStroomApi } from "lib/useStroomApi/useStroomApi";
 
 interface UseTokenManager {
-  resultPage: TokenResultPage;
+  resultPage: ApiKeyResultPage;
   remove: (userId: number) => void;
-  request: SearchTokenRequest;
-  setRequest: (request: SearchTokenRequest) => void;
+  request: SearchApiKeyRequest;
+  setRequest: (request: SearchApiKeyRequest) => void;
 }
 
-const defaultResultPage: TokenResultPage = {
+const defaultResultPage: ApiKeyResultPage = {
   values: [],
   pageResponse: {
     offset: 0,
@@ -19,7 +19,7 @@ const defaultResultPage: TokenResultPage = {
   },
 };
 
-const defaultRequest: SearchTokenRequest = {
+const defaultRequest: SearchApiKeyRequest = {
   pageRequest: {
     offset: 0,
     length: 100,
@@ -28,14 +28,14 @@ const defaultRequest: SearchTokenRequest = {
 
 export const useTokenManager = (): UseTokenManager => {
   const [resultPage, setResultPage] =
-    useState<TokenResultPage>(defaultResultPage);
+    useState<ApiKeyResultPage>(defaultResultPage);
   const [request, setRequest] = useState(defaultRequest);
 
   const { exec } = useStroomApi();
 
   const search = useCallback(() => {
     exec(
-      (api) => api.token.searchTokens(request),
+      (api) => api.apikey.searchApiKeys(request),
       (response) => {
         if (response) {
           setResultPage(response);
@@ -47,7 +47,7 @@ export const useTokenManager = (): UseTokenManager => {
   const remove = useCallback(
     (userId: number) => {
       exec(
-        (api) => api.token.deleteToken(userId),
+        (api) => api.apikey.deleteApiKey(userId),
         () => search(),
       );
     },

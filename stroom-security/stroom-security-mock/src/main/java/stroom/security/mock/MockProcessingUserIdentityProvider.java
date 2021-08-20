@@ -7,7 +7,7 @@ import java.util.Objects;
 
 public class MockProcessingUserIdentityProvider implements ProcessingUserIdentityProvider {
 
-    private static final UserIdentity USER_IDENTITY = new MockUserIdentity();
+    private static final UserIdentity USER_IDENTITY = new MockProcessingUserIdentity();
 
     @Override
     public UserIdentity get() {
@@ -16,10 +16,10 @@ public class MockProcessingUserIdentityProvider implements ProcessingUserIdentit
 
     @Override
     public boolean isProcessingUser(final UserIdentity userIdentity) {
-        return UserIdentity.IDENTITY_COMPARATOR.compare(USER_IDENTITY, userIdentity) == 0;
+        return USER_IDENTITY.equals(userIdentity);
     }
 
-    private static class MockUserIdentity implements UserIdentity {
+    private static class MockProcessingUserIdentity implements UserIdentity {
 
         @Override
         public String getId() {
@@ -27,32 +27,20 @@ public class MockProcessingUserIdentityProvider implements ProcessingUserIdentit
         }
 
         @Override
-        public String getJws() {
-            return null;
-        }
-
-        @Override
-        public String getSessionId() {
-            return null;
-        }
-
-        @SuppressWarnings("checkstyle:needbraces")
-        @Override
         public boolean equals(final Object o) {
             if (this == o) {
                 return true;
             }
-            if (!(o instanceof UserIdentity)) {
+            if (o == null || getClass() != o.getClass()) {
                 return false;
             }
-            final UserIdentity that = (UserIdentity) o;
-            return Objects.equals(getId(), that.getId()) &&
-                    Objects.equals(getJws(), that.getJws());
+            final MockProcessingUserIdentity that = (MockProcessingUserIdentity) o;
+            return Objects.equals(getId(), that.getId());
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(getId(), getJws());
+            return Objects.hash(getId());
         }
 
         @Override

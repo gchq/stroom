@@ -1,6 +1,7 @@
 package stroom.util.cache;
 
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.NotInjectableConfig;
 import stroom.util.time.StroomDuration;
 
@@ -11,7 +12,7 @@ import javax.validation.constraints.Min;
 
 // The descriptions have mostly been taken from the Caffine javadoc
 @NotInjectableConfig
-public class CacheConfig extends AbstractConfig {
+public class CacheConfig extends AbstractConfig implements IsStroomConfig {
 
     public static final String PROP_NAME_MAXIMUM_SIZE = "maximumSize";
     public static final String PROP_NAME_EXPIRE_AFTER_ACCESS = "expireAfterAccess";

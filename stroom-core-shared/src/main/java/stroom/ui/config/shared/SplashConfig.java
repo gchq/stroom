@@ -1,6 +1,7 @@
 package stroom.ui.config.shared;
 
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -15,7 +16,7 @@ import javax.inject.Singleton;
 @Singleton
 @JsonPropertyOrder({"enabled", "title", "body", "version"})
 @JsonInclude(Include.NON_NULL)
-public class SplashConfig extends AbstractConfig {
+public class SplashConfig extends AbstractConfig implements IsStroomConfig {
 
     @JsonProperty
     @JsonPropertyDescription("If you would like users to see a splash screen on login.")

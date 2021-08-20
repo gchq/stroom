@@ -2,12 +2,13 @@ package stroom.dashboard.impl;
 
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class DashboardConfig extends AbstractConfig {
+public class DashboardConfig extends AbstractConfig implements IsStroomConfig {
 
     private CacheConfig activeQueriesCache = CacheConfig.builder()
             .maximumSize(100L)

@@ -3,14 +3,13 @@ package stroom.security.identity.openid;
 import stroom.security.identity.authenticate.api.AuthenticationService;
 import stroom.security.identity.authenticate.api.AuthenticationService.AuthState;
 import stroom.security.identity.authenticate.api.AuthenticationService.AuthStatus;
+import stroom.security.identity.config.IdentityConfig;
+import stroom.security.identity.config.TokenConfig;
 import stroom.security.identity.exceptions.BadRequestException;
-import stroom.security.identity.token.TokenBuilder;
 import stroom.security.identity.token.TokenBuilderFactory;
-import stroom.security.identity.token.TokenType;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdClient;
 import stroom.security.openid.api.OpenIdClientFactory;
-import stroom.security.openid.api.TokenRequest;
 import stroom.security.openid.api.TokenResponse;
 
 import com.google.common.base.Objects;
@@ -20,12 +19,16 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.security.SecureRandom;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.TemporalAmount;
 import java.util.Base64;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriBuilder;
 
 
@@ -36,19 +39,25 @@ class OpenIdService {
     private static final String UNKNOWN_SUBJECT = "Unknown";
 
     private final AccessCodeCache accessCodeCache;
+    private final RefreshTokenCache refreshTokenCache;
     private final TokenBuilderFactory tokenBuilderFactory;
     private final AuthenticationService authenticationService;
     private final OpenIdClientFactory openIdClientDetailsFactory;
+    private final IdentityConfig identityConfig;
 
     @Inject
     OpenIdService(final AccessCodeCache accessCodeCache,
+                  final RefreshTokenCache refreshTokenCache,
                   final TokenBuilderFactory tokenBuilderFactory,
                   final AuthenticationService authenticationService,
-                  final OpenIdClientFactory openIdClientDetailsFactory) {
+                  final OpenIdClientFactory openIdClientDetailsFactory,
+                  final IdentityConfig identityConfig) {
         this.accessCodeCache = accessCodeCache;
+        this.refreshTokenCache = refreshTokenCache;
         this.tokenBuilderFactory = tokenBuilderFactory;
         this.authenticationService = authenticationService;
         this.openIdClientDetailsFactory = openIdClientDetailsFactory;
+        this.identityConfig = identityConfig;
     }
 
     public AuthResult auth(final HttpServletRequest request,
@@ -110,6 +119,7 @@ class OpenIdService {
                             authStatus.getError().get().getMessage());
                     //Send back to log in with username/password
                     result = authenticationService.createSignInUri(redirectUri);
+
                 } else if (authStatus.getAuthState().isPresent()) {
                     // If we have an authenticated session then the user is logged in
                     final AuthState authState = authStatus.getAuthState().get();
@@ -123,16 +133,16 @@ class OpenIdService {
 
                         // We need to make sure we record this access code request.
                         final String accessCode = createAccessCode();
-                        final String token = createIdToken(clientId, authState.getSubject(), nonce, state);
+
                         final AccessCodeRequest accessCodeRequest = new AccessCodeRequest(
                                 scope,
                                 responseType,
                                 clientId,
                                 redirectUri,
+                                authState.getSubject(),
                                 nonce,
                                 state,
-                                prompt,
-                                token);
+                                prompt);
                         accessCodeCache.put(accessCode, accessCodeRequest);
 
                         result = buildRedirectionUrl(redirectUri, accessCode, state);
@@ -156,12 +166,22 @@ class OpenIdService {
         return Base64.getUrlEncoder().encodeToString(bytes);
     }
 
-    public TokenResponse token(final TokenRequest tokenRequest) {
-        final String grantType = tokenRequest.getGrantType();
-        final String clientId = tokenRequest.getClientId();
-        final String clientSecret = tokenRequest.getClientSecret();
-        final String redirectUri = tokenRequest.getRedirectUri();
-        final String code = tokenRequest.getCode();
+    public TokenResponse token(final MultivaluedMap<String, String> formParams) {
+        final String grantType = formParams.getFirst(OpenId.GRANT_TYPE);
+        if (OpenId.GRANT_TYPE__AUTHORIZATION_CODE.equals(grantType)) {
+            return getIdToken(formParams);
+        } else if (OpenId.REFRESH_TOKEN.equals(grantType)) {
+            return refreshIdToken(formParams);
+        }
+        throw new BadRequestException("Unknown grant type",
+                AuthenticateOutcomeReason.OTHER, "Unknown grant type " + grantType);
+    }
+
+    public TokenResponse getIdToken(final MultivaluedMap<String, String> formParams) {
+        final String clientId = formParams.getFirst(OpenId.CLIENT_ID);
+        final String clientSecret = formParams.getFirst(OpenId.CLIENT_SECRET);
+        final String redirectUri = formParams.getFirst(OpenId.REDIRECT_URI);
+        final String code = formParams.getFirst(OpenId.CODE);
 
         final Optional<AccessCodeRequest> optionalAccessCodeRequest = accessCodeCache.getAndRemove(code);
         if (optionalAccessCodeRequest.isEmpty()) {
@@ -193,9 +213,52 @@ class OpenIdService {
                     "Redirect URI is not allowed");
         }
 
-        return TokenResponse.builder()
-                .idToken(accessCodeRequest.getToken())
-                .build();
+        final TokenResponse tokenResponse = createTokenResponse(
+                clientId,
+                accessCodeRequest.getSubject(),
+                accessCodeRequest.getNonce(),
+                accessCodeRequest.getState());
+
+        refreshTokenCache.put(tokenResponse.getRefreshToken(),
+                new TokenProperties(accessCodeRequest.getClientId(), accessCodeRequest.getSubject()));
+
+        return tokenResponse;
+    }
+
+    public TokenResponse refreshIdToken(final MultivaluedMap<String, String> formParams) {
+        final String clientId = formParams.getFirst(OpenId.CLIENT_ID);
+        final String clientSecret = formParams.getFirst(OpenId.CLIENT_SECRET);
+        final String refreshToken = formParams.getFirst(OpenId.REFRESH_TOKEN);
+
+        if (refreshToken == null) {
+            throw new BadRequestException("Null refresh token",
+                    AuthenticateOutcomeReason.OTHER, "No refresh token has been supplied");
+        }
+
+        final Optional<TokenProperties> tokenPropertiesOptional = refreshTokenCache.getAndRemove(refreshToken);
+        if (tokenPropertiesOptional.isEmpty()) {
+            throw new BadRequestException("Unknown refresh token",
+                    AuthenticateOutcomeReason.OTHER, "Refresh token already used or no longer remembered");
+        }
+
+        final OpenIdClient oAuth2Client = openIdClientDetailsFactory.getClient(clientId);
+
+        if (!Objects.equal(clientSecret, oAuth2Client.getClientSecret())) {
+            throw new BadRequestException(oAuth2Client.getName(), AuthenticateOutcomeReason.OTHER,
+                    "Incorrect secret");
+        }
+
+        final TokenProperties tokenProperties = tokenPropertiesOptional.get();
+        final TokenResponse tokenResponse = createTokenResponse(
+                tokenProperties.getClientId(),
+                tokenProperties.getSubject(),
+                null,
+                null);
+
+        refreshTokenCache.put(tokenResponse.getRefreshToken(),
+                new TokenProperties(tokenProperties.getClientId(), tokenProperties.getSubject()));
+
+        return tokenResponse;
     }
 
     private URI buildRedirectionUrl(String redirectUri, String code, String state) {
@@ -206,19 +269,48 @@ class OpenIdService {
                 .build();
     }
 
-    private String createIdToken(final String clientId,
-                                 final String subject,
-                                 final String nonce,
-                                 final String state) {
-        final TokenBuilder tokenBuilder = tokenBuilderFactory
-                .newBuilder(TokenType.USER)
+    private TokenResponse createTokenResponse(final String clientId,
+                                              final String subject,
+                                              final String nonce,
+                                              final String state) {
+        final TokenConfig tokenConfig = identityConfig.getTokenConfig();
+        final Instant now = Instant.now();
+
+        final String idToken = tokenBuilderFactory.builder()
+                .expirationTime(now.plus(tokenConfig.getIdTokenExpiration()))
                 .clientId(clientId)
                 .subject(subject)
                 .nonce(nonce)
-                .state(state);
-//                .authSessionId(authSessionId);
-//        Instant expiresOn = tokenBuilder.getExpiryDate();
-        return tokenBuilder.build();
+                .state(state)
+                .build();
+
+        final String accessToken = tokenBuilderFactory.builder()
+                .expirationTime(now.plus(tokenConfig.getAccessTokenExpiration()))
+                .clientId(clientId)
+                .subject(subject)
+                .nonce(nonce)
+                .state(state)
+                .build();
+
+        final TemporalAmount refreshTokenExpiresIn = tokenConfig.getRefreshTokenExpiration();
+        final String refreshToken = tokenBuilderFactory.builder()
+                .expirationTime(now.plus(refreshTokenExpiresIn))
+                .clientId(clientId)
+                .subject(subject)
+                .nonce(nonce)
+                .state(state)
+                .build();
+        final Long refreshTokenExpiresInSeconds = Duration.from(refreshTokenExpiresIn).toMillis() / 1000;
+
+        final long expiresInSeconds = tokenConfig.getIdTokenExpiration().toMillis() / 1000;
+
+        return TokenResponse.builder()
+                .idToken(idToken)
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .expiresIn(expiresInSeconds)
+                .refreshTokenExpiresIn(refreshTokenExpiresInSeconds)
+                .build();
     }
 
     static class AuthResult {

@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class BuildInfo extends AbstractConfig {
+public class BuildInfo {
 
     @JsonProperty
     private final long upTime;

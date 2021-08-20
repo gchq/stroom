@@ -30,19 +30,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
-import java.util.Optional;
 
 public class TokenBuilder {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TokenBuilder.class);
 
-    private Instant expiryDate;
+    private Instant expirationTime;
     private String issuer;
     private String algorithm = AlgorithmIdentifiers.RSA_USING_SHA256;
 
     private String subject;
-    private Optional<String> nonce = Optional.empty();
-    private Optional<String> state = Optional.empty();
+    private String nonce;
+    private String state;
     private PublicJsonWebKey publicJsonWebKey;
     private String clientId;
 
@@ -67,12 +66,12 @@ public class TokenBuilder {
     }
 
     public TokenBuilder nonce(String nonce) {
-        this.nonce = Optional.of(nonce);
+        this.nonce = nonce;
         return this;
     }
 
     public TokenBuilder state(String state) {
-        this.state = Optional.of(state);
+        this.state = state;
         return this;
     }
 
@@ -81,26 +80,29 @@ public class TokenBuilder {
         return this;
     }
 
-    public TokenBuilder expiryDate(Instant expiryDate) {
-        this.expiryDate = expiryDate;
+    public TokenBuilder expirationTime(Instant expirationTime) {
+        this.expirationTime = expirationTime;
         return this;
     }
 
-    public Instant getExpiryDate() {
-        return this.expiryDate;
+    public Instant getExpirationTime() {
+        return this.expirationTime;
     }
 
     public String build() {
         final JwtClaims claims = new JwtClaims();
-        if (expiryDate != null) {
-            claims.setExpirationTime(NumericDate.fromSeconds(expiryDate.getEpochSecond()));
+        if (expirationTime != null) {
+            claims.setExpirationTime(NumericDate.fromSeconds(expirationTime.getEpochSecond()));
         }
         claims.setSubject(subject);
         claims.setIssuer(issuer);
         claims.setAudience(clientId);
-
-        nonce.ifPresent(nonce -> claims.setClaim(OpenId.NONCE, nonce));
-        state.ifPresent(state -> claims.setClaim(OpenId.STATE, state));
+        if (nonce != null) {
+            claims.setClaim(OpenId.NONCE, nonce);
+        }
+        if (state != null) {
+            claims.setClaim(OpenId.STATE, state);
+        }
 
         JsonWebSignature jws = new JsonWebSignature();
         jws.setPayload(claims.toJson());

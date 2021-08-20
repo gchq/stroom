@@ -31,6 +31,7 @@ import java.nio.file.Files;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFilePermission;
 import java.time.Duration;
@@ -235,6 +236,23 @@ public final class FileUtil {
             resolved = System.getProperty("user.home") + resolved.substring(1);
         }
         return resolved;
+    }
+
+    /**
+     * Similar to {@link Files#createDirectories(Path, FileAttribute[])} but with logging
+     * to log when the dir is created.
+     *
+     * @param path The path of the dir to ensure exists
+     */
+    public static void ensureDirExists(final Path path) {
+        if (!Files.isDirectory(path)) {
+            LOGGER.info("Creating directory {}", path.normalize().toAbsolutePath());
+            try {
+                Files.createDirectories(path);
+            } catch (IOException e) {
+                throw new RuntimeException("Error creating directory " + path.normalize().toAbsolutePath(), e);
+            }
+        }
     }
 
     /**
