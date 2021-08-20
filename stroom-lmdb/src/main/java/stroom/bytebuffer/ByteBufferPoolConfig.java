@@ -2,6 +2,7 @@ package stroom.bytebuffer;
 
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
@@ -10,7 +11,7 @@ import java.util.TreeMap;
 import javax.inject.Singleton;
 
 @Singleton
-public class ByteBufferPoolConfig extends AbstractConfig {
+public class ByteBufferPoolConfig extends AbstractConfig implements IsStroomConfig {
 
     // Use a treemap so we get a consistent order in the yaml so TestYamlUtil doesn't fail
     private Map<Integer, Integer> pooledByteBufferCounts = new TreeMap<>(Map.of(

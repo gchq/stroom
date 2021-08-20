@@ -20,10 +20,11 @@ import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 
 import java.util.function.Supplier;
+import javax.ws.rs.client.Invocation.Builder;
 
 public class MockSecurityContext implements SecurityContext {
 
-    private static final AdminUserIdentity ADMIN_USER_IDENTITY = new AdminUserIdentity();
+    private static final MockAdminUserIdentity ADMIN_USER_IDENTITY = new MockAdminUserIdentity();
 
     @Override
     public String getUserId() {
@@ -86,6 +87,15 @@ public class MockSecurityContext implements SecurityContext {
     }
 
     @Override
+    public <T> T asAdminUserResult(final Supplier<T> supplier) {
+        return null;
+    }
+
+    @Override
+    public void asAdminUser(final Runnable runnable) {
+    }
+
+    @Override
     public <T> T useAsReadResult(final Supplier<T> supplier) {
         return supplier.get();
     }
@@ -125,21 +135,15 @@ public class MockSecurityContext implements SecurityContext {
         return supplier.get();
     }
 
-    private static class AdminUserIdentity implements UserIdentity {
+    @Override
+    public void addAuthorisationHeader(final Builder builder) {
+    }
+
+    private static class MockAdminUserIdentity implements UserIdentity {
 
         @Override
         public String getId() {
             return "admin";
-        }
-
-        @Override
-        public String getJws() {
-            return null;
-        }
-
-        @Override
-        public String getSessionId() {
-            return null;
         }
     }
 }

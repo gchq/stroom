@@ -26,7 +26,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { DatePickerFormField, UserFormField } from "components/FormField";
 import CustomLoader from "../../CustomLoader";
 import moment from "moment";
-import { CreateTokenRequest, TokenConfig } from "api/stroom";
+import { CreateApiKeyRequest } from "api/stroom";
 import { useStroomApi } from "lib/useStroomApi/useStroomApi";
 
 export interface CreateTokenFormValues {
@@ -123,15 +123,15 @@ export const CreateToken: React.FunctionComponent<{
   onClose: (success: boolean) => void;
 }> = ({ onClose }) => {
   const { exec } = useStroomApi();
-  const [tokenConfig, setTokenConfig] = useState<TokenConfig>();
+  const [expiryTime, setExpiryTime] = useState<number>(525600); // 365 days
   useEffect(() => {
-    if (tokenConfig === undefined) {
+    if (expiryTime === undefined) {
       exec(
-        (api) => api.token.fetchTokenConfig(),
-        (response: TokenConfig) => setTokenConfig(response),
+        (api) => api.apikey.getDefaultApiKeyExpirySeconds(),
+        (response: number) => setExpiryTime(response),
       );
     }
-  }, [tokenConfig, setTokenConfig, exec]);
+  }, [expiryTime, setExpiryTime, exec]);
 
   const onSubmit = (
     values: CreateTokenFormValues,
@@ -151,25 +151,23 @@ export const CreateToken: React.FunctionComponent<{
       }
     };
 
-    const request: CreateTokenRequest = {
+    const request: CreateApiKeyRequest = {
       userId: values.userId,
       tokenType: "api",
       expiresOnMs: values.expiresOnMs,
       comments: undefined,
       enabled: true,
     };
-    exec((api) => api.token.createToken(request), handleResponse);
+    exec((api) => api.apikey.createApiKey(request), handleResponse);
   };
 
-  if (tokenConfig === undefined) {
+  if (expiryTime === undefined) {
     return (
       <CustomLoader title="Stroom" message="Loading Config. Please wait..." />
     );
   }
 
-  const expiresOnMs = moment()
-    .add(tokenConfig.defaultApiKeyExpiryInMinutes, "minutes")
-    .valueOf();
+  const expiresOnMs = moment().add(expiryTime, "s").valueOf();
 
   return (
     <ResizableDialog

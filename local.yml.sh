@@ -79,7 +79,7 @@ makeLocal2File() {
 
   sed \
     -r \
-    -e 's/name: node1a/name: node2a/' \
+    -e 's/node1a/node2a/' \
     -e 's/(port:.*[^\d])8080/\110080/' \
     -e 's/(port:.*[^\d])8081/\110081/' \
     < "${LOCAL_CONF_FILE}" \
@@ -92,7 +92,7 @@ makeLocal3File() {
 
   sed \
     -r \
-    -e 's/name: node1a/name: node3a/' \
+    -e 's/node1a/node3a/' \
     -e 's/(port:.*[^\d])8080/\120080/' \
     -e 's/(port:.*[^\d])8081/\120081/' \
     < "${LOCAL_CONF_FILE}" \

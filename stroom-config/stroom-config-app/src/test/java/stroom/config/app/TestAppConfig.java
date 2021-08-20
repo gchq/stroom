@@ -1,8 +1,10 @@
 package stroom.config.app;
 
 import stroom.docref.DocRef;
+import stroom.util.config.PropertyPathDecorator;
 import stroom.util.config.PropertyUtil;
 import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.NotInjectableConfig;
@@ -11,7 +13,6 @@ import stroom.util.time.StroomDuration;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -21,7 +22,7 @@ import javax.inject.Singleton;
 
 class TestAppConfig {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestAppConfig.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestAppConfig.class);
 
     private static final Set<Class<?>> WHITE_LISTED_CLASSES = Set.of(
             Logger.class,
@@ -111,6 +112,26 @@ class TestAppConfig {
 //                    if (prop.getValueType().getTypeName().matches("")) {
 //                    }
                 });
+    }
+
+    @Test
+    void testPropertyDecoration() {
+        final AppConfig appConfig = new AppConfig();
+
+        LOGGER.logDurationIfInfoEnabled(
+                () -> {
+                    for (int i = 0; i < 100; i++) {
+                        PropertyPathDecorator.decoratePaths(
+                                appConfig, AppConfig.ROOT_PROPERTY_PATH);
+                    }
+                },
+                "decorating paths");
+
+        Assertions.assertThat(appConfig.getActivityConfig()
+                .getDbConfig()
+                .getConnectionConfig()
+                .getBasePath())
+                .isEqualTo("stroom.activity.db.connection");
     }
 
     private boolean isCollectionClass(final Class<?> clazz) {

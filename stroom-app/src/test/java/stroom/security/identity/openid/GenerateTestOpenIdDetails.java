@@ -1,10 +1,9 @@
 package stroom.security.identity.openid;
 
 import stroom.security.identity.config.IdentityConfig;
-import stroom.security.identity.token.JsonWebKeyFactoryImpl;
+import stroom.security.identity.token.JwkFactoryImpl;
 import stroom.security.identity.token.TokenBuilder;
 import stroom.security.identity.token.TokenBuilderFactory;
-import stroom.security.identity.token.TokenType;
 import stroom.security.openid.api.JsonWebKeyFactory;
 import stroom.security.openid.api.OpenIdClient;
 import stroom.security.openid.api.PublicJsonWebKeyProvider;
@@ -69,7 +68,7 @@ public class GenerateTestOpenIdDetails {
                 .thenAnswer(invocation -> Collections.singletonList(publicJsonWebKey));
         Mockito.when(publicJsonWebKeyProvider.getFirst())
                 .thenAnswer(invocation -> publicJsonWebKey);
-        jsonWebKeyFactory = new JsonWebKeyFactoryImpl();
+        jsonWebKeyFactory = new JwkFactoryImpl();
     }
 
     public static void main(String[] args) throws JoseException {
@@ -95,9 +94,9 @@ public class GenerateTestOpenIdDetails {
                 publicJsonWebKeyProvider);
 
         final TokenBuilder tokenBuilder = tokenBuilderFactory
-                .expiryDateForApiKeys(ZonedDateTime.now(ZoneId.from(ZoneOffset.UTC)).plus(20, ChronoUnit.YEARS)
+                .builder()
+                .expirationTime(ZonedDateTime.now(ZoneId.from(ZoneOffset.UTC)).plus(20, ChronoUnit.YEARS)
                         .toInstant())
-                .newBuilder(TokenType.API)
                 .clientId(oAuth2Client.getClientId())
                 .subject(API_KEY_USER_EMAIL);
 

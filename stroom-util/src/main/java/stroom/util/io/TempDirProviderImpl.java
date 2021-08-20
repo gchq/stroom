@@ -1,10 +1,8 @@
 package stroom.util.io;
 
-import stroom.util.logging.LogUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import javax.inject.Inject;
@@ -12,6 +10,12 @@ import javax.inject.Singleton;
 
 @Singleton
 public class TempDirProviderImpl implements TempDirProvider {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TempDirProviderImpl.class);
+
+    //    private static final String PROP_STROOM_TEMP = "stroom.temp";
+//    private static final String ENV_STROOM_TEMP = "STROOM_TEMP";
+    private static final String DEFAULT_TEMP_SUB_DIR = "temp";
 
     private final PathConfig pathConfig;
     private final HomeDirProvider homeDirProvider;
@@ -30,30 +34,43 @@ public class TempDirProviderImpl implements TempDirProvider {
         if (tempDir == null) {
             Path path = null;
 
+//            String dir = System.getProperty(PROP_STROOM_TEMP);
+//            if (dir != null) {
+//                LOGGER.info("Using stroom.temp system property: {}", dir);
+//            } else {
+//                dir = System.getenv(ENV_STROOM_TEMP);
+//                if (dir != null) {
+//                    LOGGER.info("Using STROOM_TEMP environment variable: {}", dir);
+//                } else {
+//                    dir = pathConfig.getTemp();
+//                    if (dir != null) {
+//                        LOGGER.info("Using temp path configuration property: {}", dir);
+//                    } else {
+//                        dir = System.getProperty(PROP_JAVA_TEMP);
+//                        if (dir != null) {
+//                            LOGGER.info("Using default Java temp dir: {}", dir);
+//                        }
+//                    }
+//                }
+//            }
+
             String dir = pathConfig.getTemp();
-            if (dir != null) {
+            if (dir != null && !dir.isEmpty()) {
+                LOGGER.info("Using temp path configuration property: {}", dir);
                 dir = FileUtil.replaceHome(dir);
                 path = Paths.get(dir);
             }
 
             if (path == null) {
-                throw new NullPointerException("Temp dir is null");
-            }
-            try {
-                Files.createDirectories(path);
-            } catch (IOException e) {
-                throw new RuntimeException(LogUtil.message("Error ensuring temp directory {} exits",
-                        path.toAbsolutePath()), e);
+                path = homeDirProvider.get()
+                        .resolve(DEFAULT_TEMP_SUB_DIR);
             }
 
             // If this isn't an absolute path then make it so relative to the home path.
-            String canonicalPath = FileUtil.getCanonicalPath(path);
-            if (!path.toString().equals(canonicalPath)) {
-                path = homeDirProvider.get().resolve(path);
+            if (!path.isAbsolute()) {
+                path = homeDirProvider.get()
+                        .resolve(path);
             }
-//            if (!path.startsWith("/") && !path.startsWith("\\")) {
-//                path = homeDirProvider.get().resolve(path);
-//            }
 
             path = path.toAbsolutePath();
 

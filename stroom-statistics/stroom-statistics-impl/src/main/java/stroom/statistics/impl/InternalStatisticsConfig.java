@@ -6,6 +6,7 @@ import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.validation.IsSubsetOf;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -23,7 +24,7 @@ import java.util.stream.Collectors;
 import javax.inject.Singleton;
 
 @Singleton
-public class InternalStatisticsConfig extends AbstractConfig {
+public class InternalStatisticsConfig extends AbstractConfig implements IsStroomConfig {
 
     private static final String DESCRIPTION_PREFIX = "A list of DocRefs, one for each statistic store that " +
             "events for this internal statistic will be sent to. This internal statistic describes ";

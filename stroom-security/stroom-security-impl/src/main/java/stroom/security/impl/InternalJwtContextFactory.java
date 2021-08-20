@@ -1,6 +1,5 @@
 package stroom.security.impl;
 
-import stroom.security.impl.exception.AuthenticationException;
 import stroom.security.openid.api.OpenIdClientFactory;
 import stroom.security.openid.api.PublicJsonWebKeyProvider;
 import stroom.util.logging.LambdaLogger;
@@ -57,6 +56,8 @@ class InternalJwtContextFactory implements JwtContextFactory {
      */
     @Override
     public Optional<JwtContext> getJwtContext(final String jws) {
+        Optional<JwtContext> optionalJwtContext = Optional.empty();
+
         Objects.requireNonNull(jws, "Null JWS");
         LOGGER.debug(() -> "Found auth header in request. It looks like this: " + jws);
 
@@ -64,23 +65,13 @@ class InternalJwtContextFactory implements JwtContextFactory {
             LOGGER.debug(() -> "Verifying token...");
             final JwtConsumer jwtConsumer = newJwtConsumer();
             final JwtContext jwtContext = jwtConsumer.process(jws);
-
-            // TODO : @66 Check against blacklist to see if token has been revoked. Blacklist
-            //  is a list of JWI (JWT IDs) on auth service. Only tokens with `jwi` claims are API
-            //  keys so only those tokens need checking against the blacklist cache.
-
-//            if (checkTokenRevocation) {
-//                LOGGER.debug(() -> "Checking token revocation status in remote auth service...");
-//                final String userId = getUserIdFromToken(jws);
-//                isRevoked = userId == null;
-//            }
-
-            return Optional.ofNullable(jwtContext);
+            optionalJwtContext = Optional.ofNullable(jwtContext);
 
         } catch (final RuntimeException | InvalidJwtException e) {
             LOGGER.debug(() -> "Unable to verify token: " + e.getMessage(), e);
-            throw new AuthenticationException(e.getMessage(), e);
         }
+
+        return optionalJwtContext;
     }
 
     private JwtConsumer newJwtConsumer() {

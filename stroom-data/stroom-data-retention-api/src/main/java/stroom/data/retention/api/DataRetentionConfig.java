@@ -1,6 +1,7 @@
 package stroom.data.retention.api;
 
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -10,7 +11,7 @@ import javax.inject.Singleton;
 
 @Singleton
 @JsonPropertyOrder(alphabetic = true)
-public class DataRetentionConfig extends AbstractConfig {
+public class DataRetentionConfig extends AbstractConfig implements IsStroomConfig {
 
     @JsonProperty
     @JsonPropertyDescription("The number of records that will be logically deleted in each pass of the data " +

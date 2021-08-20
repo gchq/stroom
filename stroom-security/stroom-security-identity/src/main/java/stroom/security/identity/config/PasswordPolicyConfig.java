@@ -1,6 +1,7 @@
 package stroom.security.identity.config;
 
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.validation.ValidRegex;
 import stroom.util.time.StroomDuration;
 
@@ -19,7 +20,7 @@ import javax.validation.constraints.NotNull;
 @Singleton
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class PasswordPolicyConfig extends AbstractConfig {
+public class PasswordPolicyConfig extends AbstractConfig implements IsStroomConfig {
 
     @JsonProperty
     @JsonPropertyDescription("Will the UI allow password resets")

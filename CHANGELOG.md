@@ -7,6 +7,54 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2365** : Fix to reduce memory used by `BlockGZIPInput`.
+
+* Issue **#2366** : Fix NPE caused by visualisations that do not define maxValues.
+
+* Issue **#2220** : OpenID connect web tokens can now be refreshed to maintain validity.
+
+* Included Leaflet.draw Javascript plugin within UI bundle.
+
+* Issue **#2357** : Remove dropwizard logger configuration entries that have default values.
+
+* Issue **#2350** : Fix distribution start script so it works with a different stroom home dir.
+
+* Issue **#1469** : Add hot loading of config to proxy.
+
+* Change proxy and stroom config validation to cope with relative paths and `~`.
+
+* Issue **#2353** : Swallow NoSuchFileException in config monitor.
+
+* Issue **#2355** : Jobs are no longer enabled by default on bootstrap.
+
+* Issue **#2358** : Changed default stroom home and stroom temp config paths to be null by default so they are resolved relative to the jar or use java tmp respectively.
+
+* Issue **#2354** : Old job node records associated with old jobs are now removed for all nodes regardless of what node is performing the job bootstrap activity.
+
+* Issue **#2343** : The OIDC back channel `redirect_uri` now uses the same URI stored when making the front channel request. 
+
+* Issue **gchq/stroom-resources#104** : Expose `stroom.ui.helpUrl` in the config.yml so the docs served by nginx can be accessed.
+
+* Issue **#2331** : Remove unused config properties `stroom.ui.url.(apiKeys|changepassword|users)`.
+
+Improve error handling during reference data initialisation.
+
+* Improve exception handling when node name is not configured.
+
+* Fixed issue where annotation menu button did not show when existing annotation was selected.
+
+* Fix problem with merging DB connection configs when values not supplied.
+
+* Make relative proxy file paths be relative to configured proxy home directory.
+
+* Make proxy logger file paths support `~` and relative paths be relative to proxy home.
+
+* Remove redundant items from stroom and proxy distribution config yaml files.
+
+* Rename `jerseyClient` key in proxy config.yml to `restClient`.
+
+* Add `remotecertexpiry` to the default config value for `proxyConfig.logStream.metaKeys`.
+
 * Issue **#2335** : Added CLI command `create_api_key` to create an API key for a specified user.
 
 * Added layout density user preference.
@@ -3514,8 +3562,6 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 [v7.1-beta.3]: https://github.com/gchq/stroom/compare/v7.1-beta.2..v7.1-beta.3
 [v7.1-beta.2]: https://github.com/gchq/stroom/compare/v7.1-beta.1...v7.1-beta.2
 [v7.1-beta.1]: https://github.com/gchq/stroom/compare/v7.0-beta.104...v7.1-beta.1
-[v7.0-beta.106]: https://github.com/gchq/stroom/compare/v7.0-beta.105...v7.0-beta.106
-[v7.0-beta.105]: https://github.com/gchq/stroom/compare/v7.0-beta.104...v7.0-beta.105
 [v7.0-beta.104]: https://github.com/gchq/stroom/compare/v7.0-beta.103...v7.0-beta.104
 [v7.0-beta.103]: https://github.com/gchq/stroom/compare/v7.0-beta.102...v7.0-beta.103
 [v7.0-beta.102]: https://github.com/gchq/stroom/compare/v7.0-beta.101...v7.0-beta.102

@@ -4,6 +4,7 @@ import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.ModelStringUtil;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -15,18 +16,18 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Singleton;
 
 @Singleton
-public class JobSystemConfig extends AbstractConfig implements HasDbConfig {
+public class JobSystemConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JobSystemConfig.class);
 
-    public static final String PROP_NAME_ENABLE_PROCESSING = "enableDistributedJobsOnBootstrap";
+    public static final String PROP_NAME_ENABLE_PROCESSING = "enableJobsOnBootstrap";
 
     private static final int ONE_SECOND = 1000;
     private static final long DEFAULT_INTERVAL = 10 * ONE_SECOND;
 
     private DbConfig dbConfig = new DbConfig();
     private boolean enabled = true;
-    private boolean enableDistributedJobsOnBootstrap = true;
+    private boolean enableJobsOnBootstrap;
     private String executionInterval = "10s";
 
     @JsonProperty("db")
@@ -53,20 +54,18 @@ public class JobSystemConfig extends AbstractConfig implements HasDbConfig {
         this.enabled = enabled;
     }
 
-    @JsonPropertyDescription("On boot Stroom will ensure all distributed " +
-            "jobs are created. If this property is set to true the distributed jobs will be set to enabled " +
-            "on creation, else they will be disabled. Data Processing is one such job. " +
-            "This only applies to a fresh install, an upgrade or the addition of a new node to the cluster." +
-            "This property should be set to false " +
-            "for production systems to avoid the risk of processing starting immediately after an upgrade.")
+    @JsonPropertyDescription("On boot Stroom will ensure all jobs are created. " +
+            "If this property is set to true the jobs will also be set to enabled upon creation, else they will be " +
+            "disabled. " +
+            "This should only be set to true in a demo environment and never in production therefore default is false.")
     @JsonProperty(PROP_NAME_ENABLE_PROCESSING)
-    public boolean isEnableDistributedJobsOnBootstrap() {
-        return enableDistributedJobsOnBootstrap;
+    public boolean isEnableJobsOnBootstrap() {
+        return enableJobsOnBootstrap;
     }
 
     @SuppressWarnings("unused")
-    public void setEnableDistributedJobsOnBootstrap(final boolean enableDistributedJobsOnBootstrap) {
-        this.enableDistributedJobsOnBootstrap = enableDistributedJobsOnBootstrap;
+    public void setEnableJobsOnBootstrap(final boolean enableJobsOnBootstrap) {
+        this.enableJobsOnBootstrap = enableJobsOnBootstrap;
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)

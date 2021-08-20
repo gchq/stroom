@@ -36,8 +36,10 @@ import stroom.searchable.impl.SearchableConfig;
 import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
-import stroom.util.io.PathConfig;
+import stroom.util.io.StroomPathConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
+import stroom.util.shared.PropertyPath;
 import stroom.util.shared.validation.ValidationSeverity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -49,9 +51,10 @@ import javax.validation.constraints.AssertTrue;
 
 @JsonRootName(AppConfig.NAME)
 @Singleton
-public class AppConfig extends AbstractConfig {
+public class AppConfig extends AbstractConfig implements IsStroomConfig {
 
     public static final String NAME = "stroom";
+    public static final PropertyPath ROOT_PROPERTY_PATH = PropertyPath.fromParts(NAME);
 
     public static final String PROP_NAME_ACTIVITY = "activity";
     public static final String PROP_NAME_ANNOTATION = "annotation";
@@ -125,7 +128,7 @@ public class AppConfig extends AbstractConfig {
     private LifecycleConfig lifecycleConfig = new LifecycleConfig();
     private NodeConfig nodeConfig = new NodeConfig();
     private NodeUriConfig nodeUri = new NodeUriConfig();
-    private PathConfig pathConfig = new PathConfig();
+    private StroomPathConfig pathConfig = new StroomPathConfig();
     private PipelineConfig pipelineConfig = new PipelineConfig();
     private ProcessorConfig processorConfig = new ProcessorConfig();
     private PropertyServiceConfig propertyServiceConfig = new PropertyServiceConfig();
@@ -402,12 +405,12 @@ public class AppConfig extends AbstractConfig {
     }
 
     @JsonProperty(PROP_NAME_PATH)
-    public PathConfig getPathConfig() {
+    public StroomPathConfig getPathConfig() {
         return pathConfig;
     }
 
     @SuppressWarnings("unused")
-    public void setPathConfig(final PathConfig pathConfig) {
+    public void setPathConfig(final StroomPathConfig pathConfig) {
         this.pathConfig = pathConfig;
     }
 

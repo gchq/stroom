@@ -1,6 +1,7 @@
 package stroom.alert.impl;
 
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -12,7 +13,7 @@ import javax.inject.Singleton;
 import javax.validation.constraints.Pattern;
 
 @Singleton
-public class AlertConfig extends AbstractConfig {
+public class AlertConfig extends AbstractConfig implements IsStroomConfig {
     @JsonPropertyDescription("Name of timezone (ZoneId) that will be used during alert generation.")
     private String timezone = "UTC";
 

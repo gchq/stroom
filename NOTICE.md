@@ -98,6 +98,8 @@ The table below includes licences for all Maven dependencies.
 | javax.xml.stream                          | stax-api                                     | 1.0-2            | CDDL          | GPL       |               |
 | jdk.tools                                 | jdk.tools                                    | 1.6              | Custom        |           |               |
 | junit                                     | junit                                        | 4.12             | EPL 1.0       |           |               |
+| leafletJS                                 | leaflet                                      | 1.7.1            | Custom        |           |               |
+| leafletJS                                 | Leaflet.draw                                 | 1.0.3            | Custom MIT    |           |               |   
 | log4j                                     | log4j                                        | 1.2.17           | APL 2.0       |           |               |
 | mysql                                     | mysql-connector-java                         | 5.1.40           | GPL\*         |           |               |
 | net.java.dev.jets3t                       | jets3t                                       | 0.9.0            | APL 2.0       |           |               |

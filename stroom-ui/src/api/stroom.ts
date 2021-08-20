@@ -183,6 +183,38 @@ export interface AnnotationEntry {
   version?: number;
 }
 
+export interface ApiKey {
+  comments?: string;
+
+  /** @format int64 */
+  createTimeMs?: number;
+  createUser?: string;
+  data?: string;
+  enabled?: boolean;
+
+  /** @format int64 */
+  expiresOnMs?: number;
+
+  /** @format int32 */
+  id?: number;
+  type?: string;
+
+  /** @format int64 */
+  updateTimeMs?: number;
+  updateUser?: string;
+  userEmail?: string;
+  userId?: string;
+
+  /** @format int32 */
+  version?: number;
+}
+
+export interface ApiKeyResultPage {
+  /** Details of the page of results being returned. */
+  pageResponse?: PageResponse;
+  values?: ApiKey[];
+}
+
 export interface Arg {
   allowedValues?: string[];
   argType?: "UNKNOWN" | "BOOLEAN" | "DOUBLE" | "ERROR" | "INTEGER" | "LONG" | "NULL" | "NUMBER" | "STRING";
@@ -433,6 +465,18 @@ export interface CreateAccountRequest {
   userId?: string;
 }
 
+export interface CreateApiKeyRequest {
+  comments?: string;
+  enabled?: boolean;
+
+  /** @format int64 */
+  expiresOnMs?: number;
+
+  /** @pattern ^user$|^api$|^email_reset$ */
+  tokenType: string;
+  userId: string;
+}
+
 export interface CreateEntryRequest {
   annotation?: Annotation;
   data?: string;
@@ -459,18 +503,6 @@ export interface CreateReprocessFilterRequest {
   /** @format int32 */
   priority?: number;
   queryData?: QueryData;
-}
-
-export interface CreateTokenRequest {
-  comments?: string;
-  enabled?: boolean;
-
-  /** @format int64 */
-  expiresOnMs?: number;
-
-  /** @pattern ^user$|^api$|^email_reset$ */
-  tokenType: string;
-  userId: string;
 }
 
 export interface CriteriaFieldSort {
@@ -2663,6 +2695,13 @@ export interface SearchAccountRequest {
   sortList?: CriteriaFieldSort[];
 }
 
+export interface SearchApiKeyRequest {
+  pageRequest?: PageRequest;
+  quickFilter?: string;
+  sort?: string;
+  sortList?: CriteriaFieldSort[];
+}
+
 export interface SearchBusPollRequest {
   applicationInstanceId?: string;
   searchRequests?: DashboardSearchRequest[];
@@ -2702,13 +2741,6 @@ export interface SearchResponse {
   /** A list of strings to highlight in the UI that should correlate with the search query. */
   highlights: string[];
   results?: Result[];
-}
-
-export interface SearchTokenRequest {
-  pageRequest?: PageRequest;
-  quickFilter?: string;
-  sort?: string;
-  sortList?: CriteriaFieldSort[];
 }
 
 export interface SelectionIndexShardStatus {
@@ -3315,64 +3347,17 @@ export interface TimeZone {
   use: "Local" | "UTC" | "Id" | "Offset";
 }
 
-export interface Token {
-  comments?: string;
-
-  /** @format int64 */
-  createTimeMs?: number;
-  createUser?: string;
-  data?: string;
-  enabled?: boolean;
-
-  /** @format int64 */
-  expiresOnMs?: number;
-
-  /** @format int32 */
-  id?: number;
-  tokenType?: string;
-
-  /** @format int64 */
-  updateTimeMs?: number;
-  updateUser?: string;
-  userEmail?: string;
-  userId?: string;
-
-  /** @format int32 */
-  version?: number;
-}
-
-export interface TokenConfig {
-  algorithm: string;
-
-  /** @format int64 */
-  defaultApiKeyExpiryInMinutes?: number;
-  jwsIssuer: string;
-  timeUntilExpirationForEmailResetToken: string;
-  timeUntilExpirationForUserToken: string;
-}
-
-export interface TokenRequest {
-  client_id?: string;
-  client_secret?: string;
-  code?: string;
-  grant_type?: string;
-  redirect_uri?: string;
-}
-
 export interface TokenResponse {
   access_token?: string;
 
-  /** @format int32 */
+  /** @format int64 */
   expires_in?: number;
   id_token?: string;
   refresh_token?: string;
-  token_type?: string;
-}
 
-export interface TokenResultPage {
-  /** Details of the page of results being returned. */
-  pageResponse?: PageResponse;
-  values?: Token[];
+  /** @format int64 */
+  refresh_token_expires_in?: number;
+  token_type?: string;
 }
 
 export interface UiConfig {
@@ -3392,7 +3377,6 @@ export interface UiConfig {
   source?: SourceConfig;
   splash?: SplashConfig;
   theme?: ThemeConfig;
-  url?: UrlConfig;
   welcomeHtml?: string;
 }
 
@@ -3416,12 +3400,6 @@ export interface UploadDataRequest {
   key?: ResourceKey;
   metaData?: string;
   streamTypeName?: string;
-}
-
-export interface UrlConfig {
-  apiKeys?: string;
-  changepassword?: string;
-  users?: string;
 }
 
 export interface UrlResponse {
@@ -4232,6 +4210,165 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         body: data,
         secure: true,
         type: ContentType.Json,
+        ...params,
+      }),
+  };
+  apikey = {
+    /**
+     * No description
+     *
+     * @tags Api Keys
+     * @name DeleteAllApiKeys
+     * @summary Delete all API keys.
+     * @request DELETE:/apikey/v1
+     * @secure
+     */
+    deleteAllApiKeys: (params: RequestParams = {}) =>
+      this.request<any, number>({
+        path: `/apikey/v1`,
+        method: "DELETE",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Api Keys
+     * @name CreateApiKey
+     * @summary Create a new API key.
+     * @request POST:/apikey/v1
+     * @secure
+     */
+    createApiKey: (data: CreateApiKeyRequest, params: RequestParams = {}) =>
+      this.request<any, ApiKey>({
+        path: `/apikey/v1`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Api Keys
+     * @name DeleteApiKeyByData
+     * @summary Delete an API key by the data itself.
+     * @request DELETE:/apikey/v1/byData/{data}
+     * @secure
+     */
+    deleteApiKeyByData: (data: string, params: RequestParams = {}) =>
+      this.request<any, number>({
+        path: `/apikey/v1/byData/${data}`,
+        method: "DELETE",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Api Keys
+     * @name FetchApiKeyByData
+     * @summary Read a API key by the data itself.
+     * @request GET:/apikey/v1/byData/{data}
+     * @secure
+     */
+    fetchApiKeyByData: (data: string, params: RequestParams = {}) =>
+      this.request<any, ApiKey>({
+        path: `/apikey/v1/byData/${data}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Api Keys
+     * @name GetDefaultApiKeyExpirySeconds
+     * @summary Get the default time taken for API keys to expire
+     * @request GET:/apikey/v1/noauth/getDefaultApiKeyExpirySeconds
+     * @secure
+     */
+    getDefaultApiKeyExpirySeconds: (params: RequestParams = {}) =>
+      this.request<any, number>({
+        path: `/apikey/v1/noauth/getDefaultApiKeyExpirySeconds`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Api Keys
+     * @name SearchApiKeys
+     * @summary Submit a search request for API keys
+     * @request POST:/apikey/v1/search
+     * @secure
+     */
+    searchApiKeys: (data: SearchApiKeyRequest, params: RequestParams = {}) =>
+      this.request<any, ApiKeyResultPage>({
+        path: `/apikey/v1/search`,
+        method: "POST",
+        body: data,
+        secure: true,
+        type: ContentType.Json,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Api Keys
+     * @name DeleteApiKey
+     * @summary Delete a API key by ID.
+     * @request DELETE:/apikey/v1/{id}
+     * @secure
+     */
+    deleteApiKey: (id: number, params: RequestParams = {}) =>
+      this.request<any, number>({
+        path: `/apikey/v1/${id}`,
+        method: "DELETE",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Api Keys
+     * @name FetchApiKey
+     * @summary Read a API key by ID.
+     * @request GET:/apikey/v1/{id}
+     * @secure
+     */
+    fetchApiKey: (id: number, params: RequestParams = {}) =>
+      this.request<any, ApiKey>({
+        path: `/apikey/v1/${id}`,
+        method: "GET",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Api Keys
+     * @name ToggleApiKeyEnabled
+     * @summary Enable or disable the state of an API key.
+     * @request GET:/apikey/v1/{id}/enabled
+     * @secure
+     */
+    toggleApiKeyEnabled: (id: number, query: { enabled: boolean }, params: RequestParams = {}) =>
+      this.request<any, number>({
+        path: `/apikey/v1/${id}/enabled`,
+        method: "GET",
+        query: query,
+        secure: true,
         ...params,
       }),
   };
@@ -6452,17 +6589,15 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      *
      * @tags Authentication
      * @name OpenIdToken
-     * @summary Get a token from an access code
+     * @summary Get a token from an access code or refresh token
      * @request POST:/oauth2/v1/noauth/token
      * @secure
      */
-    openIdToken: (data: TokenRequest, params: RequestParams = {}) =>
+    openIdToken: (params: RequestParams = {}) =>
       this.request<any, TokenResponse>({
         path: `/oauth2/v1/noauth/token`,
         method: "POST",
-        body: data,
         secure: true,
-        type: ContentType.Json,
         ...params,
       }),
   };
@@ -8355,199 +8490,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         body: data,
         secure: true,
         type: ContentType.Json,
-        ...params,
-      }),
-  };
-  token = {
-    /**
-     * No description
-     *
-     * @tags Api Keys
-     * @name DeleteAllTokens
-     * @summary Delete all tokens.
-     * @request DELETE:/token/v1
-     * @secure
-     */
-    deleteAllTokens: (params: RequestParams = {}) =>
-      this.request<any, number>({
-        path: `/token/v1`,
-        method: "DELETE",
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Api Keys
-     * @name ListTokens
-     * @summary Get all tokens.
-     * @request GET:/token/v1
-     * @secure
-     */
-    listTokens: (params: RequestParams = {}) =>
-      this.request<any, TokenResultPage>({
-        path: `/token/v1`,
-        method: "GET",
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Api Keys
-     * @name CreateToken
-     * @summary Create a new token.
-     * @request POST:/token/v1
-     * @secure
-     */
-    createToken: (data: CreateTokenRequest, params: RequestParams = {}) =>
-      this.request<any, Token>({
-        path: `/token/v1`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Api Keys
-     * @name DeleteTokenByContent
-     * @summary Delete a token by the token string itself.
-     * @request DELETE:/token/v1/byToken/{token}
-     * @secure
-     */
-    deleteTokenByContent: (token: string, params: RequestParams = {}) =>
-      this.request<any, number>({
-        path: `/token/v1/byToken/${token}`,
-        method: "DELETE",
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Api Keys
-     * @name FetchTokenByContent
-     * @summary Read a token by the token string itself.
-     * @request GET:/token/v1/byToken/{token}
-     * @secure
-     */
-    fetchTokenByContent: (token: string, params: RequestParams = {}) =>
-      this.request<any, Token>({
-        path: `/token/v1/byToken/${token}`,
-        method: "GET",
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Api Keys
-     * @name FetchTokenConfig
-     * @summary Get the token configuration
-     * @request GET:/token/v1/noauth/fetchTokenConfig
-     * @secure
-     */
-    fetchTokenConfig: (params: RequestParams = {}) =>
-      this.request<any, TokenConfig>({
-        path: `/token/v1/noauth/fetchTokenConfig`,
-        method: "GET",
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Api Keys
-     * @name GetPublicKey
-     * @summary Provides access to this service's current public key. A client may use these keys to verify JWTs issued by this service.
-     * @request GET:/token/v1/publickey
-     * @secure
-     */
-    getPublicKey: (params: RequestParams = {}) =>
-      this.request<any, string>({
-        path: `/token/v1/publickey`,
-        method: "GET",
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Api Keys
-     * @name SearchTokens
-     * @summary Submit a search request for tokens
-     * @request POST:/token/v1/search
-     * @secure
-     */
-    searchTokens: (data: SearchTokenRequest, params: RequestParams = {}) =>
-      this.request<any, TokenResultPage>({
-        path: `/token/v1/search`,
-        method: "POST",
-        body: data,
-        secure: true,
-        type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Api Keys
-     * @name DeleteToken
-     * @summary Delete a token by ID.
-     * @request DELETE:/token/v1/{id}
-     * @secure
-     */
-    deleteToken: (id: number, params: RequestParams = {}) =>
-      this.request<any, number>({
-        path: `/token/v1/${id}`,
-        method: "DELETE",
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Api Keys
-     * @name FetchToken
-     * @summary Read a token by ID.
-     * @request GET:/token/v1/{id}
-     * @secure
-     */
-    fetchToken: (id: number, params: RequestParams = {}) =>
-      this.request<any, Token>({
-        path: `/token/v1/${id}`,
-        method: "GET",
-        secure: true,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Api Keys
-     * @name ToggleTokenEnabled
-     * @summary Enable or disable the state of a token.
-     * @request GET:/token/v1/{id}/enabled
-     * @secure
-     */
-    toggleTokenEnabled: (id: number, query: { enabled: boolean }, params: RequestParams = {}) =>
-      this.request<any, number>({
-        path: `/token/v1/${id}/enabled`,
-        method: "GET",
-        query: query,
-        secure: true,
         ...params,
       }),
   };

@@ -1,51 +1,19 @@
 package stroom.security.impl;
 
 import stroom.security.api.UserIdentity;
-import stroom.security.impl.exception.AuthenticationException;
 import stroom.security.openid.api.OpenId;
-import stroom.security.openid.api.TokenRequest;
-import stroom.security.shared.User;
-import stroom.util.authentication.DefaultOpenIdCredentials;
-import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.net.UrlUtils;
 import stroom.util.servlet.UserAgentSessionUtil;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
-import org.apache.http.HttpEntity;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.message.BasicNameValuePair;
-import org.jose4j.jwt.JwtClaims;
-import org.jose4j.jwt.MalformedClaimException;
-import org.jose4j.jwt.consumer.JwtContext;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
 
 class OpenIdManager {
@@ -53,37 +21,28 @@ class OpenIdManager {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(OpenIdManager.class);
 
     private final ResolvedOpenIdConfig openIdConfig;
-    private final DefaultOpenIdCredentials defaultOpenIdCredentials;
-    private final JwtContextFactory jwtContextFactory;
-    private final UserCache userCache;
-    private final Provider<CloseableHttpClient> httpClientProvider;
+    private final UserIdentityFactory userIdentityFactory;
 
     @Inject
     public OpenIdManager(final ResolvedOpenIdConfig openIdConfig,
-                         final DefaultOpenIdCredentials defaultOpenIdCredentials,
-                         final JwtContextFactory jwtContextFactory,
-                         final UserCache userCache,
-                         final Provider<CloseableHttpClient> httpClientProvider) {
+                         final UserIdentityFactory userIdentityFactory) {
         this.openIdConfig = openIdConfig;
-        this.defaultOpenIdCredentials = defaultOpenIdCredentials;
-        this.jwtContextFactory = jwtContextFactory;
-        this.userCache = userCache;
-        this.httpClientProvider = httpClientProvider;
+        this.userIdentityFactory = userIdentityFactory;
     }
 
     public String redirect(final HttpServletRequest request,
                            final String code,
                            final String stateId,
                            final String postAuthRedirectUri) {
-        final String uri = OpenId.removeReservedParams(postAuthRedirectUri);
         String redirectUri = null;
 
         // If we have completed the front channel flow then we will have a state id.
         if (code != null && stateId != null) {
-            redirectUri = backChannelOIDC(request, code, stateId, uri);
+            redirectUri = backChannelOIDC(request, code, stateId);
         }
 
         if (redirectUri == null) {
+            final String uri = OpenId.removeReservedParams(postAuthRedirectUri);
             redirectUri = frontChannelOIDC(request, uri);
         }
 
@@ -100,13 +59,12 @@ class OpenIdManager {
         // Create a state for this authentication request.
         final AuthenticationState state = AuthenticationStateSessionUtil.create(request, postAuthRedirectUri);
         LOGGER.debug(() -> "frontChannelOIDC state=" + state);
-        return createAuthUri(request, endpoint, clientId, postAuthRedirectUri, state, false);
+        return createAuthUri(request, endpoint, clientId, state, false);
     }
 
     private String backChannelOIDC(final HttpServletRequest request,
                                    final String code,
-                                   final String stateId,
-                                   final String postAuthRedirectUri) {
+                                   final String stateId) {
         Objects.requireNonNull(code, "Null code");
         Objects.requireNonNull(stateId, "Null state Id");
 
@@ -123,226 +81,49 @@ class OpenIdManager {
 
         } else {
             LOGGER.debug(() -> "backChannelOIDC state=" + state);
-
-            // Invalidate the current session.
             final HttpSession session = request.getSession(false);
             UserAgentSessionUtil.set(request);
 
-            final String tokenEndpoint = openIdConfig.getTokenEndpoint();
-            String idToken = null;
+            final Optional<UserIdentity> optionalUserIdentity =
+                    userIdentityFactory.getAuthFlowUserIdentity(request, code, state);
 
-            final ObjectMapper mapper = new ObjectMapper();
-            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
-            String authorization = openIdConfig.getClientId() + ":" + openIdConfig.getClientSecret();
-            authorization = Base64.getEncoder().encodeToString(authorization.getBytes(StandardCharsets.UTF_8));
-            authorization = "Basic " + authorization;
-
-            final HttpPost httpPost = new HttpPost(tokenEndpoint);
-
-            // AWS requires form content and not a JSON object.
-            if (openIdConfig.isFormTokenRequest()) {
-                try {
-                    final List<NameValuePair> nvps = new ArrayList<>();
-                    nvps.add(new BasicNameValuePair(OpenId.CODE, code));
-                    nvps.add(new BasicNameValuePair(OpenId.GRANT_TYPE, OpenId.GRANT_TYPE__AUTHORIZATION_CODE));
-                    nvps.add(new BasicNameValuePair(OpenId.CLIENT_ID, openIdConfig.getClientId()));
-                    nvps.add(new BasicNameValuePair(OpenId.CLIENT_SECRET, openIdConfig.getClientSecret()));
-                    nvps.add(new BasicNameValuePair(OpenId.REDIRECT_URI, postAuthRedirectUri));
-
-                    httpPost.setHeader(HttpHeaders.AUTHORIZATION, authorization);
-                    httpPost.setHeader(HttpHeaders.ACCEPT, "*/*");
-                    httpPost.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED);
-                    httpPost.setEntity(new UrlEncodedFormEntity(nvps));
-                } catch (final UnsupportedEncodingException e) {
-                    throw new AuthenticationException(e.getMessage(), e);
-                }
-            } else {
-                try {
-                    final TokenRequest tokenRequest = TokenRequest.builder()
-                            .code(code)
-                            .grantType(OpenId.GRANT_TYPE__AUTHORIZATION_CODE)
-                            .clientId(openIdConfig.getClientId())
-                            .clientSecret(openIdConfig.getClientSecret())
-                            .redirectUri(postAuthRedirectUri)
-                            .build();
-                    final String json = mapper.writeValueAsString(tokenRequest);
-
-                    httpPost.setEntity(new StringEntity(json, ContentType.APPLICATION_JSON));
-                } catch (final JsonProcessingException e) {
-                    throw new AuthenticationException(e.getMessage(), e);
-                }
-            }
-
-            try (final CloseableHttpClient httpClient = httpClientProvider.get()) {
-                try (final CloseableHttpResponse response = httpClient.execute(httpPost)) {
-                    if (HttpServletResponse.SC_OK == response.getStatusLine().getStatusCode()) {
-                        final String msg = getMessage(response);
-                        final TokenResponse tokenResponse = mapper.readValue(msg, TokenResponse.class);
-                        idToken = tokenResponse.getIdToken();
-                    } else {
-                        throw new AuthenticationException("Received status " +
-                                response.getStatusLine() +
-                                " from " +
-                                tokenEndpoint);
-                    }
-                }
-            } catch (final IOException e) {
-                LOGGER.debug(e::getMessage, e);
-            }
-
-            if (idToken == null) {
-                throw new AuthenticationException("'" +
-                        OpenId.ID_TOKEN +
-                        "' not provided in response");
-            }
-
-            final UserIdentityImpl token = createUIToken(session, state, idToken);
-            if (token != null) {
+            if (optionalUserIdentity.isPresent()) {
                 // Set the token in the session.
-                UserIdentitySessionUtil.set(session, token);
+                UserIdentitySessionUtil.set(session, optionalUserIdentity.get());
                 loggedIn = true;
             }
 
             // If we manage to login then redirect to the original URL held in the state.
             if (loggedIn) {
-                LOGGER.info(() -> "Redirecting to initiating URL: " + state.getUrl());
-                redirectUri = state.getUrl();
+                LOGGER.info(() -> "Redirecting to initiating URI: " + state.getUri());
+                redirectUri = state.getUri();
             }
         }
 
         return redirectUri;
     }
 
-    private String getMessage(final CloseableHttpResponse response) {
-        String msg = "";
-        try {
-            final HttpEntity entity = response.getEntity();
-            try (final InputStream is = entity.getContent()) {
-                msg = StreamUtil.streamToString(is);
-            }
-        } catch (final RuntimeException | IOException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-        return msg;
-    }
-
-    /**
-     * This method must create the token.
-     * It does this by enacting the OpenId exchange of accessCode for idToken.
-     */
-    private UserIdentityImpl createUIToken(final HttpSession session,
-                                           final AuthenticationState state,
-                                           final String idToken) {
-        UserIdentityImpl token = null;
-
-        final String sessionId = session.getId();
-        final Optional<JwtContext> optionalJwtContext = jwtContextFactory.getJwtContext(idToken);
-        final JwtClaims jwtClaims = optionalJwtContext
-                .map(JwtContext::getJwtClaims)
-                .orElseThrow(() -> new RuntimeException("Unable to extract JWT claims"));
-
-        final String nonce = (String) jwtClaims.getClaimsMap().get(OpenId.NONCE);
-        final boolean match = nonce != null && nonce.equals(state.getNonce());
-        if (match) {
-            LOGGER.info(() -> "User is authenticated for sessionId " + sessionId);
-            final String userId = getUserId(jwtClaims);
-            final Optional<User> optionalUser = userCache.get(userId);
-            final User user = optionalUser.orElseThrow(() ->
-                    new AuthenticationException("Unable to find user: " + userId));
-            token = new UserIdentityImpl(user.getUuid(), userId, idToken, sessionId);
-
-        } else {
-            // If the nonces don't match we need to redirect to log in again.
-            // Maybe the request uses an out-of-date stroomSessionId?
-            LOGGER.info(() -> "Received a bad nonce!");
-        }
-
-        return token;
-    }
-
-    private String getUserId(final JwtClaims jwtClaims) {
-        LOGGER.trace("getUserId");
-        String userId = JwtUtil.getEmail(jwtClaims);
-        if (userId == null) {
-            userId = JwtUtil.getUserIdFromIdentities(jwtClaims);
-        }
-        if (userId == null) {
-            userId = JwtUtil.getUserName(jwtClaims);
-        }
-        if (userId == null) {
-            userId = JwtUtil.getSubject(jwtClaims);
-        }
-
-        return userId;
-    }
-
     /**
      * This method attempts to get a token from the request headers and, if present, use that to login.
      */
     public Optional<UserIdentity> loginWithRequestToken(final HttpServletRequest request) {
-        Optional<UserIdentity> userIdentity = Optional.empty();
+        return userIdentityFactory.getApiUserIdentity(request);
+    }
 
-        // See if we can login with a token if one is supplied.
-        try {
-            final Optional<JwtContext> optionalJwtContext = jwtContextFactory.getJwtContext(request);
-            if (optionalJwtContext.isPresent()) {
-                userIdentity = optionalJwtContext.flatMap(jwtContext -> getUserIdentity(request, jwtContext));
-            } else {
-                LOGGER.debug(() -> "No JWS found in headers in request to " + request.getRequestURI());
-            }
-        } catch (final RuntimeException e) {
-            LOGGER.debug(e::getMessage, e);
-        }
+    public Optional<UserIdentity> getOrSetSessionUser(final HttpServletRequest request,
+                                                      final Optional<UserIdentity> userIdentity) {
+        Optional<UserIdentity> result = userIdentity;
 
         if (userIdentity.isEmpty()) {
-            LOGGER.debug(() -> "Cannot get a valid JWS for API request to " + request.getRequestURI() + ". " +
-                    "This may be due to Stroom being left open in a browser after Stroom was restarted.");
-
             // Provide identity from the session if we are allowing this to happen.
-            userIdentity = UserIdentitySessionUtil.get(request.getSession(false));
+            result = UserIdentitySessionUtil.get(request.getSession(false));
 
         } else if (UserIdentitySessionUtil.requestHasSessionCookie(request)) {
             // Set the user ref in the session.
             UserIdentitySessionUtil.set(request.getSession(true), userIdentity.get());
         }
 
-        return userIdentity;
-    }
-
-    private Optional<UserIdentityImpl> getUserIdentity(final HttpServletRequest request,
-                                                       final JwtContext jwtContext) {
-        LOGGER.debug(() -> "Getting user identity from jwtContext=" + jwtContext);
-
-        String sessionId = null;
-        final HttpSession session = request.getSession(false);
-        if (session != null) {
-            sessionId = session.getId();
-        }
-
-        try {
-            final String userId = getUserId(jwtContext.getJwtClaims());
-            final User user;
-            if (jwtContext.getJwtClaims().getAudience().contains(defaultOpenIdCredentials.getOauth2ClientId())
-                    && userId.equals(defaultOpenIdCredentials.getApiKeyUserEmail())) {
-                LOGGER.warn(() ->
-                        "Authenticating using default API key. For production use, set up an API key in Stroom!");
-                // Using default creds so just fake a user
-                // TODO Not sure if this is enough info in the user
-                user = new User();
-                user.setName(userId);
-                user.setUuid(UUID.randomUUID().toString());
-            } else {
-                user = userCache.get(userId).orElseThrow(() ->
-                        new AuthenticationException("Unable to find user: " + userId));
-            }
-
-            return Optional.of(new UserIdentityImpl(user.getUuid(), userId, jwtContext.getJwt(), sessionId));
-
-        } catch (final MalformedClaimException e) {
-            LOGGER.error(() -> "Error extracting claims from token in request " + request.getRequestURI());
-            return Optional.empty();
-        }
+        return result;
     }
 
     public String logout(final HttpServletRequest request, final String postAuthRedirectUri) {
@@ -355,23 +136,21 @@ class OpenIdManager {
                 "To make an authentication request the OpenId config 'clientId' must not be null");
         final AuthenticationState state = AuthenticationStateSessionUtil.create(request, redirectUri);
         LOGGER.debug(() -> "logout state=" + state);
-        return createAuthUri(request, endpoint, clientId, redirectUri, state, true);
+        return createAuthUri(request, endpoint, clientId, state, true);
     }
 
     private String createAuthUri(final HttpServletRequest request,
                                  final String endpoint,
                                  final String clientId,
-                                 final String redirectUri,
                                  final AuthenticationState state,
                                  final boolean prompt) {
-
         // In some cases we might need to use an external URL as the current incoming one might have been proxied.
         // Use OIDC API.
         UriBuilder authenticationRequest = UriBuilder.fromUri(endpoint)
                 .queryParam(OpenId.RESPONSE_TYPE, OpenId.CODE)
                 .queryParam(OpenId.CLIENT_ID, clientId)
-                .queryParam(OpenId.REDIRECT_URI, redirectUri)
-                .queryParam(OpenId.SCOPE, OpenId.SCOPE__OPENID + " " + OpenId.SCOPE__EMAIL)
+                .queryParam(OpenId.REDIRECT_URI, state.getUri())
+                .queryParam(OpenId.SCOPE, openIdConfig.getRequestScope())
                 .queryParam(OpenId.STATE, state.getId())
                 .queryParam(OpenId.NONCE, state.getNonce());
 

@@ -14,6 +14,7 @@ import stroom.pipeline.state.MetaDataHolder;
 import stroom.util.cert.SSLConfig;
 import stroom.util.cert.SSLUtil;
 import stroom.util.io.ByteCountOutputStream;
+import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
@@ -55,6 +56,7 @@ public class HTTPAppender extends AbstractAppender {
     private static final Logger SEND_LOG = LoggerFactory.getLogger("send");
 
     private final MetaDataHolder metaDataHolder;
+    private final PathCreator pathCreator;
 
     private String forwardUrl;
     private Long connectionTimeout;
@@ -77,9 +79,11 @@ public class HTTPAppender extends AbstractAppender {
 
     @Inject
     HTTPAppender(final ErrorReceiverProxy errorReceiverProxy,
-                 final MetaDataHolder metaDataHolder) {
+                 final MetaDataHolder metaDataHolder,
+                 final PathCreator pathCreator) {
         super(errorReceiverProxy);
         this.metaDataHolder = metaDataHolder;
+        this.pathCreator = pathCreator;
     }
 
     @Override
@@ -111,7 +115,8 @@ public class HTTPAppender extends AbstractAppender {
                 final HttpsURLConnection httpsURLConnection = (HttpsURLConnection) connection;
                 if (!useJvmSslConfig) {
                     LOGGER.info(() -> "Configuring SSLSocketFactory for destination " + forwardUrl);
-                    final SSLSocketFactory sslSocketFactory = SSLUtil.createSslSocketFactory(sslConfig);
+                    final SSLSocketFactory sslSocketFactory = SSLUtil.createSslSocketFactory(
+                            sslConfig, pathCreator);
                     SSLUtil.applySSLConfiguration(connection, sslSocketFactory, sslConfig);
                 } else if (!sslConfig.isHostnameVerificationEnabled()) {
                     SSLUtil.disableHostnameVerification(httpsURLConnection);
@@ -262,6 +267,7 @@ public class HTTPAppender extends AbstractAppender {
         return Arrays.stream(csv.toLowerCase().split(",")).collect(Collectors.toSet());
     }
 
+    @Override
     @PipelineProperty(description = "When the current output exceeds this size it will be closed and a " +
             "new one created.",
             displayPriority = 2)
@@ -269,6 +275,7 @@ public class HTTPAppender extends AbstractAppender {
         super.setRollSize(size);
     }
 
+    @Override
     @PipelineProperty(description = "Choose if you want to split aggregated streams into separate output.",
             defaultValue = "false",
             displayPriority = 3)
@@ -276,6 +283,7 @@ public class HTTPAppender extends AbstractAppender {
         super.setSplitAggregatedStreams(splitAggregatedStreams);
     }
 
+    @Override
     @PipelineProperty(description = "Choose if you want to split individual records into separate output.",
             defaultValue = "false",
             displayPriority = 4)
