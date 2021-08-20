@@ -47,14 +47,12 @@ public class UsersPlugin extends NodeToolsPlugin {
                                 final UiConfig uiConfig) {
         final IconMenuItem usersMenuItem;
         final Preset icon = SvgPresets.USER_GROUP;
-        final String usersUiUrl = uiConfig.getUrl().getUsers();
-        if (usersUiUrl != null && usersUiUrl.trim().length() > 0) {
-            usersMenuItem = new IconMenuItem.Builder()
-                    .priority(5)
-                    .icon(icon)
-                    .text("Users")
-                    .command(() -> {
-                        postMessage("manageUsers");
+        usersMenuItem = new IconMenuItem.Builder()
+                .priority(5)
+                .icon(icon)
+                .text("Users")
+                .command(() -> {
+                    postMessage("manageUsers");
 
 //                final Hyperlink hyperlink = new Builder()
 //                        .text("Users")
@@ -63,15 +61,8 @@ public class UsersPlugin extends NodeToolsPlugin {
 //                        .icon(icon)
 //                        .build();
 //                HyperlinkEvent.fire(this, hyperlink);
-                    })
-                    .build();
-        } else {
-            usersMenuItem = new IconMenuItem.Builder()
-                    .priority(5)
-                    .icon(icon)
-                    .text("Users is not configured!")
-                    .build();
-        }
+                })
+                .build();
         event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, usersMenuItem);
     }
 //    private void addManageUserAuthorisations(final BeforeRevealMenubarEvent event,

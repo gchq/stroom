@@ -33,15 +33,6 @@ public class SuperDevUtil {
                             "\n"));
 
             relaxSecurity(appConfig);
-
-
-            // Super Dev Mode isn't compatible with HTTPS so ensure cookies are not secure.
-            appConfig.getSessionCookieConfig().setSecure(false);
-            appConfig.getUiConfig().setRequireReactWrapper(false);
-
-            // The standard content security policy is incompatible with GWT super dev mode
-            disableContentSecurity(appConfig);
-
         }
     }
 
@@ -68,5 +59,8 @@ public class SuperDevUtil {
         // Super Dev Mode isn't compatible with HTTPS so ensure cookies are not secure.
         appConfig.getSessionCookieConfig()
                 .setSecure(SUPER_DEV_SESSION_COOKIE_SECURE_VALUE);
+
+        // We don't want to force the use of the REACT wrapper when we are using GWT super dev mode
+        appConfig.getUiConfig().setRequireReactWrapper(false);
     }
 }
