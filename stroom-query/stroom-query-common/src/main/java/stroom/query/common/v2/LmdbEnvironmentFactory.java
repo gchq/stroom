@@ -92,7 +92,7 @@ public class LmdbEnvironmentFactory {
         FileUtil.mkdirs(dir);
 
         LOGGER.debug(() ->
-                "Creating RefDataOffHeapStore environment with [maxSize: " +
+                "Creating LMDB environment for search results with [maxSize: " +
                         lmdbConfig.getMaxStoreSize() +
                         ", maxDbs: " +
                         lmdbConfig.getMaxDbs() +
