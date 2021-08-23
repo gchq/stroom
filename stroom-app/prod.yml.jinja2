@@ -153,6 +153,11 @@ appConfig:
     enabled: {{ false | envVar('STROOM_CONTENT_PACK_IMPORT_ENABLED') }}
   {% endif %}
 
+  {% if distribution == "docker" %}
+  job:
+    enableJobsOnBootstrap: {{ false | envVar('STROOM_ENABLE_JOBS_ON_BOOTSTRAP') }}
+  {% endif %}
+
   node:
     # The name for the node, should be unique to each node in the cluster
     name: "node1a"
@@ -173,6 +178,7 @@ appConfig:
     home: "{{ stroomHome }}"
   publicUri:
     # The public FQDN for stroom, as typed into the browser, typically the public address of nginx
+    # or the load balancer in front of multiple nginx instances.
     # If not set stroom will try to determine it
 
     {% if distribution == "docker" %}

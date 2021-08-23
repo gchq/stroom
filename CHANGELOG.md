@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Add `enableJobsOnBootstrap` to the docker distribution config.yml to allow it to be overridden in test stacks.
+
 * Fix broken help links on jobs screen.
 
 * Issue **#2365** : Fix to reduce memory used by `BlockGZIPInput`.
