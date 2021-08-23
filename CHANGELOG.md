@@ -7,9 +7,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-
-## [v7.0-beta.140] - 2021-08-23
-
 * Add `enableJobsOnBootstrap` to the docker distribution config.yml to allow it to be overridden in test stacks.
 
 * Fix broken help links on jobs screen.
