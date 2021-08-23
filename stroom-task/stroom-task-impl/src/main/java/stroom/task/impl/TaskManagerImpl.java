@@ -435,7 +435,9 @@ class TaskManagerImpl implements TaskManager {
     /**
      * This code is here to help UI testing in dev when you have no tasks to look at in the UI.
      * It produces a load of made up tasks
+     * Used in {@link TaskManagerImpl#doFind(FindTaskProgressCriteria)}
      */
+    @SuppressWarnings("unused") // Used in commented out debugging code
     private List<TaskProgress> buildDummyTaskDataForTesting(final Predicate<TaskProgress> fuzzyMatchPredicate) {
 
         AtomicInteger id = new AtomicInteger(0);
