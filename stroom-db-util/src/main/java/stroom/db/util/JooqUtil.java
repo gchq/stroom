@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.Date;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -71,7 +70,7 @@ public final class JooqUtil {
         try (final Connection connection = dataSource.getConnection()) {
             final DSLContext context = createContext(connection);
             consumer.accept(context);
-        } catch (final SQLException e) {
+        } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
             throw new RuntimeException(e.getMessage(), e);
         }
@@ -87,7 +86,7 @@ public final class JooqUtil {
                             "truncate table " + table.getName(),
                             "SET FOREIGN_KEY_CHECKS=1")
                     .execute();
-        } catch (final SQLException e) {
+        } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
             throw new RuntimeException(e.getMessage(), e);
         }
@@ -103,7 +102,7 @@ public final class JooqUtil {
                     .from(table)
                     .fetchOne()
                     .value1();
-        } catch (final SQLException e) {
+        } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
             throw new RuntimeException(e.getMessage(), e);
         }
@@ -114,7 +113,7 @@ public final class JooqUtil {
         try (final Connection connection = dataSource.getConnection()) {
             final DSLContext context = createContext(connection);
             result = function.apply(context);
-        } catch (final SQLException e) {
+        } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
             throw new RuntimeException(e.getMessage(), e);
         }
@@ -126,7 +125,7 @@ public final class JooqUtil {
 //        try (final Connection connection = dataSource.getConnection()) {
 //            final DSLContext context = createContextWithOptimisticLocking(connection);
 //            consumer.accept(context);
-//        } catch (final SQLException e) {
+//        } catch (final Exception e) {
 //            LOGGER.error(e.getMessage(), e);
 //            throw new RuntimeException(e.getMessage(), e);
 //        }
@@ -138,7 +137,7 @@ public final class JooqUtil {
         try (final Connection connection = dataSource.getConnection()) {
             final DSLContext context = createContextWithOptimisticLocking(connection);
             result = function.apply(context);
-        } catch (final SQLException e) {
+        } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
             throw new RuntimeException(e.getMessage(), e);
         }
