@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2369** : Fix missing SQL join when reprocessing all streams matching a filter.
+
 
 ## [v7.0-beta.140] - 2021-08-23
 
