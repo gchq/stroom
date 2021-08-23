@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Fix broken help links on jobs screen.
 
+* Issue **#2367** : Fix for job node creation.
+
 * Issue **#2365** : Fix to reduce memory used by `BlockGZIPInput`.
 
 * Issue **#2366** : Fix NPE caused by visualisations that do not define maxValues.
