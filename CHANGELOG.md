@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2369** : Fix missing SQL join when reprocessing all streams matching a filter.
 
+* Change explorer root node creation to happen under cluster lock.
+
 
 ## [v7.0-beta.140] - 2021-08-23
 

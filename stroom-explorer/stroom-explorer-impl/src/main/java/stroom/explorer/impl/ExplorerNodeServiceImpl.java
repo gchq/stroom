@@ -1,5 +1,6 @@
 package stroom.explorer.impl;
 
+import stroom.cluster.lock.api.ClusterLockService;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.DocumentTypes;
@@ -27,6 +28,8 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExplorerNodeServiceImpl.class);
 
+    private static final String LOCK_NAME = "ExplorerNodeService";
+
     // TODO : This is a temporary means to set tags on nodes for the purpose of finding data source nodes.
     // TODO : The explorer will eventually allow a user to set custom tags and to find nodes searching by tag.
     private static final Map<String, String> DEFAULT_TAG_MAP = new HashMap<>();
@@ -41,14 +44,43 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
     private final ExplorerTreeDao explorerTreeDao;
     private final DocumentPermissionService documentPermissionService;
     private final SecurityContext securityContext;
+    private final ClusterLockService clusterLockService;
 
     @Inject
     ExplorerNodeServiceImpl(final ExplorerTreeDao explorerTreeDao,
                             final DocumentPermissionService documentPermissionService,
-                            final SecurityContext securityContext) {
+                            final SecurityContext securityContext,
+                            final ClusterLockService clusterLockService) {
         this.explorerTreeDao = explorerTreeDao;
         this.documentPermissionService = documentPermissionService;
         this.securityContext = securityContext;
+        this.clusterLockService = clusterLockService;
+    }
+
+    @Override
+    public void ensureRootNodeExists() {
+
+        final ExplorerTreeNode rootNode = new ExplorerTreeNode();
+        rootNode.setName(ExplorerConstants.ROOT_DOC_REF.getName());
+        rootNode.setType(ExplorerConstants.ROOT_DOC_REF.getType());
+        rootNode.setUuid(ExplorerConstants.ROOT_DOC_REF.getUuid());
+
+        if (explorerTreeDao.doesNodeExist(rootNode)) {
+            LOGGER.debug("Root node {} already exists", rootNode);
+        } else {
+            // Doesn't exist so get a cluster lock then check again
+            // in case another node beat us to it
+            clusterLockService.lock(LOCK_NAME, () -> {
+                if (!explorerTreeDao.doesNodeExist(rootNode)) {
+                    LOGGER.info("Creating explorer root node in the database {}", rootNode);
+                    try {
+                        explorerTreeDao.addChild(null, rootNode);
+                    } catch (Exception e) {
+                        throw new RuntimeException("Error creating explorer root node " + rootNode, e);
+                    }
+                }
+            });
+        }
     }
 
     @Override

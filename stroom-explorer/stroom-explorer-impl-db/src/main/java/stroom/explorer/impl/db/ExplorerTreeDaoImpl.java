@@ -6,7 +6,6 @@ import stroom.explorer.impl.ExplorerTreeNode;
 import stroom.explorer.impl.ExplorerTreePath;
 import stroom.explorer.impl.TreeModel;
 import stroom.explorer.impl.db.jooq.tables.records.ExplorerNodeRecord;
-import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 
 import org.jooq.Record;
@@ -46,18 +45,6 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
         this.removeReferencedNodes = true;
         this.orderIndexMatters = false;
         this.explorerDbConnProvider = explorerDbConnProvider;
-
-
-        try {
-            final ExplorerTreeNode rootNode = new ExplorerTreeNode();
-            rootNode.setName(ExplorerConstants.ROOT_DOC_REF.getName());
-            rootNode.setType(ExplorerConstants.ROOT_DOC_REF.getType());
-            rootNode.setUuid(ExplorerConstants.ROOT_DOC_REF.getUuid());
-            createRoot(rootNode);
-        } catch (final RuntimeException e) {
-            // Ignore error as it is probably a duplicate entry constraint.
-            LOGGER.debug(e.getMessage(), e);
-        }
     }
 
     private boolean isPersistent(final ExplorerTreeNode entity) {
@@ -196,6 +183,17 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
     @Override
     public ExplorerTreeNode createRoot(final ExplorerTreeNode root) {
         return addChild(null, root);
+    }
+
+    @Override
+    public boolean doesNodeExist(final ExplorerTreeNode root) {
+        return JooqUtil.contextResult(explorerDbConnProvider, context -> {
+            final int rootNodeCount = context
+                    .fetchCount(DSL.selectFrom(n)
+                            .where(n.UUID.eq(root.getUuid()))
+                            .and(n.TYPE.eq(root.getType())));
+            return rootNodeCount > 0;
+        });
     }
 
     @Override
