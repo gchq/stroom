@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2368** : Fixed server task nesting.
+
 
 ## [v7.0-beta.140] - 2021-08-23
 

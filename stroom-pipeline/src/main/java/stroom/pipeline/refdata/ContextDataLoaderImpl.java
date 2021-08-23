@@ -59,10 +59,8 @@ public class ContextDataLoaderImpl implements ContextDataLoader {
                                 refDataStore);
 
         final Runnable runnable = taskContextFactory.context(
-                taskContextFactory.currentContext(),
                 "Load Context Data",
                 consumer);
-
         runnable.run();
     }
 }

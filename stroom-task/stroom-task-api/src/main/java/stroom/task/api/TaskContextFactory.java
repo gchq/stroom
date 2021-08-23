@@ -41,6 +41,4 @@ public interface TaskContextFactory {
                                 consumer.accept(taskContext, t))
                         .run();
     }
-
-    TaskContext currentContext();
 }

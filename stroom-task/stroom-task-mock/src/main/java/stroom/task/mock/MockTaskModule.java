@@ -66,11 +66,6 @@ public class MockTaskModule extends AbstractModule {
                                                  final Function<TaskContext, R> function) {
                 return () -> function.apply(createTaskContext());
             }
-
-            @Override
-            public TaskContext currentContext() {
-                return createTaskContext();
-            }
         };
     }
 

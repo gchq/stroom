@@ -32,11 +32,6 @@ public class SimpleTaskContextFactory implements TaskContextFactory {
         return () -> function.apply(new SimpleTaskContext());
     }
 
-    @Override
-    public TaskContext currentContext() {
-        return null;
-    }
-
     private static class SimpleTaskContext implements TaskContext {
 
         @Override
