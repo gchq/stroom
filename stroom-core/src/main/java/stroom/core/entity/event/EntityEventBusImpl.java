@@ -119,18 +119,18 @@ class EntityEventBusImpl implements EntityEventBus {
             final Set<String> targetNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
 
             // Only send the event to remote nodes and not this one.
-            targetNodes
+            CompletableFuture.allOf(targetNodes
                     .stream()
                     .filter(targetNode -> !targetNode.equals(sourceNode))
-                    .forEach(targetNode -> {
+                    .map(targetNode -> {
                         // Send the entity event asynchronously.
-                        final Runnable runnable = taskContextFactory.context(
+                        final Runnable runnable = taskContextFactory.childContext(
                                 parentTaskContext,
                                 "Fire Entity Event To " + targetNode, taskContext ->
                                         entityEventResource.fireEvent(targetNode, entityEvent)
                         );
-                        CompletableFuture.runAsync(runnable, executor);
-                    });
+                        return CompletableFuture.runAsync(runnable, executor);
+                    }).toArray(CompletableFuture[]::new)).join();
         } catch (final NullClusterStateException | NodeNotFoundException e) {
             LOGGER.warn(e.getMessage());
             LOGGER.debug(e.getMessage(), e);

@@ -79,26 +79,26 @@ public class SolrSearchTaskHandler {
     }
 
     public void exec(final TaskContext parentContext, final SolrSearchTask task) {
-        taskContextFactory.context(parentContext, "Index Searcher", taskContext ->
-                LOGGER.logDurationIfDebugEnabled(
-                        () -> {
-                            try {
-                                if (Thread.interrupted()) {
-                                    Thread.currentThread().interrupt();
-                                    throw new RuntimeException("Interrupted");
-                                }
+        taskContextFactory.childContext(parentContext, "Index Searcher", taskContext ->
+                        LOGGER.logDurationIfDebugEnabled(
+                                () -> {
+                                    try {
+                                        if (Thread.interrupted()) {
+                                            Thread.currentThread().interrupt();
+                                            throw new RuntimeException("Interrupted");
+                                        }
 
-                                taskContext.info(() -> "Searching Solr index");
+                                        taskContext.info(() -> "Searching Solr index");
 
-                                // Start searching.
-                                searchShard(task, taskContext);
+                                        // Start searching.
+                                        searchShard(task, taskContext);
 
-                            } catch (final RuntimeException e) {
-                                LOGGER.debug(e::getMessage, e);
-                                error(task, e.getMessage(), e);
-                            }
-                        },
-                        "exec()"))
+                                    } catch (final RuntimeException e) {
+                                        LOGGER.debug(e::getMessage, e);
+                                        error(task, e.getMessage(), e);
+                                    }
+                                },
+                                "exec()"))
                 .run();
     }
 

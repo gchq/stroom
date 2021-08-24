@@ -44,14 +44,20 @@ public class MockTaskModule extends AbstractModule {
     TaskContextFactory getTaskContextFactory() {
         return new TaskContextFactory() {
             @Override
-            public Runnable context(final String taskName, final Consumer<TaskContext> consumer) {
+            public Runnable context(final String taskName,
+                                    final Consumer<TaskContext> consumer) {
                 return () -> consumer.accept(getTaskContext());
             }
 
             @Override
-            public Runnable context(final TaskContext parentContext,
-                                    final String taskName,
-                                    final Consumer<TaskContext> consumer) {
+            public Runnable childContext(final String taskName, final Consumer<TaskContext> consumer) {
+                return () -> consumer.accept(getTaskContext());
+            }
+
+            @Override
+            public Runnable childContext(final TaskContext parentContext,
+                                         final String taskName,
+                                         final Consumer<TaskContext> consumer) {
                 return () -> consumer.accept(getTaskContext());
             }
 

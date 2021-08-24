@@ -10,9 +10,12 @@ public interface TaskContextFactory {
     Runnable context(final String taskName,
                      final Consumer<TaskContext> consumer);
 
-    Runnable context(final TaskContext parentContext,
-                     final String taskName,
-                     final Consumer<TaskContext> consumer);
+    Runnable childContext(final String taskName,
+                          final Consumer<TaskContext> consumer);
+
+    Runnable childContext(final TaskContext parentContext,
+                          final String taskName,
+                          final Consumer<TaskContext> consumer);
 
     <R> Supplier<R> contextResult(final String taskName,
                                   final Function<TaskContext, R> function);
@@ -21,20 +24,20 @@ public interface TaskContextFactory {
                                   final String taskName,
                                   final Function<TaskContext, R> function);
 
-    default <T> Consumer<T> contextConsumer(final String taskName,
-                                            final BiConsumer<TaskContext, T> consumer) {
-        return t ->
-                context(taskName,
-                        taskContext ->
-                                consumer.accept(taskContext, t))
-                        .run();
-    }
+//    default <T> Consumer<T> contextConsumer(final String taskName,
+//                                            final BiConsumer<TaskContext, T> consumer) {
+//        return t ->
+//                childContext(taskName,
+//                        taskContext ->
+//                                consumer.accept(taskContext, t))
+//                        .run();
+//    }
 
     default <T> Consumer<T> contextConsumer(final TaskContext parentContext,
                                             final String taskName,
                                             final BiConsumer<TaskContext, T> consumer) {
         return t ->
-                context(
+                childContext(
                         parentContext,
                         taskName,
                         taskContext ->

@@ -75,7 +75,7 @@ class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
                 })
                 .toArray(CompletableFuture[]::new);
 
-        CompletableFuture.allOf(futures).get();
+        CompletableFuture.allOf(futures).join();
 
         assertThat(counter.get()).isEqualTo(taskCount);
 
@@ -259,7 +259,8 @@ class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
         final AtomicBoolean completedExceptionally = new AtomicBoolean();
 
         final Executor executor = executorProvider.get();
-        final Runnable runnable = taskContextFactory.context("Running task", taskContext -> testCompletedNormally());
+        final Runnable runnable = taskContextFactory.context("Running task",
+                taskContext -> testCompletedNormally());
 
         CompletableFuture.runAsync(runnable, executor)
                 .thenRun(() -> completedNormally.set(true))

@@ -61,7 +61,7 @@ public class ClusterTaskTerminatorImpl implements ClusterTaskTerminator {
         final TerminateTaskProgressRequest terminateTaskProgressRequest = new TerminateTaskProgressRequest(
                 findTaskCriteria, false);
 
-        taskContextFactory.context(null, "Terminate: " + taskName, parentContext -> {
+        taskContextFactory.context("Terminate: " + taskName, parentContext -> {
             parentContext.info(() -> searchName + " - terminating child tasks");
 
             try {
@@ -72,7 +72,6 @@ public class ClusterTaskTerminatorImpl implements ClusterTaskTerminator {
                 // Send the entity event.
                 targetNodes.forEach(nodeName -> {
                     final Runnable runnable = taskContextFactory.context(
-                            parentContext,
                             "Terminate '" + taskName + "' on node '" + nodeName + "'",
                             taskContext -> {
                                 try {

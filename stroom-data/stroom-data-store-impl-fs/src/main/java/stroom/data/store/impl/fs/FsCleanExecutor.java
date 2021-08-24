@@ -105,7 +105,7 @@ class FsCleanExecutor {
             int i = 0;
             for (final FsVolume volume : volumeList) {
                 if (VolumeUseStatus.ACTIVE.equals(volume.getStatus())) {
-                    final Runnable runnable = taskContextFactory.context(parentContext,
+                    final Runnable runnable = taskContextFactory.childContext(parentContext,
                             "Cleaning: " + volume.getPath(),
                             taskContext ->
                                     cleanVolume(taskContext, volume));

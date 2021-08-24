@@ -404,7 +404,7 @@ class DashboardServiceImpl implements DashboardService {
                 final Executor executor = executorProvider.get();
                 final CountDownLatch countDownLatch = new CountDownLatch(request.getSearchRequests().size());
                 for (final DashboardSearchRequest searchRequest : request.getSearchRequests()) {
-                    Runnable runnable = taskContextFactory.context("Search", taskContext -> {
+                    Runnable runnable = taskContextFactory.childContext("Search", taskContext -> {
                         try {
                             httpServletRequestHolder.set(httpServletRequest);
                             final DashboardQueryKey queryKey = searchRequest.getDashboardQueryKey();

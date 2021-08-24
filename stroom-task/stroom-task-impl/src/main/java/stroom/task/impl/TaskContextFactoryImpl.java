@@ -12,6 +12,7 @@ import stroom.util.logging.LogExecutionTime;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -40,14 +41,21 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
     }
 
     @Override
-    public Runnable context(final String taskName, final Consumer<TaskContext> consumer) {
-        return createFromConsumer(currentContext(), taskName, consumer);
+    public Runnable context(final String taskName,
+                            final Consumer<TaskContext> consumer) {
+        return createFromConsumer(null, taskName, consumer);
     }
 
     @Override
-    public Runnable context(final TaskContext parentContext,
-                            final String taskName,
-                            final Consumer<TaskContext> consumer) {
+    public Runnable childContext(final String taskName, final Consumer<TaskContext> consumer) {
+        return childContext(currentContext(), taskName, consumer);
+    }
+
+    @Override
+    public Runnable childContext(final TaskContext parentContext,
+                                 final String taskName,
+                                 final Consumer<TaskContext> consumer) {
+        Objects.requireNonNull(parentContext, "Expecting a parent context when creating a child context");
         return createFromConsumer(parentContext, taskName, consumer);
     }
 

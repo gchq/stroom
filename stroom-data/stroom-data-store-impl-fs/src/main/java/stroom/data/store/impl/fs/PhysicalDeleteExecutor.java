@@ -255,7 +255,7 @@ public class PhysicalDeleteExecutor {
                                  final TaskContext parentTaskContext,
                                  final Queue<Long> successfulMetaIdDeleteQueue,
                                  final Map<Path, Path> directoryMap) {
-        return taskContextFactory.context(parentTaskContext, "Deleting files", taskContext -> {
+        return taskContextFactory.childContext(parentTaskContext, "Deleting files", taskContext -> {
             try {
                 if (Thread.interrupted()) {
                     throw new InterruptedException();

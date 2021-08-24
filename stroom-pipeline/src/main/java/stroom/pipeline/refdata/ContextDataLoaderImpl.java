@@ -58,7 +58,7 @@ public class ContextDataLoaderImpl implements ContextDataLoader {
                                 refStreamDefinition,
                                 refDataStore);
 
-        final Runnable runnable = taskContextFactory.context(
+        final Runnable runnable = taskContextFactory.childContext(
                 "Load Context Data",
                 consumer);
         runnable.run();
