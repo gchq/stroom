@@ -539,15 +539,17 @@ public class LmdbDataStore implements DataStore {
                 }
 
             } else {
-                dbi.iterate(writeTxn).forEach(kv -> {
-                    final ByteBuffer keyBuffer = kv.key();
-                    final ByteBuffer valBuffer = kv.val();
+                try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(writeTxn)) {
+                    cursorIterable.forEach(kv -> {
+                        final ByteBuffer keyBuffer = kv.key();
+                        final ByteBuffer valBuffer = kv.val();
 
-                    payloadOutput.writeInt(keyBuffer.remaining());
-                    payloadOutput.writeByteBuffer(keyBuffer);
-                    payloadOutput.writeInt(valBuffer.remaining());
-                    payloadOutput.writeByteBuffer(valBuffer);
-                });
+                        payloadOutput.writeInt(keyBuffer.remaining());
+                        payloadOutput.writeByteBuffer(keyBuffer);
+                        payloadOutput.writeInt(valBuffer.remaining());
+                        payloadOutput.writeByteBuffer(valBuffer);
+                    });
+                }
 
                 dbi.drop(writeTxn);
             }
