@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2277** : Add processing filter clone function.
 
 ## [v7.1-beta.4] - 2021-08-23
 

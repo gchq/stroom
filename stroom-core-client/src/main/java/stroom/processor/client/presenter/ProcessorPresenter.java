@@ -24,6 +24,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.ProcessorFilterRow;
@@ -58,6 +59,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     private ProcessorListRow selectedProcessor;
     private ButtonView addButton;
     private ButtonView editButton;
+    private ButtonView cloneButton;
     private ButtonView removeButton;
 
     private boolean allowUpdate;
@@ -107,6 +109,8 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
             addButton.setTitle("Add Processor");
             editButton = processorListPresenter.getView().addButton(SvgPresets.EDIT);
             editButton.setTitle("Edit Processor");
+            cloneButton = processorListPresenter.getView().addButton(SvgPresets.COPY);
+            cloneButton.setTitle("Clone Processor");
             removeButton = processorListPresenter.getView().addButton(SvgPresets.DELETE);
             removeButton.setTitle("Delete Processor");
             registerHandler(addButton.addClickHandler(event -> {
@@ -117,6 +121,11 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
             registerHandler(editButton.addClickHandler(event -> {
                 if (allowUpdate) {
                     editProcessor();
+                }
+            }));
+            registerHandler(cloneButton.addClickHandler(event -> {
+                if (allowUpdate) {
+                    cloneProcessor();
                 }
             }));
             registerHandler(removeButton.addClickHandler(event -> {
@@ -139,6 +148,9 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
             } else {
                 editButton.setEnabled(false);
             }
+        }
+        if (cloneButton != null) {
+            cloneButton.setEnabled(allowUpdate);
         }
         if (removeButton != null) {
             if (allowUpdate) {
@@ -200,6 +212,25 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     private void addProcessor() {
         if (pipelineDoc != null) {
             edit(null);
+        }
+    }
+
+    /**
+     * Make a copy of the currently selected processor
+     */
+    private void cloneProcessor() {
+        if (pipelineDoc != null) {
+            // Now create the processor filter using the find stream criteria.
+            final ProcessorFilterRow row = (ProcessorFilterRow) selectedProcessor;
+            final ProcessorFilter processorFilter = row.getProcessorFilter();
+            final CreateProcessFilterRequest request = new CreateProcessFilterRequest(
+                    row.getProcessorFilter().getPipeline(),
+                    processorFilter.getQueryData(),
+                    processorFilter.getPriority(),
+                    true,
+                    false);
+            final Rest<ProcessorFilter> rest = restFactory.create();
+            rest.onSuccess(result -> processorListPresenter.refresh()).call(PROCESSOR_FILTER_RESOURCE).create(request);
         }
     }
 
