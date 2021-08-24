@@ -12,15 +12,16 @@ import stroom.util.logging.LogExecutionTime;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
-class TaskContextFactoryImpl implements TaskContextFactory {
+@Singleton
+class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TaskContextFactoryImpl.class);
 
@@ -40,27 +41,25 @@ class TaskContextFactoryImpl implements TaskContextFactory {
 
     @Override
     public Runnable context(final String taskName, final Consumer<TaskContext> consumer) {
-        return createFromConsumer(null, taskName, consumer);
+        return createFromConsumer(currentContext(), taskName, consumer);
     }
 
     @Override
     public Runnable context(final TaskContext parentContext,
                             final String taskName,
                             final Consumer<TaskContext> consumer) {
-        Objects.requireNonNull(parentContext, "Null parent context");
         return createFromConsumer(parentContext, taskName, consumer);
     }
 
     @Override
     public <R> Supplier<R> contextResult(final String taskName, final Function<TaskContext, R> function) {
-        return createFromFunction(null, taskName, function);
+        return createFromFunction(currentContext(), taskName, function);
     }
 
     @Override
     public <R> Supplier<R> contextResult(final TaskContext parentContext,
                                          final String taskName,
                                          final Function<TaskContext, R> function) {
-        Objects.requireNonNull(parentContext, "Null parent context");
         return createFromFunction(parentContext, taskName, function);
     }
 
@@ -80,8 +79,7 @@ class TaskContextFactoryImpl implements TaskContextFactory {
         return wrap(parentContext, taskName, function);
     }
 
-    @Override
-    public TaskContext currentContext() {
+    private TaskContext currentContext() {
         return CurrentTaskContext.currentContext();
     }
 
@@ -127,7 +125,7 @@ class TaskContextFactoryImpl implements TaskContextFactory {
                 ancestorTaskSet.forEach(ancestorTask -> ancestorTask.addChild(subTaskContext));
 
                 taskRegistry.put(taskId, subTaskContext);
-                LOGGER.debug(() -> "execAsync()->exec() - " + taskName + " took " + logExecutionTime.toString());
+                LOGGER.debug(() -> "execAsync()->exec() - " + taskName + " took " + logExecutionTime);
 
                 if (stop.get() || currentThread.isInterrupted()) {
                     throw new TaskTerminatedException(stop.get());
@@ -179,9 +177,15 @@ class TaskContextFactoryImpl implements TaskContextFactory {
     }
 
     private UserIdentity getUserIdentity(final TaskContext parentContext) {
-        if (parentContext != null) {
+        if (parentContext instanceof TaskContextImpl) {
             return ((TaskContextImpl) parentContext).getUserIdentity();
+        } else if (parentContext instanceof TaskContextFactoryImpl) {
+            final TaskContextImpl taskContext = CurrentTaskContext.currentContext();
+            if (taskContext != null) {
+                return taskContext.getUserIdentity();
+            }
         }
+
         return securityContext.getUserIdentity();
     }
 
@@ -201,5 +205,22 @@ class TaskContextFactoryImpl implements TaskContextFactory {
 
     void setStop(final boolean stop) {
         this.stop.set(stop);
+    }
+
+    @Override
+    public void info(final Supplier<String> messageSupplier) {
+        final TaskContextImpl taskContext = CurrentTaskContext.currentContext();
+        if (taskContext != null) {
+            taskContext.info(messageSupplier);
+        }
+    }
+
+    @Override
+    public TaskId getTaskId() {
+        final TaskContextImpl taskContext = CurrentTaskContext.currentContext();
+        if (taskContext != null) {
+            return taskContext.getTaskId();
+        }
+        return null;
     }
 }

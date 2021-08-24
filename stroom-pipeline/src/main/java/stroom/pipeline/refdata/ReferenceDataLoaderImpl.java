@@ -46,10 +46,8 @@ public class ReferenceDataLoaderImpl implements ReferenceDataLoader {
                         .exec(taskContext, refStreamDefinition);
 
         final Supplier<StoredErrorReceiver> supplier = taskContextFactory.contextResult(
-                taskContextFactory.currentContext(),
                 "Load Reference Data",
                 consumer);
-
         return supplier.get();
     }
 }

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2368** : Fixed server task nesting.
+
 * Issue **#2369** : Fix missing SQL join when reprocessing all streams matching a filter.
 
 * Issue **#2369** : Fix error when searching meta store from a dashboard with a meta key in the query.

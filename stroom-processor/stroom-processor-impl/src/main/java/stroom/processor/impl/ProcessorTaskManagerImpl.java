@@ -105,6 +105,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     private final ProcessorTaskDao processorTaskDao;
     private final ExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
+    private final TaskContext taskContext;
     private final NodeInfo nodeInfo;
     private final ProcessorConfig processorConfig;
     private final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider;
@@ -157,6 +158,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                              final ProcessorTaskDao processorTaskDao,
                              final ExecutorProvider executorProvider,
                              final TaskContextFactory taskContextFactory,
+                             final TaskContext taskContext,
                              final NodeInfo nodeInfo,
                              final ProcessorConfig processorConfig,
                              final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider,
@@ -169,6 +171,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         this.processorFilterTrackerDao = processorFilterTrackerDao;
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
+        this.taskContext = taskContext;
         this.nodeInfo = nodeInfo;
         this.processorTaskDao = processorTaskDao;
         this.processorConfig = processorConfig;
@@ -1181,6 +1184,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
     @Override
     public void writeQueueStatistics() {
+        taskContext.info(() -> "Writing processor task queue statistics");
         try {
             // Avoid writing loads of same value stats So write every min while
             // it changes Under little load the queue size will be 0

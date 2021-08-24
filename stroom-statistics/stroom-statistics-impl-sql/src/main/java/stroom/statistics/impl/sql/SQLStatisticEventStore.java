@@ -27,6 +27,7 @@ import stroom.statistics.impl.sql.shared.CustomRollUpMask;
 import stroom.statistics.impl.sql.shared.StatisticRollUpType;
 import stroom.statistics.impl.sql.shared.StatisticStore;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
+import stroom.task.api.TaskContext;
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 import stroom.util.time.TimeUtils;
@@ -71,6 +72,7 @@ public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
     private final SQLStatisticCache statisticCache;
     private final SQLStatisticsConfig config;
     private final SecurityContext securityContext;
+    private final TaskContext taskContext;
 
     /**
      * SQL for testing querying the stat/tag names
@@ -100,13 +102,14 @@ public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
                            final StatisticStoreCache statisticsDataSourceCache,
                            final SQLStatisticCache statisticCache,
                            final SQLStatisticsConfig config,
-                           final SecurityContext securityContext) {
-
+                           final SecurityContext securityContext,
+                           final TaskContext taskContext) {
         this.statisticsDataSourceValidator = statisticsDataSourceValidator;
         this.config = config;
         this.statisticsDataSourceCache = statisticsDataSourceCache;
         this.statisticCache = statisticCache;
         this.securityContext = securityContext;
+        this.taskContext = taskContext;
 
         initPool(getObjectPoolConfig());
     }
@@ -118,7 +121,8 @@ public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
                            final StatisticStoreCache statisticsDataSourceCache,
                            final SQLStatisticCache statisticCache,
                            final SQLStatisticsConfig config,
-                           final SecurityContext securityContext) {
+                           final SecurityContext securityContext,
+                           final TaskContext taskContext) {
         this.statisticsDataSourceValidator = statisticsDataSourceValidator;
         this.statisticsDataSourceCache = statisticsDataSourceCache;
         this.statisticCache = statisticCache;
@@ -127,10 +131,10 @@ public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
         this.poolSize = poolSize;
         this.config = config;
         this.securityContext = securityContext;
+        this.taskContext = taskContext;
 
         initPool(getObjectPoolConfig());
     }
-
 
     // TODO could go futher up the chain so is store agnostic
     public static RolledUpStatisticEvent generateTagRollUps(final StatisticEvent event,
@@ -216,6 +220,7 @@ public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
     }
 
     public void evict() {
+        taskContext.info(() -> "Evicting expired objects");
         LOGGER.debug("evict");
         try {
             objectPool.evict();

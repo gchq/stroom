@@ -25,7 +25,6 @@ import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.meta.api.MetaService;
 import stroom.task.api.TaskContext;
-import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -90,7 +89,7 @@ public class DataRetentionPolicyExecutor {
     private final Provider<DataRetentionRules> dataRetentionRulesProvider;
     private final DataRetentionConfig policyConfig;
     private final MetaService metaService;
-    private final TaskContextFactory taskContextFactory;
+    private final TaskContext taskContext;
     private final AtomicBoolean running = new AtomicBoolean();
 
     @Inject
@@ -98,12 +97,12 @@ public class DataRetentionPolicyExecutor {
                                 final Provider<DataRetentionRules> dataRetentionRulesProvider,
                                 final DataRetentionConfig policyConfig,
                                 final MetaService metaService,
-                                final TaskContextFactory taskContextFactory) {
+                                final TaskContext taskContext) {
         this.clusterLockService = clusterLockService;
         this.dataRetentionRulesProvider = dataRetentionRulesProvider;
         this.policyConfig = policyConfig;
         this.metaService = metaService;
-        this.taskContextFactory = taskContextFactory;
+        this.taskContext = taskContext;
     }
 
     public void exec() {
@@ -118,15 +117,13 @@ public class DataRetentionPolicyExecutor {
             try {
                 clusterLockService.tryLock(LOCK_NAME, () -> {
                     try {
-                        taskContextFactory.context("Data Retention", taskContext -> {
-                            info(taskContext, () -> "Starting data retention process");
-                            final LogExecutionTime logExecutionTime = new LogExecutionTime();
-                            // MUST truncate down to millis as the DB stores in millis and TimePeriod
-                            // also truncates to millis so we need to work to a consistent precision else
-                            // some of the date logic fails due to micro second differences
-                            process(taskContext, now.truncatedTo(ChronoUnit.MILLIS));
-                            info(taskContext, () -> "Finished data retention process in " + logExecutionTime);
-                        }).run();
+                        info(() -> "Starting data retention process");
+                        final LogExecutionTime logExecutionTime = new LogExecutionTime();
+                        // MUST truncate down to millis as the DB stores in millis and TimePeriod
+                        // also truncates to millis so we need to work to a consistent precision else
+                        // some of the date logic fails due to micro second differences
+                        process(now.truncatedTo(ChronoUnit.MILLIS));
+                        info(() -> "Finished data retention process in " + logExecutionTime);
                     } catch (final RuntimeException e) {
                         LOGGER.error(e::getMessage, e);
                     }
@@ -137,7 +134,7 @@ public class DataRetentionPolicyExecutor {
         }
     }
 
-    private synchronized void process(final TaskContext taskContext, final Instant now) {
+    private synchronized void process(final Instant now) {
         final DataRetentionRules dataRetentionRules = dataRetentionRulesProvider.get();
         LOGGER.info("All retention time calculations based on now()={}", now);
         if (dataRetentionRules != null) {
@@ -178,7 +175,7 @@ public class DataRetentionPolicyExecutor {
                                     .sorted(DataRetentionRuleAction.comparingByRuleNo())
                                     .collect(Collectors.toList());
 
-                            processPeriod(taskContext, period, sortedActions, now);
+                            processPeriod(period, sortedActions, now);
                         });
 
                 // If we finished running then update the tracker for use next time.
@@ -258,11 +255,10 @@ public class DataRetentionPolicyExecutor {
                 period.getPeriod());
     }
 
-    private void processPeriod(final TaskContext taskContext,
-                               final TimePeriod period,
+    private void processPeriod(final TimePeriod period,
                                final List<DataRetentionRuleAction> sortedRuleActions,
                                final Instant now) {
-        info(taskContext, () -> {
+        info(() -> {
 
             // Get the ages of the two dates in the period
             final Period fromTimeAge = TimeUtils.instantAsAge(period.getFrom(), now);
@@ -392,7 +388,7 @@ public class DataRetentionPolicyExecutor {
         return DataRetentionCreationTimeUtil.minus(now, rule);
     }
 
-    private void info(final TaskContext taskContext, final Supplier<String> messageSupplier) {
+    private void info(final Supplier<String> messageSupplier) {
         LOGGER.info(messageSupplier);
         taskContext.info(messageSupplier);
     }

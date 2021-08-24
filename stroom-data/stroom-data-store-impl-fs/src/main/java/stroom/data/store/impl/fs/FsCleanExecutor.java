@@ -60,6 +60,7 @@ class FsCleanExecutor {
     private final Provider<FsCleanSubTaskHandler> fsCleanSubTaskHandlerProvider;
     private final ExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
+    private final TaskContext parentContext;
     private final DataStoreServiceConfig config;
 
     @Inject
@@ -67,11 +68,13 @@ class FsCleanExecutor {
                     final Provider<FsCleanSubTaskHandler> fsCleanSubTaskHandlerProvider,
                     final ExecutorProvider executorProvider,
                     final TaskContextFactory taskContextFactory,
+                    final TaskContext parentContext,
                     final DataStoreServiceConfig config) {
         this.volumeService = volumeService;
         this.fsCleanSubTaskHandlerProvider = fsCleanSubTaskHandlerProvider;
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
+        this.parentContext = parentContext;
         this.config = config;
 
         Duration age;
@@ -84,39 +87,37 @@ class FsCleanExecutor {
     }
 
     public void clean() {
-        taskContextFactory.context("File System Clean#", parentContext -> {
-            parentContext.info(() -> "Starting file system clean task. oldAge = " + oldAge);
+        parentContext.info(() -> "Starting file system clean task. oldAge = " + oldAge);
 
-            final LogExecutionTime logExecutionTime = new LogExecutionTime();
+        final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
-            final List<FsVolume> volumeList = volumeService.find(FindFsVolumeCriteria.matchAll()).getValues();
-            if (volumeList != null && volumeList.size() > 0) {
-                // Add to the task steps remaining.
-                final ThreadPool threadPool = new ThreadPoolImpl("File System Clean#",
-                        1,
-                        1,
-                        config.getFileSystemCleanBatchSize(),
-                        Integer.MAX_VALUE);
-                final Executor executor = executorProvider.get(threadPool);
+        final List<FsVolume> volumeList = volumeService.find(FindFsVolumeCriteria.matchAll()).getValues();
+        if (volumeList != null && volumeList.size() > 0) {
+            // Add to the task steps remaining.
+            final ThreadPool threadPool = new ThreadPoolImpl("File System Clean#",
+                    1,
+                    1,
+                    config.getFileSystemCleanBatchSize(),
+                    Integer.MAX_VALUE);
+            final Executor executor = executorProvider.get(threadPool);
 
-                final CompletableFuture<?>[] completableFutures = new CompletableFuture<?>[volumeList.size()];
-                int i = 0;
-                for (final FsVolume volume : volumeList) {
-                    if (VolumeUseStatus.ACTIVE.equals(volume.getStatus())) {
-                        final Runnable runnable = taskContextFactory.context(parentContext,
-                                "Cleaning: " + volume.getPath(),
-                                taskContext ->
-                                        cleanVolume(taskContext, volume));
-                        final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable,
-                                executor);
-                        completableFutures[i++] = completableFuture;
-                    }
+            final CompletableFuture<?>[] completableFutures = new CompletableFuture<?>[volumeList.size()];
+            int i = 0;
+            for (final FsVolume volume : volumeList) {
+                if (VolumeUseStatus.ACTIVE.equals(volume.getStatus())) {
+                    final Runnable runnable = taskContextFactory.context(parentContext,
+                            "Cleaning: " + volume.getPath(),
+                            taskContext ->
+                                    cleanVolume(taskContext, volume));
+                    final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable,
+                            executor);
+                    completableFutures[i++] = completableFuture;
                 }
-                CompletableFuture.allOf(completableFutures).join();
             }
+            CompletableFuture.allOf(completableFutures).join();
+        }
 
-            parentContext.info(() -> "start() - Completed file system clean task in " + logExecutionTime);
-        }).run();
+        parentContext.info(() -> "start() - Completed file system clean task in " + logExecutionTime);
     }
 
     private void cleanVolume(final TaskContext taskContext, final FsVolume volume) {

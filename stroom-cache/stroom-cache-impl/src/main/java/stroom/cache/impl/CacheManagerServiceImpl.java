@@ -19,6 +19,7 @@ package stroom.cache.impl;
 import stroom.cache.shared.CacheInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.task.api.TaskContext;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.ModelStringUtil;
 
@@ -40,12 +41,15 @@ class CacheManagerServiceImpl implements CacheManagerService, Clearable {
 
     private final CacheManagerImpl cacheManager;
     private final SecurityContext securityContext;
+    private final TaskContext taskContext;
 
     @Inject
     CacheManagerServiceImpl(final CacheManagerImpl cacheManager,
-                            final SecurityContext securityContext) {
+                            final SecurityContext securityContext,
+                            final TaskContext taskContext) {
         this.cacheManager = cacheManager;
         this.securityContext = securityContext;
+        this.taskContext = taskContext;
     }
 
     @Override
@@ -128,6 +132,7 @@ class CacheManagerServiceImpl implements CacheManagerService, Clearable {
 
     @Override
     public void evictExpiredElements() {
+        taskContext.info(() -> "Evicting expired elements");
         cacheManager.getCaches().forEach((k, v) -> {
             LOGGER.debug("Evicting cache entries for " + k);
             try {
