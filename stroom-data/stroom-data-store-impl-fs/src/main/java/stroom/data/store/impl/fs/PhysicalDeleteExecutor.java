@@ -70,6 +70,7 @@ public class PhysicalDeleteExecutor {
     private final PhysicalDelete physicalDelete;
     private final DataVolumeDao dataVolumeDao;
     private final TaskContextFactory taskContextFactory;
+    private final TaskContext taskContext;
     private final ExecutorProvider executorProvider;
     private final DataStoreServiceConfig config;
 
@@ -82,6 +83,7 @@ public class PhysicalDeleteExecutor {
             final PhysicalDelete physicalDelete,
             final DataVolumeDao dataVolumeDao,
             final TaskContextFactory taskContextFactory,
+            final TaskContext taskContext,
             final ExecutorProvider executorProvider,
             final DataStoreServiceConfig config) {
         this.clusterLockService = clusterLockService;
@@ -91,15 +93,12 @@ public class PhysicalDeleteExecutor {
         this.physicalDelete = physicalDelete;
         this.dataVolumeDao = dataVolumeDao;
         this.taskContextFactory = taskContextFactory;
+        this.taskContext = taskContext;
         this.executorProvider = executorProvider;
         this.config = config;
     }
 
     public void exec() {
-        taskContextFactory.context("Physically Delete Data", this::lockAndDelete).run();
-    }
-
-    final void lockAndDelete(final TaskContext taskContext) {
         LOGGER.info(() -> TASK_NAME + " - start");
         clusterLockService.tryLock(LOCK_NAME, () -> {
             try {
@@ -107,7 +106,7 @@ public class PhysicalDeleteExecutor {
                     final LogExecutionTime logExecutionTime = new LogExecutionTime();
                     final long deleteThresholdEpochMs = getDeleteThresholdEpochMs(dataStoreServiceConfig);
                     if (deleteThresholdEpochMs > 0) {
-                        delete(taskContext, deleteThresholdEpochMs);
+                        delete(deleteThresholdEpochMs);
                     }
                     LOGGER.info(() -> TASK_NAME + " - finished in " + logExecutionTime);
                 }
@@ -117,7 +116,7 @@ public class PhysicalDeleteExecutor {
         });
     }
 
-    public void delete(final TaskContext taskContext, final long deleteThresholdEpochMs) {
+    public void delete(final long deleteThresholdEpochMs) {
         if (!Thread.currentThread().isInterrupted()) {
             long count;
             long total = 0;
@@ -205,11 +204,11 @@ public class PhysicalDeleteExecutor {
             successfulMetaIdDeleteQueue.drainTo(metaIdList);
 
             // Delete data volumes.
-            info(taskContext, () -> "Deleting data volumes");
+            info(() -> "Deleting data volumes");
             dataVolumeDao.delete(metaIdList);
 
             // Physically delete meta data.
-            info(taskContext, () -> "Deleting meta data");
+            info(() -> "Deleting meta data");
             physicalDelete.cleanup(metaIdList);
 
         } catch (final InterruptedException e) {
@@ -262,7 +261,7 @@ public class PhysicalDeleteExecutor {
                     throw new InterruptedException();
                 }
 
-                info(taskContext, () -> "Deleting everything associated with " + meta);
+                info(() -> "Deleting everything associated with " + meta);
 
                 final DataVolume dataVolume = dataVolumeDao.findDataVolume(meta.getId());
                 if (dataVolume == null) {
@@ -280,7 +279,7 @@ public class PhysicalDeleteExecutor {
                         try (final DirectoryStream<Path> stream = Files.newDirectoryStream(dir, glob)) {
                             stream.forEach(f -> {
                                 try {
-                                    info(taskContext, () -> "Deleting file: " + FileUtil.getCanonicalPath(f));
+                                    info(() -> "Deleting file: " + FileUtil.getCanonicalPath(f));
                                     Files.deleteIfExists(f);
                                 } catch (final IOException e) {
                                     LOGGER.debug(e.getMessage(), e);
@@ -320,7 +319,7 @@ public class PhysicalDeleteExecutor {
         });
     }
 
-    private void info(final TaskContext taskContext, final Supplier<String> message) {
+    private void info(final Supplier<String> message) {
         try {
             taskContext.info(message);
             LOGGER.debug(message);

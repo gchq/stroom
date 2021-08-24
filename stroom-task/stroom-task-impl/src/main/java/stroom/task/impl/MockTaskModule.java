@@ -17,7 +17,6 @@
 package stroom.task.impl;
 
 import stroom.task.api.ExecutorProvider;
-import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
 
 import com.google.inject.AbstractModule;
@@ -28,9 +27,9 @@ public class MockTaskModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        install(new TaskContextModule());
         bind(ExecutorProvider.class).to(ExecutorProviderImpl.class);
         bind(Executor.class).toProvider(ExecutorProviderImpl.class);
         bind(TaskManager.class).to(TaskManagerImpl.class);
-        bind(TaskContextFactory.class).to(TaskContextFactoryImpl.class);
     }
 }

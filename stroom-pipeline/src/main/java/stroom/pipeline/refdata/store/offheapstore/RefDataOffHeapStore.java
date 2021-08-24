@@ -44,6 +44,7 @@ import stroom.pipeline.refdata.store.offheapstore.databases.RangeStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreMetaDb;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataProcessingInfoSerde;
+import stroom.task.api.TaskContext;
 import stroom.util.HasHealthCheck;
 import stroom.util.io.ByteSize;
 import stroom.util.io.PathCreator;
@@ -124,6 +125,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     private final ByteSize maxSize;
     private final int maxReaders;
     private final int maxPutsBeforeCommit;
+    private final TaskContext taskContext;
 
     private final Env<ByteBuffer> lmdbEnvironment;
 
@@ -160,7 +162,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             final MapUidForwardDb.Factory mapUidForwardDbFactory,
             final MapUidReverseDb.Factory mapUidReverseDbFactory,
             final RefDataValueConverter refDataValueConverter,
-            final ProcessingInfoDb.Factory processingInfoDbFactory) {
+            final ProcessingInfoDb.Factory processingInfoDbFactory,
+            final TaskContext taskContext) {
 
         this.tempDirProvider = tempDirProvider;
         this.pathCreator = pathCreator;
@@ -170,6 +173,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         this.maxSize = referenceDataConfig.getMaxStoreSize();
         this.maxReaders = referenceDataConfig.getMaxReaders();
         this.maxPutsBeforeCommit = referenceDataConfig.getMaxPutsBeforeCommit();
+        this.taskContext = taskContext;
 
         this.lmdbEnvironment = createEnvironment(referenceDataConfig);
 
@@ -494,6 +498,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
      * @param now Allows the setting of the current time for testing purposes
      */
     void purgeOldData(final Instant now, final StroomDuration purgeAge) {
+        taskContext.info(() -> "Purging old data");
         final Instant startTime = Instant.now();
         final AtomicReference<PurgeCounts> countsRef = new AtomicReference<>(PurgeCounts.zero());
 
@@ -521,8 +526,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 });
 
                 if (optRefStreamDef.isPresent()) {
-
                     LOGGER.debug("Found at least one refStreamDef ready for purge, now getting lock");
+                    taskContext.info(() -> "Found at least one refStreamDef ready for purge, now getting lock");
 
                     // now acquire a lock for the this ref stream def so we don't conflict with any load operations
                     doWithRefStreamDefinitionLock(refStreamDefStripedReentrantLock, optRefStreamDef.get(), () -> {
@@ -587,6 +592,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
                                 //now delete the proc info entry
                                 LOGGER.debug("Deleting processing info entry for {}", refStreamDefinition);
+                                taskContext.info(() -> "Deleting processing info entry for " + refStreamDefinition);
 
                                 boolean didDeleteSucceed = processingInfoDb.delete(writeTxn, refStreamDefBuffer);
 
@@ -914,7 +920,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 .orElseThrow(() -> new RuntimeException("No MapDefinition for UID " + mapUid.toString()));
 
         final RefDataProcessingInfo refDataProcessingInfo = processingInfoDb.get(readTxn,
-                mapDefinition.getRefStreamDefinition())
+                        mapDefinition.getRefStreamDefinition())
                 .orElse(null);
 
         final String value = getReferenceDataValue(readTxn, key, valueStoreKey);

@@ -18,8 +18,10 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
-class TaskContextFactoryImpl implements TaskContextFactory {
+@Singleton
+class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TaskContextFactoryImpl.class);
 
@@ -123,7 +125,7 @@ class TaskContextFactoryImpl implements TaskContextFactory {
                 ancestorTaskSet.forEach(ancestorTask -> ancestorTask.addChild(subTaskContext));
 
                 taskRegistry.put(taskId, subTaskContext);
-                LOGGER.debug(() -> "execAsync()->exec() - " + taskName + " took " + logExecutionTime.toString());
+                LOGGER.debug(() -> "execAsync()->exec() - " + taskName + " took " + logExecutionTime);
 
                 if (stop.get() || currentThread.isInterrupted()) {
                     throw new TaskTerminatedException(stop.get());
@@ -175,9 +177,15 @@ class TaskContextFactoryImpl implements TaskContextFactory {
     }
 
     private UserIdentity getUserIdentity(final TaskContext parentContext) {
-        if (parentContext != null) {
+        if (parentContext instanceof TaskContextImpl) {
             return ((TaskContextImpl) parentContext).getUserIdentity();
+        } else if (parentContext instanceof TaskContextFactoryImpl) {
+            final TaskContextImpl taskContext = CurrentTaskContext.currentContext();
+            if (taskContext != null) {
+                return taskContext.getUserIdentity();
+            }
         }
+
         return securityContext.getUserIdentity();
     }
 
@@ -197,5 +205,22 @@ class TaskContextFactoryImpl implements TaskContextFactory {
 
     void setStop(final boolean stop) {
         this.stop.set(stop);
+    }
+
+    @Override
+    public void info(final Supplier<String> messageSupplier) {
+        final TaskContextImpl taskContext = CurrentTaskContext.currentContext();
+        if (taskContext != null) {
+            taskContext.info(messageSupplier);
+        }
+    }
+
+    @Override
+    public TaskId getTaskId() {
+        final TaskContextImpl taskContext = CurrentTaskContext.currentContext();
+        if (taskContext != null) {
+            return taskContext.getTaskId();
+        }
+        return null;
     }
 }

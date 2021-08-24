@@ -45,31 +45,32 @@ public class MockTaskModule extends AbstractModule {
         return new TaskContextFactory() {
             @Override
             public Runnable context(final String taskName, final Consumer<TaskContext> consumer) {
-                return () -> consumer.accept(createTaskContext());
+                return () -> consumer.accept(getTaskContext());
             }
 
             @Override
             public Runnable context(final TaskContext parentContext,
                                     final String taskName,
                                     final Consumer<TaskContext> consumer) {
-                return () -> consumer.accept(createTaskContext());
+                return () -> consumer.accept(getTaskContext());
             }
 
             @Override
             public <R> Supplier<R> contextResult(final String taskName, final Function<TaskContext, R> function) {
-                return () -> function.apply(createTaskContext());
+                return () -> function.apply(getTaskContext());
             }
 
             @Override
             public <R> Supplier<R> contextResult(final TaskContext parentContext,
                                                  final String taskName,
                                                  final Function<TaskContext, R> function) {
-                return () -> function.apply(createTaskContext());
+                return () -> function.apply(getTaskContext());
             }
         };
     }
 
-    private TaskContext createTaskContext() {
+    @Provides
+    TaskContext getTaskContext() {
         return new TaskContext() {
             @Override
             public void info(final Supplier<String> messageSupplier) {

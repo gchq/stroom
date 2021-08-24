@@ -17,6 +17,7 @@
 package stroom.node.impl;
 
 import stroom.statistics.api.InternalStatisticsReceiver;
+import stroom.task.api.TaskContext;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,12 +30,15 @@ class NodeStatusExecutor {
 
     private final NodeStatusServiceUtil nodeStatusServiceUtil;
     private final InternalStatisticsReceiver internalStatisticsReceiver;
+    private final TaskContext taskContext;
 
     @Inject
     NodeStatusExecutor(final NodeStatusServiceUtil nodeStatusServiceUtil,
-                       final InternalStatisticsReceiver internalStatisticsReceiver) {
+                       final InternalStatisticsReceiver internalStatisticsReceiver,
+                       final TaskContext taskContext) {
         this.nodeStatusServiceUtil = nodeStatusServiceUtil;
         this.internalStatisticsReceiver = internalStatisticsReceiver;
+        this.taskContext = taskContext;
     }
 
     /**
@@ -44,6 +48,7 @@ class NodeStatusExecutor {
      */
     void exec() {
         LOGGER.debug("Updating the status for this node.");
+        taskContext.info(() -> "Updating the status for this node");
         internalStatisticsReceiver.putEvents(nodeStatusServiceUtil.buildNodeStatus());
     }
 }
