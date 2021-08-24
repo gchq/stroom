@@ -930,11 +930,11 @@ class MetaDaoImpl implements MetaDao, Clearable {
                 select = select.leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID));
             }
 
+            // Need to add one join to meta_val for each meta key id used in the criteria
             final Set<Integer> usedValKeys = identifyExtendedAttributesFields(
                     criteria.getExpression(),
                     new HashSet<>());
-            select = metaExpressionMapper.addJoins(
-                    select, meta.ID, usedValKeys);
+            select = metaExpressionMapper.addJoins(select, meta.ID, usedValKeys);
 
             try (final Cursor<?> cursor = select
                     .where(conditions)
@@ -1358,8 +1358,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
 
             // If the criteria contain many terms that come from meta_val then we need to join
             // to meta_val multiple times, each time with a new table alias
-            select = metaExpressionMapper.addJoins(
-                    select, meta.ID, usedValKeys);
+            select = metaExpressionMapper.addJoins(select, meta.ID, usedValKeys);
 
             return select
                     .where(conditions)
