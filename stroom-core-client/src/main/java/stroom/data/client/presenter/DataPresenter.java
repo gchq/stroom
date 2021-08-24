@@ -58,6 +58,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.FontWeight;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.VerticalAlign;
+import com.google.gwt.dom.client.Style.WhiteSpace;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.safecss.shared.SafeStyles;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
@@ -87,6 +88,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
     private static final SafeStyles META_SECTION_HEAD_STYLES = new SafeStylesBuilder()
             .paddingLeft(0.2, Unit.EM)
+            .whiteSpace(WhiteSpace.NOWRAP)
             .trustedColor("#1e88e5")
             .fontWeight(FontWeight.BOLD)
             .fontSize(125, Unit.PCT)
@@ -94,12 +96,14 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
     private static final SafeStyles META_SECTION_CELL_STYLES = new SafeStylesBuilder()
             .height(2, Unit.EM)
+            .whiteSpace(WhiteSpace.NOWRAP)
             .verticalAlign(VerticalAlign.BOTTOM)
             .toSafeStyles();
 
     private static final SafeStyles META_KEY_STYLES = new SafeStylesBuilder()
             .paddingLeft(1, Unit.EM)
             .paddingRight(1, Unit.EM)
+            .whiteSpace(WhiteSpace.NOWRAP)
             .append(SafeStylesUtils.fromTrustedNameAndValue("line-height", "1.4em"))
             .append(SafeStylesUtils.fromTrustedNameAndValue("font-weight", "500"))
             .toSafeStyles();
