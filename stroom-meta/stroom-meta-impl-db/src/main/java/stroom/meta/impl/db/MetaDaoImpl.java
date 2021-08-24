@@ -930,6 +930,12 @@ class MetaDaoImpl implements MetaDao, Clearable {
                 select = select.leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID));
             }
 
+            final Set<Integer> usedValKeys = identifyExtendedAttributesFields(
+                    criteria.getExpression(),
+                    new HashSet<>());
+            select = metaExpressionMapper.addJoins(
+                    select, meta.ID, usedValKeys);
+
             try (final Cursor<?> cursor = select
                     .where(conditions)
                     .orderBy(orderFields)
