@@ -12,7 +12,6 @@ import stroom.util.logging.LogExecutionTime;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -55,19 +54,29 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
     public Runnable childContext(final TaskContext parentContext,
                                  final String taskName,
                                  final Consumer<TaskContext> consumer) {
-        Objects.requireNonNull(parentContext, "Expecting a parent context when creating a child context");
+        if (parentContext == null) {
+            LOGGER.error("Expecting a parent context when creating a child context fpr " + taskName);
+        }
         return createFromConsumer(parentContext, taskName, consumer);
     }
 
     @Override
     public <R> Supplier<R> contextResult(final String taskName, final Function<TaskContext, R> function) {
-        return createFromFunction(currentContext(), taskName, function);
+        return createFromFunction(null, taskName, function);
     }
 
     @Override
-    public <R> Supplier<R> contextResult(final TaskContext parentContext,
-                                         final String taskName,
-                                         final Function<TaskContext, R> function) {
+    public <R> Supplier<R> childContextResult(final String taskName, final Function<TaskContext, R> function) {
+        return childContextResult(currentContext(), taskName, function);
+    }
+
+    @Override
+    public <R> Supplier<R> childContextResult(final TaskContext parentContext,
+                                              final String taskName,
+                                              final Function<TaskContext, R> function) {
+        if (parentContext == null) {
+            LOGGER.error("Expecting a parent context when creating a child context fpr " + taskName);
+        }
         return createFromFunction(parentContext, taskName, function);
     }
 

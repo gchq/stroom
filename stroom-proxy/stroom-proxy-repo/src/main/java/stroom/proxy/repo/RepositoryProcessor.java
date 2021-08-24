@@ -209,7 +209,7 @@ public final class RepositoryProcessor {
             // Did we reach the file scan limit?
             return fileCount.get() >= maxFileScan;
         };
-        final Supplier<Boolean> supplier = taskContextFactory.contextResult(parentContext,
+        final Supplier<Boolean> supplier = taskContextFactory.childContextResult(parentContext,
                 "Fragmenting Repository - " + repoDir,
                 function);
         return supplier.get();

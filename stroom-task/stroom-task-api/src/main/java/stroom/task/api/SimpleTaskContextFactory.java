@@ -32,7 +32,12 @@ public class SimpleTaskContextFactory implements TaskContextFactory {
     }
 
     @Override
-    public <R> Supplier<R> contextResult(final TaskContext parentContext,
+    public <R> Supplier<R> childContextResult(final String taskName, final Function<TaskContext, R> function) {
+        return () -> function.apply(new SimpleTaskContext());
+    }
+
+    @Override
+    public <R> Supplier<R> childContextResult(final TaskContext parentContext,
                                          final String taskName,
                                          final Function<TaskContext, R> function) {
         return () -> function.apply(new SimpleTaskContext());

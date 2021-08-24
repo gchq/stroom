@@ -167,7 +167,7 @@ public class DependencyServiceImpl implements DependencyService {
                 .values()
                 .parallelStream()
                 .map(handler ->
-                        taskContextFactory.contextResult(
+                        taskContextFactory.childContextResult(
                                 parentTaskContext,
                                 "Get " + handler.getType() + " dependencies",
                                 taskContext -> {
