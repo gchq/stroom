@@ -150,7 +150,11 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
             }
         }
         if (cloneButton != null) {
-            cloneButton.setEnabled(allowUpdate);
+            if (allowUpdate) {
+                cloneButton.setEnabled(enabled);
+            } else {
+                cloneButton.setEnabled(false);
+            }
         }
         if (removeButton != null) {
             if (allowUpdate) {
