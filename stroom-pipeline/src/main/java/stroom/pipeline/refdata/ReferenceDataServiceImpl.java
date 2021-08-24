@@ -240,12 +240,10 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     @Override
     public void purge(final StroomDuration purgeAge) {
         securityContext.secure(PermissionNames.MANAGE_CACHE_PERMISSION, () ->
-                taskContextFactory.context(
-                                "Reference Data Purge",
-                                taskContext ->
-                                        LOGGER.logDurationIfDebugEnabled(
-                                                () -> performPurge(purgeAge),
-                                                LogUtil.message("Performing Purge for entries older than {}", purgeAge)))
+                taskContextFactory.context("Reference Data Purge", taskContext ->
+                                LOGGER.logDurationIfDebugEnabled(
+                                        () -> performPurge(purgeAge),
+                                        LogUtil.message("Performing Purge for entries older than {}", purgeAge)))
                         .run());
 
     }
