@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2349** : New dashboard tables will now link to the most recently added query by default.
+
 * Issue **#2351** : Improved error popup text for server responses.
 
 * Issue **#2368** : Fixed server task nesting.
