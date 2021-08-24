@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class SearchResponseCreator {
 
@@ -170,14 +171,25 @@ public class SearchResponseCreator {
                     ", isComplete: " +
                     store.isComplete());
 
+            final List<String> errors = new ArrayList<>();
+            if (store.getErrors() != null) {
+                errors.addAll(store.getErrors());
+            }
+
             List<Result> results = res;
             if (results.size() == 0) {
                 results = null;
+            } else {
+                errors.addAll(results.stream()
+                        .map(Result::getError)
+                        .distinct()
+                        .collect(Collectors.toList()));
             }
+
             final SearchResponse searchResponse = new SearchResponse(
                     store.getHighlights(),
                     results,
-                    store.getErrors(),
+                    errors.stream().distinct().collect(Collectors.toList()),
                     complete);
 
             if (complete) {
