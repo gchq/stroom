@@ -128,4 +128,15 @@ public class ExplorerTreeNode implements HasIntegerId {
     public int hashCode() {
         return Objects.hash(id);
     }
+
+    @Override
+    public String toString() {
+        return "ExplorerTreeNode{" +
+                "id=" + id +
+                ", type='" + type + '\'' +
+                ", uuid='" + uuid + '\'' +
+                ", name='" + name + '\'' +
+                ", tags='" + tags + '\'' +
+                '}';
+    }
 }

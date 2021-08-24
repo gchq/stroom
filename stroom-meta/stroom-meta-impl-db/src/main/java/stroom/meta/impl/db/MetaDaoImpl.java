@@ -59,6 +59,7 @@ import org.jooq.Record;
 import org.jooq.Record1;
 import org.jooq.Result;
 import org.jooq.Select;
+import org.jooq.SelectJoinStep;
 import org.jooq.Table;
 import org.jooq.impl.DSL;
 
@@ -174,12 +175,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
         this.docRefInfoService = docRefInfoService;
 
         // Extended meta fields.
-        metaExpressionMapper = new MetaExpressionMapper(
-                metaKeyDao,
-                META_VAL.META_KEY_ID.getName(),
-                META_VAL.VAL.getName(),
-                META_VAL.META_ID.getName(),
-                termHandlerFactory);
+        metaExpressionMapper = new MetaExpressionMapper(metaKeyDao, termHandlerFactory);
         //Add term handlers
         metaExpressionMapper.map(MetaFields.REC_READ);
         metaExpressionMapper.map(MetaFields.REC_WRITE);
@@ -934,6 +930,12 @@ class MetaDaoImpl implements MetaDao, Clearable {
                 select = select.leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID));
             }
 
+            // Need to add one join to meta_val for each meta key id used in the criteria
+            final Set<Integer> usedValKeys = identifyExtendedAttributesFields(
+                    criteria.getExpression(),
+                    new HashSet<>());
+            select = metaExpressionMapper.addJoins(select, meta.ID, usedValKeys);
+
             try (final Cursor<?> cursor = select
                     .where(conditions)
                     .orderBy(orderFields)
@@ -1341,19 +1343,28 @@ class MetaDaoImpl implements MetaDao, Clearable {
     @Override
     public List<String> getProcessorUuidList(final FindMetaCriteria criteria) {
         final Collection<Condition> conditions = createCondition(criteria);
-        return getProcessorUuidList(conditions);
-    }
+        final Set<Integer> usedValKeys = identifyExtendedAttributesFields(criteria.getExpression(), new HashSet<>());
 
-    private List<String> getProcessorUuidList(final Collection<Condition> conditions) {
-        return JooqUtil.contextResult(metaDbConnProvider, context -> context
-                .select(metaProcessor.PROCESSOR_UUID)
-                .from(meta)
-                .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
-                .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
-                .where(conditions)
-                .groupBy(metaProcessor.PROCESSOR_UUID)
-                .fetch()
-                .map(Record1::value1));
+        return JooqUtil.contextResult(metaDbConnProvider, context -> {
+
+            SelectJoinStep<Record1<String>> select = context
+                    .select(metaProcessor.PROCESSOR_UUID)
+                    .from(meta);
+
+            select = select
+                    .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                    .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                    .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID));
+
+            // If the criteria contain many terms that come from meta_val then we need to join
+            // to meta_val multiple times, each time with a new table alias
+            select = metaExpressionMapper.addJoins(select, meta.ID, usedValKeys);
+
+            return select
+                    .where(conditions)
+                    .groupBy(metaProcessor.PROCESSOR_UUID)
+                    .fetch()
+                    .map(Record1::value1);
+        });
     }
 }
