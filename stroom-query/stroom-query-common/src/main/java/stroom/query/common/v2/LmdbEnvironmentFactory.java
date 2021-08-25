@@ -119,12 +119,14 @@ public class LmdbEnvironmentFactory {
         // set it larger than the amount of free space on the filesystem.
 
         final EnvFlags[] envFlags;
+
+        // MDB_NOTLS means the reader slots created in LMDB are tied to the tx and not the thread.
+        // As we are often using thread pools, threads no longer doing LMDB work may be holding on
+        // to reader slots.  NOTLS seems to be the default in the python and go LMDB libs.
         if (lmdbConfig.isReadAheadEnabled()) {
-            //EnvFlags.MDB_WRITEMAP, EnvFlags.MDB_MAPASYNC};
-            envFlags = new EnvFlags[]{};
+            envFlags = new EnvFlags[]{EnvFlags.MDB_NOTLS};
         } else {
-            //, EnvFlags.MDB_WRITEMAP, EnvFlags.MDB_MAPASYNC};
-            envFlags = new EnvFlags[]{EnvFlags.MDB_NORDAHEAD};
+            envFlags = new EnvFlags[]{EnvFlags.MDB_NOTLS, EnvFlags.MDB_NORDAHEAD};
         }
 
         final Env<ByteBuffer> env = Env.create()
