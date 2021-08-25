@@ -25,7 +25,6 @@ import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeResource;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.date.DateUtil;
 import stroom.util.entityevent.EntityAction;
@@ -141,8 +140,7 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
             pendingUpdate.set(false);
             final Runnable runnable = taskContextFactory.context(
                     "Create Cluster State",
-                    taskContext ->
-                            exec(taskContext, clusterState, taskDelay, true));
+                    taskContext -> exec(clusterState, taskDelay, true));
             CompletableFuture
                     .runAsync(runnable, executor)
                     .whenComplete((r, t) -> {
@@ -216,8 +214,7 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
                 // remote nodes to determine active status.
                 final Runnable runnable = taskContextFactory.context(
                         "Create Cluster State",
-                        taskContext ->
-                                exec(taskContext, clusterState, 0, false));
+                        taskContext -> exec(clusterState, 0, false));
                 runnable.run();
             });
         }
@@ -286,7 +283,7 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
      */
     @Override
     public void onChange(final EntityEvent event) {
-        // Force this node to redo it's cluster state.
+        // Force this node to redo its cluster state.
         updateClusterStateAsync(REQUERY_DELAY, true);
     }
 
@@ -302,8 +299,7 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
     }
 
 
-    public void exec(final TaskContext taskContext,
-                     final ClusterState clusterState,
+    public void exec(final ClusterState clusterState,
                      final int delay,
                      final boolean testActiveNodes) {
         securityContext.secure(() -> {
@@ -316,7 +312,7 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
                     Thread.sleep(delay);
                 }
 
-                updateState(taskContext, clusterState, testActiveNodes);
+                updateState(clusterState, testActiveNodes);
             } catch (final InterruptedException e) {
                 LOGGER.debug(e.getMessage(), e);
 
@@ -326,8 +322,7 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
         });
     }
 
-    private void updateState(final TaskContext taskContext,
-                             final ClusterState clusterState,
+    private void updateState(final ClusterState clusterState,
                              final boolean testActiveNodes) {
         final String thisNodeName = nodeInfo.getThisNodeName();
 
@@ -349,7 +344,7 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
         // Create a set of active nodes, i.e. nodes we can contact at this
         // time.
         if (testActiveNodes) {
-            updateActiveNodes(taskContext, clusterState, thisNodeName, enabledNodesByPriority);
+            updateActiveNodes(clusterState, thisNodeName, enabledNodesByPriority);
 
             updateMasterNode(enabledNodesByPriority);
         }
@@ -382,8 +377,7 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
         }
     }
 
-    private void updateActiveNodes(final TaskContext parentContext,
-                                   final ClusterState clusterState,
+    private void updateActiveNodes(final ClusterState clusterState,
                                    final String thisNodeName,
                                    final List<String> enabledNodesByPriority) {
         // Only retain active nodes that are currently enabled.
@@ -397,7 +391,6 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
                 clusterState.addEnabledActiveNode(nodeName);
             } else {
                 final Runnable runnable = taskContextFactory.context(
-                        parentContext,
                         "Pinging node " + nodeName,
                         taskContext -> {
                             taskContext.info(() -> "Pinging node " + nodeName);

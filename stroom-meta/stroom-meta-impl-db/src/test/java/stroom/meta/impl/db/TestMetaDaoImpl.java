@@ -35,6 +35,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.mock.MockSecurityContextModule;
+import stroom.task.mock.MockTaskModule;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.util.shared.ResultPage;
 
@@ -65,15 +66,16 @@ class TestMetaDaoImpl {
     @BeforeEach
     void setup() {
         Guice.createInjector(
-                new MetaTestModule(),
-                new MetaDbModule(),
-                new MockClusterLockModule(),
-                new MockSecurityContextModule(),
-                new MockCollectionModule(),
-                new MockDocRefInfoModule(),
-                new MockWordListProviderModule(),
-                new CacheModule(),
-                new DbTestModule())
+                        new MetaTestModule(),
+                        new MetaDbModule(),
+                        new MockClusterLockModule(),
+                        new MockSecurityContextModule(),
+                        new MockTaskModule(),
+                        new MockCollectionModule(),
+                        new MockDocRefInfoModule(),
+                        new MockWordListProviderModule(),
+                        new CacheModule(),
+                        new DbTestModule())
                 .injectMembers(this);
         // Delete everything`
         cleanup.cleanup();

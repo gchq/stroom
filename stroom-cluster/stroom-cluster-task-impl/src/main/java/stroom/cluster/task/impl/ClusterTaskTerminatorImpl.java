@@ -72,7 +72,6 @@ public class ClusterTaskTerminatorImpl implements ClusterTaskTerminator {
                 // Send the entity event.
                 targetNodes.forEach(nodeName -> {
                     final Runnable runnable = taskContextFactory.context(
-                            parentContext,
                             "Terminate '" + taskName + "' on node '" + nodeName + "'",
                             taskContext -> {
                                 try {

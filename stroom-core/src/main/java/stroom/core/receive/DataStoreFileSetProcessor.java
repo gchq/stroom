@@ -28,7 +28,7 @@ import stroom.proxy.repo.FileSetKey;
 import stroom.proxy.repo.FileSetProcessor;
 import stroom.proxy.repo.ProxyFileHandler;
 import stroom.receive.common.StreamTargetStroomStreamHandler;
-import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TaskContext;
 import stroom.util.io.BufferFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -63,19 +63,19 @@ public final class DataStoreFileSetProcessor implements FileSetProcessor {
     private final FeedProperties feedProperties;
     private final MetaStatistics metaStatistics;
     private final boolean aggregate = true;
-    private final TaskContextFactory taskContextFactory;
+    private final TaskContext taskContext;
     private final ProxyFileHandler proxyFileHandler;
 
     @Inject
     DataStoreFileSetProcessor(final Store store,
                               final FeedProperties feedProperties,
                               final MetaStatistics metaStatistics,
-                              final TaskContextFactory taskContextFactory,
+                              final TaskContext taskContext,
                               final BufferFactory bufferFactory) {
         this.store = store;
         this.feedProperties = feedProperties;
         this.metaStatistics = metaStatistics;
-        this.taskContextFactory = taskContextFactory;
+        this.taskContext = taskContext;
 
         proxyFileHandler = new ProxyFileHandler(bufferFactory);
     }
@@ -86,70 +86,67 @@ public final class DataStoreFileSetProcessor implements FileSetProcessor {
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
             final FileSetKey key = fileSet.getKey();
-            taskContextFactory.context("Processing set - " + key, taskContext -> {
-                LOGGER.info(() -> LogUtil.message("processFeedFiles() - Started {} ({} Files)",
-                        key, fileSet.getFiles().size()));
+            LOGGER.info(() -> "Processing set - " + key + "(" + fileSet.getFiles().size() + ")");
 
-                // Sort the files in the file set so there is some consistency to processing.
-                fileSet.getFiles().sort(Comparator.comparing(p -> p.getFileName().toString()));
-                LOGGER.debug(() -> LogUtil.message("process() - {} {}", key, fileSet.getFiles()));
+            // Sort the files in the file set so there is some consistency to processing.
+            fileSet.getFiles().sort(Comparator.comparing(p -> p.getFileName().toString()));
+            LOGGER.debug(() -> LogUtil.message("process() - {} {}", key, fileSet.getFiles()));
 
-                final String feedName = key.getFeedName();
+            final String feedName = key.getFeedName();
 
-                String typeName = Optional.ofNullable(key.getTypeName())
-                        .map(String::trim)
-                        .orElse("");
-                if (typeName.isEmpty()) {
-                    // Get the default type name for this feed if none has been provided.
-                    typeName = feedProperties.getStreamTypeName(feedName);
+            String typeName = Optional.ofNullable(key.getTypeName())
+                    .map(String::trim)
+                    .orElse("");
+            if (typeName.isEmpty()) {
+                // Get the default type name for this feed if none has been provided.
+                typeName = feedProperties.getStreamTypeName(feedName);
+            }
+
+            // We don't want to aggregate reference feeds.
+            final boolean oneByOne = feedProperties.isReference(feedName) || !aggregate;
+
+            List<StreamTargetStroomStreamHandler> handlers = openStreamHandlers(feedName, typeName, oneByOne);
+            List<Path> deleteFileList = new ArrayList<>();
+
+            long sequence = 1;
+            long count = 0;
+
+            final StreamProgressMonitor streamProgressMonitor = new StreamProgressMonitor(
+                    "ProxyAggregationTask");
+
+            for (final Path file : fileSet.getFiles()) {
+                count++;
+                final long c = count;
+                taskContext.info(() -> "File " + c + " of " + fileSet.getFiles().size());
+
+                if (Thread.currentThread().isInterrupted()) {
+                    break;
                 }
+                try {
+                    if (sequence > 1 && oneByOne) {
+                        // Close off this unit
+                        handlers = closeStreamHandlers(handlers);
 
-                // We don't want to aggregate reference feeds.
-                final boolean oneByOne = feedProperties.isReference(feedName) || !aggregate;
+                        // Delete the done files
+                        cleanup(deleteFileList);
 
-                List<StreamTargetStroomStreamHandler> handlers = openStreamHandlers(feedName, typeName, oneByOne);
-                List<Path> deleteFileList = new ArrayList<>();
-
-                long sequence = 1;
-                long count = 0;
-
-                final StreamProgressMonitor streamProgressMonitor = new StreamProgressMonitor(
-                        "ProxyAggregationTask");
-
-                for (final Path file : fileSet.getFiles()) {
-                    count++;
-                    final long c = count;
-                    taskContext.info(() -> "File " + c + " of " + fileSet.getFiles().size());
-
-                    if (Thread.currentThread().isInterrupted()) {
-                        break;
+                        // Start new batch
+                        deleteFileList = new ArrayList<>();
+                        handlers = openStreamHandlers(feedName, typeName, oneByOne);
+                        sequence = 1;
                     }
-                    try {
-                        if (sequence > 1 && oneByOne) {
-                            // Close off this unit
-                            handlers = closeStreamHandlers(handlers);
 
-                            // Delete the done files
-                            cleanup(deleteFileList);
+                    sequence = proxyFileHandler.processFeedFile(handlers, file, streamProgressMonitor, sequence);
+                    deleteFileList.add(file);
 
-                            // Start new batch
-                            deleteFileList = new ArrayList<>();
-                            handlers = openStreamHandlers(feedName, typeName, oneByOne);
-                            sequence = 1;
-                        }
-
-                        sequence = proxyFileHandler.processFeedFile(handlers, file, streamProgressMonitor, sequence);
-                        deleteFileList.add(file);
-
-                    } catch (final IOException | RuntimeException e) {
-                        LOGGER.error(e::getMessage, e);
-                        handlers = closeDeleteStreamHandlers(handlers);
-                    }
+                } catch (final IOException | RuntimeException e) {
+                    LOGGER.error(e::getMessage, e);
+                    handlers = closeDeleteStreamHandlers(handlers);
                 }
-                closeStreamHandlers(handlers);
-                cleanup(deleteFileList);
-                LOGGER.info(LogUtil.message("processFeedFiles() - Completed {} in {}", feedName, logExecutionTime));
-            }).run();
+            }
+            closeStreamHandlers(handlers);
+            cleanup(deleteFileList);
+            LOGGER.info(LogUtil.message("processFeedFiles() - Completed {} in {}", feedName, logExecutionTime));
         }
     }
 

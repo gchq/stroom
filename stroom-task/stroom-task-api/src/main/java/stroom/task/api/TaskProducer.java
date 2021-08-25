@@ -79,7 +79,7 @@ public abstract class TaskProducer {
                 };
 
                 // Wrap the runnable so that we get task info and execute with the right permissions etc.
-                runnable = taskContextFactory.context(parentContext, taskName, consumer);
+                runnable = taskContextFactory.childContext(parentContext, taskName, consumer);
             }
         }
 

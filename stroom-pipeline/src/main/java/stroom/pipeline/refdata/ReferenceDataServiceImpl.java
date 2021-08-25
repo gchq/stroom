@@ -228,23 +228,21 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         // TODO @AT This is a lot of cross over between ReferenceData and ReferenceDataServiceImpl
 
         return securityContext.secureResult(PermissionNames.VIEW_DATA_PERMISSION, () ->
-                taskContextFactory.contextResult("Reference Data Lookup (API)",
-                        taskContext ->
-                                LOGGER.logDurationIfDebugEnabled(
-                                        () ->
-                                                performLookup(refDataLookupRequest),
-                                        LogUtil.message("Performing lookup for {}", refDataLookupRequest))))
+                        taskContextFactory.contextResult("Reference Data Lookup (API)",
+                                taskContext ->
+                                        LOGGER.logDurationIfDebugEnabled(
+                                                () ->
+                                                        performLookup(refDataLookupRequest),
+                                                LogUtil.message("Performing lookup for {}", refDataLookupRequest))))
                 .get();
     }
 
     @Override
     public void purge(final StroomDuration purgeAge) {
         securityContext.secure(PermissionNames.MANAGE_CACHE_PERMISSION, () ->
-                taskContextFactory.context("Reference Data Purge",
-                        taskContext ->
+                taskContextFactory.context("Reference Data Purge", taskContext ->
                                 LOGGER.logDurationIfDebugEnabled(
-                                        () ->
-                                                performPurge(purgeAge),
+                                        () -> performPurge(purgeAge),
                                         LogUtil.message("Performing Purge for entries older than {}", purgeAge)))
                         .run());
 

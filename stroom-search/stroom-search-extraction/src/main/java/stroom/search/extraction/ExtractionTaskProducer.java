@@ -145,7 +145,7 @@ class ExtractionTaskProducer extends TaskProducer {
                 }
             });
         };
-        final Runnable runnable = taskContextFactory.context(parentContext, "Extraction Task Mapper", consumer);
+        final Runnable runnable = taskContextFactory.childContext(parentContext, "Extraction Task Mapper", consumer);
         final Executor executor = executorProvider.get(ExtractionTaskExecutor.THREAD_POOL);
         CompletableFuture.runAsync(runnable, executor);
     }

@@ -252,6 +252,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
 
             // Update the meta data for all output streams to use.
             metaData.put("Source Stream", String.valueOf(meta.getId()));
+            metaData.put("Processing Node", nodeInfo.getThisNodeName());
 
             // Set the search id to be the id of the stream processor filter.
             // Only do this where the task has specific data ranges that need extracting as this is only the case

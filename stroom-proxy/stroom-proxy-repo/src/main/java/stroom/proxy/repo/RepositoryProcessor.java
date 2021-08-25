@@ -209,7 +209,7 @@ public final class RepositoryProcessor {
             // Did we reach the file scan limit?
             return fileCount.get() >= maxFileScan;
         };
-        final Supplier<Boolean> supplier = taskContextFactory.contextResult(parentContext,
+        final Supplier<Boolean> supplier = taskContextFactory.childContextResult(parentContext,
                 "Fragmenting Repository - " + repoDir,
                 function);
         return supplier.get();
@@ -286,7 +286,7 @@ public final class RepositoryProcessor {
             // Complete processing remaining file sets.
             zipInfoConsumer.complete();
         };
-        final Runnable runnable = taskContextFactory.context(parentContext,
+        final Runnable runnable = taskContextFactory.childContext(parentContext,
                 "Aggregating Repository - " + repoDir,
                 consumer);
         runnable.run();
@@ -403,7 +403,7 @@ public final class RepositoryProcessor {
             totalMappedFiles -= fileSet.getFiles().size();
 
             try {
-                final Runnable runnable = taskContextFactory.context(parentContext,
+                final Runnable runnable = taskContextFactory.childContext(parentContext,
                         "File Set Processor",
                         taskContext -> {
                             final FileSetProcessor fileSetProcessor = fileSetProcessorProvider.get();
@@ -457,7 +457,7 @@ public final class RepositoryProcessor {
 
         public void process(final Path file) {
             try {
-                final Runnable runnable = taskContextFactory.context(
+                final Runnable runnable = taskContextFactory.childContext(
                         parentContext,
                         "Fragment",
                         taskContext -> {
@@ -517,7 +517,7 @@ public final class RepositoryProcessor {
 
         public void process(final Path file, final BasicFileAttributes attrs) {
             try {
-                final Runnable runnable = taskContextFactory.context(
+                final Runnable runnable = taskContextFactory.childContext(
                         parentContext,
                         "Extract Zip Info",
                         taskContext -> {

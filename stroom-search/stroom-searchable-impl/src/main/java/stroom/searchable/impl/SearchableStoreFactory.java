@@ -3,7 +3,6 @@ package stroom.searchable.impl;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
-import stroom.query.api.v2.Query;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;

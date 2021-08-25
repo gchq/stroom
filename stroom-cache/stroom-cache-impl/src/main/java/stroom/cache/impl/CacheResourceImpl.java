@@ -143,11 +143,12 @@ class CacheResourceImpl implements CacheResource {
                 parentContext -> {
                     final Long count = allNodes.stream()
                             .map(nodeName -> {
-                                final Supplier<Long> supplier = taskContextFactory.get().contextResult(parentContext,
-                                        LogUtil.message("Clearing cache [{}] on node [{}]",
-                                                cacheName, nodeName),
-                                        taskContext ->
-                                                clearCache(cacheName, nodeName));
+                                final Supplier<Long> supplier = taskContextFactory.get()
+                                        .childContextResult(parentContext,
+                                                LogUtil.message("Clearing cache [{}] on node [{}]",
+                                                        cacheName, nodeName),
+                                                taskContext ->
+                                                        clearCache(cacheName, nodeName));
 
                                 return CompletableFuture
                                         .supplyAsync(supplier)

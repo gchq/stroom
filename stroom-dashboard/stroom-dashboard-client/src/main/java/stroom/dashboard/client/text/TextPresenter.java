@@ -615,7 +615,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
     @Override
     public void link() {
         final String tableId = getTextSettings().getTableId();
-        String newTableId = getComponents().validateOrGetFirstComponentId(tableId, TablePresenter.TYPE.getId());
+        String newTableId = getComponents().validateOrGetLastComponentId(tableId, TablePresenter.TYPE.getId());
 
         // If we can't get the same table id then set to null so that changes to any table can be listened to.
         if (!EqualsUtil.isEquals(tableId, newTableId)) {

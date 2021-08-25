@@ -88,7 +88,7 @@ public class DataUploadTaskHandler {
                            final String streamTypeName,
                            final Long effectiveMs,
                            final String metaData) {
-        taskContextFactory.context("Download Data", taskContext ->
+        taskContextFactory.context("Upload Data", taskContext ->
                 uploadData(taskContext, fileName, file, feedName, streamTypeName, effectiveMs, metaData)).run();
     }
 
