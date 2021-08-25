@@ -177,12 +177,14 @@ public class SearchResponseCreator {
                 results = null;
             }
 
-            final List<String> errors = buildErrorList(store, results);
+            final List<String> errors = buildCompoundErrorList(store, results);
 
             final SearchResponse searchResponse = new SearchResponse(
                     store.getHighlights(),
                     results,
-                    errors,
+                    errors.isEmpty()
+                            ? null
+                            : errors,
                     complete);
 
             if (complete) {
@@ -202,7 +204,7 @@ public class SearchResponseCreator {
         }
     }
 
-    private List<String> buildErrorList(final Store store, final List<Result> results) {
+    private List<String> buildCompoundErrorList(final Store store, final List<Result> results) {
         List<String> errors = new ArrayList<>();
         if (store.getErrors() != null) {
             errors.addAll(store.getErrors());
