@@ -58,7 +58,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -73,6 +72,7 @@ public class LmdbDataStore implements DataStore {
     private static final int MAX_VALUE_SIZE = (int) ByteSizeUnit.MEBIBYTE.longBytes(1);
     private static final int MIN_PAYLOAD_SIZE = (int) ByteSizeUnit.MEBIBYTE.longBytes(1);
     private static final int MAX_PAYLOAD_SIZE = (int) ByteSizeUnit.GIBIBYTE.longBytes(1);
+    private static final Executor EXECUTOR = new TransferThreadPool().getExecutor();
 
     private static final long COMMIT_FREQUENCY_MS = 1000;
     private final LmdbEnvironment environment;
@@ -141,9 +141,7 @@ public class LmdbDataStore implements DataStore {
         this.hasSort = hasSort;
 
         // Start transfer loop.
-        // TODO : Use provided executor but don't allow it to be terminated by search termination.
-        final Executor executor = Executors.newSingleThreadExecutor();
-        executor.execute(this::transfer);
+        EXECUTOR.execute(this::transfer);
     }
 
     /**
@@ -350,7 +348,14 @@ public class LmdbDataStore implements DataStore {
                 // Continue to interrupt.
                 Thread.currentThread().interrupt();
             } finally {
-                shutdown(writeTxn);
+                try {
+                    // Ensure the write transaction is closed.
+                    writeTxn.close();
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e.getMessage(), e);
+                }
+                // Let everything know we are actually complete.
+                complete.countDown();
             }
         });
     }
@@ -477,41 +482,6 @@ public class LmdbDataStore implements DataStore {
 
             return existing;
         });
-    }
-
-    private synchronized void shutdown(final Txn<ByteBuffer> writeTxn) {
-        LOGGER.debug("Shutdown called");
-        if (!shutdown.get()) {
-            try {
-                try {
-                    writeTxn.close();
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e.getMessage(), e);
-                }
-
-                try {
-                    dbi.close();
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e.getMessage(), e);
-                }
-
-                try {
-                    environment.close();
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e.getMessage(), e);
-                }
-
-                try {
-                    environment.delete();
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e.getMessage(), e);
-                }
-            } finally {
-                resultCount.set(0);
-                totalResultCount.set(0);
-                shutdown.set(true);
-            }
-        }
     }
 
     private byte[] createPayload(final Txn<ByteBuffer> writeTxn, final Dbi<ByteBuffer> dbi) {
@@ -698,10 +668,47 @@ public class LmdbDataStore implements DataStore {
         running.set(false);
         // Clear the queue for good measure.
         queue.clear();
-        // Ensure we complete.
-        complete.countDown();
         // If the transfer loop is waiting on new queue items ensure it loops once more.
         completionState.complete();
+
+        try {
+            completionState.awaitCompletion();
+        } catch (final InterruptedException e) {
+            LOGGER.debug(e.getMessage(), e);
+            // Keep interrupting.
+            Thread.currentThread().interrupt();
+        } finally {
+            shutdown();
+        }
+    }
+
+    private void shutdown() {
+        LOGGER.debug("Shutdown called");
+        if (!shutdown.get()) {
+            try {
+                try {
+                    dbi.close();
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e.getMessage(), e);
+                }
+
+                try {
+                    environment.close();
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e.getMessage(), e);
+                }
+
+                try {
+                    environment.delete();
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e.getMessage(), e);
+                }
+            } finally {
+                resultCount.set(0);
+                totalResultCount.set(0);
+                shutdown.set(true);
+            }
+        }
     }
 
     /**
@@ -786,28 +793,14 @@ public class LmdbDataStore implements DataStore {
                 payloads.add(payload);
             }
 
-            if (complete && running.get()) {
-                // If we are complete and running then we ought to be able to get the run loop to create a final
-                // payload.
-                final CountDownLatch countDownLatch = new CountDownLatch(1);
-                try {
-                    queue.put(new QueueItem() {
-                        @Override
-                        public void complete() {
-                            countDownLatch.countDown();
-                        }
-                    });
-                    if (!countDownLatch.await(1, TimeUnit.MINUTES)) {
-                        LOGGER.error("Timeout waiting for final payload creation");
+            if (complete) {
+                // If we are complete then the transfer queue must no longer be running.
+                // As this is the case we must create a new write transaction to create the final payload.
+                try (Txn<ByteBuffer> writeTxn = environment.txnWrite()) {
+                    final byte[] finalPayload = createPayload(writeTxn, dbi);
+                    if (finalPayload != null) {
+                        payloads.add(finalPayload);
                     }
-                } catch (final InterruptedException e) {
-                    LOGGER.debug(e.getMessage(), e);
-                    Thread.currentThread().interrupt();
-                }
-
-                final byte[] finalPayload = currentPayload.getAndSet(null);
-                if (finalPayload != null) {
-                    payloads.add(finalPayload);
                 }
             }
 
@@ -1047,7 +1040,7 @@ public class LmdbDataStore implements DataStore {
         public void complete() {
             if (!isComplete()) {
                 try {
-                    if (Thread.currentThread().isInterrupted() || !lmdbDataStore.running.get()) {
+                    if (Thread.currentThread().isInterrupted()) {
                         complete.countDown();
                     } else {
                         // Add a countdown latch to the transfer queue so we only return complete after the transfer
@@ -1055,7 +1048,7 @@ public class LmdbDataStore implements DataStore {
                         lmdbDataStore.queue.put(new QueueItem() {
                             @Override
                             public void complete() {
-                                complete.countDown();
+                                lmdbDataStore.running.set(false);
                             }
                         });
                     }
