@@ -50,11 +50,6 @@ public class MockTaskModule extends AbstractModule {
             }
 
             @Override
-            public Runnable childContext(final String taskName, final Consumer<TaskContext> consumer) {
-                return () -> consumer.accept(getTaskContext());
-            }
-
-            @Override
             public Runnable childContext(final TaskContext parentContext,
                                          final String taskName,
                                          final Consumer<TaskContext> consumer) {
@@ -63,11 +58,6 @@ public class MockTaskModule extends AbstractModule {
 
             @Override
             public <R> Supplier<R> contextResult(final String taskName, final Function<TaskContext, R> function) {
-                return () -> function.apply(getTaskContext());
-            }
-
-            @Override
-            public <R> Supplier<R> childContextResult(final String taskName, final Function<TaskContext, R> function) {
                 return () -> function.apply(getTaskContext());
             }
 

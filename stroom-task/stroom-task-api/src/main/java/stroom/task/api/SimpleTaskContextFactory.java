@@ -14,11 +14,6 @@ public class SimpleTaskContextFactory implements TaskContextFactory {
     }
 
     @Override
-    public Runnable childContext(final String taskName, final Consumer<TaskContext> consumer) {
-        return () -> consumer.accept(new SimpleTaskContext());
-    }
-
-    @Override
     public Runnable childContext(final TaskContext parentContext,
                                  final String taskName,
                                  final Consumer<TaskContext> consumer) {
@@ -32,14 +27,9 @@ public class SimpleTaskContextFactory implements TaskContextFactory {
     }
 
     @Override
-    public <R> Supplier<R> childContextResult(final String taskName, final Function<TaskContext, R> function) {
-        return () -> function.apply(new SimpleTaskContext());
-    }
-
-    @Override
     public <R> Supplier<R> childContextResult(final TaskContext parentContext,
-                                         final String taskName,
-                                         final Function<TaskContext, R> function) {
+                                              final String taskName,
+                                              final Function<TaskContext, R> function) {
         return () -> function.apply(new SimpleTaskContext());
     }
 }

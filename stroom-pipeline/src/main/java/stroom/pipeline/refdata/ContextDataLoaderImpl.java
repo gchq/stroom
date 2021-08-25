@@ -31,12 +31,15 @@ import javax.inject.Provider;
 public class ContextDataLoaderImpl implements ContextDataLoader {
 
     private final TaskContextFactory taskContextFactory;
+    private final TaskContext taskContext;
     private final Provider<ContextDataLoadTaskHandler> taskHandlerProvider;
 
     @Inject
     ContextDataLoaderImpl(final TaskContextFactory taskContextFactory,
+                          final TaskContext taskContext,
                           final Provider<ContextDataLoadTaskHandler> taskHandlerProvider) {
         this.taskContextFactory = taskContextFactory;
+        this.taskContext = taskContext;
         this.taskHandlerProvider = taskHandlerProvider;
     }
 
@@ -59,6 +62,7 @@ public class ContextDataLoaderImpl implements ContextDataLoader {
                                 refDataStore);
 
         final Runnable runnable = taskContextFactory.childContext(
+                taskContext,
                 "Load Context Data",
                 consumer);
         runnable.run();
