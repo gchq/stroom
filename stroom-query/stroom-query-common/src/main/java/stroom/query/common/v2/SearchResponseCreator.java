@@ -171,25 +171,18 @@ public class SearchResponseCreator {
                     ", isComplete: " +
                     store.isComplete());
 
-            final List<String> errors = new ArrayList<>();
-            if (store.getErrors() != null) {
-                errors.addAll(store.getErrors());
-            }
-
             List<Result> results = res;
+
             if (results.size() == 0) {
                 results = null;
-            } else {
-                errors.addAll(results.stream()
-                        .map(Result::getError)
-                        .distinct()
-                        .collect(Collectors.toList()));
             }
+
+            final List<String> errors = buildErrorList(store, results);
 
             final SearchResponse searchResponse = new SearchResponse(
                     store.getHighlights(),
                     results,
-                    errors.stream().distinct().collect(Collectors.toList()),
+                    errors,
                     complete);
 
             if (complete) {
@@ -207,6 +200,26 @@ public class SearchResponseCreator {
                             e.getMessage() +
                             "], see service's logs for details"));
         }
+    }
+
+    private List<String> buildErrorList(final Store store, final List<Result> results) {
+        List<String> errors = new ArrayList<>();
+        if (store.getErrors() != null) {
+            errors.addAll(store.getErrors());
+        }
+
+        if (results != null) {
+            final List<String> uniqueResultErrors = results.stream()
+                    .map(Result::getError)
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .collect(Collectors.toList());
+            errors.addAll(uniqueResultErrors);
+        }
+
+        return errors.stream()
+                .distinct()
+                .collect(Collectors.toList());
     }
 
     private Duration getEffectiveTimeout(final SearchRequest searchRequest) {
