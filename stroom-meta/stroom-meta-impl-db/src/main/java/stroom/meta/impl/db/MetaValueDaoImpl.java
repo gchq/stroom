@@ -23,6 +23,7 @@ import stroom.meta.impl.MetaKeyDao;
 import stroom.meta.impl.MetaValueConfig;
 import stroom.meta.impl.MetaValueDao;
 import stroom.meta.shared.Meta;
+import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -55,6 +56,7 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
     private final MetaKeyDao metaKeyService;
     private final MetaValueConfig metaValueConfig;
     private final ClusterLockService clusterLockService;
+    private final TaskContext taskContext;
 
     private volatile List<Row> queue = new ArrayList<>();
 
@@ -62,11 +64,13 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
     MetaValueDaoImpl(final MetaDbConnProvider metaDbConnProvider,
                      final MetaKeyDao metaKeyService,
                      final MetaValueConfig metaValueConfig,
-                     final ClusterLockService clusterLockService) {
+                     final ClusterLockService clusterLockService,
+                     final TaskContext taskContext) {
         this.metaDbConnProvider = metaDbConnProvider;
         this.metaKeyService = metaKeyService;
         this.metaValueConfig = metaValueConfig;
         this.clusterLockService = clusterLockService;
+        this.taskContext = taskContext;
     }
 
     @Override
@@ -113,6 +117,7 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
 
     @Override
     public void flush() {
+        taskContext.info(() -> "Flushing meta values to the DB");
         final Optional<List<Row>> optional = add(Collections.emptyList(), 1);
         optional.ifPresent(this::insertRecords);
     }
@@ -148,7 +153,8 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
         // Acquire a cluster lock before performing a batch delete to reduce db contention and to let a
         // single node do the job.
         clusterLockService.tryLock(LOCK_NAME, () -> {
-            final Long createTimeThresholdEpochMs = getAttributeCreateTimeThresholdEpochMs();
+            taskContext.info(() -> "Deleting old meta values");
+            final long createTimeThresholdEpochMs = getAttributeCreateTimeThresholdEpochMs();
             final int batchSize = metaValueConfig.getDeleteBatchSize();
             int count = batchSize;
             while (count >= batchSize) {
@@ -210,7 +216,7 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
     /**
      * @return The oldest data attribute that we should keep
      */
-    private Long getAttributeCreateTimeThresholdEpochMs() {
+    private long getAttributeCreateTimeThresholdEpochMs() {
         final Duration deleteAge = metaValueConfig.getDeleteAge().getDuration();
         return System.currentTimeMillis() - deleteAge.toMillis();
     }

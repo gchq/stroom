@@ -21,7 +21,6 @@ import stroom.cluster.lock.api.ClusterLockService;
 import stroom.docref.DocRef;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.task.api.TaskContext;
-import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -39,40 +38,35 @@ public class SolrIndexOptimiseExecutor {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SolrIndexOptimiseExecutor.class);
 
-    private static final String TASK_NAME = "Solr Index Optimise Executor";
     private static final String LOCK_NAME = "SolrIndexOptimiseExecutor";
 
     private final SolrIndexStore solrIndexStore;
     private final SolrIndexClientCache solrIndexClientCache;
     private final ClusterLockService clusterLockService;
-    private final TaskContextFactory taskContextFactory;
+    private final TaskContext taskContext;
 
     @Inject
     public SolrIndexOptimiseExecutor(final SolrIndexStore solrIndexStore,
                                      final SolrIndexClientCache solrIndexClientCache,
                                      final ClusterLockService clusterLockService,
-                                     final TaskContextFactory taskContextFactory) {
+                                     final TaskContext taskContext) {
         this.solrIndexStore = solrIndexStore;
         this.solrIndexClientCache = solrIndexClientCache;
         this.clusterLockService = clusterLockService;
-        this.taskContextFactory = taskContextFactory;
+        this.taskContext = taskContext;
     }
 
     public void exec() {
-        taskContextFactory.context(TASK_NAME, this::exec).run();
-    }
-
-    private void exec(final TaskContext taskContext) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        info(taskContext, () -> "Start");
+        info(() -> "Start");
         clusterLockService.tryLock(LOCK_NAME, () -> {
             try {
                 if (!Thread.currentThread().isInterrupted()) {
                     final List<DocRef> docRefs = solrIndexStore.list();
                     if (docRefs != null) {
-                        docRefs.forEach(docRef -> performRetention(taskContext, docRef));
+                        docRefs.forEach(this::performRetention);
                     }
-                    info(taskContext, () -> "Finished in " + logExecutionTime);
+                    info(() -> "Finished in " + logExecutionTime);
                 }
             } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
@@ -80,14 +74,14 @@ public class SolrIndexOptimiseExecutor {
         });
     }
 
-    private void performRetention(final TaskContext taskContext, final DocRef docRef) {
+    private void performRetention(final DocRef docRef) {
         if (!Thread.currentThread().isInterrupted()) {
             try {
                 final SolrIndexDoc solrIndexDoc = solrIndexStore.readDocument(docRef);
                 if (solrIndexDoc != null) {
                     solrIndexClientCache.context(solrIndexDoc.getSolrConnectionConfig(), solrClient -> {
                         try {
-                            info(taskContext, () -> "Optimising '" + solrIndexDoc.getName() + "'");
+                            info(() -> "Optimising '" + solrIndexDoc.getName() + "'");
                             solrClient.optimize(solrIndexDoc.getCollection());
                         } catch (final SolrServerException | IOException e) {
                             LOGGER.error(e::getMessage, e);
@@ -100,7 +94,7 @@ public class SolrIndexOptimiseExecutor {
         }
     }
 
-    private void info(final TaskContext taskContext, final Supplier<String> message) {
+    private void info(final Supplier<String> message) {
         taskContext.info(message);
         LOGGER.info(message);
     }

@@ -87,7 +87,7 @@ class ProcessorFactoryImpl implements ProcessorFactory {
         public void process() {
             final CountDownLatch countDownLatch = new CountDownLatch(processors.size());
             for (final Processor processor : processors) {
-                final Runnable runnable = taskContextFactory.context(taskContextFactory.currentContext(),
+                final Runnable runnable = taskContextFactory.childContext(
                         "Process",
                         taskContext -> processor.process());
                 CompletableFuture
@@ -104,8 +104,9 @@ class ProcessorFactoryImpl implements ProcessorFactory {
             }
 
             try {
-                while (!Thread.currentThread().isInterrupted() && countDownLatch.getCount() > 0) {
-                    countDownLatch.await(10, TimeUnit.SECONDS);
+                boolean success = false;
+                while (!Thread.currentThread().isInterrupted() && !success) {
+                    success = countDownLatch.await(10, TimeUnit.SECONDS);
                 }
             } catch (final InterruptedException e) {
                 LOGGER.error(e.getMessage(), e);

@@ -24,6 +24,7 @@ import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.concurrent.StripedLock;
 import stroom.util.io.FileUtil;
@@ -68,6 +69,7 @@ public class IndexShardManager {
     private final NodeInfo nodeInfo;
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
+    private final TaskContext taskContext;
     private final SecurityContext securityContext;
 
     private final StripedLock shardUpdateLocks = new StripedLock();
@@ -82,6 +84,7 @@ public class IndexShardManager {
                       final NodeInfo nodeInfo,
                       final Executor executor,
                       final TaskContextFactory taskContextFactory,
+                      final TaskContext taskContext,
                       final SecurityContext securityContext) {
         this.indexStore = indexStore;
         this.indexShardService = indexShardService;
@@ -89,6 +92,7 @@ public class IndexShardManager {
         this.nodeInfo = nodeInfo;
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
+        this.taskContext = taskContext;
         this.securityContext = securityContext;
 
         // Ensure all but deleted and corrupt states can be set to closed on clean.
@@ -256,6 +260,7 @@ public class IndexShardManager {
     }
 
     public void checkRetention() {
+        taskContext.info(() -> "Checking index shard retention");
         securityContext.secure(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
             final FindIndexShardCriteria criteria = FindIndexShardCriteria.matchAll();
             criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());

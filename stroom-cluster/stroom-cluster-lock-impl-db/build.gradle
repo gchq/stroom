@@ -10,7 +10,7 @@ dependencies {
     compile project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     compile project(':stroom-node:stroom-node-api')
     compile project(':stroom-security:stroom-security-api')
-//    compile project(':stroom-task:stroom-task-api')
+    compile project(':stroom-task:stroom-task-api')
     compile project(':stroom-job:stroom-job-api')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')

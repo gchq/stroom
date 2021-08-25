@@ -356,7 +356,7 @@ class TaskManagerImpl implements TaskManager {
 
         // For DEV testing uncomment this line to send dummy data to UI so you have some thing to
         // look at in the UI.
-//        final List<TaskProgress> taskProgressList = buildDummyTaskDataForTesting(fuzzyMatchPredicate);
+//        taskProgressList.addAll(buildDummyTaskDataForTesting(fuzzyMatchPredicate));
 //        if (LOGGER.isDebugEnabled()) {
 //            LOGGER.debug("taskProgressList:\n" + AsciiTable.from(taskProgressList));
 //        }
@@ -435,7 +435,9 @@ class TaskManagerImpl implements TaskManager {
     /**
      * This code is here to help UI testing in dev when you have no tasks to look at in the UI.
      * It produces a load of made up tasks
+     * Used in {@link TaskManagerImpl#doFind(FindTaskProgressCriteria)}
      */
+    @SuppressWarnings("unused") // Used in commented out debugging code
     private List<TaskProgress> buildDummyTaskDataForTesting(final Predicate<TaskProgress> fuzzyMatchPredicate) {
 
         AtomicInteger id = new AtomicInteger(0);

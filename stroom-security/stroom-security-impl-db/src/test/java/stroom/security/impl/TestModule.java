@@ -6,6 +6,7 @@ import stroom.security.impl.db.SecurityDbModule;
 import stroom.security.impl.event.PermissionChangeEventBus;
 import stroom.security.mock.MockProcessingUserIdentityProviderModule;
 import stroom.security.mock.MockSecurityContextModule;
+import stroom.task.mock.MockTaskModule;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.util.db.ForceLegacyMigration;
 import stroom.util.entityevent.EntityEventBus;
@@ -23,6 +24,7 @@ public class TestModule extends AbstractModule {
         install(new SecurityDbModule());
         install(new MockSecurityContextModule());
         install(new MockProcessingUserIdentityProviderModule());
+        install(new MockTaskModule());
 
         bind(UserAppPermissionService.class).to(UserAppPermissionServiceImpl.class);
         bind(UserService.class).to(UserServiceImpl.class);

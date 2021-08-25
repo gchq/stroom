@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2370** : Added processor node info to output meta data.
+
+* Issue **#2349** : New dashboard tables will now link to the most recently added query by default.
+
+* Issue **#2351** : Improved error popup text for server responses.
+
+* Issue **#2368** : Fixed server task nesting.
+
+* Issue **#2369** : Fix missing SQL join when reprocessing all streams matching a filter.
+
+* Issue **#2369** : Fix error when searching meta store from a dashboard with a meta key in the query.
+
+* Change explorer root node creation to happen under cluster lock.
+
 
 ## [v7.1-beta.4] - 2021-08-23
 

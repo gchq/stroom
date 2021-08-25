@@ -5,6 +5,7 @@ dependencies {
     compile project(':stroom-config:stroom-config-common')
     compile project(':stroom-core-shared')
     compile project(':stroom-docstore:stroom-docstore-api')
+    compile project(':stroom-cluster:stroom-cluster-lock-api')
 //    compile project(':stroom-db-util')
     compile project(':stroom-explorer:stroom-collection-api')
     compile project(':stroom-explorer:stroom-docrefinfo-api')

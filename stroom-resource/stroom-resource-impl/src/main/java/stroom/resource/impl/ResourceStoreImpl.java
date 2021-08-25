@@ -17,6 +17,7 @@
 package stroom.resource.impl;
 
 import stroom.resource.api.ResourceStore;
+import stroom.task.api.TaskContext;
 import stroom.util.io.FileUtil;
 import stroom.util.io.TempDirProvider;
 import stroom.util.shared.ResourceKey;
@@ -39,14 +40,17 @@ import javax.inject.Singleton;
 public class ResourceStoreImpl implements ResourceStore {
 
     private final TempDirProvider tempDirProvider;
+    private final TaskContext taskContext;
 
     private Set<ResourceKey> currentFiles = new HashSet<>();
     private Set<ResourceKey> oldFiles = new HashSet<>();
     private long sequence;
 
     @Inject
-    public ResourceStoreImpl(final TempDirProvider tempDirProvider) {
+    public ResourceStoreImpl(final TempDirProvider tempDirProvider,
+                             final TaskContext taskContext) {
         this.tempDirProvider = tempDirProvider;
+        this.taskContext = taskContext;
     }
 
     private Path getTempDir() {
@@ -98,6 +102,7 @@ public class ResourceStoreImpl implements ResourceStore {
     }
 
     void execute() {
+        taskContext.info(() -> "Deleting temp files");
         flipStore();
     }
 

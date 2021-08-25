@@ -26,6 +26,7 @@ import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.ListConfigResponse;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.task.api.TaskContext;
 import stroom.util.AuditUtil;
 import stroom.util.config.AppConfigValidator;
 import stroom.util.config.ConfigValidator;
@@ -89,16 +90,19 @@ public class GlobalConfigService {
     private final SecurityContext securityContext;
     private final ConfigMapper configMapper;
     private final AppConfigValidator appConfigValidator;
+    private final TaskContext taskContext;
 
     @Inject
     GlobalConfigService(final ConfigPropertyDao dao,
                         final SecurityContext securityContext,
                         final ConfigMapper configMapper,
-                        final AppConfigValidator appConfigValidator) {
+                        final AppConfigValidator appConfigValidator,
+                        final TaskContext taskContext) {
         this.dao = dao;
         this.securityContext = securityContext;
         this.configMapper = configMapper;
         this.appConfigValidator = appConfigValidator;
+        this.taskContext = taskContext;
 
         LOGGER.debug("Initialising GlobalConfigService");
         initialise();
@@ -143,6 +147,7 @@ public class GlobalConfigService {
      * Refresh in background
      */
     void updateConfigObjects() {
+        taskContext.info(() -> "Updating config from DB");
         updateConfigFromDb();
     }
 
@@ -176,10 +181,10 @@ public class GlobalConfigService {
             final Optional<Comparator<ConfigProperty>> optConfigPropertyComparator = buildComparator(criteria);
 
             return QuickFilterPredicateFactory.filterStream(
-                    criteria.getQuickFilterInput(),
-                    FIELD_MAPPERS,
-                    configMapper.getGlobalProperties().stream(),
-                    optConfigPropertyComparator.orElse(null))
+                            criteria.getQuickFilterInput(),
+                            FIELD_MAPPERS,
+                            configMapper.getGlobalProperties().stream(),
+                            optConfigPropertyComparator.orElse(null))
                     .collect(ListConfigResponse.collector(pageRequest, ListConfigResponse::new));
         });
     }

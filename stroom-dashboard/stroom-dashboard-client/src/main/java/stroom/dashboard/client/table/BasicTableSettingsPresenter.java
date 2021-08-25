@@ -36,6 +36,7 @@ import java.util.Objects;
 
 public class BasicTableSettingsPresenter
         extends BasicSettingsTabPresenter<BasicTableSettingsPresenter.BasicTableSettingsView> {
+
     private final EntityDropDownPresenter pipelinePresenter;
 
     @Inject
@@ -103,7 +104,7 @@ public class BasicTableSettingsPresenter
     public void read(final ComponentConfig componentData) {
         super.read(componentData);
 
-        final List<Component> list = getComponents().getComponentsByType(QueryPresenter.TYPE.getId());
+        final List<Component> list = getComponents().getSortedComponentsByType(QueryPresenter.TYPE.getId());
         setQueryList(list);
 
         final TableComponentSettings settings = (TableComponentSettings) componentData.getSettings();
@@ -185,6 +186,7 @@ public class BasicTableSettingsPresenter
     }
 
     public interface BasicTableSettingsView extends BasicSettingsTabPresenter.SettingsView {
+
         void setQueryList(List<Component> queryList);
 
         Component getQuery();

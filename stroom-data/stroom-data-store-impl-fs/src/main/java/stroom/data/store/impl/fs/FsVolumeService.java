@@ -12,6 +12,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
+import stroom.task.api.TaskContext;
 import stroom.util.AuditUtil;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
@@ -85,6 +86,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     private final PathCreator pathCreator;
     private final AtomicReference<VolumeList> currentVolumeList = new AtomicReference<>();
     private final NodeInfo nodeInfo;
+    private final TaskContext taskContext;
 
     private volatile boolean createdDefaultVolumes;
     private volatile boolean creatingDefaultVolumes;
@@ -98,7 +100,8 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                            final ClusterLockService clusterLockService,
                            final Provider<EntityEventBus> entityEventBusProvider,
                            final PathCreator pathCreator,
-                           final NodeInfo nodeInfo) {
+                           final NodeInfo nodeInfo,
+                           final TaskContext taskContext) {
         this.fsVolumeDao = fsVolumeDao;
         this.fileSystemVolumeStateDao = fileSystemVolumeStateDao;
         this.securityContext = securityContext;
@@ -108,6 +111,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         this.entityEventBusProvider = entityEventBusProvider;
         this.pathCreator = pathCreator;
         this.nodeInfo = nodeInfo;
+        this.taskContext = taskContext;
     }
 
     private static void registerVolumeSelector(final FsVolumeSelector volumeSelector) {
@@ -326,6 +330,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     }
 
     private VolumeList refresh() {
+        taskContext.info(() -> "Refreshing volumes");
         final long now = System.currentTimeMillis();
         final List<FsVolume> volumes = new ArrayList<>();
 
@@ -333,6 +338,8 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         findVolumeCriteria.addSort(FindFsVolumeCriteria.FIELD_ID, false, false);
         final List<FsVolume> volumeList = find(findVolumeCriteria).getValues();
         for (final FsVolume volume : volumeList) {
+            taskContext.info(() -> "Refreshing volume '" + volume.getPath() + "'");
+
             FsVolumeState volumeState = updateVolumeState(volume);
             volumeState = saveVolumeState(volumeState);
             volume.setVolumeState(volumeState);

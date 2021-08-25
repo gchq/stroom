@@ -44,37 +44,44 @@ public class MockTaskModule extends AbstractModule {
     TaskContextFactory getTaskContextFactory() {
         return new TaskContextFactory() {
             @Override
-            public Runnable context(final String taskName, final Consumer<TaskContext> consumer) {
-                return () -> consumer.accept(createTaskContext());
+            public Runnable context(final String taskName,
+                                    final Consumer<TaskContext> consumer) {
+                return () -> consumer.accept(getTaskContext());
             }
 
             @Override
-            public Runnable context(final TaskContext parentContext,
-                                    final String taskName,
-                                    final Consumer<TaskContext> consumer) {
-                return () -> consumer.accept(createTaskContext());
+            public Runnable childContext(final String taskName, final Consumer<TaskContext> consumer) {
+                return () -> consumer.accept(getTaskContext());
+            }
+
+            @Override
+            public Runnable childContext(final TaskContext parentContext,
+                                         final String taskName,
+                                         final Consumer<TaskContext> consumer) {
+                return () -> consumer.accept(getTaskContext());
             }
 
             @Override
             public <R> Supplier<R> contextResult(final String taskName, final Function<TaskContext, R> function) {
-                return () -> function.apply(createTaskContext());
+                return () -> function.apply(getTaskContext());
             }
 
             @Override
-            public <R> Supplier<R> contextResult(final TaskContext parentContext,
-                                                 final String taskName,
-                                                 final Function<TaskContext, R> function) {
-                return () -> function.apply(createTaskContext());
+            public <R> Supplier<R> childContextResult(final String taskName, final Function<TaskContext, R> function) {
+                return () -> function.apply(getTaskContext());
             }
 
             @Override
-            public TaskContext currentContext() {
-                return createTaskContext();
+            public <R> Supplier<R> childContextResult(final TaskContext parentContext,
+                                                      final String taskName,
+                                                      final Function<TaskContext, R> function) {
+                return () -> function.apply(getTaskContext());
             }
         };
     }
 
-    private TaskContext createTaskContext() {
+    @Provides
+    TaskContext getTaskContext() {
         return new TaskContext() {
             @Override
             public void info(final Supplier<String> messageSupplier) {
