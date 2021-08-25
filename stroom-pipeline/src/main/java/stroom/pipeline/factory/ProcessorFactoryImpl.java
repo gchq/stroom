@@ -20,6 +20,7 @@ import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ErrorStatistics;
 import stroom.pipeline.errorhandler.LoggedException;
+import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.pipeline.scope.PipelineScoped;
 import stroom.util.shared.Severity;
@@ -42,14 +43,17 @@ class ProcessorFactoryImpl implements ProcessorFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorFactoryImpl.class);
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
+    private final TaskContext taskContext;
     private final ErrorReceiverProxy errorReceiverProxy;
 
     @Inject
     public ProcessorFactoryImpl(final Executor executor,
                                 final TaskContextFactory taskContextFactory,
+                                final TaskContext taskContext,
                                 final ErrorReceiverProxy errorReceiverProxy) {
         this.executor = executor;
         this.taskContextFactory = taskContextFactory;
+        this.taskContext = taskContext;
         this.errorReceiverProxy = errorReceiverProxy;
     }
 
@@ -63,7 +67,7 @@ class ProcessorFactoryImpl implements ProcessorFactory {
             return processors.get(0);
         }
 
-        return new MultiWayProcessor(processors, executor, taskContextFactory, errorReceiverProxy);
+        return new MultiWayProcessor(processors, executor, taskContextFactory, taskContext, errorReceiverProxy);
     }
 
     static class MultiWayProcessor implements Processor {
@@ -71,15 +75,18 @@ class ProcessorFactoryImpl implements ProcessorFactory {
         private final List<Processor> processors;
         private final Executor executor;
         private final TaskContextFactory taskContextFactory;
+        private final TaskContext parentTaskContext;
         private final ErrorReceiver errorReceiver;
 
         MultiWayProcessor(final List<Processor> processors,
                           final Executor executor,
                           final TaskContextFactory taskContextFactory,
+                          final TaskContext parentTaskContext,
                           final ErrorReceiver errorReceiver) {
             this.processors = processors;
             this.executor = executor;
             this.taskContextFactory = taskContextFactory;
+            this.parentTaskContext = parentTaskContext;
             this.errorReceiver = errorReceiver;
         }
 
@@ -88,6 +95,7 @@ class ProcessorFactoryImpl implements ProcessorFactory {
             final CountDownLatch countDownLatch = new CountDownLatch(processors.size());
             for (final Processor processor : processors) {
                 final Runnable runnable = taskContextFactory.childContext(
+                        parentTaskContext,
                         "Process",
                         taskContext -> processor.process());
                 CompletableFuture
