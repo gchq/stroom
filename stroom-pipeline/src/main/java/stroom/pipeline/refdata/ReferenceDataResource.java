@@ -59,7 +59,8 @@ public interface ReferenceDataResource extends RestResource {
     @POST
     @Path(LOOKUP_SUB_PATH)
     @Operation(
-            summary = "Perform a reference data lookup using the supplied lookup request.",
+            summary = "Perform a reference data lookup using the supplied lookup request. " +
+                    "Reference data will be loaded if required using the supplied reference pipeline.",
             operationId = "lookupReferenceData")
     String lookup(@Valid @NotNull final RefDataLookupRequest refDataLookupRequest);
 
