@@ -201,7 +201,11 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
         this.byteBufferPool = byteBufferPool;
 
-        this.refStreamDefStripedReentrantLock = Striped.lazyWeakLock(100);
+        // Need a reasonable number to try and avoid keys that are not equal from using the
+        // same stripe
+        final int stripesCount = referenceDataConfig.getLoadingLockStripes();
+        LOGGER.debug("Initialising striped with {} stripes", stripesCount);
+        this.refStreamDefStripedReentrantLock = Striped.lazyWeakLock(stripesCount);
     }
 
     private Env<ByteBuffer> createEnvironment(final ReferenceDataConfig referenceDataConfig) {

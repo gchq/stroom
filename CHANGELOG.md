@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Change default number of ref loader lock stripes from 100 to 2048 and add it to config.
+
 
 ## [v7.0-beta.142] - 2021-08-26
 
