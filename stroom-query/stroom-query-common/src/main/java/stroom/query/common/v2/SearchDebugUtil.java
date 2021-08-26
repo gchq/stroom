@@ -7,6 +7,8 @@ import stroom.query.api.v2.Row;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.query.api.v2.TableResult;
+import stroom.util.io.DiffUtil;
+import stroom.util.io.FileUtil;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -15,7 +17,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -80,16 +81,20 @@ public class SearchDebugUtil {
     }
 
     private static void compareFiles(final Path pathForActualOutput, final Path pathForExpectedOutput) {
-        try {
-            final String actual = Files.readString(pathForActualOutput);
-            final String expected = Files.readString(pathForExpectedOutput);
 
-            if (!actual.equals(expected)) {
-                throw new RuntimeException("Files are not equal " + pathForActualOutput.toAbsolutePath() +
-                        " " + pathForExpectedOutput.toAbsolutePath());
-            }
-        } catch (final IOException e) {
-            throw new UncheckedIOException(e);
+        final boolean hasDifferences = DiffUtil.unifiedDiff(
+                pathForExpectedOutput,
+                pathForActualOutput,
+                true,
+                5);
+
+        if (hasDifferences) {
+            LOGGER.info("vimdiff {} {}",
+                    FileUtil.getCanonicalPath(pathForExpectedOutput),
+                    FileUtil.getCanonicalPath(pathForActualOutput));
+
+            throw new RuntimeException("Files are not equal " + pathForActualOutput.toAbsolutePath() +
+                    " " + pathForExpectedOutput.toAbsolutePath());
         }
     }
 

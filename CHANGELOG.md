@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2371** : Change search LMDB to use MDB_NOTLS flag to not tie readers to threads.
+
+* Issue **#2371** : Fix max readers error not being shown on dashboard.
+
 
 ## [v7.0-beta.141] - 2021-08-24
 
