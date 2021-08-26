@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Add method to ref data store API to list ref stream processing info.
+
+* Improve the ref data store API to allow filtering of the ref entries.
+
 * Change default number of ref loader lock stripes from 100 to 2048 and add it to config.
 
 
