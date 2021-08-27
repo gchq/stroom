@@ -52,6 +52,7 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestBasicLmdbDb extends AbstractLmdbDbTest {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestBasicLmdbDb.class);
     private final ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();
 
@@ -280,7 +281,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
         LmdbUtils.doWithReadTxn(lmdbEnv, txn -> {
 
             try (PooledByteBuffer pooledStartKeyBuffer = basicLmdbDb.getPooledKeyBuffer();
-                 PooledByteBuffer pooledEndKeyBuffer = basicLmdbDb.getPooledKeyBuffer()) {
+                    PooledByteBuffer pooledEndKeyBuffer = basicLmdbDb.getPooledKeyBuffer()) {
 
                 ByteBuffer startKeyBuffer = pooledStartKeyBuffer.getByteBuffer();
                 ByteBuffer endKeyBuffer = pooledEndKeyBuffer.getByteBuffer();
@@ -555,6 +556,16 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
         }
         LOGGER.info("entry count: " + basicLmdbDb3.getEntryCount());
         LOGGER.info("entry count: " + basicLmdbDb4.getEntryCount());
+    }
+
+    @Test
+    void testMaxReaders() {
+        Assertions.assertThat(lmdbEnv.info().numReaders)
+                .isEqualTo(0);
+        populateDb();
+        // Show that writes to the db do not effect the num readers high water mark
+        Assertions.assertThat(lmdbEnv.info().numReaders)
+                .isEqualTo(0);
     }
 
     private void populateDb() {
