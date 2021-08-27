@@ -1,8 +1,10 @@
 package stroom.pipeline.refdata.store;
 
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
@@ -12,13 +14,17 @@ import java.util.Set;
 @JsonInclude(Include.NON_NULL)
 public class RefStreamProcessingInfo {
 
+    @JsonProperty
     private final RefStreamDefinition refStreamDefinition;
+    @JsonProperty
     private final RefDataProcessingInfo refDataProcessingInfo;
+    @JsonProperty
     private final Set<String> mapNames;
 
-    public RefStreamProcessingInfo(final RefStreamDefinition refStreamDefinition,
-                                   final RefDataProcessingInfo refDataProcessingInfo,
-                                   final Set<String> mapNames) {
+    @JsonCreator
+    public RefStreamProcessingInfo(@JsonProperty("refStreamDefinition") final RefStreamDefinition refStreamDefinition,
+                                   @JsonProperty("refDataProcessingInfo") final RefDataProcessingInfo refDataProcessingInfo,
+                                   @JsonProperty("mapNames") final Set<String> mapNames) {
         this.refStreamDefinition = Objects.requireNonNull(refStreamDefinition);
         this.refDataProcessingInfo = Objects.requireNonNull(refDataProcessingInfo);
         this.mapNames = Objects.requireNonNull(mapNames);
