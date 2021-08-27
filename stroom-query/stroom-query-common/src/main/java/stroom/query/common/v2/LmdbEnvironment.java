@@ -13,6 +13,8 @@ import org.lmdbjava.Txn;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.concurrent.Semaphore;
+import java.util.function.Consumer;
 
 public class LmdbEnvironment {
 
@@ -20,19 +22,23 @@ public class LmdbEnvironment {
 
     private final Path path;
     private final Env<ByteBuffer> env;
+    private final Semaphore activeReadTransactionsSemaphore;
 
     public LmdbEnvironment(final Path path,
                            final Env<ByteBuffer> env) {
         this.path = path;
         this.env = env;
+        // Limit concurrent readers java side to ensure we don't get a max readers reached error
+        final int maxReaders = env.info().maxReaders;
+        LOGGER.debug("Initialising activeReadTransactionsSemaphore with {} permits", maxReaders);
+        this.activeReadTransactionsSemaphore = new Semaphore(maxReaders);
     }
 
     public Dbi<ByteBuffer> openDbi(final String name) {
         LOGGER.debug(() -> "Opening LMDB database with name: " + name);
         final byte[] nameBytes = toBytes(name);
         try {
-            final Dbi<ByteBuffer> dbi = env.openDbi(nameBytes, DbiFlags.MDB_CREATE);
-            return dbi;
+            return env.openDbi(nameBytes, DbiFlags.MDB_CREATE);
         } catch (final Exception e) {
             final String message = LogUtil.message("Error opening LMDB database '{}' in '{}' ({})",
                     name,
@@ -45,11 +51,31 @@ public class LmdbEnvironment {
     }
 
     Txn<ByteBuffer> txnWrite() {
+        LOGGER.debug("About to open write tx");
         return env.txnWrite();
     }
 
-    Txn<ByteBuffer> txnRead() {
-        return env.txnRead();
+    void doWithReadTxn(final Consumer<Txn<ByteBuffer>> work) {
+        try {
+            LOGGER.debug("About to acquire permit");
+            activeReadTransactionsSemaphore.acquire();
+            LOGGER.debug("Permit acquired");
+
+            try (final Txn<ByteBuffer> txn = env.txnRead()) {
+                LOGGER.debug("Performing work with read txn");
+                work.accept(txn);
+            } catch (RuntimeException e) {
+                throw new RuntimeException(LogUtil.message(
+                        "Error performing work in read transaction: {}",
+                        e.getMessage()), e);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Thread interrupted", e);
+        } finally {
+            LOGGER.debug("Releasing permit");
+            activeReadTransactionsSemaphore.release();
+        }
     }
 
     void close() {

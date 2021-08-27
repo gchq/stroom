@@ -24,6 +24,7 @@ import stroom.pipeline.refdata.store.RefDataValueConverter;
 import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory;
 import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory.Factory;
 import stroom.pipeline.refdata.store.RefStoreEntry;
+import stroom.pipeline.refdata.store.RefStreamProcessingInfo;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.query.api.v2.ExpressionItem;
@@ -43,6 +44,7 @@ import stroom.util.rest.RestUtil;
 import stroom.util.shared.PermissionException;
 import stroom.util.time.StroomDuration;
 
+import com.google.common.base.Strings;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.Receiver;
@@ -202,12 +204,68 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
     @Override
     public List<RefStoreEntry> entries(final int limit) {
+        return entries(limit, null, null);
+    }
+
+    @Override
+    public List<RefStoreEntry> entries(final int limit,
+                                       final Long refStreamId,
+                                       final String mapName) {
         return withPermissionCheck(() -> {
             final List<RefStoreEntry> entries;
             try {
-                entries = refDataStore.list(limit);
+                Predicate<RefStoreEntry> predicate = entry -> true;
+
+                if (refStreamId != null) {
+                    predicate = predicate.and(refStoreEntry ->
+                            refStoreEntry.getMapDefinition()
+                                    .getRefStreamDefinition()
+                                    .getStreamId() == refStreamId);
+                }
+
+                if (!Strings.isNullOrEmpty(mapName)) {
+                    predicate = predicate.and(refStoreEntry ->
+                            mapName.equals(refStoreEntry.getMapDefinition().getMapName()));
+                }
+
+                entries = refDataStore.list(limit, predicate);
             } catch (Exception e) {
                 LOGGER.error("Error listing reference data", e);
+                throw e;
+            }
+            return entries;
+        });
+    }
+
+    @Override
+    public List<RefStreamProcessingInfo> refStreamInfo(final int limit) {
+        return refStreamInfo(limit, null, null);
+    }
+
+    @Override
+    public List<RefStreamProcessingInfo> refStreamInfo(final int limit,
+                                                       final Long refStreamId,
+                                                       final String mapName) {
+
+        return withPermissionCheck(() -> {
+            final List<RefStreamProcessingInfo> entries;
+            try {
+                Predicate<RefStreamProcessingInfo> predicate = entry -> true;
+
+                if (refStreamId != null) {
+                    predicate = predicate.and(refStreamProcessingInfo ->
+                            refStreamProcessingInfo.getRefStreamDefinition()
+                                    .getStreamId() == refStreamId);
+                }
+
+                if (!Strings.isNullOrEmpty(mapName)) {
+                    predicate = predicate.and(refStreamProcessingInfo ->
+                            refStreamProcessingInfo.getMapNames().contains(mapName));
+                }
+
+                entries = refDataStore.listProcessingInfo(limit, predicate);
+            } catch (Exception e) {
+                LOGGER.error("Error listing ref stream processing info data", e);
                 throw e;
             }
             return entries;
@@ -227,12 +285,12 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         // TODO @AT This is a lot of cross over between ReferenceData and ReferenceDataServiceImpl
 
         return securityContext.secureResult(PermissionNames.VIEW_DATA_PERMISSION, () ->
-                        taskContextFactory.contextResult("Reference Data Lookup (API)",
-                                taskContext ->
-                                        LOGGER.logDurationIfDebugEnabled(
-                                                () ->
-                                                        performLookup(refDataLookupRequest),
-                                                LogUtil.message("Performing lookup for {}", refDataLookupRequest))))
+                taskContextFactory.contextResult("Reference Data Lookup (API)",
+                        taskContext ->
+                                LOGGER.logDurationIfDebugEnabled(
+                                        () ->
+                                                performLookup(refDataLookupRequest),
+                                        LogUtil.message("Performing lookup for {}", refDataLookupRequest))))
                 .get();
     }
 
@@ -240,9 +298,9 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     public void purge(final StroomDuration purgeAge) {
         securityContext.secure(PermissionNames.MANAGE_CACHE_PERMISSION, () ->
                 taskContextFactory.context("Reference Data Purge", taskContext ->
-                                LOGGER.logDurationIfDebugEnabled(
-                                        () -> performPurge(purgeAge),
-                                        LogUtil.message("Performing Purge for entries older than {}", purgeAge)))
+                        LOGGER.logDurationIfDebugEnabled(
+                                () -> performPurge(purgeAge),
+                                LogUtil.message("Performing Purge for entries older than {}", purgeAge)))
                         .run());
 
     }

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Add method to ref data store API to list ref stream processing info.
+
+* Improve the ref data store API to allow filtering of the ref entries.
+
+* Change default number of ref loader lock stripes from 100 to 2048 and add it to config.
+
+* Issue **#2371** : Change search LMDB to use MDB_NOTLS flag to not tie readers to threads.
+
+* Issue **#2371** : Fix max readers error not being shown on dashboard.
+
 * Issue **#2370** : Added processor node info to output meta data.
 
 * Issue **#2349** : New dashboard tables will now link to the most recently added query by default.

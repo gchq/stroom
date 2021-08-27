@@ -22,6 +22,31 @@ public class DiffUtil {
     public static boolean unifiedDiff(final Path originalFile,
                                       final Path revisedFile,
                                       final boolean colouredOutput,
+                                      final int contextLines) {
+
+        return unifiedDiff(
+                originalFile,
+                revisedFile,
+                colouredOutput,
+                contextLines,
+                createDiffLinesConsumer(
+                        FileUtil.getCanonicalPath(originalFile),
+                        FileUtil.getCanonicalPath(revisedFile)));
+    }
+
+    /**
+     * Generates a unified diff of the passed files.
+     *
+     * @param originalFile      The original file to diff
+     * @param revisedFile       The revised file to diff
+     * @param colouredOutput    True if you want ascii colour codes in the output
+     * @param contextLines      Number of lines of context before and after each difference
+     * @param diffLinesConsumer A consumer of the diff output lines
+     * @return True if any differences exist
+     */
+    public static boolean unifiedDiff(final Path originalFile,
+                                      final Path revisedFile,
+                                      final boolean colouredOutput,
                                       final int contextLines,
                                       final Consumer<List<String>> diffLinesConsumer) {
 
@@ -40,9 +65,20 @@ public class DiffUtil {
     public static boolean unifiedDiff(final String originalContent,
                                       final String revisedContent,
                                       final boolean colouredOutput,
+                                      final int contextLines) {
+        return unifiedDiff(
+                originalContent,
+                revisedContent,
+                colouredOutput,
+                contextLines,
+                createDiffLinesConsumer("Original", "Revised"));
+    }
+
+    public static boolean unifiedDiff(final String originalContent,
+                                      final String revisedContent,
+                                      final boolean colouredOutput,
                                       final int contextLines,
                                       final Consumer<List<String>> diffLinesConsumer) {
-
 
         // We have no files so used fixed words to appear in the diff
         return diff(
@@ -108,5 +144,14 @@ public class DiffUtil {
             }
         }
         return !unifiedDiff.isEmpty();
+    }
+
+    private static Consumer<List<String>> createDiffLinesConsumer(final String originalPathStr,
+                                                                  final String revisedPathStr) {
+        return diffLines ->
+                LOGGER.info("Comparing {} and {}\n{}",
+                        originalPathStr,
+                        revisedPathStr,
+                        String.join("\n", diffLines));
     }
 }
