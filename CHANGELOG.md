@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2382** : Improve error message for invalid feed encodings.
+
 
 ## [v7.0-beta.142] - 2021-08-26
 
