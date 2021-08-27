@@ -109,7 +109,7 @@ public class TestLmdbMaxReaders {
                         try {
                             // Use a semaphore to enforce the max concurrent read txns
                             // If we don't use the semaphore the test gets stuck, but not
-                            // clear why.
+                            // clear why, unless we set maxReaders > threadCount
 
                             semaphore.acquire();
                         } catch (Exception e) {

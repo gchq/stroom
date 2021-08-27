@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fix problem with ref data prefix mapping code increasing loop iterations on each element/record.
+
+* Add better logging of ref streams waiting for a lock to load.
+
+* Stop ref streams that are already loaded from calling start/stop processing.
+
 * Add method to ref data store API to list ref stream processing info.
 
 * Improve the ref data store API to allow filtering of the ref entries.

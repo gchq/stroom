@@ -49,16 +49,20 @@ public abstract class AbstractRefDataStore implements RefDataStore {
                                             long effectiveTimeMs);
 
 
+    @Override
     public boolean doWithLoaderUnlessComplete(final RefStreamDefinition refStreamDefinition,
                                               final long effectiveTimeMs,
                                               final Consumer<RefDataLoader> work) {
 
         boolean result = false;
         try (RefDataLoader refDataLoader = loader(refStreamDefinition, effectiveTimeMs)) {
-            // we now hold the lock for this RefStreamDefinition so test the completion state
+            // we now hold the lock for this RefStreamDefinition so re-test the completion state
 
             if (isDataLoaded(refStreamDefinition)) {
-                LOGGER.debug("Data is already loaded for {}, so doing nothing", refStreamDefinition);
+                // If we get here then the data was not loaded when we checked before getting the lock
+                // so we waited for the lock and in the mean time another stream did the load
+                // so we can drop out.
+                LOGGER.info("Reference Data is already loaded for {}, so doing nothing", refStreamDefinition);
             } else {
                 try {
                     work.accept(refDataLoader);
