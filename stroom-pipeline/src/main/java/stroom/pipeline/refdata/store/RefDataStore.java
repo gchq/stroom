@@ -88,6 +88,11 @@ public interface RefDataStore {
     List<RefStoreEntry> list(final int limit,
                              final Predicate<RefStoreEntry> filter);
 
+    List<RefStreamProcessingInfo> listProcessingInfo(final int limit);
+
+    List<RefStreamProcessingInfo> listProcessingInfo(final int limit,
+                                                     final Predicate<RefStreamProcessingInfo> filter);
+
     long getKeyValueEntryCount();
 
     long getKeyRangeValueEntryCount();

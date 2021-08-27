@@ -20,7 +20,9 @@ import org.lmdbjava.Txn;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 /**
  * This class provides a front door for all interactions with the {@link MapUidForwardDb} and
@@ -195,5 +197,11 @@ public class MapDefinitionUIDStore {
 
     public PooledByteBuffer getMapDefinitionPooledByteBuffer() {
         return mapUidForwardDb.getPooledKeyBuffer();
+    }
+
+    public <T> T streamEntries(final Txn<ByteBuffer> txn,
+                               final KeyRange<MapDefinition> keyRange,
+                               final Function<Stream<Tuple2<MapDefinition, UID>>, T> streamFunction) {
+        return mapUidForwardDb.streamEntries(txn, keyRange, streamFunction);
     }
 }
