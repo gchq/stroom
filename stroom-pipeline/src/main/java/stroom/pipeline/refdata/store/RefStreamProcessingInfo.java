@@ -22,9 +22,10 @@ public class RefStreamProcessingInfo {
     private final Set<String> mapNames;
 
     @JsonCreator
-    public RefStreamProcessingInfo(@JsonProperty("refStreamDefinition") final RefStreamDefinition refStreamDefinition,
-                                   @JsonProperty("refDataProcessingInfo") final RefDataProcessingInfo refDataProcessingInfo,
-                                   @JsonProperty("mapNames") final Set<String> mapNames) {
+    public RefStreamProcessingInfo(
+            @JsonProperty("refStreamDefinition") final RefStreamDefinition refStreamDefinition,
+            @JsonProperty("refDataProcessingInfo") final RefDataProcessingInfo refDataProcessingInfo,
+            @JsonProperty("mapNames") final Set<String> mapNames) {
         this.refStreamDefinition = Objects.requireNonNull(refStreamDefinition);
         this.refDataProcessingInfo = Objects.requireNonNull(refDataProcessingInfo);
         this.mapNames = Objects.requireNonNull(mapNames);
