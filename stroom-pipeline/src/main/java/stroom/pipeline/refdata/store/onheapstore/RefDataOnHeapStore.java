@@ -9,6 +9,7 @@ import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefStoreEntry;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
+import stroom.pipeline.refdata.store.RefStreamProcessingInfo;
 import stroom.pipeline.refdata.store.offheapstore.TypedByteBuffer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -196,6 +197,17 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
     @Override
     public List<RefStoreEntry> list(final int limit,
                                     final Predicate<RefStoreEntry> filter) {
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
+
+    @Override
+    public List<RefStreamProcessingInfo> listProcessingInfo(final int limit,
+                                                            final Predicate<RefStreamProcessingInfo> filter) {
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
+
+    @Override
+    public List<RefStreamProcessingInfo> listProcessingInfo(final int limit) {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 

@@ -84,7 +84,8 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     private final Env<ByteBuffer> lmdbEnvironment;
     private final RefStreamDefinition refStreamDefinition;
     private final long effectiveTimeMs;
-    private Runnable commitIfRequireFunc = () -> {}; // default position is to not commit mid-load
+    private Runnable commitIfRequireFunc = () -> {
+    }; // default position is to not commit mid-load
 
     private int inputCount = 0;
     private int newEntriesCount = 0;
@@ -144,12 +145,15 @@ public class OffHeapRefDataLoader implements RefDataLoader {
 
         // Get the lock object for this refStreamDefinition
         this.refStreamDefReentrantLock = refStreamDefStripedReentrantLock.get(refStreamDefinition);
+
         LAMBDA_LOGGER.logDurationIfDebugEnabled(
                 () -> {
                     try {
                         LOGGER.debug("Acquiring lock for {}", refStreamDefinition);
-                        // This will make any other threads trying to load the same refStreamDefinition
-                        // block and wait for us
+                        // As this is a striped lock we WILL block/wait on another thread with the same
+                        // refStreamDefinition but we MAY also block/wait on another thread with a different
+                        // refStreamDefinition depending on the number or stripes and the allocation of stripe
+                        // from refStreamDefinition.
                         refStreamDefReentrantLock.lockInterruptibly();
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
@@ -158,7 +162,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                                 refStreamDefinition));
                     }
                 },
-                () -> LogUtil.message("Acquiring lock for {}", refStreamDefinition));
+                LogUtil.message("Acquired lock for {}", refStreamDefinition));
     }
 
     @Override
