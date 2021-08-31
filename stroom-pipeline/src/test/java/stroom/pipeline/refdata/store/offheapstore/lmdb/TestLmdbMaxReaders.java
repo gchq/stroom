@@ -8,6 +8,7 @@ import stroom.util.io.ByteSize;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.lmdbjava.Env;
+import org.lmdbjava.Env.ReadersFullException;
 import org.lmdbjava.EnvFlags;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
@@ -17,17 +18,22 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
+/**
+ * Demonstrate the behaviour of too many readers trying to do a get() on LMDB at once
+ * where concurrent readers > maxReaders setting. Not a test of the stroom code.
+ */
 public class TestLmdbMaxReaders {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestLmdbMaxReaders.class);
@@ -39,12 +45,11 @@ public class TestLmdbMaxReaders {
 
 //        ThreadUtil.sleepAtLeastIgnoreInterrupts(10_000);
 
-        final int maxReaders = 8;
+        final int maxReaders = 5;
 
         final Path dbDir = Files.createTempDirectory("stroom");
 
         final EnvFlags[] envFlags = new EnvFlags[]{EnvFlags.MDB_NOTLS};
-//        final EnvFlags[] envFlags = new EnvFlags[]{};
         LOGGER.info("Creating LMDB environment with maxSize: {}, dbDir {}, envFlags {}",
                 DB_MAX_SIZE,
                 dbDir.toAbsolutePath(),
@@ -76,18 +81,14 @@ public class TestLmdbMaxReaders {
         Assertions.assertThat(env.info().numReaders)
                 .isEqualTo(1);
 
-        final int threadCount = 100;
 
+        final int threadCount = 50;
         final CountDownLatch threadsFinishedLatch = new CountDownLatch(threadCount);
-
         final CountDownLatch threadsStartedLatch = new CountDownLatch(threadCount);
         final CountDownLatch releaseThreadsLatch = new CountDownLatch(1);
-
         final Executor executor = Executors.newFixedThreadPool(threadCount + 10);
-
         final Queue<String> threads = new ConcurrentLinkedQueue<>();
-
-        final Semaphore semaphore = new Semaphore(maxReaders);
+        final List<Exception> exceptions = new ArrayList<>();
 
         IntStream.rangeClosed(1, threadCount)
                 .forEach(i -> {
@@ -106,28 +107,18 @@ public class TestLmdbMaxReaders {
 
                         LOGGER.info("Running thread {}", i);
 
-                        try {
-                            // Use a semaphore to enforce the max concurrent read txns
-                            // If we don't use the semaphore the test gets stuck, but not
-                            // clear why, unless we set maxReaders > threadCount
-
-                            semaphore.acquire();
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-
-                        LOGGER.info("Got permit{}", i);
-
                         try (Txn<ByteBuffer> txnRead = env.txnRead()) {
 
                             Assertions.assertThat(database.get(txnRead, "01"))
                                     .isNotEmpty();
-                        }
-                        semaphore.release();
-                        LOGGER.info("Finished thread {}", i);
+                        } catch (Exception e) {
+                            exceptions.add(e);
+                        } finally {
+                            LOGGER.info("Finished thread {}", i);
 
-                        threads.remove(Thread.currentThread().getName());
-                        threadsFinishedLatch.countDown();
+                            threads.remove(Thread.currentThread().getName());
+                            threadsFinishedLatch.countDown();
+                        }
                     }, executor);
                 });
 
@@ -147,6 +138,17 @@ public class TestLmdbMaxReaders {
 
         // Wait for all threads to finish
         threadsFinishedLatch.await();
+
+        LOGGER.info("Exception count: {}", exceptions.size());
+
+        Assertions.assertThat(exceptions)
+                .isNotEmpty();
+
+        Assertions.assertThat(exceptions.stream()
+                .distinct()
+                .allMatch(clazz ->
+                        clazz instanceof ReadersFullException))
+                .isTrue();
 
         LOGGER.info("numReaders: {}", env.info().numReaders);
     }
