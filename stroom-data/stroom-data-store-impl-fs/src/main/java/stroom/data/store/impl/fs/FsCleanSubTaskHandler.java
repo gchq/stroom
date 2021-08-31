@@ -121,7 +121,7 @@ class FsCleanSubTaskHandler {
                                     task.getOldAge(),
                                     task.isDelete());
                             final Runnable runnable = taskContextFactory
-                                    .context(taskContext, "File system clean", tc ->
+                                    .childContext(taskContext, "File system clean", tc ->
                                             exec(tc, subTask, deleteListConsumer));
 
                             try {

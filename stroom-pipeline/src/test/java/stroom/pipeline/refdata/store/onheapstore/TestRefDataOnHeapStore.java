@@ -30,6 +30,7 @@ import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.StringValue;
+import stroom.task.mock.MockTaskModule;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
@@ -107,6 +108,7 @@ class TestRefDataOnHeapStore {
                         bind(ReferenceDataConfig.class).toInstance(referenceDataConfig);
                         bind(HomeDirProvider.class).toInstance(() -> tempDir);
                         bind(TempDirProvider.class).toInstance(() -> tempDir);
+                        install(new MockTaskModule());
                         install(new RefDataStoreModule());
                     }
                 });

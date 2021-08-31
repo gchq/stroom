@@ -18,6 +18,7 @@ package stroom.pipeline.destination;
 
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.errorhandler.TerminatedException;
+import stroom.task.api.TaskContext;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,10 +39,13 @@ public class RollingDestinations {
     private static final ConcurrentHashMap<Object, RollingDestination> currentDestinations = new ConcurrentHashMap<>();
 
     private final AppenderConfig appenderConfig;
+    private final TaskContext taskContext;
 
     @Inject
-    public RollingDestinations(final AppenderConfig appenderConfig) {
+    public RollingDestinations(final AppenderConfig appenderConfig,
+                               final TaskContext taskContext) {
         this.appenderConfig = appenderConfig;
+        this.taskContext = taskContext;
     }
 
     public RollingDestination borrow(final Object key,
@@ -141,6 +145,7 @@ public class RollingDestinations {
     }
 
     public void roll() {
+        taskContext.info(() -> "Rolling all destinations");
         rollAll(false);
     }
 

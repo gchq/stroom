@@ -4,6 +4,8 @@ import stroom.node.api.NodeInfo;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
+import stroom.task.api.TaskContext;
+import stroom.util.logging.LogUtil;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -38,26 +40,31 @@ class HeapHistogramStatisticsExecutor {
     private final HeapHistogramService heapHistogramService;
     private final InternalStatisticsReceiver internalStatisticsReceiver;
     private final NodeInfo nodeInfo;
-
+    private final TaskContext taskContext;
 
     @Inject
     HeapHistogramStatisticsExecutor(final HeapHistogramService heapHistogramService,
                                     final InternalStatisticsReceiver internalStatisticsReceiver,
-                                    final NodeInfo nodeInfo) {
+                                    final NodeInfo nodeInfo,
+                                    final TaskContext taskContext) {
         this.heapHistogramService = heapHistogramService;
         this.internalStatisticsReceiver = internalStatisticsReceiver;
         this.nodeInfo = nodeInfo;
+        this.taskContext = taskContext;
     }
 
     public void exec() {
         try {
-            Instant startTme = Instant.now();
             LOGGER.info("Java Heap Histogram Statistics job started");
+            taskContext.info(() -> "Java Heap Histogram Statistics job started");
+            Instant startTme = Instant.now();
             final List<HeapHistogramService.HeapHistogramEntry> heapHistogramEntries =
                     heapHistogramService.generateHeapHistogram();
             processHistogramEntries(heapHistogramEntries);
             LOGGER.info("Java Heap Histogram Statistics job completed in {}",
                     Duration.between(startTme, Instant.now()).toString());
+            taskContext.info(() -> LogUtil.message("Java Heap Histogram Statistics job completed in {}",
+                    Duration.between(startTme, Instant.now()).toString()));
         } catch (final RuntimeException e) {
             LOGGER.error("Error executing scheduled Heap Histogram job", e);
             throw e;

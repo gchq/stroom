@@ -27,6 +27,8 @@ public interface ExplorerTreeDao {
 
     ExplorerTreeNode createRoot(ExplorerTreeNode node);
 
+    boolean doesNodeExist(final ExplorerTreeNode root);
+
     List<ExplorerTreeNode> getRoots();
 
     void removeAll();

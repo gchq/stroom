@@ -19,7 +19,6 @@ package stroom.task.impl;
 import stroom.lifecycle.api.LifecycleBinder;
 import stroom.searchable.api.Searchable;
 import stroom.task.api.ExecutorProvider;
-import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.TaskResource;
 import stroom.util.RunnableWrapper;
@@ -40,7 +39,6 @@ public class TaskModule extends AbstractModule {
 
         bind(ExecutorProvider.class).to(ExecutorProviderImpl.class);
         bind(Executor.class).toProvider(ExecutorProviderImpl.class);
-        bind(TaskContextFactory.class).to(TaskContextFactoryImpl.class);
         bind(TaskManager.class).to(TaskManagerImpl.class);
         bind(TaskResource.class).to(TaskResourceImpl.class);
 

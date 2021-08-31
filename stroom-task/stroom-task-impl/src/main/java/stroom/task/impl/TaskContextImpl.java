@@ -71,10 +71,7 @@ public class TaskContextImpl implements TaskContext {
     }
 
     String getUserId() {
-        if (userIdentity != null) {
-            return userIdentity.getId();
-        }
-        return null;
+        return userIdentity.getId();
     }
 
     String getSessionId() {

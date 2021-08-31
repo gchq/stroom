@@ -8,6 +8,43 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 
+## [v7.1-beta.5] - 2021-08-31
+
+* Issue **#2380** : Fix _Attribute Value Data Retention_ job blocking shutdown.
+
+* Issue **#2379** : Change reference data store LMDB to use MDB_NOTLS flag to not tie readers to threads as we typically use thread pools.
+
+* Fix problem with ref data prefix mapping code increasing loop iterations on each element/record.
+
+* Add better logging of ref streams waiting for a lock to load.
+
+* Stop ref streams that are already loaded from calling start/stop processing.
+
+* Add method to ref data store API to list ref stream processing info.
+
+* Improve the ref data store API to allow filtering of the ref entries.
+
+* Change default number of ref loader lock stripes from 100 to 2048 and add it to config.
+
+* Issue **#2371** : Change search LMDB to use MDB_NOTLS flag to not tie readers to threads.
+
+* Issue **#2371** : Fix max readers error not being shown on dashboard.
+
+* Issue **#2370** : Added processor node info to output meta data.
+
+* Issue **#2349** : New dashboard tables will now link to the most recently added query by default.
+
+* Issue **#2351** : Improved error popup text for server responses.
+
+* Issue **#2368** : Fixed server task nesting.
+
+* Issue **#2369** : Fix missing SQL join when reprocessing all streams matching a filter.
+
+* Issue **#2369** : Fix error when searching meta store from a dashboard with a meta key in the query.
+
+* Change explorer root node creation to happen under cluster lock.
+
+
 ## [v7.1-beta.4] - 2021-08-23
 
 * Add `enableJobsOnBootstrap` to the docker distribution config.yml to allow it to be overridden in test stacks.
@@ -3567,7 +3604,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.4...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.5...HEAD
+[v7.1-beta.5]: https://github.com/gchq/stroom/compare/v7.1-beta.4...v7.1-beta.5
 [v7.1-beta.4]: https://github.com/gchq/stroom/compare/v7.1-beta.3...v7.1-beta.4
 [v7.1-beta.3]: https://github.com/gchq/stroom/compare/v7.1-beta.2..v7.1-beta.3
 [v7.1-beta.2]: https://github.com/gchq/stroom/compare/v7.1-beta.1...v7.1-beta.2

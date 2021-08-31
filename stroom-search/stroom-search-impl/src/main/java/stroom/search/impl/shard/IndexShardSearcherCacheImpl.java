@@ -25,6 +25,7 @@ import stroom.index.shared.IndexShard;
 import stroom.search.impl.SearchException;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
+import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
@@ -58,6 +59,7 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
     private final AtomicLong closing = new AtomicLong();
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
+    private final TaskContext taskContext;
     private final IndexShardSearchConfig indexShardSearchConfig;
     private final SecurityContext securityContext;
 
@@ -69,12 +71,14 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
                                 final IndexShardWriterCache indexShardWriterCache,
                                 final ExecutorProvider executorProvider,
                                 final TaskContextFactory taskContextFactory,
+                                final TaskContext taskContext,
                                 final IndexShardSearchConfig indexShardSearchConfig,
                                 final SecurityContext securityContext) {
         this.cacheManager = cacheManager;
         this.indexShardService = indexShardService;
         this.indexShardWriterCache = indexShardWriterCache;
         this.taskContextFactory = taskContextFactory;
+        this.taskContext = taskContext;
         this.indexShardSearchConfig = indexShardSearchConfig;
         this.securityContext = securityContext;
 
@@ -241,6 +245,7 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
      */
     @Override
     public void refresh() {
+        taskContext.info(() -> "Refreshing index shard searcher cache");
         final ICache<Key, IndexShardSearcher> cache = getCache();
         if (cache != null) {
             LOGGER.logDurationIfDebugEnabled(() ->
