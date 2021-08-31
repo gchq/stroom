@@ -562,10 +562,18 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
     void testMaxReaders() {
         Assertions.assertThat(lmdbEnv.info().numReaders)
                 .isEqualTo(0);
-        populateDb();
+        IntStream.rangeClosed(1, 20).forEach(i -> {
+            basicLmdbDb.put(buildKey(i), buildValue(i), false);
+
+        });
         // Show that writes to the db do not effect the num readers high water mark
         Assertions.assertThat(lmdbEnv.info().numReaders)
                 .isEqualTo(0);
+
+        basicLmdbDb.get(buildKey(1));
+
+        Assertions.assertThat(lmdbEnv.info().numReaders)
+                .isEqualTo(1);
     }
 
     private void populateDb() {
