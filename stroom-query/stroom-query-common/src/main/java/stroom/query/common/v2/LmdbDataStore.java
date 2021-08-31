@@ -701,7 +701,7 @@ public class LmdbDataStore implements DataStore {
         // Ensure we complete.
         complete.countDown();
         // If the transfer loop is waiting on new queue items ensure it loops once more.
-        completionState.complete();
+        completionState.signalComplete();
     }
 
     /**
@@ -1044,7 +1044,7 @@ public class LmdbDataStore implements DataStore {
         }
 
         @Override
-        public void complete() {
+        public void signalComplete() {
             if (!isComplete()) {
                 try {
                     if (Thread.currentThread().isInterrupted() || !lmdbDataStore.running.get()) {
@@ -1093,7 +1093,7 @@ public class LmdbDataStore implements DataStore {
 
         @Override
         public void accept(final Long value) {
-            complete();
+            signalComplete();
         }
     }
 }

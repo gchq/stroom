@@ -100,11 +100,11 @@ public class SolrSearchResultCollector implements Store {
                         if (!(t instanceof TaskTerminatedException)) {
                             LOGGER.error(t.getMessage(), t);
                             coprocessors.getErrorConsumer().accept(t);
-                            coprocessors.getCompletionState().complete();
+                            coprocessors.getCompletionState().signalComplete();
                             throw new RuntimeException(t.getMessage(), t);
                         }
 
-                        coprocessors.getCompletionState().complete();
+                        coprocessors.getCompletionState().signalComplete();
                     }
                 });
     }
@@ -115,7 +115,7 @@ public class SolrSearchResultCollector implements Store {
     }
 
     public void complete() {
-        coprocessors.getCompletionState().complete();
+        coprocessors.getCompletionState().signalComplete();
     }
 
     @Override

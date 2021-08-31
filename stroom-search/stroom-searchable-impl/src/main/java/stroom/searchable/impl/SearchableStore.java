@@ -116,7 +116,7 @@ class SearchableStore implements Store {
     }
 
     public void complete() {
-        coprocessors.getCompletionState().complete();
+        coprocessors.getCompletionState().signalComplete();
     }
 
     @Override

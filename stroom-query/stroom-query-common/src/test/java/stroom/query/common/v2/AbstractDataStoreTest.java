@@ -73,7 +73,7 @@ abstract class AbstractDataStoreTest {
 
         // Wait for all items to be added.
         try {
-            dataStore.getCompletionState().complete();
+            dataStore.getCompletionState().signalComplete();
             dataStore.getCompletionState().awaitCompletion();
         } catch (final InterruptedException e) {
             throw new RuntimeException(e.getMessage(), e);
@@ -146,7 +146,7 @@ abstract class AbstractDataStoreTest {
 
         // Wait for all items to be added.
         try {
-            dataStore.getCompletionState().complete();
+            dataStore.getCompletionState().signalComplete();
             dataStore.getCompletionState().awaitCompletion();
         } catch (final InterruptedException e) {
             throw new RuntimeException(e.getMessage(), e);
@@ -213,7 +213,7 @@ abstract class AbstractDataStoreTest {
 
         // Wait for all items to be added.
         try {
-            dataStore.getCompletionState().complete();
+            dataStore.getCompletionState().signalComplete();
             dataStore.getCompletionState().awaitCompletion();
         } catch (final InterruptedException e) {
             throw new RuntimeException(e.getMessage(), e);
@@ -251,7 +251,7 @@ abstract class AbstractDataStoreTest {
 
         // Wait for all items to be added.
         try {
-            dataStore.getCompletionState().complete();
+            dataStore.getCompletionState().signalComplete();
             dataStore.getCompletionState().awaitCompletion();
         } catch (final InterruptedException e) {
             throw new RuntimeException(e.getMessage(), e);
@@ -296,7 +296,7 @@ abstract class AbstractDataStoreTest {
 
         // Wait for all items to be added.
         try {
-            dataStore.getCompletionState().complete();
+            dataStore.getCompletionState().signalComplete();
             dataStore.getCompletionState().awaitCompletion();
         } catch (final InterruptedException e) {
             throw new RuntimeException(e.getMessage(), e);
@@ -341,7 +341,7 @@ abstract class AbstractDataStoreTest {
 
         // Wait for all items to be added.
         try {
-            dataStore.getCompletionState().complete();
+            dataStore.getCompletionState().signalComplete();
             dataStore.getCompletionState().awaitCompletion();
         } catch (final InterruptedException e) {
             throw new RuntimeException(e.getMessage(), e);
@@ -386,7 +386,7 @@ abstract class AbstractDataStoreTest {
 
         // Wait for all items to be added.
         try {
-            dataStore.getCompletionState().complete();
+            dataStore.getCompletionState().signalComplete();
             dataStore.getCompletionState().awaitCompletion();
         } catch (final InterruptedException e) {
             throw new RuntimeException(e.getMessage(), e);
