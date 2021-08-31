@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2380** : Fix _Attribute Value Data Retention_ job blocking shutdown.
+
 * Issue **#2379** : Change reference data store LMDB to use MDB_NOTLS flag to not tie readers to threads as we typically use thread pools.
 
 * Fix problem with ref data prefix mapping code increasing loop iterations on each element/record.
