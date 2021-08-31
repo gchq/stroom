@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v7.0-beta.143] - 2021-08-31
+
+* Issue **#2380** : Fix _Attribute Value Data Retention_ job blocking shutdown.
+
 * Issue **#2379** : Change reference data store LMDB to use MDB_NOTLS flag to not tie readers to threads as we typically use thread pools.
 
 * Fix problem with ref data prefix mapping code increasing loop iterations on each element/record.
@@ -3661,7 +3666,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.142...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.143...HEAD
+[v7.0-beta.143]: https://github.com/gchq/stroom/compare/v7.0-beta.142...v7.0-beta.143
 [v7.0-beta.142]: https://github.com/gchq/stroom/compare/v7.0-beta.141...v7.0-beta.142
 [v7.0-beta.141]: https://github.com/gchq/stroom/compare/v7.0-beta.140...v7.0-beta.141
 [v7.0-beta.140]: https://github.com/gchq/stroom/compare/v7.0-beta.139...v7.0-beta.140

@@ -119,7 +119,7 @@ class ExtractionTaskProducer extends TaskProducer {
                             } else {
                                 // We got no values from the topic so if index search ois complete then we have finished
                                 // mapping too.
-                                streamMapCreatorCompletionState.complete();
+                                streamMapCreatorCompletionState.signalComplete();
                             }
                         } catch (final RuntimeException e) {
                             LOGGER.debug(e.getMessage(), e);
@@ -136,7 +136,7 @@ class ExtractionTaskProducer extends TaskProducer {
                 } catch (final RuntimeException e) {
                     LOGGER.error(e.getMessage(), e);
                 } finally {
-                    streamMapCreatorCompletionState.complete();
+                    streamMapCreatorCompletionState.signalComplete();
                     tc.info(() -> "Finished creating extraction tasks");
                     LOGGER.debug("Finished creating extraction tasks");
 
