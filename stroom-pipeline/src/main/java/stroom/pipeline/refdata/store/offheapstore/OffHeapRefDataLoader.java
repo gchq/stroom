@@ -146,23 +146,28 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         // Get the lock object for this refStreamDefinition
         this.refStreamDefReentrantLock = refStreamDefStripedReentrantLock.get(refStreamDefinition);
 
-        LAMBDA_LOGGER.logDurationIfDebugEnabled(
-                () -> {
-                    try {
-                        LOGGER.debug("Acquiring lock for {}", refStreamDefinition);
-                        // As this is a striped lock we WILL block/wait on another thread with the same
-                        // refStreamDefinition but we MAY also block/wait on another thread with a different
-                        // refStreamDefinition depending on the number or stripes and the allocation of stripe
-                        // from refStreamDefinition.
-                        refStreamDefReentrantLock.lockInterruptibly();
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        throw new RuntimeException(LogUtil.message(
-                                "Acquisition of lock for {} aborted due to thread interruption",
-                                refStreamDefinition));
-                    }
-                },
-                LogUtil.message("Acquired lock for {}", refStreamDefinition));
+        final Instant time1 = Instant.now();
+        try {
+            LOGGER.debug("Acquiring lock for {}", refStreamDefinition);
+            // As this is a striped lock we WILL block/wait on another thread with the same
+            // refStreamDefinition but we MAY also block/wait on another thread with a different
+            // refStreamDefinition depending on the number or stripes and the allocation of stripe
+            // from refStreamDefinition.
+            refStreamDefReentrantLock.lockInterruptibly();
+
+            final Duration timeToAcquireLock = Duration.between(time1, Instant.now());
+            LOGGER.debug("Acquired lock in {} for {}", timeToAcquireLock, refStreamDefinition);
+
+            if (timeToAcquireLock.getSeconds() > 1 && !LOGGER.isDebugEnabled()) {
+                LOGGER.info("Waited for {} to acquired lock for {}",
+                        timeToAcquireLock, refStreamDefinition);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(LogUtil.message(
+                    "Acquisition of lock for {} aborted due to thread interruption",
+                    refStreamDefinition));
+        }
     }
 
     @Override
@@ -424,7 +429,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                     refStreamDefinition);
         }
         if (writeTxn != null) {
-            LOGGER.trace("Committing transaction (put count {})", putsCounter);
+            LOGGER.trace("Committing and closing transaction (put count {})", putsCounter);
             writeTxn.commit();
             writeTxn.close();
         }
@@ -433,8 +438,10 @@ public class OffHeapRefDataLoader implements RefDataLoader {
 
         currentLoaderState = LoaderState.CLOSED;
 
-        LOGGER.debug("Releasing semaphore permit for {}", refStreamDefinition);
-        refStreamDefReentrantLock.unlock();
+        if (refStreamDefReentrantLock != null) {
+            LOGGER.debug("Releasing lock for {}", refStreamDefinition);
+            refStreamDefReentrantLock.unlock();
+        }
 
         // uncomment this for development testing, handy for seeing what is in the stores post load
 //            refDataOffHeapStore.logAllContents();

@@ -158,6 +158,11 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
             final int batchSize = metaValueConfig.getDeleteBatchSize();
             int count = batchSize;
             while (count >= batchSize) {
+                if (Thread.currentThread().isInterrupted()) {
+                    LOGGER.error("Aborting meta value deletion due to thread interruption. " +
+                            "Deletion will continue as normal on the next run.");
+                    break;
+                }
                 count = deleteBatchOfOldValues(createTimeThresholdEpochMs, batchSize);
             }
         });

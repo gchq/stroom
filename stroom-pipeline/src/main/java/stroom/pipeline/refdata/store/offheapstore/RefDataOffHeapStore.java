@@ -231,12 +231,15 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         // hardcoded into software, it needs to be reconfigurable. On Windows and MacOS you really shouldn't
         // set it larger than the amount of free space on the filesystem.
 
-        final EnvFlags[] envFlags;
-        if (referenceDataConfig.isReadAheadEnabled()) {
-            envFlags = new EnvFlags[0];
-        } else {
-            envFlags = new EnvFlags[]{EnvFlags.MDB_NORDAHEAD};
+        final List<EnvFlags> envFlagsList = new ArrayList<>();
+        envFlagsList.add(EnvFlags.MDB_NOTLS);
+
+        if (!referenceDataConfig.isReadAheadEnabled()) {
+            envFlagsList.add(EnvFlags.MDB_NORDAHEAD);
         }
+
+        final EnvFlags[] envFlags = new EnvFlags[envFlagsList.size()];
+        envFlagsList.toArray(envFlags);
 
         final String lmdbSystemLibraryPath = referenceDataConfig.getLmdbSystemLibraryPath();
 

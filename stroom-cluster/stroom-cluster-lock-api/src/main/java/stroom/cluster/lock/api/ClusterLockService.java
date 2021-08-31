@@ -24,6 +24,10 @@ package stroom.cluster.lock.api;
  */
 public interface ClusterLockService {
 
+    /**
+     * Will attempt to get the database backed lock for lockName. If it gets the lock then will run
+     * runnable under that lock. If not it will return without running runnable.
+     */
     void tryLock(String lockName, Runnable runnable);
 
     /**
