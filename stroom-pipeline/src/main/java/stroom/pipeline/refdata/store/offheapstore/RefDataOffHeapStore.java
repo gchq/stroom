@@ -81,6 +81,7 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -116,7 +117,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
     private static final String DEFAULT_STORE_SUB_DIR_NAME = "refDataOffHeapStore";
 
-    private static final long PROCESSING_INFO_UPDATE_DELAY_MS = Duration.of(1, ChronoUnit.HOURS).toMillis();
+    private static final TemporalUnit PROCESSING_INFO_TRUNCATION_UNIT = ChronoUnit.HOURS;
 
     // These are dups of org.lmdbjava.Library.LMDB_* but that class is pkg private for some reason.
     private static final String LMDB_EXTRACT_DIR_PROP = "lmdbjava.extract.dir";
@@ -293,9 +294,13 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         // opening writeTxn all the time. The last accessed time is not critical as far as accuracy goes. As long
         // as it is reasonably accurate we can use it for purging old data.
         optProcessingInfo.ifPresent(processingInfo -> {
-            long timeSinceLastAccessedTimeMs = System.currentTimeMillis() - processingInfo.getLastAccessedTimeEpochMs();
-            if (timeSinceLastAccessedTimeMs > PROCESSING_INFO_UPDATE_DELAY_MS) {
-                processingInfoDb.updateLastAccessedTime(refStreamDefinition);
+            // Truncate the last access time so it is clear to anyone looking at the values that
+            // they are approx.
+            final Instant currentLastAccessTime = processingInfo.getLastAccessedTime();
+            final Instant nowTruncated = Instant.now().truncatedTo(PROCESSING_INFO_TRUNCATION_UNIT);
+
+            if (!nowTruncated.equals(currentLastAccessTime)) {
+                processingInfoDb.updateLastAccessedTime(refStreamDefinition, nowTruncated.toEpochMilli());
             }
         });
         LOGGER.trace("getProcessingInfo({}) - {}", refStreamDefinition, optProcessingInfo);

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2379** : Change ref data lookups to truncate last access time to hourly.
+
 
 ## [v7.0-beta.143] - 2021-08-31
 
