@@ -30,6 +30,7 @@ import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.TaskStatus;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
+import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.time.StroomDuration;
@@ -63,23 +64,25 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
     private final ProcessorConfig processorConfig;
     private final ProcessorFilterDao processorFilterDao;
     private final ProcessorTaskManager processorTaskManager;
+    private final TaskContext taskContext;
 
     @Inject
     ProcessorTaskDeleteExecutorImpl(final ProcessorDbConnProvider processorDbConnProvider,
                                     final ClusterLockService clusterLockService,
                                     final ProcessorConfig processorConfig,
                                     final ProcessorFilterDao processorFilterDao,
-                                    final ProcessorTaskManager processorTaskManager) {
+                                    final ProcessorTaskManager processorTaskManager,
+                                    final TaskContext taskContext) {
         this.processorDbConnProvider = processorDbConnProvider;
         this.clusterLockService = clusterLockService;
         this.processorConfig = processorConfig;
         this.processorFilterDao = processorFilterDao;
         this.processorTaskManager = processorTaskManager;
+        this.taskContext = taskContext;
     }
 
     public void exec() {
         final AtomicLong nextDeleteMs = processorTaskManager.getNextDeleteMs();
-
         try {
             if (nextDeleteMs.get() == 0) {
                 LOGGER.debug("deleteSchedule() - no schedule set .... maybe we aren't in charge of creating tasks");
@@ -88,6 +91,7 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
                         DateUtil.createNormalDateTimeString(nextDeleteMs.get()));
                 // Have we gone past our next delete schedule?
                 if (nextDeleteMs.get() < System.currentTimeMillis()) {
+                    taskContext.info(() -> "Deleting old processor tasks");
                     lockAndDelete();
                 }
             }

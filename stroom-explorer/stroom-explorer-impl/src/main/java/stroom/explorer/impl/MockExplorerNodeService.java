@@ -12,6 +12,11 @@ import java.util.Optional;
 public class MockExplorerNodeService implements ExplorerNodeService {
 
     @Override
+    public void ensureRootNodeExists() {
+
+    }
+
+    @Override
     public void createNode(final DocRef docRef,
                            final DocRef destinationFolderRef,
                            final PermissionInheritance permissionInheritance) {

@@ -25,6 +25,7 @@ import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
+import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.concurrent.StripedLock;
 import stroom.util.logging.LambdaLogger;
@@ -73,6 +74,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private final AtomicLong closing = new AtomicLong();
     private final IndexShardWriterExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
+    private final TaskContext taskContext;
     private final SecurityContext securityContext;
 
     private volatile Settings settings;
@@ -85,6 +87,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                                      final IndexShardManager indexShardManager,
                                      final IndexShardWriterExecutorProvider executorProvider,
                                      final TaskContextFactory taskContextFactory,
+                                     final TaskContext taskContext,
                                      final SecurityContext securityContext) {
         this.nodeInfo = nodeInfo;
         this.indexShardService = indexShardService;
@@ -93,6 +96,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         this.indexShardManager = indexShardManager;
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
+        this.taskContext = taskContext;
         this.securityContext = securityContext;
     }
 
@@ -362,6 +366,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
     @Override
     public void close(final IndexShardWriter indexShardWriter) {
+        taskContext.info(() -> "Closing index shard writer for shard: " + indexShardWriter.getIndexShardId());
         close(indexShardWriter, executorProvider.getAsyncExecutor());
     }
 
@@ -394,7 +399,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         return CompletableFuture.supplyAsync(supplier, executor);
     }
 
-    private void close(final IndexShardWriter indexShardWriter, final Executor executor) {
+    private void close(final IndexShardWriter indexShardWriter,
+                       final Executor executor) {
         final long indexShardId = indexShardWriter.getIndexShardId();
 
         // Remove the shard from the map.
@@ -498,7 +504,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                         executor = Executors.newSingleThreadScheduledExecutor();
                         // Start logging action progress.
                         executor.scheduleAtFixedRate(() ->
-                                        LOGGER.info(() -> "Waiting for " + closing.get() + " index shards to close"),
+                                        LOGGER.info(() ->
+                                                "Waiting for " + closing.get() + " index shards to close"),
                                 10,
                                 10,
                                 TimeUnit.SECONDS);

@@ -300,6 +300,7 @@ public class LmdbDataStore implements DataStore {
                 long lastCommitMs = System.currentTimeMillis();
 
                 while (running.get()) {
+                    LOGGER.debug("Polling");
                     final QueueItem item = queue.poll(1, TimeUnit.SECONDS);
 
                     if (item != null) {
@@ -340,6 +341,7 @@ public class LmdbDataStore implements DataStore {
                         item.complete();
                     }
                 }
+                LOGGER.debug("Finished transfer while loop");
 
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
@@ -478,6 +480,7 @@ public class LmdbDataStore implements DataStore {
     }
 
     private synchronized void shutdown(final Txn<ByteBuffer> writeTxn) {
+        LOGGER.debug("Shutdown called");
         if (!shutdown.get()) {
             try {
                 try {
@@ -539,15 +542,17 @@ public class LmdbDataStore implements DataStore {
                 }
 
             } else {
-                dbi.iterate(writeTxn).forEach(kv -> {
-                    final ByteBuffer keyBuffer = kv.key();
-                    final ByteBuffer valBuffer = kv.val();
+                try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(writeTxn)) {
+                    cursorIterable.forEach(kv -> {
+                        final ByteBuffer keyBuffer = kv.key();
+                        final ByteBuffer valBuffer = kv.val();
 
-                    payloadOutput.writeInt(keyBuffer.remaining());
-                    payloadOutput.writeByteBuffer(keyBuffer);
-                    payloadOutput.writeInt(valBuffer.remaining());
-                    payloadOutput.writeByteBuffer(valBuffer);
-                });
+                        payloadOutput.writeInt(keyBuffer.remaining());
+                        payloadOutput.writeByteBuffer(keyBuffer);
+                        payloadOutput.writeInt(valBuffer.remaining());
+                        payloadOutput.writeByteBuffer(valBuffer);
+                    });
+                }
 
                 dbi.drop(writeTxn);
             }
@@ -624,15 +629,18 @@ public class LmdbDataStore implements DataStore {
             maxSize = Integer.MAX_VALUE;
         }
         final CompiledSorter<HasGenerators> sorter = compiledSorters[depth];
-        boolean trimmed = true;
 
-        boolean inRange = true;
+        final AtomicBoolean trimmed = new AtomicBoolean(true);
+        final AtomicBoolean inRange = new AtomicBoolean(true);
 
-        try (final Txn<ByteBuffer> readTxn = environment.txnRead()) {
+        environment.doWithReadTxn(readTxn -> {
             try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(readTxn, keyRange)) {
                 final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
 
-                while (iterator.hasNext() && inRange && !Thread.currentThread().isInterrupted()) {
+                while (iterator.hasNext()
+                        && inRange.get()
+                        && !Thread.currentThread().isInterrupted()) {
+
                     final KeyVal<ByteBuffer> keyVal = iterator.next();
 
                     // Make sure the first part of the row key matches the start key we are looking for.
@@ -646,7 +654,7 @@ public class LmdbDataStore implements DataStore {
                     if (match) {
                         final ByteBuffer valueBuffer = keyVal.val();
                         try (final UnsafeByteBufferInput input = new UnsafeByteBufferInput(valueBuffer)) {
-                            while (!input.end() && inRange) {
+                            while (!input.end() && inRange.get()) {
                                 final LmdbValue rowValue = LmdbValue.read(compiledFields, input);
                                 final Key key = rowValue.getKey();
                                 if (key.getParent().equals(parentKey)) {
@@ -654,26 +662,26 @@ public class LmdbDataStore implements DataStore {
                                     list.add(new ItemImpl(this, key, generators));
                                     if (!allowSort && list.size >= trimmedSize) {
                                         // Stop without sorting etc.
-                                        inRange = false;
+                                        inRange.set(false);
 
                                     } else {
-                                        trimmed = false;
+                                        trimmed.set(false);
                                         if (list.size() > maxSize) {
                                             list.sortAndTrim(sorter, trimmedSize, trimTop);
-                                            trimmed = true;
+                                            trimmed.set(true);
                                         }
                                     }
                                 }
                             }
                         }
                     } else {
-                        inRange = false;
+                        inRange.set(false);
                     }
                 }
             }
-        }
+        });
 
-        if (!trimmed) {
+        if (!trimmed.get()) {
             list.sortAndTrim(sorter, trimmedSize, trimTop);
         }
 
@@ -685,6 +693,7 @@ public class LmdbDataStore implements DataStore {
      */
     @Override
     public void clear() {
+        LOGGER.debug("clear called");
         // Stop the transfer loop running, this has the effect of dropping the DB when it stops.
         running.set(false);
         // Clear the queue for good measure.
@@ -692,7 +701,7 @@ public class LmdbDataStore implements DataStore {
         // Ensure we complete.
         complete.countDown();
         // If the transfer loop is waiting on new queue items ensure it loops once more.
-        completionState.complete();
+        completionState.signalComplete();
     }
 
     /**
@@ -1035,7 +1044,7 @@ public class LmdbDataStore implements DataStore {
         }
 
         @Override
-        public void complete() {
+        public void signalComplete() {
             if (!isComplete()) {
                 try {
                     if (Thread.currentThread().isInterrupted() || !lmdbDataStore.running.get()) {
@@ -1084,7 +1093,7 @@ public class LmdbDataStore implements DataStore {
 
         @Override
         public void accept(final Long value) {
-            complete();
+            signalComplete();
         }
     }
 }

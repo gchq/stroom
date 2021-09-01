@@ -65,7 +65,7 @@ class SearchableStore implements Store {
             fieldArray[i] = fieldMap.get(fieldIndex.getField(i));
         }
 
-        final Runnable runnable = taskContextFactory.context(taskContext, TASK_NAME, tc ->
+        final Runnable runnable = taskContextFactory.context(TASK_NAME, tc ->
                 searchAsync(tc, searchable, criteria, fieldArray, coprocessors));
         CompletableFuture.runAsync(runnable, executor);
     }
@@ -116,7 +116,7 @@ class SearchableStore implements Store {
     }
 
     public void complete() {
-        coprocessors.getCompletionState().complete();
+        coprocessors.getCompletionState().signalComplete();
     }
 
     @Override

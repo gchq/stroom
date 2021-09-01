@@ -17,6 +17,7 @@
 package stroom.cluster.lock.impl.db;
 
 import stroom.security.api.SecurityContext;
+import stroom.task.api.TaskContext;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.PermissionException;
 
@@ -35,11 +36,14 @@ public class ClusterLockClusterHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockClusterHandler.class);
     private final ConcurrentHashMap<String, Lock> lockMap = new ConcurrentHashMap<>();
 
+    private final TaskContext taskContext;
     private final SecurityContext securityContext;
 
     @Inject
-    ClusterLockClusterHandler(final SecurityContext securityContext) {
+    ClusterLockClusterHandler(final SecurityContext securityContext,
+                              final TaskContext taskContext) {
         this.securityContext = securityContext;
+        this.taskContext = taskContext;
     }
 
     /**
@@ -190,6 +194,7 @@ public class ClusterLockClusterHandler {
      * not been refreshed by their owner for 10 minutes.
      */
     public void unlockOldLocks() {
+        taskContext.info(() -> "Removing old cluster locks");
         final long oldTime = System.currentTimeMillis() - TEN_MINUTES;
         for (final Lock lock : lockMap.values()) {
             if (lock.refreshTime < oldTime) {

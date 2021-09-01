@@ -90,6 +90,8 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
         this.securityContext = securityContext;
         this.explorerEventLog = explorerEventLog;
         this.explorerDecoratorProvider = explorerDecoratorProvider;
+
+        explorerNodeService.ensureRootNodeExists();
     }
 
     @Override

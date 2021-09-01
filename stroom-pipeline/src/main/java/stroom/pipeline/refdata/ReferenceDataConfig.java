@@ -2,6 +2,7 @@ package stroom.pipeline.refdata;
 
 import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.RequiresRestart;
+import stroom.util.config.annotations.RequiresRestart.RestartScope;
 import stroom.util.io.ByteSize;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
@@ -29,6 +30,7 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
     private ByteSize maxStoreSize = ByteSize.ofGibibytes(50);
     private StroomDuration purgeAge = StroomDuration.ofDays(30);
     private boolean isReadAheadEnabled = true;
+    private int loadingLockStripes = 2048;
 
     private CacheConfig effectiveStreamCache = CacheConfig.builder()
             .maximumSize(1000L)
@@ -129,6 +131,19 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
 
     public void setReadAheadEnabled(final boolean isReadAheadEnabled) {
         this.isReadAheadEnabled = isReadAheadEnabled;
+    }
+
+    @Min(2)
+    @RequiresRestart(RestartScope.SYSTEM)
+    @JsonPropertyDescription("The number of lock stripes used for preventing multiple pipeline processes " +
+            "from loading the same reference stream at the same time. Values should be a power of 2. " +
+            "Lower values will mean it is more likely for two different streams from blocking one another.")
+    public int getLoadingLockStripes() {
+        return loadingLockStripes;
+    }
+
+    public void setLoadingLockStripes(final int loadingLockStripes) {
+        this.loadingLockStripes = loadingLockStripes;
     }
 
     public CacheConfig getEffectiveStreamCache() {

@@ -393,6 +393,7 @@ appConfig:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
       lmdbSystemLibraryPath: null
+      loadingLockStripes: 2048
       localDir: "reference_data"
       maxPutsBeforeCommit: 0
       maxReaders: 100

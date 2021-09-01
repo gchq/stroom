@@ -38,6 +38,7 @@ import stroom.pipeline.refdata.store.offheapstore.databases.MapUidReverseDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ProcessingInfoDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.RangeStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
+import stroom.task.mock.MockTaskModule;
 import stroom.util.io.ByteSize;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.TempDirProvider;
@@ -130,6 +131,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                         bind(HomeDirProvider.class).toInstance(() -> getCurrentTestDir());
                         bind(TempDirProvider.class).toInstance(() -> getCurrentTestDir());
                         install(new RefDataStoreModule());
+                        install(new MockTaskModule());
                         install(new PipelineScopeModule());
                     }
                 });

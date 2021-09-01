@@ -588,7 +588,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     @Override
     public void link() {
         String tableId = getVisSettings().getTableId();
-        tableId = getComponents().validateOrGetFirstComponentId(tableId, TablePresenter.TYPE.getId());
+        tableId = getComponents().validateOrGetLastComponentId(tableId, TablePresenter.TYPE.getId());
         updateTableId(tableId);
     }
 

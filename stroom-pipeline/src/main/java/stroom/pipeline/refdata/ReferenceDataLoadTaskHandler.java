@@ -182,70 +182,68 @@ class ReferenceDataLoadTaskHandler {
         // Set the source meta.
         metaHolder.setMeta(meta);
 
-        // Start processing.
-        try {
-            pipeline.startProcessing();
-        } catch (final RuntimeException e) {
-            // An exception during start processing is definitely a failure.
-            log(Severity.FATAL_ERROR, e.getMessage(), e);
-        }
+        refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, meta.getEffectiveMs(), refDataLoader -> {
+            // we are now blocking any other thread loading the same refStreamDefinition
+            // and know that this stream has not already been loaded.
 
-        try {
+            // Start processing.
+            try {
+                pipeline.startProcessing();
+            } catch (final RuntimeException e) {
+                // An exception during start processing is definitely a failure.
+                log(Severity.FATAL_ERROR, e.getMessage(), e);
+            }
+
             // Get the appropriate encoding for the stream type.
             final String encoding = feedProperties.getEncoding(
                     feedName, meta.getTypeName(), null);
+            LOGGER.debug("Using encoding '{}' for feed {}", encoding, feedName);
 
             final StreamLocationFactory streamLocationFactory = new StreamLocationFactory();
             locationFactory.setLocationFactory(streamLocationFactory);
 
-            refDataStore.doWithLoaderUnlessComplete(refStreamDefinition, meta.getEffectiveMs(), refDataLoader -> {
-                // we are now blocking any other thread loading the same refStreamDefinition
+            try {
+                // Loop over the stream boundaries and process each sequentially.
+                // Typically ref data will only have a single partIndex so if there are
+                // multiple then overrideExisting may be needed.
+                final long count = source.count();
+                for (long index = 0; index < count && !Thread.currentThread().isInterrupted(); index++) {
+                    metaHolder.setPartIndex(index);
+                    streamLocationFactory.setPartIndex(index);
 
-                try {
-                    // Loop over the stream boundaries and process each sequentially.
-                    // Typically ref data will only have a single partIndex so if there are
-                    // multiple then overrideExisting may be needed.
-                    final long count = source.count();
-                    for (long index = 0; index < count && !Thread.currentThread().isInterrupted(); index++) {
-                        metaHolder.setPartIndex(index);
-                        streamLocationFactory.setPartIndex(index);
+                    try (final InputStreamProvider inputStreamProvider = source.get(index)) {
+                        // Get the stream providers.
+                        metaHolder.setInputStreamProvider(inputStreamProvider);
 
-                        try (final InputStreamProvider inputStreamProvider = source.get(index)) {
-                            // Get the stream providers.
-                            metaHolder.setInputStreamProvider(inputStreamProvider);
+                        // Get the stream.
+                        final InputStream inputStream = inputStreamProvider.get();
 
-                            // Get the stream.
-                            final InputStream inputStream = inputStreamProvider.get();
-
-                            // set this loader in the holder so it is available to the pipeline filters
-                            refDataLoaderHolder.setRefDataLoader(refDataLoader);
-                            // Process the boundary.
-                            try {
-                                //process the pipeline, ref data will be loaded via the ReferenceDataFilter
-                                pipeline.process(inputStream, encoding);
-                            } catch (final RuntimeException e) {
-                                log(Severity.FATAL_ERROR, e.getMessage(), e);
-                            }
-                        } catch (final IOException | RuntimeException e) {
+                        // set this loader in the holder so it is available to the pipeline filters
+                        refDataLoaderHolder.setRefDataLoader(refDataLoader);
+                        // Process the boundary.
+                        try {
+                            //process the pipeline, ref data will be loaded via the ReferenceDataFilter
+                            pipeline.process(inputStream, encoding);
+                        } catch (final RuntimeException e) {
                             log(Severity.FATAL_ERROR, e.getMessage(), e);
                         }
+                    } catch (final IOException | RuntimeException e) {
+                        log(Severity.FATAL_ERROR, e.getMessage(), e);
                     }
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
-            });
-            // clear the reference to the loader now we have finished with it
-            refDataLoaderHolder.setRefDataLoader(null);
-
-        } catch (final RuntimeException e) {
-            log(Severity.FATAL_ERROR, e.getMessage(), e);
-        } finally {
-            try {
-                pipeline.endProcessing();
-            } catch (final RuntimeException e) {
+            } catch (Exception e) {
                 log(Severity.FATAL_ERROR, e.getMessage(), e);
+            } finally {
+                try {
+                    pipeline.endProcessing();
+                } catch (final RuntimeException e) {
+                    log(Severity.FATAL_ERROR, e.getMessage(), e);
+                }
             }
-        }
+        });
+        // clear the reference to the loader now we have finished with it
+        refDataLoaderHolder.setRefDataLoader(null);
+
     }
 
     private void log(final Severity severity, final String message, final Throwable e) {
