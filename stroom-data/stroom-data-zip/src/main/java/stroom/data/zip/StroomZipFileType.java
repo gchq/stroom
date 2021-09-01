@@ -13,15 +13,15 @@ public enum StroomZipFileType {
     DATA(4, ".dat", new String[]{".dat"});
 
     private static final Map<String, StroomZipFileType> EXTENSION_MAP = Map.ofEntries(
-            entry("mf", StroomZipFileType.MANIFEST),
-            entry("manifest", StroomZipFileType.MANIFEST),
-            entry("hdr", StroomZipFileType.META),
-            entry("header", StroomZipFileType.META),
-            entry("meta", StroomZipFileType.META),
-            entry("met", StroomZipFileType.META),
-            entry("ctx", StroomZipFileType.CONTEXT),
-            entry("context", StroomZipFileType.CONTEXT),
-            entry("dat", StroomZipFileType.DATA)
+            entry(".mf", StroomZipFileType.MANIFEST),
+            entry(".manifest", StroomZipFileType.MANIFEST),
+            entry(".hdr", StroomZipFileType.META),
+            entry(".header", StroomZipFileType.META),
+            entry(".meta", StroomZipFileType.META),
+            entry(".met", StroomZipFileType.META),
+            entry(".ctx", StroomZipFileType.CONTEXT),
+            entry(".context", StroomZipFileType.CONTEXT),
+            entry(".dat", StroomZipFileType.DATA)
     );
 
     /**

@@ -11,7 +11,6 @@ import stroom.proxy.repo.db.jooq.tables.records.SourceEntryRecord;
 import stroom.proxy.repo.db.jooq.tables.records.SourceItemRecord;
 import stroom.util.concurrent.ScalingThreadPoolExecutor;
 import stroom.util.io.FileUtil;
-import stroom.util.io.FileUtil.FileName;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.thread.CustomThreadFactory;
@@ -29,6 +28,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
@@ -121,7 +121,7 @@ public class ProxyRepoSourceEntries implements HasShutdown {
 
                     // Skip directories
                     if (!entry.isDirectory()) {
-                        final FileName fileName = FileUtil.parseFileName(entry.getName());
+                        final FileName fileName = parseFileName(entry.getName());
                         final StroomZipFileType stroomZipFileType =
                                 StroomZipFileType.fromExtension(fileName.getExtension());
 
@@ -208,6 +208,21 @@ public class ProxyRepoSourceEntries implements HasShutdown {
         }
     }
 
+    private FileName parseFileName(final String fileName) {
+        Objects.requireNonNull(fileName, "fileName is null");
+        final int extensionIndex = fileName.lastIndexOf(".");
+        String stem;
+        String extension;
+        if (extensionIndex == -1) {
+            stem = fileName;
+            extension = "";
+        } else {
+            stem = fileName.substring(0, extensionIndex);
+            extension = fileName.substring(extensionIndex);
+        }
+        return new FileName(fileName, stem, extension);
+    }
+
     @Override
     public void shutdown() {
         shutdown = true;
@@ -232,5 +247,35 @@ public class ProxyRepoSourceEntries implements HasShutdown {
     public interface ChangeListener {
 
         void onChange(long sourceId);
+    }
+
+    private static class FileName {
+
+        private final String fullName;
+        private final String stem;
+        private final String extension;
+
+        public FileName(final String fullName, final String stem, final String extension) {
+            this.fullName = fullName;
+            this.stem = stem;
+            this.extension = extension;
+        }
+
+        public String getFullName() {
+            return fullName;
+        }
+
+        public String getStem() {
+            return stem;
+        }
+
+        public String getExtension() {
+            return extension;
+        }
+
+        @Override
+        public String toString() {
+            return fullName;
+        }
     }
 }
