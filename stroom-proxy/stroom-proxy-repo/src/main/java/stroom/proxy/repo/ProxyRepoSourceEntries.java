@@ -1,8 +1,6 @@
 package stroom.proxy.repo;
 
-import stroom.data.zip.StroomZipEntry;
 import stroom.data.zip.StroomZipFileType;
-import stroom.data.zip.StroomZipNameSet;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
@@ -13,6 +11,7 @@ import stroom.proxy.repo.db.jooq.tables.records.SourceEntryRecord;
 import stroom.proxy.repo.db.jooq.tables.records.SourceItemRecord;
 import stroom.util.concurrent.ScalingThreadPoolExecutor;
 import stroom.util.io.FileUtil;
+import stroom.util.io.FileUtil.FileName;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.thread.CustomThreadFactory;
@@ -114,19 +113,17 @@ public class ProxyRepoSourceEntries implements HasShutdown {
             final Map<String, SourceItemRecord> itemNameMap = new HashMap<>();
             final Map<Long, List<SourceEntryRecord>> entryMap = new HashMap<>();
 
-            final StroomZipNameSet stroomZipNameSet = new StroomZipNameSet(false);
             try (final ZipFile zipFile = new ZipFile(Files.newByteChannel(fullPath))) {
                 final Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
                 while (entries.hasMoreElements()) {
                     final ZipArchiveEntry entry = entries.nextElement();
+                    LOGGER.trace(() -> "Examining zip entry '" + entry.getName() + "'");
 
                     // Skip directories
                     if (!entry.isDirectory()) {
-                        final String fileName = entry.getName();
-                        final StroomZipEntry stroomZipEntry = stroomZipNameSet.add(fileName);
-                        final String baseName = stroomZipEntry.getBaseName();
-                        final String extension = stroomZipEntry.getFullName().substring(baseName.length());
-                        final StroomZipFileType stroomZipFileType = stroomZipEntry.getStroomZipFileType();
+                        final FileName fileName = FileUtil.parseFileName(entry.getName());
+                        final StroomZipFileType stroomZipFileType =
+                                StroomZipFileType.fromExtension(fileName.getExtension());
 
                         // If this is a meta entry then get the feed name.
                         String feedName = source.getFeedName();
@@ -155,7 +152,7 @@ public class ProxyRepoSourceEntries implements HasShutdown {
                         }
 
                         long sourceItemId;
-                        SourceItemRecord sourceItemRecord = itemNameMap.get(baseName);
+                        SourceItemRecord sourceItemRecord = itemNameMap.get(fileName.getStem());
 
                         if (sourceItemRecord != null) {
                             sourceItemId = sourceItemRecord.getId();
@@ -173,12 +170,12 @@ public class ProxyRepoSourceEntries implements HasShutdown {
                             sourceItemId = sourceEntryDao.nextSourceItemId();
                             sourceItemRecord = new SourceItemRecord(
                                     sourceItemId,
-                                    baseName,
+                                    fileName.getStem(),
                                     feedName,
                                     typeName,
                                     source.getSourceId(),
                                     false);
-                            itemNameMap.put(baseName, sourceItemRecord);
+                            itemNameMap.put(fileName.getStem(), sourceItemRecord);
                         }
 
                         final long sourceEntryId = sourceEntryDao.nextSourceEntryId();
@@ -186,14 +183,14 @@ public class ProxyRepoSourceEntries implements HasShutdown {
                                 .computeIfAbsent(sourceItemId, k -> new ArrayList<>())
                                 .add(new SourceEntryRecord(
                                         sourceEntryId,
-                                        extension,
+                                        fileName.getExtension(),
                                         stroomZipFileType.getId(),
                                         entry.getSize(),
                                         sourceItemId));
                     }
                 }
 
-                if (stroomZipNameSet.getBaseNameSet().isEmpty()) {
+                if (itemNameMap.isEmpty()) {
                     errorReceiver.error(fullPath, "Unable to find any entries?");
                 }
 

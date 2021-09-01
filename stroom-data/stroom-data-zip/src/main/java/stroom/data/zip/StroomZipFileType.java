@@ -1,10 +1,28 @@
 package stroom.data.zip;
 
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+
+import static java.util.Map.entry;
+
 public enum StroomZipFileType {
     MANIFEST(1, ".mf", new String[]{".mf", ".manifest"}),
     META(2, ".meta", new String[]{".hdr", ".header", ".meta", ".met"}),
     CONTEXT(3, ".ctx", new String[]{".ctx", ".context"}),
     DATA(4, ".dat", new String[]{".dat"});
+
+    private static final Map<String, StroomZipFileType> EXTENSION_MAP = Map.ofEntries(
+            entry("mf", StroomZipFileType.MANIFEST),
+            entry("manifest", StroomZipFileType.MANIFEST),
+            entry("hdr", StroomZipFileType.META),
+            entry("header", StroomZipFileType.META),
+            entry("meta", StroomZipFileType.META),
+            entry("met", StroomZipFileType.META),
+            entry("ctx", StroomZipFileType.CONTEXT),
+            entry("context", StroomZipFileType.CONTEXT),
+            entry("dat", StroomZipFileType.DATA)
+    );
 
     /**
      * We need to be able to sort by type so we hold a numeric id that allows meta to be found before accompanying data.
@@ -46,5 +64,13 @@ public enum StroomZipFileType {
      */
     public String[] getRecognisedExtensions() {
         return recognisedExtensions;
+    }
+
+    public static StroomZipFileType fromExtension(final String extension) {
+        Optional<StroomZipFileType> optional = Optional.empty();
+        if (extension != null && !extension.isEmpty()) {
+            optional = Optional.ofNullable(EXTENSION_MAP.get(extension.toLowerCase(Locale.ROOT)));
+        }
+        return optional.orElse(StroomZipFileType.DATA);
     }
 }

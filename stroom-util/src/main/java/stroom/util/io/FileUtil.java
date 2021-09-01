@@ -306,4 +306,49 @@ public final class FileUtil {
             throw new RuntimeException("Error opening lock file " + lockFilePath.toAbsolutePath(), e);
         }
     }
+
+    public static FileName parseFileName(final String fileName) {
+        Objects.requireNonNull(fileName, "fileName is null");
+        final int extensionIndex = fileName.lastIndexOf(".");
+        String stem;
+        String extension;
+        if (extensionIndex == -1) {
+            stem = fileName;
+            extension = "";
+        } else {
+            stem = fileName.substring(0, extensionIndex);
+            extension = fileName.substring(extensionIndex + 1);
+        }
+        return new FileName(fileName, stem, extension);
+    }
+
+    public static class FileName {
+
+        private final String fullName;
+        private final String stem;
+        private final String extension;
+
+        public FileName(final String fullName, final String stem, final String extension) {
+            this.fullName = fullName;
+            this.stem = stem;
+            this.extension = extension;
+        }
+
+        public String getFullName() {
+            return fullName;
+        }
+
+        public String getStem() {
+            return stem;
+        }
+
+        public String getExtension() {
+            return extension;
+        }
+
+        @Override
+        public String toString() {
+            return fullName;
+        }
+    }
 }

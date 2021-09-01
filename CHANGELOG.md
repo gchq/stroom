@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2390** : Fix NPE thrown during proxy aggregation.
+
 
 ## [v7.1-beta.5] - 2021-08-31
 
