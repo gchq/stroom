@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2392** : Fix for token type to only allow `api`.
+
 
 ## [v7.0-beta.143] - 2021-08-31
 

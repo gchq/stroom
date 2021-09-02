@@ -162,8 +162,7 @@ class TokenDaoImpl implements TokenDao {
     public TokenResultPage list() {
         final List<Token> list = JooqUtil.contextResult(identityDbConnProvider, context -> context
                 .selectFrom(stroom.security.identity.db.jooq.tables.Token.TOKEN)
-                .where(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_TOKEN_TYPE_ID
-                        .eq(tokenTypeDao.getTokenTypeId(TokenType.USER.getText().toLowerCase())))
+                .where(createCondition())
                 .orderBy(stroom.security.identity.db.jooq.tables.Token.TOKEN.CREATE_TIME_MS)
                 .fetch()
                 .map(RECORD_TO_TOKEN_MAPPER::apply));
@@ -172,7 +171,7 @@ class TokenDaoImpl implements TokenDao {
 
     @Override
     public TokenResultPage search(final SearchTokenRequest request) {
-        final Condition condition = createCondition(request);
+        final Condition condition = createCondition();
 
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(
                 FIELD_MAP,
@@ -531,12 +530,9 @@ class TokenDaoImpl implements TokenDao {
                 .execute());
     }
 
-    private Condition createCondition(final SearchTokenRequest request) {
-        Condition condition = null;
-//        if (request.getQuickFilter() != null) {
-//            condition = ACCOUNT.USER_ID.contains(request.getQuickFilter());
-//        }
-        return condition;
+    private Condition createCondition() {
+        return stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_TOKEN_TYPE_ID
+                .eq(tokenTypeDao.getTokenTypeId(TokenType.API.getText().toLowerCase()));
     }
 
 //    /**
