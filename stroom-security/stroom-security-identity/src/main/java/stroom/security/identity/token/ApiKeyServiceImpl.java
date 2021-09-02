@@ -7,7 +7,6 @@ import stroom.security.identity.account.AccountService;
 import stroom.security.identity.exceptions.NoSuchUserException;
 import stroom.security.openid.api.OpenIdClientFactory;
 import stroom.security.shared.PermissionNames;
-import stroom.util.rest.RestUtil;
 import stroom.util.shared.PermissionException;
 
 import java.time.Instant;
@@ -38,19 +37,6 @@ public class ApiKeyServiceImpl implements ApiKeyService {
         this.openIdClientDetailsFactory = openIdClientDetailsFactory;
     }
 
-    static Optional<KeyType> getParsedTokenType(final String tokenType) {
-
-        try {
-            if (tokenType == null) {
-                return Optional.empty();
-            } else {
-                return Optional.of(KeyType.fromText(tokenType));
-            }
-        } catch (Exception e) {
-            return Optional.empty();
-        }
-    }
-
     @Override
     public ApiKeyResultPage list() {
         checkPermission();
@@ -72,11 +58,6 @@ public class ApiKeyServiceImpl implements ApiKeyService {
         final Optional<Integer> optionalAccountId = accountDao.getId(createApiKeyRequest.getUserId());
         final Integer accountId = optionalAccountId.orElseThrow(() ->
                 new NoSuchUserException("Cannot find user to associate with this API key!"));
-
-        // Parse and validate tokenType
-        final Optional<KeyType> optionalTokenType = getParsedTokenType(createApiKeyRequest.getTokenType());
-        final KeyType keyType = optionalTokenType.orElseThrow(() ->
-                RestUtil.badRequest("Unknown token type:" + createApiKeyRequest.getTokenType()));
 
         final Instant expiryInstant = createApiKeyRequest.getExpiresOnMs() == null
                 ? null
@@ -103,7 +84,7 @@ public class ApiKeyServiceImpl implements ApiKeyService {
         apiKey.setUpdateTimeMs(now);
         apiKey.setUpdateUser(userId);
         apiKey.setUserId(createApiKeyRequest.getUserId());
-        apiKey.setType(keyType.getText());
+        apiKey.setType(createApiKeyRequest.getTokenType());
         apiKey.setData(data);
         apiKey.setExpiresOnMs(actualExpiryDate.toEpochMilli());
         apiKey.setComments(createApiKeyRequest.getComments());

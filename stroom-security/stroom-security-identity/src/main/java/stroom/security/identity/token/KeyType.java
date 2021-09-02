@@ -1,7 +1,7 @@
 package stroom.security.identity.token;
 
 public enum KeyType {
-    USER("user");
+    API("api");
 
     private final String text;
 

@@ -162,8 +162,7 @@ class ApiKeyDaoImpl implements ApiKeyDao {
     public ApiKeyResultPage list() {
         final List<ApiKey> list = JooqUtil.contextResult(identityDbConnProvider, context -> context
                 .selectFrom(stroom.security.identity.db.jooq.tables.Token.TOKEN)
-                .where(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_TOKEN_TYPE_ID
-                        .eq(keyTypeDao.getTypeId(KeyType.USER.getText().toLowerCase())))
+                .where(createCondition())
                 .orderBy(stroom.security.identity.db.jooq.tables.Token.TOKEN.CREATE_TIME_MS)
                 .fetch()
                 .map(RECORD_TO_TOKEN_MAPPER::apply));
@@ -172,7 +171,7 @@ class ApiKeyDaoImpl implements ApiKeyDao {
 
     @Override
     public ApiKeyResultPage search(final SearchApiKeyRequest request) {
-        final Condition condition = createCondition(request);
+        final Condition condition = createCondition();
 
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(
                 FIELD_MAP,
@@ -531,12 +530,9 @@ class ApiKeyDaoImpl implements ApiKeyDao {
                 .execute());
     }
 
-    private Condition createCondition(final SearchApiKeyRequest request) {
-        Condition condition = null;
-//        if (request.getQuickFilter() != null) {
-//            condition = ACCOUNT.USER_ID.contains(request.getQuickFilter());
-//        }
-        return condition;
+    private Condition createCondition() {
+        return stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_TOKEN_TYPE_ID
+                .eq(keyTypeDao.getTypeId(KeyType.API.getText().toLowerCase()));
     }
 
 //    /**
