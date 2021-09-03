@@ -18,7 +18,6 @@ package stroom.security.identity.token;
 
 import stroom.security.openid.api.JsonWebKeyFactory;
 import stroom.security.openid.api.PublicJsonWebKeyProvider;
-import stroom.util.guice.HasHealthCheckBinder;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
@@ -34,8 +33,5 @@ public final class TokenModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(TokenResourceImpl.class);
-
-        HasHealthCheckBinder.create(binder())
-                .bind(TokenServiceImpl.class);
     }
 }

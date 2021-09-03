@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2379** : Change ref data lookups to truncate last access time to hourly.
 
+* Issue **#2392** : Fix for token type to only allow `api`.
+
 
 ## [v7.0-beta.143] - 2021-08-31
 
