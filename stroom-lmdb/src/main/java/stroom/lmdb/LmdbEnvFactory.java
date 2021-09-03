@@ -108,6 +108,11 @@ public class LmdbEnvFactory {
             return this;
         }
 
+        public EnvironmentBuilder setWritersBlockReaders(final boolean doWritersBlockReaders) {
+            this.doWritersBlockReaders = doWritersBlockReaders;
+            return this;
+        }
+
         public LmdbEnv build() {
 
             if (lmdbSystemLibraryPath != null) {

@@ -61,7 +61,7 @@ public class LmdbEnv implements AutoCloseable {
             // in the db, so can lead to excessive growth of the db file.
             LOGGER.debug("Initialising Environment with doWritesBlockReads: {}",
                     doWritesBlockReads);
-            readTxnMethod = this::doWithReadTxnUnderWriteLock;
+            readTxnMethod = this::getWithReadTxnUnderWriteLock;
         } else {
             // Limit concurrent readers java side to ensure we don't get a max readers reached error
             final int maxReaders = env.info().maxReaders;
@@ -72,7 +72,7 @@ public class LmdbEnv implements AutoCloseable {
 
             final Semaphore activeReadTransactionsSemaphore = new Semaphore(maxReaders);
             readTxnMethod = work ->
-                    doWithReadTxnUnderMaxReaderSemaphore(work, activeReadTransactionsSemaphore);
+                    getWithReadTxnUnderMaxReaderSemaphore(work, activeReadTransactionsSemaphore);
         }
     }
 
@@ -170,12 +170,15 @@ public class LmdbEnv implements AutoCloseable {
         });
     }
 
-    private <T> T doWithReadTxnUnderMaxReaderSemaphore(final Function<Txn<ByteBuffer>, T> work,
-                                                       final Semaphore activeReadTransactionsSemaphore) {
+    private <T> T getWithReadTxnUnderMaxReaderSemaphore(final Function<Txn<ByteBuffer>, T> work,
+                                                        final Semaphore activeReadTransactionsSemaphore) {
         try {
             LOGGER.trace("About to acquire permit");
             activeReadTransactionsSemaphore.acquire();
-            LOGGER.trace("Permit acquired");
+            LOGGER.trace(() ->
+                    LogUtil.message("Permit acquired, remaining {}, queue length {}",
+                            activeReadTransactionsSemaphore.availablePermits(),
+                            activeReadTransactionsSemaphore.getQueueLength()));
 
             try (final Txn<ByteBuffer> txn = env.txnRead()) {
                 LOGGER.trace("Performing work with read txn");
@@ -194,7 +197,7 @@ public class LmdbEnv implements AutoCloseable {
         }
     }
 
-    public <T> T doWithReadTxnUnderWriteLock(final Function<Txn<ByteBuffer>, T> work) {
+    public <T> T getWithReadTxnUnderWriteLock(final Function<Txn<ByteBuffer>, T> work) {
         try {
             LOGGER.trace("About to acquire lock");
             writeTxnLock.lockInterruptibly();
