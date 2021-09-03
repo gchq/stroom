@@ -457,7 +457,6 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
         return lmdbEnvironment.getWithWriteTxn(writeTxn -> {
             try {
                 final PutOutcome putOutcome = put(writeTxn, key, value, overwriteExisting);
-                writeTxn.commit();
                 return putOutcome;
             } catch (RuntimeException e) {
                 throw new RuntimeException(LogUtil.message("Error putting key {}, value {}", key, value), e);
@@ -528,7 +527,6 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
                         throw new RuntimeException(LogUtil.message("Error putting key {}, value {}", key, value), e);
                     }
                 });
-                writeTxn.commit();
             } catch (RuntimeException e) {
                 throw new RuntimeException(LogUtil.message("Error putting {} entries", entries.size()), e);
             }
@@ -614,7 +612,6 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
         return lmdbEnvironment.getWithWriteTxn(writeTxn -> {
             try {
                 boolean result = delete(writeTxn, key);
-                writeTxn.commit();
                 return result;
             } catch (RuntimeException e) {
                 throw new RuntimeException(LogUtil.message("Error deleting key {}", key), e);
@@ -646,7 +643,6 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
                             ByteBufferUtils.byteBufferInfo(keyBuffer),
                             result);
                 }
-                writeTxn.commit();
                 return result;
             } catch (RuntimeException e) {
                 throw new RuntimeException(LogUtil.message("Error deleting key {}",
@@ -688,7 +684,6 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
                         throw new RuntimeException(LogUtil.message("Error deleting key {}", key), e);
                     }
                 });
-                writeTxn.commit();
             } catch (RuntimeException e) {
                 throw new RuntimeException(LogUtil.message("Error deleting {} keys ", keys.size()), e);
             }

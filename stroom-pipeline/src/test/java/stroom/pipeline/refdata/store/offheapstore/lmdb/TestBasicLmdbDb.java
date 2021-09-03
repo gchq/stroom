@@ -155,6 +155,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
                         .isTrue();
                 assertThat(putOutcome.isDuplicate())
                         .hasValue(true);
+
             });
             assertThat(basicLmdbDb.getEntryCount())
                     .isEqualTo(1);

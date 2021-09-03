@@ -10,7 +10,6 @@ import stroom.util.io.PathCreator;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.lmdbjava.Env.ReadersFullException;
 import org.lmdbjava.EnvFlags;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -147,13 +146,7 @@ public class TestLmdbMaxReaders {
         LOGGER.info("Exception count: {}", exceptions.size());
 
         Assertions.assertThat(exceptions)
-                .isNotEmpty();
-
-        Assertions.assertThat(exceptions.stream()
-                .distinct()
-                .allMatch(clazz ->
-                        clazz instanceof ReadersFullException))
-                .isTrue();
+                .isEmpty();
 
         LOGGER.info("numReaders: {}", lmdbEnv.info().numReaders);
     }

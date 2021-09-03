@@ -108,6 +108,10 @@ public class LmdbEnv implements AutoCloseable {
         });
     }
 
+    /**
+     * Get a value using a write transaction. The txn will be committed after
+     * the work is complete. work should not commit.
+     */
     public <T> T getWithWriteTxn(final Function<Txn<ByteBuffer>, T> work) {
 
         LOGGER.trace("Acquiring write txn lock");
@@ -121,9 +125,12 @@ public class LmdbEnv implements AutoCloseable {
             }
 
             LOGGER.trace("About to open write tx");
-            try (final Txn<ByteBuffer> txn = env.txnWrite()) {
+            try (final Txn<ByteBuffer> writeTxn = env.txnWrite()) {
                 LOGGER.trace("Performing work with write txn");
-                return work.apply(txn);
+                T result = work.apply(writeTxn);
+                LOGGER.trace("Committing the txn");
+                writeTxn.commit();
+                return result;
             } catch (RuntimeException e) {
                 throw new RuntimeException(LogUtil.message(
                         "Error performing work in read transaction: {}",
@@ -317,18 +324,30 @@ public class LmdbEnv implements AutoCloseable {
             return writeTxn;
         }
 
+        /**
+         * {@link Txn#abort()}
+         */
         public void abort() {
             writeTxn.abort();
         }
 
+        /**
+         * {@link Txn#commit()}
+         */
         public void commit() {
             writeTxn.commit();
         }
 
+        /**
+         * {@link Txn#renew()}
+         */
         public void renew() {
             writeTxn.renew();
         }
 
+        /**
+         * {@link Txn#reset()}
+         */
         public void reset() {
             writeTxn.reset();
         }

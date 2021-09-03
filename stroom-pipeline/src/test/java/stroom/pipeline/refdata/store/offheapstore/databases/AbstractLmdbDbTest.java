@@ -59,6 +59,7 @@ public abstract class AbstractLmdbDbTest extends StroomUnitTest {
                 .withMapSize(getMaxSizeBytes())
                 .withMaxDbCount(10)
                 .addEnvFlag(EnvFlags.MDB_NOTLS)
+                .makeWritersBlockReaders()
                 .build();
     }
 
