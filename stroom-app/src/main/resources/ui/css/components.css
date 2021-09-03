@@ -529,8 +529,8 @@
     padding-bottom: var(--control__gap--vertical);
 }
 
-.documentPermissionsViewImpl-cascade {
-    margin-top: 5px;
+.DocumentPermissionsViewImpl .linkTabBar {
+    padding-bottom: var(--control__gap--vertical);
 }
 
 .documentPermissionsViewImpl-copyPermissionsFromParentButton {
@@ -1153,7 +1153,7 @@
 
 .userListViewImpl-nameFilter {
     border-bottom: none !important;
-    margin: var(--control__padding--vertical) 0;
+    margin-bottom: var(--control__padding--vertical);
 }
 
 .mainViewImpl-max {
