@@ -20,7 +20,7 @@ public class FormGroup extends Composite implements HasWidgets {
 
     public FormGroup() {
         feedback.setStyleName("invalid-feedback");
-        formGroup.setStyleName("form-group");
+        formGroup.addStyleName("form-group");
         initWidget(formGroup);
     }
 

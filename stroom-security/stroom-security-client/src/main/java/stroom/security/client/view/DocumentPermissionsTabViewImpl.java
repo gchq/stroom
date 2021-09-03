@@ -17,6 +17,7 @@
 package stroom.security.client.view;
 
 import stroom.security.client.presenter.DocumentPermissionsTabPresenter;
+import stroom.widget.form.client.FormGroup;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -36,7 +37,7 @@ public final class DocumentPermissionsTabViewImpl extends ViewImpl
     @UiField
     SimplePanel users;
     @UiField
-    Label usersLabel;
+    FormGroup documentPermissionsUsers;
     @UiField
     ScrollPanel permissions;
 
@@ -62,7 +63,7 @@ public final class DocumentPermissionsTabViewImpl extends ViewImpl
 
     @Override
     public void setUsersLabelText(String text) {
-        usersLabel.setText(text);
+        documentPermissionsUsers.setLabel(text);
     }
 
     public interface Binder extends UiBinder<Widget, DocumentPermissionsTabViewImpl> {

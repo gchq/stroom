@@ -17,11 +17,11 @@
 
 package stroom.receive.rules.client.view;
 
-import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.retention.shared.TimeUnit;
 import stroom.item.client.ItemListBox;
 import stroom.receive.rules.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.form.client.FormGroup;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -29,7 +29,6 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
@@ -46,9 +45,9 @@ public class DataRetentionRuleViewImpl extends ViewImpl implements DataRetention
     @UiField
     TextBox name;
     @UiField
-    TickBox forever;
+    CustomCheckBox forever;
     @UiField
-    Label retainLabel;
+    FormGroup retainLabel;
     @UiField
     ValueSpinner age;
     @UiField
@@ -101,12 +100,12 @@ public class DataRetentionRuleViewImpl extends ViewImpl implements DataRetention
 
     @Override
     public boolean isForever() {
-        return forever.getBooleanValue();
+        return forever.getValue();
     }
 
     @Override
     public void setForever(final boolean forever) {
-        this.forever.setBooleanValue(forever);
+        this.forever.setValue(forever);
         setEnabled(!forever);
     }
 
@@ -131,7 +130,7 @@ public class DataRetentionRuleViewImpl extends ViewImpl implements DataRetention
     }
 
     @UiHandler("forever")
-    public void onAddFunctionClick(final ValueChangeEvent<TickBoxState> event) {
+    public void onAddFunctionClick(final ValueChangeEvent<Boolean> event) {
         setEnabled(!isForever());
     }
 

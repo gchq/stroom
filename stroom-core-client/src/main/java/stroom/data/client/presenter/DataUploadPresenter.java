@@ -140,7 +140,7 @@ public class DataUploadPresenter extends MyPresenterWidget<DataUploadPresenter.D
         this.metaPresenter = streamPresenter;
         this.feedRef = feedRef;
 
-        final PopupSize popupSize = PopupSize.resizable();
+        final PopupSize popupSize = PopupSize.resizable(430, 480);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)

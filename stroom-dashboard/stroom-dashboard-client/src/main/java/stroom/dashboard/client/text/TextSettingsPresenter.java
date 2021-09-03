@@ -28,6 +28,8 @@ public class TextSettingsPresenter extends SettingsPresenter {
     public TextSettingsPresenter(final EventBus eventBus, final LinkTabsLayoutView view,
                                  final BasicTextSettingsPresenter basicSettingsPresenter) {
         super(eventBus, view);
+        getView().asWidget().addStyleName("settingsPresenter");
+
         addTab("Basic", basicSettingsPresenter);
     }
 }

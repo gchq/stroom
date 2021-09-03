@@ -19,6 +19,7 @@ package stroom.security.client.view;
 import stroom.item.client.ItemListBox;
 import stroom.security.client.presenter.DocumentPermissionsPresenter;
 import stroom.security.shared.ChangeDocumentPermissionsRequest;
+import stroom.widget.form.client.FormGroup;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -40,7 +41,7 @@ public final class DocumentPermissionsViewImpl extends ViewImpl
     @UiField
     Button copyPermissionsFromParentButton;
     @UiField
-    Grid cascadeGrid;
+    FormGroup cascadeGrid;
     @UiField
     ItemListBox<ChangeDocumentPermissionsRequest.Cascade> cascade;
 

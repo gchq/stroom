@@ -2,7 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client">
-    <g:FlowPanel styleName="max default-min-sizes dock-container-vertical stroom-border">
+    <g:FlowPanel styleName="max dock-container-vertical stroom-control">
         <b:ButtonPanel ui:field="buttonPanel" addStyleNames="dock-min"/>
         <g:ScrollPanel styleName="dock-max">
             <g:SimplePanel ui:field="expressionTree" styleName="editExpressionViewImpl-expressionTree"/>

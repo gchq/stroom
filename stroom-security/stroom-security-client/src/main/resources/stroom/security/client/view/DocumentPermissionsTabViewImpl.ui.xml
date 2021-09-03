@@ -1,17 +1,19 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
-<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client">
     <g:MySplitLayoutPanel styleName="max">
         <g:north size="200">
-            <g:FlowPanel styleName="dock-container-vertical">
-                <g:Label ui:field="usersLabel" text="Users:" styleName="dock-min"/>
-                <g:SimplePanel ui:field="users" styleName="dock-max"/>
-            </g:FlowPanel>
+            <form:FormGroup ui:field="documentPermissionsUsers" identity="documentPermissionsUsers" label="Users"
+                            addStyleNames="control__padding-bottom">
+                <g:SimplePanel ui:field="users" addStyleNames="max"/>
+            </form:FormGroup>
         </g:north>
         <g:center>
-            <g:FlowPanel styleName="dock-container-vertical">
-                <g:Label ui:field="permissionsLabel" text="Permissions:" styleName="dock-min"/>
-                <g:ScrollPanel ui:field="permissions" styleName="dock-max stroom-control"/>
-            </g:FlowPanel>
+            <form:FormGroup identity="documentPermissionsPermissions" label="Permissions"
+                            addStyleNames="control__padding-bottom">
+                <g:ScrollPanel ui:field="permissions" addStyleNames="max stroom-control"/>
+            </form:FormGroup>
         </g:center>
     </g:MySplitLayoutPanel>
 </ui:UiBinder> 

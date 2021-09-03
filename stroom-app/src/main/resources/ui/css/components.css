@@ -12,6 +12,7 @@
 
 .itemSelectionViewImpl-flowPanel {
     display: flex;
+    align-items: center;
 }
 
 .ruleView-bottom {
@@ -522,6 +523,10 @@
 
 .maximised .tabBarContainer .navigation-menu-button {
     display: initial;
+}
+
+.control__padding-bottom {
+    padding-bottom: var(--control__gap--vertical);
 }
 
 .documentPermissionsViewImpl-cascade {
@@ -1678,4 +1683,12 @@
     display: flex;
     gap: var(--control__gap--vertical);
     flex-direction: column;
+}
+
+.settingsPresenter .linkTabBar {
+    padding-bottom: var(--control__gap--vertical);
+}
+
+.settingsPresenter .layerContainer-container {
+    overflow: auto;
 }

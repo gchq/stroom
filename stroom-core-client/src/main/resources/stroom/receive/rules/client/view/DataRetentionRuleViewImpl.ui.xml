@@ -1,43 +1,27 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:i="urn:import:stroom.item.client"
-             xmlns:v="urn:import:stroom.widget.tickbox.client.view"
-             xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client">
-    <g:FlowPanel styleName="dataRetentionRuleViewImpl max large-min-sizes dock-container-vertical">
-        <g:SimplePanel styleName="dock-min dataRetentionRuleViewImpl-bottom">
-            <g:Grid ui:field="grid" styleName="stroom-control-grid w-100">
-                <g:row>
-                    <g:customCell>
-                        <g:Label text="Rule Name:" width="105px"/>
-                    </g:customCell>
-                    <g:customCell>
-                        <g:FlowPanel>
-                            <g:TextBox ui:field="name" addStyleNames="dataRetentionRuleViewImpl-name"/>
-                            <g:Label text="(optional)" addStyleNames="dataRetentionRuleViewImpl-optional"/>
-                        </g:FlowPanel>
-                    </g:customCell>
-                </g:row>
-                <g:row>
-                    <g:customCell>
-                        <g:Label text="Keep Forever:" width="105px"/>
-                    </g:customCell>
-                    <g:customCell>
-                        <v:TickBox ui:field="forever" addStyleNames="w-100"/>
-                    </g:customCell>
-                </g:row>
-                <g:row>
-                    <g:customCell>
-                        <g:Label ui:field="retainLabel" text="Retain For:" width="105px"/>
-                    </g:customCell>
-                    <g:customCell>
-                        <g:FlowPanel>
-                            <valuespinner:ValueSpinner ui:field="age"/>
-                            <i:ItemListBox ui:field="timeUnit"/>
-                        </g:FlowPanel>
-                    </g:customCell>
-                </g:row>
-            </g:Grid>
-        </g:SimplePanel>
-        <g:SimplePanel ui:field="expression" styleName="dock-max"/>
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup identity="dataRetentionRuleRuleName" label="Rule Name">
+            <g:FlowPanel>
+                <g:TextBox ui:field="name" addStyleNames="dataRetentionRuleViewImpl-name allow-focus"/>
+                <g:Label text="(optional)" addStyleNames="dataRetentionRuleViewImpl-optional"/>
+            </g:FlowPanel>
+        </form:FormGroup>
+        <form:FormGroup identity="dataRetentionRuleKeepForever" label="Keep Forever">
+            <tickbox:CustomCheckBox ui:field="forever"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="retainLabel" identity="dataRetentionRuleRetainFor" label="Retain For">
+            <g:FlowPanel>
+                <valuespinner:ValueSpinner ui:field="age"/>
+                <i:ItemListBox ui:field="timeUnit" addStyleNames="allow-focus"/>
+            </g:FlowPanel>
+        </form:FormGroup>
+        <form:FormGroup identity="dataRetentionRuleExpression" label="Expression" addStyleNames="dock-max">
+            <g:SimplePanel ui:field="expression" styleName="max"/>
+        </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

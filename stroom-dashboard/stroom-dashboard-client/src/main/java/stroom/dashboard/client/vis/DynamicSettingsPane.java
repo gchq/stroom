@@ -49,7 +49,7 @@ public class DynamicSettingsPane extends Composite implements Layer, HasReadAndW
     public DynamicSettingsPane(final boolean utc) {
         this.utc = utc;
         outer = new FlowPanel();
-        outer.setStyleName("pt-3 max default-min-sizes form");
+        outer.setStyleName("max form");
         initWidget(outer);
     }
 
