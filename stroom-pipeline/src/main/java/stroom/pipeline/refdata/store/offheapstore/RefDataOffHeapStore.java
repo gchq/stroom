@@ -23,7 +23,8 @@ import stroom.bytebuffer.PooledByteBuffer;
 import stroom.bytebuffer.PooledByteBufferPair;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.lmdb.LmdbDb;
-import stroom.lmdb.LmdbUtils;
+import stroom.lmdb.LmdbEnv;
+import stroom.lmdb.LmdbEnvFactory;
 import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.store.AbstractRefDataStore;
 import stroom.pipeline.refdata.store.MapDefinition;
@@ -63,9 +64,7 @@ import com.google.common.util.concurrent.Striped;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.Tuple3;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.jetbrains.annotations.NotNull;
-import org.lmdbjava.Env;
 import org.lmdbjava.EnvFlags;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
@@ -123,6 +122,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     private static final String LMDB_EXTRACT_DIR_PROP = "lmdbjava.extract.dir";
     private static final String LMDB_NATIVE_LIB_PROP = "lmdbjava.native.lib";
 
+    private final LmdbEnvFactory lmdbEnvFactory;
     private final TempDirProvider tempDirProvider;
     private final PathCreator pathCreator;
     private final Path dbDir;
@@ -131,7 +131,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     private final int maxPutsBeforeCommit;
     private final TaskContext taskContext;
 
-    private final Env<ByteBuffer> lmdbEnvironment;
+    private final LmdbEnv lmdbEnvironment;
 
     // the DBs that make up the store
     private final KeyValueStoreDb keyValueStoreDb;
@@ -155,6 +155,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
     @Inject
     RefDataOffHeapStore(
+            final LmdbEnvFactory lmdbEnvFactory,
             final TempDirProvider tempDirProvider,
             final PathCreator pathCreator,
             final ReferenceDataConfig referenceDataConfig,
@@ -169,6 +170,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             final ProcessingInfoDb.Factory processingInfoDbFactory,
             final TaskContext taskContext) {
 
+        this.lmdbEnvFactory = lmdbEnvFactory;
         this.tempDirProvider = tempDirProvider;
         this.pathCreator = pathCreator;
         this.referenceDataConfig = referenceDataConfig;
@@ -201,7 +203,10 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 valueStoreMetaDb);
 
         this.valueStore = new ValueStore(lmdbEnvironment, valueStoreDb, valueStoreMetaDb);
-        this.mapDefinitionUIDStore = new MapDefinitionUIDStore(lmdbEnvironment, mapUidForwardDb, mapUidReverseDb);
+        this.mapDefinitionUIDStore = new MapDefinitionUIDStore(
+                lmdbEnvironment,
+                mapUidForwardDb,
+                mapUidReverseDb);
 
         this.byteBufferPool = byteBufferPool;
 
@@ -212,7 +217,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         this.refStreamDefStripedReentrantLock = Striped.lazyWeakLock(stripesCount);
     }
 
-    private Env<ByteBuffer> createEnvironment(final ReferenceDataConfig referenceDataConfig) {
+    private LmdbEnv createEnvironment(final ReferenceDataConfig referenceDataConfig) {
         LOGGER.info(
                 "Creating RefDataOffHeapStore environment with [maxSize: {}, dbDir {}, maxReaders {}, " +
                         "maxPutsBeforeCommit {}, isReadAheadEnabled {}]",
@@ -233,40 +238,23 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         // hardcoded into software, it needs to be reconfigurable. On Windows and MacOS you really shouldn't
         // set it larger than the amount of free space on the filesystem.
 
-        final List<EnvFlags> envFlagsList = new ArrayList<>();
-        envFlagsList.add(EnvFlags.MDB_NOTLS);
+        final List<EnvFlags> envFlags = new ArrayList<>();
+        envFlags.add(EnvFlags.MDB_NOTLS);
 
         if (!referenceDataConfig.isReadAheadEnabled()) {
-            envFlagsList.add(EnvFlags.MDB_NORDAHEAD);
-        }
-
-        final EnvFlags[] envFlags = new EnvFlags[envFlagsList.size()];
-        envFlagsList.toArray(envFlags);
-
-        final String lmdbSystemLibraryPath = referenceDataConfig.getLmdbSystemLibraryPath();
-
-        if (lmdbSystemLibraryPath != null) {
-            // javax.validation should ensure the path is valid if set
-            System.setProperty(LMDB_NATIVE_LIB_PROP, lmdbSystemLibraryPath);
-            LOGGER.info("Using provided LMDB system library file " + lmdbSystemLibraryPath);
-        } else {
-            // Set the location to extract the bundled LMDB binary to
-            System.setProperty(LMDB_EXTRACT_DIR_PROP, dbDir.toAbsolutePath().toString());
-            LOGGER.info("Extracting bundled LMDB binary to " + dbDir);
+            envFlags.add(EnvFlags.MDB_NORDAHEAD);
         }
 
         try {
-            final Env<ByteBuffer> env = Env.create()
-                    .setMaxReaders(maxReaders)
-                    .setMapSize(maxSize.getBytes())
-                    .setMaxDbs(7) //should equal the number of DBs we create which is fixed at compile time
-                    .open(dbDir.toFile(), envFlags);
+            final LmdbEnv env = lmdbEnvFactory.builder(dbDir)
+                    .withMaxReaderCount(maxReaders)
+                    .withMapSize(maxSize)
+                    .withMaxDbCount(7)
+                    .withEnvFlags(envFlags)
+                    .withLmdbSystemLibraryPath(referenceDataConfig.getLmdbSystemLibraryPath())
+                    .build();
 
-            LOGGER.info("Existing databases: [{}]",
-                    env.getDbiNames()
-                            .stream()
-                            .map(Bytes::toString)
-                            .collect(Collectors.joining(",")));
+            LOGGER.info("Existing databases: [{}]", String.join(",", env.getDbiNames()));
             return env;
         } catch (Exception e) {
             throw new RuntimeException("Error initialising LMDB environment for reference data at " +
@@ -340,7 +328,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         // The value is then deserialised while still inside the txn.
         try (PooledByteBuffer valueStoreKeyPooledBufferClone = valueStore.getPooledKeyBuffer()) {
             Optional<RefDataValue> optionalRefDataValue =
-                    LmdbUtils.getWithReadTxn(lmdbEnvironment, readTxn ->
+                    lmdbEnvironment.getWithReadTxn(readTxn ->
                             // Perform the lookup with the map+key. The returned value (if found)
                             // is the key of the ValueStore, which we can use to find the actual
                             // value.
@@ -435,7 +423,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         // to interpret the bytes in the buffer
 
         try (PooledByteBuffer valueStoreKeyPooledBufferClone = valueStore.getPooledKeyBuffer()) {
-            boolean wasValueFound = LmdbUtils.getWithReadTxn(lmdbEnvironment, txn ->
+            boolean wasValueFound = lmdbEnvironment.getWithReadTxn(txn ->
                     getValueStoreKey(txn, mapDefinition, key)
                             .flatMap(valueStoreKeyBuffer -> {
                                 // we are going to use the valueStoreKeyBuffer as a key in multiple
@@ -531,7 +519,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             final AtomicBoolean wasMatchFound = new AtomicBoolean(false);
             do {
                 // with a read txn find the next proc info entry that is ready for purge
-                Optional<RefStreamDefinition> optRefStreamDef = LmdbUtils.getWithReadTxn(lmdbEnvironment, readTxn -> {
+                Optional<RefStreamDefinition> optRefStreamDef = lmdbEnvironment.getWithReadTxn(readTxn -> {
                     // ensure the buffers are cleared as we are using them in a loop
                     return findNextRefStreamDef(
                             procInfoPooledBufferPair,
@@ -549,7 +537,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                         // start a write txn and re-fetch the next entry for purge (should be the same one as above)
                         // TODO we currently purge a whole refStreamDef in one txn, may be better to do it in smaller
                         // chunks
-                        boolean wasFound = LmdbUtils.getWithWriteTxn(lmdbEnvironment, writeTxn -> {
+                        boolean wasFound = lmdbEnvironment.getWithWriteTxn(writeTxn -> {
 
                             final Optional<PooledByteBufferPair> optProcInfoBufferPair =
                                     processingInfoDb.getNextEntryAsBytes(
@@ -887,7 +875,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         //   see https://lmdb.readthedocs.io/en/release/#transaction-management
         LAMBDA_LOGGER.logDurationIfDebugEnabled(
                 () -> {
-                    LmdbUtils.doWithReadTxn(lmdbEnvironment, readTxn -> {
+                    lmdbEnvironment.doWithReadTxn(readTxn -> {
                         // Get all the KeyValue entries
                         final List<RefStoreEntry> kvEntries = keyValueStoreDb.streamEntries(
                                 readTxn,
@@ -954,12 +942,13 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
         LAMBDA_LOGGER.logDurationIfDebugEnabled(
                 () -> {
-                    LmdbUtils.doWithReadTxn(lmdbEnvironment, readTxn -> {
+                    lmdbEnvironment.doWithReadTxn(readTxn -> {
                         // Get all the KeyValue entries
                         final List<RefStreamProcessingInfo> entries2 = mapDefinitionUIDStore.streamEntries(
                                 readTxn,
                                 KeyRange.all(),
-                                stream -> handleMapDefinitionStream(stream, limit, filter, entryCounter));
+                                stream ->
+                                        handleMapDefinitionStream(stream, limit, filter, entryCounter));
 
                         entries.addAll(entries2);
                     });
@@ -1096,11 +1085,12 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                             .map(Instant::toString)
                             .orElse(null));
 
-            LmdbUtils.doWithReadTxn(lmdbEnvironment, txn -> {
+            lmdbEnvironment.doWithReadTxn(txn -> {
                 builder.addDetail("Database entry counts", databaseMap.entrySet().stream()
                         .collect(HasHealthCheck.buildTreeMapCollector(
                                 Map.Entry::getKey,
-                                entry -> entry.getValue().getEntryCount(txn))));
+                                entry ->
+                                        entry.getValue().getEntryCount(txn))));
             });
             return builder.build();
         } catch (RuntimeException e) {

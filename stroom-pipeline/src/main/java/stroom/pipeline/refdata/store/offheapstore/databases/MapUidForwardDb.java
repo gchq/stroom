@@ -21,6 +21,7 @@ import stroom.bytebuffer.ByteBufferPool;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
 import stroom.lmdb.AbstractLmdbDb;
+import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
@@ -31,7 +32,6 @@ import stroom.util.logging.LogUtil;
 
 import com.google.inject.assistedinject.Assisted;
 import org.lmdbjava.CursorIterable;
-import org.lmdbjava.Env;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 
@@ -45,7 +45,7 @@ public class MapUidForwardDb extends AbstractLmdbDb<MapDefinition, UID> {
     public static final String DB_NAME = "MapUidForward";
 
     @Inject
-    public MapUidForwardDb(@Assisted final Env<ByteBuffer> lmdbEnvironment,
+    public MapUidForwardDb(@Assisted final LmdbEnv lmdbEnvironment,
                            final ByteBufferPool byteBufferPool,
                            final MapDefinitionSerde keySerde,
                            final UIDSerde valueSerde) {
@@ -107,6 +107,6 @@ public class MapUidForwardDb extends AbstractLmdbDb<MapDefinition, UID> {
 
     public interface Factory {
 
-        MapUidForwardDb create(final Env<ByteBuffer> lmdbEnvironment);
+        MapUidForwardDb create(final LmdbEnv lmdbEnvironment);
     }
 }

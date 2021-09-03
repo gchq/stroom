@@ -18,6 +18,8 @@
 package stroom.pipeline.refdata.store.offheapstore;
 
 import stroom.bytebuffer.PooledByteBuffer;
+import stroom.lmdb.LmdbEnv;
+import stroom.lmdb.LmdbEnv.ClosableWriteTxn;
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.ProcessingState;
@@ -36,8 +38,6 @@ import stroom.util.shared.Range;
 
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Striped;
-import org.lmdbjava.Env;
-import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,7 +70,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(OffHeapRefDataLoader.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(OffHeapRefDataLoader.class);
 
-    private Txn<ByteBuffer> writeTxn = null;
+    private ClosableWriteTxn writeTxn = null;
     private Instant txnStartTime = null;
     private final RefDataOffHeapStore refDataOffHeapStore;
     private final Lock refStreamDefReentrantLock;
@@ -81,7 +81,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     private final MapDefinitionUIDStore mapDefinitionUIDStore;
     private final ProcessingInfoDb processingInfoDb;
 
-    private final Env<ByteBuffer> lmdbEnvironment;
+    private final LmdbEnv lmdbEnvironment;
     private final RefStreamDefinition refStreamDefinition;
     private final long effectiveTimeMs;
     private Runnable commitIfRequireFunc = () -> {
@@ -120,7 +120,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                          final ValueStore valueStore,
                          final MapDefinitionUIDStore mapDefinitionUIDStore,
                          final ProcessingInfoDb processingInfoDb,
-                         final Env<ByteBuffer> lmdbEnvironment,
+                         final LmdbEnv lmdbEnvironment,
                          final RefStreamDefinition refStreamDefinition,
                          final long effectiveTimeMs) {
 
@@ -206,7 +206,10 @@ public class OffHeapRefDataLoader implements RefDataLoader {
 
         // Set the processing info record to COMPLETE and update the last update time
         processingInfoDb.updateProcessingState(
-                writeTxn, refStreamDefinition, ProcessingState.COMPLETE, true);
+                writeTxn.getTxn(),
+                refStreamDefinition,
+                ProcessingState.COMPLETE,
+                true);
 
         final Duration loadDuration = Duration.between(startTime, Instant.now());
 
@@ -276,7 +279,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         keyValueKeyBuffer.clear();
         keyValueStoreDb.serializeKey(keyValueKeyBuffer, keyValueStoreKey);
         final Optional<ByteBuffer> optCurrValueStoreKeyBuffer = keyValueStoreDb.getAsBytes(
-                writeTxn, keyValueKeyBuffer);
+                writeTxn.getTxn(), keyValueKeyBuffer);
 
         // see if we have a value already for this key
         // if overwrite == false, we can just drop out here
@@ -295,7 +298,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                 final ByteBuffer currValueStoreKeyBuffer = optCurrValueStoreKeyBuffer.get();
 
                 boolean areValuesEqual = valueStore.areValuesEqual(
-                        writeTxn, currValueStoreKeyBuffer, refDataValue);
+                        writeTxn.getTxn(), currValueStoreKeyBuffer, refDataValue);
                 if (areValuesEqual) {
                     // value is the same as the existing value so nothing to do
                     // and no ref counts to change
@@ -305,7 +308,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                 } else {
                     // value is different so we need to de-reference the old one
                     // and getOrCreate the new one
-                    valueStore.deReferenceOrDeleteValue(writeTxn, currValueStoreKeyBuffer);
+                    valueStore.deReferenceOrDeleteValue(writeTxn.getTxn(), currValueStoreKeyBuffer);
 
                     putOutcome = createKeyValue(refDataValue, keyValueKeyBuffer);
                     replacedEntriesCount++;
@@ -350,7 +353,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         rangeStoreDb.serializeKey(rangeValueKeyBuffer, rangeStoreKey);
 
         final Optional<ByteBuffer> optCurrValueStoreKeyBuffer = rangeStoreDb.getAsBytes(
-                writeTxn, rangeValueKeyBuffer);
+                writeTxn.getTxn(), rangeValueKeyBuffer);
 
         final PutOutcome putOutcome;
         if (optCurrValueStoreKeyBuffer.isPresent()) {
@@ -366,7 +369,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
 //                    ValueStoreKey currentValueStoreKey = optCurrValueStoreKeyBuffer.get();
 
                 boolean areValuesEqual = valueStore.areValuesEqual(
-                        writeTxn, currValueStoreKeyBuffer, refDataValue);
+                        writeTxn.getTxn(), currValueStoreKeyBuffer, refDataValue);
                 if (areValuesEqual) {
                     // value is the same as the existing value so nothing to do
                     // and no ref counts to change
@@ -376,7 +379,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                 } else {
                     // value is different so we need to de-reference the old one
                     // and getOrCreate the new one
-                    valueStore.deReferenceOrDeleteValue(writeTxn, currValueStoreKeyBuffer);
+                    valueStore.deReferenceOrDeleteValue(writeTxn.getTxn(), currValueStoreKeyBuffer);
 
 //                        final ByteBuffer valueStoreKeyBuffer = valueStoreDb.getOrCreate(
 //                                writeTxn, refDataValue, valueStorePooledKeyBuffer, overwriteExisting);
@@ -400,23 +403,23 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     private PutOutcome createKeyValue(final RefDataValue refDataValue, final ByteBuffer keyValueKeyBuffer) {
 
         final ByteBuffer valueStoreKeyBuffer = valueStore.getOrCreateKey(
-                writeTxn, valueStorePooledKeyBuffer, refDataValue, overwriteExisting);
+                writeTxn.getTxn(), valueStorePooledKeyBuffer, refDataValue, overwriteExisting);
 
         // assuming it is cheaper to just try the put and let LMDB handle duplicates rather than
         // do a get then optional put.
         return keyValueStoreDb.put(
-                writeTxn, keyValueKeyBuffer, valueStoreKeyBuffer, overwriteExisting);
+                writeTxn.getTxn(), keyValueKeyBuffer, valueStoreKeyBuffer, overwriteExisting);
     }
 
     private PutOutcome createRangeValue(final RefDataValue refDataValue, final ByteBuffer rangeValueKeyBuffer) {
 
         final ByteBuffer valueStoreKeyBuffer = valueStore.getOrCreateKey(
-                writeTxn, valueStorePooledKeyBuffer, refDataValue, overwriteExisting);
+                writeTxn.getTxn(), valueStorePooledKeyBuffer, refDataValue, overwriteExisting);
 
         // assuming it is cheaper to just try the put and let LMDB handle duplicates rather than
         // do a get then optional put.
         return rangeStoreDb.put(
-                writeTxn, rangeValueKeyBuffer, valueStoreKeyBuffer, overwriteExisting);
+                writeTxn.getTxn(), rangeValueKeyBuffer, valueStoreKeyBuffer, overwriteExisting);
     }
 
 
@@ -431,7 +434,11 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         if (writeTxn != null) {
             LOGGER.trace("Committing and closing transaction (put count {})", putsCounter);
             writeTxn.commit();
-            writeTxn.close();
+            try {
+                writeTxn.close();
+            } catch (Exception e) {
+                throw new RuntimeException("Error closing write txn: " + e.getMessage(), e);
+            }
         }
         // release our pooled buffers back to the pool
         pooledByteBuffers.forEach(PooledByteBuffer::release);
@@ -452,7 +459,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
             throw new RuntimeException("Transaction is already open");
         }
         LOGGER.trace("Beginning write transaction");
-        writeTxn = lmdbEnvironment.txnWrite();
+        writeTxn = lmdbEnvironment.openWriteTxn();
         if (LOGGER.isDebugEnabled()) {
             txnStartTime = Instant.now();
         }
@@ -473,7 +480,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                     txnStartTime = null;
                 }
             } catch (Exception e) {
-                throw new RuntimeException("Error committing write transaction", e);
+                throw new RuntimeException("Error committing and closing write transaction", e);
             }
         }
     }
@@ -498,7 +505,10 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                 // cursor operations will happen after this and because we want to cache it we will
                 // make a copy of it using a buffer from the pool. The cache only lasts for the life
                 // of the load and will only have a couple of UIDs in it so should be fine to hold on to them.
-                final UID newUid = mapDefinitionUIDStore.getOrCreateUid(writeTxn, mapDef, temporaryUidPooledBuffer);
+                final UID newUid = mapDefinitionUIDStore.getOrCreateUid(
+                        writeTxn.getTxn(),
+                        mapDef,
+                        temporaryUidPooledBuffer);
 
                 // Now clone it into a different buffer and wrap in a new UID instance
                 final UID newUidClone = newUid.cloneToBuffer(cachedUidPooledBuffer.getByteBuffer());

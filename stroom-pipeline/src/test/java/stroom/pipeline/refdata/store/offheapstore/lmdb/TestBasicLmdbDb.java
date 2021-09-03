@@ -22,7 +22,6 @@ import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
 import stroom.lmdb.BasicLmdbDb;
-import stroom.lmdb.LmdbUtils;
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
 import stroom.pipeline.refdata.store.offheapstore.serdes.IntegerSerde;
@@ -100,7 +99,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
             basicLmdbDb.getKeySerde().serialize(keyBuffer, "MyKey");
             basicLmdbDb.getValueSerde().serialize(valueBuffer, "MyValue");
 
-            LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+            lmdbEnv.doWithWriteTxn(writeTxn -> {
                 PutOutcome putOutcome = basicLmdbDb.put(
                         writeTxn,
                         keyBuffer,
@@ -134,7 +133,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
             basicLmdbDb.getKeySerde().serialize(keyBuffer, "MyKey");
             basicLmdbDb.getValueSerde().serialize(valueBuffer, "MyValue");
 
-            LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+            lmdbEnv.doWithWriteTxn(writeTxn -> {
                 PutOutcome putOutcome = basicLmdbDb.put(
                         writeTxn,
                         keyBuffer,
@@ -169,7 +168,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
             basicLmdbDb.getKeySerde().serialize(keyBuffer, "MyKey");
             basicLmdbDb.getValueSerde().serialize(valueBuffer, "MyValue");
 
-            LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+            lmdbEnv.doWithWriteTxn(writeTxn -> {
                 basicLmdbDb.put(writeTxn, keyBuffer, valueBuffer, false);
             });
             assertThat(basicLmdbDb.getEntryCount()).isEqualTo(1);
@@ -205,7 +204,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
 
         AtomicReference<ByteBuffer> valueBufRef = new AtomicReference<>();
         // now get the value again and it should be correct
-        LmdbUtils.getWithReadTxn(lmdbEnv, txn -> {
+        lmdbEnv.getWithReadTxn(txn -> {
             ByteBuffer valueBuffer = basicLmdbDb.getAsBytes(txn, keyBuffer).get();
 
             // hold on to the buffer for later
@@ -236,7 +235,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
         basicLmdbDb.put("key2", "value2", false);
         basicLmdbDb.put("key3", "value3", false);
 
-        LmdbUtils.doWithReadTxn(lmdbEnv, txn -> {
+        lmdbEnv.doWithReadTxn(txn -> {
             Optional<ByteBuffer> optKeyBuffer = basicLmdbDb.getAsBytes(txn, "key2");
 
             assertThat(optKeyBuffer).isNotEmpty();
@@ -250,7 +249,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
         basicLmdbDb.put("key2", "value2", false);
         basicLmdbDb.put("key3", "value3", false);
 
-        LmdbUtils.doWithReadTxn(lmdbEnv, txn -> {
+        lmdbEnv.doWithReadTxn(txn -> {
 
             try (PooledByteBuffer pooledKeyBuffer = basicLmdbDb.getPooledKeyBuffer()) {
                 ByteBuffer keyBuffer = pooledKeyBuffer.getByteBuffer();
@@ -278,7 +277,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
         basicLmdbDb.put("key32", "value3", false);
         basicLmdbDb.put("key33", "value3", false);
 
-        LmdbUtils.doWithReadTxn(lmdbEnv, txn -> {
+        lmdbEnv.doWithReadTxn(txn -> {
 
             try (PooledByteBuffer pooledStartKeyBuffer = basicLmdbDb.getPooledKeyBuffer();
                     PooledByteBuffer pooledEndKeyBuffer = basicLmdbDb.getPooledKeyBuffer()) {
@@ -318,7 +317,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
     void testStreamEntries() {
         populateDb();
 
-        List<String> entries = LmdbUtils.getWithReadTxn(lmdbEnv, txn ->
+        List<String> entries = lmdbEnv.getWithReadTxn(txn ->
                 basicLmdbDb.streamEntries(txn, KeyRange.all(), stream ->
                         stream
                                 .map(kvTuple ->
@@ -333,7 +332,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
     void testStreamEntriesWithFilter() {
         populateDb();
 
-        List<String> entries = LmdbUtils.getWithReadTxn(lmdbEnv, txn ->
+        List<String> entries = lmdbEnv.getWithReadTxn(txn ->
                 basicLmdbDb.streamEntries(txn, KeyRange.all(), stream ->
                         stream
                                 .filter(kvTuple -> {
@@ -354,7 +353,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
         populateDb();
 
         KeyRange<String> keyRange = KeyRange.closed("06", "10");
-        List<String> entries = LmdbUtils.getWithReadTxn(lmdbEnv, txn ->
+        List<String> entries = lmdbEnv.getWithReadTxn(txn ->
                 basicLmdbDb.streamEntries(txn, keyRange, stream ->
                         stream
                                 .map(kvTuple ->
@@ -374,7 +373,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
         // different DB with same key in it so we can test two lookups using same key
         basicLmdbDb2.put("key2", "value3", false);
 
-        LmdbUtils.doWithReadTxn(lmdbEnv, txn -> {
+        lmdbEnv.doWithReadTxn(txn -> {
             ByteBuffer keyBuffer = ByteBuffer.allocateDirect(100);
             basicLmdbDb.serializeKey(keyBuffer, "key1");
             ByteBuffer keyBufferCopy = keyBuffer.asReadOnlyBuffer();
@@ -423,7 +422,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
         basicLmdbDb.put("key1", "value1", false);
         basicLmdbDb.put("key2", "value2", false);
 
-        LmdbUtils.doWithReadTxn(lmdbEnv, txn -> {
+        lmdbEnv.doWithReadTxn(txn -> {
 
             ByteBuffer keyBuffer1 = ByteBuffer.allocateDirect(100);
             basicLmdbDb.serializeKey(keyBuffer1, "key1");
@@ -461,7 +460,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
                 Tuple.of(3, "val3"),
                 Tuple.of(4, "val4"));
 
-        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
             data.forEach(tuple -> {
                 basicLmdbDb3.put(writeTxn, tuple._1(), tuple._2(), false);
             });
@@ -469,7 +468,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
 
         final KeyRange<Integer> keyRangeAll = KeyRange.all();
 
-        final List<Integer> output = LmdbUtils.getWithReadTxn(lmdbEnv, readTxn ->
+        final List<Integer> output = lmdbEnv.getWithReadTxn(readTxn ->
                 basicLmdbDb3.streamEntries(readTxn, keyRangeAll, stream ->
                         stream
                                 .map(Tuple2::_1)
@@ -517,7 +516,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
                 .hasSize(iterations);
 
         LOGGER.logDurationIfInfoEnabled(() -> {
-            LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+            lmdbEnv.doWithWriteTxn(writeTxn -> {
                 ascendingData.forEach(tuple -> {
                     basicLmdbDb3.put(writeTxn, tuple._1(), tuple._2(), false);
                 });
@@ -525,7 +524,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
         }, "Ascending");
 
         LOGGER.logDurationIfInfoEnabled(() -> {
-            LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+            lmdbEnv.doWithWriteTxn(writeTxn -> {
                 randomData.forEach(tuple -> {
                     basicLmdbDb3.put(writeTxn, tuple._1(), tuple._2(), false);
                 });
@@ -533,7 +532,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
         }, "Random");
 
         LOGGER.logDurationIfInfoEnabled(() -> {
-            LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+            lmdbEnv.doWithWriteTxn(writeTxn -> {
                 ascendingData.forEach(tuple -> {
                     basicLmdbDb4.put(writeTxn, tuple._1(), tuple._2(), false);
                 });
@@ -541,7 +540,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
         }, "Ascending (INTEGER_KEY)");
 
         LOGGER.logDurationIfInfoEnabled(() -> {
-            LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+            lmdbEnv.doWithWriteTxn(writeTxn -> {
                 randomData.forEach(tuple -> {
                     basicLmdbDb4.put(writeTxn, tuple._1(), tuple._2(), false);
                 });

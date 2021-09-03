@@ -2,7 +2,7 @@ package stroom.pipeline.refdata.store.offheapstore;
 
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
-import stroom.lmdb.LmdbUtils;
+import stroom.lmdb.LmdbEnv;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.offheapstore.databases.MapUidForwardDb;
@@ -13,7 +13,6 @@ import stroom.util.logging.LogUtil;
 
 import com.google.common.base.Preconditions;
 import io.vavr.Tuple2;
-import org.lmdbjava.Env;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 
@@ -39,7 +38,7 @@ public class MapDefinitionUIDStore {
 
     private final MapUidForwardDb mapUidForwardDb;
     private final MapUidReverseDb mapUidReverseDb;
-    private final Env<ByteBuffer> lmdbEnv;
+    private final LmdbEnv lmdbEnv;
 
     // TODO may want a background process that scans the reverse table to look for gaps
     // in the UID sequence and add the missing ones to another table which can be used
@@ -47,7 +46,7 @@ public class MapDefinitionUIDStore {
     // we could end up running out of UIDs in the LONG term. If that happened you could just delete
     // the files off the DB and start again.
 
-    MapDefinitionUIDStore(final Env<ByteBuffer> lmdbEnv,
+    MapDefinitionUIDStore(final LmdbEnv lmdbEnv,
                           final MapUidForwardDb mapUidForwardDb,
                           final MapUidReverseDb mapUidReverseDb) {
         this.lmdbEnv = lmdbEnv;
@@ -57,7 +56,7 @@ public class MapDefinitionUIDStore {
 
     Optional<UID> getUid(final MapDefinition mapDefinition, final ByteBuffer uidByteBuffer) {
         // The returned UID is outside the txn so must be a clone of the found one
-        return LmdbUtils.getWithReadTxn(lmdbEnv, txn ->
+        return lmdbEnv.getWithReadTxn(txn ->
                 getUid(txn, mapDefinition)
                         .flatMap(uid ->
                                 Optional.of(uid.cloneToBuffer(uidByteBuffer))));

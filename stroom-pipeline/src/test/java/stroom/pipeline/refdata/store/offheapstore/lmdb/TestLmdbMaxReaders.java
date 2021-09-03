@@ -2,20 +2,20 @@ package stroom.pipeline.refdata.store.offheapstore.lmdb;
 
 import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.lmdb.BasicLmdbDb;
+import stroom.lmdb.LmdbEnv;
+import stroom.lmdb.LmdbEnvFactory;
 import stroom.pipeline.refdata.store.offheapstore.serdes.StringSerde;
 import stroom.util.io.ByteSize;
+import stroom.util.io.PathCreator;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.lmdbjava.Env;
 import org.lmdbjava.Env.ReadersFullException;
 import org.lmdbjava.EnvFlags;
-import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -55,20 +55,24 @@ public class TestLmdbMaxReaders {
                 dbDir.toAbsolutePath(),
                 Arrays.toString(envFlags));
 
-        final Env<ByteBuffer> env = Env.create()
-                .setMapSize(DB_MAX_SIZE.getBytes())
-                .setMaxDbs(1)
-                .setMaxReaders(maxReaders)
-                .open(dbDir.toFile(), envFlags);
+        final PathCreator pathCreator = new PathCreator(() -> dbDir, () -> dbDir);
+
+        final LmdbEnv lmdbEnv = new LmdbEnvFactory(pathCreator)
+                .builder(dbDir)
+                .withMapSize(DB_MAX_SIZE)
+                .withMaxDbCount(1)
+                .withMaxReaderCount(maxReaders)
+                .addEnvFlag(EnvFlags.MDB_NOTLS)
+                .build();
 
         final BasicLmdbDb<String, String> database = new BasicLmdbDb<>(
-                env,
+                lmdbEnv,
                 new ByteBufferPoolFactory().getByteBufferPool(),
                 new StringSerde(),
                 new StringSerde(),
                 "MyBasicLmdb");
 
-        Assertions.assertThat(env.info().numReaders)
+        Assertions.assertThat(lmdbEnv.info().numReaders)
                 .isEqualTo(0);
 
         // pad the keys to a fixed length so they sort in number order
@@ -78,7 +82,7 @@ public class TestLmdbMaxReaders {
 
         database.logDatabaseContents(LOGGER::info);
 
-        Assertions.assertThat(env.info().numReaders)
+        Assertions.assertThat(lmdbEnv.info().numReaders)
                 .isEqualTo(1);
 
 
@@ -107,18 +111,19 @@ public class TestLmdbMaxReaders {
 
                         LOGGER.info("Running thread {}", i);
 
-                        try (Txn<ByteBuffer> txnRead = env.txnRead()) {
+                        lmdbEnv.doWithWriteTxn(txnRead -> {
+                            try {
+                                Assertions.assertThat(database.get(txnRead, "01"))
+                                        .isNotEmpty();
+                            } catch (Exception e) {
+                                exceptions.add(e);
+                            } finally {
+                                LOGGER.info("Finished thread {}", i);
 
-                            Assertions.assertThat(database.get(txnRead, "01"))
-                                    .isNotEmpty();
-                        } catch (Exception e) {
-                            exceptions.add(e);
-                        } finally {
-                            LOGGER.info("Finished thread {}", i);
-
-                            threads.remove(Thread.currentThread().getName());
-                            threadsFinishedLatch.countDown();
-                        }
+                                threads.remove(Thread.currentThread().getName());
+                                threadsFinishedLatch.countDown();
+                            }
+                        });
                     }, executor);
                 });
 
@@ -130,7 +135,7 @@ public class TestLmdbMaxReaders {
 
         do {
             LOGGER.info("numReaders: {}, threadsFinishedLatch: {}, threads: {}",
-                    env.info().numReaders,
+                    lmdbEnv.info().numReaders,
                     threadsFinishedLatch.getCount(),
                     String.join(", ", threads));
 
@@ -150,7 +155,7 @@ public class TestLmdbMaxReaders {
                         clazz instanceof ReadersFullException))
                 .isTrue();
 
-        LOGGER.info("numReaders: {}", env.info().numReaders);
+        LOGGER.info("numReaders: {}", lmdbEnv.info().numReaders);
     }
 
     private String buildKey(int i) {

@@ -6,7 +6,6 @@ import stroom.bytebuffer.PooledByteBuffer;
 import stroom.bytebuffer.PooledByteBufferOutputStream;
 import stroom.bytebuffer.PooledByteBufferOutputStream.Factory;
 import stroom.lmdb.EntryConsumer;
-import stroom.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.store.BasicValueStoreHashAlgorithmImpl;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.StringValue;
@@ -106,7 +105,7 @@ class TestValueStoreDb extends AbstractLmdbDbTest {
 
         final Map<Integer, ValueStoreKey> valueStoreKeysMap = new HashMap<>();
 
-        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
             ValueStoreKey valueStoreKey;
 
             // insert the first five values, all have same hash so should get increasing
@@ -129,7 +128,7 @@ class TestValueStoreDb extends AbstractLmdbDbTest {
 
         // now put the remaining 5 values
         // they should fill up the gaps in the ID sequence
-        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
             ValueStoreKey valueStoreKey;
             for (int i = 5; i < 10; i++) {
                 valueStoreKey = getOrCreate(writeTxn, refDataValues.get(i));
@@ -166,7 +165,7 @@ class TestValueStoreDb extends AbstractLmdbDbTest {
 
         final Map<Integer, ValueStoreKey> valueStoreKeysMap = new HashMap<>();
 
-        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
             ValueStoreKey valueStoreKey;
 
             // insert the first five values, all have same hash so should get increasing
@@ -190,7 +189,7 @@ class TestValueStoreDb extends AbstractLmdbDbTest {
 
         // now put the remaining 5 values
         // they should fill up the gaps in the ID sequence
-        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
             ValueStoreKey valueStoreKey;
             for (int i = 5; i < 10; i++) {
                 valueStoreKey = getOrCreate(writeTxn, refDataValues.get(i));
@@ -266,7 +265,7 @@ class TestValueStoreDb extends AbstractLmdbDbTest {
         final Map<String, ValueStoreKey> valueToKeyMap = new HashMap<>();
 
         // load three entries
-        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
             valueToKeyMap.put(val1str, getOrCreate(writeTxn, StringValue.of(val1str)));
             valueToKeyMap.put(val2str, getOrCreate(writeTxn, StringValue.of(val2str)));
             valueToKeyMap.put(val3str, getOrCreate(writeTxn, StringValue.of(val3str)));
@@ -276,7 +275,7 @@ class TestValueStoreDb extends AbstractLmdbDbTest {
 
         ValueStoreKeySerde keySerde = new ValueStoreKeySerde();
 
-        LmdbUtils.doWithReadTxn(lmdbEnv, txn -> {
+        lmdbEnv.doWithReadTxn(txn -> {
             // lookup our three entries
             valueToKeyMap.forEach((valueStr, valueStoreKey) -> {
                 valueStoreDb.getPooledKeyBuffer().doWithByteBuffer(keyBuffer -> {
@@ -320,7 +319,7 @@ class TestValueStoreDb extends AbstractLmdbDbTest {
         final Map<String, ValueStoreKey> valueToKeyMap = new HashMap<>();
 
         // load entries
-        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
             valueToKeyMap.put(val1str, getOrCreate(writeTxn, StringValue.of(val1str)));
             valueToKeyMap.put(val2str, getOrCreate(writeTxn, StringValue.of(val2str)));
             valueToKeyMap.put(val3str, getOrCreate(writeTxn, StringValue.of(val3str)));
@@ -338,7 +337,7 @@ class TestValueStoreDb extends AbstractLmdbDbTest {
 
         ValueStoreKeySerde keySerde = new ValueStoreKeySerde();
 
-        LmdbUtils.doWithReadTxn(lmdbEnv, txn -> {
+        lmdbEnv.doWithReadTxn(txn -> {
             // lookup our entries
             List<Integer> ids = new ArrayList<>();
             valueStoreDb.getPooledKeyBuffer().doWithByteBuffer(keyBuffer -> {
@@ -370,7 +369,7 @@ class TestValueStoreDb extends AbstractLmdbDbTest {
         ByteBuffer unknownValueStoreKeyBuffer = valueStoreDb.getPooledKeyBuffer().getByteBuffer();
         valueStoreDb.serializeKey(unknownValueStoreKeyBuffer, unknownValueStoreKey);
 
-        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
             boolean areValuesEqual = valueStoreDb.areValuesEqual(writeTxn, unknownValueStoreKeyBuffer, value2);
             assertThat(areValuesEqual).isFalse();
         });
@@ -387,7 +386,7 @@ class TestValueStoreDb extends AbstractLmdbDbTest {
                 Tuple.of(new ValueStoreKey(hash, (short) 2), new StringValue("val3")),
                 Tuple.of(new ValueStoreKey(hash, (short) 3), new StringValue("val4")));
 
-        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
             data.forEach(tuple -> {
                 valueStoreDb.put(writeTxn, tuple._1(), tuple._2(), false);
             });
@@ -395,7 +394,7 @@ class TestValueStoreDb extends AbstractLmdbDbTest {
 
         final KeyRange<ValueStoreKey> keyRangeAll = KeyRange.all();
 
-        final List<ValueStoreKey> output = LmdbUtils.getWithReadTxn(lmdbEnv, readTxn ->
+        final List<ValueStoreKey> output = lmdbEnv.getWithReadTxn(readTxn ->
                 valueStoreDb.streamEntries(readTxn, keyRangeAll, stream ->
                         stream
                                 .map(Tuple2::_1)
@@ -410,7 +409,7 @@ class TestValueStoreDb extends AbstractLmdbDbTest {
     private void doAreValuesEqualAssert(final StringValue value1,
                                         final StringValue value2,
                                         final boolean expectedResult) {
-        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
             ValueStoreKey valueStoreKey1 = getOrCreate(writeTxn, value1);
 
             ByteBuffer valueStoreKeyBuffer = valueStoreDb.getPooledKeyBuffer().getByteBuffer();
