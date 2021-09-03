@@ -34,10 +34,20 @@ public class LmdbEnvFactory {
         this.pathCreator = pathCreator;
     }
 
+    /**
+     * @param dir The path where the environment will be located on the filesystem.
+     *            Should be local disk and not shared storage.
+     */
     public EnvironmentBuilder builder(final Path dir) {
         return new EnvironmentBuilder(pathCreator, dir);
     }
 
+    /**
+     * @param dir The path where the environment will be located on the filesystem,
+     *            which can include the '~' character and system properties (e.g.
+     *            '/${stroom.hom}/ref_data') which will be substituted.
+     *            Should be local disk and not shared storage.
+     */
     public EnvironmentBuilder builder(final String dir) {
         return new EnvironmentBuilder(
                 pathCreator,
@@ -50,7 +60,7 @@ public class LmdbEnvFactory {
         private final Path dir;
         private final Env.Builder<ByteBuffer> builder;
         private final Set<EnvFlags> envFlags = new HashSet<>();
-        private boolean doWritersBlockReaders = false;
+        private boolean isReaderBlockedByWriter = false;
 
         private Path lmdbSystemLibraryPath = null;
 
@@ -104,12 +114,12 @@ public class LmdbEnvFactory {
         }
 
         public EnvironmentBuilder makeWritersBlockReaders() {
-            this.doWritersBlockReaders = true;
+            this.isReaderBlockedByWriter = true;
             return this;
         }
 
-        public EnvironmentBuilder setWritersBlockReaders(final boolean doWritersBlockReaders) {
-            this.doWritersBlockReaders = doWritersBlockReaders;
+        public EnvironmentBuilder setIsReaderBlockedByWriter(final boolean isReaderBlockedByWriter) {
+            this.isReaderBlockedByWriter = isReaderBlockedByWriter;
             return this;
         }
 
@@ -143,7 +153,7 @@ public class LmdbEnvFactory {
                         "Error creating LMDB env at {}: {}", e.getMessage()), e);
             }
 
-            return new LmdbEnv(dir, env, doWritersBlockReaders);
+            return new LmdbEnv(dir, env, isReaderBlockedByWriter);
         }
     }
 }

@@ -60,7 +60,7 @@ public class TestLmdbEnv {
         doMultiThreadTest(doWritersBlockReaders, expectedNumReadersHighWaterMark);
     }
 
-    private void doMultiThreadTest(final boolean doWritersBlockReaders,
+    private void doMultiThreadTest(final boolean isReaderBlockedByWriter,
                                    final int expectedNumReadersHighWaterMark)
             throws IOException, InterruptedException {
 
@@ -80,7 +80,7 @@ public class TestLmdbEnv {
                 .withMapSize(DB_MAX_SIZE)
                 .withMaxDbCount(1)
                 .withMaxReaderCount(MAX_READERS)
-                .setWritersBlockReaders(doWritersBlockReaders)
+                .setIsReaderBlockedByWriter(isReaderBlockedByWriter)
                 .addEnvFlag(EnvFlags.MDB_NOTLS)
                 .build();
 

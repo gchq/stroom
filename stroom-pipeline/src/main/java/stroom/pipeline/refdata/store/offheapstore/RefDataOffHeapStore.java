@@ -252,6 +252,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     .withMaxDbCount(7)
                     .withEnvFlags(envFlags)
                     .withLmdbSystemLibraryPath(referenceDataConfig.getLmdbSystemLibraryPath())
+                    .setIsReaderBlockedByWriter(referenceDataConfig.isReaderBlockedByWriter())
                     .build();
 
             LOGGER.info("Existing databases: [{}]", String.join(",", env.getDbiNames()));
