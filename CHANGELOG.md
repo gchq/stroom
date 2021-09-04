@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Allow HTTP request headers to be customized in HTTPAppender.
+
 * Issue **#2392** : Fix for token type to only allow `api`.
 
 
