@@ -54,7 +54,7 @@ public class EntityDropDownPresenter extends MyPresenterWidget<DropDownView>
 
     @Override
     public void focus() {
-        explorerDropDownTreePresenter.focus();
+        getView().focus();
     }
 
     public void setIncludedTypes(final String... includedTypes) {

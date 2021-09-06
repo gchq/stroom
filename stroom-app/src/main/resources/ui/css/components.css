@@ -1152,7 +1152,6 @@
 }
 
 .userListViewImpl-nameFilter {
-    border-bottom: none !important;
     margin-bottom: var(--control__padding--vertical);
 }
 
@@ -1271,9 +1270,7 @@
 }
 
 .dropDownTreeViewImpl-nameFilter {
-    width: 100%;
-    border: none;
-    border-bottom: 1px solid var(--border-color);
+    margin-bottom: var(--control__padding--vertical);
 }
 
 .welcomeViewImpl-body {

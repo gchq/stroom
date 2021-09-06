@@ -67,6 +67,11 @@ public class DropDownViewImpl extends ViewWithUiHandlers<DropDownUiHandlers>
     }
 
     @Override
+    public void focus() {
+        widget.getElement().focus();
+    }
+
+    @Override
     public void setText(final String text) {
         label.setText(text);
         label.setTitle(text);

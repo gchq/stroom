@@ -35,6 +35,7 @@ import stroom.widget.util.client.MultiSelectionModelImpl;
 import stroom.widget.util.client.Selection;
 import stroom.widget.util.client.SelectionType;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
@@ -115,7 +116,19 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
 
     @Override
     public void focus() {
+//        GWT.log("focus");
+//
+//        int row = 0;
+//        if (selectionModel.getSelected() != null) {
+//            int index = cellTable.getVisibleItems().indexOf(selectionModel.getSelected());
+//            if (index >= 0) {
+//                row = index;
+//            }
+//        }
+//        cellTable.setKeyboardSelectedRow(row, true);
         cellTable.setFocus(true);
+//
+//        cellTable.getSesetFocus(true);
     }
 
     abstract MultiSelectionModelImpl<ExplorerNode> getSelectionModel();
@@ -124,6 +137,8 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
     }
 
     void setData(final List<ExplorerNode> rows) {
+        GWT.log("set data");
+
         this.rows = rows;
         cellTable.setRowData(0, rows);
         cellTable.setRowCount(rows.size(), true);

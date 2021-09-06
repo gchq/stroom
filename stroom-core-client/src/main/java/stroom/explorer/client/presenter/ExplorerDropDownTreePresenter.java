@@ -36,7 +36,6 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.SelectionType;
 
-import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -44,7 +43,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 class ExplorerDropDownTreePresenter
         extends MyPresenterWidget<DropDownTreeView>
-        implements DropDownTreeUiHandlers, HasDataSelectionHandlers<ExplorerNode>, Focus {
+        implements DropDownTreeUiHandlers, HasDataSelectionHandlers<ExplorerNode> {
 
     private final ExtendedExplorerTree explorerTree;
     private boolean allowFolderSelection;
@@ -73,11 +72,6 @@ class ExplorerDropDownTreePresenter
                                 uiConfig.getHelpUrl())));
     }
 
-    @Override
-    public void focus() {
-        explorerTree.focus();
-    }
-
     public void show() {
         getView().clearFilter();
         refresh();
@@ -86,7 +80,7 @@ class ExplorerDropDownTreePresenter
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .caption(caption)
-                .onShow(e -> focus())
+                .onShow(e -> getView().focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         final ExplorerNode selected = getSelectedEntityData();
