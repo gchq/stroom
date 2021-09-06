@@ -2,7 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder" xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:l="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <g:FlowPanel styleName="DocumentPermissionsViewImpl max dock-container-vertical">
+    <g:FlowPanel styleName="max form-page dock-container-vertical">
         <g:SimplePanel ui:field="tabs" styleName="dock-max"/>
         <g:FlowPanel ui:field="innerLayout" styleName="dock-min form">
             <form:FormGroup ui:field="cascadeGrid" identity="documentPermissionsCascade" label="Cascade">

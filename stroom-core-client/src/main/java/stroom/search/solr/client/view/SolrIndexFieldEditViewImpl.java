@@ -20,7 +20,7 @@ import stroom.item.client.ItemListBox;
 import stroom.item.client.StringListBox;
 import stroom.search.solr.client.presenter.SolrIndexFieldEditPresenter.SolrIndexFieldEditView;
 import stroom.search.solr.shared.SolrIndexFieldType;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -44,35 +44,35 @@ public class SolrIndexFieldEditViewImpl extends ViewImpl implements SolrIndexFie
     @UiField
     TextBox defaultValue;
     @UiField
-    TickBox stored;
+    CustomCheckBox stored;
     @UiField
-    TickBox indexed;
+    CustomCheckBox indexed;
     @UiField
-    TickBox uninvertible;
+    CustomCheckBox uninvertible;
     @UiField
-    TickBox docValues;
+    CustomCheckBox docValues;
     @UiField
-    TickBox multiValued;
+    CustomCheckBox multiValued;
     @UiField
-    TickBox required;
+    CustomCheckBox required;
     @UiField
-    TickBox omitNorms;
+    CustomCheckBox omitNorms;
     @UiField
-    TickBox omitTermFreqAndPositions;
+    CustomCheckBox omitTermFreqAndPositions;
     @UiField
-    TickBox omitPositions;
+    CustomCheckBox omitPositions;
     @UiField
-    TickBox termVectors;
+    CustomCheckBox termVectors;
     @UiField
-    TickBox termPositions;
+    CustomCheckBox termPositions;
     @UiField
-    TickBox termOffsets;
+    CustomCheckBox termOffsets;
     @UiField
-    TickBox termPayloads;
+    CustomCheckBox termPayloads;
     @UiField
-    TickBox sortMissingFirst;
+    CustomCheckBox sortMissingFirst;
     @UiField
-    TickBox sortMissingLast;
+    CustomCheckBox sortMissingLast;
 
     @Inject
     public SolrIndexFieldEditViewImpl(final Binder binder) {
@@ -133,152 +133,152 @@ public class SolrIndexFieldEditViewImpl extends ViewImpl implements SolrIndexFie
 
     @Override
     public boolean isStored() {
-        return stored.getBooleanValue();
+        return stored.getValue();
     }
 
     @Override
     public void setStored(final boolean stored) {
-        this.stored.setBooleanValue(stored);
+        this.stored.setValue(stored);
     }
 
     @Override
     public boolean isIndexed() {
-        return indexed.getBooleanValue();
+        return indexed.getValue();
     }
 
     @Override
     public void setIndexed(final boolean indexed) {
-        this.indexed.setBooleanValue(indexed);
+        this.indexed.setValue(indexed);
     }
 
     @Override
     public boolean isUninvertible() {
-        return uninvertible.getBooleanValue();
+        return uninvertible.getValue();
     }
 
     @Override
     public void setUninvertible(final boolean uninvertible) {
-        this.uninvertible.setBooleanValue(uninvertible);
+        this.uninvertible.setValue(uninvertible);
     }
 
     @Override
     public boolean isDocValues() {
-        return docValues.getBooleanValue();
+        return docValues.getValue();
     }
 
     @Override
     public void setDocValues(final boolean docValues) {
-        this.docValues.setBooleanValue(docValues);
+        this.docValues.setValue(docValues);
     }
 
     @Override
     public boolean isMultiValued() {
-        return multiValued.getBooleanValue();
+        return multiValued.getValue();
     }
 
     @Override
     public void setMultiValued(final boolean multiValued) {
-        this.multiValued.setBooleanValue(multiValued);
+        this.multiValued.setValue(multiValued);
     }
 
     @Override
     public boolean isRequired() {
-        return required.getBooleanValue();
+        return required.getValue();
     }
 
     @Override
     public void setRequired(final boolean required) {
-        this.required.setBooleanValue(required);
+        this.required.setValue(required);
     }
 
     @Override
     public boolean isOmitNorms() {
-        return omitNorms.getBooleanValue();
+        return omitNorms.getValue();
     }
 
     @Override
     public void setOmitNorms(final boolean omitNorms) {
-        this.omitNorms.setBooleanValue(omitNorms);
+        this.omitNorms.setValue(omitNorms);
     }
 
     @Override
     public boolean isOmitTermFreqAndPositions() {
-        return omitTermFreqAndPositions.getBooleanValue();
+        return omitTermFreqAndPositions.getValue();
     }
 
     @Override
     public void setOmitTermFreqAndPositions(final boolean omitTermFreqAndPositions) {
-        this.omitTermFreqAndPositions.setBooleanValue(omitTermFreqAndPositions);
+        this.omitTermFreqAndPositions.setValue(omitTermFreqAndPositions);
     }
 
     @Override
     public boolean isOmitPositions() {
-        return omitPositions.getBooleanValue();
+        return omitPositions.getValue();
     }
 
     @Override
     public void setOmitPositions(final boolean omitPositions) {
-        this.omitPositions.setBooleanValue(omitPositions);
+        this.omitPositions.setValue(omitPositions);
     }
 
     @Override
     public boolean isTermVectors() {
-        return termVectors.getBooleanValue();
+        return termVectors.getValue();
     }
 
     @Override
     public void setTermVectors(final boolean termVectors) {
-        this.termVectors.setBooleanValue(termVectors);
+        this.termVectors.setValue(termVectors);
     }
 
     @Override
     public boolean isTermPositions() {
-        return termPositions.getBooleanValue();
+        return termPositions.getValue();
     }
 
     @Override
     public void setTermPositions(final boolean termPositions) {
-        this.termPositions.setBooleanValue(termPositions);
+        this.termPositions.setValue(termPositions);
     }
 
     @Override
     public boolean isTermOffsets() {
-        return termOffsets.getBooleanValue();
+        return termOffsets.getValue();
     }
 
     @Override
     public void setTermOffsets(final boolean termOffsets) {
-        this.termOffsets.setBooleanValue(termOffsets);
+        this.termOffsets.setValue(termOffsets);
     }
 
     @Override
     public boolean isTermPayloads() {
-        return termPayloads.getBooleanValue();
+        return termPayloads.getValue();
     }
 
     @Override
     public void setTermPayloads(final boolean termPayloads) {
-        this.termPayloads.setBooleanValue(termPayloads);
+        this.termPayloads.setValue(termPayloads);
     }
 
     @Override
     public boolean isSortMissingFirst() {
-        return sortMissingFirst.getBooleanValue();
+        return sortMissingFirst.getValue();
     }
 
     @Override
     public void setSortMissingFirst(final boolean sortMissingFirst) {
-        this.sortMissingFirst.setBooleanValue(sortMissingFirst);
+        this.sortMissingFirst.setValue(sortMissingFirst);
     }
 
     @Override
     public boolean isSortMissingLast() {
-        return sortMissingLast.getBooleanValue();
+        return sortMissingLast.getValue();
     }
 
     @Override
     public void setSortMissingLast(final boolean sortMissingLast) {
-        this.sortMissingLast.setBooleanValue(sortMissingLast);
+        this.sortMissingLast.setValue(sortMissingLast);
     }
 
     @Override

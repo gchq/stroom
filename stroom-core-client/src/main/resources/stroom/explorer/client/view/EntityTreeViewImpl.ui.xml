@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:v="urn:import:stroom.widget.dropdowntree.client.view">
     <g:FlowPanel styleName="dock-container-vertical">
-        <v:QuickFilter ui:field="nameFilter" addStyleNames="dock-min stroom-border-bottom"/>
-            <g:MaxScrollPanel styleName="dock-max stroom-control entityTreeView-scrollPanel" ui:field="scrollPanel"/>
+        <v:QuickFilter ui:field="nameFilter" addStyleNames="dock-min quickFilter__margin-bottom"/>
+        <g:MaxScrollPanel styleName="dock-max stroom-control" ui:field="scrollPanel"/>
     </g:FlowPanel>
 </ui:UiBinder> 

@@ -1,7 +1,7 @@
 package stroom.data.client.view;
 
 import stroom.data.client.presenter.ProcessChoicePresenter;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -15,11 +15,11 @@ public class ProcessChoiceViewImpl extends ViewImpl implements ProcessChoicePres
     @UiField
     ValueSpinner priority;
     @UiField
-    TickBox autoPriority;
+    CustomCheckBox autoPriority;
     @UiField
-    TickBox reprocess;
+    CustomCheckBox reprocess;
     @UiField
-    TickBox enabled;
+    CustomCheckBox enabled;
 
     private final Widget widget;
 
@@ -31,9 +31,9 @@ public class ProcessChoiceViewImpl extends ViewImpl implements ProcessChoicePres
         priority.setMin(1);
         priority.setValue(10);
 
-        autoPriority.setBooleanValue(true);
+        autoPriority.setValue(true);
 
-        enabled.setBooleanValue(true);
+        enabled.setValue(true);
     }
 
     @Override
@@ -53,17 +53,17 @@ public class ProcessChoiceViewImpl extends ViewImpl implements ProcessChoicePres
 
     @Override
     public boolean isAutoPriority() {
-        return autoPriority.getBooleanValue();
+        return autoPriority.getValue();
     }
 
     @Override
     public boolean isReprocess() {
-        return reprocess.getBooleanValue();
+        return reprocess.getValue();
     }
 
     @Override
     public boolean isEnabled() {
-        return enabled.getBooleanValue();
+        return enabled.getValue();
     }
 
     public interface Binder extends UiBinder<Widget, ProcessChoiceViewImpl> {

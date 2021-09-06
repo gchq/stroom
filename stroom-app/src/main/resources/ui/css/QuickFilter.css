@@ -21,6 +21,10 @@
 	overflow: hidden;
 }
 
+.quickFilter__margin-bottom {
+    margin-bottom: var(--control__padding--vertical);
+}
+
 .quickFilter-textBox {
     width: 100%; /* To allow for info and clear btns */
 	margin: 0;

@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <g:FlowPanel styleName="max default-min-sizes dock-container-vertical form">
+    <g:FlowPanel styleName="max form-page form">
         <form:FormGroup addStyleNames="dock-max" identity="cfRuleExpression" label="Row Match Expression">
             <g:SimplePanel ui:field="expression" styleName="dock-max stroom-control">
             </g:SimplePanel>

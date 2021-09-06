@@ -6,7 +6,7 @@
              xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
              xmlns:form="urn:import:stroom.widget.form.client">
 
-    <g:FlowPanel styleName="max form">
+    <g:FlowPanel styleName="max form-page form">
         <!-- Theme -->
         <form:FormGroup identity="userPreferencesTheme" label="Theme">
             <item:StringListBox ui:field="theme" addStyleNames="w-100"/>

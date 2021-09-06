@@ -2,15 +2,19 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:p="urn:import:stroom.widget.button.client"
-             xmlns:v="urn:import:stroom.widget.dropdowntree.client.view">
-    <g:FlowPanel styleName="max default-min-sizes dock-container-vertical">
-        <g:Label text="Select the items to export:" addStyleNames="dock-min exportConfigViewImpl-label"/>
-        <g:FlowPanel styleName="dock-min dock-container-horizontal exportConfigViewImpl-filter">
-            <v:QuickFilter ui:field="nameFilter" addStyleNames="dock-max exportConfigViewImpl-nameFilter"/>
-            <g:FlowPanel addStyleNames="dock-min button-container">
-                <p:SvgButton ui:field="typeFilter"/>
+             xmlns:v="urn:import:stroom.widget.dropdowntree.client.view"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form-page form">
+        <form:FormGroup identity="exportConfigSelect" label="Select the items to export" addStyleNames="max">
+            <g:FlowPanel styleName="max default-min-sizes dock-container-vertical">
+                <g:FlowPanel styleName="dock-min dock-container-horizontal exportConfigViewImpl-filter">
+                    <v:QuickFilter ui:field="nameFilter" addStyleNames="dock-max quickFilter__margin-bottom"/>
+                    <g:FlowPanel addStyleNames="dock-min button-container">
+                        <p:SvgButton ui:field="typeFilter"/>
+                    </g:FlowPanel>
+                </g:FlowPanel>
+                <g:SimplePanel ui:field="tree" styleName="dock-max stroom-control"/>
             </g:FlowPanel>
-        </g:FlowPanel>
-        <g:SimplePanel ui:field="tree" styleName="dock-max stroom-control"/>
+        </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

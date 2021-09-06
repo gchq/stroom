@@ -456,9 +456,6 @@
     border-bottom: 1px solid var(--border-color) !important;
 }
 */
-.entityTreeView-scrollPanel {
-    margin-top: var(--control__gap--vertical);
-}
 
 .dropDownView-container {
     position: relative;
@@ -1151,10 +1148,6 @@
     text-align: center;
 }
 
-.userListViewImpl-nameFilter {
-    margin-bottom: var(--control__padding--vertical);
-}
-
 .mainViewImpl-max {
     position: absolute;
     left: 0px;
@@ -1269,10 +1262,6 @@
     clear: left;
 }
 
-.dropDownTreeViewImpl-nameFilter {
-    margin-bottom: var(--control__padding--vertical);
-}
-
 .welcomeViewImpl-body {
     padding: 5px !important;
 }
@@ -1281,11 +1270,6 @@
     position: absolute;
     right: 5px;
     bottom: 5px;
-}
-
-.manageActivityViewImpl-nameFilter {
-    width: 100%;
-    border-bottom: none !important;
 }
 
 .splashViewImpl-content {
@@ -1317,9 +1301,6 @@
     max-width: 390px;
     overflow-x: hidden;
     overflow-y: auto;
-}
-
-.chooserViewImpl-nameFilter {
 }
 
 .chooserViewImpl-clearSelection {
@@ -1372,23 +1353,6 @@
     margin-top: 2px;
     vertical-align: top;
     white-space: nowrap;
-}
-
-.dependenciesTabViewImpl-quickFilter {
-    width: 100%;
-    border-bottom: none !important;
-}
-
-.exportConfigViewImpl-label {
-    margin-top: 2px;
-}
-
-.exportConfigViewImpl-filter {
-    padding: .5rem 0;
-}
-
-.exportConfigViewImpl-nameFilter {
-    border: none !important;
 }
 
 .infoMenuItem {
@@ -1670,15 +1634,20 @@
   padding-right: 4.5rem;
 }
 
-.form-group {
-    display: flex;
-    margin-bottom: 0;
-    flex-direction: column;
-}
-
 .form {
     display: flex;
     gap: var(--control__gap--vertical);
+    flex-direction: column;
+}
+
+.form-page {
+    overflow: auto;
+    padding: var(--control__gap--vertical) var(--control__gap--horizontal) 0 var(--control__gap--horizontal);
+}
+
+.form-group {
+    display: flex;
+    margin-bottom: 0;
     flex-direction: column;
 }
 

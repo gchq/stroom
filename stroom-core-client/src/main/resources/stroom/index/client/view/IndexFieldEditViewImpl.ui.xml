@@ -1,49 +1,30 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-  xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
-  xmlns:l="urn:import:stroom.item.client">
-  <g:Grid styleName="stroom-control-grid w-100">
-    <g:row>
-      <g:cell>Type:</g:cell>
-      <g:customCell>
-        <l:ItemListBox ui:field="type" addStyleNames="w-100" />
-      </g:customCell>
-    </g:row>
-    <g:row>
-      <g:cell>Name:</g:cell>
-      <g:customCell>
-        <g:TextBox ui:field="name" addStyleNames="w-100" />
-      </g:customCell>
-    </g:row>
-    <g:row>
-      <g:cell>Stored:</g:cell>
-      <g:customCell>
-        <tickbox:TickBox ui:field="stored" />
-      </g:customCell>
-    </g:row>
-    <g:row>
-      <g:cell>Indexed:</g:cell>
-      <g:customCell>
-        <tickbox:TickBox ui:field="indexed" />
-      </g:customCell>
-    </g:row>
-    <g:row>
-      <g:cell>Positions:</g:cell>
-      <g:customCell>
-        <tickbox:TickBox ui:field="positions" />
-      </g:customCell>
-    </g:row>
-    <g:row>
-      <g:cell>Analyser:</g:cell>
-      <g:customCell>
-        <l:ItemListBox ui:field="analyser" addStyleNames="w-100" />
-      </g:customCell>
-    </g:row>
-    <g:row>
-      <g:cell>Case Sensitive:</g:cell>
-      <g:customCell>
-        <tickbox:TickBox ui:field="caseSensitive" />
-      </g:customCell>
-    </g:row>
-  </g:Grid>
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:l="urn:import:stroom.item.client"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form-page form">
+        <form:FormGroup identity="indexFieldType" label="Type">
+            <l:ItemListBox ui:field="type" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="indexFieldName" label="Name">
+            <g:TextBox ui:field="name" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="indexFieldStored" label="Stored">
+            <tickbox:CustomCheckBox ui:field="stored"/>
+        </form:FormGroup>
+        <form:FormGroup identity="indexFieldIndexed" label="Indexed">
+            <tickbox:CustomCheckBox ui:field="indexed"/>
+        </form:FormGroup>
+        <form:FormGroup identity="indexFieldPositions" label="Positions">
+            <tickbox:CustomCheckBox ui:field="positions"/>
+        </form:FormGroup>
+        <form:FormGroup identity="indexFieldAnalyser" label="Analyser">
+            <l:ItemListBox ui:field="analyser" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="indexFieldCaseSensitive" label="Case Sensitive">
+            <tickbox:CustomCheckBox ui:field="caseSensitive"/>
+        </form:FormGroup>
+    </g:FlowPanel>
 </ui:UiBinder> 

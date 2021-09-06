@@ -4,7 +4,7 @@
              xmlns:v="urn:import:stroom.widget.dropdowntree.client.view">
     <g:FlowPanel styleName="max chooserViewImpl-container">
         <g:FlowPanel ui:field="top" styleName="chooserViewImpl-top">
-            <v:QuickFilter ui:field="nameFilter" addStyleNames="chooserViewImpl-nameFilter"/>
+            <v:QuickFilter ui:field="nameFilter" addStyleNames="quickFilter__margin-bottom"/>
         </g:FlowPanel>
         <g:FlowPanel ui:field="bottom" styleName="chooserViewImpl-bottom">
         </g:FlowPanel>

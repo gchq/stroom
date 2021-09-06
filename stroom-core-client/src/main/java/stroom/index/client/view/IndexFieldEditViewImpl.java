@@ -20,7 +20,7 @@ import stroom.index.client.presenter.IndexFieldEditPresenter.IndexFieldEditView;
 import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.IndexFieldType;
 import stroom.item.client.ItemListBox;
-import stroom.widget.tickbox.client.view.TickBox;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -37,15 +37,15 @@ public class IndexFieldEditViewImpl extends ViewImpl implements IndexFieldEditVi
     @UiField
     TextBox name;
     @UiField
-    TickBox stored;
+    CustomCheckBox stored;
     @UiField
-    TickBox indexed;
+    CustomCheckBox indexed;
     @UiField
-    TickBox positions;
+    CustomCheckBox positions;
     @UiField
     ItemListBox<AnalyzerType> analyser;
     @UiField
-    TickBox caseSensitive;
+    CustomCheckBox caseSensitive;
 
     @Inject
     public IndexFieldEditViewImpl(final Binder binder) {
@@ -87,32 +87,32 @@ public class IndexFieldEditViewImpl extends ViewImpl implements IndexFieldEditVi
 
     @Override
     public boolean isStored() {
-        return stored.getBooleanValue();
+        return stored.getValue();
     }
 
     @Override
     public void setStored(final boolean stored) {
-        this.stored.setBooleanValue(stored);
+        this.stored.setValue(stored);
     }
 
     @Override
     public boolean isIndexed() {
-        return indexed.getBooleanValue();
+        return indexed.getValue();
     }
 
     @Override
     public void setIndexed(final boolean indexed) {
-        this.indexed.setBooleanValue(indexed);
+        this.indexed.setValue(indexed);
     }
 
     @Override
     public boolean isTermPositions() {
-        return positions.getBooleanValue();
+        return positions.getValue();
     }
 
     @Override
     public void setTermPositions(final boolean termPositions) {
-        positions.setBooleanValue(termPositions);
+        positions.setValue(termPositions);
     }
 
     @Override
@@ -127,12 +127,12 @@ public class IndexFieldEditViewImpl extends ViewImpl implements IndexFieldEditVi
 
     @Override
     public boolean isCaseSensitive() {
-        return caseSensitive.getBooleanValue();
+        return caseSensitive.getValue();
     }
 
     @Override
     public void setCaseSensitive(final boolean caseSensitive) {
-        this.caseSensitive.setBooleanValue(caseSensitive);
+        this.caseSensitive.setValue(caseSensitive);
     }
 
     public interface Binder extends UiBinder<Widget, IndexFieldEditViewImpl> {

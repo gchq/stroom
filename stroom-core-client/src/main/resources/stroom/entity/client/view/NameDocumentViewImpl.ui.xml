@@ -2,7 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <g:FlowPanel styleName="max form">
+    <g:FlowPanel styleName="max form-page form">
         <form:FormGroup identity="nameDocumentName" label="Name" addStyleNames="dock-min">
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
