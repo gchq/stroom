@@ -41,6 +41,7 @@ import stroom.widget.popup.client.presenter.PopupType;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -117,7 +118,7 @@ public class ExportConfigPresenter
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .caption("Export")
-                .onHide(e -> treePresenter.focus())
+                .onShow(e -> getView().focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         export();
@@ -165,7 +166,7 @@ public class ExportConfigPresenter
         typeFilterPresenter.show(target);
     }
 
-    public interface ExportConfigView extends View, HasUiHandlers<ExportConfigUiHandlers> {
+    public interface ExportConfigView extends View, Focus, HasUiHandlers<ExportConfigUiHandlers> {
 
         void setTreeView(View view);
     }
