@@ -19,6 +19,7 @@ package stroom.pipeline.refdata;
 import stroom.bytebuffer.PooledByteBufferOutputStream;
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.TerminatedException;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.filter.AbstractXMLFilter;
@@ -312,6 +313,9 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                              final String qName,
                              final Attributes atts)
             throws SAXException {
+
+        checkForInterrupt();
+
         depthLevel++;
         insideElement = true;
         contentBuffer.clear();
@@ -412,6 +416,8 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
         LOGGER.trace("endElement {} {} {} level:{}", uri, localName, qName, depthLevel);
+
+        checkForInterrupt();
 
         insideElement = false;
         if (VALUE_ELEMENT.equalsIgnoreCase(localName)) {
@@ -772,5 +778,13 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
 
     private boolean hasUriBeenApplied(final String prefix) {
         return appliedPrefixToUriMap.containsKey(prefix);
+    }
+
+    private void checkForInterrupt() {
+        if (Thread.currentThread().isInterrupted()) {
+            LOGGER.debug("Thread interrupted");
+            Thread.currentThread().interrupt();
+            throw new TerminatedException();
+        }
     }
 }

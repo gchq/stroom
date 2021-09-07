@@ -1114,7 +1114,13 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                                 loader.initialise(false);
                                 loader.setCommitInterval(32_000);
 
-                                loadKeyValueData(keyValueMapCount, entryCount, refStreamDefinition, loader, mapNamFunc);
+                                loadKeyValueData(
+                                        keyValueMapCount,
+                                        entryCount,
+                                        refStreamDefinition,
+                                        loader,
+                                        mapNamFunc);
+
                                 loadRangeValueData(keyValueMapCount,
                                         entryCount,
                                         refStreamDefinition,
