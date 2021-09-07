@@ -18,7 +18,11 @@ package stroom.task.impl;
 
 import stroom.security.api.UserIdentity;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskTerminatedException;
 import stroom.task.shared.TaskId;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.Objects;
@@ -27,6 +31,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 public class TaskContextImpl implements TaskContext {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TaskContextImpl.class);
 
     private final TaskId taskId;
     private final UserIdentity userIdentity;
@@ -78,8 +84,30 @@ public class TaskContextImpl implements TaskContext {
     }
 
     synchronized void setThread(final Thread thread) {
+        final Thread currentThread = this.thread;
         this.thread = thread;
-        if (terminate) {
+
+        if (thread == null && currentThread != null) {
+            if (terminate) {
+                if (currentThread.isInterrupted()) {
+                    LOGGER.debug("Clearing interrupted state");
+                    final Thread ct = Thread.currentThread();
+                    if (currentThread != ct) {
+                        LOGGER.error("Unexpected current thread");
+                    }
+
+                    if (Thread.interrupted()) {
+                        if (currentThread.isInterrupted()) {
+                            LOGGER.error("Unable to clear interrupted state");
+                        } else {
+                            LOGGER.debug("Cleared interrupted state");
+                        }
+
+                        throw new TaskTerminatedException();
+                    }
+                }
+            }
+        } else if (terminate) {
             interrupt();
         }
     }

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2398** : Fix to clear interrupt state for threads used by terminated tasks.
+
 * Issue **#2392** : Fix for token type to only allow `api`.
 
 

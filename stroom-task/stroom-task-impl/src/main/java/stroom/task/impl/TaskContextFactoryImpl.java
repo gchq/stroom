@@ -182,8 +182,11 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
                 // Let every ancestor know this descendant task has completed.
                 ancestorTaskSet.forEach(ancestorTask -> ancestorTask.removeChild(subTaskContext));
 
-                subTaskContext.setThread(null);
-                currentThread.setName(oldThreadName);
+                try {
+                    subTaskContext.setThread(null);
+                } finally {
+                    currentThread.setName(oldThreadName);
+                }
             }
 
             return result;
