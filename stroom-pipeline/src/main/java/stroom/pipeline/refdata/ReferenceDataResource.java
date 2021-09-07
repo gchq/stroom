@@ -32,7 +32,8 @@ public interface ReferenceDataResource extends RestResource {
     String ENTRIES_SUB_PATH = "/entries";
     String REF_STREAM_INFO_SUB_PATH = "/refStreamInfo";
     String LOOKUP_SUB_PATH = "/lookup";
-    String PURGE_SUB_PATH = "/purge";
+    String PURGE_BY_AGE_SUB_PATH = "/purgeByAge";
+    String PURGE_BY_STREAM_SUB_PATH = "/purgeByStream";
 
     @GET
     @Path(ENTRIES_SUB_PATH)
@@ -65,9 +66,17 @@ public interface ReferenceDataResource extends RestResource {
     String lookup(@Valid @NotNull final RefDataLookupRequest refDataLookupRequest);
 
     @DELETE
-    @Path(PURGE_SUB_PATH + "/{purgeAge}")
+    @Path(PURGE_BY_AGE_SUB_PATH + "/{purgeAge}")
     @Operation(
             summary = "Explicitly delete all entries that are older than purgeAge.",
-            operationId = "purgeReferenceData")
+            operationId = "purgeReferenceDataByAge")
     boolean purge(@NotNull @PathParam("purgeAge") final String purgeAge);
+
+    @DELETE
+    @Path(PURGE_BY_STREAM_SUB_PATH + "/{refStreamId}/{partNo}")
+    @Operation(
+            summary = "Delete all entries for a reference stream",
+            operationId = "purgeReferenceDataByStreamAndPartNo")
+    boolean purge(@PathParam("refStreamId") final long refStreamId,
+                  @PathParam("partNo") final long partNo);
 }

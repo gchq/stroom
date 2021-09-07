@@ -77,4 +77,17 @@ public class ReferenceDataResourceImpl implements ReferenceDataResource {
             throw e;
         }
     }
+
+    @AutoLogged(OperationType.DELETE)
+    @Override
+    public boolean purge(final long refStreamId, final long partNo) {
+        try {
+            referenceDataServiceProvider.get()
+                    .purge(refStreamId, partNo);
+            return true;
+        } catch (Exception e) {
+            LOGGER.error("Failed to purge " + refStreamId + ":" + partNo, e);
+            throw e;
+        }
+    }
 }

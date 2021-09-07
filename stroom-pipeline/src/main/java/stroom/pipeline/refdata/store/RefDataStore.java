@@ -103,6 +103,11 @@ public interface RefDataStore {
 
     void purgeOldData(final StroomDuration purgeAge);
 
+    /**
+     * Purges this ref stream regardless of how recently it has been accessed
+     */
+    void purge(final long refStreamId, final long partNo);
+
     void logAllContents();
 
     void logAllContents(Consumer<String> logEntryConsumer);

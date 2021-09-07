@@ -43,9 +43,11 @@ import org.slf4j.LoggerFactory;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -318,6 +320,30 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
                 });
 
                 return streamFunction.apply(deSerialisedStream);
+            });
+        }
+    }
+
+    public Optional<Tuple2<K,V>> findFirstMatchingKey(final Txn<ByteBuffer> txn,
+                                                      final KeyRange<K> keyRange,
+                                                      final Predicate<K> keyPredicate) {
+
+        try (final PooledByteBuffer startKeyPooledBuffer = getPooledKeyBuffer();
+                final PooledByteBuffer stopKeyPooledBuffer = getPooledKeyBuffer()) {
+
+            final KeyRange<ByteBuffer> serialisedKeyRange = serialiseKeyRange(startKeyPooledBuffer,
+                    stopKeyPooledBuffer,
+                    keyRange);
+
+            return streamEntriesAsBytes(txn, serialisedKeyRange, entryStream -> {
+                return entryStream
+                        .map(keyVal -> {
+                            K key = deserializeKey(keyVal.key());
+                            V value = deserializeValue(keyVal.val());
+                            return Tuple.of(key, value);
+                        })
+                        .filter(keyVal -> keyPredicate.test(keyVal._1()))
+                        .findFirst();
             });
         }
     }

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2389** : Add an API method for purging a single reference data stream.
+
 * Issue **#2379** : Change ref data lookups to truncate last access time to hourly.
 
 * Issue **#2396** : Add `stroom:pointIsInsideXYPolygon` XSLT function.

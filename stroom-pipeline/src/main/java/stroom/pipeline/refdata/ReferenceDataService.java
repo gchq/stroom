@@ -1,6 +1,7 @@
 package stroom.pipeline.refdata;
 
 import stroom.pipeline.refdata.store.RefStoreEntry;
+import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.RefStreamProcessingInfo;
 import stroom.searchable.api.Searchable;
 import stroom.util.time.StroomDuration;
@@ -24,4 +25,6 @@ public interface ReferenceDataService extends Searchable {
     String lookup(final RefDataLookupRequest refDataLookupRequest);
 
     void purge(final StroomDuration stroomDuration);
+
+    void purge(final long refStreamId, final long partNo);
 }
