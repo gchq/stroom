@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2398** : Fix to clear interrupt state for threads used by terminated tasks.
 
+* Issue **#2396** : Add `stroom:pointIsInsideXYPolygon` XSLT function.
+
+* Allow HTTP request headers to be customized in HTTPAppender.
+
 * Issue **#2392** : Fix for token type to only allow `api`.
 
 
