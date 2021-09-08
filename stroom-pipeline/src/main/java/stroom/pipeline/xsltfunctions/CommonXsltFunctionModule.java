@@ -476,8 +476,8 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
                     new SequenceType[]{
                             SequenceType.SINGLE_DOUBLE,
                             SequenceType.SINGLE_DOUBLE,
-                            SequenceType.NUMERIC_SEQUENCE,
-                            SequenceType.NUMERIC_SEQUENCE},
+                            SequenceType.ANY_SEQUENCE,
+                            SequenceType.ANY_SEQUENCE},
                     SequenceType.SINGLE_BOOLEAN,
                     functionCallProvider);
         }
