@@ -17,6 +17,7 @@ import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -143,7 +144,7 @@ public class MapDefinitionUIDStore {
     }
 
     void forEach(final Txn<ByteBuffer> txn,
-                 final Consumer<Tuple2<MapDefinition, UID>> entryConsumer) {
+                 final Consumer<Entry<MapDefinition, UID>> entryConsumer) {
 
         mapUidForwardDb.forEachEntry(txn, KeyRange.all(), entryConsumer);
     }

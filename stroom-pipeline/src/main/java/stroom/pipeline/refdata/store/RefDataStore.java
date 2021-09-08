@@ -106,7 +106,7 @@ public interface RefDataStore {
     /**
      * Purges this ref stream regardless of how recently it has been accessed
      */
-    void purge(final long refStreamId, final long partNo);
+    void purge(final long refStreamId, final long partIndex);
 
     void logAllContents();
 

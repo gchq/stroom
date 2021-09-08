@@ -24,7 +24,6 @@ import stroom.pipeline.refdata.store.RefDataValueConverter;
 import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory;
 import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory.Factory;
 import stroom.pipeline.refdata.store.RefStoreEntry;
-import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.RefStreamProcessingInfo;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
@@ -308,12 +307,12 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     }
 
     @Override
-    public void purge(final long refStreamId, final long partNo) {
+    public void purge(final long refStreamId, final long partIndex) {
         securityContext.secure(PermissionNames.MANAGE_CACHE_PERMISSION, () ->
                 taskContextFactory.context("Reference Data Purge", taskContext ->
-                                LOGGER.logDurationIfDebugEnabled(
-                                        () -> refDataStore.purge(refStreamId, partNo),
-                                        LogUtil.message("Performing Purge for ref stream {}:{}", refStreamId, partNo)))
+                        LOGGER.logDurationIfDebugEnabled(
+                                () -> refDataStore.purge(refStreamId, partIndex),
+                                LogUtil.message("Performing Purge for ref stream {}:{}", refStreamId, partIndex)))
                         .run());
     }
 

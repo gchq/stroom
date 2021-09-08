@@ -64,7 +64,6 @@ import com.google.common.util.concurrent.Striped;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.Tuple3;
-import org.apache.hadoop.hdfs.protocol.proto.HdfsProtos.VersionRequestProtoOrBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.lmdbjava.EnvFlags;
 import org.lmdbjava.KeyRange;
@@ -86,6 +85,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
@@ -458,20 +458,20 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     }
 
     @Override
-    public void purge(final long refStreamId, final long partNo) {
+    public void purge(final long refStreamId, final long partIndex) {
 
         final Instant startTime = Instant.now();
         taskContext.info(() -> LogUtil.message("Purging data for reference stream {}:{}",
-                refStreamId, partNo));
+                refStreamId, partIndex));
 
         final AtomicReference<PurgeCounts> countsRef = new AtomicReference<>(PurgeCounts.zero());
 
-        LOGGER.info("Purging reference data store of stream {}:{}", refStreamId, partNo);
+        LOGGER.info("Purging reference data store of stream {}:{}", refStreamId, partIndex);
 
         try (final PooledByteBuffer refStreamDefPooledBuf = processingInfoDb.getPooledKeyBuffer()) {
 
             final Predicate<RefStreamDefinition> refStreamDefinitionPredicate = refStreamDef ->
-                    refStreamDef.getStreamId() == refStreamId && refStreamDef.getPartIndex() == partNo;
+                    refStreamDef.getStreamId() == refStreamId && refStreamDef.getPartIndex() == partIndex;
 
             final AtomicReference<KeyRange<RefStreamDefinition>> keyRangeRef = new AtomicReference<>(KeyRange.all());
             boolean wasMatchFound;
@@ -485,7 +485,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 }
 
                 // With a read txn scan over all the proc info entries to find the next one that is ready for purge
-                final Optional<Tuple2<RefStreamDefinition, RefDataProcessingInfo>> optEntry =
+                final Optional<Entry<RefStreamDefinition, RefDataProcessingInfo>> optEntry =
                         lmdbEnvironment.getWithReadTxn(readTxn ->
                                 processingInfoDb.findFirstMatchingKey(
                                         readTxn,
@@ -494,7 +494,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
                 if (optEntry.isPresent()) {
                     wasMatchFound = true;
-                    final RefStreamDefinition refStreamDefinition = optEntry.get()._1();
+                    final RefStreamDefinition refStreamDefinition = optEntry.get().getKey();
                     // Make the next iteration start just after this entry
                     keyRangeRef.set(KeyRange.greaterThan(refStreamDefinition));
                     processingInfoDb.serializeKey(refStreamDefPooledBuf.getByteBuffer(), refStreamDefinition);
@@ -1203,7 +1203,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 .orElseThrow(() -> new RuntimeException("No MapDefinition for UID " + mapUid.toString()));
 
         final RefDataProcessingInfo refDataProcessingInfo = processingInfoDb.get(readTxn,
-                        mapDefinition.getRefStreamDefinition())
+                mapDefinition.getRefStreamDefinition())
                 .orElse(null);
 
         final String value = getReferenceDataValue(readTxn, key, valueStoreKey);

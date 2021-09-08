@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.List;
 import javax.validation.Valid;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -75,8 +76,8 @@ public interface ReferenceDataResource extends RestResource {
     @DELETE
     @Path(PURGE_BY_STREAM_SUB_PATH + "/{refStreamId}/{partNo}")
     @Operation(
-            summary = "Delete all entries for a reference stream",
+            summary = "Delete all entries for a reference stream and part number (one based)",
             operationId = "purgeReferenceDataByStreamAndPartNo")
-    boolean purge(@PathParam("refStreamId") final long refStreamId,
-                  @PathParam("partNo") final long partNo);
+    boolean purge(@Min(1) @PathParam("refStreamId") final long refStreamId,
+                  @Min(1) @PathParam("partNo") final long partNo);
 }

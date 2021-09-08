@@ -242,7 +242,7 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
     }
 
     @Override
-    public void purge(final long refStreamId, final long partNo) {
+    public void purge(final long refStreamId, final long partIndex) {
         throw new UnsupportedOperationException("Purge functionality is not supported for the on-heap store " +
                 "as the data is transient");
     }

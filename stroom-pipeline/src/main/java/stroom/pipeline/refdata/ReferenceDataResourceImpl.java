@@ -82,8 +82,10 @@ public class ReferenceDataResourceImpl implements ReferenceDataResource {
     @Override
     public boolean purge(final long refStreamId, final long partNo) {
         try {
+            // partNo is one based, partIndex is zero based
+            final long partIndex = partNo - 1;
             referenceDataServiceProvider.get()
-                    .purge(refStreamId, partNo);
+                    .purge(refStreamId, partIndex);
             return true;
         } catch (Exception e) {
             LOGGER.error("Failed to purge " + refStreamId + ":" + partNo, e);

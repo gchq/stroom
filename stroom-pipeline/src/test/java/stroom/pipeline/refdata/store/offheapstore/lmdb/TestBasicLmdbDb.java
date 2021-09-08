@@ -305,7 +305,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
                 final List<String> keysFound = new ArrayList<>();
 
                 basicLmdbDb.forEachEntry(txn, KeyRange.closedOpen(startKey, endKey), kvTuple -> {
-                    keysFound.add(kvTuple._1());
+                    keysFound.add(kvTuple.getKey());
                 });
 
                 Assertions.assertThat(keysFound)

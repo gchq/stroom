@@ -324,7 +324,12 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
         }
     }
 
-    public Optional<Tuple2<K,V>> findFirstMatchingKey(final Txn<ByteBuffer> txn,
+    /**
+     * Find the first entry matching the supplied key predicate in the supplied key range.
+     * Not very efficient as it will scan over all entries in the range (de-serialising
+     * each one as it goes) till it finds a match.
+     */
+    public Optional<Entry<K, V>> findFirstMatchingKey(final Txn<ByteBuffer> txn,
                                                       final KeyRange<K> keyRange,
                                                       final Predicate<K> keyPredicate) {
 
@@ -335,16 +340,15 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
                     stopKeyPooledBuffer,
                     keyRange);
 
-            return streamEntriesAsBytes(txn, serialisedKeyRange, entryStream -> {
-                return entryStream
-                        .map(keyVal -> {
-                            K key = deserializeKey(keyVal.key());
-                            V value = deserializeValue(keyVal.val());
-                            return Tuple.of(key, value);
-                        })
-                        .filter(keyVal -> keyPredicate.test(keyVal._1()))
-                        .findFirst();
-            });
+            return streamEntriesAsBytes(txn, serialisedKeyRange, entryStream ->
+                    entryStream
+                            .map(keyVal -> {
+                                final K key = deserializeKey(keyVal.key());
+                                final V value = deserializeValue(keyVal.val());
+                                return Map.entry(key, value);
+                            })
+                            .filter(entry -> keyPredicate.test(entry.getKey()))
+                            .findFirst());
         }
     }
 
@@ -365,7 +369,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
      */
     public void forEachEntry(final Txn<ByteBuffer> txn,
                              final KeyRange<K> keyRange,
-                             final Consumer<Tuple2<K, V>> keyValueTupleConsumer) {
+                             final Consumer<Entry<K, V>> keyValueTupleConsumer) {
 
         try (final PooledByteBuffer startKeyPooledBuffer = getPooledKeyBuffer();
                 final PooledByteBuffer stopKeyPooledBuffer = getPooledKeyBuffer()) {
@@ -374,7 +378,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
                     stopKeyPooledBuffer,
                     keyRange);
             forEachEntryAsBytes(txn, serialisedKeyRange, keyVal -> {
-                final Tuple2<K, V> deSerialisedKeyValue = deserializeKeyVal(keyVal);
+                final Entry<K, V> deSerialisedKeyValue = deserializeKeyVal(keyVal);
                 keyValueTupleConsumer.accept(deSerialisedKeyValue);
             });
         }
@@ -825,8 +829,8 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
         }
     }
 
-    public Tuple2<K, V> deserializeKeyVal(final CursorIterable.KeyVal<ByteBuffer> keyVal) {
-        return Tuple.of(deserializeKey(keyVal.key()), deserializeValue(keyVal.val()));
+    public Entry<K, V> deserializeKeyVal(final CursorIterable.KeyVal<ByteBuffer> keyVal) {
+        return Map.entry(deserializeKey(keyVal.key()), deserializeValue(keyVal.val()));
     }
 
     public void serializeKey(final ByteBuffer keyBuffer, K key) {
