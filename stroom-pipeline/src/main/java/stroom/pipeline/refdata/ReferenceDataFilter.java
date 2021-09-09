@@ -314,6 +314,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                              final Attributes atts)
             throws SAXException {
 
+        // For slowing down a load
 //        try {
 //            Thread.sleep(2_000);
 //        } catch (InterruptedException e) {
@@ -376,7 +377,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         }
 
         super.startElement(uri, localName, newQName, atts);
-        throw new RuntimeException("Making ref load fail!!!!");
+//        throw new RuntimeException("Making ref load fail!!!!");
     }
 
 
