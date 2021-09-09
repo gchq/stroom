@@ -25,9 +25,11 @@ import stroom.pipeline.PipelineStore;
 import stroom.pipeline.errorhandler.ErrorReceiverIdDecorator;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.StoredErrorReceiver;
+import stroom.pipeline.errorhandler.TerminatedException;
 import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
+import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.shared.PipelineDoc;
@@ -46,6 +48,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Objects;
 import javax.inject.Inject;
 
 
@@ -95,6 +98,7 @@ class ContextDataLoadTaskHandler {
                      final DocRef contextPipeline,
                      final RefStreamDefinition refStreamDefinition,
                      final RefDataStore refDataStore) {
+        Objects.requireNonNull(meta);
         securityContext.secure(() -> {
             // Elevate user permissions so that inherited pipelines that the user only has 'Use'
             // permission on can be read.
@@ -147,9 +151,13 @@ class ContextDataLoadTaskHandler {
 //                            pipelineDoc.getVersion(),
 //                            stream.getId());
 
+                        final long effectiveMs = Objects.requireNonNullElseGet(
+                                meta.getEffectiveMs(),
+                                () -> meta.getCreateMs());
+
                         refDataStore.doWithLoaderUnlessComplete(
                                 refStreamDefinition,
-                                meta.getEffectiveMs(),
+                                effectiveMs,
                                 refDataLoader -> {
                                     // set this loader in the holder so it is available to the pipeline filters
                                     refDataLoaderHolder.setRefDataLoader(refDataLoader);
@@ -158,8 +166,21 @@ class ContextDataLoadTaskHandler {
                                         // Parse the stream. The ReferenceDataFilter will process the context data
                                         pipeline.process(inputStream, encoding);
 
-                                    } catch (final RuntimeException e) {
+                                    } catch (TerminatedException e) {
+                                        // Task terminated
                                         log(Severity.FATAL_ERROR, e.getMessage(), e);
+                                        refDataLoader.completeProcessing(ProcessingState.TERMINATED);
+                                    } catch (Exception e) {
+                                        log(Severity.FATAL_ERROR, e.getMessage(), e);
+                                        refDataLoader.completeProcessing(ProcessingState.FAILED);
+                                    } finally {
+                                        try {
+                                            pipeline.endProcessing();
+                                            refDataLoader.completeProcessing(ProcessingState.COMPLETE);
+                                        } catch (final RuntimeException e) {
+                                            log(Severity.FATAL_ERROR, e.getMessage(), e);
+                                            refDataLoader.completeProcessing(ProcessingState.FAILED);
+                                        }
                                     }
                                 });
 

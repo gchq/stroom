@@ -470,6 +470,9 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
         // TODO @AT Need to run the query as a task so it can be monitored from the UI.
 
+        // TODO @AT need to get rid of the up front limit. Instead we need a method on the refstore to
+        //  allow us consume a stream of entries within a read txn. The limit can then be set after the
+        //  filtering has happened.
         final List<RefStoreEntry> entries = entries(10_000);
 
         final Predicate<RefStoreEntry> predicate = buildEntryPredicate(criteria);

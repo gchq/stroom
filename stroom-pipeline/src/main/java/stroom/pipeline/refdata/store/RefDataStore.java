@@ -38,7 +38,17 @@ public interface RefDataStore {
      * Returns true if all the data for the passed stream definition has been successfully loaded into the
      * store and is available for use. Will also touch the last accessed time on the record (if found).
      */
-    boolean isDataLoaded(final RefStreamDefinition refStreamDefinition);
+    default boolean isDataLoaded(final RefStreamDefinition refStreamDefinition) {
+        return getLoadState(refStreamDefinition)
+                .filter(processingState ->
+                        processingState.equals(ProcessingState.COMPLETE))
+                .isPresent();
+    }
+
+    /**
+     * Get the load state for this refStreamDefinition if there is one.
+     */
+    Optional<ProcessingState> getLoadState(final RefStreamDefinition refStreamDefinition);
 
     /**
      * Returns true if this {@link MapDefinition} exists in the store. It makes no guarantees about the state

@@ -108,6 +108,16 @@ public class RefStreamDefinition {
                 '}';
     }
 
+    public String asUiFriendlyString() {
+        // make partIndex one based
+        return "reference stream: " + streamId +
+                ":" + (partIndex + 1) +
+                " pipeline: " +
+                (pipelineDocRef.getName() != null
+                        ? pipelineDocRef.getName()
+                        : pipelineDocRef.getUuid());
+    }
+
     @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {

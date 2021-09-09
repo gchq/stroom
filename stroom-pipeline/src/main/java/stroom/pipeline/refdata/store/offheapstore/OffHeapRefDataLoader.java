@@ -199,43 +199,54 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     }
 
     @Override
-    public void completeProcessing() {
-        LOGGER.trace("Completing processing (put count {})", putsCounter);
-        checkCurrentState(LoaderState.INITIALISED);
-        beginTxnIfRequired();
+    public void completeProcessing(final ProcessingState processingState) {
+        LOGGER.trace("Completing processing with state {} (put count {})", processingState, putsCounter);
 
-        // Set the processing info record to COMPLETE and update the last update time
-        processingInfoDb.updateProcessingState(
-                writeTxn.getTxn(),
-                refStreamDefinition,
-                ProcessingState.COMPLETE,
-                true);
+        if (!VALID_COMPLETION_STATES.contains(processingState)) {
+            throw new RuntimeException(LogUtil.message("Invalid processing state {}, should be one of {}",
+                    processingState,
+                    VALID_COMPLETION_STATES));
+        }
 
-        final Duration loadDuration = Duration.between(startTime, Instant.now());
+        if (LoaderState.COMPLETED.equals(currentLoaderState)) {
+            LOGGER.debug("Loader already completed, doing nothing");
+        } else {
+            checkCurrentState(LoaderState.INITIALISED);
+            beginTxnIfRequired();
 
-        final String mapNames = mapDefinitionToUIDMap.keySet()
-                .stream()
-                .map(MapDefinition::getMapName)
-                .collect(Collectors.joining(", "));
+            // Set the processing info record to processingState and update the last update time
+            processingInfoDb.updateProcessingState(
+                    writeTxn.getTxn(),
+                    refStreamDefinition,
+                    processingState,
+                    true);
 
-        final String pipeline = refStreamDefinition.getPipelineDocRef().getName() != null
-                ? refStreamDefinition.getPipelineDocRef().getName()
-                : refStreamDefinition.getPipelineDocRef().getUuid();
+            final Duration loadDuration = Duration.between(startTime, Instant.now());
 
-        LOGGER.info("Processed {} entries (" +
-                        "new: {}, dup-key value updated: {}, dup-key value identical: {}, dup-key ignored: {}) " +
-                        "with map name(s): [{}], stream: {}, pipeline: {} in {}",
-                inputCount,
-                newEntriesCount,
-                replacedEntriesCount,
-                unchangedEntriesCount,
-                ignoredCount,
-                mapNames,
-                refStreamDefinition.getStreamId(),
-                pipeline,
-                loadDuration);
+            final String mapNames = mapDefinitionToUIDMap.keySet()
+                    .stream()
+                    .map(MapDefinition::getMapName)
+                    .collect(Collectors.joining(", "));
 
-        currentLoaderState = LoaderState.COMPLETED;
+            final String pipeline = refStreamDefinition.getPipelineDocRef().getName() != null
+                    ? refStreamDefinition.getPipelineDocRef().getName()
+                    : refStreamDefinition.getPipelineDocRef().getUuid();
+
+            LOGGER.info("Processed {} entries (" +
+                            "new: {}, dup-key value updated: {}, dup-key value identical: {}, dup-key ignored: {}) " +
+                            "with map name(s): [{}], stream: {}, pipeline: {} in {}",
+                    inputCount,
+                    newEntriesCount,
+                    replacedEntriesCount,
+                    unchangedEntriesCount,
+                    ignoredCount,
+                    mapNames,
+                    refStreamDefinition.getStreamId(),
+                    pipeline,
+                    loadDuration);
+
+            currentLoaderState = LoaderState.COMPLETED;
+        }
     }
 
     @Override
@@ -431,15 +442,9 @@ public class OffHeapRefDataLoader implements RefDataLoader {
             LOGGER.warn("Reference data loader for {} was initialised but then closed before being completed",
                     refStreamDefinition);
         }
-        if (writeTxn != null) {
-            LOGGER.trace("Committing and closing transaction (put count {})", putsCounter);
-            writeTxn.commit();
-            try {
-                writeTxn.close();
-            } catch (Exception e) {
-                throw new RuntimeException("Error closing write txn: " + e.getMessage(), e);
-            }
-        }
+
+        commit();
+
         // release our pooled buffers back to the pool
         pooledByteBuffers.forEach(PooledByteBuffer::release);
 
@@ -468,7 +473,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     private void commit() {
         if (writeTxn != null) {
             try {
-                LOGGER.trace("Committing (put count {})", putsCounter);
+                LOGGER.trace("Committing and closing txn (put count {})", putsCounter);
                 writeTxn.commit();
                 writeTxn.close();
                 writeTxn = null;

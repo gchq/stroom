@@ -297,15 +297,9 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     }
 
     @Override
-    public boolean isDataLoaded(final RefStreamDefinition refStreamDefinition) {
-
-        boolean result = getAndTouchProcessingInfo(refStreamDefinition)
-                .map(RefDataProcessingInfo::getProcessingState)
-                .filter(Predicate.isEqual(ProcessingState.COMPLETE))
-                .isPresent();
-
-        LOGGER.trace("isDataLoaded({}) - {}", refStreamDefinition, result);
-        return result;
+    public Optional<ProcessingState> getLoadState(final RefStreamDefinition refStreamDefinition) {
+        return getAndTouchProcessingInfo(refStreamDefinition)
+                .map(RefDataProcessingInfo::getProcessingState);
     }
 
     /**
@@ -707,7 +701,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
     private String buildPurgeInfoString(final Instant startTime,
                                         final PurgeCounts purgeCounts) {
-        return LogUtil.message("{} refStreamDefs purged, {} refStreamDefs purge failures" +
+        return LogUtil.message("{} refStreamDefs purged, {} refStreamDefs purge failures " +
                         "{} maps deleted, {} values deleted, {} values de-referenced. " +
                         "Time taken {}",
                 purgeCounts.refStreamDefsDeletedCount,
@@ -1055,6 +1049,11 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         return list(limit, refStoreEntry -> true);
     }
 
+//    public <T> T streamEntries(final int limit,
+//                               final Predicate<RefStoreEntry> filter,
+//                               final Function<Stream<RefStoreEntry>, T> streamFunction) {
+//    }
+
     @Override
     public List<RefStoreEntry> list(final int limit,
                                     final Predicate<RefStoreEntry> filter) {
@@ -1081,6 +1080,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                                             final KeyValueStoreKey keyValueStoreKey = entry._1();
                                             final ValueStoreKey valueStoreKey = entry._2();
                                             final String keyStr = keyValueStoreKey.getKey();
+
                                             return buildRefStoreEntry(readTxn,
                                                     keyValueStoreKey.getMapUid(),
                                                     keyStr,

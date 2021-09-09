@@ -74,13 +74,11 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
     }
 
     @Override
-    public boolean isDataLoaded(final RefStreamDefinition refStreamDefinition) {
-        final boolean isDataLoaded = Optional.ofNullable(processingInfoMap.get(refStreamDefinition))
-                .filter(processingInfo ->
-                        processingInfo.getProcessingState().equals(ProcessingState.COMPLETE))
-                .isPresent();
-        LOGGER.trace("isDataLoaded({}) returning {}", refStreamDefinition, isDataLoaded);
-        return isDataLoaded;
+    public Optional<ProcessingState> getLoadState(final RefStreamDefinition refStreamDefinition) {
+        Optional<ProcessingState> optProcessingState = Optional.ofNullable(processingInfoMap.get(refStreamDefinition))
+                .map(RefDataProcessingInfo::getProcessingState);
+        LOGGER.trace("isDataLoaded({}) returning {}", refStreamDefinition, optProcessingState);
+        return optProcessingState;
     }
 
     @Override

@@ -94,6 +94,7 @@ public class PipelineFactory {
         final ElementRegistry pipelineElementRegistry = pipelineElementRegistryFactory.get();
 
         final Terminator terminator = () -> {
+            // TODO @AT should this be clearing the interrupt flag
             if (Thread.currentThread().isInterrupted()) {
                 throw new TerminatedException();
             }

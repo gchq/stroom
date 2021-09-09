@@ -245,7 +245,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                     "RefDataLoader is missing",
                     null);
         }
-        refDataLoaderHolder.getRefDataLoader().completeProcessing();
+//        refDataLoaderHolder.getRefDataLoader().completeProcessing();
     }
 
     @Override
@@ -314,7 +314,12 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                              final Attributes atts)
             throws SAXException {
 
-        checkForInterrupt();
+//        try {
+//            Thread.sleep(2_000);
+//        } catch (InterruptedException e) {
+//            LOGGER.info("==================INTERRUPTED=======================");
+//            Thread.currentThread().interrupt();
+//        }
 
         depthLevel++;
         insideElement = true;
@@ -371,6 +376,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         }
 
         super.startElement(uri, localName, newQName, atts);
+        throw new RuntimeException("Making ref load fail!!!!");
     }
 
 
@@ -416,8 +422,6 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
         LOGGER.trace("endElement {} {} {} level:{}", uri, localName, qName, depthLevel);
-
-        checkForInterrupt();
 
         insideElement = false;
         if (VALUE_ELEMENT.equalsIgnoreCase(localName)) {
@@ -781,9 +785,12 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     }
 
     private void checkForInterrupt() {
+        // Need to be checking for thread interruption during the parsing in case the
+        // task has been terminated or it has been interrupted for any other reason.
         if (Thread.currentThread().isInterrupted()) {
             LOGGER.debug("Thread interrupted");
             Thread.currentThread().interrupt();
+            // Throw an exception to indicate the pipeline process was terminated
             throw new TerminatedException();
         }
     }

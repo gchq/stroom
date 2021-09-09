@@ -28,9 +28,11 @@ import stroom.pipeline.StreamLocationFactory;
 import stroom.pipeline.errorhandler.ErrorReceiverIdDecorator;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.StoredErrorReceiver;
+import stroom.pipeline.errorhandler.TerminatedException;
 import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
+import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataStoreFactory;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
@@ -48,7 +50,6 @@ import stroom.util.shared.Severity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.io.InputStream;
 import javax.inject.Inject;
 
@@ -166,8 +167,8 @@ class ReferenceDataLoadTaskHandler {
                         LOGGER.debug("Finished loading reference data: {}", refStreamDefinition);
                         taskContext.info(() -> "Finished " + refStreamDefinition);
                     }
-                } catch (final IOException | RuntimeException e) {
-                    log(Severity.FATAL_ERROR, e.getMessage(), e);
+                } catch (final Exception e) {
+                    log(Severity.ERROR, e.getMessage(), e);
                 }
             });
         });
@@ -186,27 +187,22 @@ class ReferenceDataLoadTaskHandler {
             // we are now blocking any other thread loading the same refStreamDefinition
             // and know that this stream has not already been loaded.
 
-            // Start processing.
             try {
+                // Start processing.
                 pipeline.startProcessing();
-            } catch (final RuntimeException e) {
-                // An exception during start processing is definitely a failure.
-                log(Severity.FATAL_ERROR, e.getMessage(), e);
-            }
 
-            // Get the appropriate encoding for the stream type.
-            final String encoding = feedProperties.getEncoding(
-                    feedName, meta.getTypeName(), null);
-            LOGGER.debug("Using encoding '{}' for feed {}", encoding, feedName);
+                // Get the appropriate encoding for the stream type.
+                final String encoding = feedProperties.getEncoding(
+                        feedName, meta.getTypeName(), null);
+                LOGGER.debug("Using encoding '{}' for feed {}", encoding, feedName);
 
-            final StreamLocationFactory streamLocationFactory = new StreamLocationFactory();
-            locationFactory.setLocationFactory(streamLocationFactory);
-
-            try {
+                final StreamLocationFactory streamLocationFactory = new StreamLocationFactory();
+                locationFactory.setLocationFactory(streamLocationFactory);
                 // Loop over the stream boundaries and process each sequentially.
                 // Typically ref data will only have a single partIndex so if there are
                 // multiple then overrideExisting may be needed.
                 final long count = source.count();
+
                 for (long index = 0; index < count && !Thread.currentThread().isInterrupted(); index++) {
                     metaHolder.setPartIndex(index);
                     streamLocationFactory.setPartIndex(index);
@@ -221,29 +217,33 @@ class ReferenceDataLoadTaskHandler {
                         // set this loader in the holder so it is available to the pipeline filters
                         refDataLoaderHolder.setRefDataLoader(refDataLoader);
                         // Process the boundary.
-                        try {
-                            //process the pipeline, ref data will be loaded via the ReferenceDataFilter
-                            pipeline.process(inputStream, encoding);
-                        } catch (final RuntimeException e) {
-                            log(Severity.FATAL_ERROR, e.getMessage(), e);
-                        }
-                    } catch (final IOException | RuntimeException e) {
-                        log(Severity.FATAL_ERROR, e.getMessage(), e);
+                        //process the pipeline, ref data will be loaded via the ReferenceDataFilter
+                        pipeline.process(inputStream, encoding);
                     }
                 }
-            } catch (Exception e) {
+            } catch (TerminatedException e) {
+                // Task terminated
                 log(Severity.FATAL_ERROR, e.getMessage(), e);
+                refDataLoader.completeProcessing(ProcessingState.TERMINATED);
+            } catch (Exception e) {
+                // Something unexpected happened
+                log(Severity.ERROR, e.getMessage(), e);
+                refDataLoader.completeProcessing(ProcessingState.FAILED);
             } finally {
                 try {
                     pipeline.endProcessing();
+                    // TODO @AT The processing state doesn't seem to be written to the db
+                    //  on failure.
+                    refDataLoader.completeProcessing(ProcessingState.COMPLETE);
                 } catch (final RuntimeException e) {
                     log(Severity.FATAL_ERROR, e.getMessage(), e);
+                    refDataLoader.completeProcessing(ProcessingState.FAILED);
                 }
             }
         });
+
         // clear the reference to the loader now we have finished with it
         refDataLoaderHolder.setRefDataLoader(null);
-
     }
 
     private void log(final Severity severity, final String message, final Throwable e) {

@@ -29,11 +29,11 @@ public enum ProcessingState {
     // The load of this ref stream completed successfully
     COMPLETE((byte) 2, "Complete"),
     // The load of the this ref stream failed due to an error, e.g. parsing the reference
-    // data XML. It is incomplete and/or wrong so should not be used.
+    // data XML. It is incomplete and/or wrong so should not be used. No point in retrying.
     FAILED((byte) 3, "Failed"),
-    // The load was interrupted, i.e. by task cancellation or system shutdown.
-    // It is incomplete and/or wrong so should not be used.
-    INTERRUPTED((byte) 4, "Interrupted"),
+    // The load was terminated, i.e. by task cancellation or system shutdown.
+    // It is incomplete and/or wrong so should not be used but we can retry later.
+    TERMINATED((byte) 4, "Terminated"),
     // The purge of this ref stream failed for some unexpected error.
     PURGE_FAILED((byte) 5, "Purge Failed"),
     ;
