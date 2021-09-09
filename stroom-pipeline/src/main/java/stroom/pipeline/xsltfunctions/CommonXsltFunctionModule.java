@@ -2,6 +2,7 @@ package stroom.pipeline.xsltfunctions;
 
 import stroom.util.pipeline.scope.PipelineScoped;
 
+import net.sf.saxon.type.BuiltInAtomicType;
 import net.sf.saxon.value.SequenceType;
 
 import javax.inject.Inject;
@@ -476,8 +477,8 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
                     new SequenceType[]{
                             SequenceType.SINGLE_DOUBLE,
                             SequenceType.SINGLE_DOUBLE,
-                            SequenceType.ANY_SEQUENCE,
-                            SequenceType.ANY_SEQUENCE},
+                            BuiltInAtomicType.DOUBLE.zeroOrMore(),
+                            BuiltInAtomicType.DOUBLE.zeroOrMore()},
                     SequenceType.SINGLE_BOOLEAN,
                     functionCallProvider);
         }
