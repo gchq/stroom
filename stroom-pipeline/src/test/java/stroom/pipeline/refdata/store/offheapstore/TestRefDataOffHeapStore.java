@@ -100,8 +100,8 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
     private static final String PADDING = IntStream.rangeClosed(1,
             300).boxed().map(i -> "-").collect(Collectors.joining());
 
-    private static final int REF_STREAM_DEF_COUNT = 20;
-    private static final int ENTRIES_PER_MAP_DEF = 500;
+    private static final int REF_STREAM_DEF_COUNT = 2;
+    private static final int ENTRIES_PER_MAP_DEF = 5;
     private static final int MAPS_PER_REF_STREAM_DEF = 2;
 
     @Inject
@@ -178,7 +178,9 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
         bulkLoadAndAssert(true, 100);
 
         final List<RefStoreEntry> entries = refDataStore.consumeEntryStream(stream ->
-                stream.collect(Collectors.toList()));
+                stream
+                        .filter(refStoreEntry -> refStoreEntry.getKey().equals("399989"))
+                        .collect(Collectors.toList()));
 
         // *2 because we have kv and rangev pairs
         Assertions.assertThat(entries)

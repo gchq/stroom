@@ -1062,12 +1062,23 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     final CursorIterable<ByteBuffer> rangeValueDbIterable = rangeStoreDb.getLmdbDbi().iterate(
                             readTxn, KeyRange.all())) {
 
+                // Transient caches of some of the low caridinality but high frequency lookups
+                // Only provides limited performance gains.
+                final Map<UID, MapDefinition> uidToMapDefMap = new HashMap<>();
+                final Map<MapDefinition, RefDataProcessingInfo> mapDefToProcessingInfoMap = new HashMap<>();
+
                 final Stream<RefStoreEntry> keyValueStream = buildKeyValueStoreEntryStream(
                         readTxn,
-                        keyValueDbIterable);
+                        keyValueDbIterable,
+                        uidToMapDefMap,
+                        mapDefToProcessingInfoMap);
 
                 final Stream<RefStoreEntry> rangeValueStream =
-                        buildRangeValueStoreEntryStream(readTxn, rangeValueDbIterable);
+                        buildRangeValueStoreEntryStream(
+                                readTxn,
+                                rangeValueDbIterable,
+                                uidToMapDefMap,
+                                mapDefToProcessingInfoMap);
 
                 final LongAdder entryCounter = new LongAdder();
                 final Stream<RefStoreEntry> combinedStream = Stream.concat(keyValueStream, rangeValueStream)
@@ -1085,7 +1096,9 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     @NotNull
     private Stream<RefStoreEntry> buildRangeValueStoreEntryStream(
             final Txn<ByteBuffer> readTxn,
-            final CursorIterable<ByteBuffer> rangeValueDbIterable) {
+            final CursorIterable<ByteBuffer> rangeValueDbIterable,
+            final Map<UID, MapDefinition> uidToMapDefMap,
+            final Map<MapDefinition, RefDataProcessingInfo> mapDefToProcessingInfoMap) {
 
         return StreamSupport.stream(rangeValueDbIterable.spliterator(), false)
                 .map(rangeStoreDb::deserializeKeyVal)
@@ -1094,16 +1107,21 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     final ValueStoreKey valueStoreKey = entry.getValue();
                     final String keyStr = rangeStoreKey.getKeyRange().getFrom() + "-"
                             + rangeStoreKey.getKeyRange().getTo();
-                    return buildRefStoreEntry(readTxn,
+                    return buildRefStoreEntry(
+                            readTxn,
                             rangeStoreKey.getMapUid(),
                             keyStr,
-                            valueStoreKey);
+                            valueStoreKey,
+                            uidToMapDefMap,
+                            mapDefToProcessingInfoMap);
                 });
     }
 
     @NotNull
     private Stream<RefStoreEntry> buildKeyValueStoreEntryStream(final Txn<ByteBuffer> readTxn,
-                                                                final CursorIterable<ByteBuffer> keyValueDbIterable) {
+                                                                final CursorIterable<ByteBuffer> keyValueDbIterable,
+                                                                final Map<UID, MapDefinition> uidToMapDefMap,
+                                                                final Map<MapDefinition, RefDataProcessingInfo> mapDefToProcessingInfoMap) {
 
         return StreamSupport.stream(keyValueDbIterable.spliterator(), false)
                 .map(keyValueStoreDb::deserializeKeyVal)
@@ -1115,7 +1133,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     return buildRefStoreEntry(readTxn,
                             keyValueStoreKey.getMapUid(),
                             keyStr,
-                            valueStoreKey);
+                            valueStoreKey, uidToMapDefMap, mapDefToProcessingInfoMap);
                 });
     }
 
@@ -1211,14 +1229,27 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     private RefStoreEntry buildRefStoreEntry(final Txn<ByteBuffer> readTxn,
                                              final UID mapUid,
                                              final String key,
-                                             final ValueStoreKey valueStoreKey) {
+                                             final ValueStoreKey valueStoreKey,
+                                             final Map<UID, MapDefinition> uidToMapDefMap,
+                                             final Map<MapDefinition, RefDataProcessingInfo> mapDefToProcessingInfoMap) {
 
-        final MapDefinition mapDefinition = mapDefinitionUIDStore.get(readTxn, mapUid)
-                .orElseThrow(() -> new RuntimeException("No MapDefinition for UID " + mapUid.toString()));
+        LOGGER.trace("mapUid: {}", mapUid);
+        // Cache the map def lookups as we only have a handful and it saves the deser cost
+        final MapDefinition mapDefinition = uidToMapDefMap.computeIfAbsent(
+                mapUid,
+                uid ->
+                        mapDefinitionUIDStore.get(readTxn, mapUid)
+                                .orElseThrow(() ->
+                                        new RuntimeException("No MapDefinition for UID " + mapUid.toString())));
 
-        final RefDataProcessingInfo refDataProcessingInfo = processingInfoDb.get(readTxn,
-                        mapDefinition.getRefStreamDefinition())
-                .orElse(null);
+        LOGGER.trace("mapDefinition: {}", mapDefinition.toString());
+        // Cache the ref stream lookups as we only have a handful and it saves the deser cost
+        final RefDataProcessingInfo refDataProcessingInfo = mapDefToProcessingInfoMap.computeIfAbsent(
+                mapDefinition,
+                mapDefinition2 ->
+                        processingInfoDb.get(readTxn,
+                                        mapDefinition.getRefStreamDefinition())
+                                .orElse(null));
 
         final String value = getReferenceDataValue(readTxn, key, valueStoreKey);
 
