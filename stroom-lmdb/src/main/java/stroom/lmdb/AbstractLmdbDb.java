@@ -303,7 +303,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
      */
     public <T> T streamEntries(final Txn<ByteBuffer> txn,
                                final KeyRange<K> keyRange,
-                               final Function<Stream<Tuple2<K, V>>, T> streamFunction) {
+                               final Function<Stream<Entry<K, V>>, T> streamFunction) {
 
         try (final PooledByteBuffer startKeyPooledBuffer = getPooledKeyBuffer();
                 final PooledByteBuffer stopKeyPooledBuffer = getPooledKeyBuffer()) {
@@ -313,10 +313,10 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
                     keyRange);
 
             return streamEntriesAsBytes(txn, serialisedKeyRange, entryStream -> {
-                final Stream<Tuple2<K, V>> deSerialisedStream = entryStream.map(keyVal -> {
+                final Stream<Entry<K, V>> deSerialisedStream = entryStream.map(keyVal -> {
                     K key = deserializeKey(keyVal.key());
                     V value = deserializeValue(keyVal.val());
-                    return Tuple.of(key, value);
+                    return Map.entry(key, value);
                 });
 
                 return streamFunction.apply(deSerialisedStream);

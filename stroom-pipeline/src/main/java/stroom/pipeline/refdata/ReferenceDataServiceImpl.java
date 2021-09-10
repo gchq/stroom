@@ -56,6 +56,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -473,13 +474,26 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         // TODO @AT need to get rid of the up front limit. Instead we need a method on the refstore to
         //  allow us consume a stream of entries within a read txn. The limit can then be set after the
         //  filtering has happened.
-        final List<RefStoreEntry> entries = entries(10_000);
-
         final Predicate<RefStoreEntry> predicate = buildEntryPredicate(criteria);
 
-        try {
-            entries.stream()
+        final long skipCount = Optional.ofNullable(criteria)
+                .flatMap(criteria2 -> Optional.ofNullable(criteria.getPageRequest()))
+                .flatMap(pageRequest -> Optional.ofNullable(pageRequest.getOffset()))
+                .orElse(0);
+
+        final int limit = Optional.ofNullable(criteria)
+                .flatMap(criteria2 -> Optional.ofNullable(criteria.getPageRequest()))
+                .flatMap(pageRequest -> Optional.ofNullable(pageRequest.getLength()))
+                .orElse(Integer.MAX_VALUE);
+
+        LOGGER.debug("Searching ref entries with criteria {}, skipCount {}, limit {}",
+                criteria, skipCount, limit);
+
+        refDataStore.consumeEntryStream(stream -> {
+            stream
                     .filter(predicate)
+                    .skip(skipCount)
+                    .limit(limit)
                     .forEach(refStoreEntry -> {
                         final Val[] valArr = new Val[fields.length];
 
@@ -494,10 +508,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                         }
                         consumer.accept(valArr);
                     });
-        } catch (Exception e) {
-            LOGGER.error("Error querying entry list", e);
-            throw e;
-        }
+            return null;
+        });
     }
 
 

@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -380,15 +381,15 @@ class TestValueStoreDb extends AbstractLmdbDbTest {
 
         // Ensure entries come back in the right order
         long hash = 123456789;
-        final List<Tuple2<ValueStoreKey, RefDataValue>> data = List.of(
-                Tuple.of(new ValueStoreKey(hash, (short) 0), new StringValue("val1")),
-                Tuple.of(new ValueStoreKey(hash, (short) 1), new StringValue("val2")),
-                Tuple.of(new ValueStoreKey(hash, (short) 2), new StringValue("val3")),
-                Tuple.of(new ValueStoreKey(hash, (short) 3), new StringValue("val4")));
+        final List<Entry<ValueStoreKey, RefDataValue>> data = List.of(
+                Map.entry(new ValueStoreKey(hash, (short) 0), new StringValue("val1")),
+                Map.entry(new ValueStoreKey(hash, (short) 1), new StringValue("val2")),
+                Map.entry(new ValueStoreKey(hash, (short) 2), new StringValue("val3")),
+                Map.entry(new ValueStoreKey(hash, (short) 3), new StringValue("val4")));
 
         lmdbEnv.doWithWriteTxn(writeTxn -> {
-            data.forEach(tuple -> {
-                valueStoreDb.put(writeTxn, tuple._1(), tuple._2(), false);
+            data.forEach(entry -> {
+                valueStoreDb.put(writeTxn, entry.getKey(), entry.getValue(), false);
             });
         });
 
@@ -397,12 +398,12 @@ class TestValueStoreDb extends AbstractLmdbDbTest {
         final List<ValueStoreKey> output = lmdbEnv.getWithReadTxn(readTxn ->
                 valueStoreDb.streamEntries(readTxn, keyRangeAll, stream ->
                         stream
-                                .map(Tuple2::_1)
+                                .map(Entry::getKey)
                                 .collect(Collectors.toList())));
 
         Assertions.assertThat(output)
                 .containsExactlyElementsOf(data.stream()
-                        .map(Tuple2::_1)
+                        .map(Entry::getKey)
                         .collect(Collectors.toList()));
     }
 

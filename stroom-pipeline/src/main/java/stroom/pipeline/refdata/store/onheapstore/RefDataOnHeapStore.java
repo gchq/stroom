@@ -29,7 +29,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 import javax.annotation.concurrent.NotThreadSafe;
 
 /**
@@ -195,6 +197,11 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
     @Override
     public List<RefStoreEntry> list(final int limit,
                                     final Predicate<RefStoreEntry> filter) {
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
+
+    @Override
+    public <T> T consumeEntryStream(final Function<Stream<RefStoreEntry>, T> streamFunction) {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 

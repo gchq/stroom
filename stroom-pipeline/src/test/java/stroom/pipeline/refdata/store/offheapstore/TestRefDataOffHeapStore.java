@@ -29,6 +29,7 @@ import stroom.pipeline.refdata.store.RefDataStoreFactory;
 import stroom.pipeline.refdata.store.RefDataStoreModule;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefDataValueProxy;
+import stroom.pipeline.refdata.store.RefStoreEntry;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.StringValue;
 import stroom.pipeline.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
@@ -56,6 +57,7 @@ import com.google.inject.Injector;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.Tuple3;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -98,7 +100,8 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
     private static final String PADDING = IntStream.rangeClosed(1,
             300).boxed().map(i -> "-").collect(Collectors.joining());
 
-    private static final int ENTRIES_PER_MAP_DEF = 5;
+    private static final int REF_STREAM_DEF_COUNT = 20;
+    private static final int ENTRIES_PER_MAP_DEF = 500;
     private static final int MAPS_PER_REF_STREAM_DEF = 2;
 
     @Inject
@@ -167,6 +170,19 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
         // ensure loading and reading works with the NOREADAHEAD flag set
         bulkLoadAndAssert(true, 100);
+    }
+
+    @Test
+    void testConsumeEntryStream() {
+
+        bulkLoadAndAssert(true, 100);
+
+        final List<RefStoreEntry> entries = refDataStore.consumeEntryStream(stream ->
+                stream.collect(Collectors.toList()));
+
+        // *2 because we have kv and rangev pairs
+        Assertions.assertThat(entries)
+                .hasSize(REF_STREAM_DEF_COUNT * MAPS_PER_REF_STREAM_DEF * ENTRIES_PER_MAP_DEF * 2);
     }
 
     @Test
@@ -1086,10 +1102,10 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
     private void bulkLoadAndAssert(final boolean overwriteExisting,
                                    final int commitInterval) {
-        // two different ref stream definitions
-        List<RefStreamDefinition> refStreamDefinitions = Arrays.asList(
-                buildUniqueRefStreamDefinition(),
-                buildUniqueRefStreamDefinition());
+        List<RefStreamDefinition> refStreamDefinitions = IntStream.rangeClosed(1, REF_STREAM_DEF_COUNT)
+                .boxed()
+                .map(i -> buildUniqueRefStreamDefinition())
+                .collect(Collectors.toList());
 
         bulkLoadAndAssert(refStreamDefinitions, overwriteExisting, commitInterval);
     }

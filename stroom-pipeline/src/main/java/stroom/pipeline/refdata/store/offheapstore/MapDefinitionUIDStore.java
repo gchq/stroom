@@ -201,7 +201,7 @@ public class MapDefinitionUIDStore {
 
     public <T> T streamEntries(final Txn<ByteBuffer> txn,
                                final KeyRange<MapDefinition> keyRange,
-                               final Function<Stream<Tuple2<MapDefinition, UID>>, T> streamFunction) {
+                               final Function<Stream<Entry<MapDefinition, UID>>, T> streamFunction) {
         return mapUidForwardDb.streamEntries(txn, keyRange, streamFunction);
     }
 }

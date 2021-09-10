@@ -23,7 +23,9 @@ import stroom.util.time.StroomDuration;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 public interface RefDataStore {
 
@@ -97,6 +99,8 @@ public interface RefDataStore {
 
     List<RefStoreEntry> list(final int limit,
                              final Predicate<RefStoreEntry> filter);
+
+    <T> T consumeEntryStream(final Function<Stream<RefStoreEntry>, T> streamFunction);
 
     List<RefStreamProcessingInfo> listProcessingInfo(final int limit);
 

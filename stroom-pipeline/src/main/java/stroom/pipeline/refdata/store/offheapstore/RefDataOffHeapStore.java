@@ -65,6 +65,7 @@ import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.Tuple3;
 import org.jetbrains.annotations.NotNull;
+import org.lmdbjava.CursorIterable;
 import org.lmdbjava.EnvFlags;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
@@ -93,9 +94,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -1043,86 +1046,97 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         return lmdbDb.getEntryCount();
     }
 
+    public <T> T consumeEntryStream(final Function<Stream<RefStoreEntry>, T> streamFunction) {
+
+        // TODO @AT This is all VERY crude. We should only be hitting the other DBs if we are returning
+        //   a field from them or filtering on one of their fields. Also we should not be scanning over the
+        //   whole of the kv/rv DBs, instead using start/stop keys built from the query expression
+
+        // TODO @AT This is not ideal holding a txn open for the whole query (if the query takes a long time)
+        //   as read txns prevent writers from writing to reclaimed space in the db, so the store can get quite big.
+        //   see https://lmdb.readthedocs.io/en/release/#transaction-management
+
+        return lmdbEnvironment.getWithReadTxn(readTxn -> {
+            try (final CursorIterable<ByteBuffer> keyValueDbIterable = keyValueStoreDb.getLmdbDbi().iterate(
+                    readTxn, KeyRange.all());
+                    final CursorIterable<ByteBuffer> rangeValueDbIterable = rangeStoreDb.getLmdbDbi().iterate(
+                            readTxn, KeyRange.all())) {
+
+                final Stream<RefStoreEntry> keyValueStream = buildKeyValueStoreEntryStream(
+                        readTxn,
+                        keyValueDbIterable);
+
+                final Stream<RefStoreEntry> rangeValueStream =
+                        buildRangeValueStoreEntryStream(readTxn, rangeValueDbIterable);
+
+                final LongAdder entryCounter = new LongAdder();
+                final Stream<RefStoreEntry> combinedStream = Stream.concat(keyValueStream, rangeValueStream)
+                        .peek(entry -> entryCounter.increment());
+
+                return LAMBDA_LOGGER.logDurationIfDebugEnabled(
+                        () ->
+                                streamFunction.apply(combinedStream),
+                        () ->
+                                LogUtil.message("Scanned over {} entries", entryCounter.sum()));
+            }
+        });
+    }
+
+    @NotNull
+    private Stream<RefStoreEntry> buildRangeValueStoreEntryStream(
+            final Txn<ByteBuffer> readTxn,
+            final CursorIterable<ByteBuffer> rangeValueDbIterable) {
+
+        return StreamSupport.stream(rangeValueDbIterable.spliterator(), false)
+                .map(rangeStoreDb::deserializeKeyVal)
+                .map(entry -> {
+                    final RangeStoreKey rangeStoreKey = entry.getKey();
+                    final ValueStoreKey valueStoreKey = entry.getValue();
+                    final String keyStr = rangeStoreKey.getKeyRange().getFrom() + "-"
+                            + rangeStoreKey.getKeyRange().getTo();
+                    return buildRefStoreEntry(readTxn,
+                            rangeStoreKey.getMapUid(),
+                            keyStr,
+                            valueStoreKey);
+                });
+    }
+
+    @NotNull
+    private Stream<RefStoreEntry> buildKeyValueStoreEntryStream(final Txn<ByteBuffer> readTxn,
+                                                                final CursorIterable<ByteBuffer> keyValueDbIterable) {
+
+        return StreamSupport.stream(keyValueDbIterable.spliterator(), false)
+                .map(keyValueStoreDb::deserializeKeyVal)
+                .map(entry -> {
+                    final KeyValueStoreKey keyValueStoreKey = entry.getKey();
+                    final ValueStoreKey valueStoreKey = entry.getValue();
+                    final String keyStr = keyValueStoreKey.getKey();
+
+                    return buildRefStoreEntry(readTxn,
+                            keyValueStoreKey.getMapUid(),
+                            keyStr,
+                            valueStoreKey);
+                });
+    }
 
     @Override
     public List<RefStoreEntry> list(final int limit) {
-        return list(limit, refStoreEntry -> true);
+        return consumeEntryStream(stream -> stream
+                .limit(limit)
+                .collect(Collectors.toList()));
     }
-
-//    public <T> T streamEntries(final int limit,
-//                               final Predicate<RefStoreEntry> filter,
-//                               final Function<Stream<RefStoreEntry>, T> streamFunction) {
-//    }
 
     @Override
     public List<RefStoreEntry> list(final int limit,
                                     final Predicate<RefStoreEntry> filter) {
 
-        final List<RefStoreEntry> entries = new ArrayList<>();
-        final LongAdder entryCounter = new LongAdder();
-
-        // TODO @AT This is all VERY crude. We should only be hitting the other DBs if we are returning
-        //   a field from them or filtering on one of their fields. Also we should not be scanning over the
-        //   whole of the kv/rv DBs, instead using start/stop keys built from the query expression.
-
-        // TODO @AT This is not ideal holding a txn open for the whole query (if the query takes a long time)
-        //   as read txns prevent writers from writing to reclaimed space in the db, so the store can get quite big.
-        //   see https://lmdb.readthedocs.io/en/release/#transaction-management
-        LAMBDA_LOGGER.logDurationIfDebugEnabled(
-                () -> {
-                    lmdbEnvironment.doWithReadTxn(readTxn -> {
-                        // Get all the KeyValue entries
-                        final List<RefStoreEntry> kvEntries = keyValueStoreDb.streamEntries(
-                                readTxn,
-                                KeyRange.all(),
-                                entryStream -> entryStream
-                                        .map(entry -> {
-                                            final KeyValueStoreKey keyValueStoreKey = entry._1();
-                                            final ValueStoreKey valueStoreKey = entry._2();
-                                            final String keyStr = keyValueStoreKey.getKey();
-
-                                            return buildRefStoreEntry(readTxn,
-                                                    keyValueStoreKey.getMapUid(),
-                                                    keyStr,
-                                                    valueStoreKey);
-                                        })
-                                        .peek(refStoreEntry -> entryCounter.increment())
-                                        .filter(filter)
-                                        .limit(limit)
-                                        .collect(Collectors.toList()));
-                        entries.addAll(kvEntries);
-
-                        // If we haven't blown our limit then get the range entries
-                        final int rangeEntriesLimit = Math.min(limit, limit - entries.size());
-
-                        // Get all the KeyRangeValue entries
-                        final List<RefStoreEntry> rangeEntries = rangeStoreDb.streamEntries(
-                                readTxn,
-                                KeyRange.all(),
-                                entryStream -> entryStream
-                                        .map(entry -> {
-                                            final RangeStoreKey rangeStoreKey = entry._1();
-                                            final ValueStoreKey valueStoreKey = entry._2();
-                                            final String keyStr = rangeStoreKey.getKeyRange().getFrom() + "-"
-                                                    + rangeStoreKey.getKeyRange().getTo();
-                                            return buildRefStoreEntry(readTxn,
-                                                    rangeStoreKey.getMapUid(),
-                                                    keyStr,
-                                                    valueStoreKey);
-                                        })
-                                        .peek(refStoreEntry -> entryCounter.increment())
-                                        .filter(filter)
-                                        .limit(rangeEntriesLimit)
-                                        .collect(Collectors.toList()));
-                        entries.addAll(rangeEntries);
-                    });
-                },
-                () ->
-                        LogUtil.message("Scanned over {} entries, returning {}", entryCounter.sum(), entries.size()));
-
-        return entries;
+        return consumeEntryStream(stream -> stream
+                .filter(filter != null
+                        ? filter
+                        : val -> true)
+                .limit(limit)
+                .collect(Collectors.toList()));
     }
-
 
     @Override
     public List<RefStreamProcessingInfo> listProcessingInfo(final int limit) {
@@ -1156,7 +1170,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         return entries;
     }
 
-    private List<RefStreamProcessingInfo> handleMapDefinitionStream(final Stream<Tuple2<MapDefinition, UID>> stream,
+    private List<RefStreamProcessingInfo> handleMapDefinitionStream(final Stream<Entry<MapDefinition, UID>> stream,
                                                                     final int limit,
                                                                     final Predicate<RefStreamProcessingInfo> filter,
                                                                     final LongAdder entryCounter) {
@@ -1164,7 +1178,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 .map(entry -> {
                     // It could be argued we ought to group the map names
                     // by the ref stream def/info
-                    final MapDefinition mapDefinition = entry._1();
+                    final MapDefinition mapDefinition = entry.getKey();
                     final RefStreamDefinition refStreamDefinition = mapDefinition.getRefStreamDefinition();
                     final RefDataProcessingInfo refDataProcessingInfo =
                             processingInfoDb.get(refStreamDefinition)
@@ -1203,7 +1217,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 .orElseThrow(() -> new RuntimeException("No MapDefinition for UID " + mapUid.toString()));
 
         final RefDataProcessingInfo refDataProcessingInfo = processingInfoDb.get(readTxn,
-                mapDefinition.getRefStreamDefinition())
+                        mapDefinition.getRefStreamDefinition())
                 .orElse(null);
 
         final String value = getReferenceDataValue(readTxn, key, valueStoreKey);

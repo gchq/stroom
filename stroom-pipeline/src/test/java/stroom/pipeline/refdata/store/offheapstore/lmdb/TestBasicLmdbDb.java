@@ -42,6 +42,8 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
@@ -321,8 +323,8 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
         List<String> entries = lmdbEnv.getWithReadTxn(txn ->
                 basicLmdbDb.streamEntries(txn, KeyRange.all(), stream ->
                         stream
-                                .map(kvTuple ->
-                                        kvTuple._1() + "-" + kvTuple._2())
+                                .map(entry ->
+                                        entry.getKey() + "-" + entry.getValue())
                                 .peek(LOGGER::info)
                                 .collect(Collectors.toList())));
 
@@ -336,12 +338,12 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
         List<String> entries = lmdbEnv.getWithReadTxn(txn ->
                 basicLmdbDb.streamEntries(txn, KeyRange.all(), stream ->
                         stream
-                                .filter(kvTuple -> {
-                                    int i = Integer.parseInt(kvTuple._1());
+                                .filter(entry -> {
+                                    int i = Integer.parseInt(entry.getKey());
                                     return i > 10 && i <= 15;
                                 })
-                                .map(kvTuple ->
-                                        kvTuple._1() + "-" + kvTuple._2())
+                                .map(entry ->
+                                        entry.getKey() + "-" + entry.getValue())
                                 .peek(LOGGER::info)
                                 .collect(Collectors.toList())));
 
@@ -357,8 +359,8 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
         List<String> entries = lmdbEnv.getWithReadTxn(txn ->
                 basicLmdbDb.streamEntries(txn, keyRange, stream ->
                         stream
-                                .map(kvTuple ->
-                                        kvTuple._1() + "-" + kvTuple._2())
+                                .map(entry ->
+                                        entry.getKey() + "-" + entry.getValue())
                                 .peek(LOGGER::info)
                                 .collect(Collectors.toList())));
 
@@ -455,15 +457,15 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
     void testVerifyNumericKeyOrder() {
 
         // Ensure entries come back in the right order
-        final List<Tuple2<Integer, String>> data = List.of(
-                Tuple.of(1, "val1"),
-                Tuple.of(2, "val2"),
-                Tuple.of(3, "val3"),
-                Tuple.of(4, "val4"));
+        final List<Entry<Integer, String>> data = List.of(
+                Map.entry(1, "val1"),
+                Map.entry(2, "val2"),
+                Map.entry(3, "val3"),
+                Map.entry(4, "val4"));
 
         lmdbEnv.doWithWriteTxn(writeTxn -> {
-            data.forEach(tuple -> {
-                basicLmdbDb3.put(writeTxn, tuple._1(), tuple._2(), false);
+            data.forEach(entry -> {
+                basicLmdbDb3.put(writeTxn, entry.getKey(), entry.getValue(), false);
             });
         });
 
@@ -472,13 +474,13 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
         final List<Integer> output = lmdbEnv.getWithReadTxn(readTxn ->
                 basicLmdbDb3.streamEntries(readTxn, keyRangeAll, stream ->
                         stream
-                                .map(Tuple2::_1)
+                                .map(Entry::getKey)
                                 .collect(Collectors.toList())));
 
         // Verify key order
         Assertions.assertThat(output)
                 .containsExactlyElementsOf(data.stream()
-                        .map(Tuple2::_1)
+                        .map(Entry::getKey)
                         .collect(Collectors.toList()));
     }
 
