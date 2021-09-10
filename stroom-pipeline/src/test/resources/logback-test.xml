@@ -15,7 +15,7 @@
     <logger name="stroom.pipeline.reader" level="debug" />
 
     <logger name="stroom.pipeline.refdata" level="debug" />
-    
+
 <!--    <logger name="stroom.pipeline.refdata.store.offheapstore.RefDataOffHeapStore" level="debug" />-->
 
 <!--    <logger name="stroom.pipeline.refdata.store.offheapstore.databases.KeyValueStoreDb" level="trace" />-->

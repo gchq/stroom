@@ -381,10 +381,15 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                     .map(referenceLoader -> {
                         final DocRef feedDocRef = getFeedDocRef(referenceLoader);
 
+                        // TODO validate the stream type name
+                        final String streamType = Objects.requireNonNullElse(
+                                referenceLoader.getStreamType(),
+                                StreamTypeNames.REFERENCE);
+
                         return new PipelineReference(
                                 referenceLoader.getLoaderPipeline(),
                                 feedDocRef,
-                                StreamTypeNames.REFERENCE);
+                                streamType);
                     })
                     .collect(Collectors.toList());
         }
