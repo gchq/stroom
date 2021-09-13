@@ -267,8 +267,8 @@ class DataServiceImpl implements DataService {
 
             return securityContext.secureResult(permissionName, () ->
                     dataFetcher.getData(request));
-        } catch (Exception e) {
-            LOGGER.error(LogUtil.message("Error fetching data {}", request), e);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(LogUtil.message("Error fetching data {}", request), e);
             throw e;
         }
     }

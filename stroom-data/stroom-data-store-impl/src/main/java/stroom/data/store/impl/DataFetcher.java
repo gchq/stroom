@@ -83,6 +83,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.channels.ClosedByInterruptException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
@@ -297,6 +298,9 @@ public class DataFetcher {
                     }
 
                 } catch (final IOException | RuntimeException e) {
+                    if (e.getCause() instanceof ClosedByInterruptException) {
+                        throw new ViewDataException(sourceLocation, e.getMessage());
+                    }
 
                     if (meta != null) {
                         if (Status.LOCKED.equals(meta.getStatus())) {
@@ -308,7 +312,6 @@ public class DataFetcher {
                     }
 
                     LOGGER.error("Error fetching data", e);
-
                     throw new ViewDataException(sourceLocation, e.getMessage());
                 }
 

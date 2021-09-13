@@ -269,7 +269,7 @@ final class FsSource implements InternalSource, SegmentInputStreamProviderFactor
                 inputStream = fileSystemStreamPathHelper.getInputStream(streamType, getFile());
             } catch (final ClosedByInterruptException ioEx) {
                 // Sometimes we deliberately interrupt reading so don't log the error here.
-                throw new RuntimeException(ioEx);
+                throw new UncheckedIOException(ioEx);
 
             } catch (final IOException ioEx) {
                 // Don't log this as an error if we expect this stream to have been deleted or be locked.
@@ -277,7 +277,7 @@ final class FsSource implements InternalSource, SegmentInputStreamProviderFactor
                     LOGGER.error("getInputStream", ioEx);
                 }
 
-                throw new RuntimeException(ioEx);
+                throw new UncheckedIOException(ioEx);
             }
         }
         return inputStream;
