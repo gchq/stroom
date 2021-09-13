@@ -25,12 +25,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.concurrent.NotThreadSafe;
 
@@ -132,6 +134,16 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
         final Optional<RefDataValue> result2 = result;
         LAMBDA_LOGGER.trace(() -> LogUtil.message("getValue({}, {}) returning {}", mapDefinition, key, result2));
         return result;
+    }
+
+    @Override
+    public Set<String> getMapNames(final RefStreamDefinition refStreamDefinition) {
+        Objects.requireNonNull(refStreamDefinition);
+        return mapDefinitions.stream()
+                .filter(mapDefinition ->
+                        mapDefinition.getRefStreamDefinition().equals(refStreamDefinition))
+                .map(MapDefinition::getMapName)
+                .collect(Collectors.toSet());
     }
 
     private Optional<RefDataValue> getValueByRange(final NavigableMap<Range<Long>, RefDataValue> rangeSubMap,

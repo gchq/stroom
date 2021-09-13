@@ -22,6 +22,7 @@ import stroom.util.time.StroomDuration;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -46,6 +47,13 @@ public interface RefDataStore {
                         processingState.equals(ProcessingState.COMPLETE))
                 .isPresent();
     }
+
+
+    /**
+     * Returns the set of map names for the passed refStreamDefinition. Intended to be run
+     * after a load.
+     */
+    Set<String> getMapNames(final RefStreamDefinition refStreamDefinition);
 
     /**
      * Get the load state for this refStreamDefinition if there is one.

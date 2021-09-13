@@ -24,6 +24,7 @@ import stroom.meta.shared.Meta;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.errorhandler.ErrorReceiverIdDecorator;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.LoggedException;
 import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.errorhandler.TerminatedException;
 import stroom.pipeline.factory.Pipeline;
@@ -175,7 +176,9 @@ class ContextDataLoadTaskHandler {
                                         refDataLoader.completeProcessing(ProcessingState.FAILED);
                                     } finally {
                                         try {
+                                            // TODO do we need to end processing if we got an ex above
                                             pipeline.endProcessing();
+                                            // TODO this is overriding the status from the catch blocks above
                                             refDataLoader.completeProcessing(ProcessingState.COMPLETE);
                                         } catch (final RuntimeException e) {
                                             log(Severity.FATAL_ERROR, e.getMessage(), e);
@@ -207,7 +210,15 @@ class ContextDataLoadTaskHandler {
     }
 
     private void log(final Severity severity, final String message, final Throwable e) {
-        LOGGER.debug(message, e);
-        errorReceiver.log(severity, null, getClass().getSimpleName(), message, e);
+        LOGGER.trace(message, e);
+
+        // LoggedException has already been logged
+        if (errorReceiverProxy != null && !(e instanceof LoggedException)) {
+            String msg = message;
+            if (msg == null) {
+                msg = e.toString();
+            }
+            errorReceiver.log(severity, null, getClass().getSimpleName(), msg, e);
+        }
     }
 }

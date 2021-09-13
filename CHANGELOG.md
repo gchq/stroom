@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2422** : Change ref lookups to only do a lookup against a ref feeds that are known to contian the map being looked up aginst.
+
 * Issue **#2411** : Remove 10,000 limit on dashboard search of ref store.
 
 * Issue **#2389** : Add an API method for purging a single reference data stream.

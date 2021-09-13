@@ -317,6 +317,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         // For slowing down a load
 //        try {
 //            Thread.sleep(2_000);
+//            LOGGER.info("Finished sleep");
 //        } catch (InterruptedException e) {
 //            LOGGER.info("==================INTERRUPTED=======================");
 //            Thread.currentThread().interrupt();
@@ -377,7 +378,10 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         }
 
         super.startElement(uri, localName, newQName, atts);
-//        throw new RuntimeException("Making ref load fail!!!!");
+
+//        if (refStreamDefinition.getStreamId() == 999) {
+//            throw new SAXException("Making ref load fail with sax exception !!!!");
+//        }
     }
 
 

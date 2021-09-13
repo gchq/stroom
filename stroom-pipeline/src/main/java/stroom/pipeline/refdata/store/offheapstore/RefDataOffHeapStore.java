@@ -347,6 +347,13 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         }
     }
 
+    @Override
+    public Set<String> getMapNames(final RefStreamDefinition refStreamDefinition) {
+        Objects.requireNonNull(refStreamDefinition);
+        return lmdbEnvironment.getWithReadTxn(readTxn ->
+                mapDefinitionUIDStore.getMapNames(readTxn, refStreamDefinition));
+    }
+
     /**
      * Intended only for testing use.
      */
