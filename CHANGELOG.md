@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2406** : Volume status update is now performed synchronously. 
+
 * Issue **#2401** : Processing tasks no longer terminate by interrupting threads so error streams can now be written correctly.
 
 
