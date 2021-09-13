@@ -179,12 +179,14 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
         final List<RefStoreEntry> entries = refDataStore.consumeEntryStream(stream ->
                 stream
-                        .filter(refStoreEntry -> refStoreEntry.getKey().equals("399989"))
+                        .filter(refStoreEntry ->
+                                refStoreEntry.getKey().equals("key38")
+                                        || refStoreEntry.getKey().equals("key2"))
                         .collect(Collectors.toList()));
 
-        // *2 because we have kv and rangev pairs
+        // 2 because we have filtered on two unique entries
         Assertions.assertThat(entries)
-                .hasSize(REF_STREAM_DEF_COUNT * MAPS_PER_REF_STREAM_DEF * ENTRIES_PER_MAP_DEF * 2);
+                .hasSize(2);
     }
 
     @Test
