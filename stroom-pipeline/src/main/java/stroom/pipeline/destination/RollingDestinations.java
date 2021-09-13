@@ -17,7 +17,6 @@
 package stroom.pipeline.destination;
 
 import stroom.pipeline.errorhandler.ProcessException;
-import stroom.pipeline.errorhandler.TerminatedException;
 import stroom.task.api.TaskContext;
 
 import org.slf4j.Logger;
@@ -50,10 +49,6 @@ public class RollingDestinations {
 
     public RollingDestination borrow(final Object key,
                                      final RollingDestinationFactory destinationFactory) throws IOException {
-        if (Thread.currentThread().isInterrupted()) {
-            throw new TerminatedException();
-        }
-
         // Get a destination for this key. Try and get an existing one or create
         // a new one if required.
         RollingDestination destination = null;

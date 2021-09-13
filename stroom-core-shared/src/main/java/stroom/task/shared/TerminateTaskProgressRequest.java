@@ -25,29 +25,20 @@ public class TerminateTaskProgressRequest {
 
     @JsonProperty
     private final FindTaskCriteria criteria;
-    @JsonProperty
-    private final boolean kill;
 
     @JsonCreator
-    public TerminateTaskProgressRequest(@JsonProperty("criteria") final FindTaskCriteria criteria,
-                                        @JsonProperty("kill") final boolean kill) {
+    public TerminateTaskProgressRequest(@JsonProperty("criteria") final FindTaskCriteria criteria) {
         this.criteria = criteria;
-        this.kill = kill;
     }
 
     public FindTaskCriteria getCriteria() {
         return criteria;
     }
 
-    public boolean isKill() {
-        return kill;
-    }
-
     @Override
     public String toString() {
         return "TerminateTaskProgressRequest{" +
                 "criteria=" + criteria +
-                ", kill=" + kill +
                 '}';
     }
 }

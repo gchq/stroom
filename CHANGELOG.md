@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2401** : Processing tasks no longer terminate by interrupting threads so error streams can now be written correctly.
+
 
 ## [v7.0-beta.144] - 2021-09-08
 

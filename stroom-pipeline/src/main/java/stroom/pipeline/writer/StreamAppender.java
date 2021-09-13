@@ -192,22 +192,9 @@ public class StreamAppender extends AbstractAppender {
     private void close() {
         // Only do something if an output stream was used.
         if (streamTarget != null) {
-            // Clear interrupted flag if set.
-            final boolean interrupted = Thread.interrupted();
-            if (interrupted) {
-                try {
-                    // Delete the target.
-                    streamStore.deleteTarget(streamTarget);
-
-                    // Log the error.
-                    fatal("Terminated");
-
-                } finally {
-                    // Keep interrupting.
-                    Thread.currentThread().interrupt();
-                }
-
-            } else {
+            try {
+                // See if the task has been terminated.
+                checkTermination();
 
                 // Write process meta data.
                 streamTarget.getAttributes().putAll(metaData.getAttributes());
@@ -243,6 +230,16 @@ public class StreamAppender extends AbstractAppender {
                         streamStore.deleteTarget(streamTarget);
                     }
                 }
+
+            } catch (final RuntimeException e) {
+
+                // Delete the target.
+                streamStore.deleteTarget(streamTarget);
+
+                // Log the error.
+                fatal("Terminated");
+
+                throw e;
             }
         }
     }

@@ -52,6 +52,9 @@ public abstract class AbstractRollingAppender extends AbstractDestinationProvide
     public Destination borrowDestination() throws IOException {
         validateSettings();
 
+        // See if the task has been terminated.
+        checkTermination();
+
         // Get a key to use for the destination.
         final Object key = getKey();
 

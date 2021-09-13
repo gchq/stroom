@@ -20,7 +20,7 @@ import stroom.task.shared.TaskId;
 
 import java.util.function.Supplier;
 
-public interface TaskContext {
+public interface TaskContext extends Terminator {
 
     void info(Supplier<String> messageSupplier);
 

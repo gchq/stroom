@@ -21,7 +21,7 @@ import stroom.pipeline.factory.PipelineFactoryException;
 import stroom.pipeline.factory.TakesInput;
 import stroom.pipeline.factory.TakesReader;
 import stroom.pipeline.factory.Target;
-import stroom.pipeline.factory.Terminator;
+import stroom.task.api.Terminator;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,6 +29,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 
 public abstract class AbstractReaderElement extends AbstractIOElement implements TakesInput, TakesReader, Target {
+
     @Override
     public void addTarget(final Target target) {
         if (target != null) {

@@ -78,6 +78,7 @@ class ReferenceDataLoadTaskHandler {
     private final PipelineDataCache pipelineDataCache;
     private final SecurityContext securityContext;
 
+    private TaskContext taskContext;
     private ErrorReceiverIdDecorator errorReceiver;
 
     @Inject
@@ -116,6 +117,7 @@ class ReferenceDataLoadTaskHandler {
      * reference data key, value maps.
      */
     public StoredErrorReceiver exec(final TaskContext taskContext, final RefStreamDefinition refStreamDefinition) {
+        this.taskContext = taskContext;
         final StoredErrorReceiver storedErrorReceiver = new StoredErrorReceiver();
         securityContext.secure(() -> {
             // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission
@@ -154,7 +156,7 @@ class ReferenceDataLoadTaskHandler {
 
                         // Create the parser.
                         final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
-                        final Pipeline pipeline = pipelineFactory.create(pipelineData);
+                        final Pipeline pipeline = pipelineFactory.create(pipelineData, taskContext);
 
                         populateMaps(
                                 pipeline,
@@ -207,7 +209,7 @@ class ReferenceDataLoadTaskHandler {
                 // Typically ref data will only have a single partIndex so if there are
                 // multiple then overrideExisting may be needed.
                 final long count = source.count();
-                for (long index = 0; index < count && !Thread.currentThread().isInterrupted(); index++) {
+                for (long index = 0; index < count && !taskContext.isTerminated(); index++) {
                     metaHolder.setPartIndex(index);
                     streamLocationFactory.setPartIndex(index);
 

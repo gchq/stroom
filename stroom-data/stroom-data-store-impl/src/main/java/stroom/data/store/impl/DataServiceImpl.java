@@ -47,6 +47,7 @@ import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
+import stroom.task.api.TaskContextFactory;
 import stroom.ui.config.shared.SourceConfig;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
@@ -106,8 +107,8 @@ class DataServiceImpl implements DataService {
                     final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
                     final PipelineDataCache pipelineDataCache,
                     final PipelineScopeRunnable pipelineScopeRunnable,
-                    final SourceConfig sourceConfig
-
+                    final SourceConfig sourceConfig,
+                    final TaskContextFactory taskContextFactory
     ) {
         this.resourceStore = resourceStore;
         this.dataUploadTaskHandlerProvider = dataUploadTaskHandler;
@@ -130,7 +131,8 @@ class DataServiceImpl implements DataService {
                 pipelineDataCache,
                 securityContext,
                 pipelineScopeRunnable,
-                sourceConfig);
+                sourceConfig,
+                taskContextFactory);
     }
 
     @Override
