@@ -175,6 +175,8 @@ public class ReferenceData {
         // contains the map/key we are after. None-all could. At the moment we ensure the data is loaded
         // for the effective stream of all associated ref pipelines. Given that the user probably included
         // multiple ref pipelines for a reason it is probably reasonable to load them all, then do the lookups.
+        // TODO @AT The above comment is not quite right, we do know (after a load) which streams hold which maps
+        //  see https://github.com/gchq/stroom/issues/2422
         for (final PipelineReference pipelineReference : pipelineReferences) {
             LOGGER.trace("doGetValue - processing pipelineReference {} for {}",
                     pipelineReference, lookupIdentifier);
