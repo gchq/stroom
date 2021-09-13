@@ -55,8 +55,7 @@ class TestReferenceDataResourceImpl extends AbstractResourceTest<ReferenceDataRe
                                         .type(StreamTypeNames.REFERENCE)
                                         .uuid(UUID.randomUUID().toString())
                                         .build(),
-
-                                streamType)
+                                StreamTypeNames.REFERENCE)
                 )
         );
 
@@ -92,8 +91,7 @@ class TestReferenceDataResourceImpl extends AbstractResourceTest<ReferenceDataRe
                                         .type(StreamTypeNames.REFERENCE)
                                         .uuid(UUID.randomUUID().toString())
                                         .build(),
-
-                                streamType)
+                                StreamTypeNames.REFERENCE)
                 )
         );
 
@@ -129,8 +127,7 @@ class TestReferenceDataResourceImpl extends AbstractResourceTest<ReferenceDataRe
                                         .type(StreamTypeNames.REFERENCE)
                                         .uuid(UUID.randomUUID().toString())
                                         .build(),
-
-                                streamType)
+                                StreamTypeNames.REFERENCE)
                 )
         );
 

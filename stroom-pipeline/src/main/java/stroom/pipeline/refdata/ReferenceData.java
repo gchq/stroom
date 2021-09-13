@@ -481,9 +481,11 @@ public class ReferenceData {
             if (optLoadState.isPresent() && optLoadState.get().equals(ProcessingState.FAILED)) {
                 //TODO do we throw or return an empty result?
                 result.log(Severity.ERROR, () -> LogUtil.message(
-                        "Reference stream {} has been loaded previously but failed, aborting lookup",
+                        "Reference stream {} has been loaded previously but failed, " +
+                                "aborting lookup against this stream.",
                         refStreamDefinition.getStreamId()));
-                isAvailableForLookups = true;
+                isAvailableForLookups = false;
+//                throw new RuntimeException(result.getMessages());
             } else {
                 if (isRefLoadRequired) {
                     // we don't have the complete data so kick off a process to load it all

@@ -232,8 +232,6 @@ class ReferenceDataLoadTaskHandler {
             } finally {
                 try {
                     pipeline.endProcessing();
-                    // TODO @AT The processing state doesn't seem to be written to the db
-                    //  on failure.
                     refDataLoader.completeProcessing(ProcessingState.COMPLETE);
                 } catch (final RuntimeException e) {
                     log(Severity.FATAL_ERROR, e.getMessage(), e);

@@ -102,10 +102,10 @@ public interface RefDataStore {
 
     <T> T consumeEntryStream(final Function<Stream<RefStoreEntry>, T> streamFunction);
 
-    List<RefStreamProcessingInfo> listProcessingInfo(final int limit);
+    List<ProcessingInfoResponse> listProcessingInfo(final int limit);
 
-    List<RefStreamProcessingInfo> listProcessingInfo(final int limit,
-                                                     final Predicate<RefStreamProcessingInfo> filter);
+    List<ProcessingInfoResponse> listProcessingInfo(final int limit,
+                                                    final Predicate<ProcessingInfoResponse> filter);
 
     long getKeyValueEntryCount();
 

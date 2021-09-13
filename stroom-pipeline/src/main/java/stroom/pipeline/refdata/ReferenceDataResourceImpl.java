@@ -2,8 +2,8 @@ package stroom.pipeline.refdata;
 
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.pipeline.refdata.store.ProcessingInfoResponse;
 import stroom.pipeline.refdata.store.RefStoreEntry;
-import stroom.pipeline.refdata.store.RefStreamProcessingInfo;
 import stroom.util.logging.LogUtil;
 import stroom.util.time.StroomDuration;
 
@@ -40,9 +40,9 @@ public class ReferenceDataResourceImpl implements ReferenceDataResource {
     }
 
     @Override
-    public List<RefStreamProcessingInfo> refStreamInfo(final Integer limit,
-                                                       final Long refStreamId,
-                                                       final String mapName) {
+    public List<ProcessingInfoResponse> refStreamInfo(final Integer limit,
+                                                      final Long refStreamId,
+                                                      final String mapName) {
         return referenceDataServiceProvider.get()
                 .refStreamInfo(limit != null
                                 ? limit

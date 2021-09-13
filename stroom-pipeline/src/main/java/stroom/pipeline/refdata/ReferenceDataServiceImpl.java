@@ -18,13 +18,13 @@ import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.feed.api.FeedStore;
 import stroom.pipeline.refdata.RefDataLookupRequest.ReferenceLoader;
+import stroom.pipeline.refdata.store.ProcessingInfoResponse;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataStoreFactory;
 import stroom.pipeline.refdata.store.RefDataValueConverter;
 import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory;
 import stroom.pipeline.refdata.store.RefDataValueProxyConsumerFactory.Factory;
 import stroom.pipeline.refdata.store.RefStoreEntry;
-import stroom.pipeline.refdata.store.RefStreamProcessingInfo;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.query.api.v2.ExpressionItem;
@@ -240,19 +240,19 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     }
 
     @Override
-    public List<RefStreamProcessingInfo> refStreamInfo(final int limit) {
+    public List<ProcessingInfoResponse> refStreamInfo(final int limit) {
         return refStreamInfo(limit, null, null);
     }
 
     @Override
-    public List<RefStreamProcessingInfo> refStreamInfo(final int limit,
-                                                       final Long refStreamId,
-                                                       final String mapName) {
+    public List<ProcessingInfoResponse> refStreamInfo(final int limit,
+                                                      final Long refStreamId,
+                                                      final String mapName) {
 
         return withPermissionCheck(() -> {
-            final List<RefStreamProcessingInfo> entries;
+            final List<ProcessingInfoResponse> entries;
             try {
-                Predicate<RefStreamProcessingInfo> predicate = entry -> true;
+                Predicate<ProcessingInfoResponse> predicate = entry -> true;
 
                 if (refStreamId != null) {
                     predicate = predicate.and(refStreamProcessingInfo ->

@@ -253,7 +253,7 @@ public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>>
 
                     for (int i = 0; i < splitResult.length(); i++) {
                         if (i != 0) {
-                            builder.addEmSpace()
+                            builder.addEnSpace()
                                     .appendWithoutBreak("> ");
                         }
 

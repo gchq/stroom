@@ -12,13 +12,13 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import com.google.common.base.Preconditions;
-import io.vavr.Tuple2;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -203,5 +203,10 @@ public class MapDefinitionUIDStore {
                                final KeyRange<MapDefinition> keyRange,
                                final Function<Stream<Entry<MapDefinition, UID>>, T> streamFunction) {
         return mapUidForwardDb.streamEntries(txn, keyRange, streamFunction);
+    }
+
+    public Set<String> getMapNames(final Txn<ByteBuffer> readTxn,
+                                   final RefStreamDefinition refStreamDefinition) {
+        return mapUidForwardDb.getMapNames(readTxn, refStreamDefinition);
     }
 }

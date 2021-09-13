@@ -1,7 +1,7 @@
 package stroom.pipeline.refdata;
 
+import stroom.pipeline.refdata.store.ProcessingInfoResponse;
 import stroom.pipeline.refdata.store.RefStoreEntry;
-import stroom.pipeline.refdata.store.RefStreamProcessingInfo;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
@@ -54,9 +54,9 @@ public interface ReferenceDataResource extends RestResource {
             description = "This is primarily intended  for small scale debugging in non-production environments. If " +
                     "no limit is set a default limit is applied else the results will be limited to limit entries.",
             operationId = "getReferenceStreamProcessingInfoEntries")
-    List<RefStreamProcessingInfo> refStreamInfo(@QueryParam("limit") final Integer limit,
-                                                @QueryParam("refStreamId") final Long refStreamId,
-                                                @QueryParam("mapName") final String mapName);
+    List<ProcessingInfoResponse> refStreamInfo(@QueryParam("limit") final Integer limit,
+                                               @QueryParam("refStreamId") final Long refStreamId,
+                                               @QueryParam("mapName") final String mapName);
 
     @POST
     @Path(LOOKUP_SUB_PATH)
