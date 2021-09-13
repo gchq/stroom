@@ -7,11 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **#2405** : Errors caused by a thread interrupt when viewing a stream are no longer logged.
+* Issue **#2405, #2407** : Errors caused by a thread interrupt when viewing a stream are no longer logged.
 
 * Issue **#2406** : Volume status update is now performed synchronously.
 
-* Issue **#2401** : Processing tasks no longer terminate by interrupting threads so error streams can now be written correctly.
+* Issue **#2401, #2408, #2409** : Processing tasks no longer terminate by interrupting threads so error streams can now be written correctly.
 
 
 ## [v7.0-beta.144] - 2021-09-08
