@@ -99,6 +99,7 @@ public class LmdbDataStore implements DataStore {
     private final CountDownLatch complete = new CountDownLatch(1);
     private final CompletionState completionState = new CompletionStateImpl(this, complete);
     private final AtomicLong uniqueKey = new AtomicLong();
+    private final CountDownLatch transferring = new CountDownLatch(1);
 
     private final LmdbKey rootParentRowKey;
 
@@ -350,7 +351,12 @@ public class LmdbDataStore implements DataStore {
                 // Continue to interrupt.
                 Thread.currentThread().interrupt();
             } finally {
-                shutdown(writeTxn);
+                try {
+                    writeTxn.close();
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e.getMessage(), e);
+                }
+                transferring.countDown();
             }
         });
     }
@@ -477,41 +483,6 @@ public class LmdbDataStore implements DataStore {
 
             return existing;
         });
-    }
-
-    private synchronized void shutdown(final Txn<ByteBuffer> writeTxn) {
-        LOGGER.debug("Shutdown called");
-        if (!shutdown.get()) {
-            try {
-                try {
-                    writeTxn.close();
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e.getMessage(), e);
-                }
-
-                try {
-                    dbi.close();
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e.getMessage(), e);
-                }
-
-                try {
-                    environment.close();
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e.getMessage(), e);
-                }
-
-                try {
-                    environment.delete();
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e.getMessage(), e);
-                }
-            } finally {
-                resultCount.set(0);
-                totalResultCount.set(0);
-                shutdown.set(true);
-            }
-        }
     }
 
     private byte[] createPayload(final Txn<ByteBuffer> writeTxn, final Dbi<ByteBuffer> dbi) {
@@ -693,15 +664,62 @@ public class LmdbDataStore implements DataStore {
      */
     @Override
     public void clear() {
-        LOGGER.debug("clear called");
-        // Stop the transfer loop running, this has the effect of dropping the DB when it stops.
-        running.set(false);
-        // Clear the queue for good measure.
-        queue.clear();
-        // Ensure we complete.
-        complete.countDown();
-        // If the transfer loop is waiting on new queue items ensure it loops once more.
-        completionState.signalComplete();
+        try {
+            LOGGER.debug("clear called");
+            // Stop the transfer loop running, this has the effect of dropping the DB when it stops.
+            running.set(false);
+            // Clear the queue for good measure.
+            queue.clear();
+            // Ensure we complete.
+            complete.countDown();
+            // If the transfer loop is waiting on new queue items ensure it loops once more.
+            completionState.signalComplete();
+        } finally {
+            shutdown();
+        }
+    }
+
+    private synchronized void shutdown() {
+        LOGGER.debug("Shutdown called");
+        if (!shutdown.get()) {
+
+            // Wait for transferring to stop.
+            try {
+                final boolean interrupted = Thread.interrupted();
+                LOGGER.debug("Waiting for transfer to stop");
+                transferring.await();
+                if (interrupted) {
+                    Thread.currentThread().interrupt();
+                }
+            } catch (final InterruptedException e) {
+                LOGGER.debug(e.getMessage());
+                Thread.currentThread().interrupt();
+            }
+
+            try {
+                try {
+                    dbi.close();
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e.getMessage(), e);
+                }
+
+                try {
+                    environment.close();
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e.getMessage(), e);
+                }
+
+                try {
+                    environment.delete();
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e.getMessage(), e);
+                }
+            } finally {
+                resultCount.set(0);
+                totalResultCount.set(0);
+                shutdown.set(true);
+            }
+        }
     }
 
     /**

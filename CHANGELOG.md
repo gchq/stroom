@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2418** : LMDB environment is now only closed when the search results are no longer needed.
+
 * Issue **#2419** : Conditional formatting errors are now returned to the UI.
 
 * Issue **#2405, #2407** : Errors caused by a thread interrupt when viewing a stream are no longer logged.
