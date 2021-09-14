@@ -19,7 +19,6 @@ package stroom.pipeline.refdata.store.offheapstore.databases;
 
 import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.bytebuffer.ByteBufferUtils;
-import stroom.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.store.offheapstore.RangeStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
@@ -91,7 +90,7 @@ class TestRangeStoreDb extends AbstractLmdbDbTest {
         rangeStoreDb.logDatabaseContents();
 
         // now try and get some keys
-        LmdbUtils.doWithReadTxn(lmdbEnv, txn -> {
+        lmdbEnv.doWithReadTxn(txn -> {
             for (int i = 0; i < uids.size(); i++) {
                 LOGGER.debug("Iteration {}, testing with UID {}", i, uids.get(i));
 
@@ -128,7 +127,7 @@ class TestRangeStoreDb extends AbstractLmdbDbTest {
         rangeStoreDb.logRawDatabaseContents();
         rangeStoreDb.logDatabaseContents();
 
-        LmdbUtils.doWithReadTxn(lmdbEnv, txn -> {
+        lmdbEnv.doWithReadTxn(txn -> {
             boolean result;
             for (int i = 0; i < uids.size(); i++) {
                 result = rangeStoreDb.containsMapDefinition(txn, uids.get(i));
@@ -178,7 +177,7 @@ class TestRangeStoreDb extends AbstractLmdbDbTest {
         rangeStoreDb.logRawDatabaseContents();
         rangeStoreDb.logDatabaseContents();
 
-        LmdbUtils.doWithReadTxn(lmdbEnv, txn -> {
+        lmdbEnv.doWithReadTxn(txn -> {
             Optional<ValueStoreKey> optValueStoreKey = rangeStoreDb.get(txn, uid2, 5);
             assertThat(optValueStoreKey).isNotEmpty();
             assertThat(optValueStoreKey.get()).isEqualTo(val(11));
@@ -202,7 +201,7 @@ class TestRangeStoreDb extends AbstractLmdbDbTest {
         final ValueStoreKey valueStoreKey22 = new ValueStoreKey(22, (short) 22);
         final ValueStoreKey valueStoreKey31 = new ValueStoreKey(31, (short) 31);
 
-        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
             rangeStoreDb.put(writeTxn, rangeStoreKey11, valueStoreKey11, false);
             rangeStoreDb.put(writeTxn, rangeStoreKey21, valueStoreKey21, false);
             rangeStoreDb.put(writeTxn, rangeStoreKey22, valueStoreKey22, false);
@@ -217,7 +216,7 @@ class TestRangeStoreDb extends AbstractLmdbDbTest {
     }
 
     private void doForEachTest(final UID uid, final int expectedEntryCount) {
-        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
             AtomicInteger cnt = new AtomicInteger(0);
             rangeStoreDb.deleteMapEntries(writeTxn, uid, (txn, keyBuf, valBuf) -> {
                 cnt.incrementAndGet();

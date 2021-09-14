@@ -217,7 +217,7 @@ public class ByteBufferPoolImpl4 implements ByteBufferPool {
             try {
                 pooledBufferQueues[offset].put(buffer);
             } catch (InterruptedException e) {
-                LOGGER.error("Thread interrupted", e);
+                LOGGER.debug("Thread interrupted", e);
                 Thread.currentThread().interrupt();
             }
         }

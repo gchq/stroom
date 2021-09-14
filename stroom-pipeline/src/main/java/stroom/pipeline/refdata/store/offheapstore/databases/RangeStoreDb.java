@@ -22,6 +22,7 @@ import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
 import stroom.lmdb.AbstractLmdbDb;
 import stroom.lmdb.EntryConsumer;
+import stroom.lmdb.LmdbEnv;
 import stroom.pipeline.refdata.store.offheapstore.RangeStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
@@ -36,7 +37,6 @@ import stroom.util.shared.Range;
 import com.google.inject.assistedinject.Assisted;
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
-import org.lmdbjava.Env;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 
@@ -56,7 +56,7 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
     private final ValueStoreKeySerde valueSerde;
 
     @Inject
-    public RangeStoreDb(@Assisted final Env<ByteBuffer> lmdbEnvironment,
+    public RangeStoreDb(@Assisted final LmdbEnv lmdbEnvironment,
                         final ByteBufferPool byteBufferPool,
                         final RangeStoreKeySerde keySerde,
                         final ValueStoreKeySerde valueSerde) {
@@ -266,6 +266,6 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
 
     public interface Factory {
 
-        RangeStoreDb create(final Env<ByteBuffer> lmdbEnvironment);
+        RangeStoreDb create(final LmdbEnv lmdbEnvironment);
     }
 }

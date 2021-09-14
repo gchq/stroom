@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2387** : Fix reference data load/lookup failure handling.
+
+* Issue **#2422** : Change ref lookups to only do a lookup against a ref feeds that are known to contian the map being looked up against.
+
+* Issue **#2411** : Remove 10,000 limit on dashboard search of ref store.
+
+* Issue **#2389** : Add an API method for purging a single reference data stream.
+
+* Issue **#2379** : Change ref data lookups to truncate last access time to hourly.
+
 * Uplift Dropwizard from 1.3.14 to 1.3.29.
 
 * Issue **#2424** : Stop session creation for rest calls. Remove unused SessionMap class.
