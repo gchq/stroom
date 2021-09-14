@@ -377,6 +377,7 @@ appConfig:
       maxStoreSize: "50G"
       purgeAge: "P30D"
       readAheadEnabled: true
+      readerBlockedByWriter: false
     xmlSchema:
       cache:
         maximumSize: 1000
