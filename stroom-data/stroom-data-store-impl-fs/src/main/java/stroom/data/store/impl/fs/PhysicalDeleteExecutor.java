@@ -108,7 +108,7 @@ public class PhysicalDeleteExecutor {
                     if (deleteThresholdEpochMs > 0) {
                         delete(deleteThresholdEpochMs);
                     }
-                    LOGGER.info(() -> TASK_NAME + " - finished in " + logExecutionTime);
+                    LOGGER.info("{} - finished in {}", TASK_NAME, logExecutionTime);
                 }
             } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
@@ -121,7 +121,7 @@ public class PhysicalDeleteExecutor {
             long count;
             long total = 0;
 
-            final LogExecutionTime logExecutionTime = new LogExecutionTime();
+            final LogExecutionTime logExecutionTime = LogExecutionTime.start();
 
             final int deleteBatchSize = dataStoreServiceConfig.getDeleteBatchSize();
 
@@ -163,10 +163,7 @@ public class PhysicalDeleteExecutor {
                 } while (!Thread.currentThread().isInterrupted() && count >= deleteBatchSize);
             }
 
-            // Done with if as total is not final so can't be in a lambda
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Deleted {} streams in {}.", total, logExecutionTime);
-            }
+            LOGGER.info("{} - Deleted {} streams in {}.", TASK_NAME, total, logExecutionTime);
         }
     }
 
@@ -212,7 +209,7 @@ public class PhysicalDeleteExecutor {
             physicalDelete.cleanup(metaIdList);
 
         } catch (final InterruptedException e) {
-            LOGGER.debug(e::getMessage, e);
+            LOGGER.debug("{} - {}", TASK_NAME, e.getMessage(), e);
 
             // Continue to interrupt.
             Thread.currentThread().interrupt();

@@ -32,8 +32,6 @@ import stroom.util.shared.Clearable;
 import com.google.inject.AbstractModule;
 import org.apache.http.impl.client.CloseableHttpClient;
 
-import javax.servlet.http.HttpSessionListener;
-
 public class SecurityModule extends AbstractModule {
 
     private static final String MATCH_ALL_PATHS = "/*";
@@ -65,9 +63,6 @@ public class SecurityModule extends AbstractModule {
                 .addBinding(UserAppPermissionsCache.class)
                 .addBinding(UserGroupsCache.class)
                 .addBinding(UserCache.class);
-
-        GuiceUtil.buildMultiBinder(binder(), HttpSessionListener.class)
-                .addBinding(SessionMap.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(UserGroupsCache.class)
