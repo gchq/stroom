@@ -40,7 +40,9 @@ public class TestLmdbEnv {
 
     private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(2_000);
 
-    private static final int MAX_READERS = 3;
+    // If this value is set too high then the test will fail on gh actions as
+    // that has limited cores available.
+    private static final int MAX_READERS = 2;
 
     @Test
     void testWritersBlockReaders() throws IOException, InterruptedException {
