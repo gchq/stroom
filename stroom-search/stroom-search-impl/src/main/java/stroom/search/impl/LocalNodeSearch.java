@@ -68,6 +68,7 @@ public class LocalNodeSearch implements NodeSearch {
                 throw searchException;
             }
         } catch (final Throwable e) {
+            LOGGER.debug(e::getMessage, e);
             final SearchException searchException = new SearchException(e.getMessage(), e);
             resultCollector.onFailure(targetNode, searchException);
             throw searchException;
@@ -96,6 +97,7 @@ public class LocalNodeSearch implements NodeSearch {
             }
 
         } catch (final RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
             resultCollector.onFailure(sourceNode, e);
 
         } finally {

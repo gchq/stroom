@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2404** : Added debug to help diagnose issue.
+
 * Issue **#2423** : Added error logging and configuration to handle buffer overflows when dealing with large search result values.
 
 * Issue **#2410** : Fixes for dashboard child selectors like `first()` and `last()`.
