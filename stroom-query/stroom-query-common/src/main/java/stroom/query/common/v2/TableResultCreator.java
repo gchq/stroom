@@ -59,12 +59,12 @@ public class TableResultCreator implements ResultCreator {
 
     @Override
     public Result create(final DataStore data, final ResultRequest resultRequest) {
-        final Set<String> error = Collections.newSetFromMap(new ConcurrentHashMap<>());
+        final Set<String> errors = Collections.newSetFromMap(new ConcurrentHashMap<>());
         final Consumer<Throwable> errorConsumer = throwable -> {
             if (throwable.getMessage() == null || throwable.getMessage().isBlank()) {
-                error.add(throwable.getClass().getName());
+                errors.add(throwable.getClass().getName());
             } else {
-                error.add(throwable.getMessage());
+                errors.add(throwable.getMessage());
             }
         };
 
@@ -117,13 +117,18 @@ public class TableResultCreator implements ResultCreator {
             errorConsumer.accept(e);
         }
 
+        String errorString = null;
+        if (errors.size() > 0) {
+            errorString = String.join("\n", errors);
+        }
+
         return new TableResult(
                 resultRequest.getComponentId(),
                 latestFields,
                 resultList,
                 new OffsetRange(offset, resultList.size()),
                 totalResults,
-                String.join("\n", error));
+                errorString);
     }
 
     private int addTableResults(final DataStore data,
