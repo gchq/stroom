@@ -566,7 +566,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
             return list;
         } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.debug(e.getMessage(), e);
             throw e;
         }
     }
