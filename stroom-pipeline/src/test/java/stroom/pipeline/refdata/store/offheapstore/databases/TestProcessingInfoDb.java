@@ -19,7 +19,6 @@ package stroom.pipeline.refdata.store.offheapstore.databases;
 
 
 import stroom.bytebuffer.ByteBufferPoolFactory;
-import stroom.lmdb.LmdbUtils;
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
@@ -131,7 +130,7 @@ class TestProcessingInfoDb extends AbstractLmdbDbTest {
                 .hasValue(true);
 
         // open a write txn and mutate the value
-        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn ->
+        lmdbEnv.doWithWriteTxn(writeTxn ->
                 processingInfoDb.updateProcessingState(
                         writeTxn, refStreamDefinition, ProcessingState.COMPLETE, true));
 
@@ -144,7 +143,7 @@ class TestProcessingInfoDb extends AbstractLmdbDbTest {
 
         refDataProcessingInfoBefore = processingInfoDb.get(refStreamDefinition).get();
         // open a write txn and mutate the value
-        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn ->
+        lmdbEnv.doWithWriteTxn(writeTxn ->
                 processingInfoDb.updateProcessingState(
                         writeTxn, refStreamDefinition, ProcessingState.PURGE_IN_PROGRESS, false));
 

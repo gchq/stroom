@@ -94,6 +94,10 @@ public class LookupIdentifier {
         return secondaryMapName != null;
     }
 
+    /**
+     * @return The map being looked up against. This may be a nested map, e.g. MAP1/MAP2/MAP3.
+     * Use {@link LookupIdentifier#getPrimaryMapName()} for the initial map to look in.
+     */
     public String getMap() {
         return map;
     }
@@ -106,6 +110,9 @@ public class LookupIdentifier {
         return eventTime;
     }
 
+    /**
+     * @return The map to perform the lookup in, or the initial map to look in when map is a nested map.
+     */
     public String getPrimaryMapName() {
         return primaryMapName;
     }
@@ -155,7 +162,6 @@ public class LookupIdentifier {
 
     @Override
     public int hashCode() {
-
         return Objects.hash(map, key, eventTime);
     }
 }

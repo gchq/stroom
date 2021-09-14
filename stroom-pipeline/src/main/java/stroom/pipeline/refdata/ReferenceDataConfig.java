@@ -30,6 +30,7 @@ public class ReferenceDataConfig extends AbstractConfig {
     private StroomDuration purgeAge = StroomDuration.ofDays(30);
     private boolean isReadAheadEnabled = true;
     private int loadingLockStripes = 2048;
+    private boolean isReaderBlockedByWriter = false;
 
     private CacheConfig effectiveStreamCache = CacheConfig.builder()
             .maximumSize(1000L)
@@ -145,6 +146,21 @@ public class ReferenceDataConfig extends AbstractConfig {
         this.loadingLockStripes = loadingLockStripes;
     }
 
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
+    @JsonPropertyDescription("If true, then the process writing to the reference data store will block all " +
+            "other processes from reading from the store. As only one writer is allowed the active writer will " +
+            "also block all other writers. If false, then multiple processes can read from the store regardless " +
+            "of whether a process is writing to it. If there are active readers during a write then empty space in " +
+            "the store cannot be reclaimed, instead the store will grow. This setting is a trade off between " +
+            "performance and store size. If you experience excessive store size growth then set this to true.")
+    public boolean isReaderBlockedByWriter() {
+        return isReaderBlockedByWriter;
+    }
+
+    public void setReaderBlockedByWriter(final boolean readerBlockedByWriter) {
+        isReaderBlockedByWriter = readerBlockedByWriter;
+    }
+
     public CacheConfig getEffectiveStreamCache() {
         return effectiveStreamCache;
     }
@@ -155,13 +171,17 @@ public class ReferenceDataConfig extends AbstractConfig {
 
     @Override
     public String toString() {
-        return "RefDataStoreConfig{" +
+        return "ReferenceDataConfig{" +
                 "localDir='" + localDir + '\'' +
+                ", lmdbSystemLibraryPath='" + lmdbSystemLibraryPath + '\'' +
                 ", maxPutsBeforeCommit=" + maxPutsBeforeCommit +
                 ", maxReaders=" + maxReaders +
-                ", maxStoreSize='" + maxStoreSize + '\'' +
-                ", purgeAge='" + purgeAge + '\'' +
+                ", maxStoreSize=" + maxStoreSize +
+                ", purgeAge=" + purgeAge +
                 ", isReadAheadEnabled=" + isReadAheadEnabled +
+                ", loadingLockStripes=" + loadingLockStripes +
+                ", isReaderBlockedByWriter=" + isReaderBlockedByWriter +
+                ", effectiveStreamCache=" + effectiveStreamCache +
                 '}';
     }
 }

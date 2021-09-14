@@ -17,13 +17,12 @@
 package stroom.data.client.presenter;
 
 import stroom.cell.expander.client.ExpanderCell;
-import stroom.cell.info.client.SvgCell;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.pipeline.shared.FetchMarkerResult;
-import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
+import stroom.util.client.DataGridUtil;
 import stroom.util.shared.Expander;
 import stroom.util.shared.Marker;
 import stroom.util.shared.Severity;
@@ -31,11 +30,12 @@ import stroom.util.shared.StoredError;
 import stroom.util.shared.StreamLocation;
 import stroom.util.shared.Summary;
 import stroom.util.shared.TreeRow;
+import stroom.widget.tooltip.client.presenter.TooltipUtil;
+import stroom.widget.tooltip.client.presenter.TooltipUtil.Builder;
 
-import com.google.gwt.cell.client.SafeHtmlCell;
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.regexp.shared.RegExp;
+import com.google.gwt.regexp.shared.SplitResult;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
@@ -53,8 +53,11 @@ public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>>
 
     private static final HashSet<Severity> ALL_SEVERITIES = new HashSet<>(Arrays.asList(Severity.SEVERITIES));
 
+    private final RegExp messageCauseDelimiterPattern;
+
     private HashSet<Severity> expandedSeverities;
     private DataPresenter dataPresenter;
+
 
     @Inject
     public MarkerListPresenter(final EventBus eventBus) {
@@ -68,6 +71,8 @@ public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>>
         addCol();
         addMessage();
         getView().addEndColumn(new EndColumn<>());
+
+        messageCauseDelimiterPattern = RegExp.compile(RegExp.quote(StoredError.MESSAGE_CAUSE_DELIMITER));
     }
 
     private void addExpanderColumn() {
@@ -97,138 +102,170 @@ public class MarkerListPresenter extends MyPresenterWidget<DataGridView<Marker>>
     }
 
     private void addSeverityColumn() {
-        getView().addColumn(new Column<Marker, SvgPreset>(new SvgCell()) {
-            @Override
-            public SvgPreset getValue(final Marker marker) {
-                switch (marker.getSeverity()) {
-                    case FATAL_ERROR:
-                        return SvgPresets.FATAL.title("Fatal Error");
-                    case ERROR:
-                        return SvgPresets.ERROR;
-                    case WARNING:
-                        return SvgPresets.ALERT.title("Warning");
-                    case INFO:
-                        return SvgPresets.INFO;
-                    default:
-                        return null;
-                }
-            }
-        }, "", ColumnSizeConstants.ICON_COL);
+        getView().addColumn(
+                DataGridUtil.svgPresetColumnBuilder(false, (Marker marker) -> {
+                    switch (marker.getSeverity()) {
+                        case FATAL_ERROR:
+                            return SvgPresets.FATAL.title("Fatal Error");
+                        case ERROR:
+                            return SvgPresets.ERROR;
+                        case WARNING:
+                            return SvgPresets.ALERT.title("Warning");
+                        case INFO:
+                            return SvgPresets.INFO;
+                        default:
+                            return null;
+                    }
+                })
+                        .topAligned()
+                        .withStyleName(getView().getResources().dataGridStyle().dataGridCellVerticalTop())
+                        .build(),
+                "",
+                ColumnSizeConstants.ICON_COL);
     }
 
     private void addElementId() {
-        getView().addResizableColumn(new Column<Marker, SafeHtml>(new SafeHtmlCell()) {
-            @Override
-            public SafeHtml getValue(final Marker marker) {
-                if (marker instanceof StoredError) {
-                    final StoredError storedError = (StoredError) marker;
-                    if (storedError.getElementId() != null) {
-                        return SafeHtmlUtils.fromString(storedError.getElementId());
+        getView().addResizableColumn(DataGridUtil.htmlColumnBuilder(
+                (Marker marker) -> {
+                    if (marker instanceof StoredError) {
+                        final StoredError storedError = (StoredError) marker;
+                        if (storedError.getElementId() != null) {
+                            return SafeHtmlUtils.fromString(storedError.getElementId());
+                        }
+
+                    } else if (marker instanceof Summary) {
+                        final Summary summary = (Summary) marker;
+
+                        final StringBuilder sb = new StringBuilder();
+                        sb.append(summary.getSeverity().getSummaryValue());
+                        sb.append(" (");
+                        if (summary.getTotal() > summary.getCount()) {
+                            sb.append(summary.getCount());
+                            sb.append(" of ");
+                            sb.append(summary.getTotal());
+
+                            if (summary.getTotal() >= FetchMarkerResult.MAX_TOTAL_MARKERS) {
+                                sb.append("+");
+                            }
+
+                            if (summary.getTotal() <= 1) {
+                                sb.append(" item)");
+                            } else {
+                                sb.append(" items)");
+                            }
+                        } else {
+                            sb.append(summary.getCount());
+                            if (summary.getCount() <= 1) {
+                                sb.append(" item)");
+                            } else {
+                                sb.append(" items)");
+                            }
+                        }
+
+                        // Make summery items bold.
+                        final SafeHtmlBuilder builder = new SafeHtmlBuilder();
+                        builder.appendHtmlConstant("<div style=\"font-weight:500;\">");
+                        builder.appendEscaped(sb.toString());
+                        builder.appendHtmlConstant("</div>");
+
+                        return builder.toSafeHtml();
                     }
 
-                } else if (marker instanceof Summary) {
-                    final Summary summary = (Summary) marker;
-
-                    final StringBuilder sb = new StringBuilder();
-                    sb.append(summary.getSeverity().getSummaryValue());
-                    sb.append(" (");
-                    if (summary.getTotal() > summary.getCount()) {
-                        sb.append(summary.getCount());
-                        sb.append(" of ");
-                        sb.append(summary.getTotal());
-
-                        if (summary.getTotal() >= FetchMarkerResult.MAX_TOTAL_MARKERS) {
-                            sb.append("+");
-                        }
-
-                        if (summary.getTotal() <= 1) {
-                            sb.append(" item)");
-                        } else {
-                            sb.append(" items)");
-                        }
-                    } else {
-                        sb.append(summary.getCount());
-                        if (summary.getCount() <= 1) {
-                            sb.append(" item)");
-                        } else {
-                            sb.append(" items)");
-                        }
-                    }
-
-                    // Make summery items bold.
-                    final SafeHtmlBuilder builder = new SafeHtmlBuilder();
-                    builder.appendHtmlConstant("<div style=\"font-weight:500;\">");
-                    builder.appendEscaped(sb.toString());
-                    builder.appendHtmlConstant("</div>");
-
-                    return builder.toSafeHtml();
-                }
-
-                return null;
-            }
-        }, "Element", 150);
+                    return null;
+                })
+                        .topAligned()
+                        .withStyleName(getView().getResources().dataGridStyle().dataGridCellVerticalTop())
+                        .build(),
+                "Element",
+                150);
     }
 
     private void addStream() {
-        getView().addResizableColumn(new Column<Marker, String>(new TextCell()) {
-            @Override
-            public String getValue(final Marker marker) {
-                if (marker instanceof StoredError) {
-                    final StoredError storedError = (StoredError) marker;
+        getView().addResizableColumn(DataGridUtil.htmlColumnBuilder(
+                this::convertToStoredError,
+                (StoredError storedError) -> {
                     if (storedError.getLocation() != null && storedError.getLocation() instanceof StreamLocation) {
                         final StreamLocation streamLocation = (StreamLocation) storedError.getLocation();
                         if (streamLocation.getPartIndex() > -1) {
-                            return String.valueOf(streamLocation.getPartIndex() + 1);
+                            return SafeHtmlUtils.fromString(String.valueOf(streamLocation.getPartIndex() + 1));
+                        } else {
+                            return null;
                         }
+                    } else {
+                        return null;
                     }
-                }
-                return null;
-            }
-        }, "Stream", 50);
+                })
+                        .topAligned()
+                        .withStyleName(getView().getResources().dataGridStyle().dataGridCellVerticalTop())
+                        .build(),
+                "Stream",
+                50);
     }
 
     private void addLine() {
-        getView().addResizableColumn(new Column<Marker, String>(new TextCell()) {
-            @Override
-            public String getValue(final Marker marker) {
-                if (marker instanceof StoredError) {
-                    final StoredError storedError = (StoredError) marker;
+        getView().addResizableColumn(DataGridUtil.htmlColumnBuilder(
+                this::convertToStoredError,
+                (StoredError storedError) -> {
                     if (storedError.getLocation().getLineNo() >= 0) {
-                        return String.valueOf(storedError.getLocation().getLineNo());
+                        return SafeHtmlUtils.fromString(String.valueOf(storedError.getLocation().getLineNo()));
+                    } else {
+                        return null;
                     }
-                }
-                return null;
-            }
-        }, "Line", 50);
+                })
+                        .topAligned()
+                        .withStyleName(getView().getResources().dataGridStyle().dataGridCellVerticalTop())
+                        .build(),
+                "Line",
+                50);
     }
 
     private void addCol() {
-        getView().addResizableColumn(new Column<Marker, String>(new TextCell()) {
-            @Override
-            public String getValue(final Marker marker) {
-                if (marker instanceof StoredError) {
-                    final StoredError storedError = (StoredError) marker;
+        getView().addResizableColumn(DataGridUtil.htmlColumnBuilder(
+                this::convertToStoredError,
+                (StoredError storedError) -> {
                     if (storedError.getLocation().getColNo() >= 0) {
-                        return String.valueOf(storedError.getLocation().getColNo());
+                        return SafeHtmlUtils.fromString(String.valueOf(storedError.getLocation().getColNo()));
+                    } else {
+                        return null;
                     }
-                }
-                return null;
-            }
-        }, "Col", 50);
+                })
+                        .topAligned()
+                        .withStyleName(getView().getResources().dataGridStyle().dataGridCellVerticalTop())
+                        .build(),
+                "Col",
+                50);
+    }
+
+    private StoredError convertToStoredError(final Marker marker) {
+        return marker instanceof StoredError
+                ? (StoredError) marker
+                : null;
     }
 
     private void addMessage() {
-        getView().addResizableColumn(new Column<Marker, String>(new TextCell()) {
-            @Override
-            public String getValue(final Marker marker) {
-                if (marker instanceof StoredError) {
-                    final StoredError storedError = (StoredError) marker;
-                    return storedError.getMessage();
-                }
 
-                return null;
-            }
-        }, "Message", 700);
+        getView().addResizableColumn(
+                DataGridUtil.htmlColumnBuilder(this::convertToStoredError, storedError -> {
+                    // Some messages, e.g. ref data ones have multiple sub msgs within the msgs so split them out
+                    final SplitResult splitResult = messageCauseDelimiterPattern.split(storedError.getMessage());
+
+                    final Builder builder = TooltipUtil.builder();
+
+                    for (int i = 0; i < splitResult.length(); i++) {
+                        if (i != 0) {
+                            builder.addEnSpace()
+                                    .appendWithoutBreak("> ");
+                        }
+
+                        builder.addLine(splitResult.get(i));
+                    }
+                    return builder.build();
+                })
+                        .topAligned()
+                        .withStyleName(getView().getResources().dataGridStyle().dataGridCellVerticalTop())
+                        .build(),
+                "Message",
+                800);
     }
 
     public void setData(final List<Marker> markers, final int start, final int count) {

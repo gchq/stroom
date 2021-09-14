@@ -30,6 +30,7 @@ public class TaskTerminatedException extends EntityServiceException {
      * for execution and we want to know not to submit further tasks,
      */
     public TaskTerminatedException(final boolean stop) {
+        super("Task terminated");
         this.stop = stop;
     }
 

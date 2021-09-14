@@ -21,6 +21,7 @@ import stroom.bytebuffer.ByteBufferPool;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
 import stroom.lmdb.AbstractLmdbDb;
+import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.offheapstore.UID;
@@ -33,7 +34,6 @@ import stroom.util.logging.LogUtil;
 import com.google.inject.assistedinject.Assisted;
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
-import org.lmdbjava.Env;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
@@ -51,7 +51,7 @@ public class MapUidReverseDb extends AbstractLmdbDb<UID, MapDefinition> {
     public static final String DB_NAME = "MapUidBackward";
 
     @Inject
-    public MapUidReverseDb(@Assisted final Env<ByteBuffer> lmdbEnvironment,
+    public MapUidReverseDb(@Assisted final LmdbEnv lmdbEnvironment,
                            final ByteBufferPool byteBufferPool,
                            final UIDSerde keySerde,
                            final MapDefinitionSerde valueSerde) {
@@ -105,6 +105,6 @@ public class MapUidReverseDb extends AbstractLmdbDb<UID, MapDefinition> {
 
     public interface Factory {
 
-        MapUidReverseDb create(final Env<ByteBuffer> lmdbEnvironment);
+        MapUidReverseDb create(final LmdbEnv lmdbEnvironment);
     }
 }
