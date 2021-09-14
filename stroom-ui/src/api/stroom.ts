@@ -3106,7 +3106,6 @@ export interface TaskProgressResponse {
 
 export interface TerminateTaskProgressRequest {
   criteria?: FindTaskCriteria;
-  kill?: boolean;
 }
 
 export type TextComponentSettings = ComponentSettings & {

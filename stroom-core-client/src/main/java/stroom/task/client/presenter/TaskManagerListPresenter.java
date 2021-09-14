@@ -16,7 +16,6 @@
 
 package stroom.task.client.presenter;
 
-import stroom.alert.client.event.ConfirmEvent;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.cell.info.client.InfoColumn;
 import stroom.cell.tickbox.client.TickBoxCell;
@@ -83,7 +82,6 @@ public class TaskManagerListPresenter
     private final FindTaskProgressCriteria criteria = new FindTaskProgressCriteria();
     private final FindTaskProgressRequest request = new FindTaskProgressRequest(criteria);
     private final Set<TaskProgress> selectedTaskProgress = new HashSet<>();
-    private final Set<TaskProgress> requestedTerminateTaskProgress = new HashSet<>();
     private final TooltipPresenter tooltipPresenter;
     private final RestFactory restFactory;
     private final NodeManager nodeManager;
@@ -224,9 +222,9 @@ public class TaskManagerListPresenter
         // Node.
         getView().addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(getColouredCellFunc(taskProgress ->
-                        taskProgress.getNodeName() != null
-                                ? taskProgress.getNodeName()
-                                : "?"))
+                                taskProgress.getNodeName() != null
+                                        ? taskProgress.getNodeName()
+                                        : "?"))
                         .withSorting(FindTaskProgressCriteria.FIELD_NODE)
                         .build(),
                 FindTaskProgressCriteria.FIELD_NODE,
@@ -251,7 +249,7 @@ public class TaskManagerListPresenter
         // Submit Time.
         getView().addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(getColouredCellFunc(taskProgress ->
-                        ClientDateUtil.toISOString(taskProgress.getSubmitTimeMs())))
+                                ClientDateUtil.toISOString(taskProgress.getSubmitTimeMs())))
                         .withSorting(FindTaskProgressCriteria.FIELD_SUBMIT_TIME)
                         .build(),
                 FindTaskProgressCriteria.FIELD_SUBMIT_TIME,
@@ -260,7 +258,7 @@ public class TaskManagerListPresenter
         // Age.
         getView().addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(getColouredCellFunc(taskProgress ->
-                        ModelStringUtil.formatDurationString(taskProgress.getAgeMs())))
+                                ModelStringUtil.formatDurationString(taskProgress.getAgeMs())))
                         .withSorting(FindTaskProgressCriteria.FIELD_AGE)
                         .build(),
                 FindTaskProgressCriteria.FIELD_AGE,
@@ -355,7 +353,6 @@ public class TaskManagerListPresenter
 
         final HashSet<TaskProgress> currentTaskSet = new HashSet<TaskProgress>(resultPage.getValues());
         selectedTaskProgress.retainAll(currentTaskSet);
-        requestedTerminateTaskProgress.retainAll(currentTaskSet);
 
         final TaskProgressResponse response = new TaskProgressResponse(
                 resultPage.getValues(),
@@ -380,29 +377,15 @@ public class TaskManagerListPresenter
     private void endSelectedTask() {
         final Set<TaskProgress> cloneSelectedTaskProgress = new HashSet<>(selectedTaskProgress);
         for (final TaskProgress taskProgress : cloneSelectedTaskProgress) {
-            final boolean kill = requestedTerminateTaskProgress.contains(taskProgress);
-            if (kill) {
-                ConfirmEvent.fireWarn(this, "Task " + taskProgress.getTaskName() + " has not finished ... will kill",
-                        result -> {
-                            if (result) {
-                                doTerminate(taskProgress, true);
-                            }
-                        });
-
-            } else {
-                doTerminate(taskProgress, kill);
-            }
-
+            doTerminate(taskProgress);
         }
         refresh();
     }
 
-    private void doTerminate(final TaskProgress taskProgress, final boolean kill) {
+    private void doTerminate(final TaskProgress taskProgress) {
         final FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
         findTaskCriteria.addId(taskProgress.getId());
-        final TerminateTaskProgressRequest request = new TerminateTaskProgressRequest(findTaskCriteria, kill);
-
-        requestedTerminateTaskProgress.add(taskProgress);
+        final TerminateTaskProgressRequest request = new TerminateTaskProgressRequest(findTaskCriteria);
         restFactory.create()
                 .call(TASK_RESOURCE)
                 .terminate(taskProgress.getNodeName(), request);

@@ -20,12 +20,13 @@ import stroom.pipeline.destination.DestinationProvider;
 import stroom.pipeline.factory.PipelineFactoryException;
 import stroom.pipeline.factory.TakesInput;
 import stroom.pipeline.factory.Target;
-import stroom.pipeline.factory.Terminator;
+import stroom.task.api.Terminator;
 
 import java.io.IOException;
 import java.io.InputStream;
 
 public abstract class AbstractInputElement extends AbstractIOElement implements TakesInput, Target {
+
     @Override
     public void addTarget(final Target target) {
         if (target != null) {

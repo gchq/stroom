@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 class TestTaskContextImpl {
 
@@ -72,6 +73,6 @@ class TestTaskContextImpl {
             public String getSessionId() {
                 return null;
             }
-        });
+        }, new AtomicBoolean());
     }
 }

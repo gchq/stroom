@@ -59,7 +59,7 @@ public class ClusterTaskTerminatorImpl implements ClusterTaskTerminator {
                            final String searchName,
                            final String taskName) {
         final TerminateTaskProgressRequest terminateTaskProgressRequest = new TerminateTaskProgressRequest(
-                findTaskCriteria, false);
+                findTaskCriteria);
 
         taskContextFactory.context("Terminate: " + taskName, parentContext -> {
             parentContext.info(() -> searchName + " - terminating child tasks");

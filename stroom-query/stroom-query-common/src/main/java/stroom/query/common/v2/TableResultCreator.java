@@ -32,11 +32,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class TableResultCreator implements ResultCreator {
@@ -56,11 +59,19 @@ public class TableResultCreator implements ResultCreator {
 
     @Override
     public Result create(final DataStore data, final ResultRequest resultRequest) {
+        final Set<String> error = Collections.newSetFromMap(new ConcurrentHashMap<>());
+        final Consumer<Throwable> errorConsumer = throwable -> {
+            if (throwable.getMessage() == null || throwable.getMessage().isBlank()) {
+                error.add(throwable.getClass().getName());
+            } else {
+                error.add(throwable.getMessage());
+            }
+        };
+
         final List<Row> resultList = new ArrayList<>();
         int offset = 0;
         int length = Integer.MAX_VALUE;
         int totalResults = 0;
-        String error = null;
 
         try {
             final OffsetRange range = resultRequest.getRequestedRange();
@@ -99,13 +110,11 @@ public class TableResultCreator implements ResultCreator {
                     data.get(),
                     0,
                     0,
-                    rowCreator);
+                    rowCreator,
+                    errorConsumer);
         } catch (final RuntimeException e) {
-            if (e.getMessage() == null || e.getMessage().isBlank()) {
-                error = e.getClass().getName();
-            } else {
-                error = e.getMessage();
-            }
+            LOGGER.debug(e.getMessage(), e);
+            errorConsumer.accept(e);
         }
 
         return new TableResult(
@@ -114,7 +123,7 @@ public class TableResultCreator implements ResultCreator {
                 resultList,
                 new OffsetRange(offset, resultList.size()),
                 totalResults,
-                error);
+                String.join("\n", error));
     }
 
     private int addTableResults(final DataStore data,
@@ -127,7 +136,8 @@ public class TableResultCreator implements ResultCreator {
                                 final Items items,
                                 final int depth,
                                 final int position,
-                                final RowCreator rowCreator) {
+                                final RowCreator rowCreator,
+                                final Consumer<Throwable> errorConsumer) {
         int maxResultsAtThisDepth = maxResults.size(depth);
         int pos = position;
         int resultCountAtThisLevel = 0;
@@ -137,14 +147,14 @@ public class TableResultCreator implements ResultCreator {
 
             // If the result is within the requested window (offset + length) then add it.
             if (pos >= offset && resultList.size() < length) {
-                final Row row = rowCreator.create(fields, item, depth);
+                final Row row = rowCreator.create(fields, item, depth, errorConsumer);
                 if (row != null) {
                     resultList.add(row);
                 } else {
                     hide = true;
                 }
             } else if (rowCreator.hidesRows()) {
-                final Row row = rowCreator.create(fields, item, depth);
+                final Row row = rowCreator.create(fields, item, depth, errorConsumer);
                 if (row == null) {
                     hide = true;
                 }
@@ -167,7 +177,8 @@ public class TableResultCreator implements ResultCreator {
                             data.get(item.getKey()),
                             depth + 1,
                             pos,
-                            rowCreator);
+                            rowCreator,
+                            errorConsumer);
                 }
 
                 // Increment the total results at this depth.
@@ -183,7 +194,10 @@ public class TableResultCreator implements ResultCreator {
 
     private interface RowCreator {
 
-        Row create(Field[] fields, Item item, int depth);
+        Row create(Field[] fields,
+                   Item item,
+                   int depth,
+                   Consumer<Throwable> errorConsumer);
 
         boolean hidesRows();
     }
@@ -201,7 +215,10 @@ public class TableResultCreator implements ResultCreator {
         }
 
         @Override
-        public Row create(final Field[] fields, final Item item, final int depth) {
+        public Row create(final Field[] fields,
+                          final Item item,
+                          final int depth,
+                          final Consumer<Throwable> errorConsumer) {
             final List<String> stringValues = new ArrayList<>(fields.length);
             for (int i = 0; i < fields.length; i++) {
                 final Field field = fields[i];
@@ -257,7 +274,10 @@ public class TableResultCreator implements ResultCreator {
         }
 
         @Override
-        public Row create(final Field[] fields, final Item item, final int depth) {
+        public Row create(final Field[] fields,
+                          final Item item,
+                          final int depth,
+                          final Consumer<Throwable> errorConsumer) {
             Row row = null;
 
             final Map<String, Object> fieldIdToValueMap = new HashMap<>();
@@ -283,11 +303,18 @@ public class TableResultCreator implements ResultCreator {
                             break;
                         }
                     } catch (final RuntimeException e) {
-                        LOGGER.error(e.getMessage(), e);
+                        final RuntimeException exception = new RuntimeException(
+                                "Error applying conditional formatting rule: " +
+                                        rule.toString() +
+                                        " - " +
+                                        e.getMessage());
+                        LOGGER.debug(exception.getMessage(), exception);
+                        errorConsumer.accept(exception);
                     }
                 }
             } catch (final RuntimeException e) {
-                LOGGER.error(e.getMessage(), e);
+                LOGGER.debug(e.getMessage(), e);
+                errorConsumer.accept(e);
             }
 
             if (matchingRule != null) {

@@ -41,6 +41,8 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.xslt.XsltStore;
+import stroom.task.api.SimpleTaskContext;
+import stroom.task.api.TaskContext;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.io.StreamUtil;
@@ -85,6 +87,8 @@ class TestIndexingPipeline extends AbstractProcessIntegrationTest {
     private PipelineDataCache pipelineDataCache;
     @Inject
     private PipelineScopeRunnable pipelineScopeRunnable;
+    @Inject
+    private TaskContext taskContext;
 
     @BeforeEach
     @AfterEach
@@ -139,7 +143,7 @@ class TestIndexingPipeline extends AbstractProcessIntegrationTest {
 
             // Create the parser.
             final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
-            final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData);
+            final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData, taskContext);
 
             final InputStream inputStream = StroomPipelineTestFileUtil.getInputStream(SAMPLE_INDEX_INPUT);
             pipeline.process(inputStream);

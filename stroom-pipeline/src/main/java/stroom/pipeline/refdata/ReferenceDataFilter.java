@@ -19,7 +19,6 @@ package stroom.pipeline.refdata;
 import stroom.bytebuffer.PooledByteBufferOutputStream;
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
-import stroom.pipeline.errorhandler.TerminatedException;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.filter.AbstractXMLFilter;
@@ -787,16 +786,5 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
 
     private boolean hasUriBeenApplied(final String prefix) {
         return appliedPrefixToUriMap.containsKey(prefix);
-    }
-
-    private void checkForInterrupt() {
-        // Need to be checking for thread interruption during the parsing in case the
-        // task has been terminated or it has been interrupted for any other reason.
-        if (Thread.currentThread().isInterrupted()) {
-            LOGGER.debug("Thread interrupted");
-            Thread.currentThread().interrupt();
-            // Throw an exception to indicate the pipeline process was terminated
-            throw new TerminatedException();
-        }
     }
 }

@@ -15,6 +15,25 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2379** : Change ref data lookups to truncate last access time to hourly.
 
+* Issue **#2410** : Fixes for dashboard child selectors like `first()` and `last()`.
+
+* Issue **#2417** : Bad regex filter value no longer logged unnecessarily.
+
+* Issue **#2418** : LMDB environment is now only closed when the search results are no longer needed.
+
+* Issue **#2419** : Conditional formatting errors are now returned to the UI.
+
+* Issue **#2405, #2407** : Errors caused by a thread interrupt when viewing a stream are no longer logged.
+
+* Issue **#2406** : Volume status update is now performed synchronously.
+
+* Issue **#2401, #2408, #2409** : Processing tasks no longer terminate by interrupting threads so error streams can now be written correctly.
+
+
+## [v7.0-beta.144] - 2021-09-08
+
+* Issue **#2398** : Fix to clear interrupt state for threads used by terminated tasks.
+
 * Issue **#2396** : Add `stroom:pointIsInsideXYPolygon` XSLT function.
 
 * Allow HTTP request headers to be customized in HTTPAppender.
@@ -3680,7 +3699,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.143...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.144...HEAD
+[v7.0-beta.144]: https://github.com/gchq/stroom/compare/v7.0-beta.143...v7.0-beta.144
 [v7.0-beta.143]: https://github.com/gchq/stroom/compare/v7.0-beta.142...v7.0-beta.143
 [v7.0-beta.142]: https://github.com/gchq/stroom/compare/v7.0-beta.141...v7.0-beta.142
 [v7.0-beta.141]: https://github.com/gchq/stroom/compare/v7.0-beta.140...v7.0-beta.141

@@ -127,11 +127,9 @@ class DataResourceImpl implements DataResource, FetchWithLongId<List<DataInfoSec
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
     public AbstractFetchDataResult fetch(final FetchDataRequest request) {
-
         final String idStr = request.getSourceLocation() != null
                 ? request.getSourceLocation().getIdentifierString()
                 : "?";
-
         final StroomEventLoggingService stroomEventLoggingService = stroomEventLoggingServiceProvider.get();
 
         return stroomEventLoggingService.loggedResult(
@@ -166,7 +164,6 @@ class DataResourceImpl implements DataResource, FetchWithLongId<List<DataInfoSec
                 },
                 null);
     }
-
 
     @AutoLogged(OperationType.UNLOGGED) // Not an explicit user action
     @Override

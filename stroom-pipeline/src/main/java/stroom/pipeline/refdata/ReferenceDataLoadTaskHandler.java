@@ -29,7 +29,6 @@ import stroom.pipeline.errorhandler.ErrorReceiverIdDecorator;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;
 import stroom.pipeline.errorhandler.StoredErrorReceiver;
-import stroom.pipeline.errorhandler.TerminatedException;
 import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
@@ -46,6 +45,7 @@ import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskTerminatedException;
 import stroom.util.shared.Severity;
 
 import org.slf4j.Logger;
@@ -80,6 +80,7 @@ class ReferenceDataLoadTaskHandler {
     private final PipelineDataCache pipelineDataCache;
     private final SecurityContext securityContext;
 
+    private TaskContext taskContext;
     private ErrorReceiverIdDecorator errorReceiver;
 
     @Inject
@@ -118,6 +119,7 @@ class ReferenceDataLoadTaskHandler {
      * reference data key, value maps.
      */
     public StoredErrorReceiver exec(final TaskContext taskContext, final RefStreamDefinition refStreamDefinition) {
+        this.taskContext = taskContext;
         final StoredErrorReceiver storedErrorReceiver = new StoredErrorReceiver();
         securityContext.secure(() -> {
             // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission
@@ -156,7 +158,7 @@ class ReferenceDataLoadTaskHandler {
 
                         // Create the parser.
                         final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
-                        final Pipeline pipeline = pipelineFactory.create(pipelineData);
+                        final Pipeline pipeline = pipelineFactory.create(pipelineData, taskContext);
 
                         populateMaps(
                                 pipeline,
@@ -203,8 +205,7 @@ class ReferenceDataLoadTaskHandler {
                 // Typically ref data will only have a single partIndex so if there are
                 // multiple then overrideExisting may be needed.
                 final long count = source.count();
-
-                for (long index = 0; index < count && !Thread.currentThread().isInterrupted(); index++) {
+                for (long index = 0; index < count && !taskContext.isTerminated(); index++) {
                     metaHolder.setPartIndex(index);
                     streamLocationFactory.setPartIndex(index);
 
@@ -222,7 +223,8 @@ class ReferenceDataLoadTaskHandler {
                         pipeline.process(inputStream, encoding);
                     }
                 }
-            } catch (TerminatedException e) {
+                refDataLoader.completeProcessing(ProcessingState.COMPLETE);
+            } catch (TaskTerminatedException e) {
                 // Task terminated
                 log(Severity.FATAL_ERROR, e.getMessage(), e);
                 refDataLoader.completeProcessing(ProcessingState.TERMINATED);
@@ -232,10 +234,7 @@ class ReferenceDataLoadTaskHandler {
                 refDataLoader.completeProcessing(ProcessingState.FAILED);
             } finally {
                 try {
-                    // TODO do we need to end processing if we got an ex above
                     pipeline.endProcessing();
-                    // TODO this is overriding the status from the catch blocks above
-                    refDataLoader.completeProcessing(ProcessingState.COMPLETE);
                 } catch (final RuntimeException e) {
                     log(Severity.FATAL_ERROR, e.getMessage(), e);
                     refDataLoader.completeProcessing(ProcessingState.FAILED);

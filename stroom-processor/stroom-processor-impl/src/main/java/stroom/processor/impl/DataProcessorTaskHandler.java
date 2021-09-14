@@ -32,6 +32,7 @@ import stroom.processor.shared.TaskStatus;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -78,7 +79,10 @@ public class DataProcessorTaskHandler {
         // Perform processing as the processing user.
         return securityContext.asProcessingUserResult(() -> {
             // Execute with a task context.
-            return taskContextFactory.contextResult("Data Processor", taskContext -> exec(taskContext, task)).get();
+            return taskContextFactory.contextResult(
+                    "Data Processor",
+                    TerminateHandlerFactory.NOOP_FACTORY,
+                    taskContext -> exec(taskContext, task)).get();
         });
     }
 
@@ -140,7 +144,7 @@ public class DataProcessorTaskHandler {
                                 .exec(taskContext, destStreamProcessor, destProcessorFilter, processorTask, source);
                         // Only record completion for this task if it was not
                         // terminated.
-                        if (!Thread.currentThread().isInterrupted()) {
+                        if (!taskContext.isTerminated()) {
                             complete = true;
                         }
 

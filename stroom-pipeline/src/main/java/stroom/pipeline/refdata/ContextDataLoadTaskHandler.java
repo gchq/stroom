@@ -26,7 +26,6 @@ import stroom.pipeline.errorhandler.ErrorReceiverIdDecorator;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;
 import stroom.pipeline.errorhandler.StoredErrorReceiver;
-import stroom.pipeline.errorhandler.TerminatedException;
 import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
@@ -40,6 +39,8 @@ import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.api.SecurityContext;
+import stroom.task.api.TaskContext;
+import stroom.task.api.TaskTerminatedException;
 import stroom.util.io.BasicStreamCloser;
 import stroom.util.io.StreamCloser;
 import stroom.util.shared.Severity;
@@ -98,7 +99,8 @@ class ContextDataLoadTaskHandler {
                      final String feedName,
                      final DocRef contextPipeline,
                      final RefStreamDefinition refStreamDefinition,
-                     final RefDataStore refDataStore) {
+                     final RefDataStore refDataStore,
+                     final TaskContext taskContext) {
         Objects.requireNonNull(meta);
         securityContext.secure(() -> {
             // Elevate user permissions so that inherited pipelines that the user only has 'Use'
@@ -131,7 +133,7 @@ class ContextDataLoadTaskHandler {
                         // Create the parser.
                         final PipelineDoc pipelineDoc = pipelineStore.readDocument(contextPipeline);
                         final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
-                        final Pipeline pipeline = pipelineFactory.create(pipelineData);
+                        final Pipeline pipeline = pipelineFactory.create(pipelineData, taskContext);
 
                         feedHolder.setFeedName(feedName);
 
@@ -167,7 +169,8 @@ class ContextDataLoadTaskHandler {
                                         // Parse the stream. The ReferenceDataFilter will process the context data
                                         pipeline.process(inputStream, encoding);
 
-                                    } catch (TerminatedException e) {
+                                        refDataLoader.completeProcessing(ProcessingState.COMPLETE);
+                                    } catch (TaskTerminatedException e) {
                                         // Task terminated
                                         log(Severity.FATAL_ERROR, e.getMessage(), e);
                                         refDataLoader.completeProcessing(ProcessingState.TERMINATED);
@@ -176,10 +179,7 @@ class ContextDataLoadTaskHandler {
                                         refDataLoader.completeProcessing(ProcessingState.FAILED);
                                     } finally {
                                         try {
-                                            // TODO do we need to end processing if we got an ex above
                                             pipeline.endProcessing();
-                                            // TODO this is overriding the status from the catch blocks above
-                                            refDataLoader.completeProcessing(ProcessingState.COMPLETE);
                                         } catch (final RuntimeException e) {
                                             log(Severity.FATAL_ERROR, e.getMessage(), e);
                                             refDataLoader.completeProcessing(ProcessingState.FAILED);
