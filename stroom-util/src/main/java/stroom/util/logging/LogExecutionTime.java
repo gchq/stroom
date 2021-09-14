@@ -25,6 +25,10 @@ public class LogExecutionTime {
 
     private final long startTime = System.currentTimeMillis();
 
+    public static LogExecutionTime start() {
+        return new LogExecutionTime();
+    }
+
     public long getDuration() {
         return System.currentTimeMillis() - startTime;
     }

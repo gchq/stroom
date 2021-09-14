@@ -89,7 +89,7 @@ class FsCleanExecutor {
     public void clean() {
         parentContext.info(() -> "Starting file system clean task. oldAge = " + oldAge);
 
-        final LogExecutionTime logExecutionTime = new LogExecutionTime();
+        final LogExecutionTime logExecutionTime = LogExecutionTime.start();
 
         final List<FsVolume> volumeList = volumeService.find(FindFsVolumeCriteria.matchAll()).getValues();
         if (volumeList != null && volumeList.size() > 0) {
