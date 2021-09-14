@@ -2243,6 +2243,12 @@ export interface RefStreamDefinition {
   streamId?: number;
 }
 
+export interface RefStreamProcessingInfo {
+  mapNames?: string[];
+  refDataProcessingInfo?: RefDataProcessingInfo;
+  refStreamDefinition?: RefStreamDefinition;
+}
+
 export interface ReferenceLoader {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   loaderPipeline: DocRef;
@@ -3100,7 +3106,6 @@ export interface TaskProgressResponse {
 
 export interface TerminateTaskProgressRequest {
   criteria?: FindTaskCriteria;
-  kill?: boolean;
 }
 
 export type TextComponentSettings = ComponentSettings & {
@@ -6783,7 +6788,10 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request GET:/refData/v1/entries
      * @secure
      */
-    getReferenceStoreEntries: (query?: { limit?: number }, params: RequestParams = {}) =>
+    getReferenceStoreEntries: (
+      query?: { limit?: number; refStreamId?: number; mapName?: string },
+      params: RequestParams = {},
+    ) =>
       this.request<any, RefStoreEntry[]>({
         path: `/refData/v1/entries`,
         method: "GET",
@@ -6797,7 +6805,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      *
      * @tags Reference Data
      * @name LookupReferenceData
-     * @summary Perform a reference data lookup using the supplied lookup request.
+     * @summary Perform a reference data lookup using the supplied lookup request. Reference data will be loaded if required using the supplied reference pipeline.
      * @request POST:/refData/v1/lookup
      * @secure
      */
@@ -6824,6 +6832,27 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       this.request<any, boolean>({
         path: `/refData/v1/purge/${purgeAge}`,
         method: "DELETE",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * @description This is primarily intended  for small scale debugging in non-production environments. If no limit is set a default limit is applied else the results will be limited to limit entries.
+     *
+     * @tags Reference Data
+     * @name GetReferenceStreamProcessingInfoEntries
+     * @summary List processing info entries for all ref streams
+     * @request GET:/refData/v1/refStreamInfo
+     * @secure
+     */
+    getReferenceStreamProcessingInfoEntries: (
+      query?: { limit?: number; refStreamId?: number; mapName?: string },
+      params: RequestParams = {},
+    ) =>
+      this.request<any, RefStreamProcessingInfo[]>({
+        path: `/refData/v1/refStreamInfo`,
+        method: "GET",
+        query: query,
         secure: true,
         ...params,
       }),

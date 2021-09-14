@@ -55,6 +55,8 @@ import stroom.pipeline.writer.OutputStreamAppender;
 import stroom.pipeline.writer.TextWriter;
 import stroom.pipeline.writer.XMLWriter;
 import stroom.security.api.SecurityContext;
+import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.ui.config.shared.SourceConfig;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
@@ -81,6 +83,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.channels.ClosedByInterruptException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
@@ -121,6 +124,7 @@ public class DataFetcher {
     private final SecurityContext securityContext;
     private final PipelineScopeRunnable pipelineScopeRunnable;
     private final SourceConfig sourceConfig;
+    private final TaskContextFactory taskContextFactory;
 
     //    private Long index = 0L;
     private Long partCount = 0L;
@@ -145,7 +149,8 @@ public class DataFetcher {
                 final PipelineDataCache pipelineDataCache,
                 final SecurityContext securityContext,
                 final PipelineScopeRunnable pipelineScopeRunnable,
-                final SourceConfig sourceConfig) {
+                final SourceConfig sourceConfig,
+                final TaskContextFactory taskContextFactory) {
         this.streamStore = streamStore;
         this.feedProperties = feedProperties;
         this.feedHolderProvider = feedHolderProvider;
@@ -159,6 +164,7 @@ public class DataFetcher {
         this.securityContext = securityContext;
         this.pipelineScopeRunnable = pipelineScopeRunnable;
         this.sourceConfig = sourceConfig;
+        this.taskContextFactory = taskContextFactory;
     }
 
     public Set<String> getAvailableChildStreamTypes(final long id, final long partNo) {
@@ -184,121 +190,133 @@ public class DataFetcher {
     }
 
     public AbstractFetchDataResult getData(final FetchDataRequest fetchDataRequest) {
-        LOGGER.debug(() -> LogUtil.message("getData called for {}:{}:{}",
-                fetchDataRequest.getSourceLocation().getMetaId(),
-                fetchDataRequest.getSourceLocation().getPartIndex(),
-                fetchDataRequest.getSourceLocation().getRecordIndex()));
+        return taskContextFactory.contextResult("Data Fetcher", taskContext -> {
+            taskContext.info(() -> "Fetching data for " +
+                    fetchDataRequest.getSourceLocation().getMetaId() +
+                    ":" +
+                    fetchDataRequest.getSourceLocation().getPartIndex() +
+                    ":" +
+                    fetchDataRequest.getSourceLocation().getRecordIndex());
 
-        // Allow users with 'Use' permission to read data, pipelines and XSLT.
-        return securityContext.useAsReadResult(() -> {
-            Set<String> availableChildStreamTypes;
-            String feedName = null;
-            String streamTypeName = null;
-            Meta meta = null;
-            final SourceLocation sourceLocation = fetchDataRequest.getSourceLocation();
-
-
-            // Get the stream source.
-            try (final Source source = streamStore.openSource(
+            LOGGER.debug(() -> LogUtil.message("getData called for {}:{}:{}",
                     fetchDataRequest.getSourceLocation().getMetaId(),
-                    true)) {
+                    fetchDataRequest.getSourceLocation().getPartIndex(),
+                    fetchDataRequest.getSourceLocation().getRecordIndex()));
 
-                // If we have no stream then let the client know it has been
-                // deleted.
-                if (source == null) {
-                    return createEmptyResult(
-                            fetchDataRequest,
-                            feedName,
-                            null,
-                            sourceLocation,
-                            "## Stream has been deleted ## ");
-                }
+            // Allow users with 'Use' permission to read data, pipelines and XSLT.
+            return securityContext.useAsReadResult(() -> {
+                Set<String> availableChildStreamTypes;
+                String feedName = null;
+                String streamTypeName = null;
+                Meta meta = null;
+                final SourceLocation sourceLocation = fetchDataRequest.getSourceLocation();
 
-                meta = source.getMeta();
-                feedName = meta.getFeedName();
-                streamTypeName = meta.getTypeName();
+
+                // Get the stream source.
+                try (final Source source = streamStore.openSource(
+                        fetchDataRequest.getSourceLocation().getMetaId(),
+                        true)) {
+
+                    // If we have no stream then let the client know it has been
+                    // deleted.
+                    if (source == null) {
+                        return createEmptyResult(
+                                fetchDataRequest,
+                                feedName,
+                                null,
+                                sourceLocation,
+                                "## Stream has been deleted ## ");
+                    }
+
+                    meta = source.getMeta();
+                    feedName = meta.getFeedName();
+                    streamTypeName = meta.getTypeName();
 
 //                if (sourceLocation.getPartNo() < 0 || sourceLocation.getSegmentNo() < 0) {
-                if (sourceLocation.getPartIndex() < 0) {
-                    // Handle cases during stepping when we have not yet stepped
-                    return createEmptyResult(
-                            fetchDataRequest,
-                            feedName,
-                            streamTypeName,
-                            sourceLocation,
-                            "## No data ##");
-                }
+                    if (sourceLocation.getPartIndex() < 0) {
+                        // Handle cases during stepping when we have not yet stepped
+                        return createEmptyResult(
+                                fetchDataRequest,
+                                feedName,
+                                streamTypeName,
+                                sourceLocation,
+                                "## No data ##");
+                    }
 
-                long partIndex = fetchDataRequest.getSourceLocation().getPartIndex();
-                partCount = source.count();
+                    long partIndex = fetchDataRequest.getSourceLocation().getPartIndex();
+                    partCount = source.count();
 
-                // Prevent user going past last part
-                if (partIndex >= partCount) {
-                    partIndex = partCount - 1;
-                }
+                    // Prevent user going past last part
+                    if (partIndex >= partCount) {
+                        partIndex = partCount - 1;
+                    }
 
-                try (final InputStreamProvider inputStreamProvider = source.get(partIndex)) {
-                    // Find out which child stream types are available.
-                    availableChildStreamTypes = getAvailableChildStreamTypes(inputStreamProvider);
+                    try (final InputStreamProvider inputStreamProvider = source.get(partIndex)) {
+                        // Find out which child stream types are available.
+                        availableChildStreamTypes = getAvailableChildStreamTypes(inputStreamProvider);
 
-                    final String requestedChildStreamType = sourceLocation.getOptChildType()
-                            .orElse(null);
-                    try (final SegmentInputStream segmentInputStream = inputStreamProvider.get(
-                            requestedChildStreamType)) {
+                        final String requestedChildStreamType = sourceLocation.getOptChildType()
+                                .orElse(null);
+                        try (final SegmentInputStream segmentInputStream = inputStreamProvider.get(
+                                requestedChildStreamType)) {
 
-                        final boolean isSegmented = segmentInputStream.count() > 1;
+                            final boolean isSegmented = segmentInputStream.count() > 1;
 
-                        // segment no doesn't matter for non-segmented data
-                        if (isSegmented && sourceLocation.getRecordIndex() < 0) {
-                            // Handle cases during stepping when we have not yet stepped
-                            return createEmptyResult(
-                                    fetchDataRequest,
-                                    feedName,
-                                    streamTypeName,
-                                    sourceLocation,
-                                    "## No data ##");
-                        }
+                            // segment no doesn't matter for non-segmented data
+                            if (isSegmented && sourceLocation.getRecordIndex() < 0) {
+                                // Handle cases during stepping when we have not yet stepped
+                                return createEmptyResult(
+                                        fetchDataRequest,
+                                        feedName,
+                                        streamTypeName,
+                                        sourceLocation,
+                                        "## No data ##");
+                            }
 
-                        // If this is an error stream and the UI is requesting markers then
-                        // create a list of markers.
-                        if (StreamTypeNames.ERROR.equals(streamTypeName) && fetchDataRequest.isMarkerMode()) {
-                            return createErrorMarkerResult(
+                            // If this is an error stream and the UI is requesting markers then
+                            // create a list of markers.
+                            if (StreamTypeNames.ERROR.equals(streamTypeName) && fetchDataRequest.isMarkerMode()) {
+                                return createErrorMarkerResult(
+                                        feedName,
+                                        streamTypeName,
+                                        segmentInputStream,
+                                        fetchDataRequest.getSourceLocation(),
+                                        availableChildStreamTypes,
+                                        fetchDataRequest.getExpandedSeverities());
+                            }
+
+                            return createDataResult(
                                     feedName,
                                     streamTypeName,
                                     segmentInputStream,
-                                    fetchDataRequest.getSourceLocation(),
                                     availableChildStreamTypes,
-                                    fetchDataRequest.getExpandedSeverities());
+                                    source,
+                                    inputStreamProvider,
+                                    fetchDataRequest,
+                                    taskContext);
                         }
-
-                        return createDataResult(
-                                feedName,
-                                streamTypeName,
-                                segmentInputStream,
-                                availableChildStreamTypes,
-                                source,
-                                inputStreamProvider,
-                                fetchDataRequest);
                     }
+
+                } catch (final IOException | RuntimeException e) {
+                    if (e.getCause() instanceof ClosedByInterruptException) {
+                        throw new ViewDataException(sourceLocation, e.getMessage());
+                    }
+
+                    if (meta != null) {
+                        if (Status.LOCKED.equals(meta.getStatus())) {
+                            throw new ViewDataException(sourceLocation, "You cannot view locked streams.");
+                        }
+                        if (Status.DELETED.equals(meta.getStatus())) {
+                            throw new ViewDataException(sourceLocation, "This data may no longer exist.");
+                        }
+                    }
+
+                    LOGGER.error("Error fetching data", e);
+                    throw new ViewDataException(sourceLocation, e.getMessage());
                 }
 
-            } catch (final IOException | RuntimeException e) {
-
-                if (meta != null) {
-                    if (Status.LOCKED.equals(meta.getStatus())) {
-                        throw new ViewDataException(sourceLocation, "You cannot view locked streams.");
-                    }
-                    if (Status.DELETED.equals(meta.getStatus())) {
-                        throw new ViewDataException(sourceLocation, "This data may no longer exist.");
-                    }
-                }
-
-                LOGGER.error("Error fetching data", e);
-
-                throw new ViewDataException(sourceLocation, e.getMessage());
-            }
-
-        });
+            });
+        }).get();
     }
 
     @NotNull
@@ -384,7 +402,8 @@ public class DataFetcher {
                                              final Set<String> availableChildStreamTypes,
                                              final Source streamSource,
                                              final InputStreamProvider inputStreamProvider,
-                                             final FetchDataRequest fetchDataRequest) throws IOException {
+                                             final FetchDataRequest fetchDataRequest,
+                                             final TaskContext taskContext) throws IOException {
         final SourceLocation sourceLocation = fetchDataRequest.getSourceLocation();
         // Read the input stream into a string.
         // If the input stream has multiple segments then we are going to
@@ -429,7 +448,8 @@ public class DataFetcher {
                 inputStreamProvider,
                 fetchDataRequest,
                 dataType,
-                rawResult);
+                rawResult,
+                taskContext);
     }
 
     @NotNull
@@ -440,7 +460,8 @@ public class DataFetcher {
                                                  final InputStreamProvider inputStreamProvider,
                                                  final FetchDataRequest fetchDataRequest,
                                                  final DataType dataType,
-                                                 final RawResult rawResult) {
+                                                 final RawResult rawResult,
+                                                 final TaskContext taskContext) {
 
         String output;
         final DocRef pipeline = fetchDataRequest.getPipeline();
@@ -453,7 +474,8 @@ public class DataFetcher {
                         rawResult.getRawData(),
                         feedName,
                         pipeline,
-                        inputStreamProvider);
+                        inputStreamProvider,
+                        taskContext);
 
             } catch (final RuntimeException e) {
                 output = e.getMessage();
@@ -920,7 +942,8 @@ public class DataFetcher {
                                final String string,
                                final String feedName,
                                final DocRef pipelineRef,
-                               final InputStreamProvider inputStreamProvider) {
+                               final InputStreamProvider inputStreamProvider,
+                               final TaskContext taskContext) {
         return pipelineScopeRunnable.scopeResult(() -> {
             try {
 
@@ -952,7 +975,7 @@ public class DataFetcher {
                 if (pipelineData == null) {
                     throw new EntityServiceException("Pipeline has no data");
                 }
-                final Pipeline pipeline = pipelineFactory.create(pipelineData);
+                final Pipeline pipeline = pipelineFactory.create(pipelineData, taskContext);
 
                 // Try and find the writer on this pipeline.
                 AbstractWriter writer = null;

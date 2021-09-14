@@ -29,7 +29,7 @@ import { Confirm, PromptType } from "../../Prompt/Prompt";
 
 const initialToken: Token = {
   userId: "",
-  tokenType: "user",
+  tokenType: "api",
   data: "",
   expiresOnMs: 0,
   comments: "",

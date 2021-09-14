@@ -37,6 +37,7 @@ import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.api.SecurityContext;
+import stroom.task.api.TaskContext;
 import stroom.util.io.BasicStreamCloser;
 import stroom.util.io.StreamCloser;
 import stroom.util.shared.Severity;
@@ -94,7 +95,8 @@ class ContextDataLoadTaskHandler {
                      final String feedName,
                      final DocRef contextPipeline,
                      final RefStreamDefinition refStreamDefinition,
-                     final RefDataStore refDataStore) {
+                     final RefDataStore refDataStore,
+                     final TaskContext taskContext) {
         securityContext.secure(() -> {
             // Elevate user permissions so that inherited pipelines that the user only has 'Use'
             // permission on can be read.
@@ -126,7 +128,7 @@ class ContextDataLoadTaskHandler {
                         // Create the parser.
                         final PipelineDoc pipelineDoc = pipelineStore.readDocument(contextPipeline);
                         final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
-                        final Pipeline pipeline = pipelineFactory.create(pipelineData);
+                        final Pipeline pipeline = pipelineFactory.create(pipelineData, taskContext);
 
                         feedHolder.setFeedName(feedName);
 

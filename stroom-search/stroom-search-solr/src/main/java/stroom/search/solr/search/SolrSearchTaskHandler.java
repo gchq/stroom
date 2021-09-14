@@ -83,8 +83,7 @@ public class SolrSearchTaskHandler {
                         LOGGER.logDurationIfDebugEnabled(
                                 () -> {
                                     try {
-                                        if (Thread.interrupted()) {
-                                            Thread.currentThread().interrupt();
+                                        if (Thread.currentThread().isInterrupted()) {
                                             throw new RuntimeException("Interrupted");
                                         }
 
@@ -354,8 +353,7 @@ public class SolrSearchTaskHandler {
 
         @Override
         public void endDoc(final Object docObj) {
-            if (Thread.interrupted()) {
-                Thread.currentThread().interrupt();
+            if (Thread.currentThread().isInterrupted()) {
                 throw new RuntimeException("Interrupted");
             }
 

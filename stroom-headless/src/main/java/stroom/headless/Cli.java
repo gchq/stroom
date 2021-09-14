@@ -22,6 +22,7 @@ import stroom.data.zip.StroomZipNameSet;
 import stroom.docstore.impl.fs.FSPersistenceConfig;
 import stroom.importexport.impl.ImportExportService;
 import stroom.proxy.repo.StroomZipRepository;
+import stroom.task.api.SimpleTaskContext;
 import stroom.task.impl.ExternalShutdownController;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.io.AbstractFileVisitor;
@@ -278,7 +279,7 @@ public class Cli extends AbstractCommandLineTool {
 
                 final CliTranslationTaskHandler handler = translationTaskHandlerProvider.get();
                 handler.exec(IgnoreCloseInputStream.wrap(dataStream), IgnoreCloseInputStream.wrap(metaStream),
-                        IgnoreCloseInputStream.wrap(contextStream), errorWriter);
+                        IgnoreCloseInputStream.wrap(contextStream), errorWriter, new SimpleTaskContext());
             }
 
             // Close the zip file.

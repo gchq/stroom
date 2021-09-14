@@ -294,7 +294,7 @@ public abstract class AbstractXMLFilter extends AbstractElement implements XMLFi
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
             throws SAXException {
-        terminationCheck();
+        checkTermination();
         contentHandler.startElement(uri, localName, qName, atts);
     }
 

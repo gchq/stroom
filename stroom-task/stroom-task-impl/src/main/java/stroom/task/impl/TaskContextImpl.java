@@ -18,27 +18,35 @@ package stroom.task.impl;
 
 import stroom.security.api.UserIdentity;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskTerminatedException;
+import stroom.task.api.TerminateHandler;
 import stroom.task.shared.TaskId;
 
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 public class TaskContextImpl implements TaskContext {
 
     private final TaskId taskId;
-    private final UserIdentity userIdentity;
     private final String name;
+    private final UserIdentity userIdentity;
+    private final AtomicBoolean stop;
     private final long submitTimeMs = System.currentTimeMillis();
     private final Set<TaskContextImpl> children = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     private volatile boolean terminate;
     private volatile Supplier<String> messageSupplier;
     private volatile Thread thread;
+    private volatile TerminateHandler terminateHandler;
 
-    public TaskContextImpl(final TaskId taskId, final String name, final UserIdentity userIdentity) {
+    public TaskContextImpl(final TaskId taskId,
+                           final String name,
+                           final UserIdentity userIdentity,
+                           final AtomicBoolean stop) {
         Objects.requireNonNull(taskId, "Task has null id");
         Objects.requireNonNull(name, "Task has null name");
         Objects.requireNonNull(userIdentity, "Task has null user identity: " + name);
@@ -46,6 +54,7 @@ public class TaskContextImpl implements TaskContext {
         this.taskId = taskId;
         this.userIdentity = userIdentity;
         this.name = name;
+        this.stop = stop;
     }
 
     @Override
@@ -58,11 +67,25 @@ public class TaskContextImpl implements TaskContext {
         return taskId;
     }
 
+    @Override
+    public boolean isTerminated() {
+        return terminate;
+    }
+
+    @Override
+    public void checkTermination() throws TaskTerminatedException {
+        if (isTerminated()) {
+            throw new TaskTerminatedException(stop.get());
+        }
+    }
+
     synchronized void terminate() {
         this.terminate = true;
         children.forEach(TaskContextImpl::terminate);
 
-        interrupt();
+        if (terminateHandler != null) {
+            terminateHandler.onTerminate();
+        }
     }
 
     UserIdentity getUserIdentity() {
@@ -77,40 +100,15 @@ public class TaskContextImpl implements TaskContext {
         return userIdentity.getSessionId();
     }
 
+    synchronized void setTerminateHandler(final TerminateHandler terminateHandler) {
+        this.terminateHandler = terminateHandler;
+        if (terminate && terminateHandler != null) {
+            terminateHandler.onTerminate();
+        }
+    }
+
     synchronized void setThread(final Thread thread) {
         this.thread = thread;
-        if (terminate) {
-            interrupt();
-        }
-    }
-
-    boolean isTerminated() {
-        final Thread thread = this.thread;
-        if (thread != null) {
-            if (thread.isInterrupted()) {
-                // Make sure the thread hasn't been reassigned.
-                if (thread == this.thread) {
-                    return true;
-                }
-            }
-        }
-
-        return terminate;
-    }
-
-    synchronized void interrupt() {
-        final Thread thread = this.thread;
-        if (thread != null) {
-            thread.interrupt();
-        }
-    }
-
-    @SuppressWarnings("deprecation")
-    synchronized void kill() {
-        final Thread thread = this.thread;
-        if (thread != null) {
-            thread.stop();
-        }
     }
 
     String getThreadName() {

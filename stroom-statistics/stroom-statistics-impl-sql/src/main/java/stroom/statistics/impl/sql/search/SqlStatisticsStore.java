@@ -74,7 +74,7 @@ public class SqlStatisticsStore implements Store {
 
     private void complete() {
         LOGGER.debug("complete called");
-        coprocessors.getCompletionState().complete();
+        coprocessors.getCompletionState().signalComplete();
     }
 
     @Override

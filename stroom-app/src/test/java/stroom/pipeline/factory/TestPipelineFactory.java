@@ -25,6 +25,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.task.api.SimpleTaskContext;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.common.StroomPipelineTestFileUtil;
 
@@ -56,7 +57,7 @@ class TestPipelineFactory extends AbstractProcessIntegrationTest {
                 elementRegistryFactory,
                 elementRegistryFactory,
                 new SimpleProcessorFactory());
-        final Pipeline pipeline = pipelineFactory.create(mergedPipelineData);
+        final Pipeline pipeline = pipelineFactory.create(mergedPipelineData, new SimpleTaskContext());
 
         System.out.println(pipeline);
     }
@@ -94,6 +95,6 @@ class TestPipelineFactory extends AbstractProcessIntegrationTest {
         assertThat(pipelineSerialiser.getXmlFromPipelineData(pipeline3.getPipelineData())).isEqualTo(data3);
 
         // Create a parser with the merged config.
-        pipelineFactory.create(pipelineData3);
+        pipelineFactory.create(pipelineData3, new SimpleTaskContext());
     }
 }

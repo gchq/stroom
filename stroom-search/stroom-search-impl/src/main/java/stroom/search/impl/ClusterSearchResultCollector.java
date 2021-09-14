@@ -103,11 +103,11 @@ public class ClusterSearchResultCollector implements Store {
                         if (!(t instanceof TaskTerminatedException)) {
                             LOGGER.error(t.getMessage(), t);
                             onFailure(nodeName, t);
-                            coprocessors.getCompletionState().complete();
+                            coprocessors.getCompletionState().signalComplete();
                             throw new RuntimeException(t.getMessage(), t);
                         }
 
-                        coprocessors.getCompletionState().complete();
+                        coprocessors.getCompletionState().signalComplete();
                     }
                 });
     }
@@ -118,7 +118,7 @@ public class ClusterSearchResultCollector implements Store {
     }
 
     public void complete() {
-        completionState.complete();
+        completionState.signalComplete();
     }
 
     @Override

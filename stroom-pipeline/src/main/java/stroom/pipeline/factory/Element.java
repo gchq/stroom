@@ -16,6 +16,8 @@
 
 package stroom.pipeline.factory;
 
+import stroom.task.api.Terminator;
+
 import java.util.List;
 
 public interface Element extends HasElementId {

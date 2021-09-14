@@ -66,7 +66,6 @@ public class UserTaskManagerPresenter
     private final NodeManager nodeManager;
     private final Map<TaskProgress, UserTaskPresenter> taskPresenterMap = new HashMap<>();
     private final Map<TaskId, TaskProgress> idMap = new HashMap<>();
-    private final Set<TaskId> requestTaskKillSet = new HashSet<>();
     private final Timer refreshTimer;
     private boolean visible;
     private final Set<String> refreshing = new HashSet<>();
@@ -157,17 +156,11 @@ public class UserTaskManagerPresenter
         // Combine data from all nodes.
         final ResultPage<TaskProgress> list = TaskProgressUtil.combine(criteria, responseMap.values(), treeAction);
 
-        final HashSet<TaskId> idSet = new HashSet<>();
-        for (final TaskProgress value : list.getValues()) {
-            idSet.add(value.getId());
-        }
-        requestTaskKillSet.retainAll(idSet);
-
         // Refresh the display.
         setData(list);
     }
 
-    private void setData(ResultPage<TaskProgress> list) {
+    private void setData(final ResultPage<TaskProgress> list) {
         if (visible) {
             final Set<UserTaskPresenter> tasksToRemove = new HashSet<>(taskPresenterMap.values());
 
@@ -212,15 +205,10 @@ public class UserTaskManagerPresenter
     @Override
     public void onTerminate(final TaskProgress taskProgress) {
         String message = "Are you sure you want to terminate this task?";
-        if (requestTaskKillSet.contains(taskProgress.getId())) {
-            message = "Are you sure you want to kill this task?";
-        }
         ConfirmEvent.fire(UserTaskManagerPresenter.this, message, result -> {
-            final boolean kill = requestTaskKillSet.contains(taskProgress.getId());
             final FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
             findTaskCriteria.addId(taskProgress.getId());
-            requestTaskKillSet.add(taskProgress.getId());
-            final TerminateTaskProgressRequest request = new TerminateTaskProgressRequest(findTaskCriteria, kill);
+            final TerminateTaskProgressRequest request = new TerminateTaskProgressRequest(findTaskCriteria);
             final Rest<Boolean> rest = restFactory.create();
             rest
                     .call(TASK_RESOURCE)
