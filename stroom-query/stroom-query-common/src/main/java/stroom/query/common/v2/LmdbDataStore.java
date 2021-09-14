@@ -588,6 +588,11 @@ public class LmdbDataStore implements DataStore {
                                       final int trimmedSize,
                                       final boolean allowSort,
                                       final boolean trimTop) {
+        // If we don't have any children at the requested depth then return an empty list.
+        if (compiledSorters.length <= depth) {
+            return ItemArrayList.EMPTY;
+        }
+
         final ItemArrayList list = new ItemArrayList(10);
 
         final ByteBuffer start = LmdbKey.createKeyStem(depth, parentKey);
@@ -881,6 +886,8 @@ public class LmdbDataStore implements DataStore {
 
     private static class ItemArrayList {
 
+        private static final ItemArrayList EMPTY = new ItemArrayList(0);
+
         private final int minArraySize;
         private ItemImpl[] array;
         private int size;
@@ -900,7 +907,7 @@ public class LmdbDataStore implements DataStore {
                 final int len = Math.max(minArraySize, trimmedSize);
                 final ItemImpl[] newArray = new ItemImpl[len];
                 if (trimTop) {
-                    System.arraycopy(array, array.length - trimmedSize, newArray, 0, trimmedSize);
+                    System.arraycopy(array, size - trimmedSize, newArray, 0, trimmedSize);
                 } else {
                     System.arraycopy(array, 0, newArray, 0, trimmedSize);
                 }
@@ -968,7 +975,7 @@ public class LmdbDataStore implements DataStore {
                         maxRows = ((BottomSelector) generator).getLimit();
                         trimTop = true;
                     } else if (generator instanceof NthSelector) {
-                        maxRows = ((NthSelector) generator).getPos();
+                        maxRows = ((NthSelector) generator).getPos() + 1;
                     }
 
                     final ItemArrayList items = lmdbDataStore.getChildren(
@@ -988,7 +995,7 @@ public class LmdbDataStore implements DataStore {
                         @Override
                         public Val get(final int pos) {
                             if (pos < items.size) {
-                                items.get(pos).generators[index].eval();
+                                return items.get(pos).generators[index].eval();
                             }
                             return ValNull.INSTANCE;
                         }

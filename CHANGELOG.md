@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Change debug summary logging in Data Delete job to info level.
 
+* Issue **#2410** : Fixes for dashboard child selectors like `first()` and `last()`.
+
 * Issue **#2417** : Bad regex filter value no longer logged unnecessarily.
 
 * Issue **#2418** : LMDB environment is now only closed when the search results are no longer needed.
