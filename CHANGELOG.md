@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2382** : Improve error message for invalid feed encodings.
 
+* Uplift Dropwizard from 1.3.14 to 1.3.29.
+
+* Issue **#2424** : Stop session creation for rest calls. Remove unused SessionMap class.
+
+* Change debug summary logging in Data Delete job to info level.
+
+* Issue **#2402** : Improved logging for error caused by invalid meta filter values.
+
+* Issue **#2404** : Added debug to help diagnose issue.
+
+* Issue **#2423** : Added error logging and configuration to handle buffer overflows when dealing with large search result values.
+
 * Issue **#2410** : Fixes for dashboard child selectors like `first()` and `last()`.
 
 * Issue **#2417** : Bad regex filter value no longer logged unnecessarily.

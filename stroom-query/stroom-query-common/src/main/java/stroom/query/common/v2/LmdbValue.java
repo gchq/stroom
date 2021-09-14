@@ -1,13 +1,20 @@
 package stroom.query.common.v2;
 
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import com.esotericsoftware.kryo.unsafe.UnsafeByteBufferInput;
 import com.esotericsoftware.kryo.unsafe.UnsafeByteBufferOutput;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 class LmdbValue {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbValue.class);
 
     private CompiledField[] fields;
     private ByteBuffer byteBuffer;
@@ -47,15 +54,21 @@ class LmdbValue {
     private void pack() {
         final byte[] keyBytes = getKey().getBytes();
         final byte[] generatorBytes = getGenerators().getBytes();
+        final int requiredCapacity = calculateRequiredCapacity(keyBytes, generatorBytes);
 
-        try (final UnsafeByteBufferOutput output = new UnsafeByteBufferOutput(
-                Integer.BYTES +
-                        keyBytes.length +
-                        Integer.BYTES +
-                        generatorBytes.length)) {
+        try (final UnsafeByteBufferOutput output = new UnsafeByteBufferOutput(requiredCapacity)) {
             write(output, keyBytes, generatorBytes);
             byteBuffer = output.getByteBuffer().flip();
+        } catch (final IOException e) {
+            LOGGER.error(e::getMessage, e);
         }
+    }
+
+    private int calculateRequiredCapacity(final byte[] keyBytes, final byte[] generatorBytes) {
+        return Integer.BYTES +
+                keyBytes.length +
+                Integer.BYTES +
+                generatorBytes.length;
     }
 
     static LmdbValue read(final CompiledField[] fields, final Input input) {
@@ -66,11 +79,21 @@ class LmdbValue {
         return new LmdbValue(fields, fullKey, generatorBytes);
     }
 
-    void write(final Output output) {
+    void write(final Output output) throws IOException {
         write(output, getKey().getBytes(), getGenerators().getBytes());
     }
 
-    private void write(final Output output, final byte[] fullKeyBytes, final byte[] generatorBytes) {
+    private void write(final Output output, final byte[] fullKeyBytes, final byte[] generatorBytes) throws IOException {
+        final int requiredCapacity = calculateRequiredCapacity(fullKeyBytes, generatorBytes);
+        final long remaining = output.getMaxCapacity() - output.total();
+        if (remaining < requiredCapacity) {
+            LOGGER.debug(() -> "Row size exceeds capacity: " +
+                    Arrays.toString(fullKeyBytes) +
+                    " " +
+                    Arrays.toString(generatorBytes));
+            throw new IOException("Row size exceeds capacity");
+        }
+
         output.writeInt(fullKeyBytes.length);
         output.writeBytes(fullKeyBytes, 0, fullKeyBytes.length);
         output.writeInt(generatorBytes.length);

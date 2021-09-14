@@ -492,6 +492,10 @@ appConfig:
       maxReaders: 10
       maxStoreSize: "10G"
       maxDbs: 10
+      minValueSize: "1K"
+      maxValueSize: "1M"
+      minPayloadSize: "1M"
+      maxPayloadSize: "1G"
       readAheadEnabled: true
       offHeapResults: true
       payloadLimit: "0B"

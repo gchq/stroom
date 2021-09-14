@@ -43,7 +43,17 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
             final TermHandler<Long> termHandler = termHandlerFactory.create(
                     dataSourceField,
                     valueField,
-                    value -> List.of(Long.valueOf(value)));
+                    value -> {
+                        try {
+                            return List.of(Long.valueOf(value));
+                        } catch (final NumberFormatException e) {
+                            throw new NumberFormatException("Error parsing value \"" +
+                                    value +
+                                    "\" as number for field '" +
+                                    dataSourceField.getName() +
+                                    "'");
+                        }
+                    });
 
             final MetaTermHandler handler = new MetaTermHandler(
                     createKeyField(id),
