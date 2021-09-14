@@ -20,7 +20,6 @@ import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
-import stroom.task.api.TerminateHandlerFactory;
 
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -52,7 +51,6 @@ public class ReferenceDataLoaderImpl implements ReferenceDataLoader {
         final Supplier<StoredErrorReceiver> supplier = taskContextFactory.childContextResult(
                 taskContext,
                 "Load Reference Data",
-                TerminateHandlerFactory.NOOP_FACTORY,
                 consumer);
         return supplier.get();
     }

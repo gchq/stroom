@@ -313,7 +313,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                              final Attributes atts)
             throws SAXException {
 
-        // For slowing down a load
+        // For slowing down a load in testing
 //        try {
 //            Thread.sleep(2_000);
 //            LOGGER.info("Finished sleep");
@@ -377,10 +377,6 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         }
 
         super.startElement(uri, localName, newQName, atts);
-
-//        if (refStreamDefinition.getStreamId() == 999) {
-//            throw new SAXException("Making ref load fail with sax exception !!!!");
-//        }
     }
 
 

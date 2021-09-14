@@ -223,7 +223,12 @@ class ReferenceDataLoadTaskHandler {
                         pipeline.process(inputStream, encoding);
                     }
                 }
-                refDataLoader.completeProcessing(ProcessingState.COMPLETE);
+
+                if (taskContext.isTerminated()) {
+                    refDataLoader.completeProcessing(ProcessingState.TERMINATED);
+                } else {
+                    refDataLoader.completeProcessing(ProcessingState.COMPLETE);
+                }
             } catch (TaskTerminatedException e) {
                 // Task terminated
                 log(Severity.FATAL_ERROR, e.getMessage(), e);

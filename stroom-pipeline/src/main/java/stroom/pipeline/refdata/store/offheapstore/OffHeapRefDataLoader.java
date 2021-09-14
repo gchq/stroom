@@ -221,6 +221,9 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                     processingState,
                     true);
 
+            // Need to commit the state change
+            commit();
+
             final Duration loadDuration = Duration.between(startTime, Instant.now());
 
             final String mapNames = mapDefinitionToUIDMap.keySet()
@@ -443,10 +446,18 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                     refStreamDefinition);
         }
 
-        commit();
+        try {
+            commit();
+        } catch (Exception e) {
+            LOGGER.error("Error committing txn: {}", e.getMessage(), e);
+        }
 
-        // release our pooled buffers back to the pool
-        pooledByteBuffers.forEach(PooledByteBuffer::release);
+        try {
+            // release our pooled buffers back to the pool
+            pooledByteBuffers.forEach(PooledByteBuffer::release);
+        } catch (Exception e) {
+            LOGGER.error("Error releasing buffers: {}", e.getMessage(), e);
+        }
 
         currentLoaderState = LoaderState.CLOSED;
 
