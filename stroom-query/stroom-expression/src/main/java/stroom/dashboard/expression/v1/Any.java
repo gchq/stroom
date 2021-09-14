@@ -47,6 +47,12 @@ public class Any extends AbstractSelectorFunction implements Serializable {
         return new AnySelector(super.createGenerator());
     }
 
+    @Override
+    public boolean isChildSelector() {
+        // `any()` is a special case because we actually don't need to select a child row as it just grab any value.
+        return false;
+    }
+
     public static class AnySelector extends Selector {
 
         private static final long serialVersionUID = 8153777070911899616L;

@@ -53,4 +53,9 @@ abstract class AbstractSelectorFunction extends AbstractFunction implements Seri
     public boolean hasAggregate() {
         return isAggregate();
     }
+
+    @Override
+    public boolean isChildSelector() {
+        return true;
+    }
 }

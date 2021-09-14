@@ -63,4 +63,10 @@ public interface Function extends Param, Serializable {
      * parameters used will aggregate data.
      */
     boolean hasAggregate();
+
+    /**
+     * If the function selects a child row return true.
+     * @return True is the function selects a child row.
+     */
+    boolean isChildSelector();
 }
