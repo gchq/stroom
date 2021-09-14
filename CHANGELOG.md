@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2382** : Improve error message for invalid feed encodings.
+
 * Issue **#2387** : Fix reference data load/lookup failure handling.
 
 * Issue **#2422** : Change ref lookups to only do a lookup against a ref feeds that are known to contian the map being looked up against.
