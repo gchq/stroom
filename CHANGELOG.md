@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Uplift Dropwizard from 1.3.14 to 1.3.29.
+
+* Issue **#2424** : Stop session creation for rest calls. Remove unused SessionMap class.
+
 * Change debug summary logging in Data Delete job to info level.
 
 * Issue **#2417** : Bad regex filter value no longer logged unnecessarily.
