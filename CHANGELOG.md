@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2379** : Change ref data lookups to truncate last access time to hourly.
 
+* Issue **#2404** : Added debug to help diagnose issue.
+
+* Issue **#2423** : Added error logging and configuration to handle buffer overflows when dealing with large search result values.
+
 * Issue **#2410** : Fixes for dashboard child selectors like `first()` and `last()`.
 
 * Issue **#2417** : Bad regex filter value no longer logged unnecessarily.

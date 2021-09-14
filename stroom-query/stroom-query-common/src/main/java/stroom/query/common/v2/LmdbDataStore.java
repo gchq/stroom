@@ -32,7 +32,6 @@ import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValSerialiser;
 import stroom.query.api.v2.TableSettings;
-import stroom.util.io.ByteSizeUnit;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -69,14 +68,14 @@ import javax.annotation.Nonnull;
 public class LmdbDataStore implements DataStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbDataStore.class);
-    private static final int MIN_VALUE_SIZE = (int) ByteSizeUnit.KIBIBYTE.longBytes(1);
-    private static final int MAX_VALUE_SIZE = (int) ByteSizeUnit.MEBIBYTE.longBytes(1);
-    private static final int MIN_PAYLOAD_SIZE = (int) ByteSizeUnit.MEBIBYTE.longBytes(1);
-    private static final int MAX_PAYLOAD_SIZE = (int) ByteSizeUnit.GIBIBYTE.longBytes(1);
 
     private static final long COMMIT_FREQUENCY_MS = 1000;
     private final LmdbEnvironment environment;
     private final LmdbConfig lmdbConfig;
+    private final int minValueSize;
+    private final int maxValueSize;
+    private final int minPayloadSize;
+    private final int maxPayloadSize;
     private final Dbi<ByteBuffer> dbi;
 //    private final ByteBufferPool byteBufferPool;
 
@@ -115,6 +114,11 @@ public class LmdbDataStore implements DataStore {
                   final Sizes storeSize) {
         this.lmdbConfig = lmdbConfig;
         this.maxResults = maxResults;
+
+        minValueSize = (int) lmdbConfig.getMinValueSize().getBytes();
+        maxValueSize = (int) lmdbConfig.getMaxValueSize().getBytes();
+        minPayloadSize = (int) lmdbConfig.getMinPayloadSize().getBytes();
+        maxPayloadSize = (int) lmdbConfig.getMaxPayloadSize().getBytes();
 
         compiledFields = CompiledFields.create(tableSettings.getFields(), fieldIndex, paramMap);
         compiledDepths = new CompiledDepths(compiledFields, tableSettings.showDetail());
@@ -391,9 +395,9 @@ public class LmdbDataStore implements DataStore {
                     // Get the existing entry for this key.
                     final ByteBuffer existingValueBuffer = dbi.get(txn, rowKey.getByteBuffer());
 
-                    final int minValueSize = Math.max(MIN_VALUE_SIZE, existingValueBuffer.remaining());
+                    final int minValSize = Math.max(minValueSize, existingValueBuffer.remaining());
                     try (final UnsafeByteBufferOutput output =
-                            new UnsafeByteBufferOutput(minValueSize, MAX_VALUE_SIZE)) {
+                            new UnsafeByteBufferOutput(minValSize, maxValueSize)) {
                         boolean merged = false;
 
                         try (final UnsafeByteBufferInput input = new UnsafeByteBufferInput(existingValueBuffer)) {
@@ -486,7 +490,7 @@ public class LmdbDataStore implements DataStore {
     }
 
     private byte[] createPayload(final Txn<ByteBuffer> writeTxn, final Dbi<ByteBuffer> dbi) {
-        final PayloadOutput payloadOutput = new PayloadOutput(MIN_PAYLOAD_SIZE, MAX_PAYLOAD_SIZE);
+        final PayloadOutput payloadOutput = new PayloadOutput(minPayloadSize, maxPayloadSize);
 
         Metrics.measure("createPayload", () -> {
             final long limit = lmdbConfig.getPayloadLimit().getBytes();
@@ -1054,6 +1058,14 @@ public class LmdbDataStore implements DataStore {
 
         @Override
         public void complete() {
+        }
+
+        @Override
+        public String toString() {
+            return "QueueItemImpl{" +
+                    "rowKey=" + rowKey +
+                    ", rowValue=" + rowValue +
+                    '}';
         }
     }
 
