@@ -83,7 +83,6 @@ class RefDataStoreHolder {
             isLookupNeeded = true;
         } else {
             // We have done a load so see if the stream has our map
-
             isLookupNeeded = mapNames.contains(mapName);
         }
 

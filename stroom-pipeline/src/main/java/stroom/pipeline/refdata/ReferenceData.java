@@ -149,7 +149,7 @@ public class ReferenceData {
                     final String nextKey = ((StringValue) refDataValue).getValue();
                     LOGGER.trace("Found value to use as next key {}", nextKey);
                     // use the value from this lookup as the key for the nested map
-                    LookupIdentifier nestedIdentifier = lookupIdentifier.getNestedLookupIdentifier(nextKey);
+                    final LookupIdentifier nestedIdentifier = lookupIdentifier.getNestedLookupIdentifier(nextKey);
 
                     ensureReferenceDataAvailability(pipelineReferences, nestedIdentifier, result);
                 } catch (ClassCastException e) {
@@ -310,13 +310,15 @@ public class ReferenceData {
                             refStreamDefinition,
                             onHeapRefDataStore);
 
-                    // Now the data is loaded record the maps in the stream
-                    refDataStoreHolder.addKnownMapNames(
-                            onHeapRefDataStore,
-                            pipelineReference,
-                            refStreamDefinition);
                 }
             }
+
+            // Now the data is known to be loaded, record the maps available in the stream
+            refDataStoreHolder.addKnownMapNames(
+                    onHeapRefDataStore,
+                    pipelineReference,
+                    refStreamDefinition);
+
             // Add a proxy to the lookup value now we know it is loaded
             setValueProxyOnResult(onHeapRefDataStore, mapName, keyName, result, refStreamDefinition);
         }
@@ -437,6 +439,7 @@ public class ReferenceData {
                         pipelineReference.getPipeline(),
                         getPipelineVersion(pipelineReference),
                         effectiveStream.getStreamId());
+
                 result.addEffectiveStream(refStreamDefinition);
                 final RefDataStore offHeapRefDataStore = refDataStoreHolder.getOffHeapRefDataStore();
 
@@ -534,11 +537,6 @@ public class ReferenceData {
                         // pipeline process
                         refDataLoaderHolder.markRefStreamAsAvailable(refStreamDefinition);
 
-                        // Now the data is loaded record the maps in the stream
-                        refDataStoreHolder.addKnownMapNames(
-                                offHeapRefDataStore,
-                                pipelineReference,
-                                refStreamDefinition);
 
                         isAvailableForLookups = true;
                     } else {
@@ -546,6 +544,14 @@ public class ReferenceData {
                     }
                 } else {
                     isAvailableForLookups = true;
+                }
+
+                if (isAvailableForLookups) {
+                    // Now the data is loaded record the maps in the stream
+                    refDataStoreHolder.addKnownMapNames(
+                            offHeapRefDataStore,
+                            pipelineReference,
+                            refStreamDefinition);
                 }
             }
         }
