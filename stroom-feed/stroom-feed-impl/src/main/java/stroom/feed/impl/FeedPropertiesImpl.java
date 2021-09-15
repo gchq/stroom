@@ -28,6 +28,7 @@ public class FeedPropertiesImpl implements FeedProperties {
         this.feedConfig = feedConfig;
     }
 
+    @Override
     public String getDisplayClassification(final String feedName) {
         final Optional<FeedDoc> optional = feedDocCache.get(feedName);
         final String classification = optional
@@ -45,6 +46,7 @@ public class FeedPropertiesImpl implements FeedProperties {
      *                            or if not applicable
      * @return The applicable encoding
      */
+    @Override
     public String getEncoding(final String feedName,
                               final String streamTypeName,
                               final String childStreamTypeName) throws UnsupportedEncodingException {

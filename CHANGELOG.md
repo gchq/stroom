@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2382** : Improved charset resolution.
 
+## [v7.0-beta.145] - 2021-09-14
+
+* Issue **#2382** : Improve error message for invalid feed encodings.
+
+* Issue **#2387** : Fix reference data load/lookup failure handling.
+
+* Issue **#2422** : Change ref lookups to only do a lookup against a ref feeds that are known to contian the map being looked up against.
+
+* Issue **#2411** : Remove 10,000 limit on dashboard search of ref store.
+
+* Issue **#2389** : Add an API method for purging a single reference data stream.
+
+* Issue **#2379** : Change ref data lookups to truncate last access time to hourly.
+
+* Uplift Dropwizard from 1.3.14 to 1.3.29.
+
+* Issue **#2424** : Stop session creation for rest calls. Remove unused SessionMap class.
+
+* Change debug summary logging in Data Delete job to info level.
+
 * Issue **#2402** : Improved logging for error caused by invalid meta filter values.
 
 * Issue **#2404** : Added debug to help diagnose issue.
@@ -3699,7 +3719,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.144...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.145...HEAD
+[v7.0-beta.145]: https://github.com/gchq/stroom/compare/v7.0-beta.144...v7.0-beta.145
 [v7.0-beta.144]: https://github.com/gchq/stroom/compare/v7.0-beta.143...v7.0-beta.144
 [v7.0-beta.143]: https://github.com/gchq/stroom/compare/v7.0-beta.142...v7.0-beta.143
 [v7.0-beta.142]: https://github.com/gchq/stroom/compare/v7.0-beta.141...v7.0-beta.142

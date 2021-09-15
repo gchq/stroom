@@ -21,6 +21,7 @@ import stroom.bytebuffer.ByteBufferPool;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
 import stroom.lmdb.AbstractLmdbDb;
+import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
@@ -31,12 +32,13 @@ import stroom.util.logging.LogUtil;
 
 import com.google.inject.assistedinject.Assisted;
 import org.lmdbjava.CursorIterable;
-import org.lmdbjava.Env;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Supplier;
 import javax.inject.Inject;
 
@@ -45,7 +47,7 @@ public class MapUidForwardDb extends AbstractLmdbDb<MapDefinition, UID> {
     public static final String DB_NAME = "MapUidForward";
 
     @Inject
-    public MapUidForwardDb(@Assisted final Env<ByteBuffer> lmdbEnvironment,
+    public MapUidForwardDb(@Assisted final LmdbEnv lmdbEnvironment,
                            final ByteBufferPool byteBufferPool,
                            final MapDefinitionSerde keySerde,
                            final UIDSerde valueSerde) {
@@ -74,7 +76,7 @@ public class MapUidForwardDb extends AbstractLmdbDb<MapDefinition, UID> {
                                               final Supplier<ByteBuffer> uidBufferSupplier) {
 
         Optional<UID> optMatchedMapUid = Optional.empty();
-        MapDefinition mapDefinitionWithNoMapName = new MapDefinition(refStreamDefinition);
+        final MapDefinition mapDefinitionWithNoMapName = new MapDefinition(refStreamDefinition);
         try (PooledByteBuffer pooledStartKeyIncBuffer = getPooledKeyBuffer()) {
             ByteBuffer startKeyIncBuffer = pooledStartKeyIncBuffer.getByteBuffer();
 
@@ -105,8 +107,42 @@ public class MapUidForwardDb extends AbstractLmdbDb<MapDefinition, UID> {
         return optMatchedMapUid;
     }
 
+    /**
+     * Gets all store map names for a given refStreamDefinition.
+     */
+    public Set<String> getMapNames(final Txn<ByteBuffer> readTxn,
+                                   final RefStreamDefinition refStreamDefinition) {
+
+        final Set<String> mapNames = new HashSet<>();
+        final MapDefinition mapDefinitionWithNoMapName = new MapDefinition(refStreamDefinition);
+
+        try (PooledByteBuffer pooledStartKeyIncBuffer = getPooledKeyBuffer()) {
+            final ByteBuffer startKeyIncBuffer = pooledStartKeyIncBuffer.getByteBuffer();
+
+            getKeySerde().serialize(startKeyIncBuffer, mapDefinitionWithNoMapName);
+
+            final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(startKeyIncBuffer);
+
+            try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(readTxn, keyRange)) {
+                for (final CursorIterable.KeyVal<ByteBuffer> keyVal : cursorIterable) {
+
+                    // our startKeyIncBuffer contains only the refStreamDefinition part
+                    // so ensure the key we get back from the cursor is prefixed with that
+                    // else we are on a different refStreamDefinition
+                    if (!ByteBufferUtils.containsPrefix(keyVal.key(), startKeyIncBuffer)) {
+                        break;
+                    }
+
+                    final MapDefinition mapDefinition = deserializeKey(keyVal.key());
+                    mapNames.add(mapDefinition.getMapName());
+                }
+            }
+        }
+        return mapNames;
+    }
+
     public interface Factory {
 
-        MapUidForwardDb create(final Env<ByteBuffer> lmdbEnvironment);
+        MapUidForwardDb create(final LmdbEnv lmdbEnvironment);
     }
 }

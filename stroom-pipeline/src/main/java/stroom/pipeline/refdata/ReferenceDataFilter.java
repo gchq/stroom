@@ -244,7 +244,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                     "RefDataLoader is missing",
                     null);
         }
-        refDataLoaderHolder.getRefDataLoader().completeProcessing();
+//        refDataLoaderHolder.getRefDataLoader().completeProcessing();
     }
 
     @Override
@@ -312,6 +312,16 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                              final String qName,
                              final Attributes atts)
             throws SAXException {
+
+        // For slowing down a load in testing
+//        try {
+//            Thread.sleep(2_000);
+//            LOGGER.info("Finished sleep");
+//        } catch (InterruptedException e) {
+//            LOGGER.info("==================INTERRUPTED=======================");
+//            Thread.currentThread().interrupt();
+//        }
+
         depthLevel++;
         insideElement = true;
         contentBuffer.clear();

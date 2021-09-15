@@ -28,6 +28,7 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class StoredError implements Marker, Comparable<StoredError> {
 
+    public static final String MESSAGE_CAUSE_DELIMITER = " > ";
     private static final String SPACE = " ";
     private static final String CLOSE_BRACKET = "] ";
     private static final String COLON = ":";

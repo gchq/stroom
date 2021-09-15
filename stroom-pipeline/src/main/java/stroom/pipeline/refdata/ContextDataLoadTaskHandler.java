@@ -24,10 +24,12 @@ import stroom.meta.shared.Meta;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.errorhandler.ErrorReceiverIdDecorator;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.LoggedException;
 import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
+import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.shared.PipelineDoc;
@@ -38,6 +40,7 @@ import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskTerminatedException;
 import stroom.util.io.BasicStreamCloser;
 import stroom.util.io.StreamCloser;
 import stroom.util.shared.Severity;
@@ -47,6 +50,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Objects;
 import javax.inject.Inject;
 
 
@@ -97,6 +101,7 @@ class ContextDataLoadTaskHandler {
                      final RefStreamDefinition refStreamDefinition,
                      final RefDataStore refDataStore,
                      final TaskContext taskContext) {
+        Objects.requireNonNull(meta);
         securityContext.secure(() -> {
             // Elevate user permissions so that inherited pipelines that the user only has 'Use'
             // permission on can be read.
@@ -149,9 +154,13 @@ class ContextDataLoadTaskHandler {
 //                            pipelineDoc.getVersion(),
 //                            stream.getId());
 
+                        final long effectiveMs = Objects.requireNonNullElseGet(
+                                meta.getEffectiveMs(),
+                                () -> meta.getCreateMs());
+
                         refDataStore.doWithLoaderUnlessComplete(
                                 refStreamDefinition,
-                                meta.getEffectiveMs(),
+                                effectiveMs,
                                 refDataLoader -> {
                                     // set this loader in the holder so it is available to the pipeline filters
                                     refDataLoaderHolder.setRefDataLoader(refDataLoader);
@@ -160,8 +169,21 @@ class ContextDataLoadTaskHandler {
                                         // Parse the stream. The ReferenceDataFilter will process the context data
                                         pipeline.process(inputStream, encoding);
 
-                                    } catch (final RuntimeException e) {
+                                        refDataLoader.completeProcessing(ProcessingState.COMPLETE);
+                                    } catch (TaskTerminatedException e) {
+                                        // Task terminated
                                         log(Severity.FATAL_ERROR, e.getMessage(), e);
+                                        refDataLoader.completeProcessing(ProcessingState.TERMINATED);
+                                    } catch (Exception e) {
+                                        log(Severity.FATAL_ERROR, e.getMessage(), e);
+                                        refDataLoader.completeProcessing(ProcessingState.FAILED);
+                                    } finally {
+                                        try {
+                                            pipeline.endProcessing();
+                                        } catch (final RuntimeException e) {
+                                            log(Severity.FATAL_ERROR, e.getMessage(), e);
+                                            refDataLoader.completeProcessing(ProcessingState.FAILED);
+                                        }
                                     }
                                 });
 
@@ -188,7 +210,15 @@ class ContextDataLoadTaskHandler {
     }
 
     private void log(final Severity severity, final String message, final Throwable e) {
-        LOGGER.debug(message, e);
-        errorReceiver.log(severity, null, getClass().getSimpleName(), message, e);
+        LOGGER.trace(message, e);
+
+        // LoggedException has already been logged
+        if (errorReceiverProxy != null && !(e instanceof LoggedException)) {
+            String msg = message;
+            if (msg == null) {
+                msg = e.toString();
+            }
+            errorReceiver.log(severity, null, getClass().getSimpleName(), msg, e);
+        }
     }
 }
