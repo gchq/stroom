@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2382** : Improved charset resolution.
 
+
 ## [v7.0-beta.145] - 2021-09-14
 
 * Issue **#2382** : Improve error message for invalid feed encodings.
