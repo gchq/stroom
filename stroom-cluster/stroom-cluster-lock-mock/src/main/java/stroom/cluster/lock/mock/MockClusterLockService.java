@@ -17,7 +17,7 @@ public class MockClusterLockService implements ClusterLockService {
     }
 
     @Override
-    public <T> T lock(final String lockName, final Supplier<T> supplier) {
+    public <T> T lockResult(final String lockName, final Supplier<T> supplier) {
         return supplier.get();
     }
 }

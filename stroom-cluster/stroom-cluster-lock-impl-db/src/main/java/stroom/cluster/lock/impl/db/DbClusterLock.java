@@ -51,7 +51,7 @@ class DbClusterLock implements Clearable {
         lock(lockName, runnable);
     }
 
-    public <T> T lock(final String lockName, final Supplier<T> supplier) {
+    public <T> T lockResult(final String lockName, final Supplier<T> supplier) {
         LOGGER.debug("lock({}) - >>>", lockName);
 
         final LogExecutionTime logExecutionTime = new LogExecutionTime();

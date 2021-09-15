@@ -58,8 +58,8 @@ class ClusterLockServiceImpl implements ClusterLockService {
     }
 
     @Override
-    public <T> T lock(final String lockName, final Supplier<T> supplier) {
-        return dbClusterLock.lock(lockName, supplier);
+    public <T> T lockResult(final String lockName, final Supplier<T> supplier) {
+        return dbClusterLock.lockResult(lockName, supplier);
     }
 
     @Override

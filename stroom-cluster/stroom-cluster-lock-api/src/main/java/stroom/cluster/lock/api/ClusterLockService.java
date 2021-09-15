@@ -42,5 +42,5 @@ public interface ClusterLockService {
      * Will block until the database backed lock for lockName is obtained, then will run
      * supplier under that lock, returning supplier's return value
      */
-    <T> T lock(final String lockName, final Supplier<T> supplier);
+    <T> T lockResult(final String lockName, final Supplier<T> supplier);
 }
