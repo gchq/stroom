@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -51,7 +50,7 @@ public class LmdbEnvFactory {
     public EnvironmentBuilder builder(final String dir) {
         return new EnvironmentBuilder(
                 pathCreator,
-                Paths.get(pathCreator.makeAbsolute(pathCreator.replaceSystemProperties(dir))));
+                pathCreator.toAppPath(dir));
     }
 
     public static class EnvironmentBuilder {
@@ -108,8 +107,7 @@ public class LmdbEnvFactory {
         public EnvironmentBuilder withLmdbSystemLibraryPath(final String lmdbSystemLibraryPath) {
             this.lmdbSystemLibraryPath = lmdbSystemLibraryPath == null
                     ? null
-                    : Paths.get(pathCreator.makeAbsolute(
-                            pathCreator.replaceSystemProperties(lmdbSystemLibraryPath)));
+                    : pathCreator.toAppPath(lmdbSystemLibraryPath);
             return this;
         }
 
