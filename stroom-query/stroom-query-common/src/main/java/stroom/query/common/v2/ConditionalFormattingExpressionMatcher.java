@@ -155,8 +155,8 @@ public class ConditionalFormattingExpressionMatcher {
                 case IN:
                     return isIn(termValue, attribute);
                 default:
-                    throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                            + field.getFormat().getType().getDisplayValue() + " field type");
+                    // Try to treat as a numeric field.
+                    return matchNumericField(condition, termValue, field, fieldName, attribute);
             }
         }
     }

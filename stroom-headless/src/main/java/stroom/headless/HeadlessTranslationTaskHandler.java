@@ -48,6 +48,7 @@ import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.api.SecurityContext;
+import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.shared.Severity;
@@ -106,7 +107,8 @@ class HeadlessTranslationTaskHandler {
     public void exec(final InputStream dataStream,
                      final InputStream metaStream,
                      final InputStream contextStream,
-                     final HeadlessFilter headlessFilter) {
+                     final HeadlessFilter headlessFilter,
+                     final TaskContext taskContext) {
         securityContext.secure(() -> {
             // Elevate user permissions so that inherited pipelines that the user only has 'Use'
             // permission on can be read.
@@ -146,7 +148,7 @@ class HeadlessTranslationTaskHandler {
                     // Create the parser.
                     final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
                     final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
-                    final Pipeline pipeline = pipelineFactory.create(pipelineData);
+                    final Pipeline pipeline = pipelineFactory.create(pipelineData, taskContext);
 
                     // Find last XSLT filter.
                     final XMLFilter lastFilter = getLastFilter(pipeline);

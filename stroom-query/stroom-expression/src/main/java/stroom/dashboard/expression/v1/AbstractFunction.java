@@ -94,4 +94,9 @@ abstract class AbstractFunction implements Function, Appendable {
     public boolean isAggregate() {
         return false;
     }
+
+    @Override
+    public boolean isChildSelector() {
+        return false;
+    }
 }

@@ -30,6 +30,10 @@ import java.util.function.Function;
 
 public final class TooltipUtil {
 
+    public static final SafeHtml NON_BREAKING_SPACE = SafeHtmlUtils.fromSafeConstant("&nbsp;");
+    public static final SafeHtml EN_SPACE = SafeHtmlUtils.fromSafeConstant("&ensp;");
+    public static final SafeHtml EM_SPACE = SafeHtmlUtils.fromSafeConstant("&emsp;");
+
     private static final SafeHtml BREAK = SafeHtmlUtils.fromSafeConstant("<br/>");
     private static final SafeHtml SEPARATOR = SafeHtmlUtils.fromSafeConstant("<hr/>");
     private static final SafeHtml ITAlIC_OPEN = SafeHtmlUtils.fromSafeConstant("<i>");
@@ -217,6 +221,9 @@ public final class TooltipUtil {
             return this;
         }
 
+        /**
+         * Add the text followed by a break tag
+         */
         public Builder addLine(final String value) {
             if (value != null && !value.isEmpty()) {
                 buffer.appendEscaped(value);
@@ -225,6 +232,9 @@ public final class TooltipUtil {
             return this;
         }
 
+        /**
+         * Add the text inside paragraph tags
+         */
         public Builder addParagraph(final String value) {
             if (value != null && !value.isEmpty()) {
                 buffer.append(PARA_OPEN);
@@ -236,6 +246,21 @@ public final class TooltipUtil {
 
         public Builder addBreak() {
             buffer.append(BREAK);
+            return this;
+        }
+
+        public Builder addNonBreakingSpace() {
+            buffer.append(NON_BREAKING_SPACE);
+            return this;
+        }
+
+        public Builder addEnSpace() {
+            buffer.append(EN_SPACE);
+            return this;
+        }
+
+        public Builder addEmSpace() {
+            buffer.append(EM_SPACE);
             return this;
         }
 

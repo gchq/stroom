@@ -10830,8 +10830,6 @@ components:
       properties:
         criteria:
           $ref: '#/components/schemas/FindTaskCriteria'
-        kill:
-          type: boolean
     TextComponentSettings:
       type: object
       allOf:

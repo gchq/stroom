@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2382** : Improve error message for invalid feed encodings.
+
+* Issue **#2387** : Fix reference data load/lookup failure handling.
+
+* Issue **#2422** : Change ref lookups to only do a lookup against a ref feeds that are known to contian the map being looked up against.
+
+* Issue **#2411** : Remove 10,000 limit on dashboard search of ref store.
+
+* Issue **#2389** : Add an API method for purging a single reference data stream.
+
+* Issue **#2379** : Change ref data lookups to truncate last access time to hourly.
+
+* Uplift Dropwizard from 1.3.14 to 1.3.29.
+
+* Issue **#2424** : Stop session creation for rest calls. Remove unused SessionMap class.
+
+* Change debug summary logging in Data Delete job to info level.
+
+* Issue **#2402** : Improved logging for error caused by invalid meta filter values.
+
+* Issue **#2404** : Added debug to help diagnose issue.
+
+* Issue **#2423** : Added error logging and configuration to handle buffer overflows when dealing with large search result values.
+
+* Issue **#2410** : Fixes for dashboard child selectors like `first()` and `last()`.
+
+* Issue **#2417** : Bad regex filter value no longer logged unnecessarily.
+
+* Issue **#2418** : LMDB environment is now only closed when the search results are no longer needed.
+
+* Issue **#2419** : Conditional formatting errors are now returned to the UI.
+
+* Issue **#2405, #2407** : Errors caused by a thread interrupt when viewing a stream are no longer logged.
+
+* Issue **#2406** : Volume status update is now performed synchronously.
+
+* Issue **#2401, #2408, #2409** : Processing tasks no longer terminate by interrupting threads so error streams can now be written correctly.
+
 * Issue **#2398** : Fix to clear interrupt state for threads used by terminated tasks.
 
 * Issue **#2396** : Add `stroom:pointIsInsideXYPolygon` XSLT function.

@@ -95,4 +95,11 @@ public class StoredErrorReceiver implements ErrorReceiver {
     public List<StoredError> getList() {
         return list;
     }
+
+    public long getCount(final Severity severity) {
+        return list.stream()
+                .map(StoredError::getSeverity)
+                .filter(itemSeverity -> itemSeverity.equals(severity))
+                .count();
+    }
 }

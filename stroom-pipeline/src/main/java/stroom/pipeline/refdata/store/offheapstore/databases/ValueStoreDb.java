@@ -23,6 +23,7 @@ import stroom.bytebuffer.PooledByteBuffer;
 import stroom.bytebuffer.PooledByteBufferOutputStream;
 import stroom.lmdb.AbstractLmdbDb;
 import stroom.lmdb.EntryConsumer;
+import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbUtils;
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.store.RefDataValue;
@@ -37,7 +38,6 @@ import stroom.util.logging.LogUtil;
 import com.google.common.base.Preconditions;
 import com.google.inject.assistedinject.Assisted;
 import org.lmdbjava.Cursor;
-import org.lmdbjava.Env;
 import org.lmdbjava.GetOp;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
@@ -98,7 +98,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
     private final PooledByteBufferOutputStream.Factory pooledByteBufferOutputStreamFactory;
 
     @Inject
-    public ValueStoreDb(@Assisted final Env<ByteBuffer> lmdbEnvironment,
+    public ValueStoreDb(@Assisted final LmdbEnv lmdbEnvironment,
                         final ByteBufferPool byteBufferPool,
                         final ValueStoreKeySerde keySerde,
                         final GenericRefDataValueSerde valueSerde,
@@ -350,6 +350,6 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
 
     public interface Factory {
 
-        ValueStoreDb create(final Env<ByteBuffer> lmdbEnvironment);
+        ValueStoreDb create(final LmdbEnv lmdbEnvironment);
     }
 }

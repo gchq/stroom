@@ -50,7 +50,7 @@ public class LuceneSearchResponseCreatorManager implements SearchResponseCreator
             final Store store = storeFactory.create(key.getSearchRequest());
             return searchResponseCreatorFactory.create(store);
         } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.debug(e.getMessage(), e);
             throw e;
         }
     }

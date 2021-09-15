@@ -26,6 +26,7 @@ import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataUtil;
+import stroom.task.api.TaskContextFactory;
 import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
@@ -45,16 +46,19 @@ public class XMLValidator {
     private final PipelineStore pipelineStore;
     private final Provider<ErrorReceiverProxy> errorReceiverProvider;
     private final PipelineScopeRunnable pipelineScopeRunnable;
+    private final TaskContextFactory taskContextFactory;
 
     @Inject
     XMLValidator(final Provider<PipelineFactory> pipelineFactoryProvider,
                  final PipelineStore pipelineStore,
                  final Provider<ErrorReceiverProxy> errorReceiverProvider,
-                 final PipelineScopeRunnable pipelineScopeRunnable) {
+                 final PipelineScopeRunnable pipelineScopeRunnable,
+                 final TaskContextFactory taskContextFactory) {
         this.pipelineFactoryProvider = pipelineFactoryProvider;
         this.pipelineStore = pipelineStore;
         this.errorReceiverProvider = errorReceiverProvider;
         this.pipelineScopeRunnable = pipelineScopeRunnable;
+        this.taskContextFactory = taskContextFactory;
     }
 
     /**
@@ -66,52 +70,54 @@ public class XMLValidator {
      * @return message
      */
     public String getInvalidXmlResourceMessage(final String resourceName, final boolean useSchema) {
-        return pipelineScopeRunnable.scopeResult(() -> {
-            // Only validate if something is provided
-            if (resourceName != null && !resourceName.isEmpty()) {
-                try {
-                    // Buffer the stream.
-                    final InputStream inputStream = new BufferedInputStream(
-                            StroomPipelineTestFileUtil.getInputStream(resourceName));
+        return taskContextFactory.contextResult("XMLValidator", taskContext1 ->
+                pipelineScopeRunnable.scopeResult(() -> {
+                    // Only validate if something is provided
+                    if (resourceName != null && !resourceName.isEmpty()) {
+                        try {
+                            // Buffer the stream.
+                            final InputStream inputStream = new BufferedInputStream(
+                                    StroomPipelineTestFileUtil.getInputStream(resourceName));
 
-                    // Setup the error receiver.
-                    errorReceiverProvider.get().setErrorReceiver(new LoggingErrorReceiver());
+                            // Setup the error receiver.
+                            errorReceiverProvider.get().setErrorReceiver(new LoggingErrorReceiver());
 
-                    // Create the pipeline.
-                    final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore,
-                            StroomPipelineTestFileUtil.getString("F2XTestUtil/validation.Pipeline.data.xml"));
-                    final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
-                    final PipelineData pipelineData = pipelineDoc.getPipelineData();
+                            // Create the pipeline.
+                            final DocRef pipelineRef =
+                                    PipelineTestUtil.createTestPipeline(pipelineStore,
+                                    StroomPipelineTestFileUtil.getString("F2XTestUtil/validation.Pipeline.data.xml"));
+                            final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+                            final PipelineData pipelineData = pipelineDoc.getPipelineData();
 
-                    // final ElementType schemaFilterElementType = new ElementType(
-                    // "SchemaFilter");
-                    // final PropertyType schemaValidationPropertyType = new
-                    // PropertyType(
-                    // schemaFilterElementType, "schemaValidation", "Boolean",
-                    // false);
-                    pipelineData.addProperty(PipelineDataUtil.createProperty("schemaFilter",
-                            "schemaValidation",
-                            false));
-                    // final PropertyType schemaGroupPropertyType = new
-                    // PropertyType(
-                    // schemaFilterElementType, "schemaGroup", "String", false);
-                    pipelineData
-                            .addProperty(PipelineDataUtil.createProperty("schemaFilter",
-                                    "schemaGroup",
-                                    "DATA_SPLITTER"));
-                    pipelineStore.writeDocument(pipelineDoc);
+                            // final ElementType schemaFilterElementType = new ElementType(
+                            // "SchemaFilter");
+                            // final PropertyType schemaValidationPropertyType = new
+                            // PropertyType(
+                            // schemaFilterElementType, "schemaValidation", "Boolean",
+                            // false);
+                            pipelineData.addProperty(PipelineDataUtil.createProperty("schemaFilter",
+                                    "schemaValidation",
+                                    false));
+                            // final PropertyType schemaGroupPropertyType = new
+                            // PropertyType(
+                            // schemaFilterElementType, "schemaGroup", "String", false);
+                            pipelineData
+                                    .addProperty(PipelineDataUtil.createProperty("schemaFilter",
+                                            "schemaGroup",
+                                            "DATA_SPLITTER"));
+                            pipelineStore.writeDocument(pipelineDoc);
 
-                    final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData);
-                    pipeline.process(inputStream);
+                            final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData, taskContext1);
+                            pipeline.process(inputStream);
 
-                    return errorReceiverProvider.get().toString();
+                            return errorReceiverProvider.get().toString();
 
-                } catch (final RuntimeException e) {
-                    return e.getMessage();
-                }
-            }
+                        } catch (final RuntimeException e) {
+                            return e.getMessage();
+                        }
+                    }
 
-            return NO_RESOURCE_PROVIDED;
-        });
+                    return NO_RESOURCE_PROVIDED;
+                })).get();
     }
 }

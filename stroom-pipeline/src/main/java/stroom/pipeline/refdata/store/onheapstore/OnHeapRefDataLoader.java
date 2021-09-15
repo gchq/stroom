@@ -23,10 +23,10 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.stream.Collectors;
 
 class OnHeapRefDataLoader implements RefDataLoader {
 
@@ -101,28 +101,56 @@ class OnHeapRefDataLoader implements RefDataLoader {
     }
 
     @Override
-    public void completeProcessing() {
+    public void completeProcessing(final ProcessingState processingState) {
+        Objects.requireNonNull(processingState);
+        LOGGER.trace("Completing processing with state {} (put count {})", processingState, putsCounter);
+
+        if (!VALID_COMPLETION_STATES.contains(processingState)) {
+            throw new RuntimeException(LogUtil.message("Invalid processing state {}, should be one of {}",
+                    processingState,
+                    VALID_COMPLETION_STATES));
+        }
+
         startTime = Instant.now();
 
-        checkCurrentState(LoaderState.INITIALISED);
+        if (LoaderState.COMPLETED.equals(currentLoaderState)) {
+            LOGGER.debug("Loader already completed, doing nothing");
+        } else {
+            checkCurrentState(LoaderState.INITIALISED);
 
-        // Set the processing info record to COMPLETE and update the last update time
-        updateProcessingState(
-                refStreamDefinition, ProcessingState.COMPLETE, true);
+            // Set the processing info record to COMPLETE and update the last update time
+            updateProcessingState(
+                    refStreamDefinition,
+                    processingState,
+                    true);
 
-        final String mapNames = loadedMapNames
-                .stream()
-                .collect(Collectors.joining(","));
+            final String mapNames = String.join(",", loadedMapNames);
+            final Duration loadDuration = Duration.between(startTime, Instant.now());
 
-        final Duration loadDuration = Duration.between(startTime, Instant.now());
-        LOGGER.info("Successfully Loaded {} entries out of {} attempts with map names [{}] in {} for {}",
-                successfulPutsCounter, putsCounter, mapNames, loadDuration, refStreamDefinition);
+            if (processingState.equals(ProcessingState.COMPLETE)) {
+                LOGGER.info("Successfully loaded {} entries out of {} attempts with map names [{}] in {} for {}",
+                        successfulPutsCounter,
+                        putsCounter,
+                        mapNames,
+                        loadDuration,
+                        refStreamDefinition);
+            } else {
+                LOGGER.error("Failed to load {} entries out of {} attempts with outcome {}, " +
+                                "map names [{}] in {} for {}",
+                        successfulPutsCounter,
+                        putsCounter,
+                        processingState,
+                        mapNames,
+                        loadDuration,
+                        refStreamDefinition);
+            }
+
 
 //        LAMBDA_LOGGER.doIfTraceEnabled(() ->
 //                refDataStore.logAllContents(LOGGER::trace));
 
-        currentLoaderState = LoaderState.COMPLETED;
-
+            currentLoaderState = LoaderState.COMPLETED;
+        }
     }
 
     @Override

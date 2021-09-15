@@ -78,19 +78,11 @@ public class RollingStreamDestination extends RollingDestination {
 
     @Override
     protected void afterRoll(final Consumer<Throwable> exceptionConsumer) {
-        // Clear interrupted flag if set.
-        final boolean interrupted = Thread.interrupted();
         try {
             streamTarget.getAttributes().put(MetaFields.REC_WRITE.getName(), recordCount.toString());
             streamTarget.close();
         } catch (final IOException e) {
             throw new RuntimeException(e.getMessage(), e);
-
-        } finally {
-            // Keep interrupting if we previously cleared the flag.
-            if (interrupted) {
-                Thread.currentThread().interrupt();
-            }
         }
     }
 

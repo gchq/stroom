@@ -14,9 +14,18 @@
  * limitations under the License.
  */
 
-package stroom.util.shared;
+package stroom.task.api;
 
 public interface TerminateHandler {
 
+    /**
+     * Called when we are expected to take some termination action.
+     */
     void onTerminate();
+
+    /**
+     * Called when this terminate handler is no longer needed.
+     */
+    default void onDestroy() {
+    }
 }

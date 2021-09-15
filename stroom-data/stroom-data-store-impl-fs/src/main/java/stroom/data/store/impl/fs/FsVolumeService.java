@@ -329,7 +329,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         clusterLockService.tryLock(LOCK_NAME, this::refresh);
     }
 
-    private VolumeList refresh() {
+    private synchronized VolumeList refresh() {
         taskContext.info(() -> "Refreshing volumes");
         final long now = System.currentTimeMillis();
         final List<FsVolume> volumes = new ArrayList<>();
