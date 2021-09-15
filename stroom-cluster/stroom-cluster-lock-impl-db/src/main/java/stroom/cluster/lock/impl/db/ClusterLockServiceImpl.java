@@ -54,7 +54,10 @@ class ClusterLockServiceImpl implements ClusterLockService {
 
     @Override
     public void lock(final String lockName, final Runnable runnable) {
-        dbClusterLock.lock(lockName, runnable);
+        dbClusterLock.lockResult(lockName, () -> {
+            runnable.run();
+            return null;
+        });
     }
 
     @Override

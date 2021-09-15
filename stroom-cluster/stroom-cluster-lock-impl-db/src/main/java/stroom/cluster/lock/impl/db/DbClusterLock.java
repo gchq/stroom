@@ -48,7 +48,10 @@ class DbClusterLock implements Clearable {
     }
 
     public void lock(final String lockName, final Runnable runnable) {
-        lock(lockName, runnable);
+        lockResult(lockName, () -> {
+            runnable.run();
+            return null;
+        });
     }
 
     public <T> T lockResult(final String lockName, final Supplier<T> supplier) {
