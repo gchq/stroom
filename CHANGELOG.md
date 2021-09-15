@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2382** : Improved charset resolution.
+
 * Issue **#2402** : Improved logging for error caused by invalid meta filter values.
 
 * Issue **#2404** : Added debug to help diagnose issue.

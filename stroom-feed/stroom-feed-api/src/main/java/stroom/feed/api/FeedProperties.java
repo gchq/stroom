@@ -2,6 +2,8 @@ package stroom.feed.api;
 
 import stroom.feed.shared.FeedDoc.FeedStatus;
 
+import java.io.UnsupportedEncodingException;
+
 public interface FeedProperties {
 
     String getDisplayClassification(final String feedName);
@@ -15,7 +17,7 @@ public interface FeedProperties {
      */
     String getEncoding(final String feedName,
                        final String streamTypeName,
-                       final String childStreamTypeName);
+                       final String childStreamTypeName) throws UnsupportedEncodingException;
 
     String getStreamTypeName(final String feedName);
 

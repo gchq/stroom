@@ -196,15 +196,15 @@ class ReferenceDataLoadTaskHandler {
                 log(Severity.FATAL_ERROR, e.getMessage(), e);
             }
 
-            // Get the appropriate encoding for the stream type.
-            final String encoding = feedProperties.getEncoding(
-                    feedName, meta.getTypeName(), null);
-            LOGGER.debug("Using encoding '{}' for feed {}", encoding, feedName);
-
-            final StreamLocationFactory streamLocationFactory = new StreamLocationFactory();
-            locationFactory.setLocationFactory(streamLocationFactory);
-
             try {
+                // Get the appropriate encoding for the stream type.
+                final String encoding = feedProperties.getEncoding(
+                        feedName, meta.getTypeName(), null);
+                LOGGER.debug("Using encoding '{}' for feed {}", encoding, feedName);
+
+                final StreamLocationFactory streamLocationFactory = new StreamLocationFactory();
+                locationFactory.setLocationFactory(streamLocationFactory);
+
                 // Loop over the stream boundaries and process each sequentially.
                 // Typically ref data will only have a single partIndex so if there are
                 // multiple then overrideExisting may be needed.
