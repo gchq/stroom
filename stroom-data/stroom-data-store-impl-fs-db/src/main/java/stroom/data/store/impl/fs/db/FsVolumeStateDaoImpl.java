@@ -4,6 +4,7 @@ import stroom.data.store.impl.fs.FsVolumeStateDao;
 import stroom.data.store.impl.fs.db.jooq.tables.records.FsVolumeStateRecord;
 import stroom.data.store.impl.fs.shared.FsVolumeState;
 import stroom.db.util.GenericDao;
+import stroom.db.util.JooqUtil;
 
 import java.util.Optional;
 import javax.inject.Inject;
@@ -14,10 +15,12 @@ import static stroom.data.store.impl.fs.db.jooq.tables.FsVolumeState.FS_VOLUME_S
 @Singleton
 public class FsVolumeStateDaoImpl implements FsVolumeStateDao {
 
+    private final FsDataStoreDbConnProvider fsDataStoreDbConnProvider;
     private final GenericDao<FsVolumeStateRecord, FsVolumeState, Integer> genericDao;
 
     @Inject
     FsVolumeStateDaoImpl(final FsDataStoreDbConnProvider fsDataStoreDbConnProvider) {
+        this.fsDataStoreDbConnProvider = fsDataStoreDbConnProvider;
         genericDao = new GenericDao<>(FS_VOLUME_STATE,
                 FS_VOLUME_STATE.ID,
                 FsVolumeState.class,
@@ -30,8 +33,13 @@ public class FsVolumeStateDaoImpl implements FsVolumeStateDao {
     }
 
     @Override
-    public FsVolumeState update(final FsVolumeState job) {
-        return genericDao.update(job);
+    public FsVolumeState update(final FsVolumeState volumeState) {
+        return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> {
+            final FsVolumeStateRecord record = context.newRecord(FS_VOLUME_STATE);
+            record.from(volumeState);
+            record.update();
+            return record.into(FsVolumeState.class);
+        });
     }
 
     @Override

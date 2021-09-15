@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2432** : Volume state is now updated without optimistic locking.
+
 * Issue **#2382** : Improved charset resolution.
 
 ## [v7.0-beta.145] - 2021-09-14

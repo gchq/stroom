@@ -342,9 +342,8 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         for (final FsVolume volume : volumeList) {
             taskContext.info(() -> "Refreshing volume '" + volume.getPath() + "'");
 
-            FsVolumeState volumeState = updateVolumeState(volume);
-            volumeState = saveVolumeState(volumeState);
-            volume.setVolumeState(volumeState);
+            // Update the volume state and save in the DB.
+            updateVolumeState(volume);
 
             // Record some statistics for the use of this volume.
             recordStats(volume);
@@ -400,42 +399,42 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         }
     }
 
-    private FsVolumeState updateVolumeState(final FsVolume volume) {
-        final FsVolumeState volumeState = volume.getVolumeState();
-        volumeState.setUpdateTimeMs(System.currentTimeMillis());
+    private void updateVolumeState(final FsVolume volume) {
         final Path path = Paths.get(volume.getPath());
 
-        // Ensure the path exists
-        if (Files.isDirectory(path)) {
-            LOGGER.debug(() -> LogUtil.message("updateVolumeState() path exists: {}", path));
-            setSizes(path, volumeState);
-        } else {
-            try {
+        try {
+            FsVolumeState volumeState = volume.getVolumeState();
+            volumeState.setUpdateTimeMs(System.currentTimeMillis());
+
+            // Ensure the path exists
+            if (Files.isDirectory(path)) {
+                LOGGER.debug(() -> LogUtil.message("updateVolumeState() path exists: {}", path));
+                setSizes(path, volumeState);
+            } else {
                 Files.createDirectories(path);
                 LOGGER.debug(() -> LogUtil.message("updateVolumeState() path created: {}", path));
                 setSizes(path, volumeState);
-            } catch (final IOException e) {
-                LOGGER.error(() -> LogUtil.message("updateVolumeState() path not created: {}", path));
             }
-        }
 
-        LOGGER.debug(() -> LogUtil.message("updateVolumeState() exit {}", volume));
-        return volumeState;
+            volumeState = saveVolumeState(volumeState);
+            volume.setVolumeState(volumeState);
+
+            LOGGER.debug(() -> LogUtil.message("updateVolumeState() exit {}", volume));
+
+        } catch (final IOException | RuntimeException e) {
+            LOGGER.error(() -> LogUtil.message("updateVolumeState() path not created: {}", path));
+        }
     }
 
-    private void setSizes(final Path path, final FsVolumeState volumeState) {
-        try {
-            final FileStore fileStore = Files.getFileStore(path);
-            final long usableSpace = fileStore.getUsableSpace();
-            final long freeSpace = fileStore.getUnallocatedSpace();
-            final long totalSpace = fileStore.getTotalSpace();
+    private void setSizes(final Path path, final FsVolumeState volumeState) throws IOException {
+        final FileStore fileStore = Files.getFileStore(path);
+        final long usableSpace = fileStore.getUsableSpace();
+        final long freeSpace = fileStore.getUnallocatedSpace();
+        final long totalSpace = fileStore.getTotalSpace();
 
-            volumeState.setBytesTotal(totalSpace);
-            volumeState.setBytesFree(usableSpace);
-            volumeState.setBytesUsed(totalSpace - freeSpace);
-        } catch (final IOException e) {
-            LOGGER.error(e::getMessage, e);
-        }
+        volumeState.setBytesTotal(totalSpace);
+        volumeState.setBytesFree(usableSpace);
+        volumeState.setBytesUsed(totalSpace - freeSpace);
     }
 
     private FsVolumeState saveVolumeState(final FsVolumeState volumeState) {
