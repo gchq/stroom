@@ -62,7 +62,7 @@ public class FeedPropertiesImpl implements FeedProperties {
                 // Child stream type is null for the data child streams
                 // Only raw streams have a custom encoding, everything internal is the default charset,
                 // i.e. UTF8
-                return resolveEncoding(feedName, streamTypeName, feedDoc.getContextEncoding());
+                return resolveEncoding(feedName, streamTypeName, feedDoc.getEncoding());
 
             } else {
                 return StreamUtil.DEFAULT_CHARSET_NAME;

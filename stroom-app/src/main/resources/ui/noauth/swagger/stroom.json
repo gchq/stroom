@@ -5117,9 +5117,9 @@
         "tags" : [ "Reference Data" ]
       }
     },
-    "/refData/v1/purge/{purgeAge}" : {
+    "/refData/v1/purgeByAge/{purgeAge}" : {
       "delete" : {
-        "operationId" : "purgeReferenceData",
+        "operationId" : "purgeReferenceDataByAge",
         "parameters" : [ {
           "in" : "path",
           "name" : "purgeAge",
@@ -5141,6 +5141,44 @@
           }
         },
         "summary" : "Explicitly delete all entries that are older than purgeAge.",
+        "tags" : [ "Reference Data" ]
+      }
+    },
+    "/refData/v1/purgeByStream/{refStreamId}/{partNo}" : {
+      "delete" : {
+        "operationId" : "purgeReferenceDataByStreamAndPartNo",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "refStreamId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64",
+            "minimum" : 1
+          }
+        }, {
+          "in" : "path",
+          "name" : "partNo",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64",
+            "minimum" : 1
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Delete all entries for a reference stream and part number (one based)",
         "tags" : [ "Reference Data" ]
       }
     },
@@ -5176,7 +5214,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/RefStreamProcessingInfo"
+                    "$ref" : "#/components/schemas/ProcessingInfoResponse"
                   }
                 }
               }
@@ -12035,6 +12073,34 @@
           }
         }
       },
+      "ProcessingInfoResponse" : {
+        "type" : "object",
+        "properties" : {
+          "createTime" : {
+            "type" : "string"
+          },
+          "effectiveTime" : {
+            "type" : "string"
+          },
+          "lastAccessedTime" : {
+            "type" : "string"
+          },
+          "mapNames" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            },
+            "uniqueItems" : true
+          },
+          "processingState" : {
+            "type" : "string",
+            "enum" : [ "LOAD_IN_PROGRESS", "PURGE_IN_PROGRESS", "COMPLETE", "FAILED", "TERMINATED", "PURGE_FAILED" ]
+          },
+          "refStreamDefinition" : {
+            "$ref" : "#/components/schemas/RefStreamDefinition"
+          }
+        }
+      },
       "Processor" : {
         "type" : "object",
         "properties" : {
@@ -12615,7 +12681,7 @@
           },
           "processingState" : {
             "type" : "string",
-            "enum" : [ "LOAD_IN_PROGRESS", "PURGE_IN_PROGRESS", "COMPLETE" ]
+            "enum" : [ "LOAD_IN_PROGRESS", "PURGE_IN_PROGRESS", "COMPLETE", "FAILED", "TERMINATED", "PURGE_FAILED" ]
           }
         }
       },
@@ -12659,24 +12725,6 @@
           }
         }
       },
-      "RefStreamProcessingInfo" : {
-        "type" : "object",
-        "properties" : {
-          "mapNames" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            },
-            "uniqueItems" : true
-          },
-          "refDataProcessingInfo" : {
-            "$ref" : "#/components/schemas/RefDataProcessingInfo"
-          },
-          "refStreamDefinition" : {
-            "$ref" : "#/components/schemas/RefStreamDefinition"
-          }
-        }
-      },
       "ReferenceLoader" : {
         "type" : "object",
         "properties" : {
@@ -12685,6 +12733,9 @@
           },
           "referenceFeed" : {
             "$ref" : "#/components/schemas/DocRef"
+          },
+          "streamType" : {
+            "type" : "string"
           }
         },
         "required" : [ "loaderPipeline", "referenceFeed" ]
