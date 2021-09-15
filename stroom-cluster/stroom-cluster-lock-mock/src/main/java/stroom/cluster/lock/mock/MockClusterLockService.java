@@ -2,6 +2,8 @@ package stroom.cluster.lock.mock;
 
 import stroom.cluster.lock.api.ClusterLockService;
 
+import java.util.function.Supplier;
+
 public class MockClusterLockService implements ClusterLockService {
 
     @Override
@@ -12,5 +14,10 @@ public class MockClusterLockService implements ClusterLockService {
     @Override
     public void lock(final String lockName, final Runnable runnable) {
         runnable.run();
+    }
+
+    @Override
+    public <T> T lock(final String lockName, final Supplier<T> supplier) {
+        return supplier.get();
     }
 }

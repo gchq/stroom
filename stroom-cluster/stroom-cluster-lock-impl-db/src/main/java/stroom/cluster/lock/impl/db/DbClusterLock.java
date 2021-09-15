@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -47,6 +48,10 @@ class DbClusterLock implements Clearable {
     }
 
     public void lock(final String lockName, final Runnable runnable) {
+        lock(lockName, runnable);
+    }
+
+    public <T> T lock(final String lockName, final Supplier<T> supplier) {
         LOGGER.debug("lock({}) - >>>", lockName);
 
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
@@ -54,7 +59,7 @@ class DbClusterLock implements Clearable {
         // This happens outside this transaction
         checkLockCreated(lockName);
 
-        JooqUtil.transaction(clusterLockDbConnProvider, context -> {
+        return JooqUtil.transactionResult(clusterLockDbConnProvider, context -> {
             final Optional<Record> optional = context
                     .select()
                     .from(CLUSTER_LOCK)
@@ -62,13 +67,13 @@ class DbClusterLock implements Clearable {
                     .forUpdate()
                     .fetchOptional();
 
-            if (!optional.isPresent()) {
+            if (optional.isEmpty()) {
                 throw new IllegalStateException("No cluster lock has been found or created: " + lockName);
             }
 
             LOGGER.debug("lock({}) - <<< {}", lockName, logExecutionTime);
 
-            runnable.run();
+            return supplier.get();
         });
     }
 

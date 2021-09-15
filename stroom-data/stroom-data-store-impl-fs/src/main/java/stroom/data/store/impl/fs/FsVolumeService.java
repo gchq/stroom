@@ -315,7 +315,8 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
             synchronized (this) {
                 volumeList = currentVolumeList.get();
                 if (volumeList == null) {
-                    volumeList = refresh();
+                    volumeList = clusterLockService.lock(LOCK_NAME, this::refresh);
+
                 }
             }
         }
@@ -328,6 +329,8 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     }
 
     void updateStatus() {
+        // Only one node needs to do this, so if it doesn't get the lock
+        // another one will
         clusterLockService.tryLock(LOCK_NAME, this::refresh);
     }
 
@@ -352,11 +355,9 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         }
 
         final VolumeList newList = new VolumeList(now, volumes);
-        synchronized (this) {
-            final VolumeList currentList = currentVolumeList.get();
-            if (currentList == null || currentList.createTime < newList.createTime) {
-                currentVolumeList.set(newList);
-            }
+        final VolumeList currentList = currentVolumeList.get();
+        if (currentList == null || currentList.createTime < newList.createTime) {
+            currentVolumeList.set(newList);
         }
 
         return newList;
