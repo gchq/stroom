@@ -110,9 +110,9 @@ public class Coprocessors implements Iterable<Coprocessor> {
     public CompletionState getCompletionState() {
         return new CompletionState() {
             @Override
-            public void complete() {
+            public void signalComplete() {
                 for (final Coprocessor coprocessor : coprocessorMap.values()) {
-                    coprocessor.getCompletionState().complete();
+                    coprocessor.getCompletionState().signalComplete();
                 }
             }
 
@@ -152,7 +152,7 @@ public class Coprocessors implements Iterable<Coprocessor> {
 
     public void clear() {
         for (final Coprocessor coprocessor : coprocessorMap.values()) {
-            coprocessor.getCompletionState().complete();
+            coprocessor.getCompletionState().signalComplete();
             coprocessor.clear();
         }
     }

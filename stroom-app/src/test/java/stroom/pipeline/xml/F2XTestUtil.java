@@ -37,6 +37,8 @@ import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.textconverter.TextConverterStore;
 import stroom.pipeline.writer.TestAppender;
 import stroom.pipeline.xslt.XsltStore;
+import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.shared.Severity;
 
@@ -62,6 +64,7 @@ public class F2XTestUtil {
     private final XsltStore xsltStore;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final RecordCount recordCount;
+    private final TaskContextFactory taskContextFactory;
 
     @Inject
     F2XTestUtil(final PipelineFactory pipelineFactory,
@@ -69,25 +72,37 @@ public class F2XTestUtil {
                 final TextConverterStore textConverterStore,
                 final XsltStore xsltStore,
                 final ErrorReceiverProxy errorReceiverProxy,
-                final RecordCount recordCount) {
+                final RecordCount recordCount,
+                final TaskContextFactory taskContextFactory) {
         this.pipelineFactory = pipelineFactory;
         this.feedHolder = feedHolder;
         this.textConverterStore = textConverterStore;
         this.xsltStore = xsltStore;
         this.errorReceiverProxy = errorReceiverProxy;
         this.recordCount = recordCount;
+        this.taskContextFactory = taskContextFactory;
     }
 
     /**
      * Run a XML and XSLT transform.
      */
-    public String runFullTest(final FeedDoc feed, final TextConverterType textConverterType,
-                              final String textConverterLocation, final String xsltLocation, final String dataLocation,
+    public String runFullTest(final FeedDoc feed,
+                              final TextConverterType textConverterType,
+                              final String textConverterLocation,
+                              final String xsltLocation,
+                              final String dataLocation,
                               final int expectedWarnings) {
         // Get the input stream.
         final InputStream in = StroomPipelineTestFileUtil.getInputStream(dataLocation);
 
-        return runFullTest(feed, textConverterType, textConverterLocation, xsltLocation, in, expectedWarnings);
+        return taskContextFactory.contextResult("F2XTestUtil", taskContext ->
+                runFullTest(feed,
+                        textConverterType,
+                        textConverterLocation,
+                        xsltLocation,
+                        in,
+                        expectedWarnings,
+                        taskContext)).get();
     }
 
     /**
@@ -98,7 +113,8 @@ public class F2XTestUtil {
                                final String textConverterLocation,
                                final String xsltLocation,
                                final InputStream dataStream,
-                               final int expectedWarnings) {
+                               final int expectedWarnings,
+                               final TaskContext taskContext) {
         // Create an output stream.
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
 
@@ -156,7 +172,7 @@ public class F2XTestUtil {
         // xsltFilterElementType, "xslt", "XSLT", false);
         pipelineData.addProperty(PipelineDataUtil.createProperty("xsltFilter", "xslt", xsltRef));
 
-        final Pipeline pipeline = pipelineFactory.create(pipelineData);
+        final Pipeline pipeline = pipelineFactory.create(pipelineData, taskContext);
 
         final List<TestAppender> filters = pipeline.findFilters(TestAppender.class);
         final TestAppender testAppender = filters.get(0);
@@ -192,52 +208,55 @@ public class F2XTestUtil {
     /**
      * Run a XML transform.
      */
-    public String runF2XTest(final TextConverterType textConverterType, final String textConverterLocation,
+    public String runF2XTest(final TextConverterType textConverterType,
+                             final String textConverterLocation,
                              final InputStream inputStream) {
-        // Persist the text converter.
-        final DocRef docRef = textConverterStore.createDocument("TEST_TRANSLATION");
-        TextConverterDoc textConverter = textConverterStore.readDocument(docRef);
-        textConverter.setConverterType(textConverterType);
-        textConverter.setData(StroomPipelineTestFileUtil.getString(textConverterLocation));
-        textConverterStore.writeDocument(textConverter);
+        return taskContextFactory.contextResult("F2XTestUtil", taskContext -> {
+            // Persist the text converter.
+            final DocRef docRef = textConverterStore.createDocument("TEST_TRANSLATION");
+            TextConverterDoc textConverter = textConverterStore.readDocument(docRef);
+            textConverter.setConverterType(textConverterType);
+            textConverter.setData(StroomPipelineTestFileUtil.getString(textConverterLocation));
+            textConverterStore.writeDocument(textConverter);
 
-        // Setup the error receiver.
-        final LoggingErrorReceiver loggingErrorReceiver = new LoggingErrorReceiver();
-        errorReceiverProxy.setErrorReceiver(loggingErrorReceiver);
+            // Setup the error receiver.
+            final LoggingErrorReceiver loggingErrorReceiver = new LoggingErrorReceiver();
+            errorReceiverProxy.setErrorReceiver(loggingErrorReceiver);
 
-        // Create the pipeline.
-        final PipelineDoc pipelineDoc = PipelineTestUtil.createBasicPipeline(
-                StroomPipelineTestFileUtil.getString("F2XTestUtil/f2xtest.Pipeline.data.xml"));
-        final PipelineData pipelineData = pipelineDoc.getPipelineData();
+            // Create the pipeline.
+            final PipelineDoc pipelineDoc = PipelineTestUtil.createBasicPipeline(
+                    StroomPipelineTestFileUtil.getString("F2XTestUtil/f2xtest.Pipeline.data.xml"));
+            final PipelineData pipelineData = pipelineDoc.getPipelineData();
 
-        // final ElementType parserElementType = new ElementType("Parser");
-        // final PropertyType textConverterPropertyType = new PropertyType(
-        // parserElementType, "textConverter", "TextConverter", false);
-        pipelineData.addProperty(
-                PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", docRef));
+            // final ElementType parserElementType = new ElementType("Parser");
+            // final PropertyType textConverterPropertyType = new PropertyType(
+            // parserElementType, "textConverter", "TextConverter", false);
+            pipelineData.addProperty(
+                    PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", docRef));
 
-        // final ElementType schemaFilterElementType = new ElementType(
-        // "SchemaFilter");
-        // final PropertyType schemaGroupPropertyType = new PropertyType(
-        // schemaFilterElementType, "schemaGroup", "String", false);
-        pipelineData.addProperty(PipelineDataUtil.createProperty(
-                "schemaFilter", "schemaGroup", "RECORDS"));
+            // final ElementType schemaFilterElementType = new ElementType(
+            // "SchemaFilter");
+            // final PropertyType schemaGroupPropertyType = new PropertyType(
+            // schemaFilterElementType, "schemaGroup", "String", false);
+            pipelineData.addProperty(PipelineDataUtil.createProperty(
+                    "schemaFilter", "schemaGroup", "RECORDS"));
 
-        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+            final ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        final PipelineData mergedPipelineData = new PipelineDataMerger().merge(pipelineData).createMergedData();
-        final Pipeline pipeline = pipelineFactory.create(mergedPipelineData);
+            final PipelineData mergedPipelineData = new PipelineDataMerger().merge(pipelineData).createMergedData();
+            final Pipeline pipeline = pipelineFactory.create(mergedPipelineData, taskContext);
 
-        final List<TestAppender> filters = pipeline.findFilters(TestAppender.class);
-        final TestAppender testAppender = filters.get(0);
-        testAppender.setOutputStream(out);
+            final List<TestAppender> filters = pipeline.findFilters(TestAppender.class);
+            final TestAppender testAppender = filters.get(0);
+            testAppender.setOutputStream(out);
 
-        pipeline.process(inputStream);
+            pipeline.process(inputStream);
 
-        if (!loggingErrorReceiver.isAllOk()) {
-            fail(errorReceiverProxy.toString());
-        }
+            if (!loggingErrorReceiver.isAllOk()) {
+                fail(errorReceiverProxy.toString());
+            }
 
-        return out.toString();
+            return out.toString();
+        }).get();
     }
 }

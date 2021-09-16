@@ -20,7 +20,14 @@ package stroom.pipeline.refdata.store;
 import stroom.lmdb.PutOutcome;
 import stroom.util.shared.Range;
 
+import java.util.Set;
+
 public interface RefDataLoader extends AutoCloseable {
+
+    Set<ProcessingState> VALID_COMPLETION_STATES = Set.of(
+            ProcessingState.COMPLETE,
+            ProcessingState.FAILED,
+            ProcessingState.TERMINATED);
 
     /**
      * @return The {@link RefStreamDefinition} that this loader is loading data for
@@ -30,6 +37,7 @@ public interface RefDataLoader extends AutoCloseable {
     /**
      * Creates the initial ProcessingInfo entry to mark this stream definition
      * as having a load in progress.
+     *
      * @param overwriteExisting If true, allows duplicate keys to override existing values
      * @return
      */
@@ -39,7 +47,15 @@ public interface RefDataLoader extends AutoCloseable {
      * Completes the load, committing any outstanding work and marking the ProcessingInfo
      * entry as complete for this stream definition
      */
-    void completeProcessing();
+    default void completeProcessing() {
+        completeProcessing(ProcessingState.COMPLETE);
+    }
+
+    /**
+     * Completes the load, committing any outstanding work and marking the ProcessingInfo
+     * entry with processingState for this stream definition
+     */
+    void completeProcessing(final ProcessingState processingState);
 
     /**
      * Set the number of puts to perform before committing the operations so far
@@ -49,9 +65,10 @@ public interface RefDataLoader extends AutoCloseable {
     /**
      * Put an entry into the key/value store. The overwriteExisting setting of the loader
      * will govern how duplicates are handled.
+     *
      * @param mapDefinition The {@link MapDefinition} that this entry is associated with
-     * @param key The key
-     * @param refDataValue The value
+     * @param key           The key
+     * @param refDataValue  The value
      * @return True if the entry was put into the store
      */
     PutOutcome put(final MapDefinition mapDefinition,
@@ -61,9 +78,10 @@ public interface RefDataLoader extends AutoCloseable {
     /**
      * Put an entry into the range/value store. The overwriteExisting setting of the loader
      * will govern how duplicates are handled.
+     *
      * @param mapDefinition The {@link MapDefinition} that this entry is associated with
-     * @param keyRange The key range that the value is associate with
-     * @param refDataValue The value
+     * @param keyRange      The key range that the value is associate with
+     * @param refDataValue  The value
      * @return True if the entry was put into the store
      */
     PutOutcome put(final MapDefinition mapDefinition,

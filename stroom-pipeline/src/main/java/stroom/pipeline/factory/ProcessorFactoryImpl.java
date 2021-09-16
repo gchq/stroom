@@ -22,6 +22,7 @@ import stroom.pipeline.errorhandler.ErrorStatistics;
 import stroom.pipeline.errorhandler.LoggedException;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.pipeline.scope.PipelineScoped;
 import stroom.util.shared.Severity;
 
@@ -97,6 +98,7 @@ class ProcessorFactoryImpl implements ProcessorFactory {
                 final Runnable runnable = taskContextFactory.childContext(
                         parentTaskContext,
                         "Process",
+                        TerminateHandlerFactory.NOOP_FACTORY,
                         taskContext -> processor.process());
                 CompletableFuture
                         .runAsync(runnable, executor)
@@ -113,7 +115,7 @@ class ProcessorFactoryImpl implements ProcessorFactory {
 
             try {
                 boolean success = false;
-                while (!Thread.currentThread().isInterrupted() && !success) {
+                while (!parentTaskContext.isTerminated() && !success) {
                     success = countDownLatch.await(10, TimeUnit.SECONDS);
                 }
             } catch (final InterruptedException e) {

@@ -3850,6 +3850,15 @@ paths:
         schema:
           type: integer
           format: int32
+      - in: query
+        name: refStreamId
+        schema:
+          type: integer
+          format: int64
+      - in: query
+        name: mapName
+        schema:
+          type: string
       responses:
         default:
           content:
@@ -3879,6 +3888,7 @@ paths:
                 type: string
           description: default response
       summary: Perform a reference data lookup using the supplied lookup request.
+        Reference data will be loaded if required using the supplied reference pipeline.
       tags:
       - Reference Data
   /refData/v1/purge/{purgeAge}:
@@ -3898,6 +3908,39 @@ paths:
                 type: boolean
           description: default response
       summary: Explicitly delete all entries that are older than purgeAge.
+      tags:
+      - Reference Data
+  /refData/v1/refStreamInfo:
+    get:
+      description: This is primarily intended  for small scale debugging in non-production
+        environments. If no limit is set a default limit is applied else the results
+        will be limited to limit entries.
+      operationId: getReferenceStreamProcessingInfoEntries
+      parameters:
+      - in: query
+        name: limit
+        schema:
+          type: integer
+          format: int32
+      - in: query
+        name: refStreamId
+        schema:
+          type: integer
+          format: int64
+      - in: query
+        name: mapName
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RefStreamProcessingInfo'
+          description: default response
+      summary: List processing info entries for all ref streams
       tags:
       - Reference Data
   /remoteSearch/v1/destroy:
@@ -9348,6 +9391,18 @@ components:
         streamId:
           type: integer
           format: int64
+    RefStreamProcessingInfo:
+      type: object
+      properties:
+        mapNames:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+        refDataProcessingInfo:
+          $ref: '#/components/schemas/RefDataProcessingInfo'
+        refStreamDefinition:
+          $ref: '#/components/schemas/RefStreamDefinition'
     ReferenceLoader:
       type: object
       properties:
@@ -10775,8 +10830,6 @@ components:
       properties:
         criteria:
           $ref: '#/components/schemas/FindTaskCriteria'
-        kill:
-          type: boolean
     TextComponentSettings:
       type: object
       allOf:

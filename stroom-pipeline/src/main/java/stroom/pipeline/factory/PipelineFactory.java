@@ -19,7 +19,6 @@ package stroom.pipeline.factory;
 import stroom.docref.DocRef;
 import stroom.pipeline.SupportsCodeInjection;
 import stroom.pipeline.destination.DestinationProvider;
-import stroom.pipeline.errorhandler.TerminatedException;
 import stroom.pipeline.filter.SAXEventRecorder;
 import stroom.pipeline.filter.SAXRecordDetector;
 import stroom.pipeline.filter.SplitFilter;
@@ -45,6 +44,7 @@ import stroom.pipeline.stepping.Recorder;
 import stroom.pipeline.stepping.SteppingController;
 import stroom.pipeline.stepping.SteppingFilter;
 import stroom.pipeline.writer.OutputRecorder;
+import stroom.task.api.Terminator;
 import stroom.util.pipeline.scope.PipelineScoped;
 
 import org.slf4j.Logger;
@@ -85,19 +85,15 @@ public class PipelineFactory {
     /**
      * Convenience method for non stepping mode. Used only for testing.
      */
-    public Pipeline create(final PipelineData pipelineData) {
-        return create(pipelineData, null);
+    public Pipeline create(final PipelineData pipelineData,
+                           final Terminator terminator) {
+        return create(pipelineData, terminator, null);
     }
 
     public Pipeline create(final PipelineData pipelineData,
+                           final Terminator terminator,
                            final SteppingController controller) {
         final ElementRegistry pipelineElementRegistry = pipelineElementRegistryFactory.get();
-
-        final Terminator terminator = () -> {
-            if (Thread.currentThread().isInterrupted()) {
-                throw new TerminatedException();
-            }
-        };
 
         // If we are stepping then we don't want to use the cache.
         // Create an instance of each element.

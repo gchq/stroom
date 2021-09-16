@@ -80,7 +80,7 @@ class SolrClusterSearchTaskHandler {
                     LOGGER.trace(() -> "Search is complete, setting searchComplete to true and " +
                             "counting down searchCompleteLatch");
                     // Tell the client that the search has completed.
-                    coprocessors.getCompletionState().complete();
+                    coprocessors.getCompletionState().signalComplete();
                 }
             }
         });

@@ -37,6 +37,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import javax.inject.Inject;
 
 class ElasticClusterSearchTaskHandler {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticClusterSearchTaskHandler.class);
 
     private final ElasticSearchFactory elasticSearchFactory;
@@ -94,7 +95,7 @@ class ElasticClusterSearchTaskHandler {
                     LOGGER.trace(() -> "Search is complete, setting searchComplete to true and " +
                             "counting down searchCompleteLatch");
                     // Tell the client that the search has completed.
-                    coprocessors.getCompletionState().complete();
+                    coprocessors.getCompletionState().signalComplete();
                 }
             }
         });

@@ -21,6 +21,7 @@ import stroom.bytebuffer.ByteBufferPool;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
 import stroom.lmdb.AbstractLmdbDb;
+import stroom.lmdb.LmdbEnv;
 import stroom.pipeline.refdata.store.offheapstore.KeyValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
@@ -33,7 +34,6 @@ import stroom.util.logging.LogUtil;
 import com.google.inject.assistedinject.Assisted;
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
-import org.lmdbjava.Env;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
@@ -56,7 +56,7 @@ public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStore
     private final ValueStoreKeySerde valueSerde;
 
     @Inject
-    KeyValueStoreDb(@Assisted final Env<ByteBuffer> lmdbEnvironment,
+    KeyValueStoreDb(@Assisted final LmdbEnv lmdbEnvironment,
                     final ByteBufferPool byteBufferPool,
                     final KeyValueStoreKeySerde keySerde,
                     final ValueStoreKeySerde valueSerde) {
@@ -149,6 +149,6 @@ public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStore
 
     public interface Factory {
 
-        KeyValueStoreDb create(final Env<ByteBuffer> lmdbEnvironment);
+        KeyValueStoreDb create(final LmdbEnv lmdbEnvironment);
     }
 }

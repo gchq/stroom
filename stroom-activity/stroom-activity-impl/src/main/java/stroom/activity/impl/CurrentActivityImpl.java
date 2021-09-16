@@ -43,6 +43,7 @@ public class CurrentActivityImpl implements CurrentActivity {
         this.securityContext = securityContext;
     }
 
+    @Override
     public Activity getActivity() {
         return securityContext.secureResult(() -> {
             Activity activity = null;
@@ -50,10 +51,14 @@ public class CurrentActivityImpl implements CurrentActivity {
             try {
                 final HttpServletRequest request = httpServletRequestProvider.get();
                 if (request != null) {
-                    final HttpSession session = request.getSession();
-                    final Object object = session.getAttribute(NAME);
-                    if (object instanceof Activity) {
-                        activity = (Activity) object;
+                    final HttpSession session = request.getSession(false);
+                    if (session != null) {
+                        final Object object = session.getAttribute(NAME);
+                        if (object instanceof Activity) {
+                            activity = (Activity) object;
+                        }
+                    } else {
+                        LOGGER.debug("No Session");
                     }
                 }
             } catch (final RuntimeException e) {
@@ -64,12 +69,17 @@ public class CurrentActivityImpl implements CurrentActivity {
         });
     }
 
+    @Override
     public void setActivity(final Activity activity) {
         securityContext.secure(() -> {
             final HttpServletRequest request = httpServletRequestProvider.get();
             if (request != null) {
-                final HttpSession session = request.getSession();
-                session.setAttribute(NAME, activity);
+                final HttpSession session = request.getSession(false);
+                if (session != null) {
+                    session.setAttribute(NAME, activity);
+                } else {
+                    LOGGER.debug("No Session");
+                }
             }
         });
     }

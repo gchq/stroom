@@ -20,7 +20,6 @@ package stroom.pipeline.refdata.store.offheapstore.databases;
 
 import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.bytebuffer.ByteBufferUtils;
-import stroom.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.store.offheapstore.KeyValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
@@ -70,7 +69,7 @@ class TestKeyValueStoreDb extends AbstractLmdbDbTest {
         final ValueStoreKey valueStoreKey22 = new ValueStoreKey(22, (short) 22);
         final ValueStoreKey valueStoreKey31 = new ValueStoreKey(31, (short) 31);
 
-        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
             keyValueStoreDb.put(writeTxn, keyValueStoreKey11, valueStoreKey11, false);
             keyValueStoreDb.put(writeTxn, keyValueStoreKey21, valueStoreKey21, false);
             keyValueStoreDb.put(writeTxn, keyValueStoreKey22, valueStoreKey22, false);
@@ -87,7 +86,7 @@ class TestKeyValueStoreDb extends AbstractLmdbDbTest {
     @Test
     void testDeleteMapEntries() {
 
-        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
             putEntry(writeTxn, 1, "key11", 1, (short) 1);
             putEntry(writeTxn, 1, "key12", 1, (short) 1);
             putEntry(writeTxn, 1, "key13", 1, (short) 1);
@@ -104,7 +103,7 @@ class TestKeyValueStoreDb extends AbstractLmdbDbTest {
                     .isEqualTo(9);
         });
 
-        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
             keyValueStoreDb.deleteMapEntries(
                     writeTxn,
                     UID.of(2, ByteBuffer.allocateDirect(10)),
@@ -136,7 +135,7 @@ class TestKeyValueStoreDb extends AbstractLmdbDbTest {
     }
 
     private void doForEachTest(final UID uid, final int expectedEntryCount) {
-        LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
             AtomicInteger cnt = new AtomicInteger(0);
             keyValueStoreDb.deleteMapEntries(writeTxn, uid, (keyBuf, valBuf) -> {
                 cnt.incrementAndGet();

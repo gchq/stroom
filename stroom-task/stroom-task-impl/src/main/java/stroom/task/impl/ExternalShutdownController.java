@@ -16,7 +16,7 @@
 
 package stroom.task.impl;
 
-import stroom.util.shared.TerminateHandler;
+import stroom.task.api.TerminateHandler;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

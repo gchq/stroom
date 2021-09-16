@@ -96,7 +96,7 @@ public class ElasticAsyncSearchTaskHandler {
                     terminateTasks(task, taskContext.getTaskId());
 
                     // Ensure search is complete even if we had errors.
-                    resultCollector.complete();
+                    resultCollector.signalComplete();
 
                     // We need to wait here for the client to keep getting results if
                     // this is an interactive search.

@@ -34,6 +34,7 @@ import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.textconverter.TextConverterStore;
 import stroom.pipeline.xslt.XsltStore;
+import stroom.task.api.TaskContext;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.io.FileUtil;
@@ -83,6 +84,8 @@ class TestXMLWithErrorsInTransform extends AbstractProcessIntegrationTest {
     private PipelineDataCache pipelineDataCache;
     @Inject
     private PipelineScopeRunnable pipelineScopeRunnable;
+    @Inject
+    private TaskContext taskContext;
 
     /**
      * Tests the XMLTransformer on some sample Windows XML events.
@@ -131,7 +134,7 @@ class TestXMLWithErrorsInTransform extends AbstractProcessIntegrationTest {
             pipelineStore.writeDocument(pipelineDoc);
 
             final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
-            final Pipeline pipeline = pipelineFactory.create(pipelineData);
+            final Pipeline pipeline = pipelineFactory.create(pipelineData, taskContext);
 
 //            feedHolder.setFeedName("");
 //
