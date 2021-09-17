@@ -50,6 +50,6 @@ class FsOrphanMetaFinderExecutor {
             };
             final FsOrphanMetaFinderProgress progress = new FsOrphanMetaFinderProgress(taskContext);
             orphanFileFinderProvider.get().scan(orphanConsumer, progress);
-        });
+        }).run();
     }
 }
