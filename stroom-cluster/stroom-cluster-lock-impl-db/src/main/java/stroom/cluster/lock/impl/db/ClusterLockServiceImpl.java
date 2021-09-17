@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -53,7 +54,15 @@ class ClusterLockServiceImpl implements ClusterLockService {
 
     @Override
     public void lock(final String lockName, final Runnable runnable) {
-        dbClusterLock.lock(lockName, runnable);
+        dbClusterLock.lockResult(lockName, () -> {
+            runnable.run();
+            return null;
+        });
+    }
+
+    @Override
+    public <T> T lockResult(final String lockName, final Supplier<T> supplier) {
+        return dbClusterLock.lockResult(lockName, supplier);
     }
 
     @Override

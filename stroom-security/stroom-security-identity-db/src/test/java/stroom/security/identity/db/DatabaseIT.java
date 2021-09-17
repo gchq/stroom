@@ -2,7 +2,7 @@ package stroom.security.identity.db;
 
 import stroom.test.common.util.db.DbTestUtil;
 
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +39,7 @@ public abstract class DatabaseIT {
 //        cleanDatabase();
 //    }
 
-    @Before
+    @BeforeEach
     public void before() {
 //        authDbConnProvider = new TestAuthDbConnProvider();
 //        Map<String, String> flywayConfiguration = new HashMap<String, String>();
