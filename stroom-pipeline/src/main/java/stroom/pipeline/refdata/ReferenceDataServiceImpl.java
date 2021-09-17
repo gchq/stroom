@@ -519,11 +519,12 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
                         final Val[] valArr = new Val[fields.length];
 
-                        try {
-                            Thread.sleep(50);
-                        } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
-                        }
+                        // Useful for slowing down the search in dev to test termination
+//                        try {
+//                            Thread.sleep(50);
+//                        } catch (InterruptedException e) {
+//                            Thread.currentThread().interrupt();
+//                        }
 
                         for (int i = 0; i < fields.length; i++) {
                             AbstractField field = fields[i];
