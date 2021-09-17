@@ -45,21 +45,38 @@ public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TY
         this.connectionProvider = connectionProvider;
     }
 
+    @Override
     public T_OBJ_TYPE create(final T_OBJ_TYPE object) {
         return JooqUtil.contextResult(connectionProvider, context ->
                 create(context, object));
     }
 
+    @Override
     public Optional<T_OBJ_TYPE> fetch(final T_ID_TYPE id) {
         return JooqUtil.contextResult(connectionProvider, context ->
                 fetch(context, id));
     }
 
+    /**
+     * Performs the update of the object using optimistic locking
+     */
+    @Override
     public T_OBJ_TYPE update(final T_OBJ_TYPE object) {
         return JooqUtil.contextResultWithOptimisticLocking(connectionProvider, context ->
                 update(context, object));
     }
 
+    /**
+     * Performs the update of the object without optimistic locking. Should only be used
+     * in cases where it does not matter if another thread/node could have also done
+     * an update on the same record.
+     */
+    public T_OBJ_TYPE updateWithoutOptimisticLocking(final T_OBJ_TYPE object) {
+        return JooqUtil.contextResult(connectionProvider, context ->
+                update(context, object));
+    }
+
+    @Override
     public boolean delete(final T_ID_TYPE id) {
         return JooqUtil.contextResult(connectionProvider, context ->
                 delete(context, id));

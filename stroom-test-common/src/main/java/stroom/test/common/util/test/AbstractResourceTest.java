@@ -10,7 +10,6 @@ import io.dropwizard.testing.junit5.ResourceExtension;
 import org.assertj.core.api.Assertions;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.logging.LoggingFeature;
-import org.junit.Rule;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
@@ -30,7 +29,6 @@ public abstract class AbstractResourceTest<R extends RestResource> {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractResourceTest.class);
 
     // Need to add resources as suppliers so they can be fully mocked by mocktio before being used
-    @Rule
     private final ResourceExtension resources = ResourceExtension.builder()
             .addResource(() -> {
                 LOGGER.info("Calling getRestResource()");

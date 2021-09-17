@@ -328,6 +328,8 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     }
 
     void updateStatus() {
+        // Only one node needs to do this, so if it doesn't get the lock
+        // another one will
         clusterLockService.tryLock(LOCK_NAME, this::refresh);
     }
 
@@ -351,11 +353,9 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         }
 
         final VolumeList newList = new VolumeList(now, volumes);
-        synchronized (this) {
-            final VolumeList currentList = currentVolumeList.get();
-            if (currentList == null || currentList.createTime < newList.createTime) {
-                currentVolumeList.set(newList);
-            }
+        final VolumeList currentList = currentVolumeList.get();
+        if (currentList == null || currentList.createTime < newList.createTime) {
+            currentVolumeList.set(newList);
         }
 
         return newList;
@@ -438,7 +438,10 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     }
 
     private FsVolumeState saveVolumeState(final FsVolumeState volumeState) {
-        return fileSystemVolumeStateDao.update(volumeState);
+        // If another node updates the state at the same time it doesn't matter
+        // as they will be updating to the same value. This saves having to
+        // get a cluster lock
+        return fileSystemVolumeStateDao.updateWithoutOptimisticLocking(volumeState);
     }
 
     private void ensureDefaultVolumes() {
