@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.data.store.impl.fs;
@@ -22,53 +21,88 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
+import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
+import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.Meta;
-import stroom.task.impl.ExecutorProviderImpl;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.io.FileUtil;
+import stroom.util.time.StroomDuration;
 
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Collection;
+import java.util.List;
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
+class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
 
     private static final int NEG_SIXTY = -60;
     private static final int NEG_FOUR = -4;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestFileSystemCleanTask.class);
-
     @Inject
-    private Store streamStore;
-    @Inject
-    private FsDataStoreMaintenanceService streamMaintenanceService;
+    private FsFileFinder fileFinder;
     @Inject
     private DataVolumeService dataVolumeService;
     @Inject
-    private FsCleanExecutor fileSystemCleanTaskExecutor;
-    @Inject
-    private ExecutorProviderImpl executorProvider;
-    @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
+    @Inject
+    private DataStoreServiceConfig config;
+    @Inject
+    private FsVolumeService volumeService;
+    @Inject
+    private Store streamStore;
+    @Inject
+    private FsOrphanFileFinderExecutor fsOrphanFileFinderExecutor;
 
     @Test
-    void testCheckCleaning() throws IOException {
-        fileSystemCleanTaskExecutor.clean();
+    void testSimple() throws IOException {
+        config.setFileSystemCleanOldAge(StroomDuration.ZERO);
 
-        waitForTaskManagerToComplete();
+        final String feedName = FileSystemTestUtil.getUniqueTestString();
+
+        final Meta md = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
+
+        commonTestScenarioCreator.createSampleBlankProcessedFile(feedName, md);
+
+        final List<Path> files = fileFinder.findAllStreamFile(md);
+
+        assertThat(files.size() > 0).isTrue();
+
+        final FindDataVolumeCriteria findStreamVolumeCriteria = FindDataVolumeCriteria.create(md);
+        assertThat(dataVolumeService.find(findStreamVolumeCriteria).size() > 0).isTrue();
+
+        final Path dir = files.iterator().next().getParent();
+
+        final Path test1 = dir.resolve("badfile.dat");
+
+        Files.createFile(test1);
+
+        assertThat(Files.exists(test1)).isTrue();
+        fsOrphanFileFinderExecutor.scan();
+
+        final List<FsVolume> volumeList = volumeService.find(FindFsVolumeCriteria.matchAll()).getValues();
+        assertThat(volumeList.size()).isEqualTo(1);
+
+        final Path orphanFileList = Paths.get(volumeList.get(0).getPath()).resolve("orphan_files.out");
+        final List<String> fileList = Files.readAllLines(orphanFileList);
+        assertThat(fileList).contains(FileUtil.getCanonicalPath(test1));
+    }
+
+
+    @Test
+    void testScan() throws IOException {
+        fsOrphanFileFinderExecutor.scan();
 
         final ZonedDateTime oldDate = ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_SIXTY);
 
@@ -89,7 +123,7 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
         try (final Target lockstreamTarget1 = streamStore.openTarget(lockfile1)) {
             TargetUtil.write(lockstreamTarget1, "MyTest");
 
-            final Collection<Path> lockedFiles = streamMaintenanceService.findAllStreamFile(
+            final Collection<Path> lockedFiles = fileFinder.findAllStreamFile(
                     lockstreamTarget1.getMeta());
             FileSystemUtil.updateLastModified(lockedFiles, oldDate.toInstant().toEpochMilli());
             dataVolumeService.find(FindDataVolumeCriteria.create(lockstreamTarget1.getMeta()));
@@ -107,7 +141,7 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
                 meta = nolockstreamTarget1.getMeta();
                 TargetUtil.write(nolockstreamTarget1, "MyTest");
             }
-            final Collection<Path> unlockedFiles = streamMaintenanceService
+            final Collection<Path> unlockedFiles = fileFinder
                     .findAllStreamFile(meta);
             final Path directory = unlockedFiles.iterator().next().getParent();
             // Create some other files on the file system
@@ -134,17 +168,24 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
                     ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_FOUR).toInstant().toEpochMilli());
 
             // Run the clean
-            fileSystemCleanTaskExecutor.clean();
+            fsOrphanFileFinderExecutor.scan();
 
-            waitForTaskManagerToComplete();
+            final List<FsVolume> volumeList = volumeService.find(FindFsVolumeCriteria.matchAll()).getValues();
+            assertThat(volumeList.size()).isEqualTo(1);
+            final Path orphanFileList = Paths.get(volumeList.get(0).getPath()).resolve("orphan_files.out");
+            final List<String> fileList = Files.readAllLines(orphanFileList);
 
             assertThat(FileSystemUtil.isAllFile(lockedFiles)).as("Locked files should still exist").isTrue();
             assertThat(FileSystemUtil.isAllFile(unlockedFiles)).as("Unlocked files should still exist").isTrue();
 
-            assertThat(Files.isRegularFile(oldfile)).as("expected deleted " + oldfile).isFalse();
-            assertThat(Files.isDirectory(olddir)).as("deleted deleted " + olddir).isFalse();
-            assertThat(Files.isDirectory(newdir)).as("not deleted new dir").isTrue();
-            assertThat(Files.isRegularFile(oldfileinnewdir)).as("deleted old file in new dir").isFalse();
+            assertThat(fileList).as("expected orphan " + oldfile)
+                    .contains(FileUtil.getCanonicalPath(oldfile));
+            assertThat(fileList).as("expected orphan " + olddir)
+                    .contains(FileUtil.getCanonicalPath(olddir));
+            assertThat(fileList).as("unexpected orphan " + newdir)
+                    .doesNotContain(FileUtil.getCanonicalPath(newdir));
+            assertThat(fileList).as("old file in new dir")
+                    .contains(FileUtil.getCanonicalPath(oldfileinnewdir));
         }
     }
 
@@ -157,7 +198,7 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
 
         final Meta meta = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
 
-        Collection<Path> files = streamMaintenanceService.findAllStreamFile(meta);
+        Collection<Path> files = fileFinder.findAllStreamFile(meta);
 
         for (final Path file : files) {
             assertThat(FileUtil.delete(file)).isTrue();
@@ -169,9 +210,9 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
                 .as("Must be saved to at least one volume")
                 .isTrue();
 
-        fileSystemCleanTaskExecutor.clean();
+        fsOrphanFileFinderExecutor.scan();
 
-        files = streamMaintenanceService.findAllStreamFile(meta);
+        files = fileFinder.findAllStreamFile(meta);
 
         assertThat(files.size())
                 .as("Files have been deleted above")
@@ -181,16 +222,12 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
                 .as("Volumes should still exist as they are new")
                 .isTrue();
 
-        fileSystemCleanTaskExecutor.clean();
-
-        waitForTaskManagerToComplete();
+        fsOrphanFileFinderExecutor.scan();
     }
 
     @Test
-    void testCheckCleaningLotsOfFiles() throws IOException {
-        fileSystemCleanTaskExecutor.clean();
-
-        waitForTaskManagerToComplete();
+    void testScanLotsOfFiles() throws IOException {
+        fsOrphanFileFinderExecutor.scan();
 
         final String feedName = FileSystemTestUtil.getUniqueTestString();
         final long endTime = System.currentTimeMillis();
@@ -208,16 +245,7 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
             }
         }
 
-        fileSystemCleanTaskExecutor.clean();
+        fsOrphanFileFinderExecutor.scan();
 
-        waitForTaskManagerToComplete();
-
-    }
-
-    private void waitForTaskManagerToComplete() {
-        while (executorProvider.getCurrentTaskCount() > 0) {
-            Thread.yield();
-        }
-        LOGGER.info("waitForTaskManagerToComplete() - done");
     }
 }

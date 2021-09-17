@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2430** : Removed file system clean task and replaced with orphan finding jobs for files and meta.
+
 * Issue **#2432** : Volume state is now updated without optimistic locking.
 
 * Issue **#2382** : Improved charset resolution.

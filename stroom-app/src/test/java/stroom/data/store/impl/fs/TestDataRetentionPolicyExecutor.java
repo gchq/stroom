@@ -68,10 +68,8 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
     private Store streamStore;
     @Inject
     private DataVolumeService dataVolumeService;
-    //    @Inject
-//    private FeedStore feedStore;
     @Inject
-    private FsCleanExecutor fileSystemCleanTaskExecutor;
+    private FsOrphanFileFinderExecutor fileSystemCleanTaskExecutor;
     @Inject
     private NodeInfo nodeInfo;
     @Inject
@@ -87,7 +85,7 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
     void testCheckArchive() throws IOException {
         dataStoreServiceConfig.setFileSystemCleanOldAge(StroomDuration.ZERO);
         dataStoreServiceConfig.setDeletePurgeAge(StroomDuration.ZERO);
-        fileSystemCleanTaskExecutor.clean();
+        fileSystemCleanTaskExecutor.scan();
 
         final ZonedDateTime oldDate = ZonedDateTime.now(ZoneOffset.UTC).minusDays(SIXTY);
         final ZonedDateTime newDate = ZonedDateTime.now(ZoneOffset.UTC).minusDays(FIFTY);
