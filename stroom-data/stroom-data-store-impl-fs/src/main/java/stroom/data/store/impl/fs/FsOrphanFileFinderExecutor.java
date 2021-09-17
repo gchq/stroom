@@ -121,7 +121,9 @@ class FsOrphanFileFinderExecutor {
     private void scanVolume(final TaskContext taskContext, final FsVolume volume, final long oldestDirTime) {
         final Path dir = Paths.get(volume.getPath());
         if (!Files.isDirectory(dir)) {
-            LOGGER.error(() -> "Directory for file delete list does not exist '" + FileUtil.getCanonicalPath(dir) + "'");
+            LOGGER.error(() -> "Directory for file delete list does not exist '" +
+                    FileUtil.getCanonicalPath(dir) +
+                    "'");
         } else {
             final Path orphanFileList = dir.resolve(ORPHAN_FILE_LIST);
             try {
