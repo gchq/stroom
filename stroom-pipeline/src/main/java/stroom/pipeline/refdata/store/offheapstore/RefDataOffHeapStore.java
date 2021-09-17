@@ -711,8 +711,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
     private String buildPurgeInfoString(final Instant startTime,
                                         final PurgeCounts purgeCounts) {
-        return LogUtil.message("{} refStreamDefs purged, {} refStreamDefs purge failures " +
-                        "{} maps deleted, {} values deleted, {} values de-referenced. " +
+        return LogUtil.message(" refStreamDefs purged: {}, refStreamDef purge failures: {}, " +
+                        "maps deleted: {}, values deleted: {}, values de-referenced: {}. " +
                         "Time taken {}",
                 purgeCounts.refStreamDefsDeletedCount,
                 purgeCounts.refStreamDefsFailedCount,

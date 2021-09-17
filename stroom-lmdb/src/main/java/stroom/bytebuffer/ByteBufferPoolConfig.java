@@ -8,9 +8,13 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import java.util.Map;
 import java.util.TreeMap;
 import javax.inject.Singleton;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 
 @Singleton
 public class ByteBufferPoolConfig extends AbstractConfig {
+
+    private int warningThresholdPercentage = 90;
 
     // Use a treemap so we get a consistent order in the yaml so TestYamlUtil doesn't fail
     private Map<Integer, Integer> pooledByteBufferCounts = new TreeMap<>(Map.of(
@@ -21,6 +25,19 @@ public class ByteBufferPoolConfig extends AbstractConfig {
             10_000, 50,
             100_000, 10,
             1_000_000, 3));
+
+    @Max(100)
+    @Min(1)
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
+    @JsonPropertyDescription("When the number of created buffers for any size reaches this threshold a warning will " +
+            "be logged.")
+    public int getWarningThresholdPercentage() {
+        return warningThresholdPercentage;
+    }
+
+    public void setWarningThresholdPercentage(final int warningThresholdPercentage) {
+        this.warningThresholdPercentage = warningThresholdPercentage;
+    }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("Defines the maximum number of byte buffers that will be held in the pool, " +
@@ -40,7 +57,8 @@ public class ByteBufferPoolConfig extends AbstractConfig {
     @Override
     public String toString() {
         return "ByteBufferPoolConfig{" +
-                "pooledByteBufferCounts=" + pooledByteBufferCounts +
+                "warningThresholdPercentage=" + warningThresholdPercentage +
+                ", pooledByteBufferCounts=" + pooledByteBufferCounts +
                 '}';
     }
 }

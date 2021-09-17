@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Add API method to clear the byte buffer pool.
+
+* Improve the output of the system info api call for the byte buffer pool.
+
+* Issue **#2439** : Change log level for an error in the byte buffer pool.
+
+* Issue **#2444** : Fix release of buffers to the pool that was causing ref data searches to hang.
+
 * Issue **#2432** : Volume state is now updated without optimistic locking.
 
 * Issue **#2382** : Improved charset resolution.
