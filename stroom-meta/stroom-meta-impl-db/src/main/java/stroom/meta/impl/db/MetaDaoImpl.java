@@ -1019,9 +1019,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
         final PageRequest pageRequest = criteria.getPageRequest();
         final Collection<Condition> conditions = createCondition(criteria);
         final Collection<OrderField<?>> orderFields = createOrderFields(criteria);
-
-        int offset = JooqUtil.getOffset(pageRequest);
-        int numberOfRows = JooqUtil.getLimit(pageRequest, true, FIND_RECORD_LIMIT);
+        final int offset = JooqUtil.getOffset(pageRequest);
+        final int numberOfRows = JooqUtil.getLimit(pageRequest, true, FIND_RECORD_LIMIT);
 
         final Set<Integer> extendedAttributeIds = identifyExtendedAttributesFields(criteria.getExpression(),
                 new HashSet<>());
