@@ -123,6 +123,8 @@ public class ProcessingInfoResponse {
                 '}';
     }
 
+    @JsonPropertyOrder(alphabetic = true)
+    @JsonInclude(Include.NON_NULL)
     public static class EntryCounts {
 
         @JsonProperty
