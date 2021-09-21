@@ -19,7 +19,6 @@ package stroom.cache.impl;
 import stroom.cache.api.CacheManager;
 import stroom.job.api.Schedule;
 import stroom.job.api.ScheduledJobsBinder;
-import stroom.lifecycle.api.LifecycleBinder;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
@@ -44,10 +43,6 @@ public class CacheModule extends AbstractModule {
                         .description("Evicts expired cache entries")
                         .managed(false)
                         .schedule(Schedule.ScheduleType.PERIODIC, "1m"));
-
-        LifecycleBinder.create(binder())
-                .bindStartupTaskTo(CacheManagerClose.class);
-
     }
 
     private static class EvictExpiredElements extends RunnableWrapper {
@@ -55,14 +50,6 @@ public class CacheModule extends AbstractModule {
         @Inject
         EvictExpiredElements(final CacheManagerService stroomCacheManager) {
             super(stroomCacheManager::evictExpiredElements);
-        }
-    }
-
-    private static class CacheManagerClose extends RunnableWrapper {
-
-        @Inject
-        CacheManagerClose(final CacheManagerImpl cacheManager) {
-            super(cacheManager::close);
         }
     }
 }
