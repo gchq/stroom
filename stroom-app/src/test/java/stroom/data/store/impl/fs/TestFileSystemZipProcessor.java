@@ -59,7 +59,7 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
     @Inject
     private FeedProperties feedProperties;
     @Inject
-    private FsDataStoreMaintenanceService streamMaintenanceService;
+    private FsFileFinder fileFinder;
 
     @Test
     void testSimpleSingleFile() throws IOException {
@@ -274,7 +274,7 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
 
         stroomStreamProcessor.closeHandlers();
 
-        final List<Path> files = streamMaintenanceService
+        final List<Path> files = fileFinder
                 .findAllStreamFile(handlerList.get(0).getStreamSet().iterator().next());
 
         final HashSet<String> foundFiles = new HashSet<>();

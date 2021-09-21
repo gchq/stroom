@@ -141,11 +141,7 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
             batchBindStep.execute();
         });
 
-        if (logExecutionTime.getDuration() > 1000) {
-            LOGGER.warn(() -> "Saved " + rows.size() + " updates, completed in " + logExecutionTime);
-        } else {
-            LOGGER.debug(() -> "Saved " + rows.size() + " updates, completed in " + logExecutionTime);
-        }
+        LOGGER.debug(() -> "Saved " + rows.size() + " updates, completed in " + logExecutionTime);
     }
 
     @Override
@@ -194,12 +190,7 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
                                 batchSize)
         );
 
-        if (logExecutionTime.getDuration() > 1000) {
-            LOGGER.warn(() -> "Deleted " + count + ", completed in " + logExecutionTime);
-        } else {
-            LOGGER.debug(() -> "Deleted " + count + ", completed in " + logExecutionTime);
-        }
-
+        LOGGER.debug(() -> "Deleted " + count + ", completed in " + logExecutionTime);
         return count;
 
 //        final SqlBuilder sql = new SqlBuilder();

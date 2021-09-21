@@ -10,7 +10,7 @@ public final class LambdaLoggerFactory {
         // Factory.
     }
 
-    public static final LambdaLogger getLogger(final Class<?> clazz) {
+    public static LambdaLogger getLogger(final Class<?> clazz) {
         final Logger logger = LoggerFactory.getLogger(clazz.getName());
 
         if (logger instanceof LocationAwareLogger) {

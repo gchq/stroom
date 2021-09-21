@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2444** : Fix release of buffers to the pool that was causing ref data searches to hang.
 
+* Issue **#2433, #2434** : Fixed shutdown task order.
+
+* Issue **#2430** : Removed file system clean task and replaced with orphan finding jobs for files and meta.
+
 * Issue **#2432** : Volume state is now updated without optimistic locking.
 
 * Issue **#2382** : Improved charset resolution.

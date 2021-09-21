@@ -37,7 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestPhysicalDeleteExecutor extends AbstractCoreIntegrationTest {
 
     @Inject
-    private FsDataStoreMaintenanceService streamMaintenanceService;
+    private FsFileFinder fileFinder;
     @Inject
     private MetaService metaService;
     @Inject
@@ -58,8 +58,8 @@ class TestPhysicalDeleteExecutor extends AbstractCoreIntegrationTest {
         final Meta md1 = create(feedName);
         final Meta md2 = create(feedName);
 
-        final List<Path> files1 = streamMaintenanceService.findAllStreamFile(md1);
-        final List<Path> files2 = streamMaintenanceService.findAllStreamFile(md2);
+        final List<Path> files1 = fileFinder.findAllStreamFile(md1);
+        final List<Path> files2 = fileFinder.findAllStreamFile(md2);
 
         countFiles(files1, 2);
         countFiles(files2, 2);
