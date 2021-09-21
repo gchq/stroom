@@ -267,7 +267,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
                 if (!Strings.isNullOrEmpty(mapName)) {
                     predicate = predicate.and(refStreamProcessingInfo ->
-                            refStreamProcessingInfo.getMapNames().contains(mapName));
+                            refStreamProcessingInfo.getMaps().containsKey(mapName));
                 }
 
                 entries = refDataStore.listProcessingInfo(limit, predicate);
@@ -306,7 +306,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         securityContext.secure(PermissionNames.MANAGE_CACHE_PERMISSION, () ->
                 taskContextFactory.context("Reference Data Purge", taskContext ->
                         LOGGER.logDurationIfDebugEnabled(
-                                () -> performPurge(purgeAge),
+                                () -> performPurge(purgeAge, taskContext),
                                 LogUtil.message("Performing Purge for entries older than {}", purgeAge)))
                         .run());
 
@@ -327,7 +327,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         byteBufferPool.clear();
     }
 
-    private void performPurge(final StroomDuration purgeAge) {
+    private void performPurge(final StroomDuration purgeAge, final TaskContext taskContext) {
         refDataStore.purgeOldData(purgeAge);
     }
 
@@ -378,7 +378,10 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
             return stringWriter.toString();
         } catch (Exception e) {
-            LOGGER.error("Error looking up {}", refDataLookupRequest, e);
+            // Errors for unknown keys are to be expected
+            if (!(e instanceof NotFoundException)) {
+                LOGGER.error("Error looking up {}", refDataLookupRequest, e);
+            }
             throw e;
         }
     }
