@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2455** : Improved error handling when streams not found.
+
 * Issue **#2399** : Now changing expression fields keeps the same condition if it is still applicable to the new field.
 
 * Issue **#2426** : Fixed user selection problem for document permissions.
