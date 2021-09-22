@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2399** : Now changing expression fields keeps the same condition if it is still applicable to the new field.
+
 * Issue **#2426** : Fixed user selection problem for document permissions.
 
 * Issue **#2436** : Fixed small UI issue whereby a user or group was not immediately removed from document permissions when the remove button was clicked.

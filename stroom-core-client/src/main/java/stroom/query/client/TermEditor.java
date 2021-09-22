@@ -225,20 +225,20 @@ public class TermEditor extends Composite {
         suggestOracle.setField(field);
         final List<Condition> conditions = getConditions(field);
 
+        Condition selected = conditionListBox.getSelectedItem();
         conditionListBox.clear();
         conditionListBox.addItems(conditions);
 
-        // Set the condition.
-        Condition selected;
-
-        if (!useDefaultCondition && term.getCondition() != null && conditions.contains(term.getCondition())) {
-            selected = term.getCondition();
-        } else if (conditions.contains(Condition.IS_DOC_REF)) {
-            selected = Condition.IS_DOC_REF;
-        } else if (conditions.contains(Condition.EQUALS)) {
-            selected = Condition.EQUALS;
-        } else {
-            selected = conditions.get(0);
+        if (selected == null || !conditions.contains(selected)) {
+            if (!useDefaultCondition && term.getCondition() != null && conditions.contains(term.getCondition())) {
+                selected = term.getCondition();
+            } else if (conditions.contains(Condition.IS_DOC_REF)) {
+                selected = Condition.IS_DOC_REF;
+            } else if (conditions.contains(Condition.EQUALS)) {
+                selected = Condition.EQUALS;
+            } else {
+                selected = conditions.get(0);
+            }
         }
 
         conditionListBox.setSelectedItem(selected);
