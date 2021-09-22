@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2436** : Fixed small UI issue whereby a user or group was not immediately removed from document permissions when the remove button was clicked.
+
 * Issue **#2416** : Added logging to identify cause of slow meta listing.
 
 * Improve termination handling in reference data purge.
