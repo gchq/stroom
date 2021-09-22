@@ -5,6 +5,7 @@ import stroom.util.shared.Expander;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +51,10 @@ public class TableRow {
                 ? (" style=" + cell.getStyles())
                 : "";
 
-        safeHtmlBuilder.appendHtmlConstant("<div class=\"cell\"" + styleAttrStr + ">");
+        final String titleAttrStr = cell.getRawValue() != null ?
+                " title=\"" + SafeHtmlUtils.htmlEscape(cell.getRawValue()) + "\"" : "";
+
+        safeHtmlBuilder.appendHtmlConstant("<div class=\"cell\"" + styleAttrStr + titleAttrStr + ">");
 
         appendValue(cell.getRawValue(), safeHtmlBuilder);
 
