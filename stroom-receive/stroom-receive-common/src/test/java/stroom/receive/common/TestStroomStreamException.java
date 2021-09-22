@@ -16,16 +16,24 @@
 
 package stroom.receive.common;
 
+import stroom.meta.api.AttributeMap;
+import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.ZipException;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestStroomStreamException {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestStroomStreamException.class);
 
     @Test
     void testCompressedStreamCorrupt() {
@@ -41,10 +49,106 @@ class TestStroomStreamException {
         doTest(new RuntimeException("test"), StroomStatusCode.UNKNOWN_ERROR, "test");
     }
 
-    private void doTest(Exception exception, StroomStatusCode stroomStatusCode, String msg) {
-        assertThatThrownBy(() ->
-                StroomStreamException.create(exception))
+    @Test
+    void testAttributeValues() {
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put(StandardHeaderArguments.FEED, "MY_FEED");
+        attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_GZIP);
+
+        final StroomStatusCode stroomStatusCode = StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVED_DATA;
+        final String arg1 = "arg1";
+        final StroomStreamException stroomStreamException = new StroomStreamException(
+                stroomStatusCode, attributeMap, arg1);
+
+        assertThatThrownBy(() -> {
+            try {
+                StroomStreamException.createAndThrow(stroomStreamException, attributeMap);
+            } catch (Exception e) {
+                LOGGER.info("msg: {}", e.getMessage());
+                throw e;
+            }
+        })
+                .hasMessageContaining("Stroom Status " + stroomStatusCode.getCode() + " - " +
+                        stroomStatusCode.getMessage())
+                .hasMessageContaining("arg1")
+                .hasMessageContaining(StandardHeaderArguments.FEED + ": MY_FEED")
+                .hasMessageContaining(StandardHeaderArguments.COMPRESSION
+                        + ": "
+                        + StandardHeaderArguments.COMPRESSION_GZIP);
+    }
+
+    @Test
+    void testOneAttributeValue() {
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put(StandardHeaderArguments.FEED, "MY_FEED");
+
+        final StroomStatusCode stroomStatusCode = StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVED_DATA;
+        final String arg1 = "arg1";
+        final StroomStreamException stroomStreamException = new StroomStreamException(
+                stroomStatusCode, attributeMap, arg1);
+
+        assertThatThrownBy(() -> {
+            try {
+                StroomStreamException.createAndThrow(stroomStreamException, attributeMap);
+            } catch (Exception e) {
+                LOGGER.info("msg: {}", e.getMessage());
+                throw e;
+            }
+        })
+                .hasMessageContaining("Stroom Status " + stroomStatusCode.getCode() + " - " +
+                        stroomStatusCode.getMessage())
+                .hasMessageContaining("arg1")
+                .hasMessageContaining(StandardHeaderArguments.FEED + ": MY_FEED");
+    }
+
+    @Test
+    void testNestedExceptions() {
+
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put(StandardHeaderArguments.FEED, "MY_FEED");
+
+        final StroomStatusCode stroomStatusCode = StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVED_DATA;
+        final String arg1 = "arg1";
+
+        final Throwable throwable = new RuntimeException(
+                "Outer ex msg",
+                new RuntimeException(
+                        "middle ex msg",
+                        new RuntimeException("inner ex msg")));
+
+        final String msg = StroomStreamException.unwrapMessage(throwable);
+
+        LOGGER.info("msg: {}", msg);
+
+        assertThat(msg)
+                .contains("Outer ex msg")
+                .contains("middle ex msg")
+                .contains("inner ex msg");
+    }
+
+    private void doTest(final Exception exception,
+                        final StroomStatusCode stroomStatusCode,
+                        final String msg) {
+        doTest(exception, stroomStatusCode, new AttributeMap(), msg);
+    }
+
+    private String doTest(final Exception exception,
+                          final StroomStatusCode stroomStatusCode,
+                          final AttributeMap attributeMap,
+                          final String msg) {
+        AtomicReference<String> msgRef = new AtomicReference<>();
+        assertThatThrownBy(() -> {
+            try {
+                StroomStreamException.createAndThrow(exception, attributeMap);
+            } catch (Exception e) {
+                LOGGER.info("msg: {}", e.getMessage());
+                msgRef.set(e.getMessage());
+                throw e;
+            }
+        })
                 .hasMessage("Stroom Status " + stroomStatusCode.getCode() + " - " +
                         stroomStatusCode.getMessage() + " - " + msg);
+
+        return msgRef.get();
     }
 }

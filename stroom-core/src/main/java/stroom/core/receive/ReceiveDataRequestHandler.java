@@ -32,9 +32,9 @@ import stroom.receive.common.StroomStreamException;
 import stroom.receive.common.StroomStreamProcessor;
 import stroom.security.api.SecurityContext;
 import stroom.util.io.BufferFactory;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -52,7 +52,7 @@ import javax.servlet.http.HttpServletResponse;
  */
 class ReceiveDataRequestHandler implements RequestHandler {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ReceiveDataRequestHandler.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReceiveDataRequestHandler.class);
 
     private final SecurityContext securityContext;
     private final Store streamStore;
@@ -85,14 +85,15 @@ class ReceiveDataRequestHandler implements RequestHandler {
             final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();
 
             final AttributeMap attributeMap = AttributeMapUtil.create(request);
+            final String feedName;
             if (attributeMapFilter.filter(attributeMap)) {
                 debug("Receiving data", attributeMap);
 
-                final String feedName = Optional.ofNullable(attributeMap.get(StandardHeaderArguments.FEED))
+                feedName = Optional.ofNullable(attributeMap.get(StandardHeaderArguments.FEED))
                         .map(String::trim)
                         .orElse("");
                 if (feedName.isEmpty()) {
-                    throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED);
+                    throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED, attributeMap);
                 }
 
                 // Get the type name from the header arguments if supplied.
@@ -106,7 +107,7 @@ class ReceiveDataRequestHandler implements RequestHandler {
 
                 // Validate the data type name.
                 if (!metaService.getTypes().contains(typeName)) {
-                    throw new StroomStreamException(StroomStatusCode.UNEXPECTED_DATA_TYPE);
+                    throw new StroomStreamException(StroomStatusCode.UNEXPECTED_DATA_TYPE, attributeMap);
                 }
 
                 List<StreamTargetStroomStreamHandler> handlers = StreamTargetStroomStreamHandler
@@ -138,17 +139,43 @@ class ReceiveDataRequestHandler implements RequestHandler {
             } else {
                 // Drop the data.
                 debug("Dropping data", attributeMap);
+                feedName = null;
             }
 
             // Set the response status.
-            response.setStatus(StroomStatusCode.OK.getHttpCode());
-            LOGGER.info("handleRequest response " + StroomStatusCode.OK);
+            final StroomStatusCode stroomStatusCode = StroomStatusCode.OK;
+            response.setStatus(stroomStatusCode.getHttpCode());
+            logSuccess(attributeMap, stroomStatusCode);
         });
+    }
+
+    private void logSuccess(final AttributeMap attributeMap, final StroomStatusCode stroomStatusCode) {
+        final StringBuilder clientDetailsStringBuilder = new StringBuilder();
+        AttributeMapUtil.appendAttributes(
+                attributeMap,
+                clientDetailsStringBuilder,
+                StandardHeaderArguments.X_FORWARDED_FOR,
+                StandardHeaderArguments.REMOTE_HOST,
+                StandardHeaderArguments.REMOTE_ADDRESS,
+                StandardHeaderArguments.RECEIVED_PATH);
+
+        final String clientDetailsStr = clientDetailsStringBuilder.isEmpty()
+                ? ""
+                : " - " + clientDetailsStringBuilder;
+
+        LOGGER.info(() -> LogUtil.message(
+                "Sending success response {} - {}{}",
+                stroomStatusCode.getHttpCode(),
+                StroomStreamException.buildStatusMessage(stroomStatusCode, attributeMap),
+                clientDetailsStr));
     }
 
     private void debug(final String message, final AttributeMap attributeMap) {
         if (LOGGER.isDebugEnabled()) {
-            final List<String> keys = attributeMap.keySet().stream().sorted().collect(Collectors.toList());
+            final List<String> keys = attributeMap.keySet()
+                    .stream()
+                    .sorted()
+                    .collect(Collectors.toList());
             final StringBuilder sb = new StringBuilder();
             keys.forEach(key -> {
                 sb.append(key);
@@ -168,7 +195,7 @@ class ReceiveDataRequestHandler implements RequestHandler {
         try {
             return request.getInputStream();
         } catch (final IOException ioEx) {
-            throw new StroomStreamException(StroomStatusCode.UNKNOWN_ERROR, ioEx.getMessage());
+            throw new StroomStreamException(StroomStatusCode.UNKNOWN_ERROR, request, ioEx.getMessage());
         }
     }
 }
