@@ -70,7 +70,7 @@ public class ProxyRequestHandler implements RequestHandler {
         try {
             final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
             if (feedName == null || feedName.trim().isEmpty()) {
-                throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED);
+                throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED, attributeMap);
             }
 
             try (final ByteCountInputStream inputStream = new ByteCountInputStream(request.getInputStream())) {
@@ -144,7 +144,7 @@ public class ProxyRequestHandler implements RequestHandler {
                 }
             }
         } catch (final StroomStreamException e) {
-            StroomStreamException.sendErrorResponse(response, e);
+            StroomStreamException.sendErrorResponse(request, response, e);
             returnCode = e.getStroomStatusCode().getCode();
 
             LOGGER.warn("\"handleException()\",{},\"{}\"",
@@ -173,10 +173,10 @@ public class ProxyRequestHandler implements RequestHandler {
             }
 
         } catch (final IOException | RuntimeException e) {
-            StroomStreamException.sendErrorResponse(response, e);
+            RuntimeException unwrappedException = StroomStreamException.sendErrorResponse(request, response, e);
             returnCode = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
 
-            LOGGER.error("\"handleException()\",{}", CSVFormatter.format(attributeMap), e);
+            LOGGER.error("\"handleException()\",{}", CSVFormatter.format(attributeMap), unwrappedException);
             final long duration = System.currentTimeMillis() - startTimeMs;
             logStream.log(
                     RECEIVE_LOG,
