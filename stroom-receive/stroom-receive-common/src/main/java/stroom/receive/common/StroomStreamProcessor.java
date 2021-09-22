@@ -131,7 +131,8 @@ public class StroomStreamProcessor {
             if (compression != null && !compression.isEmpty()) {
                 compression = compression.toUpperCase(StreamUtil.DEFAULT_LOCALE);
                 if (!StandardHeaderArguments.VALID_COMPRESSION_SET.contains(compression)) {
-                    throw new StroomStreamException(StroomStatusCode.UNKNOWN_COMPRESSION, compression);
+                    throw new StroomStreamException(
+                            StroomStatusCode.UNKNOWN_COMPRESSION, globalAttributeMap, compression);
                 }
             }
 
@@ -155,7 +156,8 @@ public class StroomStreamProcessor {
                         inputStream = new GzipCompressorInputStream(inputStream, true);
                         compressed = true;
                     } catch (final IOException ioEx) {
-                        throw new StroomStreamException(StroomStatusCode.COMPRESSED_STREAM_INVALID, ioEx.getMessage());
+                        throw new StroomStreamException(
+                                StroomStatusCode.COMPRESSED_STREAM_INVALID, globalAttributeMap, ioEx.getMessage());
                     }
                 }
 
@@ -184,7 +186,7 @@ public class StroomStreamProcessor {
                 }
             }
         } catch (final IOException zex) {
-            StroomStreamException.create(zex);
+            StroomStreamException.createAndThrow(zex, globalAttributeMap);
         } finally {
             CloseableUtil.closeLogAndIgnoreException(inputStream);
         }
@@ -201,6 +203,7 @@ public class StroomStreamProcessor {
             if (isCompressed) {
                 throw new StroomStreamException(
                         StroomStatusCode.COMPRESSED_STREAM_INVALID,
+                        globalAttributeMap,
                         ioEx.getMessage());
             } else {
                 throw ioEx;
@@ -233,7 +236,8 @@ public class StroomStreamProcessor {
                 // entries without consulting the zip's dictionary.
                 zipEntry = zipArchiveInputStream.getNextZipEntry();
             } catch (final IOException ioEx) {
-                throw new StroomStreamException(StroomStatusCode.COMPRESSED_STREAM_INVALID, ioEx.getMessage());
+                throw new StroomStreamException(
+                        StroomStatusCode.COMPRESSED_STREAM_INVALID, globalAttributeMap, ioEx.getMessage());
             }
 
             if (zipEntry == null) {
@@ -269,6 +273,7 @@ public class StroomStreamProcessor {
                 } catch (final IOException ioEx) {
                     throw new StroomStreamException(
                             StroomStatusCode.COMPRESSED_STREAM_INVALID,
+                            globalAttributeMap,
                             ioEx.getMessage());
                 }
 
@@ -322,6 +327,7 @@ public class StroomStreamProcessor {
                     } catch (final IOException ioEx) {
                         throw new StroomStreamException(
                                 StroomStatusCode.COMPRESSED_STREAM_INVALID,
+                                globalAttributeMap,
                                 ioEx.getMessage());
                     }
                     if (read == -1) {
@@ -359,7 +365,8 @@ public class StroomStreamProcessor {
         if (stroomZipNameSet.getBaseNameSet().isEmpty()) {
             // A zip stream with no entries is always 22 bytes in size.
             if (byteCountInputStream.getCount() > 22) {
-                throw new StroomStreamException(StroomStatusCode.COMPRESSED_STREAM_INVALID, "No Zip Entries");
+                throw new StroomStreamException(
+                        StroomStatusCode.COMPRESSED_STREAM_INVALID, globalAttributeMap, "No Zip Entries");
             } else {
                 LOGGER.warn("processZipStream() - Zip stream with no entries! {}", globalAttributeMap);
             }

@@ -117,7 +117,7 @@ class ForwardStreamHandler implements StreamHandler {
 
         if (connection != null) {
             try {
-                responseCode = StroomStreamException.checkConnectionResponse(connection);
+                responseCode = StroomStreamException.checkConnectionResponse(connection, attributeMap);
             } finally {
                 final long duration = System.currentTimeMillis() - startTimeMs;
                 logStream.log(SEND_LOG, attributeMap, "SEND", forwardUrl, responseCode, bytesSent, duration);
