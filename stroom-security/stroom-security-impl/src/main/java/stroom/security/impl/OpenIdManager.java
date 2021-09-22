@@ -244,8 +244,8 @@ class OpenIdManager {
         final String nonce = (String) jwtClaims.getClaimsMap().get(OpenId.NONCE);
         final boolean match = nonce != null && nonce.equals(state.getNonce());
         if (match) {
-            LOGGER.info(() -> "User is authenticated for sessionId " + sessionId);
             final String userId = getUserId(jwtClaims);
+            LOGGER.info(() -> "User " + userId + " is authenticated for sessionId " + sessionId);
             final Optional<User> optionalUser = userCache.get(userId);
             final User user = optionalUser.orElseThrow(() ->
                     new AuthenticationException("Unable to find user: " + userId));
