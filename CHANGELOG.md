@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2416** : Added logging to identify cause of slow meta listing.
+
 * Improve termination handling in reference data purge.
 
 * Improve the data in the `/api/refData/v1/refStreamInfo` api method.
