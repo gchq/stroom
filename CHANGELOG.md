@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v7.0-beta.146] - 2021-09-22
+
 * Add debug logging to AuthenticationStateSessionUtil
 
 * Issue **#2448** : Change data receipt ERROR log messages to WARN. Also improve log message content for success and failure.
@@ -3758,7 +3761,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.145...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.146...HEAD
+[v7.0-beta.146]: https://github.com/gchq/stroom/compare/v7.0-beta.145...v7.0-beta.146
 [v7.0-beta.145]: https://github.com/gchq/stroom/compare/v7.0-beta.144...v7.0-beta.145
 [v7.0-beta.144]: https://github.com/gchq/stroom/compare/v7.0-beta.143...v7.0-beta.144
 [v7.0-beta.143]: https://github.com/gchq/stroom/compare/v7.0-beta.142...v7.0-beta.143
