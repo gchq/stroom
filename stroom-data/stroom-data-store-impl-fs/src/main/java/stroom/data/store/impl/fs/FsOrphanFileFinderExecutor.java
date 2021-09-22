@@ -20,6 +20,7 @@ package stroom.data.store.impl.fs;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
+import stroom.meta.shared.Meta;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -30,6 +31,9 @@ import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -50,7 +54,7 @@ import javax.inject.Provider;
 class FsOrphanFileFinderExecutor {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsOrphanFileFinderExecutor.class);
-    private static final String ORPHAN_FILE_LIST = "orphan_files.out";
+    private static final Logger ORPHAN_FILE_LOGGER = LoggerFactory.getLogger("orphan_file");
     public static final String TASK_NAME = "Orphan File Finder";
 
     private final FsVolumeService volumeService;
@@ -58,7 +62,6 @@ class FsOrphanFileFinderExecutor {
     private final Provider<FsOrphanFileFinder> orphanFileFinderProvider;
     private final ExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
-    private final TaskContext parentContext;
     private final DataStoreServiceConfig config;
 
     @Inject
@@ -66,13 +69,11 @@ class FsOrphanFileFinderExecutor {
                                final Provider<FsOrphanFileFinder> orphanFileFinderProvider,
                                final ExecutorProvider executorProvider,
                                final TaskContextFactory taskContextFactory,
-                               final TaskContext parentContext,
                                final DataStoreServiceConfig config) {
         this.volumeService = volumeService;
         this.orphanFileFinderProvider = orphanFileFinderProvider;
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
-        this.parentContext = parentContext;
         this.config = config;
 
         Duration age;
@@ -84,6 +85,18 @@ class FsOrphanFileFinderExecutor {
     }
 
     public void scan() {
+        taskContextFactory.context(TASK_NAME, taskContext -> {
+            taskContext.info(() -> "Starting orphan file finder");
+            final Consumer<Path> orphanConsumer = path -> {
+                LOGGER.debug(() -> "Unexpected file in store: " +
+                        FileUtil.getCanonicalPath(path));
+                ORPHAN_FILE_LOGGER.info(FileUtil.getCanonicalPath(path));
+            };
+            scan(orphanConsumer, taskContext);
+        }).run();
+    }
+
+    public void scan(final Consumer<Path> orphanConsumer, final TaskContext parentContext) {
         parentContext.info(() -> "Starting orphan file finder task. oldAge = " + oldAge);
         final long oldestDirTime = System.currentTimeMillis() - oldAge.toMillis();
 
@@ -106,7 +119,7 @@ class FsOrphanFileFinderExecutor {
                     final Runnable runnable = taskContextFactory.childContext(parentContext,
                             "Checking: " + volume.getPath(),
                             taskContext ->
-                                    scanVolume(taskContext, volume, oldestDirTime));
+                                    scanVolume(volume, orphanConsumer, oldestDirTime, taskContext));
                     final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable,
                             executor);
                     completableFutures[i++] = completableFuture;
@@ -118,30 +131,17 @@ class FsOrphanFileFinderExecutor {
         parentContext.info(() -> "start() - Completed orphan file finder in " + logExecutionTime);
     }
 
-    private void scanVolume(final TaskContext taskContext, final FsVolume volume, final long oldestDirTime) {
+    private void scanVolume(final FsVolume volume,
+                            final Consumer<Path> orphanConsumer,
+                            final long oldestDirTime,
+                            final TaskContext taskContext) {
         final Path dir = Paths.get(volume.getPath());
         if (!Files.isDirectory(dir)) {
             LOGGER.error(() -> "Directory for file delete list does not exist '" +
                     FileUtil.getCanonicalPath(dir) +
                     "'");
         } else {
-            final Path orphanFileList = dir.resolve(ORPHAN_FILE_LIST);
-            try {
-                try (final PrintWriter printWriter = new PrintWriter(Files.newBufferedWriter(orphanFileList,
-                        StreamUtil.DEFAULT_CHARSET))) {
-                    final Consumer<Path> deleteConsumer = file -> {
-                        LOGGER.debug(() -> "Unexpected file in store: " +
-                                FileUtil.getCanonicalPath(file));
-                        synchronized (printWriter) {
-                            printWriter.println(FileUtil.getCanonicalPath(file));
-                        }
-                    };
-
-                    orphanFileFinderProvider.get().scanVolumePath(volume, deleteConsumer, oldestDirTime, taskContext);
-                }
-            } catch (final IOException e) {
-                LOGGER.error(() -> "exec() - Error writing " + ORPHAN_FILE_LIST, e);
-            }
+            orphanFileFinderProvider.get().scanVolumePath(volume, orphanConsumer, oldestDirTime, taskContext);
         }
     }
 }

@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2448** : Change data receipt ERROR log messages to WARN. Also improve log message content for success and failure.
 
+* Issue **#2413** : Removed duplication of data retention fields in info pane. 
+
+* Issue **#2443** : Internal meta statistics are now added with processing user permissions.
+
+* Issue **#2455** : Improved error handling when streams not found.
+
+* Issue **#2399** : Now changing expression fields keeps the same condition if it is still applicable to the new field.
+
+* Issue **#2426** : Fixed user selection problem for document permissions.
+
+* Issue **#2436** : Fixed small UI issue whereby a user or group was not immediately removed from document permissions when the remove button was clicked.
+
+* Issue **#2416** : Added logging to identify cause of slow meta listing.
+
 * Improve termination handling in reference data purge.
 
 * Improve the data in the `/api/refData/v1/refStreamInfo` api method.

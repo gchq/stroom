@@ -51,7 +51,18 @@ public class DocumentPermissions {
     }
 
     public Map<String, Set<String>> getPermissions() {
-        return permissions;
+        return new HashMap<>(permissions);
+    }
+
+    public void addPermission(final String userUuid, final String permission) {
+        permissions.computeIfAbsent(userUuid, k -> new HashSet<>()).add(permission);
+    }
+
+    public void removePermission(final String userUuid, final String permission) {
+        final Set<String> perms = permissions.get(userUuid);
+        if (perms != null) {
+            perms.remove(permission);
+        }
     }
 
     public boolean containsUserOrGroup(final String uuid, final boolean isGroup) {
@@ -73,25 +84,24 @@ public class DocumentPermissions {
     }
 
     public Set<String> getPermissionsForUser(final String userUuid) {
-        return permissions.getOrDefault(userUuid, Collections.emptySet());
-    }
-
-    public void addUser(final User user) {
-        users.add(user);
-        permissions.putIfAbsent(user.getUuid(), new HashSet<>());
-    }
-
-    public void addGroup(final User group) {
-        groups.add(group);
-        permissions.putIfAbsent(group.getUuid(), new HashSet<>());
+        return new HashSet<>(permissions.getOrDefault(userUuid, Collections.emptySet()));
     }
 
     public void addUser(final User user, final boolean isGroup) {
         if (isGroup) {
-            addGroup(user);
+            groups.add(user);
         } else {
-            addUser(user);
+            users.add(user);
         }
+    }
+
+    public void removeUser(final User user) {
+        if (user.isGroup()) {
+            groups.remove(user);
+        } else {
+            users.remove(user);
+        }
+        permissions.remove(user.getUuid());
     }
 
     @SuppressWarnings("checkstyle:needbraces")

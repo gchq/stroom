@@ -16,7 +16,6 @@
 
 package stroom.data.store.impl.fs;
 
-
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
@@ -25,6 +24,7 @@ import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.Meta;
+import stroom.task.api.SimpleTaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.util.test.FileSystemTestUtil;
@@ -36,11 +36,12 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -89,20 +90,16 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
         Files.createFile(test1);
 
         assertThat(Files.exists(test1)).isTrue();
-        fsOrphanFileFinderExecutor.scan();
 
+        final List<String> fileList = scan();
         final List<FsVolume> volumeList = volumeService.find(FindFsVolumeCriteria.matchAll()).getValues();
         assertThat(volumeList.size()).isEqualTo(1);
-
-        final Path orphanFileList = Paths.get(volumeList.get(0).getPath()).resolve("orphan_files.out");
-        final List<String> fileList = Files.readAllLines(orphanFileList);
         assertThat(fileList).contains(FileUtil.getCanonicalPath(test1));
     }
 
-
     @Test
     void testScan() throws IOException {
-        fsOrphanFileFinderExecutor.scan();
+        scan();
 
         final ZonedDateTime oldDate = ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_SIXTY);
 
@@ -168,12 +165,10 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
                     ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_FOUR).toInstant().toEpochMilli());
 
             // Run the clean
-            fsOrphanFileFinderExecutor.scan();
+            final List<String> fileList = scan();
 
             final List<FsVolume> volumeList = volumeService.find(FindFsVolumeCriteria.matchAll()).getValues();
             assertThat(volumeList.size()).isEqualTo(1);
-            final Path orphanFileList = Paths.get(volumeList.get(0).getPath()).resolve("orphan_files.out");
-            final List<String> fileList = Files.readAllLines(orphanFileList);
 
             assertThat(FileSystemUtil.isAllFile(lockedFiles)).as("Locked files should still exist").isTrue();
             assertThat(FileSystemUtil.isAllFile(unlockedFiles)).as("Unlocked files should still exist").isTrue();
@@ -210,7 +205,7 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
                 .as("Must be saved to at least one volume")
                 .isTrue();
 
-        fsOrphanFileFinderExecutor.scan();
+        scan();
 
         files = fileFinder.findAllStreamFile(meta);
 
@@ -222,12 +217,12 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
                 .as("Volumes should still exist as they are new")
                 .isTrue();
 
-        fsOrphanFileFinderExecutor.scan();
+        scan();
     }
 
     @Test
     void testScanLotsOfFiles() throws IOException {
-        fsOrphanFileFinderExecutor.scan();
+        scan();
 
         final String feedName = FileSystemTestUtil.getUniqueTestString();
         final long endTime = System.currentTimeMillis();
@@ -245,7 +240,15 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
             }
         }
 
-        fsOrphanFileFinderExecutor.scan();
+        scan();
+    }
 
+    private List<String> scan() {
+        final List<String> fileList = new ArrayList<>();
+        final Consumer<Path> orphanConsumer = path -> {
+            fileList.add(FileUtil.getCanonicalPath(path));
+        };
+        fsOrphanFileFinderExecutor.scan(orphanConsumer, new SimpleTaskContext());
+        return fileList;
     }
 }
