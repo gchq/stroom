@@ -10,8 +10,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
@@ -20,7 +20,7 @@ public class ProcessingInfoResponse {
     @JsonProperty
     private final RefStreamDefinition refStreamDefinition;
     @JsonProperty
-    private final Set<String> mapNames;
+    private final Map<String, EntryCounts> maps;
     @JsonProperty
     private final String createTime;
     @JsonProperty
@@ -33,13 +33,13 @@ public class ProcessingInfoResponse {
     @JsonCreator
     public ProcessingInfoResponse(
             @JsonProperty("refStreamDefinition") final RefStreamDefinition refStreamDefinition,
-            @JsonProperty("mapNames") final Set<String> mapNames,
+            @JsonProperty("maps") final Map<String, EntryCounts> maps,
             @JsonProperty("createTime") final String createTime,
             @JsonProperty("lastAccessedTime") final String lastAccessedTime,
             @JsonProperty("effectiveTime") final String effectiveTime,
             @JsonProperty("processingState") final ProcessingState processingState) {
         this.refStreamDefinition = Objects.requireNonNull(refStreamDefinition);
-        this.mapNames = Objects.requireNonNull(mapNames);
+        this.maps = Objects.requireNonNull(maps);
         this.createTime = Objects.requireNonNull(createTime);
         this.lastAccessedTime = Objects.requireNonNull(lastAccessedTime);
         this.effectiveTime = Objects.requireNonNull(effectiveTime);
@@ -49,11 +49,11 @@ public class ProcessingInfoResponse {
     @JsonIgnore
     public ProcessingInfoResponse(final RefStreamDefinition refStreamDefinition,
                                   final RefDataProcessingInfo refDataProcessingInfo,
-                                  final Set<String> mapNames) {
+                                  final Map<String, EntryCounts> maps) {
 
         this(
                 refStreamDefinition,
-                mapNames,
+                maps,
                 DateUtil.createNormalDateTimeString(refDataProcessingInfo.getCreateTimeEpochMs()),
                 DateUtil.createNormalDateTimeString(refDataProcessingInfo.getLastAccessedTimeEpochMs()),
                 DateUtil.createNormalDateTimeString(refDataProcessingInfo.getEffectiveTimeEpochMs()),
@@ -64,8 +64,8 @@ public class ProcessingInfoResponse {
         return refStreamDefinition;
     }
 
-    public Set<String> getMapNames() {
-        return mapNames;
+    public Map<String, EntryCounts> getMaps() {
+        return maps;
     }
 
     public String getCreateTime() {
@@ -94,7 +94,7 @@ public class ProcessingInfoResponse {
         }
         final ProcessingInfoResponse that = (ProcessingInfoResponse) o;
         return refStreamDefinition.equals(that.refStreamDefinition)
-                && mapNames.equals(that.mapNames)
+                && maps.equals(that.maps)
                 && createTime.equals(that.createTime)
                 && lastAccessedTime.equals(that.lastAccessedTime)
                 && effectiveTime.equals(that.effectiveTime)
@@ -104,7 +104,7 @@ public class ProcessingInfoResponse {
     @Override
     public int hashCode() {
         return Objects.hash(refStreamDefinition,
-                mapNames,
+                maps,
                 createTime,
                 lastAccessedTime,
                 effectiveTime,
@@ -115,11 +115,61 @@ public class ProcessingInfoResponse {
     public String toString() {
         return "ProcessingInfoResponse{" +
                 "refStreamDefinition=" + refStreamDefinition +
-                ", mapNames=" + mapNames +
+                ", mapNames=" + maps +
                 ", createTime='" + createTime + '\'' +
                 ", lastAccessedTime='" + lastAccessedTime + '\'' +
                 ", effectiveTime='" + effectiveTime + '\'' +
                 ", processingState=" + processingState +
                 '}';
+    }
+
+    @JsonPropertyOrder(alphabetic = true)
+    @JsonInclude(Include.NON_NULL)
+    public static class EntryCounts {
+
+        @JsonProperty
+        private final long keyValueCount;
+        @JsonProperty
+        private final long rangeValueCount;
+
+        @JsonCreator
+        public EntryCounts(@JsonProperty("keyValueCount") final long keyValueCount,
+                           @JsonProperty("rangeValueCount") final long rangeValueCount) {
+            this.keyValueCount = keyValueCount;
+            this.rangeValueCount = rangeValueCount;
+        }
+
+        public long getKeyValueCount() {
+            return keyValueCount;
+        }
+
+        public long getRangeValueCount() {
+            return rangeValueCount;
+        }
+
+        @Override
+        public String toString() {
+            return "EntryCounts{" +
+                    "keyValueCount=" + keyValueCount +
+                    ", rangeValueCount=" + rangeValueCount +
+                    '}';
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final EntryCounts that = (EntryCounts) o;
+            return keyValueCount == that.keyValueCount && rangeValueCount == that.rangeValueCount;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(keyValueCount, rangeValueCount);
+        }
     }
 }

@@ -26,4 +26,6 @@ public interface ReferenceDataService extends Searchable {
     void purge(final StroomDuration stroomDuration);
 
     void purge(final long refStreamId, final long partNo);
+
+    void clearBufferPool();
 }

@@ -22,6 +22,7 @@ import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
 import stroom.lmdb.AbstractLmdbDb;
 import stroom.lmdb.LmdbEnv;
+import stroom.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.store.offheapstore.KeyValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
@@ -121,6 +122,33 @@ public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStore
                 LOGGER.debug("Deleted {} {} entries", DB_NAME, cnt);
             }
         }
+    }
+
+    public long getEntryCount(final UID mapUid, final Txn<ByteBuffer> readTxn) {
+        long cnt = 0;
+        try (final PooledByteBuffer startKeyBuffer = getPooledKeyBuffer();
+                final PooledByteBuffer endKeyBuffer = getPooledKeyBuffer()) {
+
+            final KeyRange<ByteBuffer> keyRange = buildSingleMapUidKeyRange(
+                    mapUid,
+                    startKeyBuffer.getByteBuffer(),
+                    endKeyBuffer.getByteBuffer());
+
+            // TODO @AT Once a version of LMDBJava >0.8.1 is released then remove the comparator
+            //  see https://github.com/lmdbjava/lmdbjava/issues/169
+            try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(
+                    readTxn, keyRange, LmdbUtils::compareBuff)) {
+
+                for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
+//                    LAMBDA_LOGGER.trace(() -> LogUtil.message(
+//                            "Key: {}",
+//                            ByteBufferUtils.byteBufferInfo(keyVal.key())));
+
+                    cnt++;
+                }
+            }
+        }
+        return cnt;
     }
 
     private KeyRange<ByteBuffer> buildSingleMapUidKeyRange(final UID mapUid,

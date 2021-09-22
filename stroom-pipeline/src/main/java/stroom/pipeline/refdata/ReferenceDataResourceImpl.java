@@ -92,4 +92,16 @@ public class ReferenceDataResourceImpl implements ReferenceDataResource {
             throw e;
         }
     }
+
+    @AutoLogged(OperationType.UNLOGGED)
+    @Override
+    public void clearBufferPool() {
+        try {
+            referenceDataServiceProvider.get()
+                    .clearBufferPool();
+        } catch (RuntimeException e) {
+            LOGGER.error("Failed to clear buffer pool", e);
+            throw e;
+        }
+    }
 }

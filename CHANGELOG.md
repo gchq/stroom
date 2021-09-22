@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Improve termination handling in reference data purge.
+
+* Improve the data in the `/api/refData/v1/refStreamInfo` api method.
+
+* Add API method to clear the byte buffer pool.
+
+* Improve the output of the system info api call for the byte buffer pool.
+
+* Issue **#2439** : Change log level for an error in the byte buffer pool.
+
+* Issue **#2444** : Fix release of buffers to the pool that was causing ref data searches to hang.
+
 * Issue **#2433, #2434** : Fixed shutdown task order.
 
 * Issue **#2430** : Removed file system clean task and replaced with orphan finding jobs for files and meta.

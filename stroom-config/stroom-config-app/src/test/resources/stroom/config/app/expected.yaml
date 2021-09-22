@@ -40,6 +40,7 @@ appConfig:
     standardComments: []
     createText: "Create Annotation"
   byteBufferPool:
+    warningThresholdPercentage: 90
     pooledByteBufferCounts:
       1: 50
       10: 50

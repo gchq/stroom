@@ -21,7 +21,7 @@
 <!--    <logger name="stroom.pipeline.refdata.store.offheapstore.databases.KeyValueStoreDb" level="trace" />-->
 
 
-<!--    <logger name="stroom.pipeline.refdata.util" level="trace" />-->
+<!--    <logger name="stroom.pipeline.refdata" level="trace" />-->
 
 <!--    <logger name="stroom.pipeline.refdata.ReferenceDataFilter" level="trace" />-->
 

@@ -47,7 +47,6 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.entry;
 
 class TestByteBufferPool {
 
@@ -62,7 +61,7 @@ class TestByteBufferPool {
     @Test
     void doWithBuffer() {
 
-        ByteBufferPool byteBufferPool = getByteBufferPool();
+        final ByteBufferPool byteBufferPool = getByteBufferPool();
 
         assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(0);
         int minCapacity = 100;
@@ -82,7 +81,7 @@ class TestByteBufferPool {
     @Test
     void doWithBuffer_sameSize() {
 
-        ByteBufferPool byteBufferPool = getByteBufferPool();
+        final ByteBufferPool byteBufferPool = getByteBufferPool();
 
         assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(0);
 
@@ -130,7 +129,7 @@ class TestByteBufferPool {
     }
 
     @Test
-    void testBufferClearing() {
+    void testBufferReleasing() {
         ByteBufferPool byteBufferPool = getByteBufferPool();
 
         PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(10);
@@ -172,6 +171,28 @@ class TestByteBufferPool {
     }
 
     @Test
+    void testClear() throws InterruptedException {
+        int threadCount = 50;
+        int minCapacity = 10;
+        final ByteBufferPool byteBufferPool = getByteBufferPool();
+
+        assertPoolSizeAfterMultipleConcurrentGetRequests(threadCount, minCapacity, byteBufferPool);
+
+        LOGGER.info(byteBufferPool.getSystemInfo().toString());
+
+        byteBufferPool.clear();
+
+        LOGGER.info(byteBufferPool.getSystemInfo().toString());
+
+        assertThat(byteBufferPool.getCurrentPoolSize()).isEqualTo(0);
+
+        //re-run the same thing and the pool size should be the same at the end
+        assertPoolSizeAfterMultipleConcurrentGetRequests(threadCount, minCapacity, byteBufferPool);
+
+        LOGGER.info(byteBufferPool.getSystemInfo().toString());
+    }
+
+    @Test
     void testGetSystemInfo() {
         final ByteBufferPool byteBufferPool = getByteBufferPool();
 
@@ -201,12 +222,21 @@ class TestByteBufferPool {
         SystemInfoResult systemInfoResult = byteBufferPool.getSystemInfo();
         LOGGER.info("health: {}", systemInfoResult);
 
-        Map<Integer, Long> counts = (Map<Integer, Long>) systemInfoResult.getDetails().get("Buffer capacity counts");
+        assertQueueSize(systemInfoResult, 1, 2);
+        assertQueueSize(systemInfoResult, 10, 3);
+        assertQueueSize(systemInfoResult, 100, 1);
+    }
 
-        assertThat(counts).containsExactly(
-                entry(1, 2L),
-                entry(10, 3L),
-                entry(100, 1L));
+    private void assertQueueSize(final SystemInfoResult systemInfoResult,
+                                 final int bufferSize,
+                                 final int expectedQueueSize) {
+
+        final int actualQueueSize = ((Map<Integer, Map<String, Integer>>) systemInfoResult.getDetails()
+                .get("Pooled buffers (grouped by buffer capacity)"))
+                .get(bufferSize)
+                .get("Buffers available in pool");
+
+        assertThat(actualQueueSize).isEqualTo(expectedQueueSize);
     }
 
 

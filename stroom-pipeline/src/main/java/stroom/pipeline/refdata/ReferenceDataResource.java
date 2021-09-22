@@ -35,6 +35,7 @@ public interface ReferenceDataResource extends RestResource {
     String LOOKUP_SUB_PATH = "/lookup";
     String PURGE_BY_AGE_SUB_PATH = "/purgeByAge";
     String PURGE_BY_STREAM_SUB_PATH = "/purgeByStream";
+    String CLEAR_BUFFER_POOL_PATH = "/clearBufferPool";
 
     @GET
     @Path(ENTRIES_SUB_PATH)
@@ -80,4 +81,11 @@ public interface ReferenceDataResource extends RestResource {
             operationId = "purgeReferenceDataByStreamAndPartNo")
     boolean purge(@Min(1) @PathParam("refStreamId") final long refStreamId,
                   @Min(1) @PathParam("partNo") final long partNo);
+
+    @DELETE
+    @Path(CLEAR_BUFFER_POOL_PATH)
+    @Operation(
+            summary = "Clear all buffers currently available in the buffer pool to reclaim memory.",
+            operationId = "clearBufferPool")
+    void clearBufferPool();
 }
