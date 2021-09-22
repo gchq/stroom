@@ -215,6 +215,41 @@ class TestRangeStoreDb extends AbstractLmdbDbTest {
         doForEachTest(uid3, 1);
     }
 
+    @Test
+    void testGetEntryCount() {
+
+        final UID uid1 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 1, 0, 0, 1);
+        final UID uid2 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 2, 0, 0, 2);
+        final UID uid3 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 3, 0, 0, 3);
+
+        final RangeStoreKey rangeStoreKey11 = new RangeStoreKey(uid1, Range.of(10L, 20L));
+        final RangeStoreKey rangeStoreKey21 = new RangeStoreKey(uid2, Range.of(20L, 25L));
+        final RangeStoreKey rangeStoreKey22 = new RangeStoreKey(uid2, Range.of(20L, 30L));
+        final RangeStoreKey rangeStoreKey31 = new RangeStoreKey(uid3, Range.of(30L, 40L));
+
+        final ValueStoreKey valueStoreKey11 = new ValueStoreKey(11, (short) 11);
+        final ValueStoreKey valueStoreKey21 = new ValueStoreKey(21, (short) 21);
+        final ValueStoreKey valueStoreKey22 = new ValueStoreKey(22, (short) 22);
+        final ValueStoreKey valueStoreKey31 = new ValueStoreKey(31, (short) 31);
+
+        lmdbEnv.doWithWriteTxn(writeTxn -> {
+            rangeStoreDb.put(writeTxn, rangeStoreKey11, valueStoreKey11, false);
+            rangeStoreDb.put(writeTxn, rangeStoreKey21, valueStoreKey21, false);
+            rangeStoreDb.put(writeTxn, rangeStoreKey22, valueStoreKey22, false);
+            rangeStoreDb.put(writeTxn, rangeStoreKey31, valueStoreKey31, false);
+
+            assertThat(rangeStoreDb.getEntryCount(writeTxn)).isEqualTo(4);
+        });
+
+        rangeStoreDb.logRawDatabaseContents();
+
+        lmdbEnv.doWithReadTxn(readTxn -> {
+            final long entryCount = rangeStoreDb.getEntryCount(uid2, readTxn);
+            assertThat(entryCount).isEqualTo(2);
+        });
+
+    }
+
     private void doForEachTest(final UID uid, final int expectedEntryCount) {
         lmdbEnv.doWithWriteTxn(writeTxn -> {
             AtomicInteger cnt = new AtomicInteger(0);

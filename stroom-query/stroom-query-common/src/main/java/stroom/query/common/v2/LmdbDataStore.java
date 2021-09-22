@@ -17,7 +17,6 @@
 
 package stroom.query.common.v2;
 
-import stroom.bytebuffer.ByteBufferPool;
 import stroom.dashboard.expression.v1.Any.AnySelector;
 import stroom.dashboard.expression.v1.Bottom.BottomSelector;
 import stroom.dashboard.expression.v1.Expression;
@@ -77,7 +76,6 @@ public class LmdbDataStore implements DataStore {
     private final int minPayloadSize;
     private final int maxPayloadSize;
     private final Dbi<ByteBuffer> dbi;
-//    private final ByteBufferPool byteBufferPool;
 
     private final CompiledField[] compiledFields;
     private final CompiledSorter<HasGenerators>[] compiledSorters;
@@ -104,7 +102,6 @@ public class LmdbDataStore implements DataStore {
 
     LmdbDataStore(final LmdbEnvironmentFactory lmdbEnvironmentFactory,
                   final LmdbConfig lmdbConfig,
-                  final ByteBufferPool byteBufferPool,
                   final String queryKey,
                   final String componentId,
                   final TableSettings tableSettings,
@@ -133,7 +130,6 @@ public class LmdbDataStore implements DataStore {
         final String dirName = uuid.replaceAll("[^A-Za-z0-9]", "_");
         this.environment = lmdbEnvironmentFactory.createEnvironment(dirName);
         this.dbi = environment.openDbi(uuid);
-//        this.byteBufferPool = byteBufferPool;
 
         // Find out if we have any sorting.
         boolean hasSort = false;

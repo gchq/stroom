@@ -1,7 +1,5 @@
 package stroom.search.impl;
 
-import stroom.bytebuffer.ByteBufferPoolConfig;
-import stroom.bytebuffer.ByteBufferPoolImpl4;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
@@ -78,12 +76,11 @@ class TestSearchResultCreation {
         final LmdbConfig lmdbConfig = new LmdbConfig();
         final TempDirProvider tempDirProvider = () -> tempDir;
         final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
-        final LmdbEnvironmentFactory lmdbEnvironmentFactory =
-                new LmdbEnvironmentFactory(tempDirProvider, lmdbConfig, pathCreator);
-        dataStoreFactory = new LmdbDataStoreFactory(
-                lmdbEnvironmentFactory,
-                new ByteBufferPoolImpl4(new ByteBufferPoolConfig()),
-                lmdbConfig);
+        final LmdbEnvironmentFactory lmdbEnvironmentFactory = new LmdbEnvironmentFactory(
+                tempDirProvider,
+                lmdbConfig,
+                pathCreator);
+        dataStoreFactory = new LmdbDataStoreFactory(lmdbEnvironmentFactory, lmdbConfig);
     }
 
     @Test

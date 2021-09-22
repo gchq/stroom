@@ -38,6 +38,10 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import javax.xml.bind.DatatypeConverter;
 
+import static java.lang.Long.reverseBytes;
+import static java.nio.ByteOrder.LITTLE_ENDIAN;
+import static java.util.Objects.requireNonNull;
+
 /**
  * Class of static utility methods for working with lmdbjava
  */
@@ -375,5 +379,48 @@ public class LmdbUtils {
                 logContentsInRange(env, dbi, txn, keyRange, ByteBufferUtils::byteBufferToHex,
                         ByteBufferUtils::byteBufferToHex, logEntryConsumer)
         );
+    }
+
+
+    /**
+     * TODO Remove when we are using LMDBJava >0.8.1
+     * This is a copy of
+     * https://github.com/lmdbjava/lmdbjava/blob/master/src/main/java/org/lmdbjava/ByteBufferProxy.java
+     * until the version after 0.8.1 of LMDBJava is released.
+     */
+    public static int compareBuff(final ByteBuffer o1, final ByteBuffer o2) {
+        requireNonNull(o1);
+        requireNonNull(o2);
+        if (o1.equals(o2)) {
+            return 0;
+        }
+        final int minLength = Math.min(o1.limit(), o2.limit());
+        final int minWords = minLength / Long.BYTES;
+
+        final boolean reverse1 = o1.order() == LITTLE_ENDIAN;
+        final boolean reverse2 = o1.order() == LITTLE_ENDIAN;
+        for (int i = 0; i < minWords * Long.BYTES; i += Long.BYTES) {
+            final long lw = reverse1
+                    ? reverseBytes(o1.getLong(i))
+                    : o1.getLong(i);
+            final long rw = reverse2
+                    ? reverseBytes(o2.getLong(i))
+                    : o2.getLong(i);
+            final int diff = Long.compareUnsigned(lw, rw);
+            if (diff != 0) {
+                return diff;
+            }
+        }
+
+        for (int i = minWords * Long.BYTES; i < minLength; i++) {
+            final int lw = Byte.toUnsignedInt(o1.get(i));
+            final int rw = Byte.toUnsignedInt(o2.get(i));
+            final int result = Integer.compareUnsigned(lw, rw);
+            if (result != 0) {
+                return result;
+            }
+        }
+
+        return o1.remaining() - o2.remaining();
     }
 }

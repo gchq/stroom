@@ -29,6 +29,7 @@ import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.store.AbstractRefDataStore;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.ProcessingInfoResponse;
+import stroom.pipeline.refdata.store.ProcessingInfoResponse.EntryCounts;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataLoader;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
@@ -47,6 +48,7 @@ import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreMetaDb;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataProcessingInfoSerde;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskTerminatedException;
 import stroom.util.HasHealthCheck;
 import stroom.util.io.ByteSize;
 import stroom.util.io.PathCreator;
@@ -465,7 +467,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     public void purge(final long refStreamId, final long partIndex) {
 
         final Instant startTime = Instant.now();
-        taskContext.info(() -> LogUtil.message("Purging data for reference stream {}:{}",
+        this.taskContext.info(() -> LogUtil.message("Purging data for reference stream {}:{}",
                 refStreamId, partIndex));
 
         final AtomicReference<PurgeCounts> countsRef = new AtomicReference<>(PurgeCounts.zero());
@@ -481,11 +483,10 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             boolean wasMatchFound;
             do {
                 // Allow for task termination
-                if (Thread.currentThread().isInterrupted()) {
+                if (Thread.currentThread().isInterrupted() || taskContext.isTerminated()) {
                     // As we are outside of a txn the interruption is ok and everything will be in
                     // valid state for when purge is run again. Thus we don't n
-                    LOGGER.warn("Thread interrupted during purge. All data is in a consistent state.");
-                    throw new InterruptedException();
+                    throw new TaskTerminatedException();
                 }
 
                 // With a read txn scan over all the proc info entries to find the next one that is ready for purge
@@ -527,10 +528,13 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                         "Unable to purge {} ref stream definitions",
                         purgeCounts.refStreamDefsFailedCount));
             }
-        } catch (InterruptedException e) {
-            LAMBDA_LOGGER.warn(() -> "Purge interrupted. " +
+        } catch (TaskTerminatedException e) {
+            // Expected behaviour so just rethrow, stopping it being picked up by the other
+            // catch block
+            LOGGER.debug("Purge terminated", e);
+            LAMBDA_LOGGER.warn(() -> "Purge terminated. " +
                     buildPurgeInfoString(startTime, countsRef.get()));
-            Thread.currentThread().interrupt();
+            throw e;
         } catch (Exception e) {
             LAMBDA_LOGGER.error(() -> "Purge failed due to " + e.getMessage() + ". " +
                     buildPurgeInfoString(startTime, countsRef.get()), e);
@@ -580,9 +584,11 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     }
 
     /**
+     * Synchronized to prevent to ensure consecutive purge jobs don't clash
+     *
      * @param now Allows the setting of the current time for testing purposes
      */
-    void purgeOldData(final Instant now, final StroomDuration purgeAge) {
+    synchronized void purgeOldData(final Instant now, final StroomDuration purgeAge) {
         taskContext.info(() -> "Purging old data");
         final Instant startTime = Instant.now();
         final AtomicReference<PurgeCounts> countsRef = new AtomicReference<>(PurgeCounts.zero());
@@ -611,9 +617,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 // Allow for task termination
                 if (Thread.currentThread().isInterrupted()) {
                     // As we are outside of a txn the interruption is ok and everything will be in
-                    // valid state for when purge is run again. Thus we don't n
-                    LOGGER.warn("Thread interrupted during purge. All data is in a consistent state.");
-                    throw new InterruptedException();
+                    // valid state for when purge is run again.
+                    throw new TaskTerminatedException();
                 }
 
                 // With a read txn scan over all the proc info entries to find the next one that is ready for purge
@@ -640,6 +645,13 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     LOGGER.debug("No matching ref stream found");
                     wasMatchFound = false;
                 }
+
+                // Sleep block to slow things down for testing
+//                try {
+//                    Thread.sleep(20_000);
+//                } catch (InterruptedException e) {
+//                    Thread.currentThread().interrupt();
+//                }
             } while (wasMatchFound);
 
             final PurgeCounts purgeCounts = countsRef.get();
@@ -652,10 +664,13 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                         "Unable to purge {} ref stream definitions",
                         purgeCounts.refStreamDefsFailedCount));
             }
-        } catch (InterruptedException e) {
-            LAMBDA_LOGGER.warn(() -> "Purge interrupted. " +
+        } catch (TaskTerminatedException e) {
+            // Expected behaviour so just rethrow, stopping it being picked up by the other
+            // catch block
+            LOGGER.debug("Purge terminated", e);
+            LAMBDA_LOGGER.warn(() -> "Purge terminated. " +
                     buildPurgeInfoString(startTime, countsRef.get()));
-            Thread.currentThread().interrupt();
+            throw e;
         } catch (Exception e) {
             LAMBDA_LOGGER.error(() -> "Purge failed due to " + e.getMessage() + ". " +
                     buildPurgeInfoString(startTime, countsRef.get()), e);
@@ -711,8 +726,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
     private String buildPurgeInfoString(final Instant startTime,
                                         final PurgeCounts purgeCounts) {
-        return LogUtil.message("{} refStreamDefs purged, {} refStreamDefs purge failures " +
-                        "{} maps deleted, {} values deleted, {} values de-referenced. " +
+        return LogUtil.message(" refStreamDefs purged: {}, refStreamDef purge failures: {}, " +
+                        "maps deleted: {}, values deleted: {}, values de-referenced: {}. " +
                         "Time taken {}",
                 purgeCounts.refStreamDefsDeletedCount,
                 purgeCounts.refStreamDefsFailedCount,
@@ -1211,12 +1226,26 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         final RefDataProcessingInfo refDataProcessingInfo = entry.getValue();
 
         // Sub-query to get the map names for this refStreamDefinition
-        final Set<String> mapNames = mapDefinitionUIDStore.getMapNames(readTxn, refStreamDefinition);
+        final List<MapDefinition> mapDefinitions = mapDefinitionUIDStore.getMapDefinitions(readTxn,
+                refStreamDefinition);
+
+        final Map<String, EntryCounts> mapNameToEntryCountsMap = new HashMap<>();
+        for (final MapDefinition mapDefinition : mapDefinitions) {
+            final Optional<UID> optMapUid = mapDefinitionUIDStore.get(readTxn, mapDefinition);
+
+            optMapUid.ifPresent(mapUid -> {
+                final long keyValueCount = keyValueStoreDb.getEntryCount(mapUid, readTxn);
+                final long rangeValueCount = rangeStoreDb.getEntryCount(mapUid, readTxn);
+                mapNameToEntryCountsMap.put(
+                        mapDefinition.getMapName(),
+                        new EntryCounts(keyValueCount, rangeValueCount));
+            });
+        }
 
         return new ProcessingInfoResponse(
                 refStreamDefinition,
                 refDataProcessingInfo,
-                mapNames);
+                mapNameToEntryCountsMap);
     }
 
     private RefStoreEntry buildRefStoreEntry(
