@@ -206,9 +206,9 @@ public class DataFetcher {
             // Allow users with 'Use' permission to read data, pipelines and XSLT.
             return securityContext.useAsReadResult(() -> {
                 Set<String> availableChildStreamTypes;
+                Meta meta = null;
                 String feedName = null;
                 String streamTypeName = null;
-                Meta meta = null;
                 final SourceLocation sourceLocation = fetchDataRequest.getSourceLocation();
 
 
@@ -217,22 +217,21 @@ public class DataFetcher {
                         fetchDataRequest.getSourceLocation().getMetaId(),
                         true)) {
 
-                    // If we have no stream then let the client know it has been
-                    // deleted.
-                    if (source == null) {
-                        return createEmptyResult(
-                                fetchDataRequest,
-                                feedName,
-                                null,
-                                sourceLocation,
-                                "## Stream has been deleted ## ");
-                    }
+//                    // If we have no stream then let the client know it has been
+//                    // deleted.
+//                    if (source == null) {
+//                        return createEmptyResult(
+//                                fetchDataRequest,
+//                                feedName,
+//                                null,
+//                                sourceLocation,
+//                                "## Stream has been deleted ## ");
+//                    }
 
                     meta = source.getMeta();
                     feedName = meta.getFeedName();
                     streamTypeName = meta.getTypeName();
 
-//                if (sourceLocation.getPartNo() < 0 || sourceLocation.getSegmentNo() < 0) {
                     if (sourceLocation.getPartIndex() < 0) {
                         // Handle cases during stepping when we have not yet stepped
                         return createEmptyResult(
@@ -298,23 +297,29 @@ public class DataFetcher {
                     }
 
                 } catch (final IOException | RuntimeException e) {
-                    if (e.getCause() instanceof ClosedByInterruptException) {
-                        throw new ViewDataException(sourceLocation, e.getMessage());
-                    }
+                    String message = null;
 
-                    if (meta != null) {
+                    if (e.getCause() instanceof ClosedByInterruptException) {
+                        message = e.getMessage();
+                    } else if (meta != null) {
                         if (Status.LOCKED.equals(meta.getStatus())) {
-                            throw new ViewDataException(sourceLocation, "You cannot view locked streams.");
+                            message = "You cannot view locked streams.";
                         }
                         if (Status.DELETED.equals(meta.getStatus())) {
-                            throw new ViewDataException(sourceLocation, "This data may no longer exist.");
+                            message = "This data may no longer exist.";
                         }
+                    } else {
+                        message = "Error fetching data: " + e.getMessage();
                     }
 
-                    LOGGER.error("Error fetching data", e);
-                    throw new ViewDataException(sourceLocation, e.getMessage());
+                    LOGGER.debug(message, e);
+                    return createEmptyResult(
+                            fetchDataRequest,
+                            feedName,
+                            streamTypeName,
+                            sourceLocation,
+                            "## " + message + " ##");
                 }
-
             });
         }).get();
     }

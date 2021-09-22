@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2448** : Change data receipt ERROR log messages to WARN. Also improve log message content for success and failure.
 
+* Issue **#2412** : You are now able to view locked streams or deleted data if it is still accessible.
+
 * Issue **#2413** : Removed duplication of data retention fields in info pane. 
 
 * Issue **#2443** : Internal meta statistics are now added with processing user permissions.
