@@ -371,7 +371,10 @@ class DataServiceImpl implements DataService {
         return entries;
     }
 
-    private String getDateTimeString(final long ms) {
+    private String getDateTimeString(final Long ms) {
+        if (ms == null) {
+            return "";
+        }
         return DateUtil.createNormalDateTimeString(ms) + " (" + ms + ")";
     }
 
