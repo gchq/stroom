@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2447** : Correctly offset displayed date/time values by the configured user timezone.
+
 * Issue **#2382** : Improve error message for invalid feed encodings.
 
 * Issue **#2387** : Fix reference data load/lookup failure handling.

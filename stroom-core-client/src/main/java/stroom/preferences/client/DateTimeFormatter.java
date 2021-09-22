@@ -85,8 +85,7 @@ public class DateTimeFormatter {
                                                     final String dateTimePattern,
                                                     final String id,
                                                     final String offset)/*-{
-        var moment = $wnd.moment(ms);
-        var m = moment.utc(ms);
+        var m = $wnd.moment(ms);
         switch (use) {
             case "UTC": {
                 m = m.utc();
