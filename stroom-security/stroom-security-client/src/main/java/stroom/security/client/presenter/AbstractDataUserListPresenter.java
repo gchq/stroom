@@ -2,7 +2,6 @@ package stroom.security.client.presenter;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.security.shared.FindUserCriteria;
-import stroom.widget.popup.client.event.HidePopupEvent;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -11,7 +10,7 @@ public abstract class AbstractDataUserListPresenter extends AbstractUserListPres
 
     private final RestFactory restFactory;
     private UserDataProvider dataProvider;
-    private FindUserCriteria findUserCriteria;
+    FindUserCriteria findUserCriteria;
 
     @Inject
     public AbstractDataUserListPresenter(final EventBus eventBus,
@@ -19,26 +18,6 @@ public abstract class AbstractDataUserListPresenter extends AbstractUserListPres
                                          final RestFactory restFactory) {
         super(eventBus, userListView);
         this.restFactory = restFactory;
-    }
-
-    @Override
-    protected void onBind() {
-        super.onBind();
-        registerHandler(getSelectionModel().addSelectionHandler(event -> {
-            if (event.getSelectionType().isDoubleSelect()) {
-                if (findUserCriteria != null && findUserCriteria.getRelatedUser() == null) {
-                    hide();
-                }
-            }
-        }));
-    }
-
-    void hide() {
-        HidePopupEvent.fire(
-                this,
-                this,
-                false,
-                true);
     }
 
     @Override

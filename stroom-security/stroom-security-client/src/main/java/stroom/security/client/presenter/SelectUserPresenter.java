@@ -30,6 +30,7 @@ import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView;
@@ -54,7 +55,7 @@ public class SelectUserPresenter extends MyPresenterWidget<UserListView> impleme
     private final ManageNewEntityPresenter newPresenter;
     private UserNameDataProvider dataProvider;
     private FindUserNameCriteria findUserCriteria;
-    private String selected;
+    private Consumer<User> userConsumer;
 
     @Inject
     public SelectUserPresenter(final EventBus eventBus,
@@ -99,38 +100,21 @@ public class SelectUserPresenter extends MyPresenterWidget<UserListView> impleme
         }));
         registerHandler(dataGridView.getSelectionModel().addSelectionHandler(event -> {
             if (event.getSelectionType().isDoubleSelect()) {
-                selected = dataGridView.getSelectionModel().getSelected();
-                if (selected != null && selected.length() > 0) {
-                    HidePopupEvent.fire(
-                            SelectUserPresenter.this,
-                            SelectUserPresenter.this,
-                            false,
-                            true);
-                }
+                final String selected = dataGridView.getSelectionModel().getSelected();
+                hide(false, true, selected);
             }
         }));
     }
 
     private void onNew() {
-        final PopupUiHandlers hidePopupUiHandlers = new PopupUiHandlers() {
+        final PopupUiHandlers hidePopupUiHandlers = new DefaultPopupUiHandlers() {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
-                    selected = newPresenter.getName();
-                    if (selected != null && selected.length() > 0) {
-                        HidePopupEvent.fire(
-                                SelectUserPresenter.this,
-                                SelectUserPresenter.this,
-                                false,
-                                true);
-                    }
+                    final String selected = newPresenter.getName();
+                    hide(false, true, selected);
                 }
                 newPresenter.hide();
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                // Ignore hide.
             }
         };
 
@@ -160,35 +144,18 @@ public class SelectUserPresenter extends MyPresenterWidget<UserListView> impleme
     }
 
     public void show(final Consumer<User> userConsumer) {
+        this.userConsumer = userConsumer;
         final FindUserNameCriteria findUserCriteria = new FindUserNameCriteria();
         setup(findUserCriteria);
 
         final PopupSize popupSize = new PopupSize(400, 400, 400, 400, true);
-        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
             @Override
             public void onHideRequest(boolean autoClose, boolean ok) {
-                HidePopupEvent.fire(
-                        SelectUserPresenter.this,
-                        SelectUserPresenter.this,
-                        autoClose,
-                        ok);
-            }
-
-            @Override
-            public void onHide(boolean autoClose, boolean ok) {
-                if (ok) {
-                    final String selected = getSelected();
-                    if (selected != null) {
-                        final Rest<User> rest = restFactory.create();
-                        rest
-                                .onSuccess(userConsumer)
-                                .call(USER_RESOURCE)
-                                .create(selected, false);
-                    }
-                }
+                final String selected = dataGridView.getSelectionModel().getSelected();
+                hide(autoClose, ok, selected);
             }
         };
-
         ShowPopupEvent.fire(
                 SelectUserPresenter.this,
                 SelectUserPresenter.this,
@@ -196,6 +163,29 @@ public class SelectUserPresenter extends MyPresenterWidget<UserListView> impleme
                 popupSize,
                 "Choose User To Add",
                 popupUiHandlers);
+    }
+
+    private void hide(final boolean autoClose, final boolean ok, final String selected) {
+        if (ok && userConsumer != null && selected != null && selected.length() > 0) {
+            final Rest<User> rest = restFactory.create();
+            rest
+                    .onSuccess(user -> {
+                        userConsumer.accept(user);
+                        HidePopupEvent.fire(
+                                this,
+                                this,
+                                autoClose,
+                                ok);
+                    })
+                    .call(USER_RESOURCE)
+                    .create(selected, false);
+        } else {
+            HidePopupEvent.fire(
+                    this,
+                    this,
+                    autoClose,
+                    ok);
+        }
     }
 
     public void setup(final FindUserNameCriteria findUserCriteria) {
@@ -207,10 +197,6 @@ public class SelectUserPresenter extends MyPresenterWidget<UserListView> impleme
 
     public void refresh() {
         dataProvider.refresh();
-    }
-
-    public String getSelected() {
-        return selected;
     }
 
     public DataGridView<String> getDataGridView() {
