@@ -19,6 +19,8 @@ package stroom.data.store.impl.fs;
 
 import stroom.meta.shared.Meta;
 import stroom.task.api.TaskContextFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +31,8 @@ import javax.inject.Provider;
 
 class FsOrphanMetaFinderExecutor {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger("orphan_meta");
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsOrphanMetaFinderExecutor.class);
+    private static final Logger ORPHAN_META_LOGGER = LoggerFactory.getLogger("orphan_meta");
     public static final String TASK_NAME = "Orphan Meta Finder";
 
     private final Provider<FsOrphanMetaFinder> orphanFileFinderProvider;
@@ -46,7 +49,8 @@ class FsOrphanMetaFinderExecutor {
         taskContextFactory.context(TASK_NAME, taskContext -> {
             taskContext.info(() -> "Starting orphan meta finder");
             final Consumer<Meta> orphanConsumer = meta -> {
-                LOGGER.info(String.valueOf(meta.getId()));
+                LOGGER.debug(() -> "Orphan meta: " + meta.toString());
+                ORPHAN_META_LOGGER.info(String.valueOf(meta.getId()));
             };
             final FsOrphanMetaFinderProgress progress = new FsOrphanMetaFinderProgress(taskContext);
             orphanFileFinderProvider.get().scan(orphanConsumer, progress);

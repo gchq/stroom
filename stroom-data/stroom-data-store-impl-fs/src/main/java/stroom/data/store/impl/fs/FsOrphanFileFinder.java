@@ -78,7 +78,7 @@ class FsOrphanFileFinder {
     }
 
     public ScanVolumePathResult scanVolumePath(final FsVolume volume,
-                                               final Consumer<Path> deleteConsumer,
+                                               final Consumer<Path> orphanConsumer,
                                                final long oldestDirTime,
                                                final TaskContext taskContext) {
         final FsOrphanFileFinderProgress cleanProgress = new FsOrphanFileFinderProgress(volume.getPath(), taskContext);
@@ -112,7 +112,7 @@ class FsOrphanFileFinder {
                                 // If the dir is empty and old then record it.
                                 final long age = dirAge.get();
                                 if (age > 0 && age < oldestDirTime) {
-                                    deleteConsumer.accept(dir);
+                                    orphanConsumer.accept(dir);
                                 }
 
                                 return super.postVisitDirectory(dir, exc);
@@ -133,14 +133,14 @@ class FsOrphanFileFinder {
                                 final long id = fileSystemStreamPathHelper.getId(file);
                                 if (id == -1) {
                                     cleanProgress.addDeleteCount();
-                                    deleteConsumer.accept(file);
+                                    orphanConsumer.accept(file);
                                 } else {
                                     fileMap.computeIfAbsent(id, k -> new HashSet<>()).add(file);
                                 }
 
                                 if (fileMap.size() > BATCH_SIZE) {
                                     // Validate the batch of files against the DB.
-                                    validateFiles(fileMap, cleanProgress, deleteConsumer);
+                                    validateFiles(fileMap, cleanProgress, orphanConsumer);
                                     fileMap.clear();
                                 }
 
@@ -152,7 +152,7 @@ class FsOrphanFileFinder {
             }
 
             // Validate any remaining files against the DB.
-            validateFiles(fileMap, cleanProgress, deleteConsumer);
+            validateFiles(fileMap, cleanProgress, orphanConsumer);
             fileMap.clear();
 
             return result;
