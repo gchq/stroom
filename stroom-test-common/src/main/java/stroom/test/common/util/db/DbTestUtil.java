@@ -200,7 +200,8 @@ public class DbTestUtil {
             LOGGER.info("Using DB connection url: {}", url);
             dbConfig.setConnectionConfig(newConnectionConfig);
 
-            final HikariConfig hikariConfig = HikariUtil.createConfig(dbConfig);
+            final HikariConfig hikariConfig = HikariUtil.createConfig(
+                    dbConfig, null, null, null);
             dataSource = new HikariDataSource(hikariConfig);
 
             THREAD_LOCAL.set(dataSource);
