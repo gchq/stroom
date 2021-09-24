@@ -73,6 +73,8 @@ import stroom.util.shared.OffsetRange;
 import stroom.util.shared.Severity;
 import stroom.util.shared.TextRange;
 
+import com.google.common.base.Strings;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.ByteOrderMark;
 import org.jetbrains.annotations.NotNull;
 
@@ -83,8 +85,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.channels.ClosedByInterruptException;
+import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -301,13 +308,10 @@ public class DataFetcher {
 
                     if (e.getCause() instanceof ClosedByInterruptException) {
                         message = e.getMessage();
-                    } else if (meta != null) {
-                        if (Status.LOCKED.equals(meta.getStatus())) {
-                            message = "You cannot view locked streams.";
-                        }
-                        if (Status.DELETED.equals(meta.getStatus())) {
-                            message = "This data may no longer exist.";
-                        }
+                    } else if (meta != null && Status.LOCKED.equals(meta.getStatus())) {
+                        message = "You cannot view locked streams.";
+                    } else if (meta != null && Status.DELETED.equals(meta.getStatus())) {
+                        message = "This data may no longer exist.";
                     } else {
                         message = "Error fetching data: " + e.getMessage();
                     }
@@ -580,17 +584,135 @@ public class DataFetcher {
                                           final SegmentInputStream segmentInputStream,
                                           final String encoding) throws IOException {
 
-        final RawResult rawResult = extractDataRange(
+
+        RawResult rawResult;
+        rawResult = extractDataRangeAsHex(
                 sourceLocation,
                 segmentInputStream,
                 encoding,
                 segmentInputStream.size());
 
-
         // Non-segmented data exists within parts so set the item info
         rawResult.setItemRange(new OffsetRange(sourceLocation.getPartIndex(), 1L));
         rawResult.setTotalItemCount(Count.of(partCount, true));
         return rawResult;
+    }
+
+    private RawResult extractDataRangeAsHex(final SourceLocation sourceLocation,
+                                            final InputStream inputStream,
+                                            final String encoding,
+                                            final long streamSizeBytes) throws IOException {
+
+        final int maxBytesPerLine = 32;
+        final int maxLines = 100;
+        final CharsetDecoder charsetDecoder = Charset.forName(encoding).newDecoder()
+                .onMalformedInput(CodingErrorAction.REPLACE)
+                .onUnmappableCharacter(CodingErrorAction.REPLACE)
+                .replaceWith("�");
+        final StringBuilder stringBuilder = new StringBuilder();
+        final byte[] lineBytes = new byte[maxBytesPerLine];
+        int lineOffset = 0; // zero based for simpler maths
+        while (lineOffset < maxLines) {
+            if (lineOffset != 0) {
+                stringBuilder.append("\n");
+            }
+            int remaining = maxBytesPerLine;
+            int len = 0;
+            int lineByteCount = 0;
+            // Keep reading till we have a full line of our hex
+            while (remaining > 0 && len >= 0) {
+                len = inputStream.read(lineBytes, maxBytesPerLine - remaining, remaining);
+                if (len > 0) {
+                    lineByteCount += len;
+                    remaining -= len;
+                }
+            }
+            if (len == -1) {
+                break;
+            }
+
+            bytesToString(stringBuilder, lineOffset, lineBytes, lineByteCount, maxBytesPerLine, charsetDecoder);
+            lineOffset++;
+        }
+
+        return new RawResult(sourceLocation, stringBuilder.toString(), 0);
+    }
+
+    private void bytesToString(final StringBuilder stringBuilder,
+                               final long lineOffset,
+                               final byte[] lineBytes,
+                               final int len,
+                               final int bytesPerLine,
+                               final CharsetDecoder charsetDecoder) {
+        final long firstByteNo = lineOffset * bytesPerLine;
+        stringBuilder
+                .append(Strings.padStart(Long.toHexString(firstByteNo), 10, '0'))
+                .append(" ");
+
+        final StringBuilder hexStringBuilder = new StringBuilder();
+        final StringBuilder decodedStringBuilder = new StringBuilder();
+        for (int i = 0; i < lineBytes.length; i++) {
+            if (i < len) {
+                byte[] arr = new byte[]{lineBytes[i]};
+
+                final String hex = Hex.encodeHexString(arr);
+                hexStringBuilder
+                        .append(hex)
+                        .append(" ");
+
+                ByteBuffer byteBuffer = ByteBuffer.wrap(arr);
+                char chr;
+                try {
+                    CharBuffer charBuffer = charsetDecoder.decode(byteBuffer);
+                    chr = charBuffer.charAt(0);
+//                    if (!Character.isLetterOrDigit(chr)) {
+//                        // Some control chars will mess up the editor
+//                        chr = '�';
+//                    }
+                } catch (CharacterCodingException e) {
+                    chr = '�';
+                }
+                appendChar(chr, decodedStringBuilder, hex);
+
+            } else {
+                hexStringBuilder
+                        .append("   ");
+                decodedStringBuilder.append(" ");
+            }
+
+            if (i != 0
+                    && (i + 1) % 4 == 0) {
+                hexStringBuilder.append(" ");
+            }
+        }
+        stringBuilder
+                .append(hexStringBuilder)
+                .append(decodedStringBuilder);
+    }
+
+    private void appendChar(final char chr, final StringBuilder stringBuilder, final String hex) {
+
+        final char charToAppend;
+        if ((int) chr < 32) {
+            // replace all non-printable chars, ideally with a representative char
+            if (chr == 0) {
+                charToAppend = ' ';
+            } else if (chr == '\n') {
+                charToAppend = '↲';
+            } else if (chr == '\r') {
+                charToAppend = '↩';
+            } else if (chr == '\t') {
+                charToAppend = '↹';
+            } else {
+                charToAppend = '�';
+            }
+        } else if (chr == ' ') {
+            charToAppend = '␣';
+        } else {
+            charToAppend = chr;
+        }
+        stringBuilder.append(charToAppend);
+//        LOGGER.trace("{} appended as {}", hex, charToAppend);
     }
 
     private RawResult extractDataRange(final SourceLocation sourceLocation,
