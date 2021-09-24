@@ -17,6 +17,8 @@ import stroom.security.impl.SecurityContextModule;
 import stroom.statistics.impl.sql.search.SQLStatisticSearchModule;
 import stroom.util.guice.HasSystemInfoBinder;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.health.HealthCheckRegistry;
 import com.google.inject.AbstractModule;
 import io.dropwizard.setup.Environment;
 
@@ -60,11 +62,24 @@ public class AppModule extends AbstractModule {
     protected void configure() {
         bind(Config.class).toInstance(configuration);
 
-        // Allows us to load up the app in the absence of a the DW jersey environment
-        // e.g. for migrations
+        final HealthCheckRegistry healthCheckRegistry;
+        final MetricRegistry metricRegistry;
         if (environment != null) {
+            // Make the various DW objects available, bind them individually so
+            // modules don't need to pull in all of DW just for metrics.
             bind(Environment.class).toInstance(environment);
+            metricRegistry = environment.metrics();
+            healthCheckRegistry = environment.healthChecks();
+        } else {
+            // Allows us to load up the app in the absence of a the DW jersey environment
+            // e.g. for migrations
+            // Just use brand new registries so code works. We don't care what gets written to
+            // those registries.
+            metricRegistry = new MetricRegistry();
+            healthCheckRegistry = new HealthCheckRegistry();
         }
+        bind(MetricRegistry.class).toInstance(metricRegistry);
+        bind(HealthCheckRegistry.class).toInstance(healthCheckRegistry);
 
         install(new AppConfigModule(configHolder));
         install(new UriFactoryModule());

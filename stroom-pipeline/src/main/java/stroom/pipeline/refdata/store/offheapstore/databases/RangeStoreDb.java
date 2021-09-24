@@ -23,7 +23,6 @@ import stroom.bytebuffer.PooledByteBuffer;
 import stroom.lmdb.AbstractLmdbDb;
 import stroom.lmdb.EntryConsumer;
 import stroom.lmdb.LmdbEnv;
-import stroom.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.store.offheapstore.RangeStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
@@ -105,7 +104,7 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
             // TODO @AT Once a version of LMDBJava >0.8.1 is released then remove the comparator
             //  see https://github.com/lmdbjava/lmdbjava/issues/169
             try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(
-                    txn, keyRange, LmdbUtils::compareBuff)) {
+                    txn, keyRange)) {
                 // loop backwards over all rows with the same mapDefinitionUid, starting at key
                 for (final CursorIterable.KeyVal<ByteBuffer> keyVal : cursorIterable) {
                     cnt.incrementAndGet();
@@ -261,7 +260,7 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
             // TODO @AT Once a version of LMDBJava >0.8.1 is released then remove the comparator
             //  see https://github.com/lmdbjava/lmdbjava/issues/169
             try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(
-                    readTxn, keyRange, LmdbUtils::compareBuff)) {
+                    readTxn, keyRange)) {
 
                 for (final KeyVal<ByteBuffer> ignored : cursorIterable) {
                     cnt++;

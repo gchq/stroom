@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Uplift LMDBJava to 0.8.2 to fix LMDBJava cursor comparator bug.
+
+* Issue **#2464** : Add `leakDetectionThreshold` to the hikari pool config.
+
+* Issue **#2463** : Integrate the hikari connection pool with drop wizard's health checks and metrics.
+
 
 ## [v7.0-beta.146] - 2021-09-22
 
