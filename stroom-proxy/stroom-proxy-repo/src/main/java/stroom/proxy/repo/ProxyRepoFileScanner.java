@@ -194,7 +194,7 @@ public final class ProxyRepoFileScanner {
                         final String typeName = attributeMap.get(StandardHeaderArguments.TYPE);
 
                         // This is an unrecorded source so add it.
-                        proxyRepoSources.addSource(relativePathString, feedName, typeName, lastModified);
+                        proxyRepoSources.addSource(relativePathString, feedName, typeName, lastModified, attributeMap);
 
                     } catch (final IOException e) {
                         throw new UncheckedIOException(e);

@@ -33,13 +33,8 @@ public class LogExecutionTime {
         return System.currentTimeMillis() - startTime;
     }
 
-    public long getStartTime() {
-        return startTime;
-    }
-
     @Override
     public String toString() {
         return ModelStringUtil.formatDurationString(getDuration());
     }
-
 }

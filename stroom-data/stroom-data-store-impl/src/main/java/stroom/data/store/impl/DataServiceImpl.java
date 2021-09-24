@@ -207,10 +207,7 @@ class DataServiceImpl implements DataService {
         final ResultPage<MetaRow> metaRows = metaService.findDecoratedRows(
                 new FindMetaCriteria(MetaExpressionUtil.createDataIdExpression(id)));
         final MetaRow metaRow = metaRows.getFirst();
-
-//        final Meta meta = metaService.getMeta(id, true);
         final List<DataInfoSection> sections = new ArrayList<>();
-//
         if (metaRow == null) {
             final List<DataInfoSection.Entry> entries = new ArrayList<>(1);
             entries.add(new DataInfoSection.Entry("Deleted Stream Id", String.valueOf(id)));
@@ -233,7 +230,12 @@ class DataServiceImpl implements DataService {
                     .collect(Collectors.toList());
             sortedKeys.forEach(key -> {
                 final String value = attributeMap.get(key);
-                if (value != null) {
+                if (value != null &&
+                        // We are going to add retention entries separately.
+                        !DataRetentionFields.RETENTION_AGE.equals(key) &&
+                        !DataRetentionFields.RETENTION_UNTIL.equals(key) &&
+                        !DataRetentionFields.RETENTION_RULE.equals(key)) {
+
                     if (MetaFields.DURATION.getName().equals(key)) {
                         entries.add(new DataInfoSection.Entry(key, convertDuration(value)));
                     } else if (key.toLowerCase().contains("time")) {
@@ -254,7 +256,6 @@ class DataServiceImpl implements DataService {
 
             sections.add(new DataInfoSection("Files", Collections.singletonList(new Entry("", files))));
         }
-
         return sections;
     }
 
@@ -370,7 +371,10 @@ class DataServiceImpl implements DataService {
         return entries;
     }
 
-    private String getDateTimeString(final long ms) {
+    private String getDateTimeString(final Long ms) {
+        if (ms == null) {
+            return "";
+        }
         return DateUtil.createNormalDateTimeString(ms) + " (" + ms + ")";
     }
 
@@ -378,10 +382,6 @@ class DataServiceImpl implements DataService {
         final List<DataInfoSection.Entry> entries = new ArrayList<>();
 
         if (attributeMap != null && !attributeMap.isEmpty()) {
-//            // Add additional data retention information.
-//            final StreamAttributeMapRetentionRuleDecorator decorator = decoratorProvider.get();
-//            decorator.addMatchingRetentionRuleInfo(meta, attributeMap);
-
             entries.add(new DataInfoSection.Entry(DataRetentionFields.RETENTION_AGE,
                     attributeMap.get(DataRetentionFields.RETENTION_AGE)));
             entries.add(new DataInfoSection.Entry(DataRetentionFields.RETENTION_UNTIL,

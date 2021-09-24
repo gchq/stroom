@@ -10,7 +10,6 @@ class MockFsTypePaths implements FsTypePathDao {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MockFsTypePaths.class);
     private static final Map<String, String> PATH_MAP = new HashMap<>();
-    private static final Map<String, String> TYPE_MAP = new HashMap<>();
 
     static {
         put("Manifest", "MANIFEST");
@@ -29,7 +28,6 @@ class MockFsTypePaths implements FsTypePathDao {
 
     private static void put(final String name, final String path) {
         PATH_MAP.put(name, path);
-        TYPE_MAP.put(path, name);
     }
 
     @Override
@@ -41,15 +39,5 @@ class MockFsTypePaths implements FsTypePathDao {
             PATH_MAP.put(streamType, path);
         }
         return path;
-    }
-
-    @Override
-    public String getType(final String path) {
-        String type = TYPE_MAP.get(path);
-        if (type == null) {
-            LOGGER.error("Unknown stream type for path '" + path + "'");
-            return path;
-        }
-        return type;
     }
 }

@@ -20,9 +20,8 @@ package stroom.pipeline.errorhandler;
  * Exception used to wrap all exceptions generated within transformation code.
  */
 public class ProcessException extends RuntimeException {
-    private static final long serialVersionUID = 6230610711953733732L;
 
-    private String message;
+    private final String message;
 
     /**
      * Wraps Exception constructor.
@@ -49,14 +48,14 @@ public class ProcessException extends RuntimeException {
         this.message = MessageUtil.getMessage(message, cause);
     }
 
-    public static final ProcessException wrap(final Throwable throwable) {
+    public static ProcessException wrap(final Throwable throwable) {
         if (throwable instanceof ProcessException) {
             return (ProcessException) throwable;
         }
         return new ProcessException(throwable.getMessage(), throwable);
     }
 
-    public static final ProcessException wrap(final String msg, final Throwable throwable) {
+    public static ProcessException wrap(final String msg, final Throwable throwable) {
         if (throwable instanceof ProcessException) {
             return (ProcessException) throwable;
         }

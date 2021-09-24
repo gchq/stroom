@@ -34,17 +34,21 @@ import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreMetaDb;
 import stroom.pipeline.refdata.store.onheapstore.FastInfosetValueConsumer;
 import stroom.pipeline.refdata.store.onheapstore.OnHeapRefDataValueProxyConsumer;
 import stroom.pipeline.refdata.store.onheapstore.StringValueConsumer;
+import stroom.task.api.TaskTerminatedException;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.HasSystemInfoBinder;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 
 import static stroom.job.api.Schedule.ScheduleType.CRON;
 
 public class RefDataStoreModule extends AbstractModule {
+
     @Override
     protected void configure() {
         install(new ByteBufferModule());
@@ -89,9 +93,20 @@ public class RefDataStoreModule extends AbstractModule {
     }
 
     private static class RefDataPurge extends RunnableWrapper {
+
+        private static final Logger LOGGER = LoggerFactory.getLogger(RefDataPurge.class);
+
         @Inject
         RefDataPurge(final RefDataStoreFactory refDataStoreFactory) {
-            super(refDataStoreFactory::purgeOldData);
+
+            super(() -> {
+                try {
+                    refDataStoreFactory.purgeOldData();
+                } catch (TaskTerminatedException e) {
+                    LOGGER.debug("Reference Data Purge terminated", e);
+                    LOGGER.warn("Reference Data Purge terminated");
+                }
+            });
         }
     }
 }

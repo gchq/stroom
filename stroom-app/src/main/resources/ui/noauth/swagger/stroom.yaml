@@ -3838,6 +3838,18 @@ paths:
       summary: Finds processor task summaries
       tags:
       - Processor Tasks
+  /refData/v1/clearBufferPool:
+    delete:
+      operationId: clearBufferPool
+      responses:
+        default:
+          content:
+            application/json: {}
+          description: default response
+      summary: Clear all buffers currently available in the buffer pool to reclaim
+        memory.
+      tags:
+      - Reference Data
   /refData/v1/entries:
     get:
       description: This is primarily intended  for small scale debugging in non-production
@@ -3891,9 +3903,9 @@ paths:
         Reference data will be loaded if required using the supplied reference pipeline.
       tags:
       - Reference Data
-  /refData/v1/purge/{purgeAge}:
+  /refData/v1/purgeByAge/{purgeAge}:
     delete:
-      operationId: purgeReferenceData
+      operationId: purgeReferenceDataByAge
       parameters:
       - in: path
         name: purgeAge
@@ -3908,6 +3920,34 @@ paths:
                 type: boolean
           description: default response
       summary: Explicitly delete all entries that are older than purgeAge.
+      tags:
+      - Reference Data
+  /refData/v1/purgeByStream/{refStreamId}/{partNo}:
+    delete:
+      operationId: purgeReferenceDataByStreamAndPartNo
+      parameters:
+      - in: path
+        name: refStreamId
+        required: true
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      - in: path
+        name: partNo
+        required: true
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Delete all entries for a reference stream and part number (one based)
       tags:
       - Reference Data
   /refData/v1/refStreamInfo:
@@ -3938,7 +3978,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/RefStreamProcessingInfo'
+                  $ref: '#/components/schemas/ProcessingInfoResponse'
           description: default response
       summary: List processing info entries for all ref streams
       tags:
@@ -7019,6 +7059,15 @@ components:
           type: string
         value:
           type: string
+    EntryCounts:
+      type: object
+      properties:
+        keyValueCount:
+          type: integer
+          format: int64
+        rangeValueCount:
+          type: integer
+          format: int64
     EventCoprocessorSettings:
       type: object
       allOf:
@@ -8934,6 +8983,30 @@ components:
         defaultTimeLimit:
           type: integer
           format: int64
+    ProcessingInfoResponse:
+      type: object
+      properties:
+        createTime:
+          type: string
+        effectiveTime:
+          type: string
+        lastAccessedTime:
+          type: string
+        maps:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/EntryCounts'
+        processingState:
+          type: string
+          enum:
+          - LOAD_IN_PROGRESS
+          - PURGE_IN_PROGRESS
+          - COMPLETE
+          - FAILED
+          - TERMINATED
+          - PURGE_FAILED
+        refStreamDefinition:
+          $ref: '#/components/schemas/RefStreamDefinition'
     Processor:
       type: object
       properties:
@@ -9364,6 +9437,9 @@ components:
           - LOAD_IN_PROGRESS
           - PURGE_IN_PROGRESS
           - COMPLETE
+          - FAILED
+          - TERMINATED
+          - PURGE_FAILED
     RefStoreEntry:
       type: object
       properties:
@@ -9391,18 +9467,6 @@ components:
         streamId:
           type: integer
           format: int64
-    RefStreamProcessingInfo:
-      type: object
-      properties:
-        mapNames:
-          type: array
-          items:
-            type: string
-          uniqueItems: true
-        refDataProcessingInfo:
-          $ref: '#/components/schemas/RefDataProcessingInfo'
-        refStreamDefinition:
-          $ref: '#/components/schemas/RefStreamDefinition'
     ReferenceLoader:
       type: object
       properties:
@@ -9410,6 +9474,8 @@ components:
           $ref: '#/components/schemas/DocRef'
         referenceFeed:
           $ref: '#/components/schemas/DocRef'
+        streamType:
+          type: string
       required:
       - loaderPipeline
       - referenceFeed

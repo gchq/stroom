@@ -17,12 +17,15 @@
 package stroom.data.store.impl.fs;
 
 import stroom.data.store.impl.ScanVolumePathResult;
+import stroom.task.api.TaskContext;
 import stroom.util.shared.ModelStringUtil;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-class FsCleanProgress {
+class FsOrphanFileFinderProgress {
 
+    private final String volume;
+    private final TaskContext taskContext;
     private final AtomicLong scanDirCount = new AtomicLong();
     private final AtomicLong scanFileCount = new AtomicLong();
     private final AtomicLong scanDeleteCount = new AtomicLong();
@@ -30,7 +33,11 @@ class FsCleanProgress {
     private final AtomicLong scanPending = new AtomicLong(0);
     private final AtomicLong scanComplete = new AtomicLong(0);
 
-    FsCleanProgress() {
+    FsOrphanFileFinderProgress(final String volume,
+                               final TaskContext taskContext) {
+        this.volume = volume;
+        this.taskContext = taskContext;
+        log();
     }
 
     void addResult(final ScanVolumePathResult result) {
@@ -47,16 +54,19 @@ class FsCleanProgress {
                 + ModelStringUtil.formatCsv(scanTooNewToDeleteCount);
     }
 
-    AtomicLong getScanDirCount() {
-        return scanDirCount;
+    void addDir() {
+        scanDirCount.incrementAndGet();
+        log();
     }
 
-    AtomicLong getScanDeleteCount() {
-        return scanDeleteCount;
+    void addDeleteCount() {
+        scanDeleteCount.incrementAndGet();
+        log();
     }
 
-    AtomicLong getScanFileCount() {
-        return scanFileCount;
+    void addFile() {
+        scanFileCount.incrementAndGet();
+        log();
     }
 
     void addScanPending(int value) {
@@ -66,5 +76,16 @@ class FsCleanProgress {
     void addScanComplete() {
         scanComplete.incrementAndGet();
         scanPending.decrementAndGet();
+    }
+
+    void log() {
+        taskContext.info(() -> volume +
+                " (Scan Dir/File " +
+                scanDirCount.get() +
+                "/" +
+                scanFileCount.get() +
+                ", Del " +
+                scanDeleteCount.get() +
+                ") ");
     }
 }

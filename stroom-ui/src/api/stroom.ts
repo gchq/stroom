@@ -918,6 +918,14 @@ export interface Entry {
   value?: string;
 }
 
+export interface EntryCounts {
+  /** @format int64 */
+  keyValueCount?: number;
+
+  /** @format int64 */
+  rangeValueCount?: number;
+}
+
 export type EventCoprocessorSettings = CoprocessorSettings & {
   maxEvent?: EventRef;
   maxEvents?: number;
@@ -2090,6 +2098,15 @@ export interface ProcessConfig {
   defaultTimeLimit?: number;
 }
 
+export interface ProcessingInfoResponse {
+  createTime?: string;
+  effectiveTime?: string;
+  lastAccessedTime?: string;
+  maps?: Record<string, EntryCounts>;
+  processingState?: "LOAD_IN_PROGRESS" | "PURGE_IN_PROGRESS" | "COMPLETE" | "FAILED" | "TERMINATED" | "PURGE_FAILED";
+  refStreamDefinition?: RefStreamDefinition;
+}
+
 export interface Processor {
   /** @format int64 */
   createTimeMs?: number;
@@ -2375,7 +2392,7 @@ export interface RefDataProcessingInfo {
 
   /** @format int64 */
   lastAccessedTimeEpochMs?: number;
-  processingState?: "LOAD_IN_PROGRESS" | "PURGE_IN_PROGRESS" | "COMPLETE";
+  processingState?: "LOAD_IN_PROGRESS" | "PURGE_IN_PROGRESS" | "COMPLETE" | "FAILED" | "TERMINATED" | "PURGE_FAILED";
 }
 
 export interface RefStoreEntry {
@@ -2400,18 +2417,13 @@ export interface RefStreamDefinition {
   streamId?: number;
 }
 
-export interface RefStreamProcessingInfo {
-  mapNames?: string[];
-  refDataProcessingInfo?: RefDataProcessingInfo;
-  refStreamDefinition?: RefStreamDefinition;
-}
-
 export interface ReferenceLoader {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   loaderPipeline: DocRef;
 
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   referenceFeed: DocRef;
+  streamType?: string;
 }
 
 export type RemovePermissionEvent = PermissionChangeEvent & {
@@ -7259,6 +7271,23 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
   };
   refData = {
     /**
+     * No description
+     *
+     * @tags Reference Data
+     * @name ClearBufferPool
+     * @summary Clear all buffers currently available in the buffer pool to reclaim memory.
+     * @request DELETE:/refData/v1/clearBufferPool
+     * @secure
+     */
+    clearBufferPool: (params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/refData/v1/clearBufferPool`,
+        method: "DELETE",
+        secure: true,
+        ...params,
+      }),
+
+    /**
      * @description This is primarily intended  for small scale debugging in non-production environments. If no limit is set a default limit is applied else the results will be limited to limit entries.
      *
      * @tags Reference Data
@@ -7302,14 +7331,31 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Reference Data
-     * @name PurgeReferenceData
+     * @name PurgeReferenceDataByAge
      * @summary Explicitly delete all entries that are older than purgeAge.
-     * @request DELETE:/refData/v1/purge/{purgeAge}
+     * @request DELETE:/refData/v1/purgeByAge/{purgeAge}
      * @secure
      */
-    purgeReferenceData: (purgeAge: string, params: RequestParams = {}) =>
+    purgeReferenceDataByAge: (purgeAge: string, params: RequestParams = {}) =>
       this.request<any, boolean>({
-        path: `/refData/v1/purge/${purgeAge}`,
+        path: `/refData/v1/purgeByAge/${purgeAge}`,
+        method: "DELETE",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Reference Data
+     * @name PurgeReferenceDataByStreamAndPartNo
+     * @summary Delete all entries for a reference stream and part number (one based)
+     * @request DELETE:/refData/v1/purgeByStream/{refStreamId}/{partNo}
+     * @secure
+     */
+    purgeReferenceDataByStreamAndPartNo: (refStreamId: number, partNo: number, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/refData/v1/purgeByStream/${refStreamId}/${partNo}`,
         method: "DELETE",
         secure: true,
         ...params,
@@ -7328,7 +7374,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       query?: { limit?: number; refStreamId?: number; mapName?: string },
       params: RequestParams = {},
     ) =>
-      this.request<any, RefStreamProcessingInfo[]>({
+      this.request<any, ProcessingInfoResponse[]>({
         path: `/refData/v1/refStreamInfo`,
         method: "GET",
         query: query,

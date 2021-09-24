@@ -16,9 +16,6 @@
 
 package stroom.query.common.v2;
 
-import stroom.bytebuffer.ByteBufferPool;
-import stroom.bytebuffer.ByteBufferPoolConfig;
-import stroom.bytebuffer.ByteBufferPoolImpl4;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
@@ -59,14 +56,12 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
 
         final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
         final LmdbConfig lmdbConfig = new LmdbConfig();
-        final ByteBufferPool byteBufferPool = new ByteBufferPoolImpl4(new ByteBufferPoolConfig());
         final LmdbEnvironmentFactory lmdbEnvironmentFactory =
                 new LmdbEnvironmentFactory(lmdbConfig, pathCreator);
 
         return new LmdbDataStore(
                 lmdbEnvironmentFactory,
                 lmdbConfig,
-                byteBufferPool,
                 UUID.randomUUID().toString(),
                 "0",
                 tableSettings,

@@ -20,6 +20,7 @@ package stroom.data.store.impl.fs;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
+import stroom.meta.shared.Meta;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -27,6 +28,8 @@ import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 
 import org.slf4j.Logger;
@@ -48,33 +51,29 @@ import javax.inject.Provider;
 /**
  * Task to clean the stream store.
  */
-class FsCleanExecutor {
+class FsOrphanFileFinderExecutor {
 
-    private static final String DELETE_OUT = "delete.out";
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsOrphanFileFinderExecutor.class);
+    private static final Logger ORPHAN_FILE_LOGGER = LoggerFactory.getLogger("orphan_file");
+    public static final String TASK_NAME = "Orphan File Finder";
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(FsCleanExecutor.class);
     private final FsVolumeService volumeService;
     private final Duration oldAge;
-    private final boolean deleteOut;
-
-    private final Provider<FsCleanSubTaskHandler> fsCleanSubTaskHandlerProvider;
+    private final Provider<FsOrphanFileFinder> orphanFileFinderProvider;
     private final ExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
-    private final TaskContext parentContext;
     private final DataStoreServiceConfig config;
 
     @Inject
-    FsCleanExecutor(final FsVolumeService volumeService,
-                    final Provider<FsCleanSubTaskHandler> fsCleanSubTaskHandlerProvider,
-                    final ExecutorProvider executorProvider,
-                    final TaskContextFactory taskContextFactory,
-                    final TaskContext parentContext,
-                    final DataStoreServiceConfig config) {
+    FsOrphanFileFinderExecutor(final FsVolumeService volumeService,
+                               final Provider<FsOrphanFileFinder> orphanFileFinderProvider,
+                               final ExecutorProvider executorProvider,
+                               final TaskContextFactory taskContextFactory,
+                               final DataStoreServiceConfig config) {
         this.volumeService = volumeService;
-        this.fsCleanSubTaskHandlerProvider = fsCleanSubTaskHandlerProvider;
+        this.orphanFileFinderProvider = orphanFileFinderProvider;
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
-        this.parentContext = parentContext;
         this.config = config;
 
         Duration age;
@@ -83,18 +82,30 @@ class FsCleanExecutor {
             age = Duration.ofDays(1);
         }
         this.oldAge = age;
-        this.deleteOut = config.isFileSystemCleanDeleteOut();
     }
 
-    public void clean() {
-        parentContext.info(() -> "Starting file system clean task. oldAge = " + oldAge);
+    public void scan() {
+        taskContextFactory.context(TASK_NAME, taskContext -> {
+            taskContext.info(() -> "Starting orphan file finder");
+            final Consumer<Path> orphanConsumer = path -> {
+                LOGGER.debug(() -> "Unexpected file in store: " +
+                        FileUtil.getCanonicalPath(path));
+                ORPHAN_FILE_LOGGER.info(FileUtil.getCanonicalPath(path));
+            };
+            scan(orphanConsumer, taskContext);
+        }).run();
+    }
+
+    public void scan(final Consumer<Path> orphanConsumer, final TaskContext parentContext) {
+        parentContext.info(() -> "Starting orphan file finder task. oldAge = " + oldAge);
+        final long oldestDirTime = System.currentTimeMillis() - oldAge.toMillis();
 
         final LogExecutionTime logExecutionTime = LogExecutionTime.start();
 
         final List<FsVolume> volumeList = volumeService.find(FindFsVolumeCriteria.matchAll()).getValues();
         if (volumeList != null && volumeList.size() > 0) {
             // Add to the task steps remaining.
-            final ThreadPool threadPool = new ThreadPoolImpl("File System Clean#",
+            final ThreadPool threadPool = new ThreadPoolImpl(TASK_NAME + "#",
                     1,
                     1,
                     config.getFileSystemCleanBatchSize(),
@@ -106,9 +117,9 @@ class FsCleanExecutor {
             for (final FsVolume volume : volumeList) {
                 if (VolumeUseStatus.ACTIVE.equals(volume.getStatus())) {
                     final Runnable runnable = taskContextFactory.childContext(parentContext,
-                            "Cleaning: " + volume.getPath(),
+                            "Checking: " + volume.getPath(),
                             taskContext ->
-                                    cleanVolume(taskContext, volume));
+                                    scanVolume(volume, orphanConsumer, oldestDirTime, taskContext));
                     final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable,
                             executor);
                     completableFutures[i++] = completableFuture;
@@ -117,36 +128,20 @@ class FsCleanExecutor {
             CompletableFuture.allOf(completableFutures).join();
         }
 
-        parentContext.info(() -> "start() - Completed file system clean task in " + logExecutionTime);
+        parentContext.info(() -> "start() - Completed orphan file finder in " + logExecutionTime);
     }
 
-    private void cleanVolume(final TaskContext taskContext, final FsVolume volume) {
-        final FsCleanProgress taskProgress = new FsCleanProgress();
-        if (deleteOut) {
-            final Path dir = Paths.get(volume.getPath());
-            if (!Files.isDirectory(dir)) {
-                LOGGER.error("Directory for file delete list does not exist '" + FileUtil.getCanonicalPath(dir) + "'");
-            } else {
-                final Path deleteListFile = dir.resolve(DELETE_OUT);
-                try {
-                    try (final PrintWriter printWriter = new PrintWriter(Files.newBufferedWriter(deleteListFile,
-                            StreamUtil.DEFAULT_CHARSET))) {
-                        final Consumer<List<String>> deleteListConsumer = list -> {
-                            synchronized (printWriter) {
-                                list.forEach(printWriter::println);
-                            }
-                        };
-
-                        final FsCleanSubTask subTask = new FsCleanSubTask(taskProgress, volume, "", "", oldAge, false);
-                        fsCleanSubTaskHandlerProvider.get().exec(taskContext, subTask, deleteListConsumer);
-                    }
-                } catch (final IOException e) {
-                    LOGGER.error("exec() - Error writing " + DELETE_OUT, e);
-                }
-            }
+    private void scanVolume(final FsVolume volume,
+                            final Consumer<Path> orphanConsumer,
+                            final long oldestDirTime,
+                            final TaskContext taskContext) {
+        final Path dir = Paths.get(volume.getPath());
+        if (!Files.isDirectory(dir)) {
+            LOGGER.error(() -> "Directory for file delete list does not exist '" +
+                    FileUtil.getCanonicalPath(dir) +
+                    "'");
         } else {
-            final FsCleanSubTask subTask = new FsCleanSubTask(taskProgress, volume, "", "", oldAge, true);
-            fsCleanSubTaskHandlerProvider.get().exec(taskContext, subTask, null);
+            orphanFileFinderProvider.get().scanVolumePath(volume, orphanConsumer, oldestDirTime, taskContext);
         }
     }
 }

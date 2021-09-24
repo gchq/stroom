@@ -36,9 +36,9 @@ import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Supplier;
 import javax.inject.Inject;
 
@@ -71,7 +71,7 @@ public class MapUidForwardDb extends AbstractLmdbDb<MapDefinition, UID> {
         }
     }
 
-    public Optional<UID> getNextMapDefinition(final Txn<ByteBuffer> writeTxn,
+    public Optional<UID> getNextMapDefinition(final Txn<ByteBuffer> readTxn,
                                               final RefStreamDefinition refStreamDefinition,
                                               final Supplier<ByteBuffer> uidBufferSupplier) {
 
@@ -84,7 +84,7 @@ public class MapUidForwardDb extends AbstractLmdbDb<MapDefinition, UID> {
 
             final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(startKeyIncBuffer);
 
-            try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(writeTxn, keyRange)) {
+            try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(readTxn, keyRange)) {
                 for (final CursorIterable.KeyVal<ByteBuffer> keyVal : cursorIterable) {
 
                     // our startKeyIncBuffer contains only the refStreamDefinition part
@@ -110,10 +110,10 @@ public class MapUidForwardDb extends AbstractLmdbDb<MapDefinition, UID> {
     /**
      * Gets all store map names for a given refStreamDefinition.
      */
-    public Set<String> getMapNames(final Txn<ByteBuffer> readTxn,
-                                   final RefStreamDefinition refStreamDefinition) {
+    public List<MapDefinition> getMapDefinitions(final Txn<ByteBuffer> readTxn,
+                                                 final RefStreamDefinition refStreamDefinition) {
 
-        final Set<String> mapNames = new HashSet<>();
+        final List<MapDefinition> mapDefinitions = new ArrayList<>();
         final MapDefinition mapDefinitionWithNoMapName = new MapDefinition(refStreamDefinition);
 
         try (PooledByteBuffer pooledStartKeyIncBuffer = getPooledKeyBuffer()) {
@@ -134,11 +134,11 @@ public class MapUidForwardDb extends AbstractLmdbDb<MapDefinition, UID> {
                     }
 
                     final MapDefinition mapDefinition = deserializeKey(keyVal.key());
-                    mapNames.add(mapDefinition.getMapName());
+                    mapDefinitions.add(mapDefinition);
                 }
             }
         }
-        return mapNames;
+        return mapDefinitions;
     }
 
     public interface Factory {

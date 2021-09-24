@@ -116,10 +116,10 @@ ext.versions = [
         jackson_swagger   : '2.11.1', // Specific version of jackson for use with the swagger plugin
         jooq              : '3.14.7',
         json_path         : '2.5.0', // Used to parse JSON search results from Elasticsearch
-        junit_jupiter     : '5.6.2',
+        junit_jupiter     : '5.7.2',
         kafka             : '2.2.1', // CDH 6.3 uses kafka 2.2.1
         lucene            : '5.5.3',
-        mockito           : '3.6.28',
+        mockito           : '3.12.4',
         swagger           : '2.1.7',
         unirest           : '1.4.9',
         zookeeper         : '3.4.8', // Roughly pegged to the server version used by Cloudera, see links above. This version is forced below.
@@ -141,7 +141,7 @@ ext.libs = [
         //------3rd Party-libs---------------
 //        agrona                         : "org.agrona:agrona:1.8.0",
         aopalliance                    : "aopalliance:aopalliance:1.0",
-        assertj_core                   : "org.assertj:assertj-core:3.18.1",
+        assertj_core                   : "org.assertj:assertj-core:3.20.2",
         bcrypt                         : 'de.svenkubiak:jBCrypt:0.4.1',
         c3p0                           : "com.mchange:c3p0:0.9.5.2",
         caffeine                       : "com.github.ben-manes.caffeine:caffeine:2.8.0",
@@ -247,7 +247,7 @@ ext.libs = [
         junit_jupiter_params           : "org.junit.jupiter:junit-jupiter-params:$versions.junit_jupiter",
         kafka_clients                  : "org.apache.kafka:kafka-clients:$versions.kafka",
         kryo                           : "com.esotericsoftware:kryo:5.0.3",
-        lmdbjava                       : "org.lmdbjava:lmdbjava:0.8.1",
+        lmdbjava                       : "org.lmdbjava:lmdbjava:0.8.2",
         log4j_over_slf4j               : "org.slf4j:log4j-over-slf4j", // version controlled by DW BOM
         logback_classic                : "ch.qos.logback:logback-classic", // version controlled by DW BOM
         logback_core                   : "ch.qos.logback:logback-core", // version controlled by DW BOM
@@ -358,6 +358,8 @@ subprojects {
         // conflict with logback. Also replace any log4j deps with log4j-over-slf4j
         // so dependency jars work with slf4j
         all {
+            // DW BOM comes with junit 4 which we don't want
+            exclude group: "junit", module: "junit"
             exclude group: "org.slf4j", module: "slf4j-log4j12"
             exclude group: "log4j", module: "log4j"
             exclude group: "commons-logging", module: "commons-logging"

@@ -1,5 +1,6 @@
 package stroom.pipeline.refdata;
 
+import stroom.bytebuffer.ByteBufferPool;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValInteger;
 import stroom.dashboard.expression.v1.ValLong;
@@ -35,6 +36,7 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -183,6 +185,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     private final PipelineScopeRunnable pipelineScopeRunnable;
     private final TaskContextFactory taskContextFactory;
     private final RefDataValueProxyConsumerFactory.Factory refDataValueProxyConsumerFactoryFactory;
+    private final ByteBufferPool byteBufferPool;
 
     @Inject
     public ReferenceDataServiceImpl(final RefDataStoreFactory refDataStoreFactory,
@@ -192,7 +195,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                     final RefDataValueConverter refDataValueConverter,
                                     final PipelineScopeRunnable pipelineScopeRunnable,
                                     final TaskContextFactory taskContextFactory,
-                                    final Factory refDataValueProxyConsumerFactoryFactory) {
+                                    final Factory refDataValueProxyConsumerFactoryFactory,
+                                    final ByteBufferPool byteBufferPool) {
         this.refDataStore = refDataStoreFactory.getOffHeapStore();
         this.securityContext = securityContext;
         this.feedStore = feedStore;
@@ -201,6 +205,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         this.pipelineScopeRunnable = pipelineScopeRunnable;
         this.taskContextFactory = taskContextFactory;
         this.refDataValueProxyConsumerFactoryFactory = refDataValueProxyConsumerFactoryFactory;
+        this.byteBufferPool = byteBufferPool;
     }
 
     @Override
@@ -261,7 +266,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
                 if (!Strings.isNullOrEmpty(mapName)) {
                     predicate = predicate.and(refStreamProcessingInfo ->
-                            refStreamProcessingInfo.getMapNames().contains(mapName));
+                            refStreamProcessingInfo.getMaps().containsKey(mapName));
                 }
 
                 entries = refDataStore.listProcessingInfo(limit, predicate);
@@ -300,7 +305,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         securityContext.secure(PermissionNames.MANAGE_CACHE_PERMISSION, () ->
                 taskContextFactory.context("Reference Data Purge", taskContext ->
                         LOGGER.logDurationIfDebugEnabled(
-                                () -> performPurge(purgeAge),
+                                () -> performPurge(purgeAge, taskContext),
                                 LogUtil.message("Performing Purge for entries older than {}", purgeAge)))
                         .run());
 
@@ -316,7 +321,12 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                         .run());
     }
 
-    private void performPurge(final StroomDuration purgeAge) {
+    @Override
+    public void clearBufferPool() {
+        byteBufferPool.clear();
+    }
+
+    private void performPurge(final StroomDuration purgeAge, final TaskContext taskContext) {
         refDataStore.purgeOldData(purgeAge);
     }
 
@@ -367,7 +377,10 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
             return stringWriter.toString();
         } catch (Exception e) {
-            LOGGER.error("Error looking up {}", refDataLookupRequest, e);
+            // Errors for unknown keys are to be expected
+            if (!(e instanceof NotFoundException)) {
+                LOGGER.error("Error looking up {}", refDataLookupRequest, e);
+            }
             throw e;
         }
     }
@@ -455,13 +468,16 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                        final Consumer<Val[]> consumer) {
 
         withPermissionCheck(() -> LOGGER.logDurationIfInfoEnabled(
-                () -> doSearch(criteria, fields, consumer),
+                () -> taskContextFactory.context("Querying reference data store", taskContext ->
+                        doSearch(criteria, fields, consumer, taskContext))
+                        .run(),
                 "Querying ref store"));
     }
 
     private void doSearch(final ExpressionCriteria criteria,
                           final AbstractField[] fields,
-                          final Consumer<Val[]> consumer) {
+                          final Consumer<Val[]> consumer,
+                          final TaskContext taskContext) {
         // TODO @AT This is a temporary very crude impl to see if it works.
         //  The search code ought to be pushed down to the offHeapStore so it can query the many DBs
         //  selectively and in a MUCH more efficient way, e.g. using start/stop keys on the kv store scan.
@@ -499,7 +515,18 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                     .skip(skipCount)
                     .limit(limit)
                     .forEach(refStoreEntry -> {
+                        if (taskContext.isTerminated()) {
+                            throw new RuntimeException("Aborting search due to task termination");
+                        }
+
                         final Val[] valArr = new Val[fields.length];
+
+                        // Useful for slowing down the search in dev to test termination
+//                        try {
+//                            Thread.sleep(50);
+//                        } catch (InterruptedException e) {
+//                            Thread.currentThread().interrupt();
+//                        }
 
                         for (int i = 0; i < fields.length; i++) {
                             AbstractField field = fields[i];

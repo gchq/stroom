@@ -798,9 +798,9 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         if (availableChildStreamTypes == null) {
             // Hide all links
-            hideTab(infoTab, true);
+            hideTab(infoTab, false);
             hideTab(errorTab, true);
-            hideTab(dataTab, true);
+            hideTab(dataTab, false);
             hideTab(metaTab, true);
             hideTab(contextTab, true);
         } else {

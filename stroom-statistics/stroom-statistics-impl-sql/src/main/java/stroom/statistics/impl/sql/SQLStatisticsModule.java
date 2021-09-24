@@ -62,7 +62,7 @@ public class SQLStatisticsModule extends AbstractFlyWayDbModule<SQLStatisticsCon
         // We need it to shutdown quite late so anything that is generating stats has had
         // a chance to finish generating
         LifecycleBinder.create(binder())
-                .bindShutdownTaskTo(SQLStatisticShutdown.class, 100_000);
+                .bindShutdownTaskTo(SQLStatisticShutdown.class, 1);
     }
 
     @Override

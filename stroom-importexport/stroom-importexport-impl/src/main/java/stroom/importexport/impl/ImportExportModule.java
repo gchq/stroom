@@ -35,7 +35,7 @@ public class ImportExportModule extends AbstractModule {
         //Startup with very low priority to ensure it starts after everything else
         //in particular
         LifecycleBinder.create(binder())
-                .bindStartupTaskTo(ContentPackImportStartup.class, -1_000);
+                .bindStartupTaskTo(ContentPackImportStartup.class, 6);
     }
 
     private static class ContentPackImportStartup extends RunnableWrapper {

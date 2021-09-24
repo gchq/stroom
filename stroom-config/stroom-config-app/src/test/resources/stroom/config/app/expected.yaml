@@ -15,6 +15,7 @@ appConfig:
         connectionTimeout: "PT30S"
         idleTimeout: "PT10M"
         maxLifetime: "PT30M"
+        leakDetectionThreshold: "PT0S"
         minimumIdle: 10
         maxPoolSize: 30
   alerting:
@@ -36,6 +37,7 @@ appConfig:
         connectionTimeout: "PT30S"
         idleTimeout: "PT10M"
         maxLifetime: "PT30M"
+        leakDetectionThreshold: "PT0S"
         minimumIdle: 10
         maxPoolSize: 30
     statusValues:
@@ -45,6 +47,7 @@ appConfig:
     standardComments: []
     createText: "Create Annotation"
   byteBufferPool:
+    warningThresholdPercentage: 90
     pooledByteBufferCounts:
       1: 50
       10: 50
@@ -72,6 +75,7 @@ appConfig:
         connectionTimeout: "PT30S"
         idleTimeout: "PT10M"
         maxLifetime: "PT30M"
+        leakDetectionThreshold: "PT0S"
         minimumIdle: 10
         maxPoolSize: 30
   commonDbDetails:
@@ -87,6 +91,7 @@ appConfig:
       connectionTimeout: "PT30S"
       idleTimeout: "PT10M"
       maxLifetime: "PT30M"
+      leakDetectionThreshold: "PT0S"
       minimumIdle: 10
       maxPoolSize: 30
   contentPackImport:
@@ -106,6 +111,7 @@ appConfig:
         connectionTimeout: "PT30S"
         idleTimeout: "PT10M"
         maxLifetime: "PT30M"
+        leakDetectionThreshold: "PT0S"
         minimumIdle: 10
         maxPoolSize: 30
   dashboard:
@@ -141,6 +147,7 @@ appConfig:
           connectionTimeout: "PT30S"
           idleTimeout: "PT10M"
           maxLifetime: "PT30M"
+          leakDetectionThreshold: "PT0S"
           minimumIdle: 10
           maxPoolSize: 30
       metaValue:
@@ -170,6 +177,7 @@ appConfig:
           connectionTimeout: "PT30S"
           idleTimeout: "PT10M"
           maxLifetime: "PT30M"
+          leakDetectionThreshold: "PT0S"
           minimumIdle: 10
           maxPoolSize: 30
     filesystemVolume:
@@ -206,6 +214,7 @@ appConfig:
         connectionTimeout: "PT30S"
         idleTimeout: "PT10M"
         maxLifetime: "PT30M"
+        leakDetectionThreshold: "PT0S"
         minimumIdle: 10
         maxPoolSize: 30
   elastic:
@@ -239,6 +248,7 @@ appConfig:
         connectionTimeout: "PT30S"
         idleTimeout: "PT10M"
         maxLifetime: "PT30M"
+        leakDetectionThreshold: "PT0S"
         minimumIdle: 10
         maxPoolSize: 30
     docRefInfoCache:
@@ -273,6 +283,7 @@ appConfig:
         connectionTimeout: "PT30S"
         idleTimeout: "PT10M"
         maxLifetime: "PT30M"
+        leakDetectionThreshold: "PT0S"
         minimumIdle: 10
         maxPoolSize: 30
     writer:
@@ -298,6 +309,7 @@ appConfig:
         connectionTimeout: "PT30S"
         idleTimeout: "PT10M"
         maxLifetime: "PT30M"
+        leakDetectionThreshold: "PT0S"
         minimumIdle: 10
         maxPoolSize: 30
     enableJobsOnBootstrap: false
@@ -350,6 +362,7 @@ appConfig:
         connectionTimeout: "PT30S"
         idleTimeout: "PT10M"
         maxLifetime: "PT30M"
+        leakDetectionThreshold: "PT0S"
         minimumIdle: 10
         maxPoolSize: 30
     status:
@@ -448,6 +461,7 @@ appConfig:
         connectionTimeout: "PT30S"
         idleTimeout: "PT10M"
         maxLifetime: "PT30M"
+        leakDetectionThreshold: "PT0S"
         minimumIdle: 10
         maxPoolSize: 30
   properties:
@@ -464,6 +478,7 @@ appConfig:
         connectionTimeout: "PT30S"
         idleTimeout: "PT10M"
         maxLifetime: "PT30M"
+        leakDetectionThreshold: "PT0S"
         minimumIdle: 10
         maxPoolSize: 30
   proxyAggregation:
@@ -579,6 +594,7 @@ appConfig:
           connectionTimeout: "PT30S"
           idleTimeout: "PT10M"
           maxLifetime: "PT30M"
+          leakDetectionThreshold: "PT0S"
           minimumIdle: 10
           maxPoolSize: 30
     webContent:
@@ -607,6 +623,7 @@ appConfig:
           connectionTimeout: "PT30S"
           idleTimeout: "PT10M"
           maxLifetime: "PT30M"
+          leakDetectionThreshold: "PT0S"
           minimumIdle: 10
           maxPoolSize: 30
       email:
@@ -705,6 +722,7 @@ appConfig:
           connectionTimeout: "PT30S"
           idleTimeout: "PT10M"
           maxLifetime: "PT30M"
+          leakDetectionThreshold: "PT0S"
           minimumIdle: 10
           maxPoolSize: 30
       search:
@@ -818,6 +836,7 @@ appConfig:
         connectionTimeout: "PT30S"
         idleTimeout: "PT10M"
         maxLifetime: "PT30M"
+        leakDetectionThreshold: "PT0S"
         minimumIdle: 10
         maxPoolSize: 30
   ui:

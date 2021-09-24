@@ -19,7 +19,9 @@ package stroom.security.client.presenter;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
+import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView;
@@ -32,6 +34,8 @@ import java.util.function.Consumer;
 
 public class SelectGroupPresenter extends AbstractDataUserListPresenter {
 
+    private Consumer<User> userConsumer;
+
     @Inject
     public SelectGroupPresenter(final EventBus eventBus,
                                 final UserListView userListView,
@@ -39,7 +43,20 @@ public class SelectGroupPresenter extends AbstractDataUserListPresenter {
         super(eventBus, userListView, restFactory);
     }
 
+    @Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(getSelectionModel().addSelectionHandler(event -> {
+            if (event.getSelectionType().isDoubleSelect() && getSelectionModel().getSelected() != null) {
+                if (findUserCriteria != null && findUserCriteria.getRelatedUser() == null) {
+                    hide(false, true);
+                }
+            }
+        }));
+    }
+
     public void show(final Consumer<User> groupConsumer) {
+        this.userConsumer = groupConsumer;
         final FindUserCriteria findUserCriteria = new FindUserCriteria();
 
         // If we are a group then get users and vice versa.
@@ -60,20 +77,10 @@ public class SelectGroupPresenter extends AbstractDataUserListPresenter {
                         .resizable(true)
                         .build())
                 .build();
-        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
             @Override
             public void onHideRequest(boolean autoClose, boolean ok) {
-                hide();
-            }
-
-            @Override
-            public void onHide(boolean autoClose, boolean ok) {
-                if (ok) {
-                    final User selected = getSelectionModel().getSelected();
-                    if (selected != null) {
-                        groupConsumer.accept(selected);
-                    }
-                }
+                hide(autoClose, ok);
             }
         };
         ShowPopupEvent.fire(this,
@@ -82,5 +89,20 @@ public class SelectGroupPresenter extends AbstractDataUserListPresenter {
                 popupSize,
                 "Choose Group To Add",
                 popupUiHandlers);
+    }
+
+    private void hide(boolean autoClose, boolean ok) {
+        if (ok && userConsumer != null) {
+            final User selected = getSelectionModel().getSelected();
+            if (selected != null) {
+                userConsumer.accept(selected);
+            }
+        }
+
+        HidePopupEvent.fire(
+                this,
+                this,
+                autoClose,
+                ok);
     }
 }

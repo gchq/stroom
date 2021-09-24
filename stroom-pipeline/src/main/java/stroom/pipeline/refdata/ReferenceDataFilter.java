@@ -675,6 +675,8 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         LOGGER.info("Processed {} XML ref data entries for ref stream {}",
                 valueCount,
                 refStreamDefinition);
+
+        // It is critical that this happens else the buffer it uses will not be released back to the pool
         pooledByteBufferOutputStream.release();
         super.endProcessing();
     }

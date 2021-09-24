@@ -35,8 +35,8 @@ public class StreamTargetStreamHandlers implements StreamHandlers {
                        final Consumer<StreamHandler> consumer) {
         StreamTargetStreamHandler streamHandler = null;
         try {
-            if (feedName.isEmpty()) {
-                throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED);
+            if (feedName == null || feedName.isEmpty()) {
+                throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED, attributeMap);
             }
 
             String type = typeName;
@@ -47,7 +47,7 @@ public class StreamTargetStreamHandlers implements StreamHandlers {
 
             // Validate the data type name.
             if (!metaService.getTypes().contains(type)) {
-                throw new StroomStreamException(StroomStatusCode.UNEXPECTED_DATA_TYPE);
+                throw new StroomStreamException(StroomStatusCode.UNEXPECTED_DATA_TYPE, attributeMap);
             }
 
             streamHandler = new StreamTargetStreamHandler(

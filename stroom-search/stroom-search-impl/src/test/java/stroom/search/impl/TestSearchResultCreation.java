@@ -1,7 +1,5 @@
 package stroom.search.impl;
 
-import stroom.bytebuffer.ByteBufferPoolConfig;
-import stroom.bytebuffer.ByteBufferPoolImpl4;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
@@ -82,7 +80,6 @@ class TestSearchResultCreation {
                 new LmdbEnvironmentFactory(lmdbConfig, pathCreator);
         dataStoreFactory = new LmdbDataStoreFactory(
                 lmdbEnvironmentFactory,
-                new ByteBufferPoolImpl4(new ByteBufferPoolConfig()),
                 lmdbConfig);
     }
 

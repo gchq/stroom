@@ -201,6 +201,7 @@ class ReferenceDataLoadTaskHandler {
 
                 final StreamLocationFactory streamLocationFactory = new StreamLocationFactory();
                 locationFactory.setLocationFactory(streamLocationFactory);
+
                 // Loop over the stream boundaries and process each sequentially.
                 // Typically ref data will only have a single partIndex so if there are
                 // multiple then overrideExisting may be needed.

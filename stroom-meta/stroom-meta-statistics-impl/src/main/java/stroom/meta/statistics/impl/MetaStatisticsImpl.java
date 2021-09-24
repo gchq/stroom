@@ -17,6 +17,7 @@
 package stroom.meta.statistics.impl;
 
 import stroom.meta.statistics.api.MetaStatistics;
+import stroom.security.api.SecurityContext;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.util.date.DateUtil;
@@ -38,31 +39,36 @@ class MetaStatisticsImpl implements MetaStatistics {
     private static final Logger LOGGER = LoggerFactory.getLogger(MetaStatisticsImpl.class);
 
     private final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider;
+    private final SecurityContext securityContext;
 
     private List<MetaStatisticsTemplate> templates;
 
     @Inject
-    MetaStatisticsImpl(final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider) {
+    MetaStatisticsImpl(final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider,
+                       final SecurityContext securityContext) {
         this.internalStatisticsReceiverProvider = internalStatisticsReceiverProvider;
+        this.securityContext = securityContext;
     }
 
     @Override
     public void recordStatistics(final Map<String, String> metaData) {
-        final InternalStatisticsReceiver receiver = internalStatisticsReceiverProvider.get();
-        if (receiver != null) {
-            for (final MetaStatisticsTemplate template : templates) {
-                try {
-                    final InternalStatisticEvent statisticEvent = buildStatisticEvent(template, metaData);
-                    if (statisticEvent != null) {
-                        receiver.putEvent(statisticEvent);
-                    } else {
-                        LOGGER.trace("recordStatistics() - abort {} {}", metaData, template);
+        securityContext.asProcessingUser(() -> {
+            final InternalStatisticsReceiver receiver = internalStatisticsReceiverProvider.get();
+            if (receiver != null) {
+                for (final MetaStatisticsTemplate template : templates) {
+                    try {
+                        final InternalStatisticEvent statisticEvent = buildStatisticEvent(template, metaData);
+                        if (statisticEvent != null) {
+                            receiver.putEvent(statisticEvent);
+                        } else {
+                            LOGGER.trace("recordStatistics() - abort {} {}", metaData, template);
+                        }
+                    } catch (final RuntimeException e) {
+                        LOGGER.error("recordStatistics() - abort {} {}", metaData, template, e);
                     }
-                } catch (final RuntimeException e) {
-                    LOGGER.error("recordStatistics() - abort {} {}", metaData, template, e);
                 }
             }
-        }
+        });
     }
 
     /**
@@ -75,7 +81,7 @@ class MetaStatisticsImpl implements MetaStatistics {
         Preconditions.checkNotNull(template.getKey());
         Preconditions.checkNotNull(metaData);
 
-        Long timeMs = null;
+        final long timeMs;
         final String timeValue = metaData.get(template.getTimeMsAttribute());
         if (timeValue != null && !timeValue.isEmpty()) {
             try {

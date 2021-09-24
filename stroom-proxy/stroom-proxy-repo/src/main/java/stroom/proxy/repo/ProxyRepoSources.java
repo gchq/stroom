@@ -1,5 +1,6 @@
 package stroom.proxy.repo;
 
+import stroom.meta.api.AttributeMap;
 import stroom.proxy.StroomStatusCode;
 import stroom.proxy.repo.dao.SourceDao;
 import stroom.proxy.repo.dao.SourceDao.Source;
@@ -30,11 +31,12 @@ public class ProxyRepoSources implements Clearable {
     }
 
     public Source addSource(final String path,
-                          final String feedName,
-                          final String typeName,
-                          final long lastModifiedTimeMs) {
+                            final String feedName,
+                            final String typeName,
+                            final long lastModifiedTimeMs,
+                            final AttributeMap attributeMap) {
         if (feedName.isEmpty()) {
-            throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED);
+            throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED, attributeMap);
         }
 
         final Source source = sourceDao.addSource(

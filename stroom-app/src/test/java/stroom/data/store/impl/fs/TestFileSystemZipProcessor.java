@@ -59,7 +59,7 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
     @Inject
     private Store streamStore;
     @Inject
-    private FsDataStoreMaintenanceService streamMaintenanceService;
+    private FsFileFinder fileFinder;
     @Inject
     private StreamTargetStreamHandlers streamTargetStreamHandlers;
 
@@ -206,7 +206,7 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
             expectedBoundaries.add(map);
 
             doTest(file, 1, new HashSet<>(Arrays.asList("revt.bgz", "revt.bdy.dat", "revt.ctx.bgz",
-                    "revt.ctx.bdy.dat", "revt.meta.bgz", "revt.meta.bdy.dat", "revt.mf.dat")), expectedContent,
+                            "revt.ctx.bdy.dat", "revt.meta.bgz", "revt.meta.bdy.dat", "revt.mf.dat")), expectedContent,
                     expectedBoundaries);
         } finally {
             Files.delete(file);
@@ -276,7 +276,7 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
         });
 
         final StreamTargetStreamHandler streamTargetStreamHandler = handlerRef.get();
-        final List<Path> files = streamMaintenanceService
+        final List<Path> files = fileFinder
                 .findAllStreamFile(streamTargetStreamHandler.getStreamSet().iterator().next());
 
         final HashSet<String> foundFiles = new HashSet<>();

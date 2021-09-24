@@ -16,6 +16,8 @@
 
 package stroom.cluster.lock.api;
 
+import java.util.function.Supplier;
+
 /**
  * tryLock and release lock utilises the cluster but the master node must be up
  * to work
@@ -28,11 +30,17 @@ public interface ClusterLockService {
      * Will attempt to get the database backed lock for lockName. If it gets the lock then will run
      * runnable under that lock. If not it will return without running runnable.
      */
-    void tryLock(String lockName, Runnable runnable);
+    void tryLock(final String lockName, final Runnable runnable);
 
     /**
      * Will block until the database backed lock for lockName is obtained, then will run
      * runnable under that lock
      */
-    void lock(String lockName, Runnable runnable);
+    void lock(final String lockName, final Runnable runnable);
+
+    /**
+     * Will block until the database backed lock for lockName is obtained, then will run
+     * supplier under that lock, returning supplier's return value
+     */
+    <T> T lockResult(final String lockName, final Supplier<T> supplier);
 }

@@ -101,7 +101,10 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
 //                buf -> valueSerde.deserialize(buf).toString());
 
             final AtomicInteger cnt = new AtomicInteger();
-            try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(txn, keyRange)) {
+            // TODO @AT Once a version of LMDBJava >0.8.1 is released then remove the comparator
+            //  see https://github.com/lmdbjava/lmdbjava/issues/169
+            try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(
+                    txn, keyRange)) {
                 // loop backwards over all rows with the same mapDefinitionUid, starting at key
                 for (final CursorIterable.KeyVal<ByteBuffer> keyVal : cursorIterable) {
                     cnt.incrementAndGet();
@@ -244,25 +247,53 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
         }
     }
 
-//    private KeyRange<ByteBuffer> buildSingleMapUidKeyRange(final UID mapUid,
-//                                                           final ByteBuffer startKeyIncBuffer,
-//                                                           final ByteBuffer endKeyExcBuffer) {
-//        Range<Long> dummyRange = Range.of(0L, 1L);
-//        final RangeStoreKey startKeyInc = new RangeStoreKey(mapUid, dummyRange);
-//
-//        keySerde.serializeWithoutRangePart(startKeyIncBuffer, startKeyInc);
-//
-//        UID nextMapUid = mapUid.nextUid();
-//        final RangeStoreKey endKeyExc = new RangeStoreKey(nextMapUid, dummyRange);
-//
-//        LOGGER.trace(() -> LogUtil.message("Using range {} (inc) {} (exc)",
-//                ByteBufferUtils.byteBufferInfo(startKeyIncBuffer),
-//                ByteBufferUtils.byteBufferInfo(endKeyExcBuffer)));
-//
-//        keySerde.serializeWithoutRangePart(endKeyExcBuffer, endKeyExc);
-//
-//        return KeyRange.closedOpen(startKeyIncBuffer, endKeyExcBuffer);
-//    }
+    public long getEntryCount(final UID mapUid, final Txn<ByteBuffer> readTxn) {
+        long cnt = 0;
+        try (final PooledByteBuffer startKeyBuffer = getPooledKeyBuffer();
+                final PooledByteBuffer endKeyBuffer = getPooledKeyBuffer()) {
+
+            final KeyRange<ByteBuffer> keyRange = buildSingleMapUidKeyRange(
+                    mapUid,
+                    startKeyBuffer.getByteBuffer(),
+                    endKeyBuffer.getByteBuffer());
+
+            // TODO @AT Once a version of LMDBJava >0.8.1 is released then remove the comparator
+            //  see https://github.com/lmdbjava/lmdbjava/issues/169
+            try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(
+                    readTxn, keyRange)) {
+
+                for (final KeyVal<ByteBuffer> ignored : cursorIterable) {
+                    cnt++;
+                }
+            }
+        }
+        return cnt;
+    }
+
+    private KeyRange<ByteBuffer> buildSingleMapUidKeyRange(final UID mapUid,
+                                                           final ByteBuffer startKeyIncBuffer,
+                                                           final ByteBuffer endKeyExcBuffer) {
+        final Range<Long> ignoredRange = Range.of(0L, 1L);
+        final RangeStoreKey startKeyInc = new RangeStoreKey(mapUid, ignoredRange);
+
+        // serialise the startKeyInc to both start and end buffers, then
+        // we will mutate the uid of the end buffer
+        keySerde.serializeWithoutRangePart(startKeyIncBuffer, startKeyInc);
+        keySerde.serializeWithoutRangePart(endKeyExcBuffer, startKeyInc);
+
+        // Increment the UID part of the end key buffer to give us an exclusive key
+        UID.incrementUid(endKeyExcBuffer);
+
+//        final KeyValueStoreKey endKeyExc = new KeyValueStoreKey(nextMapUid, "");
+
+        LOGGER.trace(() -> LogUtil.message("Using range {} (inc) {} (exc)",
+                ByteBufferUtils.byteBufferInfo(startKeyIncBuffer),
+                ByteBufferUtils.byteBufferInfo(endKeyExcBuffer)));
+
+//        keySerde.serializeWithoutKeyPart(endKeyExcBuffer, endKeyExc);
+
+        return KeyRange.closedOpen(startKeyIncBuffer, endKeyExcBuffer);
+    }
 
     public interface Factory {
 

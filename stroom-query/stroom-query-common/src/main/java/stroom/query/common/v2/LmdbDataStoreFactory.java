@@ -1,6 +1,5 @@
 package stroom.query.common.v2;
 
-import stroom.bytebuffer.ByteBufferPool;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.query.api.v2.TableSettings;
 
@@ -10,18 +9,16 @@ import javax.inject.Inject;
 public class LmdbDataStoreFactory implements DataStoreFactory {
 
     private final LmdbEnvironmentFactory lmdbEnvironmentFactory;
-    private final ByteBufferPool byteBufferPool;
     private final LmdbConfig lmdbConfig;
 
     @Inject
     public LmdbDataStoreFactory(final LmdbEnvironmentFactory lmdbEnvironmentFactory,
-                                final ByteBufferPool byteBufferPool,
                                 final LmdbConfig lmdbConfig) {
         this.lmdbEnvironmentFactory = lmdbEnvironmentFactory;
-        this.byteBufferPool = byteBufferPool;
         this.lmdbConfig = lmdbConfig;
     }
 
+    @Override
     public DataStore create(final String queryKey,
                             final String componentId,
                             final TableSettings tableSettings,
@@ -41,7 +38,6 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
         final LmdbDataStore dataStore = new LmdbDataStore(
                 lmdbEnvironmentFactory,
                 lmdbConfig,
-                byteBufferPool,
                 queryKey,
                 componentId,
                 tableSettings,
@@ -49,6 +45,7 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                 paramMap,
                 maxResults,
                 storeSize);
+
         return dataStore;
     }
 }

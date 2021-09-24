@@ -5,7 +5,7 @@ import com.google.inject.multibindings.MapBinder;
 
 public class LifecycleBinder {
 
-    private static final int DEFAULT_PRIORITY = 0;
+    private static final int DEFAULT_PRIORITY = 5;
 
     private final MapBinder<StartupTask, Runnable> startupTaskMapBinder;
     private final MapBinder<ShutdownTask, Runnable> shutdownTaskMapBinder;

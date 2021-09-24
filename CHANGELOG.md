@@ -7,6 +7,52 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Uplift LMDBJava to 0.8.2 to fix LMDBJava cursor comparator bug.
+
+* Issue **#2464** : Add `leakDetectionThreshold` to the hikari pool config.
+
+* Issue **#2463** : Integrate the hikari connection pool with drop wizard's health checks and metrics.
+
+* Add debug logging to AuthenticationStateSessionUtil
+
+* Issue **#2448** : Change data receipt ERROR log messages to WARN. Also improve log message content for success and failure.
+
+* Issue **#2412** : You are now able to view locked streams or deleted data if it is still accessible.
+
+* Issue **#2413** : Removed duplication of data retention fields in info pane.
+
+* Issue **#2443** : Internal meta statistics are now added with processing user permissions.
+
+* Issue **#2455** : Improved error handling when streams not found.
+
+* Issue **#2399** : Now changing expression fields keeps the same condition if it is still applicable to the new field.
+
+* Issue **#2426** : Fixed user selection problem for document permissions.
+
+* Issue **#2436** : Fixed small UI issue whereby a user or group was not immediately removed from document permissions when the remove button was clicked.
+
+* Issue **#2416** : Added logging to identify cause of slow meta listing.
+
+* Improve termination handling in reference data purge.
+
+* Improve the data in the `/api/refData/v1/refStreamInfo` api method.
+
+* Add API method to clear the byte buffer pool.
+
+* Improve the output of the system info api call for the byte buffer pool.
+
+* Issue **#2439** : Change log level for an error in the byte buffer pool.
+
+* Issue **#2444** : Fix release of buffers to the pool that was causing ref data searches to hang.
+
+* Issue **#2433, #2434** : Fixed shutdown task order.
+
+* Issue **#2430** : Removed file system clean task and replaced with orphan finding jobs for files and meta.
+
+* Issue **#2432** : Volume state is now updated without optimistic locking.
+
+* Issue **#2382** : Improved charset resolution.
+
 * Issue **#2447** : Correctly offset displayed date/time values by the configured user timezone.
 
 * Issue **#2457** : Display a tooltip when hovering the mouse over a grid column cell.
