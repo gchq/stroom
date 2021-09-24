@@ -22,7 +22,6 @@ import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
 import stroom.lmdb.AbstractLmdbDb;
 import stroom.lmdb.LmdbEnv;
-import stroom.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.store.offheapstore.KeyValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
@@ -137,7 +136,7 @@ public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStore
             // TODO @AT Once a version of LMDBJava >0.8.1 is released then remove the comparator
             //  see https://github.com/lmdbjava/lmdbjava/issues/169
             try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(
-                    readTxn, keyRange, LmdbUtils::compareBuff)) {
+                    readTxn, keyRange)) {
 
                 for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
 //                    LAMBDA_LOGGER.trace(() -> LogUtil.message(
