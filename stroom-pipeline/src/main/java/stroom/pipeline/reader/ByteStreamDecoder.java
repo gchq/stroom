@@ -5,6 +5,7 @@ import stroom.bytebuffer.ByteBufferUtils;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.string.HexDumpUtil;
 
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -191,16 +192,23 @@ public class ByteStreamDecoder {
         private final byte[] malformedBytes;
         private final Charset charset;
 
-        public DecoderException(final Charset charset, final byte[] malformedBytes) {
-            super("Unable to decode a "
-                    + charset.displayName()
-                    + " character from the following"
-                    + " bytes ["
-                    + ByteArrayUtils.byteArrayToHex(malformedBytes)
-                    + "]");
+        public DecoderException(final Charset charset,
+                                final byte[] malformedBytes) {
+            super(buildErrorMessage(charset, malformedBytes));
 
             this.malformedBytes = malformedBytes;
             this.charset = charset;
+        }
+
+        private static String buildErrorMessage(final Charset charset,
+                                                final byte[] malformedBytes) {
+            final String printableStr = HexDumpUtil.decodeAsPrintableChars(malformedBytes, charset);
+            return "Unable to decode a "
+                    + charset.displayName()
+                    + " character starting at bytes ["
+                    + ByteArrayUtils.byteArrayToHex(malformedBytes)
+                    + "] [" + printableStr
+                    + "]";
         }
 
         public byte[] getMalformedBytes() {

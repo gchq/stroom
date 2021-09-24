@@ -89,6 +89,7 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     private final Option snippetsOption;
     private final Option liveAutoCompletionOption;
     private final Option highlightActiveLineOption;
+    private final Option viewAsHexOption;
 
     @UiField(provided = true)
     DockLayoutPanel layout;
@@ -107,6 +108,8 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     private AceEditorMode mode = AceEditorMode.XML;
     private int firstLineNumber = 1;
     private Function<String, List<TextRange>> formattedHighlightsFunc;
+
+    private boolean isViewAsHex = false;
 
     @Inject
     public EditorViewImpl() {
@@ -167,6 +170,7 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
                 "Snippets", true, true, (on) -> editor.setUseSnippets(on));
         highlightActiveLineOption = new Option(
                 "Highlight Active Line", true, true, (on) -> editor.setHighlightActiveLine(on));
+        viewAsHexOption = new Option("View as Hex", false, false, (on) -> isViewAsHex = on);
 
         editor.getElement().setClassName("editor");
         editor.addDomHandler(event -> handleMouseDown(event), MouseDownEvent.getType());
@@ -484,6 +488,11 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     @Override
     public Option getHighlightActiveLineOption() {
         return highlightActiveLineOption;
+    }
+
+    @Override
+    public Option getViewAsHexOption() {
+        return viewAsHexOption;
     }
 
     @Override

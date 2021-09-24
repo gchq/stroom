@@ -198,6 +198,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         textPresenter.setUiHandlers(this);
         textPresenter.setWrapLines(true);
+        textPresenter.getViewAsHexOption().setChangeHandler((isOn) ->
+                update(false));
 
         addTab(infoTab);
         addTab(errorTab);
@@ -286,19 +288,23 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                     itemNavigatorPresenter.refreshNavigator();
                     refreshProgressBar(false);
                     refreshTextPresenterContent();
+                    textPresenter.getViewAsHexOption().setUnavailable();
                 } else {
                     getView().setSourceLinkVisible(true);
                     if (META_TAB_NAME.equals(tab.getLabel())) {
                         editorMode = AceEditorMode.PROPERTIES;
                         fetchDataForCurrentStreamNo(StreamTypeNames.META);
                         refreshProgressBar(false);
+                        textPresenter.getViewAsHexOption().setUnavailable();
                     } else if (CONTEXT_TAB_NAME.equals(tab.getLabel())) {
                         editorMode = AceEditorMode.XML;
                         fetchDataForCurrentStreamNo(StreamTypeNames.CONTEXT);
+                        textPresenter.getViewAsHexOption().setAvailable();
                     } else if (ERROR_TAB_NAME.equals(tab.getLabel())) {
                         errorMarkerMode = true;
                         editorMode = AceEditorMode.TEXT;
                         fetchDataForCurrentStreamNo(null);
+                        textPresenter.getViewAsHexOption().setUnavailable();
                     } else {
                         // Turn off error marker mode if we are currently looking at
                         // an error and switching to the data tab.
@@ -310,9 +316,13 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                             // Any old data so treat as XML
                             editorMode = AceEditorMode.XML;
                         }
+                        textPresenter.getViewAsHexOption().setAvailable();
 
                         fetchDataForCurrentStreamNo(null);
                     }
+                }
+                if (textPresenter.getViewAsHexOption().isOnAndAvailable()) {
+                    editorMode = AceEditorMode.TEXT;
                 }
                 lastTabName = tab.getLabel();
             }
@@ -590,8 +600,16 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             }
 
             final FetchDataRequest request = new FetchDataRequest(builder.build());
-            request.setMarkerMode(StreamTypeNames.ERROR.equals(currentStreamType)
-                    && isInErrorMarkerMode());
+            if (StreamTypeNames.ERROR.equals(currentStreamType)
+                    && isInErrorMarkerMode()) {
+                request.setDisplayMode(FetchDataRequest.DisplayMode.MARKER);
+            } else {
+                if (textPresenter.getViewAsHexOption().isOnAndAvailable()) {
+                    request.setDisplayMode(FetchDataRequest.DisplayMode.HEX);
+                } else {
+                    request.setDisplayMode(FetchDataRequest.DisplayMode.TEXT);
+                }
+            }
             request.setExpandedSeverities(expandedSeverities);
             request.setFireEvents(fireEvents);
             doFetch(request, fireEvents);

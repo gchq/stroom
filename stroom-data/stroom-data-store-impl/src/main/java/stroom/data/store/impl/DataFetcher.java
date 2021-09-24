@@ -1,3 +1,4 @@
+
 /*
  *
  *  * Copyright 2018 Crown Copyright
@@ -40,6 +41,7 @@ import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.reader.ByteStreamDecoder.DecodedChar;
 import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataRequest;
+import stroom.pipeline.shared.FetchDataRequest.DisplayMode;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.FetchMarkerResult;
 import stroom.pipeline.shared.PipelineDoc;
@@ -72,6 +74,7 @@ import stroom.util.shared.Marker;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.Severity;
 import stroom.util.shared.TextRange;
+import stroom.util.string.HexDumpUtil;
 
 import com.google.common.base.Strings;
 import org.apache.commons.codec.binary.Hex;
@@ -91,7 +94,6 @@ import java.nio.channels.ClosedByInterruptException;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CodingErrorAction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -281,7 +283,9 @@ public class DataFetcher {
 
                             // If this is an error stream and the UI is requesting markers then
                             // create a list of markers.
-                            if (StreamTypeNames.ERROR.equals(streamTypeName) && fetchDataRequest.isMarkerMode()) {
+                            if (StreamTypeNames.ERROR.equals(streamTypeName)
+                                    && DisplayMode.MARKER.equals(fetchDataRequest.getDisplayMode())) {
+
                                 return createErrorMarkerResult(
                                         feedName,
                                         streamTypeName,
@@ -289,20 +293,23 @@ public class DataFetcher {
                                         fetchDataRequest.getSourceLocation(),
                                         availableChildStreamTypes,
                                         fetchDataRequest.getExpandedSeverities());
+                            } else if (DisplayMode.MARKER.equals(fetchDataRequest.getDisplayMode())) {
+                                throw new RuntimeException(LogUtil.message(
+                                        "Invalid display mode {} for stream type {}",
+                                        fetchDataRequest.getDisplayMode(), streamTypeName));
+                            } else {
+                                return createDataResult(
+                                        feedName,
+                                        streamTypeName,
+                                        segmentInputStream,
+                                        availableChildStreamTypes,
+                                        source,
+                                        inputStreamProvider,
+                                        fetchDataRequest,
+                                        taskContext);
                             }
-
-                            return createDataResult(
-                                    feedName,
-                                    streamTypeName,
-                                    segmentInputStream,
-                                    availableChildStreamTypes,
-                                    source,
-                                    inputStreamProvider,
-                                    fetchDataRequest,
-                                    taskContext);
                         }
                     }
-
                 } catch (final IOException | RuntimeException e) {
                     String message = null;
 
@@ -436,10 +443,18 @@ public class DataFetcher {
         final RawResult rawResult;
 
         if (DataType.SEGMENTED.equals(dataType)) {
-            rawResult = getSegmentedData(sourceLocation, segmentInputStream, encoding);
+            rawResult = getSegmentedData(
+                    sourceLocation,
+                    segmentInputStream,
+                    encoding,
+                    fetchDataRequest.getDisplayMode());
         } else {
             // Non-segmented data
-            rawResult = getNonSegmentedData(sourceLocation, segmentInputStream, encoding);
+            rawResult = getNonSegmentedData(
+                    sourceLocation,
+                    segmentInputStream,
+                    encoding,
+                    fetchDataRequest.getDisplayMode());
         }
 
         // We are viewing the data with the BOM removed, so remove the size of the BOM from the
@@ -538,7 +553,8 @@ public class DataFetcher {
 
     private RawResult getSegmentedData(final SourceLocation sourceLocation,
                                        final SegmentInputStream segmentInputStream,
-                                       final String encoding) throws IOException {
+                                       final String encoding,
+                                       final DisplayMode displayMode) throws IOException {
 //        // Get the appropriate encoding for the stream type.
 //        final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
 
@@ -568,11 +584,18 @@ public class DataFetcher {
 
         // Get the data from the stream.
 //        return StreamUtil.streamToString(segmentInputStream, Charset.forName(encoding));
-        final RawResult rawResult = extractDataRange(
-                sourceLocation,
-                segmentInputStream,
-                encoding,
-                segmentInputStream.size());
+        final RawResult rawResult = switch (displayMode) {
+            case TEXT -> extractDataRange(
+                    sourceLocation,
+                    segmentInputStream,
+                    encoding,
+                    segmentInputStream.size());
+            case HEX -> extractDataRangeAsHex(
+                    sourceLocation,
+                    segmentInputStream,
+                    encoding);
+            default -> throw new IllegalArgumentException("Unexpected display mode " + displayMode);
+        };
 
         // Override the page items range/total as we are dealing in segments/records
         rawResult.setItemRange(new OffsetRange(recordIndex, 1L));
@@ -582,15 +605,22 @@ public class DataFetcher {
 
     private RawResult getNonSegmentedData(final SourceLocation sourceLocation,
                                           final SegmentInputStream segmentInputStream,
-                                          final String encoding) throws IOException {
+                                          final String encoding,
+                                          final DisplayMode displayMode) throws IOException {
 
 
-        RawResult rawResult;
-        rawResult = extractDataRangeAsHex(
-                sourceLocation,
-                segmentInputStream,
-                encoding,
-                segmentInputStream.size());
+        final RawResult rawResult = switch (displayMode) {
+            case TEXT -> extractDataRange(
+                    sourceLocation,
+                    segmentInputStream,
+                    encoding,
+                    segmentInputStream.size());
+            case HEX -> extractDataRangeAsHex(
+                    sourceLocation,
+                    segmentInputStream,
+                    encoding);
+            default -> throw new IllegalArgumentException("Unexpected display mode " + displayMode);
+        };
 
         // Non-segmented data exists within parts so set the item info
         rawResult.setItemRange(new OffsetRange(sourceLocation.getPartIndex(), 1L));
@@ -600,42 +630,14 @@ public class DataFetcher {
 
     private RawResult extractDataRangeAsHex(final SourceLocation sourceLocation,
                                             final InputStream inputStream,
-                                            final String encoding,
-                                            final long streamSizeBytes) throws IOException {
+                                            final String encoding) throws IOException {
 
-        final int maxBytesPerLine = 32;
-        final int maxLines = 100;
-        final CharsetDecoder charsetDecoder = Charset.forName(encoding).newDecoder()
-                .onMalformedInput(CodingErrorAction.REPLACE)
-                .onUnmappableCharacter(CodingErrorAction.REPLACE)
-                .replaceWith("�");
-        final StringBuilder stringBuilder = new StringBuilder();
-        final byte[] lineBytes = new byte[maxBytesPerLine];
-        int lineOffset = 0; // zero based for simpler maths
-        while (lineOffset < maxLines) {
-            if (lineOffset != 0) {
-                stringBuilder.append("\n");
-            }
-            int remaining = maxBytesPerLine;
-            int len = 0;
-            int lineByteCount = 0;
-            // Keep reading till we have a full line of our hex
-            while (remaining > 0 && len >= 0) {
-                len = inputStream.read(lineBytes, maxBytesPerLine - remaining, remaining);
-                if (len > 0) {
-                    lineByteCount += len;
-                    remaining -= len;
-                }
-            }
-            if (len == -1) {
-                break;
-            }
+        final String hexDump = HexDumpUtil.hexDump(
+                inputStream,
+                Charset.forName(encoding),
+                500);
 
-            bytesToString(stringBuilder, lineOffset, lineBytes, lineByteCount, maxBytesPerLine, charsetDecoder);
-            lineOffset++;
-        }
-
-        return new RawResult(sourceLocation, stringBuilder.toString(), 0);
+        return new RawResult(sourceLocation, hexDump, 0);
     }
 
     private void bytesToString(final StringBuilder stringBuilder,
@@ -665,14 +667,10 @@ public class DataFetcher {
                 try {
                     CharBuffer charBuffer = charsetDecoder.decode(byteBuffer);
                     chr = charBuffer.charAt(0);
-//                    if (!Character.isLetterOrDigit(chr)) {
-//                        // Some control chars will mess up the editor
-//                        chr = '�';
-//                    }
                 } catch (CharacterCodingException e) {
                     chr = '�';
                 }
-                appendChar(chr, decodedStringBuilder, hex);
+                appendPrintableChar(chr, decodedStringBuilder, hex);
 
             } else {
                 hexStringBuilder
@@ -690,7 +688,9 @@ public class DataFetcher {
                 .append(decodedStringBuilder);
     }
 
-    private void appendChar(final char chr, final StringBuilder stringBuilder, final String hex) {
+    private void appendPrintableChar(final char chr,
+                                     final StringBuilder stringBuilder,
+                                     final String hex) {
 
         final char charToAppend;
         if ((int) chr < 32) {

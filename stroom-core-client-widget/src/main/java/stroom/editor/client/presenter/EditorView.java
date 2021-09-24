@@ -41,6 +41,7 @@ public interface EditorView extends View, HasKeyDownHandlers, HasFormatHandlers,
 
     void focus();
 
+    @Override
     void setText(final String text);
 
     void setText(final String text, final boolean format);
@@ -93,6 +94,8 @@ public interface EditorView extends View, HasKeyDownHandlers, HasFormatHandlers,
     Option getLiveAutoCompletionOption();
 
     Option getHighlightActiveLineOption();
+
+    Option getViewAsHexOption();
 
     void showFilterButton(boolean show);
 

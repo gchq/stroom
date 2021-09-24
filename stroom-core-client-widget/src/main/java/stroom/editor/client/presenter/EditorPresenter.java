@@ -162,6 +162,10 @@ public class EditorPresenter
         return getView().getHighlightActiveLineOption();
     }
 
+    public Option getViewAsHexOption() {
+        return getView().getViewAsHexOption();
+    }
+
     public void setFirstLineNumber(final int firstLineNumber) {
         getView().setFirstLineNumber(firstLineNumber);
     }

@@ -111,6 +111,10 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> {
         return editorPresenter.getHighlightActiveLineOption();
     }
 
+    public Option getViewAsHexOption() {
+        return editorPresenter.getViewAsHexOption();
+    }
+
     public Option getUseVimBindingsOption() {
         return editorPresenter.getUseVimBindingsOption();
     }
