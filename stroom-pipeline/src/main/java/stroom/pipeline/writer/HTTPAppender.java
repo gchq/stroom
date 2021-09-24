@@ -14,6 +14,7 @@ import stroom.pipeline.state.MetaDataHolder;
 import stroom.util.cert.SSLConfig;
 import stroom.util.cert.SSLUtil;
 import stroom.util.io.ByteCountOutputStream;
+import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
@@ -55,6 +56,7 @@ public class HTTPAppender extends AbstractAppender {
     private static final Logger SEND_LOG = LoggerFactory.getLogger("send");
 
     private final MetaDataHolder metaDataHolder;
+    private final PathCreator pathCreator;
 
     private String forwardUrl;
     private Long connectionTimeout;
@@ -75,11 +77,19 @@ public class HTTPAppender extends AbstractAppender {
     private String requestMethod = "POST";
     private String contentType = "application/json";
 
+    private boolean httpHeadersIncludeStreamMetaData = true;
+    private String httpHeadersUserDefinedHeader1;
+    private String httpHeadersUserDefinedHeader2;
+    private String httpHeadersUserDefinedHeader3;
+
+
     @Inject
     HTTPAppender(final ErrorReceiverProxy errorReceiverProxy,
-                 final MetaDataHolder metaDataHolder) {
+                 final MetaDataHolder metaDataHolder,
+                 final PathCreator pathCreator) {
         super(errorReceiverProxy);
         this.metaDataHolder = metaDataHolder;
+        this.pathCreator = pathCreator;
     }
 
     @Override
@@ -94,15 +104,42 @@ public class HTTPAppender extends AbstractAppender {
         super.returnDestination(destination);
     }
 
+    private void addAttributeIfHeaderDefined(final AttributeMap attributeMap, final String headerText) {
+        if (headerText == null || headerText.length() < 3) {
+            return;
+        }
+        if (!headerText.contains(":")) {
+            throw new IllegalArgumentException("Additional Headers must be specified as 'Name: Value', but '"
+                    + headerText + "' supplied.");
+        }
+
+        int delimiterPos = headerText.indexOf(':');
+        attributeMap.put(headerText.substring(0, delimiterPos), headerText.substring(delimiterPos + 1));
+    }
+
     @Override
     protected OutputStream createOutputStream() throws IOException {
         try {
             OutputStream outputStream;
-            final AttributeMap attributeMap = metaDataHolder.getMetaData();
 
-            LOGGER.info(() -> "createOutputStream() - " + forwardUrl + " Sending request " + attributeMap);
-            startTimeMs = System.currentTimeMillis();
-            attributeMap.computeIfAbsent(StandardHeaderArguments.GUID, k -> UUID.randomUUID().toString());
+            final AttributeMap sendHeader;
+            if (httpHeadersIncludeStreamMetaData) {
+                final AttributeMap attributeMap = metaDataHolder.getMetaData();
+
+
+                startTimeMs = System.currentTimeMillis();
+                attributeMap.computeIfAbsent(StandardHeaderArguments.GUID, k -> UUID.randomUUID().toString());
+
+                sendHeader = AttributeMapUtil.cloneAllowable(attributeMap);
+            } else {
+                sendHeader = new AttributeMap();
+            }
+
+            addAttributeIfHeaderDefined(sendHeader, httpHeadersUserDefinedHeader1);
+            addAttributeIfHeaderDefined(sendHeader, httpHeadersUserDefinedHeader2);
+            addAttributeIfHeaderDefined(sendHeader, httpHeadersUserDefinedHeader3);
+
+            LOGGER.info(() -> "createOutputStream() - " + forwardUrl + " Sending request " + sendHeader);
 
             URL url = new URL(forwardUrl);
             connection = (HttpURLConnection) url.openConnection();
@@ -111,7 +148,8 @@ public class HTTPAppender extends AbstractAppender {
                 final HttpsURLConnection httpsURLConnection = (HttpsURLConnection) connection;
                 if (!useJvmSslConfig) {
                     LOGGER.info(() -> "Configuring SSLSocketFactory for destination " + forwardUrl);
-                    final SSLSocketFactory sslSocketFactory = SSLUtil.createSslSocketFactory(sslConfig);
+                    final SSLSocketFactory sslSocketFactory = SSLUtil.createSslSocketFactory(
+                            sslConfig, pathCreator);
                     SSLUtil.applySSLConfiguration(connection, sslSocketFactory, sslConfig);
                 } else if (!sslConfig.isHostnameVerificationEnabled()) {
                     SSLUtil.disableHostnameVerification(httpsURLConnection);
@@ -137,7 +175,7 @@ public class HTTPAppender extends AbstractAppender {
                         StandardHeaderArguments.COMPRESSION_ZIP);
             }
 
-            AttributeMap sendHeader = AttributeMapUtil.cloneAllowable(attributeMap);
+
             for (Entry<String, String> entry : sendHeader.entrySet()) {
                 connection.addRequestProperty(entry.getKey(), entry.getValue());
             }
@@ -262,6 +300,7 @@ public class HTTPAppender extends AbstractAppender {
         return Arrays.stream(csv.toLowerCase().split(",")).collect(Collectors.toSet());
     }
 
+    @Override
     @PipelineProperty(description = "When the current output exceeds this size it will be closed and a " +
             "new one created.",
             displayPriority = 2)
@@ -269,6 +308,7 @@ public class HTTPAppender extends AbstractAppender {
         super.setRollSize(size);
     }
 
+    @Override
     @PipelineProperty(description = "Choose if you want to split aggregated streams into separate output.",
             defaultValue = "false",
             displayPriority = 3)
@@ -276,6 +316,7 @@ public class HTTPAppender extends AbstractAppender {
         super.setSplitAggregatedStreams(splitAggregatedStreams);
     }
 
+    @Override
     @PipelineProperty(description = "Choose if you want to split individual records into separate output.",
             defaultValue = "false",
             displayPriority = 4)
@@ -398,5 +439,30 @@ public class HTTPAppender extends AbstractAppender {
             displayPriority = 21)
     public void setContentType(String contentType) {
         this.contentType = contentType;
+    }
+
+    @PipelineProperty(description = "Provide stream metadata as HTTP headers",
+            defaultValue = "true",
+            displayPriority = 22)
+    public void setHttpHeadersIncludeStreamMetaData(final boolean newValue) {
+        this.httpHeadersIncludeStreamMetaData = newValue;
+    }
+
+    @PipelineProperty(description = "Additional HTTP Header 1, format is 'HeaderName: HeaderValue'",
+            displayPriority = 23)
+    public void setHttpHeadersUserDefinedHeader1(final String headerText) {
+        this.httpHeadersUserDefinedHeader1 = headerText;
+    }
+
+    @PipelineProperty(description = "Additional HTTP Header 2, format is 'HeaderName: HeaderValue'",
+            displayPriority = 24)
+    public void setHttpHeadersUserDefinedHeader2(final String headerText) {
+        this.httpHeadersUserDefinedHeader2 = headerText;
+    }
+
+    @PipelineProperty(description = "Additional HTTP Header 3, format is 'HeaderName: HeaderValue'",
+            displayPriority = 25)
+    public void setHttpHeadersUserDefinedHeader3(final String headerText) {
+        this.httpHeadersUserDefinedHeader3 = headerText;
     }
 }

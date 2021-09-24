@@ -49,7 +49,13 @@ class CompiledDepths {
             if (showDetail || maxGroupDepth < 0) {
                 maxDepth = maxGroupDepth + 1;
             } else {
-                maxDepth = maxGroupDepth;
+                final boolean requireChildren = Arrays.stream(compiledFields).anyMatch(field ->
+                        field.getExpression().isChildSelector());
+                if (requireChildren) {
+                    maxDepth = maxGroupDepth + 1;
+                } else {
+                    maxDepth = maxGroupDepth;
+                }
             }
 
             length = maxDepth + 1;

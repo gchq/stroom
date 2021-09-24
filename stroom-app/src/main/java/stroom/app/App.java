@@ -17,40 +17,45 @@
 package stroom.app;
 
 import stroom.app.commands.CreateAccountCommand;
+import stroom.app.commands.CreateApiKeyCommand;
 import stroom.app.commands.DbMigrationCommand;
 import stroom.app.commands.ManageUsersCommand;
 import stroom.app.commands.ResetPasswordCommand;
 import stroom.app.guice.AppModule;
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
+import stroom.config.app.SuperDevUtil;
 import stroom.config.app.YamlUtil;
-import stroom.config.global.impl.ConfigMapper;
-import stroom.config.global.impl.validation.ConfigValidator;
-import stroom.config.global.impl.validation.ValidationModule;
 import stroom.dropwizard.common.Filters;
 import stroom.dropwizard.common.HealthChecks;
 import stroom.dropwizard.common.ManagedServices;
 import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.dropwizard.common.SessionListeners;
-import stroom.dropwizard.common.StroomConfigurationSourceProvider;
 import stroom.event.logging.rs.api.RestResourceAutoLogger;
 import stroom.security.impl.AuthenticationConfig;
-import stroom.security.impl.ContentSecurityConfig;
 import stroom.util.ColouredStringBuilder;
 import stroom.util.ConsoleColour;
+import stroom.util.config.AppConfigValidator;
+import stroom.util.config.ConfigValidator;
+import stroom.util.config.PropertyPathDecorator;
 import stroom.util.date.DateUtil;
+import stroom.util.io.DirProvidersModule;
+import stroom.util.io.FileUtil;
 import stroom.util.io.HomeDirProvider;
+import stroom.util.io.PathConfig;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ResourcePaths;
+import stroom.util.validation.ValidationModule;
 
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Module;
 import io.dropwizard.Application;
-import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
-import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.jersey.sessions.SessionFactoryProvider;
 import io.dropwizard.servlets.tasks.LogConfigurationTask;
 import io.dropwizard.setup.Bootstrap;
@@ -61,6 +66,7 @@ import org.glassfish.jersey.logging.LoggingFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
@@ -80,10 +86,8 @@ public class App extends Application<Config> {
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
 
     private static final String APP_NAME = "Stroom";
-    private static final String GWT_SUPER_DEV_SYSTEM_PROP_NAME = "gwtSuperDevMode";
     public static final String SESSION_COOKIE_NAME = "STROOM_SESSION_ID";
     private static final boolean SUPER_DEV_AUTHENTICATION_REQUIRED_VALUE = false;
-    private static final String SUPER_DEV_CONTENT_SECURITY_POLICY_VALUE = "";
 
     @Inject
     private HealthChecks healthChecks;
@@ -119,13 +123,13 @@ public class App extends Application<Config> {
     // Needed for DropwizardExtensionsSupport
     public App() {
         configFile = Paths.get("PATH_NOT_SUPPLIED");
-        validationOnlyInjector = createValidationInjector();
+        validationOnlyInjector = createValidationInjector(configFile);
     }
 
 
     App(final Path configFile) {
         this.configFile = configFile;
-        validationOnlyInjector = createValidationInjector();
+        validationOnlyInjector = createValidationInjector(configFile);
     }
 
     public static void main(final String[] args) throws Exception {
@@ -140,13 +144,9 @@ public class App extends Application<Config> {
 
     @Override
     public void initialize(final Bootstrap<Config> bootstrap) {
-        // This allows us to use templating in the YAML configuration.
-        bootstrap.setConfigurationSourceProvider(
-                new StroomConfigurationSourceProvider(
-                        new SubstitutingSourceProvider(bootstrap.getConfigurationSourceProvider(),
-                                new EnvironmentVariableSubstitutor(false))
-                )
-        );
+        // This allows us to use env var templating and relative (to stroom home) paths in the YAML configuration.
+        bootstrap.setConfigurationSourceProvider(YamlUtil.createConfigurationSourceProvider(
+                bootstrap.getConfigurationSourceProvider(), true));
 
         // Add the GWT UI assets.
         bootstrap.addBundle(new DynamicAssetsBundle(
@@ -178,6 +178,7 @@ public class App extends Application<Config> {
         // http server
         bootstrap.addCommand(new DbMigrationCommand(configFile));
         bootstrap.addCommand(new CreateAccountCommand(configFile));
+        bootstrap.addCommand(new CreateApiKeyCommand(configFile));
         bootstrap.addCommand(new ResetPasswordCommand(configFile));
         bootstrap.addCommand(new ManageUsersCommand(configFile));
     }
@@ -202,8 +203,8 @@ public class App extends Application<Config> {
                         LoggingFeature.Verbosity.PAYLOAD_ANY,
                         LoggingFeature.DEFAULT_MAX_ENTITY_SIZE));
 
-        // Check if we are running GWT Super Dev Mode
-        checkForSuperDev(configuration.getAppConfig());
+        // Check if we are running GWT Super Dev Mode, if so relax security
+        SuperDevUtil.relaxSecurityInSuperDevMode(configuration.getAppConfig());
 
         // Add useful logging setup.
         registerLogConfiguration(environment);
@@ -224,7 +225,12 @@ public class App extends Application<Config> {
 
         final AppModule appModule = new AppModule(configuration, environment, configFile);
 
-        Guice.createInjector(appModule).injectMembers(this);
+        Guice.createInjector(appModule)
+                .injectMembers(this);
+
+        // Ensure we have our home/temp dirs set up
+        FileUtil.ensureDirExists(homeDirProvider.get());
+        FileUtil.ensureDirExists(tempDirProvider.get());
 
         //Register REST Resource Auto Logger to automatically log calls to suitably annotated resources/methods
         //Note that if autologger is not required, and the next line removed, then it will be necessary to
@@ -298,16 +304,18 @@ public class App extends Application<Config> {
 
         final AppConfig appConfig = config.getAppConfig();
 
-        ConfigMapper.decorateWithPropertyPaths(appConfig);
+        // Walk the config tree to decorate it with all the path names
+        // so we can qualify each prop
+        PropertyPathDecorator.decoratePaths(appConfig, AppConfig.ROOT_PROPERTY_PATH);
 
-        final ConfigValidator configValidator = validationOnlyInjector.getInstance(ConfigValidator.class);
+        final AppConfigValidator appConfigValidator = validationOnlyInjector.getInstance(AppConfigValidator.class);
 
         LOGGER.info("Validating application configuration file {}",
                 configFile.toAbsolutePath().normalize().toString());
 
-        final ConfigValidator.Result result = configValidator.validateRecursively(appConfig);
+        final ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validateRecursively(appConfig);
 
-        result.handleViolations(ConfigValidator::logConstraintViolation);
+        result.handleViolations(AppConfigValidator::logConstraintViolation);
 
         LOGGER.info("Completed validation of application configuration, errors: {}, warnings: {}",
                 result.getErrorCount(),
@@ -315,7 +323,7 @@ public class App extends Application<Config> {
 
         if (result.hasErrors() && appConfig.isHaltBootOnConfigValidationFailure()) {
             LOGGER.error("Application configuration is invalid. Stopping Stroom. To run Stroom with invalid " +
-                            "configuration, set {} to false. This is not advised!",
+                            "configuration, set {} to false, however this is not advised!",
                     appConfig.getFullPath(AppConfig.PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE));
             System.exit(1);
         }
@@ -363,33 +371,6 @@ public class App extends Application<Config> {
         environment.admin().addTask(new LogConfigurationTask());
     }
 
-    @SuppressWarnings("checkstyle:LineLength")
-    private void checkForSuperDev(final AppConfig appConfig) {
-        // If sys prop gwtSuperDevMode=true then override other config props
-        // i.e. use a run configuration with arg '-DgwtSuperDevMode=true'
-        if (Boolean.getBoolean(GWT_SUPER_DEV_SYSTEM_PROP_NAME)) {
-            LOGGER.warn("" + ConsoleColour.red(
-                    "" +
-                            "\n                                      _                                  _      " +
-                            "\n                                     | |                                | |     " +
-                            "\n      ___ _   _ _ __   ___ _ __    __| | _____   __  _ __ ___   ___   __| | ___ " +
-                            "\n     / __| | | | '_ \\ / _ \\ '__|  / _` |/ _ \\ \\ / / | '_ ` _ \\ / _ \\ / _` |/ _ \\" +
-                            "\n     \\__ \\ |_| | |_) |  __/ |    | (_| |  __/\\ V /  | | | | | | (_) | (_| |  __/" +
-                            "\n     |___/\\__,_| .__/ \\___|_|     \\__,_|\\___| \\_/   |_| |_| |_|\\___/ \\__,_|\\___|" +
-                            "\n               | |                                                              " +
-                            "\n               |_|                                                              " +
-                            "\n"));
-
-//            disableAuthentication(appConfig);
-
-            // Super Dev Mode isn't compatible with HTTPS so ensure cookies are not secure.
-            appConfig.getSessionCookieConfig().setSecure(false);
-
-            // The standard content security policy is incompatible with GWT super dev mode
-            disableContentSecurity(appConfig);
-        }
-    }
-
     private void disableAuthentication(final AppConfig appConfig) {
         LOGGER.warn("\n" + ConsoleColour.red(
                 "" +
@@ -414,21 +395,31 @@ public class App extends Application<Config> {
         authenticationConfig.setAuthenticationRequired(SUPER_DEV_AUTHENTICATION_REQUIRED_VALUE);
     }
 
-    private void disableContentSecurity(final AppConfig appConfig) {
-        final ContentSecurityConfig contentSecurityConfig = appConfig.getSecurityConfig().getContentSecurityConfig();
-        final String msg = new ColouredStringBuilder()
-                .appendRed("In GWT Super Dev Mode, overriding ")
-                .appendCyan(ContentSecurityConfig.PROP_NAME_CONTENT_SECURITY_POLICY)
-                .appendRed(" to [")
-                .appendCyan(SUPER_DEV_CONTENT_SECURITY_POLICY_VALUE)
-                .appendRed("] in appConfig")
-                .toString();
+    /**
+     * Creates a separate guice injector just for doing javax validation on the config
+     */
+    private Injector createValidationInjector(final Path configFile) {
 
-        LOGGER.warn(msg);
-        contentSecurityConfig.setContentSecurityPolicy(SUPER_DEV_CONTENT_SECURITY_POLICY_VALUE);
-    }
+        try {
+            // We need to read the AppConfig in the same way that dropwiz will so we can get the
+            // possibly substituted values for stroom.(home|temp) for use with PathCreator
+            LOGGER.info("Parsing config file to establish home and temp");
+            final AppConfig appConfig = YamlUtil.readAppConfig(configFile);
 
-    private Injector createValidationInjector() {
-        return Guice.createInjector(new ValidationModule());
+            final Module pathConfigModule = new AbstractModule() {
+                @Override
+                protected void configure() {
+                    bind(PathConfig.class).toInstance(appConfig.getPathConfig());
+                    install(new DirProvidersModule());
+                }
+            };
+
+            return Guice.createInjector(
+                    new ValidationModule(),
+                    pathConfigModule);
+
+        } catch (IOException e) {
+            throw new RuntimeException("Error parsing config file " + configFile.toAbsolutePath().normalize());
+        }
     }
 }

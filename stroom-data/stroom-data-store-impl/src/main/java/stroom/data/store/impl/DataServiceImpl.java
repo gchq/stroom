@@ -47,6 +47,7 @@ import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
+import stroom.task.api.TaskContextFactory;
 import stroom.ui.config.shared.SourceConfig;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
@@ -106,8 +107,8 @@ class DataServiceImpl implements DataService {
                     final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
                     final PipelineDataCache pipelineDataCache,
                     final PipelineScopeRunnable pipelineScopeRunnable,
-                    final SourceConfig sourceConfig
-
+                    final SourceConfig sourceConfig,
+                    final TaskContextFactory taskContextFactory
     ) {
         this.resourceStore = resourceStore;
         this.dataUploadTaskHandlerProvider = dataUploadTaskHandler;
@@ -130,7 +131,8 @@ class DataServiceImpl implements DataService {
                 pipelineDataCache,
                 securityContext,
                 pipelineScopeRunnable,
-                sourceConfig);
+                sourceConfig,
+                taskContextFactory);
     }
 
     @Override
@@ -265,8 +267,8 @@ class DataServiceImpl implements DataService {
 
             return securityContext.secureResult(permissionName, () ->
                     dataFetcher.getData(request));
-        } catch (Exception e) {
-            LOGGER.error(LogUtil.message("Error fetching data {}", request), e);
+        } catch (final RuntimeException e) {
+            LOGGER.debug(LogUtil.message("Error fetching data {}", request), e);
             throw e;
         }
     }
@@ -349,7 +351,7 @@ class DataServiceImpl implements DataService {
         entries.add(new DataInfoSection.Entry("Stream Id", String.valueOf(meta.getId())));
         entries.add(new DataInfoSection.Entry("Status", meta.getStatus().getDisplayValue()));
         entries.add(new DataInfoSection.Entry("Status Ms", getDateTimeString(meta.getStatusMs())));
-        entries.add(new DataInfoSection.Entry("Parent Data Id", String.valueOf(meta.getParentMetaId())));
+        entries.add(new DataInfoSection.Entry("Parent Stream Id", String.valueOf(meta.getParentMetaId())));
         entries.add(new DataInfoSection.Entry("Created", getDateTimeString(meta.getCreateMs())));
         entries.add(new DataInfoSection.Entry("Effective", getDateTimeString(meta.getEffectiveMs())));
         entries.add(new DataInfoSection.Entry("Stream Type", meta.getTypeName()));

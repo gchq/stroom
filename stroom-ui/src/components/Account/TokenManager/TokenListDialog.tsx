@@ -1,16 +1,16 @@
 import * as React from "react";
 import { FunctionComponent } from "react";
 import { ItemManagerProps } from "../AccountManager/ItemManager";
-import { Token } from "api/stroom";
+import { ApiKey } from "api/stroom";
 import { ItemManagerDialog } from "../AccountManager/ItemManagerDialog";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export const TokenListDialog: FunctionComponent<{
-  itemManagerProps: ItemManagerProps<Token>;
+  itemManagerProps: ItemManagerProps<ApiKey>;
   onClose: () => void;
 }> = ({ itemManagerProps, onClose }) => {
   return (
-    <ItemManagerDialog<Token>
+    <ItemManagerDialog<ApiKey>
       title={
         <React.Fragment>
           <FontAwesomeIcon icon="key" className="mr-3" />

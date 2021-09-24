@@ -17,12 +17,10 @@
 package stroom.security.impl;
 
 import stroom.config.common.UriFactory;
-import stroom.security.api.ProcessingUserIdentityProvider;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.exception.AuthenticationException;
 import stroom.security.openid.api.OpenId;
-import stroom.security.shared.User;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -65,20 +63,17 @@ class SecurityFilter implements Filter {
     private final UriFactory uriFactory;
     private final SecurityContext securityContext;
     private final OpenIdManager openIdManager;
-    private final ProcessingUserIdentityProvider processingUserIdentityProvider;
 
     @Inject
     SecurityFilter(
             final AuthenticationConfig authenticationConfig,
             final UriFactory uriFactory,
             final SecurityContext securityContext,
-            final OpenIdManager openIdManager,
-            final ProcessingUserIdentityProvider processingUserIdentityProvider) {
+            final OpenIdManager openIdManager) {
         this.authenticationConfig = authenticationConfig;
         this.uriFactory = uriFactory;
         this.securityContext = securityContext;
         this.openIdManager = openIdManager;
-        this.processingUserIdentityProvider = processingUserIdentityProvider;
     }
 
     @Override
@@ -146,18 +141,23 @@ class SecurityFilter implements Filter {
                 final String propPath = authenticationConfig.getFullPath(
                         AuthenticationConfig.PROP_NAME_AUTHENTICATION_REQUIRED);
                 LOGGER.warn("{} is false, authenticating as admin for {}", propPath, fullPath);
-                authenticateAsAdmin(request, response, chain);
+                securityContext.asAdminUser(() -> {
+                    // Set the user ref in the session.
+                    openIdManager.getOrSetSessionUser(request, Optional.of(securityContext.getUserIdentity()));
+                    process(request, response, chain);
+                });
 
             } else {
                 // Try to get a token from the request for login.
-                final Optional<UserIdentity> userIdentity = openIdManager.loginWithRequestToken(request);
+                Optional<UserIdentity> userIdentity = openIdManager.loginWithRequestToken(request);
+                userIdentity = openIdManager.getOrSetSessionUser(request, userIdentity);
                 if (userIdentity.isPresent()) {
-                    continueAsUser(request, response, chain, userIdentity.get());
+                    securityContext.asUser(userIdentity.get(), () -> process(request, response, chain));
 
-                }  else if (shouldBypassAuthentication(fullPath)) {
+                } else if (shouldBypassAuthentication(fullPath)) {
                     // Some paths don't need authentication (they contain `/noauth/`.
                     // If that is the case then proceed as proc user.
-                    authenticateAsProcUser(request, response, chain);
+                    securityContext.asProcessingUser(() -> process(request, response, chain));
 
                 } else if (isApiRequest(servletPath)) {
                     // If we couldn't login with a token or couldn't get a token then error as this is an API call
@@ -226,48 +226,13 @@ class SecurityFilter implements Filter {
         return fullPath.contains(ResourcePaths.NO_AUTH + "/");
     }
 
-    private void authenticateAsAdmin(final HttpServletRequest request,
-                                     final HttpServletResponse response,
-                                     final FilterChain chain) throws IOException, ServletException {
-
-        bypassAuthentication(request, response, chain, UserIdentitySessionUtil.requestHasSessionCookie(request),
-                securityContext.createIdentity(User.ADMIN_USER_NAME));
-    }
-
-    private void authenticateAsProcUser(final HttpServletRequest request,
-                                        final HttpServletResponse response,
-                                        final FilterChain chain) throws IOException, ServletException {
-        bypassAuthentication(request, response, chain, false, processingUserIdentityProvider.get());
-    }
-
-    private void bypassAuthentication(final HttpServletRequest request,
-                                      final HttpServletResponse response,
-                                      final FilterChain chain,
-                                      final boolean useSession,
-                                      final UserIdentity userIdentity) throws IOException, ServletException {
-        LAMBDA_LOGGER.debug(() ->
-                LogUtil.message("Authenticating as user {} for request {}", userIdentity, request.getRequestURI()));
-        if (useSession) {
-            // Set the user ref in the session.
-            UserIdentitySessionUtil.set(request.getSession(true), userIdentity);
-        }
-        continueAsUser(request, response, chain, userIdentity);
-    }
-
-    private void continueAsUser(final HttpServletRequest request,
-                                final HttpServletResponse response,
-                                final FilterChain chain,
-                                final UserIdentity userIdentity)
-            throws IOException, ServletException {
-        if (userIdentity != null) {
-            // If the session already has a reference to a user then continue the chain as that user.
-            try {
-                CurrentUserState.push(userIdentity);
-
-                chain.doFilter(request, response);
-            } finally {
-                CurrentUserState.pop();
-            }
+    private void process(final HttpServletRequest request,
+                         final HttpServletResponse response,
+                         final FilterChain chain) {
+        try {
+            chain.doFilter(request, response);
+        } catch (final IOException | ServletException e) {
+            throw new RuntimeException(e);
         }
     }
 

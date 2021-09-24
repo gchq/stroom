@@ -12,7 +12,6 @@ import stroom.query.api.v2.ExpressionTerm;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.SelectJoinStep;
-import org.jooq.impl.DSL;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,23 +20,16 @@ import java.util.function.Function;
 
 class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
 
+    private static final String META_ALIAS_PREFIX = "mv_";
+
     private final CommonExpressionMapper expressionMapper;
     private final MetaKeyDao metaKeyDao;
-    private final String keyFieldName;
-    private final String valueFieldName;
-    private final String metaIdFieldName;
     private final TermHandlerFactory termHandlerFactory;
 
     MetaExpressionMapper(final MetaKeyDao metaKeyDao,
-                         final String keyFieldName,
-                         final String valueFieldName,
-                         final String metaIdFieldName,
                          final TermHandlerFactory termHandlerFactory) {
         expressionMapper = new CommonExpressionMapper();
         this.metaKeyDao = metaKeyDao;
-        this.keyFieldName = keyFieldName;
-        this.metaIdFieldName = metaIdFieldName;
-        this.valueFieldName = valueFieldName;
         this.termHandlerFactory = termHandlerFactory;
     }
 
@@ -51,7 +43,17 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
             final TermHandler<Long> termHandler = termHandlerFactory.create(
                     dataSourceField,
                     valueField,
-                    value -> List.of(Long.valueOf(value)));
+                    value -> {
+                        try {
+                            return List.of(Long.valueOf(value));
+                        } catch (final NumberFormatException e) {
+                            throw new NumberFormatException("Error parsing value \"" +
+                                    value +
+                                    "\" as number for field '" +
+                                    dataSourceField.getName() +
+                                    "'");
+                        }
+                    });
 
             final MetaTermHandler handler = new MetaTermHandler(
                     createKeyField(id),
@@ -61,32 +63,46 @@ class MetaExpressionMapper implements Function<ExpressionItem, Condition> {
         }
     }
 
-    public SelectJoinStep<?> addJoins(
-            SelectJoinStep<?> query,
+    /**
+     * If the criteria contains many terms that come from meta_val then we need to join to meta_val
+     * multiple times, each time with a new table alias.
+     *
+     * @param usedValKeys The list of meta_key IDs that feature in the criteria. One join will be
+     *                    added for each.
+     * @return The query with joins added
+     */
+    public <T extends org.jooq.Record> SelectJoinStep<T> addJoins(
+            SelectJoinStep<T> query,
             final Field<Long> metaIdField,
             final Set<Integer> usedValKeys) {
 
         for (Integer id : usedValKeys) {
-            query = query.leftOuterJoin(MetaVal.META_VAL.as("v" + id))
+            final MetaVal metaVal = getAliasedMetaValTable(id);
+
+            query = query.leftOuterJoin(metaVal)
                     .on(metaIdField.eq(createMetaIdField(id))); //Join on meta_val
         }
         return query;
     }
 
-    private String createTableName(final int valKeyId) {
-        return "`v" + valKeyId + "`";
+    private MetaVal getAliasedMetaValTable(final int valKeyId) {
+        return MetaVal.META_VAL
+                .as(META_ALIAS_PREFIX + valKeyId);
     }
 
     private Field<Long> createValueField(final int valKeyId) {
-        return DSL.field(createTableName(valKeyId) + ".`" + valueFieldName + "`", Long.class);
+        return getAliasedMetaValTable(valKeyId)
+                .field(MetaVal.META_VAL.VAL);
     }
 
     private Field<Integer> createKeyField(final int valKeyId) {
-        return DSL.field(createTableName(valKeyId) + ".`" + keyFieldName + "`", Integer.class);
+        return getAliasedMetaValTable(valKeyId)
+                .field(MetaVal.META_VAL.META_KEY_ID);
     }
 
     private Field<Long> createMetaIdField(final int valKeyId) {
-        return DSL.field(createTableName(valKeyId) + ".`" + metaIdFieldName + "`", Long.class);
+        return getAliasedMetaValTable(valKeyId)
+                .field(MetaVal.META_VAL.META_ID);
     }
 
     @Override

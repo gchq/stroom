@@ -78,6 +78,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -105,6 +106,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     private final ProcessorTaskDao processorTaskDao;
     private final ExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
+    private final TaskContext taskContext;
     private final NodeInfo nodeInfo;
     private final ProcessorConfig processorConfig;
     private final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider;
@@ -157,6 +159,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                              final ProcessorTaskDao processorTaskDao,
                              final ExecutorProvider executorProvider,
                              final TaskContextFactory taskContextFactory,
+                             final TaskContext taskContext,
                              final NodeInfo nodeInfo,
                              final ProcessorConfig processorConfig,
                              final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider,
@@ -169,6 +172,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         this.processorFilterTrackerDao = processorFilterTrackerDao;
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
+        this.taskContext = taskContext;
         this.nodeInfo = nodeInfo;
         this.processorTaskDao = processorTaskDao;
         this.processorConfig = processorConfig;
@@ -888,7 +892,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         final Long maxMetaId = metaService.getMaxId();
 
 
-        final Consumer<EventRefs> eventRefsConsumer = taskContextFactory.contextConsumer(
+        final Consumer<EventRefs> eventRefsConsumer = contextConsumer(
                 taskContext,
                 "Creating event refs from search",
                 (taskContext2, eventRefs) -> {
@@ -915,6 +919,18 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
         // record the future so we can wait for it later
         progressTracker.addFuture(future);
+    }
+
+    private <T> Consumer<T> contextConsumer(final TaskContext parentContext,
+                                            final String taskName,
+                                            final BiConsumer<TaskContext, T> consumer) {
+        return t ->
+                taskContextFactory.childContext(
+                        parentContext,
+                        taskName,
+                        taskContext ->
+                                consumer.accept(taskContext, t))
+                        .run();
     }
 
     private void createTasksFromEventRefs(final ProcessorFilter filter,
@@ -1181,6 +1197,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
     @Override
     public void writeQueueStatistics() {
+        taskContext.info(() -> "Writing processor task queue statistics");
         try {
             // Avoid writing loads of same value stats So write every min while
             // it changes Under little load the queue size will be 0

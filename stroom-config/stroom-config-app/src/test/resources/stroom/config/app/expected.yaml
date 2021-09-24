@@ -300,7 +300,7 @@ appConfig:
         maxLifetime: "PT30M"
         minimumIdle: 10
         maxPoolSize: 30
-    enableDistributedJobsOnBootstrap: true
+    enableJobsOnBootstrap: false
   kafka:
     skeletonConfigContent: "# The following properties are taken from the v2.2 documentation\n\
       # for the Kafka Producer and can be uncommented and set as required.\n# NOTE\
@@ -364,8 +364,8 @@ appConfig:
     port: null
     pathPrefix: null
   path:
-    home: "."
-    temp: "/tmp/stroom"
+    home: null
+    temp: null
   pipeline:
     httpClientCache:
       maximumSize: 1000
@@ -388,17 +388,19 @@ appConfig:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
     referenceData:
-      localDir: "reference_data"
-      lmdbSystemLibraryPath: null
-      maxPutsBeforeCommit: 0
-      maxReaders: 100
-      maxStoreSize: "50G"
-      purgeAge: "P30D"
       effectiveStreamCache:
         maximumSize: 1000
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
+      lmdbSystemLibraryPath: null
+      loadingLockStripes: 2048
+      localDir: "reference_data"
+      maxPutsBeforeCommit: 0
+      maxReaders: 100
+      maxStoreSize: "50G"
+      purgeAge: "P30D"
       readAheadEnabled: true
+      readerBlockedByWriter: false
     xmlSchema:
       cache:
         maximumSize: 1000
@@ -465,14 +467,14 @@ appConfig:
         minimumIdle: 10
         maxPoolSize: 30
   proxyAggregation:
-    repoDir: "proxy_repo"
-    dbDir: "proxy_repo_db"
     aggregator:
+      aggregationFrequency: "PT1M"
       enabled: true
+      maxAggregateAge: "PT10M"
       maxItemsPerAggregate: 1000
       maxUncompressedByteSize: "1.0G"
-      maxAggregateAge: "PT10M"
-      aggregationFrequency: "PT1M"
+    dbDir: "proxy_repo_db"
+    repoDir: "proxy_repo"
   publicUri:
     scheme: "https"
     hostname: null
@@ -514,6 +516,10 @@ appConfig:
       maxReaders: 10
       maxStoreSize: "10G"
       maxDbs: 10
+      minValueSize: "1K"
+      maxValueSize: "1M"
+      minPayloadSize: "1M"
+      maxPayloadSize: "1G"
       readAheadEnabled: true
       offHeapResults: true
       payloadLimit: "0B"
@@ -538,8 +544,8 @@ appConfig:
         tokenEndpoint: null
         jwksUri: null
         logoutEndpoint: null
-        formTokenRequest: false
-        jwtClaimsResolver: null
+        formTokenRequest: true
+        requestScope: null
         clientId: null
         clientSecret: null
       preventLogin: false
@@ -623,6 +629,10 @@ appConfig:
           maximumSize: 1000
           expireAfterAccess: "PT10M"
           expireAfterWrite: null
+        refreshTokenCache:
+          maximumSize: 10000
+          expireAfterAccess: "P1D"
+          expireAfterWrite: null
       passwordPolicy:
         allowPasswordResets: true
         forcePasswordChangeOnFirstLogin: true
@@ -636,11 +646,13 @@ appConfig:
           \ than 8 characters."
         unusedAccountDeactivationThreshold: "P90D"
       token:
+        accessTokenExpiration: "PT1H"
         algorithm: "RS256"
-        defaultApiKeyExpiryInMinutes: 525600
+        defaultApiKeyExpiration: "P365D"
+        emailResetTokenExpiration: "PT10M"
+        idTokenExpiration: "PT1H"
         jwsIssuer: "stroom"
-        timeUntilExpirationForEmailResetToken: "PT5M"
-        timeUntilExpirationForUserToken: "P30D"
+        refreshTokenExpiration: "P30D"
       useDefaultOpenIdCredentials: false
   serviceDiscovery:
     enabled: false
@@ -856,10 +868,6 @@ appConfig:
       tubeOpacity: "0.6"
       topMenuTextColour: "#FFFFFF"
       labelColours: "TEST1=#FF0000,TEST2=#FF9900"
-    url:
-      apiKeys: "../../../s/apiKeys"
-      changepassword: "../../../s/changepassword"
-      users: "../../../s/users"
     welcomeHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from\
       \ multiple systems.</p>"
   uiUri:

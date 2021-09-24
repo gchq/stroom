@@ -36,8 +36,6 @@ import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import com.jayway.jsonpath.DocumentContext;
-import com.jayway.jsonpath.JsonPath;
 import org.elasticsearch.action.search.ClearScrollRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
@@ -60,6 +58,7 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 public class ElasticSearchTaskHandler {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticSearchTaskHandler.class);
 
     /**
@@ -73,10 +72,10 @@ public class ElasticSearchTaskHandler {
     private static final int SCROLL_SIZE = 1000;
 
     private static final ThreadPool THREAD_POOL = new ThreadPoolImpl(
-        "Search Elasticsearch Index",
-        5,
-        0,
-        Integer.MAX_VALUE);
+            "Search Elasticsearch Index",
+            5,
+            0,
+            Integer.MAX_VALUE);
 
     private final ElasticClientCache elasticClientCache;
     private final ElasticClusterStore elasticClusterStore;
@@ -96,30 +95,30 @@ public class ElasticSearchTaskHandler {
     }
 
     public void exec(final TaskContext parentContext, final ElasticSearchTask task) {
-        taskContextFactory.context(parentContext, "Index Searcher", taskContext ->
-                LOGGER.logDurationIfDebugEnabled(
-                        () -> {
-                            try {
-                                if (Thread.interrupted()) {
-                                    Thread.currentThread().interrupt();
-                                    throw new RuntimeException("Interrupted");
-                                }
+        taskContextFactory.childContext(parentContext, "Index Searcher", taskContext ->
+                        LOGGER.logDurationIfDebugEnabled(
+                                () -> {
+                                    try {
+                                        if (Thread.interrupted()) {
+                                            Thread.currentThread().interrupt();
+                                            throw new RuntimeException("Interrupted");
+                                        }
 
-                                taskContext.info(() -> "Searching Elasticsearch index");
+                                        taskContext.info(() -> "Searching Elasticsearch index");
 
-                                // Start searching.
-                                searchIndex(task, taskContext);
+                                        // Start searching.
+                                        searchIndex(task);
 
-                            } catch (final RuntimeException e) {
-                                LOGGER.debug(e::getMessage, e);
-                                error(task, e.getMessage(), e);
-                            }
-                        },
-                        "exec()"))
+                                    } catch (final RuntimeException e) {
+                                        LOGGER.debug(e::getMessage, e);
+                                        error(task, e.getMessage(), e);
+                                    }
+                                },
+                                "exec()"))
                 .run();
     }
 
-    private void searchIndex(final ElasticSearchTask task, final TaskContext taskContext) {
+    private void searchIndex(final ElasticSearchTask task) {
         final ElasticIndexDoc elasticIndex = task.getElasticIndex();
         final ElasticClusterDoc elasticCluster = elasticClusterStore.readDocument(elasticIndex.getClusterRef());
         final ElasticConnectionConfig connectionConfig = elasticCluster.getConnection();
@@ -127,18 +126,18 @@ public class ElasticSearchTaskHandler {
         // If there is an error building the query then it will be null here.
         try {
             final Runnable runnable = () ->
-                LOGGER.logDurationIfDebugEnabled(
-                    () -> {
-                        try {
-                            streamingSearch(task, elasticIndex, connectionConfig);
-                        } catch (final RuntimeException e) {
-                            error(task, e.getMessage(), e);
-                        } finally {
-                            task.getTracker().complete();
-                            completionLatch.countDown();
-                        }
-                    },
-                    () -> "searcher.search()");
+                    LOGGER.logDurationIfDebugEnabled(
+                            () -> {
+                                try {
+                                    streamingSearch(task, elasticIndex, connectionConfig);
+                                } catch (final RuntimeException e) {
+                                    error(task, e.getMessage(), e);
+                                } finally {
+                                    task.getTracker().complete();
+                                    completionLatch.countDown();
+                                }
+                            },
+                            () -> "searcher.search()");
             CompletableFuture.runAsync(runnable, executor);
         } catch (final RuntimeException e) {
             error(task, e.getMessage(), e);
@@ -156,8 +155,8 @@ public class ElasticSearchTaskHandler {
                 searchRequest.scroll(scroll);
 
                 SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder()
-                    .query(task.getQuery())
-                    .size(SCROLL_SIZE);
+                        .query(task.getQuery())
+                        .size(SCROLL_SIZE);
                 searchRequest.source(searchSourceBuilder);
 
                 SearchResponse searchResponse = elasticClient.search(searchRequest, RequestOptions.DEFAULT);
@@ -235,8 +234,8 @@ public class ElasticSearchTaskHandler {
                                 }
                             }
                         } else if (property instanceof HashMap) {
-                            @SuppressWarnings("unchecked")
-                            final HashMap<String, Object> propertyMap = (HashMap<String, Object>) property;
+                            @SuppressWarnings("unchecked") final HashMap<String, Object> propertyMap =
+                                    (HashMap<String, Object>) property;
 
                             // Get the child property matching the field path
                             fieldValue = propertyMap.get(childPropertyName);
@@ -258,6 +257,10 @@ public class ElasticSearchTaskHandler {
                             values[insertAt] = ValDouble.create((Float) fieldValue);
                         } else if (fieldValue instanceof Boolean) {
                             values[insertAt] = ValBoolean.create((Boolean) fieldValue);
+                        } else if (fieldValue instanceof ArrayList) {
+                            values[insertAt] = ValString.create(((ArrayList<?>) fieldValue).stream()
+                                    .map(Object::toString)
+                                    .collect(Collectors.joining(", ")));
                         } else {
                             values[insertAt] = ValString.create(fieldValue.toString());
                         }

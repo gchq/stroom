@@ -1,5 +1,6 @@
 package stroom.pipeline.refdata;
 
+import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.util.date.DateUtil;
@@ -119,13 +120,19 @@ public class RefDataLookupRequest {
         @JsonProperty
         private final DocRef referenceFeed;
 
+        @Valid
+        @JsonProperty
+        private final String streamType;
+
         // TODO @AT Should we have strm type in here, defaulting to REFERENCE?
 
         @JsonCreator
         public ReferenceLoader(@JsonProperty("loaderPipeline") final DocRef loaderPipeline,
-                               @JsonProperty("referenceFeed") final DocRef referenceFeed) {
+                               @JsonProperty("referenceFeed") final DocRef referenceFeed,
+                               @JsonProperty("streamType") final String streamType) {
             this.loaderPipeline = loaderPipeline;
             this.referenceFeed = referenceFeed;
+            this.streamType = streamType;
         }
 
         public DocRef getLoaderPipeline() {
@@ -136,11 +143,16 @@ public class RefDataLookupRequest {
             return referenceFeed;
         }
 
+        public String getStreamType() {
+            return streamType;
+        }
+
         @Override
         public String toString() {
             return "ReferenceLoader{" +
                     "loaderPipeline=" + loaderPipeline +
-                    ", referenceFeed='" + referenceFeed + '\'' +
+                    ", referenceFeed=" + referenceFeed +
+                    ", streamType='" + streamType + '\'' +
                     '}';
         }
 

@@ -26,6 +26,8 @@ import java.util.Optional;
 
 public interface ExplorerNodeService {
 
+    void ensureRootNodeExists();
+
     void createNode(DocRef docRef, DocRef destinationFolderRef, PermissionInheritance permissionInheritance);
 
     void copyNode(DocRef sourceDocRef,

@@ -2,19 +2,26 @@ package stroom.pipeline.refdata;
 
 import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.RequiresRestart;
+import stroom.util.config.annotations.RequiresRestart.RestartScope;
 import stroom.util.io.ByteSize;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.validation.ValidFilePath;
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.annotation.Nonnull;
 import javax.inject.Singleton;
 import javax.validation.constraints.Min;
 
 @Singleton
-public class ReferenceDataConfig extends AbstractConfig {
+@JsonPropertyOrder(alphabetic = true)
+public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfig {
+
+    public static final String LOCAL_DIR_PROP_NAME = "localDir";
 
     private String localDir = "reference_data";
     private String lmdbSystemLibraryPath = null;
@@ -23,6 +30,8 @@ public class ReferenceDataConfig extends AbstractConfig {
     private ByteSize maxStoreSize = ByteSize.ofGibibytes(50);
     private StroomDuration purgeAge = StroomDuration.ofDays(30);
     private boolean isReadAheadEnabled = true;
+    private int loadingLockStripes = 2048;
+    private boolean isReaderBlockedByWriter = false;
 
     private CacheConfig effectiveStreamCache = CacheConfig.builder()
             .maximumSize(1000L)
@@ -31,6 +40,7 @@ public class ReferenceDataConfig extends AbstractConfig {
 
     @Nonnull
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
+    @JsonProperty(LOCAL_DIR_PROP_NAME)
     @JsonPropertyDescription("The path relative to the home directory to use for storing the reference data store. " +
             "It MUST be on local disk, NOT network storage, due to use of memory mapped files. " +
             "The directory will be created if it doesn't exist." +
@@ -124,6 +134,34 @@ public class ReferenceDataConfig extends AbstractConfig {
         this.isReadAheadEnabled = isReadAheadEnabled;
     }
 
+    @Min(2)
+    @RequiresRestart(RestartScope.SYSTEM)
+    @JsonPropertyDescription("The number of lock stripes used for preventing multiple pipeline processes " +
+            "from loading the same reference stream at the same time. Values should be a power of 2. " +
+            "Lower values will mean it is more likely for two different streams from blocking one another.")
+    public int getLoadingLockStripes() {
+        return loadingLockStripes;
+    }
+
+    public void setLoadingLockStripes(final int loadingLockStripes) {
+        this.loadingLockStripes = loadingLockStripes;
+    }
+
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
+    @JsonPropertyDescription("If true, then the process writing to the reference data store will block all " +
+            "other processes from reading from the store. As only one writer is allowed the active writer will " +
+            "also block all other writers. If false, then multiple processes can read from the store regardless " +
+            "of whether a process is writing to it. If there are active readers during a write then empty space in " +
+            "the store cannot be reclaimed, instead the store will grow. This setting is a trade off between " +
+            "performance and store size. If you experience excessive store size growth then set this to true.")
+    public boolean isReaderBlockedByWriter() {
+        return isReaderBlockedByWriter;
+    }
+
+    public void setReaderBlockedByWriter(final boolean readerBlockedByWriter) {
+        isReaderBlockedByWriter = readerBlockedByWriter;
+    }
+
     public CacheConfig getEffectiveStreamCache() {
         return effectiveStreamCache;
     }
@@ -134,13 +172,17 @@ public class ReferenceDataConfig extends AbstractConfig {
 
     @Override
     public String toString() {
-        return "RefDataStoreConfig{" +
+        return "ReferenceDataConfig{" +
                 "localDir='" + localDir + '\'' +
+                ", lmdbSystemLibraryPath='" + lmdbSystemLibraryPath + '\'' +
                 ", maxPutsBeforeCommit=" + maxPutsBeforeCommit +
                 ", maxReaders=" + maxReaders +
-                ", maxStoreSize='" + maxStoreSize + '\'' +
-                ", purgeAge='" + purgeAge + '\'' +
+                ", maxStoreSize=" + maxStoreSize +
+                ", purgeAge=" + purgeAge +
                 ", isReadAheadEnabled=" + isReadAheadEnabled +
+                ", loadingLockStripes=" + loadingLockStripes +
+                ", isReaderBlockedByWriter=" + isReaderBlockedByWriter +
+                ", effectiveStreamCache=" + effectiveStreamCache +
                 '}';
     }
 }

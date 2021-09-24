@@ -1,19 +1,20 @@
 /*
  *
- *   Copyright 2017 Crown Copyright
  *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
+ *
+ *
  *
  *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   Copyright 2017 Crown Copyright
+ *   Licensed under the Apache License, Version 2.0 (the "License");
  *   See the License for the specific language governing permissions and
+ *   Unless required by applicable law or agreed to in writing, software
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   You may obtain a copy of the License at
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   import stroom.util.shared.IsStroomConfig;
  *   limitations under the License.
- *
+ *   you may not use this file except in compliance with the License.
  */
 
 package stroom.security.identity.config;
@@ -23,6 +24,7 @@ import stroom.config.common.HasDbConfig;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.validation.ValidRegex;
 import stroom.util.shared.validation.ValidationSeverity;
 
@@ -38,7 +40,7 @@ import javax.validation.constraints.NotNull;
 
 @Singleton
 @JsonPropertyOrder(alphabetic = true)
-public final class IdentityConfig extends AbstractConfig implements HasDbConfig {
+public final class IdentityConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
 
     public static final String PROP_NAME_EMAIL = "email";
     public static final String PROP_NAME_TOKEN = "token";
@@ -66,7 +68,7 @@ public final class IdentityConfig extends AbstractConfig implements HasDbConfig 
     @ReadOnly
     @JsonProperty()
     @JsonPropertyDescription("If true, stroom will use a set of default authentication credentials to allow" +
-            "API calls from stroom-proxy. For test or demonstration purposes only, set to false for production")
+            "API calls from stroom-proxy. For test or demonstration purposes only, leave as false for production")
     public boolean isUseDefaultOpenIdCredentials() {
         return useDefaultOpenIdCredentials;
     }
@@ -147,7 +149,7 @@ public final class IdentityConfig extends AbstractConfig implements HasDbConfig 
         this.failedLoginLockThreshold = failedLoginLockThreshold;
     }
 
-    @Nullable
+    @NotNull
     @JsonProperty(PROP_NAME_TOKEN)
     public TokenConfig getTokenConfig() {
         return tokenConfig;

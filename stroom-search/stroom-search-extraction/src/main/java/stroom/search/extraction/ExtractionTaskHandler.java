@@ -26,7 +26,6 @@ import stroom.pipeline.PipelineStore;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ProcessException;
-import stroom.pipeline.errorhandler.TerminatedException;
 import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
@@ -42,6 +41,7 @@ import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskTerminatedException;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
@@ -112,13 +112,13 @@ class ExtractionTaskHandler {
                                 taskContext.info(() ->
                                         "Extracting " + task.getEventIds().length + " records from stream " + streamId);
 
-                                extract(task);
+                                extract(taskContext, task);
                             }
                         },
                         () -> "ExtractionTaskHandler.exec()"));
     }
 
-    private void extract(final ExtractionTask task) {
+    private void extract(final TaskContext taskContext, final ExtractionTask task) {
         try {
             this.task = task;
 
@@ -140,7 +140,7 @@ class ExtractionTaskHandler {
 
             // Create the parser.
             final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
-            final Pipeline pipeline = pipelineFactory.create(pipelineData);
+            final Pipeline pipeline = pipelineFactory.create(pipelineData, taskContext);
             if (pipeline == null) {
                 throw new ExtractionException("Unable to create parser for pipeline: " + pipelineRef);
             }
@@ -276,7 +276,7 @@ class ExtractionTaskHandler {
                         () -> LogUtil.message("Processing pipeline {}, stream {}",
                                 pipelineRef.getUuid(), source.getMeta().getId()));
 
-            } catch (final TerminatedException e) {
+            } catch (final TaskTerminatedException e) {
                 // Ignore stopped pipeline exceptions as we are meant to get
                 // these when a task is asked to stop prematurely.
             } catch (final RuntimeException e) {

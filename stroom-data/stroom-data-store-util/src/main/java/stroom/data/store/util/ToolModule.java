@@ -26,10 +26,9 @@ import stroom.statistics.mock.MockInternalStatisticsModule;
 import stroom.task.mock.MockTaskModule;
 import stroom.util.db.ForceLegacyMigration;
 import stroom.util.entityevent.EntityEventBus;
-import stroom.util.io.HomeDirProvider;
-import stroom.util.io.HomeDirProviderImpl;
-import stroom.util.io.TempDirProvider;
-import stroom.util.io.TempDirProviderImpl;
+import stroom.util.io.DirProvidersModule;
+import stroom.util.io.PathConfig;
+import stroom.util.io.StroomPathConfig;
 import stroom.util.servlet.MockServletModule;
 
 import com.google.inject.AbstractModule;
@@ -60,8 +59,8 @@ public class ToolModule extends AbstractModule {
         bind(ForceLegacyMigration.class).toInstance(new ForceLegacyMigration() {
         });
 
-        bind(HomeDirProvider.class).to(HomeDirProviderImpl.class);
-        bind(TempDirProvider.class).to(TempDirProviderImpl.class);
+        bind(PathConfig.class).to(StroomPathConfig.class);
+        install(new DirProvidersModule());
     }
 
     @Provides

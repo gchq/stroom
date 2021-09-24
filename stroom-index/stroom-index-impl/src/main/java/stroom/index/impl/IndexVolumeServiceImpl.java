@@ -11,6 +11,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
+import stroom.task.api.TaskContext;
 import stroom.util.AuditUtil;
 import stroom.util.NextNameGenerator;
 import stroom.util.io.FileUtil;
@@ -43,16 +44,19 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable {
     private final SecurityContext securityContext;
     private final NodeInfo nodeInfo;
     private final InternalStatisticsReceiver statisticsReceiver;
+    private final TaskContext taskContext;
 
     @Inject
     IndexVolumeServiceImpl(final IndexVolumeDao indexVolumeDao,
                            final SecurityContext securityContext,
                            final NodeInfo nodeInfo,
-                           final InternalStatisticsReceiver statisticsReceiver) {
+                           final InternalStatisticsReceiver statisticsReceiver,
+                           final TaskContext taskContext) {
         this.indexVolumeDao = indexVolumeDao;
         this.securityContext = securityContext;
         this.nodeInfo = nodeInfo;
         this.statisticsReceiver = statisticsReceiver;
+        this.taskContext = taskContext;
     }
 
     @Override
@@ -65,8 +69,8 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable {
         AuditUtil.stamp(securityContext.getUserId(), indexVolume);
 
         final List<String> names = indexVolumeDao.getAll().stream().map(i -> isNullOrEmpty(i.getNodeName())
-                ? ""
-                : i.getNodeName())
+                        ? ""
+                        : i.getNodeName())
                 .collect(Collectors.toList());
         indexVolume.setNodeName(isNullOrEmpty(indexVolume.getNodeName())
                 ? NextNameGenerator.getNextName(names, "New index volume")
@@ -110,10 +114,12 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable {
 
     @Override
     public void rescan() {
+        taskContext.info(() -> "Updating index volume status");
         final String nodeName = nodeInfo.getThisNodeName();
         final ExpressionOperator expression = ExpressionUtil.equals(IndexVolumeFields.NODE_NAME, nodeName);
         final List<IndexVolume> volumes = find(new ExpressionCriteria(expression)).getValues();
         for (final IndexVolume volume : volumes) {
+            taskContext.info(() -> "Updating index volume status for '" + volume.getPath() + "'");
             updateVolumeState(volume);
 
             // Record some statistics for the use of this volume.

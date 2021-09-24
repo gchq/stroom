@@ -18,6 +18,8 @@
 package stroom.pipeline.refdata.store.offheapstore;
 
 import stroom.bytebuffer.PooledByteBuffer;
+import stroom.lmdb.LmdbEnv;
+import stroom.lmdb.LmdbEnv.WriteTxnWrapper;
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.ProcessingState;
@@ -36,8 +38,6 @@ import stroom.util.shared.Range;
 
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.Striped;
-import org.lmdbjava.Env;
-import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,7 +70,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(OffHeapRefDataLoader.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(OffHeapRefDataLoader.class);
 
-    private Txn<ByteBuffer> writeTxn = null;
+    private WriteTxnWrapper writeTxn = null;
     private Instant txnStartTime = null;
     private final RefDataOffHeapStore refDataOffHeapStore;
     private final Lock refStreamDefReentrantLock;
@@ -81,10 +81,11 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     private final MapDefinitionUIDStore mapDefinitionUIDStore;
     private final ProcessingInfoDb processingInfoDb;
 
-    private final Env<ByteBuffer> lmdbEnvironment;
+    private final LmdbEnv lmdbEnvironment;
     private final RefStreamDefinition refStreamDefinition;
     private final long effectiveTimeMs;
-    private Runnable commitIfRequireFunc = () -> {}; // default position is to not commit mid-load
+    private Runnable commitIfRequireFunc = () -> {
+    }; // default position is to not commit mid-load
 
     private int inputCount = 0;
     private int newEntriesCount = 0;
@@ -119,7 +120,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                          final ValueStore valueStore,
                          final MapDefinitionUIDStore mapDefinitionUIDStore,
                          final ProcessingInfoDb processingInfoDb,
-                         final Env<ByteBuffer> lmdbEnvironment,
+                         final LmdbEnv lmdbEnvironment,
                          final RefStreamDefinition refStreamDefinition,
                          final long effectiveTimeMs) {
 
@@ -144,21 +145,29 @@ public class OffHeapRefDataLoader implements RefDataLoader {
 
         // Get the lock object for this refStreamDefinition
         this.refStreamDefReentrantLock = refStreamDefStripedReentrantLock.get(refStreamDefinition);
-        LAMBDA_LOGGER.logDurationIfDebugEnabled(
-                () -> {
-                    try {
-                        LOGGER.debug("Acquiring lock for {}", refStreamDefinition);
-                        // This will make any other threads trying to load the same refStreamDefinition
-                        // block and wait for us
-                        refStreamDefReentrantLock.lockInterruptibly();
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        throw new RuntimeException(LogUtil.message(
-                                "Acquisition of lock for {} aborted due to thread interruption",
-                                refStreamDefinition));
-                    }
-                },
-                () -> LogUtil.message("Acquiring lock for {}", refStreamDefinition));
+
+        final Instant time1 = Instant.now();
+        try {
+            LOGGER.debug("Acquiring lock for {}", refStreamDefinition);
+            // As this is a striped lock we WILL block/wait on another thread with the same
+            // refStreamDefinition but we MAY also block/wait on another thread with a different
+            // refStreamDefinition depending on the number or stripes and the allocation of stripe
+            // from refStreamDefinition.
+            refStreamDefReentrantLock.lockInterruptibly();
+
+            final Duration timeToAcquireLock = Duration.between(time1, Instant.now());
+            LOGGER.debug("Acquired lock in {} for {}", timeToAcquireLock, refStreamDefinition);
+
+            if (timeToAcquireLock.getSeconds() > 1 && !LOGGER.isDebugEnabled()) {
+                LOGGER.info("Waited for {} to acquired lock for {}",
+                        timeToAcquireLock, refStreamDefinition);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(LogUtil.message(
+                    "Acquisition of lock for {} aborted due to thread interruption",
+                    refStreamDefinition));
+        }
     }
 
     @Override
@@ -190,40 +199,57 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     }
 
     @Override
-    public void completeProcessing() {
-        LOGGER.trace("Completing processing (put count {})", putsCounter);
-        checkCurrentState(LoaderState.INITIALISED);
-        beginTxnIfRequired();
+    public void completeProcessing(final ProcessingState processingState) {
+        LOGGER.trace("Completing processing with state {} (put count {})", processingState, putsCounter);
 
-        // Set the processing info record to COMPLETE and update the last update time
-        processingInfoDb.updateProcessingState(
-                writeTxn, refStreamDefinition, ProcessingState.COMPLETE, true);
+        if (!VALID_COMPLETION_STATES.contains(processingState)) {
+            throw new RuntimeException(LogUtil.message("Invalid processing state {}, should be one of {}",
+                    processingState,
+                    VALID_COMPLETION_STATES));
+        }
 
-        final Duration loadDuration = Duration.between(startTime, Instant.now());
+        if (LoaderState.COMPLETED.equals(currentLoaderState)) {
+            LOGGER.debug("Loader already completed, doing nothing");
+        } else {
+            checkCurrentState(LoaderState.INITIALISED);
+            beginTxnIfRequired();
 
-        final String mapNames = mapDefinitionToUIDMap.keySet()
-                .stream()
-                .map(MapDefinition::getMapName)
-                .collect(Collectors.joining(", "));
+            // Set the processing info record to processingState and update the last update time
+            processingInfoDb.updateProcessingState(
+                    writeTxn.getTxn(),
+                    refStreamDefinition,
+                    processingState,
+                    true);
 
-        final String pipeline = refStreamDefinition.getPipelineDocRef().getName() != null
-                ? refStreamDefinition.getPipelineDocRef().getName()
-                : refStreamDefinition.getPipelineDocRef().getUuid();
+            // Need to commit the state change
+            commit();
 
-        LOGGER.info("Processed {} entries (" +
-                        "new: {}, dup-key value updated: {}, dup-key value identical: {}, dup-key ignored: {}) " +
-                        "with map name(s): [{}], stream: {}, pipeline: {} in {}",
-                inputCount,
-                newEntriesCount,
-                replacedEntriesCount,
-                unchangedEntriesCount,
-                ignoredCount,
-                mapNames,
-                refStreamDefinition.getStreamId(),
-                pipeline,
-                loadDuration);
+            final Duration loadDuration = Duration.between(startTime, Instant.now());
 
-        currentLoaderState = LoaderState.COMPLETED;
+            final String mapNames = mapDefinitionToUIDMap.keySet()
+                    .stream()
+                    .map(MapDefinition::getMapName)
+                    .collect(Collectors.joining(", "));
+
+            final String pipeline = refStreamDefinition.getPipelineDocRef().getName() != null
+                    ? refStreamDefinition.getPipelineDocRef().getName()
+                    : refStreamDefinition.getPipelineDocRef().getUuid();
+
+            LOGGER.info("Processed {} entries (" +
+                            "new: {}, dup-key value updated: {}, dup-key value identical: {}, dup-key ignored: {}) " +
+                            "with map name(s): [{}], stream: {}, pipeline: {} in {}",
+                    inputCount,
+                    newEntriesCount,
+                    replacedEntriesCount,
+                    unchangedEntriesCount,
+                    ignoredCount,
+                    mapNames,
+                    refStreamDefinition.getStreamId(),
+                    pipeline,
+                    loadDuration);
+
+            currentLoaderState = LoaderState.COMPLETED;
+        }
     }
 
     @Override
@@ -267,7 +293,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         keyValueKeyBuffer.clear();
         keyValueStoreDb.serializeKey(keyValueKeyBuffer, keyValueStoreKey);
         final Optional<ByteBuffer> optCurrValueStoreKeyBuffer = keyValueStoreDb.getAsBytes(
-                writeTxn, keyValueKeyBuffer);
+                writeTxn.getTxn(), keyValueKeyBuffer);
 
         // see if we have a value already for this key
         // if overwrite == false, we can just drop out here
@@ -286,7 +312,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                 final ByteBuffer currValueStoreKeyBuffer = optCurrValueStoreKeyBuffer.get();
 
                 boolean areValuesEqual = valueStore.areValuesEqual(
-                        writeTxn, currValueStoreKeyBuffer, refDataValue);
+                        writeTxn.getTxn(), currValueStoreKeyBuffer, refDataValue);
                 if (areValuesEqual) {
                     // value is the same as the existing value so nothing to do
                     // and no ref counts to change
@@ -296,7 +322,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                 } else {
                     // value is different so we need to de-reference the old one
                     // and getOrCreate the new one
-                    valueStore.deReferenceOrDeleteValue(writeTxn, currValueStoreKeyBuffer);
+                    valueStore.deReferenceOrDeleteValue(writeTxn.getTxn(), currValueStoreKeyBuffer);
 
                     putOutcome = createKeyValue(refDataValue, keyValueKeyBuffer);
                     replacedEntriesCount++;
@@ -341,7 +367,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         rangeStoreDb.serializeKey(rangeValueKeyBuffer, rangeStoreKey);
 
         final Optional<ByteBuffer> optCurrValueStoreKeyBuffer = rangeStoreDb.getAsBytes(
-                writeTxn, rangeValueKeyBuffer);
+                writeTxn.getTxn(), rangeValueKeyBuffer);
 
         final PutOutcome putOutcome;
         if (optCurrValueStoreKeyBuffer.isPresent()) {
@@ -357,7 +383,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
 //                    ValueStoreKey currentValueStoreKey = optCurrValueStoreKeyBuffer.get();
 
                 boolean areValuesEqual = valueStore.areValuesEqual(
-                        writeTxn, currValueStoreKeyBuffer, refDataValue);
+                        writeTxn.getTxn(), currValueStoreKeyBuffer, refDataValue);
                 if (areValuesEqual) {
                     // value is the same as the existing value so nothing to do
                     // and no ref counts to change
@@ -367,7 +393,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                 } else {
                     // value is different so we need to de-reference the old one
                     // and getOrCreate the new one
-                    valueStore.deReferenceOrDeleteValue(writeTxn, currValueStoreKeyBuffer);
+                    valueStore.deReferenceOrDeleteValue(writeTxn.getTxn(), currValueStoreKeyBuffer);
 
 //                        final ByteBuffer valueStoreKeyBuffer = valueStoreDb.getOrCreate(
 //                                writeTxn, refDataValue, valueStorePooledKeyBuffer, overwriteExisting);
@@ -391,23 +417,23 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     private PutOutcome createKeyValue(final RefDataValue refDataValue, final ByteBuffer keyValueKeyBuffer) {
 
         final ByteBuffer valueStoreKeyBuffer = valueStore.getOrCreateKey(
-                writeTxn, valueStorePooledKeyBuffer, refDataValue, overwriteExisting);
+                writeTxn.getTxn(), valueStorePooledKeyBuffer, refDataValue, overwriteExisting);
 
         // assuming it is cheaper to just try the put and let LMDB handle duplicates rather than
         // do a get then optional put.
         return keyValueStoreDb.put(
-                writeTxn, keyValueKeyBuffer, valueStoreKeyBuffer, overwriteExisting);
+                writeTxn.getTxn(), keyValueKeyBuffer, valueStoreKeyBuffer, overwriteExisting);
     }
 
     private PutOutcome createRangeValue(final RefDataValue refDataValue, final ByteBuffer rangeValueKeyBuffer) {
 
         final ByteBuffer valueStoreKeyBuffer = valueStore.getOrCreateKey(
-                writeTxn, valueStorePooledKeyBuffer, refDataValue, overwriteExisting);
+                writeTxn.getTxn(), valueStorePooledKeyBuffer, refDataValue, overwriteExisting);
 
         // assuming it is cheaper to just try the put and let LMDB handle duplicates rather than
         // do a get then optional put.
         return rangeStoreDb.put(
-                writeTxn, rangeValueKeyBuffer, valueStoreKeyBuffer, overwriteExisting);
+                writeTxn.getTxn(), rangeValueKeyBuffer, valueStoreKeyBuffer, overwriteExisting);
     }
 
 
@@ -419,18 +445,26 @@ public class OffHeapRefDataLoader implements RefDataLoader {
             LOGGER.warn("Reference data loader for {} was initialised but then closed before being completed",
                     refStreamDefinition);
         }
-        if (writeTxn != null) {
-            LOGGER.trace("Committing transaction (put count {})", putsCounter);
-            writeTxn.commit();
-            writeTxn.close();
+
+        try {
+            commit();
+        } catch (Exception e) {
+            LOGGER.error("Error committing txn: {}", e.getMessage(), e);
         }
-        // release our pooled buffers back to the pool
-        pooledByteBuffers.forEach(PooledByteBuffer::release);
+
+        try {
+            // release our pooled buffers back to the pool
+            pooledByteBuffers.forEach(PooledByteBuffer::release);
+        } catch (Exception e) {
+            LOGGER.error("Error releasing buffers: {}", e.getMessage(), e);
+        }
 
         currentLoaderState = LoaderState.CLOSED;
 
-        LOGGER.debug("Releasing semaphore permit for {}", refStreamDefinition);
-        refStreamDefReentrantLock.unlock();
+        if (refStreamDefReentrantLock != null) {
+            LOGGER.debug("Releasing lock for {}", refStreamDefinition);
+            refStreamDefReentrantLock.unlock();
+        }
 
         // uncomment this for development testing, handy for seeing what is in the stores post load
 //            refDataOffHeapStore.logAllContents();
@@ -441,7 +475,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
             throw new RuntimeException("Transaction is already open");
         }
         LOGGER.trace("Beginning write transaction");
-        writeTxn = lmdbEnvironment.txnWrite();
+        writeTxn = lmdbEnvironment.openWriteTxn();
         if (LOGGER.isDebugEnabled()) {
             txnStartTime = Instant.now();
         }
@@ -450,7 +484,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     private void commit() {
         if (writeTxn != null) {
             try {
-                LOGGER.trace("Committing (put count {})", putsCounter);
+                LOGGER.trace("Committing and closing txn (put count {})", putsCounter);
                 writeTxn.commit();
                 writeTxn.close();
                 writeTxn = null;
@@ -462,7 +496,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                     txnStartTime = null;
                 }
             } catch (Exception e) {
-                throw new RuntimeException("Error committing write transaction", e);
+                throw new RuntimeException("Error committing and closing write transaction", e);
             }
         }
     }
@@ -487,7 +521,10 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                 // cursor operations will happen after this and because we want to cache it we will
                 // make a copy of it using a buffer from the pool. The cache only lasts for the life
                 // of the load and will only have a couple of UIDs in it so should be fine to hold on to them.
-                final UID newUid = mapDefinitionUIDStore.getOrCreateUid(writeTxn, mapDef, temporaryUidPooledBuffer);
+                final UID newUid = mapDefinitionUIDStore.getOrCreateUid(
+                        writeTxn.getTxn(),
+                        mapDef,
+                        temporaryUidPooledBuffer);
 
                 // Now clone it into a different buffer and wrap in a new UID instance
                 final UID newUidClone = newUid.cloneToBuffer(cachedUidPooledBuffer.getByteBuffer());

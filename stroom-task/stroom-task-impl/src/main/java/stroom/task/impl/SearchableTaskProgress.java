@@ -138,7 +138,7 @@ class SearchableTaskProgress implements Searchable {
                 // Only send the event to remote nodes and not this one.
                 // Send the entity event.
                 targetNodes.forEach(nodeName -> {
-                    final Supplier<TaskProgressResponse> supplier = taskContextFactory.contextResult(taskContext,
+                    final Supplier<TaskProgressResponse> supplier = taskContextFactory.childContextResult(taskContext,
                             "Getting progress from node '" + nodeName + "'",
                             tc ->
                                     taskResource.list(nodeName));

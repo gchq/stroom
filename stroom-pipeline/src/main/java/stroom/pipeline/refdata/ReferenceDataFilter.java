@@ -17,7 +17,6 @@
 package stroom.pipeline.refdata;
 
 import stroom.bytebuffer.PooledByteBufferOutputStream;
-import stroom.hadoopcommonshaded.org.apache.commons.collections.map.HashedMap;
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -45,12 +44,12 @@ import org.xml.sax.SAXException;
 
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import javax.inject.Inject;
@@ -147,6 +146,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     private final PooledByteBufferOutputStream pooledByteBufferOutputStream;
     private final CharBuffer contentBuffer = new CharBuffer(20);
 
+    private RefStreamDefinition refStreamDefinition;
     private String mapName;
     private String key;
     private boolean insideValueElement;
@@ -162,9 +162,9 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     // Track all prefix=>uri mappings that have been applied to the current scope of the fastInfoset fragment
     private Map<String, String> appliedPrefixToUriMap = new HashMap<>();
 
-    private Map<Integer, List<String>> manuallyAddedLevelToPrefixMap = new HashedMap();
+    private Map<Integer, Set<String>> manuallyAddedLevelToPrefixMap = new HashMap<>();
 
-    private int level = 0;
+    private int depthLevel = 0;
 
     private boolean insideElement = false;
     private boolean isFastInfosetDocStarted = false;
@@ -212,12 +212,16 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                     "RefDataLoader is missing",
                     null);
         }
-        PutOutcome putOutcome = refDataLoaderHolder.getRefDataLoader().initialise(overrideExistingValues);
+
+        refStreamDefinition = refDataLoaderHolder.getRefDataLoader()
+                .getRefStreamDefinition();
+
+        LOGGER.debug("StartStream called, refStreamDefinition: {}", refStreamDefinition);
+
+        final PutOutcome putOutcome = refDataLoaderHolder.getRefDataLoader()
+                .initialise(overrideExistingValues);
 
         if (!putOutcome.isSuccess()) {
-            RefStreamDefinition refStreamDefinition = refDataLoaderHolder.getRefDataLoader()
-                    .getRefStreamDefinition();
-
             errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
                     LogUtil.message(
                             "A processing info entry already exists for this reference pipeline {}, " +
@@ -240,7 +244,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                     "RefDataLoader is missing",
                     null);
         }
-        refDataLoaderHolder.getRefDataLoader().completeProcessing();
+//        refDataLoaderHolder.getRefDataLoader().completeProcessing();
     }
 
     @Override
@@ -308,11 +312,21 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                              final String qName,
                              final Attributes atts)
             throws SAXException {
-        level++;
+
+        // For slowing down a load in testing
+//        try {
+//            Thread.sleep(2_000);
+//            LOGGER.info("Finished sleep");
+//        } catch (InterruptedException e) {
+//            LOGGER.info("==================INTERRUPTED=======================");
+//            Thread.currentThread().interrupt();
+//        }
+
+        depthLevel++;
         insideElement = true;
         contentBuffer.clear();
 
-        LOGGER.trace("startElement {} {} {}, level:{}", uri, localName, qName, level);
+        LOGGER.trace("startElement {} {} {}, level:{}", uri, localName, qName, depthLevel);
 
         String newQName = qName;
         if (VALUE_ELEMENT.equalsIgnoreCase(localName)) {
@@ -407,7 +421,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
      */
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
-        LOGGER.trace("endElement {} {} {} level:{}", uri, localName, qName, level);
+        LOGGER.trace("endElement {} {} {} level:{}", uri, localName, qName, depthLevel);
 
         insideElement = false;
         if (VALUE_ELEMENT.equalsIgnoreCase(localName)) {
@@ -464,15 +478,30 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         contentBuffer.clear();
 
         // Manually call endPrefixMapping for those prefixes we added
-        final List<String> manuallyAddedPrefixes = manuallyAddedLevelToPrefixMap.getOrDefault(level,
-                Collections.emptyList());
-        for (final String manuallyAddedPrefix : manuallyAddedPrefixes) {
-            fastInfosetEndPrefixMapping(manuallyAddedPrefix);
+        final Set<String> manuallyAddedPrefixes = manuallyAddedLevelToPrefixMap.getOrDefault(
+                depthLevel,
+                Collections.emptySet());
+
+        if (!manuallyAddedPrefixes.isEmpty()) {
+            LOGGER.trace(() ->
+                    LogUtil.message("Ending {} manually added prefixes at level {}",
+                            manuallyAddedPrefixes.size(),
+                            depthLevel));
+
+            // Can't use .forEach() due to the SaxException
+            for (final String manuallyAddedPrefix : manuallyAddedPrefixes) {
+                fastInfosetEndPrefixMapping(manuallyAddedPrefix);
+            }
+
+            // We are leaving this level so can now delete the prefix mappings for this level
+            manuallyAddedLevelToPrefixMap.get(depthLevel)
+                    .clear();
         }
 
         super.endElement(uri, localName, qName);
 
-        level--;
+        // Leaving this level so
+        depthLevel--;
     }
 
 
@@ -643,7 +672,9 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
 
     @Override
     public void endProcessing() {
-        LOGGER.info("Processed {} XML ref data entries", valueCount);
+        LOGGER.info("Processed {} XML ref data entries for ref stream {}",
+                valueCount,
+                refStreamDefinition);
         pooledByteBufferOutputStream.release();
         super.endProcessing();
     }
@@ -693,7 +724,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
 
     private void fastInfosetManuallyAddPrefixMapping(final String prefix, final String uri) throws SAXException {
         LOGGER.trace("Manually starting prefix mapping {}:{}", prefix, uri);
-        manuallyAddedLevelToPrefixMap.computeIfAbsent(level, key -> new ArrayList<>())
+        manuallyAddedLevelToPrefixMap.computeIfAbsent(depthLevel, key -> new HashSet<>())
                 .add(prefix);
         fastInfosetStartPrefixMapping(prefix, uri);
     }
@@ -742,7 +773,8 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     }
 
     private boolean hasUriBeenApplied(final String prefix, final String uri) {
-        return appliedPrefixToUriMap.entrySet().stream()
+        return appliedPrefixToUriMap.entrySet()
+                .stream()
                 .anyMatch(prefixToUriEntry ->
                         Objects.equals(prefixToUriEntry.getKey(), prefix)
                                 && Objects.equals(prefixToUriEntry.getValue(), uri));

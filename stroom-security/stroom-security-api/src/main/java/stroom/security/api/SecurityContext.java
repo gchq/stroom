@@ -17,6 +17,7 @@
 package stroom.security.api;
 
 import java.util.function.Supplier;
+import javax.ws.rs.client.Invocation;
 
 public interface SecurityContext {
 
@@ -101,6 +102,16 @@ public interface SecurityContext {
     void asProcessingUser(Runnable runnable);
 
     /**
+     * Run the supplied code as an admin user.
+     */
+    <T> T asAdminUserResult(Supplier<T> supplier);
+
+    /**
+     * Run the supplied code as an admin user.
+     */
+    void asAdminUser(Runnable runnable);
+
+    /**
      * Allow the current user to read items that they only have 'Use' permission on.
      */
     <T> T useAsReadResult(Supplier<T> supplier);
@@ -141,4 +152,6 @@ public interface SecurityContext {
      * insecurely even if it is often secured when executed from other entry points.
      */
     <T> T insecureResult(Supplier<T> supplier);
+
+    void addAuthorisationHeader(final Invocation.Builder builder);
 }

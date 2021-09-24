@@ -20,7 +20,6 @@ package stroom.pipeline.refdata.store.offheapstore.serdes;
 import stroom.lmdb.AbstractKryoSerde;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
-import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -28,8 +27,6 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.nio.ByteBuffer;
 
 public class MapDefinitionSerde extends AbstractKryoSerde<MapDefinition> {
 
@@ -64,11 +61,11 @@ public class MapDefinitionSerde extends AbstractKryoSerde<MapDefinition> {
         return new MapDefinition(refStreamDefinition, mapName);
     }
 
-    public void serializeWithoutKeyPart(final ByteBuffer byteBuffer, final MapDefinition mapDefinition) {
-
-        serialize(byteBuffer, mapDefinition);
-
-        // set the limit to just after the UID part
-        byteBuffer.limit(UID.UID_ARRAY_LENGTH);
-    }
+//    public void serializeWithoutKeyPart(final ByteBuffer byteBuffer, final MapDefinition mapDefinition) {
+//
+//        serialize(byteBuffer, mapDefinition);
+//
+//        // set the limit to just after the UID part
+//        byteBuffer.limit(UID.UID_ARRAY_LENGTH);
+//    }
 }

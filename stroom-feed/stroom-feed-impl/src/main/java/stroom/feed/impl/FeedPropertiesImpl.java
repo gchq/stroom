@@ -27,6 +27,7 @@ public class FeedPropertiesImpl implements FeedProperties {
         this.feedConfig = feedConfig;
     }
 
+    @Override
     public String getDisplayClassification(final String feedName) {
         final Optional<FeedDoc> optional = feedDocCache.get(feedName);
         final String classification = optional
@@ -44,6 +45,7 @@ public class FeedPropertiesImpl implements FeedProperties {
      *                            or if not applicable
      * @return The applicable encoding
      */
+    @Override
     public String getEncoding(final String feedName,
                               final String streamTypeName,
                               final String childStreamTypeName) {
@@ -62,11 +64,15 @@ public class FeedPropertiesImpl implements FeedProperties {
                         return Optional.empty();
                     }
                 })
-                .filter(this::isEncodingSupported)
+                .filter(encoding ->
+                        isEncodingSupported(encoding, feedName, streamTypeName, childStreamTypeName))
                 .orElse(StreamUtil.DEFAULT_CHARSET_NAME);
     }
 
-    private boolean isEncodingSupported(final String encoding) {
+    private boolean isEncodingSupported(final String encoding,
+                                        final String feedName,
+                                        final String streamTypeName,
+                                        final String childStreamTypeName) {
         boolean isSupported = false;
         try {
             isSupported = Charset.isSupported(encoding);
@@ -74,8 +80,14 @@ public class FeedPropertiesImpl implements FeedProperties {
             // Ignore.
         }
         if (!isSupported) {
-            LOGGER.error("Unsupported charset '" + encoding
-                    + "'. Using default '" + StreamUtil.DEFAULT_CHARSET_NAME + "'.");
+            LOGGER.error("Unsupported charset '{}' for " +
+                            "(feed: {}, streamType: {}, childStreamType: {}). " +
+                            "Using default '{}'",
+                    encoding,
+                    feedName,
+                    streamTypeName,
+                    childStreamTypeName,
+                    StreamUtil.DEFAULT_CHARSET_NAME);
         }
         return isSupported;
     }

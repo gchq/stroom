@@ -2,6 +2,7 @@ package stroom.util.xml;
 
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -10,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import javax.inject.Singleton;
 
 @Singleton
-public class ParserConfig extends AbstractConfig {
+public class ParserConfig extends AbstractConfig implements IsStroomConfig {
 
     private CacheConfig cacheConfig = CacheConfig.builder()
             .maximumSize(1000L)

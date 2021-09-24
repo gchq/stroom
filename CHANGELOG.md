@@ -7,6 +7,159 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2447** : Correctly offset displayed date/time values by the configured user timezone.
+
+* Issue **#2457** : Display a tooltip when hovering the mouse over a grid column cell.
+
+* Issue **#2382** : Improve error message for invalid feed encodings.
+
+* Issue **#2387** : Fix reference data load/lookup failure handling.
+
+* Issue **#2422** : Change ref lookups to only do a lookup against a ref feeds that are known to contian the map being looked up against.
+
+* Issue **#2411** : Remove 10,000 limit on dashboard search of ref store.
+
+* Issue **#2389** : Add an API method for purging a single reference data stream.
+
+* Issue **#2379** : Change ref data lookups to truncate last access time to hourly.
+
+* Uplift Dropwizard from 1.3.14 to 1.3.29.
+
+* Issue **#2424** : Stop session creation for rest calls. Remove unused SessionMap class.
+
+* Change debug summary logging in Data Delete job to info level.
+
+* Issue **#2402** : Improved logging for error caused by invalid meta filter values.
+
+* Issue **#2404** : Added debug to help diagnose issue.
+
+* Issue **#2423** : Added error logging and configuration to handle buffer overflows when dealing with large search result values.
+
+* Issue **#2410** : Fixes for dashboard child selectors like `first()` and `last()`.
+
+* Issue **#2417** : Bad regex filter value no longer logged unnecessarily.
+
+* Issue **#2418** : LMDB environment is now only closed when the search results are no longer needed.
+
+* Issue **#2419** : Conditional formatting errors are now returned to the UI.
+
+* Issue **#2405, #2407** : Errors caused by a thread interrupt when viewing a stream are no longer logged.
+
+* Issue **#2406** : Volume status update is now performed synchronously.
+
+* Issue **#2401, #2408, #2409** : Processing tasks no longer terminate by interrupting threads so error streams can now be written correctly.
+
+* Issue **#2398** : Fix to clear interrupt state for threads used by terminated tasks.
+
+* Issue **#2396** : Add `stroom:pointIsInsideXYPolygon` XSLT function.
+
+* Allow HTTP request headers to be customized in HTTPAppender.
+
+* Issue **#2392** : Fix for token type to only allow `api`.
+
+
+## [v7.1-beta.6] - 2021-09-01
+
+* Issue **#2277** : Add processing filter clone function.
+
+* Issue **#2390** : Fix NPE thrown during proxy aggregation.
+
+
+## [v7.1-beta.5] - 2021-08-31
+
+* Issue **#2380** : Fix _Attribute Value Data Retention_ job blocking shutdown.
+
+* Issue **#2379** : Change reference data store LMDB to use MDB_NOTLS flag to not tie readers to threads as we typically use thread pools.
+
+* Fix problem with ref data prefix mapping code increasing loop iterations on each element/record.
+
+* Add better logging of ref streams waiting for a lock to load.
+
+* Stop ref streams that are already loaded from calling start/stop processing.
+
+* Add method to ref data store API to list ref stream processing info.
+
+* Improve the ref data store API to allow filtering of the ref entries.
+
+* Change default number of ref loader lock stripes from 100 to 2048 and add it to config.
+
+* Issue **#2371** : Change search LMDB to use MDB_NOTLS flag to not tie readers to threads.
+
+* Issue **#2371** : Fix max readers error not being shown on dashboard.
+
+* Issue **#2370** : Added processor node info to output meta data.
+
+* Issue **#2349** : New dashboard tables will now link to the most recently added query by default.
+
+* Issue **#2351** : Improved error popup text for server responses.
+
+* Issue **#2368** : Fixed server task nesting.
+
+* Issue **#2369** : Fix missing SQL join when reprocessing all streams matching a filter.
+
+* Issue **#2369** : Fix error when searching meta store from a dashboard with a meta key in the query.
+
+* Change explorer root node creation to happen under cluster lock.
+
+
+## [v7.1-beta.4] - 2021-08-23
+
+* Add `enableJobsOnBootstrap` to the docker distribution config.yml to allow it to be overridden in test stacks.
+
+* Fix broken help links on jobs screen.
+
+* Issue **#2367** : Fix for job node creation.
+
+* Issue **#2365** : Fix to reduce memory used by `BlockGZIPInput`.
+
+* Issue **#2366** : Fix NPE caused by visualisations that do not define maxValues.
+
+* Issue **#2220** : OpenID connect web tokens can now be refreshed to maintain validity.
+
+* Included Leaflet.draw Javascript plugin within UI bundle.
+
+* Issue **#2357** : Remove dropwizard logger configuration entries that have default values.
+
+* Issue **#2350** : Fix distribution start script so it works with a different stroom home dir.
+
+* Issue **#1469** : Add hot loading of config to proxy.
+
+* Change proxy and stroom config validation to cope with relative paths and `~`.
+
+* Issue **#2353** : Swallow NoSuchFileException in config monitor.
+
+* Issue **#2355** : Jobs are no longer enabled by default on bootstrap.
+
+* Issue **#2358** : Changed default stroom home and stroom temp config paths to be null by default so they are resolved relative to the jar or use java tmp respectively.
+
+* Issue **#2354** : Old job node records associated with old jobs are now removed for all nodes regardless of what node is performing the job bootstrap activity.
+
+* Issue **#2343** : The OIDC back channel `redirect_uri` now uses the same URI stored when making the front channel request. 
+
+* Issue **gchq/stroom-resources#104** : Expose `stroom.ui.helpUrl` in the config.yml so the docs served by nginx can be accessed.
+
+* Issue **#2331** : Remove unused config properties `stroom.ui.url.(apiKeys|changepassword|users)`.
+
+Improve error handling during reference data initialisation.
+
+* Improve exception handling when node name is not configured.
+
+* Fixed issue where annotation menu button did not show when existing annotation was selected.
+
+* Fix problem with merging DB connection configs when values not supplied.
+
+* Make relative proxy file paths be relative to configured proxy home directory.
+
+* Make proxy logger file paths support `~` and relative paths be relative to proxy home.
+
+* Remove redundant items from stroom and proxy distribution config yaml files.
+
+* Rename `jerseyClient` key in proxy config.yml to `restClient`.
+
+* Add `remotecertexpiry` to the default config value for `proxyConfig.logStream.metaKeys`.
+
+* Issue **#2335** : Added CLI command `create_api_key` to create an API key for a specified user.
+
 * Added layout density user preference.
 
 * Issue **#2288** : Added export content menu item.
@@ -3508,12 +3661,13 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.3...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.1-beta.6...HEAD
+[v7.1-beta.6]: https://github.com/gchq/stroom/compare/v7.1-beta.5...v7.1-beta.6
+[v7.1-beta.5]: https://github.com/gchq/stroom/compare/v7.1-beta.4...v7.1-beta.5
+[v7.1-beta.4]: https://github.com/gchq/stroom/compare/v7.1-beta.3...v7.1-beta.4
 [v7.1-beta.3]: https://github.com/gchq/stroom/compare/v7.1-beta.2..v7.1-beta.3
 [v7.1-beta.2]: https://github.com/gchq/stroom/compare/v7.1-beta.1...v7.1-beta.2
 [v7.1-beta.1]: https://github.com/gchq/stroom/compare/v7.0-beta.104...v7.1-beta.1
-[v7.0-beta.106]: https://github.com/gchq/stroom/compare/v7.0-beta.105...v7.0-beta.106
-[v7.0-beta.105]: https://github.com/gchq/stroom/compare/v7.0-beta.104...v7.0-beta.105
 [v7.0-beta.104]: https://github.com/gchq/stroom/compare/v7.0-beta.103...v7.0-beta.104
 [v7.0-beta.103]: https://github.com/gchq/stroom/compare/v7.0-beta.102...v7.0-beta.103
 [v7.0-beta.102]: https://github.com/gchq/stroom/compare/v7.0-beta.101...v7.0-beta.102

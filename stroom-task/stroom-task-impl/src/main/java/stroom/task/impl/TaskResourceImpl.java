@@ -32,7 +32,6 @@ import stroom.util.servlet.SessionIdProvider;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.ResultPage;
 
-import event.logging.EventAction;
 import event.logging.ProcessAction;
 import event.logging.ProcessEventAction;
 
@@ -116,8 +115,7 @@ class TaskResourceImpl implements TaskResource {
                                 nodeName),
                         () ->
                                 taskManagerProvider.get().terminate(
-                                        request.getCriteria(),
-                                        request.isKill()),
+                                        request.getCriteria()),
                         builder ->
                                 builder.post(Entity.json(request)));
 

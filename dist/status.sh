@@ -19,11 +19,11 @@ show_status(){
   local -r NOT_RUNNING_MESSAGE="${APP_NAME} is not running"
   local -r RUNNING_MESSAGE="${APP_NAME} is running under PID"
 
-  if [ ! -f "${stroom_pid_file}" ]; then # If there is no pid file
+  if [ ! -f "${STROOM_PID_FILE}" ]; then # If there is no pid file
     info "${NOT_RUNNING_MESSAGE}"
   else # If there is a pid file we need to deal with it
     local stroom_pid
-    stroom_pid="$(cat "${stroom_pid_file}")";
+    stroom_pid="$(cat "${STROOM_PID_FILE}")";
 
     if [ "${stroom_pid}" = '' ]; then # If the pid file is empty for some reason
       info "${NOT_RUNNING_MESSAGE}"
@@ -48,10 +48,7 @@ main() {
   # shellcheck disable=SC1091
   source "${script_dir}/config/scripts.env"
   # shellcheck disable=SC1091
-  source "${script_dir}/${PATH_TO_UTIL_SCRIPT}"
-
-  # shellcheck disable=SC2153
-  local -r stroom_pid_file="${script_dir}/${STROOM_PID_FILE}"
+  source "${PATH_TO_UTIL_SCRIPT}"
 
   while getopts ":mh" arg; do
     # shellcheck disable=SC2034

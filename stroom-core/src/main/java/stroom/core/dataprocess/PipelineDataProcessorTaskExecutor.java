@@ -252,6 +252,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
 
             // Update the meta data for all output streams to use.
             metaData.put("Source Stream", String.valueOf(meta.getId()));
+            metaData.put("Processing Node", nodeInfo.getThisNodeName());
 
             // Set the search id to be the id of the stream processor filter.
             // Only do this where the task has specific data ranges that need extracting as this is only the case
@@ -295,8 +296,8 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
 
             // Process the streams.
             final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
-            final Pipeline pipeline = pipelineFactory.create(pipelineData);
-            processNestedStreams(pipeline, meta, streamSource);
+            final Pipeline pipeline = pipelineFactory.create(pipelineData, taskContext);
+            processNestedStreams(pipeline, meta, streamSource, taskContext);
 
             final String finishedInfo;
             //Calling isSuperceded() now always ensures that it is called, even in cases when there is no output.
@@ -371,7 +372,8 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
      */
     private void processNestedStreams(final Pipeline pipeline,
                                       final Meta meta,
-                                      final Source source) {
+                                      final Source source,
+                                      final TaskContext taskContext) {
         boolean startedProcessing = false;
 
         // Get the stream providers.
@@ -384,7 +386,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
             // Loop over the stream boundaries and process each
             // sequentially.
             final long count = source.count();
-            for (long index = 0; index < count && !Thread.currentThread().isInterrupted(); index++) {
+            for (long index = 0; index < count && !taskContext.isTerminated(); index++) {
                 try (final InputStreamProvider inputStreamProvider = source.get(index)) {
                     InputStream inputStream;
 

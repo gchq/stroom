@@ -1,12 +1,10 @@
 package stroom.security.identity.openid;
 
 import stroom.security.openid.api.OpenId;
-import stroom.security.openid.api.TokenRequest;
 import stroom.security.openid.api.TokenResponse;
 import stroom.util.shared.RestResource;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.List;
@@ -23,6 +21,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 
 @Singleton
 @Tag(name = OpenIdResource.AUTHENTICATION_TAG)
@@ -50,11 +49,12 @@ public interface OpenIdResource extends RestResource {
             @QueryParam(OpenId.PROMPT) @Nullable String prompt);
 
     @Operation(
-            summary = "Get a token from an access code",
+            summary = "Get a token from an access code or refresh token",
             operationId = "openIdToken")
     @POST
     @Path("token")
-    TokenResponse token(@Parameter(description = "tokenRequest", required = true) TokenRequest tokenRequest);
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    TokenResponse token(MultivaluedMap<String, String> formParams);
 
     @Operation(
             summary = "Provides access to this service's current public key. " +

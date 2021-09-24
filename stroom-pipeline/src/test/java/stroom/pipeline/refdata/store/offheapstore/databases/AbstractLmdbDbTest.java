@@ -17,38 +17,50 @@
 
 package stroom.pipeline.refdata.store.offheapstore.databases;
 
+import stroom.lmdb.LmdbEnv;
+import stroom.lmdb.LmdbEnvFactory;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.ByteSize;
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathCreator;
 import stroom.util.shared.ModelStringUtil;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.lmdbjava.Env;
+import org.lmdbjava.EnvFlags;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 
 public abstract class AbstractLmdbDbTest extends StroomUnitTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractLmdbDbTest.class);
     private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(2_000);
-    protected Env<ByteBuffer> lmdbEnv = null;
+    protected LmdbEnv lmdbEnv = null;
     private Path dbDir = null;
 
     @BeforeEach
     final void createEnv() throws IOException {
         dbDir = Files.createTempDirectory("stroom");
-        LOGGER.info("Creating LMDB environment with maxSize: {}, dbDir {}",
-                getMaxSizeBytes(), dbDir.toAbsolutePath().toString());
+        final EnvFlags[] envFlags = new EnvFlags[]{EnvFlags.MDB_NOTLS};
+        LOGGER.info("Creating LMDB environment with maxSize: {}, dbDir {}, envFlags {}",
+                getMaxSizeBytes(),
+                dbDir.toAbsolutePath(),
+                Arrays.toString(envFlags));
 
-        lmdbEnv = Env.create()
-                .setMapSize(getMaxSizeBytes().getBytes())
-                .setMaxDbs(10)
-                .open(dbDir.toFile());
+        final PathCreator pathCreator = new PathCreator(() -> dbDir, () -> dbDir);
+
+        lmdbEnv = new LmdbEnvFactory(pathCreator)
+                .builder(dbDir)
+                .withMapSize(getMaxSizeBytes())
+                .withMaxDbCount(10)
+                .addEnvFlag(EnvFlags.MDB_NOTLS)
+                .makeWritersBlockReaders()
+                .build();
     }
 
     @AfterEach

@@ -17,7 +17,6 @@
 package stroom.security.impl;
 
 import stroom.security.api.DocumentPermissionService;
-import stroom.security.api.TokenVerifier;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.impl.event.PermissionChangeEventLifecycleModule;
 import stroom.security.impl.event.PermissionChangeEventModule;
@@ -32,8 +31,6 @@ import stroom.util.shared.Clearable;
 import com.google.inject.AbstractModule;
 import org.apache.http.impl.client.CloseableHttpClient;
 
-import javax.servlet.http.HttpSessionListener;
-
 public class SecurityModule extends AbstractModule {
 
     private static final String MATCH_ALL_PATHS = "/*";
@@ -46,8 +43,7 @@ public class SecurityModule extends AbstractModule {
         bind(UserAppPermissionService.class).to(UserAppPermissionServiceImpl.class);
         bind(DocumentPermissionService.class).to(DocumentPermissionServiceImpl.class);
         bind(UserService.class).to(UserServiceImpl.class);
-        bind(TokenVerifier.class).to(TokenVerifierImpl.class);
-        bind(JwtContextFactory.class).to(JwtContextFactoryImpl.class);
+        bind(UserIdentityFactory.class).to(UserIdentityFactoryImpl.class);
         bind(CloseableHttpClient.class).toProvider(HttpClientProvider.class);
 
         FilterBinder.create(binder())
@@ -65,9 +61,6 @@ public class SecurityModule extends AbstractModule {
                 .addBinding(UserAppPermissionsCache.class)
                 .addBinding(UserGroupsCache.class)
                 .addBinding(UserCache.class);
-
-        GuiceUtil.buildMultiBinder(binder(), HttpSessionListener.class)
-                .addBinding(SessionMap.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(UserGroupsCache.class)

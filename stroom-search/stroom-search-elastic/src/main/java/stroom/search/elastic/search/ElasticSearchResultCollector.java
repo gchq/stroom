@@ -38,6 +38,7 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Provider;
 
 public class ElasticSearchResultCollector implements Store {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ElasticSearchResultCollector.class);
     private static final String TASK_NAME = "ElasticSearchTask";
 
@@ -104,11 +105,11 @@ public class ElasticSearchResultCollector implements Store {
                         if (!(t instanceof TaskTerminatedException)) {
                             LOGGER.error(t.getMessage(), t);
                             coprocessors.getErrorConsumer().accept(t);
-                            coprocessors.getCompletionState().complete();
+                            coprocessors.getCompletionState().signalComplete();
                             throw new RuntimeException(t.getMessage(), t);
                         }
 
-                        coprocessors.getCompletionState().complete();
+                        coprocessors.getCompletionState().signalComplete();
                     }
                 });
     }
@@ -118,8 +119,8 @@ public class ElasticSearchResultCollector implements Store {
         coprocessors.clear();
     }
 
-    public void complete() {
-        coprocessors.getCompletionState().complete();
+    public void signalComplete() {
+        coprocessors.getCompletionState().signalComplete();
     }
 
     @Override

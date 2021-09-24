@@ -27,7 +27,7 @@ public class TimeUtils {
      * @param now The instant used to represent the current time. Useful for testing purposes.
      */
     public static Instant durationToThreshold(final Instant now, final StroomDuration stroomDuration) {
-        return durationToThreshold(stroomDuration.getDuration());
+        return durationToThreshold(now, stroomDuration.getDuration());
     }
 
     /**

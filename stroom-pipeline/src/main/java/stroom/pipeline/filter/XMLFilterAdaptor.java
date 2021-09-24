@@ -17,7 +17,7 @@
 package stroom.pipeline.filter;
 
 import stroom.pipeline.factory.Processor;
-import stroom.pipeline.factory.Terminator;
+import stroom.task.api.Terminator;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;

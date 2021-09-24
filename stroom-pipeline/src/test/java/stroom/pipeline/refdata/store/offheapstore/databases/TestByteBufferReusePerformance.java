@@ -21,7 +21,6 @@ package stroom.pipeline.refdata.store.offheapstore.databases;
 import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.bytebuffer.PooledByteBufferPair;
 import stroom.lmdb.BasicLmdbDb;
-import stroom.lmdb.LmdbUtils;
 import stroom.lmdb.Serde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.StringSerde;
 import stroom.util.io.ByteSize;
@@ -81,7 +80,7 @@ class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
         LAMBDA_LOGGER.logDurationIfDebugEnabled(() -> {
 
             try (final PooledByteBufferPair pooledByteBufferPair = basicLmdbDb.getPooledBufferPair()) {
-                LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+                lmdbEnv.doWithWriteTxn(writeTxn -> {
                     for (int i = 0; i < recCount; i++) {
                         stringSerde.serialize(pooledByteBufferPair.getKeyBuffer(), "key" + i);
                         stringSerde.serialize(pooledByteBufferPair.getValueBuffer(), "value" + i);
@@ -103,7 +102,7 @@ class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
                 for (int i = 0; i < recCount; i++) {
                     stringSerde.serialize(pooledByteBufferPair.getKeyBuffer(), "key" + i);
 
-                    LmdbUtils.doWithReadTxn(lmdbEnv, txn -> {
+                    lmdbEnv.doWithReadTxn(txn -> {
                         Optional<ByteBuffer> optValue = basicLmdbDb.getAsBytes(
                                 txn,
                                 pooledByteBufferPair.getKeyBuffer());
@@ -125,7 +124,7 @@ class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
             final ByteBuffer keyBuffer = ByteBuffer.allocateDirect(lmdbEnv.getMaxKeySize());
             final ByteBuffer valueBuffer = ByteBuffer.allocateDirect(VALUE_BUFFER_SIZE);
 
-            LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+            lmdbEnv.doWithWriteTxn(writeTxn -> {
                 for (int i = 0; i < recCount; i++) {
                     stringSerde.serialize(keyBuffer, "key" + i);
                     stringSerde.serialize(valueBuffer, "value" + i);
@@ -146,7 +145,7 @@ class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
 
                 final int j = i;
 
-                LmdbUtils.doWithReadTxn(lmdbEnv, txn -> {
+                lmdbEnv.doWithReadTxn(txn -> {
                     Optional<ByteBuffer> optValue = basicLmdbDb.getAsBytes(txn, keyBuffer);
 //                    assertThat(optValue).isPresent();
 //                    assertThat(optValue.map(bb -> stringSerde.deserialize(bb)).get()).isEqualTo("value" + j);
@@ -172,7 +171,7 @@ class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
             keyPool.add(ByteBuffer.allocateDirect(lmdbEnv.getMaxKeySize()));
             valuePool.add(ByteBuffer.allocateDirect(VALUE_BUFFER_SIZE));
 
-            LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+            lmdbEnv.doWithWriteTxn(writeTxn -> {
                 for (int i = 0; i < recCount; i++) {
                     ByteBuffer keyBuffer = null;
                     ByteBuffer valueBuffer = null;
@@ -209,7 +208,7 @@ class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
             for (int i = 0; i < recCount; i++) {
                 final int j = i;
 
-                LmdbUtils.doWithReadTxn(lmdbEnv, txn -> {
+                lmdbEnv.doWithReadTxn(txn -> {
                     ByteBuffer keyBuffer = null;
                     try {
                         keyBuffer = keyPool.take();
@@ -247,7 +246,7 @@ class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
             keyPool.add(ByteBuffer.allocateDirect(lmdbEnv.getMaxKeySize()));
             valuePool.add(ByteBuffer.allocateDirect(VALUE_BUFFER_SIZE));
 
-            LmdbUtils.doWithWriteTxn(lmdbEnv, writeTxn -> {
+            lmdbEnv.doWithWriteTxn(writeTxn -> {
                 for (int i = 0; i < recCount; i++) {
                     ByteBuffer keyBuffer = null;
                     ByteBuffer valueBuffer = null;
@@ -281,7 +280,7 @@ class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
 
             keyPool.add(ByteBuffer.allocateDirect(lmdbEnv.getMaxKeySize()));
 
-            LmdbUtils.doWithReadTxn(lmdbEnv, txn -> {
+            lmdbEnv.doWithReadTxn(txn -> {
                 for (int i = 0; i < recCount; i++) {
                     final int j = i;
 

@@ -16,6 +16,8 @@
 
 package stroom.resource.impl;
 
+import stroom.task.api.SimpleTaskContext;
+import stroom.task.api.SimpleTaskContextFactory;
 import stroom.util.shared.ResourceKey;
 
 import org.junit.jupiter.api.Test;
@@ -34,7 +36,7 @@ class TestResourceStore {
 
     @Test
     void testSimple() throws IOException {
-        final ResourceStoreImpl resourceStore = new ResourceStoreImpl(() -> tempDir);
+        final ResourceStoreImpl resourceStore = new ResourceStoreImpl(() -> tempDir, new SimpleTaskContext());
         resourceStore.execute();
 
         final ResourceKey key1 = resourceStore.createTempFile("TestResourceStore1.dat");

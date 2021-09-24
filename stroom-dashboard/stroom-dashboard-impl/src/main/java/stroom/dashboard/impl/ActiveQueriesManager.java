@@ -19,6 +19,7 @@ package stroom.dashboard.impl;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
 import stroom.dashboard.impl.datasource.DataSourceProviderRegistry;
+import stroom.security.api.HasSessionId;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.util.shared.Clearable;
@@ -58,7 +59,15 @@ class ActiveQueriesManager implements Clearable {
     }
 
     public String createKey(final UserIdentity userIdentity, final String applicationInstanceId) {
-        return userIdentity.getId() + "_" + userIdentity.getSessionId() + "_" + applicationInstanceId;
+        final StringBuilder sb = new StringBuilder();
+        sb.append(userIdentity.getId());
+        sb.append("_");
+        if (userIdentity instanceof HasSessionId) {
+            sb.append(((HasSessionId) userIdentity).getSessionId());
+            sb.append("_");
+        }
+        sb.append(applicationInstanceId);
+        return sb.toString();
     }
 
     @Override

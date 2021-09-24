@@ -30,8 +30,11 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,7 +74,10 @@ public final class PropertyUtil {
         propMap.values().stream()
                 .filter(propFilter)
                 .forEach(prop -> {
-                    LOGGER.trace("{}{}#{}", indent, object.getClass().getSimpleName(), prop.getName());
+                    LOGGER.trace("{}{}#{}",
+                            indent,
+                            object.getClass().getSimpleName(),
+                            prop.getName());
 
                     // process the prop
                     propConsumer.accept(prop);
@@ -132,6 +138,44 @@ public final class PropertyUtil {
                     }
                 })
                 .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+    }
+
+    public static Class<?> getDataType(Class<?> clazz) {
+        if (clazz.isPrimitive()) {
+            return clazz;
+        }
+
+        if (clazz.isArray()) {
+            return getDataType(clazz.getComponentType());
+        }
+
+        return clazz;
+    }
+
+    public static Class<?> getDataType(Type type) {
+        if (type instanceof Class) {
+            return getDataType((Class<?>) type);
+        } else if (type instanceof ParameterizedType) {
+            ParameterizedType pt = (ParameterizedType) type;
+            return getDataType(pt.getRawType());
+        } else {
+            throw new RuntimeException(LogUtil.message("Unexpected type of type {}",
+                    type.getClass().getName()));
+        }
+    }
+
+    public static List<Type> getGenericTypes(Type type) {
+        if (type instanceof Class) {
+            return Collections.emptyList();
+        } else if (type instanceof ParameterizedType) {
+            ParameterizedType pt = (ParameterizedType) type;
+            Type[] specificTypes = pt.getActualTypeArguments();
+
+            return Arrays.asList(specificTypes);
+        } else {
+            throw new RuntimeException(LogUtil.message("Unexpected type of type {}",
+                    type.getClass().getName()));
+        }
     }
 
     private static void getPropsFromFields(final Object object, final Map<String, Prop> propMap) {

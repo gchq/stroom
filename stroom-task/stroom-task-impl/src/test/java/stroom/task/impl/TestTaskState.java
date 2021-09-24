@@ -16,13 +16,11 @@
 
 package stroom.task.impl;
 
-
-import stroom.security.api.UserIdentity;
-
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 class TestTaskContextImpl {
 
@@ -57,21 +55,6 @@ class TestTaskContextImpl {
     }
 
     private TaskContextImpl create() {
-        return new TaskContextImpl(TaskIdFactory.create(), "test", new UserIdentity() {
-            @Override
-            public String getId() {
-                return null;
-            }
-
-            @Override
-            public String getJws() {
-                return null;
-            }
-
-            @Override
-            public String getSessionId() {
-                return null;
-            }
-        });
+        return new TaskContextImpl(TaskIdFactory.create(), "test", () -> null, new AtomicBoolean(false));
     }
 }

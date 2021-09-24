@@ -125,16 +125,16 @@ public class ExtractionDecoratorFactory {
                                               final long streamId, final long[] sortedEventIds,
                                               DocRef extractionPipeline, List<AlertDefinition> alertDefinitions,
                                               final Map<String, String> params) {
-        final AlertExtractionSingleTaskProducer extractionTaskProducer =
-                new AlertExtractionSingleTaskProducer(streamId, sortedEventIds,
-                        extractionPipeline, receiver,
-                alertDefinitions, params,
-                extractionTaskExecutor,
-                extractionTaskHandlerProvider,
-                taskContextFactory,
-                taskContextFactory.currentContext());
-
-        return extractionTaskProducer.process();
+        return taskContextFactory.contextResult("Create Alerts", taskContext -> {
+            final AlertExtractionSingleTaskProducer extractionTaskProducer =
+                    new AlertExtractionSingleTaskProducer(streamId, sortedEventIds,
+                            extractionPipeline, receiver,
+                            alertDefinitions, params,
+                            extractionTaskExecutor,
+                            extractionTaskHandlerProvider,
+                            taskContextFactory,
+                            taskContext);
+            return extractionTaskProducer.process();
+        }).get();
     }
-
 }

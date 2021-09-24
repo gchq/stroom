@@ -1,15 +1,6 @@
 package stroom.security.api;
 
-import java.io.Serializable;
-import java.util.Comparator;
-
-public interface UserIdentity extends Serializable {
-
-    Comparator<UserIdentity> IDENTITY_COMPARATOR = Comparator.comparing(UserIdentity::getId);
+public interface UserIdentity {
 
     String getId();
-
-    String getJws();
-
-    String getSessionId();
 }

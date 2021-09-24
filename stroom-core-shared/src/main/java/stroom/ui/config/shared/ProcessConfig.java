@@ -1,6 +1,7 @@
 package stroom.ui.config.shared;
 
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -15,7 +16,7 @@ import javax.inject.Singleton;
 @Singleton
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class ProcessConfig extends AbstractConfig {
+public class ProcessConfig extends AbstractConfig implements IsStroomConfig {
 
     private static final long DEFAULT_TIME_LIMIT = 30L;
     private static final long DEFAULT_RECORD_LIMIT = 1000000L;

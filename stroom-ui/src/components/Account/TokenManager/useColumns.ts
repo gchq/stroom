@@ -1,9 +1,9 @@
-import { Token } from "api/stroom";
+import { ApiKey } from "api/stroom";
 import { useMemo } from "react";
 import { Column } from "react-table";
 import useDateUtil from "../../../lib/useDateUtil";
 
-const useColumns = (): Column<Token>[] => {
+const useColumns = (): Column<ApiKey>[] => {
   const { toDateString } = useDateUtil();
   return useMemo(
     () => [

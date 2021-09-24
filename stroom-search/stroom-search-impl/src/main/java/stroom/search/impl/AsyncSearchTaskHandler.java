@@ -92,7 +92,7 @@ class AsyncSearchTaskHandler {
         securityContext.secure(() -> securityContext.useAsRead(() -> {
             final ClusterSearchResultCollector resultCollector = task.getResultCollector();
 
-            if (!Thread.currentThread().isInterrupted()) {
+            if (!parentContext.isTerminated()) {
                 final String sourceNode = targetNodeSetFactory.getSourceNode();
                 final Map<String, List<Long>> shardMap = new HashMap<>();
 
@@ -133,7 +133,7 @@ class AsyncSearchTaskHandler {
                         final String nodeName = entry.getKey();
                         final List<Long> shards = entry.getValue();
                         if (targetNodes.contains(nodeName)) {
-                            final Runnable runnable = taskContextFactory.context(parentContext,
+                            final Runnable runnable = taskContextFactory.childContext(parentContext,
                                     "Node search",
                                     taskContext -> {
                                         final NodeSearch nodeSearch;

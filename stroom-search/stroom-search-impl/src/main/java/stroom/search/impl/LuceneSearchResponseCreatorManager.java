@@ -8,6 +8,7 @@ import stroom.query.common.v2.SearchResponseCreatorFactory;
 import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.query.common.v2.Store;
 import stroom.search.impl.shard.IndexShardSearchConfig;
+import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
@@ -25,15 +26,18 @@ public class LuceneSearchResponseCreatorManager implements SearchResponseCreator
 
     private final LuceneSearchStoreFactory storeFactory;
     private final SearchResponseCreatorFactory searchResponseCreatorFactory;
+    private final TaskContext taskContext;
     private final ICache<SearchResponseCreatorCache.Key, SearchResponseCreator> cache;
 
     @Inject
     public LuceneSearchResponseCreatorManager(final CacheManager cacheManager,
                                               final IndexShardSearchConfig indexShardSearchConfig,
                                               final LuceneSearchStoreFactory storeFactory,
-                                              final SearchResponseCreatorFactory searchResponseCreatorFactory) {
+                                              final SearchResponseCreatorFactory searchResponseCreatorFactory,
+                                              final TaskContext taskContext) {
         this.storeFactory = storeFactory;
         this.searchResponseCreatorFactory = searchResponseCreatorFactory;
+        this.taskContext = taskContext;
         cache = cacheManager.create(CACHE_NAME,
                 indexShardSearchConfig::getSearchResultCache,
                 this::create,
@@ -46,7 +50,7 @@ public class LuceneSearchResponseCreatorManager implements SearchResponseCreator
             final Store store = storeFactory.create(key.getSearchRequest());
             return searchResponseCreatorFactory.create(store);
         } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.debug(e.getMessage(), e);
             throw e;
         }
     }
@@ -70,6 +74,7 @@ public class LuceneSearchResponseCreatorManager implements SearchResponseCreator
 
     @Override
     public void evictExpiredElements() {
+        taskContext.info(() -> "Evicting expired search responses");
         cache.evictExpiredElements();
     }
 

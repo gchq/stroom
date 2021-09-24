@@ -28,7 +28,7 @@ public class CompletionStateImpl implements CompletionState {
     private final AtomicLong completionCount = new AtomicLong();
 
     @Override
-    public void complete() {
+    public void signalComplete() {
         complete.set(true);
         countDownLatch.countDown();
     }
@@ -51,7 +51,7 @@ public class CompletionStateImpl implements CompletionState {
     @Override
     public void accept(final Long value) {
         completionCount.set(value);
-        complete();
+        signalComplete();
     }
 
     @Override

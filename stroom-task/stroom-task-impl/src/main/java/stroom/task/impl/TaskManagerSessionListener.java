@@ -58,7 +58,7 @@ class TaskManagerSessionListener implements HttpSessionListener {
                     final String sessionId = event.getSession().getId();
                     final FindTaskCriteria criteria = new FindTaskCriteria();
                     criteria.setSessionId(sessionId);
-                    taskManager.terminate(criteria, false);
+                    taskManager.terminate(criteria);
                 });
             }
         } catch (final RuntimeException e) {

@@ -161,7 +161,7 @@ class SessionListListener implements HttpSessionListener, SessionListService {
                         .stream()
                         .map(nodeName -> {
                             final Supplier<SessionListResponse> listSessionsOnNodeTask =
-                                    taskContextFactory.contextResult(parentTaskContext,
+                                    taskContextFactory.childContextResult(parentTaskContext,
                                             LogUtil.message("Get session list on node [{}]", nodeName),
                                             taskContext ->
                                                     listSessions(nodeName));

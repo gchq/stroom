@@ -28,20 +28,20 @@ import { FormField } from "../../FormField/FormField";
 import { CloseButton, CloseProps } from "../../Dialog/CloseButton";
 import useDateUtil from "lib/useDateUtil";
 import { useStroomApi } from "lib/useStroomApi";
-import { Token } from "api/stroom";
+import { ApiKey } from "api/stroom";
 
-export interface EditTokenProps {
-  initialValues: Token;
-  onSubmit: (values: Token, actions: FormikHelpers<Token>) => void;
+export interface EditApiKeyProps {
+  initialValues: ApiKey;
+  onSubmit: (values: ApiKey, actions: FormikHelpers<ApiKey>) => void;
   onClose: (success: boolean) => void;
 }
 
-export interface EditTokenFormProps {
-  formikProps: FormikProps<Token>;
+export interface EditApiKeyFormProps {
+  formikProps: FormikProps<ApiKey>;
   closeProps: CloseProps;
 }
 
-const EditTokenForm: FunctionComponent<EditTokenFormProps> = ({
+const EditTokenForm: FunctionComponent<EditApiKeyFormProps> = ({
   formikProps,
   closeProps,
 }) => {
@@ -69,7 +69,7 @@ const EditTokenForm: FunctionComponent<EditTokenFormProps> = ({
               onChange={() => {
                 exec(
                   (api) =>
-                    api.token.toggleTokenEnabled(values.id, {
+                    api.apikey.toggleApiKeyEnabled(values.id, {
                       enabled: !values.enabled,
                     }),
                   () => {
@@ -133,7 +133,7 @@ const EditTokenForm: FunctionComponent<EditTokenFormProps> = ({
   );
 };
 
-export const EditTokenFormik: React.FunctionComponent<EditTokenProps> = ({
+export const EditTokenFormik: React.FunctionComponent<EditApiKeyProps> = ({
   initialValues,
   onSubmit,
   onClose,
@@ -158,7 +158,7 @@ export const EditTokenFormik: React.FunctionComponent<EditTokenProps> = ({
 };
 
 export const EditToken: React.FunctionComponent<{
-  token: Token;
+  token: ApiKey;
   onClose: (success: boolean) => void;
 }> = ({ token, onClose }) => {
   const onSubmit = () => {

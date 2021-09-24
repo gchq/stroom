@@ -20,15 +20,12 @@ package stroom.lmdb;
 import stroom.bytebuffer.ByteBufferPool;
 
 import org.lmdbjava.DbiFlags;
-import org.lmdbjava.Env;
-
-import java.nio.ByteBuffer;
 
 public class BasicLmdbDb<K, V> extends AbstractLmdbDb<K, V> {
 
     private final String name;
 
-    public BasicLmdbDb(final Env<ByteBuffer> lmdbEnvironment,
+    public BasicLmdbDb(final LmdbEnv lmdbEnvironment,
                        final ByteBufferPool byteBufferPool,
                        final Serde<K> keySerde,
                        final Serde<V> valueSerde,

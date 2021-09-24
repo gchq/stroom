@@ -1,17 +1,18 @@
 /*
  * Copyright 2018 Crown Copyright
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * See the License for the specific language governing permissions and
+ * Unless required by applicable law or agreed to in writing, software
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * You may obtain a copy of the License at
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * import stroom.util.shared.IsStroomConfig;
  * limitations under the License.
+ * you may not use this file except in compliance with the License.
  */
 
 package stroom.config.common;
@@ -20,6 +21,7 @@ import stroom.util.config.annotations.Password;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.NotInjectableConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -28,7 +30,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import java.util.Objects;
 
 @NotInjectableConfig
-public class ConnectionConfig extends AbstractConfig {
+public class ConnectionConfig extends AbstractConfig implements IsStroomConfig {
 
     public static final String PROP_NAME_JDBC_DRIVER_CLASS_NAME = "jdbcDriverClassName";
     public static final String PROP_NAME_JDBC_DRIVER_URL = "jdbcDriverUrl";
@@ -37,6 +39,15 @@ public class ConnectionConfig extends AbstractConfig {
     private static final String COMMON_DESCRIPTION = "Should only be set in the application YAML config file. " +
             "Connection details can be set in one place using 'stroom.commonDbDetails.*', individually for each " +
             "service area or a mixture of the two.";
+
+    // These defaults are set in CommonDbConfig. We don't set them here else the properties UI
+    // will show the default conn details for each non-common db module (if not set) which is then
+    // confusing for the user.
+    public static final String DEFAULT_JDBC_DRIVER_CLASS_NAME = "com.mysql.cj.jdbc.Driver";
+    public static final String DEFAULT_JDBC_DRIVER_URL =
+            "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8";
+    public static final String DEFAULT_JDBC_DRIVER_USERNAME = "stroomuser";
+    public static final String DEFAULT_JDBC_DRIVER_PASSWORD = "stroompassword1";
 
     private String className;
     private String url;
@@ -137,7 +148,6 @@ public class ConnectionConfig extends AbstractConfig {
                 "jdbcDriverClassName='" + className + '\'' +
                 ", jdbcDriverUrl='" + url + '\'' +
                 ", jdbcDriverUsername='" + user + '\'' +
-                ", jdbcDriverPassword='" + password + '\'' +
                 '}';
     }
 
@@ -151,10 +161,10 @@ public class ConnectionConfig extends AbstractConfig {
 
     public static final class Builder {
 
-        private String className = "com.mysql.cj.jdbc.Driver";
-        private String url;
-        private String user;
-        private String password;
+        private String className = DEFAULT_JDBC_DRIVER_CLASS_NAME;
+        private String url = DEFAULT_JDBC_DRIVER_URL;
+        private String user = DEFAULT_JDBC_DRIVER_USERNAME;
+        private String password = DEFAULT_JDBC_DRIVER_PASSWORD;
 
         private Builder() {
         }

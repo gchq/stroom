@@ -149,7 +149,7 @@ public class IndexShardSearchTaskHandler {
                 final SearcherManager searcherManager = indexShardSearcher.getSearcherManager();
                 final IndexSearcher searcher = searcherManager.acquire();
                 try {
-                    final Runnable runnable = taskContextFactory.context(parentTaskContext,
+                    final Runnable runnable = taskContextFactory.childContext(parentTaskContext,
                             "Index Searcher",
                             taskContext ->
                                     LOGGER.logDurationIfDebugEnabled(

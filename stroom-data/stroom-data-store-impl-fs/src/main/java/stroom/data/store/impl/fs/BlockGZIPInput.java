@@ -16,9 +16,7 @@
 
 package stroom.data.store.impl.fs;
 
-import stroom.util.io.BasicStreamCloser;
 import stroom.util.io.SeekableInputStream;
-import stroom.util.io.StreamCloser;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -33,8 +31,6 @@ import javax.annotation.Nonnull;
  */
 abstract class BlockGZIPInput extends InputStream implements SeekableInputStream {
 
-    // Use to help track non-closed streams
-    private final StreamCloser streamCloser = new BasicStreamCloser();
     /**
      * Pointer to the current GZIPstream
      */
@@ -106,20 +102,15 @@ abstract class BlockGZIPInput extends InputStream implements SeekableInputStream
     void init() throws IOException {
         // Create a buffer for the reading
         currentRawStreamBuffer = createBufferedInputStream(true);
-        try {
-            // Check Header Marker
-            readHeaderMarker();
 
-            // Read Header
-            blockSize = (int) readLong();
-            dataLength = readLong();
-            idxStart = readLong();
-            eof = readLong();
+        // Check Header Marker
+        readHeaderMarker();
 
-        } finally {
-            // Make sure the stream is closed.
-            streamCloser.add(currentRawStreamBuffer);
-        }
+        // Read Header
+        blockSize = (int) readLong();
+        dataLength = readLong();
+        idxStart = readLong();
+        eof = readLong();
     }
 
     abstract InputStream getRawStream();
@@ -241,6 +232,16 @@ abstract class BlockGZIPInput extends InputStream implements SeekableInputStream
     }
 
     /**
+     * Start a BGZIP block
+     */
+    void startGzipBlock() throws IOException {
+        blockCount++;
+        readMagicMarker();
+        currentBlockRawGzipSize = readLong();
+        currentStream = new GZIPInputStream(new GzipInputStreamAdaptor());
+    }
+
+    /**
      * End the BGZIP block
      */
     private void endGzipBlock() throws IOException {
@@ -250,20 +251,14 @@ abstract class BlockGZIPInput extends InputStream implements SeekableInputStream
             throw new IOException("Gzip Had More To Come!");
         }
         currentBlockRawGzipSize = -1;
-
-        currentStream = null;
+        closeCurrentStream();
     }
 
-    /**
-     * Start a BGZIP block
-     */
-    void startGzipBlock() throws IOException {
-        blockCount++;
-        readMagicMarker();
-        currentBlockRawGzipSize = readLong();
-
-        currentStream = new GZIPInputStream(new GzipInputStreamAdaptor());
-        streamCloser.add(currentStream);
+    private void closeCurrentStream() throws IOException {
+        if (currentStream != null) {
+            currentStream.close();
+            currentStream = null;
+        }
     }
 
     /**
@@ -346,9 +341,16 @@ abstract class BlockGZIPInput extends InputStream implements SeekableInputStream
     @Override
     public void close() throws IOException {
         try {
-            streamCloser.close();
+            closeCurrentStream();
         } finally {
-            super.close();
+            try {
+                if (currentRawStreamBuffer != null) {
+                    currentRawStreamBuffer.close();
+                    currentRawStreamBuffer = null;
+                }
+            } finally {
+                super.close();
+            }
         }
     }
 

@@ -88,6 +88,7 @@ class SteppingRequestHandler {
     private final PipelineContext pipelineContext;
     private final SecurityContext securityContext;
 
+    private TaskContext taskContext;
     private List<Long> allMetaIdList;
     private List<Long> filteredMetaIdList;
     private int currentStreamIndex = -1;
@@ -137,7 +138,9 @@ class SteppingRequestHandler {
         this.securityContext = securityContext;
     }
 
-    public SteppingResult exec(final TaskContext taskContext, final PipelineStepRequest request) {
+    public SteppingResult exec(final TaskContext taskContext,
+                               final PipelineStepRequest request) {
+        this.taskContext = taskContext;
         taskContext.info(() -> "Started stepping");
 
         return securityContext.secureResult(PermissionNames.STEPPING_PERMISSION, () -> {
@@ -203,7 +206,7 @@ class SteppingRequestHandler {
 
                 taskContext.info(() -> "Finished stepping");
 
-                if (Thread.currentThread().isInterrupted()) {
+                if (taskContext.isTerminated()) {
                     generalErrors.add("Stepping was terminated");
                 }
 
@@ -220,7 +223,7 @@ class SteppingRequestHandler {
     }
 
     private void initialise(final PipelineStepRequest request) {
-        if (!Thread.currentThread().isInterrupted()) {
+        if (!taskContext.isTerminated()) {
             final StepType stepType = request.getStepType();
             currentLocation = request.getStepLocation();
 
@@ -284,7 +287,7 @@ class SteppingRequestHandler {
     }
 
     private void process(final PipelineStepRequest request, final Long metaId) {
-        if (!Thread.currentThread().isInterrupted()) {
+        if (!taskContext.isTerminated()) {
             final StepType stepType = request.getStepType();
 
             if (metaId != null && !metaId.equals(lastStreamId)) {
@@ -312,7 +315,7 @@ class SteppingRequestHandler {
 
                 // Get the appropriate stream and source based on the type of
                 // translation.
-                controller.getTaskContext().info(() -> "Opening source: " + metaId);
+                taskContext.info(() -> "Opening source: " + metaId);
                 try (final Source source = streamStore.openSource(metaId)) {
                     if (source != null) {
                         // Load the feed.
@@ -366,7 +369,7 @@ class SteppingRequestHandler {
     }
 
     private Long getMetaId(final PipelineStepRequest request) {
-        if (!Thread.currentThread().isInterrupted()) {
+        if (!taskContext.isTerminated()) {
             final StepType stepType = request.getStepType();
             // If we are just refreshing then just return the same task we used
             // before.
@@ -465,7 +468,7 @@ class SteppingRequestHandler {
             lastFeedName = null;
         }
 
-        if (!Thread.currentThread().isInterrupted()) {
+        if (!taskContext.isTerminated()) {
             // Create a new pipeline for a new feed or if the feed has changed.
             if (lastFeedName == null) {
                 lastFeedName = feedName;
@@ -540,7 +543,7 @@ class SteppingRequestHandler {
             while (!done
                     && partIndex >= 0
                     && partIndex <= maxPartIndex
-                    && !Thread.currentThread().isInterrupted()) {
+                    && !taskContext.isTerminated()) {
                 // Set the stream number.
                 metaHolder.setPartIndex(partIndex);
                 streamLocationFactory.setPartIndex(partIndex);
@@ -623,7 +626,7 @@ class SteppingRequestHandler {
             pipelineContext.setStepping(true);
 
             final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
-            pipeline = pipelineFactory.create(pipelineData, controller);
+            pipeline = pipelineFactory.create(pipelineData, taskContext, controller);
 
             // Don't return a pipeline if we cannot step with it.
             if (pipeline == null

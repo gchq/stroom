@@ -22,6 +22,7 @@ import stroom.collection.mock.MockCollectionModule;
 import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.docrefinfo.mock.MockDocRefInfoModule;
 import stroom.security.mock.MockSecurityContextModule;
+import stroom.task.mock.MockTaskModule;
 import stroom.test.common.util.db.DbTestModule;
 
 import com.google.inject.Guice;
@@ -43,15 +44,16 @@ class TestMetaFeedDaoImpl {
     @BeforeEach
     void setup() {
         Guice.createInjector(
-                new MetaTestModule(),
-                new MetaDbModule(),
-                new MockClusterLockModule(),
-                new MockSecurityContextModule(),
-                new MockCollectionModule(),
-                new MockDocRefInfoModule(),
-                new MockWordListProviderModule(),
-                new CacheModule(),
-                new DbTestModule())
+                        new MetaTestModule(),
+                        new MetaDbModule(),
+                        new MockClusterLockModule(),
+                        new MockSecurityContextModule(),
+                        new MockTaskModule(),
+                        new MockCollectionModule(),
+                        new MockDocRefInfoModule(),
+                        new MockWordListProviderModule(),
+                        new CacheModule(),
+                        new DbTestModule())
                 .injectMembers(this);
         // Delete everything
         cleanup.cleanup();

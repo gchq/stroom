@@ -2,6 +2,7 @@ package stroom.security.impl;
 
 import stroom.config.common.UriFactory;
 import stroom.security.impl.exception.AuthenticationException;
+import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdClientFactory;
 import stroom.security.openid.api.OpenIdConfigurationResponse;
 import stroom.security.openid.api.OpenIdConfigurationResponse.Builder;
@@ -42,6 +43,10 @@ public class ResolvedOpenIdConfig {
             OAUTH2_BASE_PATH, "/certs");
     public static final String INTERNAL_LOGOUT_ENDPOINT = ResourcePaths.buildAuthenticatedApiPath(
             AUTHENTICATION_BASE_PATH, "/logout");
+    public static final String DEFAULT_REQUEST_SCOPE = "" +
+            OpenId.SCOPE__OPENID +
+            " " +
+            OpenId.SCOPE__EMAIL;
 
     private final UriFactory uriFactory;
     private final OpenIdConfig openIdConfig;
@@ -111,6 +116,12 @@ public class ResolvedOpenIdConfig {
                             if (openIdConfig.getLogoutEndpoint() != null &&
                                     !openIdConfig.getLogoutEndpoint().isBlank()) {
                                 builder = builder.logoutEndpoint(openIdConfig.getLogoutEndpoint());
+                            } else if (openIdConfiguration.getLogoutEndpoint() == null ||
+                                    openIdConfiguration.getLogoutEndpoint().isBlank()) {
+                                // If the IdP doesn't provide a logout endpoint then use the internal one to invalidate
+                                // the session and redirect to perform a a new auth flow.
+                                builder = builder.logoutEndpoint(
+                                        uriFactory.publicUri(INTERNAL_LOGOUT_ENDPOINT).toString());
                             }
                             openIdConfiguration = builder.build();
 
@@ -176,8 +187,17 @@ public class ResolvedOpenIdConfig {
 
     public boolean isFormTokenRequest() {
         if (openIdConfig.isUseInternal()) {
-            return false;
+            return true;
         }
         return openIdConfig.isFormTokenRequest();
+    }
+
+    public String getRequestScope() {
+        if (openIdConfig.isUseInternal() ||
+                openIdConfig.getRequestScope() == null ||
+                openIdConfig.getRequestScope().isBlank()) {
+            return DEFAULT_REQUEST_SCOPE;
+        }
+        return openIdConfig.getRequestScope();
     }
 }

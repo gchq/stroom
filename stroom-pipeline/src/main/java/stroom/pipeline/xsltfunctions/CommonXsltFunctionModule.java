@@ -2,6 +2,7 @@ package stroom.pipeline.xsltfunctions;
 
 import stroom.util.pipeline.scope.PipelineScoped;
 
+import net.sf.saxon.type.BuiltInAtomicType;
 import net.sf.saxon.value.SequenceType;
 
 import javax.inject.Inject;
@@ -45,6 +46,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         bindFunction(NumericIPFunction.class);
         bindFunction(ParseUriFunction.class);
         bindFunction(PipelineNameFunction.class);
+        bindFunction(PointIsInsideXYPolygonFunction.class);
         bindFunction(PutFunction.class);
         bindFunction(RandomFunction.class);
         bindFunction(RecordNoFunction.class);
@@ -459,6 +461,25 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
                     0,
                     new SequenceType[]{},
                     SequenceType.OPTIONAL_STRING,
+                    functionCallProvider);
+        }
+    }
+
+    private static class PointIsInsideXYPolygonFunction
+            extends StroomExtensionFunctionDefinition<PointIsInsideXYPolygon> {
+
+        @Inject
+        PointIsInsideXYPolygonFunction(final Provider<PointIsInsideXYPolygon> functionCallProvider) {
+            super(
+                    "pointIsInsideXYPolygon",
+                    4,
+                    4,
+                    new SequenceType[]{
+                            SequenceType.SINGLE_DOUBLE,
+                            SequenceType.SINGLE_DOUBLE,
+                            BuiltInAtomicType.DOUBLE.zeroOrMore(),
+                            BuiltInAtomicType.DOUBLE.zeroOrMore()},
+                    SequenceType.SINGLE_BOOLEAN,
                     functionCallProvider);
         }
     }

@@ -14,8 +14,18 @@ public class TokenResponse {
     private final String accessToken;
     @JsonProperty("refresh_token")
     private final String refreshToken;
+
+    /**
+     * RECOMMENDED.  The lifetime in seconds of the access token.  For
+     * example, the value "3600" denotes that the access token will
+     * expire in one hour from the time the response was generated.
+     * If omitted, the authorization server SHOULD provide the
+     * expiration time via other means or document the default value.
+     */
     @JsonProperty("expires_in")
-    private final int expiresIn;
+    private final Long expiresIn;
+    @JsonProperty("refresh_token_expires_in")
+    private final Long refreshTokenExpiresIn;
     @JsonProperty("token_type")
     private final String tokenType;
 
@@ -23,12 +33,14 @@ public class TokenResponse {
     TokenResponse(@JsonProperty("id_token") final String idToken,
                   @JsonProperty("access_token") final String accessToken,
                   @JsonProperty("refresh_token") final String refreshToken,
-                  @JsonProperty("expires_in") final int expiresIn,
+                  @JsonProperty("expires_in") final Long expiresIn,
+                  @JsonProperty("refresh_token_expires_in") final Long refreshTokenExpiresIn,
                   @JsonProperty("token_type") final String tokenType) {
         this.idToken = idToken;
         this.accessToken = accessToken;
         this.refreshToken = refreshToken;
         this.expiresIn = expiresIn;
+        this.refreshTokenExpiresIn = refreshTokenExpiresIn;
         this.tokenType = tokenType;
     }
 
@@ -44,8 +56,12 @@ public class TokenResponse {
         return refreshToken;
     }
 
-    public int getExpiresIn() {
+    public Long getExpiresIn() {
         return expiresIn;
+    }
+
+    public Long getRefreshTokenExpiresIn() {
+        return refreshTokenExpiresIn;
     }
 
     public String getTokenType() {
@@ -65,7 +81,8 @@ public class TokenResponse {
         private String idToken;
         private String accessToken;
         private String refreshToken;
-        private int expiresIn;
+        private Long expiresIn;
+        private Long refreshTokenExpiresIn;
         private String tokenType;
 
         private Builder() {
@@ -76,6 +93,7 @@ public class TokenResponse {
             this.accessToken = tokenResponse.accessToken;
             this.refreshToken = tokenResponse.refreshToken;
             this.expiresIn = tokenResponse.expiresIn;
+            this.refreshTokenExpiresIn = tokenResponse.refreshTokenExpiresIn;
             this.tokenType = tokenResponse.tokenType;
         }
 
@@ -94,8 +112,13 @@ public class TokenResponse {
             return this;
         }
 
-        public Builder expiresIn(final int expiresIn) {
+        public Builder expiresIn(final Long expiresIn) {
             this.expiresIn = expiresIn;
+            return this;
+        }
+
+        public Builder refreshTokenExpiresIn(final Long refreshTokenExpiresIn) {
+            this.refreshTokenExpiresIn = refreshTokenExpiresIn;
             return this;
         }
 
@@ -110,6 +133,7 @@ public class TokenResponse {
                     accessToken,
                     refreshToken,
                     expiresIn,
+                    refreshTokenExpiresIn,
                     tokenType);
         }
     }

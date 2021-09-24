@@ -43,7 +43,6 @@ import com.google.common.base.CaseFormat;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
-import io.dropwizard.client.JerseyClientConfiguration;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
@@ -73,6 +72,7 @@ import java.util.stream.StreamSupport;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+
 /**
  * Responsible for mapping between the AppConfig object tree and a flat set of key value pairs.
  * The key for a leaf of the tree is a dot delimited path of all the branches to get to that leaf,
@@ -96,7 +96,6 @@ public class ConfigMapper {
             "|", ":", ";", ",", "!", "/", "\\", "#", "@", "~", "-", "_", "=", "+", "?");
     private static final Set<String> VALID_DELIMITERS_SET = new HashSet<>(VALID_DELIMITERS_LIST);
 
-    private static final PropertyPath ROOT_PROPERTY_PATH = PropertyPath.fromParts("stroom");
     private static final String DOCREF_PREFIX = "docRef";
     private static final Pattern DOCREF_PATTERN = Pattern.compile("^" + DOCREF_PREFIX + "\\([^)]+\\)$");
     public static final String LIST_EXAMPLE = "|item1|item2|item3";
@@ -149,7 +148,7 @@ public class ConfigMapper {
         // populating the globalPropertiesMap so the passed hashmap is thrown away.
         addConfigObjectMethods(
                 getVanillaAppConfig(),
-                ROOT_PROPERTY_PATH,
+                AppConfig.ROOT_PROPERTY_PATH,
                 new HashMap<>(),
                 this::defaultValuePropertyConsumer);
 
@@ -174,6 +173,7 @@ public class ConfigMapper {
 
     private AppConfig getVanillaAppConfig() {
         try {
+            // We do this rather than new AppConfig() so that tests can sub class AppConfig
             return appConfig.getClass().getDeclaredConstructor().newInstance();
         } catch (InstantiationException
                 | IllegalAccessException
@@ -211,7 +211,7 @@ public class ConfigMapper {
             LOGGER.debug("Adding yaml config values into global property map");
             addConfigObjectMethods(
                     newAppConfig,
-                    ROOT_PROPERTY_PATH,
+                    AppConfig.ROOT_PROPERTY_PATH,
                     propertyMap,
                     this::yamlPropertyConsumer);
         }
@@ -370,42 +370,39 @@ public class ConfigMapper {
 
             final Class<?> valueType = prop.getValueClass();
 
-            // Ignore the dropwiz jersey config in our config
-            if (valueType != JerseyClientConfiguration.class) {
 
-                final Object value = prop.getValueFromConfigObject();
+            final Object value = prop.getValueFromConfigObject();
 //                if (isSupportedPropertyType(valueType) && !prop.hasAnnotation(JsonIgnore.class)) {
-                if (isSupportedPropertyType(valueType)) {
+            if (isSupportedPropertyType(valueType)) {
 
-                    if (!prop.hasSetter()) {
-                        throw new RuntimeException(LogUtil.message("Prop {} in class {} has no setter.",
-                                prop.getName(),
-                                (prop.getParentObject() != null
-                                        ? prop.getParentObject().getClass().getName()
-                                        : "null")));
-                    }
-                    // This is a leaf, i.e. a property so add it to our map
-                    propertyMap.put(fullPath, prop);
-
-                    // Now let the consumer do something to it
-                    propConsumer.accept(fullPath, prop);
-                } else if (AbstractConfig.class.isAssignableFrom(valueType)) {
-                    // This must be a branch, i.e. config object so recurse into that
-                    if (value != null) {
-                        AbstractConfig childConfigObject = (AbstractConfig) value;
-                        addConfigObjectMethods(
-                                childConfigObject,
-                                fullPath,
-                                propertyMap,
-                                propConsumer);
-                    }
-                } else {
-                    // This is not expected
-                    throw new RuntimeException(LogUtil.message(
-                            "Unexpected bean property of type [{}], expecting an instance of {}, or a supported type.",
-                            valueType.getName(),
-                            AbstractConfig.class.getSimpleName()));
+                if (!prop.hasSetter()) {
+                    throw new RuntimeException(LogUtil.message("Prop {} in class {} has no setter.",
+                            prop.getName(),
+                            (prop.getParentObject() != null
+                                    ? prop.getParentObject().getClass().getName()
+                                    : "null")));
                 }
+                // This is a leaf, i.e. a property so add it to our map
+                propertyMap.put(fullPath, prop);
+
+                // Now let the consumer do something to it
+                propConsumer.accept(fullPath, prop);
+            } else if (AbstractConfig.class.isAssignableFrom(valueType)) {
+                // This must be a branch, i.e. config object so recurse into that
+                if (value != null) {
+                    AbstractConfig childConfigObject = (AbstractConfig) value;
+                    addConfigObjectMethods(
+                            childConfigObject,
+                            fullPath,
+                            propertyMap,
+                            propConsumer);
+                }
+            } else {
+                // This is not expected
+                throw new RuntimeException(LogUtil.message(
+                        "Unexpected bean property of type [{}], expecting an instance of {}, or a supported type.",
+                        valueType.getName(),
+                        AbstractConfig.class.getSimpleName()));
             }
         });
     }
@@ -416,8 +413,12 @@ public class ConfigMapper {
         // props should be in here with a default value (and a value that matches it)
         final ConfigProperty configProperty = globalPropertiesMap.get(fullPath);
 
-        Preconditions.checkNotNull(configProperty, "Property %s with path %s exists in the " +
-                "YAML but not in the object model, this should not happen", yamlProp, fullPath);
+        Preconditions.checkNotNull(
+                configProperty,
+                "Property %s with path %s exists in the " +
+                        "YAML but not in the object model, this should not happen",
+                yamlProp,
+                fullPath);
 
         // Create global property.
         final String yamlValueAsStr = getStringValue(yamlProp);
@@ -648,7 +649,7 @@ public class ConfigMapper {
             final Prop prop,
             final String value,
             final Type genericType) {
-        final Class<?> type = getDataType(genericType);
+        final Class<?> type = PropertyUtil.getDataType(genericType);
 
         if (value == null) {
             if (type.isPrimitive()) {
@@ -707,7 +708,7 @@ public class ConfigMapper {
 
             LOGGER.debug(() -> LogUtil.message(
                     "Unable to convert value [{}] of property [{}] to type [{}] due to: {}",
-                    value, propName, e.getMessage()), e);
+                    value, propName, getDataTypeName(genericType), e.getMessage()), e);
             throw new ConfigPropertyValidationException(LogUtil.message(
                     "Unable to convert value [{}] of property [{}] to type [{}] due to: {}",
                     value, propName, getDataTypeName(genericType), e.getMessage()), e);
@@ -740,7 +741,7 @@ public class ConfigMapper {
     }
 
     private static Class<?> getGenericsParam(final Type typeWithGenerics, final int index) {
-        List<Type> genericsParamTypes = getGenericTypes(typeWithGenerics);
+        List<Type> genericsParamTypes = PropertyUtil.getGenericTypes(typeWithGenerics);
         if (genericsParamTypes.isEmpty()) {
             throw new RuntimeException(LogUtil.message(
                     "Unable to get generics parameter {} for type {} as it has no parameterised types",
@@ -751,7 +752,7 @@ public class ConfigMapper {
                     index, genericsParamTypes));
         }
 
-        return getDataType(genericsParamTypes.get(index));
+        return PropertyUtil.getDataType(genericsParamTypes.get(index));
     }
 
     private static Boolean parseBoolean(final String str) {
@@ -958,43 +959,6 @@ public class ConfigMapper {
         return Enum.valueOf((Class<Enum>) type, serialisedForm.toUpperCase());
     }
 
-    private static Class<?> getDataType(Class<?> clazz) {
-        if (clazz.isPrimitive()) {
-            return clazz;
-        }
-
-        if (clazz.isArray()) {
-            return getDataType(clazz.getComponentType());
-        }
-
-        return clazz;
-    }
-
-    private static Class<?> getDataType(Type type) {
-        if (type instanceof Class) {
-            return getDataType((Class<?>) type);
-        } else if (type instanceof ParameterizedType) {
-            ParameterizedType pt = (ParameterizedType) type;
-            return getDataType(pt.getRawType());
-        } else {
-            throw new RuntimeException(LogUtil.message("Unexpected type of type {}",
-                    type.getClass().getName()));
-        }
-    }
-
-    private static List<Type> getGenericTypes(Type type) {
-        if (type instanceof Class) {
-            return Collections.emptyList();
-        } else if (type instanceof ParameterizedType) {
-            ParameterizedType pt = (ParameterizedType) type;
-            Type[] specificTypes = pt.getActualTypeArguments();
-
-            return Arrays.asList(specificTypes);
-        } else {
-            throw new RuntimeException(LogUtil.message("Unexpected type of type {}",
-                    type.getClass().getName()));
-        }
-    }
 
     private static String getDelimiter(final String allText,
                                        final List<String> availableDelimiters) {

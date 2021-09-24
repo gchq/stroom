@@ -18,6 +18,7 @@ import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.feed.api.FeedStore;
 import stroom.pipeline.refdata.RefDataLookupRequest.ReferenceLoader;
+import stroom.pipeline.refdata.store.ProcessingInfoResponse;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataStoreFactory;
 import stroom.pipeline.refdata.store.RefDataValueConverter;
@@ -43,6 +44,7 @@ import stroom.util.rest.RestUtil;
 import stroom.util.shared.PermissionException;
 import stroom.util.time.StroomDuration;
 
+import com.google.common.base.Strings;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.Receiver;
@@ -53,6 +55,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -202,12 +205,68 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
     @Override
     public List<RefStoreEntry> entries(final int limit) {
+        return entries(limit, null, null);
+    }
+
+    @Override
+    public List<RefStoreEntry> entries(final int limit,
+                                       final Long refStreamId,
+                                       final String mapName) {
         return withPermissionCheck(() -> {
             final List<RefStoreEntry> entries;
             try {
-                entries = refDataStore.list(limit);
+                Predicate<RefStoreEntry> predicate = entry -> true;
+
+                if (refStreamId != null) {
+                    predicate = predicate.and(refStoreEntry ->
+                            refStoreEntry.getMapDefinition()
+                                    .getRefStreamDefinition()
+                                    .getStreamId() == refStreamId);
+                }
+
+                if (!Strings.isNullOrEmpty(mapName)) {
+                    predicate = predicate.and(refStoreEntry ->
+                            mapName.equals(refStoreEntry.getMapDefinition().getMapName()));
+                }
+
+                entries = refDataStore.list(limit, predicate);
             } catch (Exception e) {
                 LOGGER.error("Error listing reference data", e);
+                throw e;
+            }
+            return entries;
+        });
+    }
+
+    @Override
+    public List<ProcessingInfoResponse> refStreamInfo(final int limit) {
+        return refStreamInfo(limit, null, null);
+    }
+
+    @Override
+    public List<ProcessingInfoResponse> refStreamInfo(final int limit,
+                                                      final Long refStreamId,
+                                                      final String mapName) {
+
+        return withPermissionCheck(() -> {
+            final List<ProcessingInfoResponse> entries;
+            try {
+                Predicate<ProcessingInfoResponse> predicate = entry -> true;
+
+                if (refStreamId != null) {
+                    predicate = predicate.and(refStreamProcessingInfo ->
+                            refStreamProcessingInfo.getRefStreamDefinition()
+                                    .getStreamId() == refStreamId);
+                }
+
+                if (!Strings.isNullOrEmpty(mapName)) {
+                    predicate = predicate.and(refStreamProcessingInfo ->
+                            refStreamProcessingInfo.getMapNames().contains(mapName));
+                }
+
+                entries = refDataStore.listProcessingInfo(limit, predicate);
+            } catch (Exception e) {
+                LOGGER.error("Error listing ref stream processing info data", e);
                 throw e;
             }
             return entries;
@@ -239,14 +298,22 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     @Override
     public void purge(final StroomDuration purgeAge) {
         securityContext.secure(PermissionNames.MANAGE_CACHE_PERMISSION, () ->
-                taskContextFactory.context("Reference Data Purge",
-                        taskContext ->
-                                LOGGER.logDurationIfDebugEnabled(
-                                        () ->
-                                                performPurge(purgeAge),
-                                        LogUtil.message("Performing Purge for entries older than {}", purgeAge)))
+                taskContextFactory.context("Reference Data Purge", taskContext ->
+                        LOGGER.logDurationIfDebugEnabled(
+                                () -> performPurge(purgeAge),
+                                LogUtil.message("Performing Purge for entries older than {}", purgeAge)))
                         .run());
 
+    }
+
+    @Override
+    public void purge(final long refStreamId, final long partIndex) {
+        securityContext.secure(PermissionNames.MANAGE_CACHE_PERMISSION, () ->
+                taskContextFactory.context("Reference Data Purge", taskContext ->
+                        LOGGER.logDurationIfDebugEnabled(
+                                () -> refDataStore.purge(refStreamId, partIndex),
+                                LogUtil.message("Performing Purge for ref stream {}:{}", refStreamId, partIndex)))
+                        .run());
     }
 
     private void performPurge(final StroomDuration purgeAge) {
@@ -313,10 +380,15 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                     .map(referenceLoader -> {
                         final DocRef feedDocRef = getFeedDocRef(referenceLoader);
 
+                        // TODO validate the stream type name
+                        final String streamType = Objects.requireNonNullElse(
+                                referenceLoader.getStreamType(),
+                                StreamTypeNames.REFERENCE);
+
                         return new PipelineReference(
                                 referenceLoader.getLoaderPipeline(),
                                 feedDocRef,
-                                StreamTypeNames.REFERENCE);
+                                streamType);
                     })
                     .collect(Collectors.toList());
         }
@@ -403,13 +475,29 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
         // TODO @AT Need to run the query as a task so it can be monitored from the UI.
 
-        final List<RefStoreEntry> entries = entries(10_000);
-
+        // TODO @AT need to get rid of the up front limit. Instead we need a method on the refstore to
+        //  allow us consume a stream of entries within a read txn. The limit can then be set after the
+        //  filtering has happened.
         final Predicate<RefStoreEntry> predicate = buildEntryPredicate(criteria);
 
-        try {
-            entries.stream()
+        final long skipCount = Optional.ofNullable(criteria)
+                .flatMap(criteria2 -> Optional.ofNullable(criteria.getPageRequest()))
+                .flatMap(pageRequest -> Optional.ofNullable(pageRequest.getOffset()))
+                .orElse(0);
+
+        final int limit = Optional.ofNullable(criteria)
+                .flatMap(criteria2 -> Optional.ofNullable(criteria.getPageRequest()))
+                .flatMap(pageRequest -> Optional.ofNullable(pageRequest.getLength()))
+                .orElse(Integer.MAX_VALUE);
+
+        LOGGER.debug("Searching ref entries with criteria {}, skipCount {}, limit {}",
+                criteria, skipCount, limit);
+
+        refDataStore.consumeEntryStream(stream -> {
+            stream
                     .filter(predicate)
+                    .skip(skipCount)
+                    .limit(limit)
                     .forEach(refStoreEntry -> {
                         final Val[] valArr = new Val[fields.length];
 
@@ -424,10 +512,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                         }
                         consumer.accept(valArr);
                     });
-        } catch (Exception e) {
-            LOGGER.error("Error querying entry list", e);
-            throw e;
-        }
+            return null;
+        });
     }
 
 

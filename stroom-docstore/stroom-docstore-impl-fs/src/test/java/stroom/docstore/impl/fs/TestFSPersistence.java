@@ -25,7 +25,8 @@ class TestFSPersistence {
 
     @Test
     void test() throws IOException {
-        final Persistence persistence = new FSPersistence(Files.createTempDirectory("docstore").resolve("conf"));
+        final Persistence persistence = new FSPersistence(
+                Files.createTempDirectory("docstore").resolve("conf"));
 
         final String uuid1 = UUID.randomUUID().toString();
         final String uuid2 = UUID.randomUUID().toString();

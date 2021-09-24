@@ -3,6 +3,7 @@ package stroom.query.common.v2;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.io.ByteSize;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsStroomConfig;
 import stroom.util.shared.validation.ValidFilePath;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -13,7 +14,7 @@ import javax.inject.Singleton;
 import javax.validation.constraints.Min;
 
 @Singleton
-public class LmdbConfig extends AbstractConfig {
+public class LmdbConfig extends AbstractConfig implements IsStroomConfig {
 
     private String localDir = "search_results";
     private String lmdbSystemLibraryPath = null;
@@ -24,6 +25,11 @@ public class LmdbConfig extends AbstractConfig {
     private boolean isReadAheadEnabled = true;
     private boolean offHeapResults = true;
     private ByteSize payloadLimit = ByteSize.ofMebibytes(0);
+
+    private ByteSize minValueSize = ByteSize.ofKibibytes(1);
+    private ByteSize maxValueSize = ByteSize.ofMebibytes(1);
+    private ByteSize minPayloadSize = ByteSize.ofMebibytes(1);
+    private ByteSize maxPayloadSize = ByteSize.ofGibibytes(1);
 
     @Nonnull
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
@@ -135,6 +141,42 @@ public class LmdbConfig extends AbstractConfig {
 
     public void setPayloadLimit(final ByteSize payloadLimit) {
         this.payloadLimit = payloadLimit;
+    }
+
+    @JsonPropertyDescription("The minimum byte size of a value byte buffer.")
+    public ByteSize getMinValueSize() {
+        return minValueSize;
+    }
+
+    public void setMinValueSize(final ByteSize minValueSize) {
+        this.minValueSize = minValueSize;
+    }
+
+    @JsonPropertyDescription("The maximum byte size of a value byte buffer.")
+    public ByteSize getMaxValueSize() {
+        return maxValueSize;
+    }
+
+    public void setMaxValueSize(final ByteSize maxValueSize) {
+        this.maxValueSize = maxValueSize;
+    }
+
+    @JsonPropertyDescription("The minimum byte size of a payload buffer.")
+    public ByteSize getMinPayloadSize() {
+        return minPayloadSize;
+    }
+
+    public void setMinPayloadSize(final ByteSize minPayloadSize) {
+        this.minPayloadSize = minPayloadSize;
+    }
+
+    @JsonPropertyDescription("The maximum byte size of a payload buffer.")
+    public ByteSize getMaxPayloadSize() {
+        return maxPayloadSize;
+    }
+
+    public void setMaxPayloadSize(final ByteSize maxPayloadSize) {
+        this.maxPayloadSize = maxPayloadSize;
     }
 
     @Override

@@ -16,8 +16,8 @@
 
 package stroom.search.impl.shard;
 
-import stroom.pipeline.errorhandler.TerminatedException;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskTerminatedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -69,7 +69,7 @@ class IndexShardHitCollector extends SimpleCollector {
             info(() -> "Quitting...");
             Thread.currentThread().interrupt();
             LOGGER.debug(e::getMessage, e);
-            throw new TerminatedException();
+            throw new TaskTerminatedException();
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
         }

@@ -12,17 +12,12 @@ import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
 import stroom.security.shared.UserAndPermissions;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
 class AppPermissionResourceImpl implements AppPermissionResource {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(AppPermissionResourceImpl.class);
 
     private final Provider<SecurityContext> securityContextProvider;
     private final Provider<UserService> userServiceProvider;
@@ -55,7 +50,8 @@ class AppPermissionResourceImpl implements AppPermissionResource {
     @Override
     @AutoLogged(OperationType.VIEW)
     public UserAndPermissions getUserAndPermissions() {
-        final UserIdentity userIdentity = CurrentUserState.current();
+        final SecurityContext securityContext = securityContextProvider.get();
+        final UserIdentity userIdentity = securityContext.getUserIdentity();
         if (userIdentity == null) {
             return null;
         }
@@ -69,13 +65,13 @@ class AppPermissionResourceImpl implements AppPermissionResource {
 
         final boolean preventLogin = authenticationConfigProvider.get().isPreventLogin();
         if (preventLogin) {
-            if (!securityContextProvider.get().isAdmin()) {
+            if (!securityContext.isAdmin()) {
                 throw new AuthenticationException("Stroom is down for maintenance. Please try again later.");
             }
         }
 
         return new UserAndPermissions(identity.getId(),
-                userAndPermissionsHelperProvider.get().get(identity.getUserUuid()));
+                userAndPermissionsHelperProvider.get().get(identity.getUuid()));
     }
 
     @Override

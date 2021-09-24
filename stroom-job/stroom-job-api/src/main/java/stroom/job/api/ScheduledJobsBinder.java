@@ -29,7 +29,7 @@ public class ScheduledJobsBinder {
         return bindJobTo(jobRunnableClass, () -> scheduledJob);
     }
 
-    public ScheduledJobsBinder bindJobTo(final Class<? extends Runnable> jobRunnableClass,
+    private ScheduledJobsBinder bindJobTo(final Class<? extends Runnable> jobRunnableClass,
                                          final Supplier<ScheduledJob> scheduledJobSupplier) {
         final ScheduledJob scheduledJob = Objects.requireNonNull(scheduledJobSupplier.get());
 

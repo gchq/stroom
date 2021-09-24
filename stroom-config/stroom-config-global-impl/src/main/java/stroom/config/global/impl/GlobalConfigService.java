@@ -19,7 +19,6 @@ package stroom.config.global.impl;
 
 
 import stroom.config.app.AppConfig;
-import stroom.config.global.impl.validation.ConfigValidator;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.ConfigPropertyValidationException;
 import stroom.config.global.shared.GlobalConfigCriteria;
@@ -27,7 +26,10 @@ import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.ListConfigResponse;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.task.api.TaskContext;
 import stroom.util.AuditUtil;
+import stroom.util.config.AppConfigValidator;
+import stroom.util.config.ConfigValidator;
 import stroom.util.config.PropertyUtil;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
@@ -87,17 +89,20 @@ public class GlobalConfigService {
     private final ConfigPropertyDao dao;
     private final SecurityContext securityContext;
     private final ConfigMapper configMapper;
-    private final ConfigValidator configValidator;
+    private final AppConfigValidator appConfigValidator;
+    private final TaskContext taskContext;
 
     @Inject
     GlobalConfigService(final ConfigPropertyDao dao,
                         final SecurityContext securityContext,
                         final ConfigMapper configMapper,
-                        final ConfigValidator configValidator) {
+                        final AppConfigValidator appConfigValidator,
+                        final TaskContext taskContext) {
         this.dao = dao;
         this.securityContext = securityContext;
         this.configMapper = configMapper;
-        this.configValidator = configValidator;
+        this.appConfigValidator = appConfigValidator;
+        this.taskContext = taskContext;
 
         LOGGER.debug("Initialising GlobalConfigService");
         initialise();
@@ -142,6 +147,7 @@ public class GlobalConfigService {
      * Refresh in background
      */
     void updateConfigObjects() {
+        taskContext.info(() -> "Updating config from DB");
         updateConfigFromDb();
     }
 
@@ -175,10 +181,10 @@ public class GlobalConfigService {
             final Optional<Comparator<ConfigProperty>> optConfigPropertyComparator = buildComparator(criteria);
 
             return QuickFilterPredicateFactory.filterStream(
-                    criteria.getQuickFilterInput(),
-                    FIELD_MAPPERS,
-                    configMapper.getGlobalProperties().stream(),
-                    optConfigPropertyComparator.orElse(null))
+                            criteria.getQuickFilterInput(),
+                            FIELD_MAPPERS,
+                            configMapper.getGlobalProperties().stream(),
+                            optConfigPropertyComparator.orElse(null))
                     .collect(ListConfigResponse.collector(pageRequest, ListConfigResponse::new));
         });
     }
@@ -333,7 +339,7 @@ public class GlobalConfigService {
         final AbstractConfig parentConfigObject = (AbstractConfig) prop.getParentObject();
         final String propertyName = propertyPath.getPropertyName();
 
-        ConfigValidator.Result result = configValidator.validateValue(
+        ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validateValue(
                 parentConfigObject.getClass(), propertyName, effectiveValue);
 
         // TODO ideally we would handle warnings in some way, but that is probably a job for a new UI

@@ -21,15 +21,15 @@ import { useTokenManager } from "./useTokenManager";
 import useColumns from "./useColumns";
 import { PagerProps } from "../../Pager/Pager";
 import { EditToken } from "../EditToken/EditToken";
-import { Token } from "api/stroom";
+import { ApiKey } from "api/stroom";
 import { QuickFilterProps } from "../AccountManager/QuickFilter";
 import { CreateToken } from "../EditToken/CreateToken";
 import { TableProps } from "../../Table/Table";
 import { Confirm, PromptType } from "../../Prompt/Prompt";
 
-const initialToken: Token = {
+const initialToken: ApiKey = {
   userId: "",
-  tokenType: "user",
+  type: "api",
   data: "",
   expiresOnMs: 0,
   comments: "",
@@ -40,8 +40,8 @@ const TokenManager: FunctionComponent<{
   onClose: () => void;
 }> = ({ onClose }) => {
   const { resultPage, remove, request, setRequest } = useTokenManager();
-  const [editingToken, setEditingToken] = useState<Token>();
-  const [deletingToken, setDeletingToken] = useState<Token>();
+  const [editingToken, setEditingToken] = useState<ApiKey>();
+  const [deletingToken, setDeletingToken] = useState<ApiKey>();
   const quickFilterProps: QuickFilterProps = {
     onChange: (value) => {
       setRequest({
@@ -63,7 +63,7 @@ const TokenManager: FunctionComponent<{
       });
     },
   };
-  const tableProps: TableProps<Token> = {
+  const tableProps: TableProps<ApiKey> = {
     columns: useColumns(),
     data: resultPage.values,
     initialSortBy: request.sortList,

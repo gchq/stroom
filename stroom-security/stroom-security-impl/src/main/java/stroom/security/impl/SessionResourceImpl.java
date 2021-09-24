@@ -56,13 +56,16 @@ public class SessionResourceImpl implements SessionResource {
     @Override
     @AutoLogged(OperationType.UNLOGGED)
     public ValidateSessionResponse validateSession(final String postAuthRedirectUri) {
+        final AuthenticationConfig authenticationConfig = authenticationConfigProvider.get();
+        final OpenIdManager openIdManager = openIdManagerProvider.get();
         final HttpServletRequest request = httpServletRequestProvider.get();
-        Optional<UserIdentity> userIdentity = openIdManagerProvider.get().loginWithRequestToken(request);
+        Optional<UserIdentity> userIdentity = openIdManager.loginWithRequestToken(request);
+        userIdentity = openIdManager.getOrSetSessionUser(request, userIdentity);
         if (userIdentity.isPresent()) {
             return new ValidateSessionResponse(true, userIdentity.get().getId(), null);
         }
 
-        if (!authenticationConfigProvider.get().isAuthenticationRequired()) {
+        if (!authenticationConfig.isAuthenticationRequired()) {
             return new ValidateSessionResponse(true, "admin", null);
 
 //        } else if (openIdManagerProvider.get().isTokenExpectedInRequest()) {
@@ -77,8 +80,7 @@ public class SessionResourceImpl implements SessionResource {
                 // If we have completed the front channel flow then we will have a state id.
                 final String code = getParam(postAuthRedirectUri, OpenId.CODE);
                 final String stateId = getParam(postAuthRedirectUri, OpenId.STATE);
-                final String redirectUri = openIdManagerProvider.get()
-                        .redirect(request, code, stateId, postAuthRedirectUri);
+                final String redirectUri = openIdManager.redirect(request, code, stateId, postAuthRedirectUri);
 
                 // We might have completed the back channel authentication now so see if we have a user session.
                 userIdentity = UserIdentitySessionUtil.get(request.getSession(false));

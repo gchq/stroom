@@ -1,5 +1,7 @@
 package stroom.task.mock;
 
+import stroom.task.api.SimpleTaskContext;
+import stroom.task.api.SimpleTaskContextFactory;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
@@ -14,6 +16,12 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class MockTaskModule extends AbstractModule {
+
+    @Override
+    protected void configure() {
+        bind(TaskContextFactory.class).to(SimpleTaskContextFactory.class);
+        bind(TaskContext.class).to(SimpleTaskContext.class);
+    }
 
     @Provides
     TaskManager getTaskManager() {
@@ -36,58 +44,6 @@ public class MockTaskModule extends AbstractModule {
             @Override
             public void terminate(final TaskId taskId) {
 
-            }
-        };
-    }
-
-    @Provides
-    TaskContextFactory getTaskContextFactory() {
-        return new TaskContextFactory() {
-            @Override
-            public Runnable context(final String taskName, final Consumer<TaskContext> consumer) {
-                return () -> consumer.accept(createTaskContext());
-            }
-
-            @Override
-            public Runnable context(final TaskContext parentContext,
-                                    final String taskName,
-                                    final Consumer<TaskContext> consumer) {
-                return () -> consumer.accept(createTaskContext());
-            }
-
-            @Override
-            public <R> Supplier<R> contextResult(final String taskName, final Function<TaskContext, R> function) {
-                return () -> function.apply(createTaskContext());
-            }
-
-            @Override
-            public <R> Supplier<R> contextResult(final TaskContext parentContext,
-                                                 final String taskName,
-                                                 final Function<TaskContext, R> function) {
-                return () -> function.apply(createTaskContext());
-            }
-
-            @Override
-            public TaskContext currentContext() {
-                return createTaskContext();
-            }
-        };
-    }
-
-    private TaskContext createTaskContext() {
-        return new TaskContext() {
-            @Override
-            public void info(final Supplier<String> messageSupplier) {
-            }
-
-            @Override
-            public TaskId getTaskId() {
-                return new TaskId() {
-                    @Override
-                    public String getId() {
-                        return UUID.randomUUID().toString();
-                    }
-                };
             }
         };
     }
