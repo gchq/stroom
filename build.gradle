@@ -197,6 +197,7 @@ ext.libs = [
         gwt_user                       : "com.google.gwt:gwt-user:$versions.gwt",
         gwtp_mvp_client                : "com.gwtplatform:gwtp-mvp-client:0.7",
         gson                           : 'com.google.code.gson:gson:2.6.2',
+        hazelcast                      : "com.hazelcast:hazelcast:4.2.2",
         hbase                          : "org.apache.hbase:hbase-common:2.1.5", //should be set to be consistent with CDH version
         hessian                        : "com.caucho:hessian:4.0.51",
         hikari                         : "com.zaxxer:HikariCP:$versions.hikari",

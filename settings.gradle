@@ -272,3 +272,5 @@ include 'stroom-util-shared'
 
 include 'stroom-ssl-test'
 include 'stroom-alert:stroom-alert-mock'
+include 'stroom-hazelcast:stroom-hazelcast-api'
+include 'stroom-hazelcast:stroom-hazelcast-impl'
