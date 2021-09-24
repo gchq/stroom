@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2457** : Display a tooltip when hovering the mouse over a grid column cell.
+
 * Issue **#2382** : Improve error message for invalid feed encodings.
 
 * Issue **#2387** : Fix reference data load/lookup failure handling.
