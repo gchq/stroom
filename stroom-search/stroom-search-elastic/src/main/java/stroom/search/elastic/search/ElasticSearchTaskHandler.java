@@ -257,6 +257,10 @@ public class ElasticSearchTaskHandler {
                             values[insertAt] = ValDouble.create((Float) fieldValue);
                         } else if (fieldValue instanceof Boolean) {
                             values[insertAt] = ValBoolean.create((Boolean) fieldValue);
+                        } else if (fieldValue instanceof ArrayList) {
+                            values[insertAt] = ValString.create(((ArrayList<?>) fieldValue).stream()
+                                    .map(Object::toString)
+                                    .collect(Collectors.joining(", ")));
                         } else {
                             values[insertAt] = ValString.create(fieldValue.toString());
                         }
