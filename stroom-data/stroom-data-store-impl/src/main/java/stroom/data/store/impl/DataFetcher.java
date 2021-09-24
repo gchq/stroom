@@ -76,8 +76,6 @@ import stroom.util.shared.Severity;
 import stroom.util.shared.TextRange;
 import stroom.util.string.HexDumpUtil;
 
-import com.google.common.base.Strings;
-import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.ByteOrderMark;
 import org.jetbrains.annotations.NotNull;
 
@@ -88,12 +86,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.nio.channels.ClosedByInterruptException;
-import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -635,84 +629,9 @@ public class DataFetcher {
         final String hexDump = HexDumpUtil.hexDump(
                 inputStream,
                 Charset.forName(encoding),
-                500);
+                sourceConfig.getMaxHexDumpLines());
 
         return new RawResult(sourceLocation, hexDump, 0);
-    }
-
-    private void bytesToString(final StringBuilder stringBuilder,
-                               final long lineOffset,
-                               final byte[] lineBytes,
-                               final int len,
-                               final int bytesPerLine,
-                               final CharsetDecoder charsetDecoder) {
-        final long firstByteNo = lineOffset * bytesPerLine;
-        stringBuilder
-                .append(Strings.padStart(Long.toHexString(firstByteNo), 10, '0'))
-                .append(" ");
-
-        final StringBuilder hexStringBuilder = new StringBuilder();
-        final StringBuilder decodedStringBuilder = new StringBuilder();
-        for (int i = 0; i < lineBytes.length; i++) {
-            if (i < len) {
-                byte[] arr = new byte[]{lineBytes[i]};
-
-                final String hex = Hex.encodeHexString(arr);
-                hexStringBuilder
-                        .append(hex)
-                        .append(" ");
-
-                ByteBuffer byteBuffer = ByteBuffer.wrap(arr);
-                char chr;
-                try {
-                    CharBuffer charBuffer = charsetDecoder.decode(byteBuffer);
-                    chr = charBuffer.charAt(0);
-                } catch (CharacterCodingException e) {
-                    chr = '�';
-                }
-                appendPrintableChar(chr, decodedStringBuilder, hex);
-
-            } else {
-                hexStringBuilder
-                        .append("   ");
-                decodedStringBuilder.append(" ");
-            }
-
-            if (i != 0
-                    && (i + 1) % 4 == 0) {
-                hexStringBuilder.append(" ");
-            }
-        }
-        stringBuilder
-                .append(hexStringBuilder)
-                .append(decodedStringBuilder);
-    }
-
-    private void appendPrintableChar(final char chr,
-                                     final StringBuilder stringBuilder,
-                                     final String hex) {
-
-        final char charToAppend;
-        if ((int) chr < 32) {
-            // replace all non-printable chars, ideally with a representative char
-            if (chr == 0) {
-                charToAppend = ' ';
-            } else if (chr == '\n') {
-                charToAppend = '↲';
-            } else if (chr == '\r') {
-                charToAppend = '↩';
-            } else if (chr == '\t') {
-                charToAppend = '↹';
-            } else {
-                charToAppend = '�';
-            }
-        } else if (chr == ' ') {
-            charToAppend = '␣';
-        } else {
-            charToAppend = chr;
-        }
-        stringBuilder.append(charToAppend);
-//        LOGGER.trace("{} appended as {}", hex, charToAppend);
     }
 
     private RawResult extractDataRange(final SourceLocation sourceLocation,
