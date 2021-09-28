@@ -16,32 +16,33 @@
 
 package stroom.processor.impl.db;
 
-import stroom.processor.shared.ProcessorTask;
-
+import org.jooq.Record;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
+import static stroom.processor.impl.db.jooq.tables.ProcessorTask.PROCESSOR_TASK;
+
 class TaskStatusTraceLog {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskStatusTraceLog.class);
 
-    void createdTasks(final Class<?> clazz, final List<ProcessorTask> streamTasks) {
-        if (LOGGER.isTraceEnabled() && streamTasks.size() > 0) {
+    void createdTasks(final Class<?> clazz, final List<Record> records) {
+        if (LOGGER.isTraceEnabled() && records.size() > 0) {
             final StringBuilder sb = new StringBuilder();
             sb.append("Master created ");
-            sb.append(streamTasks.size());
-            appendStreamTaskList(sb, streamTasks);
+            sb.append(records.size());
+            appendStreamTaskList(sb, records);
             appendClass(sb, clazz);
             LOGGER.trace(sb.toString());
         }
     }
 
-    private void appendStreamTaskList(final StringBuilder sb, final List<ProcessorTask> streamTasks) {
+    private void appendStreamTaskList(final StringBuilder sb, final List<Record> records) {
         sb.append(" ( ");
-        for (final ProcessorTask task : streamTasks) {
-            sb.append(task.getId());
+        for (final Record record : records) {
+            sb.append(record.get(PROCESSOR_TASK.ID));
             sb.append(" ");
         }
         sb.append(")");

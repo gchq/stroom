@@ -61,7 +61,7 @@ public class JobDaoImpl implements JobDao, HasIntCrud<Job> {
 
     @Inject
     JobDaoImpl(final JobDbConnProvider jobDbConnProvider) {
-        genericDao = new GenericDao<>(JOB, JOB.ID, Job.class, jobDbConnProvider);
+        genericDao = new GenericDao<>(jobDbConnProvider, JOB, JOB.ID, Job.class);
         this.jobDbConnProvider = jobDbConnProvider;
     }
 

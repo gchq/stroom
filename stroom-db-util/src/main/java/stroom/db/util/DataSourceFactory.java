@@ -6,5 +6,5 @@ import javax.sql.DataSource;
 
 public interface DataSourceFactory {
 
-    DataSource create(HasDbConfig config);
+    DataSource create(HasDbConfig config, String name, boolean unique);
 }

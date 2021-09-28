@@ -66,9 +66,13 @@ class ConfigPropertyDaoImpl implements ConfigPropertyDao {
     @Inject
     ConfigPropertyDaoImpl(final GlobalConfigDbConnProvider globalConfigDbConnProvider) {
         this.globalConfigDbConnProvider = globalConfigDbConnProvider;
-        this.genericDao = new GenericDao<>(CONFIG, CONFIG.ID, ConfigProperty.class, globalConfigDbConnProvider);
-        genericDao.setRecordToObjectMapper(RECORD_TO_CONFIG_PROPERTY_MAPPER);
-        genericDao.setObjectToRecordMapper(CONFIG_PROPERTY_TO_RECORD_MAPPER);
+        this.genericDao = new GenericDao<>(
+                globalConfigDbConnProvider,
+                CONFIG,
+                CONFIG.ID,
+                ConfigProperty.class,
+                CONFIG_PROPERTY_TO_RECORD_MAPPER,
+                RECORD_TO_CONFIG_PROPERTY_MAPPER);
     }
 
     @Override

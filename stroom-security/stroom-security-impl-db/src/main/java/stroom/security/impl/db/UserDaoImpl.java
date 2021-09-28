@@ -68,9 +68,13 @@ public class UserDaoImpl implements UserDao {
         this.processingUserIdentityProvider = processingUserIdentityProvider;
         this.securityDbConnProvider = securityDbConnProvider;
 
-        genericDao = new GenericDao<>(STROOM_USER, STROOM_USER.ID, User.class, securityDbConnProvider);
-        genericDao.setObjectToRecordMapper(USER_TO_RECORD_MAPPER);
-        genericDao.setRecordToObjectMapper(RECORD_TO_USER_MAPPER);
+        genericDao = new GenericDao<>(
+                securityDbConnProvider,
+                STROOM_USER,
+                STROOM_USER.ID,
+                User.class,
+                USER_TO_RECORD_MAPPER,
+                RECORD_TO_USER_MAPPER);
     }
 
     @Override

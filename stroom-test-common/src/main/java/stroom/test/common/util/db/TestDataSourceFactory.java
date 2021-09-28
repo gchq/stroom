@@ -31,10 +31,10 @@ class TestDataSourceFactory implements DataSourceFactory, Clearable {
     }
 
     @Override
-    public DataSource create(final HasDbConfig config) {
+    public DataSource create(final HasDbConfig config, final String name, final boolean unique) {
         final DbConfig dbConfig = config.getDbConfig();
         final DbConfig mergedConfig = commonDbConfig.mergeConfig(dbConfig);
-        return DbTestUtil.createTestDataSource(mergedConfig);
+        return DbTestUtil.createTestDataSource(mergedConfig, name, unique);
     }
 
     @Override

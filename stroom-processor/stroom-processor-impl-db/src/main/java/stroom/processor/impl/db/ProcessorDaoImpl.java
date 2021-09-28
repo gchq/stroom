@@ -30,7 +30,7 @@ class ProcessorDaoImpl implements ProcessorDao {
     public ProcessorDaoImpl(final ProcessorDbConnProvider processorDbConnProvider,
                             final ExpressionMapperFactory expressionMapperFactory) {
         this.processorDbConnProvider = processorDbConnProvider;
-        this.genericDao = new GenericDao<>(PROCESSOR, PROCESSOR.ID, Processor.class, processorDbConnProvider);
+        this.genericDao = new GenericDao<>(processorDbConnProvider, PROCESSOR, PROCESSOR.ID, Processor.class);
 
         expressionMapper = expressionMapperFactory.create();
         expressionMapper.map(ProcessorFields.ID, PROCESSOR.ID, Integer::valueOf);

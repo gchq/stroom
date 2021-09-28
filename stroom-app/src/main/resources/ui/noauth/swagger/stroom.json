@@ -5044,6 +5044,21 @@
         "tags" : [ "Processor Tasks" ]
       }
     },
+    "/refData/v1/clearBufferPool" : {
+      "delete" : {
+        "operationId" : "clearBufferPool",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : { }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Clear all buffers currently available in the buffer pool to reclaim memory.",
+        "tags" : [ "Reference Data" ]
+      }
+    },
     "/refData/v1/entries" : {
       "get" : {
         "description" : "This is primarily intended  for small scale debugging in non-production environments. If no limit is set a default limit is applied else the results will be limited to limit entries.",
@@ -9554,6 +9569,19 @@
           }
         }
       },
+      "EntryCounts" : {
+        "type" : "object",
+        "properties" : {
+          "keyValueCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "rangeValueCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
       "EventCoprocessorSettings" : {
         "type" : "object",
         "allOf" : [ {
@@ -12085,12 +12113,11 @@
           "lastAccessedTime" : {
             "type" : "string"
           },
-          "mapNames" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            },
-            "uniqueItems" : true
+          "maps" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "$ref" : "#/components/schemas/EntryCounts"
+            }
           },
           "processingState" : {
             "type" : "string",

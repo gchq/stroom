@@ -41,7 +41,7 @@ public class ActivityDaoImpl implements ActivityDao {
     @Inject
     ActivityDaoImpl(final ActivityDbConnProvider activityDbConnProvider) {
         this.activityDbConnProvider = activityDbConnProvider;
-        genericDao = new GenericDao<>(ACTIVITY, ACTIVITY.ID, Activity.class, activityDbConnProvider);
+        genericDao = new GenericDao<>(activityDbConnProvider, ACTIVITY, ACTIVITY.ID, Activity.class);
     }
 
     @Override

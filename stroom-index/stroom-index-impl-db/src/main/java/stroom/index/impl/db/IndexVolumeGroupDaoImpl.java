@@ -57,12 +57,13 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
                             final Provider<IndexStore> indexStoreProvider) {
         this.indexDbConnProvider = indexDbConnProvider;
         this.indexStoreProvider = indexStoreProvider;
-        genericDao = new GenericDao<>(INDEX_VOLUME_GROUP,
+        genericDao = new GenericDao<>(
+                indexDbConnProvider,
+                INDEX_VOLUME_GROUP,
                 INDEX_VOLUME_GROUP.ID,
                 IndexVolumeGroup.class,
-                indexDbConnProvider);
-        genericDao.setRecordToObjectMapper(RECORD_TO_INDEX_VOLUME_GROUP_MAPPER);
-        genericDao.setObjectToRecordMapper(INDEX_VOLUME_GROUP_TO_RECORD_MAPPER);
+                INDEX_VOLUME_GROUP_TO_RECORD_MAPPER,
+                RECORD_TO_INDEX_VOLUME_GROUP_MAPPER);
     }
 
     @Override

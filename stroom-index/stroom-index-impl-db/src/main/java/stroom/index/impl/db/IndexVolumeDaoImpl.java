@@ -87,9 +87,13 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
     IndexVolumeDaoImpl(final IndexDbConnProvider indexDbConnProvider,
                        final ExpressionMapperFactory expressionMapperFactory) {
         this.indexDbConnProvider = indexDbConnProvider;
-        genericDao = new GenericDao<>(INDEX_VOLUME, INDEX_VOLUME.ID, IndexVolume.class, indexDbConnProvider);
-        genericDao.setRecordToObjectMapper(RECORD_TO_INDEX_VOLUME_MAPPER);
-        genericDao.setObjectToRecordMapper(INDEX_VOLUME_TO_RECORD_MAPPER);
+        genericDao = new GenericDao<>(
+                indexDbConnProvider,
+                INDEX_VOLUME,
+                INDEX_VOLUME.ID,
+                IndexVolume.class,
+                INDEX_VOLUME_TO_RECORD_MAPPER,
+                RECORD_TO_INDEX_VOLUME_MAPPER);
 
         // Standard fields.
         expressionMapper = expressionMapperFactory.create();

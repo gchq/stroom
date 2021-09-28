@@ -83,10 +83,13 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
     @Inject
     JobNodeDaoImpl(final JobDbConnProvider jobDbConnProvider) {
         this.jobDbConnProvider = jobDbConnProvider;
-
-        genericDao = new GenericDao<>(JOB_NODE, JOB_NODE.ID, JobNode.class, jobDbConnProvider);
-        genericDao.setObjectToRecordMapper(JOB_NODE_TO_RECORD_MAPPER);
-        genericDao.setRecordToObjectMapper(RECORD_TO_JOB_NODE_MAPPER);
+        genericDao = new GenericDao<>(
+                jobDbConnProvider,
+                JOB_NODE,
+                JOB_NODE.ID,
+                JobNode.class,
+                JOB_NODE_TO_RECORD_MAPPER,
+                RECORD_TO_JOB_NODE_MAPPER);
     }
 
     @Override

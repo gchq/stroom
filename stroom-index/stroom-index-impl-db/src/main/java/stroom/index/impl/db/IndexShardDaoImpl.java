@@ -94,9 +94,13 @@ class IndexShardDaoImpl implements IndexShardDao {
         this.indexDbConnProvider = indexDbConnProvider;
         this.indexVolumeDao = indexVolumeDao;
         this.indexVolumeGroupService = indexVolumeGroupService;
-        genericDao = new GenericDao<>(INDEX_SHARD, INDEX_SHARD.ID, IndexShard.class, indexDbConnProvider);
-        genericDao.setRecordToObjectMapper(RECORD_TO_INDEX_SHARD_MAPPER);
-        genericDao.setObjectToRecordMapper(INDEX_SHARD_TO_RECORD_MAPPER);
+        genericDao = new GenericDao<>(
+                indexDbConnProvider,
+                INDEX_SHARD,
+                INDEX_SHARD.ID,
+                IndexShard.class,
+                INDEX_SHARD_TO_RECORD_MAPPER,
+                RECORD_TO_INDEX_SHARD_MAPPER);
     }
 
     @Override

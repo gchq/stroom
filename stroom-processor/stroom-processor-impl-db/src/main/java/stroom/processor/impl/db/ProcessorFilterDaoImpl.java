@@ -59,10 +59,11 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                            final ProcessorFilterMarshaller marshaller) {
         this.processorDbConnProvider = processorDbConnProvider;
         this.marshaller = marshaller;
-        this.genericDao = new GenericDao<>(PROCESSOR_FILTER,
+        this.genericDao = new GenericDao<>(
+                processorDbConnProvider,
+                PROCESSOR_FILTER,
                 PROCESSOR_FILTER.ID,
-                ProcessorFilter.class,
-                processorDbConnProvider);
+                ProcessorFilter.class);
 
         expressionMapper = expressionMapperFactory.create();
         expressionMapper.map(ProcessorFilterFields.ID, PROCESSOR_FILTER.ID, Integer::valueOf);
@@ -163,7 +164,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                         .select()
                         .from(PROCESSOR_FILTER)
                         .join(PROCESSOR_FILTER_TRACKER).on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(
-                        PROCESSOR_FILTER_TRACKER.ID))
+                                PROCESSOR_FILTER_TRACKER.ID))
                         .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
                         .where(PROCESSOR_FILTER.ID.eq(id))
                         .fetchOptional()

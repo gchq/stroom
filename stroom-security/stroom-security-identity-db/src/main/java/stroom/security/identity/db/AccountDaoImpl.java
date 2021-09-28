@@ -195,14 +195,13 @@ class AccountDaoImpl implements AccountDao {
                           final IdentityDbConnProvider identityDbConnProvider) {
         this.config = config;
         this.identityDbConnProvider = identityDbConnProvider;
-
         genericDao = new GenericDao<>(
+                identityDbConnProvider,
                 ACCOUNT,
                 ACCOUNT.ID,
                 Account.class,
-                identityDbConnProvider);
-        genericDao.setObjectToRecordMapper(ACCOUNT_TO_RECORD_MAPPER);
-        genericDao.setRecordToObjectMapper(RECORD_TO_ACCOUNT_MAPPER);
+                ACCOUNT_TO_RECORD_MAPPER,
+                RECORD_TO_ACCOUNT_MAPPER);
     }
 
     @Override
@@ -293,10 +292,10 @@ class AccountDaoImpl implements AccountDao {
                     final Comparator<Account> comparator = buildComparator(request).orElse(null);
 
                     return QuickFilterPredicateFactory.filterStream(
-                            request.getQuickFilter(),
-                            FIELD_MAPPERS,
-                            stream.map(RECORD_TO_ACCOUNT_MAPPER),
-                            comparator)
+                                    request.getQuickFilter(),
+                                    FIELD_MAPPERS,
+                                    stream.map(RECORD_TO_ACCOUNT_MAPPER),
+                                    comparator)
                             .collect(AccountResultPage.collector(request.getPageRequest(), AccountResultPage::new));
                 }
             }
