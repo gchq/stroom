@@ -80,12 +80,12 @@ class ProcessorNodeCache implements Clearable {
 
     private Optional<Integer> create(final String name) {
         return JooqUtil.contextResult(processorDbConnProvider, context -> context
-                .insertInto(PROCESSOR_NODE, PROCESSOR_NODE.NAME)
-                .values(name)
-                .onDuplicateKeyIgnore()
-                .returning(PROCESSOR_NODE.ID)
-                .fetchOptional()
-                .map(ProcessorNodeRecord::getId));
+                        .insertInto(PROCESSOR_NODE, PROCESSOR_NODE.NAME)
+                        .values(name)
+                        .onDuplicateKeyIgnore()
+                        .returning(PROCESSOR_NODE.ID)
+                        .fetchOptional())
+                .map(ProcessorNodeRecord::getId);
     }
 
     @Override

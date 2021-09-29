@@ -79,14 +79,14 @@ class StoredQueryDaoImpl implements StoredQueryDao {
                     Optional.ofNullable(criteria.getFavourite()).map(QUERY.FAVOURITE::eq));
 
             final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
-
+            final int offset = JooqUtil.getOffset(criteria.getPageRequest());
+            final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
             return context
                     .select()
                     .from(QUERY)
                     .where(conditions)
                     .orderBy(orderFields)
-                    .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
-                    .offset(JooqUtil.getOffset(criteria.getPageRequest()))
+                    .limit(offset, limit)
                     .fetch()
                     .into(StoredQuery.class);
         });

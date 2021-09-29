@@ -1,5 +1,7 @@
 package stroom.db.util;
 
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
@@ -15,11 +17,10 @@ import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.SQLDialect;
 import org.jooq.Table;
+import org.jooq.UpdatableRecord;
 import org.jooq.conf.Settings;
 import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.Date;
@@ -38,7 +39,7 @@ import javax.sql.DataSource;
 
 public final class JooqUtil {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(JooqUtil.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JooqUtil.class);
     private static final ThreadLocal<DataSource> DATA_SOURCE_THREAD_LOCAL = new ThreadLocal<>();
 
     private static final String DEFAULT_ID_FIELD_NAME = "id";
@@ -172,6 +173,58 @@ public final class JooqUtil {
     public static <R> R transactionResult(final DataSource dataSource, final Function<DSLContext, R> function) {
         return contextResult(dataSource,
                 context -> context.transactionResult(nested -> function.apply(DSL.using(nested))));
+    }
+
+    public static <R extends UpdatableRecord<R>> R create(final DataSource dataSource, final R record) {
+        LOGGER.debug(() -> "Creating a " + record.getTable() + " record " + record);
+        try (final Connection connection = dataSource.getConnection()) {
+            try {
+                checkDataSource(dataSource);
+                final DSLContext context = createContext(connection);
+                record.attach(context.configuration());
+                record.store();
+            } finally {
+                releaseDataSource();
+            }
+        } catch (final Exception e) {
+            throw convertException(e);
+        }
+        return record;
+    }
+
+    public static <R extends UpdatableRecord<R>> R update(final DataSource dataSource, final R record) {
+        LOGGER.debug(() -> "Updating a " + record.getTable() + " record " + record);
+        try (final Connection connection = dataSource.getConnection()) {
+            try {
+                checkDataSource(dataSource);
+                final DSLContext context = createContext(connection);
+                record.attach(context.configuration());
+                record.update();
+            } finally {
+                releaseDataSource();
+            }
+        } catch (final Exception e) {
+            throw convertException(e);
+        }
+        return record;
+    }
+
+    public static <R extends UpdatableRecord<R>> R updateWithOptimisticLocking(final DataSource dataSource,
+                                                                               final R record) {
+        LOGGER.debug(() -> "Updating a " + record.getTable() + " record " + record);
+        try (final Connection connection = dataSource.getConnection()) {
+            try {
+                checkDataSource(dataSource);
+                final DSLContext context = createContextWithOptimisticLocking(connection);
+                record.attach(context.configuration());
+                record.update();
+            } finally {
+                releaseDataSource();
+            }
+        } catch (final Exception e) {
+            throw convertException(e);
+        }
+        return record;
     }
 
     /**
@@ -468,7 +521,7 @@ public final class JooqUtil {
     }
 
     private static RuntimeException convertException(final Exception e) {
-        LOGGER.error(e.getMessage(), e);
+        LOGGER.error(e::getMessage, e);
         if (e instanceof RuntimeException) {
             return (RuntimeException) e;
         } else {
@@ -482,7 +535,7 @@ public final class JooqUtil {
             try {
                 throw new RuntimeException("Data source already in use");
             } catch (final RuntimeException e) {
-                LOGGER.error(e.getMessage(), e);
+                LOGGER.error(e::getMessage, e);
             }
         }
         DATA_SOURCE_THREAD_LOCAL.set(dataSource);

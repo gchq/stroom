@@ -71,6 +71,7 @@ import java.util.function.Predicate;
 import javax.inject.Inject;
 
 import static java.util.Map.entry;
+import static java.util.Map.of;
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFeed.PROCESSOR_FEED;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FILTER;
@@ -509,7 +510,8 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     public ResultPage<ProcessorTask> find(final ExpressionCriteria criteria) {
         final Condition condition = expressionMapper.apply(criteria.getExpression());
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
-        final PageRequest pageRequest = criteria.getPageRequest();
+        final int offset = JooqUtil.getOffset(criteria.getPageRequest());
+        final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
         final Result<Record> result = JooqUtil.contextResult(processorDbConnProvider, context ->
                 context
                         .select()
@@ -522,8 +524,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                         .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
                         .where(condition)
                         .orderBy(orderFields)
-                        .limit(JooqUtil.getLimit(pageRequest, true))
-                        .offset(JooqUtil.getOffset(pageRequest))
+                        .limit(offset, limit)
                         .fetch());
         return convert(criteria, result, new HashMap<>());
     }
@@ -532,6 +533,8 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                                 final Condition condition,
                                 final Collection<OrderField<?>> orderFields,
                                 final PageRequest pageRequest) {
+        final int offset = JooqUtil.getOffset(pageRequest);
+        final int limit = JooqUtil.getLimit(pageRequest, true);
         return context
                 .select()
                 .from(PROCESSOR_TASK)
@@ -543,8 +546,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
                 .where(condition)
                 .orderBy(orderFields)
-                .limit(JooqUtil.getLimit(pageRequest, true))
-                .offset(JooqUtil.getOffset(pageRequest))
+                .limit(offset, limit)
                 .fetch();
     }
 
@@ -578,7 +580,8 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         final Condition condition = expressionMapper.apply(criteria.getExpression());
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
         final PageRequest pageRequest = criteria.getPageRequest();
-
+        final int offset = JooqUtil.getOffset(pageRequest);
+        final int limit = JooqUtil.getLimit(pageRequest, true);
         final Result<Record5<String, String, Integer, Byte, Integer>> result =
                 JooqUtil.contextResult(processorDbConnProvider, context -> context
                         .select(
@@ -599,8 +602,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                                 PROCESSOR_FILTER.PRIORITY,
                                 PROCESSOR_TASK.STATUS)
                         .orderBy(orderFields)
-                        .limit(JooqUtil.getLimit(pageRequest, true))
-                        .offset(JooqUtil.getOffset(pageRequest))
+                        .limit(offset, limit)
                         .fetch());
 
         final List<ProcessorTaskSummary> list = result.map(record -> {

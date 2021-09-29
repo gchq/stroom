@@ -30,7 +30,6 @@ import org.jooq.OrderField;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import javax.inject.Inject;
 
 import static stroom.node.impl.db.jooq.tables.Node.NODE;
@@ -64,11 +63,10 @@ public class NodeDaoImpl implements NodeDao {
 
     @Override
     public Node update(final Node node) {
-        return JooqUtil.contextResultWithOptimisticLocking(nodeDbConnProvider, context -> {
-            final NodeRecord nodeRecord = context.newRecord(NODE, node);
-            nodeRecord.update();
-            return nodeRecord.into(Node.class);
-        });
+        final NodeRecord record = NODE.newRecord();
+        record.from(node);
+        final NodeRecord persistedRecord = JooqUtil.updateWithOptimisticLocking(nodeDbConnProvider, record);
+        return persistedRecord.into(Node.class);
     }
 
     @Override
@@ -78,26 +76,26 @@ public class NodeDaoImpl implements NodeDao {
                 JooqUtil.getBooleanCondition(NODE.ENABLED, criteria.isEnabled()));
 
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
-
+        final int offset = JooqUtil.getOffset(criteria.getPageRequest());
+        final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
         final List<Node> list = JooqUtil.contextResult(nodeDbConnProvider, context ->
-                context
-                        .selectFrom(NODE)
-                        .where(conditions)
-                        .orderBy(orderFields)
-                        .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
-                        .offset(JooqUtil.getOffset(criteria.getPageRequest()))
-                        .fetch()
-                        .map(r -> r.into(Node.class)));
+                        context
+                                .selectFrom(NODE)
+                                .where(conditions)
+                                .orderBy(orderFields)
+                                .limit(offset, limit)
+                                .fetch())
+                .map(r -> r.into(Node.class));
         return ResultPage.createCriterialBasedList(list, criteria);
     }
 
     @Override
     public Node getNode(final String nodeName) {
-        final Optional<Node> optional = JooqUtil.contextResult(nodeDbConnProvider, context -> context
-                .selectFrom(NODE)
-                .where(NODE.NAME.eq(nodeName))
-                .fetchOptional()
-                .map(r -> r.into(Node.class)));
-        return optional.orElse(null);
+        return JooqUtil.contextResult(nodeDbConnProvider, context -> context
+                        .selectFrom(NODE)
+                        .where(NODE.NAME.eq(nodeName))
+                        .fetchOptional())
+                .map(r -> r.into(Node.class))
+                .orElse(null);
     }
 }

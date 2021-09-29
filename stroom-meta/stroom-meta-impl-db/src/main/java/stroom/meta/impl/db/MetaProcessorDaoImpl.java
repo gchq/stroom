@@ -85,12 +85,12 @@ class MetaProcessorDaoImpl implements MetaProcessorDao, Clearable {
 
     private Optional<Integer> create(final String processorUuid, final String pipelineUuid) {
         return JooqUtil.contextResult(metaDbConnProvider, context -> context
-                .insertInto(META_PROCESSOR, META_PROCESSOR.PROCESSOR_UUID, META_PROCESSOR.PIPELINE_UUID)
-                .values(processorUuid, pipelineUuid)
-                .onDuplicateKeyIgnore()
-                .returning(META_PROCESSOR.ID)
-                .fetchOptional()
-                .map(MetaProcessorRecord::getId));
+                        .insertInto(META_PROCESSOR, META_PROCESSOR.PROCESSOR_UUID, META_PROCESSOR.PIPELINE_UUID)
+                        .values(processorUuid, pipelineUuid)
+                        .onDuplicateKeyIgnore()
+                        .returning(META_PROCESSOR.ID)
+                        .fetchOptional())
+                .map(MetaProcessorRecord::getId);
     }
 
     @Override

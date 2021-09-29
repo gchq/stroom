@@ -33,7 +33,6 @@ public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TY
     public GenericDao(final DataSource connectionProvider,
                       final Table<T_REC_TYPE> table,
                       final TableField<T_REC_TYPE, T_ID_TYPE> idField,
-                      final Class<T_OBJ_TYPE> objectTypeClass,
                       final BiFunction<T_OBJ_TYPE, T_REC_TYPE, T_REC_TYPE> objectToRecordMapper,
                       final Function<Record, T_OBJ_TYPE> recordToObjectMapper) {
         this.connectionProvider = connectionProvider;
@@ -47,7 +46,7 @@ public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TY
                       final Table<T_REC_TYPE> table,
                       final TableField<T_REC_TYPE, T_ID_TYPE> idField,
                       final Class<T_OBJ_TYPE> objectTypeClass) {
-        this(connectionProvider, table, idField, objectTypeClass, (object, record) -> {
+        this(connectionProvider, table, idField, (object, record) -> {
             record.from(object);
             return record;
         }, record ->

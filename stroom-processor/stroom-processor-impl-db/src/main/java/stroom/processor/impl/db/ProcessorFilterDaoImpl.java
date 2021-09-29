@@ -19,7 +19,6 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
 
 import org.jooq.Condition;
-import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
@@ -95,52 +94,50 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
         LAMBDA_LOGGER.debug(() -> LogUtil.message("Creating a {}", PROCESSOR_FILTER.getName()));
 
         final ProcessorFilter marshalled = marshaller.marshal(processorFilter);
-        final ProcessorFilter stored = JooqUtil.transactionResult(processorDbConnProvider, context -> {
-            ProcessorFilterTracker tracker = new ProcessorFilterTracker();
-            tracker.setMinMetaCreateMs(minMetaCreateMs);
-            tracker.setMaxMetaCreateMs(maxMetaCreateMs);
+        final ProcessorFilterTracker tracker = new ProcessorFilterTracker();
+        tracker.setMinMetaCreateMs(minMetaCreateMs);
+        tracker.setMaxMetaCreateMs(maxMetaCreateMs);
 
-            final ProcessorFilterTrackerRecord processorFilterTrackerRecord = context.newRecord(
-                    PROCESSOR_FILTER_TRACKER, tracker);
+        final ProcessorFilterTrackerRecord processorFilterTrackerRecord = PROCESSOR_FILTER_TRACKER.newRecord();
+        processorFilterTrackerRecord.from(tracker);
+
+        final ProcessorFilterRecord processorFilterRecord = PROCESSOR_FILTER.newRecord();
+        processorFilterRecord.from(marshalled);
+        processorFilterRecord.setFkProcessorId(marshalled.getProcessor().getId());
+
+        final ProcessorFilterRecord stored = JooqUtil.transactionResult(processorDbConnProvider, context -> {
+            processorFilterTrackerRecord.attach(context.configuration());
             processorFilterTrackerRecord.store();
-            tracker = processorFilterTrackerRecord.into(ProcessorFilterTracker.class);
 
-            marshalled.setProcessorFilterTracker(tracker);
+            final ProcessorFilterTracker persistedTracker =
+                    processorFilterTrackerRecord.into(ProcessorFilterTracker.class);
+            marshalled.setProcessorFilterTracker(persistedTracker);
+            processorFilterRecord.setFkProcessorFilterTrackerId(persistedTracker.getId());
 
-            final ProcessorFilterRecord processorFilterRecord = context.newRecord(PROCESSOR_FILTER, marshalled);
-
-            processorFilterRecord.setFkProcessorFilterTrackerId(marshalled.getProcessorFilterTracker().getId());
-            processorFilterRecord.setFkProcessorId(marshalled.getProcessor().getId());
+            processorFilterRecord.attach(context.configuration());
             processorFilterRecord.store();
 
-            final ProcessorFilter result = processorFilterRecord.into(ProcessorFilter.class);
-            result.setProcessorFilterTracker(result.getProcessorFilterTracker());
-            result.setProcessor(result.getProcessor());
-
-            return result;
+            return processorFilterRecord;
         });
-        return marshaller.unmarshal(stored);
+
+        final ProcessorFilter result = stored.into(ProcessorFilter.class);
+        result.setProcessorFilterTracker(result.getProcessorFilterTracker());
+        result.setProcessor(result.getProcessor());
+
+        return marshaller.unmarshal(result);
     }
 
     @Override
     public ProcessorFilter update(final ProcessorFilter processorFilter) {
         final ProcessorFilter marshalled = marshaller.marshal(processorFilter);
-        final ProcessorFilter stored = JooqUtil.contextResultWithOptimisticLocking(
-                processorDbConnProvider, context -> {
-                    final ProcessorFilterRecord processorFilterRecord =
-                            context.newRecord(PROCESSOR_FILTER, marshalled);
-
-//            processorFilterRecord.setFkProcessorFilterTrackerId(marshalled.getProcessorFilterTracker().getId());
-//            processorFilterRecord.setFkProcessorId(marshalled.getProcessor().getId());
-                    processorFilterRecord.update();
-
-                    final ProcessorFilter result = processorFilterRecord.into(ProcessorFilter.class);
-                    result.setProcessorFilterTracker(marshalled.getProcessorFilterTracker());
-                    result.setProcessor(marshalled.getProcessor());
-
-                    return result;
-                });
-        return marshaller.unmarshal(stored);
+        final ProcessorFilterRecord record = PROCESSOR_FILTER.newRecord();
+        record.from(processorFilter);
+        final ProcessorFilterRecord persistedRecord = JooqUtil.updateWithOptimisticLocking(processorDbConnProvider,
+                record);
+        final ProcessorFilter result = persistedRecord.into(ProcessorFilter.class);
+        result.setProcessorFilterTracker(marshalled.getProcessorFilterTracker());
+        result.setProcessor(marshalled.getProcessor());
+        return marshaller.unmarshal(result);
     }
 
     @Override
@@ -154,54 +151,20 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                 .update(PROCESSOR_FILTER)
                 .set(PROCESSOR_FILTER.DELETED, true)
                 .where(PROCESSOR_FILTER.ID.eq(id))
-                .execute() > 0);
+                .execute()) > 0;
     }
 
     @Override
     public Optional<ProcessorFilter> fetch(final int id) {
         return JooqUtil.contextResult(processorDbConnProvider, context ->
-                context
-                        .select()
-                        .from(PROCESSOR_FILTER)
-                        .join(PROCESSOR_FILTER_TRACKER).on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(
-                                PROCESSOR_FILTER_TRACKER.ID))
-                        .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
-                        .where(PROCESSOR_FILTER.ID.eq(id))
-                        .fetchOptional()
-                        .map(record -> {
-                            final Processor processor = RECORD_TO_PROCESSOR_MAPPER.apply(record);
-                            final ProcessorFilter processorFilter = RECORD_TO_PROCESSOR_FILTER_MAPPER.apply(record);
-                            final ProcessorFilterTracker processorFilterTracker =
-                                    RECORD_TO_PROCESSOR_FILTER_TRACKER_MAPPER.apply(record);
-
-                            processorFilter.setProcessor(processor);
-                            processorFilter.setProcessorFilterTracker(processorFilterTracker);
-
-                            return marshaller.unmarshal(processorFilter);
-                        }));
-    }
-
-    @Override
-    public ResultPage<ProcessorFilter> find(final ExpressionCriteria criteria) {
-        return JooqUtil.contextResult(processorDbConnProvider, context -> find(context, criteria));
-    }
-
-    private ResultPage<ProcessorFilter> find(final DSLContext context, final ExpressionCriteria criteria) {
-        final Condition condition = expressionMapper.apply(criteria.getExpression());
-
-        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
-
-        final List<ProcessorFilter> list = context
-                .select()
-                .from(PROCESSOR_FILTER)
-                .join(PROCESSOR_FILTER_TRACKER).on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(
-                        PROCESSOR_FILTER_TRACKER.ID))
-                .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
-                .where(condition)
-                .orderBy(orderFields)
-                .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
-                .offset(JooqUtil.getOffset(criteria.getPageRequest()))
-                .fetch()
+                        context
+                                .select()
+                                .from(PROCESSOR_FILTER)
+                                .join(PROCESSOR_FILTER_TRACKER).on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(
+                                        PROCESSOR_FILTER_TRACKER.ID))
+                                .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
+                                .where(PROCESSOR_FILTER.ID.eq(id))
+                                .fetchOptional())
                 .map(record -> {
                     final Processor processor = RECORD_TO_PROCESSOR_MAPPER.apply(record);
                     final ProcessorFilter processorFilter = RECORD_TO_PROCESSOR_FILTER_MAPPER.apply(record);
@@ -213,18 +176,36 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
                     return marshaller.unmarshal(processorFilter);
                 });
-
-        return ResultPage.createCriterialBasedList(list, criteria);
     }
 
-//    private Collection<Condition> convertCriteria(final FindProcessorFilterCriteria criteria) {
-//        return JooqUtil.conditions(
-//                JooqUtil.getRangeCondition(PROCESSOR_FILTER.PRIORITY, criteria.getPriorityRange()),
-//                JooqUtil.getRangeCondition(PROCESSOR_FILTER_TRACKER.LAST_POLL_MS, criteria.getLastPollPeriod()),
-//                JooqUtil.getSetCondition(PROCESSOR_FILTER.FK_PROCESSOR_ID, criteria.getProcessorIdSet()),
-//                JooqUtil.getStringCondition(PROCESSOR.PIPELINE_UUID, criteria.getPipelineUuidCriteria()),
-//                Optional.ofNullable(criteria.getProcessorEnabled()).map(PROCESSOR.ENABLED::eq),
-//                Optional.ofNullable(criteria.getProcessorFilterEnabled()).map(PROCESSOR_FILTER.ENABLED::eq),
-//                Optional.ofNullable(criteria.getCreateUser()).map(PROCESSOR_FILTER.CREATE_USER::eq));
-//    }
+    @Override
+    public ResultPage<ProcessorFilter> find(final ExpressionCriteria criteria) {
+        final Condition condition = expressionMapper.apply(criteria.getExpression());
+
+        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
+        final int offset = JooqUtil.getOffset(criteria.getPageRequest());
+        final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
+        final List<ProcessorFilter> list = JooqUtil.contextResult(processorDbConnProvider, context -> context
+                        .select()
+                        .from(PROCESSOR_FILTER)
+                        .join(PROCESSOR_FILTER_TRACKER).on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(
+                                PROCESSOR_FILTER_TRACKER.ID))
+                        .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
+                        .where(condition)
+                        .orderBy(orderFields)
+                        .limit(offset, limit)
+                        .fetch())
+                .map(record -> {
+                    final Processor processor = RECORD_TO_PROCESSOR_MAPPER.apply(record);
+                    final ProcessorFilter processorFilter = RECORD_TO_PROCESSOR_FILTER_MAPPER.apply(record);
+                    final ProcessorFilterTracker processorFilterTracker =
+                            RECORD_TO_PROCESSOR_FILTER_TRACKER_MAPPER.apply(record);
+
+                    processorFilter.setProcessor(processor);
+                    processorFilter.setProcessorFilterTracker(processorFilterTracker);
+
+                    return marshaller.unmarshal(processorFilter);
+                });
+        return ResultPage.createCriterialBasedList(list, criteria);
+    }
 }

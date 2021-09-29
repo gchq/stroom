@@ -151,9 +151,9 @@ class AnnotationDaoImpl implements AnnotationDao {
                     System.currentTimeMillis());
 
             return optional.orElseThrow(() ->
-                    new RuntimeException(
-                            "Expected a standard date value for field \"" + fieldName
-                                    + "\" but was given string \"" + value + "\""))
+                            new RuntimeException(
+                                    "Expected a standard date value for field \"" + fieldName
+                                            + "\" but was given string \"" + value + "\""))
                     .toInstant().toEpochMilli();
         } catch (final Exception e) {
             throw new RuntimeException("Expected a standard date value for field \"" + fieldName
@@ -164,12 +164,12 @@ class AnnotationDaoImpl implements AnnotationDao {
     @Override
     public Annotation get(final long annotationId) {
         return JooqUtil.contextResult(connectionProvider, context -> context
-                .select()
-                .from(ANNOTATION)
-                .where(ANNOTATION.ID.eq(annotationId))
-                .fetchOptional()
+                        .select()
+                        .from(ANNOTATION)
+                        .where(ANNOTATION.ID.eq(annotationId))
+                        .fetchOptional())
                 .map(RECORD_TO_ANNOTATION_MAPPER)
-                .orElse(null));
+                .orElse(null);
     }
 
     private Annotation get(final Annotation annotation) {
@@ -192,14 +192,13 @@ class AnnotationDaoImpl implements AnnotationDao {
     @Override
     public List<Annotation> getAnnotationsForEvents(final long streamId, final long eventId) {
         return JooqUtil.contextResult(connectionProvider, context -> context
-                .select()
-                .from(ANNOTATION)
-                .join(ANNOTATION_DATA_LINK).on(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID.eq(ANNOTATION.ID))
-                .where(ANNOTATION_DATA_LINK.STREAM_ID.eq(streamId).and(ANNOTATION_DATA_LINK.EVENT_ID.eq(eventId)))
-                .fetch()
-                .stream()
-                .map(RECORD_TO_ANNOTATION_MAPPER)
-                .collect(Collectors.toList()));
+                        .select()
+                        .from(ANNOTATION)
+                        .join(ANNOTATION_DATA_LINK).on(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID.eq(ANNOTATION.ID))
+                        .where(ANNOTATION_DATA_LINK.STREAM_ID.eq(streamId)
+                                .and(ANNOTATION_DATA_LINK.EVENT_ID.eq(eventId)))
+                        .fetch())
+                .map(RECORD_TO_ANNOTATION_MAPPER::apply);
     }
 
     @Override
@@ -210,12 +209,12 @@ class AnnotationDaoImpl implements AnnotationDao {
 
     private AnnotationDetail getDetail(final Annotation annotation) {
         final List<AnnotationEntry> entries = JooqUtil.contextResult(connectionProvider, context -> context
-                .select()
-                .from(ANNOTATION_ENTRY)
-                .where(ANNOTATION_ENTRY.FK_ANNOTATION_ID.eq(annotation.getId()))
-                .orderBy(ANNOTATION_ENTRY.ID)
-                .fetch()
-                .map(RECORD_TO_ANNOTATION_ENTRY_MAPPER::apply));
+                        .select()
+                        .from(ANNOTATION_ENTRY)
+                        .where(ANNOTATION_ENTRY.FK_ANNOTATION_ID.eq(annotation.getId()))
+                        .orderBy(ANNOTATION_ENTRY.ID)
+                        .fetch())
+                .map(RECORD_TO_ANNOTATION_ENTRY_MAPPER::apply);
 
         return new AnnotationDetail(annotation, entries);
     }
@@ -318,33 +317,33 @@ class AnnotationDaoImpl implements AnnotationDao {
 
     private Annotation create(final Annotation annotation) {
         final Optional<Long> optional = JooqUtil.contextResult(connectionProvider, context -> context
-                .insertInto(ANNOTATION,
-                        ANNOTATION.VERSION,
-                        ANNOTATION.CREATE_USER,
-                        ANNOTATION.CREATE_TIME_MS,
-                        ANNOTATION.UPDATE_USER,
-                        ANNOTATION.UPDATE_TIME_MS,
-                        ANNOTATION.TITLE,
-                        ANNOTATION.SUBJECT,
-                        ANNOTATION.STATUS,
-                        ANNOTATION.ASSIGNED_TO,
-                        ANNOTATION.COMMENT,
-                        ANNOTATION.HISTORY)
-                .values(1,
-                        annotation.getCreateUser(),
-                        annotation.getCreateTime(),
-                        annotation.getUpdateUser(),
-                        annotation.getUpdateTime(),
-                        annotation.getTitle(),
-                        annotation.getSubject(),
-                        annotation.getStatus(),
-                        annotation.getAssignedTo(),
-                        annotation.getComment(),
-                        annotation.getHistory())
-                .onDuplicateKeyIgnore()
-                .returning(ANNOTATION.ID)
-                .fetchOptional()
-                .map(AnnotationRecord::getId));
+                        .insertInto(ANNOTATION,
+                                ANNOTATION.VERSION,
+                                ANNOTATION.CREATE_USER,
+                                ANNOTATION.CREATE_TIME_MS,
+                                ANNOTATION.UPDATE_USER,
+                                ANNOTATION.UPDATE_TIME_MS,
+                                ANNOTATION.TITLE,
+                                ANNOTATION.SUBJECT,
+                                ANNOTATION.STATUS,
+                                ANNOTATION.ASSIGNED_TO,
+                                ANNOTATION.COMMENT,
+                                ANNOTATION.HISTORY)
+                        .values(1,
+                                annotation.getCreateUser(),
+                                annotation.getCreateTime(),
+                                annotation.getUpdateUser(),
+                                annotation.getUpdateTime(),
+                                annotation.getTitle(),
+                                annotation.getSubject(),
+                                annotation.getStatus(),
+                                annotation.getAssignedTo(),
+                                annotation.getComment(),
+                                annotation.getHistory())
+                        .onDuplicateKeyIgnore()
+                        .returning(ANNOTATION.ID)
+                        .fetchOptional())
+                .map(AnnotationRecord::getId);
 
         return optional.map(id -> {
             annotation.setId(id);
@@ -410,12 +409,12 @@ class AnnotationDaoImpl implements AnnotationDao {
     @Override
     public List<EventId> getLinkedEvents(final Long annotationId) {
         return JooqUtil.contextResult(connectionProvider, context -> context
-                .select(ANNOTATION_DATA_LINK.STREAM_ID, ANNOTATION_DATA_LINK.EVENT_ID)
-                .from(ANNOTATION_DATA_LINK)
-                .where(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID.eq(annotationId))
-                .orderBy(ANNOTATION_DATA_LINK.STREAM_ID, ANNOTATION_DATA_LINK.EVENT_ID)
-                .fetch()
-                .map(r -> new EventId(r.get(ANNOTATION_DATA_LINK.STREAM_ID), r.get(ANNOTATION_DATA_LINK.EVENT_ID))));
+                        .select(ANNOTATION_DATA_LINK.STREAM_ID, ANNOTATION_DATA_LINK.EVENT_ID)
+                        .from(ANNOTATION_DATA_LINK)
+                        .where(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID.eq(annotationId))
+                        .orderBy(ANNOTATION_DATA_LINK.STREAM_ID, ANNOTATION_DATA_LINK.EVENT_ID)
+                        .fetch())
+                .map(r -> new EventId(r.get(ANNOTATION_DATA_LINK.STREAM_ID), r.get(ANNOTATION_DATA_LINK.EVENT_ID)));
     }
 
     @Override

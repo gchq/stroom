@@ -91,17 +91,16 @@ public class JobDaoImpl implements JobDao, HasIntCrud<Job> {
                 JooqUtil.getStringCondition(JOB.NAME, criteria.getName()));
 
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
-
+        final int offset = JooqUtil.getOffset(criteria.getPageRequest());
+        final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
         final List<Job> list = JooqUtil.contextResult(jobDbConnProvider, context -> context
-                .select()
-                .from(JOB)
-                .where(conditions)
-                .orderBy(orderFields)
-                .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
-                .offset(JooqUtil.getOffset(criteria.getPageRequest()))
-                .fetch()
-                .into(Job.class));
-
+                        .select()
+                        .from(JOB)
+                        .where(conditions)
+                        .orderBy(orderFields)
+                        .limit(offset, limit)
+                        .fetch())
+                .into(Job.class);
         return ResultPage.createCriterialBasedList(list, criteria);
     }
 
@@ -114,33 +113,4 @@ public class JobDaoImpl implements JobDao, HasIntCrud<Job> {
                                 .from(JOB_NODE)))
                 .execute());
     }
-
-
-//    private GenericDao<JobRecord, Job, Integer> genericDao;
-//
-//    @Inject
-//    JobDao(final ConnectionProvider connectionProvider) {
-//        genericDao = new GenericDao<>(JOB, JOB.ID, Job.class, connectionProvider);
-//    }
-//
-//    @Override
-//    public Job create(final Job job) {
-//        return genericDao.create(job);
-//    }
-//
-//    @Override
-//    public Job update(final Job job) {
-//        return genericDao.update(job);
-//    }
-//
-//    @Override
-//    public boolean delete(int id) {
-//        return genericDao.delete(id);
-//    }
-//
-//    @Override
-//    public Optional<Job> fetch(int id) {
-//        return genericDao.fetch(id);
-//    }
-
 }

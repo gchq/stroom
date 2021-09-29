@@ -161,11 +161,11 @@ class TokenDaoImpl implements TokenDao {
     @Override
     public TokenResultPage list() {
         final List<Token> list = JooqUtil.contextResult(identityDbConnProvider, context -> context
-                .selectFrom(stroom.security.identity.db.jooq.tables.Token.TOKEN)
-                .where(createCondition())
-                .orderBy(stroom.security.identity.db.jooq.tables.Token.TOKEN.CREATE_TIME_MS)
-                .fetch()
-                .map(RECORD_TO_TOKEN_MAPPER::apply));
+                        .selectFrom(stroom.security.identity.db.jooq.tables.Token.TOKEN)
+                        .where(createCondition())
+                        .orderBy(stroom.security.identity.db.jooq.tables.Token.TOKEN.CREATE_TIME_MS)
+                        .fetch())
+                .map(RECORD_TO_TOKEN_MAPPER::apply);
         return ResultPageFactory.createUnboundedList(list, TokenResultPage::new);
     }
 
@@ -397,12 +397,12 @@ class TokenDaoImpl implements TokenDao {
     @Override
     public int deleteAllTokensExceptAdmins() {
         final Integer adminUserId = JooqUtil.contextResult(identityDbConnProvider, context -> context
-                .select(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID)
-                .from(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
-                .where(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.USER_ID
-                        .eq("admin"))
-                .fetchOne()
-                .map(r -> r.get(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID)));
+                        .select(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID)
+                        .from(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
+                        .where(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.USER_ID
+                                .eq("admin"))
+                        .fetchOne())
+                .map(r -> r.get(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID));
 
         return JooqUtil.contextResult(identityDbConnProvider, context -> context
                 .deleteFrom(stroom.security.identity.db.jooq.tables.Token.TOKEN)
@@ -433,89 +433,89 @@ class TokenDaoImpl implements TokenDao {
     @Override
     public List<Token> getTokensForAccount(final int accountId) {
         return JooqUtil.contextResult(identityDbConnProvider, context -> context
-                .select(
-                        stroom.security.identity.db.jooq.tables.Token.TOKEN.ID,
-                        stroom.security.identity.db.jooq.tables.Token.TOKEN.VERSION,
-                        stroom.security.identity.db.jooq.tables.Token.TOKEN.CREATE_TIME_MS,
-                        stroom.security.identity.db.jooq.tables.Token.TOKEN.UPDATE_TIME_MS,
-                        stroom.security.identity.db.jooq.tables.Token.TOKEN.CREATE_USER,
-                        stroom.security.identity.db.jooq.tables.Token.TOKEN.UPDATE_USER,
-                        stroom.security.identity.db.jooq.tables.Account.ACCOUNT.USER_ID,
-                        stroom.security.identity.db.jooq.tables.Account.ACCOUNT.EMAIL,
-                        TOKEN_TYPE.TYPE,
-                        stroom.security.identity.db.jooq.tables.Token.TOKEN.DATA,
-                        stroom.security.identity.db.jooq.tables.Token.TOKEN.EXPIRES_ON_MS,
-                        stroom.security.identity.db.jooq.tables.Token.TOKEN.COMMENTS,
-                        stroom.security.identity.db.jooq.tables.Token.TOKEN.ENABLED)
-                .from(stroom.security.identity.db.jooq.tables.Token.TOKEN)
-                .join(TOKEN_TYPE).on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_TOKEN_TYPE_ID
-                        .eq(TOKEN_TYPE.ID))
-                .join(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
-                .on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_ACCOUNT_ID
-                        .eq(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID))
-                .where(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_ACCOUNT_ID.eq(accountId))
-                .orderBy(stroom.security.identity.db.jooq.tables.Token.TOKEN.ID)
-                .fetch()
-                .map(RECORD_TO_TOKEN_MAPPER::apply));
+                        .select(
+                                stroom.security.identity.db.jooq.tables.Token.TOKEN.ID,
+                                stroom.security.identity.db.jooq.tables.Token.TOKEN.VERSION,
+                                stroom.security.identity.db.jooq.tables.Token.TOKEN.CREATE_TIME_MS,
+                                stroom.security.identity.db.jooq.tables.Token.TOKEN.UPDATE_TIME_MS,
+                                stroom.security.identity.db.jooq.tables.Token.TOKEN.CREATE_USER,
+                                stroom.security.identity.db.jooq.tables.Token.TOKEN.UPDATE_USER,
+                                stroom.security.identity.db.jooq.tables.Account.ACCOUNT.USER_ID,
+                                stroom.security.identity.db.jooq.tables.Account.ACCOUNT.EMAIL,
+                                TOKEN_TYPE.TYPE,
+                                stroom.security.identity.db.jooq.tables.Token.TOKEN.DATA,
+                                stroom.security.identity.db.jooq.tables.Token.TOKEN.EXPIRES_ON_MS,
+                                stroom.security.identity.db.jooq.tables.Token.TOKEN.COMMENTS,
+                                stroom.security.identity.db.jooq.tables.Token.TOKEN.ENABLED)
+                        .from(stroom.security.identity.db.jooq.tables.Token.TOKEN)
+                        .join(TOKEN_TYPE).on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_TOKEN_TYPE_ID
+                                .eq(TOKEN_TYPE.ID))
+                        .join(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
+                        .on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_ACCOUNT_ID
+                                .eq(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID))
+                        .where(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_ACCOUNT_ID.eq(accountId))
+                        .orderBy(stroom.security.identity.db.jooq.tables.Token.TOKEN.ID)
+                        .fetch())
+                .map(RECORD_TO_TOKEN_MAPPER::apply);
     }
 
     @Override
     public Optional<Token> readById(int tokenId) {
         return JooqUtil.contextResult(identityDbConnProvider, context -> context
-                .select(
-                        stroom.security.identity.db.jooq.tables.Token.TOKEN.ID,
-                        stroom.security.identity.db.jooq.tables.Token.TOKEN.VERSION,
-                        stroom.security.identity.db.jooq.tables.Token.TOKEN.CREATE_TIME_MS,
-                        stroom.security.identity.db.jooq.tables.Token.TOKEN.UPDATE_TIME_MS,
-                        stroom.security.identity.db.jooq.tables.Token.TOKEN.CREATE_USER,
-                        stroom.security.identity.db.jooq.tables.Token.TOKEN.UPDATE_USER,
-                        stroom.security.identity.db.jooq.tables.Account.ACCOUNT.USER_ID,
-                        stroom.security.identity.db.jooq.tables.Account.ACCOUNT.EMAIL,
-                        TOKEN_TYPE.TYPE,
-                        stroom.security.identity.db.jooq.tables.Token.TOKEN.DATA,
-                        stroom.security.identity.db.jooq.tables.Token.TOKEN.EXPIRES_ON_MS,
-                        stroom.security.identity.db.jooq.tables.Token.TOKEN.COMMENTS,
-                        stroom.security.identity.db.jooq.tables.Token.TOKEN.ENABLED)
-                .from(stroom.security.identity.db.jooq.tables.Token.TOKEN)
-                .join(TOKEN_TYPE)
-                .on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_TOKEN_TYPE_ID
-                        .eq(TOKEN_TYPE.ID))
-                .join(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
-                .on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_ACCOUNT_ID
-                        .eq(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID))
-                .where(stroom.security.identity.db.jooq.tables.Token.TOKEN.ID.eq(tokenId))
-                .fetchOptional()
-                .map(RECORD_TO_TOKEN_MAPPER));
+                        .select(
+                                stroom.security.identity.db.jooq.tables.Token.TOKEN.ID,
+                                stroom.security.identity.db.jooq.tables.Token.TOKEN.VERSION,
+                                stroom.security.identity.db.jooq.tables.Token.TOKEN.CREATE_TIME_MS,
+                                stroom.security.identity.db.jooq.tables.Token.TOKEN.UPDATE_TIME_MS,
+                                stroom.security.identity.db.jooq.tables.Token.TOKEN.CREATE_USER,
+                                stroom.security.identity.db.jooq.tables.Token.TOKEN.UPDATE_USER,
+                                stroom.security.identity.db.jooq.tables.Account.ACCOUNT.USER_ID,
+                                stroom.security.identity.db.jooq.tables.Account.ACCOUNT.EMAIL,
+                                TOKEN_TYPE.TYPE,
+                                stroom.security.identity.db.jooq.tables.Token.TOKEN.DATA,
+                                stroom.security.identity.db.jooq.tables.Token.TOKEN.EXPIRES_ON_MS,
+                                stroom.security.identity.db.jooq.tables.Token.TOKEN.COMMENTS,
+                                stroom.security.identity.db.jooq.tables.Token.TOKEN.ENABLED)
+                        .from(stroom.security.identity.db.jooq.tables.Token.TOKEN)
+                        .join(TOKEN_TYPE)
+                        .on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_TOKEN_TYPE_ID
+                                .eq(TOKEN_TYPE.ID))
+                        .join(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
+                        .on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_ACCOUNT_ID
+                                .eq(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID))
+                        .where(stroom.security.identity.db.jooq.tables.Token.TOKEN.ID.eq(tokenId))
+                        .fetchOptional())
+                .map(RECORD_TO_TOKEN_MAPPER);
     }
 
 
     @Override
     public Optional<Token> readByToken(String token) {
         return JooqUtil.contextResult(identityDbConnProvider, context -> context
-                .select(
-                        stroom.security.identity.db.jooq.tables.Token.TOKEN.ID,
-                        stroom.security.identity.db.jooq.tables.Token.TOKEN.VERSION,
-                        stroom.security.identity.db.jooq.tables.Token.TOKEN.CREATE_TIME_MS,
-                        stroom.security.identity.db.jooq.tables.Token.TOKEN.UPDATE_TIME_MS,
-                        stroom.security.identity.db.jooq.tables.Token.TOKEN.CREATE_USER,
-                        stroom.security.identity.db.jooq.tables.Token.TOKEN.UPDATE_USER,
-                        stroom.security.identity.db.jooq.tables.Account.ACCOUNT.USER_ID,
-                        stroom.security.identity.db.jooq.tables.Account.ACCOUNT.EMAIL,
-                        TOKEN_TYPE.TYPE,
-                        stroom.security.identity.db.jooq.tables.Token.TOKEN.DATA,
-                        stroom.security.identity.db.jooq.tables.Token.TOKEN.EXPIRES_ON_MS,
-                        stroom.security.identity.db.jooq.tables.Token.TOKEN.COMMENTS,
-                        stroom.security.identity.db.jooq.tables.Token.TOKEN.ENABLED)
-                .from(stroom.security.identity.db.jooq.tables.Token.TOKEN)
-                .join(TOKEN_TYPE)
-                .on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_TOKEN_TYPE_ID
-                        .eq(TOKEN_TYPE.ID))
-                .join(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
-                .on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_ACCOUNT_ID
-                        .eq(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID))
-                .where(stroom.security.identity.db.jooq.tables.Token.TOKEN.DATA.eq(token))
-                .fetchOptional()
-                .map(RECORD_TO_TOKEN_MAPPER));
+                        .select(
+                                stroom.security.identity.db.jooq.tables.Token.TOKEN.ID,
+                                stroom.security.identity.db.jooq.tables.Token.TOKEN.VERSION,
+                                stroom.security.identity.db.jooq.tables.Token.TOKEN.CREATE_TIME_MS,
+                                stroom.security.identity.db.jooq.tables.Token.TOKEN.UPDATE_TIME_MS,
+                                stroom.security.identity.db.jooq.tables.Token.TOKEN.CREATE_USER,
+                                stroom.security.identity.db.jooq.tables.Token.TOKEN.UPDATE_USER,
+                                stroom.security.identity.db.jooq.tables.Account.ACCOUNT.USER_ID,
+                                stroom.security.identity.db.jooq.tables.Account.ACCOUNT.EMAIL,
+                                TOKEN_TYPE.TYPE,
+                                stroom.security.identity.db.jooq.tables.Token.TOKEN.DATA,
+                                stroom.security.identity.db.jooq.tables.Token.TOKEN.EXPIRES_ON_MS,
+                                stroom.security.identity.db.jooq.tables.Token.TOKEN.COMMENTS,
+                                stroom.security.identity.db.jooq.tables.Token.TOKEN.ENABLED)
+                        .from(stroom.security.identity.db.jooq.tables.Token.TOKEN)
+                        .join(TOKEN_TYPE)
+                        .on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_TOKEN_TYPE_ID
+                                .eq(TOKEN_TYPE.ID))
+                        .join(stroom.security.identity.db.jooq.tables.Account.ACCOUNT)
+                        .on(stroom.security.identity.db.jooq.tables.Token.TOKEN.FK_ACCOUNT_ID
+                                .eq(stroom.security.identity.db.jooq.tables.Account.ACCOUNT.ID))
+                        .where(stroom.security.identity.db.jooq.tables.Token.TOKEN.DATA.eq(token))
+                        .fetchOptional())
+                .map(RECORD_TO_TOKEN_MAPPER);
     }
 
 
