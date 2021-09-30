@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Regenerated restful API.
+
 
 ## [v7.0-beta.147] - 2021-09-30
 
