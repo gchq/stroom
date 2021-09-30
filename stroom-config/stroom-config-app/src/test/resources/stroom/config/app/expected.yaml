@@ -844,6 +844,7 @@ appConfig:
       maxCharactersInPreviewFetch: 30000
       maxCharactersPerFetch: 80000
       maxCharactersToCompleteLine: 10000
+      maxHexDumpLines: 1000
     splash:
       enabled: false
       title: "Splash Screen"

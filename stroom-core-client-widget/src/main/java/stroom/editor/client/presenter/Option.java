@@ -18,7 +18,7 @@ package stroom.editor.client.presenter;
 
 public class Option {
 
-    private final ChangeHandler changeHandler;
+    private ChangeHandler changeHandler;
     private final String text;
     private boolean on;
     private boolean available;
@@ -90,6 +90,10 @@ public class Option {
         setAvailable(defaultAvailability);
     }
 
+    public void setChangeHandler(final ChangeHandler changeHandler) {
+        this.changeHandler = changeHandler;
+    }
+
     public String getText() {
         if (on) {
             return text + " (<span style=\"color: green\">ON</span>)";
@@ -98,7 +102,7 @@ public class Option {
         }
     }
 
-    public boolean isOk() {
+    public boolean isOnAndAvailable() {
         return available && on;
     }
 

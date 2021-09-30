@@ -12,6 +12,7 @@
 export interface AbstractFetchDataResult {
   availableChildStreamTypes?: string[];
   classification?: string;
+  displayMode?: "TEXT" | "HEX" | "MARKER";
   feedName?: string;
 
   /** The offset and length of a range of data in a sub-set of a query result set */
@@ -975,8 +976,8 @@ export interface FetchAllDocumentPermissionsRequest {
 }
 
 export interface FetchDataRequest {
+  displayMode?: "TEXT" | "HEX" | "MARKER";
   expandedSeverities?: ("INFO" | "WARN" | "ERROR" | "FATAL")[];
-  markerMode?: boolean;
 
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   pipeline?: DocRef;
@@ -2837,6 +2838,12 @@ export interface SourceConfig {
    * @min 0
    */
   maxCharactersToCompleteLine?: number;
+
+  /**
+   * @format int32
+   * @min 1
+   */
+  maxHexDumpLines?: number;
 }
 
 export interface SourceLocation {

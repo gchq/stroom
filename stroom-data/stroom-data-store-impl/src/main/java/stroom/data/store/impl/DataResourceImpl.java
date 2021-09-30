@@ -27,6 +27,7 @@ import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataRequest;
+import stroom.pipeline.shared.FetchDataRequest.DisplayMode;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.util.EntityServiceExceptionUtil;
 import stroom.util.shared.Count;
@@ -41,6 +42,7 @@ import event.logging.ImportEventAction;
 import event.logging.MultiObject;
 import event.logging.ViewEventAction;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import javax.inject.Inject;
@@ -186,9 +188,11 @@ class DataResourceImpl implements DataResource, FetchWithLongId<List<DataInfoSec
                 Count.of(0L, true),
                 0L,
                 null,
-                viewDataException.getMessage(),
+                null,
                 false,
-                null);
+                null,
+                DisplayMode.TEXT,
+                Collections.singletonList(viewDataException.getMessage()));
     }
 
     @Override

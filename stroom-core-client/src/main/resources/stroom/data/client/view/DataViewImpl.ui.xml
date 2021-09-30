@@ -2,6 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
 			 xmlns:g="urn:import:com.google.gwt.user.client.ui"
 			 xmlns:v="urn:import:stroom.widget.layout.client.view"
+			 xmlns:b="urn:import:stroom.widget.button.client"
 			 xmlns:pager="urn:import:stroom.data.pager.client"
 			 xmlns:tab="urn:import:stroom.widget.tab.client.view"
 			 xmlns:btn="urn:import:stroom.widget.button.client">
@@ -57,6 +58,10 @@
 		float: left;
 		}
 
+		.buttonPanel {
+		float: left;
+		}
+
 		.sourceLinkLabel:hover {
 		text-decoration: underline;
 		}
@@ -74,6 +79,7 @@
 									addStyleNames="{style.tabBarInner}" />
 				</v:ResizeFlowPanel>
 				<g:FlowPanel styleName="{style.rightPanel}">
+					<b:ButtonPanel ui:field="buttonPanel" styleName="{style.buttonPanel}"/>
 					<v:ResizeSimplePanel ui:field="navigatorContainer"
 										 styleName="{style.navigatorContainer}"/>
 					<g:Label ui:field="sourceLinkLabel"
