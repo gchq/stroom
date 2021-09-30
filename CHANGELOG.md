@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2475** : Orphan file and meta finder now show the correct task progress.
+
 * Issue **#2474** : Fixed orphan file finder.
 
 * Issue **#2469** : Made `SafeXmlFilter` available for use in the application.
