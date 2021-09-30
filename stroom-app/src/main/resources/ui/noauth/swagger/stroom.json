@@ -7849,6 +7849,12 @@
             "type" : "string",
             "enum" : [ "TEXT", "HEX", "MARKER" ]
           },
+          "errors" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
           "feedName" : {
             "type" : "string"
           },

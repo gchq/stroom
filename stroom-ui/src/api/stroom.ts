@@ -13,6 +13,7 @@ export interface AbstractFetchDataResult {
   availableChildStreamTypes?: string[];
   classification?: string;
   displayMode?: "TEXT" | "HEX" | "MARKER";
+  errors?: string[];
   feedName?: string;
 
   /** The offset and length of a range of data in a sub-set of a query result set */

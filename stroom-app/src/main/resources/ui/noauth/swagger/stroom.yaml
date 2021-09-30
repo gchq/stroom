@@ -5398,6 +5398,10 @@ components:
           - TEXT
           - HEX
           - MARKER
+        errors:
+          type: array
+          items:
+            type: string
         feedName:
           type: string
         itemRange:
