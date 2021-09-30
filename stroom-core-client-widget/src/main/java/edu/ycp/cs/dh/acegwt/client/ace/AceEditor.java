@@ -99,6 +99,16 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
 	}-*/;
 
     /**
+     * Set whether to show the indent guides
+     *
+     * @param showIndentGuides true if vertical indent guides should be shown
+     */
+    public native void setShowIndentGuides(boolean showIndentGuides) /*-{
+		var editor = this.@edu.ycp.cs.dh.acegwt.client.ace.AceEditor::editor;
+		editor.setOption("displayIndentGuides", showIndentGuides)
+	}-*/;
+
+    /**
      * Set whether to show hidden chars or not
      *
      * @param showInvisibles true if hidden chars should be displayed

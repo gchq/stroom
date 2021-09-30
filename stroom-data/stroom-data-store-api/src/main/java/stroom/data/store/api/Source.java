@@ -60,4 +60,7 @@ public interface Source extends Closeable {
      * @throws IOException
      */
     long count() throws IOException;
+
+
+    long count(final String childStreamType) throws IOException;
 }

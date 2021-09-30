@@ -35,6 +35,12 @@ public class SourceConfig extends AbstractConfig {
             "characters in order to complete the line.")
     private long maxCharactersToCompleteLine;
 
+    @Min(1)
+    @JsonProperty
+    @JsonPropertyDescription("The maximum number of lines of hex dump to display when viewing data as hex. " +
+            "A single line displays 32 bytes.")
+    private int maxHexDumpLines;
+
     public SourceConfig() {
         setDefaults();
     }
@@ -42,12 +48,14 @@ public class SourceConfig extends AbstractConfig {
     @JsonCreator
     public SourceConfig(@JsonProperty("maxCharactersInPreviewFetch") final long maxCharactersInPreviewFetch,
                         @JsonProperty("maxCharactersPerFetch") final long maxCharactersPerFetch,
-                        @JsonProperty("maxCharactersToCompleteLine") final long maxCharactersToCompleteLine) {
+                        @JsonProperty("maxCharactersToCompleteLine") final long maxCharactersToCompleteLine,
+                        @JsonProperty("maxHexDumpLines") final int maxHexDumpLines) {
 
         // TODO @AT Default values may need increasing
         this.maxCharactersInPreviewFetch = maxCharactersInPreviewFetch;
         this.maxCharactersPerFetch = maxCharactersPerFetch;
         this.maxCharactersToCompleteLine = maxCharactersToCompleteLine;
+        this.maxHexDumpLines = maxHexDumpLines;
 
         setDefaults();
     }
@@ -56,9 +64,16 @@ public class SourceConfig extends AbstractConfig {
         maxCharactersInPreviewFetch = setDefaultIfUnset(maxCharactersInPreviewFetch, 30_000L);
         maxCharactersPerFetch = setDefaultIfUnset(maxCharactersPerFetch, 80_000L);
         maxCharactersToCompleteLine = setDefaultIfUnset(maxCharactersToCompleteLine, 10_000L);
+        maxHexDumpLines = setDefaultIfUnset(maxHexDumpLines, 1_000);
     }
 
     private long setDefaultIfUnset(final long value, final long defaultValue) {
+        return value > 0
+                ? value
+                : defaultValue;
+    }
+
+    private int setDefaultIfUnset(final int value, final int defaultValue) {
         return value > 0
                 ? value
                 : defaultValue;
@@ -88,7 +103,24 @@ public class SourceConfig extends AbstractConfig {
         this.maxCharactersToCompleteLine = maxCharactersToCompleteLine;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
+    public int getMaxHexDumpLines() {
+        return maxHexDumpLines;
+    }
+
+    public void setMaxHexDumpLines(final int maxHexDumpLines) {
+        this.maxHexDumpLines = maxHexDumpLines;
+    }
+
+    @Override
+    public String toString() {
+        return "SourceConfig{" +
+                "maxCharactersInPreviewFetch=" + maxCharactersInPreviewFetch +
+                ", maxCharactersPerFetch=" + maxCharactersPerFetch +
+                ", maxCharactersToCompleteLine=" + maxCharactersToCompleteLine +
+                ", maxHexDumpLines=" + maxHexDumpLines +
+                '}';
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -98,20 +130,18 @@ public class SourceConfig extends AbstractConfig {
             return false;
         }
         final SourceConfig that = (SourceConfig) o;
-        return maxCharactersInPreviewFetch == that.maxCharactersInPreviewFetch &&
-                maxCharactersPerFetch == that.maxCharactersPerFetch;
+        return maxCharactersInPreviewFetch == that.maxCharactersInPreviewFetch
+                && maxCharactersPerFetch == that.maxCharactersPerFetch
+                && maxCharactersToCompleteLine == that.maxCharactersToCompleteLine
+                && maxHexDumpLines == that.maxHexDumpLines;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(maxCharactersInPreviewFetch, maxCharactersPerFetch);
+        return Objects.hash(maxCharactersInPreviewFetch,
+                maxCharactersPerFetch,
+                maxCharactersToCompleteLine,
+                maxHexDumpLines);
     }
 
-    @Override
-    public String toString() {
-        return "SourceConfig{" +
-                "maxCharactersInPreviewFetch=" + maxCharactersInPreviewFetch +
-                ", maxCharactersPerFetch=" + maxCharactersPerFetch +
-                '}';
-    }
 }

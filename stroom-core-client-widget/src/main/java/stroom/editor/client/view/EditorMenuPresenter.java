@@ -19,9 +19,9 @@ package stroom.editor.client.view;
 import stroom.editor.client.presenter.Action;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.Option;
-import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
+import stroom.widget.menu.client.presenter.SimpleMenuItem;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -75,7 +75,9 @@ public class EditorMenuPresenter {
         addMenuItem(position++, menuItems, xmlEditorPresenter.getIndicatorsOption());
         addMenuItem(position++, menuItems, xmlEditorPresenter.getLineNumbersOption());
         addMenuItem(position++, menuItems, xmlEditorPresenter.getLineWrapOption());
+        addMenuItem(position++, menuItems, xmlEditorPresenter.getShowIndentGuides());
         addMenuItem(position++, menuItems, xmlEditorPresenter.getShowInvisiblesOption());
+        addMenuItem(position++, menuItems, xmlEditorPresenter.getViewAsHexOption());
         addMenuItem(position++, menuItems, xmlEditorPresenter.getHighlightActiveLineOption());
         addMenuItem(position++, menuItems, xmlEditorPresenter.getUseVimBindingsOption());
         addMenuItem(position++, menuItems, xmlEditorPresenter.getBasicAutoCompletionOption());
@@ -112,7 +114,7 @@ public class EditorMenuPresenter {
     }
 
     private Item createItem(final String text, final Command command, final int position) {
-        return new IconMenuItem(position, text, null, true, command);
+        return new SimpleMenuItem(position, text, null, true, command);
     }
 
 }

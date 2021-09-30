@@ -29,6 +29,7 @@ import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 import stroom.util.shared.TextRange;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent;
+import stroom.widget.layout.client.view.ResizeSimplePanel;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -45,11 +46,15 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import edu.ycp.cs.dh.acegwt.client.ace.AceAnnotationType;
@@ -83,16 +88,19 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     private final Option lineNumbersOption;
     private final Option indicatorsOption;
     private final Option lineWrapOption;
+    private final Option showIndentGuides;
     private final Option showInvisiblesOption;
     private final Option useVimBindingsOption;
     private final Option basicAutoCompletionOption;
     private final Option snippetsOption;
     private final Option liveAutoCompletionOption;
     private final Option highlightActiveLineOption;
+    private final Option viewAsHexOption;
 
     @UiField(provided = true)
     DockLayoutPanel layout;
     @UiField
+    ResizeSimplePanel content;
     Editor editor;
     @UiField
     RightBar rightBar;
@@ -107,6 +115,8 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     private AceEditorMode mode = AceEditorMode.XML;
     private int firstLineNumber = 1;
     private Function<String, List<TextRange>> formattedHighlightsFunc;
+
+    private boolean isViewAsHex = false;
 
     @Inject
     public EditorViewImpl() {
@@ -124,7 +134,10 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
             }
         };
 
+        editor = new Editor();
+
         layout = binder.createAndBindUi(this);
+        content.setWidget(editor.asWidget());
 
         filterButtons.addDomHandler(event -> {
             if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
@@ -155,6 +168,8 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
                 "Indicators", SHOW_INDICATORS_DEFAULT, false, this::doLayout);
         lineWrapOption = new Option(
                 "Wrap Lines", false, true, (on) -> editor.setUseWrapMode(on));
+        showIndentGuides = new Option(
+                "Show Indent Guides", true, true, (on) -> editor.setShowIndentGuides(on));
         showInvisiblesOption = new Option(
                 "Show Hidden Characters", false, true, (on) -> editor.setShowInvisibles(on));
         useVimBindingsOption = new Option(
@@ -167,10 +182,12 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
                 "Snippets", true, true, (on) -> editor.setUseSnippets(on));
         highlightActiveLineOption = new Option(
                 "Highlight Active Line", true, true, (on) -> editor.setHighlightActiveLine(on));
+        viewAsHexOption = new Option("View as Hex", false, false, (on) -> isViewAsHex = on);
 
         editor.getElement().setClassName("editor");
-        editor.addDomHandler(event -> handleMouseDown(event), MouseDownEvent.getType());
+        content.addDomHandler(event -> handleMouseDown(event), MouseDownEvent.getType());
         rightBar.setEditor(editor);
+
     }
 
     private void handleMouseDown(final MouseDownEvent event) {
@@ -223,6 +240,7 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
 
     @Override
     public void setText(final String text, final boolean format) {
+        content.setWidget(editor.asWidget());
         if (text == null) {
             editor.setText("");
         } else {
@@ -360,6 +378,32 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     }
 
     @Override
+    public void setErrorText(final String title, final String errorText) {
+
+        final SafeHtmlBuilder safeHtmlBuilder = new SafeHtmlBuilder()
+                .appendHtmlConstant("<div class=\"editor-error\">")
+                .appendHtmlConstant("<p>")
+                .append(SafeHtmlUtils.fromString(title))
+                .appendHtmlConstant("</p>");
+
+        final String[] errorTextLines = errorText.split("\n");
+        for (final String line : errorTextLines) {
+            safeHtmlBuilder
+                    .appendHtmlConstant("<p>")
+                    .append(SafeHtmlUtils.fromString(line))
+                    .appendHtmlConstant("</p>");
+        }
+
+        safeHtmlBuilder
+                .appendHtmlConstant("</div>");
+
+        final ScrollPanel scrollPanel = new ScrollPanel();
+        final HTMLPanel htmlPanel = new HTMLPanel(safeHtmlBuilder.toSafeHtml());
+        scrollPanel.setWidget(htmlPanel.asWidget());
+        content.setWidget(scrollPanel.asWidget());
+    }
+
+    @Override
     public void setReadOnly(final boolean readOnly) {
         editor.setReadOnly(readOnly);
     }
@@ -457,6 +501,11 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     }
 
     @Override
+    public Option getShowIndentGuides() {
+        return showIndentGuides;
+    }
+
+    @Override
     public Option getShowInvisiblesOption() {
         return showInvisiblesOption;
     }
@@ -484,6 +533,11 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     @Override
     public Option getHighlightActiveLineOption() {
         return highlightActiveLineOption;
+    }
+
+    @Override
+    public Option getViewAsHexOption() {
+        return viewAsHexOption;
     }
 
     @Override
