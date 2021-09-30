@@ -429,6 +429,7 @@ public class DataFetcher {
                 totalCharCount,
                 availableChildStreamTypes,
                 new ArrayList<>(resultList),
+                DisplayMode.MARKER,
                 null);
     }
 
