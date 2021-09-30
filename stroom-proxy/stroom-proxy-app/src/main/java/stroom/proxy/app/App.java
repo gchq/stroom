@@ -31,6 +31,8 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.PathConfig;
 import stroom.util.io.TempDirProvider;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.IsProxyConfig;
@@ -40,15 +42,12 @@ import stroom.util.validation.ValidationModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Module;
 import io.dropwizard.Application;
 import io.dropwizard.servlets.tasks.LogConfigurationTask;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -62,7 +61,7 @@ import javax.validation.ValidatorFactory;
 
 public class App extends Application<Config> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(App.class);
 
     @Inject
     private HealthChecks healthChecks;
@@ -232,17 +231,23 @@ public class App extends Application<Config> {
             LOGGER.info("Parsing config file to establish home and temp");
             final ProxyConfig proxyConfig = ProxyYamlUtil.readProxyConfig(configFile);
 
-            final Module pathConfigModule = new AbstractModule() {
-                @Override
-                protected void configure() {
-                    bind(PathConfig.class).toInstance(proxyConfig.getProxyPathConfig());
-                }
-            };
+            LOGGER.debug(() -> "proxyPathConfig " + proxyConfig.getProxyPathConfig());
+
+            // Allow for someone having pathConfig set to null in the yaml, e.g. just
+            //   pathConfig:
+            final PathConfig effectivePathConfig = Objects.requireNonNullElse(
+                    proxyConfig.getProxyPathConfig(),
+                    new ProxyPathConfig());
 
             return Guice.createInjector(
                     new ValidationModule(),
                     new DirProvidersModule(),
-                    pathConfigModule);
+                    new AbstractModule() {
+                        @Override
+                        protected void configure() {
+                            bind(PathConfig.class).toInstance(effectivePathConfig);
+                        }
+                    });
 
         } catch (IOException e) {
             throw new RuntimeException("Error parsing config file " + configFile.toAbsolutePath().normalize());

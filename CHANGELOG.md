@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2403** : Fix guice bind errors in stroom and proxy when the `path` config branch is empty or set to null.
+
 * Issue **#2462** : Made changes to stop DB connections being used within the context of other open connections.
 
 * Uplift LMDBJava to 0.8.2 to fix LMDBJava cursor comparator bug.
