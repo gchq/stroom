@@ -3,13 +3,15 @@ package stroom.proxy.repo.dao;
 import stroom.proxy.repo.ProxyRepoDbConnProvider;
 import stroom.proxy.repo.dao.SourceEntryDao.SourceItem;
 import stroom.proxy.repo.db.jooq.tables.records.AggregateRecord;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import org.jooq.Condition;
 import org.jooq.DSLContext;
+import org.jooq.Result;
 import org.jooq.impl.DSL;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -23,6 +25,8 @@ import static stroom.proxy.repo.db.jooq.tables.SourceItem.SOURCE_ITEM;
 
 @Singleton
 public class AggregateDao {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AggregateDao.class);
 
     private final SqliteJooqHelper jooq;
     private final AtomicLong aggregateRecordId = new AtomicLong();
@@ -47,7 +51,7 @@ public class AggregateDao {
      *
      * @return The number of rows changed.
      */
-    public int resetFailedForwards() {
+    public synchronized int resetFailedForwards() {
         return jooq.contextResult(context -> context
                 .update(AGGREGATE)
                 .set(AGGREGATE.FORWARD_ERROR, false)
@@ -59,7 +63,7 @@ public class AggregateDao {
      *
      * @param aggregateId The id of the aggregate to record a forwarding error against.
      */
-    public void setForwardError(final long aggregateId) {
+    public synchronized void setForwardError(final long aggregateId) {
         jooq.context(context -> context
                 .update(AGGREGATE)
                 .set(AGGREGATE.FORWARD_ERROR, true)
@@ -67,7 +71,7 @@ public class AggregateDao {
                 .execute());
     }
 
-    public void setForwardSuccess(final DSLContext context, final long aggregateId) {
+    public synchronized void setForwardSuccess(final DSLContext context, final long aggregateId) {
         // Delete aggregate items and aggregate so that source entries and items can be deleted by cleanup.
         context
                 .deleteFrom(AGGREGATE_ITEM)
@@ -83,9 +87,9 @@ public class AggregateDao {
     /**
      * Close all aggregates that meet the supplied criteria.
      */
-    public int closeAggregates(final int maxItemsPerAggregate,
-                               final long maxUncompressedByteSize,
-                               final long oldestMs) {
+    public synchronized int closeAggregates(final int maxItemsPerAggregate,
+                                            final long maxUncompressedByteSize,
+                                            final long oldestMs) {
         final Condition condition =
                 AGGREGATE.COMPLETE.eq(false)
                         .and(
@@ -110,7 +114,7 @@ public class AggregateDao {
      * @param limit The maximum number of aggregates to return.
      * @return A list of aggregates that are ready and waiting to be forwarded.
      */
-    public List<Aggregate> getCompletedAggregates(final int limit) {
+    public synchronized List<Aggregate> getCompletedAggregates(final int limit) {
         return jooq.contextResult(context -> context
                 // Get all completed aggregates.
                 .select(AGGREGATE.ID, AGGREGATE.FEED_NAME, AGGREGATE.TYPE_NAME)
@@ -127,10 +131,21 @@ public class AggregateDao {
                 )));
     }
 
-    public void addItem(final SourceItem sourceItem,
-                        final int maxItemsPerAggregate,
-                        final long maxUncompressedByteSize) {
+    public synchronized void addItem(final SourceItem sourceItem,
+                                     final int maxItemsPerAggregate,
+                                     final long maxUncompressedByteSize) {
         final long maxAggregateSize = Math.max(0, maxUncompressedByteSize - sourceItem.getByteSize());
+
+        LOGGER.debug(() -> "addItem - " +
+                ", feed=" +
+                sourceItem.getFeedName() +
+                ", type=" +
+                sourceItem.getTypeName() +
+                ", maxAggregateSize=" +
+                maxAggregateSize +
+                ", maxItemsPerAggregate=" +
+                maxItemsPerAggregate);
+
         final Condition condition = DSL
                 .and(sourceItem.getFeedName() == null
                         ? AGGREGATE.FEED_NAME.isNull()
@@ -144,15 +159,23 @@ public class AggregateDao {
 
         jooq.transaction(context -> {
             // See if we can get an existing aggregate that will fit this data collection.
-            final Optional<AggregateRecord> optionalRecord = context
+            final Result<AggregateRecord> result = context
                     .selectFrom(AGGREGATE)
                     .where(condition)
                     .orderBy(AGGREGATE.CREATE_TIME_MS)
-                    .fetchOptional();
+                    .fetch();
+
+            AggregateRecord record = null;
+            if (result.size() > 0) {
+                record = result.get(0);
+                if (result.size() > 1) {
+                    LOGGER.warn(() -> "Received more that one result for aggregate query " + condition + "\n" + result);
+                }
+            }
 
             long aggregateId;
-            if (optionalRecord.isPresent()) {
-                aggregateId = optionalRecord.get().getId();
+            if (record != null) {
+                aggregateId = record.getId();
 
                 // We have somewhere we can add the data collection so add it to the aggregate.
                 context
@@ -204,7 +227,7 @@ public class AggregateDao {
         });
     }
 
-    public int deleteAll() {
+    public synchronized int deleteAll() {
         return jooq.contextResult(context -> {
             int total = 0;
             total += context
@@ -217,7 +240,7 @@ public class AggregateDao {
         });
     }
 
-    public void clear() {
+    public synchronized void clear() {
         deleteAll();
         jooq
                 .getMaxId(AGGREGATE_ITEM, AGGREGATE_ITEM.ID)
