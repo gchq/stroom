@@ -33,7 +33,6 @@ import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
 import java.io.IOException;
@@ -136,13 +135,13 @@ class FsOrphanFileFinder {
 
                                 if (id == -1) {
                                     LOGGER.trace(() -> "Orphan file as no id: " + FileUtil.getCanonicalPath(file));
-                                    cleanProgress.addDeleteCount();
+                                    cleanProgress.addOrphanCount();
                                     orphanConsumer.accept(file);
                                 } else {
                                     fileMap.computeIfAbsent(id, k -> new HashSet<>()).add(file);
                                 }
 
-                                if (fileMap.size() > BATCH_SIZE) {
+                                if (fileMap.size() >= BATCH_SIZE) {
                                     // Validate the batch of files against the DB.
                                     validateFiles(fileMap, cleanProgress, orphanConsumer);
                                     fileMap.clear();
@@ -171,7 +170,6 @@ class FsOrphanFileFinder {
         final ExpressionOperator expression = builder.build();
 
         final FindMetaCriteria criteria = new FindMetaCriteria(expression);
-        criteria.setPageRequest(new PageRequest(0, BATCH_SIZE));
         final ResultPage<Meta> resultPage = metaService.find(criteria);
 
         // If we have had the same number of results from the DB that we asked for then all is good.
@@ -195,7 +193,7 @@ class FsOrphanFileFinder {
                     list.forEach(file -> {
                         LOGGER.trace(() -> "Orphan file: " + FileUtil.getCanonicalPath(file));
                         if (Files.isRegularFile(file)) {
-                            cleanProgress.addDeleteCount();
+                            cleanProgress.addOrphanCount();
                             orphanConsumer.accept(file);
                         }
                     }));
