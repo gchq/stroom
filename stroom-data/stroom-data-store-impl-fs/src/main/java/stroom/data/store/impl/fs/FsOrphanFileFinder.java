@@ -36,8 +36,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
-import org.checkerframework.checker.units.qual.A;
-
 import java.io.IOException;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
@@ -50,7 +48,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import javax.inject.Inject;
@@ -112,6 +109,7 @@ class FsOrphanFileFinder {
                                 // If the dir is empty and old then record it.
                                 final long age = dirAge.get();
                                 if (age > 0 && age < oldestDirTime) {
+                                    LOGGER.trace(() -> "Orphan dir: " + FileUtil.getCanonicalPath(dir));
                                     orphanConsumer.accept(dir);
                                 }
 
@@ -131,7 +129,13 @@ class FsOrphanFileFinder {
                                 // Process only raw zip repo files, i.e. files that have not already been created
                                 // by the fragmenting process.
                                 final long id = fileSystemStreamPathHelper.getId(file);
+                                LOGGER.trace(() -> "Got id = " +
+                                        id +
+                                        " for file " +
+                                        FileUtil.getCanonicalPath(file));
+
                                 if (id == -1) {
+                                    LOGGER.trace(() -> "Orphan file as no id: " + FileUtil.getCanonicalPath(file));
                                     cleanProgress.addDeleteCount();
                                     orphanConsumer.accept(file);
                                 } else {
@@ -161,7 +165,7 @@ class FsOrphanFileFinder {
 
     private void validateFiles(final Map<Long, Set<Path>> fileMap,
                                final FsOrphanFileFinderProgress cleanProgress,
-                               final Consumer<Path> deleteConsumer) {
+                               final Consumer<Path> orphanConsumer) {
         final ExpressionOperator.Builder builder = ExpressionOperator.builder().op(Op.OR);
         fileMap.keySet().forEach(id -> builder.addTerm(MetaFields.ID, Condition.EQUALS, id));
         final ExpressionOperator expression = builder.build();
@@ -173,18 +177,28 @@ class FsOrphanFileFinder {
         // If we have had the same number of results from the DB that we asked for then all is good.
         final List<Meta> metaList = resultPage.getValues();
         if (metaList.size() != fileMap.size()) {
+            LOGGER.debug(() -> "Meta list is different size to file map: " +
+                    "metaList.size() = " +
+                    metaList.size() +
+                    ", fileMap.size() = " +
+                    fileMap.size());
+            LOGGER.debug(() -> "Expression = " +
+                    expression);
+            LOGGER.debug(() -> "Batch size = " +
+                    BATCH_SIZE);
+
             // Determine which files are orphans.
             for (final Meta meta : metaList) {
                 fileMap.remove(meta.getId());
             }
-            fileMap.values().forEach(list -> {
-                list.forEach(file -> {
-                    if (Files.isRegularFile(file)) {
-                        cleanProgress.addDeleteCount();
-                        deleteConsumer.accept(file);
-                    }
-                });
-            });
+            fileMap.values().forEach(list ->
+                    list.forEach(file -> {
+                        LOGGER.trace(() -> "Orphan file: " + FileUtil.getCanonicalPath(file));
+                        if (Files.isRegularFile(file)) {
+                            cleanProgress.addDeleteCount();
+                            orphanConsumer.accept(file);
+                        }
+                    }));
         }
     }
 }
