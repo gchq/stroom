@@ -30,13 +30,12 @@ public class MetaRetentionTrackerDaoImpl implements MetaRetentionTrackerDao {
     @Override
     public Optional<DataRetentionTracker> getTracker() {
         final List<DataRetentionTracker> trackers = JooqUtil.contextResult(metaDbConnProvider, context -> context
-                .select(
-                        META_RETENTION_TRACKER.LAST_RUN_TIME,
-                        META_RETENTION_TRACKER.RETENTION_RULES_VERSION)
-                .from(META_RETENTION_TRACKER)
-                .fetch()
-                .map(RECORD_MAPPER::apply)
-        );
+                        .select(
+                                META_RETENTION_TRACKER.LAST_RUN_TIME,
+                                META_RETENTION_TRACKER.RETENTION_RULES_VERSION)
+                        .from(META_RETENTION_TRACKER)
+                        .fetch())
+                .map(RECORD_MAPPER::apply);
         if (trackers.size() > 1) {
             throw new RuntimeException("Found more than one tracker: " + trackers);
         }

@@ -101,24 +101,23 @@ class DbClusterLock implements Clearable {
 
     private Integer get(final String name) {
         return JooqUtil.contextResult(clusterLockDbConnProvider, context -> context
-                .select(CLUSTER_LOCK.ID)
-                .from(CLUSTER_LOCK)
-                .where(CLUSTER_LOCK.NAME.eq(name))
-                .fetchOptional()
+                        .select(CLUSTER_LOCK.ID)
+                        .from(CLUSTER_LOCK)
+                        .where(CLUSTER_LOCK.NAME.eq(name))
+                        .fetchOptional())
                 .map(r -> r.get(CLUSTER_LOCK.ID))
-                .orElse(null));
+                .orElse(null);
     }
 
     private Integer create(final String name) {
         return JooqUtil.contextResult(clusterLockDbConnProvider, context -> context
-                .insertInto(CLUSTER_LOCK, CLUSTER_LOCK.NAME)
-                .values(name)
-                .onDuplicateKeyIgnore()
-                .returning(CLUSTER_LOCK.ID)
-                .fetchOptional()
+                        .insertInto(CLUSTER_LOCK, CLUSTER_LOCK.NAME)
+                        .values(name)
+                        .onDuplicateKeyIgnore()
+                        .returning(CLUSTER_LOCK.ID)
+                        .fetchOptional())
                 .map(r -> r.get(CLUSTER_LOCK.ID))
-                .orElseGet(() -> get(name))
-        );
+                .orElseGet(() -> get(name));
     }
 
     @Override

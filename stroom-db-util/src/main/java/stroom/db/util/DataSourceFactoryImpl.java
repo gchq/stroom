@@ -16,7 +16,6 @@ import com.zaxxer.hikari.HikariDataSource;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
@@ -29,8 +28,7 @@ public class DataSourceFactoryImpl implements DataSourceFactory {
     private final CommonDbConfig commonDbConfig;
     private final MetricRegistry metricRegistry;
     private final HealthCheckRegistry healthCheckRegistry;
-    private static final ConcurrentMap<DbConfig, DataSource> DATA_SOURCE_MAP = new ConcurrentHashMap<>();
-    private static final AtomicBoolean IS_FIRST_POOL = new AtomicBoolean(true);
+    private static final ConcurrentMap<DataSourceKey, DataSource> DATA_SOURCE_MAP = new ConcurrentHashMap<>();
 
     @Inject
     public DataSourceFactoryImpl(final CommonDbConfig commonDbConfig,
@@ -45,22 +43,23 @@ public class DataSourceFactoryImpl implements DataSourceFactory {
     }
 
     @Override
-    public DataSource create(final HasDbConfig config) {
+    public DataSource create(final HasDbConfig config, final String name, final boolean unique) {
         final DbConfig dbConfig = config.getDbConfig();
 
         // Create a merged config using the common db config as a base.
         final DbConfig mergedConfig = commonDbConfig.mergeConfig(dbConfig);
+        final DataSourceKey key = new DataSourceKey(mergedConfig, name, unique);
 
         LOGGER.debug(() ->
                 LogUtil.message("Class: {}\n  {}\n  {}\n  {}",
                         config.getClass().getSimpleName(),
                         dbConfig.getConnectionConfig(),
                         commonDbConfig.getConnectionConfig(),
-                        mergedConfig.getConnectionConfig()));
+                        key));
 
         // Get a data source from a map to limit connections where connection details are common.
-        return DATA_SOURCE_MAP.computeIfAbsent(mergedConfig, dbConfigKey -> {
-            final String poolName = getPoolName(config);
+        return DATA_SOURCE_MAP.computeIfAbsent(key, k -> {
+            final String poolName = k.getPoolName();
             LOGGER.debug(() ->
                     LogUtil.message("Creating datasource for: {}, user: {}, poolName: {}",
                             Optional.ofNullable(mergedConfig.getConnectionConfig())
@@ -70,22 +69,11 @@ public class DataSourceFactoryImpl implements DataSourceFactory {
                             poolName));
 
             final HikariConfig hikariConfig = HikariUtil.createConfig(
-                    dbConfigKey,
+                    k.getConfig(),
                     poolName,
                     metricRegistry,
                     healthCheckRegistry);
             return new HikariDataSource(hikariConfig);
         });
-    }
-
-    private String getPoolName(final HasDbConfig config) {
-        // Use the config class name to name our pool.
-        // The snag with this is that because we only create a pool when the db config
-        // is different from the last one, in most cases we will have one pool and it will be named
-        // according to the first db module to hit us, which seems to be LegacyDbConfig.
-        return "hikari-" + config.getClass()
-                .getSimpleName()
-                .replace("Config", "")
-                .toLowerCase();
     }
 }

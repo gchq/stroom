@@ -22,6 +22,7 @@ import stroom.util.pipeline.scope.PipelineScoped;
 
 @PipelineScoped
 public class StreamProcessorHolder implements Holder {
+
     private Processor streamProcessor;
     private ProcessorTask streamTask;
 

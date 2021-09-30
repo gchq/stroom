@@ -5,6 +5,7 @@ import stroom.config.common.ConnectionConfig;
 import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
+import stroom.db.util.DataSourceKey;
 import stroom.db.util.DbUrl;
 import stroom.db.util.HikariUtil;
 import stroom.util.ConsoleColour;
@@ -35,10 +36,14 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -60,7 +65,9 @@ public class DbTestUtil {
             "WHERE TABLE_SCHEMA = database() " +
             "AND TABLE_TYPE LIKE '%BASE TABLE%' " +
             "AND TABLE_NAME NOT LIKE '%schema%';";
-    private static final ThreadLocal<DataSource> THREAD_LOCAL = new ThreadLocal<>();
+    private static final ThreadLocal<DbConfig> THREAD_LOCAL = new ThreadLocal<>();
+    private static final ThreadLocal<Set<DataSource>> LOCAL_DATA_SOURCES = new ThreadLocal<>();
+    private static final ConcurrentMap<DataSourceKey, DataSource> DATA_SOURCE_MAP = new ConcurrentHashMap<>();
     private static volatile EmbeddedMysql EMBEDDED_MYSQL;
     private static volatile boolean HAVE_ALREADY_SHOWN_DB_MSG = false;
 
@@ -93,7 +100,7 @@ public class DbTestUtil {
     }
 
     public static DataSource createTestDataSource() {
-        return createTestDataSource(new CommonDbConfig());
+        return createTestDataSource(new CommonDbConfig(), "test", false);
     }
 
     private static <T> T getValueOrOverride(final String envVarName,
@@ -111,10 +118,10 @@ public class DbTestUtil {
                 .orElseGet(valueSupplier);
     }
 
-    public static DataSource createTestDataSource(final DbConfig dbConfig) {
+    public static DataSource createTestDataSource(final DbConfig dbConfig, final String name, final boolean unique) {
         // See if we have a local data source.
-        DataSource dataSource = THREAD_LOCAL.get();
-        if (dataSource == null) {
+        DbConfig testDbConfig = THREAD_LOCAL.get();
+        if (testDbConfig == null) {
             // Create a merged config using the common db config as a base.
             ConnectionConfig connectionConfig = dbConfig.getConnectionConfig();
             ConnectionConfig rootConnectionConfig;
@@ -192,20 +199,29 @@ public class DbTestUtil {
                     .build()
                     .toString();
 
-
             final ConnectionConfig newConnectionConfig = connectionConfig
                     .copy()
                     .url(url)
                     .build();
             LOGGER.info("Using DB connection url: {}", url);
-            dbConfig.setConnectionConfig(newConnectionConfig);
-
-            final HikariConfig hikariConfig = HikariUtil.createConfig(
-                    dbConfig, null, null, null);
-            dataSource = new HikariDataSource(hikariConfig);
-
-            THREAD_LOCAL.set(dataSource);
+            testDbConfig = new DbConfig(newConnectionConfig, dbConfig.getConnectionPoolConfig());
+            THREAD_LOCAL.set(testDbConfig);
         }
+
+        // Get a data source from a map to limit connections where connection details are common.
+        final DataSourceKey dataSourceKey = new DataSourceKey(testDbConfig, name, unique);
+        final DataSource dataSource = DATA_SOURCE_MAP.computeIfAbsent(dataSourceKey, k -> {
+            final HikariConfig hikariConfig = HikariUtil.createConfig(
+                    k.getConfig(), null, null, null);
+            return new HikariDataSource(hikariConfig);
+        });
+
+        Set<DataSource> dataSources = LOCAL_DATA_SOURCES.get();
+        if (dataSources == null) {
+            dataSources = new HashSet<>();
+            LOCAL_DATA_SOURCES.set(dataSources);
+        }
+        dataSources.add(dataSource);
 
         return dataSource;
     }
@@ -404,13 +420,15 @@ public class DbTestUtil {
     }
 
     public static void clear() {
-        final DataSource dataSource = THREAD_LOCAL.get();
-        if (dataSource != null) {
-            // Clear the database.
-            try (final Connection connection = dataSource.getConnection()) {
-                DbTestUtil.clearAllTables(connection);
-            } catch (final SQLException e) {
-                throw new RuntimeException(e.getMessage(), e);
+        final Set<DataSource> dataSources = LOCAL_DATA_SOURCES.get();
+        if (dataSources != null) {
+            for (final DataSource dataSource : dataSources) {
+                // Clear the database.
+                try (final Connection connection = dataSource.getConnection()) {
+                    DbTestUtil.clearAllTables(connection);
+                } catch (final SQLException e) {
+                    throw new RuntimeException(e.getMessage(), e);
+                }
             }
         }
     }

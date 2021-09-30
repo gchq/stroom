@@ -148,7 +148,8 @@ public class ResultPage<T> implements Serializable {
      * Used for filter queries (maybe bounded).
      */
     public static <T> ResultPage<T> createCriterialBasedList(final List<T> realList,
-                                                             final BaseCriteria baseCriteria, final Long totalSize) {
+                                                             final BaseCriteria baseCriteria,
+                                                             final Long totalSize) {
         return createPageResultList(realList, baseCriteria.getPageRequest(), totalSize);
     }
 
