@@ -26,6 +26,16 @@ public class DataSourceKey {
         return "hikari-" + name;
     }
 
+    /**
+     * WARNING: THIS IS A SPECIAL EQUALS METHOD
+     * <p>
+     * This method is specifically designed to only include the data source name in the equality if we want to force a
+     * unique data source to be created based on the config plus the name. In most cases we dedupe the datasource on the
+     * connection config alone and don't use the name.
+     *
+     * @param o The object to compare
+     * @return True if the objects are the same.
+     */
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -41,6 +51,15 @@ public class DataSourceKey {
         return config.equals(key.config);
     }
 
+    /**
+     * WARNING: THIS IS A SPECIAL HASHCODE METHOD
+     * <p>
+     * This method is specifically designed to only include the data source name in the hashcode if we want to force a
+     * unique data source to be created based on the config plus the name. In most cases we dedupe the datasource on the
+     * connection config alone and don't use the name.
+     *
+     * @return The hashcode.
+     */
     @Override
     public int hashCode() {
         if (unique) {
