@@ -19,10 +19,14 @@ public class HexDumpUtil {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HexDumpUtil.class);
 
+    static final char DEFAULT_REPLACEMENT_CHAR = '.';
+    static final char NULL_REPLACEMENT_CHAR = '.';
+    static final char LINE_FEED_REPLACEMENT_CHAR = '↲';
+    static final char CARRIAGE_RETURN_REPLACEMENT_CHAR = '↩';
+    static final char TAB_REPLACEMENT_CHAR = '↹';
+    static final String DEFAULT_REPLACEMENT_STRING = String.valueOf(DEFAULT_REPLACEMENT_CHAR);
+
     private static final int MAX_BYTES_PER_LINE = 32;
-    //    private static final char REPLACEMENT_CHAR = '�';
-    private static final char REPLACEMENT_CHAR = '.';
-    private static final String REPLACEMENT_STRING = String.valueOf(REPLACEMENT_CHAR);
 
     private HexDumpUtil() {
     }
@@ -96,7 +100,7 @@ public class HexDumpUtil {
         final CharsetDecoder charsetDecoder = charset.newDecoder()
                 .onMalformedInput(CodingErrorAction.REPLACE)
                 .onUnmappableCharacter(CodingErrorAction.REPLACE)
-                .replaceWith(REPLACEMENT_STRING);
+                .replaceWith(DEFAULT_REPLACEMENT_STRING);
         return charsetDecoder;
     }
 
@@ -132,7 +136,7 @@ public class HexDumpUtil {
                     CharBuffer charBuffer = charsetDecoder.decode(byteBuffer);
                     chr = charBuffer.charAt(0);
                 } catch (CharacterCodingException e) {
-                    chr = REPLACEMENT_CHAR;
+                    chr = DEFAULT_REPLACEMENT_CHAR;
                 }
                 final char printableChar = asPrintableChar(chr);
                 LOGGER.trace("hex: {}, printableChar {}", hex, printableChar);
@@ -162,15 +166,15 @@ public class HexDumpUtil {
         if ((int) chr < 32) {
             // replace all non-printable chars, ideally with a representative char
             if (chr == 0) {
-                charToAppend = '.';
+                charToAppend = NULL_REPLACEMENT_CHAR;
             } else if (chr == '\n') {
-                charToAppend = '↲';
+                charToAppend = LINE_FEED_REPLACEMENT_CHAR;
             } else if (chr == '\r') {
-                charToAppend = '↩';
+                charToAppend = CARRIAGE_RETURN_REPLACEMENT_CHAR;
             } else if (chr == '\t') {
-                charToAppend = '↹';
+                charToAppend = TAB_REPLACEMENT_CHAR;
             } else {
-                charToAppend = REPLACEMENT_CHAR;
+                charToAppend = DEFAULT_REPLACEMENT_CHAR;
             }
 //        } else if (chr == ' ') {
 //            charToAppend = '␣';
@@ -202,7 +206,7 @@ public class HexDumpUtil {
                 final CharBuffer charBuffer = charsetDecoder.decode(byteBuffer);
                 chr = charBuffer.charAt(0);
             } catch (CharacterCodingException e) {
-                chr = REPLACEMENT_CHAR;
+                chr = DEFAULT_REPLACEMENT_CHAR;
             }
             final char printableChar = asPrintableChar(chr);
             stringBuilder.append(printableChar);

@@ -1,5 +1,6 @@
 package stroom.util.string;
 
+import com.google.common.base.Strings;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -36,8 +37,9 @@ class TestHexDumpUtil {
         final String hexDump = HexDumpUtil.hexDump(new ByteArrayInputStream(input.getBytes(charset)), charset);
         LOGGER.info("hexDump: \n{}", hexDump);
 
+        final String replacedChars = Strings.repeat(HexDumpUtil.DEFAULT_REPLACEMENT_STRING, 4);
         Assertions.assertThat(hexDump)
-                .contains("Small input ����.");
+                .contains("Small input " + replacedChars + ".");
 
         Assertions.assertThat(hexDump)
                 .doesNotContain("\n")
@@ -63,14 +65,23 @@ class TestHexDumpUtil {
     void testDecodeAsPrintableChars2() {
 
         final Charset charset = StandardCharsets.UTF_8;
-        final String input = String.valueOf(new char[]{0x00, 0x09, 0x0a, 0x0d});
+        final String input = String.valueOf(new char[]{
+                0x00, // null
+                0x09, // tab
+                0x0a, // line feed
+                0x0d}); // carriage return
         final byte[] bytes = input.getBytes(charset);
 
         final String printableChars = HexDumpUtil.decodeAsPrintableChars(bytes, charset);
 
         LOGGER.info("printableChars: {}", printableChars);
 
+        final String expected = String.valueOf(HexDumpUtil.NULL_REPLACEMENT_CHAR) +
+                HexDumpUtil.TAB_REPLACEMENT_CHAR +
+                HexDumpUtil.LINE_FEED_REPLACEMENT_CHAR +
+                HexDumpUtil.CARRIAGE_RETURN_REPLACEMENT_CHAR;
+
         Assertions.assertThat(printableChars)
-                .isEqualTo("␀↹↲↩");
+                .isEqualTo(expected);
     }
 }
