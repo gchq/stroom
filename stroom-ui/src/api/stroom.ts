@@ -12,6 +12,7 @@
 export interface AbstractFetchDataResult {
   availableChildStreamTypes?: string[];
   classification?: string;
+  displayMode?: "TEXT" | "HEX" | "MARKER";
   feedName?: string;
 
   /** The offset and length of a range of data in a sub-set of a query result set */
@@ -773,6 +774,14 @@ export interface Entry {
   value?: string;
 }
 
+export interface EntryCounts {
+  /** @format int64 */
+  keyValueCount?: number;
+
+  /** @format int64 */
+  rangeValueCount?: number;
+}
+
 export type EventCoprocessorSettings = CoprocessorSettings & {
   maxEvent?: EventRef;
   maxEvents?: number;
@@ -967,8 +976,8 @@ export interface FetchAllDocumentPermissionsRequest {
 }
 
 export interface FetchDataRequest {
+  displayMode?: "TEXT" | "HEX" | "MARKER";
   expandedSeverities?: ("INFO" | "WARN" | "ERROR" | "FATAL")[];
-  markerMode?: boolean;
 
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   pipeline?: DocRef;
@@ -1938,7 +1947,7 @@ export interface ProcessingInfoResponse {
   createTime?: string;
   effectiveTime?: string;
   lastAccessedTime?: string;
-  mapNames?: string[];
+  maps?: Record<string, EntryCounts>;
   processingState?: "LOAD_IN_PROGRESS" | "PURGE_IN_PROGRESS" | "COMPLETE" | "FAILED" | "TERMINATED" | "PURGE_FAILED";
   refStreamDefinition?: RefStreamDefinition;
 }
@@ -2829,6 +2838,12 @@ export interface SourceConfig {
    * @min 0
    */
   maxCharactersToCompleteLine?: number;
+
+  /**
+   * @format int32
+   * @min 1
+   */
+  maxHexDumpLines?: number;
 }
 
 export interface SourceLocation {
@@ -6783,6 +6798,23 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       }),
   };
   refData = {
+    /**
+     * No description
+     *
+     * @tags Reference Data
+     * @name ClearBufferPool
+     * @summary Clear all buffers currently available in the buffer pool to reclaim memory.
+     * @request DELETE:/refData/v1/clearBufferPool
+     * @secure
+     */
+    clearBufferPool: (params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/refData/v1/clearBufferPool`,
+        method: "DELETE",
+        secure: true,
+        ...params,
+      }),
+
     /**
      * @description This is primarily intended  for small scale debugging in non-production environments. If no limit is set a default limit is applied else the results will be limited to limit entries.
      *

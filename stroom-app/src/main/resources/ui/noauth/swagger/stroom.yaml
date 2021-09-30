@@ -3457,6 +3457,18 @@ paths:
       summary: Finds processor task summaries
       tags:
       - Processor Tasks
+  /refData/v1/clearBufferPool:
+    delete:
+      operationId: clearBufferPool
+      responses:
+        default:
+          content:
+            application/json: {}
+          description: default response
+      summary: Clear all buffers currently available in the buffer pool to reclaim
+        memory.
+      tags:
+      - Reference Data
   /refData/v1/entries:
     get:
       description: This is primarily intended  for small scale debugging in non-production
@@ -5380,6 +5392,12 @@ components:
           uniqueItems: true
         classification:
           type: string
+        displayMode:
+          type: string
+          enum:
+          - TEXT
+          - HEX
+          - MARKER
         feedName:
           type: string
         itemRange:
@@ -6594,6 +6612,15 @@ components:
           type: string
         value:
           type: string
+    EntryCounts:
+      type: object
+      properties:
+        keyValueCount:
+          type: integer
+          format: int64
+        rangeValueCount:
+          type: integer
+          format: int64
     EventCoprocessorSettings:
       type: object
       allOf:
@@ -6920,6 +6947,12 @@ components:
     FetchDataRequest:
       type: object
       properties:
+        displayMode:
+          type: string
+          enum:
+          - TEXT
+          - HEX
+          - MARKER
         expandedSeverities:
           type: array
           items:
@@ -6929,8 +6962,6 @@ components:
             - WARN
             - ERROR
             - FATAL
-        markerMode:
-          type: boolean
         pipeline:
           $ref: '#/components/schemas/DocRef'
         recordCount:
@@ -8497,11 +8528,10 @@ components:
           type: string
         lastAccessedTime:
           type: string
-        mapNames:
-          type: array
-          items:
-            type: string
-          uniqueItems: true
+        maps:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/EntryCounts'
         processingState:
           type: string
           enum:
@@ -9845,6 +9875,10 @@ components:
           type: integer
           format: int64
           minimum: 0
+        maxHexDumpLines:
+          type: integer
+          format: int32
+          minimum: 1
     SourceLocation:
       type: object
       properties:

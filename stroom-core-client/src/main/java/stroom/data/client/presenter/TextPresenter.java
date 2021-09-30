@@ -83,6 +83,10 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> {
         editorPresenter.setText(text);
     }
 
+    public void setErrorText(final String title, final String errorText) {
+        editorPresenter.setErrorText(title, errorText);
+    }
+
     public Action getFormatAction() {
         return editorPresenter.getFormatAction();
     }

@@ -16,6 +16,7 @@
 
 package stroom.pipeline.shared;
 
+import stroom.pipeline.shared.FetchDataRequest.DisplayMode;
 import stroom.util.shared.Count;
 import stroom.util.shared.Marker;
 import stroom.util.shared.OffsetRange;
@@ -49,7 +50,8 @@ public class FetchMarkerResult extends AbstractFetchDataResult {
                              @JsonProperty("totalItemCount") final Count<Long> totalItemCount,
                              @JsonProperty("totalCharacterCount") final Count<Long> totalCharacterCount,
                              @JsonProperty("availableChildStreamTypes") final Set<String> availableChildStreamTypes,
-                             @JsonProperty("markers") final List<Marker> markers) {
+                             @JsonProperty("markers") final List<Marker> markers,
+                             @JsonProperty("errors") final List<String> errors) {
 //        super(streamTypeName, classification, streamRange,
 //        streamRowCount, pageRange, pageRowCount, availableChildStreamTypes);
         super(feedName,
@@ -59,7 +61,9 @@ public class FetchMarkerResult extends AbstractFetchDataResult {
                 itemRange,
                 totalItemCount,
                 totalCharacterCount,
-                availableChildStreamTypes);
+                availableChildStreamTypes,
+                DisplayMode.MARKER,
+                errors);
         this.markers = markers;
     }
 

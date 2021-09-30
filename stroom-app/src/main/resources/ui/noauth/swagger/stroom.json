@@ -5044,6 +5044,21 @@
         "tags" : [ "Processor Tasks" ]
       }
     },
+    "/refData/v1/clearBufferPool" : {
+      "delete" : {
+        "operationId" : "clearBufferPool",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : { }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Clear all buffers currently available in the buffer pool to reclaim memory.",
+        "tags" : [ "Reference Data" ]
+      }
+    },
     "/refData/v1/entries" : {
       "get" : {
         "description" : "This is primarily intended  for small scale debugging in non-production environments. If no limit is set a default limit is applied else the results will be limited to limit entries.",
@@ -7830,6 +7845,10 @@
           "classification" : {
             "type" : "string"
           },
+          "displayMode" : {
+            "type" : "string",
+            "enum" : [ "TEXT", "HEX", "MARKER" ]
+          },
           "feedName" : {
             "type" : "string"
           },
@@ -9554,6 +9573,19 @@
           }
         }
       },
+      "EntryCounts" : {
+        "type" : "object",
+        "properties" : {
+          "keyValueCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "rangeValueCount" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
       "EventCoprocessorSettings" : {
         "type" : "object",
         "allOf" : [ {
@@ -9971,15 +10003,16 @@
       "FetchDataRequest" : {
         "type" : "object",
         "properties" : {
+          "displayMode" : {
+            "type" : "string",
+            "enum" : [ "TEXT", "HEX", "MARKER" ]
+          },
           "expandedSeverities" : {
             "type" : "array",
             "items" : {
               "type" : "string",
               "enum" : [ "INFO", "WARN", "ERROR", "FATAL" ]
             }
-          },
-          "markerMode" : {
-            "type" : "boolean"
           },
           "pipeline" : {
             "$ref" : "#/components/schemas/DocRef"
@@ -12085,12 +12118,11 @@
           "lastAccessedTime" : {
             "type" : "string"
           },
-          "mapNames" : {
-            "type" : "array",
-            "items" : {
-              "type" : "string"
-            },
-            "uniqueItems" : true
+          "maps" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "$ref" : "#/components/schemas/EntryCounts"
+            }
           },
           "processingState" : {
             "type" : "string",
@@ -13875,6 +13907,11 @@
             "type" : "integer",
             "format" : "int64",
             "minimum" : 0
+          },
+          "maxHexDumpLines" : {
+            "type" : "integer",
+            "format" : "int32",
+            "minimum" : 1
           }
         }
       },

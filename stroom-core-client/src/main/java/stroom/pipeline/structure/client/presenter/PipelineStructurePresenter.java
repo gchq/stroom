@@ -533,8 +533,19 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                             text = result.getXml();
                         }
                         xmlEditor.setText(text, true);
-                        ShowPopupEvent.fire(PipelineStructurePresenter.this, xmlEditor, PopupType.OK_CANCEL_DIALOG,
-                                popupSize, "Pipeline Source", popupUiHandlers);
+                        ShowPopupEvent.fire(
+                                PipelineStructurePresenter.this,
+                                xmlEditor,
+                                PopupType.OK_CANCEL_DIALOG,
+                                popupSize,
+                                "Pipeline Source",
+                                popupUiHandlers);
+                    })
+                    .onFailure(throwable -> {
+                        xmlEditor.setErrorText(
+                                "Unable to display pipeline source",
+                                throwable.getMessage()
+                        );
                     })
                     .call(PIPELINE_RESOURCE)
                     .fetchPipelineXml(docRef);

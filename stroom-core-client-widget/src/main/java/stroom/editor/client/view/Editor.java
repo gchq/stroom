@@ -61,6 +61,8 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
     private boolean scrollMarginDirty;
     private boolean useWrapMode;
     private boolean useWrapModeDirty;
+    private boolean showIndentGuides;
+    private boolean showIndentGuidesDirty;
     private boolean showInvisibles = false;
     private boolean showInvisiblesDirty;
     private boolean useVimBindings = false;
@@ -90,6 +92,7 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
                     editor.setTabSize(2);
                     started = true;
                 }
+                //
                 updateAnnotations();
                 updateChangeHandler();
                 updateFirstLineNumber();
@@ -109,6 +112,7 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
                 updateUseSnippets();
                 updateUseVimBindings();
                 updateUseWrapMode();
+                updateShowIndentGuides();
             }
         });
 
@@ -359,6 +363,19 @@ public class Editor extends Composite implements HasValueChangeHandlers<String> 
         if (editor.isAttached() && useWrapModeDirty) {
             editor.setUseWrapMode(useWrapMode);
             useWrapModeDirty = false;
+        }
+    }
+
+    public void setShowIndentGuides(final boolean showIndentGuides) {
+        showIndentGuidesDirty = true;
+        this.showIndentGuides = showIndentGuides;
+        updateShowIndentGuides();
+    }
+
+    private void updateShowIndentGuides() {
+        if (editor.isAttached() && showIndentGuidesDirty) {
+            editor.setShowIndentGuides(showIndentGuides);
+            showIndentGuidesDirty = false;
         }
     }
 

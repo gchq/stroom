@@ -37,7 +37,8 @@ public class SourceConfig extends AbstractConfig {
 
     @Min(1)
     @JsonProperty
-    @JsonPropertyDescription("The maximum number of lines of hex dump to display when viewing data as hex.")
+    @JsonPropertyDescription("The maximum number of lines of hex dump to display when viewing data as hex. " +
+            "A single line displays 32 bytes.")
     private int maxHexDumpLines;
 
     public SourceConfig() {
@@ -63,7 +64,7 @@ public class SourceConfig extends AbstractConfig {
         maxCharactersInPreviewFetch = setDefaultIfUnset(maxCharactersInPreviewFetch, 30_000L);
         maxCharactersPerFetch = setDefaultIfUnset(maxCharactersPerFetch, 80_000L);
         maxCharactersToCompleteLine = setDefaultIfUnset(maxCharactersToCompleteLine, 10_000L);
-        maxHexDumpLines = setDefaultIfUnset(maxHexDumpLines, 500);
+        maxHexDumpLines = setDefaultIfUnset(maxHexDumpLines, 1_000);
     }
 
     private long setDefaultIfUnset(final long value, final long defaultValue) {

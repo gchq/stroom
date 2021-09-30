@@ -18,6 +18,9 @@ package stroom.data.client.view;
 
 import stroom.data.client.presenter.DataPresenter.DataView;
 import stroom.data.client.presenter.ItemNavigatorPresenter.ItemNavigatorView;
+import stroom.svg.client.SvgPreset;
+import stroom.widget.button.client.ButtonPanel;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
 import stroom.widget.tab.client.view.LinkTabBar;
@@ -50,6 +53,10 @@ public class DataViewImpl extends ViewImpl implements DataView {
 
     @UiField
     SimplePanel progressBarPanel;
+
+    @UiField
+    ButtonPanel buttonPanel;
+
 
     @Inject
     public DataViewImpl(final Binder binder) {
@@ -101,6 +108,11 @@ public class DataViewImpl extends ViewImpl implements DataView {
         } else {
             progressBarPanel.clear();
         }
+    }
+
+    @Override
+    public ButtonView addButton(final SvgPreset preset) {
+        return buttonPanel.addButton(preset);
     }
 
     public interface Binder extends UiBinder<Widget, DataViewImpl> {

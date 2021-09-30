@@ -208,7 +208,7 @@ public class ByteStreamDecoder {
                     + " character starting at bytes ["
                     + ByteArrayUtils.byteArrayToHex(malformedBytes)
                     + "] [" + printableStr
-                    + "]";
+                    + "]. View the data as hex to see the raw data.";
         }
 
         public byte[] getMalformedBytes() {

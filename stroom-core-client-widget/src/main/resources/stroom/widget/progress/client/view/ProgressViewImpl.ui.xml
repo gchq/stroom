@@ -21,6 +21,7 @@
         position: absolute;
         background-color: #1e88e5;
         height: 4px;
+        min-width: 3px;
         }
     </ui:style>
 

@@ -58,6 +58,8 @@ public interface EditorView extends View, HasKeyDownHandlers, HasFormatHandlers,
 
     void setHighlights(final List<TextRange> highlights);
 
+    public void setErrorText(final String title, final String errorText);
+
     /**
      * If the text is being formatted by this view then you can provide a function to generate
      * highlights on the formatted text as the line/col positions in the formatted text may
@@ -82,6 +84,8 @@ public interface EditorView extends View, HasKeyDownHandlers, HasFormatHandlers,
     Option getIndicatorsOption();
 
     Option getLineWrapOption();
+
+    Option getShowIndentGuides();
 
     Option getShowInvisiblesOption();
 

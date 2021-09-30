@@ -17,16 +17,19 @@
 package stroom.pipeline.shared;
 
 
+import stroom.pipeline.shared.FetchDataRequest.DisplayMode;
 import stroom.util.shared.Count;
 import stroom.util.shared.OffsetRange;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+import java.util.List;
 import java.util.Set;
 
 @JsonTypeInfo(
@@ -56,6 +59,11 @@ public abstract class AbstractFetchDataResult {
     private final Count<Long> totalCharacterCount; // Total chars in part/segment
     @JsonProperty
     private final Set<String> availableChildStreamTypes;
+    @JsonProperty
+    private final DisplayMode displayMode;
+    @JsonProperty
+    private final List<String> errors;
+
 
     @JsonCreator
     public AbstractFetchDataResult(
@@ -66,7 +74,9 @@ public abstract class AbstractFetchDataResult {
             @JsonProperty("itemRange") final OffsetRange itemRange,
             @JsonProperty("totalItemCount") final Count<Long> totalItemCount,
             @JsonProperty("totalCharacterCount") final Count<Long> totalCharacterCount,
-            @JsonProperty("availableChildStreamTypes") final Set<String> availableChildStreamTypes) {
+            @JsonProperty("availableChildStreamTypes") final Set<String> availableChildStreamTypes,
+            @JsonProperty("displayMode") final DisplayMode displayMode,
+            @JsonProperty("errors") final List<String> errors) {
 
         this.feedName = feedName;
         this.streamTypeName = streamTypeName;
@@ -76,6 +86,8 @@ public abstract class AbstractFetchDataResult {
         this.totalItemCount = totalItemCount;
         this.totalCharacterCount = totalCharacterCount;
         this.availableChildStreamTypes = availableChildStreamTypes;
+        this.displayMode = displayMode;
+        this.errors = errors;
     }
 
     public String getFeedName() {
@@ -108,5 +120,18 @@ public abstract class AbstractFetchDataResult {
 
     public Set<String> getAvailableChildStreamTypes() {
         return availableChildStreamTypes;
+    }
+
+    public DisplayMode getDisplayMode() {
+        return displayMode;
+    }
+
+    public List<String> getErrors() {
+        return errors;
+    }
+
+    @JsonIgnore
+    public boolean hasErrors() {
+        return errors != null && !errors.isEmpty();
     }
 }

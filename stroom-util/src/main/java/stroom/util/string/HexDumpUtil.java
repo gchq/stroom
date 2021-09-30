@@ -20,7 +20,8 @@ public class HexDumpUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(HexDumpUtil.class);
 
     private static final int MAX_BYTES_PER_LINE = 32;
-    private static final char REPLACEMENT_CHAR = '�';
+    //    private static final char REPLACEMENT_CHAR = '�';
+    private static final char REPLACEMENT_CHAR = '.';
     private static final String REPLACEMENT_STRING = String.valueOf(REPLACEMENT_CHAR);
 
     private HexDumpUtil() {
@@ -38,7 +39,8 @@ public class HexDumpUtil {
      * Produces a hex dump similar to the linux xxd binary.
      *
      * @param inputStream     The stream to dump as hex
-     * @param charset         The charset to decode single bytes with
+     * @param charset         The charset to decode single bytes with. Even if a multibyte charset
+     *                        is supplied bytes will only be decoded individually.
      * @param maxHexDumpLines The max number of line of hex dump output. A full line contains 32 bytes.
      * @return
      * @throws IOException
@@ -74,7 +76,7 @@ public class HexDumpUtil {
             }
 
             // build the hex dump line for these bytes
-            bytesToString(
+            appendHexDumpLine(
                     stringBuilder,
                     lineOffset,
                     lineBytes,
@@ -98,19 +100,23 @@ public class HexDumpUtil {
         return charsetDecoder;
     }
 
-    private static void bytesToString(final StringBuilder stringBuilder,
-                                      final long lineOffset,
-                                      final byte[] lineBytes,
-                                      final int len,
-                                      final int bytesPerLine,
-                                      final CharsetDecoder charsetDecoder) {
+    private static void appendHexDumpLine(final StringBuilder stringBuilder,
+                                          final long lineOffset,
+                                          final byte[] lineBytes,
+                                          final int len,
+                                          final int bytesPerLine,
+                                          final CharsetDecoder charsetDecoder) {
         final long firstByteNo = lineOffset * bytesPerLine;
+        // Add the number of the first byte on the line in hex form, zero padded
         stringBuilder
                 .append(Strings.padStart(Long.toHexString(firstByteNo), 10, '0'))
-                .append(" ");
+                .append("  ");
 
+        // Builder for the hex values for each byte
         final StringBuilder hexStringBuilder = new StringBuilder();
+        // Builder for the decoded forms of each individual byte
         final StringBuilder decodedStringBuilder = new StringBuilder();
+
         for (int i = 0; i < lineBytes.length; i++) {
             if (i < len) {
                 byte[] arr = new byte[]{lineBytes[i]};
@@ -120,7 +126,7 @@ public class HexDumpUtil {
                         .append(hex)
                         .append(" ");
 
-                ByteBuffer byteBuffer = ByteBuffer.wrap(arr);
+                final ByteBuffer byteBuffer = ByteBuffer.wrap(arr);
                 char chr;
                 try {
                     CharBuffer charBuffer = charsetDecoder.decode(byteBuffer);
@@ -156,7 +162,7 @@ public class HexDumpUtil {
         if ((int) chr < 32) {
             // replace all non-printable chars, ideally with a representative char
             if (chr == 0) {
-                charToAppend = '␀';
+                charToAppend = '.';
             } else if (chr == '\n') {
                 charToAppend = '↲';
             } else if (chr == '\r') {
