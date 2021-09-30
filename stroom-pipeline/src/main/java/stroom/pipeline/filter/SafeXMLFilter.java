@@ -16,6 +16,10 @@
 
 package stroom.pipeline.filter;
 
+import stroom.pipeline.factory.ConfigurableElement;
+import stroom.pipeline.shared.ElementIcons;
+import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.util.CharBuffer;
 
 import org.xml.sax.Attributes;
@@ -23,10 +27,14 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
+@ConfigurableElement(type = "SafeXMLFilter", category = Category.FILTER, roles = {
+        PipelineElementType.ROLE_TARGET,
+        PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_STEPPING,
+        PipelineElementType.ROLE_MUTATOR}, icon = ElementIcons.RECORD_OUTPUT)
 public class SafeXMLFilter extends AbstractXMLFilter {
 
-    private SafeBuffer safeBuffer = new SafeBuffer(500);
-    private SafeAttributes safeAttributes = new SafeAttributes(safeBuffer);
+    private final SafeBuffer safeBuffer = new SafeBuffer(500);
+    private final SafeAttributes safeAttributes = new SafeAttributes(safeBuffer);
 
     @Override
     public void startElement(String uri, String localName, String name, Attributes atts) throws SAXException {
@@ -51,8 +59,6 @@ public class SafeXMLFilter extends AbstractXMLFilter {
     }
 
     private static class SafeBuffer extends CharBuffer {
-
-        private static final long serialVersionUID = 7457435229363903797L;
 
         private static final char ZERO = '0';
         private static final int MAX_DIGITS = 3;
@@ -202,8 +208,6 @@ public class SafeXMLFilter extends AbstractXMLFilter {
 
     private static class OutputBuffer extends CharBuffer {
 
-        private static final long serialVersionUID = 5324120855707144530L;
-
         OutputBuffer(final int initialSize) {
             super(initialSize);
         }
@@ -213,7 +217,7 @@ public class SafeXMLFilter extends AbstractXMLFilter {
         }
     }
 
-    private class SafeAttributes extends AttributesImpl {
+    private static class SafeAttributes extends AttributesImpl {
 
         private final SafeBuffer safeBuffer;
 

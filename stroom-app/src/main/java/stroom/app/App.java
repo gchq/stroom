@@ -42,7 +42,10 @@ import stroom.util.io.DirProvidersModule;
 import stroom.util.io.FileUtil;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.PathConfig;
+import stroom.util.io.StroomPathConfig;
 import stroom.util.io.TempDirProvider;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.BuildInfo;
@@ -52,7 +55,6 @@ import stroom.util.validation.ValidationModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Module;
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.jersey.sessions.SessionFactoryProvider;
@@ -62,8 +64,6 @@ import io.dropwizard.setup.Environment;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.jersey.logging.LoggingFeature;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -82,7 +82,7 @@ import javax.validation.ValidatorFactory;
 
 public class App extends Application<Config> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(App.class);
 
     private static final String APP_NAME = "Stroom";
     public static final String SESSION_COOKIE_NAME = "STROOM_SESSION_ID";
@@ -403,18 +403,23 @@ public class App extends Application<Config> {
             // possibly substituted values for stroom.(home|temp) for use with PathCreator
             LOGGER.info("Parsing config file to establish home and temp");
             final AppConfig appConfig = YamlUtil.readAppConfig(configFile);
+            LOGGER.debug(() -> "pathConfig " + appConfig.getPathConfig());
 
-            final Module pathConfigModule = new AbstractModule() {
-                @Override
-                protected void configure() {
-                    bind(PathConfig.class).toInstance(appConfig.getPathConfig());
-                    install(new DirProvidersModule());
-                }
-            };
+            // Allow for someone having pathConfig set to null in the yaml, e.g. just
+            //   pathConfig:
+            final PathConfig effectivePathConfig = Objects.requireNonNullElse(
+                    appConfig.getPathConfig(),
+                    new StroomPathConfig());
 
             return Guice.createInjector(
                     new ValidationModule(),
-                    pathConfigModule);
+                    new DirProvidersModule(),
+                    new AbstractModule() {
+                        @Override
+                        protected void configure() {
+                            bind(PathConfig.class).toInstance(effectivePathConfig);
+                        }
+                    });
 
         } catch (IOException e) {
             throw new RuntimeException("Error parsing config file " + configFile.toAbsolutePath().normalize());
