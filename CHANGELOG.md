@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2240** : Prevent autologger warning for `ExplorerResourceImpl`
 
+* Issue **#2465** : `SaveAs` is now working for non admin users.
+
 * Issue **#2460** : Processing filters now reliably process feeds where wildcards are used to match feed names.
 
 
