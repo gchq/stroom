@@ -438,7 +438,7 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
 //    }
 
     /**
-     * 11. This method will reload an document.
+     * 11. This method will reload a document.
      */
     @SuppressWarnings("unchecked")
     public void reload(final DocRef docRef) {

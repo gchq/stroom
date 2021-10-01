@@ -40,7 +40,6 @@ public abstract class DocumentEditPresenter<V extends View, D> extends MyPresent
     private D entity;
     private boolean dirty;
     private boolean reading;
-    private boolean checkedPermissions;
     private boolean readOnly = true;
 
     public DocumentEditPresenter(final EventBus eventBus, final V view, final ClientSecurityContext securityContext) {
@@ -49,21 +48,19 @@ public abstract class DocumentEditPresenter<V extends View, D> extends MyPresent
     }
 
     private void setDirty(final boolean dirty, final boolean force) {
-        if (!isReadOnly()) {
-            if (!reading && (force || this.dirty != dirty)) {
-                this.dirty = dirty;
-                DirtyEvent.fire(this, dirty);
-                onDirty(dirty);
-            }
+        if (!reading && (force || this.dirty != dirty)) {
+            this.dirty = dirty;
+            DirtyEvent.fire(this, dirty);
+            onDirtyChange();
         }
     }
 
-    public void onDirty(final boolean dirty) {
+    public void onDirtyChange() {
     }
 
     @Override
     public boolean isDirty() {
-        return dirty;
+        return !readOnly && dirty;
     }
 
     public void setDirty(final boolean dirty) {
@@ -72,20 +69,20 @@ public abstract class DocumentEditPresenter<V extends View, D> extends MyPresent
 
     @Override
     public final void read(final DocRef docRef, final D entity) {
-        // Check document permissions if we haven't already.
-        if (!checkedPermissions) {
-            checkedPermissions = true;
-            securityContext.hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.UPDATE)
-                    .onSuccess(this::setAllowUpdate);
-        }
+        // Check document permissions.
+        securityContext.hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.UPDATE)
+                .onSuccess(allowUpdate -> {
+                    onReadOnly(!allowUpdate);
 
-        this.entity = entity;
-        if (entity != null) {
-            reading = true;
-            onRead(docRef, entity);
-            reading = false;
-            setDirty(false, true);
-        }
+                    // Now read the doc.
+                    this.entity = entity;
+                    if (entity != null) {
+                        reading = true;
+                        onRead(docRef, entity);
+                        reading = false;
+                        setDirty(false, true);
+                    }
+                });
     }
 
     @Override
@@ -100,10 +97,6 @@ public abstract class DocumentEditPresenter<V extends View, D> extends MyPresent
             final ReadOnlyChangeHandler changeHandler = (ReadOnlyChangeHandler) getView();
             changeHandler.onReadOnly(readOnly);
         }
-    }
-
-    private void setAllowUpdate(Boolean allowUpdate) {
-        onReadOnly(!allowUpdate);
     }
 
     public boolean isReadOnly() {
