@@ -71,7 +71,6 @@ import java.util.function.Predicate;
 import javax.inject.Inject;
 
 import static java.util.Map.entry;
-import static java.util.Map.of;
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFeed.PROCESSOR_FEED;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FILTER;
@@ -157,11 +156,24 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 PROCESSOR_TASK.CREATE_TIME_MS,
                 value -> getDate(ProcessorTaskFields.CREATE_TIME, value));
         expressionMapper.map(ProcessorTaskFields.CREATE_TIME_MS, PROCESSOR_TASK.CREATE_TIME_MS, Long::valueOf);
+        expressionMapper.map(ProcessorTaskFields.START_TIME,
+                PROCESSOR_TASK.START_TIME_MS,
+                value -> getDate(ProcessorTaskFields.START_TIME, value));
+        expressionMapper.map(ProcessorTaskFields.START_TIME_MS, PROCESSOR_TASK.START_TIME_MS, Long::valueOf);
+        expressionMapper.map(ProcessorTaskFields.END_TIME,
+                PROCESSOR_TASK.END_TIME_MS,
+                value -> getDate(ProcessorTaskFields.END_TIME, value));
+        expressionMapper.map(ProcessorTaskFields.END_TIME_MS, PROCESSOR_TASK.END_TIME_MS, Long::valueOf);
+        expressionMapper.map(ProcessorTaskFields.STATUS_TIME,
+                PROCESSOR_TASK.STATUS_TIME_MS,
+                value -> getDate(ProcessorTaskFields.STATUS_TIME, value));
+        expressionMapper.map(ProcessorTaskFields.STATUS_TIME_MS, PROCESSOR_TASK.STATUS_TIME_MS, Long::valueOf);
         expressionMapper.map(ProcessorTaskFields.META_ID, PROCESSOR_TASK.META_ID, Long::valueOf);
         expressionMapper.map(ProcessorTaskFields.NODE_NAME, PROCESSOR_NODE.NAME, value -> value);
         expressionMapper.map(ProcessorTaskFields.FEED, PROCESSOR_FEED.NAME, value -> value, true);
         expressionMapper.map(ProcessorTaskFields.PIPELINE, PROCESSOR.PIPELINE_UUID, value -> value);
         expressionMapper.map(ProcessorTaskFields.PROCESSOR_FILTER_ID, PROCESSOR_FILTER.ID, Integer::valueOf);
+        expressionMapper.map(ProcessorTaskFields.PROCESSOR_FILTER_PRIORITY, PROCESSOR_FILTER.PRIORITY, Integer::valueOf);
         expressionMapper.map(ProcessorTaskFields.PROCESSOR_ID, PROCESSOR.ID, Integer::valueOf);
         expressionMapper.map(ProcessorTaskFields.STATUS,
                 PROCESSOR_TASK.STATUS,
@@ -171,11 +183,18 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         valueMapper = new ValueMapper();
         valueMapper.map(ProcessorTaskFields.CREATE_TIME, PROCESSOR_TASK.CREATE_TIME_MS, ValLong::create);
         valueMapper.map(ProcessorTaskFields.CREATE_TIME_MS, PROCESSOR_TASK.CREATE_TIME_MS, ValLong::create);
+        valueMapper.map(ProcessorTaskFields.START_TIME, PROCESSOR_TASK.START_TIME_MS, ValLong::create);
+        valueMapper.map(ProcessorTaskFields.START_TIME_MS, PROCESSOR_TASK.START_TIME_MS, ValLong::create);
+        valueMapper.map(ProcessorTaskFields.END_TIME, PROCESSOR_TASK.END_TIME_MS, ValLong::create);
+        valueMapper.map(ProcessorTaskFields.END_TIME_MS, PROCESSOR_TASK.END_TIME_MS, ValLong::create);
+        valueMapper.map(ProcessorTaskFields.STATUS_TIME, PROCESSOR_TASK.STATUS_TIME_MS, ValLong::create);
+        valueMapper.map(ProcessorTaskFields.STATUS_TIME_MS, PROCESSOR_TASK.STATUS_TIME_MS, ValLong::create);
         valueMapper.map(ProcessorTaskFields.META_ID, PROCESSOR_TASK.META_ID, ValLong::create);
         valueMapper.map(ProcessorTaskFields.NODE_NAME, PROCESSOR_NODE.NAME, ValString::create);
         valueMapper.map(ProcessorTaskFields.FEED, PROCESSOR_FEED.NAME, ValString::create);
         valueMapper.map(ProcessorTaskFields.PIPELINE, PROCESSOR.PIPELINE_UUID, this::getPipelineName);
         valueMapper.map(ProcessorTaskFields.PROCESSOR_FILTER_ID, PROCESSOR_FILTER.ID, ValInteger::create);
+        valueMapper.map(ProcessorTaskFields.PROCESSOR_FILTER_PRIORITY, PROCESSOR_FILTER.PRIORITY, ValInteger::create);
         valueMapper.map(ProcessorTaskFields.PROCESSOR_ID, PROCESSOR.ID, ValInteger::create);
         valueMapper.map(ProcessorTaskFields.STATUS,
                 PROCESSOR_TASK.STATUS,
@@ -632,6 +651,10 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         final boolean nodeValueExists = fieldList.stream().anyMatch(Predicate.isEqual(ProcessorTaskFields.NODE_NAME));
         final int feedTermCount = ExpressionUtil.termCount(criteria.getExpression(), ProcessorTaskFields.FEED);
         final boolean feedValueExists = fieldList.stream().anyMatch(Predicate.isEqual(ProcessorTaskFields.FEED));
+        final int processorFilterTermCount = ExpressionUtil.termCount(criteria.getExpression(),
+                Set.of(ProcessorTaskFields.PROCESSOR_FILTER_ID, ProcessorTaskFields.PROCESSOR_FILTER_PRIORITY));
+        final int processorTermCount = ExpressionUtil.termCount(criteria.getExpression(),
+                ProcessorTaskFields.PROCESSOR_ID);
         final int pipelineTermCount = ExpressionUtil.termCount(criteria.getExpression(), ProcessorTaskFields.PIPELINE);
         final boolean pipelineValueExists = fieldList.stream()
                 .anyMatch(Predicate.isEqual(ProcessorTaskFields.PIPELINE));
@@ -660,9 +683,16 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 select = select.leftOuterJoin(PROCESSOR_FEED)
                         .on(PROCESSOR_TASK.FK_PROCESSOR_FEED_ID.eq(PROCESSOR_FEED.ID));
             }
-            if (pipelineTermCount > 0 || pipelineValueExists) {
+            if (processorFilterTermCount > 0 ||
+                    processorTermCount > 0 ||
+                    pipelineTermCount > 0 ||
+                    pipelineValueExists) {
                 select = select.join(PROCESSOR_FILTER)
                         .on(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(PROCESSOR_FILTER.ID));
+            }
+            if (processorTermCount > 0 ||
+                    pipelineTermCount > 0 ||
+                    pipelineValueExists) {
                 select = select.join(PROCESSOR)
                         .on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID));
             }
