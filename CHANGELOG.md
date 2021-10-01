@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2460** : Processing filters now reliably process feeds where wildcards are used to match feed names.
+
 
 ## [v7.0-beta.148] - 2021-09-30
 
