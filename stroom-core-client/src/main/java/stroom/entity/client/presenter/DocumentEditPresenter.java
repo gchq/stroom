@@ -70,19 +70,16 @@ public abstract class DocumentEditPresenter<V extends View, D> extends MyPresent
     @Override
     public final void read(final DocRef docRef, final D entity) {
         // Check document permissions.
-        securityContext.hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.UPDATE)
-                .onSuccess(allowUpdate -> {
-                    onReadOnly(!allowUpdate);
-
-                    // Now read the doc.
-                    this.entity = entity;
-                    if (entity != null) {
-                        reading = true;
-                        onRead(docRef, entity);
-                        reading = false;
-                        setDirty(false, true);
-                    }
-                });
+        securityContext
+                .hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.UPDATE)
+                .onSuccess(allowUpdate -> onReadOnly(!allowUpdate));
+        this.entity = entity;
+        if (entity != null) {
+            reading = true;
+            onRead(docRef, entity);
+            reading = false;
+            setDirty(false, true);
+        }
     }
 
     @Override
