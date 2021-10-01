@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2441** : Improve logging and prevent autologger warning for `MetaResourcImpl`
+
+* Issue **#2440** : Prevent autologger warning for `ExplorerResourceImpl`
+
 * Issue **#2465** : `SaveAs` is now working for non admin users.
 
 * Issue **#2460** : Processing filters now reliably process feeds where wildcards are used to match feed names.
