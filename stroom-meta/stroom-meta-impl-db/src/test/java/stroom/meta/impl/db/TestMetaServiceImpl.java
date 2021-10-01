@@ -13,6 +13,7 @@ import stroom.data.retention.shared.FindDataRetentionImpactCriteria;
 import stroom.data.retention.shared.TimeUnit;
 import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.docrefinfo.mock.MockDocRefInfoModule;
+import stroom.event.logging.mock.MockStroomEventLoggingModule;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
 import stroom.meta.impl.MetaModule;
@@ -89,7 +90,8 @@ class TestMetaServiceImpl {
                 new CacheModule(),
                 new DbTestModule(),
                 new MetaTestModule(),
-                new MockTaskModule())
+                new MockTaskModule(),
+                new MockStroomEventLoggingModule())
                 .injectMembers(this);
         // Delete everything
         cleanup.cleanup();

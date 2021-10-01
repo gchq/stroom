@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2414** : The processing tasks data source now exposes start, end and status times plus filter priorities.
 
+* Issue **#2441** : Improve logging and prevent autologger warning for `MetaResourcImpl`
+
+* Issue **#2440** : Prevent autologger warning for `ExplorerResourceImpl`
+
 * Issue **#2465** : `SaveAs` is now working for non admin users.
 
 * Issue **#2460** : Processing filters now reliably process feeds where wildcards are used to match feed names.
