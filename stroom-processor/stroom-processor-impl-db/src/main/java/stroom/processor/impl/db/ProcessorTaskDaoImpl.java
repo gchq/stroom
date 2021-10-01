@@ -173,7 +173,9 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         expressionMapper.map(ProcessorTaskFields.FEED, PROCESSOR_FEED.NAME, value -> value, true);
         expressionMapper.map(ProcessorTaskFields.PIPELINE, PROCESSOR.PIPELINE_UUID, value -> value);
         expressionMapper.map(ProcessorTaskFields.PROCESSOR_FILTER_ID, PROCESSOR_FILTER.ID, Integer::valueOf);
-        expressionMapper.map(ProcessorTaskFields.PROCESSOR_FILTER_PRIORITY, PROCESSOR_FILTER.PRIORITY, Integer::valueOf);
+        expressionMapper.map(ProcessorTaskFields.PROCESSOR_FILTER_PRIORITY,
+                PROCESSOR_FILTER.PRIORITY,
+                Integer::valueOf);
         expressionMapper.map(ProcessorTaskFields.PROCESSOR_ID, PROCESSOR.ID, Integer::valueOf);
         expressionMapper.map(ProcessorTaskFields.STATUS,
                 PROCESSOR_TASK.STATUS,
