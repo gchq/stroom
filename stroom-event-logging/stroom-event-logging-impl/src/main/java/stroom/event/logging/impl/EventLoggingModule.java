@@ -20,6 +20,8 @@ import stroom.activity.api.CurrentActivity;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.explorer.shared.BulkActionResult;
+import stroom.job.shared.Job;
 import stroom.security.api.SecurityContext;
 import stroom.util.BuildInfoProvider;
 import stroom.util.shared.BuildInfo;
@@ -38,7 +40,8 @@ public class EventLoggingModule extends AbstractModule {
         bind(StroomEventLoggingService.class).to(StroomEventLoggingServiceImpl.class);
         bind(DocumentEventLog.class).to(DocumentEventLogImpl.class);
 
-        ObjectInfoProviderBinder.create(binder());
+        ObjectInfoProviderBinder.create(binder())
+                .bind(BulkActionResult.class, BulkActionResultObjectInfoProvider.class);
     }
 
     @SuppressWarnings("checkstyle:needbraces")
