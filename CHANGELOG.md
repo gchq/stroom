@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2452** : New pipeline references now default to `Reference` data type.
+
 * Issue **#2414** : The processing tasks data source now exposes start, end and status times plus filter priorities.
 
 * Issue **#2441** : Improve logging and prevent autologger warning for `MetaResourcImpl`
