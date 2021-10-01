@@ -66,9 +66,12 @@ class ConfigPropertyDaoImpl implements ConfigPropertyDao {
     @Inject
     ConfigPropertyDaoImpl(final GlobalConfigDbConnProvider globalConfigDbConnProvider) {
         this.globalConfigDbConnProvider = globalConfigDbConnProvider;
-        this.genericDao = new GenericDao<>(CONFIG, CONFIG.ID, ConfigProperty.class, globalConfigDbConnProvider);
-        genericDao.setRecordToObjectMapper(RECORD_TO_CONFIG_PROPERTY_MAPPER);
-        genericDao.setObjectToRecordMapper(CONFIG_PROPERTY_TO_RECORD_MAPPER);
+        this.genericDao = new GenericDao<>(
+                globalConfigDbConnProvider,
+                CONFIG,
+                CONFIG.ID,
+                CONFIG_PROPERTY_TO_RECORD_MAPPER,
+                RECORD_TO_CONFIG_PROPERTY_MAPPER);
     }
 
     @Override
@@ -85,9 +88,10 @@ class ConfigPropertyDaoImpl implements ConfigPropertyDao {
     public Optional<ConfigProperty> fetch(final String propertyName) {
         Objects.requireNonNull(propertyName);
         return JooqUtil.contextResult(globalConfigDbConnProvider, context -> context
-                .selectFrom(CONFIG)
-                .where(CONFIG.NAME.eq(propertyName))
-                .fetchOptional(RECORD_TO_CONFIG_PROPERTY_MAPPER::apply));
+                        .selectFrom(CONFIG)
+                        .where(CONFIG.NAME.eq(propertyName))
+                        .fetchOptional())
+                .map(RECORD_TO_CONFIG_PROPERTY_MAPPER);
     }
 
     @Override
@@ -116,7 +120,7 @@ class ConfigPropertyDaoImpl implements ConfigPropertyDao {
     @Override
     public List<ConfigProperty> list() {
         return JooqUtil.contextResult(globalConfigDbConnProvider, context -> context
-                .fetch(CONFIG)
-                .map(RECORD_TO_CONFIG_PROPERTY_MAPPER::apply));
+                        .fetch(CONFIG))
+                .map(RECORD_TO_CONFIG_PROPERTY_MAPPER::apply);
     }
 }

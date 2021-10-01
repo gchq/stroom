@@ -28,7 +28,6 @@ public abstract class AbstractDataSourceProviderModule<T_CONFIG extends HasDbCon
 
     protected abstract T_CONN_PROV createConnectionProvider(DataSource dataSource);
 
-
     @Override
     protected void configure() {
         super.configure();
@@ -52,9 +51,16 @@ public abstract class AbstractDataSourceProviderModule<T_CONFIG extends HasDbCon
 
         LOGGER.debug(() -> "Getting connection provider for " + getModuleName());
 
-        final DataSource dataSource = dataSourceFactory.create(configProvider.get());
+        final DataSource dataSource = dataSourceFactory.create(
+                configProvider.get(),
+                getModuleName(),
+                createUniquePool());
         performMigration(dataSource);
         return createConnectionProvider(dataSource);
+    }
+
+    protected boolean createUniquePool() {
+        return false;
     }
 
     protected abstract void performMigration(DataSource dataSource);

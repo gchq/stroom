@@ -57,34 +57,34 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
                             final Provider<IndexStore> indexStoreProvider) {
         this.indexDbConnProvider = indexDbConnProvider;
         this.indexStoreProvider = indexStoreProvider;
-        genericDao = new GenericDao<>(INDEX_VOLUME_GROUP,
+        genericDao = new GenericDao<>(
+                indexDbConnProvider,
+                INDEX_VOLUME_GROUP,
                 INDEX_VOLUME_GROUP.ID,
-                IndexVolumeGroup.class,
-                indexDbConnProvider);
-        genericDao.setRecordToObjectMapper(RECORD_TO_INDEX_VOLUME_GROUP_MAPPER);
-        genericDao.setObjectToRecordMapper(INDEX_VOLUME_GROUP_TO_RECORD_MAPPER);
+                INDEX_VOLUME_GROUP_TO_RECORD_MAPPER,
+                RECORD_TO_INDEX_VOLUME_GROUP_MAPPER);
     }
 
     @Override
     public IndexVolumeGroup getOrCreate(final IndexVolumeGroup indexVolumeGroup) {
         Optional<Integer> optional = JooqUtil.contextResult(indexDbConnProvider, context -> context
-                .insertInto(INDEX_VOLUME_GROUP,
-                        INDEX_VOLUME_GROUP.VERSION,
-                        INDEX_VOLUME_GROUP.CREATE_USER,
-                        INDEX_VOLUME_GROUP.CREATE_TIME_MS,
-                        INDEX_VOLUME_GROUP.UPDATE_USER,
-                        INDEX_VOLUME_GROUP.UPDATE_TIME_MS,
-                        INDEX_VOLUME_GROUP.NAME)
-                .values(1,
-                        indexVolumeGroup.getCreateUser(),
-                        indexVolumeGroup.getCreateTimeMs(),
-                        indexVolumeGroup.getUpdateUser(),
-                        indexVolumeGroup.getUpdateTimeMs(),
-                        indexVolumeGroup.getName())
-                .onDuplicateKeyIgnore()
-                .returning(INDEX_VOLUME_GROUP.ID)
-                .fetchOptional()
-                .map(IndexVolumeGroupRecord::getId));
+                        .insertInto(INDEX_VOLUME_GROUP,
+                                INDEX_VOLUME_GROUP.VERSION,
+                                INDEX_VOLUME_GROUP.CREATE_USER,
+                                INDEX_VOLUME_GROUP.CREATE_TIME_MS,
+                                INDEX_VOLUME_GROUP.UPDATE_USER,
+                                INDEX_VOLUME_GROUP.UPDATE_TIME_MS,
+                                INDEX_VOLUME_GROUP.NAME)
+                        .values(1,
+                                indexVolumeGroup.getCreateUser(),
+                                indexVolumeGroup.getCreateTimeMs(),
+                                indexVolumeGroup.getUpdateUser(),
+                                indexVolumeGroup.getUpdateTimeMs(),
+                                indexVolumeGroup.getName())
+                        .onDuplicateKeyIgnore()
+                        .returning(INDEX_VOLUME_GROUP.ID)
+                        .fetchOptional())
+                .map(IndexVolumeGroupRecord::getId);
 
         return optional.map(id -> {
             indexVolumeGroup.setId(id);
@@ -126,23 +126,23 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
     @Override
     public IndexVolumeGroup get(final int id) {
         return JooqUtil.contextResult(indexDbConnProvider, context -> context
-                .select()
-                .from(INDEX_VOLUME_GROUP)
-                .where(INDEX_VOLUME_GROUP.ID.eq(id))
-                .fetchOptional()
+                        .select()
+                        .from(INDEX_VOLUME_GROUP)
+                        .where(INDEX_VOLUME_GROUP.ID.eq(id))
+                        .fetchOptional())
                 .map(RECORD_TO_INDEX_VOLUME_GROUP_MAPPER)
-                .orElse(null));
+                .orElse(null);
     }
 
     @Override
     public IndexVolumeGroup get(final String name) {
         return JooqUtil.contextResult(indexDbConnProvider, context -> context
-                .select()
-                .from(INDEX_VOLUME_GROUP)
-                .where(INDEX_VOLUME_GROUP.NAME.eq(name))
-                .fetchOptional()
+                        .select()
+                        .from(INDEX_VOLUME_GROUP)
+                        .where(INDEX_VOLUME_GROUP.NAME.eq(name))
+                        .fetchOptional())
                 .map(RECORD_TO_INDEX_VOLUME_GROUP_MAPPER)
-                .orElse(null));
+                .orElse(null);
     }
 
 
@@ -158,11 +158,11 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
     @Override
     public List<IndexVolumeGroup> getAll() {
         return JooqUtil.contextResult(indexDbConnProvider, context -> context
-                .select()
-                .from(INDEX_VOLUME_GROUP)
-                .orderBy(INDEX_VOLUME_GROUP.NAME)
-                .fetch()
-                .map(RECORD_TO_INDEX_VOLUME_GROUP_MAPPER::apply));
+                        .select()
+                        .from(INDEX_VOLUME_GROUP)
+                        .orderBy(INDEX_VOLUME_GROUP.NAME)
+                        .fetch())
+                .map(RECORD_TO_INDEX_VOLUME_GROUP_MAPPER::apply);
     }
 
     @Override

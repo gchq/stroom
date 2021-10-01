@@ -110,6 +110,13 @@ public class EditorPresenter
         setText(text, false);
     }
 
+    /**
+     * Replaces the editor with some html showing the errorText and its title
+     */
+    public void setErrorText(final String title, final String errorText) {
+        getView().setErrorText(title, errorText);
+    }
+
     public void insertTextAtCursor(final String text) {
         getView().insertTextAtCursor(text);
     }
@@ -155,6 +162,10 @@ public class EditorPresenter
         return getView().getLineWrapOption();
     }
 
+    public Option getShowIndentGuides() {
+        return getView().getShowIndentGuides();
+    }
+
     public Option getShowInvisiblesOption() {
         return getView().getShowInvisiblesOption();
     }
@@ -177,6 +188,10 @@ public class EditorPresenter
 
     public Option getHighlightActiveLineOption() {
         return getView().getHighlightActiveLineOption();
+    }
+
+    public Option getViewAsHexOption() {
+        return getView().getViewAsHexOption();
     }
 
     public void setFirstLineNumber(final int firstLineNumber) {

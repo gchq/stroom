@@ -87,9 +87,12 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
     IndexVolumeDaoImpl(final IndexDbConnProvider indexDbConnProvider,
                        final ExpressionMapperFactory expressionMapperFactory) {
         this.indexDbConnProvider = indexDbConnProvider;
-        genericDao = new GenericDao<>(INDEX_VOLUME, INDEX_VOLUME.ID, IndexVolume.class, indexDbConnProvider);
-        genericDao.setRecordToObjectMapper(RECORD_TO_INDEX_VOLUME_MAPPER);
-        genericDao.setObjectToRecordMapper(INDEX_VOLUME_TO_RECORD_MAPPER);
+        genericDao = new GenericDao<>(
+                indexDbConnProvider,
+                INDEX_VOLUME,
+                INDEX_VOLUME.ID,
+                INDEX_VOLUME_TO_RECORD_MAPPER,
+                RECORD_TO_INDEX_VOLUME_MAPPER);
 
         // Standard fields.
         expressionMapper = expressionMapperFactory.create();
@@ -121,33 +124,33 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
     @Override
     public List<IndexVolume> getAll() {
         return JooqUtil.contextResult(indexDbConnProvider, context -> context
-                .select()
-                .from(INDEX_VOLUME)
-                .fetch()
-                .map(RECORD_TO_INDEX_VOLUME_MAPPER::apply));
+                        .select()
+                        .from(INDEX_VOLUME)
+                        .fetch())
+                .map(RECORD_TO_INDEX_VOLUME_MAPPER::apply);
     }
 
     @Override
     public List<IndexVolume> getVolumesInGroupOnNode(final String groupName, final String nodeName) {
         return JooqUtil.contextResult(indexDbConnProvider, context -> context
-                .select()
-                .from(INDEX_VOLUME)
-                .join(INDEX_VOLUME_GROUP).on(INDEX_VOLUME_GROUP.ID.eq(INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID))
-                .where(INDEX_VOLUME_GROUP.NAME.eq(groupName))
-                .and(INDEX_VOLUME.NODE_NAME.eq(nodeName))
-                .fetch()
-                .map(RECORD_TO_INDEX_VOLUME_MAPPER::apply));
+                        .select()
+                        .from(INDEX_VOLUME)
+                        .join(INDEX_VOLUME_GROUP).on(INDEX_VOLUME_GROUP.ID.eq(INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID))
+                        .where(INDEX_VOLUME_GROUP.NAME.eq(groupName))
+                        .and(INDEX_VOLUME.NODE_NAME.eq(nodeName))
+                        .fetch())
+                .map(RECORD_TO_INDEX_VOLUME_MAPPER::apply);
     }
 
     @Override
     public List<IndexVolume> getVolumesInGroup(final String groupName) {
         return JooqUtil.contextResult(indexDbConnProvider, context -> context
-                .select()
-                .from(INDEX_VOLUME)
-                .join(INDEX_VOLUME_GROUP).on(INDEX_VOLUME_GROUP.ID.eq(INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID))
-                .where(INDEX_VOLUME_GROUP.NAME.eq(groupName))
-                .fetch()
-                .map(RECORD_TO_INDEX_VOLUME_MAPPER::apply));
+                        .select()
+                        .from(INDEX_VOLUME)
+                        .join(INDEX_VOLUME_GROUP).on(INDEX_VOLUME_GROUP.ID.eq(INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID))
+                        .where(INDEX_VOLUME_GROUP.NAME.eq(groupName))
+                        .fetch())
+                .map(RECORD_TO_INDEX_VOLUME_MAPPER::apply);
     }
 
     @Override
@@ -193,13 +196,13 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
                                    final int offset,
                                    final int numberOfRows) {
         return JooqUtil.contextResult(indexDbConnProvider, context -> context
-                .select()
-                .from(INDEX_VOLUME)
-                .where(condition)
-                .orderBy(orderFields)
-                .limit(offset, numberOfRows)
-                .fetch()
-                .map(RECORD_TO_INDEX_VOLUME_MAPPER::apply));
+                        .select()
+                        .from(INDEX_VOLUME)
+                        .where(condition)
+                        .orderBy(orderFields)
+                        .limit(offset, numberOfRows)
+                        .fetch())
+                .map(RECORD_TO_INDEX_VOLUME_MAPPER::apply);
     }
 
     private Condition createCondition(final ExpressionCriteria criteria) {

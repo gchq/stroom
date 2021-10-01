@@ -17,6 +17,7 @@
 package stroom.pipeline.shared;
 
 import stroom.data.shared.DataType;
+import stroom.pipeline.shared.FetchDataRequest.DisplayMode;
 import stroom.util.shared.Count;
 import stroom.util.shared.OffsetRange;
 
@@ -25,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -52,7 +54,9 @@ public class FetchDataResult extends AbstractFetchDataResult {
                            @JsonProperty("availableChildStreamTypes") final Set<String> availableChildStreamTypes,
                            @JsonProperty("data") final String data,
                            @JsonProperty("html") final boolean html,
-                           @JsonProperty("dataType") final DataType dataType) {
+                           @JsonProperty("dataType") final DataType dataType,
+                           @JsonProperty("displayMode") final DisplayMode displayMode,
+                           @JsonProperty("errors") final List<String> errors) {
         super(feedName,
                 streamTypeName,
                 classification,
@@ -60,7 +64,9 @@ public class FetchDataResult extends AbstractFetchDataResult {
                 itemRange,
                 totalItemCount,
                 totalCharacterCount,
-                availableChildStreamTypes);
+                availableChildStreamTypes,
+                displayMode,
+                errors);
         this.data = data;
         this.html = html;
         this.dataType = dataType;

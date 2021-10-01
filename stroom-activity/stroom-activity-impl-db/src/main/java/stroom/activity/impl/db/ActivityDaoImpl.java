@@ -41,7 +41,7 @@ public class ActivityDaoImpl implements ActivityDao {
     @Inject
     ActivityDaoImpl(final ActivityDbConnProvider activityDbConnProvider) {
         this.activityDbConnProvider = activityDbConnProvider;
-        genericDao = new GenericDao<>(ACTIVITY, ACTIVITY.ID, Activity.class, activityDbConnProvider);
+        genericDao = new GenericDao<>(activityDbConnProvider, ACTIVITY, ACTIVITY.ID, Activity.class);
     }
 
     @Override
@@ -67,27 +67,21 @@ public class ActivityDaoImpl implements ActivityDao {
 
     @Override
     public List<Activity> find(final FindActivityCriteria criteria) {
-        final List<Activity> list = JooqUtil.contextResult(activityDbConnProvider, context -> {
+        // Only filter on the user in the DB as we don't have a jooq/sql version of the
+        // QuickFilterPredicateFactory
+        final Collection<Condition> conditions = JooqUtil.conditions(
+                Optional.ofNullable(criteria.getUserId()).map(ACTIVITY.USER_ID::eq));
+        final Integer offset = JooqUtil.getOffset(criteria.getPageRequest());
+        final Integer limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
 
-            // Only filter on the user in the DB as we don't have a jooq/sql version of the
-            // QuickFilterPredicateFactory
-            final Collection<Condition> conditions = JooqUtil.conditions(
-                    Optional.ofNullable(criteria.getUserId()).map(ACTIVITY.USER_ID::eq));
-
-            return context
-                    .select()
-                    .from(ACTIVITY)
-                    .where(conditions)
-                    .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
-                    .offset(JooqUtil.getOffset(criteria.getPageRequest()))
-                    .fetch()
-                    .into(Activity.class)
-                    .stream()
-                    .map(ActivitySerialiser::deserialise)
-                    .collect(Collectors.toList());
-        });
-
-        return list.stream()
+        return JooqUtil.contextResult(activityDbConnProvider, context -> context
+                        .select()
+                        .from(ACTIVITY)
+                        .where(conditions)
+                        .limit(offset, limit)
+                        .fetch())
+                .into(Activity.class)
+                .stream()
                 .map(ActivitySerialiser::deserialise)
                 .collect(Collectors.toList());
     }

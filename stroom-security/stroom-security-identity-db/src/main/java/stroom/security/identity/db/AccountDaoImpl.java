@@ -36,7 +36,6 @@ import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
 import stroom.util.shared.CompareUtil;
 import stroom.util.shared.PageResponse;
 
@@ -195,14 +194,12 @@ class AccountDaoImpl implements AccountDao {
                           final IdentityDbConnProvider identityDbConnProvider) {
         this.config = config;
         this.identityDbConnProvider = identityDbConnProvider;
-
         genericDao = new GenericDao<>(
+                identityDbConnProvider,
                 ACCOUNT,
                 ACCOUNT.ID,
-                Account.class,
-                identityDbConnProvider);
-        genericDao.setObjectToRecordMapper(ACCOUNT_TO_RECORD_MAPPER);
-        genericDao.setRecordToObjectMapper(RECORD_TO_ACCOUNT_MAPPER);
+                ACCOUNT_TO_RECORD_MAPPER,
+                RECORD_TO_ACCOUNT_MAPPER);
     }
 
     @Override
@@ -210,11 +207,11 @@ class AccountDaoImpl implements AccountDao {
         final TableField<AccountRecord, String> orderByUserIdField =
                 ACCOUNT.USER_ID;
         final List<Account> list = JooqUtil.contextResult(identityDbConnProvider, context -> context
-                .selectFrom(ACCOUNT)
-                .where(ACCOUNT.PROCESSING_ACCOUNT.isFalse())
-                .orderBy(orderByUserIdField)
-                .fetch()
-                .map(RECORD_TO_ACCOUNT_MAPPER::apply));
+                        .selectFrom(ACCOUNT)
+                        .where(ACCOUNT.PROCESSING_ACCOUNT.isFalse())
+                        .orderBy(orderByUserIdField)
+                        .fetch())
+                .map(RECORD_TO_ACCOUNT_MAPPER::apply);
         return ResultPageFactory.createUnboundedList(list, AccountResultPage::new);
     }
 
@@ -293,10 +290,10 @@ class AccountDaoImpl implements AccountDao {
                     final Comparator<Account> comparator = buildComparator(request).orElse(null);
 
                     return QuickFilterPredicateFactory.filterStream(
-                            request.getQuickFilter(),
-                            FIELD_MAPPERS,
-                            stream.map(RECORD_TO_ACCOUNT_MAPPER),
-                            comparator)
+                                    request.getQuickFilter(),
+                                    FIELD_MAPPERS,
+                                    stream.map(RECORD_TO_ACCOUNT_MAPPER),
+                                    comparator)
                             .collect(AccountResultPage.collector(request.getPageRequest(), AccountResultPage::new));
                 }
             }
@@ -316,15 +313,10 @@ class AccountDaoImpl implements AccountDao {
     @Override
     public Account create(final Account account, final String password) {
         final String passwordHash = hashPassword(password);
-        return JooqUtil.contextResult(identityDbConnProvider, context -> {
-            LOGGER.debug(() -> LogUtil.message("Creating a {}",
-                    ACCOUNT.getName()));
-            final AccountRecord record = ACCOUNT_TO_RECORD_MAPPER.apply(
-                    account, context.newRecord(ACCOUNT));
-            record.setPasswordHash(passwordHash);
-            record.store();
-            return RECORD_TO_ACCOUNT_MAPPER.apply(record);
-        });
+        final AccountRecord record = ACCOUNT_TO_RECORD_MAPPER.apply(
+                account, ACCOUNT.newRecord());
+        record.setPasswordHash(passwordHash);
+        return RECORD_TO_ACCOUNT_MAPPER.apply(JooqUtil.create(identityDbConnProvider, record));
     }
 
     @Override
@@ -423,12 +415,12 @@ class AccountDaoImpl implements AccountDao {
 
             // Query the field back to find out if we locked.
             locked = JooqUtil.contextResult(identityDbConnProvider, context -> context
-                    .select(ACCOUNT.LOCKED)
-                    .from(ACCOUNT)
-                    .where(ACCOUNT.USER_ID.eq(userId))
-                    .fetchOptional()
+                            .select(ACCOUNT.LOCKED)
+                            .from(ACCOUNT)
+                            .where(ACCOUNT.USER_ID.eq(userId))
+                            .fetchOptional())
                     .map(Record1::value1)
-                    .orElse(false));
+                    .orElse(false);
         } else {
             JooqUtil.context(identityDbConnProvider, context -> context
                     .update(ACCOUNT)
@@ -470,20 +462,20 @@ class AccountDaoImpl implements AccountDao {
     @Override
     public Optional<Account> get(final String userId) {
         return JooqUtil.contextResult(identityDbConnProvider, context -> context
-                .selectFrom(ACCOUNT)
-                .where(ACCOUNT.USER_ID.eq(userId))
-                .fetchOptional()
-                .map(RECORD_TO_ACCOUNT_MAPPER));
+                        .selectFrom(ACCOUNT)
+                        .where(ACCOUNT.USER_ID.eq(userId))
+                        .fetchOptional())
+                .map(RECORD_TO_ACCOUNT_MAPPER);
     }
 
     @Override
     public Optional<Integer> getId(final String userId) {
         return JooqUtil.contextResult(identityDbConnProvider, context -> context
-                .select(ACCOUNT.ID)
-                .from(ACCOUNT)
-                .where(ACCOUNT.USER_ID.eq(userId))
-                .fetchOptional()
-                .map(r -> r.getValue(ACCOUNT.ID)));
+                        .select(ACCOUNT.ID)
+                        .from(ACCOUNT)
+                        .where(ACCOUNT.USER_ID.eq(userId))
+                        .fetchOptional())
+                .map(r -> r.getValue(ACCOUNT.ID));
     }
 
     @Override

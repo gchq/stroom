@@ -30,9 +30,6 @@ import static stroom.job.impl.db.jooq.Tables.JOB;
 import static stroom.job.impl.db.jooq.Tables.JOB_NODE;
 
 public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
-//    private static final Logger LOGGER = LoggerFactory.getLogger(JobNodeDaoImpl.class);
-//    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(JobNodeDaoImpl.class);
-
 
     private static final Map<String, Field<?>> FIELD_MAP = Map.of(
             FindJobNodeCriteria.FIELD_ID, JOB_NODE.ID);
@@ -83,10 +80,12 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
     @Inject
     JobNodeDaoImpl(final JobDbConnProvider jobDbConnProvider) {
         this.jobDbConnProvider = jobDbConnProvider;
-
-        genericDao = new GenericDao<>(JOB_NODE, JOB_NODE.ID, JobNode.class, jobDbConnProvider);
-        genericDao.setObjectToRecordMapper(JOB_NODE_TO_RECORD_MAPPER);
-        genericDao.setRecordToObjectMapper(RECORD_TO_JOB_NODE_MAPPER);
+        genericDao = new GenericDao<>(
+                jobDbConnProvider,
+                JOB_NODE,
+                JOB_NODE.ID,
+                JOB_NODE_TO_RECORD_MAPPER,
+                RECORD_TO_JOB_NODE_MAPPER);
     }
 
     @Override
@@ -94,18 +93,6 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
         final JobNode result = genericDao.create(jobNode);
         result.setJob(jobNode.getJob());
         return result;
-
-//        final JobNode result = JooqUtil.contextResult(connectionProvider, context -> {
-//            LAMBDA_LOGGER.debug(LambdaLogUtil.message("Creating a {}", JOB_NODE.getName()));
-//            JobNodeRecord record = context.newRecord(JOB_NODE, jobNode);
-//            record.set(JOB_NODE.JOB_ID, jobNode.getJob().getId());
-//            record.store();
-//            return record.into(JobNode.class);
-//        });
-//        result.setJob(jobNode.getJob());
-//        return result;
-
-
     }
 
     @Override
@@ -126,16 +113,17 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
     @Override
     public Optional<JobNode> fetch(int id) {
         return JooqUtil.contextResult(jobDbConnProvider, context -> context
-                .select()
-                .from(JOB_NODE)
-                .join(JOB).on(JOB_NODE.JOB_ID.eq(JOB.ID))
-                .where(JOB_NODE.ID.eq(id))
-                .fetchOptional().map(record -> {
+                        .select()
+                        .from(JOB_NODE)
+                        .join(JOB).on(JOB_NODE.JOB_ID.eq(JOB.ID))
+                        .where(JOB_NODE.ID.eq(id))
+                        .fetchOptional())
+                .map(record -> {
                     final Job job = RECORD_TO_JOB_MAPPER.apply(record);
                     final JobNode jobNode = RECORD_TO_JOB_NODE_MAPPER.apply(record);
                     jobNode.setJob(job);
                     return jobNode;
-                }));
+                });
     }
 
     public JobNodeListResponse find(FindJobNodeCriteria criteria) {
@@ -144,22 +132,22 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
                 JooqUtil.getStringCondition(JOB_NODE.NODE_NAME, criteria.getNodeName()));
 
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
-
+        final int offset = JooqUtil.getOffset(criteria.getPageRequest());
+        final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
         final List<JobNode> list = JooqUtil.contextResult(jobDbConnProvider, context -> context
-                .select()
-                .from(JOB_NODE)
-                .join(JOB).on(JOB_NODE.JOB_ID.eq(JOB.ID))
-                .where(conditions)
-                .orderBy(orderFields)
-                .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
-                .offset(JooqUtil.getOffset(criteria.getPageRequest()))
-                .fetch(record -> {
+                        .select()
+                        .from(JOB_NODE)
+                        .join(JOB).on(JOB_NODE.JOB_ID.eq(JOB.ID))
+                        .where(conditions)
+                        .orderBy(orderFields)
+                        .limit(offset, limit)
+                        .fetch())
+                .map(record -> {
                     final Job job = RECORD_TO_JOB_MAPPER.apply(record);
                     final JobNode jobNode = RECORD_TO_JOB_NODE_MAPPER.apply(record);
                     jobNode.setJob(job);
                     return jobNode;
-                }));
-
+                });
         return JobNodeListResponse.createUnboundedJobeNodeResponse(list);
     }
 }

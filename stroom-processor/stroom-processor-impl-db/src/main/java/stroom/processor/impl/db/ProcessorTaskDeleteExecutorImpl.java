@@ -146,19 +146,19 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
     private int deleteDeletedTasksAndProcessors() {
         // Get deleted processors.
         List<Integer> deletedProcessors = JooqUtil.contextResult(processorDbConnProvider, context -> context
-                .select(PROCESSOR.ID)
-                .from(PROCESSOR)
-                .where(PROCESSOR.DELETED.eq(true))
-                .fetch()
-                .map(Record1::value1));
+                        .select(PROCESSOR.ID)
+                        .from(PROCESSOR)
+                        .where(PROCESSOR.DELETED.eq(true))
+                        .fetch())
+                .map(Record1::value1);
 
         List<Integer> deletedProcessorFilters = JooqUtil.contextResult(processorDbConnProvider, context -> context
-                .select(PROCESSOR_FILTER.ID)
-                .from(PROCESSOR_FILTER)
-                .where(PROCESSOR_FILTER.DELETED.eq(true))
-                .or(PROCESSOR_FILTER.FK_PROCESSOR_ID.in(deletedProcessors))
-                .fetch()
-                .map(Record1::value1));
+                        .select(PROCESSOR_FILTER.ID)
+                        .from(PROCESSOR_FILTER)
+                        .where(PROCESSOR_FILTER.DELETED.eq(true))
+                        .or(PROCESSOR_FILTER.FK_PROCESSOR_ID.in(deletedProcessors))
+                        .fetch())
+                .map(Record1::value1);
 
         // Delete tasks.
         int count = JooqUtil.contextResult(processorDbConnProvider, context ->

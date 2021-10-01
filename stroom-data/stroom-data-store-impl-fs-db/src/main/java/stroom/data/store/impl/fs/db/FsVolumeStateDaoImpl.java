@@ -14,16 +14,15 @@ import static stroom.data.store.impl.fs.db.jooq.tables.FsVolumeState.FS_VOLUME_S
 @Singleton
 public class FsVolumeStateDaoImpl implements FsVolumeStateDao {
 
-    private final FsDataStoreDbConnProvider fsDataStoreDbConnProvider;
     private final GenericDao<FsVolumeStateRecord, FsVolumeState, Integer> genericDao;
 
     @Inject
     FsVolumeStateDaoImpl(final FsDataStoreDbConnProvider fsDataStoreDbConnProvider) {
-        this.fsDataStoreDbConnProvider = fsDataStoreDbConnProvider;
-        genericDao = new GenericDao<>(FS_VOLUME_STATE,
+        genericDao = new GenericDao<>(
+                fsDataStoreDbConnProvider,
+                FS_VOLUME_STATE,
                 FS_VOLUME_STATE.ID,
-                FsVolumeState.class,
-                fsDataStoreDbConnProvider);
+                FsVolumeState.class);
     }
 
     @Override

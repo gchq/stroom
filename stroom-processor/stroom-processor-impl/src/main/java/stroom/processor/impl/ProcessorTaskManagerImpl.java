@@ -127,7 +127,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     /**
      * Our queue.
      */
-    private final ConcurrentHashMap<ProcessorFilter, StreamTaskQueue> queueMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<ProcessorFilter, ProcessorTaskQueue> queueMap = new ConcurrentHashMap<>();
 
     /**
      * Time to see if we need filling if we are above our water mark
@@ -209,7 +209,6 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
             allowAsyncTaskCreation = false;
             allowTaskCreation = false;
             clearTaskStore();
-//            processorTaskManagerRecentStreamDetails = null;
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         } finally {
@@ -231,11 +230,8 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         }
 
         List<ProcessorTask> assignedStreamTasks = Collections.emptyList();
-
         try {
-
             if (processorConfig.isAssignTasks() && count > 0) {
-
                 // Get local reference to list in case it is swapped out.
                 final List<ProcessorFilter> filters = prioritisedFiltersRef.get();
                 if (filters != null && filters.size() > 0) {
@@ -246,7 +242,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                         final ProcessorFilter filter = filters.get(index);
 
                         // Get the queue for this filter.
-                        final StreamTaskQueue queue = queueMap.get(filter);
+                        final ProcessorTaskQueue queue = queueMap.get(filter);
                         if (queue != null) {
                             // Add as many tasks as we can for this filter.
                             ProcessorTask streamTask = queue.poll();
@@ -343,17 +339,11 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         }
     }
 
-//    @Override
-//    public ProcessorTaskManagerRecentStreamDetails getProcessorTaskManagerRecentStreamDetails() {
-////        return processorTaskManagerRecentStreamDetails;
-//        return null;
-//    }
-
     private synchronized void clearTaskStore() {
-        for (final Entry<ProcessorFilter, StreamTaskQueue> entry : queueMap.entrySet()) {
+        for (final Entry<ProcessorFilter, ProcessorTaskQueue> entry : queueMap.entrySet()) {
             final ProcessorFilter filter = entry.getKey();
             if (filter != null) {
-                final StreamTaskQueue queue = queueMap.remove(filter);
+                final ProcessorTaskQueue queue = queueMap.remove(filter);
                 if (queue != null) {
                     ProcessorTask streamTask = queue.poll();
                     while (streamTask != null) {
@@ -367,7 +357,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     @Override
     public int getTaskQueueSize() {
         int size = 0;
-        for (final StreamTaskQueue queue : queueMap.values()) {
+        for (final ProcessorTaskQueue queue : queueMap.values()) {
             if (queue != null) {
                 size += queue.size();
             }
@@ -451,7 +441,6 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         // to be in the middle of creating tasks when another node assumes master
         // status and tries to create tasks too. Thus a db backed cluster lock
         // is needed
-        // The local lock is still needed to
         createTasksLock.lock();
         try {
             if (allowTaskCreation) {
@@ -523,7 +512,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
         try {
             for (final ProcessorFilter filter : filters) {
-                final StreamTaskQueue queue = queueMap.computeIfAbsent(filter, k -> new StreamTaskQueue());
+                final ProcessorTaskQueue queue = queueMap.computeIfAbsent(filter, k -> new ProcessorTaskQueue());
                 final int currQueueSize = queue.size();
 
                 if (progressTracker.areTasksRemainingToBeCreated() && currQueueSize < halfQueueSize) {
@@ -551,7 +540,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         final Set<ProcessorFilter> enabledFilterSet = new HashSet<>(filters);
         for (final ProcessorFilter filter : queueMap.keySet()) {
             if (!enabledFilterSet.contains(filter)) {
-                final StreamTaskQueue queue = queueMap.remove(filter);
+                final ProcessorTaskQueue queue = queueMap.remove(filter);
                 if (queue != null) {
                     ProcessorTask streamTask = queue.poll();
                     while (streamTask != null) {
@@ -582,7 +571,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     }
 
 
-    private int getTaskCountToCreate(final StreamTaskQueue queue,
+    private int getTaskCountToCreate(final ProcessorTaskQueue queue,
                                      final TaskCreationProgressTracker progressTracker) {
         return Math.min(
                 processorConfig.getQueueSize() - queue.size(),
@@ -592,7 +581,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     private void createTasksForFilter(final TaskContext taskContext,
                                       final String nodeName,
                                       final ProcessorFilter filter,
-                                      final StreamTaskQueue queue,
+                                      final ProcessorTaskQueue queue,
                                       final TaskCreationProgressTracker progressTracker) {
         Optional<ProcessorFilter> optionalProcessorFilter = Optional.empty();
 
@@ -606,11 +595,11 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                 // Set the current user to be the one who created the filter so that only streams that that user
                 // has access to are processed.
                 securityContext.asUser(securityContext.createIdentity(loadedFilter.getCreateUser()), () -> {
-                    LOGGER.debug("createTasksForFilter() - processorFilter {}", loadedFilter.toString());
+                    LOGGER.debug("createTasksForFilter() - processorFilter {}", loadedFilter);
 
                     // Only try and create tasks if the processor is enabled.
                     if (loadedFilter.isEnabled() && loadedFilter.getProcessor().isEnabled()) {
-                        taskContext.info(() -> "Creating tasks: " + loadedFilter.toString());
+                        taskContext.info(() -> "Creating tasks: " + loadedFilter);
 
                         // If there are any tasks for this filter that were
                         // previously created but are unprocessed, not owned by any
@@ -628,7 +617,6 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                         // If we allowing tasks to be created then go ahead and
                         // create some.
                         if (processorConfig.isCreateTasks()) {
-//                            final String logPrefix = "Creating tasks with filter " + loadedFilter.getId();
 
                             final Boolean exhausted = exhaustedFilterMap.computeIfAbsent(
                                     loadedFilter.getId(),
@@ -703,7 +691,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                         }
 
                         taskContext.info(() -> "Created " + progressTracker.getCreatedCount(loadedFilter)
-                                + " tasks: " + loadedFilter.toString());
+                                + " tasks: " + loadedFilter);
                     }
                 });
             });
@@ -730,7 +718,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     private int addUnownedTasks(final TaskContext taskContext,
                                 final String nodeName,
                                 final ProcessorFilter filter,
-                                final StreamTaskQueue queue,
+                                final ProcessorTaskQueue queue,
                                 final TaskCreationProgressTracker progressTracker) {
         int count = 0;
         int tasksToCreate = getTaskCountToCreate(queue, progressTracker);
@@ -822,7 +810,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                                             final long streamQueryTime,
                                             final String nodeName,
                                             final TaskCreationProgressTracker progressTracker,
-                                            final StreamTaskQueue queue,
+                                            final ProcessorTaskQueue queue,
                                             final ProcessorFilterTracker tracker,
                                             final TaskContext taskContext) {
 
@@ -937,7 +925,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                                           final long streamQueryTime,
                                           final String nodeName,
                                           final TaskCreationProgressTracker progressTracker,
-                                          final StreamTaskQueue queue,
+                                          final ProcessorTaskQueue queue,
                                           final Long maxMetaId,
                                           final ProcessorFilterTracker updatedTracker,
                                           final EventRefs eventRefs) {
@@ -998,7 +986,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                                          final long streamQueryTime,
                                          final String nodeName,
                                          final TaskCreationProgressTracker progressTracker,
-                                         final StreamTaskQueue queue,
+                                         final ProcessorTaskQueue queue,
                                          final ProcessorFilterTracker tracker) {
         if (termCount(queryData) == 0) {
             throw new RuntimeException("Attempting to create tasks with an unconstrained filter " + filter);
@@ -1047,7 +1035,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                         LOGGER.debug("createTasks() - Created {} tasks (requiredTasks={}) for filter {}",
                                 createdTasks.getTotalTasksCreated(),
                                 requiredTasks,
-                                filter.toString());
+                                filter);
                         exhaustedFilterMap.put(filter.getId(), createdTasks.getTotalTasksCreated() == 0);
                     });
         }

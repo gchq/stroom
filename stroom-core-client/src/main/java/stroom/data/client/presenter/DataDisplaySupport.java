@@ -84,7 +84,7 @@ public class DataDisplaySupport {
             dataPresenter.fetchData(sourceLocation);
             presenter = dataPresenter;
             caption = "Stream "
-                    + sourceLocation.getMetaId();
+                    + sourceLocation.getIdentifierString();
         } else {
             final ClassificationWrappedSourcePresenter sourcePresenter = sourcePresenterProvider.get();
             sourcePresenter.setSourceLocationUsingHighlight(sourceLocation);

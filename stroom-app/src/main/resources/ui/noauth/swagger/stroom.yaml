@@ -5638,6 +5638,16 @@ components:
           uniqueItems: true
         classification:
           type: string
+        displayMode:
+          type: string
+          enum:
+          - TEXT
+          - HEX
+          - MARKER
+        errors:
+          type: array
+          items:
+            type: string
         feedName:
           type: string
         itemRange:
@@ -7394,6 +7404,12 @@ components:
     FetchDataRequest:
       type: object
       properties:
+        displayMode:
+          type: string
+          enum:
+          - TEXT
+          - HEX
+          - MARKER
         expandedSeverities:
           type: array
           items:
@@ -7403,8 +7419,6 @@ components:
             - WARN
             - ERROR
             - FATAL
-        markerMode:
-          type: boolean
         pipeline:
           $ref: '#/components/schemas/DocRef'
         recordCount:
@@ -10340,6 +10354,10 @@ components:
           type: integer
           format: int64
           minimum: 0
+        maxHexDumpLines:
+          type: integer
+          format: int32
+          minimum: 1
     SourceLocation:
       type: object
       properties:

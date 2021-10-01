@@ -80,12 +80,12 @@ class ProcessorFeedCache implements Clearable {
 
     private Optional<Integer> create(final String name) {
         return JooqUtil.contextResult(processorDbConnProvider, context -> context
-                .insertInto(PROCESSOR_FEED, PROCESSOR_FEED.NAME)
-                .values(name)
-                .onDuplicateKeyIgnore()
-                .returning(PROCESSOR_FEED.ID)
-                .fetchOptional()
-                .map(ProcessorFeedRecord::getId));
+                        .insertInto(PROCESSOR_FEED, PROCESSOR_FEED.NAME)
+                        .values(name)
+                        .onDuplicateKeyIgnore()
+                        .returning(PROCESSOR_FEED.ID)
+                        .fetchOptional())
+                .map(ProcessorFeedRecord::getId);
     }
 
     @Override

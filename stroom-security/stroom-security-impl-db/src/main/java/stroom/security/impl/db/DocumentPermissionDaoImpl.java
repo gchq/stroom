@@ -37,16 +37,14 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
     public Map<String, Set<String>> getPermissionsForDocument(final String docUuid) {
         final Map<String, Set<String>> permissions = new HashMap<>();
 
-        JooqUtil.context(securityDbConnProvider, context -> context
-                .select()
-                .from(DOC_PERMISSION)
-                .where(DOC_PERMISSION.DOC_UUID.eq(docUuid))
-                .fetch()
-                .forEach(r -> {
-                    permissions.computeIfAbsent(r.get(DOC_PERMISSION.USER_UUID), k -> new HashSet<>()).add(r.get(
-                            DOC_PERMISSION.PERMISSION));
-                })
-        );
+        JooqUtil.contextResult(securityDbConnProvider, context -> context
+                        .select()
+                        .from(DOC_PERMISSION)
+                        .where(DOC_PERMISSION.DOC_UUID.eq(docUuid))
+                        .fetch())
+                .forEach(r ->
+                        permissions.computeIfAbsent(r.get(DOC_PERMISSION.USER_UUID), k ->
+                                new HashSet<>()).add(r.get(DOC_PERMISSION.PERMISSION)));
 
         return permissions;
     }
@@ -55,14 +53,13 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
     public UserDocumentPermissions getPermissionsForUser(final String userUuid) {
         final UserDocumentPermissions userDocumentPermissions = new UserDocumentPermissions();
 
-        JooqUtil.context(securityDbConnProvider, context -> context
-                .selectDistinct(DOC_PERMISSION.DOC_UUID, DOC_PERMISSION.PERMISSION)
-                .from(DOC_PERMISSION)
-                .where(DOC_PERMISSION.USER_UUID.eq(userUuid))
-                .fetch()
+        JooqUtil.contextResult(securityDbConnProvider, context -> context
+                        .selectDistinct(DOC_PERMISSION.DOC_UUID, DOC_PERMISSION.PERMISSION)
+                        .from(DOC_PERMISSION)
+                        .where(DOC_PERMISSION.USER_UUID.eq(userUuid))
+                        .fetch())
                 .forEach(r -> userDocumentPermissions.addPermission(r.get(DOC_PERMISSION.DOC_UUID),
-                        r.get(DOC_PERMISSION.PERMISSION)))
-        );
+                        r.get(DOC_PERMISSION.PERMISSION)));
 
         return userDocumentPermissions;
     }

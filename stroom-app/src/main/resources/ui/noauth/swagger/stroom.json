@@ -8205,6 +8205,16 @@
           "classification" : {
             "type" : "string"
           },
+          "displayMode" : {
+            "type" : "string",
+            "enum" : [ "TEXT", "HEX", "MARKER" ]
+          },
+          "errors" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
           "feedName" : {
             "type" : "string"
           },
@@ -10633,15 +10643,16 @@
       "FetchDataRequest" : {
         "type" : "object",
         "properties" : {
+          "displayMode" : {
+            "type" : "string",
+            "enum" : [ "TEXT", "HEX", "MARKER" ]
+          },
           "expandedSeverities" : {
             "type" : "array",
             "items" : {
               "type" : "string",
               "enum" : [ "INFO", "WARN", "ERROR", "FATAL" ]
             }
-          },
-          "markerMode" : {
-            "type" : "boolean"
           },
           "pipeline" : {
             "$ref" : "#/components/schemas/DocRef"
@@ -14572,6 +14583,11 @@
             "type" : "integer",
             "format" : "int64",
             "minimum" : 0
+          },
+          "maxHexDumpLines" : {
+            "type" : "integer",
+            "format" : "int32",
+            "minimum" : 1
           }
         }
       },

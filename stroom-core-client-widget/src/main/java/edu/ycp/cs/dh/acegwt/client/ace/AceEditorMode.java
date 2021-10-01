@@ -39,6 +39,12 @@ public enum AceEditorMode {
      */
     STROOM_EXPRESSION("stroom_expression"),
 
+    /**
+     * Used for view as hex mode
+     */
+    STROOM_HEX_DUMP("stroom_hex_dump"),
+
+
 
     /**
      * ABAP (Advanced Business Application Programming).
