@@ -46,7 +46,7 @@ import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
-@AutoLogged
+@AutoLogged(OperationType.MANUALLY_LOGGED)
 class ExplorerResourceImpl implements ExplorerResource {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExplorerResourceImpl.class);
