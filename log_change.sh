@@ -1,6 +1,21 @@
 #!/usr/bin/env bash
 
+##########################################################################
+# Script to record changelog entries in individual files to get around
+# the issue of merge conflicts on the CHANGELOG file when doing PRs.
+#
+# Credit for this idea goes to 
+# https://about.gitlab.com/blog/2018/07/03/solving-gitlabs-changelog-conflict-crisis/
+# 
+# Change log entries are stored in files in <repo_root>/unreleased_changes
+# This script is used in conjunction with tag_release.sh which adds the
+# change entries to the CHANGELOG at release time.
+##########################################################################
+
 set -euo pipefail
+
+IS_DEBUG=true
+UNRELEASED_DIR_NAME="unreleased_changes"
 
 setup_echo_colours() {
   # Exit the script on any error
@@ -32,12 +47,10 @@ info() {
 
 warn() {
   echo -e "${YELLOW}WARNING${NC}: $*${NC}" >&2
-  echo
 }
 
 error() {
   echo -e "${RED}ERROR${NC}: $*${NC}" >&2
-  echo
 }
 
 error_exit() {
@@ -62,8 +75,27 @@ debug() {
   fi
 }
 
-
 get_git_issue_from_branch() {
+
+  local current_branch
+  current_branch="$(git rev-parse --abbrev-ref HEAD)"
+
+  local git_issue_from_branch
+  git_issue_from_branch="$( \
+    echo "${current_branch}" \
+    | grep \
+      --only-matching \
+      --perl-regexp '(?<=^gh-)[1-9][0-9]*' \
+      )"
+
+  if [[ ! -n "${git_issue_from_branch}" ]]; then
+    error_exit "Unable to establish GitHub issue number from" \
+      "branch ${BLUE}${current_branch}${NC}"
+  fi
+  echo "${git_issue_from_branch}"
+}
+
+establish_git_namespace_and_repo() {
   # 'origin https://github.com/gchq/stroom.git (fetch)' => 'gchq stroom'
   # read the space delimited values into an array so we can split them
   local namespace_and_repo=()
@@ -74,8 +106,9 @@ get_git_issue_from_branch() {
 
   debug_value "namespace_and_repo" "${namespace_and_repo[*]}"
 
-  local git_namespace=""
-  local git_repo=""
+  # global scope
+  git_namespace=""
+  git_repo=""
 
   if [[ "${#namespace_and_repo[@]}" -ne 2 ]]; then
     warn "Unable to parse git namespace and repo from the remote URL."
@@ -86,7 +119,6 @@ get_git_issue_from_branch() {
     debug_value "git_namespace" "${git_namespace}"
     debug_value "git_repo" "${git_repo}"
   fi
-
 }
 
 validate_git_issue() {
@@ -99,7 +131,43 @@ validate_git_issue() {
       "${BLUE}namespace/repo#1234${NC}, ${BLUE}0${NC} or ${BLUE}AUTO${NC}."
   fi
 
-  # TODO:  <30-09-21, AT> # hit github api to see if issue exists
+  if [[ "${git_issue}" = "0" ]]; then
+    local issue_namespace
+    local issue_repo
+    if [[ "${git_issue}" =~ ^[1-9][0-9]*$ ]]; then
+      # Issue in this repo so use the values we got from the local repo
+      issue_namespace="${git_namespace}"
+      issue_repo="${git_repo}"
+    else
+      # Fully qualified issue so extract the parts by replacing / and # with
+      # space then reading into an array which will split on space
+      local parts=()
+      parts=( ${git_issue//[\#\/]/ } )
+      issue_namespace="${parts[0]}"
+      issue_repo="${parts[1]}"
+      issue_number="${parts[2]}"
+    fi
+
+    debug_value "issue_namespace" "${issue_namespace}"
+    debug_value "issue_repo" "${issue_repo}"
+    debug_value "issue_number" "${issue_number}"
+
+    local github_issue_url="https://github.com/${issue_namespace}/${issue_repo}/issues/${issue_number}"
+    debug_value "github_issue_url" "${github_issue_url}"
+
+    local -r http_status_code="$( \
+      curl \
+        -s \
+        -o /dev/null \
+        -w "%{http_code}" \
+        "${github_issue_url}")"
+
+    debug_value "http_status_code" "${http_status_code}"
+
+    if [[ ! "${http_status_code}" = "200" ]]; then
+      error_exit "Issue ${BLUE}${git_issue}${NC} does not exist on GitHub"
+    fi
+  fi
 }
 
 validate_in_git_repo() {
@@ -113,7 +181,6 @@ is_existing_change_file_present() {
   local git_issue="$1"; shift
   local change_text="$1"; shift
 
-
   local git_issue_str
   git_issue_str="$(format_git_issue_for_filename "${git_issue}")"
 
@@ -122,7 +189,7 @@ is_existing_change_file_present() {
     find \
       /home/dev/git_work/v7stroom/unreleased_changes/ \
       -maxdepth 1 \
-      -name '*__1234' \
+      -name "*__${git_issue_str}" \
       -print \
       -quit)"
 
@@ -133,6 +200,8 @@ is_existing_change_file_present() {
     info "A change entry file already exists for this issue"
 
     open_file_in_editor "${existing_file}"
+
+    validate_change_file "${existing_file}"
 
     return 0
   else
@@ -148,9 +217,8 @@ format_git_issue_for_filename() {
   if [[ "${git_issue}" = "0" ]]; then
     git_issue_str="NO_ISSUE"
   else
-    git_issue_str="${git_issue/\#/_}"
-    #debug_value "git_issue_str" "${git_issue_str}"
-    git_issue_str="${git_issue_str/\//_}"
+    # replace / and # with _
+    git_issue_str="${git_issue//[\#\/]/_}"
     #debug_value "git_issue_str" "${git_issue_str}"
   fi
   echo "${git_issue_str}"
@@ -206,10 +274,13 @@ write_change_entry() {
     read -n 1 -s -r -p "Press any key to continue"
 
     # No change text so open the user's preferred editor or vi/vim if not set
-    if ! open_file_in_editor "${change_file}"; then
-      #rm "${change_file}"
-      error_exit "Edit aborted by user. Deleting file ${BLUE}${change_file}${NC}"
-    fi
+    #if ! open_file_in_editor "${change_file}"; then
+      ##rm "${change_file}"
+      #error_exit "Edit aborted by user. Deleting file ${BLUE}${change_file}${NC}"
+    #fi
+    open_file_in_editor "${change_file}"
+
+    validate_change_file "${change_file}"
   fi
 }
 
@@ -247,12 +318,54 @@ open_file_in_editor() {
   debug_value "return_code" "${return_code}" 
 }
 
+validate_change_file() {
+
+  local change_file="$1"; shift
+  # https://regex101.com/r/cSfrND/1 
+  local regex='^(#|(# |\* Issue \*\*([a-zA-Z0-9_\-.]+\/[a-zA-Z0-9_\-.]+\#[0-9]+|[0-9]+)\*\* : |\* ).+)$'
+  local bad_lines=()
+
+  local bad_lines
+  bad_lines="$( \
+    grep \
+      --perl-regexp "${regex}" \
+      --invert-match \
+      "${change_file}" \
+    )"
+
+  if [[ -n "${bad_lines}" ]]; then
+    error "The following lines are not valid in ${BLUE}${change_file}${NC}:"
+    echo -e "--------------------------------------------------------------------------------"
+    echo -e "${bad_lines}"
+    echo -e "--------------------------------------------------------------------------------"
+    echo -e "Validation regex: ${BLUE}${regex}${NC}"
+    exit 1
+  fi
+  #while IFS= read -r line || [[ -n $line ]]; do
+    #if [[ ! "${line}" =~ ${regex} ]]; then
+      #debug_value "line" "${line}"
+      #bad_lines+=( "${line}" )
+    #fi
+  #done < "${change_file}"
+
+  #if [[ "${#bad_lines[@]}" -gt 0 ]]; then
+    #error "The following lines are not valid in ${BLUE}${change_file}${NC}:"
+    #echo -e "--------------------------------------------------------------------------------"
+
+    #for bad_line in "${bad_lines[@]}"; do
+      #echo -e "${bad_line}"
+    #done
+
+    #echo -e "--------------------------------------------------------------------------------"
+    #echo -e "Validation regex: ${BLUE}${regex}${NC}"
+    #exit 1
+  #fi
+}
+
 main() {
-  local IS_DEBUG=true
   #local SCRIPT_DIR
   #SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
   #debug_value "SCRIPT_DIR" "${SCRIPT_DIR}"
-  local UNRELEASED_DIR_NAME="unreleased_changes"
 
   setup_echo_colours
 
@@ -281,10 +394,11 @@ main() {
   debug_value "change_text" "${change_text}"
 
   validate_in_git_repo
+
+  establish_git_namespace_and_repo
   
   if [[ "${git_issue}" = "AUTO" ]]; then
     git_issue="$(get_git_issue_from_branch)"
-    debug_value "git_issue" "${git_issue}"
   else
     validate_git_issue "${git_issue}"
   fi
