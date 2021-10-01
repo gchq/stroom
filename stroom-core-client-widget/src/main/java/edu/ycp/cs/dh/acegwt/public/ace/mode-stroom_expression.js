@@ -1,3 +1,7 @@
+// You can use https://ace.c9.io/tool/mode_creator.html to test the highlight rules
+
+// When you add a new mode, you need to add a reference to the file in app.html
+
 // First define the highlight rules
 
 define("ace/mode/stroom_expression_highlight_rules",["require","exports","module","ace/lib/oop","ace/mode/text_highlight_rules"], function(require, exports, module) {

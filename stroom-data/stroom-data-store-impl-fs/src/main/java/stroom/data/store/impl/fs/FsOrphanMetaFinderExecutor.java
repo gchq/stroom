@@ -18,7 +18,7 @@
 package stroom.data.store.impl.fs;
 
 import stroom.meta.shared.Meta;
-import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -36,24 +36,22 @@ class FsOrphanMetaFinderExecutor {
     public static final String TASK_NAME = "Orphan Meta Finder";
 
     private final Provider<FsOrphanMetaFinder> orphanFileFinderProvider;
-    private final TaskContextFactory taskContextFactory;
+    private final TaskContext taskContext;
 
     @Inject
     FsOrphanMetaFinderExecutor(final Provider<FsOrphanMetaFinder> orphanFileFinderProvider,
-                               final TaskContextFactory taskContextFactory) {
+                               final TaskContext taskContext) {
         this.orphanFileFinderProvider = orphanFileFinderProvider;
-        this.taskContextFactory = taskContextFactory;
+        this.taskContext = taskContext;
     }
 
     public void scan() {
-        taskContextFactory.context(TASK_NAME, taskContext -> {
-            taskContext.info(() -> "Starting orphan meta finder");
-            final Consumer<Meta> orphanConsumer = meta -> {
-                LOGGER.debug(() -> "Orphan meta: " + meta.toString());
-                ORPHAN_META_LOGGER.info(String.valueOf(meta.getId()));
-            };
-            final FsOrphanMetaFinderProgress progress = new FsOrphanMetaFinderProgress(taskContext);
-            orphanFileFinderProvider.get().scan(orphanConsumer, progress);
-        }).run();
+        taskContext.info(() -> "Starting orphan meta finder");
+        final Consumer<Meta> orphanConsumer = meta -> {
+            LOGGER.debug(() -> "Orphan meta: " + meta.toString());
+            ORPHAN_META_LOGGER.info(String.valueOf(meta.getId()));
+        };
+        final FsOrphanMetaFinderProgress progress = new FsOrphanMetaFinderProgress(taskContext);
+        orphanFileFinderProvider.get().scan(orphanConsumer, progress);
     }
 }

@@ -21,7 +21,6 @@ import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
 import stroom.task.api.TaskContext;
-import stroom.task.api.TaskContextFactory;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -51,20 +50,20 @@ class FsOrphanFileFinderExecutor {
     private final FsVolumeService volumeService;
     private final Duration oldAge;
     private final Provider<FsOrphanFileFinder> orphanFileFinderProvider;
-//    private final ExecutorProvider executorProvider;
-    private final TaskContextFactory taskContextFactory;
+    //    private final ExecutorProvider executorProvider;
+    private final TaskContext taskContext;
 //    private final DataStoreServiceConfig config;
 
     @Inject
     FsOrphanFileFinderExecutor(final FsVolumeService volumeService,
                                final Provider<FsOrphanFileFinder> orphanFileFinderProvider,
 //                               final ExecutorProvider executorProvider,
-                               final TaskContextFactory taskContextFactory,
+                               final TaskContext taskContext,
                                final DataStoreServiceConfig config) {
         this.volumeService = volumeService;
         this.orphanFileFinderProvider = orphanFileFinderProvider;
 //        this.executorProvider = executorProvider;
-        this.taskContextFactory = taskContextFactory;
+        this.taskContext = taskContext;
 //        this.config = config;
 
         Duration age;
@@ -76,15 +75,13 @@ class FsOrphanFileFinderExecutor {
     }
 
     public void scan() {
-        taskContextFactory.context(TASK_NAME, taskContext -> {
-            taskContext.info(() -> "Starting orphan file finder");
-            final Consumer<Path> orphanConsumer = path -> {
-                LOGGER.debug(() -> "Unexpected file in store: " +
-                        FileUtil.getCanonicalPath(path));
-                ORPHAN_FILE_LOGGER.info(FileUtil.getCanonicalPath(path));
-            };
-            scan(orphanConsumer, taskContext);
-        }).run();
+        taskContext.info(() -> "Starting orphan file finder");
+        final Consumer<Path> orphanConsumer = path -> {
+            LOGGER.debug(() -> "Unexpected file in store: " +
+                    FileUtil.getCanonicalPath(path));
+            ORPHAN_FILE_LOGGER.info(FileUtil.getCanonicalPath(path));
+        };
+        scan(orphanConsumer, taskContext);
     }
 
     public void scan(final Consumer<Path> orphanConsumer, final TaskContext parentContext) {

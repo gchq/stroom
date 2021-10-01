@@ -24,6 +24,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Arrays;
+
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FetchDataRequest {
 
@@ -36,9 +38,10 @@ public class FetchDataRequest {
     @JsonProperty
     private boolean showAsHtml;
     @JsonProperty
-    private boolean markerMode;
-    @JsonProperty
     private Severity[] expandedSeverities;
+    @JsonProperty
+    private DisplayMode displayMode = DisplayMode.TEXT;
+
 
     // Segmented (one rec could still be too large for display in the UI)
     // rec no. offset => rec count
@@ -78,14 +81,14 @@ public class FetchDataRequest {
                             @JsonProperty("recordCount") final long recordCount,
                             @JsonProperty("pipeline") final DocRef pipeline,
                             @JsonProperty("showAsHtml") final boolean showAsHtml,
-                            @JsonProperty("markerMode") final boolean markerMode,
-                            @JsonProperty("expandedSeverities") final Severity[] expandedSeverities) {
+                            @JsonProperty("expandedSeverities") final Severity[] expandedSeverities,
+                            @JsonProperty("displayMode") final DisplayMode displayMode) {
         this.sourceLocation = sourceLocation;
         this.recordCount = recordCount;
         this.pipeline = pipeline;
         this.showAsHtml = showAsHtml;
-        this.markerMode = markerMode;
         this.expandedSeverities = expandedSeverities;
+        this.displayMode = displayMode;
     }
 
     public SourceLocation getSourceLocation() {
@@ -112,14 +115,6 @@ public class FetchDataRequest {
         this.showAsHtml = showAsHtml;
     }
 
-    public boolean isMarkerMode() {
-        return markerMode;
-    }
-
-    public void setMarkerMode(final boolean markerMode) {
-        this.markerMode = markerMode;
-    }
-
     public Severity[] getExpandedSeverities() {
         return expandedSeverities;
     }
@@ -136,6 +131,14 @@ public class FetchDataRequest {
         this.pipeline = pipeline;
     }
 
+    public DisplayMode getDisplayMode() {
+        return displayMode;
+    }
+
+    public void setDisplayMode(final DisplayMode displayMode) {
+        this.displayMode = displayMode;
+    }
+
     @JsonIgnore
     public boolean isFireEvents() {
         return fireEvents;
@@ -144,5 +147,24 @@ public class FetchDataRequest {
     @JsonIgnore
     public void setFireEvents(final boolean fireEvents) {
         this.fireEvents = fireEvents;
+    }
+
+    public enum DisplayMode {
+        TEXT,
+        HEX,
+        MARKER;
+    }
+
+    @Override
+    public String toString() {
+        return "FetchDataRequest{" +
+                "sourceLocation=" + sourceLocation +
+                ", recordCount=" + recordCount +
+                ", pipeline=" + pipeline +
+                ", showAsHtml=" + showAsHtml +
+                ", expandedSeverities=" + Arrays.toString(expandedSeverities) +
+                ", displayMode=" + displayMode +
+                ", fireEvents=" + fireEvents +
+                '}';
     }
 }

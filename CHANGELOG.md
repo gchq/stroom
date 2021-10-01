@@ -7,9 +7,31 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **#2403** : Fix guice bind errors in stroom and proxy when the `path` config branch is empty or set to null.
 
-* Issue **#2474** : Added debug to help diagnose issue with orphan file finder.
+## [v7.0-beta.148] - 2021-09-30
+
+* Regenerated restful API.
+
+
+## [v7.0-beta.147] - 2021-09-30
+
+* Issue **#2475** : Orphan file and meta finder now show the correct task progress.
+
+* Issue **#2474** : Fixed orphan file finder.
+
+* Issue **#2467** : Fix viewing of streams that can't be decoded. Errors now displayed in large banner rather than as text in the editor.
+
+* Add a view as hex option to the Data Preview panes.
+
+* Add option to show/hide the editor indent guides.
+
+* Remove white space on editor context menu.
+
+* Change data viewing 'progress' bar to have a minimum width of 3px to make it more visible.
+
+* Issue **#2469** : Made `SafeXmlFilter` available for use in the application.
+
+* Issue **#2403** : Fix guice bind errors in stroom and proxy when the `path` config branch is empty or set to null.
 
 * Issue **#2462** : Made changes to stop DB connections being used within the context of other open connections.
 
@@ -3773,7 +3795,9 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.146...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.148...HEAD
+[v7.0-beta.148]: https://github.com/gchq/stroom/compare/v7.0-beta.147...v7.0-beta.148
+[v7.0-beta.147]: https://github.com/gchq/stroom/compare/v7.0-beta.146...v7.0-beta.147
 [v7.0-beta.146]: https://github.com/gchq/stroom/compare/v7.0-beta.145...v7.0-beta.146
 [v7.0-beta.145]: https://github.com/gchq/stroom/compare/v7.0-beta.144...v7.0-beta.145
 [v7.0-beta.144]: https://github.com/gchq/stroom/compare/v7.0-beta.143...v7.0-beta.144
