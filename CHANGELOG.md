@@ -7,10 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2441** : Improve logging and prevent autologger warning for `MetaResourcImpl`
 
-* Issue **#2241** : Improve logging and prevent autologger warning for `MetaResourcImpl`
-
-* Issue **#2240** : Prevent autologger warning for `ExplorerResourceImpl`
+* Issue **#2440** : Prevent autologger warning for `ExplorerResourceImpl`
 
 * Issue **#2460** : Processing filters now reliably process feeds where wildcards are used to match feed names.
 
