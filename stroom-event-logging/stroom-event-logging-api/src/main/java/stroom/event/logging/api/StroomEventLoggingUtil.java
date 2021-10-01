@@ -138,7 +138,7 @@ public class StroomEventLoggingUtil {
 
         if (advancedQueryItem != null) {
             queryBuilder.withAdvanced(AdvancedQuery.builder()
-                    .withQueryItems()
+                    .withQueryItems(advancedQueryItem)
                     .build());
         }
     }
