@@ -81,7 +81,7 @@ class JwkDaoImpl implements JwkDao {
         record.setCreateUser("admin");
         record.setUpdateTimeMs(now);
         record.setUpdateUser("admin");
-            record.setFkTokenTypeId(typeId);
+        record.setFkTokenTypeId(typeId);
         record.setEnabled(true);
         JooqUtil.create(identityDbConnProvider, record);
     }
