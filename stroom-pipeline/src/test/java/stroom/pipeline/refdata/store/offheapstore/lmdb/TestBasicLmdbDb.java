@@ -28,6 +28,7 @@ import stroom.pipeline.refdata.store.offheapstore.serdes.IntegerSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.StringSerde;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
@@ -35,12 +36,15 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.lmdbjava.CursorIterable;
+import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.KeyRange;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -51,6 +55,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 class TestBasicLmdbDb extends AbstractLmdbDbTest {
 
@@ -454,6 +459,49 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
     }
 
     @Test
+    void testKeyUseOutsideCursor() {
+        basicLmdbDb.put("key1", "value1", false);
+        basicLmdbDb.put("key2", "value2", false);
+
+        lmdbEnv.doWithReadTxn(txn -> {
+
+            ByteBuffer keyBuffer1 = ByteBuffer.allocateDirect(100);
+            basicLmdbDb.serializeKey(keyBuffer1, "key1");
+
+            ByteBuffer startKeyBuf = ByteBuffer.allocateDirect(100);
+            basicLmdbDb.serializeKey(startKeyBuf, "key1");
+
+            // Same start/end key
+            final KeyRange<ByteBuffer> keyRange = KeyRange.closed(startKeyBuf, startKeyBuf);
+
+            ByteBuffer foundKeyBuffer = null;
+            try (CursorIterable<ByteBuffer> cursorIterable = basicLmdbDb.iterate(txn, keyRange)) {
+                final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
+                if (iterator.hasNext()) {
+                    foundKeyBuffer = iterator.next().key();
+                }
+            }
+
+            // foundKeyBuffer is not out of scope of the cursor
+            Assertions.assertThat(foundKeyBuffer)
+                    .isNotNull();
+
+            assertThat(basicLmdbDb.deserializeKey(foundKeyBuffer))
+                    .isEqualTo("key1");
+
+            // now do another get on a different key to get a different value
+            ByteBuffer keyBuffer2 = ByteBuffer.allocateDirect(100);
+            basicLmdbDb.serializeKey(keyBuffer2, "key2");
+            basicLmdbDb.getAsBytes(txn, keyBuffer2).get();
+
+            // Now bake sure the buffer we got in the cursor is still the same
+            // and has not been affected by the other get.
+            assertThat(basicLmdbDb.deserializeKey(foundKeyBuffer))
+                    .isEqualTo("key1");
+        });
+    }
+
+    @Test
     void testVerifyNumericKeyOrder() {
 
         // Ensure entries come back in the right order
@@ -576,6 +624,98 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
 
         Assertions.assertThat(lmdbEnv.info().numReaders)
                 .isEqualTo(1);
+    }
+
+    /**
+     * Intended for manual running at high iteration count to test lookup difference
+     */
+    @Test
+    void testGetVsCursorPerformance() {
+
+//        final int iterations = 100_000;
+        final int iterations = 1_000_000;
+//        final int iterations = 10_000_000;
+//        final int iterations = 10;
+
+        LOGGER.info("info {}", basicLmdbDb3.getDbInfo());
+
+        // Ensure entries come back in the right order
+        final List<Tuple2<Integer, String>> ascendingData = IntStream
+                .range(0, iterations)
+                .boxed()
+                .map(i -> Tuple.of(i, String.format("Val %010d", i)))
+                .collect(Collectors.toList());
+
+        Assertions.assertThat(ascendingData)
+                .hasSize(iterations);
+
+        LOGGER.logDurationIfInfoEnabled(() -> {
+            lmdbEnv.doWithWriteTxn(writeTxn -> {
+                ascendingData.forEach(tuple -> {
+                    basicLmdbDb3.put(writeTxn, tuple._1(), tuple._2(), false);
+                });
+            });
+        }, "Ascending puts");
+
+        if (iterations < 50) {
+            basicLmdbDb3.logDatabaseContents(LOGGER::info);
+            basicLmdbDb3.logRawDatabaseContents(LOGGER::info);
+        }
+
+        LOGGER.info("entry count: " + basicLmdbDb3.getEntryCount());
+
+        final int runCount = 3;
+        // Do it a few times so the jvm can warm up
+        for (int i = 0; i < runCount; i++) {
+            LOGGER.logDurationIfInfoEnabled(() -> {
+                lmdbEnv.doWithReadTxn(writeTxn -> {
+                    ascendingData.forEach(tuple -> {
+                        final Integer key = tuple._1();
+                        final String val = basicLmdbDb3.get(writeTxn, key)
+                                .orElseThrow(() ->
+                                        new RuntimeException("No value for key " + key));
+                        assertThat(val)
+                                .isEqualTo(tuple._2());
+                    });
+                });
+            }, "Gets");
+        }
+
+        for (int i = 0; i < runCount; i++) {
+            LOGGER.logDurationIfInfoEnabled(() -> {
+                lmdbEnv.doWithReadTxn(readTxn -> {
+                    ascendingData.forEach(tuple -> {
+                        final Integer key = tuple._1();
+
+                        try (final PooledByteBuffer startKeyBuf = basicLmdbDb3.getPooledKeyBuffer();
+                                final PooledByteBuffer endKeyBuf = basicLmdbDb3.getPooledKeyBuffer()) {
+
+                            basicLmdbDb3.serializeKey(startKeyBuf.getByteBuffer(), key);
+                            basicLmdbDb3.serializeKey(endKeyBuf.getByteBuffer(), key);
+
+                            final KeyRange<ByteBuffer> keyRange = KeyRange.closed(
+                                    startKeyBuf.getByteBuffer(),
+                                    endKeyBuf.getByteBuffer());
+
+                            try (final CursorIterable<ByteBuffer> cursorIterable = basicLmdbDb3.iterate(
+                                    readTxn, keyRange)) {
+
+                                final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
+                                String val = null;
+                                if (iterator.hasNext()) {
+                                    val = basicLmdbDb3.deserializeValue(iterator.next().val());
+                                } else {
+                                    fail(LogUtil.message("Key {} not found", key));
+                                }
+
+                                assertThat(val)
+                                        .isEqualTo(tuple._2());
+                            }
+                        }
+                    });
+                });
+            }, "Cursor gets");
+        }
     }
 
     private void populateDb() {

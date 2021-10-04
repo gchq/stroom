@@ -97,8 +97,10 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(TestRefDataOffHeapStore.class);
     private static final String KV_TYPE = "KV";
     private static final String RANGE_TYPE = "Range";
-    private static final String PADDING = IntStream.rangeClosed(1,
-            300).boxed().map(i -> "-").collect(Collectors.joining());
+    private static final String PADDING = IntStream.rangeClosed(1, 300)
+            .boxed()
+            .map(i -> "-")
+            .collect(Collectors.joining());
 
     private static final int REF_STREAM_DEF_COUNT = 2;
     private static final int ENTRIES_PER_MAP_DEF = 5;
@@ -113,12 +115,17 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
     private Injector injector;
     private RefDataStore refDataStore;
 
-    void setDbMaxSizeProperty() {
-        setDbMaxSizeProperty(ByteSize.ofMebibytes(500));
-    }
+//    void setDbMaxSizeProperty() {
+//        setDbMaxSizeProperty(ByteSize.ofMebibytes(5_000));
+//    }
+//
+//    void setDbMaxSizeProperty(final ByteSize size) {
+//        referenceDataConfig.setMaxStoreSize(size);
+//    }
 
-    void setDbMaxSizeProperty(final ByteSize size) {
-        referenceDataConfig.setMaxStoreSize(size);
+    @Override
+    protected ByteSize getMaxSizeBytes() {
+        return ByteSize.ofMebibytes(5_000);
     }
 
     @BeforeEach
@@ -126,8 +133,6 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
         LOGGER.debug("Creating LMDB environment in dbDir {}", getDbDir().toAbsolutePath().toString());
 
         referenceDataConfig.setLocalDir(getDbDir().toAbsolutePath().toString());
-
-        setDbMaxSizeProperty();
 
         injector = Guice.createInjector(
                 new AbstractModule() {
@@ -539,16 +544,17 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
     void testPurgeOldData_all() {
 
         // two different ref stream definitions
-        List<RefStreamDefinition> refStreamDefinitions = Arrays.asList(
-                buildUniqueRefStreamDefinition(1),
-                buildUniqueRefStreamDefinition(2));
+        final List<RefStreamDefinition> refStreamDefinitions = IntStream.rangeClosed(1, REF_STREAM_DEF_COUNT)
+                .boxed()
+                .map(this::buildUniqueRefStreamDefinition)
+                .collect(Collectors.toList());
 
-        bulkLoadAndAssert(refStreamDefinitions, false, 1000);
+        bulkLoadAndAssert(refStreamDefinitions, false, 0);
 
         getReferenceDataConfig().setPurgeAge(StroomDuration.ZERO);
 
         assertThat(refDataStore.getProcessingInfoEntryCount())
-                .isEqualTo(2);
+                .isEqualTo(REF_STREAM_DEF_COUNT);
         assertThat(refDataStore.getKeyValueEntryCount())
                 .isGreaterThan(0);
         assertThat(refDataStore.getKeyRangeValueEntryCount())
@@ -892,6 +898,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
     void testBigLoadGetAndPurgeForPerfTesting() {
         doBigLoadGetAndPurgeForPerfTesting(5, true, true, true, true);
     }
+
 
     /**
      * Make entryCount very big for manual performance testing or profiling
@@ -1379,18 +1386,34 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                     .isEqualTo(ProcessingState.COMPLETE);
 
         });
+        LOGGER.info("Starting key value asserts");
         assertLoadedKeyValueData(keyValueLoadedData);
+        LOGGER.info("Starting range value asserts");
         assertLoadedKeyRangeValueData(keyRangeValueLoadedData);
+        LOGGER.info("Completed asserts");
     }
 
     private void assertLoadedKeyValueData(final List<Tuple3<MapDefinition, String, StringValue>> keyValueLoadedData) {
+
+        LOGGER.info("Starting key value asserts on {} entries", keyValueLoadedData.size());
+
+        final Instant startTime = Instant.now();
+        final AtomicInteger counter = new AtomicInteger();
         // query all values from the key/value store
         keyValueLoadedData.forEach(tuple3 -> {
+            final int tenPercent = keyValueLoadedData.size() / 10;
+            if (counter.incrementAndGet() % tenPercent == 0) {
+                final Duration duration = Duration.between(startTime, Instant.now());
+                LOGGER.info("Count: {}, in {}, ms/get: {}",
+                        counter.get(),
+                        duration,
+                        counter.get() / duration.toMillis());
+            }
             // get the proxy object
-            RefDataValueProxy valueProxy = refDataStore.getValueProxy(tuple3._1, tuple3._2);
+            final RefDataValueProxy valueProxy = refDataStore.getValueProxy(tuple3._1, tuple3._2);
 
 
-            RefDataValue refDataValue = valueProxy.supplyValue().get();
+            final RefDataValue refDataValue = valueProxy.supplyValue().get();
 
             assertThat(refDataValue).isInstanceOf(StringValue.class);
             assertThat((StringValue) refDataValue)
@@ -1410,7 +1433,21 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
     private void assertLoadedKeyRangeValueData(
             final List<Tuple3<MapDefinition, Range<Long>, StringValue>> keyRangeValueLoadedData) {
 
+        LOGGER.info("Starting range value asserts on {} entries", keyRangeValueLoadedData.size());
+
+        final Instant startTime = Instant.now();
+        final AtomicInteger counter = new AtomicInteger();
+
         keyRangeValueLoadedData.forEach(tuple3 -> {
+            final int tenPercent = keyRangeValueLoadedData.size() / 10;
+            if (counter.incrementAndGet() % tenPercent == 0) {
+                final Duration duration = Duration.between(startTime, Instant.now());
+                // *5 because we do 5 different gets for each tuple3 entry
+                LOGGER.info("Count: {}, in {}, ms/get {}",
+                        counter.get(),
+                        duration,
+                        (counter.get() * 5L) / duration.toMillis());
+            }
 
             // build a variety of keys from the supplied range
             String keyAtStartOfRange = tuple3._2.getFrom().toString();
@@ -1431,11 +1468,11 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                 LOGGER.debug("range {}, key {}, expected {}", tuple3._2, tuple2._1, tuple2._2);
 
                 // get the proxy object
-                RefDataValueProxy valueProxy = refDataStore.getValueProxy(tuple3._1, tuple2._1);
+                final RefDataValueProxy valueProxy = refDataStore.getValueProxy(tuple3._1, tuple2._1);
 
                 boolean isValueExpected = tuple2._2;
 
-                Optional<RefDataValue> optRefDataValue = valueProxy.supplyValue();
+                final Optional<RefDataValue> optRefDataValue = valueProxy.supplyValue();
 
                 assertThat(optRefDataValue.isPresent())
                         .isEqualTo(isValueExpected);

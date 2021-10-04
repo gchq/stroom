@@ -132,6 +132,9 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
                         //  Better still we could accept an arg of a Function<ByteBuffer, ByteBuffer> to map the
                         //  valueStoreKey buffer into the actual value bytebuffer from the valueStoreDb.
                         //  This would save a buffer copy.
+                        //if (cnt.get() > 1) {
+                            //LOGGER.info("{} iterations", cnt.get());
+                        //}
                         return Optional.of(keyVal.val());
                     }
                 }
