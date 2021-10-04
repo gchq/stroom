@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2485** : Autologger: UNLOGGED calls always being logged.
+
 * Issue **#2395** : Fixed timezone issue in API key display.
 
 * Issue **#2452** : New pipeline references now default to `Reference` data type.
