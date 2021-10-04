@@ -131,13 +131,15 @@ validate_git_issue() {
       "${BLUE}namespace/repo#1234${NC}, ${BLUE}0${NC} or ${BLUE}AUTO${NC}."
   fi
 
-  if [[ "${git_issue}" = "0" ]]; then
+  if [[ ! "${git_issue}" = "0" ]]; then
     local issue_namespace
     local issue_repo
+    local issue_number
     if [[ "${git_issue}" =~ ^[1-9][0-9]*$ ]]; then
       # Issue in this repo so use the values we got from the local repo
       issue_namespace="${git_namespace}"
       issue_repo="${git_repo}"
+      issue_number="${git_issue}"
     else
       # Fully qualified issue so extract the parts by replacing / and # with
       # space then reading into an array which will split on space
@@ -152,20 +154,50 @@ validate_git_issue() {
     debug_value "issue_repo" "${issue_repo}"
     debug_value "issue_number" "${issue_number}"
 
-    local github_issue_url="https://github.com/${issue_namespace}/${issue_repo}/issues/${issue_number}"
+    local github_issue_url="https://api.github.com/repos/${issue_namespace}/${issue_repo}/issues/${issue_number}"
+
     debug_value "github_issue_url" "${github_issue_url}"
 
-    local -r http_status_code="$( \
-      curl \
-        -s \
-        -o /dev/null \
-        -w "%{http_code}" \
-        "${github_issue_url}")"
+    # global scope
+    issue_title=
+    local curl_return_code=0
+    # Turn off exit on error so we can get the curl return code in the subshell
+    set +e 
 
-    debug_value "http_status_code" "${http_status_code}"
+    if command -v jq >/dev/null 2>&1; then
+      # jq is available so use it
+      issue_title="$( \
+        curl \
+          --silent \
+          --fail \
+          "${github_issue_url}" \
+        | jq \
+          --raw-output \
+          '.title' \
+      )"
+      curl_return_code=$?
+    else
+      # no jq so fall back to greppage
+      issue_title="$( \
+        curl \
+          --silent \
+          --fail \
+          "${github_issue_url}" \
+        | grep \
+          --only-matching \
+          --prl-regexp \
+          '(?<="title": ").*(?=",)' \
+      )"
+      curl_return_code=$?
+    fi
+    set -e
 
-    if [[ ! "${http_status_code}" = "200" ]]; then
+    debug_value "curl_return_code" "${curl_return_code}"
+
+    if [[ "${curl_return_code}" -ne 0 ]]; then
       error_exit "Issue ${BLUE}${git_issue}${NC} does not exist on GitHub"
+    else
+      info "Issue title: ${BLUE}${issue_title}${NC}"
     fi
   fi
 }
@@ -189,7 +221,7 @@ is_existing_change_file_present() {
     find \
       /home/dev/git_work/v7stroom/unreleased_changes/ \
       -maxdepth 1 \
-      -name "*__${git_issue_str}" \
+      -name "*__${git_issue_str}.md" \
       -print \
       -quit)"
 
@@ -236,7 +268,7 @@ write_change_entry() {
   
   # Use two underscores to help distinguish the date from the issue part
   # which may itself contain underscores.
-  local filename="${date_str}__${git_issue_str}"
+  local filename="${date_str}__${git_issue_str}.md"
   local change_file="${unreleased_dir}/${filename}"
 
   debug_value "change_file" "${change_file}"
@@ -262,12 +294,33 @@ write_change_entry() {
   fi
 
   local line="${line_prefix}${issue_part}${change_text}"
+  local content
+
+  # Craft the content of the file
+  content="$( \
+    echo "${line}" 
+    echo
+    echo
+    if [[ -n "${issue_title}" ]]; then
+      echo "# ********************************************************************************"
+      echo "# Issue title: ${issue_title}"
+      echo "# ********************************************************************************"
+      echo
+    fi
+    echo "# All blank and comment lines will be ignored when imported into the CHANGELOG"
+    echo "# Examples of accptable entires are:"
+    echo "# * An change with no associated GitHub issue."
+    echo "# * Issue **1234** : A change with an associated GitHub issue in this repository"
+    echo "# * Issue **namespace/other-repo#1234** : A change with an associated GitHub issue in another repository"
+    echo "# Entries are in GitHub flavour markdown and should be written on a single line with no hard breaks."
+  )"
+
   info "Writing file ${BLUE}${change_file}${GREEN} with content:"
   info "--------------------------------------------------------------------------------"
-  info "${YELLOW}${line}${NC}"
+  info "${YELLOW}${content}${NC}"
   info "--------------------------------------------------------------------------------"
 
-  echo "${line}" > "${change_file}"
+  echo -e "${content}" > "${change_file}"
 
   if [[ ! -n "${change_text}" ]]; then
 
