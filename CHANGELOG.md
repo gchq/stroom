@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2484** : Fix failing ref lookups when one loader has range data.
+
 * Issue **#2485** : Autologger: UNLOGGED calls always being logged.
 
 * Issue **#2395** : Fixed timezone issue in API key display.
