@@ -59,7 +59,6 @@ public class SchemaKey implements Serializable {
         return builder.toHashCode();
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (o == this) {

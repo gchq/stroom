@@ -64,6 +64,7 @@ public class SingleRefDataValueProxy implements RefDataValueProxy {
     /**
      * If a reference data entry exists for this {@link SingleRefDataValueProxy} pass its value to the consumer
      * as a {@link TypedByteBuffer}.
+     *
      * @param typedByteBufferConsumer
      * @return True if the entry is found and the consumer is called.
      */
@@ -90,11 +91,14 @@ public class SingleRefDataValueProxy implements RefDataValueProxy {
         }
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final SingleRefDataValueProxy that = (SingleRefDataValueProxy) o;
         return Objects.equals(refDataStore, that.refDataStore) &&
                 Objects.equals(mapDefinition, that.mapDefinition) &&

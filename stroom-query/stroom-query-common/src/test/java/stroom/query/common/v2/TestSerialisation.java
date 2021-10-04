@@ -428,7 +428,6 @@ class TestSerialisation {
             return num;
         }
 
-        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
             if (this == o) {
@@ -468,7 +467,6 @@ class TestSerialisation {
             return num2;
         }
 
-        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
             if (this == o) {
@@ -513,7 +511,6 @@ class TestSerialisation {
             return str;
         }
 
-        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
             if (this == o) {
@@ -564,7 +561,6 @@ class TestSerialisation {
             return list;
         }
 
-        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
             if (this == o) {
@@ -611,7 +607,6 @@ class TestSerialisation {
             return list;
         }
 
-        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
             if (this == o) {

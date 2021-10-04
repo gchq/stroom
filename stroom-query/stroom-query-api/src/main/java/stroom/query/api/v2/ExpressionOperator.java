@@ -102,7 +102,6 @@ public final class ExpressionOperator extends ExpressionItem {
         return children;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -189,7 +188,7 @@ public final class ExpressionOperator extends ExpressionItem {
     public static final class Builder extends ExpressionItem.Builder<ExpressionOperator, Builder> {
 
         private Op op;
-        private List<ExpressionItem> children = new ArrayList<>();
+        private final List<ExpressionItem> children = new ArrayList<>();
 
         private Builder() {
         }

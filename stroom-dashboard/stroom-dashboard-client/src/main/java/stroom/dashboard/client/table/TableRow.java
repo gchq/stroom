@@ -91,7 +91,7 @@ public class TableRow {
             if (p instanceof Hyperlink) {
                 final Hyperlink hyperlink = (Hyperlink) p;
                 if (!hyperlink.getText().trim().isEmpty()) {
-                    sb.appendHtmlConstant("<u link=\"" + hyperlink.toString() + "\">");
+                    sb.appendHtmlConstant("<u link=\"" + hyperlink + "\">");
 
 //                    if (field != null && field.getFormat() != null && field.getFormat().getType() == Type.DATE_TIME) {
 //                        try {
@@ -154,7 +154,6 @@ public class TableRow {
                 '}';
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

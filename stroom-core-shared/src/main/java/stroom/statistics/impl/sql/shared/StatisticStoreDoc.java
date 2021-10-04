@@ -237,7 +237,6 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
         }
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

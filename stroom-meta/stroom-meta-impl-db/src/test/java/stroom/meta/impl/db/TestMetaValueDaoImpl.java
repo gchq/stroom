@@ -22,6 +22,7 @@ import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.docrefinfo.mock.MockDocRefInfoModule;
+import stroom.event.logging.mock.MockStroomEventLoggingModule;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.impl.MetaModule;
@@ -70,7 +71,8 @@ class TestMetaValueDaoImpl {
                 new CacheModule(),
                 new DbTestModule(),
                 new MetaTestModule(),
-                new MockTaskModule())
+                new MockTaskModule(),
+                new MockStroomEventLoggingModule())
                 .injectMembers(this);
         metaValueConfig.setAddAsync(false);
         // Delete everything

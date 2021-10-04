@@ -65,7 +65,6 @@ public abstract class AbstractDataSourceProviderModule<T_CONFIG extends HasDbCon
 
     protected abstract void performMigration(DataSource dataSource);
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

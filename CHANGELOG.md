@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2452** : New pipeline references now default to `Reference` data type.
+
+* Issue **#2414** : The processing tasks data source now exposes start, end and status times plus filter priorities.
+
+* Issue **#2441** : Improve logging and prevent autologger warning for `MetaResourcImpl`
+
+* Issue **#2440** : Prevent autologger warning for `ExplorerResourceImpl`
+
+* Issue **#2465** : `SaveAs` is now working for non admin users.
+
+* Issue **#2460** : Processing filters now reliably process feeds where wildcards are used to match feed names.
+
 * Issue **#2475** : Orphan file and meta finder now show the correct task progress.
 
 * Issue **#2474** : Fixed orphan file finder.
