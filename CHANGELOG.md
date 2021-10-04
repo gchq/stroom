@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2484** : Fix failing ref lookups when one loader has range data.
+
 
 ## [v7.0-beta.148] - 2021-09-30
 

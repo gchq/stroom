@@ -397,6 +397,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     // key could not be converted to a long, either this mapdef has no ranges or
                     // an invalid key was used. See if we have any ranges at all for this mapdef
                     // to determine whether to error or not.
+                    // TODO @AT Could maybe hold the result in a short lived on-heap cache to improve performance
                     boolean doesStoreContainRanges = rangeStoreDb.containsMapDefinition(readTxn, mapUid);
                     if (doesStoreContainRanges) {
                         // we have ranges for this map def so we would expect to be able to convert the key
@@ -417,7 +418,6 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         }
         return optValueStoreKeyBuffer;
     }
-
 
     @Override
     public boolean consumeValueBytes(final MapDefinition mapDefinition,
