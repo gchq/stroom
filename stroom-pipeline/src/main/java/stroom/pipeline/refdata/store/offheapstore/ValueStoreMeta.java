@@ -6,9 +6,9 @@ import java.util.Objects;
 /**
  * < typeId >< referenceCount >
  * < 1 byte >< 3 bytes >
- *
- *  referenceCount stored as a 3 byte unsigned integer so a max
- *  of ~1.6 million.
+ * <p>
+ * referenceCount stored as a 3 byte unsigned integer so a max
+ * of ~1.6 million.
  */
 public class ValueStoreMeta {
 
@@ -33,11 +33,14 @@ public class ValueStoreMeta {
         return referenceCount;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         ValueStoreMeta that = (ValueStoreMeta) o;
         return typeId == that.typeId &&
                 referenceCount == that.referenceCount;

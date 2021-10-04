@@ -212,7 +212,7 @@ public class RollUpBitMask {
             if (rollUpBitMask == null) {
                 throw new RuntimeException(String.format("Position lists have not been loaded into the cache for " +
                                 "a position list [%s] of size %s. This should never happen",
-                        tagPositions.toString(),
+                        tagPositions,
                         tagPositions.size()));
             }
         }
@@ -563,7 +563,6 @@ public class RollUpBitMask {
         return result;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object obj) {
         if (this == obj) {

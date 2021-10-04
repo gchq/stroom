@@ -41,7 +41,6 @@ public class GetFeedStatusRequest extends RemoteRequest {
         return senderDn;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

@@ -137,7 +137,6 @@ public class XmlSchemaDoc extends Doc implements HasData {
         this.schemaGroup = schemaGroup;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

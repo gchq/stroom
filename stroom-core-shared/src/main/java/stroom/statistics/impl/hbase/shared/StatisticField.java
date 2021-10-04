@@ -35,6 +35,7 @@ import javax.xml.bind.annotation.XmlType;
 @JsonPropertyOrder({"fieldName"})
 @JsonInclude(Include.NON_NULL)
 public class StatisticField implements HasDisplayValue, Comparable<StatisticField> {
+
     @XmlElement(name = "fieldName")
     @JsonProperty
     private String fieldName;
@@ -70,23 +71,29 @@ public class StatisticField implements HasDisplayValue, Comparable<StatisticFiel
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((fieldName == null) ? 0 : fieldName.hashCode());
+        result = prime * result + ((fieldName == null)
+                ? 0
+                : fieldName.hashCode());
         return result;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         final StatisticField other = (StatisticField) obj;
         if (fieldName == null) {
             return other.fieldName == null;
-        } else return fieldName.equals(other.fieldName);
+        } else {
+            return fieldName.equals(other.fieldName);
+        }
     }
 
     @Override

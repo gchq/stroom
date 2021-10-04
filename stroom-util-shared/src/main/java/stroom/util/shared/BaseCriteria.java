@@ -123,7 +123,6 @@ public abstract class BaseCriteria {
         return sortList;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

@@ -23,13 +23,14 @@ import java.util.Set;
 
 @Deprecated
 public class StreamAttributeMap implements SharedObject {
+
     private static final long serialVersionUID = -8198186456924478908L;
 
     private Stream stream;
     private List<String> fileNameList;
-    private Map<StreamAttributeKey, String> attributeMap = new HashMap<>();
-    private Map<String, String> nameValueMap = new HashMap<>();
-    private Map<String, StreamAttributeKey> nameKeyMap = new HashMap<>();
+    private final Map<StreamAttributeKey, String> attributeMap = new HashMap<>();
+    private final Map<String, String> nameValueMap = new HashMap<>();
+    private final Map<String, StreamAttributeKey> nameKeyMap = new HashMap<>();
 
     public StreamAttributeMap() {
         // Default constructor necessary for GWT serialisation.
@@ -90,11 +91,14 @@ public class StreamAttributeMap implements SharedObject {
         this.fileNameList = fileNameList;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (!(o instanceof StreamAttributeMap)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof StreamAttributeMap)) {
+            return false;
+        }
 
         final StreamAttributeMap that = (StreamAttributeMap) o;
 

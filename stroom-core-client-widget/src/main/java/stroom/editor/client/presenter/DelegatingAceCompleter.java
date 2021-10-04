@@ -59,7 +59,7 @@ public class DelegatingAceCompleter {
                 : null;
         final MapKey mapKey = MapKey.from(editorId, modeName);
         editorIdToCompletionProviderMap.computeIfAbsent(
-                mapKey, k -> new ArrayList<>())
+                        mapKey, k -> new ArrayList<>())
                 .addAll(Arrays.asList(completionProviders));
 
         logCompletionProvidersCount();
@@ -196,7 +196,6 @@ public class DelegatingAceCompleter {
             return modeName;
         }
 
-        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
             if (this == o) {

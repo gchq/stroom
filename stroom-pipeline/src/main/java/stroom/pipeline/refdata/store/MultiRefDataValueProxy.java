@@ -30,7 +30,7 @@ import java.util.function.Consumer;
 /**
  * A wrapper for multiple {@link RefDataValueProxy} objects. A lookup (consumeBytes or supplyValue)
  * will perform a lookup against each sub-proxy in turn until a value is found.
- *
+ * <p>
  * This is used when we have multiple ref loaders attached to an XSLT. Any one of them may be
  * able to provide the value. This means the order of ref loaders is important for performance.
  * The one most likely to yield results should be at the top.
@@ -113,11 +113,14 @@ public class MultiRefDataValueProxy implements RefDataValueProxy {
         return foundValue;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final MultiRefDataValueProxy that = (MultiRefDataValueProxy) o;
         return Objects.equals(refDataValueProxies, that.refDataValueProxies);
     }
