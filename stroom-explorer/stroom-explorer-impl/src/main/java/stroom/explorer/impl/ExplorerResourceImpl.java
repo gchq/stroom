@@ -106,6 +106,7 @@ class ExplorerResourceImpl implements ExplorerResource {
     }
 
     @Override
+    @AutoLogged(OperationType.VIEW)
     public Set<DocRef> fetchDocRefs(final Set<DocRef> docRefs) {
         final Set<DocRef> result = new HashSet<>();
         if (docRefs != null) {
