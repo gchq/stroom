@@ -272,13 +272,21 @@ class MetaDaoImpl implements MetaDao, Clearable {
     private List<Integer> getIds(final String name,
                                  final Map<String, List<Integer>> map,
                                  final Function<String, List<Integer>> function) {
-        List<Integer> list = map.get(name);
-        if (list == null || list.size() == 0) {
+        List<Integer> list;
+
+        // We can't cache wildcard names as we don't know what they will match in the DB.
+        if (name.contains("*")) {
             list = function.apply(name);
-            if (list != null && list.size() > 0) {
-                map.put(name, list);
+        } else {
+            list = map.get(name);
+            if (list == null || list.size() == 0) {
+                list = function.apply(name);
+                if (list != null && list.size() > 0) {
+                    map.put(name, list);
+                }
             }
         }
+
         return list;
     }
 

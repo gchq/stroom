@@ -5,6 +5,7 @@ import stroom.security.api.UserIdentity;
 import java.util.Objects;
 
 class UserIdentityImpl implements UserIdentity {
+
     private final String userUuid;
     private final String id;
     private final String jws;
@@ -36,11 +37,14 @@ class UserIdentityImpl implements UserIdentity {
         return sessionId;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (!(o instanceof UserIdentity)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof UserIdentity)) {
+            return false;
+        }
         final UserIdentity that = (UserIdentity) o;
         return Objects.equals(id, that.getId()) &&
                 Objects.equals(jws, that.getJws()) &&

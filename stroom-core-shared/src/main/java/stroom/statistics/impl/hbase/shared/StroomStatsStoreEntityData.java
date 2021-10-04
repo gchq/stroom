@@ -149,13 +149,13 @@ public class StroomStatsStoreEntityData {
 
         if (rolledUpFieldNames.size() > fields.size()) {
             throw new RuntimeException("isRollUpCombinationSupported called with more rolled up fields (" +
-                    rolledUpFieldNames.toString() + ") than there are statistic fields (" +
+                    rolledUpFieldNames + ") than there are statistic fields (" +
                     getCachedFieldPositions().keySet() + ")");
         }
 
         if (!getCachedFieldPositions().keySet().containsAll(rolledUpFieldNames)) {
             throw new RuntimeException("isRollUpCombinationSupported called rolled up fields (" +
-                    rolledUpFieldNames.toString() + ") that don't exist in the statistic fields list (" +
+                    rolledUpFieldNames + ") that don't exist in the statistic fields list (" +
                     getCachedFieldPositions().keySet() + ")");
         }
 
@@ -189,7 +189,6 @@ public class StroomStatsStoreEntityData {
         return result;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object obj) {
         if (this == obj) {
@@ -203,13 +202,10 @@ public class StroomStatsStoreEntityData {
         }
         final StroomStatsStoreEntityData other = (StroomStatsStoreEntityData) obj;
         if (fields == null) {
-            if (other.fields != null) {
-                return false;
-            }
-        } else if (!fields.equals(other.fields)) {
-            return false;
+            return other.fields == null;
+        } else {
+            return fields.equals(other.fields);
         }
-        return true;
     }
 
     @Override

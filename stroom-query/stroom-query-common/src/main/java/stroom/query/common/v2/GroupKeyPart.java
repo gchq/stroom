@@ -30,7 +30,6 @@ class GroupKeyPart implements KeyPart {
         return groupValues;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -56,7 +55,7 @@ class GroupKeyPart implements KeyPart {
                 sb.append("|");
             }
             if (val != null) {
-                sb.append(val.toString());
+                sb.append(val);
             }
         }
     }

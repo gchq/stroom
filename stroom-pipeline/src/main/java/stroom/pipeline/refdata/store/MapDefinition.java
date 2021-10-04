@@ -79,11 +79,14 @@ public class MapDefinition {
         return refStreamDefinition;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final MapDefinition that = (MapDefinition) o;
         return Objects.equals(refStreamDefinition, that.refStreamDefinition) &&
                 Objects.equals(mapName, that.mapName);

@@ -58,7 +58,6 @@ public class VisResultRequest extends ComponentResultRequest {
         return requestedRange;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

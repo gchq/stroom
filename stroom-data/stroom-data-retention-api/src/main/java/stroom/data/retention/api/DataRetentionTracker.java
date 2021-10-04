@@ -26,7 +26,6 @@ public class DataRetentionTracker {
         return rulesVersion;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

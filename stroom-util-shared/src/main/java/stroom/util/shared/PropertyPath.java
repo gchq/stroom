@@ -17,7 +17,6 @@
 package stroom.util.shared;
 
 import stroom.docref.HasName;
-import stroom.docref.HasNameMutable;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -36,7 +35,6 @@ import java.util.Objects;
  * stroom.node.name
  * The aim is to break the dot delimited path strings into its parts to
  * reduce the memory overhead of holding all the paths as many parts are similar
- *
  */
 @JsonInclude(Include.NON_NULL)
 public class PropertyPath implements Comparable<PropertyPath>, HasName {
@@ -98,7 +96,7 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
     private static void validateParts(final List<String> parts) {
         for (final String part : parts) {
             if (part == null || part.isEmpty()) {
-                throw new RuntimeException("Null or empty path part in " + parts.toString());
+                throw new RuntimeException("Null or empty path part in " + parts);
             }
         }
     }
@@ -154,7 +152,6 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
         }
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

@@ -43,7 +43,6 @@ public final class DataSource implements Serializable {
         return fields;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object o) {
         if (this == o) {

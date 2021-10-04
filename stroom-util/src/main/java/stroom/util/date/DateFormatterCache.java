@@ -177,7 +177,6 @@ public final class DateFormatterCache {
             this.hashCode = Objects.hash(pattern, defaultTime);
         }
 
-        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
             if (this == o) {

@@ -109,7 +109,6 @@ public class VisualisationDoc extends Doc {
         this.settings = settings;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

@@ -49,7 +49,6 @@ public class VisLimit implements Serializable {
         this.size = size;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
