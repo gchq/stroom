@@ -27,6 +27,7 @@ import stroom.pipeline.refdata.store.offheapstore.RangeStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RangeStoreKeySerde;
+import stroom.pipeline.refdata.store.offheapstore.serdes.RangeStoreKeySerde.CompareResult;
 import stroom.pipeline.refdata.store.offheapstore.serdes.UIDSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
 import stroom.util.logging.LambdaLogger;
@@ -71,22 +72,24 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
      * passed key. It will scan backwards from key until it finds the first matching range. If no matching range
      * is found an empty Optional is returned.
      */
-    public Optional<ValueStoreKey> get(final Txn<ByteBuffer> txn, final UID mapDefinitionUid, final long key) {
+    public Optional<ValueStoreKey> get(final Txn<ByteBuffer> txn,
+                                       final UID mapDefinitionUid,
+                                       final long key) {
         return getAsBytes(txn, mapDefinitionUid, key)
                 .map(valueSerde::deserialize);
     }
 
-    public Optional<ByteBuffer> getAsBytes(final Txn<ByteBuffer> txn, final UID mapDefinitionUid, final long key) {
+    public Optional<ByteBuffer> getAsBytes(final Txn<ByteBuffer> txn,
+                                           final UID mapDefinitionUid,
+                                           final long key) {
         LOGGER.trace(() -> "get called for " + mapDefinitionUid + ", key " + key);
 
-        try (final PooledByteBuffer startKeyPolledBuffer = getPooledKeyBuffer();
-                final PooledByteBuffer endKeyPolledBuffer = getPooledKeyBuffer()) {
+        try (final PooledByteBuffer startKeyPolledBuffer = getPooledKeyBuffer()) {
 
             final KeyRange<ByteBuffer> keyRange = buildKeyRange(
                     mapDefinitionUid,
                     key,
-                    startKeyPolledBuffer.getByteBuffer(),
-                    endKeyPolledBuffer.getByteBuffer());
+                    startKeyPolledBuffer.getByteBuffer());
 
             // these lines are useful for debugging with SMALL data volumes
 //        logDatabaseContents(txn);
@@ -101,8 +104,6 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
 //                buf -> valueSerde.deserialize(buf).toString());
 
             final AtomicInteger cnt = new AtomicInteger();
-            // TODO @AT Once a version of LMDBJava >0.8.1 is released then remove the comparator
-            //  see https://github.com/lmdbjava/lmdbjava/issues/169
             try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(
                     txn, keyRange)) {
                 // loop backwards over all rows with the same mapDefinitionUid, starting at key
@@ -110,14 +111,20 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
                     cnt.incrementAndGet();
                     final ByteBuffer keyBuffer = keyVal.key();
 
+                    final CompareResult compareResult = RangeStoreKeySerde.isKeyInRange(
+                            keyBuffer,
+                            mapDefinitionUid,
+                            key);
+
                     if (LOGGER.isTraceEnabled()) {
                         final RangeStoreKey rangeStoreKey = keySerde.deserialize(keyBuffer);
-                        LOGGER.trace("rangeStoreKey {}, keyBuffer {}",
+                        LOGGER.trace("rangeStoreKey {}, keyBuffer {}, compareResult {}",
                                 rangeStoreKey,
-                                ByteBufferUtils.byteBufferInfo(keyBuffer));
+                                ByteBufferUtils.byteBufferInfo(keyBuffer),
+                                compareResult);
                     }
 
-                    if (RangeStoreKeySerde.isKeyInRange(keyBuffer, key)) {
+                    if (CompareResult.IN_RANGE.equals(compareResult)) {
                         final UID uidOfFoundKey = UIDSerde.extractUid(keyBuffer);
                         // double check to be sure we have the right mapDefinitionUid
                         if (!uidOfFoundKey.equals(mapDefinitionUid)) {
@@ -133,9 +140,17 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
                         //  valueStoreKey buffer into the actual value bytebuffer from the valueStoreDb.
                         //  This would save a buffer copy.
                         //if (cnt.get() > 1) {
-                            //LOGGER.info("{} iterations", cnt.get());
+                        //LOGGER.info("{} iterations", cnt.get());
                         //}
                         return Optional.of(keyVal.val());
+                    } else {
+                        // If we are not inside the range then we have no hit.
+                        // This assumes ranges are non-overlapping.
+                        // e.g. if an entry exists with key [10-20] and we lookup with key 15,
+                        // the cursor start key will be [15-Long.MAX_VAL]. Thus [10-20] will be
+                        // the first one found.  If the first one found was [0-10] then we could safely
+                        // bomb out.
+                        break;
                     }
                 }
             }
@@ -179,8 +194,7 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
 
     private KeyRange<ByteBuffer> buildKeyRange(final UID mapDefinitionUid,
                                                final long key,
-                                               final ByteBuffer startKeyBuf,
-                                               final ByteBuffer endKeyBuf) {
+                                               final ByteBuffer startKeyBuf) {
         // We want to scan backwards over all keys with the passed mapDefinitionUid,
         // starting with a range from == key. E.g. with the following data (ignoring mapDefUid)
         // in DB order.
@@ -203,23 +217,16 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
         final RangeStoreKey startRangeStoreKey = new RangeStoreKey(mapDefinitionUid, startRange);
         keySerde.serialize(startKeyBuf, startRangeStoreKey);
 
-        // Zero is the lowest value for 'from' and 'to' so this represents the smallest key for
-        // a given mapDefinitionUid.
-        final Range<Long> endRange = new Range<>(0L, 0L);
-        final RangeStoreKey endRangeStoreKey = new RangeStoreKey(mapDefinitionUid, endRange);
-        keySerde.serialize(endKeyBuf, endRangeStoreKey);
-
-        LOGGER.trace(() -> "Using range [" + endRangeStoreKey + "] to [" + startRangeStoreKey + "]");
+        LOGGER.trace(() -> "Using startRangeStoreKey [" + startRangeStoreKey + "]");
         // we want to scan backward from (and including, if found) our start key
-        return KeyRange.closedBackward(startKeyBuf, endKeyBuf);
+        return KeyRange.atLeastBackward(startKeyBuf);
     }
 
     public void deleteMapEntries(final Txn<ByteBuffer> writeTxn,
                                  final UID mapUid,
                                  final EntryConsumer entryConsumer) {
 
-        try (PooledByteBuffer startKeyIncPooledBuffer = getPooledKeyBuffer();
-                PooledByteBuffer endKeyExcPooledBuffer = getPooledKeyBuffer()) {
+        try (PooledByteBuffer startKeyIncPooledBuffer = getPooledKeyBuffer()) {
 
             // TODO there appears to be a bug in LMDB that causes an IndexOutOfBoundsException
             // when both the start and end key are used in the keyRange

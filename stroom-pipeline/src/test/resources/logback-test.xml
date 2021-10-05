@@ -19,6 +19,8 @@
 <!--    <logger name="stroom.pipeline.refdata.store.offheapstore.RefDataOffHeapStore" level="debug" />-->
 
 <!--    <logger name="stroom.pipeline.refdata.store.offheapstore.databases.KeyValueStoreDb" level="trace" />-->
+<!--    <logger name="stroom.pipeline.refdata.store.offheapstore.databases.RangeStoreDb" level="trace" />-->
+
 
 
 <!--    <logger name="stroom.pipeline.refdata" level="trace" />-->

@@ -25,6 +25,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.concurrent.NotThreadSafe;
 
@@ -170,6 +171,23 @@ public class LmdbEnv implements AutoCloseable {
 
             LOGGER.trace("Opening new write txn");
             return new WriteTxnWrapper(writeTxnLock, env.txnWrite());
+        } catch (InterruptedException e) {
+            throw new RuntimeException("Thread interrupted while waiting for write lock on "
+                    + path.toAbsolutePath().normalize());
+        }
+    }
+
+    /**
+     * @return An {@link AutoCloseable} wrapper that can provide multiple write txns all while holding
+     * the single write lock. Useful for large jobs that need to commit periodically but don't want to release
+     * the lock to avoid the risk of deadlocks.
+     */
+    public BatchingWriteTxnWrapper getBatchingWriteTxnWrapper() {
+        try {
+            LOGGER.trace("Acquiring write txn lock");
+            writeTxnLock.lockInterruptibly();
+
+            return new BatchingWriteTxnWrapper(writeTxnLock, env::txnWrite);
         } catch (InterruptedException e) {
             throw new RuntimeException("Thread interrupted while waiting for write lock on "
                     + path.toAbsolutePath().normalize());
@@ -362,20 +380,6 @@ public class LmdbEnv implements AutoCloseable {
         }
 
         /**
-         * {@link Txn#renew()}
-         */
-        public void renew() {
-            writeTxn.renew();
-        }
-
-        /**
-         * {@link Txn#reset()}
-         */
-        public void reset() {
-            writeTxn.reset();
-        }
-
-        /**
          * Closes the txn and releases the single write lock
          */
         @Override
@@ -388,6 +392,70 @@ public class LmdbEnv implements AutoCloseable {
                     writeLock.unlock();
                 }
                 writeTxn = null;
+            }
+        }
+    }
+
+    @NotThreadSafe
+    public static class BatchingWriteTxnWrapper implements AutoCloseable {
+
+        private final ReentrantLock writeLock;
+        private Supplier<Txn<ByteBuffer>> writeTxnSupplier;
+        private Txn<ByteBuffer> writeTxn;
+
+
+        /**
+         * @param writeLock Should already be held by this thread.
+         */
+        private BatchingWriteTxnWrapper(final ReentrantLock writeLock,
+                                        final Supplier<Txn<ByteBuffer>> writeTxnSupplier) {
+            this.writeLock = writeLock;
+            this.writeTxnSupplier = writeTxnSupplier;
+        }
+
+        /**
+         * @return The write txn object. Do NOT call close() on the returned txn,
+         * use {@link WriteTxnWrapper#close()} or a try-with-resources block.
+         */
+        public Txn<ByteBuffer> getTxn() {
+            if (writeTxn == null) {
+                Objects.requireNonNull(writeTxnSupplier, "Has already been closed");
+                writeTxn = writeTxnSupplier.get();
+            }
+            return writeTxn;
+        }
+
+        /**
+         * {@link Txn#abort()}
+         */
+        public void abort() {
+            writeTxn.abort();
+            writeTxn = null;
+        }
+
+        /**
+         * {@link Txn#commit()}
+         */
+        public void commit() {
+            writeTxn.commit();
+            writeTxn = null;
+        }
+
+        /**
+         * Closes the txn and releases the single write lock
+         */
+        @Override
+        public void close() throws Exception {
+            if (writeTxn != null) {
+                try {
+                    writeTxn.close();
+                } finally {
+                    if (writeLock.isHeldByCurrentThread()) {
+                        writeLock.unlock();
+                    }
+                    writeTxn = null;
+                    writeTxnSupplier = null;
+                }
             }
         }
     }

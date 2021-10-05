@@ -23,6 +23,7 @@ import stroom.pipeline.refdata.store.offheapstore.RangeStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RangeStoreKeySerde;
+import stroom.pipeline.refdata.store.offheapstore.serdes.RangeStoreKeySerde.CompareResult;
 import stroom.pipeline.refdata.store.offheapstore.serdes.ValueStoreKeySerde;
 import stroom.util.shared.Range;
 
@@ -101,7 +102,9 @@ class TestRangeStoreDb extends AbstractLmdbDbTest {
                 getAndAssert(txn, uids.get(i), 300, (i * 10) + 5); // on range end
 
                 getAndAssertNotFound(txn, uids.get(i), 0); // not in a range
+                getAndAssertNotFound(txn, uids.get(i), 21); // not in a range
                 getAndAssertNotFound(txn, uids.get(i), 50); // not in a range
+                getAndAssertNotFound(txn, uids.get(i), 100); // not in a range
                 getAndAssertNotFound(txn, uids.get(i), 301); // not in a range
             }
         });
@@ -142,6 +145,26 @@ class TestRangeStoreDb extends AbstractLmdbDbTest {
             result = rangeStoreDb.containsMapDefinition(txn, uid4);
             assertThat(result).isFalse();
         });
+    }
+
+    @Test
+    void testIsKeyInRange() {
+        final RangeStoreKey rangeStoreKey = new RangeStoreKey(uid1, Range.of(10L, 20L));
+        final ByteBuffer keyBuffer = ByteBuffer.allocate(Long.BYTES * 2 + UID.UID_ARRAY_LENGTH);
+        rangeStoreDb.serializeKey(keyBuffer, rangeStoreKey);
+
+        assertThat(RangeStoreKeySerde.isKeyInRange(keyBuffer, uid1, 9))
+                .isEqualTo(CompareResult.BELOW_RANGE);
+        assertThat(RangeStoreKeySerde.isKeyInRange(keyBuffer, uid1, 10))
+                .isEqualTo(CompareResult.IN_RANGE);
+        assertThat(RangeStoreKeySerde.isKeyInRange(keyBuffer, uid1, 15L))
+                .isEqualTo(CompareResult.IN_RANGE);
+        assertThat(RangeStoreKeySerde.isKeyInRange(keyBuffer, uid1, 19))
+                .isEqualTo(CompareResult.IN_RANGE);
+        assertThat(RangeStoreKeySerde.isKeyInRange(keyBuffer, uid1, 20))
+                .isEqualTo(CompareResult.ABOVE_RANGE);
+        assertThat(RangeStoreKeySerde.isKeyInRange(keyBuffer, uid2, 15L))
+                .isEqualTo(CompareResult.MAP_UID_MISMATCH);
     }
 
     private void getAndAssert(Txn<ByteBuffer> txn, UID uid, long key, int expectedValue) {
