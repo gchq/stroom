@@ -38,11 +38,8 @@ public class User implements HasAuditInfo, HasIntegerId {
      */
     @JsonProperty
     private boolean group;
-    @JsonProperty
-    private boolean enabled;
 
     public User() {
-        enabled = true;
     }
 
     @JsonCreator
@@ -54,8 +51,7 @@ public class User implements HasAuditInfo, HasIntegerId {
                 @JsonProperty("updateUser") final String updateUser,
                 @JsonProperty("name") final String name,
                 @JsonProperty("uuid") final String uuid,
-                @JsonProperty("group") final boolean group,
-                @JsonProperty("enabled") final boolean enabled) {
+                @JsonProperty("group") final boolean group) {
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;
@@ -65,7 +61,6 @@ public class User implements HasAuditInfo, HasIntegerId {
         this.name = name;
         this.uuid = uuid;
         this.group = group;
-        this.enabled = enabled;
     }
 
     @Override
@@ -145,14 +140,6 @@ public class User implements HasAuditInfo, HasIntegerId {
         this.group = group;
     }
 
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(final boolean enabled) {
-        this.enabled = enabled;
-    }
-
     @Override
     public String toString() {
         return "User{" +
@@ -165,23 +152,8 @@ public class User implements HasAuditInfo, HasIntegerId {
                 ", name='" + name + '\'' +
                 ", uuid='" + uuid + '\'' +
                 ", group=" + group +
-                ", enabled=" + enabled +
                 '}';
     }
-
-//    @Override
-//    public boolean equals(final Object o) {
-//        if (this == o) return true;
-//        if (o == null || getClass() != o.getClass()) return false;
-//        final User user = (User) o;
-//        return Objects.equals(id, user.id);
-//    }
-//
-//    @Override
-//    public int hashCode() {
-//        return Objects.hash(id);
-//    }
-
 
     @Override
     public boolean equals(final Object o) {
@@ -219,7 +191,6 @@ public class User implements HasAuditInfo, HasIntegerId {
         private String name;
         private String uuid;
         private boolean group;
-        private boolean enabled = true;
 
         private Builder() {
         }
@@ -234,7 +205,6 @@ public class User implements HasAuditInfo, HasIntegerId {
             this.name = user.name;
             this.uuid = user.uuid;
             this.group = user.group;
-            this.enabled = user.enabled;
         }
 
         public Builder id(final int value) {
@@ -257,11 +227,6 @@ public class User implements HasAuditInfo, HasIntegerId {
             return this;
         }
 
-        public Builder enabled(final boolean value) {
-            enabled = value;
-            return this;
-        }
-
         public User build() {
             return new User(id,
                     version,
@@ -271,8 +236,7 @@ public class User implements HasAuditInfo, HasIntegerId {
                     updateUser,
                     name,
                     uuid,
-                    group,
-                    enabled);
+                    group);
         }
     }
 }
