@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2492** : Fixed issue getting filter priorities in processor task data store.
+
 * Issue **#2489** : Change to wrap long error messages in stepping display.
 
 * Issue **#2487** : Fixed issue flushing and deleting index shards.
