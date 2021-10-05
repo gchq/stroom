@@ -97,6 +97,7 @@ const TokenManager: FunctionComponent<{
           },
           quickFilterProps,
           pagerProps,
+          keyExtractor: (token) => token.id.toString(),
         }}
         onClose={onClose}
       />

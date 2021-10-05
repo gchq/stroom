@@ -14,6 +14,8 @@ import { CriteriaFieldSort } from "api/stroom";
 export interface TableProps<T> {
   columns: any[];
   data: T[];
+  selectedRows?: T[];
+  setSelectedRows?: (selected: T[]) => void;
   initialSortBy?: CriteriaFieldSort[];
   onChangeSort?: (sort: CriteriaFieldSort[]) => void;
   onSelect?: (selected: T[]) => void;
@@ -26,6 +28,8 @@ export const Table = <T,>(
   const {
     columns,
     data,
+    selectedRows = [],
+    setSelectedRows = () => undefined,
     initialSortBy = [],
     onChangeSort = () => undefined,
     onSelect = () => undefined,
@@ -55,14 +59,12 @@ export const Table = <T,>(
     rows,
     prepareRow,
     state: { sortBy },
-    toggleAllRowsSelected,
   } = useTable(
     {
       columns,
       data,
       defaultColumn,
       initialState,
-      autoResetSelectedRows: false,
       manualSortBy: true,
     },
     useBlockLayout,
@@ -121,19 +123,15 @@ export const Table = <T,>(
             <div
               key={row.id}
               {...row.getRowProps()}
-              className={`tr ${row.isSelected ? "selected" : ""}`}
+              className={`tr ${
+                selectedRows.indexOf(row.original) != -1 ? "selected" : ""
+              }`}
               onClick={() => {
-                if (!row.isSelected) {
-                  toggleAllRowsSelected(false);
-                  row.toggleRowSelected();
-                }
+                setSelectedRows([row.original]);
                 onSelect([row.original]);
               }}
               onDoubleClick={() => {
-                if (!row.isSelected) {
-                  toggleAllRowsSelected(false);
-                  row.toggleRowSelected();
-                }
+                setSelectedRows([row.original]);
                 onDoubleSelect([row.original]);
               }}
             >

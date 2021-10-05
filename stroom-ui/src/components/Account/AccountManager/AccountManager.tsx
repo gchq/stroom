@@ -97,6 +97,7 @@ const AccountManager: FunctionComponent<{
           },
           quickFilterProps,
           pagerProps,
+          keyExtractor: (account) => account.id.toString(),
         }}
         onClose={onClose}
       />
