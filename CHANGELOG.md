@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2431** : Fixed issue with item selection in account and token list pages.
 
+
+## [v7.0-beta.149] - 2021-10-04
+
+* Issue **#2484** : Fix failing ref lookups when one loader has range data.
+
+* Issue **#2485** : Autologger: UNLOGGED calls always being logged.
+
 * Issue **#2395** : Fixed timezone issue in API key display.
 
 * Issue **#2452** : New pipeline references now default to `Reference` data type.
@@ -3811,7 +3818,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.148...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.149...HEAD
+[v7.0-beta.149]: https://github.com/gchq/stroom/compare/v7.0-beta.148...v7.0-beta.149
 [v7.0-beta.148]: https://github.com/gchq/stroom/compare/v7.0-beta.147...v7.0-beta.148
 [v7.0-beta.147]: https://github.com/gchq/stroom/compare/v7.0-beta.146...v7.0-beta.147
 [v7.0-beta.146]: https://github.com/gchq/stroom/compare/v7.0-beta.145...v7.0-beta.146

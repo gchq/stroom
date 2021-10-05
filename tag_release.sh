@@ -640,7 +640,7 @@ EOF
 
   if [[ "${#namespace_and_repo[@]}" -ne 2 ]]; then
     warn "Unable to parse git namespace and repo from the remote URL." \
-      "\nYou will have to see them manually in ${BLUE}${tag_release_config_file}"
+      "\nYou will have to set them manually in ${BLUE}${tag_release_config_file}"
   else
     git_namespace="${namespace_and_repo[0]}"
     git_repo="${namespace_and_repo[1]}"

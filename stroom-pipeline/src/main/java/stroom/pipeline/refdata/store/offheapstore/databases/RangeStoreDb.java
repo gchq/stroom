@@ -148,18 +148,29 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
     public boolean containsMapDefinition(final Txn<ByteBuffer> txn, final UID mapDefinitionUid) {
         LOGGER.trace(() -> "containsMapDefinition called for " + mapDefinitionUid);
 
-        try (PooledByteBuffer pooledKeyBuffer = getPooledKeyBuffer()) {
+        try (PooledByteBuffer pooledStartKeyBuffer = getPooledKeyBuffer();
+                PooledByteBuffer pooledEndKeyBuffer = getPooledKeyBuffer();
+                PooledByteBuffer nextUidBuffer = getByteBufferPool().getPooledByteBuffer(UID.length())) {
+
             final Range<Long> startRange = new Range<>(0L, 0L);
             final RangeStoreKey startRangeStoreKey = new RangeStoreKey(mapDefinitionUid, startRange);
-            final ByteBuffer startKeyBuf = pooledKeyBuffer.getByteBuffer();
+            final ByteBuffer startKeyBuf = pooledStartKeyBuffer.getByteBuffer();
             keySerde.serialize(startKeyBuf, startRangeStoreKey);
 
-            final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(startKeyBuf);
+            // Build an exclusive end key using the next map UID
+            mapDefinitionUid.writeNextUid(nextUidBuffer.getByteBuffer());
+            final UID nextMapDefUid = UID.wrap(nextUidBuffer.getByteBuffer());
+            final RangeStoreKey endRangeStoreKey = new RangeStoreKey(nextMapDefUid, startRange);
+            final ByteBuffer endKeyBuf = pooledEndKeyBuffer.getByteBuffer();
+            keySerde.serialize(endKeyBuf, endRangeStoreKey);
+
+            // start key inclusive, end key exclusive
+            final KeyRange<ByteBuffer> keyRange = KeyRange.closedOpen(startKeyBuf, endKeyBuf);
 
             try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(txn, keyRange)) {
+                // If we find anything in our range then it means this map uid is in the range store.
                 return cursorIterable.iterator().hasNext();
             }
-
         }
     }
 
