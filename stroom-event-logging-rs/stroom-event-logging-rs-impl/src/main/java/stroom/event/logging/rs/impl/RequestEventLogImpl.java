@@ -81,7 +81,7 @@ class RequestEventLogImpl implements RequestEventLog {
                 documentEventLog.create(responseEntity, typeId, descriptionVerb, error);
                 break;
             case COPY:
-                documentEventLog.copy(requestEntity, typeId, descriptionVerb, error);
+                documentEventLog.copy(requestEntity, responseEntity, typeId, descriptionVerb, error);
                 break;
             case UPDATE:
                 if (!RequestInfo.objectIsLoggable(responseEntity)) {

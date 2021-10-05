@@ -70,7 +70,7 @@ public final class ValDouble implements ValNumber {
 
     @Override
     public void appendString(final StringBuilder sb) {
-        sb.append(toString());
+        sb.append(this);
     }
 
     @Override
@@ -78,7 +78,6 @@ public final class ValDouble implements ValNumber {
         return TYPE;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

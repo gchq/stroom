@@ -8,6 +8,27 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 
+## [v7.0-beta.149] - 2021-10-04
+
+* Issue **#2484** : Fix failing ref lookups when one loader has range data.
+
+* Issue **#2485** : Autologger: UNLOGGED calls always being logged.
+
+* Issue **#2395** : Fixed timezone issue in API key display.
+
+* Issue **#2452** : New pipeline references now default to `Reference` data type.
+
+* Issue **#2414** : The processing tasks data source now exposes start, end and status times plus filter priorities.
+
+* Issue **#2441** : Improve logging and prevent autologger warning for `MetaResourcImpl`
+
+* Issue **#2440** : Prevent autologger warning for `ExplorerResourceImpl`
+
+* Issue **#2465** : `SaveAs` is now working for non admin users.
+
+* Issue **#2460** : Processing filters now reliably process feeds where wildcards are used to match feed names.
+
+
 ## [v7.0-beta.148] - 2021-09-30
 
 * Regenerated restful API.
@@ -3795,7 +3816,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.148...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.149...HEAD
+[v7.0-beta.149]: https://github.com/gchq/stroom/compare/v7.0-beta.148...v7.0-beta.149
 [v7.0-beta.148]: https://github.com/gchq/stroom/compare/v7.0-beta.147...v7.0-beta.148
 [v7.0-beta.147]: https://github.com/gchq/stroom/compare/v7.0-beta.146...v7.0-beta.147
 [v7.0-beta.146]: https://github.com/gchq/stroom/compare/v7.0-beta.145...v7.0-beta.146

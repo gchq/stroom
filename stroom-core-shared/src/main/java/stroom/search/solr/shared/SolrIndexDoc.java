@@ -178,7 +178,6 @@ public class SolrIndexDoc extends Doc {
         return DOCUMENT_TYPE;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

@@ -57,7 +57,6 @@ public class SearchModule extends AbstractModule {
                         .schedule(PERIODIC, "10s"));
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

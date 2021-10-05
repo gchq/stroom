@@ -11,7 +11,7 @@ const useDateUtil = (): DateUtil => {
   } = useConfig();
 
   const toDateString = (value: number) => {
-    const onMoment = moment(value);
+    const onMoment = moment.utc(value);
     return onMoment.format(dateFormat) + "Z";
   };
 

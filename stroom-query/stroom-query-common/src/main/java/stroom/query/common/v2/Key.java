@@ -118,7 +118,6 @@ public class Key implements Iterable<KeyPart> {
         return null;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

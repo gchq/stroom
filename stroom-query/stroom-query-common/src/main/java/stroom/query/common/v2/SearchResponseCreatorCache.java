@@ -30,6 +30,7 @@ public interface SearchResponseCreatorCache {
     //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     class Key {
+
         private final QueryKey queryKey;
         private final SearchRequest searchRequest;
 
@@ -51,11 +52,14 @@ public interface SearchResponseCreatorCache {
             return searchRequest;
         }
 
-        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
 
             final Key key = (Key) o;
 

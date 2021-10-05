@@ -63,7 +63,6 @@ public final class Param {
         return value;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object o) {
         if (this == o) {

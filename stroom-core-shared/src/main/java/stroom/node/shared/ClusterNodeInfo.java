@@ -138,7 +138,6 @@ public class ClusterNodeInfo {
         this.error = error;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -206,7 +205,6 @@ public class ClusterNodeInfo {
             return master;
         }
 
-        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
             if (this == o) {

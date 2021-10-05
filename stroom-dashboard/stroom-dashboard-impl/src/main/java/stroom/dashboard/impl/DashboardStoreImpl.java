@@ -35,6 +35,7 @@ import stroom.docstore.api.UniqueNameUtil;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
+import stroom.security.api.SecurityContext;
 import stroom.util.shared.Message;
 
 import org.slf4j.Logger;
@@ -55,23 +56,32 @@ class DashboardStoreImpl implements DashboardStore {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DashboardStoreImpl.class);
 
+    private static final String TEMPLATE_FILE = "DashboardTemplate.json";
+
     private final Store<DashboardDoc> store;
     private final DashboardSerialiser serialiser;
+    private final SecurityContext securityContext;
 
     private DashboardConfig template;
 
     @Inject
     DashboardStoreImpl(final StoreFactory storeFactory,
-                       final DashboardSerialiser serialiser) {
+                       final DashboardSerialiser serialiser,
+                       final SecurityContext securityContext) {
         this.store = storeFactory.createStore(serialiser, DashboardDoc.DOCUMENT_TYPE, DashboardDoc.class);
         this.serialiser = serialiser;
+        this.securityContext = securityContext;
     }
 
     private DashboardConfig getTemplate() {
         if (template == null) {
-            try (final InputStream is = getClass().getResourceAsStream("DashboardTemplate.json")) {
-                final byte[] bytes = is.readAllBytes();
-                template = serialiser.getDashboardConfigFromJson(bytes);
+            try (final InputStream is = getClass().getResourceAsStream(TEMPLATE_FILE)) {
+                if (is != null) {
+                    final byte[] bytes = is.readAllBytes();
+                    template = serialiser.getDashboardConfigFromJson(bytes);
+                } else {
+                    LOGGER.error("Error reading dashboard template as template not found: " + TEMPLATE_FILE);
+                }
             } catch (final IOException e) {
                 LOGGER.error("Error reading dashboard template from file", e);
             }
@@ -88,9 +98,14 @@ class DashboardStoreImpl implements DashboardStore {
         final DocRef docRef = store.createDocument(name);
 
         // Create a dashboard from a template.
-        final DashboardDoc dashboardDoc = store.readDocument(docRef);
-        dashboardDoc.setDashboardConfig(getTemplate());
-        store.writeDocument(dashboardDoc);
+
+        // Read and write as a processing user to ensure we are allowed as documents do not have permissions added to
+        // them until after they are created in the store.
+        securityContext.asProcessingUser(() -> {
+            final DashboardDoc dashboardDoc = store.readDocument(docRef);
+            dashboardDoc.setDashboardConfig(getTemplate());
+            store.writeDocument(dashboardDoc);
+        });
         return docRef;
     }
 

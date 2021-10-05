@@ -107,7 +107,7 @@ public class TimeAgnosticStatisticEvent implements Serializable {
 
             return Collections.unmodifiableList(tempTagList);
         } else {
-            return Collections.unmodifiableList(Collections.<StatisticTag>emptyList());
+            return Collections.unmodifiableList(Collections.emptyList());
         }
     }
 
@@ -203,7 +203,6 @@ public class TimeAgnosticStatisticEvent implements Serializable {
         return result;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object obj) {
         if (this == obj) {
@@ -241,13 +240,10 @@ public class TimeAgnosticStatisticEvent implements Serializable {
             return false;
         }
         if (value == null) {
-            if (other.value != null) {
-                return false;
-            }
-        } else if (!value.equals(other.value)) {
-            return false;
+            return other.value == null;
+        } else {
+            return value.equals(other.value);
         }
-        return true;
     }
 
 }

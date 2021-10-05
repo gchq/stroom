@@ -347,11 +347,10 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     public void onReadOnly(final boolean readOnly) {
         super.onReadOnly(readOnly || embedded);
 
+        saveButton.setEnabled(isDirty() && !embedded);
+        saveAsButton.setEnabled(true);
+
         boolean enabled = !readOnly && !embedded;
-
-        saveButton.setEnabled(isDirty() && enabled);
-        saveAsButton.setEnabled(enabled);
-
         addButton.setEnabled(enabled);
         if (enabled) {
             registerHandler(addButton.addClickHandler(event -> {
@@ -471,16 +470,13 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     }
 
     @Override
-    public void onDirty(final boolean dirty) {
-        if (!isReadOnly()) {
-            // Only fire tab refresh if the tab has changed.
-            if (lastLabel == null || !lastLabel.equals(getLabel())) {
-                lastLabel = getLabel();
-                RefreshContentTabEvent.fire(this, this);
-            }
-
-            saveButton.setEnabled(dirty);
+    public void onDirtyChange() {
+        // Only fire tab refresh if the tab has changed.
+        if (lastLabel == null || !lastLabel.equals(getLabel())) {
+            lastLabel = getLabel();
+            RefreshContentTabEvent.fire(this, this);
         }
+        saveButton.setEnabled(isDirty());
     }
 
     public void setCustomTitle(final String customTitle) {

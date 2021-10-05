@@ -47,7 +47,6 @@ public class FsDataStoreModule extends AbstractModule {
                 .bind(EchoServlet.class);
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
