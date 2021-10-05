@@ -100,7 +100,9 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
             .collect(Collectors.joining());
 
     private static final int REF_STREAM_DEF_COUNT = 2;
-    private static final int ENTRIES_PER_MAP_DEF = 50_000;
+    //    private static final int ENTRIES_PER_MAP_DEF = 10;
+    private static final int ENTRIES_PER_MAP_DEF = 20_000;
+    //    private static final int ENTRIES_PER_MAP_DEF = 1_000_000;
     private static final int MAPS_PER_REF_STREAM_DEF = 2;
 
     @Inject
@@ -122,7 +124,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
     @Override
     protected ByteSize getMaxSizeBytes() {
-        return ByteSize.ofMebibytes(5_000);
+        return ByteSize.ofGibibytes(10);
     }
 
     @BeforeEach

@@ -924,8 +924,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         Optional<UID> optMapUid;
         try (PooledByteBuffer pooledUidBuffer = byteBufferPool.getPooledByteBuffer(UID.UID_ARRAY_LENGTH)) {
             do {
-                //open a ranged cursor on the map forward table to scan all map defs for that stream def
-                //for each map def get the map uid
+                // open a ranged cursor on the map forward table to scan all map defs for that stream def
+                // for each map def get the map uid
                 optMapUid = mapDefinitionUIDStore.getNextMapDefinition(
                         writeTxn, refStreamDefinition, pooledUidBuffer::getByteBuffer);
 
@@ -938,7 +938,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                                             mapUid)));
 
                     LOGGER.debug("Found mapUid {} for refStreamDefinition {}", mapUid, refStreamDefinition);
-                    Tuple2<Integer, Integer> dataPurgeCounts = purgeMapData(writeTxn, optMapUid.get());
+                    final Tuple2<Integer, Integer> dataPurgeCounts = purgeMapData(writeTxn, optMapUid.get());
                     summaryInfo = summaryInfo.increment(
                             1,
                             dataPurgeCounts._1(),

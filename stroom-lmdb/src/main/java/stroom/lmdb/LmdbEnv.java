@@ -77,6 +77,13 @@ public class LmdbEnv implements AutoCloseable {
     }
 
     /**
+     * @link Env#sync
+     */
+    public void sync(final boolean force) {
+        env.sync(force);
+    }
+
+    /**
      * Opens a database with the supplied name. If no dbiFlags are supplied then
      * {@link DbiFlags#MDB_CREATE} is used to create the database if it doesn't exist.
      */
