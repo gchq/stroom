@@ -20,6 +20,7 @@ import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 
 public class StreamKey {
+
     private final String feed;
     private final String streamType;
     private final boolean segmentOutput;
@@ -51,7 +52,6 @@ public class StreamKey {
         return builder.toHashCode();
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (o == this) {

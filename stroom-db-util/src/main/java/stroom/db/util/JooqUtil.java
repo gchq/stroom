@@ -1,5 +1,7 @@
 package stroom.db.util;
 
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
@@ -15,11 +17,10 @@ import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.SQLDialect;
 import org.jooq.Table;
+import org.jooq.UpdatableRecord;
 import org.jooq.conf.Settings;
 import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.Date;
@@ -38,7 +39,8 @@ import javax.sql.DataSource;
 
 public final class JooqUtil {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(JooqUtil.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JooqUtil.class);
+    private static final ThreadLocal<DataSource> DATA_SOURCE_THREAD_LOCAL = new ThreadLocal<>();
 
     private static final String DEFAULT_ID_FIELD_NAME = "id";
     private static final Boolean RENDER_SCHEMA = false;
@@ -58,7 +60,7 @@ public final class JooqUtil {
         return DSL.using(connection, SQLDialect.MYSQL, settings);
     }
 
-    public static DSLContext createContextWithOptimisticLocking(final Connection connection) {
+    private static DSLContext createContextWithOptimisticLocking(final Connection connection) {
         Settings settings = new Settings();
         // Turn off fully qualified schemata.
         settings = settings.withRenderSchema(RENDER_SCHEMA);
@@ -68,8 +70,13 @@ public final class JooqUtil {
 
     public static void context(final DataSource dataSource, final Consumer<DSLContext> consumer) {
         try (final Connection connection = dataSource.getConnection()) {
-            final DSLContext context = createContext(connection);
-            consumer.accept(context);
+            try {
+                checkDataSource(dataSource);
+                final DSLContext context = createContext(connection);
+                consumer.accept(context);
+            } finally {
+                releaseDataSource();
+            }
         } catch (final Exception e) {
             throw convertException(e);
         }
@@ -78,13 +85,18 @@ public final class JooqUtil {
     public static <R extends Record> void truncateTable(final DataSource dataSource,
                                                         final Table<R> table) {
         try (final Connection connection = dataSource.getConnection()) {
-            final DSLContext context = createContext(connection);
-            context
-                    .batch(
-                            "SET FOREIGN_KEY_CHECKS=0",
-                            "truncate table " + table.getName(),
-                            "SET FOREIGN_KEY_CHECKS=1")
-                    .execute();
+            try {
+                checkDataSource(dataSource);
+                final DSLContext context = createContext(connection);
+                context
+                        .batch(
+                                "SET FOREIGN_KEY_CHECKS=0",
+                                "truncate table " + table.getName(),
+                                "SET FOREIGN_KEY_CHECKS=1")
+                        .execute();
+            } finally {
+                releaseDataSource();
+            }
         } catch (final Exception e) {
             throw convertException(e);
         }
@@ -94,12 +106,17 @@ public final class JooqUtil {
                                                        final Table<R> table) {
 
         try (final Connection connection = dataSource.getConnection()) {
-            final DSLContext context = createContext(connection);
-            return context
-                    .selectCount()
-                    .from(table)
-                    .fetchOne()
-                    .value1();
+            try {
+                checkDataSource(dataSource);
+                final DSLContext context = createContext(connection);
+                return context
+                        .selectCount()
+                        .from(table)
+                        .fetchOne()
+                        .value1();
+            } finally {
+                releaseDataSource();
+            }
         } catch (final Exception e) {
             throw convertException(e);
         }
@@ -108,8 +125,13 @@ public final class JooqUtil {
     public static <R> R contextResult(final DataSource dataSource, final Function<DSLContext, R> function) {
         R result;
         try (final Connection connection = dataSource.getConnection()) {
-            final DSLContext context = createContext(connection);
-            result = function.apply(context);
+            try {
+                checkDataSource(dataSource);
+                final DSLContext context = createContext(connection);
+                result = function.apply(context);
+            } finally {
+                releaseDataSource();
+            }
         } catch (final Exception e) {
             throw convertException(e);
         }
@@ -131,8 +153,13 @@ public final class JooqUtil {
                                                            final Function<DSLContext, R> function) {
         R result;
         try (final Connection connection = dataSource.getConnection()) {
-            final DSLContext context = createContextWithOptimisticLocking(connection);
-            result = function.apply(context);
+            try {
+                checkDataSource(dataSource);
+                final DSLContext context = createContextWithOptimisticLocking(connection);
+                result = function.apply(context);
+            } finally {
+                releaseDataSource();
+            }
         } catch (final Exception e) {
             throw convertException(e);
         }
@@ -148,6 +175,58 @@ public final class JooqUtil {
                 context -> context.transactionResult(nested -> function.apply(DSL.using(nested))));
     }
 
+    public static <R extends UpdatableRecord<R>> R create(final DataSource dataSource, final R record) {
+        LOGGER.debug(() -> "Creating a " + record.getTable() + " record " + record);
+        try (final Connection connection = dataSource.getConnection()) {
+            try {
+                checkDataSource(dataSource);
+                final DSLContext context = createContext(connection);
+                record.attach(context.configuration());
+                record.store();
+            } finally {
+                releaseDataSource();
+            }
+        } catch (final Exception e) {
+            throw convertException(e);
+        }
+        return record;
+    }
+
+    public static <R extends UpdatableRecord<R>> R update(final DataSource dataSource, final R record) {
+        LOGGER.debug(() -> "Updating a " + record.getTable() + " record " + record);
+        try (final Connection connection = dataSource.getConnection()) {
+            try {
+                checkDataSource(dataSource);
+                final DSLContext context = createContext(connection);
+                record.attach(context.configuration());
+                record.update();
+            } finally {
+                releaseDataSource();
+            }
+        } catch (final Exception e) {
+            throw convertException(e);
+        }
+        return record;
+    }
+
+    public static <R extends UpdatableRecord<R>> R updateWithOptimisticLocking(final DataSource dataSource,
+                                                                               final R record) {
+        LOGGER.debug(() -> "Updating a " + record.getTable() + " record " + record);
+        try (final Connection connection = dataSource.getConnection()) {
+            try {
+                checkDataSource(dataSource);
+                final DSLContext context = createContextWithOptimisticLocking(connection);
+                record.attach(context.configuration());
+                record.update();
+            } finally {
+                releaseDataSource();
+            }
+        } catch (final Exception e) {
+            throw convertException(e);
+        }
+        return record;
+    }
+
     /**
      * Delete all rows matching the passed id value
      *
@@ -160,7 +239,7 @@ public final class JooqUtil {
                                                     final Field<Integer> field,
                                                     final int id) {
 
-        return JooqUtil.contextResult(dataSource, context ->
+        return contextResult(dataSource, context ->
                 context
                         .deleteFrom(table)
                         .where(field.eq(id))
@@ -178,7 +257,7 @@ public final class JooqUtil {
                                                     final int id) {
 
         final Field<Integer> idField = getIdField(table);
-        return JooqUtil.contextResult(dataSource, context ->
+        return contextResult(dataSource, context ->
                 context
                         .deleteFrom(table)
                         .where(idField.eq(id))
@@ -199,7 +278,7 @@ public final class JooqUtil {
                                                               final int id) {
 
         final Field<Integer> idField = getIdField(table);
-        return JooqUtil.contextResult(dataSource, context ->
+        return contextResult(dataSource, context ->
                 context
                         .fetchOptional(table, idField.eq(id))
                         .map(record ->
@@ -302,7 +381,7 @@ public final class JooqUtil {
 
         // Combine conditions.
         final Optional<Condition> condition = fromCondition.map(c1 ->
-                toCondition.map(c1::and).orElse(c1))
+                        toCondition.map(c1::and).orElse(c1))
                 .or(() -> toCondition);
         return convertMatchNull(field, matchNull, condition);
     }
@@ -442,12 +521,28 @@ public final class JooqUtil {
     }
 
     private static RuntimeException convertException(final Exception e) {
-        LOGGER.error(e.getMessage(), e);
+        LOGGER.error(e::getMessage, e);
         if (e instanceof RuntimeException) {
             return (RuntimeException) e;
         } else {
             return new RuntimeException(e.getMessage(), e);
         }
+    }
+
+    private static void checkDataSource(final DataSource dataSource) {
+        DataSource currentDataSource = DATA_SOURCE_THREAD_LOCAL.get();
+        if (currentDataSource != null && currentDataSource.equals(dataSource)) {
+            try {
+                throw new RuntimeException("Data source already in use");
+            } catch (final RuntimeException e) {
+                LOGGER.error(e::getMessage, e);
+            }
+        }
+        DATA_SOURCE_THREAD_LOCAL.set(dataSource);
+    }
+
+    private static void releaseDataSource() {
+        DATA_SOURCE_THREAD_LOCAL.set(null);
     }
 
 }

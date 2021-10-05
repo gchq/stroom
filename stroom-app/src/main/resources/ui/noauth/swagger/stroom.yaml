@@ -5371,29 +5371,6 @@ paths:
       summary: Find the users matching the supplied criteria
       tags:
       - Authorisation
-  /users/v1/{userName}/status:
-    put:
-      operationId: setUserStatus
-      parameters:
-      - in: path
-        name: userName
-        required: true
-        schema:
-          type: string
-      - in: query
-        name: enabled
-        schema:
-          type: boolean
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: boolean
-          description: default response
-      summary: Enables/disables the Stroom user with the supplied username
-      tags:
-      - Authorisation
   /users/v1/{userUuid}:
     get:
       operationId: fetchUser
@@ -5638,6 +5615,16 @@ components:
           uniqueItems: true
         classification:
           type: string
+        displayMode:
+          type: string
+          enum:
+          - TEXT
+          - HEX
+          - MARKER
+        errors:
+          type: array
+          items:
+            type: string
         feedName:
           type: string
         itemRange:
@@ -7394,6 +7381,12 @@ components:
     FetchDataRequest:
       type: object
       properties:
+        displayMode:
+          type: string
+          enum:
+          - TEXT
+          - HEX
+          - MARKER
         expandedSeverities:
           type: array
           items:
@@ -7403,8 +7396,6 @@ components:
             - WARN
             - ERROR
             - FATAL
-        markerMode:
-          type: boolean
         pipeline:
           $ref: '#/components/schemas/DocRef'
         recordCount:
@@ -10340,6 +10331,10 @@ components:
           type: integer
           format: int64
           minimum: 0
+        maxHexDumpLines:
+          type: integer
+          format: int32
+          minimum: 1
     SourceLocation:
       type: object
       properties:
@@ -10885,6 +10880,10 @@ components:
     TaskProgressResponse:
       type: object
       properties:
+        errors:
+          type: array
+          items:
+            type: string
         pageResponse:
           $ref: '#/components/schemas/PageResponse'
         values:
@@ -11133,8 +11132,6 @@ components:
           format: int64
         createUser:
           type: string
-        enabled:
-          type: boolean
         group:
           type: boolean
         id:

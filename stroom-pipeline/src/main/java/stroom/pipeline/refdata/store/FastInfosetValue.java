@@ -48,11 +48,14 @@ public class FastInfosetValue extends RefDataValue {
         return valueStoreHashAlgorithm.hash(fastInfosetByteBuffer);
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final FastInfosetValue that = (FastInfosetValue) o;
         return Objects.equals(fastInfosetByteBuffer, that.fastInfosetByteBuffer);
     }

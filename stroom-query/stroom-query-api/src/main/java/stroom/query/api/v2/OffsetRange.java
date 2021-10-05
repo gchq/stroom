@@ -31,7 +31,7 @@ import java.util.Objects;
 public final class OffsetRange {
 
     @Schema(description = "The start offset for this sub-set of data, where zero is the offset of the first record " +
-                    "in the full result set",
+            "in the full result set",
             example = "0",
             required = true)
     @JsonProperty
@@ -64,7 +64,6 @@ public final class OffsetRange {
         return length;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object o) {
         if (this == o) {

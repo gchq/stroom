@@ -141,7 +141,6 @@ public class FindIndexShardCriteria extends BaseCriteria {
         return sb.toString();
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

@@ -664,16 +664,17 @@ public class MockStore implements Store, Clearable {
             try (final SegmentInputStream segmentInputStream = new RASegmentInputStream(data, boundaryIndex)) {
                 return segmentInputStream.count();
             }
-
-//            try (final NestedInputStream nestedInputStream = getNestedInputStream()) {
-//                return nestedInputStream.getEntryCount();
-//            }
         }
 
-//        @Override
-//        public NestedInputStreamFactory getChild(final String streamTypeName) {
-//            return child(streamTypeName);
-//        }
+        @Override
+        public long count(final String childStreamType) throws IOException {
+            final InputStream data = getChildInputStream(childStreamType);
+            final InputStream boundaryIndex = getChildInputStream(InternalStreamTypeNames.BOUNDARY_INDEX);
+
+            try (final SegmentInputStream segmentInputStream = new RASegmentInputStream(data, boundaryIndex)) {
+                return segmentInputStream.count();
+            }
+        }
 
         /////////////////////////////////
         // START INTERNAL SOURCE

@@ -113,12 +113,12 @@ class MetaTypeDaoImpl implements MetaTypeDao, Clearable {
 
     private Optional<Integer> create(final String name) {
         return JooqUtil.contextResult(metaDbConnProvider, context -> context
-                .insertInto(META_TYPE, META_TYPE.NAME)
-                .values(name)
-                .onDuplicateKeyIgnore()
-                .returning(META_TYPE.ID)
-                .fetchOptional()
-                .map(MetaTypeRecord::getId));
+                        .insertInto(META_TYPE, META_TYPE.NAME)
+                        .values(name)
+                        .onDuplicateKeyIgnore()
+                        .returning(META_TYPE.ID)
+                        .fetchOptional())
+                .map(MetaTypeRecord::getId);
     }
 
     @Override

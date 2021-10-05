@@ -9,6 +9,58 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2471** : Changes to help diagnose proxy aggregation issues.
 
+* Issue **#2494** : Changed logging to help diagnose problem.
+
+* Issue **#2429** : The server tasks screen now handles errors that occur when trying to contact unreachable nodes.
+
+* Issue **#2492** : Fixed issue getting filter priorities in processor task data store.
+
+* Issue **#2489** : Change to wrap long error messages in stepping display.
+
+* Issue **#2487** : Fixed issue flushing and deleting index shards.
+
+* Issue **#2442** : Removed enabled/disabled states for permission users and user groups as these are now controlled by account authentication. 
+
+* Issue **#2431** : Fixed issue with item selection in account and token list pages.
+
+* Issue **#2484** : Fix failing ref lookups when one loader has range data.
+
+* Issue **#2485** : Autologger: UNLOGGED calls always being logged.
+
+* Issue **#2395** : Fixed timezone issue in API key display.
+
+* Issue **#2452** : New pipeline references now default to `Reference` data type.
+
+* Issue **#2414** : The processing tasks data source now exposes start, end and status times plus filter priorities.
+
+* Issue **#2441** : Improve logging and prevent autologger warning for `MetaResourcImpl`
+
+* Issue **#2440** : Prevent autologger warning for `ExplorerResourceImpl`
+
+* Issue **#2465** : `SaveAs` is now working for non admin users.
+
+* Issue **#2460** : Processing filters now reliably process feeds where wildcards are used to match feed names.
+
+* Issue **#2475** : Orphan file and meta finder now show the correct task progress.
+
+* Issue **#2474** : Fixed orphan file finder.
+
+* Issue **#2467** : Fix viewing of streams that can't be decoded. Errors now displayed in large banner rather than as text in the editor.
+
+* Add a view as hex option to the Data Preview panes.
+
+* Add option to show/hide the editor indent guides.
+
+* Remove white space on editor context menu.
+
+* Change data viewing 'progress' bar to have a minimum width of 3px to make it more visible.
+
+* Issue **#2469** : Made `SafeXmlFilter` available for use in the application.
+
+* Issue **#2403** : Fix guice bind errors in stroom and proxy when the `path` config branch is empty or set to null.
+
+* Issue **#2462** : Made changes to stop DB connections being used within the context of other open connections.
+
 * Uplift LMDBJava to 0.8.2 to fix LMDBJava cursor comparator bug.
 
 * Issue **#2464** : Add `leakDetectionThreshold` to the hikari pool config.

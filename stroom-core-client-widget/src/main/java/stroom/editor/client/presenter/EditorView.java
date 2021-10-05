@@ -40,6 +40,7 @@ public interface EditorView extends View, HasKeyDownHandlers, HasFormatHandlers,
 
     void focus();
 
+    @Override
     void setText(final String text);
 
     void setText(final String text, final boolean format);
@@ -55,6 +56,8 @@ public interface EditorView extends View, HasKeyDownHandlers, HasFormatHandlers,
     void setIndicators(final IndicatorLines indicators);
 
     void setHighlights(final List<TextRange> highlights);
+
+    public void setErrorText(final String title, final String errorText);
 
     /**
      * If the text is being formatted by this view then you can provide a function to generate
@@ -81,6 +84,8 @@ public interface EditorView extends View, HasKeyDownHandlers, HasFormatHandlers,
 
     Option getLineWrapOption();
 
+    Option getShowIndentGuides();
+
     Option getShowInvisiblesOption();
 
     Option getUseVimBindingsOption();
@@ -92,6 +97,8 @@ public interface EditorView extends View, HasKeyDownHandlers, HasFormatHandlers,
     Option getLiveAutoCompletionOption();
 
     Option getHighlightActiveLineOption();
+
+    Option getViewAsHexOption();
 
     void setControlsVisible(boolean visible);
 }

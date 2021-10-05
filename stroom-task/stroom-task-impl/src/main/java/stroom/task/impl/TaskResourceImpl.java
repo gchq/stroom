@@ -35,6 +35,8 @@ import stroom.util.shared.ResultPage;
 import event.logging.ProcessAction;
 import event.logging.ProcessEventAction;
 
+import java.util.Collections;
+import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.ws.rs.client.Entity;
@@ -64,23 +66,29 @@ class TaskResourceImpl implements TaskResource {
 
     @Override
     public TaskProgressResponse find(final String nodeName, final FindTaskProgressRequest request) {
-        return nodeServiceProvider.get()
-                .remoteRestResult(
-                        nodeName,
-                        TaskProgressResponse.class,
-                        () -> ResourcePaths.buildAuthenticatedApiPath(
-                                TaskResource.BASE_PATH,
-                                TaskResource.FIND_PATH_PART,
-                                nodeName),
-                        () -> {
-                            final ResultPage<TaskProgress> resultPage = taskManagerProvider.get()
-                                    .find(request.getCriteria());
-                            return new TaskProgressResponse(
-                                    resultPage.getValues(),
-                                    resultPage.getPageResponse());
-                        },
-                        builder ->
-                                builder.post(Entity.json(request)));
+        try {
+            return nodeServiceProvider.get()
+                    .remoteRestResult(
+                            nodeName,
+                            TaskProgressResponse.class,
+                            () -> ResourcePaths.buildAuthenticatedApiPath(
+                                    TaskResource.BASE_PATH,
+                                    TaskResource.FIND_PATH_PART,
+                                    nodeName),
+                            () -> {
+                                final ResultPage<TaskProgress> resultPage = taskManagerProvider.get()
+                                        .find(request.getCriteria());
+                                return new TaskProgressResponse(
+                                        resultPage.getValues(),
+                                        Collections.emptyList(),
+                                        resultPage.getPageResponse());
+                            },
+                            builder ->
+                                    builder.post(Entity.json(request)));
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
+            return new TaskProgressResponse(Collections.emptyList(), List.of(e.getMessage()), null);
+        }
     }
 
     @Override

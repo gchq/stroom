@@ -9,7 +9,6 @@ import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DateField;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
-import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.db.util.ValueMapper;
 import stroom.db.util.ValueMapper.Mapper;
@@ -50,6 +49,7 @@ import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
+import org.jooq.Record5;
 import org.jooq.Result;
 import org.jooq.impl.DSL;
 
@@ -66,7 +66,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import javax.inject.Inject;
 
 import static java.util.Map.entry;
@@ -128,8 +127,6 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     private final ProcessorDbConnProvider processorDbConnProvider;
     private final ProcessorFilterMarshaller marshaller;
     private final DocRefInfoService docRefInfoService;
-
-    private final GenericDao<ProcessorTaskRecord, ProcessorTask, Long> genericDao;
     private final ExpressionMapper expressionMapper;
     private final ValueMapper valueMapper;
 
@@ -152,34 +149,31 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         this.marshaller = marshaller;
         this.docRefInfoService = docRefInfoService;
 
-        this.genericDao = new GenericDao<>(PROCESSOR_TASK,
-                PROCESSOR_TASK.ID,
-                ProcessorTask.class,
-                processorDbConnProvider);
-        this.genericDao.setObjectToRecordMapper((processorTask, record) -> {
-            record.from(processorTask);
-            if (processorTask.getStatus() != null) {
-                record.set(PROCESSOR_TASK.STATUS, processorTask.getStatus().getPrimitiveValue());
-            }
-            record.set(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID, processorTask.getProcessorFilter().getId());
-            record.set(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID,
-                    processorNodeCache.getOrCreate(processorTask.getNodeName()));
-            record.set(PROCESSOR_TASK.FK_PROCESSOR_FEED_ID,
-                    processorFeedCache.getOrCreate(processorTask.getFeedName()));
-            return record;
-        });
-        this.genericDao.setRecordToObjectMapper(new RecordToProcessorTaskMapper());
-
         expressionMapper = expressionMapperFactory.create();
         expressionMapper.map(ProcessorTaskFields.CREATE_TIME,
                 PROCESSOR_TASK.CREATE_TIME_MS,
                 value -> getDate(ProcessorTaskFields.CREATE_TIME, value));
         expressionMapper.map(ProcessorTaskFields.CREATE_TIME_MS, PROCESSOR_TASK.CREATE_TIME_MS, Long::valueOf);
+        expressionMapper.map(ProcessorTaskFields.START_TIME,
+                PROCESSOR_TASK.START_TIME_MS,
+                value -> getDate(ProcessorTaskFields.START_TIME, value));
+        expressionMapper.map(ProcessorTaskFields.START_TIME_MS, PROCESSOR_TASK.START_TIME_MS, Long::valueOf);
+        expressionMapper.map(ProcessorTaskFields.END_TIME,
+                PROCESSOR_TASK.END_TIME_MS,
+                value -> getDate(ProcessorTaskFields.END_TIME, value));
+        expressionMapper.map(ProcessorTaskFields.END_TIME_MS, PROCESSOR_TASK.END_TIME_MS, Long::valueOf);
+        expressionMapper.map(ProcessorTaskFields.STATUS_TIME,
+                PROCESSOR_TASK.STATUS_TIME_MS,
+                value -> getDate(ProcessorTaskFields.STATUS_TIME, value));
+        expressionMapper.map(ProcessorTaskFields.STATUS_TIME_MS, PROCESSOR_TASK.STATUS_TIME_MS, Long::valueOf);
         expressionMapper.map(ProcessorTaskFields.META_ID, PROCESSOR_TASK.META_ID, Long::valueOf);
         expressionMapper.map(ProcessorTaskFields.NODE_NAME, PROCESSOR_NODE.NAME, value -> value);
         expressionMapper.map(ProcessorTaskFields.FEED, PROCESSOR_FEED.NAME, value -> value, true);
         expressionMapper.map(ProcessorTaskFields.PIPELINE, PROCESSOR.PIPELINE_UUID, value -> value);
         expressionMapper.map(ProcessorTaskFields.PROCESSOR_FILTER_ID, PROCESSOR_FILTER.ID, Integer::valueOf);
+        expressionMapper.map(ProcessorTaskFields.PROCESSOR_FILTER_PRIORITY,
+                PROCESSOR_FILTER.PRIORITY,
+                Integer::valueOf);
         expressionMapper.map(ProcessorTaskFields.PROCESSOR_ID, PROCESSOR.ID, Integer::valueOf);
         expressionMapper.map(ProcessorTaskFields.STATUS,
                 PROCESSOR_TASK.STATUS,
@@ -189,11 +183,18 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         valueMapper = new ValueMapper();
         valueMapper.map(ProcessorTaskFields.CREATE_TIME, PROCESSOR_TASK.CREATE_TIME_MS, ValLong::create);
         valueMapper.map(ProcessorTaskFields.CREATE_TIME_MS, PROCESSOR_TASK.CREATE_TIME_MS, ValLong::create);
+        valueMapper.map(ProcessorTaskFields.START_TIME, PROCESSOR_TASK.START_TIME_MS, ValLong::create);
+        valueMapper.map(ProcessorTaskFields.START_TIME_MS, PROCESSOR_TASK.START_TIME_MS, ValLong::create);
+        valueMapper.map(ProcessorTaskFields.END_TIME, PROCESSOR_TASK.END_TIME_MS, ValLong::create);
+        valueMapper.map(ProcessorTaskFields.END_TIME_MS, PROCESSOR_TASK.END_TIME_MS, ValLong::create);
+        valueMapper.map(ProcessorTaskFields.STATUS_TIME, PROCESSOR_TASK.STATUS_TIME_MS, ValLong::create);
+        valueMapper.map(ProcessorTaskFields.STATUS_TIME_MS, PROCESSOR_TASK.STATUS_TIME_MS, ValLong::create);
         valueMapper.map(ProcessorTaskFields.META_ID, PROCESSOR_TASK.META_ID, ValLong::create);
         valueMapper.map(ProcessorTaskFields.NODE_NAME, PROCESSOR_NODE.NAME, ValString::create);
         valueMapper.map(ProcessorTaskFields.FEED, PROCESSOR_FEED.NAME, ValString::create);
         valueMapper.map(ProcessorTaskFields.PIPELINE, PROCESSOR.PIPELINE_UUID, this::getPipelineName);
         valueMapper.map(ProcessorTaskFields.PROCESSOR_FILTER_ID, PROCESSOR_FILTER.ID, ValInteger::create);
+        valueMapper.map(ProcessorTaskFields.PROCESSOR_FILTER_PRIORITY, PROCESSOR_FILTER.PRIORITY, ValInteger::create);
         valueMapper.map(ProcessorTaskFields.PROCESSOR_ID, PROCESSOR.ID, ValInteger::create);
         valueMapper.map(ProcessorTaskFields.STATUS,
                 PROCESSOR_TASK.STATUS,
@@ -252,79 +253,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
         LOGGER.info(() -> "Set " + results + " tasks back to UNPROCESSED (Reprocess), NULL that were " +
                 "UNPROCESSED, ASSIGNED, PROCESSING for node " + nodeInfo.getThisNodeName());
-
-//        final SqlBuilder sql = new SqlBuilder();
-//        sql.append("UPDATE ");
-//        sql.append(ProcessorTask.TABLE_NAME);
-//        sql.append(" SET ");
-//        sql.append(ProcessorTask.STATUS);
-//        sql.append(" = ");
-//        sql.arg(TaskStatus.UNPROCESSED.getPrimitiveValue());
-//        sql.append(", ");
-//        sql.append(Node.FOREIGN_KEY);
-//        sql.append(" = NULL WHERE ");
-//        sql.append(Node.FOREIGN_KEY);
-//        sql.append(" = ");
-//        sql.arg(nodeInfo.getThisNode().getId());
-//        final CriteriaSet<TaskStatus> criteriaSet = new CriteriaSet<>();
-//        criteriaSet.addAll(Arrays.asList(TaskStatus.UNPROCESSED, TaskStatus.ASSIGNED, TaskStatus.PROCESSING));
-//        sql.appendPrimitiveValueSetQuery(ProcessorTask.STATUS, criteriaSet);
-//
-//        final long results = stroomEntityManager.executeNativeUpdate(sql);
-//
-//        LOGGER.info(
-//                "doStartup() - Set {} Tasks back to UNPROCESSED (Reprocess), NULL that were
-//                UNPROCESSED, ASSIGNED, PROCESSING for node {}",
-//                results, nodeInfo.getThisNodeName());
     }
-
-
-//    private ExpressionOperator copyExpression(final ExpressionOperator expression) {
-//        ExpressionOperator.Builder builder;
-//
-//        if (expression != null) {
-//            builder = ExpressionOperator.builder().op(expression.op());
-//
-//            if (expression.enabled() && expression.getChildren() != null) {
-//                addChildren(builder, expression);
-//            }
-//
-//        } else {
-//            builder = ExpressionOperator.builder();
-//        }
-//
-//        final ExpressionOperator.Builder or = ExpressionOperator.builder().op(Op.OR)
-//                .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.LOCKED.getDisplayValue())
-//                .addTerm(StreamDataSource.STATUS, Condition.EQUALS, StreamStatus.UNLOCKED.getDisplayValue());
-//        builder.addOperator(or.build());
-//        return builder.build();
-//    }
-//
-//    private void addChildren(final ExpressionOperator.Builder builder, final ExpressionOperator parent) {
-//        for (final ExpressionItem item : parent.getChildren()) {
-//            if (item.isEnabled()) {
-//                if (item instanceof ExpressionOperator) {
-//                    final ExpressionOperator expressionOperator = (ExpressionOperator) item;
-//                    final ExpressionOperator.Builder child = ExpressionOperator.builder().op(Op.OR);
-//                    addChildren(child, expressionOperator);
-//                    builder.addOperator(child.build());
-//                } else if (item instanceof ExpressionTerm) {
-//                    final ExpressionTerm expressionTerm = (ExpressionTerm) item;
-//
-//                    // Don't copy stream status terms as we are going to set them later.
-//                    if (!StreamDataSource.STATUS.equals(expressionTerm.getField())) {
-//                        if (Condition.IN_DICTIONARY.equals(expressionTerm.getCondition())) {
-//                            builder.addTerm(expressionTerm.getField(), expressionTerm.getCondition(),
-//                            expressionTerm.getDictionary());
-//                        } else {
-//                            builder.addTerm(expressionTerm.getField(), expressionTerm.getCondition(),
-//                            expressionTerm.getValue());
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
 
     /**
      * Create new tasks for the specified filter and add them to the queue.
@@ -359,36 +288,83 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         synchronized (TASK_CREATION_MONITOR) {
             final Integer nodeId = processorNodeCache.getOrCreate(thisNodeName);
 
+            // Get the current time.
+            final long streamTaskCreateMs = System.currentTimeMillis();
+
+            final ExpressionOperator expression = ExpressionOperator.builder()
+                    .addTerm(ProcessorTaskFields.NODE_NAME, ExpressionTerm.Condition.EQUALS, thisNodeName)
+                    .addTerm(ProcessorTaskFields.CREATE_TIME_MS,
+                            ExpressionTerm.Condition.EQUALS,
+                            streamTaskCreateMs)
+                    .addTerm(ProcessorTaskFields.STATUS,
+                            ExpressionTerm.Condition.EQUALS,
+                            TaskStatus.UNPROCESSED.getDisplayValue())
+                    .addTerm(ProcessorTaskFields.PROCESSOR_FILTER_ID,
+                            ExpressionTerm.Condition.EQUALS,
+                            filter.getId())
+                    .build();
+            final ExpressionCriteria findStreamTaskCriteria = new ExpressionCriteria(expression);
+            final Condition condition = expressionMapper.apply(expression);
+            final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, findStreamTaskCriteria);
+
+            final CreationState creationState = new CreationState();
+
+            // Create all bind values.
+            final Object[][] allBindValues = new Object[streams.entrySet().size()][];
+            int rowCount = 0;
+            for (final Entry<Meta, InclusiveRanges> entry : streams.entrySet()) {
+                final Meta meta = entry.getKey();
+                final InclusiveRanges eventRanges = entry.getValue();
+
+                String eventRangeData = null;
+                if (eventRanges != null) {
+                    eventRangeData = eventRanges.rangesToString();
+                    creationState.eventCount += eventRanges.count();
+                }
+
+                // Update the max event id if this stream id is greater than
+                // any we have seen before.
+                if (creationState.streamIdRange == null || meta.getId() > creationState.streamIdRange.getMax()) {
+                    if (eventRanges != null) {
+                        creationState.eventIdRange = eventRanges.getOuterRange();
+                    } else {
+                        creationState.eventIdRange = null;
+                    }
+                }
+
+                creationState.streamIdRange = InclusiveRange.extend(creationState.streamIdRange, meta.getId());
+                creationState.streamMsRange = InclusiveRange.extend(creationState.streamMsRange, meta.getCreateMs());
+
+                final Object[] bindValues = new Object[PROCESSOR_TASK_COLUMNS.length];
+
+                bindValues[0] = 1; //version
+                bindValues[1] = streamTaskCreateMs; //create_ms
+                bindValues[2] = TaskStatus.UNPROCESSED.getPrimitiveValue(); //stat
+                bindValues[3] = streamTaskCreateMs; //stat_ms
+
+                if (Status.UNLOCKED.equals(meta.getStatus())) {
+                    // If the stream is unlocked then take ownership of the
+                    // task, i.e. set the node to this node.
+                    bindValues[4] = nodeId; //fk_node_id
+                    creationState.availableTasksCreated++;
+                }
+                bindValues[5] = processorFeedCache.getOrCreate(meta.getFeedName());
+                bindValues[6] = meta.getId(); //fk_strm_id
+                if (eventRangeData != null && !eventRangeData.isEmpty()) {
+                    bindValues[7] = eventRangeData; //dat
+                }
+                bindValues[8] = filter.getId(); //fk_strm_proc_filt_id
+                allBindValues[rowCount++] = bindValues;
+            }
+
             // Do everything within a single transaction.
             JooqUtil.transaction(processorDbConnProvider, context -> {
-                List<ProcessorTask> availableTaskList = Collections.emptyList();
-                int availableTasksCreated = 0;
-                int totalTasksCreated = 0;
-                long eventCount = 0;
-
-                // Get the current time.
-                final long streamTaskCreateMs = System.currentTimeMillis();
-
-                InclusiveRange streamIdRange = null;
-                InclusiveRange streamMsRange = null;
-                InclusiveRange eventIdRange = null;
-
-                if (streams.size() > 0) {
-                    //                    final Field[] columns = new Field[] {
-                    //                            PROCESSOR_TASK.VERSION,
-                    //                            PROCESSOR_TASK.CREATE_TIME_MS,
-                    //                            PROCESSOR_TASK.STATUS,
-                    //                            PROCESSOR_TASK.START_TIME_MS,
-                    //                            PROCESSOR_TASK.NODE_NAME,
-                    //                            PROCESSOR_TASK.STREAM_ID,
-                    //                            PROCESSOR_TASK.DATA,
-                    //                            PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID};
-
+                if (allBindValues.length > 0) {
                     BatchBindStep batchBindStep = null;
-                    int rowCount = 0;
+                    int i = 0;
 
-                    for (final Entry<Meta, InclusiveRanges> entry : streams.entrySet()) {
-                        rowCount++;
+                    for (final Object[] bindValues : allBindValues) {
+                        i++;
 
                         if (batchBindStep == null) {
                             batchBindStep = context
@@ -399,121 +375,61 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                                                     .values(PROCESSOR_TASK_VALUES));
                         }
 
-                        final Meta meta = entry.getKey();
-                        final InclusiveRanges eventRanges = entry.getValue();
-
-                        String eventRangeData = null;
-                        if (eventRanges != null) {
-                            eventRangeData = eventRanges.rangesToString();
-                            eventCount += eventRanges.count();
-                        }
-
-                        // Update the max event id if this stream id is greater than
-                        // any we have seen before.
-                        if (streamIdRange == null || meta.getId() > streamIdRange.getMax()) {
-                            if (eventRanges != null) {
-                                eventIdRange = eventRanges.getOuterRange();
-                            } else {
-                                eventIdRange = null;
-                            }
-                        }
-
-                        streamIdRange = InclusiveRange.extend(streamIdRange, meta.getId());
-                        streamMsRange = InclusiveRange.extend(streamMsRange, meta.getCreateMs());
-
-                        final Object[] bindValues = new Object[PROCESSOR_TASK_COLUMNS.length];
-
-                        bindValues[0] = 1; //version
-                        bindValues[1] = streamTaskCreateMs; //create_ms
-                        bindValues[2] = TaskStatus.UNPROCESSED.getPrimitiveValue(); //stat
-                        bindValues[3] = streamTaskCreateMs; //stat_ms
-
-                        if (Status.UNLOCKED.equals(meta.getStatus())) {
-                            // If the stream is unlocked then take ownership of the
-                            // task, i.e. set the node to this node.
-                            bindValues[4] = nodeId; //fk_node_id
-                            availableTasksCreated++;
-                        }
-                        bindValues[5] = processorFeedCache.getOrCreate(meta.getFeedName());
-                        bindValues[6] = meta.getId(); //fk_strm_id
-                        if (eventRangeData != null && !eventRangeData.isEmpty()) {
-                            bindValues[7] = eventRangeData; //dat
-                        }
-                        bindValues[8] = filter.getId(); //fk_strm_proc_filt_id
-
                         batchBindStep.bind(bindValues);
 
                         // Execute insert if we have reached batch size.
-                        if (rowCount >= processorConfig.getDatabaseMultiInsertMaxBatchSize()) {
-                            executeInsert(batchBindStep, rowCount);
-                            rowCount = 0;
+                        if (i >= processorConfig.getDatabaseMultiInsertMaxBatchSize()) {
+                            executeInsert(batchBindStep, i);
+                            i = 0;
                             batchBindStep = null;
                         }
                     }
 
                     // Do final execution.
                     if (batchBindStep != null) {
-                        executeInsert(batchBindStep, rowCount);
-                        rowCount = 0;
-                        batchBindStep = null;
+                        executeInsert(batchBindStep, i);
                     }
 
-                    totalTasksCreated = streams.size();
+                    creationState.totalTasksCreated = streams.size();
 
                     // Select them back
-                    final ExpressionOperator expression = ExpressionOperator.builder()
-                            .addTerm(ProcessorTaskFields.NODE_NAME, ExpressionTerm.Condition.EQUALS, thisNodeName)
-                            .addTerm(ProcessorTaskFields.CREATE_TIME_MS,
-                                    ExpressionTerm.Condition.EQUALS,
-                                    streamTaskCreateMs)
-                            .addTerm(ProcessorTaskFields.STATUS,
-                                    ExpressionTerm.Condition.EQUALS,
-                                    TaskStatus.UNPROCESSED.getDisplayValue())
-                            .addTerm(ProcessorTaskFields.PROCESSOR_FILTER_ID,
-                                    ExpressionTerm.Condition.EQUALS,
-                                    filter.getId())
-                            .build();
-                    final ExpressionCriteria findStreamTaskCriteria = new ExpressionCriteria(expression);
-//                    findStreamTaskCriteria.obtainNodeNameCriteria().setString(thisNodeName);
-//                    findStreamTaskCriteria.setCreateMs(streamTaskCreateMs);
-//                    findStreamTaskCriteria.obtainTaskStatusSet().add(TaskStatus.UNPROCESSED);
-//                    findStreamTaskCriteria.obtainProcessorFilterIdSet().add(filter.getId());
-                    availableTaskList = find(context, findStreamTaskCriteria).getValues();
+                    final Result<Record> availableTaskList = find(context,
+                            condition,
+                            orderFields,
+                            findStreamTaskCriteria.getPageRequest());
+                    creationState.availableTaskList = availableTaskList;
 
                     taskStatusTraceLog.createdTasks(ProcessorTaskDaoImpl.class, availableTaskList);
 
                     // Ensure that the select has got back the stream tasks that we
                     // have just inserted. If it hasn't this would be very bad.
-                    if (availableTaskList.size() != availableTasksCreated) {
+                    if (availableTaskList.size() != creationState.availableTasksCreated) {
                         throw new RuntimeException("Unexpected number of stream tasks selected back after insertion.");
                     }
                 }
 
                 // Anything created?
-                if (totalTasksCreated > 0) {
+                if (creationState.totalTasksCreated > 0) {
                     // Done with if because args are not final so can't use lambda
-                    if (LOGGER.isDebugEnabled()) {
-                        LOGGER.debug("processProcessorFilter() - Created {} tasks ({} available) in the range {}",
-                                totalTasksCreated, availableTasksCreated, streamIdRange);
-                    }
+                    log(creationState, creationState.streamIdRange);
 
                     // If we have never created tasks before or the last poll gave
                     // us no tasks then start to report a new creation range.
                     if (tracker.getMinMetaCreateMs() == null || (tracker.getLastPollTaskCount() != null
                             && tracker.getLastPollTaskCount().longValue() == 0L)) {
-                        tracker.setMinMetaCreateMs(streamMsRange.getMin());
+                        tracker.setMinMetaCreateMs(creationState.streamMsRange.getMin());
                     }
                     // Report where we have got to.
-                    tracker.setMetaCreateMs(streamMsRange.getMax());
+                    tracker.setMetaCreateMs(creationState.streamMsRange.getMax());
 
                     // Only create tasks for streams with an id 1 or more greater
                     // than the greatest stream id we have created tasks for this
                     // time round in future.
-                    if (eventIdRange != null) {
-                        tracker.setMinMetaId(streamIdRange.getMax());
-                        tracker.setMinEventId(eventIdRange.getMax() + 1);
+                    if (creationState.eventIdRange != null) {
+                        tracker.setMinMetaId(creationState.streamIdRange.getMax());
+                        tracker.setMinEventId(creationState.eventIdRange.getMax() + 1);
                     } else {
-                        tracker.setMinMetaId(streamIdRange.getMax() + 1);
+                        tracker.setMinMetaId(creationState.streamIdRange.getMax() + 1);
                         tracker.setMinEventId(0L);
                     }
 
@@ -535,22 +451,22 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 }
 
                 if (tracker.getMetaCount() != null) {
-                    if (totalTasksCreated > 0) {
-                        tracker.setMetaCount(tracker.getMetaCount() + totalTasksCreated);
+                    if (creationState.totalTasksCreated > 0) {
+                        tracker.setMetaCount(tracker.getMetaCount() + creationState.totalTasksCreated);
                     }
                 } else {
-                    tracker.setMetaCount((long) totalTasksCreated);
+                    tracker.setMetaCount((long) creationState.totalTasksCreated);
                 }
-                if (eventCount > 0) {
+                if (creationState.eventCount > 0) {
                     if (tracker.getEventCount() != null) {
-                        tracker.setEventCount(tracker.getEventCount() + eventCount);
+                        tracker.setEventCount(tracker.getEventCount() + creationState.eventCount);
                     } else {
-                        tracker.setEventCount(eventCount);
+                        tracker.setEventCount(creationState.eventCount);
                     }
                 }
 
                 tracker.setLastPollMs(streamTaskCreateMs);
-                tracker.setLastPollTaskCount(totalTasksCreated);
+                tracker.setLastPollTaskCount(creationState.totalTasksCreated);
                 tracker.setStatus(null);
 
                 // Has this filter finished creating tasks for good, i.e. is there
@@ -565,17 +481,35 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
                 // Save the tracker state within the transaction.
                 processorFilterTrackerDao.update(context, tracker);
-
-                consumer.accept(new CreatedTasks(availableTaskList,
-                        availableTasksCreated,
-                        totalTasksCreated,
-                        eventCount));
             });
-            //            } catch (final RuntimeException e) {
-            //                LOGGER.error("createNewTasks", e);
-            //            }
 
+            final List<ProcessorTask> list;
+            if (creationState.availableTaskList != null) {
+                final ResultPage<ProcessorTask> resultPage = convert(
+                        findStreamTaskCriteria,
+                        creationState.availableTaskList,
+                        new HashMap<>());
+                list = resultPage.getValues();
+            } else {
+                list = Collections.emptyList();
+            }
+
+            consumer.accept(new CreatedTasks(
+                    list,
+                    creationState.availableTasksCreated,
+                    creationState.totalTasksCreated,
+                    creationState.eventCount));
         }
+    }
+
+    private void log(final CreationState creationState,
+                     final InclusiveRange streamIdRange) {
+        LOGGER.debug(() -> "processProcessorFilter() - Created " +
+                creationState.totalTasksCreated +
+                " tasks (" +
+                creationState.availableTasksCreated +
+                " available) in the range " +
+                streamIdRange);
     }
 
     private void executeInsert(final BatchBindStep batchBindStep, final int rowCount) {
@@ -589,312 +523,36 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         }
     }
 
-
-//    public ProcessorTaskManagerRecentStreamDetails getRecentStreamInfo(
-//            final ProcessorTaskManagerRecentStreamDetails lastRecent) {
-//        ProcessorTaskManagerRecentStreamDetails recentStreamInfo =
-//        new ProcessorTaskManagerRecentStreamDetails(lastRecent,
-//                getMaxStreamId());
-//        if (recentStreamInfo.hasRecentDetail()) {
-//            // Only do this check if not that many streams have come in.
-//            if (recentStreamInfo.getRecentStreamCount() > RECENT_STREAM_ID_LIMIT) {
-//                // Forget the history and start again.
-//                recentStreamInfo = new ProcessorTaskManagerRecentStreamDetails(
-//                null, recentStreamInfo.getMaxStreamId());
-//            } else {
-//                final SqlBuilder sql = new SqlBuilder();
-//                sql.append("SELECT DISTINCT(");
-//                sql.append(FeedEntity.FOREIGN_KEY);
-//                sql.append("), 'A' FROM ");
-//                sql.append(StreamEntity.TABLE_NAME);
-//                sql.append(" WHERE ");
-//                sql.append(StreamEntity.ID);
-//                sql.append(" > ");
-//                sql.arg(recentStreamInfo.getRecentStreamId());
-//                sql.append(" AND ");
-//                sql.append(StreamEntity.ID);
-//                sql.append(" <= ");
-//                sql.arg(recentStreamInfo.getMaxStreamId());
-//
-//                // Find out about feeds that have come in recently
-//                @SuppressWarnings("unchecked") final List<Object[]> resultSet =
-//                stroomEntityManager.executeNativeQueryResultList(sql);
-//
-//                for (final Object[] row : resultSet) {
-//                    recentStreamInfo.addRecentFeedId(((Number) row[0]).longValue());
-//                }
-//            }
-//        }
-//        return recentStreamInfo;
-//    }
-//
-//    private long getMaxStreamId() {
-//        return stroomEntityManager.executeNativeQueryLongResult(MAX_STREAM_ID_SQL);
-//    }
-
-
-    //    @Override
-//    public Class<ProcessorTask> getEntityClass() {
-//        return ProcessorTask.class;
-//    }
-//
-//    @Override
-
-
-//getSqlFieldMap().getSqlFieldMap(), criteria, null);
-//            return getEntityManager().executeNativeQuerySummaryDataResult(sql, 3);
-//
-//
-//;
-//
-//        return securityContext.secureResult(permission(), () -> {
-//            final SqlBuilder sql = new SqlBuilder();
-//            sql.append("SELECT D.* FROM (");
-//            sql.append("SELECT 0");
-////            sql.append(StreamProcessor.PIPELINE_UUID);
-////            sql.append(" PIPE_UUID,");
-//            sql.append(", SP.");
-//            sql.append(Processor.PIPELINE_UUID);
-//            sql.append(" PIPE_UUID,");
-////            sql.append(" F.");
-////            sql.append(FeedEntity.ID);
-////            sql.append(" FEED_ID, F.");
-////            sql.append(SQLNameConstants.NAME);
-////            sql.append(" F_NAME,");
-//            sql.append(" SPF.");
-//            sql.append(ProcessorFilter.PRIORITY);
-//            sql.append(" PRIORITY_1, SPF.");
-//            sql.append(ProcessorFilter.PRIORITY);
-//            sql.append(" PRIORITY_2, ST.");
-//            sql.append(ProcessorTask.STATUS);
-//            sql.append(" STAT_ID1, ST.");
-//            sql.append(ProcessorTask.STATUS);
-//            sql.append(" STAT_ID2, COUNT(*) AS ");
-//            sql.append(SQLNameConstants.COUNT);
-//            sql.append(" FROM ");
-//            sql.append(ProcessorTask.TABLE_NAME);
-//            sql.append(" ST JOIN ");
-////            sql.append(StreamEntity.TABLE_NAME);
-////            sql.append(" S ON (S.");
-////            sql.append(StreamEntity.ID);
-////            sql.append(" = ST.");
-////            sql.append(StreamEntity.FOREIGN_KEY);
-////            sql.append(") JOIN ");
-////            sql.append(FeedEntity.TABLE_NAME);
-////            sql.append(" F ON (F.");
-////            sql.append(FeedEntity.ID);
-////            sql.append(" = S.");
-////            sql.append(FeedEntity.FOREIGN_KEY);
-////            sql.append(") JOIN ");
-//            sql.append(ProcessorFilter.TABLE_NAME);
-//            sql.append(" SPF ON (SPF.");
-//            sql.append(ProcessorFilter.ID);
-//            sql.append(" = ST.");
-//            sql.append(ProcessorFilter.FOREIGN_KEY);
-//            sql.append(") JOIN ");
-//            sql.append(Processor.TABLE_NAME);
-//            sql.append(" SP ON (SP.");
-//            sql.append(Processor.ID);
-//            sql.append(" = SPF.");
-//            sql.append(Processor.FOREIGN_KEY);
-//            sql.append(")");
-//            sql.append(" WHERE 1=1");
-//
-////            sql.appendPrimitiveValueSetQuery("S." + StreamEntity.STATUS,
-// StreamStatusId.convertStatusSet(criteria.getStatusSet()));
-//            sql.appendDocRefSetQuery("SP." + Processor.PIPELINE_UUID, criteria.getPipelineUuidCriteria());
-////            sql.appendEntityIdSetQuery("F." + BaseEntity.ID, feedService.convertNameSet(criteria.getFeedNameSet()));
-//
-//            sql.append(" GROUP BY PIPE_UUID, PRIORITY_1, STAT_ID1");
-//            sql.append(") D");
-//
-//            sql.appendOrderBy(getSqlFieldMap().getSqlFieldMap(), criteria, null);
-//
-//            return getEntityManager().executeNativeQuerySummaryDataResult(sql, 3);
-//        });
-//    }
-//
-//    public BaseResultList<SummaryDataRow> executeNativeQuerySummaryDataResult(
-//    final List<Object[]> list, final int numberKeys) {
-//        final ArrayList<SummaryDataRow> summaryData = new ArrayList<>();
-//
-//        for (final Object[] row : list) {
-//            final SummaryDataRow summaryDataRow = new SummaryDataRow();
-//            int pos = 0;
-//            for (int i = 0; i < numberKeys; i++) {
-//                final Object key = row[pos++];
-//                final Object value = row[pos++];
-//                summaryDataRow.getKey().add(((Number) key).longValue());
-//                summaryDataRow.getLabel().add((String.valueOf(value)));
-//            }
-//            summaryDataRow.setCount(((Number) row[pos++]).longValue());
-//            summaryData.add(summaryDataRow);
-//        }
-//
-//        return BaseResultList.createUnboundedList(summaryData);
-//    }
-//
-//    @Override
-//    public FindProcessorTaskCriteria createCriteria() {
-//        return new FindProcessorTaskCriteria();
-//    }
-
-//    @Override
-//    public void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindProcessorTaskCriteria criteria) {
-//        CriteriaLoggingUtil.appendCriteriaSet(items, "streamTaskStatusSet", criteria.getTaskStatusSet());
-//        CriteriaLoggingUtil.appendCriteriaSet(items, "streamIdSet", criteria.getMetaIdSet());
-//        CriteriaLoggingUtil.appendCriteriaSet(items, "nodeIdSet", criteria.getNodeIdSet());
-//        CriteriaLoggingUtil.appendCriteriaSet(items, "streamTaskIdSet", criteria.getProcessorTaskIdSet());
-//        CriteriaLoggingUtil.appendCriteriaSet(items, "processorFilterIdSet", criteria.getProcessorFilterIdSet());
-//        CriteriaLoggingUtil.appendCriteriaSet(items, "statusSet", criteria.getStatusSet());
-//        CriteriaLoggingUtil.appendCriteriaSet(items, "pipelineSet", criteria.getPipelineUuidCriteria());
-////        CriteriaLoggingUtil.appendCriteriaSet(items, "feedNameSet", criteria.getFeedNameSet());
-//        CriteriaLoggingUtil.appendDateTerm(items, "createMs", criteria.getCreateTimeMs());
-//        CriteriaLoggingUtil.appendRangeTerm(items, "createPeriod", criteria.getCreatePeriod());
-////        CriteriaLoggingUtil.appendRangeTerm(items, "effectivePeriod", criteria.getEffectivePeriod());
-//        super.appendCriteria(items, criteria);
-//    }
-
-//    @Override
-//    protected QueryAppender<ProcessorTask, FindProcessorTaskCriteria> createQueryAppender(
-//    StroomEntityManager entityManager) {
-//        return new StreamTaskServiceImpl.StreamTaskQueryAppender(entityManager);
-//    }
-//
-//    @Override
-//    protected FieldMap createFieldMap() {
-//        return super.createFieldMap()
-//                .add(FindProcessorTaskCriteria.FIELD_CREATE_TIME,
-//                TABLE_PREFIX_STREAM_TASK + ProcessorTask.CREATE_MS,
-//                "createMs")
-//                .add(FindProcessorTaskCriteria.FIELD_START_TIME,
-//                TABLE_PREFIX_STREAM_TASK + ProcessorTask.START_TIME_MS,
-//                "startTimeMs")
-//                .add(FindProcessorTaskCriteria.FIELD_END_TIME_DATE,
-//                TABLE_PREFIX_STREAM_TASK + ProcessorTask.END_TIME_MS,
-//                "endTimeMs")
-//                .add(FindProcessorTaskCriteria.FIELD_FEED_NAME, "F_NAME", "stream.feed.name")
-//                .add(FindProcessorTaskCriteria.FIELD_PRIORITY, "PRIORITY_1", "processorFilter.priority")
-//                .add(FindProcessorTaskCriteria.FIELD_PIPELINE_UUID,
-//                "P_NAME",
-//                "processorFilter.streamProcessor.pipeline.uuid")
-//                .add(FindProcessorTaskCriteria.FIELD_STATUS, "STAT_ID1", "pstatus")
-//                .add(FindProcessorTaskCriteria.FIELD_COUNT, SQLNameConstants.COUNT, "NA")
-//                .add(FindProcessorTaskCriteria.FIELD_NODE, null, "node.name");
-//    }
-//
-//    @Override
-//    protected String permission() {
-//        return PermissionNames.MANAGE_PROCESSORS_PERMISSION;
-//    }
-//
-//    private class StreamTaskQueryAppender extends QueryAppender<ProcessorTask, FindProcessorTaskCriteria> {
-//
-//        StreamTaskQueryAppender(final StroomEntityManager entityManager) {
-//            super(entityManager);
-//        }
-//
-//        @Override
-//        protected void appendBasicJoin(final HqlBuilder sql, final String alias, final Set<String> fetchSet) {
-//            super.appendBasicJoin(sql, alias, fetchSet);
-//
-//            if (fetchSet != null) {
-//                if (fetchSet.contains(Node.ENTITY_TYPE)) {
-//                    sql.append(" LEFT JOIN FETCH " + alias + ".node AS node");
-//                }
-//                if (fetchSet.contains(ProcessorFilter.ENTITY_TYPE) || fetchSet.contains(Processor.ENTITY_TYPE)
-//                        || fetchSet.contains(PipelineDoc.DOCUMENT_TYPE)) {
-//                    sql.append(" JOIN FETCH " + alias + ".processorFilter AS spf");
-//                }
-//                if (fetchSet.contains(Processor.ENTITY_TYPE) || fetchSet.contains(PipelineDoc.DOCUMENT_TYPE)) {
-//                    sql.append(" JOIN FETCH spf.streamProcessor AS sp");
-//                }
-////                if (fetchSet.contains(StreamEntity.ENTITY_TYPE)) {
-////                    sql.append(" JOIN FETCH " + alias + ".stream AS s");
-////                }
-////                if (fetchSet.contains(FeedEntity.ENTITY_TYPE)) {
-////                    sql.append(" JOIN FETCH s.feed AS f");
-////                }
-////                if (fetchSet.contains(StreamTypeEntity.ENTITY_TYPE)) {
-////                    sql.append(" JOIN FETCH s.streamType AS st");
-////                }
-//            }
-//        }
-//
-//        @Override
-//        protected void appendBasicCriteria(final HqlBuilder sql,
-//                                           final String alias,
-//                                           final FindProcessorTaskCriteria criteria) {
-//            super.appendBasicCriteria(sql, alias, criteria);
-//
-//            // Append all the criteria
-//            sql.appendPrimitiveValueSetQuery(alias + ".pstatus", criteria.getTaskStatusSet());
-//
-//            sql.appendCriteriaSetQuery(alias + ".id", criteria.getProcessorTaskIdSet());
-//
-//            sql.appendCriteriaSetQuery(alias + ".node.id", criteria.getNodeIdSet());
-//
-//            sql.appendDocRefSetQuery(alias + ".processorFilter.streamProcessor.pipelineUuid",
-//                    criteria.obtainPipelineSet());
-//
-//            sql.appendCriteriaSetQuery(alias + ".processorFilter.id", criteria.getProcessorFilterIdSet());
-//
-//            sql.appendValueQuery(alias + ".createMs", criteria.getCreateTimeMs());
-//
-////            if (criteria.getStatusSet() != null
-// || criteria.getFeedIdSet() != null
-// || criteria.getPipelineUuidCriteria() != null) {
-//            sql.appendCriteriaSetQuery(alias + ".streamId", criteria.getMetaIdSet());
-//
-////            sql.appendCriteriaSetQuery(alias + ".stream.streamType",
-// streamTypeService.convertNameSet(criteria.getStreamTypeNameSet()));
-////
-////            sql.appendPrimitiveValueSetQuery(alias + ".stream.pstatus",
-// StreamStatusId.convertStatusSet(criteria.getStatusSet()));
-//
-////            sql.appendEntityIdSetQuery(alias + ".processorFilter.streamProcessor.pipeline",
-////                    criteria.getPipelineUuidCriteria());
-////
-////                sql.appendEntityIdSetQuery(alias + ".processorFilter.streamProcessor",
-////                        criteria.getStreamProcessorIdSet());
-////
-////            sql.appendEntityIdSetQuery(alias + ".stream.feed",
-// feedService.convertNameSet(criteria.getFeedNameSet()));
-//
-//            sql.appendRangeQuery(alias + ".createMs", criteria.getCreatePeriod());
-////            sql.appendRangeQuery(alias + ".stream.effectiveMs", criteria.getEffectivePeriod());
-//        }
-//    }
-
-
-    private Optional<ProcessorTask> fetch(final DSLContext context, final ProcessorTask processorTask) {
-        return genericDao.fetch(context, processorTask.getId()).map(p -> decorate(p, processorTask));
-    }
-
-    private ProcessorTask update(final DSLContext context, final ProcessorTask processorTask) {
-        return decorate(genericDao.update(context, processorTask), processorTask);
-    }
-
-    private ProcessorTask decorate(final ProcessorTask result, final ProcessorTask original) {
-        result.setNodeName(original.getNodeName());
-        result.setFeedName(original.getFeedName());
-        result.setProcessorFilter(original.getProcessorFilter());
-        return result;
-    }
-
     @Override
     public ResultPage<ProcessorTask> find(final ExpressionCriteria criteria) {
-        return JooqUtil.contextResult(processorDbConnProvider, context -> find(context, criteria));
+        final Condition condition = expressionMapper.apply(criteria.getExpression());
+        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
+        final int offset = JooqUtil.getOffset(criteria.getPageRequest());
+        final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
+        final Result<Record> result = JooqUtil.contextResult(processorDbConnProvider, context ->
+                context
+                        .select()
+                        .from(PROCESSOR_TASK)
+                        .leftOuterJoin(PROCESSOR_NODE).on(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(PROCESSOR_NODE.ID))
+                        .leftOuterJoin(PROCESSOR_FEED).on(PROCESSOR_TASK.FK_PROCESSOR_FEED_ID.eq(PROCESSOR_FEED.ID))
+                        .join(PROCESSOR_FILTER).on(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(PROCESSOR_FILTER.ID))
+                        .join(PROCESSOR_FILTER_TRACKER).on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(
+                                PROCESSOR_FILTER_TRACKER.ID))
+                        .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
+                        .where(condition)
+                        .orderBy(orderFields)
+                        .limit(offset, limit)
+                        .fetch());
+        return convert(criteria, result, new HashMap<>());
     }
 
-    ResultPage<ProcessorTask> find(final DSLContext context, final ExpressionCriteria criteria) {
-        final Condition condition = expressionMapper.apply(criteria.getExpression());
-
-        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
-
-        final Map<Integer, ProcessorFilter> processorFilterCache = new HashMap<>();
-
-        final List<ProcessorTask> list = context
+    private Result<Record> find(final DSLContext context,
+                                final Condition condition,
+                                final Collection<OrderField<?>> orderFields,
+                                final PageRequest pageRequest) {
+        final int offset = JooqUtil.getOffset(pageRequest);
+        final int limit = JooqUtil.getLimit(pageRequest, true);
+        return context
                 .select()
                 .from(PROCESSOR_TASK)
                 .leftOuterJoin(PROCESSOR_NODE).on(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(PROCESSOR_NODE.ID))
@@ -905,90 +563,104 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
                 .where(condition)
                 .orderBy(orderFields)
-                .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
-                .offset(JooqUtil.getOffset(criteria.getPageRequest()))
-                .fetch()
-                .map(record -> {
-                    final Integer processorFilterId = record.get(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID);
-                    final ProcessorFilter processorFilter = processorFilterCache.computeIfAbsent(processorFilterId,
-                            pfid -> {
-                                final Processor processor = RECORD_TO_PROCESSOR_MAPPER.apply(record);
-                                final ProcessorFilterTracker processorFilterTracker =
-                                        RECORD_TO_PROCESSOR_FILTER_TRACKER_MAPPER.apply(record);
+                .limit(offset, limit)
+                .fetch();
+    }
 
-                                final ProcessorFilter filter = RECORD_TO_PROCESSOR_FILTER_MAPPER.apply(record);
-                                filter.setProcessor(processor);
-                                filter.setProcessorFilterTracker(processorFilterTracker);
-                                return marshaller.unmarshal(filter);
-                            });
+    private ResultPage<ProcessorTask> convert(final ExpressionCriteria criteria,
+                                              final Result<Record> result,
+                                              final Map<Integer, ProcessorFilter> processorFilterCache) {
+        final List<ProcessorTask> list = result.map(record -> {
+            final Integer processorFilterId = record.get(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID);
+            final ProcessorFilter processorFilter = processorFilterCache.computeIfAbsent(processorFilterId,
+                    pfid -> {
+                        final Processor processor = RECORD_TO_PROCESSOR_MAPPER.apply(record);
+                        final ProcessorFilterTracker processorFilterTracker =
+                                RECORD_TO_PROCESSOR_FILTER_TRACKER_MAPPER.apply(record);
 
-                    final ProcessorTask processorTask = RECORD_TO_PROCESSOR_TASK_MAPPER.apply(record);
-                    processorTask.setProcessorFilter(marshaller.unmarshal(processorFilter));
+                        final ProcessorFilter filter = RECORD_TO_PROCESSOR_FILTER_MAPPER.apply(record);
+                        filter.setProcessor(processor);
+                        filter.setProcessorFilterTracker(processorFilterTracker);
+                        return marshaller.unmarshal(filter);
+                    });
 
-                    return processorTask;
-                });
+            final ProcessorTask processorTask = RECORD_TO_PROCESSOR_TASK_MAPPER.apply(record);
+            processorTask.setProcessorFilter(marshaller.unmarshal(processorFilter));
 
+            return processorTask;
+        });
         return ResultPage.createCriterialBasedList(list, criteria);
     }
 
     @Override
     public ResultPage<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria) {
         final Condition condition = expressionMapper.apply(criteria.getExpression());
-
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
+        final PageRequest pageRequest = criteria.getPageRequest();
+        final int offset = JooqUtil.getOffset(pageRequest);
+        final int limit = JooqUtil.getLimit(pageRequest, true);
+        final Result<Record5<String, String, Integer, Byte, Integer>> result =
+                JooqUtil.contextResult(processorDbConnProvider, context -> context
+                        .select(
+                                PROCESSOR_FEED.NAME,
+                                PROCESSOR.PIPELINE_UUID,
+                                PROCESSOR_FILTER.PRIORITY,
+                                PROCESSOR_TASK.STATUS,
+                                COUNT
+                        )
+                        .from(PROCESSOR_TASK)
+                        .leftOuterJoin(PROCESSOR_NODE).on(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(PROCESSOR_NODE.ID))
+                        .join(PROCESSOR_FEED).on(PROCESSOR_TASK.FK_PROCESSOR_FEED_ID.eq(PROCESSOR_FEED.ID))
+                        .join(PROCESSOR_FILTER).on(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(PROCESSOR_FILTER.ID))
+                        .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
+                        .where(condition)
+                        .groupBy(PROCESSOR.PIPELINE_UUID,
+                                PROCESSOR_TASK.FK_PROCESSOR_FEED_ID,
+                                PROCESSOR_FILTER.PRIORITY,
+                                PROCESSOR_TASK.STATUS)
+                        .orderBy(orderFields)
+                        .limit(offset, limit)
+                        .fetch());
 
-        final List<ProcessorTaskSummary> list = JooqUtil.contextResult(processorDbConnProvider, context -> context
-                .select(
-                        PROCESSOR_FEED.NAME,
-                        PROCESSOR.PIPELINE_UUID,
-                        PROCESSOR_FILTER.PRIORITY,
-                        PROCESSOR_TASK.STATUS,
-                        COUNT
-                )
-                .from(PROCESSOR_TASK)
-                .leftOuterJoin(PROCESSOR_NODE).on(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(PROCESSOR_NODE.ID))
-                .join(PROCESSOR_FEED).on(PROCESSOR_TASK.FK_PROCESSOR_FEED_ID.eq(PROCESSOR_FEED.ID))
-                .join(PROCESSOR_FILTER).on(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(PROCESSOR_FILTER.ID))
-                .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
-                .where(condition)
-                .groupBy(PROCESSOR.PIPELINE_UUID,
-                        PROCESSOR_TASK.FK_PROCESSOR_FEED_ID,
-                        PROCESSOR_FILTER.PRIORITY,
-                        PROCESSOR_TASK.STATUS)
-                .orderBy(orderFields)
-                .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
-                .offset(JooqUtil.getOffset(criteria.getPageRequest()))
-                .fetch()
-                .map(record -> {
-                    final String feed = record.get(PROCESSOR_FEED.NAME);
-                    final String pipelineUuid = record.get(PROCESSOR.PIPELINE_UUID);
-                    final int priority = record.get(PROCESSOR_FILTER.PRIORITY);
-                    final TaskStatus status = TaskStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(record.get(
-                            PROCESSOR_TASK.STATUS));
-                    final int count = record.get(COUNT);
-                    DocRef pipelineDocRef = new DocRef("Pipeline", pipelineUuid);
-                    final Optional<String> pipelineName = docRefInfoService.name(pipelineDocRef);
-                    if (pipelineName.isPresent()) {
-                        pipelineDocRef = pipelineDocRef.copy().name(pipelineName.get()).build();
-                    }
-                    return new ProcessorTaskSummary(pipelineDocRef, feed, priority, status, count);
-                }));
+        final List<ProcessorTaskSummary> list = result.map(record -> {
+            final String feed = record.get(PROCESSOR_FEED.NAME);
+            final String pipelineUuid = record.get(PROCESSOR.PIPELINE_UUID);
+            final int priority = record.get(PROCESSOR_FILTER.PRIORITY);
+            final TaskStatus status = TaskStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(record.get(
+                    PROCESSOR_TASK.STATUS));
+            final int count = record.get(COUNT);
+            DocRef pipelineDocRef = new DocRef("Pipeline", pipelineUuid);
+            final Optional<String> pipelineName = docRefInfoService.name(pipelineDocRef);
+            if (pipelineName.isPresent()) {
+                pipelineDocRef = pipelineDocRef.copy().name(pipelineName.get()).build();
+            }
+            return new ProcessorTaskSummary(pipelineDocRef, feed, priority, status, count);
+        });
 
         return ResultPage.createCriterialBasedList(list, criteria);
+    }
+
+    private boolean isUsed(final Set<AbstractField> fieldSet,
+                           final List<AbstractField> resultFields,
+                           final ExpressionCriteria criteria) {
+        return resultFields.stream().anyMatch(fieldSet::contains) ||
+                ExpressionUtil.termCount(criteria.getExpression(), fieldSet) > 0;
     }
 
     @Override
     public void search(final ExpressionCriteria criteria,
                        final AbstractField[] fields,
                        final Consumer<Val[]> consumer) {
+        final Set<AbstractField> processorFields = Set.of(
+                ProcessorTaskFields.PROCESSOR_FILTER_ID,
+                ProcessorTaskFields.PROCESSOR_FILTER_PRIORITY);
+
         final List<AbstractField> fieldList = Arrays.asList(fields);
-        final int nodeTermCount = ExpressionUtil.termCount(criteria.getExpression(), ProcessorTaskFields.NODE_NAME);
-        final boolean nodeValueExists = fieldList.stream().anyMatch(Predicate.isEqual(ProcessorTaskFields.NODE_NAME));
-        final int feedTermCount = ExpressionUtil.termCount(criteria.getExpression(), ProcessorTaskFields.FEED);
-        final boolean feedValueExists = fieldList.stream().anyMatch(Predicate.isEqual(ProcessorTaskFields.FEED));
-        final int pipelineTermCount = ExpressionUtil.termCount(criteria.getExpression(), ProcessorTaskFields.PIPELINE);
-        final boolean pipelineValueExists = fieldList.stream()
-                .anyMatch(Predicate.isEqual(ProcessorTaskFields.PIPELINE));
+        final boolean nodeUsed = isUsed(Set.of(ProcessorTaskFields.NODE_NAME), fieldList, criteria);
+        final boolean feedUsed = isUsed(Set.of(ProcessorTaskFields.FEED), fieldList, criteria);
+        final boolean processorFilterUsed = isUsed(processorFields, fieldList, criteria);
+        final boolean processorUsed = isUsed(Set.of(ProcessorTaskFields.PROCESSOR_ID), fieldList, criteria);
+        final boolean pipelineUsed = isUsed(Set.of(ProcessorTaskFields.PIPELINE), fieldList, criteria);
 
         final PageRequest pageRequest = criteria.getPageRequest();
         final Condition condition = expressionMapper.apply(criteria.getExpression());
@@ -1006,17 +678,19 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
             }
 
             var select = context.select(dbFields).from(PROCESSOR_TASK);
-            if (nodeTermCount > 0 || nodeValueExists) {
+            if (nodeUsed) {
                 select = select.leftOuterJoin(PROCESSOR_NODE)
                         .on(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(PROCESSOR_NODE.ID));
             }
-            if (feedTermCount > 0 || feedValueExists) {
+            if (feedUsed) {
                 select = select.leftOuterJoin(PROCESSOR_FEED)
                         .on(PROCESSOR_TASK.FK_PROCESSOR_FEED_ID.eq(PROCESSOR_FEED.ID));
             }
-            if (pipelineTermCount > 0 || pipelineValueExists) {
+            if (processorFilterUsed || processorUsed || pipelineUsed) {
                 select = select.join(PROCESSOR_FILTER)
                         .on(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(PROCESSOR_FILTER.ID));
+            }
+            if (processorUsed || pipelineUsed) {
                 select = select.join(PROCESSOR)
                         .on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID));
             }
@@ -1047,38 +721,37 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         });
     }
 
-    //    private Collection<Condition> convertCriteria(final FindProcessorTaskCriteria criteria) {
-//        return JooqUtil.conditions(
-//                JooqUtil.getSetCondition(PROCESSOR_TASK.STATUS,
-//                CriteriaSet.convert(criteria.getTaskStatusSet(), TaskStatus::getPrimitiveValue)),
-//                JooqUtil.getSetCondition(PROCESSOR_TASK.ID, criteria.getProcessorTaskIdSet()),
-//                JooqUtil.getStringCondition(PROCESSOR_NODE.NAME, criteria.getNodeNameCriteria()),
-//                JooqUtil.getStringCondition(PROCESSOR.PIPELINE_UUID, criteria.getPipelineUuidCriteria()),
-//                JooqUtil.getSetCondition(PROCESSOR_FILTER.ID, criteria.getProcessorFilterIdSet()),
-//                Optional.ofNullable(criteria.getCreateMs()).map(PROCESSOR_TASK.CREATE_TIME_MS::eq),
-//                JooqUtil.getRangeCondition(PROCESSOR_TASK.CREATE_TIME_MS, criteria.getCreatePeriod()),
-//                JooqUtil.getSetCondition(PROCESSOR_TASK.META_ID, criteria.getMetaIdSet()));
-//    }
-
     @Override
     public ProcessorTask changeTaskStatus(final ProcessorTask processorTask,
                                           final String nodeName,
                                           final TaskStatus status,
                                           final Long startTime,
                                           final Long endTime) {
-        // Do everything within a single transaction.
-        return JooqUtil.transactionResult(processorDbConnProvider, context -> {
-            LOGGER.debug(() -> LogUtil.message(
-                    "changeTaskStatus() - Changing task status of {} to node={}, status={}",
-                    processorTask, nodeName, status));
-            final long now = System.currentTimeMillis();
+        LOGGER.debug(() -> LogUtil.message(
+                "changeTaskStatus() - Changing task status of {} to node={}, status={}",
+                processorTask, nodeName, status));
+        final long now = System.currentTimeMillis();
 
-            ProcessorTask result = null;
+        final Integer nodeId;
+        if (nodeName != null) {
+            nodeId = processorNodeCache.getOrCreate(nodeName);
+        } else {
+            nodeId = null;
+        }
+
+        // Do everything within a single transaction.
+        final ProcessorTaskRecord result = JooqUtil.transactionResult(processorDbConnProvider, context -> {
+            ProcessorTaskRecord record = context.newRecord(PROCESSOR_TASK);
 
             try {
                 try {
-                    modify(processorTask, nodeName, status, now, startTime, endTime);
-                    result = update(context, processorTask);
+                    record.from(processorTask);
+                    record.setFkProcessorNodeId(nodeId);
+                    record.setStatus(status.getPrimitiveValue());
+                    record.setStatusTimeMs(now);
+                    record.setStartTimeMs(startTime);
+                    record.setEndTimeMs(endTime);
+                    record.update();
 
                 } catch (final RuntimeException e) {
                     // Try this operation a few times.
@@ -1099,18 +772,27 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                                         "changeTaskStatus() - Task has changed, attempting reload {}", processorTask));
                             }
 
-                            final ProcessorTask loaded = fetch(context, processorTask).orElse(null);
-                            if (loaded == null) {
+                            final Optional<ProcessorTaskRecord> optional = context
+                                    .selectFrom(PROCESSOR_TASK)
+                                    .where(PROCESSOR_TASK.ID.eq(record.getId()))
+                                    .fetchOptional();
+
+                            if (optional.isEmpty()) {
                                 LOGGER.warn(() -> LogUtil.message(
                                         "changeTaskStatus() - Failed to reload task {}", processorTask));
-                            } else if (TaskStatus.DELETED.equals(loaded.getStatus())) {
+                            } else if (TaskStatus.DELETED.getPrimitiveValue() == optional.get().getStatus()) {
                                 LOGGER.warn(() -> LogUtil.message(
                                         "changeTaskStatus() - Task has been deleted {}", processorTask));
                             } else {
                                 LOGGER.warn(() -> LogUtil.message(
-                                        "changeTaskStatus() - Loaded stream task {}", loaded));
-                                modify(loaded, nodeName, status, now, startTime, endTime);
-                                result = update(context, loaded);
+                                        "changeTaskStatus() - Loaded stream task {}", optional.get()));
+                                record = optional.get();
+                                record.setFkProcessorNodeId(nodeId);
+                                record.setStatus(status.getPrimitiveValue());
+                                record.setStatusTimeMs(now);
+                                record.setStartTimeMs(startTime);
+                                record.setEndTimeMs(endTime);
+                                record.update();
                             }
                         } catch (final RuntimeException e2) {
                             success = false;
@@ -1132,20 +814,46 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 Thread.currentThread().interrupt();
             }
 
-            return result;
+            return record;
         });
+
+        return convert(result,
+                nodeName,
+                processorTask.getFeedName(),
+                processorTask.getProcessorFilter());
     }
 
-    private void modify(final ProcessorTask processorTask,
-                        final String nodeName,
-                        final TaskStatus status,
-                        final Long statusMs,
-                        final Long startTimeMs,
-                        final Long endTimeMs) {
-        processorTask.setNodeName(nodeName);
-        processorTask.setStatus(status);
-        processorTask.setStatusTimeMs(statusMs);
-        processorTask.setStartTimeMs(startTimeMs);
-        processorTask.setEndTimeMs(endTimeMs);
+    private ProcessorTask convert(final ProcessorTaskRecord record,
+                                  final String nodeName,
+                                  final String feedName,
+                                  final ProcessorFilter processorFilter) {
+        if (record == null) {
+            return null;
+        }
+
+        return new ProcessorTask(
+                record.getId(),
+                record.getVersion(),
+                record.getMetaId(),
+                record.getData(),
+                nodeName,
+                feedName,
+                record.getCreateTimeMs(),
+                record.getStatusTimeMs(),
+                record.getStartTimeMs(),
+                record.getEndTimeMs(),
+                TaskStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(record.getStatus()),
+                processorFilter);
+    }
+
+    private static class CreationState {
+
+        InclusiveRange streamIdRange;
+        InclusiveRange streamMsRange;
+        InclusiveRange eventIdRange;
+        Result<Record> availableTaskList;
+        int availableTasksCreated;
+        int totalTasksCreated;
+        long eventCount;
     }
 }

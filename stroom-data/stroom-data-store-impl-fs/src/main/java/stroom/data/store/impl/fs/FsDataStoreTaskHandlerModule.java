@@ -23,6 +23,7 @@ import stroom.util.guice.RestResourcesBinder;
 import com.google.inject.AbstractModule;
 
 public class FsDataStoreTaskHandlerModule extends AbstractModule {
+
     @Override
     protected void configure() {
         RestResourcesBinder.create(binder())
@@ -32,12 +33,12 @@ public class FsDataStoreTaskHandlerModule extends AbstractModule {
                 .addBinding(FsVolumeService.class);
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        return true;
+        if (this == o) {
+            return true;
+        }
+        return o != null && getClass() == o.getClass();
     }
 
     @Override

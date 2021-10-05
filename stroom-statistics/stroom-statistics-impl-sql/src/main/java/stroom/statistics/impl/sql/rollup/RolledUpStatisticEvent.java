@@ -132,7 +132,6 @@ public class RolledUpStatisticEvent implements Iterable<TimeAgnosticStatisticEve
         return result;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {

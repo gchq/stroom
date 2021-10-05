@@ -142,6 +142,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     // This is the parent stream type as opposed to the child stream type,
     // i.e. Raw Events rather than say Context
     private String currentStreamType;
+    // This is the child stream type, e.g. meta, context
+    // but may also be Info which is not really
     private String effectiveChildStreamType;
     private Set<String> currentAvailableStreamTypes = null;
     private DataType curDataType;
@@ -163,6 +165,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private boolean ignoreActions;
     // Track the tab last used so if we switch streams we can select the same tab again if it has it
     private String lastTabName;
+    // The currently selected tab
+    private String currentTabName = null;
 
     @Inject
     public DataPresenter(final EventBus eventBus,
@@ -198,6 +202,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         textPresenter.setUiHandlers(this);
         textPresenter.setWrapLines(true);
+        textPresenter.getViewAsHexOption().setChangeHandler((isOn) ->
+                update(false));
 
         addTab(infoTab);
         addTab(errorTab);
@@ -272,70 +278,101 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     }
 
     private void onNewTabSelected(final TabData tab) {
+        currentTabName = tab.getLabel();
         // Make sure tabs don't do anything in stepping mode.
         if (!steppingSource) {
             if (tab != null) {
                 // Clear the text presenter while we wait for the new data to come down
                 textPresenter.setText(null);
+
                 if (INFO_TAB_NAME.equals(tab.getLabel())) {
                     setActiveTab(infoTab, null);
                     effectiveChildStreamType = INFO_PSEUDO_STREAM_TYPE;
                     showHtmlPresenter();
                     fetchMetaInfoData(getCurrentMetaId());
                     getView().setSourceLinkVisible(false);
+                    setNavigationControlsVisible(false);
+                    getView().setProgressView(null);
                     itemNavigatorPresenter.refreshNavigator();
                     refreshProgressBar(false);
                     refreshTextPresenterContent();
                 } else {
                     getView().setSourceLinkVisible(true);
+                    setNavigationControlsVisible(true);
+                    getView().setProgressView(progressPresenter.getView());
                     if (META_TAB_NAME.equals(tab.getLabel())) {
-                        editorMode = AceEditorMode.PROPERTIES;
                         fetchDataForCurrentStreamNo(StreamTypeNames.META);
                         refreshProgressBar(false);
                     } else if (CONTEXT_TAB_NAME.equals(tab.getLabel())) {
-                        editorMode = AceEditorMode.XML;
                         fetchDataForCurrentStreamNo(StreamTypeNames.CONTEXT);
                     } else if (ERROR_TAB_NAME.equals(tab.getLabel())) {
                         errorMarkerMode = true;
-                        editorMode = AceEditorMode.TEXT;
                         fetchDataForCurrentStreamNo(null);
                     } else {
                         // Turn off error marker mode if we are currently looking at
                         // an error and switching to the data tab.
                         if (StreamTypeNames.ERROR.equals(currentStreamType)) {
                             errorMarkerMode = false;
-                            // Error textual data so display as text
-                            editorMode = AceEditorMode.TEXT;
-                        } else {
-                            // Any old data so treat as XML
-                            editorMode = AceEditorMode.XML;
                         }
-
                         fetchDataForCurrentStreamNo(null);
                     }
                 }
+                // Keep track of the tab we are on for when we switch streams
                 lastTabName = tab.getLabel();
             }
         }
     }
 
-    private void updateEditorMode(final String streamType, final TabData tabData) {
-        if (tabData != null && streamType != null) {
-            final String tabName = tabData.getLabel();
-            if (INFO_TAB_NAME.equals(tabName)) {
-                editorMode = AceEditorMode.TEXT;
-            } else if (isInErrorMarkerMode() && StreamTypeNames.ERROR.equals(streamType)) {
-                // Not a text editor
-            } else if (!isInErrorMarkerMode() && StreamTypeNames.ERROR.equals(streamType)) {
-                editorMode = AceEditorMode.TEXT;
-            } else if (META_TAB_NAME.equals(tabName)) {
-                editorMode = AceEditorMode.PROPERTIES;
-            } else if (CONTEXT_TAB_NAME.equals(tabName)) {
-                editorMode = AceEditorMode.XML;
-            } else {
-                // Default to xml mode
-                editorMode = AceEditorMode.XML;
-            }
+    private void updateEditorDisplay() {
+
+        // Determine the syntax highlighting mode
+        if (INFO_TAB_NAME.equals(currentTabName)) {
+            editorMode = AceEditorMode.TEXT;
+        } else if (META_TAB_NAME.equals(currentTabName)) {
+            editorMode = AceEditorMode.PROPERTIES;
+        } else if (lastResult != null && FetchDataRequest.DisplayMode.HEX.equals(lastResult.getDisplayMode())) {
+            editorMode = AceEditorMode.STROOM_HEX_DUMP;
+        } else {
+            editorMode = AceEditorMode.XML;
+        }
+
+        // Set up hex viewing availability and state
+        // If the source location has a data range then it means we are viewing a preview of
+        // a sub-set of the data (i.e. from DataDisplaySupport) and it makes no sense to
+        // see hex of this sub-set when the sub-set lotaion is reliant on chars being decodeable.
+        if (INFO_TAB_NAME.equals(currentTabName)
+                || ERROR_TAB_NAME.equals(currentTabName)
+                || currentSourceLocation.getDataRange() != null) {
+            textPresenter.getViewAsHexOption().setOff();
+            textPresenter.getViewAsHexOption().setUnavailable();
+        } else {
+            textPresenter.getViewAsHexOption().setAvailable();
+        }
+
+        if (lastResult != null && lastResult.hasErrors()) {
+            final String childStreamText = lastResult.getSourceLocation().getOptChildType()
+                    .map(childType -> " (" + childType + ")")
+                    .orElse("");
+            final String title = "Unable to display stream ["
+                    + lastResult.getSourceLocation().getIdentifierString()
+                    + "]"
+                    + childStreamText
+                    + " as "
+                    + (lastResult.getDisplayMode() != null
+                    ? lastResult.getDisplayMode().name().toLowerCase()
+                    : "text");
+            final String errorText = String.join("\n", lastResult.getErrors());
+            textPresenter.setErrorText(title, errorText);
+        } else {
+            final boolean shouldFormatData = lastResult != null
+                    && FetchDataRequest.DisplayMode.TEXT.equals(lastResult.getDisplayMode())
+                    && AceEditorMode.XML.equals(editorMode);
+
+            textPresenter.getViewAsHexOption()
+                    .setOn(FetchDataRequest.DisplayMode.HEX.equals(lastResult.getDisplayMode()));
+            textPresenter.setMode(editorMode);
+            textPresenter.setText(data, shouldFormatData);
+            textPresenter.setControlsVisible(playButtonVisible);
         }
     }
 
@@ -590,8 +627,16 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             }
 
             final FetchDataRequest request = new FetchDataRequest(builder.build());
-            request.setMarkerMode(StreamTypeNames.ERROR.equals(currentStreamType)
-                    && isInErrorMarkerMode());
+            if (StreamTypeNames.ERROR.equals(currentStreamType)
+                    && isInErrorMarkerMode()) {
+                request.setDisplayMode(FetchDataRequest.DisplayMode.MARKER);
+            } else {
+                if (textPresenter.getViewAsHexOption().isOnAndAvailable()) {
+                    request.setDisplayMode(FetchDataRequest.DisplayMode.HEX);
+                } else {
+                    request.setDisplayMode(FetchDataRequest.DisplayMode.TEXT);
+                }
+            }
             request.setExpandedSeverities(expandedSeverities);
             request.setFireEvents(fireEvents);
             doFetch(request, fireEvents);
@@ -655,7 +700,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                                         itemNavigatorPresenter.setRefreshing(false);
                                     }
                                 })
-                                .onFailure(caught -> itemNavigatorPresenter.setRefreshing(false))
+                                .onFailure(caught ->
+                                        itemNavigatorPresenter.setRefreshing(false))
                                 .call(DATA_RESOURCE)
                                 .fetch(request);
                     }
@@ -852,9 +898,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private void setActiveTab(final TabData tab, final String streamType) {
 //        GWT.log("Setting active tab to " + tab.getLabel());
         getView().getTabBar().selectTab(tab);
-        if (streamType != null) {
-            updateEditorMode(streamType, tab);
-        }
+        currentTabName = tab.getLabel();
+        updateEditorDisplay();
     }
 
     private void showHtmlPresenter() {
@@ -868,7 +913,6 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     }
 
     private void showMarkerPresenter() {
-        // TODO @AT Need one for marker data
         itemNavigatorPresenter.setDisplay(navigatorData);
         getView().getLayerContainer().show(markerListPresenter);
     }
@@ -879,25 +923,51 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
     private void refresh(final AbstractFetchDataResult result) {
 
-        refreshProgressBar(result != null);
-        setPagers(result);
         refreshTextPresenterContent();
-
         refreshMetaInfoPresenterContent(result != null
                 ? result.getSourceLocation().getMetaId()
                 : null);
 
-        itemNavigatorPresenter.refreshNavigator();
-        refreshHighlights(result);
-        refreshMarkers(result);
+        if (result != null && result.hasErrors()) {
+            setNavigationControlsVisible(false);
+            getView().setSourceLinkVisible(false);
+            getView().setProgressView(null);
+        } else {
+            setNavigationControlsVisible(true);
+            getView().setSourceLinkVisible(true);
+            setPagers(result);
+            getView().setProgressView(progressPresenter.getView());
+            refreshProgressBar(result != null);
+            itemNavigatorPresenter.refreshNavigator();
+            refreshHighlights(result);
+            refreshMarkers(result);
+        }
     }
 
     private void refreshTextPresenterContent() {
-        textPresenter.setMode(editorMode);
-        // Only want to try to format (which formats as XML) if we know the
-        // data is likely to be XML, else it can mess up the formatting of error text.
-        textPresenter.setText(data, AceEditorMode.XML.equals(editorMode));
-        textPresenter.setControlsVisible(playButtonVisible);
+        if (lastResult != null && lastResult.hasErrors()) {
+            final String childStreamText = lastResult.getSourceLocation().getOptChildType()
+                    .map(childType -> " (" + childType + ")")
+                    .orElse("");
+            final String title = "Unable to display stream ["
+                    + lastResult.getSourceLocation().getIdentifierString()
+                    + "]"
+                    + childStreamText
+                    + " as "
+                    + (lastResult.getDisplayMode() != null
+                    ? lastResult.getDisplayMode().name().toLowerCase()
+                    : "text");
+            final String errorText = String.join("\n", lastResult.getErrors());
+            textPresenter.setErrorText(title, errorText);
+        } else {
+            final boolean shouldFormatData = lastResult != null
+                    && FetchDataRequest.DisplayMode.TEXT.equals(lastResult.getDisplayMode())
+                    && AceEditorMode.XML.equals(editorMode);
+
+            textPresenter.setMode(editorMode);
+            textPresenter.setText(data, shouldFormatData);
+            textPresenter.setControlsVisible(playButtonVisible);
+        }
     }
 
     private void refreshMetaInfoPresenterContent(final Long metaId) {
@@ -1152,7 +1222,9 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         @Override
         public OffsetRange getItemRange() {
-            return itemRangeSupplier.get();
+            return itemRangeSupplier != null
+                    ? itemRangeSupplier.get()
+                    : OffsetRange.zero();
         }
 
         @Override

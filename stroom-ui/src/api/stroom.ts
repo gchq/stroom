@@ -12,6 +12,8 @@
 export interface AbstractFetchDataResult {
   availableChildStreamTypes?: string[];
   classification?: string;
+  displayMode?: "TEXT" | "HEX" | "MARKER";
+  errors?: string[];
   feedName?: string;
 
   /** The offset and length of a range of data in a sub-set of a query result set */
@@ -1120,8 +1122,8 @@ export interface FetchAllDocumentPermissionsRequest {
 }
 
 export interface FetchDataRequest {
+  displayMode?: "TEXT" | "HEX" | "MARKER";
   expandedSeverities?: ("INFO" | "WARN" | "ERROR" | "FATAL")[];
-  markerMode?: boolean;
 
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   pipeline?: DocRef;
@@ -2994,6 +2996,12 @@ export interface SourceConfig {
    * @min 0
    */
   maxCharactersToCompleteLine?: number;
+
+  /**
+   * @format int32
+   * @min 1
+   */
+  maxHexDumpLines?: number;
 }
 
 export interface SourceLocation {
@@ -3268,6 +3276,8 @@ export interface TaskProgress {
 }
 
 export interface TaskProgressResponse {
+  errors?: string[];
+
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: TaskProgress[];
@@ -3427,7 +3437,6 @@ export interface User {
   /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
-  enabled?: boolean;
   group?: boolean;
 
   /** @format int32 */
@@ -8658,24 +8667,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         body: data,
         secure: true,
         type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Authorisation
-     * @name SetUserStatus
-     * @summary Enables/disables the Stroom user with the supplied username
-     * @request PUT:/users/v1/{userName}/status
-     * @secure
-     */
-    setUserStatus: (userName: string, query?: { enabled?: boolean }, params: RequestParams = {}) =>
-      this.request<any, boolean>({
-        path: `/users/v1/${userName}/status`,
-        method: "PUT",
-        query: query,
-        secure: true,
         ...params,
       }),
 

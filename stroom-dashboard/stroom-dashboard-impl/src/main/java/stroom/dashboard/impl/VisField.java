@@ -66,7 +66,6 @@ public class VisField implements Serializable {
         this.sort = sort;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

@@ -74,7 +74,6 @@ public final class Query {
         return params;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object o) {
         if (this == o) {

@@ -23,12 +23,12 @@ class TaskCreationProgressTracker {
     // The number of tasks we want to create which will be decremented as we create them
     private final AtomicInteger remainingTasksToCreateCounter;
     private final ConcurrentMap<ProcessorFilter, AtomicInteger> tasksCreatedCountsMap = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<ProcessorFilter, StreamTaskQueue> queueMap;
+    private final ConcurrentHashMap<ProcessorFilter, ProcessorTaskQueue> queueMap;
     private final ProcessorConfig processorConfig;
     private final List<CompletableFuture<?>> futures = new ArrayList<>();
 
     public TaskCreationProgressTracker(final int totalTasksToCreate,
-                                       final ConcurrentHashMap<ProcessorFilter, StreamTaskQueue> queueMap,
+                                       final ConcurrentHashMap<ProcessorFilter, ProcessorTaskQueue> queueMap,
                                        final ProcessorConfig processorConfig) {
         this.remainingTasksToCreateCounter = new AtomicInteger(totalTasksToCreate);
         this.queueMap = queueMap;
@@ -77,7 +77,7 @@ class TaskCreationProgressTracker {
     }
 
     public int getTaskCountToCreate(final ProcessorFilter filter) {
-        final StreamTaskQueue queue = queueMap.get(filter);
+        final ProcessorTaskQueue queue = queueMap.get(filter);
         if (queue != null) {
             // This assumes the max number of tasks to create per filter is the same as the max number of
             // tasks to create over all filters.

@@ -145,7 +145,6 @@ public enum ByteSizeUnit {
             return new CaseInsensitiveString(value);
         }
 
-        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(Object o) {
             if (this == o) {

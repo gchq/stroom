@@ -39,7 +39,7 @@ public class ImportState {
     @JsonProperty
     private final DocRef docRef;
     @JsonProperty
-    private String sourcePath;
+    private final String sourcePath;
     @JsonProperty
     private String destPath;
     @JsonProperty
@@ -159,11 +159,14 @@ public class ImportState {
         this.state = state;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         final ImportState that = (ImportState) o;
 
@@ -181,11 +184,15 @@ public class ImportState {
     }
 
     public enum ImportMode {
-        CREATE_CONFIRMATION, ACTION_CONFIRMATION, IGNORE_CONFIRMATION
+        CREATE_CONFIRMATION,
+        ACTION_CONFIRMATION,
+        IGNORE_CONFIRMATION
     }
 
     public enum State implements HasDisplayValue {
-        NEW("New"), UPDATE("Update"), EQUAL("Equal");
+        NEW("New"),
+        UPDATE("Update"),
+        EQUAL("Equal");
 
         private final String displayValue;
 
