@@ -27,6 +27,7 @@ stories.add("List", () => {
             of: 0,
           },
         },
+        keyExtractor: (token) => token.id.toString(),
       }}
       onClose={() => undefined}
     />

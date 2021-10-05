@@ -66,7 +66,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import javax.inject.Inject;
 
 import static java.util.Map.entry;
@@ -641,22 +640,27 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         return ResultPage.createCriterialBasedList(list, criteria);
     }
 
+    private boolean isUsed(final Set<AbstractField> fieldSet,
+                           final List<AbstractField> resultFields,
+                           final ExpressionCriteria criteria) {
+        return resultFields.stream().anyMatch(fieldSet::contains) ||
+                ExpressionUtil.termCount(criteria.getExpression(), fieldSet) > 0;
+    }
+
     @Override
     public void search(final ExpressionCriteria criteria,
                        final AbstractField[] fields,
                        final Consumer<Val[]> consumer) {
+        final Set<AbstractField> processorFields = Set.of(
+                ProcessorTaskFields.PROCESSOR_FILTER_ID,
+                ProcessorTaskFields.PROCESSOR_FILTER_PRIORITY);
+
         final List<AbstractField> fieldList = Arrays.asList(fields);
-        final int nodeTermCount = ExpressionUtil.termCount(criteria.getExpression(), ProcessorTaskFields.NODE_NAME);
-        final boolean nodeValueExists = fieldList.stream().anyMatch(Predicate.isEqual(ProcessorTaskFields.NODE_NAME));
-        final int feedTermCount = ExpressionUtil.termCount(criteria.getExpression(), ProcessorTaskFields.FEED);
-        final boolean feedValueExists = fieldList.stream().anyMatch(Predicate.isEqual(ProcessorTaskFields.FEED));
-        final int processorFilterTermCount = ExpressionUtil.termCount(criteria.getExpression(),
-                Set.of(ProcessorTaskFields.PROCESSOR_FILTER_ID, ProcessorTaskFields.PROCESSOR_FILTER_PRIORITY));
-        final int processorTermCount = ExpressionUtil.termCount(criteria.getExpression(),
-                ProcessorTaskFields.PROCESSOR_ID);
-        final int pipelineTermCount = ExpressionUtil.termCount(criteria.getExpression(), ProcessorTaskFields.PIPELINE);
-        final boolean pipelineValueExists = fieldList.stream()
-                .anyMatch(Predicate.isEqual(ProcessorTaskFields.PIPELINE));
+        final boolean nodeUsed = isUsed(Set.of(ProcessorTaskFields.NODE_NAME), fieldList, criteria);
+        final boolean feedUsed = isUsed(Set.of(ProcessorTaskFields.FEED), fieldList, criteria);
+        final boolean processorFilterUsed = isUsed(processorFields, fieldList, criteria);
+        final boolean processorUsed = isUsed(Set.of(ProcessorTaskFields.PROCESSOR_ID), fieldList, criteria);
+        final boolean pipelineUsed = isUsed(Set.of(ProcessorTaskFields.PIPELINE), fieldList, criteria);
 
         final PageRequest pageRequest = criteria.getPageRequest();
         final Condition condition = expressionMapper.apply(criteria.getExpression());
@@ -674,24 +678,19 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
             }
 
             var select = context.select(dbFields).from(PROCESSOR_TASK);
-            if (nodeTermCount > 0 || nodeValueExists) {
+            if (nodeUsed) {
                 select = select.leftOuterJoin(PROCESSOR_NODE)
                         .on(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(PROCESSOR_NODE.ID));
             }
-            if (feedTermCount > 0 || feedValueExists) {
+            if (feedUsed) {
                 select = select.leftOuterJoin(PROCESSOR_FEED)
                         .on(PROCESSOR_TASK.FK_PROCESSOR_FEED_ID.eq(PROCESSOR_FEED.ID));
             }
-            if (processorFilterTermCount > 0 ||
-                    processorTermCount > 0 ||
-                    pipelineTermCount > 0 ||
-                    pipelineValueExists) {
+            if (processorFilterUsed || processorUsed || pipelineUsed) {
                 select = select.join(PROCESSOR_FILTER)
                         .on(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(PROCESSOR_FILTER.ID));
             }
-            if (processorTermCount > 0 ||
-                    pipelineTermCount > 0 ||
-                    pipelineValueExists) {
+            if (processorUsed || pipelineUsed) {
                 select = select.join(PROCESSOR)
                         .on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID));
             }

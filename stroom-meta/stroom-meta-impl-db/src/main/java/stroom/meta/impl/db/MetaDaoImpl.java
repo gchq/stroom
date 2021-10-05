@@ -81,7 +81,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -876,18 +875,22 @@ class MetaDaoImpl implements MetaDao, Clearable {
         return (Integer) result;
     }
 
+    private boolean isUsed(final Set<AbstractField> fieldSet,
+                           final List<AbstractField> resultFields,
+                           final ExpressionCriteria criteria) {
+        return resultFields.stream().anyMatch(fieldSet::contains) ||
+                ExpressionUtil.termCount(criteria.getExpression(), fieldSet) > 0;
+    }
+
     @Override
     public void search(final ExpressionCriteria criteria,
                        final AbstractField[] fields,
                        final Consumer<Val[]> consumer) {
         final List<AbstractField> fieldList = Arrays.asList(fields);
-        final int feedTermCount = ExpressionUtil.termCount(criteria.getExpression(), MetaFields.FEED);
-        final boolean feedValueExists = fieldList.stream().anyMatch(Predicate.isEqual(MetaFields.FEED));
-        final int typeTermCount = ExpressionUtil.termCount(criteria.getExpression(), MetaFields.TYPE);
-        final boolean typeValueExists = fieldList.stream().anyMatch(Predicate.isEqual(MetaFields.TYPE));
-        final int processorTermCount = ExpressionUtil.termCount(criteria.getExpression(), MetaFields.PIPELINE);
-        final boolean processorValueExists = fieldList.stream().anyMatch(Predicate.isEqual(MetaFields.PIPELINE));
-        final boolean extendedValuesExist = fieldList.stream().anyMatch(MetaFields.getExtendedFields()::contains);
+        final boolean feedUsed = isUsed(Set.of(MetaFields.FEED), fieldList, criteria);
+        final boolean typeUsed = isUsed(Set.of(MetaFields.TYPE), fieldList, criteria);
+        final boolean pipelineUsed = isUsed(Set.of(MetaFields.PIPELINE), fieldList, criteria);
+        final boolean extendedValuesUsed = isUsed(Set.copyOf(MetaFields.getExtendedFields()), fieldList, criteria);
 
         final PageRequest pageRequest = criteria.getPageRequest();
         final Collection<Condition> conditions = createCondition(criteria.getExpression());
@@ -914,7 +917,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
         }
 
         // Need to modify requested fields to include id if we are going to fetch extended attributes.
-        if (extendedValuesExist) {
+        if (extendedValuesUsed) {
             if (dbFields.stream().noneMatch(meta.ID::equals)) {
                 dbFields.add(meta.ID);
             }
@@ -930,13 +933,13 @@ class MetaDaoImpl implements MetaDao, Clearable {
             }
 
             var select = context.select(dbFields).from(meta);
-            if (feedTermCount > 0 || feedValueExists) {
+            if (feedUsed) {
                 select = select.join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID));
             }
-            if (typeTermCount > 0 || typeValueExists) {
+            if (typeUsed) {
                 select = select.join(metaType).on(meta.TYPE_ID.eq(metaType.ID));
             }
-            if (processorTermCount > 0 || processorValueExists) {
+            if (pipelineUsed) {
                 select = select.leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID));
             }
 
@@ -956,7 +959,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
                     final Result<?> result = cursor.fetchNext(1000);
 
                     // If we require some extended values then perform another query to get them.
-                    if (extendedValuesExist) {
+                    if (extendedValuesUsed) {
                         final List<Long> idList = result.getValues(meta.ID);
                         fillExtendedFieldValueMap(context, idList, extendedFieldKeyIdList, extendedFieldValueMap);
                     }
@@ -965,7 +968,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
                         final Val[] arr = new Val[fields.length];
 
                         Map<Integer, Long> extendedValues = null;
-                        if (extendedValuesExist) {
+                        if (extendedValuesUsed) {
                             extendedValues = extendedFieldValueMap.get(r.get(meta.ID));
                         }
 

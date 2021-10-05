@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2494** : Changed logging to help diagnose problem.
+
+* Issue **#2429** : The server tasks screen now handles errors that occur when trying to contact unreachable nodes.
+
+* Issue **#2492** : Fixed issue getting filter priorities in processor task data store.
+
+* Issue **#2489** : Change to wrap long error messages in stepping display.
+
+* Issue **#2487** : Fixed issue flushing and deleting index shards.
+
+* Issue **#2442** : Removed enabled/disabled states for permission users and user groups as these are now controlled by account authentication. 
+
+* Issue **#2431** : Fixed issue with item selection in account and token list pages.
+
+* Issue **#2484** : Fix failing ref lookups when one loader has range data.
+
+* Issue **#2485** : Autologger: UNLOGGED calls always being logged.
+
+* Issue **#2395** : Fixed timezone issue in API key display.
+
 * Issue **#2452** : New pipeline references now default to `Reference` data type.
 
 * Issue **#2414** : The processing tasks data source now exposes start, end and status times plus filter priorities.

@@ -110,7 +110,7 @@ class TestRangeStoreDb extends AbstractLmdbDbTest {
     @Test
     void testContainsMapDefinition() {
 
-        final List<UID> uids = Arrays.asList(uid1, uid2, uid3);
+        final List<UID> uids = Arrays.asList(uid2, uid3);
         final UID uid4 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 0, 0, 0, 4);
 
         // Load some non-contiguous ranges for different mapDefinitionUids
@@ -133,6 +133,10 @@ class TestRangeStoreDb extends AbstractLmdbDbTest {
                 result = rangeStoreDb.containsMapDefinition(txn, uids.get(i));
                 assertThat(result).isTrue();
             }
+
+            // no entries exist for uid1
+            result = rangeStoreDb.containsMapDefinition(txn, uid1);
+            assertThat(result).isFalse();
 
             // no entries exist for uid4
             result = rangeStoreDb.containsMapDefinition(txn, uid4);

@@ -31,6 +31,10 @@
   	-webkit-user-select: text;
   	-moz-user-select: text;
   	user-select: text;
+    white-space: break-spaces;
+    overflow: auto;
+    max-width: 90%;
+    max-height: 90%;
 }
 
 .editor .ace_gutter-cell.stroom_info {
