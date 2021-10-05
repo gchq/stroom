@@ -80,7 +80,7 @@ public class JooqHelper {
         return DSL.using(connection, sqlDialect, settings);
     }
 
-    private <R> R useConnectionResult(final Function<Connection, R> function) {
+    <R> R useConnectionResult(final Function<Connection, R> function) {
         try {
             checkDataSource(dataSource);
             try (final Connection connection = dataSource.getConnection()) {

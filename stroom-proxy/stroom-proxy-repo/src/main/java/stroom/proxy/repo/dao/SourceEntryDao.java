@@ -1,5 +1,6 @@
 package stroom.proxy.repo.dao;
 
+import stroom.db.util.SqliteJooqHelper;
 import stroom.proxy.repo.ProxyRepoDbConnProvider;
 import stroom.proxy.repo.db.jooq.tables.records.SourceEntryRecord;
 import stroom.proxy.repo.db.jooq.tables.records.SourceItemRecord;

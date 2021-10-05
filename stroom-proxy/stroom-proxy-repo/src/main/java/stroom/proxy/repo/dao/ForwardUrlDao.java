@@ -16,6 +16,7 @@
 
 package stroom.proxy.repo.dao;
 
+import stroom.db.util.SqliteJooqHelper;
 import stroom.proxy.repo.ForwarderDestinations;
 import stroom.proxy.repo.ProxyRepoDbConnProvider;
 

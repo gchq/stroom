@@ -1,13 +1,12 @@
 package stroom.proxy.repo;
 
-import stroom.db.util.JooqHelper;
+import stroom.db.util.SqliteJooqHelper;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.apache.commons.lang3.StringUtils;
 import org.jooq.Condition;
 import org.jooq.Record;
-import org.jooq.SQLDialect;
 import org.jooq.Table;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -55,7 +54,7 @@ public class TestCleanup {
 
     @Test
     void testCleanup() {
-        final JooqHelper jooq = new JooqHelper(connProvider, SQLDialect.SQLITE);
+        final SqliteJooqHelper jooq = new SqliteJooqHelper(connProvider);
         jooq.context(context -> {
             long sourceId = 0;
             long sourceItemId = 0;
@@ -243,7 +242,7 @@ public class TestCleanup {
     <R extends Record, T extends Table<R>> void printTable(final T table,
                                                            final Condition condition,
                                                            final String message) {
-        final JooqHelper jooq = new JooqHelper(connProvider, SQLDialect.SQLITE);
+        final SqliteJooqHelper jooq = new SqliteJooqHelper(connProvider);
         jooq.context(context -> {
             final List<R> records = context.selectFrom(table).where(condition).fetch();
             printRecords(records, message);

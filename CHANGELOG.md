@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2471** : Changes to ensure SQLite DB connection is only used by one process at a time.
+
 * Issue **#2471** : Changes to help diagnose proxy aggregation issues.
 
 * Issue **#2494** : Changed logging to help diagnose problem.
