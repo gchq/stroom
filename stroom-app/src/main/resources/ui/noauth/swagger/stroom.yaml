@@ -5125,29 +5125,6 @@ paths:
       summary: Find the users matching the supplied criteria
       tags:
       - Authorisation
-  /users/v1/{userName}/status:
-    put:
-      operationId: setUserStatus
-      parameters:
-      - in: path
-        name: userName
-        required: true
-        schema:
-          type: string
-      - in: query
-        name: enabled
-        schema:
-          type: boolean
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: boolean
-          description: default response
-      summary: Enables/disables the Stroom user with the supplied username
-      tags:
-      - Authorisation
   /users/v1/{userUuid}:
     get:
       operationId: fetchUser
@@ -10428,6 +10405,10 @@ components:
     TaskProgressResponse:
       type: object
       properties:
+        errors:
+          type: array
+          items:
+            type: string
         pageResponse:
           $ref: '#/components/schemas/PageResponse'
         values:
@@ -10755,8 +10736,6 @@ components:
           format: int64
         createUser:
           type: string
-        enabled:
-          type: boolean
         group:
           type: boolean
         id:

@@ -3119,6 +3119,8 @@ export interface TaskProgress {
 }
 
 export interface TaskProgressResponse {
+  errors?: string[];
+
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: TaskProgress[];
@@ -3330,7 +3332,6 @@ export interface User {
   /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
-  enabled?: boolean;
   group?: boolean;
 
   /** @format int32 */
@@ -8322,24 +8323,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         body: data,
         secure: true,
         type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Authorisation
-     * @name SetUserStatus
-     * @summary Enables/disables the Stroom user with the supplied username
-     * @request PUT:/users/v1/{userName}/status
-     * @secure
-     */
-    setUserStatus: (userName: string, query?: { enabled?: boolean }, params: RequestParams = {}) =>
-      this.request<any, boolean>({
-        path: `/users/v1/${userName}/status`,
-        method: "PUT",
-        query: query,
-        secure: true,
         ...params,
       }),
 
