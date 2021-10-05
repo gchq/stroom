@@ -220,7 +220,8 @@ public class IndexShardManager {
 
                 final IndexShardWriterCache indexShardWriterCache = indexShardWriterCacheProvider.get();
 
-                // Create an atomic integer to count the number of index shard writers yet to complete the specified action.
+                // Create an atomic integer to count the number of index shard writers yet to complete the specified
+                // action.
                 final AtomicInteger remaining = new AtomicInteger(ownedShards.size());
 
                 // Create a scheduled executor for us to continually log index shard writer action progress.
