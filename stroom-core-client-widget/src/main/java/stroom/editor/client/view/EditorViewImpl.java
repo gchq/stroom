@@ -314,7 +314,7 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
                                 throw new RuntimeException("Unexpected severity " + severity);
                         }
 
-                        // Ace munges all the msgs together in one popup for annotaions on the same line/col
+                        // Ace munges all the msgs together in one popup for annotations on the same line/col
                         // so add the severity as if we have some info + warnings then we get a warning
                         // icon whose popup contains all the msgs.
                         annotations.add(new Annotation(

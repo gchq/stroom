@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2489** : Change to wrap long error messages in stepping display.
+
 * Issue **#2487** : Fixed issue flushing and deleting index shards.
 
 * Issue **#2442** : Removed enabled/disabled states for permission users and user groups as these are now controlled by account authentication. 
