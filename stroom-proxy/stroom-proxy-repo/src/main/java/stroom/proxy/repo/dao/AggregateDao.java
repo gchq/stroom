@@ -88,7 +88,7 @@ public class AggregateDao {
     /**
      * Close all aggregates that meet the supplied criteria.
      */
-    public int closeAggregates(final int maxItemsPerAggregate,
+    public synchronized int closeAggregates(final int maxItemsPerAggregate,
                                final long maxUncompressedByteSize,
                                final long oldestMs) {
         final Condition condition =
@@ -132,13 +132,13 @@ public class AggregateDao {
                 )));
     }
 
-    public void addItem(final SourceItem sourceItem,
+    public synchronized void addItem(final SourceItem sourceItem,
                         final int maxItemsPerAggregate,
                         final long maxUncompressedByteSize) {
         final long maxAggregateSize = Math.max(0, maxUncompressedByteSize - sourceItem.getByteSize());
 
         LOGGER.debug(() -> "addItem - " +
-                ", feed=" +
+                "feed=" +
                 sourceItem.getFeedName() +
                 ", type=" +
                 sourceItem.getTypeName() +

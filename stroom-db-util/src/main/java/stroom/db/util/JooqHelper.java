@@ -31,7 +31,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -45,7 +44,6 @@ public class JooqHelper {
     private static final String DEFAULT_ID_FIELD_NAME = "id";
     private static final Boolean RENDER_SCHEMA = false;
     private static final ThreadLocal<CurrentDataSource> DATA_SOURCE_THREAD_LOCAL = new ThreadLocal<>();
-    private static final AtomicReference<CurrentDataSource> CURRENT_DATA_SOURCE = new AtomicReference<>();
 
     private final DataSource dataSource;
     private final SQLDialect sqlDialect;
@@ -452,21 +450,10 @@ public class JooqHelper {
                     currentDataSource);
         }
         DATA_SOURCE_THREAD_LOCAL.set(currentDataSource);
-
-        // Check global usage.
-        CurrentDataSource globalDataSource = CURRENT_DATA_SOURCE.get();
-        if (globalDataSource != null && globalDataSource.dataSource.equals(dataSource)) {
-            LOGGER.debug(() -> "Data source already in use globally:\n\n" +
-                    globalDataSource +
-                    "\n\n" +
-                    currentDataSource);
-        }
-        CURRENT_DATA_SOURCE.set(currentDataSource);
     }
 
     private static void releaseDataSource() {
         DATA_SOURCE_THREAD_LOCAL.set(null);
-        CURRENT_DATA_SOURCE.set(null);
     }
 
     private static class CurrentDataSource {

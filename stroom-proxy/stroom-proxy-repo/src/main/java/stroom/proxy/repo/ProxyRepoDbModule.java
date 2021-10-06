@@ -12,6 +12,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import org.sqlite.SQLiteDataSource;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -38,33 +39,60 @@ public class ProxyRepoDbModule extends AbstractModule {
             final DataSourceFactory dataSourceFactory) {
         LOGGER.debug(() -> "Getting connection provider for " + MODULE);
 
-        final DbConfig config = getDbConfig(repoDbDirProvider);
-        final DataSource dataSource = dataSourceFactory.create(() -> config, MODULE, true);
-        FlywayUtil.migrate(dataSource, FLYWAY_LOCATIONS, FLYWAY_TABLE, MODULE);
-        return new DataSourceImpl(dataSource);
-    }
 
-    private DbConfig getDbConfig(final RepoDbDirProvider repoDbDirProvider) {
-        final DbConfig dbConfig = new DbConfig();
+
         final Path dbDir = repoDbDirProvider.get();
-
         FileUtil.mkdirs(dbDir);
         if (!Files.isDirectory(dbDir)) {
             throw new RuntimeException("Unable to find DB dir: " + FileUtil.getCanonicalPath(dbDir));
         }
-
         final Path path = dbDir.resolve("proxy-repo.db");
         final String fullPath = FileUtil.getCanonicalPath(path);
+        final SQLiteDataSource sqLiteDataSource = new SQLiteDataSource();
+        sqLiteDataSource.setUrl("jdbc:sqlite:" + fullPath);
+        FlywayUtil.migrate(sqLiteDataSource, FLYWAY_LOCATIONS, FLYWAY_TABLE, MODULE);
+        return new DataSourceImpl(sqLiteDataSource);
 
-        final ConnectionConfig connectionConfig = new ConnectionConfig();
-        connectionConfig.setClassName("org.sqlite.JDBC");
-        connectionConfig.setUrl("jdbc:sqlite:" + fullPath);
-//            connectionConfig.setUser("sa");
-//            connectionConfig.setPassword("sa");
 
-        dbConfig.setConnectionConfig(connectionConfig);
-        return dbConfig;
+
+
+
+
+
+
+
+
+//        final DbConfig config = getDbConfig(repoDbDirProvider);
+//        final DataSource dataSource = dataSourceFactory.create(() -> config, MODULE, true);
+//        FlywayUtil.migrate(dataSource, FLYWAY_LOCATIONS, FLYWAY_TABLE, MODULE);
+//        return new DataSourceImpl(dataSource);
     }
+
+//    private DbConfig getDbConfig(final RepoDbDirProvider repoDbDirProvider) {
+//        final DbConfig dbConfig = new DbConfig();
+//        final Path dbDir = repoDbDirProvider.get();
+//
+//        FileUtil.mkdirs(dbDir);
+//        if (!Files.isDirectory(dbDir)) {
+//            throw new RuntimeException("Unable to find DB dir: " + FileUtil.getCanonicalPath(dbDir));
+//        }
+//
+//        final Path path = dbDir.resolve("proxy-repo.db");
+//        final String fullPath = FileUtil.getCanonicalPath(path);
+//
+//        final ConnectionConfig connectionConfig = new ConnectionConfig();
+//        connectionConfig.setClassName("org.sqlite.JDBC");
+//        connectionConfig.setUrl("jdbc:sqlite:" + fullPath);
+////            connectionConfig.setUser("sa");
+////            connectionConfig.setPassword("sa");
+//
+//        dbConfig.setConnectionConfig(connectionConfig);
+//
+//        // SQLite is best used with a single connection.
+//        dbConfig.getConnectionPoolConfig().setMaxPoolSize(1);
+//
+//        return dbConfig;
+//    }
 
     public static class DataSourceImpl extends DataSourceProxy implements ProxyRepoDbConnProvider {
 

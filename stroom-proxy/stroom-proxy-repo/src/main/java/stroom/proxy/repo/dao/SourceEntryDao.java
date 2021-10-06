@@ -139,23 +139,23 @@ public class SourceEntryDao {
                            final long sourceId,
                            final Map<String, SourceItemRecord> itemNameMap,
                            final Map<Long, List<SourceEntryRecord>> entryMap) {
-        jooq.transaction(context -> {
-            final List<SourceItemRecord> sourceItemRecords = new ArrayList<>(itemNameMap.size());
-            final List<SourceEntryRecord> sourceEntryRecords = new ArrayList<>();
-            for (final SourceItemRecord sourceItemRecord : itemNameMap.values()) {
-                if (sourceItemRecord.getFeedName() == null) {
-                    LOGGER.error(() ->
-                            "Source item has no feed name: " +
-                                    fullPath +
-                                    " - " +
-                                    sourceItemRecord.getName());
-                } else {
-                    sourceItemRecords.add(sourceItemRecord);
-                    final List<SourceEntryRecord> entries = entryMap.get(sourceItemRecord.getId());
-                    sourceEntryRecords.addAll(entries);
-                }
+        final List<SourceItemRecord> sourceItemRecords = new ArrayList<>(itemNameMap.size());
+        final List<SourceEntryRecord> sourceEntryRecords = new ArrayList<>();
+        for (final SourceItemRecord sourceItemRecord : itemNameMap.values()) {
+            if (sourceItemRecord.getFeedName() == null) {
+                LOGGER.error(() ->
+                        "Source item has no feed name: " +
+                                fullPath +
+                                " - " +
+                                sourceItemRecord.getName());
+            } else {
+                sourceItemRecords.add(sourceItemRecord);
+                final List<SourceEntryRecord> entries = entryMap.get(sourceItemRecord.getId());
+                sourceEntryRecords.addAll(entries);
             }
+        }
 
+        jooq.transaction(context -> {
             context.batchInsert(sourceItemRecords).execute();
             context.batchInsert(sourceEntryRecords).execute();
 
