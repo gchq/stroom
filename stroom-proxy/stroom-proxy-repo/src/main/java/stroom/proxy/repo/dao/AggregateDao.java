@@ -52,7 +52,7 @@ public class AggregateDao {
      *
      * @return The number of rows changed.
      */
-    public synchronized int resetFailedForwards() {
+    public int resetFailedForwards() {
         return jooq.contextResult(context -> context
                 .update(AGGREGATE)
                 .set(AGGREGATE.FORWARD_ERROR, false)
@@ -64,7 +64,7 @@ public class AggregateDao {
      *
      * @param aggregateId The id of the aggregate to record a forwarding error against.
      */
-    public synchronized void setForwardError(final long aggregateId) {
+    public void setForwardError(final long aggregateId) {
         jooq.context(context -> context
                 .update(AGGREGATE)
                 .set(AGGREGATE.FORWARD_ERROR, true)
@@ -72,7 +72,7 @@ public class AggregateDao {
                 .execute());
     }
 
-    public synchronized void setForwardSuccess(final DSLContext context, final long aggregateId) {
+    public void setForwardSuccess(final DSLContext context, final long aggregateId) {
         // Delete aggregate items and aggregate so that source entries and items can be deleted by cleanup.
         context
                 .deleteFrom(AGGREGATE_ITEM)
@@ -88,9 +88,9 @@ public class AggregateDao {
     /**
      * Close all aggregates that meet the supplied criteria.
      */
-    public synchronized int closeAggregates(final int maxItemsPerAggregate,
-                                            final long maxUncompressedByteSize,
-                                            final long oldestMs) {
+    public int closeAggregates(final int maxItemsPerAggregate,
+                               final long maxUncompressedByteSize,
+                               final long oldestMs) {
         final Condition condition =
                 AGGREGATE.COMPLETE.eq(false)
                         .and(
@@ -115,7 +115,7 @@ public class AggregateDao {
      * @param limit The maximum number of aggregates to return.
      * @return A list of aggregates that are ready and waiting to be forwarded.
      */
-    public synchronized List<Aggregate> getCompletedAggregates(final int limit) {
+    public List<Aggregate> getCompletedAggregates(final int limit) {
         return jooq.contextResult(context -> context
                 // Get all completed aggregates.
                 .select(AGGREGATE.ID, AGGREGATE.FEED_NAME, AGGREGATE.TYPE_NAME)
@@ -132,9 +132,9 @@ public class AggregateDao {
                 )));
     }
 
-    public synchronized void addItem(final SourceItem sourceItem,
-                                     final int maxItemsPerAggregate,
-                                     final long maxUncompressedByteSize) {
+    public void addItem(final SourceItem sourceItem,
+                        final int maxItemsPerAggregate,
+                        final long maxUncompressedByteSize) {
         final long maxAggregateSize = Math.max(0, maxUncompressedByteSize - sourceItem.getByteSize());
 
         LOGGER.debug(() -> "addItem - " +
@@ -228,7 +228,7 @@ public class AggregateDao {
         });
     }
 
-    public synchronized int deleteAll() {
+    public int deleteAll() {
         return jooq.contextResult(context -> {
             int total = 0;
             total += context
@@ -241,7 +241,7 @@ public class AggregateDao {
         });
     }
 
-    public synchronized void clear() {
+    public void clear() {
         deleteAll();
         jooq
                 .getMaxId(AGGREGATE_ITEM, AGGREGATE_ITEM.ID)

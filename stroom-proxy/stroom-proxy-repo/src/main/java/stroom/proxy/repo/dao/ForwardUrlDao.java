@@ -25,6 +25,7 @@ import org.jooq.Record1;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
@@ -87,6 +88,7 @@ public class ForwardUrlDao {
     }
 
     public int getForwardUrlId(final String forwardUrl) {
+        Objects.requireNonNull(forwardUrl, "The forward URL is null");
         return jooq.contextResult(context -> {
             final Optional<Integer> optionalId = context
                     .select(FORWARD_URL.ID)
