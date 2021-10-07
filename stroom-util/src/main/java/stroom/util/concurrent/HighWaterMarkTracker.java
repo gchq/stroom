@@ -16,7 +16,8 @@ public class HighWaterMarkTracker {
     private final AtomicInteger highWaterMark = new AtomicInteger();
 
     /**
-     * Increment the number of concurrent things.
+     * Increment the number of concurrent things happening, i.e. call it before doing
+     * the concurrent activity.
      */
     public void increment() {
         concurrentCount.accumulateAndGet(0, (currentConcurrentCount, ignored) -> {
@@ -32,12 +33,17 @@ public class HighWaterMarkTracker {
     }
 
     /**
-     * Decrement the number of concurrent things.
+     * Decrement the number of concurrent things happening, i.e. call it after completing the
+     * concurrent activity
      */
     public void decrement() {
         concurrentCount.decrementAndGet();
     }
 
+    /**
+     * Do concurrent work while keeping track of the maximum number of threads performing work
+     * at once.
+     */
     public <T> T getWithHighWaterMarkTracking(final Supplier<T> work) {
         try {
             increment();
@@ -47,6 +53,10 @@ public class HighWaterMarkTracker {
         }
     }
 
+    /**
+     * Do concurrent work while keeping track of the maximum number of threads performing work
+     * at once.
+     */
     public void doWithHighWaterMarkTracking(final Runnable work) {
         try {
             increment();

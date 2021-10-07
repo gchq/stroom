@@ -254,19 +254,17 @@ public class TestLmdbEnv {
 
             lmdbEnv.doWithReadTxn(txnRead -> {
                 try {
-                    highWaterMarkTracker.increment();
-                    // Do the read
-                    final Optional<String> optVal = database.get(txnRead, "01");
+                    highWaterMarkTracker.doWithHighWaterMarkTracking(() -> {
+                        final Optional<String> optVal = database.get(txnRead, "01");
 
-                    Assertions.assertThat(optVal)
-                            .isNotEmpty();
+                        Assertions.assertThat(optVal)
+                                .isNotEmpty();
+                        LOGGER.trace("highWaterMarkTracker: {}", highWaterMarkTracker);
+                    });
                 } catch (Exception e) {
                     exceptions.add(e);
                 } finally {
-                    LOGGER.trace("Finished reader thread {}, highWaterMarkTracker: {}",
-                            i, highWaterMarkTracker);
-
-                    highWaterMarkTracker.decrement();
+                    LOGGER.trace("Finished reader thread {}", i);
 
                     threads.remove(Thread.currentThread().getName());
                     threadsFinishedLatch.countDown();
@@ -305,21 +303,20 @@ public class TestLmdbEnv {
 
             lmdbEnv.doWithWriteTxn(writeTxn -> {
                 try {
-                    highWaterMarkTracker.increment();
-                    // Do a write
-                    final PutOutcome putOutcome = database.put(
-                            writeTxn, key, "xxxxxx", true);
+                    highWaterMarkTracker.doWithHighWaterMarkTracking(() -> {
+                        // Do a write
+                        final PutOutcome putOutcome = database.put(
+                                writeTxn, key, "xxxxxx", true);
 
-                    Assertions.assertThat(putOutcome.isSuccess())
-                            .isTrue();
+                        Assertions.assertThat(putOutcome.isSuccess())
+                                .isTrue();
+                        LOGGER.trace("highWaterMarkTracker: {}", highWaterMarkTracker);
+                    });
 
                 } catch (Exception e) {
                     exceptions.add(e);
                 } finally {
-                    LOGGER.trace("Finished writer thread {}, highWaterMarkTracker: {}",
-                            i, highWaterMarkTracker);
-
-                    highWaterMarkTracker.decrement();
+                    LOGGER.trace("Finished writer thread {}", i);
 
                     threads.remove(Thread.currentThread().getName());
                     threadsFinishedLatch.countDown();

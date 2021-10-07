@@ -25,7 +25,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.StampedLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -69,7 +69,7 @@ public class LmdbEnv implements AutoCloseable {
         if (isReaderBlockedByWriter) {
             // Read/write lock enforces writes block reads and the semphore ensures we don't have
             // too many readers.
-            readWriteLock = new ReentrantReadWriteLock();
+            readWriteLock = new StampedLock().asReadWriteLock();
             writeTxnLock = readWriteLock.writeLock();
             // Read txns open concurrently with write txns mean the writes can't reclaim unused space
             // in the db, so can lead to excessive growth of the db file.
@@ -197,7 +197,7 @@ public class LmdbEnv implements AutoCloseable {
      * the lock to avoid the risk of deadlocks.
      * A call to this method will result in a write lock being obtained.
      */
-    public BatchingWriteTxnWrapper getBatchingWriteTxnWrapper() {
+    public BatchingWriteTxnWrapper openBatchingWriteTxn() {
         try {
             LOGGER.trace("Acquiring write txn lock");
             writeTxnLock.lockInterruptibly();
