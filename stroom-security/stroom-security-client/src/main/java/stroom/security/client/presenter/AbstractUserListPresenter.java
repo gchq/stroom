@@ -46,19 +46,11 @@ public abstract class AbstractUserListPresenter extends MyPresenterWidget<UserLi
         dataGridView.addColumn(new Column<User, SvgPreset>(new SvgCell()) {
             @Override
             public SvgPreset getValue(final User userRef) {
-                if (userRef.isEnabled()) {
-                    if (!userRef.isGroup()) {
-                        return SvgPresets.USER;
-                    }
-
-                    return SvgPresets.USER_GROUP;
-                }
-
                 if (!userRef.isGroup()) {
-                    return SvgPresets.USER_DISABLED;
+                    return SvgPresets.USER;
                 }
 
-                return SvgPresets.USER_GROUP_DISABLED;
+                return SvgPresets.USER_GROUP;
             }
         }, "</br>", 20);
 

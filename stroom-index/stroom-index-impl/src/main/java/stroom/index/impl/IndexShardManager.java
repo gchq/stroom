@@ -40,6 +40,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
@@ -214,46 +215,57 @@ public class IndexShardManager {
     private long performAction(final List<IndexShard> ownedShards, final IndexShardAction action) {
         final AtomicLong shardCount = new AtomicLong();
         if (ownedShards.size() > 0) {
-            final IndexShardWriterCache indexShardWriterCache = indexShardWriterCacheProvider.get();
+            taskContextFactory.context("Index Shard Manager", parentTaskContext -> {
+                parentTaskContext.info(() -> action.getActivity() + " index shards");
 
-            // Create an atomic integer to count the number of index shard writers yet to complete the specified action.
-            final AtomicInteger remaining = new AtomicInteger(ownedShards.size());
+                final IndexShardWriterCache indexShardWriterCache = indexShardWriterCacheProvider.get();
 
-            // Create a scheduled executor for us to continually log index shard writer action progress.
-            final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-            // Start logging action progress.
-            executor.scheduleAtFixedRate(
-                    () ->
-                            LOGGER.info(() ->
-                                    "Waiting for " + remaining.get() + " index shards to " + action.getName()),
-                    10,
-                    10,
-                    TimeUnit.SECONDS);
+                // Create an atomic integer to count the number of index shard writers yet to complete the specified
+                // action.
+                final AtomicInteger remaining = new AtomicInteger(ownedShards.size());
 
-            // Perform action on all of the index shard writers in parallel.
-            ownedShards.parallelStream().forEach(shard -> {
-                try {
-                    switch (action) {
-                        case FLUSH:
-                            shardCount.incrementAndGet();
-                            indexShardWriterCache.flush(shard.getId());
-                            break;
-                        case DELETE:
-                            shardCount.incrementAndGet();
-                            indexShardWriterCache.delete(shard.getId());
-                            break;
+                // Create a scheduled executor for us to continually log index shard writer action progress.
+                final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+                // Start logging action progress.
+                executor.scheduleAtFixedRate(
+                        () ->
+                                LOGGER.info(() ->
+                                        "Waiting for " + remaining.get() + " index shards to " + action.getName()),
+                        10,
+                        10,
+                        TimeUnit.SECONDS);
+
+                // Perform action on all of the index shard writers in parallel.
+                ownedShards.parallelStream().forEach(shard -> {
+                    try {
+                        // We use a child tak context here to create child messages in the UI but also to ensure the
+                        // task is performed in the context of the parent user.
+                        taskContextFactory.childContext(parentTaskContext, "Index Shard Manager",
+                                taskContext -> {
+                                    taskContext.info(() -> action.getActivity() + " index shard: " + shard.getId());
+                                    switch (action) {
+                                        case FLUSH:
+                                            shardCount.incrementAndGet();
+                                            indexShardWriterCache.flush(shard.getId());
+                                            break;
+                                        case DELETE:
+                                            shardCount.incrementAndGet();
+                                            indexShardWriterCache.delete(shard.getId());
+                                            break;
+                                    }
+                                }).run();
+                    } catch (final RuntimeException e) {
+                        LOGGER.error(e::getMessage, e);
                     }
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e::getMessage, e);
-                }
 
-                remaining.getAndDecrement();
-            });
+                    remaining.getAndDecrement();
+                });
 
-            // Shut down the progress logging executor.
-            executor.shutdown();
+                // Shut down the progress logging executor.
+                executor.shutdown();
 
-            LOGGER.info(() -> "Finished " + action.getActivity() + " index shards");
+                LOGGER.info(() -> "Finished " + action.getActivity().toLowerCase(Locale.ROOT) + " index shards");
+            }).run();
         }
 
         return shardCount.get();
@@ -374,8 +386,8 @@ public class IndexShardManager {
     }
 
     public enum IndexShardAction {
-        FLUSH("flush", "flushing"),
-        DELETE("delete", "deleting");
+        FLUSH("flush", "Flushing"),
+        DELETE("delete", "Deleting");
 
         private final String name;
         private final String activity;

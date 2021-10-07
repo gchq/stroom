@@ -16,6 +16,7 @@
 
 package stroom.task.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.cell.info.client.InfoColumn;
 import stroom.cell.tickbox.client.TickBoxCell;
@@ -56,6 +57,7 @@ import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.Timer;
@@ -64,6 +66,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -72,6 +75,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class TaskManagerListPresenter
         extends MyPresenterWidget<DataGridView<TaskProgress>>
@@ -87,11 +91,14 @@ public class TaskManagerListPresenter
     private final NodeManager nodeManager;
     private final NameFilterTimer timer = new NameFilterTimer();
     private final Map<String, List<TaskProgress>> responseMap = new HashMap<>();
+    private final Map<String, List<String>> errorMap = new HashMap<>();
     private final RestDataProvider<TaskProgress, TaskProgressResponse> dataProvider;
 
     private final ButtonView expandAllButton;
     private final ButtonView collapseAllButton;
+    private final ButtonView warningsButton;
 
+    private String currentWarnings;
     private Column<TaskProgress, Expander> expanderColumn;
 
     private final TaskManagerTreeAction treeAction = new TaskManagerTreeAction();
@@ -112,6 +119,8 @@ public class TaskManagerListPresenter
 
         expandAllButton = getView().addButton(SvgPresets.EXPAND_DOWN.with("Expand All", false));
         collapseAllButton = getView().addButton(SvgPresets.COLLAPSE_UP.with("Collapse All", false));
+        warningsButton = getView().addButton(SvgPresets.ALERT.title("Show Warnings"));
+        warningsButton.setVisible(false);
 
         updateButtonStates();
 
@@ -139,18 +148,40 @@ public class TaskManagerListPresenter
                 dataProvider.refresh();
             }
         });
+    }
 
-        expandAllButton.addClickHandler(event -> {
+    @Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(expandAllButton.addClickHandler(event -> {
             treeAction.expandAll();
             dataProvider.refresh();
             updateButtonStates();
-        });
+        }));
 
-        collapseAllButton.addClickHandler(event -> {
+        registerHandler(collapseAllButton.addClickHandler(event -> {
             treeAction.collapseAll();
             dataProvider.refresh();
             updateButtonStates();
-        });
+        }));
+
+        registerHandler(warningsButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                showWarnings();
+            }
+        }));
+    }
+
+    private void showWarnings() {
+        if (currentWarnings != null && !currentWarnings.isEmpty()) {
+            AlertEvent.fireWarn(this, "The following warnings have been created while fetching tasks:",
+                    currentWarnings, null);
+        }
+    }
+
+    public void setErrors(final String errors) {
+        currentWarnings = errors;
+        warningsButton.setVisible(currentWarnings != null && !currentWarnings.isEmpty());
     }
 
     private void updateButtonStates() {
@@ -318,12 +349,11 @@ public class TaskManagerListPresenter
     public void fetchNodes(final Consumer<TaskProgressResponse> dataConsumer,
                            final Consumer<Throwable> throwableConsumer) {
         nodeManager.listAllNodes(
-                nodeNames -> fetchTasksForNodes(dataConsumer, throwableConsumer, nodeNames),
+                nodeNames -> fetchTasksForNodes(dataConsumer, nodeNames),
                 throwableConsumer);
     }
 
     private void fetchTasksForNodes(final Consumer<TaskProgressResponse> dataConsumer,
-                                    final Consumer<Throwable> throwableConsumer,
                                     final List<String> nodeNames) {
         responseMap.clear();
         for (final String nodeName : nodeNames) {
@@ -331,20 +361,20 @@ public class TaskManagerListPresenter
             rest
                     .onSuccess(response -> {
                         responseMap.put(nodeName, response.getValues());
-//                        GWT.log("combining results for node " + nodeName);
-                        combineNodeTasks(dataConsumer, throwableConsumer);
+                        errorMap.put(nodeName, response.getErrors());
+                        combineNodeTasks(dataConsumer);
                     })
                     .onFailure(throwable -> {
                         responseMap.remove(nodeName);
-                        combineNodeTasks(dataConsumer, throwableConsumer);
+                        errorMap.put(nodeName, Collections.singletonList(throwable.getMessage()));
+                        combineNodeTasks(dataConsumer);
                     })
                     .call(TASK_RESOURCE)
                     .find(nodeName, request);
         }
     }
 
-    private void combineNodeTasks(final Consumer<TaskProgressResponse> dataConsumer,
-                                  final Consumer<Throwable> throwableConsumer) {
+    private void combineNodeTasks(final Consumer<TaskProgressResponse> dataConsumer) {
         // Combine data from all nodes.
         final ResultPage<TaskProgress> resultPage = TaskProgressUtil.combine(
                 criteria,
@@ -354,8 +384,15 @@ public class TaskManagerListPresenter
         final HashSet<TaskProgress> currentTaskSet = new HashSet<TaskProgress>(resultPage.getValues());
         selectedTaskProgress.retainAll(currentTaskSet);
 
+        final String allErrors = errorMap.entrySet()
+                .stream()
+                .flatMap(r -> r.getValue().stream().map(message -> r.getKey() + ": " + message))
+                .collect(Collectors.joining("\n"));
+        setErrors(allErrors);
+
         final TaskProgressResponse response = new TaskProgressResponse(
                 resultPage.getValues(),
+                null,
                 resultPage.getPageResponse());
         dataConsumer.accept(response);
         updateButtonStates();

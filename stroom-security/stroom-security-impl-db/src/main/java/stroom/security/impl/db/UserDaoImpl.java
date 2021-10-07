@@ -37,7 +37,6 @@ public class UserDaoImpl implements UserDao {
         user.setName(record.get(STROOM_USER.NAME));
         user.setUuid(record.get(STROOM_USER.UUID));
         user.setGroup(record.get(STROOM_USER.IS_GROUP));
-        user.setEnabled(record.get(STROOM_USER.ENABLED));
         return user;
     };
 
@@ -53,7 +52,7 @@ public class UserDaoImpl implements UserDao {
                 record.set(STROOM_USER.NAME, user.getName());
                 record.set(STROOM_USER.UUID, user.getUuid());
                 record.set(STROOM_USER.IS_GROUP, user.isGroup());
-                record.set(STROOM_USER.ENABLED, user.isEnabled());
+                record.set(STROOM_USER.ENABLED, true);
                 return record;
             };
 
