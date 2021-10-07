@@ -22,7 +22,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -43,8 +46,10 @@ public class LmdbEnv implements AutoCloseable {
     // Lock to ensure only one thread can hold a write txn at once.
     // If doWritesBlockReads is true then will only one thread can hold an open txn
     // of any kind at once.
-    private final ReentrantLock writeTxnLock = new ReentrantLock();
+    private final Lock writeTxnLock;
     private final Function<Function<Txn<ByteBuffer>, ?>, ?> readTxnGetMethod;
+    private final ReadWriteLock readWriteLock;
+    private final Semaphore activeReadTransactionsSemaphore;
 
     public LmdbEnv(final Path path,
                    final Env<ByteBuffer> env) {
@@ -57,23 +62,32 @@ public class LmdbEnv implements AutoCloseable {
         this.path = path;
         this.env = env;
 
+        // Limit concurrent readers java side to ensure we don't get a max readers reached error
+        final int maxReaders = env.info().maxReaders;
+        activeReadTransactionsSemaphore = new Semaphore(maxReaders);
+
         if (isReaderBlockedByWriter) {
+            // Read/write lock enforces writes block reads and the semphore ensures we don't have
+            // too many readers.
+            readWriteLock = new ReentrantReadWriteLock();
+            writeTxnLock = readWriteLock.writeLock();
             // Read txns open concurrently with write txns mean the writes can't reclaim unused space
             // in the db, so can lead to excessive growth of the db file.
             LOGGER.debug("Initialising Environment with isReaderBlockedByWriter: {}",
                     isReaderBlockedByWriter);
-            readTxnGetMethod = this::getWithReadTxnUnderWriteLock;
+            readTxnGetMethod = work ->
+                    getWithReadTxnUnderReadWriteLock(work, readWriteLock.readLock());
         } else {
-            // Limit concurrent readers java side to ensure we don't get a max readers reached error
-            final int maxReaders = env.info().maxReaders;
+            // No lock for readers, only the sempaphor to enforce max concurrent readers
+            // Simple re-entrant lock to enforce max one concurrent writer
+            readWriteLock = null;
+            writeTxnLock = new ReentrantLock();
 
             LOGGER.debug("Initialising Environment with permits: {}, isReaderBlockedByWriter: {}",
                     maxReaders,
                     isReaderBlockedByWriter);
 
-            final Semaphore activeReadTransactionsSemaphore = new Semaphore(maxReaders);
-            readTxnGetMethod = work ->
-                    getWithReadTxnUnderMaxReaderSemaphore(work, activeReadTransactionsSemaphore);
+            readTxnGetMethod = this::getWithReadTxnUnderMaxReaderSemaphore;
         }
     }
 
@@ -205,8 +219,7 @@ public class LmdbEnv implements AutoCloseable {
         });
     }
 
-    private <T> T getWithReadTxnUnderMaxReaderSemaphore(final Function<Txn<ByteBuffer>, T> work,
-                                                        final Semaphore activeReadTransactionsSemaphore) {
+    private <T> T getWithReadTxnUnderMaxReaderSemaphore(final Function<Txn<ByteBuffer>, T> work) {
         try {
             LOGGER.trace("About to acquire permit");
             activeReadTransactionsSemaphore.acquire();
@@ -232,26 +245,21 @@ public class LmdbEnv implements AutoCloseable {
         }
     }
 
-    public <T> T getWithReadTxnUnderWriteLock(final Function<Txn<ByteBuffer>, T> work) {
+    public <T> T getWithReadTxnUnderReadWriteLock(final Function<Txn<ByteBuffer>, T> work,
+                                                  final Lock readLock) {
         try {
             LOGGER.trace("About to acquire lock");
-            writeTxnLock.lockInterruptibly();
+            // Wait for writers to finish
+            readLock.lockInterruptibly();
             LOGGER.trace("Lock acquired");
 
-            try (final Txn<ByteBuffer> txn = env.txnRead()) {
-                LOGGER.trace("Performing work with read txn");
-                return work.apply(txn);
-            } catch (RuntimeException e) {
-                throw new RuntimeException(LogUtil.message(
-                        "Error performing work in read transaction: {}",
-                        e.getMessage()), e);
-            }
+            return getWithReadTxnUnderMaxReaderSemaphore(work);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException("Thread interrupted", e);
         } finally {
             LOGGER.trace("Releasing lock");
-            writeTxnLock.unlock();
+            readLock.unlock();
         }
     }
 
@@ -344,13 +352,13 @@ public class LmdbEnv implements AutoCloseable {
     @NotThreadSafe
     public static class WriteTxnWrapper implements AutoCloseable {
 
-        private final ReentrantLock writeLock;
+        private final Lock writeLock;
         private Txn<ByteBuffer> writeTxn;
 
         /**
          * @param writeLock Should already be held by this thread.
          */
-        private WriteTxnWrapper(final ReentrantLock writeLock,
+        private WriteTxnWrapper(final Lock writeLock,
                                 final Txn<ByteBuffer> writeTxn) {
             this.writeLock = writeLock;
             this.writeTxn = writeTxn;
@@ -388,9 +396,7 @@ public class LmdbEnv implements AutoCloseable {
             try {
                 writeTxn.close();
             } finally {
-                if (writeLock.isHeldByCurrentThread()) {
-                    writeLock.unlock();
-                }
+                writeLock.unlock();
                 writeTxn = null;
             }
         }
@@ -399,7 +405,7 @@ public class LmdbEnv implements AutoCloseable {
     @NotThreadSafe
     public static class BatchingWriteTxnWrapper implements AutoCloseable {
 
-        private final ReentrantLock writeLock;
+        private final Lock writeLock;
         private Supplier<Txn<ByteBuffer>> writeTxnSupplier;
         private Txn<ByteBuffer> writeTxn;
 
@@ -407,7 +413,7 @@ public class LmdbEnv implements AutoCloseable {
         /**
          * @param writeLock Should already be held by this thread.
          */
-        private BatchingWriteTxnWrapper(final ReentrantLock writeLock,
+        private BatchingWriteTxnWrapper(final Lock writeLock,
                                         final Supplier<Txn<ByteBuffer>> writeTxnSupplier) {
             this.writeLock = writeLock;
             this.writeTxnSupplier = writeTxnSupplier;
@@ -429,16 +435,21 @@ public class LmdbEnv implements AutoCloseable {
          * {@link Txn#abort()}
          */
         public void abort() {
-            writeTxn.abort();
-            writeTxn = null;
+            if (writeTxn != null) {
+                writeTxn.abort();
+                writeTxn = null;
+            }
         }
 
         /**
          * {@link Txn#commit()}
          */
         public void commit() {
-            writeTxn.commit();
-            writeTxn = null;
+            if (writeTxn != null) {
+                writeTxn.commit();
+                writeTxn.close();
+                writeTxn = null;
+            }
         }
 
         /**
@@ -450,9 +461,7 @@ public class LmdbEnv implements AutoCloseable {
                 try {
                     writeTxn.close();
                 } finally {
-                    if (writeLock.isHeldByCurrentThread()) {
-                        writeLock.unlock();
-                    }
+                    writeLock.unlock();
                     writeTxn = null;
                     writeTxnSupplier = null;
                 }

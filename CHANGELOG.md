@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fix performance issue with ref data range lookups.
+
+* Change default value for `stroom.pipeline.referenceData.readerBlockedByWriter` to true.
+
+* Fix locking for `stroom.pipeline.referenceData.readerBlockedByWriter`.
+
 
 ## [v7.0-beta.150] - 2021-10-05
 

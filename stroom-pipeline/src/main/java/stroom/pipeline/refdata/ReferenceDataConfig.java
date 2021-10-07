@@ -30,7 +30,7 @@ public class ReferenceDataConfig extends AbstractConfig {
     private StroomDuration purgeAge = StroomDuration.ofDays(30);
     private boolean isReadAheadEnabled = true;
     private int loadingLockStripes = 2048;
-    private boolean isReaderBlockedByWriter = false;
+    private boolean isReaderBlockedByWriter = true;
 
     private CacheConfig effectiveStreamCache = CacheConfig.builder()
             .maximumSize(1000L)
@@ -147,12 +147,13 @@ public class ReferenceDataConfig extends AbstractConfig {
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    @JsonPropertyDescription("If true, then the process writing to the reference data store will block all " +
+    @JsonPropertyDescription("If true, then a process writing to the reference data store will block all " +
             "other processes from reading from the store. As only one writer is allowed the active writer will " +
             "also block all other writers. If false, then multiple processes can read from the store regardless " +
-            "of whether a process is writing to it. If there are active readers during a write then empty space in " +
+            "of whether a process is writing to it. Also when false, if there are active readers during a write " +
+            "then empty space in " +
             "the store cannot be reclaimed, instead the store will grow. This setting is a trade off between " +
-            "performance and store size. If you experience excessive store size growth then set this to true.")
+            "performance and store size.")
     public boolean isReaderBlockedByWriter() {
         return isReaderBlockedByWriter;
     }

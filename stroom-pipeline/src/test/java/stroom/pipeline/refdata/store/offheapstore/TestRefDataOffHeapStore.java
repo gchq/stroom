@@ -100,10 +100,10 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
             .collect(Collectors.joining());
 
     private static final int REF_STREAM_DEF_COUNT = 2;
-    //    private static final int ENTRIES_PER_MAP_DEF = 5;
-//    private static final int ENTRIES_PER_MAP_DEF = 10_000;
+    private static final int ENTRIES_PER_MAP_DEF = 5;
+    //    private static final int ENTRIES_PER_MAP_DEF = 10_000;
     //    private static final int ENTRIES_PER_MAP_DEF = 100_000;
-    private static final int ENTRIES_PER_MAP_DEF = 1_000_000;
+//    private static final int ENTRIES_PER_MAP_DEF = 1_000_000;
     private static final int MAPS_PER_REF_STREAM_DEF = 2;
 
     @Inject
