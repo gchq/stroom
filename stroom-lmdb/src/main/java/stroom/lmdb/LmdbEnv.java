@@ -176,7 +176,7 @@ public class LmdbEnv implements AutoCloseable {
 
     /**
      * @return An {@link AutoCloseable} wrapper round the open write txn that also releases
-     * the single write lock.
+     * the single write lock. A call to this method will result in a write lock being obtained.
      */
     public WriteTxnWrapper openWriteTxn() {
         try {
@@ -195,6 +195,7 @@ public class LmdbEnv implements AutoCloseable {
      * @return An {@link AutoCloseable} wrapper that can provide multiple write txns all while holding
      * the single write lock. Useful for large jobs that need to commit periodically but don't want to release
      * the lock to avoid the risk of deadlocks.
+     * A call to this method will result in a write lock being obtained.
      */
     public BatchingWriteTxnWrapper getBatchingWriteTxnWrapper() {
         try {
@@ -402,6 +403,9 @@ public class LmdbEnv implements AutoCloseable {
         }
     }
 
+    /**
+     * Creates a write txn on calls to {@link BatchingWriteTxnWrapper#getTxn()}
+     */
     @NotThreadSafe
     public static class BatchingWriteTxnWrapper implements AutoCloseable {
 
