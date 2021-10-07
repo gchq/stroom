@@ -146,6 +146,15 @@ error_exit() {
   exit 1
 }
 
+validation_exit() {
+  error "$@"
+  if [ "${IS_DEBUG_ENABLED:-false}" = true ]; then
+    echo -e "${RED}IN DEBUG MODE - won't exit${NC}"
+  else
+    exit 1
+  fi
+}
+
 debug() {
   # To run with debug logging do;
   # IS_DEBUG_ENABLED=true ./tag_release.sh
@@ -178,10 +187,20 @@ do_tagging() {
   echo
   info "Creating annotated tag [${BLUE}${version}${GREEN}]" \
     "for the current commit"
-  echo -e "${commit_msg}" | git tag -a --file - "${version}"
+
+  if [ "${IS_DEBUG_ENABLED:-false}" = true ]; then
+    echo -e "${RED}IN DEBUG MODE - won't tag git${NC}"
+  else
+    echo -e "${commit_msg}" | git tag -a --file - "${version}"
+  fi
 
   info "Pushing the new tag [${BLUE}${version}${GREEN}] to origin"
-  git push origin "${version}"
+
+  if [ "${IS_DEBUG_ENABLED:-false}" = true ]; then
+    echo -e "${RED}IN DEBUG MODE - won't push tag${NC}"
+  else
+    git push origin "${version}"
+  fi
 
   info "Done"
   echo
@@ -288,7 +307,7 @@ validate_version_in_changelog() {
 
 validate_release_date() {
   if ! grep -q "^\s*##\s*\[${version}\] - ${curr_date}" "${changelog_file}"; then
-    error_exit "Cannot find a heading with today's date" \
+    validation_exit "Cannot find a heading with today's date" \
       "[${BLUE}## [${version}] - ${curr_date}${GREEN}] in" \
       "${BLUE}${CHANGELOG_FILENAME}${GREEN}.${NC}"
   fi
@@ -307,7 +326,8 @@ validate_compare_link_exists() {
 
 validate_for_uncommitted_work() {
   if [ "$(git status --porcelain 2>/dev/null | wc -l)" -ne 0 ]; then
-    error_exit "There are uncommitted changes or untracked files." \
+    
+    validation_exit "There are uncommitted changes or untracked files." \
       "Commit them before running this script.${NC}"
   fi
 }
@@ -489,6 +509,7 @@ prompt_user_for_version() {
   local is_valid_version_str=false
   while [[ "${is_valid_version_str}" = false ]]; do
     read \
+      -r \
       -e \
       -p "$(echo -e "${GREEN}Enter the tag/version for this release:${NC}")"$'\n' \
       -i "${suggested_version}" version
@@ -628,10 +649,10 @@ EOF
   # 'origin https://github.com/gchq/stroom.git (fetch)' => 'gchq stroom'
   # read the space delimited values into an array so we can split them
   local namespace_and_repo=()
-  namespace_and_repo=(
-    $(git remote -v \
+  IFS=" " read -r -a namespace_and_repo <<< "$( \
+    git remote -v \
       | grep "(fetch)" \
-      | sed -r 's#.*[/:]([^/]+)/(.*)\.git \(fetch\)#\1 \2#'))
+      | sed -r 's#.*[/:]([^/]+)/(.*)\.git \(fetch\)#\1 \2#')"
 
   debug "namespace_and_repo: ${namespace_and_repo[*]}"
 
@@ -676,6 +697,7 @@ main() {
   local tag_release_config_file="${repo_root}/${TAG_RELEASE_CONFIG_FILENAME}"
   if [[ -f "${tag_release_config_file}" ]]; then
     # Source any repo specific config
+    # shellcheck disable=SC1090
     source "${tag_release_config_file}"
   else
     create_config_file
