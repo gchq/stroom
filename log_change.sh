@@ -88,7 +88,7 @@ get_git_issue_from_branch() {
       --perl-regexp '(?<=^gh-)[1-9][0-9]*' \
       )"
 
-  if [[ ! -n "${git_issue_from_branch}" ]]; then
+  if [[ -z "${git_issue_from_branch}" ]]; then
     error_exit "Unable to establish GitHub issue number from" \
       "branch ${BLUE}${current_branch}${NC}"
   fi
@@ -99,10 +99,10 @@ establish_git_namespace_and_repo() {
   # 'origin https://github.com/gchq/stroom.git (fetch)' => 'gchq stroom'
   # read the space delimited values into an array so we can split them
   local namespace_and_repo=()
-  namespace_and_repo=(
-    $(git remote -v \
+  IFS=" " read -r -a namespace_and_repo <<< "$( \
+    git remote -v \
       | grep "(fetch)" \
-      | sed -r 's#.*[/:]([^/]+)/(.*)\.git \(fetch\)#\1 \2#'))
+      | sed -r 's#.*[/:]([^/]+)/(.*)\.git \(fetch\)#\1 \2#')"
 
   debug_value "namespace_and_repo" "${namespace_and_repo[*]}"
 
@@ -125,11 +125,14 @@ validate_git_issue() {
   local git_issue="$1"; shift
   debug "Validating [${git_issue}]"
   
-  if [[ ! "${git_issue}" =~ ^([a-zA-Z0-9_-.]+\/[a-zA-Z0-9_-.]+\#[0-9]+|[0-9]+)$ ]]; then
+  if [[ ! "${git_issue}" =~ ^([_.a-zA-Z0-9-]+\/[_.a-zA-Z0-9-]+\#[0-9]+|[0-9]+)$ ]]; then
     error_exit "Invalid github issue number ${BLUE}${git_issue}${NC}." \
       "Should be of the form ${BLUE}1234${NC}," \
       "${BLUE}namespace/repo#1234${NC}, ${BLUE}0${NC} or ${BLUE}AUTO${NC}."
   fi
+
+  # global scope
+  issue_title=""
 
   if [[ ! "${git_issue}" = "0" ]]; then
     local issue_namespace
@@ -144,7 +147,7 @@ validate_git_issue() {
       # Fully qualified issue so extract the parts by replacing / and # with
       # space then reading into an array which will split on space
       local parts=()
-      parts=( ${git_issue//[\#\/]/ } )
+      IFS=" " read -r -a parts <<< "${git_issue//[\#\/]/ }"
       issue_namespace="${parts[0]}"
       issue_repo="${parts[1]}"
       issue_number="${parts[2]}"
@@ -158,8 +161,6 @@ validate_git_issue() {
 
     debug_value "github_issue_url" "${github_issue_url}"
 
-    # global scope
-    issue_title=
     local curl_return_code=0
     # Turn off exit on error so we can get the curl return code in the subshell
     set +e 
@@ -177,7 +178,7 @@ validate_git_issue() {
       )"
       curl_return_code=$?
     else
-      # no jq so fall back to greppage
+      # no jq so fall back to grep
       issue_title="$( \
         curl \
           --silent \
@@ -219,7 +220,7 @@ is_existing_change_file_present() {
   local existing_file
   existing_file="$( \
     find \
-      /home/dev/git_work/v7stroom/unreleased_changes/ \
+      "${unreleased_dir}/" \
       -maxdepth 1 \
       -name "*__${git_issue_str}.md" \
       -print \
@@ -247,7 +248,7 @@ format_git_issue_for_filename() {
 
   local git_issue_str
   if [[ "${git_issue}" = "0" ]]; then
-    git_issue_str="NO_ISSUE"
+    git_issue_str="0"
   else
     # replace / and # with _
     git_issue_str="${git_issue//[\#\/]/_}"
@@ -307,12 +308,18 @@ write_change_entry() {
       echo "# ********************************************************************************"
       echo
     fi
-    echo "# All blank and comment lines will be ignored when imported into the CHANGELOG"
+    echo "# All blank and comment lines will be ignored when imported into the CHANGELOG."
+    echo "# Entries should be in GitHub flavour markdown and should be written on a single"
+    echo "# line with no hard breaks."
+    echo "#"
     echo "# Examples of accptable entires are:"
-    echo "# * An change with no associated GitHub issue."
+    echo "#"
+    echo "#"
     echo "# * Issue **1234** : A change with an associated GitHub issue in this repository"
+    echo "#"
     echo "# * Issue **namespace/other-repo#1234** : A change with an associated GitHub issue in another repository"
-    echo "# Entries are in GitHub flavour markdown and should be written on a single line with no hard breaks."
+    echo "#"
+    echo "# * A change with no associated GitHub issue."
   )"
 
   info "Writing file ${BLUE}${change_file}${GREEN} with content:"
@@ -322,7 +329,7 @@ write_change_entry() {
 
   echo -e "${content}" > "${change_file}"
 
-  if [[ ! -n "${change_text}" ]]; then
+  if [[ -z "${change_text}" ]]; then
 
     read -n 1 -s -r -p "Press any key to continue"
 
