@@ -26,6 +26,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.StampedLock;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -192,17 +193,18 @@ public class LmdbEnv implements AutoCloseable {
     }
 
     /**
+     * @param batchSize
      * @return An {@link AutoCloseable} wrapper that can provide multiple write txns all while holding
      * the single write lock. Useful for large jobs that need to commit periodically but don't want to release
      * the lock to avoid the risk of deadlocks.
      * A call to this method will result in a write lock being obtained.
      */
-    public BatchingWriteTxnWrapper openBatchingWriteTxn() {
+    public BatchingWriteTxnWrapper openBatchingWriteTxn(final int batchSize) {
         try {
             LOGGER.trace("Acquiring write txn lock");
             writeTxnLock.lockInterruptibly();
 
-            return new BatchingWriteTxnWrapper(writeTxnLock, env::txnWrite);
+            return new BatchingWriteTxnWrapper(writeTxnLock, env::txnWrite, batchSize);
         } catch (InterruptedException e) {
             throw new RuntimeException("Thread interrupted while waiting for write lock on "
                     + path.toAbsolutePath().normalize());
@@ -413,14 +415,31 @@ public class LmdbEnv implements AutoCloseable {
         private Supplier<Txn<ByteBuffer>> writeTxnSupplier;
         private Txn<ByteBuffer> writeTxn;
 
+        private final int maxBatchSize;
+        private int batchCounter = 0;
+        private final BooleanSupplier commitFunc;
 
         /**
-         * @param writeLock Should already be held by this thread.
+         * @param writeLock    Should already be held by this thread.
+         * @param maxBatchSize
          */
         private BatchingWriteTxnWrapper(final Lock writeLock,
-                                        final Supplier<Txn<ByteBuffer>> writeTxnSupplier) {
+                                        final Supplier<Txn<ByteBuffer>> writeTxnSupplier,
+                                        final int maxBatchSize) {
             this.writeLock = writeLock;
             this.writeTxnSupplier = writeTxnSupplier;
+            this.maxBatchSize = maxBatchSize == 0
+                    ? Integer.MAX_VALUE
+                    : maxBatchSize;
+
+            if (maxBatchSize == 0) {
+                commitFunc = () -> {
+                    // a max batch size of zero means don't commit
+                    return false;
+                };
+            } else {
+                commitFunc = this::commitWithBatchCheck;
+            }
         }
 
         /**
@@ -446,13 +465,43 @@ public class LmdbEnv implements AutoCloseable {
         }
 
         /**
+         * Increment the count of items processed in the batch
+         *
+         * @return True if the batch is full, false if not.
+         */
+        public boolean incrementBatchCount() {
+            return (++batchCounter >= maxBatchSize);
+        }
+
+        /**
+         * Force a commit regardless of batch size
          * {@link Txn#commit()}
          */
-        public void commit() {
+        public boolean commit() {
             if (writeTxn != null) {
+                LOGGER.trace("Committing txn with batchCounter: {}", batchCounter);
                 writeTxn.commit();
                 writeTxn.close();
                 writeTxn = null;
+                batchCounter = 0;
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        /**
+         * Commit if the batch has reach its max size
+         */
+        public boolean commitIfRequired() {
+            return commitFunc.getAsBoolean();
+        }
+
+        private boolean commitWithBatchCheck() {
+            if (++batchCounter >= maxBatchSize) {
+                return commit();
+            } else {
+                return false;
             }
         }
 
@@ -461,15 +510,27 @@ public class LmdbEnv implements AutoCloseable {
          */
         @Override
         public void close() throws Exception {
-            if (writeTxn != null) {
-                try {
-                    writeTxn.close();
-                } finally {
-                    writeLock.unlock();
-                    writeTxn = null;
-                    writeTxnSupplier = null;
+            try {
+                if (writeTxn != null) {
+                    try {
+                        writeTxn.close();
+                    } finally {
+                        writeTxn = null;
+                        writeTxnSupplier = null;
+                    }
                 }
+            } finally {
+                // whatever happens we must release the lock
+                writeLock.unlock();
             }
+        }
+
+        @Override
+        public String toString() {
+            return "BatchingWriteTxnWrapper{" +
+                    "maxBatchSize=" + maxBatchSize +
+                    ", batchCounter=" + batchCounter +
+                    '}';
         }
     }
 }

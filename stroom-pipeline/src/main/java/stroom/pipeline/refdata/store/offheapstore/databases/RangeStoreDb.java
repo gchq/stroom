@@ -23,6 +23,7 @@ import stroom.bytebuffer.PooledByteBuffer;
 import stroom.lmdb.AbstractLmdbDb;
 import stroom.lmdb.EntryConsumer;
 import stroom.lmdb.LmdbEnv;
+import stroom.lmdb.LmdbEnv.BatchingWriteTxnWrapper;
 import stroom.pipeline.refdata.store.offheapstore.RangeStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
@@ -222,7 +223,7 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
         return KeyRange.atLeastBackward(startKeyBuf);
     }
 
-    public void deleteMapEntries(final Txn<ByteBuffer> writeTxn,
+    public void deleteMapEntries(final BatchingWriteTxnWrapper batchingWriteTxnWrapper,
                                  final UID mapUid,
                                  final EntryConsumer entryConsumer) {
 
@@ -242,28 +243,59 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
             keySerde.serializeWithoutRangePart(startKeyIncBuffer, startKeyInc);
             final KeyRange<ByteBuffer> atLeastKeyRange = KeyRange.atLeast(startKeyIncBuffer);
 
-            try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(writeTxn, atLeastKeyRange)) {
-                final AtomicInteger cnt = new AtomicInteger();
-                final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
-                while (iterator.hasNext()) {
-                    final KeyVal<ByteBuffer> keyVal = iterator.next();
-                    if (ByteBufferUtils.containsPrefix(keyVal.key(), startKeyIncBuffer)) {
-                        // prefixed with our UID
+            boolean isComplete = false;
+            int totalCount = 0;
 
-                        LOGGER.trace(() -> LogUtil.message("Found entry {} {}",
-                                ByteBufferUtils.byteBufferInfo(keyVal.key()),
-                                ByteBufferUtils.byteBufferInfo(keyVal.val())));
+            while (!isComplete) {
+                try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(
+                        batchingWriteTxnWrapper.getTxn(), atLeastKeyRange)) {
 
-                        // pass the found kv pair from this entry to the consumer
-                        entryConsumer.accept(writeTxn, keyVal.key(), keyVal.val());
-                        iterator.remove();
-                        cnt.incrementAndGet();
+                    int batchCount = 0;
+                    boolean foundEntry = false;
+                    final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
+
+                    while (iterator.hasNext()) {
+                        foundEntry = true;
+                        final KeyVal<ByteBuffer> keyVal = iterator.next();
+                        if (ByteBufferUtils.containsPrefix(keyVal.key(), startKeyIncBuffer)) {
+                            // prefixed with our UID
+
+                            LOGGER.trace(() -> LogUtil.message("Found entry {} {}",
+                                    ByteBufferUtils.byteBufferInfo(keyVal.key()),
+                                    ByteBufferUtils.byteBufferInfo(keyVal.val())));
+
+                            // pass the found kv pair from this entry to the consumer
+                            entryConsumer.accept(batchingWriteTxnWrapper.getTxn(), keyVal.key(), keyVal.val());
+                            iterator.remove();
+                            batchCount++;
+
+                            // Having deleted one entry and associated value, commit if we have reached our batch size
+                            final boolean isBatchFull = batchingWriteTxnWrapper.incrementBatchCount();
+
+                            if (isBatchFull) {
+                                // txn is now gone so need to break out and start another cursor with a new txn
+                                break;
+                            }
+                        } else {
+                            // passed out UID so break out
+                            LOGGER.trace("Breaking out of loop");
+                            isComplete = true;
+                            break;
+                        }
+                    }
+
+                    if (foundEntry) {
+                        totalCount += batchCount;
+                        LOGGER.debug("Deleted {} {} entries this iteration, total deleted: {}",
+                                batchCount, DB_NAME, totalCount);
                     } else {
-                        // passed out UID so break out
-                        break;
+                        isComplete = true;
                     }
                 }
-                LOGGER.debug(() -> "Deleted " + DB_NAME + " " + cnt.get() + " entries");
+                // Force the commit as we either have a full batch or we have finished
+                // We may now have a partial purge committed but we are still under write lock so no other threads
+                // can purge or load and there is a lock on the ref stream.
+                batchingWriteTxnWrapper.commit();
             }
         }
     }
@@ -278,8 +310,6 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
                     startKeyBuffer.getByteBuffer(),
                     endKeyBuffer.getByteBuffer());
 
-            // TODO @AT Once a version of LMDBJava >0.8.1 is released then remove the comparator
-            //  see https://github.com/lmdbjava/lmdbjava/issues/169
             try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(
                     readTxn, keyRange)) {
 

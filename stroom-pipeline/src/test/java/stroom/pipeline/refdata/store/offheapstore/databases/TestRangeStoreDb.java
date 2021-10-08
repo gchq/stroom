@@ -19,6 +19,7 @@ package stroom.pipeline.refdata.store.offheapstore.databases;
 
 import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.bytebuffer.ByteBufferUtils;
+import stroom.lmdb.LmdbEnv.BatchingWriteTxnWrapper;
 import stroom.pipeline.refdata.store.offheapstore.RangeStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
@@ -212,7 +213,7 @@ class TestRangeStoreDb extends AbstractLmdbDbTest {
     }
 
     @Test
-    void forEachEntry() {
+    void forEachEntry() throws Exception {
 
         final UID uid1 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 1, 0, 0, 1);
         final UID uid2 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 2, 0, 0, 2);
@@ -277,16 +278,21 @@ class TestRangeStoreDb extends AbstractLmdbDbTest {
 
     }
 
-    private void doForEachTest(final UID uid, final int expectedEntryCount) {
-        lmdbEnv.doWithWriteTxn(writeTxn -> {
+    private void doForEachTest(final UID uid, final int expectedEntryCount) throws Exception {
+        try (final BatchingWriteTxnWrapper batchingWriteTxnWrapper = lmdbEnv.openBatchingWriteTxn(2)) {
             AtomicInteger cnt = new AtomicInteger(0);
-            rangeStoreDb.deleteMapEntries(writeTxn, uid, (txn, keyBuf, valBuf) -> {
-                cnt.incrementAndGet();
-                LOGGER.info("{} {}", ByteBufferUtils.byteBufferInfo(keyBuf), ByteBufferUtils.byteBufferInfo(valBuf));
-            });
+            rangeStoreDb.deleteMapEntries(
+                    batchingWriteTxnWrapper,
+                    uid,
+                    (writeTxn2, keyBuf, valBuf) -> {
+                        cnt.incrementAndGet();
+                        LOGGER.info("{} {}",
+                                ByteBufferUtils.byteBufferInfo(keyBuf),
+                                ByteBufferUtils.byteBufferInfo(valBuf));
+                    });
 
             assertThat(cnt).hasValue(expectedEntryCount);
-        });
+        }
     }
 
 //

@@ -633,9 +633,9 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
     void testGetVsCursorPerformance() {
 
 //        final int iterations = 100_000;
-        final int iterations = 1_000_000;
+//        final int iterations = 1_000_000;
 //        final int iterations = 10_000_000;
-//        final int iterations = 10;
+        final int iterations = 10;
 
         LOGGER.info("info {}", basicLmdbDb3.getDbInfo());
 

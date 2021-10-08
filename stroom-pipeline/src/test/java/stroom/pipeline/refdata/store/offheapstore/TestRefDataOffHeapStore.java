@@ -133,6 +133,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
         LOGGER.debug("Creating LMDB environment in dbDir {}", getDbDir().toAbsolutePath().toString());
 
         referenceDataConfig.setLocalDir(getDbDir().toAbsolutePath().toString());
+        referenceDataConfig.setMaxPurgeDeletesBeforeCommit(500_000);
 
         injector = Guice.createInjector(
                 new AbstractModule() {

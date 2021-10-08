@@ -24,7 +24,8 @@ public class ReferenceDataConfig extends AbstractConfig {
 
     private String localDir = "reference_data";
     private String lmdbSystemLibraryPath = null;
-    private int maxPutsBeforeCommit = 0;
+    private int maxPutsBeforeCommit = 200_000;
+    private int maxPurgeDeletesBeforeCommit = 200_000;
     private int maxReaders = 100;
     private ByteSize maxStoreSize = ByteSize.ofGibibytes(50);
     private StroomDuration purgeAge = StroomDuration.ofDays(30);
@@ -80,6 +81,20 @@ public class ReferenceDataConfig extends AbstractConfig {
     @SuppressWarnings("unused")
     public void setMaxPutsBeforeCommit(final int maxPutsBeforeCommit) {
         this.maxPutsBeforeCommit = maxPutsBeforeCommit;
+    }
+
+    @Min(0)
+    @JsonPropertyDescription("The maximum number of entries in one reference stream to purge before the " +
+            "transaction is committed. A value high enough to purge all entries in one transaction is " +
+            "preferable but for large reference streams this may result in errors due to the transaction " +
+            "being too large.")
+    public int getMaxPurgeDeletesBeforeCommit() {
+        return maxPurgeDeletesBeforeCommit;
+    }
+
+    @SuppressWarnings("unused")
+    public void setMaxPurgeDeletesBeforeCommit(final int maxPurgeDeletesBeforeCommit) {
+        this.maxPurgeDeletesBeforeCommit = maxPurgeDeletesBeforeCommit;
     }
 
     @Min(1)
@@ -176,6 +191,7 @@ public class ReferenceDataConfig extends AbstractConfig {
                 "localDir='" + localDir + '\'' +
                 ", lmdbSystemLibraryPath='" + lmdbSystemLibraryPath + '\'' +
                 ", maxPutsBeforeCommit=" + maxPutsBeforeCommit +
+                ", maxPurgeDeletesBeforeCommit=" + maxPurgeDeletesBeforeCommit +
                 ", maxReaders=" + maxReaders +
                 ", maxStoreSize=" + maxStoreSize +
                 ", purgeAge=" + purgeAge +

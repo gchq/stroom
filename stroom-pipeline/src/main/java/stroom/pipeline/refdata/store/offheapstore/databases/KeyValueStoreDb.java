@@ -21,7 +21,9 @@ import stroom.bytebuffer.ByteBufferPool;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
 import stroom.lmdb.AbstractLmdbDb;
+import stroom.lmdb.EntryConsumer;
 import stroom.lmdb.LmdbEnv;
+import stroom.lmdb.LmdbEnv.BatchingWriteTxnWrapper;
 import stroom.pipeline.refdata.store.offheapstore.KeyValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
@@ -41,7 +43,6 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.Iterator;
-import java.util.function.BiConsumer;
 import javax.inject.Inject;
 
 public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStoreKey> {
@@ -66,9 +67,9 @@ public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStore
         this.valueSerde = valueSerde;
     }
 
-    public void deleteMapEntries(final Txn<ByteBuffer> writeTxn,
+    public void deleteMapEntries(final BatchingWriteTxnWrapper batchingWriteTxnWrapper,
                                  final UID mapUid,
-                                 final BiConsumer<ByteBuffer, ByteBuffer> entryConsumer) {
+                                 final EntryConsumer entryConsumer) {
         LOGGER.debug("deleteMapEntries(..., {}, ...)", mapUid);
 
         try (PooledByteBuffer startKeyIncPooledBuffer = getPooledKeyBuffer();
@@ -92,33 +93,62 @@ public class KeyValueStoreDb extends AbstractLmdbDb<KeyValueStoreKey, ValueStore
 
             final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(startKeyIncBuffer);
 
-//            try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(writeTxn, singleMapUidKeyRange)) {
-            try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(writeTxn, keyRange)) {
-                int cnt = 0;
+            boolean isComplete = false;
+            int totalCount = 0;
 
-                final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
-                while (iterator.hasNext()) {
-                    final KeyVal<ByteBuffer> keyVal = iterator.next();
-                    LAMBDA_LOGGER.trace(() -> LogUtil.message("Found entry {} {}",
-                            ByteBufferUtils.byteBufferInfo(keyVal.key()),
-                            ByteBufferUtils.byteBufferInfo(keyVal.val())));
-                    if (ByteBufferUtils.containsPrefix(keyVal.key(), startKeyIncBuffer)) {
-                        // prefixed with our UID
+            while (!isComplete) {
+                try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(
+                        batchingWriteTxnWrapper.getTxn(), keyRange)) {
 
+                    int batchCount = 0;
+                    boolean foundEntry = false;
+                    final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
 
-                        // pass the found kv pair from this entry to the consumer
-                        // consumer MUST not hold on to the key/value references as they can change
-                        // once the cursor is closed or moves position
-                        entryConsumer.accept(keyVal.key(), keyVal.val());
-                        iterator.remove();
-                        cnt++;
+                    while (iterator.hasNext()) {
+                        foundEntry = true;
+                        final KeyVal<ByteBuffer> keyVal = iterator.next();
+                        LAMBDA_LOGGER.trace(() -> LogUtil.message("Found entry {} {}",
+                                ByteBufferUtils.byteBufferInfo(keyVal.key()),
+                                ByteBufferUtils.byteBufferInfo(keyVal.val())));
+
+                        if (ByteBufferUtils.containsPrefix(keyVal.key(), startKeyIncBuffer)) {
+                            // prefixed with our UID
+
+                            // pass the found kv pair from this entry to the consumer
+                            // consumer MUST not hold on to the key/value references as they can change
+                            // once the cursor is closed or moves position
+                            entryConsumer.accept(batchingWriteTxnWrapper.getTxn(), keyVal.key(), keyVal.val());
+                            iterator.remove();
+                            batchCount++;
+
+                            // Having deleted one entry and associated value, commit if we have reached our batch size
+                            final boolean isBatchFull = batchingWriteTxnWrapper.incrementBatchCount();
+
+                            if (isBatchFull) {
+                                // txn is now gone so need to break out and start another cursor with a new txn
+                                break;
+                            }
+                        } else {
+                            // passed our UID so break out
+                            LOGGER.trace("Breaking out of loop");
+                            isComplete = true;
+                            break;
+                        }
+                    }
+
+                    if (foundEntry) {
+                        totalCount += batchCount;
+                        LOGGER.debug("Deleted {} {} entries this iteration, total deleted: {}",
+                                batchCount, DB_NAME, totalCount);
                     } else {
-                        // passed out UID so break out
-                        LOGGER.trace("Breaking out of loop");
-                        break;
+                        isComplete = true;
                     }
                 }
-                LOGGER.debug("Deleted {} {} entries", DB_NAME, cnt);
+
+                // Force the commit as we either have a full batch or we have finished
+                // We may now have a partial purge committed but we are still under write lock so no other threads
+                // can purge or load and there is a lock on the ref stream.
+                batchingWriteTxnWrapper.commit();
             }
         }
     }
