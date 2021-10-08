@@ -203,25 +203,29 @@ public class SourceEntryDao {
     }
 
     private void insertItems(final DSLContext context, final List<Object[]> sourceItems) {
-        final BatchBindStep batchBindStep = context.batch(context
-                .insertInto(SOURCE_ITEM)
-                .columns(SOURCE_ITEM_COLUMNS)
-                .values(SOURCE_ITEM_VALUES));
-        for (final Object[] sourceItem : sourceItems) {
-            batchBindStep.bind(sourceItem);
+        if (sourceItems.size() > 0) {
+            final BatchBindStep batchBindStep = context.batch(context
+                    .insertInto(SOURCE_ITEM)
+                    .columns(SOURCE_ITEM_COLUMNS)
+                    .values(SOURCE_ITEM_VALUES));
+            for (final Object[] sourceItem : sourceItems) {
+                batchBindStep.bind(sourceItem);
+            }
+            batchBindStep.execute();
         }
-        batchBindStep.execute();
     }
 
     private void insertEntries(final DSLContext context, final List<Object[]> sourceEntries) {
-        final BatchBindStep batchBindStep = context.batch(context
-                .insertInto(SOURCE_ENTRY)
-                .columns(SOURCE_ENTRY_COLUMNS)
-                .values(SOURCE_ENTRY_VALUES));
-        for (final Object[] sourceEntry : sourceEntries) {
-            batchBindStep.bind(sourceEntry);
+        if (sourceEntries.size() > 0) {
+            final BatchBindStep batchBindStep = context.batch(context
+                    .insertInto(SOURCE_ENTRY)
+                    .columns(SOURCE_ENTRY_COLUMNS)
+                    .values(SOURCE_ENTRY_VALUES));
+            for (final Object[] sourceEntry : sourceEntries) {
+                batchBindStep.bind(sourceEntry);
+            }
+            batchBindStep.execute();
         }
-        batchBindStep.execute();
     }
 
     private void setSourceExamined(final DSLContext context, final long sourceId) {
