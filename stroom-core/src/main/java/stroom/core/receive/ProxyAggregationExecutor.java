@@ -63,7 +63,7 @@ public class ProxyAggregationExecutor {
             // If we are aggregating then we need to tell the source entry service to examine new sources when they are
             // added.
             proxyRepoSources.addChangeListener(proxyRepoSourceEntries::examineSource);
-            // When new source entries have been added tell teh aggregator that they are ready to be added to
+            // When new source entries have been added tell the aggregator that they are ready to be added to
             // aggregates.
             proxyRepoSourceEntries.addChangeListener(aggregator::aggregate);
             // When new aggregates are complete tell the forwarder that it can forward them.
