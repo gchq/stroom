@@ -310,7 +310,7 @@ write_change_entry() {
     fi
     echo "# All blank and comment lines will be ignored when imported into the CHANGELOG."
     echo "# Entries should be in GitHub flavour markdown and should be written on a single"
-    echo "# line with no hard breaks."
+    echo "# line on the first line of the file with no hard breaks."
     echo "#"
     echo "# Examples of accptable entires are:"
     echo "#"

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+~~~
+DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
+~~~
+
 
 ## [v7.0-beta.148] - 2021-09-30
 

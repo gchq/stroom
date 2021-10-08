@@ -109,6 +109,9 @@ TAG_EXAMPLE='v6.0-beta.19'
 PREVIOUS_TAG_EXAMPLE="${TAG_EXAMPLE//9/8}"
 # The location of the change log relative to the repo root
 CHANGELOG_FILENAME='CHANGELOG.md'
+# The path to the directory containing the unreleased changes
+# relative to the repo root
+UNRELEASED_CHANGES_DIR='unreleased_changes'
 # The namespace/usser on github, i.e. github.com/<namespace>, should be set in tag_release_config.env
 GITHUB_NAMESPACE=
 # The name of the git repository on github, should be set in tag_release_config.env
@@ -162,8 +165,8 @@ debug() {
     echo -e "${DGREY}DEBUG: $*${NC}"
   fi
 }
-info() {
 
+info() {
   echo -e "${GREEN}$*${NC}"
 }
 
@@ -263,6 +266,8 @@ validate_version_string() {
 }
 
 validate_changelog_exists() {
+  debug "validate_changelog_exists() called"
+
   if [ ! -f "${changelog_file}" ]; then
     error_exit "The file ${BLUE}${changelog_file}${GREEN} does not exist in the" \
       "current directory.${NC}"
@@ -270,6 +275,7 @@ validate_changelog_exists() {
 }
 
 validate_unreleased_heading_in_changelog() {
+  debug "validate_unreleased_heading_in_changelog() called"
   if ! grep -q "${UNRELEASED_HEADING_REGEX}" "${changelog_file}"; then
     error_exit "The changelog is missing the" \
       "following heading.\n${YELLOW}## [Unreleased]${NC}"
@@ -277,6 +283,7 @@ validate_unreleased_heading_in_changelog() {
 }
 
 validate_in_git_repo() {
+  debug "validate_in_git_repo() called"
   if ! git rev-parse --show-toplevel > /dev/null 2>&1; then
     error_exit "You are not in a git repository. This script should be run from" \
       "the root of a repository.${NC}"
@@ -284,6 +291,7 @@ validate_in_git_repo() {
 }
 
 validate_for_duplicate_tag() {
+  debug "validate_for_duplicate_tag() called"
   if git tag | grep -q "^${version}$"; then
     local msgs=("This repository has already been tagged with"
       "[${BLUE}${version}${GREEN}].${NC}")
@@ -299,6 +307,7 @@ validate_for_duplicate_tag() {
 }
 
 validate_version_in_changelog() {
+  debug "validate_version_in_changelog() called"
   if ! grep -q "^\s*##\s*\[${version}\]" "${changelog_file}"; then
     error_exit "Version [${BLUE}${version}${GREEN}] is not in the file" \
       "${BLUE}${CHANGELOG_FILENAME}${GREEN}.${NC}"
@@ -306,6 +315,7 @@ validate_version_in_changelog() {
 }
 
 validate_release_date() {
+  debug "validate_release_date() called"
   if ! grep -q "^\s*##\s*\[${version}\] - ${curr_date}" "${changelog_file}"; then
     validation_exit "Cannot find a heading with today's date" \
       "[${BLUE}## [${version}] - ${curr_date}${GREEN}] in" \
@@ -314,6 +324,7 @@ validate_release_date() {
 }
 
 validate_compare_link_exists() {
+  debug "validate_compare_link_exists() called"
   if ! grep -q "^\[${version}\]:" "${changelog_file}"; then
     error "Version [${BLUE}${version}${GREEN}] does not have a link entry at" \
       "the bottom of the ${BLUE}${CHANGELOG_FILENAME}${GREEN}.${NC}"
@@ -325,6 +336,7 @@ validate_compare_link_exists() {
 }
 
 validate_for_uncommitted_work() {
+  debug "validate_for_uncommitted_work() called"
   if [ "$(git status --porcelain 2>/dev/null | wc -l)" -ne 0 ]; then
     
     validation_exit "There are uncommitted changes or untracked files." \
@@ -635,6 +647,10 @@ create_config_file() {
   # The location of the change log relative to the repo root
   #CHANGELOG_FILENAME='CHANGELOG.md'
 
+  # The path to the directory containing the unreleased changes
+  # relative to the repo root
+  #UNRELEASED_CHANGES_DIR='unreleased_changes'
+
   # If you want to run any validation that is specific to this repo then uncomment
   # this function and implement some validation
   #apply_custom_validation() {
@@ -686,11 +702,33 @@ EOF
     "commit them to git and then finally re-run this script."
 }
 
+scan_change_files() {
+  debug "Scanning ${unreleased_changes_dir}"
+
+  for change_file in "${unreleased_changes_dir}/"*_*__*.md; do
+    debug "change_file: ${change_file}"
+    are_unreleased_issues=true
+
+    local change_line
+    change_line="$(head -n1 "${change_file}")"
+
+    unreleased_changes_text+="${change_line}\n\n"
+  done
+
+  # Remove the last line which will be empty
+  unreleased_changes_text="$(echo -e "${unreleased_changes_text}" | head -n-1)"
+
+  echo "#######################"
+  echo -e "${unreleased_changes_text}"
+  echo "#######################"
+}
+
 main() {
   setup_echo_colours
 
   local repo_root
   repo_root="$(git rev-parse --show-toplevel)"
+  debug "repo_root: ${repo_root}"
   # Switch to the repo root so all git commands are run from there
   pushd "${repo_root}" > /dev/null
 
@@ -711,6 +749,7 @@ main() {
   COMPARE_URL_EXAMPLE="${GITHUB_URL_BASE}/compare/${PREVIOUS_TAG_EXAMPLE}...${TAG_EXAMPLE}"
 
   local changelog_file="${repo_root}/${CHANGELOG_FILENAME}"
+  local unreleased_changes_dir="${repo_root}/${UNRELEASED_CHANGES_DIR}"
 
   if [ ! -f "${tag_release_config_file}" ]; then
     error_exit "Can't find file ${BLUE}${tag_release_config_file}${NC}"
@@ -730,6 +769,15 @@ main() {
   info "Fetching tags"
   git fetch --tags
 
+  local most_recent_release_version=""
+  local requested_version=""
+  local version=""
+  local unreleased_changes=()
+  local are_unreleased_issues=false
+  local unreleased_changes_text=""
+  local curr_date
+  curr_date="$(date +%Y-%m-%d)"
+
   # Initial validation before we start modifying the changelog
   validate_changelog_exists
   validate_unreleased_heading_in_changelog
@@ -737,18 +785,13 @@ main() {
   validate_local_vs_remote
   validate_in_git_repo
 
-  local most_recent_release_version=""
-  local requested_version=""
-  local version=""
-  local unreleased_changes=()
-  local are_unreleased_issues=false
-  local curr_date
-  curr_date="$(date +%Y-%m-%d)"
 
   if [ $# -gt 0 ]; then
     # version passed as argument
     requested_version="$1"
   fi
+
+  scan_change_files
 
   parse_changelog
 
