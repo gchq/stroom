@@ -14,6 +14,7 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -80,7 +81,7 @@ public interface ReferenceDataResource extends RestResource {
             summary = "Delete all entries for a reference stream and part number (one based)",
             operationId = "purgeReferenceDataByStreamAndPartNo")
     boolean purge(@Min(1) @PathParam("refStreamId") final long refStreamId,
-                  @Min(1) @PathParam("partNo") final long partNo);
+                  @Min(1) @DefaultValue("1") @PathParam("partNo") final long partNo);
 
     @DELETE
     @Path(CLEAR_BUFFER_POOL_PATH)

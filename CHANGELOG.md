@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2483** : Change reference data purge to delete entries in batchs to avoid large transactions that result in errors.
+
 * Fix performance issue with ref data range lookups.
 
 * Change default value for `stroom.pipeline.referenceData.readerBlockedByWriter` to true.
