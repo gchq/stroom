@@ -20,8 +20,6 @@ import stroom.db.util.SqliteJooqHelper;
 import stroom.proxy.repo.ForwarderDestinations;
 import stroom.proxy.repo.ProxyRepoDbConnProvider;
 
-import org.jooq.Record1;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -94,8 +92,7 @@ public class ForwardUrlDao {
                     .select(FORWARD_URL.ID)
                     .from(FORWARD_URL)
                     .where(FORWARD_URL.URL.equal(forwardUrl))
-                    .fetchOptional()
-                    .map(Record1::value1);
+                    .fetchOptional(FORWARD_URL.ID);
 
             return optionalId.orElseGet(() -> {
                 final int newId = forwardUrlRecordId.incrementAndGet();
