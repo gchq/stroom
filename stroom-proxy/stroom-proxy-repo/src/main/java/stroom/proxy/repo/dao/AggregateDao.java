@@ -8,8 +8,8 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import org.jooq.Condition;
+import org.jooq.Cursor;
 import org.jooq.DSLContext;
-import org.jooq.Result;
 import org.jooq.impl.DSL;
 
 import java.util.List;
@@ -89,8 +89,8 @@ public class AggregateDao {
      * Close all aggregates that meet the supplied criteria.
      */
     public synchronized int closeAggregates(final int maxItemsPerAggregate,
-                               final long maxUncompressedByteSize,
-                               final long oldestMs) {
+                                            final long maxUncompressedByteSize,
+                                            final long oldestMs) {
         final Condition condition =
                 AGGREGATE.COMPLETE.eq(false)
                         .and(
@@ -117,24 +117,24 @@ public class AggregateDao {
      */
     public List<Aggregate> getCompletedAggregates(final int limit) {
         return jooq.contextResult(context -> context
-                // Get all completed aggregates.
-                .select(AGGREGATE.ID, AGGREGATE.FEED_NAME, AGGREGATE.TYPE_NAME)
-                .from(AGGREGATE)
-                .where(AGGREGATE.COMPLETE.isTrue())
-                .and(AGGREGATE.FORWARD_ERROR.isFalse())
-                .orderBy(AGGREGATE.CREATE_TIME_MS)
-                .limit(limit)
-                .fetch()
+                        // Get all completed aggregates.
+                        .select(AGGREGATE.ID, AGGREGATE.FEED_NAME, AGGREGATE.TYPE_NAME)
+                        .from(AGGREGATE)
+                        .where(AGGREGATE.COMPLETE.isTrue())
+                        .and(AGGREGATE.FORWARD_ERROR.isFalse())
+                        .orderBy(AGGREGATE.CREATE_TIME_MS)
+                        .limit(limit)
+                        .fetch())
                 .map(r -> new Aggregate(
                         r.value1(),
                         r.value2(),
                         r.value3()
-                )));
+                ));
     }
 
     public synchronized void addItem(final SourceItem sourceItem,
-                        final int maxItemsPerAggregate,
-                        final long maxUncompressedByteSize) {
+                                     final int maxItemsPerAggregate,
+                                     final long maxUncompressedByteSize) {
         final long maxAggregateSize = Math.max(0, maxUncompressedByteSize - sourceItem.getByteSize());
 
         LOGGER.debug(() -> "addItem - " +
@@ -160,24 +160,23 @@ public class AggregateDao {
 
         jooq.transaction(context -> {
             // See if we can get an existing aggregate that will fit this data collection.
-            final Result<AggregateRecord> result = context
+
+            // Note that there may be more than one aggregate that can fit the record as we may have built more than one
+            // as a previous one may not have had enough room for a new item so another aggregate might have been
+            // started.
+            Long aggregateId;
+            try (final Cursor<AggregateRecord> cursor = context
                     .selectFrom(AGGREGATE)
                     .where(condition)
                     .orderBy(AGGREGATE.CREATE_TIME_MS)
-                    .fetch();
-
-            AggregateRecord record = null;
-            if (result.size() > 0) {
-                record = result.get(0);
-                if (result.size() > 1) {
-                    LOGGER.warn(() -> "Received more that one result for aggregate query " + condition + "\n" + result);
-                }
+                    .fetchLazy()) {
+                aggregateId = cursor
+                        .fetchNextOptional()
+                        .map(AggregateRecord::getId)
+                        .orElse(null);
             }
 
-            long aggregateId;
-            if (record != null) {
-                aggregateId = record.getId();
-
+            if (aggregateId != null) {
                 // We have somewhere we can add the data collection so add it to the aggregate.
                 context
                         .update(AGGREGATE)
@@ -265,22 +264,22 @@ public class AggregateDao {
     public List<SourceEntry> fetchSourceEntries(final long aggregateId) {
         // Get all of the source zip entries that we want to write to the forwarding location.
         return jooq.contextResult(context -> context
-                .select(SOURCE.PATH,
-                        SOURCE_ITEM.NAME,
-                        SOURCE_ENTRY.EXTENSION)
-                .from(SOURCE)
-                .join(SOURCE_ITEM).on(SOURCE_ITEM.FK_SOURCE_ID.eq(SOURCE.ID))
-                .join(SOURCE_ENTRY).on(SOURCE_ENTRY.FK_SOURCE_ITEM_ID.eq(SOURCE_ITEM.ID))
-                .join(AGGREGATE_ITEM).on(AGGREGATE_ITEM.FK_SOURCE_ITEM_ID.eq(SOURCE_ITEM.ID))
-                .join(AGGREGATE).on(AGGREGATE.ID.eq(AGGREGATE_ITEM.FK_AGGREGATE_ID))
-                .where(AGGREGATE.ID.eq(aggregateId))
-                .orderBy(SOURCE.ID, SOURCE_ITEM.ID, SOURCE_ENTRY.EXTENSION_TYPE, SOURCE_ENTRY.EXTENSION)
-                .fetch()
+                        .select(SOURCE.PATH,
+                                SOURCE_ITEM.NAME,
+                                SOURCE_ENTRY.EXTENSION)
+                        .from(SOURCE)
+                        .join(SOURCE_ITEM).on(SOURCE_ITEM.FK_SOURCE_ID.eq(SOURCE.ID))
+                        .join(SOURCE_ENTRY).on(SOURCE_ENTRY.FK_SOURCE_ITEM_ID.eq(SOURCE_ITEM.ID))
+                        .join(AGGREGATE_ITEM).on(AGGREGATE_ITEM.FK_SOURCE_ITEM_ID.eq(SOURCE_ITEM.ID))
+                        .join(AGGREGATE).on(AGGREGATE.ID.eq(AGGREGATE_ITEM.FK_AGGREGATE_ID))
+                        .where(AGGREGATE.ID.eq(aggregateId))
+                        .orderBy(SOURCE.ID, SOURCE_ITEM.ID, SOURCE_ENTRY.EXTENSION_TYPE, SOURCE_ENTRY.EXTENSION)
+                        .fetch())
                 .map(r -> new SourceEntry(
                         r.value1(),
                         r.value2(),
                         r.value3()
-                )));
+                ));
     }
 
     public static class Aggregate {
