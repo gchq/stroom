@@ -60,12 +60,12 @@ public class ForwardAggregateDao {
      */
     public Map<Integer, Boolean> getForwardingState(final long aggregateId) {
         return jooq.contextResult(context -> context
-                .select(FORWARD_AGGREGATE.FK_FORWARD_URL_ID, FORWARD_AGGREGATE.SUCCESS)
-                .from(FORWARD_AGGREGATE)
-                .where(FORWARD_AGGREGATE.FK_AGGREGATE_ID.eq(aggregateId))
-                .fetch()
-                .stream()
-                .collect(Collectors.toMap(Record2::value1, Record2::value2)));
+                        .select(FORWARD_AGGREGATE.FK_FORWARD_URL_ID, FORWARD_AGGREGATE.SUCCESS)
+                        .from(FORWARD_AGGREGATE)
+                        .where(FORWARD_AGGREGATE.FK_AGGREGATE_ID.eq(aggregateId))
+                        .fetch()
+                        .stream())
+                .collect(Collectors.toMap(Record2::value1, Record2::value2));
     }
 
     /**
