@@ -51,9 +51,9 @@ public class SourceDao {
     }
 
     public Source addSource(final String path,
-                          final String feedName,
-                          final String typeName,
-                          final long lastModifiedTimeMs) {
+                            final String feedName,
+                            final String typeName,
+                            final long lastModifiedTimeMs) {
         final long sourceId = sourceRecordId.incrementAndGet();
         jooq.context(context -> context
                 .insertInto(
@@ -133,18 +133,18 @@ public class SourceDao {
      */
     public List<Source> getNewSources(final int limit) {
         return jooq.contextResult(context -> context
-                .select(SOURCE.ID, SOURCE.PATH, SOURCE.FEED_NAME, SOURCE.TYPE_NAME)
-                .from(SOURCE)
-                .where(SOURCE.EXAMINED.isFalse())
-                .orderBy(SOURCE.LAST_MODIFIED_TIME_MS, SOURCE.ID)
-                .limit(limit)
-                .fetch()
+                        .select(SOURCE.ID, SOURCE.PATH, SOURCE.FEED_NAME, SOURCE.TYPE_NAME)
+                        .from(SOURCE)
+                        .where(SOURCE.EXAMINED.isFalse())
+                        .orderBy(SOURCE.LAST_MODIFIED_TIME_MS, SOURCE.ID)
+                        .limit(limit)
+                        .fetch())
                 .map(r -> new Source(
                         r.value1(),
                         r.value2(),
                         r.value3(),
                         r.value4()
-                )));
+                ));
     }
 
     public int countSources() {
@@ -160,19 +160,19 @@ public class SourceDao {
      */
     public List<Source> getCompletedSources(final int limit) {
         return jooq.contextResult(context -> context
-                // Get all completed sources.
-                .select(SOURCE.ID, SOURCE.PATH, SOURCE.FEED_NAME, SOURCE.TYPE_NAME)
-                .from(SOURCE)
-                .where(SOURCE.FORWARD_ERROR.isFalse())
-                .orderBy(SOURCE.LAST_MODIFIED_TIME_MS)
-                .limit(limit)
-                .fetch()
+                        // Get all completed sources.
+                        .select(SOURCE.ID, SOURCE.PATH, SOURCE.FEED_NAME, SOURCE.TYPE_NAME)
+                        .from(SOURCE)
+                        .where(SOURCE.FORWARD_ERROR.isFalse())
+                        .orderBy(SOURCE.LAST_MODIFIED_TIME_MS)
+                        .limit(limit)
+                        .fetch())
                 .map(r -> new Source(
                         r.value1(),
                         r.value2(),
                         r.value3(),
                         r.value4()
-                )));
+                ));
     }
 
     /**
@@ -185,17 +185,17 @@ public class SourceDao {
      */
     public List<Source> getDeletableSources(final int limit) {
         return jooq.contextResult(context -> context
-                .selectDistinct(SOURCE.ID, SOURCE.PATH)
-                .from(SOURCE)
-                .where(DELETE_SOURCE_CONDITION)
-                .limit(limit)
-                .fetch()
+                        .selectDistinct(SOURCE.ID, SOURCE.PATH)
+                        .from(SOURCE)
+                        .where(DELETE_SOURCE_CONDITION)
+                        .limit(limit)
+                        .fetch())
                 .map(r -> new Source(
                         r.value1(),
                         r.value2(),
                         null,
                         null
-                )));
+                ));
     }
 
     /**
