@@ -7,7 +7,10 @@ import stroom.proxy.repo.db.jooq.tables.records.SourceItemRecord;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import org.jooq.BatchBindStep;
 import org.jooq.Condition;
+import org.jooq.DSLContext;
+import org.jooq.Field;
 import org.jooq.Record1;
 import org.jooq.SelectConditionStep;
 import org.jooq.impl.DSL;
@@ -39,10 +42,28 @@ public class SourceEntryDao {
                     .select(AGGREGATE_ITEM.ID)
                     .from(AGGREGATE_ITEM)
                     .where(AGGREGATE_ITEM.FK_SOURCE_ITEM_ID.eq(SOURCE_ITEM.ID)));
+
     private static final Condition DELETE_SOURCE_ENTRY_CONDITION =
             SOURCE_ENTRY.FK_SOURCE_ITEM_ID.in(SELECT_SOURCE_ITEM_ID);
     private static final Condition DELETE_SOURCE_ITEM_CONDITION =
             SOURCE_ITEM.ID.in(SELECT_SOURCE_ITEM_ID);
+
+    private static final Field<?>[] SOURCE_ITEM_COLUMNS = new Field<?>[]{
+            SOURCE_ITEM.ID,
+            SOURCE_ITEM.NAME,
+            SOURCE_ITEM.FEED_NAME,
+            SOURCE_ITEM.TYPE_NAME,
+            SOURCE_ITEM.FK_SOURCE_ID,
+            SOURCE_ITEM.AGGREGATED};
+    private static final Object[] SOURCE_ITEM_VALUES = new Object[SOURCE_ITEM_COLUMNS.length];
+
+    private static final Field<?>[] SOURCE_ENTRY_COLUMNS = new Field<?>[]{
+            SOURCE_ENTRY.ID,
+            SOURCE_ENTRY.EXTENSION,
+            SOURCE_ENTRY.EXTENSION_TYPE,
+            SOURCE_ENTRY.BYTE_SIZE,
+            SOURCE_ENTRY.FK_SOURCE_ITEM_ID};
+    private static final Object[] SOURCE_ENTRY_VALUES = new Object[SOURCE_ENTRY_COLUMNS.length];
 
     private final SqliteJooqHelper jooq;
 
@@ -139,8 +160,8 @@ public class SourceEntryDao {
                            final long sourceId,
                            final Map<String, SourceItemRecord> itemNameMap,
                            final Map<Long, List<SourceEntryRecord>> entryMap) {
-        final List<SourceItemRecord> sourceItemRecords = new ArrayList<>(itemNameMap.size());
-        final List<SourceEntryRecord> sourceEntryRecords = new ArrayList<>();
+        final List<Object[]> sourceItems = new ArrayList<>(itemNameMap.size());
+        final List<Object[]> sourceEntries = new ArrayList<>();
         for (final SourceItemRecord sourceItemRecord : itemNameMap.values()) {
             if (sourceItemRecord.getFeedName() == null) {
                 LOGGER.error(() ->
@@ -149,23 +170,66 @@ public class SourceEntryDao {
                                 " - " +
                                 sourceItemRecord.getName());
             } else {
-                sourceItemRecords.add(sourceItemRecord);
+                final Object[] sourceItem = new Object[SOURCE_ITEM_COLUMNS.length];
+                sourceItem[0] = sourceItemRecord.getId();
+                sourceItem[1] = sourceItemRecord.getName();
+                sourceItem[2] = sourceItemRecord.getFeedName();
+                sourceItem[3] = sourceItemRecord.getTypeName();
+                sourceItem[4] = sourceItemRecord.getFkSourceId();
+                sourceItem[5] = sourceItemRecord.getAggregated();
+
+                sourceItems.add(sourceItem);
                 final List<SourceEntryRecord> entries = entryMap.get(sourceItemRecord.getId());
-                sourceEntryRecords.addAll(entries);
+
+                for (final SourceEntryRecord entry : entries) {
+                    final Object[] sourceEntry = new Object[SOURCE_ENTRY_COLUMNS.length];
+                    sourceEntry[0] = entry.getId();
+                    sourceEntry[1] = entry.getExtension();
+                    sourceEntry[2] = entry.getExtensionType();
+                    sourceEntry[3] = entry.getByteSize();
+                    sourceEntry[4] = entry.getFkSourceItemId();
+                    sourceEntries.add(sourceEntry);
+                }
             }
         }
 
         jooq.transaction(context -> {
-            context.batchInsert(sourceItemRecords).execute();
-            context.batchInsert(sourceEntryRecords).execute();
+            insertItems(context, sourceItems);
+            insertEntries(context, sourceEntries);
 
             // Mark the source as having been examined.
-            context
-                    .update(SOURCE)
-                    .set(SOURCE.EXAMINED, true)
-                    .where(SOURCE.ID.eq(sourceId))
-                    .execute();
+            setSourceExamined(context, sourceId);
         });
+    }
+
+    private void insertItems(final DSLContext context, final List<Object[]> sourceItems) {
+        final BatchBindStep batchBindStep = context.batch(context
+                .insertInto(SOURCE_ITEM)
+                .columns(SOURCE_ITEM_COLUMNS)
+                .values(SOURCE_ITEM_VALUES));
+        for (final Object[] sourceItem : sourceItems) {
+            batchBindStep.bind(sourceItem);
+        }
+        batchBindStep.execute();
+    }
+
+    private void insertEntries(final DSLContext context, final List<Object[]> sourceEntries) {
+        final BatchBindStep batchBindStep = context.batch(context
+                .insertInto(SOURCE_ENTRY)
+                .columns(SOURCE_ENTRY_COLUMNS)
+                .values(SOURCE_ENTRY_VALUES));
+        for (final Object[] sourceEntry : sourceEntries) {
+            batchBindStep.bind(sourceEntry);
+        }
+        batchBindStep.execute();
+    }
+
+    private void setSourceExamined(final DSLContext context, final long sourceId) {
+        context
+                .update(SOURCE)
+                .set(SOURCE.EXAMINED, true)
+                .where(SOURCE.ID.eq(sourceId))
+                .execute();
     }
 
     public List<Long> getDeletableSourceItemIds() {
@@ -173,8 +237,7 @@ public class SourceEntryDao {
                 .selectDistinct(SOURCE_ITEM.ID)
                 .from(SOURCE_ITEM)
                 .where(DELETE_SOURCE_ITEM_CONDITION)
-                .fetch()
-                .map(Record1::value1));
+                .fetch(SOURCE_ITEM.ID));
     }
 
     public List<Long> getDeletableSourceEntryIds() {
@@ -182,8 +245,7 @@ public class SourceEntryDao {
                 .selectDistinct(SOURCE_ENTRY.ID)
                 .from(SOURCE_ENTRY)
                 .where(DELETE_SOURCE_ENTRY_CONDITION)
-                .fetch()
-                .map(Record1::value1));
+                .fetch(SOURCE_ENTRY.ID));
     }
 
     public List<SourceItem> getNewSourceItems() {
@@ -192,47 +254,47 @@ public class SourceEntryDao {
 
     public List<SourceItem> getNewSourceItems(final int limit) {
         return jooq.contextResult(context -> context
-                // Get all data items that have not been added to aggregate destinations.
-                .select(SOURCE_ITEM.ID,
-                        SOURCE_ITEM.FEED_NAME,
-                        SOURCE_ITEM.TYPE_NAME,
-                        DSL.sum(SOURCE_ENTRY.BYTE_SIZE))
-                .from(SOURCE_ITEM)
-                .join(SOURCE).on(SOURCE.ID.eq(SOURCE_ITEM.FK_SOURCE_ID))
-                .join(SOURCE_ENTRY).on(SOURCE_ENTRY.FK_SOURCE_ITEM_ID.eq(SOURCE_ITEM.ID))
-                .where(SOURCE_ITEM.AGGREGATED.isFalse())
-                .groupBy(SOURCE_ITEM.ID)
-                .orderBy(SOURCE.LAST_MODIFIED_TIME_MS, SOURCE.ID, SOURCE_ITEM.ID)
-                .limit(limit)
-                .fetch()
+                        // Get all data items that have not been added to aggregate destinations.
+                        .select(SOURCE_ITEM.ID,
+                                SOURCE_ITEM.FEED_NAME,
+                                SOURCE_ITEM.TYPE_NAME,
+                                DSL.sum(SOURCE_ENTRY.BYTE_SIZE))
+                        .from(SOURCE_ITEM)
+                        .join(SOURCE).on(SOURCE.ID.eq(SOURCE_ITEM.FK_SOURCE_ID))
+                        .join(SOURCE_ENTRY).on(SOURCE_ENTRY.FK_SOURCE_ITEM_ID.eq(SOURCE_ITEM.ID))
+                        .where(SOURCE_ITEM.AGGREGATED.isFalse())
+                        .groupBy(SOURCE_ITEM.ID)
+                        .orderBy(SOURCE.LAST_MODIFIED_TIME_MS, SOURCE.ID, SOURCE_ITEM.ID)
+                        .limit(limit)
+                        .fetch())
                 .map(r -> new SourceItem(
                         r.value1(),
                         r.value2(),
                         r.value3(),
                         r.value4().longValue()
-                )));
+                ));
     }
 
     public List<SourceItem> getNewSourceItemsForSource(final long sourceId) {
         return jooq.contextResult(context -> context
-                // Get all data items that have not been added to aggregate destinations.
-                .select(SOURCE_ITEM.ID,
-                        SOURCE_ITEM.FEED_NAME,
-                        SOURCE_ITEM.TYPE_NAME,
-                        DSL.sum(SOURCE_ENTRY.BYTE_SIZE))
-                .from(SOURCE_ITEM)
-                .join(SOURCE_ENTRY).on(SOURCE_ENTRY.FK_SOURCE_ITEM_ID.eq(SOURCE_ITEM.ID))
-                .where(SOURCE_ITEM.FK_SOURCE_ID.eq(sourceId))
-                .and(SOURCE_ITEM.AGGREGATED.isFalse())
-                .groupBy(SOURCE_ITEM.ID)
-                .orderBy(SOURCE_ITEM.ID)
-                .fetch()
+                        // Get all data items that have not been added to aggregate destinations.
+                        .select(SOURCE_ITEM.ID,
+                                SOURCE_ITEM.FEED_NAME,
+                                SOURCE_ITEM.TYPE_NAME,
+                                DSL.sum(SOURCE_ENTRY.BYTE_SIZE))
+                        .from(SOURCE_ITEM)
+                        .join(SOURCE_ENTRY).on(SOURCE_ENTRY.FK_SOURCE_ITEM_ID.eq(SOURCE_ITEM.ID))
+                        .where(SOURCE_ITEM.FK_SOURCE_ID.eq(sourceId))
+                        .and(SOURCE_ITEM.AGGREGATED.isFalse())
+                        .groupBy(SOURCE_ITEM.ID)
+                        .orderBy(SOURCE_ITEM.ID)
+                        .fetch())
                 .map(r -> new SourceItem(
                         r.value1(),
                         r.value2(),
                         r.value3(),
                         r.value4().longValue()
-                )));
+                ));
     }
 
     public static class SourceItem {
