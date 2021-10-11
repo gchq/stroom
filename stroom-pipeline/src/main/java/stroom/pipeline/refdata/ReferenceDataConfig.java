@@ -24,13 +24,14 @@ public class ReferenceDataConfig extends AbstractConfig {
 
     private String localDir = "reference_data";
     private String lmdbSystemLibraryPath = null;
-    private int maxPutsBeforeCommit = 0;
+    private int maxPutsBeforeCommit = 200_000;
+    private int maxPurgeDeletesBeforeCommit = 200_000;
     private int maxReaders = 100;
     private ByteSize maxStoreSize = ByteSize.ofGibibytes(50);
     private StroomDuration purgeAge = StroomDuration.ofDays(30);
     private boolean isReadAheadEnabled = true;
     private int loadingLockStripes = 2048;
-    private boolean isReaderBlockedByWriter = false;
+    private boolean isReaderBlockedByWriter = true;
 
     private CacheConfig effectiveStreamCache = CacheConfig.builder()
             .maximumSize(1000L)
@@ -80,6 +81,20 @@ public class ReferenceDataConfig extends AbstractConfig {
     @SuppressWarnings("unused")
     public void setMaxPutsBeforeCommit(final int maxPutsBeforeCommit) {
         this.maxPutsBeforeCommit = maxPutsBeforeCommit;
+    }
+
+    @Min(0)
+    @JsonPropertyDescription("The maximum number of entries in one reference stream to purge before the " +
+            "transaction is committed. A value high enough to purge all entries in one transaction is " +
+            "preferable but for large reference streams this may result in errors due to the transaction " +
+            "being too large.")
+    public int getMaxPurgeDeletesBeforeCommit() {
+        return maxPurgeDeletesBeforeCommit;
+    }
+
+    @SuppressWarnings("unused")
+    public void setMaxPurgeDeletesBeforeCommit(final int maxPurgeDeletesBeforeCommit) {
+        this.maxPurgeDeletesBeforeCommit = maxPurgeDeletesBeforeCommit;
     }
 
     @Min(1)
@@ -147,12 +162,13 @@ public class ReferenceDataConfig extends AbstractConfig {
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    @JsonPropertyDescription("If true, then the process writing to the reference data store will block all " +
+    @JsonPropertyDescription("If true, then a process writing to the reference data store will block all " +
             "other processes from reading from the store. As only one writer is allowed the active writer will " +
             "also block all other writers. If false, then multiple processes can read from the store regardless " +
-            "of whether a process is writing to it. If there are active readers during a write then empty space in " +
+            "of whether a process is writing to it. Also when false, if there are active readers during a write " +
+            "then empty space in " +
             "the store cannot be reclaimed, instead the store will grow. This setting is a trade off between " +
-            "performance and store size. If you experience excessive store size growth then set this to true.")
+            "performance and store size.")
     public boolean isReaderBlockedByWriter() {
         return isReaderBlockedByWriter;
     }
@@ -175,6 +191,7 @@ public class ReferenceDataConfig extends AbstractConfig {
                 "localDir='" + localDir + '\'' +
                 ", lmdbSystemLibraryPath='" + lmdbSystemLibraryPath + '\'' +
                 ", maxPutsBeforeCommit=" + maxPutsBeforeCommit +
+                ", maxPurgeDeletesBeforeCommit=" + maxPurgeDeletesBeforeCommit +
                 ", maxReaders=" + maxReaders +
                 ", maxStoreSize=" + maxStoreSize +
                 ", purgeAge=" + purgeAge +

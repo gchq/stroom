@@ -46,7 +46,10 @@ public abstract class AbstractLmdbDbTest extends StroomUnitTest {
     @BeforeEach
     final void createEnv() throws IOException {
         dbDir = Files.createTempDirectory("stroom");
-        final EnvFlags[] envFlags = new EnvFlags[]{EnvFlags.MDB_NOTLS};
+        final EnvFlags[] envFlags = new EnvFlags[]{
+                EnvFlags.MDB_NOTLS
+        };
+
         LOGGER.info("Creating LMDB environment with maxSize: {}, dbDir {}, envFlags {}",
                 getMaxSizeBytes(),
                 dbDir.toAbsolutePath(),
@@ -58,7 +61,7 @@ public abstract class AbstractLmdbDbTest extends StroomUnitTest {
                 .builder(dbDir)
                 .withMapSize(getMaxSizeBytes())
                 .withMaxDbCount(10)
-                .addEnvFlag(EnvFlags.MDB_NOTLS)
+                .withEnvFlags(envFlags)
                 .makeWritersBlockReaders()
                 .build();
     }

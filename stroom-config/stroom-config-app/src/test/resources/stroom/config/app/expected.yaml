@@ -385,12 +385,13 @@ appConfig:
       lmdbSystemLibraryPath: null
       loadingLockStripes: 2048
       localDir: "reference_data"
-      maxPutsBeforeCommit: 0
+      maxPurgeDeletesBeforeCommit: 200000
+      maxPutsBeforeCommit: 200000
       maxReaders: 100
       maxStoreSize: "50G"
       purgeAge: "P30D"
       readAheadEnabled: true
-      readerBlockedByWriter: false
+      readerBlockedByWriter: true
     xmlSchema:
       cache:
         maximumSize: 1000

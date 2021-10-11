@@ -20,6 +20,7 @@ package stroom.pipeline.refdata.store.offheapstore.databases;
 
 import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.bytebuffer.ByteBufferUtils;
+import stroom.lmdb.LmdbEnv.BatchingWriteTxnWrapper;
 import stroom.pipeline.refdata.store.offheapstore.KeyValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
@@ -53,7 +54,7 @@ class TestKeyValueStoreDb extends AbstractLmdbDbTest {
     }
 
     @Test
-    void forEachEntry() {
+    void forEachEntry() throws Exception {
 
         final UID uid1 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 1, 0, 0, 1);
         final UID uid2 = UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 2, 0, 0, 2);
@@ -84,7 +85,7 @@ class TestKeyValueStoreDb extends AbstractLmdbDbTest {
     }
 
     @Test
-    void testDeleteMapEntries() {
+    void testDeleteMapEntries() throws Exception {
 
         lmdbEnv.doWithWriteTxn(writeTxn -> {
             putEntry(writeTxn, 1, "key11", 1, (short) 1);
@@ -103,19 +104,19 @@ class TestKeyValueStoreDb extends AbstractLmdbDbTest {
                     .isEqualTo(9);
         });
 
-        lmdbEnv.doWithWriteTxn(writeTxn -> {
+        try (final BatchingWriteTxnWrapper batchingWriteTxnWrapper = lmdbEnv.openBatchingWriteTxn(2)) {
             keyValueStoreDb.deleteMapEntries(
-                    writeTxn,
+                    batchingWriteTxnWrapper,
                     UID.of(2, ByteBuffer.allocateDirect(10)),
-                    (keyBuffer, valueBuffer) -> {
+                    (writeTxn, keyBuffer, valueBuffer) -> {
                         LOGGER.info("{} - {}",
                                 ByteBufferUtils.byteBufferInfo(keyBuffer),
                                 ByteBufferUtils.byteBufferInfo(keyBuffer));
                     });
 
-            assertThat(keyValueStoreDb.getEntryCount(writeTxn))
+            assertThat(keyValueStoreDb.getEntryCount(batchingWriteTxnWrapper.getTxn()))
                     .isEqualTo(6);
-        });
+        }
     }
 
 
@@ -172,10 +173,10 @@ class TestKeyValueStoreDb extends AbstractLmdbDbTest {
                 false);
     }
 
-    private void doForEachTest(final UID uid, final int expectedEntryCount) {
-        lmdbEnv.doWithWriteTxn(writeTxn -> {
+    private void doForEachTest(final UID uid, final int expectedEntryCount) throws Exception {
+        try (final BatchingWriteTxnWrapper batchingWriteTxnWrapper = lmdbEnv.openBatchingWriteTxn(2)) {
             AtomicInteger cnt = new AtomicInteger(0);
-            keyValueStoreDb.deleteMapEntries(writeTxn, uid, (keyBuf, valBuf) -> {
+            keyValueStoreDb.deleteMapEntries(batchingWriteTxnWrapper, uid, (writeTxn, keyBuf, valBuf) -> {
                 cnt.incrementAndGet();
                 LOGGER.info("{} {}",
                         ByteBufferUtils.byteBufferInfo(keyBuf),
@@ -183,6 +184,6 @@ class TestKeyValueStoreDb extends AbstractLmdbDbTest {
             });
 
             assertThat(cnt).hasValue(expectedEntryCount);
-        });
+        }
     }
 }
