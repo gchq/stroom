@@ -3558,6 +3558,7 @@ paths:
         schema:
           type: integer
           format: int64
+          default: 1
           minimum: 1
       responses:
         default:
