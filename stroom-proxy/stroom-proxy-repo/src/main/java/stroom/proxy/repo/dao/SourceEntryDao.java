@@ -177,10 +177,9 @@ public class SourceEntryDao {
                 sourceItem[3] = sourceItemRecord.getTypeName();
                 sourceItem[4] = sourceItemRecord.getFkSourceId();
                 sourceItem[5] = sourceItemRecord.getAggregated();
-
                 sourceItems.add(sourceItem);
-                final List<SourceEntryRecord> entries = entryMap.get(sourceItemRecord.getId());
 
+                final List<SourceEntryRecord> entries = entryMap.get(sourceItemRecord.getId());
                 for (final SourceEntryRecord entry : entries) {
                     final Object[] sourceEntry = new Object[SOURCE_ENTRY_COLUMNS.length];
                     sourceEntry[0] = entry.getId();
