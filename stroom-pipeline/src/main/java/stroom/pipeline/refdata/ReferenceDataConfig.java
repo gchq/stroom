@@ -5,7 +5,6 @@ import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.config.annotations.RequiresRestart.RestartScope;
 import stroom.util.io.ByteSize;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.validation.ValidFilePath;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -23,7 +22,6 @@ public class ReferenceDataConfig extends AbstractConfig {
     public static final String LOCAL_DIR_PROP_NAME = "localDir";
 
     private String localDir = "reference_data";
-    private String lmdbSystemLibraryPath = null;
     private int maxPutsBeforeCommit = 200_000;
     private int maxPurgeDeletesBeforeCommit = 200_000;
     private int maxReaders = 100;
@@ -51,21 +49,6 @@ public class ReferenceDataConfig extends AbstractConfig {
 
     public void setLocalDir(final String localDir) {
         this.localDir = localDir;
-    }
-
-    @ValidFilePath
-    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    @JsonPropertyDescription("The path to a provided LMDB system library file. If unset the LMDB binary " +
-            "bundled with Stroom will be extracted to 'localDir'. This property can be used if you already have LMDB " +
-            "installed or want to make use of a package manager provided instance. If you set this property care " +
-            "needs  to be taken over version compatibility between the version of LMDBJava (that Stroom uses to " +
-            "interact with LMDB) and the version of the LMDB binary.")
-    public String getLmdbSystemLibraryPath() {
-        return lmdbSystemLibraryPath;
-    }
-
-    public void setLmdbSystemLibraryPath(final String lmdbSystemLibraryPath) {
-        this.lmdbSystemLibraryPath = lmdbSystemLibraryPath;
     }
 
     @Min(0)
@@ -189,7 +172,6 @@ public class ReferenceDataConfig extends AbstractConfig {
     public String toString() {
         return "ReferenceDataConfig{" +
                 "localDir='" + localDir + '\'' +
-                ", lmdbSystemLibraryPath='" + lmdbSystemLibraryPath + '\'' +
                 ", maxPutsBeforeCommit=" + maxPutsBeforeCommit +
                 ", maxPurgeDeletesBeforeCommit=" + maxPurgeDeletesBeforeCommit +
                 ", maxReaders=" + maxReaders +

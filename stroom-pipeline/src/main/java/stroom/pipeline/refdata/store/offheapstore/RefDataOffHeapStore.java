@@ -257,7 +257,6 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     .withMapSize(maxSize)
                     .withMaxDbCount(7)
                     .withEnvFlags(envFlags)
-                    .withLmdbSystemLibraryPath(referenceDataConfig.getLmdbSystemLibraryPath())
                     .setIsReaderBlockedByWriter(referenceDataConfig.isReaderBlockedByWriter())
                     .build();
 

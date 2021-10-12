@@ -28,6 +28,7 @@ import stroom.job.impl.JobSystemConfig;
 import stroom.kafka.impl.KafkaConfig;
 import stroom.legacy.db.LegacyDbConfig;
 import stroom.lifecycle.impl.LifecycleConfig;
+import stroom.lmdb.LmdbLibraryConfig;
 import stroom.meta.impl.MetaServiceConfig;
 import stroom.meta.impl.MetaValueConfig;
 import stroom.node.impl.HeapHistogramConfig;
@@ -169,6 +170,7 @@ public class AppConfigModule extends AbstractModule {
         bindConfig(AppConfig::getJobSystemConfig, AppConfig::setJobSystemConfig, JobSystemConfig.class);
         bindConfig(AppConfig::getKafkaConfig, AppConfig::setKafkaConfig, KafkaConfig.class);
         bindConfig(AppConfig::getLifecycleConfig, AppConfig::setLifecycleConfig, LifecycleConfig.class);
+        bindConfig(AppConfig::getLmdbLibraryConfig, AppConfig::setLmdbLibraryConfig, LmdbLibraryConfig.class);
         bindConfig(AppConfig::getNodeConfig, AppConfig::setNodeConfig, NodeConfig.class, nodeConfig ->
                 bindConfig(nodeConfig,
                         NodeConfig::getStatusConfig,

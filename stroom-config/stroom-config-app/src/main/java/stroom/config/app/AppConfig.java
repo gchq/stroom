@@ -25,6 +25,7 @@ import stroom.job.impl.JobSystemConfig;
 import stroom.kafka.impl.KafkaConfig;
 import stroom.legacy.db.LegacyDbConfig;
 import stroom.lifecycle.impl.LifecycleConfig;
+import stroom.lmdb.LmdbLibraryConfig;
 import stroom.node.impl.NodeConfig;
 import stroom.pipeline.PipelineConfig;
 import stroom.processor.impl.ProcessorConfig;
@@ -74,6 +75,8 @@ public class AppConfig extends AbstractConfig {
     public static final String PROP_NAME_JOB = "job";
     public static final String PROP_NAME_KAFKA = "kafka";
     public static final String PROP_NAME_LIFECYCLE = "lifecycle";
+    public static final String PROP_NAME_LMDB_LIBRARY = "lmdbLibrary";
+    public static final String PROP_NAME_LOGGING = "logging";
     public static final String PROP_NAME_NODE = "node";
     public static final String PROP_NAME_NODE_URI = "nodeUri";
     public static final String PROP_NAME_PATH = "path";
@@ -84,7 +87,6 @@ public class AppConfig extends AbstractConfig {
     public static final String PROP_NAME_PUBLIC_URI = "publicUri";
     public static final String PROP_NAME_QUERY_HISTORY = "queryHistory";
     public static final String PROP_NAME_RECEIVE = "receive";
-    public static final String PROP_NAME_LOGGING = "logging";
     public static final String PROP_NAME_SEARCH = "search";
     public static final String PROP_NAME_SEARCHABLE = "searchable";
     public static final String PROP_NAME_SECURITY = "security";
@@ -117,16 +119,16 @@ public class AppConfig extends AbstractConfig {
     private JobSystemConfig jobSystemConfig = new JobSystemConfig();
     private KafkaConfig kafkaConfig = new KafkaConfig();
     private LifecycleConfig lifecycleConfig = new LifecycleConfig();
+    private LmdbLibraryConfig lmdbLibraryConfig = new LmdbLibraryConfig();
+    private LoggingConfig loggingConfig = new LoggingConfig();
     private NodeConfig nodeConfig = new NodeConfig();
     private NodeUriConfig nodeUri = new NodeUriConfig();
-    private StroomPathConfig pathConfig = new StroomPathConfig();
     private PipelineConfig pipelineConfig = new PipelineConfig();
     private ProcessorConfig processorConfig = new ProcessorConfig();
     private PropertyServiceConfig propertyServiceConfig = new PropertyServiceConfig();
     private ProxyAggregationConfig proxyAggregationConfig = new ProxyAggregationConfig();
     private PublicUriConfig publicUri = new PublicUriConfig();
     private ReceiveDataConfig receiveDataConfig = new ReceiveDataConfig();
-    private LoggingConfig loggingConfig = new LoggingConfig();
     private SearchConfig searchConfig = new SearchConfig();
     private SearchableConfig searchableConfig = new SearchableConfig();
     private SecurityConfig securityConfig = new SecurityConfig();
@@ -135,6 +137,7 @@ public class AppConfig extends AbstractConfig {
     private SolrConfig solrConfig = new SolrConfig();
     private StatisticsConfig statisticsConfig = new StatisticsConfig();
     private StoredQueryConfig storedQueryConfig = new StoredQueryConfig();
+    private StroomPathConfig pathConfig = new StroomPathConfig();
     private UiConfig uiConfig = new UiConfig();
     private UiUriConfig uiUri = new UiUriConfig();
     private VolumeConfig volumeConfig = new VolumeConfig();
@@ -348,6 +351,16 @@ public class AppConfig extends AbstractConfig {
     @SuppressWarnings("unused")
     public void setLifecycleConfig(final LifecycleConfig lifecycleConfig) {
         this.lifecycleConfig = lifecycleConfig;
+    }
+
+    @JsonProperty(PROP_NAME_LMDB_LIBRARY)
+    public LmdbLibraryConfig getLmdbLibraryConfig() {
+        return lmdbLibraryConfig;
+    }
+
+    @SuppressWarnings("unused")
+    public void setLmdbLibraryConfig(final LmdbLibraryConfig lmdbLibraryConfig) {
+        this.lmdbLibraryConfig = lmdbLibraryConfig;
     }
 
     @JsonProperty(PROP_NAME_NODE)

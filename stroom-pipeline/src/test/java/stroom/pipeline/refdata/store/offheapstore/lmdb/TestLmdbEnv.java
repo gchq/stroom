@@ -5,11 +5,13 @@ import stroom.lmdb.BasicLmdbDb;
 import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbEnv.BatchingWriteTxnWrapper;
 import stroom.lmdb.LmdbEnvFactory;
+import stroom.lmdb.LmdbLibraryConfig;
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.store.offheapstore.serdes.StringSerde;
 import stroom.util.concurrent.HighWaterMarkTracker;
 import stroom.util.io.ByteSize;
 import stroom.util.io.PathCreator;
+import stroom.util.io.TempDirProvider;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -168,8 +170,9 @@ public class TestLmdbEnv {
                 Arrays.toString(envFlags));
 
         final PathCreator pathCreator = new PathCreator(() -> dbDir, () -> dbDir);
+        final TempDirProvider tempDirProvider = () -> dbDir;
 
-        lmdbEnv = new LmdbEnvFactory(pathCreator)
+        lmdbEnv = new LmdbEnvFactory(pathCreator, tempDirProvider, new LmdbLibraryConfig())
                 .builder(dbDir)
                 .withMapSize(DB_MAX_SIZE)
                 .withMaxDbCount(1)

@@ -149,14 +149,13 @@ public class LmdbEnv implements AutoCloseable {
 
         LOGGER.trace("Acquiring write txn lock");
         try {
-            try {
-                writeTxnLock.lockInterruptibly();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new RuntimeException("Thread interrupted while waiting for write lock on "
-                        + path.toAbsolutePath().normalize());
-            }
-
+            writeTxnLock.lockInterruptibly();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Thread interrupted while waiting for write lock on "
+                    + path.toAbsolutePath().normalize());
+        }
+        try {
             LOGGER.trace("About to open write tx");
             try (final Txn<ByteBuffer> writeTxn = env.txnWrite()) {
                 LOGGER.trace("Performing work with write txn");
@@ -223,9 +222,15 @@ public class LmdbEnv implements AutoCloseable {
     }
 
     private <T> T getWithReadTxnUnderMaxReaderSemaphore(final Function<Txn<ByteBuffer>, T> work) {
+        LOGGER.trace("About to acquire permit");
         try {
-            LOGGER.trace("About to acquire permit");
             activeReadTransactionsSemaphore.acquire();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Thread interrupted", e);
+        }
+
+        try {
             LOGGER.trace(() ->
                     LogUtil.message("Permit acquired, remaining {}, queue length {}",
                             activeReadTransactionsSemaphore.availablePermits(),
@@ -239,9 +244,6 @@ public class LmdbEnv implements AutoCloseable {
                         "Error performing work in read transaction: {}",
                         e.getMessage()), e);
             }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Thread interrupted", e);
         } finally {
             LOGGER.trace("Releasing permit");
             activeReadTransactionsSemaphore.release();
@@ -255,11 +257,13 @@ public class LmdbEnv implements AutoCloseable {
             // Wait for writers to finish
             readLock.lockInterruptibly();
             LOGGER.trace("Lock acquired");
-
-            return getWithReadTxnUnderMaxReaderSemaphore(work);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException("Thread interrupted", e);
+        }
+
+        try {
+            return getWithReadTxnUnderMaxReaderSemaphore(work);
         } finally {
             LOGGER.trace("Releasing lock");
             readLock.unlock();

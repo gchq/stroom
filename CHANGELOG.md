@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2478** : Create a single place in config for the LMDB library path and extraction dir.
+
+* Issue **#2478** : Delete old LMDB library binaries on boot.
+
 
 ## [v7.0-beta.151] - 2021-10-11
 
