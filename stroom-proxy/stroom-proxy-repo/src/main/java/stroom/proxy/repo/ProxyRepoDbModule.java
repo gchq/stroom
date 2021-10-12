@@ -15,6 +15,8 @@ import com.google.inject.Provides;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.SQLException;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
 
@@ -67,6 +69,24 @@ public class ProxyRepoDbModule extends AbstractModule {
 
         private DataSourceImpl(final DataSource dataSource) {
             super(dataSource);
+            try (final Connection connection = super.getConnection()) {
+                pragma(connection, "pragma journal_mode = WAL;");
+            } catch (final SQLException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        }
+
+        @Override
+        public Connection getConnection() throws SQLException {
+            final Connection connection = super.getConnection();
+            pragma(connection, "pragma synchronous = normal;");
+            pragma(connection, "pragma temp_store = memory;");
+            pragma(connection, "pragma mmap_size = 30000000000;");
+            return connection;
+        }
+
+        public void pragma(final Connection connection, final String pragma) throws SQLException {
+            connection.prepareStatement(pragma).execute();
         }
     }
 }
