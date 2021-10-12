@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -261,9 +262,10 @@ class TestStoreAndForward {
         final ExecutorService executorService = Executors.newFixedThreadPool(24);
 
         long start = System.currentTimeMillis();
-        final CompletableFuture[] futures = new CompletableFuture[2500]; //4000 = 16 s      100000 = 5.6m   10000 = 38s
+        final CompletableFuture<?>[] futures = new CompletableFuture[2500]; // 4000 = 16 s  100000 = 5.6m  10000 = 38s
         for (int i = 0; i < futures.length; i++) {
-            final CompletableFuture completableFuture = CompletableFuture.runAsync(this::testUnique, executorService);
+            final CompletableFuture<?> completableFuture =
+                    CompletableFuture.runAsync(this::testUnique, executorService);
             futures[i] = completableFuture;
         }
 
@@ -273,16 +275,19 @@ class TestStoreAndForward {
     }
 
     void testUnique() {
-        final Source source = proxyRepoSources.addSource(
-                UUID.randomUUID().toString(),
-                "test",
-                null,
-                System.currentTimeMillis(),
-                null);
-        final long sourceId = source.getSourceId();
-        final String path = source.getSourcePath();
+        final Optional<Source> optional = proxyRepoSources
+                .addSource(
+                        UUID.randomUUID().toString(),
+                        "test",
+                        null,
+                        System.currentTimeMillis(),
+                        null);
+        optional.ifPresent(source -> {
+            final long sourceId = source.getSourceId();
+            final String path = source.getSourcePath();
 
-        addEntriesToSource(sourceId, path, 10, 10);
+            addEntriesToSource(sourceId, path, 10, 10);
+        });
     }
 
     void addEntriesToSource(final long sourceId,

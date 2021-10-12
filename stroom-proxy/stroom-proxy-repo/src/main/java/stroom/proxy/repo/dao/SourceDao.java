@@ -50,29 +50,54 @@ public class SourceDao {
                 .fetchOptional(SOURCE.ID));
     }
 
-    public Source addSource(final String path,
-                            final String feedName,
-                            final String typeName,
-                            final long lastModifiedTimeMs) {
-        final long sourceId = sourceRecordId.incrementAndGet();
-        jooq.context(context -> context
-                .insertInto(
-                        SOURCE,
-                        SOURCE.ID,
-                        SOURCE.PATH,
-                        SOURCE.FEED_NAME,
-                        SOURCE.TYPE_NAME,
-                        SOURCE.LAST_MODIFIED_TIME_MS
-                )
-                .values(
-                        sourceId,
-                        path,
-                        feedName,
-                        typeName,
-                        lastModifiedTimeMs
-                )
-                .execute());
-        return new Source(sourceId, path, feedName, typeName);
+    /**
+     * Add a new source to the database.
+     * <p>
+     * If a new source is successfully added then return it in the optional result. If a source for the supplied path
+     * already exists then return an empty optional.
+     * <p>
+     * This method is synchronized to cope with sources being added via receipt and repo scanning at the same time.
+     *
+     * @param path               The path of the source to add.
+     * @param feedName           The feed name associated with the source.
+     * @param typeName           The type name associated with the source.
+     * @param lastModifiedTimeMs The last time the source data was modified.
+     * @return If a new source is successfully added then return it in the optional result. If a source for the supplied
+     * path already exists then return an empty optional.
+     */
+    public synchronized Optional<Source> addSource(final String path,
+                                                   final String feedName,
+                                                   final String typeName,
+                                                   final long lastModifiedTimeMs) {
+        final Optional<Source> result;
+
+        // If a source already exists for the supplied path then return an empty optional.
+        if (getSourceId(path).isPresent()) {
+            result = Optional.empty();
+
+        } else {
+            final long sourceId = sourceRecordId.incrementAndGet();
+            jooq.context(context -> context
+                    .insertInto(
+                            SOURCE,
+                            SOURCE.ID,
+                            SOURCE.PATH,
+                            SOURCE.FEED_NAME,
+                            SOURCE.TYPE_NAME,
+                            SOURCE.LAST_MODIFIED_TIME_MS
+                    )
+                    .values(
+                            sourceId,
+                            path,
+                            feedName,
+                            typeName,
+                            lastModifiedTimeMs
+                    )
+                    .execute());
+            result = Optional.of(new Source(sourceId, path, feedName, typeName));
+        }
+
+        return result;
     }
 
     /**

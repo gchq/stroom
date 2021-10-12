@@ -53,7 +53,9 @@ public class TestForwardAggregateDao {
         Optional<Long> id = sourceDao.getSourceId("test");
         assertThat(id.isPresent()).isFalse();
 
-        Source source = sourceDao.addSource("test", "test", "test", System.currentTimeMillis());
+        final Source source = sourceDao
+                .addSource("test", "test", "test", System.currentTimeMillis())
+                .orElse(null);
         assertThat(source).isNotNull();
 
         id = sourceDao.getSourceId("test");

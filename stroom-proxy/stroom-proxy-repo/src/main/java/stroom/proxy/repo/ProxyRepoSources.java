@@ -30,24 +30,26 @@ public class ProxyRepoSources implements Clearable {
         return sourceDao.getSourceId(path);
     }
 
-    public Source addSource(final String path,
-                            final String feedName,
-                            final String typeName,
-                            final long lastModifiedTimeMs,
-                            final AttributeMap attributeMap) {
+    public Optional<Source> addSource(final String path,
+                                      final String feedName,
+                                      final String typeName,
+                                      final long lastModifiedTimeMs,
+                                      final AttributeMap attributeMap) {
         if (feedName.isEmpty()) {
             throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED, attributeMap);
         }
 
-        final Source source = sourceDao.addSource(
+        final Optional<Source> optional = sourceDao.addSource(
                 path,
                 feedName,
                 typeName,
                 lastModifiedTimeMs);
 
-        changeListeners.forEach(listener -> listener.onChange(source));
+        optional.ifPresent(source ->
+                changeListeners.forEach(listener ->
+                        listener.onChange(source)));
 
-        return source;
+        return optional;
     }
 
     @Override
