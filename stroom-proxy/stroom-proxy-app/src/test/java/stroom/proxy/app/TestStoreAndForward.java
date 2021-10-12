@@ -8,7 +8,6 @@ import stroom.data.zip.StroomZipOutputStreamImpl;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
-import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.proxy.app.forwarder.ForwardDestinationConfig;
 import stroom.proxy.app.handler.ReceiveStreamHandlers;
 import stroom.proxy.repo.ProgressHandler;
@@ -28,7 +27,6 @@ import stroom.util.time.StroomDuration;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.jooq.exception.DataAccessException;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -51,9 +49,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import javax.inject.Inject;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @Disabled
 class TestStoreAndForward {
@@ -223,21 +218,6 @@ class TestStoreAndForward {
     }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     @Test
     void testForwardPerformance() throws Exception {
 //        final ForwardDestinationConfig forwardDestinationConfig = new ForwardDestinationConfig();
@@ -248,7 +228,6 @@ class TestStoreAndForward {
         final Path homeDir = Paths.get("/home/stroomdev66/tmp/proxy_test");
         //Files.createTempDirectory("stroom-proxy-home");
         final Path configPath = tempDir.resolve("temp-config.yml");
-
 
 
         final ForwardDestinationConfig forwardDestinationConfig = new ForwardDestinationConfig();
@@ -294,7 +273,12 @@ class TestStoreAndForward {
     }
 
     void testUnique() {
-        final Source source = proxyRepoSources.addSource(UUID.randomUUID().toString(), "test", null, System.currentTimeMillis(), null);
+        final Source source = proxyRepoSources.addSource(
+                UUID.randomUUID().toString(),
+                "test",
+                null,
+                System.currentTimeMillis(),
+                null);
         final long sourceId = source.getSourceId();
         final String path = source.getSourcePath();
 
@@ -363,28 +347,6 @@ class TestStoreAndForward {
                 itemNameMap,
                 entryMap);
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
     public synchronized StroomZipOutputStream getStroomZipOutputStream(final String executionUuid,
