@@ -325,6 +325,9 @@ appConfig:
       expireAfterWrite: null
   lifecycle:
     enabled: true
+  lmdbLibrary:
+    providedSystemLibraryPath: null
+    systemLibraryExtractDir: "lmdb_library"
   node:
     db:
       connection:
@@ -353,9 +356,6 @@ appConfig:
     hostname: null
     port: null
     pathPrefix: null
-  path:
-    home: null
-    temp: null
   pipeline:
     httpClientCache:
       maximumSize: 1000
@@ -382,7 +382,6 @@ appConfig:
         maximumSize: 1000
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
-      lmdbSystemLibraryPath: null
       loadingLockStripes: 2048
       localDir: "reference_data"
       maxPurgeDeletesBeforeCommit: 200000
@@ -814,6 +813,9 @@ appConfig:
         leakDetectionThreshold: "PT0S"
         minimumIdle: 10
         maxPoolSize: 30
+  path:
+    home: null
+    temp: null
   ui:
     aboutHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple\
       \ systems.</p>"
