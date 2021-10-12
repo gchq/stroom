@@ -12,6 +12,14 @@ proxyConfig:
     contentSyncEnabled: false
     syncFrequency: 0
     upstreamUrl: null
+  db:
+    connectionPragma:
+    - "pragma synchronous = normal;"
+    - "pragma temp_store = memory;"
+    - "pragma mmap_size = 30000000000;"
+    dbDir: "db"
+    globalPragma:
+    - "pragma journal_mode = WAL;"
   feedStatus:
     apiKey: null
     url: null
@@ -30,7 +38,6 @@ proxyConfig:
     receiptPolicyUuid: null
   repository:
     cleanupFrequency: "PT1H"
-    dbDir: "repo"
     dirCleanDelay: "PT10S"
     format: "${pathId}/${id}"
     lockDeleteAge: "PT1H"

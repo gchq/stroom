@@ -10,7 +10,6 @@ import java.util.Optional;
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ExtendWith(GuiceExtension.class)
 @IncludeModule(ProxyRepoTestModule.class)
@@ -38,11 +37,22 @@ public class TestSource {
 
     @Test
     void testUniquePath() {
-        assertThatThrownBy(() -> {
-            for (int i = 0; i < 10; i++) {
-                proxyRepoSources.addSource("path", "test", null, System.currentTimeMillis(), null);
-            }
-        }, "Expected error");
+        assertThat(proxyRepoSources.addSource(
+                        "path",
+                        "test",
+                        null,
+                        System.currentTimeMillis(),
+                        null)
+                .orElse(null))
+                .isNotNull();
+        assertThat(proxyRepoSources.addSource(
+                        "path",
+                        "test",
+                        null,
+                        System.currentTimeMillis(),
+                        null)
+                .orElse(null))
+                .isNull();
         proxyRepoSources.clear();
         proxyRepoSources.addSource("path", "test", null, System.currentTimeMillis(), null);
     }

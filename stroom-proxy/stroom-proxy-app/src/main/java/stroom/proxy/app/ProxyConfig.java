@@ -7,6 +7,7 @@ import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.LogStreamConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.proxy.repo.ProxyRepoFileScannerConfig;
+import stroom.proxy.repo.RepoDbConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.PropertyPath;
@@ -32,6 +33,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     private String contentDir;
 
     private ProxyPathConfig pathConfig = new ProxyPathConfig();
+    private RepoDbConfig proxyDbConfig = new RepoDbConfig();
     private ReceiptPolicyConfig receiptPolicyConfig = new ReceiptPolicyConfig();
     private ProxyRepoConfig proxyRepoConfig = new ProxyRepoConfig();
     private ProxyRepoFileScannerConfig proxyRepoFileScannerConfig = new ProxyRepoFileScannerConfig();
@@ -88,6 +90,15 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
     public void setPathConfig(final ProxyPathConfig pathConfig) {
         this.pathConfig = pathConfig;
+    }
+
+    @JsonProperty("db")
+    public RepoDbConfig getProxyDbConfig() {
+        return proxyDbConfig;
+    }
+
+    public void setProxyDbConfig(final RepoDbConfig proxyDbConfig) {
+        this.proxyDbConfig = proxyDbConfig;
     }
 
     @JsonProperty("receiptPolicy")

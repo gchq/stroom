@@ -488,7 +488,14 @@ appConfig:
       maxAggregateAge: "PT10M"
       maxItemsPerAggregate: 1000
       maxUncompressedByteSize: "1.0G"
-    dbDir: "proxy_repo_db"
+    repoDbConfig:
+      connectionPragma:
+      - "pragma synchronous = normal;"
+      - "pragma temp_store = memory;"
+      - "pragma mmap_size = 30000000000;"
+      dbDir: "proxy_repo_db"
+      globalPragma:
+      - "pragma journal_mode = WAL;"
     repoDir: "proxy_repo"
   publicUri:
     scheme: "https"

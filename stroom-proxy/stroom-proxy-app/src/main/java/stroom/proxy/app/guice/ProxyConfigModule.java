@@ -14,6 +14,7 @@ import stroom.proxy.repo.LogStreamConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.proxy.repo.ProxyRepoFileScannerConfig;
 import stroom.proxy.repo.RepoConfig;
+import stroom.proxy.repo.RepoDbConfig;
 import stroom.util.config.ConfigLocation;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasHealthCheckBinder;
@@ -84,6 +85,9 @@ public class ProxyConfigModule extends AbstractModule {
                 ProxyConfig::setPathConfig,
                 ProxyPathConfig.class,
                 PathConfig.class);
+        bindConfig(ProxyConfig::getProxyDbConfig,
+                ProxyConfig::setProxyDbConfig,
+                RepoDbConfig.class);
         bindConfig(ProxyConfig::getProxyRepositoryConfig,
                 ProxyConfig::setProxyRepositoryConfig,
                 ProxyRepoConfig.class,
