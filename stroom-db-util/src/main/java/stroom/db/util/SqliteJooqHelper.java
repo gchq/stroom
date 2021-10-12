@@ -7,16 +7,15 @@ import org.jooq.SQLDialect;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.concurrent.atomic.AtomicInteger;
-//import java.util.concurrent.locks.Lock;
-//import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import javax.sql.DataSource;
 
 public class SqliteJooqHelper extends JooqHelper {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SqliteJooqHelper.class);
-//    private static final Lock DB_LOCK = new ReentrantLock();
+    private static final Lock DB_LOCK = new ReentrantLock();
 //    private static final Map<String, Invocation> invocations = new ConcurrentHashMap<>();
 //    private static final AtomicLong time = new AtomicLong();
 
@@ -29,19 +28,22 @@ public class SqliteJooqHelper extends JooqHelper {
 
     @Override
     <R> R useConnectionResult(final Function<Connection, R> function) {
-        R result = null;
+        R result;
 
-//        DB_LOCK.lock();
-//        try {
-//            try (final Connection connection = dataSource.getConnection()) {
-//                result = function.apply(connection);
-//            } catch (final RuntimeException | SQLException e) {
-//                LOGGER.error(e::getMessage, e);
-//                throw new RuntimeException(e.getMessage(), e);
-//            }
-//        } finally {
-//            DB_LOCK.unlock();
-//        }
+        DB_LOCK.lock();
+        try {
+            try (final Connection connection = dataSource.getConnection()) {
+                result = function.apply(connection);
+            } catch (final SQLException e) {
+                LOGGER.error(e::getMessage, e);
+                throw new RuntimeException(e.getMessage(), e);
+            } catch (final RuntimeException e) {
+                LOGGER.error(e::getMessage, e);
+                throw e;
+            }
+        } finally {
+            DB_LOCK.unlock();
+        }
 
 //        final StackTraceElement[] stackTrace;
 //        final String source;
@@ -65,24 +67,28 @@ public class SqliteJooqHelper extends JooqHelper {
 //            try {
 //                checkDataSource(dataSource);
 
-        final AtomicInteger tries = new AtomicInteger(1);
-        boolean tryAgain = true;
-        while (tryAgain) {
-            tryAgain = false;
-            try (final Connection connection = dataSource.getConnection()) {
-                result = function.apply(connection);
-            } catch (final RuntimeException | SQLException e) {
-                if (e.getMessage() != null && e.getMessage().contains("SQLITE_BUSY")) {
-                    tryAgain = true;
-                    final int count = tries.incrementAndGet();
-                    LOGGER.debug(() -> count + " tries");
-
-                } else {
-                    LOGGER.error(e::getMessage, e);
-                    throw new RuntimeException(e.getMessage(), e);
-                }
-            }
-        }
+//        final AtomicInteger tries = new AtomicInteger(1);
+//        boolean tryAgain = true;
+//        while (tryAgain) {
+//            tryAgain = false;
+//            try (final Connection connection = dataSource.getConnection()) {
+//                result = function.apply(connection);
+//            } catch (final RuntimeException | SQLException e) {
+//                if (e.getMessage() != null && e.getMessage().contains("SQLITE_BUSY")) {
+//                    tryAgain = true;
+//                    final int count = tries.incrementAndGet();
+//                    LOGGER.debug(() -> count + " tries");
+//
+//                } else {
+//                    LOGGER.error(e::getMessage, e);
+//                    if (e instanceof RuntimeException) {
+//                        throw (RuntimeException) e;
+//                    } else {
+//                        throw new RuntimeException(e.getMessage(), e);
+//                    }
+//                }
+//            }
+//        }
 
 //            long now = System.nanoTime();
 //            long elapsed = now - afterLock;
