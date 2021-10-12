@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Change `/api/refData/v1/purgeByAge/{purgeAge}`, `/api/refData/v1/purgeByStream/{refStreamId}` and `/api/refData/v1/clearBufferPool` to act on all nodes unless the `nodeName` query param is provided.
+
 
 ## [v7.0-beta.151] - 2021-10-11
 

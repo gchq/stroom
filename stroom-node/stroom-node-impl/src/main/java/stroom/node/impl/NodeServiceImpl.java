@@ -41,6 +41,8 @@ import stroom.util.shared.ResultPage;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -50,6 +52,7 @@ import javax.inject.Singleton;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.Invocation.Builder;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -102,10 +105,8 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
     }
 
     ResultPage<Node> find(final FindNodeCriteria criteria) {
-        return securityContext.secureResult(() -> {
-            return nodeDao.find(criteria);
-        });
-
+        return securityContext.secureResult(() ->
+                nodeDao.find(criteria));
     }
 
     @Override
@@ -165,7 +166,8 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
                                             final Supplier<String> fullPathSupplier,
                                             final Supplier<T_RESP> localSupplier,
                                             final Function<Invocation.Builder, Response> responseBuilderFunc,
-                                            final Function<Response, T_RESP> responseMapper) {
+                                            final Function<Response, T_RESP> responseMapper,
+                                            final Map<String, Object> queryParams) {
         RestUtil.requireNonNull(nodeName, "nodeName not supplied");
 
         final T_RESP resp;
@@ -184,9 +186,7 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
                     nodeName) + fullPathSupplier.get();
             LOGGER.debug("Fetching value from remote node at {}", url);
             try {
-                final Builder builder = webTargetFactory
-                        .create(url)
-                        .request(MediaType.APPLICATION_JSON);
+                final Builder builder = createBuilder(queryParams, url);
 
                 final Response response = responseBuilderFunc.apply(builder);
 
@@ -208,7 +208,8 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
     public void remoteRestCall(final String nodeName,
                                final Supplier<String> fullPathSupplier,
                                final Runnable localRunnable,
-                               final Function<Builder, Response> responseBuilderFunc) {
+                               final Function<Builder, Response> responseBuilderFunc,
+                               final Map<String, Object> queryParams) {
 
         RestUtil.requireNonNull(nodeName, "nodeName not supplied");
 
@@ -225,9 +226,7 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
                     nodeName) + fullPathSupplier.get();
             LOGGER.debug("Calling remote node at {}", url);
             try {
-                final Builder builder = webTargetFactory
-                        .create(url)
-                        .request(MediaType.APPLICATION_JSON);
+                final Builder builder = createBuilder(queryParams, url);
 
                 final Response response = responseBuilderFunc.apply(builder);
 
@@ -239,6 +238,22 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
                 throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
             }
         }
+    }
+
+    private Builder createBuilder(final Map<String, Object> queryParams, final String url) {
+        WebTarget webTarget = webTargetFactory
+                .create(url);
+
+        if (queryParams != null) {
+            for (final Entry<String, Object> entry : queryParams.entrySet()) {
+                if (entry.getKey() != null) {
+                    webTarget = webTarget.queryParam(entry.getKey(), entry.getValue());
+                }
+            }
+        }
+
+        return webTarget
+                .request(MediaType.APPLICATION_JSON);
     }
 
     Node getNode(final String nodeName) {
