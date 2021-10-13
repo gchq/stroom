@@ -133,6 +133,7 @@ public class LmdbDataStore implements DataStore {
         // Make safe for the file system.
         final String dirName = uuid.replaceAll("[^A-Za-z0-9]", "_");
         this.lmdbEnv = lmdbEnvFactory.builder(resultStoreConfig.getLmdbConfig())
+                .withSubDirectory(dirName)
                 .addEnvFlag(EnvFlags.MDB_NOTLS)
                 .build();
         this.dbi = lmdbEnv.openDbi(uuid);
@@ -301,7 +302,8 @@ public class LmdbDataStore implements DataStore {
 
     private void transfer() {
         Metrics.measure("Transfer", () -> {
-            try (BatchingWriteTxn txnWrapper = lmdbEnv.openBatchingWriteTxn(100_000)) {
+            try (final BatchingWriteTxn batchingWriteTxn = lmdbEnv.openBatchingWriteTxn(
+                    resultStoreConfig.getMaxPutsBeforeCommit())) {
                 boolean needsCommit = false;
                 long lastCommitMs = System.currentTimeMillis();
 
@@ -311,7 +313,7 @@ public class LmdbDataStore implements DataStore {
 
                     if (item != null) {
                         if (item.getRowKey() != null) {
-                            insert(txnWrapper, dbi, item);
+                            insert(batchingWriteTxn, dbi, item);
 
                         } else {
                             // Ensure commit.
@@ -326,11 +328,11 @@ public class LmdbDataStore implements DataStore {
                         // Commit
                         lastCommitMs = System.currentTimeMillis();
                         needsCommit = false;
-                        txnWrapper.commit();
+                        batchingWriteTxn.commit();
 
                         // Create payload and clear the DB.
-                        currentPayload.set(createPayload(txnWrapper.getTxn(), dbi));
-                        txnWrapper.commit();
+                        currentPayload.set(createPayload(batchingWriteTxn.getTxn(), dbi));
+                        batchingWriteTxn.commit();
 
                     } else if (needsCommit) {
                         final long now = System.currentTimeMillis();
@@ -338,7 +340,7 @@ public class LmdbDataStore implements DataStore {
                             // Commit
                             lastCommitMs = now;
                             needsCommit = false;
-                            txnWrapper.commit();
+                            batchingWriteTxn.commit();
                         }
                     }
 
@@ -361,7 +363,7 @@ public class LmdbDataStore implements DataStore {
         });
     }
 
-    private void insert(final BatchingWriteTxn writeTxn,
+    private void insert(final BatchingWriteTxn batchingWriteTxn,
                         final Dbi<ByteBuffer> dbi,
                         final QueueItem queueItem) {
         Metrics.measure("Insert", () -> {
@@ -373,7 +375,7 @@ public class LmdbDataStore implements DataStore {
 
                 // Just try to put first.
                 final boolean success = put(
-                        writeTxn,
+                        batchingWriteTxn,
                         dbi,
                         rowKey.getByteBuffer(),
                         rowValue.getByteBuffer(),
@@ -383,7 +385,7 @@ public class LmdbDataStore implements DataStore {
 
                 } else if (rowKey.isGroup()) {
                     // Get the existing entry for this key.
-                    final ByteBuffer existingValueBuffer = dbi.get(writeTxn.getTxn(), rowKey.getByteBuffer());
+                    final ByteBuffer existingValueBuffer = dbi.get(batchingWriteTxn.getTxn(), rowKey.getByteBuffer());
 
                     final int minValSize = Math.max(minValueSize, existingValueBuffer.remaining());
                     try (final UnsafeByteBufferOutput output =
@@ -429,7 +431,7 @@ public class LmdbDataStore implements DataStore {
                         }
 
                         final ByteBuffer newValue = output.getByteBuffer().flip();
-                        final boolean ok = put(writeTxn, dbi, rowKey.getByteBuffer(), newValue);
+                        final boolean ok = put(batchingWriteTxn, dbi, rowKey.getByteBuffer(), newValue);
                         if (!ok) {
                             throw new RuntimeException("Unable to update");
                         }
@@ -446,14 +448,16 @@ public class LmdbDataStore implements DataStore {
         });
     }
 
-    private boolean put(final BatchingWriteTxn writeTxn,
+    private boolean put(final BatchingWriteTxn batchingWriteTxn,
                         final Dbi<ByteBuffer> dbi,
                         final ByteBuffer key,
                         final ByteBuffer val,
                         final PutFlags... flags) {
         try {
-            final boolean didPutSucceed = dbi.put(writeTxn.getTxn(), key, val, flags);
-            writeTxn.commitIfRequired();
+            final boolean didPutSucceed = dbi.put(batchingWriteTxn.getTxn(), key, val, flags);
+            if (didPutSucceed) {
+                batchingWriteTxn.commitIfRequired();
+            }
             return didPutSucceed;
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
