@@ -430,7 +430,6 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
         final AtomicReference<PurgeCounts> countsRef = new AtomicReference<>(PurgeCounts.zero());
 
-        LOGGER.info("Purging reference data store of stream {}:{}", refStreamId, partIndex);
 
         try (final PooledByteBuffer refStreamDefPooledBuf = processingInfoDb.getPooledKeyBuffer()) {
 
@@ -458,6 +457,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 if (optEntry.isPresent()) {
                     wasMatchFound = true;
                     final RefStreamDefinition refStreamDefinition = optEntry.get().getKey();
+                    LOGGER.debug("refStreamDefinition: {}", refStreamDefinition);
+
                     // Make the next iteration start just after this entry
                     keyRangeRef.set(KeyRange.greaterThan(refStreamDefinition));
                     processingInfoDb.serializeKey(refStreamDefPooledBuf.getByteBuffer(), refStreamDefinition);
@@ -477,14 +478,17 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             } while (wasMatchFound);
 
             final PurgeCounts purgeCounts = countsRef.get();
-            if (purgeCounts.refStreamDefsFailedCount == 0) {
-                LAMBDA_LOGGER.info(() -> "Purge completed successfully. " +
-                        buildPurgeInfoString(startTime, purgeCounts));
-            } else {
+
+            LOGGER.debug("purgeCounts: {}", purgeCounts);
+
+            if (purgeCounts.refStreamDefsFailedCount > 0) {
                 // One or more ref stream defs failed
                 throw new RuntimeException(LogUtil.message(
                         "Unable to purge {} ref stream definitions",
                         purgeCounts.refStreamDefsFailedCount));
+            } else if (purgeCounts.refStreamDefsDeletedCount > 0) {
+                LAMBDA_LOGGER.info(() -> "Purge completed successfully. " +
+                        buildPurgeInfoString(startTime, purgeCounts));
             }
         } catch (TaskTerminatedException e) {
             // Expected behaviour so just rethrow, stopping it being picked up by the other
@@ -788,7 +792,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 refDataProcessingInfo.getCreateTime(),
                 refDataProcessingInfo.getLastAccessedTime());
 
-        LOGGER.info("  Purging refStreamDefinition with {}", refStreamDefStr);
+        LOGGER.info("Purging refStreamDefinition with {}", refStreamDefStr);
 
         RefStreamPurgeCounts refStreamSummaryInfo = RefStreamPurgeCounts.zero();
         try {
@@ -816,7 +820,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             // Ensure we commit at the end of each ref stream
             batchingWriteTxn.commit();
 
-            LOGGER.info("  Completed purge of refStreamDefinition with stream {} (" +
+            LOGGER.info("Completed purge of refStreamDefinition with stream {} (" +
                             "{} maps deleted, {} values deleted, {} values de-referenced)",
                     refStreamDefinition.getStreamId(),
                     refStreamSummaryInfo.mapsDeletedCount,
@@ -827,7 +831,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             refStreamSummaryInfo = refStreamSummaryInfo.increment(
                     0, 0, 0, false);
 
-            LOGGER.error("  Failed purge of refStreamDefinition with stream {} (" +
+            LOGGER.error("Failed purge of refStreamDefinition with stream {} (" +
                             "{} maps deleted, {} values deleted, {} values de-referenced): {}",
                     refStreamDefinition.getStreamId(),
                     refStreamSummaryInfo.mapsDeletedCount,
@@ -911,7 +915,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                             dataPurgeCounts._1(),
                             dataPurgeCounts._2());
 
-                    LOGGER.info("    Purged map {}, {} values deleted, {} values de-referenced",
+                    LOGGER.info("  Purged map {}, {} values deleted, {} values de-referenced",
                             mapDefinition.getMapName(),
                             dataPurgeCounts._1(),
                             dataPurgeCounts._2());
