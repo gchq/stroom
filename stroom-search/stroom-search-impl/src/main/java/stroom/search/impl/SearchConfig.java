@@ -102,7 +102,7 @@ public class SearchConfig extends AbstractConfig {
         this.remoteSearchResultCache = remoteSearchResultCache;
     }
 
-    @JsonProperty("lmdb")
+    @JsonProperty("resultStore")
     public ResultStoreConfig getLmdbConfig() {
         return resultStoreConfig;
     }

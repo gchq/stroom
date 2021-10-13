@@ -41,7 +41,7 @@ public class LmdbEnv implements AutoCloseable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbEnv.class);
 
-    private final Path path;
+    private final Path localDir;
     private final Env<ByteBuffer> env;
 
     // Lock to ensure only one thread can hold a write txn at once.
@@ -52,15 +52,15 @@ public class LmdbEnv implements AutoCloseable {
     private final ReadWriteLock readWriteLock;
     private final Semaphore activeReadTransactionsSemaphore;
 
-    LmdbEnv(final Path path,
+    LmdbEnv(final Path localDir,
             final Env<ByteBuffer> env) {
-        this(path, env, false);
+        this(localDir, env, false);
     }
 
-    LmdbEnv(final Path path,
+    LmdbEnv(final Path localDir,
             final Env<ByteBuffer> env,
             final boolean isReaderBlockedByWriter) {
-        this.path = path;
+        this.localDir = localDir;
         this.env = env;
 
         // Limit concurrent readers java side to ensure we don't get a max readers reached error
@@ -92,6 +92,10 @@ public class LmdbEnv implements AutoCloseable {
         }
     }
 
+    public Path getLocalDir() {
+        return localDir;
+    }
+
     /**
      * @link Env#sync
      */
@@ -114,13 +118,13 @@ public class LmdbEnv implements AutoCloseable {
                 LogUtil.message("Opening LMDB database with name: {}, flags: {}, path: {}",
                         name,
                         Arrays.toString(flags),
-                        path.toAbsolutePath().normalize()));
+                        localDir.toAbsolutePath().normalize()));
         try {
             return env.openDbi(name, DbiFlags.MDB_CREATE);
         } catch (final Exception e) {
             final String message = LogUtil.message("Error opening LMDB database '{}' in '{}' ({})",
                     name,
-                    FileUtil.getCanonicalPath(path),
+                    FileUtil.getCanonicalPath(localDir),
                     e.getMessage());
 
             LOGGER.error(message, e);
@@ -153,7 +157,7 @@ public class LmdbEnv implements AutoCloseable {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException("Thread interrupted while waiting for write lock on "
-                    + path.toAbsolutePath().normalize());
+                    + localDir.toAbsolutePath().normalize());
         }
         try {
             LOGGER.trace("About to open write tx");
@@ -187,7 +191,7 @@ public class LmdbEnv implements AutoCloseable {
             return new WriteTxnWrapper(writeTxnLock, env.txnWrite());
         } catch (InterruptedException e) {
             throw new RuntimeException("Thread interrupted while waiting for write lock on "
-                    + path.toAbsolutePath().normalize());
+                    + localDir.toAbsolutePath().normalize());
         }
     }
 
@@ -206,7 +210,7 @@ public class LmdbEnv implements AutoCloseable {
             return new BatchingWriteTxnWrapper(writeTxnLock, env::txnWrite, batchSize);
         } catch (InterruptedException e) {
             throw new RuntimeException("Thread interrupted while waiting for write lock on "
-                    + path.toAbsolutePath().normalize());
+                    + localDir.toAbsolutePath().normalize());
         }
     }
 
@@ -272,7 +276,7 @@ public class LmdbEnv implements AutoCloseable {
 
     @Override
     public void close() {
-        LOGGER.debug(() -> "Closing LMDB environment at " + path.toAbsolutePath().normalize());
+        LOGGER.debug(() -> "Closing LMDB environment at " + localDir.toAbsolutePath().normalize());
         env.close();
     }
 
@@ -283,8 +287,8 @@ public class LmdbEnv implements AutoCloseable {
         if (!env.isClosed()) {
             throw new RuntimeException(("LMDB environment at {} is still open"));
         }
-        if (!FileUtil.deleteDir(path)) {
-            throw new RuntimeException("Unable to delete dir: " + FileUtil.getCanonicalPath(path));
+        if (!FileUtil.deleteDir(localDir)) {
+            throw new RuntimeException("Unable to delete dir: " + FileUtil.getCanonicalPath(localDir));
         }
     }
 

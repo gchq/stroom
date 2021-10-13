@@ -382,15 +382,17 @@ appConfig:
         maximumSize: 1000
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
+      lmdb:
+        localDir: "reference_data"
+        maxDbs: 7
+        maxReaders: 100
+        maxStoreSize: "50G"
+        readAheadEnabled: true
+        readerBlockedByWriter: true
       loadingLockStripes: 2048
-      localDir: "reference_data"
       maxPurgeDeletesBeforeCommit: 200000
       maxPutsBeforeCommit: 200000
-      maxReaders: 100
-      maxStoreSize: "50G"
       purgeAge: "P30D"
-      readAheadEnabled: true
-      readerBlockedByWriter: true
     xmlSchema:
       cache:
         maximumSize: 1000
@@ -501,7 +503,11 @@ appConfig:
         maximumSize: 2
         expireAfterAccess: "PT1M"
         expireAfterWrite: null
-    lmdb:
+    remoteSearchResultCache:
+      maximumSize: 100
+      expireAfterAccess: "PT1M"
+      expireAfterWrite: null
+    resultStore:
       localDir: "search_results"
       lmdbSystemLibraryPath: null
       maxPutsBeforeCommit: 0
@@ -515,10 +521,6 @@ appConfig:
       readAheadEnabled: true
       offHeapResults: true
       payloadLimit: "0B"
-    remoteSearchResultCache:
-      maximumSize: 100
-      expireAfterAccess: "PT1M"
-      expireAfterWrite: null
   searchable:
     storeSize: "1000000,100,10,1"
     searchResultCache:

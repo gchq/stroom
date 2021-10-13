@@ -8,6 +8,7 @@ import stroom.util.io.ByteSize;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
@@ -168,6 +169,7 @@ public class ReferenceDataConfig extends AbstractConfig {
 //        isReaderBlockedByWriter = readerBlockedByWriter;
 //    }
 
+    @JsonProperty("lmdb")
     public LmdbConfig getLmdbConfig() {
         return lmdbConfig;
     }

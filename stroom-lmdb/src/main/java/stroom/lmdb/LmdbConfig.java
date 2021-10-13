@@ -88,6 +88,7 @@ public class LmdbConfig extends AbstractConfig {
         this.maxStoreSize = maxStoreSize;
     }
 
+    @Min(1)
     @JsonPropertyDescription("The maximum number of databases that can be created for this environment.")
     public int getMaxDbs() {
         return maxDbs;

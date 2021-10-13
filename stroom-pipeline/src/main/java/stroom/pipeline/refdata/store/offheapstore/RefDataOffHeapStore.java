@@ -52,9 +52,6 @@ import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataProcessingInfoSe
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.HasHealthCheck;
-import stroom.util.io.ByteSize;
-import stroom.util.io.PathCreator;
-import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -75,12 +72,10 @@ import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -130,12 +125,6 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     private static final String LMDB_NATIVE_LIB_PROP = "lmdbjava.native.lib";
 
     private final LmdbEnvFactory lmdbEnvFactory;
-    private final TempDirProvider tempDirProvider;
-    private final PathCreator pathCreator;
-    private final Path dbDir;
-    private final ByteSize maxSize;
-    private final int maxReaders;
-    private final int maxPutsBeforeCommit;
     private final TaskContext taskContext;
 
     private final LmdbEnv lmdbEnvironment;
@@ -163,8 +152,6 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     @Inject
     RefDataOffHeapStore(
             final LmdbEnvFactory lmdbEnvFactory,
-            final TempDirProvider tempDirProvider,
-            final PathCreator pathCreator,
             final ReferenceDataConfig referenceDataConfig,
             final ByteBufferPool byteBufferPool,
             final Factory keyValueStoreDbFactory,
@@ -178,17 +165,11 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             final TaskContext taskContext) {
 
         this.lmdbEnvFactory = lmdbEnvFactory;
-        this.tempDirProvider = tempDirProvider;
-        this.pathCreator = pathCreator;
         this.referenceDataConfig = referenceDataConfig;
         this.refDataValueConverter = refDataValueConverter;
-        this.dbDir = getStoreDir();
-        this.maxSize = referenceDataConfig.getLmdbConfig().getMaxStoreSize();
-        this.maxReaders = referenceDataConfig.getLmdbConfig().getMaxReaders();
-        this.maxPutsBeforeCommit = referenceDataConfig.getMaxPutsBeforeCommit();
         this.taskContext = taskContext;
 
-        this.lmdbEnvironment = createEnvironment(referenceDataConfig);
+        this.lmdbEnvironment = createEnvironment(referenceDataConfig.getLmdbConfig());
 
         // create all the databases
         this.keyValueStoreDb = keyValueStoreDbFactory.create(lmdbEnvironment);
@@ -224,15 +205,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         this.refStreamDefStripedReentrantLock = Striped.lazyWeakLock(stripesCount);
     }
 
-    private LmdbEnv createEnvironment(final ReferenceDataConfig referenceDataConfig) {
-        LOGGER.info(
-                "Creating RefDataOffHeapStore environment with [maxSize: {}, dbDir {}, maxReaders {}, " +
-                        "maxPutsBeforeCommit {}, isReadAheadEnabled {}]",
-                maxSize,
-                dbDir.toAbsolutePath().toString() + File.separatorChar,
-                maxReaders,
-                maxPutsBeforeCommit,
-                referenceDataConfig.getLmdbConfig().isReadAheadEnabled());
+    private LmdbEnv createEnvironment(final LmdbConfig lmdbConfig) {
 
         // By default LMDB opens with readonly mmaps so you cannot mutate the bytebuffers inside a txn.
         // Instead you need to create a new bytebuffer for the value and put that. If you want faster writes
@@ -245,28 +218,12 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         // hardcoded into software, it needs to be reconfigurable. On Windows and MacOS you really shouldn't
         // set it larger than the amount of free space on the filesystem.
 
-        final List<EnvFlags> envFlags = new ArrayList<>();
-        envFlags.add(EnvFlags.MDB_NOTLS);
+        final LmdbEnv env = lmdbEnvFactory.builder(lmdbConfig)
+                .addEnvFlag(EnvFlags.MDB_NOTLS)
+                .build();
 
-        if (!referenceDataConfig.getLmdbConfig().isReadAheadEnabled()) {
-            envFlags.add(EnvFlags.MDB_NORDAHEAD);
-        }
-
-        try {
-            final LmdbEnv env = lmdbEnvFactory.builder(dbDir)
-                    .withMaxReaderCount(maxReaders)
-                    .withMapSize(maxSize)
-                    .withMaxDbCount(7)
-                    .withEnvFlags(envFlags)
-                    .setIsReaderBlockedByWriter(referenceDataConfig.getLmdbConfig().isReaderBlockedByWriter())
-                    .build();
-
-            LOGGER.info("Existing databases: [{}]", String.join(",", env.getDbiNames()));
-            return env;
-        } catch (Exception e) {
-            throw new RuntimeException("Error initialising LMDB environment for reference data at " +
-                    dbDir.toAbsolutePath().normalize(), e);
-        }
+        LOGGER.info("Existing databases: [{}]", String.join(",", env.getDbiNames()));
+        return env;
     }
 
     @Override
@@ -565,7 +522,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 refStreamDefinition,
                 effectiveTimeMs);
 
-        refDataLoader.setCommitInterval(maxPutsBeforeCommit);
+        refDataLoader.setCommitInterval(referenceDataConfig.getMaxPutsBeforeCommit());
         return refDataLoader;
     }
 
@@ -1348,14 +1305,14 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     processingInfoDb.getLastAccessedTimeRange();
 
             final SystemInfoResult.Builder builder = SystemInfoResult.builder().name(getSystemInfoName())
-                    .addDetail("Path", dbDir.toAbsolutePath().toString())
-                    .addDetail("Environment max size", maxSize)
+                    .addDetail("Path", lmdbEnvironment.getLocalDir().toAbsolutePath().normalize())
+                    .addDetail("Environment max size", referenceDataConfig.getLmdbConfig().getMaxStoreSize())
                     .addDetail("Environment current size",
                             ModelStringUtil.formatIECByteSizeString(getEnvironmentDiskUsage()))
                     .addDetail("Purge age", referenceDataConfig.getPurgeAge())
                     .addDetail("Purge cut off",
                             TimeUtils.durationToThreshold(referenceDataConfig.getPurgeAge()).toString())
-                    .addDetail("Max readers", maxReaders)
+                    .addDetail("Max readers", referenceDataConfig.getLmdbConfig().getMaxReaders())
                     .addDetail("Read-ahead enabled", referenceDataConfig.getLmdbConfig().isReadAheadEnabled())
                     .addDetail("Current buffer pool size", byteBufferPool.getCurrentPoolSize())
                     .addDetail("Earliest lastAccessedTime", lastAccessedTimeRange._1()
@@ -1382,7 +1339,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
     private long getEnvironmentDiskUsage() {
         long totalSizeBytes;
-        try (final Stream<Path> fileStream = Files.list(dbDir)) {
+        try (final Stream<Path> fileStream = Files.list(lmdbEnvironment.getLocalDir().toAbsolutePath())) {
             totalSizeBytes = fileStream
                     .mapToLong(path -> {
                         try {
@@ -1394,60 +1351,11 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     .sum();
         } catch (IOException
                 | RuntimeException e) {
-            LOGGER.error("Error calculating disk usage for path {}", dbDir.toAbsolutePath().toString(), e);
+            LOGGER.error("Error calculating disk usage for path {}",
+                    lmdbEnvironment.getLocalDir().toAbsolutePath().normalize(), e);
             totalSizeBytes = -1;
         }
         return totalSizeBytes;
-    }
-
-    private Path getStoreDir() {
-        String storeDirStr = referenceDataConfig.getLmdbConfig().getLocalDir();
-        storeDirStr = pathCreator.replaceSystemProperties(storeDirStr);
-        storeDirStr = pathCreator.makeAbsolute(storeDirStr);
-        Path storeDir;
-        if (storeDirStr == null) {
-            LOGGER.warn("Off heap store dir is not set ({}), falling back to temporary directory {}. " +
-                            "If your temporary directory is cleared on host restart then all reference data will " +
-                            "also be lost.",
-                    referenceDataConfig.getFullPath(LmdbConfig.LOCAL_DIR_PROP_NAME),
-                    tempDirProvider.get());
-
-            storeDir = tempDirProvider.get();
-            Objects.requireNonNull(storeDir, "Temp dir is not set");
-            storeDir = storeDir.resolve(DEFAULT_STORE_SUB_DIR_NAME);
-        } else {
-            storeDirStr = pathCreator.replaceSystemProperties(storeDirStr);
-            storeDirStr = pathCreator.makeAbsolute(storeDirStr);
-            storeDir = Paths.get(storeDirStr);
-        }
-
-        try {
-            LOGGER.info("Ensuring directory {} exists (from configuration property {})",
-                    storeDir.toAbsolutePath(),
-                    referenceDataConfig.getFullPath(LmdbConfig.LOCAL_DIR_PROP_NAME));
-            Files.createDirectories(storeDir);
-        } catch (IOException e) {
-            throw new RuntimeException(
-                    LogUtil.message("Error ensuring directory {} exists (from configuration property {})",
-                            storeDir.toAbsolutePath(),
-                            referenceDataConfig.getFullPath(LmdbConfig.LOCAL_DIR_PROP_NAME)), e);
-        }
-
-        if (!Files.isReadable(storeDir)) {
-            throw new RuntimeException(
-                    LogUtil.message("Directory {} (from configuration property {}) is not readable",
-                            storeDir.toAbsolutePath(),
-                            referenceDataConfig.getFullPath(LmdbConfig.LOCAL_DIR_PROP_NAME)));
-        }
-
-        if (!Files.isWritable(storeDir)) {
-            throw new RuntimeException(
-                    LogUtil.message("Directory {} (from configuration property {}) is not writable",
-                            storeDir.toAbsolutePath(),
-                            referenceDataConfig.getFullPath(LmdbConfig.LOCAL_DIR_PROP_NAME)));
-        }
-
-        return storeDir;
     }
 
     private static final class PurgeCounts {
