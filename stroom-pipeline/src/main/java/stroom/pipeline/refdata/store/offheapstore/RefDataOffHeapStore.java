@@ -22,6 +22,7 @@ import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
 import stroom.bytebuffer.PooledByteBufferPair;
 import stroom.docstore.shared.DocRefUtil;
+import stroom.lmdb.LmdbConfig;
 import stroom.lmdb.LmdbDb;
 import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbEnv.BatchingWriteTxnWrapper;
@@ -182,8 +183,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         this.referenceDataConfig = referenceDataConfig;
         this.refDataValueConverter = refDataValueConverter;
         this.dbDir = getStoreDir();
-        this.maxSize = referenceDataConfig.getMaxStoreSize();
-        this.maxReaders = referenceDataConfig.getMaxReaders();
+        this.maxSize = referenceDataConfig.getLmdbConfig().getMaxStoreSize();
+        this.maxReaders = referenceDataConfig.getLmdbConfig().getMaxReaders();
         this.maxPutsBeforeCommit = referenceDataConfig.getMaxPutsBeforeCommit();
         this.taskContext = taskContext;
 
@@ -231,7 +232,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 dbDir.toAbsolutePath().toString() + File.separatorChar,
                 maxReaders,
                 maxPutsBeforeCommit,
-                referenceDataConfig.isReadAheadEnabled());
+                referenceDataConfig.getLmdbConfig().isReadAheadEnabled());
 
         // By default LMDB opens with readonly mmaps so you cannot mutate the bytebuffers inside a txn.
         // Instead you need to create a new bytebuffer for the value and put that. If you want faster writes
@@ -247,7 +248,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         final List<EnvFlags> envFlags = new ArrayList<>();
         envFlags.add(EnvFlags.MDB_NOTLS);
 
-        if (!referenceDataConfig.isReadAheadEnabled()) {
+        if (!referenceDataConfig.getLmdbConfig().isReadAheadEnabled()) {
             envFlags.add(EnvFlags.MDB_NORDAHEAD);
         }
 
@@ -257,7 +258,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     .withMapSize(maxSize)
                     .withMaxDbCount(7)
                     .withEnvFlags(envFlags)
-                    .setIsReaderBlockedByWriter(referenceDataConfig.isReaderBlockedByWriter())
+                    .setIsReaderBlockedByWriter(referenceDataConfig.getLmdbConfig().isReaderBlockedByWriter())
                     .build();
 
             LOGGER.info("Existing databases: [{}]", String.join(",", env.getDbiNames()));
@@ -1355,7 +1356,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     .addDetail("Purge cut off",
                             TimeUtils.durationToThreshold(referenceDataConfig.getPurgeAge()).toString())
                     .addDetail("Max readers", maxReaders)
-                    .addDetail("Read-ahead enabled", referenceDataConfig.isReadAheadEnabled())
+                    .addDetail("Read-ahead enabled", referenceDataConfig.getLmdbConfig().isReadAheadEnabled())
                     .addDetail("Current buffer pool size", byteBufferPool.getCurrentPoolSize())
                     .addDetail("Earliest lastAccessedTime", lastAccessedTimeRange._1()
                             .map(Instant::toString)
@@ -1400,7 +1401,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     }
 
     private Path getStoreDir() {
-        String storeDirStr = referenceDataConfig.getLocalDir();
+        String storeDirStr = referenceDataConfig.getLmdbConfig().getLocalDir();
         storeDirStr = pathCreator.replaceSystemProperties(storeDirStr);
         storeDirStr = pathCreator.makeAbsolute(storeDirStr);
         Path storeDir;
@@ -1408,7 +1409,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             LOGGER.warn("Off heap store dir is not set ({}), falling back to temporary directory {}. " +
                             "If your temporary directory is cleared on host restart then all reference data will " +
                             "also be lost.",
-                    referenceDataConfig.getFullPath(ReferenceDataConfig.LOCAL_DIR_PROP_NAME),
+                    referenceDataConfig.getFullPath(LmdbConfig.LOCAL_DIR_PROP_NAME),
                     tempDirProvider.get());
 
             storeDir = tempDirProvider.get();
@@ -1423,27 +1424,27 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         try {
             LOGGER.info("Ensuring directory {} exists (from configuration property {})",
                     storeDir.toAbsolutePath(),
-                    referenceDataConfig.getFullPath(ReferenceDataConfig.LOCAL_DIR_PROP_NAME));
+                    referenceDataConfig.getFullPath(LmdbConfig.LOCAL_DIR_PROP_NAME));
             Files.createDirectories(storeDir);
         } catch (IOException e) {
             throw new RuntimeException(
                     LogUtil.message("Error ensuring directory {} exists (from configuration property {})",
                             storeDir.toAbsolutePath(),
-                            referenceDataConfig.getFullPath(ReferenceDataConfig.LOCAL_DIR_PROP_NAME)), e);
+                            referenceDataConfig.getFullPath(LmdbConfig.LOCAL_DIR_PROP_NAME)), e);
         }
 
         if (!Files.isReadable(storeDir)) {
             throw new RuntimeException(
                     LogUtil.message("Directory {} (from configuration property {}) is not readable",
                             storeDir.toAbsolutePath(),
-                            referenceDataConfig.getFullPath(ReferenceDataConfig.LOCAL_DIR_PROP_NAME)));
+                            referenceDataConfig.getFullPath(LmdbConfig.LOCAL_DIR_PROP_NAME)));
         }
 
         if (!Files.isWritable(storeDir)) {
             throw new RuntimeException(
                     LogUtil.message("Directory {} (from configuration property {}) is not writable",
                             storeDir.toAbsolutePath(),
-                            referenceDataConfig.getFullPath(ReferenceDataConfig.LOCAL_DIR_PROP_NAME)));
+                            referenceDataConfig.getFullPath(LmdbConfig.LOCAL_DIR_PROP_NAME)));
         }
 
         return storeDir;

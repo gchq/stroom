@@ -132,7 +132,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
     void setup() {
         LOGGER.debug("Creating LMDB environment in dbDir {}", getDbDir().toAbsolutePath().toString());
 
-        referenceDataConfig.setLocalDir(getDbDir().toAbsolutePath().toString());
+        referenceDataConfig.getLmdbConfig().setLocalDir(getDbDir().toAbsolutePath().toString());
         referenceDataConfig.setMaxPurgeDeletesBeforeCommit(500_000);
 
         injector = Guice.createInjector(
@@ -172,7 +172,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
     @Test
     void testNoReadAhead() {
-        getReferenceDataConfig().setReadAheadEnabled(false);
+        getReferenceDataConfig().getLmdbConfig().setReadAheadEnabled(false);
 
         // ensure loading and reading works with the NOREADAHEAD flag set
         bulkLoadAndAssert(true, 100);

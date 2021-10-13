@@ -30,20 +30,20 @@ public class LmdbEnvironmentFactory {
     private static final String DEFAULT_STORE_SUB_DIR_NAME = "searchResults";
 
     private final TempDirProvider tempDirProvider;
-    private final LmdbConfig lmdbConfig;
+    private final ResultStoreConfig resultStoreConfig;
     private final PathCreator pathCreator;
     private final Path dbDir;
 
     @Inject
     public LmdbEnvironmentFactory(final TempDirProvider tempDirProvider,
-                                  final LmdbConfig lmdbConfig,
+                                  final ResultStoreConfig resultStoreConfig,
                                   final PathCreator pathCreator) {
         this.tempDirProvider = tempDirProvider;
-        this.lmdbConfig = lmdbConfig;
+        this.resultStoreConfig = resultStoreConfig;
         this.pathCreator = pathCreator;
         this.dbDir = getStoreDir();
 
-        final String lmdbSystemLibraryPath = lmdbConfig.getLmdbSystemLibraryPath();
+        final String lmdbSystemLibraryPath = resultStoreConfig.getLmdbSystemLibraryPath();
         if (lmdbSystemLibraryPath != null) {
             // javax.validation should ensure the path is valid if set
             System.setProperty(LMDB_NATIVE_LIB_PROP, lmdbSystemLibraryPath);
@@ -56,7 +56,7 @@ public class LmdbEnvironmentFactory {
     }
 
     private Path getStoreDir() {
-        String storeDirStr = lmdbConfig.getLocalDir();
+        String storeDirStr = resultStoreConfig.getLocalDir();
         storeDirStr = pathCreator.replaceSystemProperties(storeDirStr);
         storeDirStr = pathCreator.makeAbsolute(storeDirStr);
         Path storeDir;
@@ -93,18 +93,18 @@ public class LmdbEnvironmentFactory {
 
         LOGGER.debug(() ->
                 "Creating LMDB environment for search results with [maxSize: " +
-                        lmdbConfig.getMaxStoreSize() +
+                        resultStoreConfig.getMaxStoreSize() +
                         ", maxDbs: " +
-                        lmdbConfig.getMaxDbs() +
+                        resultStoreConfig.getMaxDbs() +
                         ", dbDir " +
                         FileUtil.getCanonicalPath(dir) +
                         ", maxReaders " +
-                        lmdbConfig.getMaxReaders() +
+                        resultStoreConfig.getMaxReaders() +
                         ", " +
                         "maxPutsBeforeCommit " +
-                        lmdbConfig.getMaxPutsBeforeCommit() +
+                        resultStoreConfig.getMaxPutsBeforeCommit() +
                         ", isReadAheadEnabled " +
-                        lmdbConfig.isReadAheadEnabled() +
+                        resultStoreConfig.isReadAheadEnabled() +
                         "]");
 
         // By default LMDB opens with readonly mmaps so you cannot mutate the bytebuffers inside a txn.
@@ -123,15 +123,15 @@ public class LmdbEnvironmentFactory {
         // MDB_NOTLS means the reader slots created in LMDB are tied to the tx and not the thread.
         // As we are often using thread pools, threads no longer doing LMDB work may be holding on
         // to reader slots.  NOTLS seems to be the default in the python and go LMDB libs.
-        if (lmdbConfig.isReadAheadEnabled()) {
+        if (resultStoreConfig.isReadAheadEnabled()) {
             envFlags = new EnvFlags[]{EnvFlags.MDB_NOTLS};
         } else {
             envFlags = new EnvFlags[]{EnvFlags.MDB_NOTLS, EnvFlags.MDB_NORDAHEAD};
         }
 
         final Env<ByteBuffer> env = Env.create()
-                .setMaxReaders(lmdbConfig.getMaxReaders())
-                .setMapSize(lmdbConfig.getMaxStoreSize().getBytes())
+                .setMaxReaders(resultStoreConfig.getMaxReaders())
+                .setMapSize(resultStoreConfig.getMaxStoreSize().getBytes())
                 .setMaxDbs(1)
                 .open(dir.toFile(), envFlags);
         return new LmdbEnvironment(dir, env);

@@ -27,9 +27,9 @@ import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.DataStoreFactory;
 import stroom.query.common.v2.Item;
 import stroom.query.common.v2.Items;
-import stroom.query.common.v2.LmdbConfig;
 import stroom.query.common.v2.LmdbDataStoreFactory;
 import stroom.query.common.v2.LmdbEnvironmentFactory;
+import stroom.query.common.v2.ResultStoreConfig;
 import stroom.query.common.v2.SearchDebugUtil;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.Sizes;
@@ -73,14 +73,14 @@ class TestSearchResultCreation {
 
     @BeforeEach
     void setup(@TempDir final Path tempDir) {
-        final LmdbConfig lmdbConfig = new LmdbConfig();
+        final ResultStoreConfig resultStoreConfig = new ResultStoreConfig();
         final TempDirProvider tempDirProvider = () -> tempDir;
         final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
         final LmdbEnvironmentFactory lmdbEnvironmentFactory = new LmdbEnvironmentFactory(
                 tempDirProvider,
-                lmdbConfig,
+                resultStoreConfig,
                 pathCreator);
-        dataStoreFactory = new LmdbDataStoreFactory(lmdbEnvironmentFactory, lmdbConfig);
+        dataStoreFactory = new LmdbDataStoreFactory(lmdbEnvironmentFactory, resultStoreConfig);
     }
 
     @Test

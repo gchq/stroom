@@ -57,13 +57,13 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
 
         final TempDirProvider tempDirProvider = () -> tempDir;
         final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
-        final LmdbConfig lmdbConfig = new LmdbConfig();
+        final ResultStoreConfig resultStoreConfig = new ResultStoreConfig();
         final LmdbEnvironmentFactory lmdbEnvironmentFactory =
-                new LmdbEnvironmentFactory(tempDirProvider, lmdbConfig, pathCreator);
+                new LmdbEnvironmentFactory(tempDirProvider, resultStoreConfig, pathCreator);
 
         return new LmdbDataStore(
                 lmdbEnvironmentFactory,
-                lmdbConfig,
+                resultStoreConfig,
                 UUID.randomUUID().toString(),
                 "0",
                 tableSettings,

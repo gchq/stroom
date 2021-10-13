@@ -70,7 +70,7 @@ public class LmdbDataStore implements DataStore {
 
     private static final long COMMIT_FREQUENCY_MS = 1000;
     private final LmdbEnvironment environment;
-    private final LmdbConfig lmdbConfig;
+    private final ResultStoreConfig resultStoreConfig;
     private final int minValueSize;
     private final int maxValueSize;
     private final int minPayloadSize;
@@ -101,7 +101,7 @@ public class LmdbDataStore implements DataStore {
     private final LmdbKey rootParentRowKey;
 
     LmdbDataStore(final LmdbEnvironmentFactory lmdbEnvironmentFactory,
-                  final LmdbConfig lmdbConfig,
+                  final ResultStoreConfig resultStoreConfig,
                   final String queryKey,
                   final String componentId,
                   final TableSettings tableSettings,
@@ -109,13 +109,13 @@ public class LmdbDataStore implements DataStore {
                   final Map<String, String> paramMap,
                   final Sizes maxResults,
                   final Sizes storeSize) {
-        this.lmdbConfig = lmdbConfig;
+        this.resultStoreConfig = resultStoreConfig;
         this.maxResults = maxResults;
 
-        minValueSize = (int) lmdbConfig.getMinValueSize().getBytes();
-        maxValueSize = (int) lmdbConfig.getMaxValueSize().getBytes();
-        minPayloadSize = (int) lmdbConfig.getMinPayloadSize().getBytes();
-        maxPayloadSize = (int) lmdbConfig.getMaxPayloadSize().getBytes();
+        minValueSize = (int) resultStoreConfig.getMinValueSize().getBytes();
+        maxValueSize = (int) resultStoreConfig.getMaxValueSize().getBytes();
+        minPayloadSize = (int) resultStoreConfig.getMinPayloadSize().getBytes();
+        maxPayloadSize = (int) resultStoreConfig.getMaxPayloadSize().getBytes();
 
         compiledFields = CompiledFields.create(tableSettings.getFields(), fieldIndex, paramMap);
         compiledDepths = new CompiledDepths(compiledFields, tableSettings.showDetail());
@@ -489,7 +489,7 @@ public class LmdbDataStore implements DataStore {
         final PayloadOutput payloadOutput = new PayloadOutput(minPayloadSize, maxPayloadSize);
 
         Metrics.measure("createPayload", () -> {
-            final long limit = lmdbConfig.getPayloadLimit().getBytes();
+            final long limit = resultStoreConfig.getPayloadLimit().getBytes();
             if (limit > 0) {
                 final AtomicLong count = new AtomicLong();
                 try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(writeTxn)) {

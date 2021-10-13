@@ -40,7 +40,7 @@ import stroom.pipeline.filter.XmlSchemaConfig;
 import stroom.pipeline.filter.XsltConfig;
 import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.processor.impl.ProcessorConfig;
-import stroom.query.common.v2.LmdbConfig;
+import stroom.query.common.v2.ResultStoreConfig;
 import stroom.search.extraction.ExtractionConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.impl.shard.IndexShardSearchConfig;
@@ -218,7 +218,7 @@ public class AppConfigModule extends AbstractModule {
                     SearchConfig::getExtractionConfig,
                     SearchConfig::setExtractionConfig,
                     ExtractionConfig.class);
-            bindConfig(searchConfig, SearchConfig::getLmdbConfig, SearchConfig::setLmdbConfig, LmdbConfig.class);
+            bindConfig(searchConfig, SearchConfig::getLmdbConfig, SearchConfig::setLmdbConfig, ResultStoreConfig.class);
             bindConfig(searchConfig,
                     SearchConfig::getShardConfig,
                     SearchConfig::setShardConfig,

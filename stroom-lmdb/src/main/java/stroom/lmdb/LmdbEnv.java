@@ -52,14 +52,14 @@ public class LmdbEnv implements AutoCloseable {
     private final ReadWriteLock readWriteLock;
     private final Semaphore activeReadTransactionsSemaphore;
 
-    public LmdbEnv(final Path path,
-                   final Env<ByteBuffer> env) {
+    LmdbEnv(final Path path,
+            final Env<ByteBuffer> env) {
         this(path, env, false);
     }
 
-    public LmdbEnv(final Path path,
-                   final Env<ByteBuffer> env,
-                   final boolean isReaderBlockedByWriter) {
+    LmdbEnv(final Path path,
+            final Env<ByteBuffer> env,
+            final boolean isReaderBlockedByWriter) {
         this.path = path;
         this.env = env;
 

@@ -9,13 +9,13 @@ import javax.inject.Inject;
 public class LmdbDataStoreFactory implements DataStoreFactory {
 
     private final LmdbEnvironmentFactory lmdbEnvironmentFactory;
-    private final LmdbConfig lmdbConfig;
+    private final ResultStoreConfig resultStoreConfig;
 
     @Inject
     public LmdbDataStoreFactory(final LmdbEnvironmentFactory lmdbEnvironmentFactory,
-                                final LmdbConfig lmdbConfig) {
+                                final ResultStoreConfig resultStoreConfig) {
         this.lmdbEnvironmentFactory = lmdbEnvironmentFactory;
-        this.lmdbConfig = lmdbConfig;
+        this.resultStoreConfig = resultStoreConfig;
     }
 
     @Override
@@ -26,7 +26,7 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                             final Map<String, String> paramMap,
                             final Sizes maxResults,
                             final Sizes storeSize) {
-        if (!lmdbConfig.isOffHeapResults()) {
+        if (!resultStoreConfig.isOffHeapResults()) {
             return new MapDataStore(
                     tableSettings,
                     fieldIndex,
@@ -37,7 +37,7 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
 
         final LmdbDataStore dataStore = new LmdbDataStore(
                 lmdbEnvironmentFactory,
-                lmdbConfig,
+                resultStoreConfig,
                 queryKey,
                 componentId,
                 tableSettings,

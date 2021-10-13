@@ -35,7 +35,6 @@ public class LmdbEnvFactory {
     private final LmdbLibraryConfig lmdbLibraryConfig;
     private final TempDirProvider tempDirProvider;
 
-    private final AtomicBoolean hasLibraryBeenConfigured = new AtomicBoolean(false);
 
     @Inject
     public LmdbEnvFactory(final PathCreator pathCreator,
@@ -55,8 +54,7 @@ public class LmdbEnvFactory {
                 pathCreator,
                 tempDirProvider,
                 lmdbLibraryConfig,
-                dir,
-                hasLibraryBeenConfigured);
+                dir);
     }
 
     /**
@@ -70,11 +68,12 @@ public class LmdbEnvFactory {
                 pathCreator,
                 tempDirProvider,
                 lmdbLibraryConfig,
-                Paths.get(pathCreator.makeAbsolute(pathCreator.replaceSystemProperties(dir))),
-                hasLibraryBeenConfigured);
+                Paths.get(pathCreator.makeAbsolute(pathCreator.replaceSystemProperties(dir))));
     }
 
     public static class EnvironmentBuilder {
+
+        private static final AtomicBoolean HAS_LIBRARY_BEEN_CONFIGURED = new AtomicBoolean(false);
 
         private final PathCreator pathCreator;
         private final TempDirProvider tempDirProvider;
@@ -88,8 +87,7 @@ public class LmdbEnvFactory {
         private EnvironmentBuilder(final PathCreator pathCreator,
                                    final TempDirProvider tempDirProvider,
                                    final LmdbLibraryConfig lmdbLibraryConfig,
-                                   final Path dir,
-                                   final AtomicBoolean hasLibraryBeenConfigured) {
+                                   final Path dir) {
             this.pathCreator = pathCreator;
             this.tempDirProvider = tempDirProvider;
             this.lmdbLibraryConfig = lmdbLibraryConfig;
@@ -98,9 +96,9 @@ public class LmdbEnvFactory {
 
             // Library config is done via java system props and is static code in LMDBJava so
             // only want to do it once
-            if (!hasLibraryBeenConfigured.get()) {
+            if (!HAS_LIBRARY_BEEN_CONFIGURED.get()) {
                 configureLibrary();
-                hasLibraryBeenConfigured.set(true);
+                HAS_LIBRARY_BEEN_CONFIGURED.set(true);
             }
         }
 

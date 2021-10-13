@@ -204,9 +204,9 @@ class TestConfigMapper {
         AppConfig appConfig = getAppConfig();
 
         // simulate dropwiz setting a prop from the yaml
-        String initialValue = appConfig.getPipelineConfig().getReferenceDataConfig().getLocalDir();
+        String initialValue = appConfig.getPipelineConfig().getReferenceDataConfig().getLmdbConfig().getLocalDir();
         String newValue = initialValue + "xxx";
-        appConfig.getPipelineConfig().getReferenceDataConfig().setLocalDir(newValue);
+        appConfig.getPipelineConfig().getReferenceDataConfig().getLmdbConfig().setLocalDir(newValue);
 
         ConfigMapper configMapper = new ConfigMapper(appConfig);
 
@@ -231,9 +231,9 @@ class TestConfigMapper {
         AppConfig appConfig = getAppConfig();
 
         // simulate a prop not being defined in the yaml
-        String initialValue = appConfig.getPipelineConfig().getReferenceDataConfig().getLocalDir();
+        String initialValue = appConfig.getPipelineConfig().getReferenceDataConfig().getLmdbConfig().getLocalDir();
         String newYamlValue = null;
-        appConfig.getPipelineConfig().getReferenceDataConfig().setLocalDir(newYamlValue);
+        appConfig.getPipelineConfig().getReferenceDataConfig().getLmdbConfig().setLocalDir(newYamlValue);
 
         ConfigMapper configMapper = new ConfigMapper(appConfig);
 
