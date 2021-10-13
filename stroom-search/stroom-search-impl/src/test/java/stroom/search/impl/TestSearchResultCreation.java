@@ -4,6 +4,8 @@ import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.docref.DocRef;
+import stroom.lmdb.LmdbEnvFactory;
+import stroom.lmdb.LmdbLibraryConfig;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
@@ -28,7 +30,6 @@ import stroom.query.common.v2.DataStoreFactory;
 import stroom.query.common.v2.Item;
 import stroom.query.common.v2.Items;
 import stroom.query.common.v2.LmdbDataStoreFactory;
-import stroom.query.common.v2.LmdbEnvironmentFactory;
 import stroom.query.common.v2.ResultStoreConfig;
 import stroom.query.common.v2.SearchDebugUtil;
 import stroom.query.common.v2.SearchResponseCreator;
@@ -74,13 +75,11 @@ class TestSearchResultCreation {
     @BeforeEach
     void setup(@TempDir final Path tempDir) {
         final ResultStoreConfig resultStoreConfig = new ResultStoreConfig();
+        final LmdbLibraryConfig lmdbLibraryConfig = new LmdbLibraryConfig();
         final TempDirProvider tempDirProvider = () -> tempDir;
         final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
-        final LmdbEnvironmentFactory lmdbEnvironmentFactory = new LmdbEnvironmentFactory(
-                tempDirProvider,
-                resultStoreConfig,
-                pathCreator);
-        dataStoreFactory = new LmdbDataStoreFactory(lmdbEnvironmentFactory, resultStoreConfig);
+        final LmdbEnvFactory lmdbEnvFactory = new LmdbEnvFactory(pathCreator, tempDirProvider, lmdbLibraryConfig);
+        dataStoreFactory = new LmdbDataStoreFactory(lmdbEnvFactory, resultStoreConfig);
     }
 
     @Test

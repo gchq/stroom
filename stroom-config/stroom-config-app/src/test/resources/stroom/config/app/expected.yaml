@@ -385,7 +385,7 @@ appConfig:
       lmdb:
         localDir: "reference_data"
         maxDbs: 7
-        maxReaders: 100
+        maxReaders: 999
         maxStoreSize: "50G"
         readAheadEnabled: true
         readerBlockedByWriter: true

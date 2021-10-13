@@ -182,13 +182,13 @@ public class LmdbEnv implements AutoCloseable {
      * @return An {@link AutoCloseable} wrapper round the open write txn that also releases
      * the single write lock. A call to this method will result in a write lock being obtained.
      */
-    public WriteTxnWrapper openWriteTxn() {
+    public WriteTxn openWriteTxn() {
         try {
             LOGGER.trace("Acquiring write txn lock");
             writeTxnLock.lockInterruptibly();
 
             LOGGER.trace("Opening new write txn");
-            return new WriteTxnWrapper(writeTxnLock, env.txnWrite());
+            return new WriteTxn(writeTxnLock, env.txnWrite());
         } catch (InterruptedException e) {
             throw new RuntimeException("Thread interrupted while waiting for write lock on "
                     + localDir.toAbsolutePath().normalize());
@@ -202,12 +202,12 @@ public class LmdbEnv implements AutoCloseable {
      * the lock to avoid the risk of deadlocks.
      * A call to this method will result in a write lock being obtained.
      */
-    public BatchingWriteTxnWrapper openBatchingWriteTxn(final int batchSize) {
+    public BatchingWriteTxn openBatchingWriteTxn(final int batchSize) {
         try {
             LOGGER.trace("Acquiring write txn lock");
             writeTxnLock.lockInterruptibly();
 
-            return new BatchingWriteTxnWrapper(writeTxnLock, env::txnWrite, batchSize);
+            return new BatchingWriteTxn(writeTxnLock, env::txnWrite, batchSize);
         } catch (InterruptedException e) {
             throw new RuntimeException("Thread interrupted while waiting for write lock on "
                     + localDir.toAbsolutePath().normalize());
@@ -361,7 +361,7 @@ public class LmdbEnv implements AutoCloseable {
     }
 
     @NotThreadSafe
-    public static class WriteTxnWrapper implements AutoCloseable {
+    public static class WriteTxn implements AutoCloseable {
 
         private final Lock writeLock;
         private Txn<ByteBuffer> writeTxn;
@@ -369,15 +369,15 @@ public class LmdbEnv implements AutoCloseable {
         /**
          * @param writeLock Should already be held by this thread.
          */
-        private WriteTxnWrapper(final Lock writeLock,
-                                final Txn<ByteBuffer> writeTxn) {
+        private WriteTxn(final Lock writeLock,
+                         final Txn<ByteBuffer> writeTxn) {
             this.writeLock = writeLock;
             this.writeTxn = writeTxn;
         }
 
         /**
          * @return The write txn object. Do NOT call close() on the returned txn,
-         * use {@link WriteTxnWrapper#close()} or a try-with-resources block.
+         * use {@link WriteTxn#close()} or a try-with-resources block.
          */
         public Txn<ByteBuffer> getTxn() {
             Objects.requireNonNull(writeTxn, "Transaction is closed");
@@ -414,10 +414,10 @@ public class LmdbEnv implements AutoCloseable {
     }
 
     /**
-     * Creates a write txn on calls to {@link BatchingWriteTxnWrapper#getTxn()}
+     * Creates a write txn on calls to {@link BatchingWriteTxn#getTxn()}
      */
     @NotThreadSafe
-    public static class BatchingWriteTxnWrapper implements AutoCloseable {
+    public static class BatchingWriteTxn implements AutoCloseable {
 
         private final Lock writeLock;
         private Supplier<Txn<ByteBuffer>> writeTxnSupplier;
@@ -431,9 +431,9 @@ public class LmdbEnv implements AutoCloseable {
          * @param writeLock    Should already be held by this thread.
          * @param maxBatchSize
          */
-        private BatchingWriteTxnWrapper(final Lock writeLock,
-                                        final Supplier<Txn<ByteBuffer>> writeTxnSupplier,
-                                        final int maxBatchSize) {
+        private BatchingWriteTxn(final Lock writeLock,
+                                 final Supplier<Txn<ByteBuffer>> writeTxnSupplier,
+                                 final int maxBatchSize) {
             this.writeLock = writeLock;
             this.writeTxnSupplier = writeTxnSupplier;
             this.maxBatchSize = maxBatchSize == 0
@@ -452,7 +452,7 @@ public class LmdbEnv implements AutoCloseable {
 
         /**
          * @return The write txn object. Do NOT call close() on the returned txn,
-         * use {@link WriteTxnWrapper#close()} or a try-with-resources block.
+         * use {@link WriteTxn#close()} or a try-with-resources block.
          */
         public Txn<ByteBuffer> getTxn() {
             if (writeTxn == null) {
@@ -517,7 +517,7 @@ public class LmdbEnv implements AutoCloseable {
          * Closes the txn and releases the single write lock
          */
         @Override
-        public void close() throws Exception {
+        public void close() {
             try {
                 if (writeTxn != null) {
                     try {

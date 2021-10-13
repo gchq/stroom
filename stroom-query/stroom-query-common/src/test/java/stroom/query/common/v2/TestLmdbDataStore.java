@@ -19,6 +19,8 @@ package stroom.query.common.v2;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.lmdb.LmdbEnvFactory;
+import stroom.lmdb.LmdbLibraryConfig;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.OffsetRange;
@@ -58,11 +60,11 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         final TempDirProvider tempDirProvider = () -> tempDir;
         final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
         final ResultStoreConfig resultStoreConfig = new ResultStoreConfig();
-        final LmdbEnvironmentFactory lmdbEnvironmentFactory =
-                new LmdbEnvironmentFactory(tempDirProvider, resultStoreConfig, pathCreator);
+        final LmdbLibraryConfig lmdbLibraryConfig = new LmdbLibraryConfig();
+        final LmdbEnvFactory lmdbEnvFactory = new LmdbEnvFactory(pathCreator, tempDirProvider, lmdbLibraryConfig);
 
         return new LmdbDataStore(
-                lmdbEnvironmentFactory,
+                lmdbEnvFactory,
                 resultStoreConfig,
                 UUID.randomUUID().toString(),
                 "0",

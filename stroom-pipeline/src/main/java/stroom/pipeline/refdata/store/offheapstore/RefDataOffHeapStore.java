@@ -25,7 +25,7 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.lmdb.LmdbConfig;
 import stroom.lmdb.LmdbDb;
 import stroom.lmdb.LmdbEnv;
-import stroom.lmdb.LmdbEnv.BatchingWriteTxnWrapper;
+import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
 import stroom.lmdb.LmdbEnvFactory;
 import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.store.AbstractRefDataStore;
@@ -709,13 +709,13 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         doWithRefStreamDefinitionLock(refStreamDefStripedReentrantLock, refStreamDefinition, () -> {
 
             try {
-                try (final BatchingWriteTxnWrapper batchingWriteTxnWrapper = lmdbEnvironment.openBatchingWriteTxn(
+                try (final BatchingWriteTxn batchingWriteTxn = lmdbEnvironment.openBatchingWriteTxn(
                         referenceDataConfig.getMaxPurgeDeletesBeforeCommit())) {
 
                     // We now hold an open write txn so re-fetch the processing info in case something has
                     // changed between our first read and now
                     final Optional<ByteBuffer> optRefDataProcInfoBuf = processingInfoDb.getAsBytes(
-                            batchingWriteTxnWrapper.getTxn(), refStreamDefinitionBuf);
+                            batchingWriteTxn.getTxn(), refStreamDefinitionBuf);
 
                     if (optRefDataProcInfoBuf.isPresent()) {
                         final RefDataProcessingInfo refDataProcessingInfo = processingInfoDb.deserializeValue(
@@ -728,7 +728,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                                     refStreamDefinition,
                                     refDataProcessingInfo,
                                     refStreamDefinitionBuf,
-                                    batchingWriteTxnWrapper);
+                                    batchingWriteTxn);
 
                             refStreamPurgeCountsRef.set(refStreamPurgeCounts);
                         } else {
@@ -741,7 +741,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     }
 
                     // Force final commit
-                    batchingWriteTxnWrapper.commit();
+                    batchingWriteTxn.commit();
                 }
             } catch (Exception e) {
                 try {
@@ -768,7 +768,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     private RefStreamPurgeCounts purgeRefStreamDef(final RefStreamDefinition refStreamDefinition,
                                                    final RefDataProcessingInfo refDataProcessingInfo,
                                                    final ByteBuffer refStreamDefinitionBuf,
-                                                   final BatchingWriteTxnWrapper batchingWriteTxnWrapper) {
+                                                   final BatchingWriteTxn batchingWriteTxn) {
 
         taskContext.info(() -> "Purging reference stream " +
                 refStreamDefinition.getStreamId() + ":" +
@@ -794,27 +794,27 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         try {
             // mark it is purge in progress, so if we are committing part way through
             // other processes will know it is a partial state.
-            processingInfoDb.updateProcessingState(batchingWriteTxnWrapper.getTxn(),
+            processingInfoDb.updateProcessingState(batchingWriteTxn.getTxn(),
                     refStreamDefinitionBuf,
                     ProcessingState.PURGE_IN_PROGRESS,
                     false);
 
             // purge the data associated with this ref stream def
-            refStreamSummaryInfo = purgeRefStreamData(batchingWriteTxnWrapper, refStreamDefinition);
+            refStreamSummaryInfo = purgeRefStreamData(batchingWriteTxn, refStreamDefinition);
 
             //now delete the proc info entry
             LOGGER.debug("Deleting processing info entry for {}", refStreamDefinition);
             taskContext.info(() -> "Deleting processing info entry for " + refStreamDefinition);
 
             boolean didDeleteSucceed = processingInfoDb.delete(
-                    batchingWriteTxnWrapper.getTxn(), refStreamDefinitionBuf);
+                    batchingWriteTxn.getTxn(), refStreamDefinitionBuf);
 
             if (!didDeleteSucceed) {
                 throw new RuntimeException("Processing info entry not found so was not deleted");
             }
 
             // Ensure we commit at the end of each ref stream
-            batchingWriteTxnWrapper.commit();
+            batchingWriteTxn.commit();
 
             LOGGER.info("  Completed purge of refStreamDefinition with stream {} (" +
                             "{} maps deleted, {} values deleted, {} values de-referenced)",
@@ -838,7 +838,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             try {
                 // We are still under the ref stream def lock here
                 processingInfoDb.updateProcessingState(
-                        batchingWriteTxnWrapper.getTxn(),
+                        batchingWriteTxn.getTxn(),
                         refStreamDefinitionBuf,
                         ProcessingState.PURGE_FAILED,
                         false);
@@ -878,7 +878,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         });
     }
 
-    private RefStreamPurgeCounts purgeRefStreamData(final BatchingWriteTxnWrapper batchingWriteTxnWrapper,
+    private RefStreamPurgeCounts purgeRefStreamData(final BatchingWriteTxn batchingWriteTxn,
                                                     final RefStreamDefinition refStreamDefinition) {
 
         LOGGER.debug("purgeRefStreamData({})", refStreamDefinition);
@@ -890,12 +890,12 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 // open a ranged cursor on the map forward table to scan all map defs for that stream def
                 // for each map def get the map uid
                 optMapUid = mapDefinitionUIDStore.getNextMapDefinition(
-                        batchingWriteTxnWrapper.getTxn(), refStreamDefinition, pooledUidBuffer::getByteBuffer);
+                        batchingWriteTxn.getTxn(), refStreamDefinition, pooledUidBuffer::getByteBuffer);
 
                 if (optMapUid.isPresent()) {
                     final UID mapUid = optMapUid.get();
                     final MapDefinition mapDefinition = mapDefinitionUIDStore.get(
-                            batchingWriteTxnWrapper.getTxn(), mapUid)
+                            batchingWriteTxn.getTxn(), mapUid)
                             .orElseThrow(() ->
                                     new RuntimeException(LogUtil.message(
                                             "We should be a mapDefinition if we have a UID, uid: {}",
@@ -904,7 +904,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     LOGGER.debug("Found mapUid {} for refStreamDefinition {}", mapUid, refStreamDefinition);
 
                     final Tuple2<Integer, Integer> dataPurgeCounts = purgeMapData(
-                            batchingWriteTxnWrapper, optMapUid.get());
+                            batchingWriteTxn, optMapUid.get());
 
                     summaryInfo = summaryInfo.increment(
                             1,
@@ -925,7 +925,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         return summaryInfo;
     }
 
-    private Tuple2<Integer, Integer> purgeMapData(final BatchingWriteTxnWrapper batchingWriteTxnWrapper,
+    private Tuple2<Integer, Integer> purgeMapData(final BatchingWriteTxn batchingWriteTxn,
                                                   final UID mapUid) {
 
         LOGGER.debug("purgeMapData(writeTxn, {})", mapUid);
@@ -936,7 +936,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         AtomicLong valueEntryDeleteCount = new AtomicLong();
         AtomicLong valueEntryDeReferenceCount = new AtomicLong();
         keyValueStoreDb.deleteMapEntries(
-                batchingWriteTxnWrapper,
+                batchingWriteTxn,
                 mapUid,
                 (writeTxn, keyValueStoreKeyBuffer, valueStoreKeyBuffer) -> {
 
@@ -954,7 +954,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         // loop over all rangeValue entries for this mapUid and dereference/delete the associated
         // valueStore entry
         rangeStoreDb.deleteMapEntries(
-                batchingWriteTxnWrapper,
+                batchingWriteTxn,
                 mapUid,
                 (writeTxn, rangeValueStoreKeyBuffer, valueStoreKeyBuffer) -> {
 
@@ -967,7 +967,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 });
         LOGGER.debug("Deleting range/value entries and de-referencing/deleting their values");
 
-        mapDefinitionUIDStore.deletePair(batchingWriteTxnWrapper.getTxn(), mapUid);
+        mapDefinitionUIDStore.deletePair(batchingWriteTxn.getTxn(), mapUid);
 
         return Tuple.of(valueEntryDeleteCount.intValue(), valueEntryDeReferenceCount.intValue());
     }

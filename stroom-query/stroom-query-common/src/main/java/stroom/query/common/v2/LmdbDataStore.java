@@ -30,6 +30,9 @@ import stroom.dashboard.expression.v1.Top.TopSelector;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValSerialiser;
+import stroom.lmdb.LmdbEnv;
+import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
+import stroom.lmdb.LmdbEnvFactory;
 import stroom.query.api.v2.TableSettings;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -41,6 +44,7 @@ import com.esotericsoftware.kryo.unsafe.UnsafeByteBufferOutput;
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Dbi;
+import org.lmdbjava.EnvFlags;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.PutFlags;
 import org.lmdbjava.Txn;
@@ -69,7 +73,7 @@ public class LmdbDataStore implements DataStore {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbDataStore.class);
 
     private static final long COMMIT_FREQUENCY_MS = 1000;
-    private final LmdbEnvironment environment;
+    private final LmdbEnv lmdbEnv;
     private final ResultStoreConfig resultStoreConfig;
     private final int minValueSize;
     private final int maxValueSize;
@@ -100,7 +104,7 @@ public class LmdbDataStore implements DataStore {
 
     private final LmdbKey rootParentRowKey;
 
-    LmdbDataStore(final LmdbEnvironmentFactory lmdbEnvironmentFactory,
+    LmdbDataStore(final LmdbEnvFactory lmdbEnvFactory,
                   final ResultStoreConfig resultStoreConfig,
                   final String queryKey,
                   final String componentId,
@@ -128,8 +132,10 @@ public class LmdbDataStore implements DataStore {
         final String uuid = (queryKey + "_" + componentId + "_" + UUID.randomUUID());
         // Make safe for the file system.
         final String dirName = uuid.replaceAll("[^A-Za-z0-9]", "_");
-        this.environment = lmdbEnvironmentFactory.createEnvironment(dirName);
-        this.dbi = environment.openDbi(uuid);
+        this.lmdbEnv = lmdbEnvFactory.builder(resultStoreConfig.getLmdbConfig())
+                .addEnvFlag(EnvFlags.MDB_NOTLS)
+                .build();
+        this.dbi = lmdbEnv.openDbi(uuid);
 
         // Find out if we have any sorting.
         boolean hasSort = false;
@@ -295,8 +301,7 @@ public class LmdbDataStore implements DataStore {
 
     private void transfer() {
         Metrics.measure("Transfer", () -> {
-            Txn<ByteBuffer> writeTxn = environment.txnWrite();
-            try {
+            try (BatchingWriteTxn txnWrapper = lmdbEnv.openBatchingWriteTxn(100_000)) {
                 boolean needsCommit = false;
                 long lastCommitMs = System.currentTimeMillis();
 
@@ -306,7 +311,7 @@ public class LmdbDataStore implements DataStore {
 
                     if (item != null) {
                         if (item.getRowKey() != null) {
-                            insert(writeTxn, dbi, item);
+                            insert(txnWrapper, dbi, item);
 
                         } else {
                             // Ensure commit.
@@ -321,11 +326,11 @@ public class LmdbDataStore implements DataStore {
                         // Commit
                         lastCommitMs = System.currentTimeMillis();
                         needsCommit = false;
-                        writeTxn = commit(writeTxn);
+                        txnWrapper.commit();
 
                         // Create payload and clear the DB.
-                        currentPayload.set(createPayload(writeTxn, dbi));
-                        writeTxn = commit(writeTxn);
+                        currentPayload.set(createPayload(txnWrapper.getTxn(), dbi));
+                        txnWrapper.commit();
 
                     } else if (needsCommit) {
                         final long now = System.currentTimeMillis();
@@ -333,7 +338,7 @@ public class LmdbDataStore implements DataStore {
                             // Commit
                             lastCommitMs = now;
                             needsCommit = false;
-                            writeTxn = commit(writeTxn);
+                            txnWrapper.commit();
                         }
                     }
 
@@ -351,25 +356,14 @@ public class LmdbDataStore implements DataStore {
                 // Continue to interrupt.
                 Thread.currentThread().interrupt();
             } finally {
-                try {
-                    writeTxn.close();
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e.getMessage(), e);
-                }
                 transferring.countDown();
             }
         });
     }
 
-    private Txn<ByteBuffer> commit(final Txn<ByteBuffer> txn) {
-        Metrics.measure("Commit", () -> {
-            txn.commit();
-            txn.close();
-        });
-        return environment.txnWrite();
-    }
-
-    private void insert(final Txn<ByteBuffer> txn, final Dbi<ByteBuffer> dbi, final QueueItem queueItem) {
+    private void insert(final BatchingWriteTxn writeTxn,
+                        final Dbi<ByteBuffer> dbi,
+                        final QueueItem queueItem) {
         Metrics.measure("Insert", () -> {
             try {
                 LOGGER.trace(() -> "insert");
@@ -379,7 +373,7 @@ public class LmdbDataStore implements DataStore {
 
                 // Just try to put first.
                 final boolean success = put(
-                        txn,
+                        writeTxn,
                         dbi,
                         rowKey.getByteBuffer(),
                         rowValue.getByteBuffer(),
@@ -389,7 +383,7 @@ public class LmdbDataStore implements DataStore {
 
                 } else if (rowKey.isGroup()) {
                     // Get the existing entry for this key.
-                    final ByteBuffer existingValueBuffer = dbi.get(txn, rowKey.getByteBuffer());
+                    final ByteBuffer existingValueBuffer = dbi.get(writeTxn.getTxn(), rowKey.getByteBuffer());
 
                     final int minValSize = Math.max(minValueSize, existingValueBuffer.remaining());
                     try (final UnsafeByteBufferOutput output =
@@ -435,7 +429,7 @@ public class LmdbDataStore implements DataStore {
                         }
 
                         final ByteBuffer newValue = output.getByteBuffer().flip();
-                        final boolean ok = put(txn, dbi, rowKey.getByteBuffer(), newValue);
+                        final boolean ok = put(writeTxn, dbi, rowKey.getByteBuffer(), newValue);
                         if (!ok) {
                             throw new RuntimeException("Unable to update");
                         }
@@ -452,13 +446,15 @@ public class LmdbDataStore implements DataStore {
         });
     }
 
-    private boolean put(final Txn<ByteBuffer> txn,
+    private boolean put(final BatchingWriteTxn writeTxn,
                         final Dbi<ByteBuffer> dbi,
                         final ByteBuffer key,
                         final ByteBuffer val,
                         final PutFlags... flags) {
         try {
-            return dbi.put(txn, key, val, flags);
+            final boolean didPutSucceed = dbi.put(writeTxn.getTxn(), key, val, flags);
+            writeTxn.commitIfRequired();
+            return didPutSucceed;
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
@@ -609,7 +605,7 @@ public class LmdbDataStore implements DataStore {
         final AtomicBoolean trimmed = new AtomicBoolean(true);
         final AtomicBoolean inRange = new AtomicBoolean(true);
 
-        environment.doWithReadTxn(readTxn -> {
+        lmdbEnv.doWithReadTxn(readTxn -> {
             try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(readTxn, keyRange)) {
                 final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
 
@@ -709,13 +705,13 @@ public class LmdbDataStore implements DataStore {
                 }
 
                 try {
-                    environment.close();
+                    lmdbEnv.close();
                 } catch (final RuntimeException e) {
                     LOGGER.error(e.getMessage(), e);
                 }
 
                 try {
-                    environment.delete();
+                    lmdbEnv.delete();
                 } catch (final RuntimeException e) {
                     LOGGER.error(e.getMessage(), e);
                 }
