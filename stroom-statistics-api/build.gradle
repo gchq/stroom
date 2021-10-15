@@ -3,6 +3,6 @@ dependencies {
     compile project(':stroom-util-shared')
 
 
-    compile libs.stroomQueryApi
+    compile files("../libs/stroom-query-api-v2.2.21.jar")
     compile libs.guava
 }

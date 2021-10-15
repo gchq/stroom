@@ -15,7 +15,7 @@
  */
 
 dependencies {
-    compile libs.stroomQueryApi
+    compile files("../libs/stroom-query-api-v2.2.21.jar")
     compile project(':stroom-entity-shared')
     compile project(':stroom-util-shared')
 

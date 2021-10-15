@@ -19,8 +19,8 @@ dependencies {
     compile project(':stroom-headless')
     permitUnusedDeclared project(':stroom-headless')
 
-    integrationTestCompile libs.stroomQueryApi
-    integrationTestCompile libs.stroomQueryCommon
+    integrationTestCompile files("../libs/stroom-query-api-v2.2.21.jar")
+    integrationTestCompile files("../libs/stroom-query-common-v2.2.21.jar")
     integrationTestCompile project(path: ':stroom-core-server', configuration: 'testArtifacts')
     integrationTestCompile project(path: ':stroom-dashboard-server', configuration: 'testArtifacts')
     integrationTestCompile project(path: ':stroom-index-server', configuration: 'testArtifacts')

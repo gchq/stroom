@@ -17,14 +17,14 @@ dependencies {
 
     compile libs.commons_csv
     compile libs.dropwizard_metrics_healthchecks
-    compile libs.eventLogging
+    compile files("../libs/event-logging-v3.1.2_schema-v3.1.2.jar")
     compile libs.guice4
     compile libs.jackson_annotations
     compile libs.javax_inject
 //    compile libs.slf4j_api
     compile libs.spring_context
-    compile libs.stroomExpression
-    compile libs.stroomQueryApi
+    compile files("../libs/stroom-expression-v1.5.10.jar")
+    compile files("../libs/stroom-query-api-v2.2.21.jar")
 //    compile libs.swagger_annotations
 //    compile libs.ws_rs_api
 }

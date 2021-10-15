@@ -23,9 +23,9 @@ dependencies {
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 
-    compile libs.stroomAuthApi
-    compile libs.stroomQueryApi
-    compile libs.eventLogging
+    compile files("../libs/stroom-auth-service-api-v6.0.25-1.jar")
+    compile files("../libs/stroom-query-api-v2.2.21.jar")
+    compile files("../libs/event-logging-v3.1.2_schema-v3.1.2.jar")
     compile libs.aspectjrt
     compile libs.commons_lang
     compile libs.guava

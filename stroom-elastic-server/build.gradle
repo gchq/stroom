@@ -8,7 +8,7 @@ dependencies {
     compile project(':stroom-security-server')
     permitUnusedDeclared project(':stroom-security-server')
 
-    compile libs.stroomQueryApi
+    compile files("../libs/stroom-query-api-v2.2.21.jar")
     compile libs.stroomQueryAudit
     compile libs.slf4j_api
     compile libs.spring_context

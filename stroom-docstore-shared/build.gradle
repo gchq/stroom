@@ -1,4 +1,4 @@
 dependencies {
-    compile libs.stroomQueryApi
+    compile files("../libs/stroom-query-api-v2.2.21.jar")
     compile libs.jackson_annotations
 }

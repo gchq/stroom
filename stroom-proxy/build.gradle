@@ -18,8 +18,8 @@ dependencies {
     compile libs.javax_servlet_api
     compile libs.javax_validation
     compile libs.slf4j_api
-    compile libs.stroomProxyRemoteApi
-    compile libs.stroomQueryApi
+    compile files("../libs/stroom-proxy-remote-api-v5.1.2.jar")
+    compile files("../libs/stroom-query-api-v2.2.21.jar")
     compile libs.ws_rs_api
 
     testCompile project(path: ':stroom-util', configuration: 'testArtifacts')

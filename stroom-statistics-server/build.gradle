@@ -11,10 +11,10 @@ dependencies {
     compile project(':stroom-util-shared')
     compile project(':stroom-connectors')
 
-    compile libs.stroomQueryApi
-    compile libs.stroomExpression
-    compile libs.stroomQueryCommon
-    compile libs.stroomStatsSchema
+    compile files("../libs/stroom-query-api-v2.2.21.jar")
+    compile files("../libs/stroom-expression-v1.5.10.jar")
+    compile files("../libs/stroom-query-common-v2.2.21.jar")
+    compile files("../libs/stroom-stats-schema-v0.6.0-alpha.2.jar")
 
     compile libs.c3p0
     compile libs.commons_lang

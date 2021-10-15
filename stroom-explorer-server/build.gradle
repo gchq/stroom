@@ -9,8 +9,8 @@ dependencies {
     compile project(':stroom-explorer-api')
 
     compile libs.spring_beans
-    compile libs.stroomQueryApi
-    compile libs.eventLogging
+    compile files("../libs/stroom-query-api-v2.2.21.jar")
+    compile files("../libs/event-logging-v3.1.2_schema-v3.1.2.jar")
     compile libs.hibernate_jpa_api
     compile libs.javax_inject
     compile libs.javax_servlet_api

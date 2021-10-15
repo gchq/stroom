@@ -66,15 +66,7 @@ ext.versions = [
     stroom: getPropertyOrDefault('version', 'SNAPSHOT'),
 
     //------Stroom-repos---------------
-//    stroomProxyRepo: 'v5.1-beta.8',
-    eventLogging: 'v3.1.2_schema-v3.1.2',
-    hadoopCommonShaded: 'v2.6.4-5',
-    hadoopHdfsShaded: 'v2.6.4-4',
-    stroomAuth: 'v6.0.25-1', // Needed for the correct version of the client API
-    stroomExpression: 'v1.5.10',
     stroomQuery: 'v2.2.21', // Same version for both stroom-query-api and stroom-query-common
-    stroomStats: 'v0.6.0-alpha.2',
-    stroomProxyApi: 'v5.1.2',
 
     //------------3rd-party------------
     curator: '4.2.0', // Curator 4 works with ZK 3.4.x in soft compatibility mode, i.e. you must exlude its dep on ZK and explicitly add one for 3.4.x
@@ -100,16 +92,7 @@ ext.versions = [
 //dependency strings for use in sub projects
 ext.libs = [
     //------Stroom-libs---------------
-    eventLogging: "event-logging:event-logging:$versions.eventLogging",
-    stroomQueryApi: "stroom:stroom-query-api:$versions.stroomQuery",
     stroomQueryAudit: "stroom:stroom-query-audit:$versions.stroomQuery",
-    stroomQueryCommon: "stroom:stroom-query-common:$versions.stroomQuery",
-    stroomExpression: "stroom:stroom-expression:$versions.stroomExpression",
-    stroomStatsSchema: "stroom:stroom-stats-schema:$versions.stroomStats",
-    stroomAuthApi: "stroom:stroom-auth-service-api:$versions.stroomAuth",
-    stroomProxyRemoteApi: "stroom:stroom-proxy-remote-api:$versions.stroomProxyApi",
-    hadoopCommonShaded: "stroom:hadoop-common-shaded:$versions.hadoopCommonShaded",
-    hadoopHdfsShaded: "stroom:hadoop-hdfs-shaded:$versions.hadoopHdfsShaded",
 
     //------3rd Party-libs---------------
     aopalliance: "aopalliance:aopalliance:1.0",
@@ -232,15 +215,15 @@ def visualisationsContentPackUrl = "http://github.com/gchq/stroom-visualisations
 
 //A set of content packs to download in the task downloadStroomContent
 ext.contentPacks = [
-    'core-xml-schemas': 'v2.0',
-    'event-logging-xml-schema': 'v3.2.3',
-    'internal-dashboards': 'v1.1',
-    'internal-statistics-sql': 'v2.1',
-    'internal-statistics-stroom-stats': 'v2.1',
-    'standard-pipelines': 'v0.1',
-    'stroom-101': 'v1.0',
-    'stroom-logs': 'v2.0-alpha.5',
-    'template-pipelines': 'v0.2'
+//    'core-xml-schemas': 'v2.0',
+//    'event-logging-xml-schema': 'v3.2.3',
+//    'internal-dashboards': 'v1.1',
+//    'internal-statistics-sql': 'v2.1',
+//    'internal-statistics-stroom-stats': 'v2.1',
+//    'standard-pipelines': 'v0.1',
+//    'stroom-101': 'v1.0',
+//    'stroom-logs': 'v2.0-alpha.5',
+//    'template-pipelines': 'v0.2'
 ]
 
 //defines a list of gradle projects that we will publish with maven/bintray
@@ -334,9 +317,9 @@ subprojects {
     repositories {
         mavenLocal()
         jcenter()
-        maven { url "https://dl.bintray.com/stroom/event-logging" }
-        maven { url "https://dl.bintray.com/stroom/stroom" }
-        maven { url "https://dl.bintray.com/stroom/stroom-proxy" }
+//        maven { url "https://dl.bintray.com/stroom/event-logging" }
+//        maven { url "https://dl.bintray.com/stroom/stroom" }
+//        maven { url "https://dl.bintray.com/stroom/stroom-proxy" }
     }
 
     test {

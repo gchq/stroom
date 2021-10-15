@@ -5,7 +5,7 @@ dependencies {
     runtime project(':stroom-security-api')
 
     compile libs.restygwt
-    compile libs.stroomQueryApi
+    compile files("../libs/stroom-query-api-v2.2.21.jar")
     compile libs.swagger_annotations
     compile libs.ws_rs_api
 

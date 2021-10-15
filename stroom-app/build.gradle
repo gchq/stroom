@@ -95,7 +95,7 @@ dependencies {
     compile project(':stroom-statistics-server')
     compile project(':stroom-ruleset-server')
 
-    compile libs.stroomQueryApi
+    compile files("../libs/stroom-query-api-v2.2.21.jar")
 
     compile libs.dropwizard_lifecycle
     compile libs.guava

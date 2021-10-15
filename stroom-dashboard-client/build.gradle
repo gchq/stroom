@@ -8,8 +8,8 @@ dependencies {
     compile project(':stroom-util-shared')
     runtime project(':stroom-security-client')
 
-    compile libs.stroomQueryApi
-    compile libs.stroomQueryCommon
+    compile files("../libs/stroom-query-api-v2.2.21.jar")
+    compile files("../libs/stroom-query-common-v2.2.21.jar")
 
     compile libs.gin
     compile libs.guice3

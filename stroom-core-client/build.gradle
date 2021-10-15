@@ -16,7 +16,7 @@ dependencies {
     compile libs.gwtp_mvp_client
     compile libs.javax_inject
     compile libs.restygwt
-    compile libs.stroomQueryApi
+    compile files("../libs/stroom-query-api-v2.2.21.jar")
     compile libs.ws_rs_api
 
     //Needed only for the GwtCompilerWrapper

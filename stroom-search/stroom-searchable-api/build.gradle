@@ -5,6 +5,6 @@ dependencies {
     compile project(':stroom-entity-shared')
 
 //    compile libs.stroomDocRef
-    compile libs.stroomExpression
-    compile libs.stroomQueryApi
+    compile files("../../libs/stroom-expression-v1.5.10.jar")
+    compile files("../../libs/stroom-query-api-v2.2.21.jar")
 }

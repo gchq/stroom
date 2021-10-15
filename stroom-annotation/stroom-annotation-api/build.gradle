@@ -7,5 +7,5 @@ dependencies {
     permitUnusedDeclared project(':stroom-index-shared') // not clear why it thinks this is unused
 //    compile project(':stroom-search:stroom-search-extraction')
     
-    compile libs.stroomQueryApi
+    compile files("../libs/stroom-query-api-v2.2.21.jar")
 }

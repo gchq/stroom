@@ -26,9 +26,9 @@ dependencies {
     compile libs.solrj
     compile libs.spring_beans
     compile libs.spring_context
-    compile libs.stroomExpression
-    compile libs.stroomQueryApi
-    compile libs.stroomQueryCommon
+    compile files("../../libs/stroom-expression-v1.5.10.jar")
+    compile files("../../libs/stroom-query-api-v2.2.21.jar")
+    compile files("../../libs/stroom-query-common-v2.2.21.jar")
     compile libs.swagger_annotations
     compile libs.javax_inject
     compile libs.ws_rs_api

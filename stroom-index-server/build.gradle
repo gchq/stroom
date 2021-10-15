@@ -26,10 +26,10 @@ dependencies {
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 
-    compile libs.stroomQueryApi
-    compile libs.stroomQueryCommon
-    compile libs.stroomExpression
-    compile libs.eventLogging
+    compile files("../libs/stroom-query-api-v2.2.21.jar")
+    compile files("../libs/stroom-query-common-v2.2.21.jar")
+    compile files("../libs/stroom-expression-v1.5.10.jar")
+    compile files("../libs/event-logging-v3.1.2_schema-v3.1.2.jar")
     compile libs.guava
     compile libs.javax_inject
     compile libs.lucene_analyzers_common

@@ -12,9 +12,9 @@ dependencies {
     compile project(':stroom-connectors')
     permitUnusedDeclared project(':stroom-connectors')
 
-    compile libs.hadoopCommonShaded
-    compile libs.hadoopHdfsShaded
-    compile libs.stroomQueryApi
+    compile files("../libs/hadoop-common-shaded-v2.6.4-5.jar")
+    compile files("../libs/hadoop-hdfs-shaded-v2.6.4-4.jar")
+    compile files("../libs/stroom-query-api-v2.2.21.jar")
     compile libs.spring_beans
     compile libs.spring_context
     compile libs.spring_tx

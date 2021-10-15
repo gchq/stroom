@@ -26,8 +26,8 @@ dependencies {
 //    compile libs.jaxb_api
     compile libs.jooq
     compile libs.spring_context
-    compile libs.stroomExpression
-    compile libs.stroomQueryApi
+    compile files("../libs/stroom-expression-v1.5.10.jar")
+    compile files("../libs/stroom-query-api-v2.2.21.jar")
 //    compile libs.saxon_he
     compile libs.slf4j_api
 //
