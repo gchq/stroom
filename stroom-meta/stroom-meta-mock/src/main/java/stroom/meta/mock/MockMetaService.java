@@ -330,7 +330,7 @@ public class MockMetaService implements MetaService, Clearable {
 
     @Override
     public void deleteTrackers(final String rulesVersion) {
-       
+
     }
 
     public Map<Long, Meta> getMetaMap() {

@@ -58,6 +58,8 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 
 /**
+ * See also stroom-data/stroom-data-retention-impl/docs/design.md
+ * <p>
  * This class is concerned with logically deleting meta records according to a set of data
  * retention rules. Rules have precedence, with a higher rule number meaning the rule is more
  * important. All rules need to be applied to all meta records in precedence order. The first
@@ -70,7 +72,7 @@ import javax.inject.Provider;
  * age of 1 day then the min create time is now()-1d.
  * <p>
  * If we have a 1mth rule and a 1yr rule then the following periods will be used:
- * 1mnth ago => now (Ignored as ALL rules have age >= this, so all data is retained)
+ * 1mnth ago => now (Ignored as ALL rules have age >= this, so all data in this period is retained)
  * 1yr ago => 1mnth ago
  * epoch => 1yr ago
  * <p>
