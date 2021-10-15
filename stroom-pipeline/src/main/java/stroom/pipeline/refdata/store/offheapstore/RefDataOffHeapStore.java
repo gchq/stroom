@@ -22,9 +22,10 @@ import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
 import stroom.bytebuffer.PooledByteBufferPair;
 import stroom.docstore.shared.DocRefUtil;
+import stroom.lmdb.LmdbConfig;
 import stroom.lmdb.LmdbDb;
 import stroom.lmdb.LmdbEnv;
-import stroom.lmdb.LmdbEnv.BatchingWriteTxnWrapper;
+import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
 import stroom.lmdb.LmdbEnvFactory;
 import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.store.AbstractRefDataStore;
@@ -51,9 +52,6 @@ import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataProcessingInfoSe
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.HasHealthCheck;
-import stroom.util.io.ByteSize;
-import stroom.util.io.PathCreator;
-import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -74,12 +72,10 @@ import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -129,12 +125,6 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     private static final String LMDB_NATIVE_LIB_PROP = "lmdbjava.native.lib";
 
     private final LmdbEnvFactory lmdbEnvFactory;
-    private final TempDirProvider tempDirProvider;
-    private final PathCreator pathCreator;
-    private final Path dbDir;
-    private final ByteSize maxSize;
-    private final int maxReaders;
-    private final int maxPutsBeforeCommit;
     private final TaskContext taskContext;
 
     private final LmdbEnv lmdbEnvironment;
@@ -162,8 +152,6 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     @Inject
     RefDataOffHeapStore(
             final LmdbEnvFactory lmdbEnvFactory,
-            final TempDirProvider tempDirProvider,
-            final PathCreator pathCreator,
             final ReferenceDataConfig referenceDataConfig,
             final ByteBufferPool byteBufferPool,
             final Factory keyValueStoreDbFactory,
@@ -177,17 +165,11 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             final TaskContext taskContext) {
 
         this.lmdbEnvFactory = lmdbEnvFactory;
-        this.tempDirProvider = tempDirProvider;
-        this.pathCreator = pathCreator;
         this.referenceDataConfig = referenceDataConfig;
         this.refDataValueConverter = refDataValueConverter;
-        this.dbDir = getStoreDir();
-        this.maxSize = referenceDataConfig.getMaxStoreSize();
-        this.maxReaders = referenceDataConfig.getMaxReaders();
-        this.maxPutsBeforeCommit = referenceDataConfig.getMaxPutsBeforeCommit();
         this.taskContext = taskContext;
 
-        this.lmdbEnvironment = createEnvironment(referenceDataConfig);
+        this.lmdbEnvironment = createEnvironment(referenceDataConfig.getLmdbConfig());
 
         // create all the databases
         this.keyValueStoreDb = keyValueStoreDbFactory.create(lmdbEnvironment);
@@ -223,15 +205,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         this.refStreamDefStripedReentrantLock = Striped.lazyWeakLock(stripesCount);
     }
 
-    private LmdbEnv createEnvironment(final ReferenceDataConfig referenceDataConfig) {
-        LOGGER.info(
-                "Creating RefDataOffHeapStore environment with [maxSize: {}, dbDir {}, maxReaders {}, " +
-                        "maxPutsBeforeCommit {}, isReadAheadEnabled {}]",
-                maxSize,
-                dbDir.toAbsolutePath().toString() + File.separatorChar,
-                maxReaders,
-                maxPutsBeforeCommit,
-                referenceDataConfig.isReadAheadEnabled());
+    private LmdbEnv createEnvironment(final LmdbConfig lmdbConfig) {
 
         // By default LMDB opens with readonly mmaps so you cannot mutate the bytebuffers inside a txn.
         // Instead you need to create a new bytebuffer for the value and put that. If you want faster writes
@@ -244,29 +218,12 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         // hardcoded into software, it needs to be reconfigurable. On Windows and MacOS you really shouldn't
         // set it larger than the amount of free space on the filesystem.
 
-        final List<EnvFlags> envFlags = new ArrayList<>();
-        envFlags.add(EnvFlags.MDB_NOTLS);
+        final LmdbEnv env = lmdbEnvFactory.builder(lmdbConfig)
+                .addEnvFlag(EnvFlags.MDB_NOTLS)
+                .build();
 
-        if (!referenceDataConfig.isReadAheadEnabled()) {
-            envFlags.add(EnvFlags.MDB_NORDAHEAD);
-        }
-
-        try {
-            final LmdbEnv env = lmdbEnvFactory.builder(dbDir)
-                    .withMaxReaderCount(maxReaders)
-                    .withMapSize(maxSize)
-                    .withMaxDbCount(7)
-                    .withEnvFlags(envFlags)
-                    .withLmdbSystemLibraryPath(referenceDataConfig.getLmdbSystemLibraryPath())
-                    .setIsReaderBlockedByWriter(referenceDataConfig.isReaderBlockedByWriter())
-                    .build();
-
-            LOGGER.info("Existing databases: [{}]", String.join(",", env.getDbiNames()));
-            return env;
-        } catch (Exception e) {
-            throw new RuntimeException("Error initialising LMDB environment for reference data at " +
-                    dbDir.toAbsolutePath().normalize(), e);
-        }
+        LOGGER.info("Existing databases: [{}]", String.join(",", env.getDbiNames()));
+        return env;
     }
 
     @Override
@@ -569,7 +526,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 refStreamDefinition,
                 effectiveTimeMs);
 
-        refDataLoader.setCommitInterval(maxPutsBeforeCommit);
+        refDataLoader.setCommitInterval(referenceDataConfig.getMaxPutsBeforeCommit());
         return refDataLoader;
     }
 
@@ -756,13 +713,13 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         doWithRefStreamDefinitionLock(refStreamDefStripedReentrantLock, refStreamDefinition, () -> {
 
             try {
-                try (final BatchingWriteTxnWrapper batchingWriteTxnWrapper = lmdbEnvironment.openBatchingWriteTxn(
+                try (final BatchingWriteTxn batchingWriteTxn = lmdbEnvironment.openBatchingWriteTxn(
                         referenceDataConfig.getMaxPurgeDeletesBeforeCommit())) {
 
                     // We now hold an open write txn so re-fetch the processing info in case something has
                     // changed between our first read and now
                     final Optional<ByteBuffer> optRefDataProcInfoBuf = processingInfoDb.getAsBytes(
-                            batchingWriteTxnWrapper.getTxn(), refStreamDefinitionBuf);
+                            batchingWriteTxn.getTxn(), refStreamDefinitionBuf);
 
                     if (optRefDataProcInfoBuf.isPresent()) {
                         final RefDataProcessingInfo refDataProcessingInfo = processingInfoDb.deserializeValue(
@@ -775,7 +732,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                                     refStreamDefinition,
                                     refDataProcessingInfo,
                                     refStreamDefinitionBuf,
-                                    batchingWriteTxnWrapper);
+                                    batchingWriteTxn);
 
                             refStreamPurgeCountsRef.set(refStreamPurgeCounts);
                         } else {
@@ -788,7 +745,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     }
 
                     // Force final commit
-                    batchingWriteTxnWrapper.commit();
+                    batchingWriteTxn.commit();
                 }
             } catch (Exception e) {
                 try {
@@ -815,7 +772,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     private RefStreamPurgeCounts purgeRefStreamDef(final RefStreamDefinition refStreamDefinition,
                                                    final RefDataProcessingInfo refDataProcessingInfo,
                                                    final ByteBuffer refStreamDefinitionBuf,
-                                                   final BatchingWriteTxnWrapper batchingWriteTxnWrapper) {
+                                                   final BatchingWriteTxn batchingWriteTxn) {
 
         taskContext.info(() -> "Purging reference stream " +
                 refStreamDefinition.getStreamId() + ":" +
@@ -841,27 +798,27 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         try {
             // mark it is purge in progress, so if we are committing part way through
             // other processes will know it is a partial state.
-            processingInfoDb.updateProcessingState(batchingWriteTxnWrapper.getTxn(),
+            processingInfoDb.updateProcessingState(batchingWriteTxn.getTxn(),
                     refStreamDefinitionBuf,
                     ProcessingState.PURGE_IN_PROGRESS,
                     false);
 
             // purge the data associated with this ref stream def
-            refStreamSummaryInfo = purgeRefStreamData(batchingWriteTxnWrapper, refStreamDefinition);
+            refStreamSummaryInfo = purgeRefStreamData(batchingWriteTxn, refStreamDefinition);
 
             //now delete the proc info entry
             LOGGER.debug("Deleting processing info entry for {}", refStreamDefinition);
             taskContext.info(() -> "Deleting processing info entry for " + refStreamDefinition);
 
             boolean didDeleteSucceed = processingInfoDb.delete(
-                    batchingWriteTxnWrapper.getTxn(), refStreamDefinitionBuf);
+                    batchingWriteTxn.getTxn(), refStreamDefinitionBuf);
 
             if (!didDeleteSucceed) {
                 throw new RuntimeException("Processing info entry not found so was not deleted");
             }
 
             // Ensure we commit at the end of each ref stream
-            batchingWriteTxnWrapper.commit();
+            batchingWriteTxn.commit();
 
             LOGGER.info("Completed purge of refStreamDefinition with stream {} (" +
                             "{} maps deleted, {} values deleted, {} values de-referenced)",
@@ -885,7 +842,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             try {
                 // We are still under the ref stream def lock here
                 processingInfoDb.updateProcessingState(
-                        batchingWriteTxnWrapper.getTxn(),
+                        batchingWriteTxn.getTxn(),
                         refStreamDefinitionBuf,
                         ProcessingState.PURGE_FAILED,
                         false);
@@ -925,7 +882,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         });
     }
 
-    private RefStreamPurgeCounts purgeRefStreamData(final BatchingWriteTxnWrapper batchingWriteTxnWrapper,
+    private RefStreamPurgeCounts purgeRefStreamData(final BatchingWriteTxn batchingWriteTxn,
                                                     final RefStreamDefinition refStreamDefinition) {
 
         LOGGER.debug("purgeRefStreamData({})", refStreamDefinition);
@@ -937,12 +894,12 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 // open a ranged cursor on the map forward table to scan all map defs for that stream def
                 // for each map def get the map uid
                 optMapUid = mapDefinitionUIDStore.getNextMapDefinition(
-                        batchingWriteTxnWrapper.getTxn(), refStreamDefinition, pooledUidBuffer::getByteBuffer);
+                        batchingWriteTxn.getTxn(), refStreamDefinition, pooledUidBuffer::getByteBuffer);
 
                 if (optMapUid.isPresent()) {
                     final UID mapUid = optMapUid.get();
                     final MapDefinition mapDefinition = mapDefinitionUIDStore.get(
-                            batchingWriteTxnWrapper.getTxn(), mapUid)
+                            batchingWriteTxn.getTxn(), mapUid)
                             .orElseThrow(() ->
                                     new RuntimeException(LogUtil.message(
                                             "We should be a mapDefinition if we have a UID, uid: {}",
@@ -951,7 +908,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     LOGGER.debug("Found mapUid {} for refStreamDefinition {}", mapUid, refStreamDefinition);
 
                     final Tuple2<Integer, Integer> dataPurgeCounts = purgeMapData(
-                            batchingWriteTxnWrapper, optMapUid.get());
+                            batchingWriteTxn, optMapUid.get());
 
                     summaryInfo = summaryInfo.increment(
                             1,
@@ -972,7 +929,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         return summaryInfo;
     }
 
-    private Tuple2<Integer, Integer> purgeMapData(final BatchingWriteTxnWrapper batchingWriteTxnWrapper,
+    private Tuple2<Integer, Integer> purgeMapData(final BatchingWriteTxn batchingWriteTxn,
                                                   final UID mapUid) {
 
         LOGGER.debug("purgeMapData(writeTxn, {})", mapUid);
@@ -983,7 +940,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         AtomicLong valueEntryDeleteCount = new AtomicLong();
         AtomicLong valueEntryDeReferenceCount = new AtomicLong();
         keyValueStoreDb.deleteMapEntries(
-                batchingWriteTxnWrapper,
+                batchingWriteTxn,
                 mapUid,
                 (writeTxn, keyValueStoreKeyBuffer, valueStoreKeyBuffer) -> {
 
@@ -1001,7 +958,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         // loop over all rangeValue entries for this mapUid and dereference/delete the associated
         // valueStore entry
         rangeStoreDb.deleteMapEntries(
-                batchingWriteTxnWrapper,
+                batchingWriteTxn,
                 mapUid,
                 (writeTxn, rangeValueStoreKeyBuffer, valueStoreKeyBuffer) -> {
 
@@ -1014,7 +971,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 });
         LOGGER.debug("Deleting range/value entries and de-referencing/deleting their values");
 
-        mapDefinitionUIDStore.deletePair(batchingWriteTxnWrapper.getTxn(), mapUid);
+        mapDefinitionUIDStore.deletePair(batchingWriteTxn.getTxn(), mapUid);
 
         return Tuple.of(valueEntryDeleteCount.intValue(), valueEntryDeReferenceCount.intValue());
     }
@@ -1352,15 +1309,15 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     processingInfoDb.getLastAccessedTimeRange();
 
             final SystemInfoResult.Builder builder = SystemInfoResult.builder().name(getSystemInfoName())
-                    .addDetail("Path", dbDir.toAbsolutePath().toString())
-                    .addDetail("Environment max size", maxSize)
+                    .addDetail("Path", lmdbEnvironment.getLocalDir().toAbsolutePath().normalize())
+                    .addDetail("Environment max size", referenceDataConfig.getLmdbConfig().getMaxStoreSize())
                     .addDetail("Environment current size",
                             ModelStringUtil.formatIECByteSizeString(getEnvironmentDiskUsage()))
                     .addDetail("Purge age", referenceDataConfig.getPurgeAge())
                     .addDetail("Purge cut off",
                             TimeUtils.durationToThreshold(referenceDataConfig.getPurgeAge()).toString())
-                    .addDetail("Max readers", maxReaders)
-                    .addDetail("Read-ahead enabled", referenceDataConfig.isReadAheadEnabled())
+                    .addDetail("Max readers", referenceDataConfig.getLmdbConfig().getMaxReaders())
+                    .addDetail("Read-ahead enabled", referenceDataConfig.getLmdbConfig().isReadAheadEnabled())
                     .addDetail("Current buffer pool size", byteBufferPool.getCurrentPoolSize())
                     .addDetail("Earliest lastAccessedTime", lastAccessedTimeRange._1()
                             .map(Instant::toString)
@@ -1386,7 +1343,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
     private long getEnvironmentDiskUsage() {
         long totalSizeBytes;
-        try (final Stream<Path> fileStream = Files.list(dbDir)) {
+        try (final Stream<Path> fileStream = Files.list(lmdbEnvironment.getLocalDir().toAbsolutePath())) {
             totalSizeBytes = fileStream
                     .mapToLong(path -> {
                         try {
@@ -1398,60 +1355,11 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     .sum();
         } catch (IOException
                 | RuntimeException e) {
-            LOGGER.error("Error calculating disk usage for path {}", dbDir.toAbsolutePath().toString(), e);
+            LOGGER.error("Error calculating disk usage for path {}",
+                    lmdbEnvironment.getLocalDir().toAbsolutePath().normalize(), e);
             totalSizeBytes = -1;
         }
         return totalSizeBytes;
-    }
-
-    private Path getStoreDir() {
-        String storeDirStr = referenceDataConfig.getLocalDir();
-        storeDirStr = pathCreator.replaceSystemProperties(storeDirStr);
-        storeDirStr = pathCreator.makeAbsolute(storeDirStr);
-        Path storeDir;
-        if (storeDirStr == null) {
-            LOGGER.warn("Off heap store dir is not set ({}), falling back to temporary directory {}. " +
-                            "If your temporary directory is cleared on host restart then all reference data will " +
-                            "also be lost.",
-                    referenceDataConfig.getFullPath(ReferenceDataConfig.LOCAL_DIR_PROP_NAME),
-                    tempDirProvider.get());
-
-            storeDir = tempDirProvider.get();
-            Objects.requireNonNull(storeDir, "Temp dir is not set");
-            storeDir = storeDir.resolve(DEFAULT_STORE_SUB_DIR_NAME);
-        } else {
-            storeDirStr = pathCreator.replaceSystemProperties(storeDirStr);
-            storeDirStr = pathCreator.makeAbsolute(storeDirStr);
-            storeDir = Paths.get(storeDirStr);
-        }
-
-        try {
-            LOGGER.info("Ensuring directory {} exists (from configuration property {})",
-                    storeDir.toAbsolutePath(),
-                    referenceDataConfig.getFullPath(ReferenceDataConfig.LOCAL_DIR_PROP_NAME));
-            Files.createDirectories(storeDir);
-        } catch (IOException e) {
-            throw new RuntimeException(
-                    LogUtil.message("Error ensuring directory {} exists (from configuration property {})",
-                            storeDir.toAbsolutePath(),
-                            referenceDataConfig.getFullPath(ReferenceDataConfig.LOCAL_DIR_PROP_NAME)), e);
-        }
-
-        if (!Files.isReadable(storeDir)) {
-            throw new RuntimeException(
-                    LogUtil.message("Directory {} (from configuration property {}) is not readable",
-                            storeDir.toAbsolutePath(),
-                            referenceDataConfig.getFullPath(ReferenceDataConfig.LOCAL_DIR_PROP_NAME)));
-        }
-
-        if (!Files.isWritable(storeDir)) {
-            throw new RuntimeException(
-                    LogUtil.message("Directory {} (from configuration property {}) is not writable",
-                            storeDir.toAbsolutePath(),
-                            referenceDataConfig.getFullPath(ReferenceDataConfig.LOCAL_DIR_PROP_NAME)));
-        }
-
-        return storeDir;
     }
 
     private static final class PurgeCounts {

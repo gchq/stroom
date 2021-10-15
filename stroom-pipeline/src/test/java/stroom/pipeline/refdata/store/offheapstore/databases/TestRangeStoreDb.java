@@ -19,7 +19,7 @@ package stroom.pipeline.refdata.store.offheapstore.databases;
 
 import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.bytebuffer.ByteBufferUtils;
-import stroom.lmdb.LmdbEnv.BatchingWriteTxnWrapper;
+import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
 import stroom.pipeline.refdata.store.offheapstore.RangeStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
@@ -279,10 +279,10 @@ class TestRangeStoreDb extends AbstractLmdbDbTest {
     }
 
     private void doForEachTest(final UID uid, final int expectedEntryCount) throws Exception {
-        try (final BatchingWriteTxnWrapper batchingWriteTxnWrapper = lmdbEnv.openBatchingWriteTxn(2)) {
+        try (final BatchingWriteTxn batchingWriteTxn = lmdbEnv.openBatchingWriteTxn(2)) {
             AtomicInteger cnt = new AtomicInteger(0);
             rangeStoreDb.deleteMapEntries(
-                    batchingWriteTxnWrapper,
+                    batchingWriteTxn,
                     uid,
                     (writeTxn2, keyBuf, valBuf) -> {
                         cnt.incrementAndGet();

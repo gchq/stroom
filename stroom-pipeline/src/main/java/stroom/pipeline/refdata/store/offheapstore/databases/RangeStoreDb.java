@@ -23,7 +23,7 @@ import stroom.bytebuffer.PooledByteBuffer;
 import stroom.lmdb.AbstractLmdbDb;
 import stroom.lmdb.EntryConsumer;
 import stroom.lmdb.LmdbEnv;
-import stroom.lmdb.LmdbEnv.BatchingWriteTxnWrapper;
+import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
 import stroom.pipeline.refdata.store.offheapstore.RangeStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
@@ -223,7 +223,7 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
         return KeyRange.atLeastBackward(startKeyBuf);
     }
 
-    public void deleteMapEntries(final BatchingWriteTxnWrapper batchingWriteTxnWrapper,
+    public void deleteMapEntries(final BatchingWriteTxn batchingWriteTxn,
                                  final UID mapUid,
                                  final EntryConsumer entryConsumer) {
 
@@ -248,7 +248,7 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
 
             while (!isComplete) {
                 try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(
-                        batchingWriteTxnWrapper.getTxn(), atLeastKeyRange)) {
+                        batchingWriteTxn.getTxn(), atLeastKeyRange)) {
 
                     int batchCount = 0;
                     boolean foundEntry = false;
@@ -265,12 +265,12 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
                                     ByteBufferUtils.byteBufferInfo(keyVal.val())));
 
                             // pass the found kv pair from this entry to the consumer
-                            entryConsumer.accept(batchingWriteTxnWrapper.getTxn(), keyVal.key(), keyVal.val());
+                            entryConsumer.accept(batchingWriteTxn.getTxn(), keyVal.key(), keyVal.val());
                             iterator.remove();
                             batchCount++;
 
                             // Having deleted one entry and associated value, commit if we have reached our batch size
-                            final boolean isBatchFull = batchingWriteTxnWrapper.incrementBatchCount();
+                            final boolean isBatchFull = batchingWriteTxn.incrementBatchCount();
 
                             if (isBatchFull) {
                                 // txn is now gone so need to break out and start another cursor with a new txn
@@ -295,7 +295,7 @@ public class RangeStoreDb extends AbstractLmdbDb<RangeStoreKey, ValueStoreKey> {
                 // Force the commit as we either have a full batch or we have finished
                 // We may now have a partial purge committed but we are still under write lock so no other threads
                 // can purge or load and there is a lock on the ref stream.
-                batchingWriteTxnWrapper.commit();
+                batchingWriteTxn.commit();
             }
         }
     }
