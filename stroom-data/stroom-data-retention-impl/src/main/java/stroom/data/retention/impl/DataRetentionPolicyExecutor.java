@@ -25,6 +25,7 @@ import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.meta.api.MetaService;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskTerminatedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -38,7 +39,6 @@ import io.vavr.Tuple2;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.Period;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -121,14 +121,17 @@ public class DataRetentionPolicyExecutor {
      */
     void exec(final Instant now) {
         clusterLockService.tryLock(LOCK_NAME, () -> {
+            final LogExecutionTime logExecutionTime = new LogExecutionTime();
             try {
                 info(() -> "Starting data retention process");
-                final LogExecutionTime logExecutionTime = new LogExecutionTime();
                 // MUST truncate down to millis as the DB stores in millis and TimePeriod
                 // also truncates to millis so we need to work to a consistent precision else
                 // some of the date logic fails due to micro second differences
                 process(now.truncatedTo(ChronoUnit.MILLIS));
                 info(() -> "Finished data retention process in " + logExecutionTime);
+            } catch (final TaskTerminatedException e) {
+                LOGGER.debug("Task terminated", e);
+                LOGGER.error(JOB_NAME + " - Task terminated after " + logExecutionTime);
             } catch (final RuntimeException e) {
                 LOGGER.error(JOB_NAME + " - Error enforcing data retention policies: {}", e.getMessage(), e);
             }
@@ -143,18 +146,11 @@ public class DataRetentionPolicyExecutor {
 
             if (activeRules != null && activeRules.size() > 0) {
 
-
-                // Use tracker to establish how long ago we last ran this process so we can avoid
-                // scanning over data that has already been evaluated
-//                final Duration timeSinceLastRun = getTimeSinceLastRun(now, dataRetentionRules);
-
                 // Create a map of unique periods with the set of rules that apply to them.
                 final List<ProcessablePeriod> processablePeriods = getProcessPeriods(
                         dataRetentionRules,
                         activeRules,
                         now);
-
-                final AtomicBoolean allSuccessful = new AtomicBoolean(true);
 
                 // Rules must be in ascending order by rule number so they applied in the correct order
                 processablePeriods.stream()
@@ -163,9 +159,8 @@ public class DataRetentionPolicyExecutor {
                                 processablePeriod.timePeriod.getFrom(), Comparator.reverseOrder()))
                         .takeWhile(entry -> {
                             if (Thread.currentThread().isInterrupted()) {
-                                allSuccessful.set(false);
                                 LOGGER.error("Thread interrupted");
-                                return false;
+                                throw new TaskTerminatedException();
                             } else {
                                 return true;
                             }
@@ -182,7 +177,7 @@ public class DataRetentionPolicyExecutor {
                             processPeriod(period, sortedActions, processablePeriod.ruleAge, now);
 
                             // We have successfully processed this period so update the tracker
-                            // so the next run can work from where we got to
+                            // so the next run on this period can work from where we got to
                             final DataRetentionTracker newTracker = new DataRetentionTracker(
                                     dataRetentionRules.getVersion(),
                                     processablePeriod.ruleAge,
@@ -284,15 +279,22 @@ public class DataRetentionPolicyExecutor {
     }
 
     private String getPeriodInfo(final TimePeriod period, final Instant now) {
-        final Period fromTimeAge = TimeUtils.instantAsAge(period.getFrom(), now);
-        final Period toTimeAge = TimeUtils.instantAsAge(period.getTo(), now);
+        final String fromTimeAgeStr = Instant.EPOCH.equals(period.getFrom())
+                ? "EPOCH"
+                : TimeUtils.instantAsAgeStr(period.getFrom(), now) + " ago";
+        final String toTimeAgeStr = TimeUtils.instantAsAgeStr(period.getTo(), now);
 
-        return LogUtil.message("{} ago => {} ago ({} => {}) [duration: {}]",
-                fromTimeAge,
-                toTimeAge,
+        // Duration is better for shorter periods as Period will just say P0D for small stuff
+        final String durationStr = period.getDuration().compareTo(Duration.ofDays(30)) < 0
+                ? period.getDuration().toString()
+                : period.getPeriod().toString();
+
+        return LogUtil.message("{} => {} ago ({} => {}) [duration: {}]",
+                fromTimeAgeStr,
+                toTimeAgeStr,
                 period.getFrom(),
                 period.getTo(),
-                period.getPeriod());
+                TimeUtils.periodAsAgeStr(period));
     }
 
     private void processPeriod(final TimePeriod period,
@@ -300,11 +302,6 @@ public class DataRetentionPolicyExecutor {
                                final String ruleAge,
                                final Instant now) {
         info(() -> {
-
-            // Get the ages of the two dates in the period
-            final Period fromTimeAge = TimeUtils.instantAsAge(period.getFrom(), now);
-            final Period toTimeAge = TimeUtils.instantAsAge(period.getTo(), now);
-
             return LogUtil.message(
                     "Considering streams created " +
                             "between {}, {} rule actions:\n{}",
