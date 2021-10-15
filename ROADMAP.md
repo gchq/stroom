@@ -85,7 +85,7 @@ Add support for XSLT 3.
 ## Accessibility Improvements
 Refactoring some elements of the UI to improve accessibility.
 
-# v10+
+# v8+
 
 ## Authorisation enhancements
 The Stroom authorisation system is split out into a separate service and provides integration with external authorisation mechanisms.
