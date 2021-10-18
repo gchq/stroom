@@ -103,7 +103,15 @@ public class DataRetentionRule {
                                                 final boolean enabled,
                                                 final ExpressionOperator expression) {
         // Forever so the age parts are ignored.
-        return new DataRetentionRule(ruleNumber, creationTime, name, enabled, expression, 50, TimeUnit.YEARS, true);
+        return new DataRetentionRule(
+                ruleNumber,
+                creationTime,
+                name,
+                enabled,
+                expression,
+                50,
+                TimeUnit.YEARS,
+                true);
     }
 
     public static DataRetentionRule ageRule(final int ruleNumber,
@@ -114,7 +122,15 @@ public class DataRetentionRule {
                                             final int age,
                                             final TimeUnit timeUnit) {
         // Forever so the age parts are ignored.
-        return new DataRetentionRule(ruleNumber, creationTime, name, enabled, expression, age, timeUnit, false);
+        return new DataRetentionRule(
+                ruleNumber,
+                creationTime,
+                name,
+                enabled,
+                expression,
+                age,
+                timeUnit,
+                false);
     }
 
     public int getRuleNumber() {
@@ -152,6 +168,10 @@ public class DataRetentionRule {
     @XmlTransient
     @JsonIgnore
     public String getAgeString() {
+
+        // IMPORTANT - The return value is used as the serialised form of the rule age in the
+        // meta_retention_tracker table so think carefully before you change it
+
         if (forever) {
             return FOREVER;
         }
