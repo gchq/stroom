@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2497** : Added summary to orphan file finder.
 
+* Issue **#2500** : Add a primary key to the `meta_retention_tracker` table for MySQL Group Replication.
+
+* Change meta retention tracking to track at the time period level so a killed job preserves the position of the periods already processed.
+
 * Issue **#2513** : Fixed stepping to unique values.
 
 * Issue **#2496** : Fixed issue where data browser was showing duplicate streams.

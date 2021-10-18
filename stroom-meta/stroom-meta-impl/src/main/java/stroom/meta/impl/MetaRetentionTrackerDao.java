@@ -2,11 +2,13 @@ package stroom.meta.impl;
 
 import stroom.data.retention.api.DataRetentionTracker;
 
-import java.util.Optional;
+import java.util.List;
 
 public interface MetaRetentionTrackerDao {
 
-    Optional<DataRetentionTracker> getTracker();
+    List<DataRetentionTracker> getTrackers();
 
-    void createOrUpdate(DataRetentionTracker dataRetentionTracker);
+    void createOrUpdate(final DataRetentionTracker dataRetentionTracker);
+
+    int deleteTrackers(final String rulesVersion);
 }

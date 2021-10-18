@@ -6,24 +6,41 @@ import java.util.Objects;
 
 public class DataRetentionTracker {
 
-    private final Instant lastRunTime;
     private final String rulesVersion;
+    private final String ruleAge;
+    private final Instant lastRunTime;
 
-    public DataRetentionTracker(final Instant lastRunTime, final String rulesVersion) {
+    public DataRetentionTracker(final String rulesVersion,
+                                final String ruleAge,
+                                final Instant lastRunTime) {
         this.lastRunTime = Objects.requireNonNull(lastRunTime.truncatedTo(ChronoUnit.MILLIS));
         this.rulesVersion = Objects.requireNonNull(rulesVersion);
+        this.ruleAge = ruleAge;
     }
 
-    public DataRetentionTracker(final long lastRunTimeMs, final String rulesVersion) {
-        this(Instant.ofEpochMilli(lastRunTimeMs), rulesVersion);
+    public DataRetentionTracker(final String rulesVersion,
+                                final String ruleAge,
+                                final long lastRunTimeMs) {
+        this(
+                rulesVersion,
+                ruleAge,
+                Instant.ofEpochMilli(lastRunTimeMs));
+    }
+
+    public DataRetentionTracker copy(final Instant newLastRunTime) {
+        return new DataRetentionTracker(rulesVersion, ruleAge, newLastRunTime);
+    }
+
+    public String getRulesVersion() {
+        return rulesVersion;
     }
 
     public Instant getLastRunTime() {
         return lastRunTime;
     }
 
-    public String getRulesVersion() {
-        return rulesVersion;
+    public String getRuleAge() {
+        return ruleAge;
     }
 
     @Override
@@ -35,20 +52,21 @@ public class DataRetentionTracker {
             return false;
         }
         final DataRetentionTracker that = (DataRetentionTracker) o;
-        return lastRunTime.equals(that.lastRunTime) &&
-                rulesVersion.equals(that.rulesVersion);
+        return Objects.equals(rulesVersion, that.rulesVersion) && Objects.equals(ruleAge,
+                that.ruleAge) && Objects.equals(lastRunTime, that.lastRunTime);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(lastRunTime, rulesVersion);
+        return Objects.hash(rulesVersion, ruleAge, lastRunTime);
     }
 
     @Override
     public String toString() {
         return "DataRetentionTracker{" +
-                "lastRunTime=" + lastRunTime +
-                ", rulesVersion='" + rulesVersion + '\'' +
+                "rulesVersion='" + rulesVersion + '\'' +
+                ", ruleAge='" + ruleAge + '\'' +
+                ", lastRunTime=" + lastRunTime +
                 '}';
     }
 }

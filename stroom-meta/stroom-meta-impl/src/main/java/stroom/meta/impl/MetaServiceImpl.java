@@ -684,8 +684,13 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     @Override
-    public Optional<DataRetentionTracker> getRetentionTracker() {
-        return metaRetentionTrackerDao.getTracker();
+    public List<DataRetentionTracker> getRetentionTrackers() {
+        return metaRetentionTrackerDao.getTrackers();
+    }
+
+    @Override
+    public void deleteTrackers(final String rulesVersion) {
+        metaRetentionTrackerDao.deleteTrackers(rulesVersion);
     }
 
     @Override
