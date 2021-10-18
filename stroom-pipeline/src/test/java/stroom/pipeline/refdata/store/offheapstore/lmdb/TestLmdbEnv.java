@@ -3,13 +3,15 @@ package stroom.pipeline.refdata.store.offheapstore.lmdb;
 import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.lmdb.BasicLmdbDb;
 import stroom.lmdb.LmdbEnv;
-import stroom.lmdb.LmdbEnv.BatchingWriteTxnWrapper;
+import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
 import stroom.lmdb.LmdbEnvFactory;
+import stroom.lmdb.LmdbLibraryConfig;
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.store.offheapstore.serdes.StringSerde;
 import stroom.util.concurrent.HighWaterMarkTracker;
 import stroom.util.io.ByteSize;
 import stroom.util.io.PathCreator;
+import stroom.util.io.TempDirProvider;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -100,13 +102,13 @@ public class TestLmdbEnv {
     void testBatchingWriteTxnWrapper_withBatchSize() throws Exception {
         buildEnvAndDb(true);
 
-        try (final BatchingWriteTxnWrapper batchingWriteTxnWrapper = lmdbEnv.openBatchingWriteTxn(2)) {
+        try (final BatchingWriteTxn batchingWriteTxn = lmdbEnv.openBatchingWriteTxn(2)) {
             for (int i = 0; i < 9; i++) {
-                database.put(batchingWriteTxnWrapper.getTxn(), buildKey(i), buildValue(i), false);
-                batchingWriteTxnWrapper.commitIfRequired();
+                database.put(batchingWriteTxn.getTxn(), buildKey(i), buildValue(i), false);
+                batchingWriteTxn.commitIfRequired();
             }
             // final commit
-            batchingWriteTxnWrapper.commit();
+            batchingWriteTxn.commit();
         }
 
         Assertions.assertThat(database.getEntryCount())
@@ -117,14 +119,14 @@ public class TestLmdbEnv {
     void testBatchingWriteTxnWrapper_withBatchSize_withAbort() throws Exception {
         buildEnvAndDb(true);
 
-        try (final BatchingWriteTxnWrapper batchingWriteTxnWrapper = lmdbEnv.openBatchingWriteTxn(2)) {
+        try (final BatchingWriteTxn batchingWriteTxn = lmdbEnv.openBatchingWriteTxn(2)) {
             for (int i = 0; i < 9; i++) {
-                database.put(batchingWriteTxnWrapper.getTxn(), buildKey(i), buildValue(i), false);
-                batchingWriteTxnWrapper.commitIfRequired();
+                database.put(batchingWriteTxn.getTxn(), buildKey(i), buildValue(i), false);
+                batchingWriteTxn.commitIfRequired();
             }
 
             // abort the txn so no. 9 should be rolled back leaving 8
-            batchingWriteTxnWrapper.abort();
+            batchingWriteTxn.abort();
         }
 
         Assertions.assertThat(database.getEntryCount())
@@ -135,7 +137,7 @@ public class TestLmdbEnv {
     void testBatchingWriteTxnWrapper_noWork() throws Exception {
         buildEnvAndDb(true);
 
-        try (final BatchingWriteTxnWrapper batchingWriteTxnWrapper = lmdbEnv.openBatchingWriteTxn(2)) {
+        try (final BatchingWriteTxn batchingWriteTxn = lmdbEnv.openBatchingWriteTxn(2)) {
             // do nothing
         }
 
@@ -147,8 +149,8 @@ public class TestLmdbEnv {
     void testBatchingWriteTxnWrapper_noWork_abort() throws Exception {
         buildEnvAndDb(true);
 
-        try (final BatchingWriteTxnWrapper batchingWriteTxnWrapper = lmdbEnv.openBatchingWriteTxn(2)) {
-            batchingWriteTxnWrapper.abort();
+        try (final BatchingWriteTxn batchingWriteTxn = lmdbEnv.openBatchingWriteTxn(2)) {
+            batchingWriteTxn.abort();
         }
 
         Assertions.assertThat(database.getEntryCount())
@@ -168,8 +170,9 @@ public class TestLmdbEnv {
                 Arrays.toString(envFlags));
 
         final PathCreator pathCreator = new PathCreator(() -> dbDir, () -> dbDir);
+        final TempDirProvider tempDirProvider = () -> dbDir;
 
-        lmdbEnv = new LmdbEnvFactory(pathCreator)
+        lmdbEnv = new LmdbEnvFactory(pathCreator, tempDirProvider, new LmdbLibraryConfig())
                 .builder(dbDir)
                 .withMapSize(DB_MAX_SIZE)
                 .withMaxDbCount(1)

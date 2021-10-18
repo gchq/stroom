@@ -20,7 +20,7 @@ package stroom.pipeline.refdata.store.offheapstore.databases;
 
 import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.bytebuffer.ByteBufferUtils;
-import stroom.lmdb.LmdbEnv.BatchingWriteTxnWrapper;
+import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
 import stroom.pipeline.refdata.store.offheapstore.KeyValueStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.store.offheapstore.ValueStoreKey;
@@ -104,9 +104,9 @@ class TestKeyValueStoreDb extends AbstractLmdbDbTest {
                     .isEqualTo(9);
         });
 
-        try (final BatchingWriteTxnWrapper batchingWriteTxnWrapper = lmdbEnv.openBatchingWriteTxn(2)) {
+        try (final BatchingWriteTxn batchingWriteTxn = lmdbEnv.openBatchingWriteTxn(2)) {
             keyValueStoreDb.deleteMapEntries(
-                    batchingWriteTxnWrapper,
+                    batchingWriteTxn,
                     UID.of(2, ByteBuffer.allocateDirect(10)),
                     (writeTxn, keyBuffer, valueBuffer) -> {
                         LOGGER.info("{} - {}",
@@ -114,7 +114,7 @@ class TestKeyValueStoreDb extends AbstractLmdbDbTest {
                                 ByteBufferUtils.byteBufferInfo(keyBuffer));
                     });
 
-            assertThat(keyValueStoreDb.getEntryCount(batchingWriteTxnWrapper.getTxn()))
+            assertThat(keyValueStoreDb.getEntryCount(batchingWriteTxn.getTxn()))
                     .isEqualTo(6);
         }
     }
@@ -174,9 +174,9 @@ class TestKeyValueStoreDb extends AbstractLmdbDbTest {
     }
 
     private void doForEachTest(final UID uid, final int expectedEntryCount) throws Exception {
-        try (final BatchingWriteTxnWrapper batchingWriteTxnWrapper = lmdbEnv.openBatchingWriteTxn(2)) {
+        try (final BatchingWriteTxn batchingWriteTxn = lmdbEnv.openBatchingWriteTxn(2)) {
             AtomicInteger cnt = new AtomicInteger(0);
-            keyValueStoreDb.deleteMapEntries(batchingWriteTxnWrapper, uid, (writeTxn, keyBuf, valBuf) -> {
+            keyValueStoreDb.deleteMapEntries(batchingWriteTxn, uid, (writeTxn, keyBuf, valBuf) -> {
                 cnt.incrementAndGet();
                 LOGGER.info("{} {}",
                         ByteBufferUtils.byteBufferInfo(keyBuf),
