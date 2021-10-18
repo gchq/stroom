@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2497** : Added summary to orphan file finder.
+
 * Issue **#2513** : Fixed stepping to unique values.
 
 * Issue **#2496** : Fixed issue where data browser was showing duplicate streams.
