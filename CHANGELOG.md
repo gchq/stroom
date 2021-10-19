@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2501** : Change reference data store to use consistent approach to last access time truncation.
 
+* Issue **#2497** : Added summary to orphan file finder.
+
 * Issue **#2500** : Add a primary key to the `meta_retention_tracker` table for MySQL Group Replication.
 
 * Change meta retention tracking to track at the time period level so a killed job preserves the position of the periods already processed.
