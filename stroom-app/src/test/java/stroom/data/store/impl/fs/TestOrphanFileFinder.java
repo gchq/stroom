@@ -36,8 +36,10 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -73,6 +75,9 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
         final Meta md = commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
+        final String date = ZonedDateTime
+                .ofInstant(Instant.ofEpochMilli(md.getCreateMs()), ZoneOffset.UTC)
+                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
 
         commonTestScenarioCreator.createSampleBlankProcessedFile(feedName, md);
 
@@ -95,7 +100,9 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
         final List<String> fileList = scan(summary);
         assertThat(summary.toString()).isEqualTo("Summary:\n" +
                 "RAW_EVENTS\n" +
-                " - 2021/10/18 - 1\n");
+                " - " +
+                date +
+                " - 1\n");
         final List<FsVolume> volumeList = volumeService.find(FindFsVolumeCriteria.matchAll()).getValues();
         assertThat(volumeList.size()).isEqualTo(1);
         assertThat(fileList).contains(FileUtil.getCanonicalPath(test1));
@@ -107,7 +114,9 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
         scan(summary);
         assertThat(summary.toString()).isEqualTo("");
 
-        final ZonedDateTime oldDate = ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_SIXTY);
+        final ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
+        final ZonedDateTime oldDate = now.plusDays(NEG_SIXTY);
+        final String date = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
 
         // Write a file 2 files ... on we leave locked and the other not locked
         final String feedName = FileSystemTestUtil.getUniqueTestString();
@@ -158,24 +167,26 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
             final Path olddir = directory.resolve("olddir");
             FileUtil.mkdirs(olddir);
             FileUtil.setLastModified(olddir,
-                    ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_SIXTY).toInstant().toEpochMilli());
+                    now.plusDays(NEG_SIXTY).toInstant().toEpochMilli());
 
             final Path newdir = directory.resolve("newdir");
             FileUtil.mkdirs(newdir);
             FileUtil.setLastModified(newdir,
-                    ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_SIXTY).toInstant().toEpochMilli());
+                    now.plusDays(NEG_SIXTY).toInstant().toEpochMilli());
 
             final Path oldfileinnewdir = newdir.resolve("oldfileinnewdir.txt");
             Files.createFile(oldfileinnewdir);
             FileUtil.setLastModified(oldfileinnewdir,
-                    ZonedDateTime.now(ZoneOffset.UTC).plusDays(NEG_FOUR).toInstant().toEpochMilli());
+                    now.plusDays(NEG_FOUR).toInstant().toEpochMilli());
 
             // Run the clean
             final FsOrphanFileFinderSummary summary2 = new FsOrphanFileFinderSummary();
             final List<String> fileList = scan(summary2);
             assertThat(summary2.toString()).isEqualTo("Summary:\n" +
                     "RAW_EVENTS\n" +
-                    " - 2021/10/18 - 3\n");
+                    " - " +
+                    date +
+                    " - 3\n");
 
             final List<FsVolume> volumeList = volumeService.find(FindFsVolumeCriteria.matchAll()).getValues();
             assertThat(volumeList.size()).isEqualTo(1);
