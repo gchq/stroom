@@ -936,7 +936,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 : null);
 
         if (result != null && result.hasErrors()) {
-            setNavigationControlsVisible(false);
+            // Data may be multi-part so one part may have errors but the rest not
+            setNavigationControlsVisible(true);
             getView().setSourceLinkVisible(false);
             getView().setProgressView(null);
         } else {
