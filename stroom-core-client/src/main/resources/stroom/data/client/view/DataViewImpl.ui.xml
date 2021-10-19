@@ -52,7 +52,6 @@
 		.sourceLinkLabel {
 		margin: 0px;
 		margin-top: 2px;
-		cursor: pointer;
 		padding-left: 0.75em;
 		padding-right: 0.75em;
 		float: left;
@@ -62,9 +61,6 @@
 		float: left;
 		}
 
-		.sourceLinkLabel:hover {
-		text-decoration: underline;
-		}
 	</ui:style>
 
 	<g:DockLayoutPanel unit="PX" styleName="{style.layout}">
@@ -83,7 +79,7 @@
 					<v:ResizeSimplePanel ui:field="navigatorContainer"
 										 styleName="{style.navigatorContainer}"/>
 					<g:Label ui:field="sourceLinkLabel"
-							 styleName="{style.sourceLinkLabel}"/>
+							 styleName="{style.sourceLinkLabel} clickableLabel"/>
 				</g:FlowPanel>
 			</g:FlowPanel>
 		</g:north>
