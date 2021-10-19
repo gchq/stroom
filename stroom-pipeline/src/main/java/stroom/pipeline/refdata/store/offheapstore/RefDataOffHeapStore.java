@@ -248,7 +248,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         optProcessingInfo.ifPresent(processingInfo -> {
             // Truncate the last access time so it is clear to anyone looking at the values that
             // they are approx.
-           
+
             final RefDataProcessingInfo updatedProcessingInfo = processingInfo.updateLastAccessedTime();
 
             if (!processingInfo.getLastAccessedTime().equals(updatedProcessingInfo.getLastAccessedTime())) {
