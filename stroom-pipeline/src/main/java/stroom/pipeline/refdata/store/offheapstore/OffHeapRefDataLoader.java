@@ -19,7 +19,7 @@ package stroom.pipeline.refdata.store.offheapstore;
 
 import stroom.bytebuffer.PooledByteBuffer;
 import stroom.lmdb.LmdbEnv;
-import stroom.lmdb.LmdbEnv.WriteTxnWrapper;
+import stroom.lmdb.LmdbEnv.WriteTxn;
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.ProcessingState;
@@ -70,7 +70,7 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(OffHeapRefDataLoader.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(OffHeapRefDataLoader.class);
 
-    private WriteTxnWrapper writeTxn = null;
+    private WriteTxn writeTxn = null;
     private Instant txnStartTime = null;
     private final RefDataOffHeapStore refDataOffHeapStore;
     private final Lock refStreamDefReentrantLock;

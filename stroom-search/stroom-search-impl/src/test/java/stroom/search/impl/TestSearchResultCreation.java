@@ -5,6 +5,8 @@ import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.DateTimeSettings;
+import stroom.lmdb.LmdbEnvFactory;
+import stroom.lmdb.LmdbLibraryConfig;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
@@ -28,9 +30,8 @@ import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.DataStoreFactory;
 import stroom.query.common.v2.Item;
 import stroom.query.common.v2.Items;
-import stroom.query.common.v2.LmdbConfig;
 import stroom.query.common.v2.LmdbDataStoreFactory;
-import stroom.query.common.v2.LmdbEnvironmentFactory;
+import stroom.query.common.v2.ResultStoreConfig;
 import stroom.query.common.v2.SearchDebugUtil;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.Sizes;
@@ -38,6 +39,7 @@ import stroom.query.common.v2.SizesProvider;
 import stroom.search.extraction.ExtractionReceiver;
 import stroom.search.extraction.ExtractionReceiverImpl;
 import stroom.util.io.PathCreator;
+import stroom.util.io.TempDirProvider;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -74,13 +76,14 @@ class TestSearchResultCreation {
 
     @BeforeEach
     void setup(@TempDir final Path tempDir) {
-        final LmdbConfig lmdbConfig = new LmdbConfig();
+        final ResultStoreConfig resultStoreConfig = new ResultStoreConfig();
+        final LmdbLibraryConfig lmdbLibraryConfig = new LmdbLibraryConfig();
+        final TempDirProvider tempDirProvider = () -> tempDir;
         final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
-        final LmdbEnvironmentFactory lmdbEnvironmentFactory =
-                new LmdbEnvironmentFactory(lmdbConfig, pathCreator);
+        final LmdbEnvFactory lmdbEnvFactory = new LmdbEnvFactory(pathCreator, tempDirProvider, lmdbLibraryConfig);
         dataStoreFactory = new LmdbDataStoreFactory(
-                lmdbEnvironmentFactory,
-                lmdbConfig);
+                lmdbEnvFactory,
+                resultStoreConfig);
     }
 
     @Test

@@ -88,6 +88,10 @@ public class XPathFilter {
         this.ignoreCase = ignoreCase;
     }
 
+    public Map<String, Rec> getUniqueValues() {
+        return uniqueValues;
+    }
+
     public Rec getUniqueRecord(final String value) {
         if (uniqueValues == null) {
             return null;

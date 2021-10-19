@@ -1056,22 +1056,24 @@ class MetaDaoImpl implements MetaDao, Clearable {
             return identified;
         }
         for (ExpressionItem child : expr.getChildren()) {
-            if (child instanceof ExpressionTerm) {
-                ExpressionTerm term = (ExpressionTerm) child;
+            if (child.enabled()) {
+                if (child instanceof ExpressionTerm) {
+                    ExpressionTerm term = (ExpressionTerm) child;
 
-                if (extendedFieldNames.contains(term.getField())) {
-                    Optional<Integer> key = metaKeyDao.getIdForName(term.getField());
-                    key.ifPresent(identified::add);
+                    if (extendedFieldNames.contains(term.getField())) {
+                        Optional<Integer> key = metaKeyDao.getIdForName(term.getField());
+                        key.ifPresent(identified::add);
+                    }
+                } else if (child instanceof ExpressionOperator) {
+                    identified.addAll(identifyExtendedAttributesFields((ExpressionOperator) child, identified));
+                } else {
+                    //Don't know what this is!
+                    LOGGER.warn("Unknown ExpressionItem type " + child.getClass().getName() +
+                            " unable to optimise meta query");
+                    //Allow search to succeed without optimisation
+                    return IntStream.range(metaKeyDao.getMinId(),
+                            metaKeyDao.getMaxId()).boxed().collect(Collectors.toSet());
                 }
-            } else if (child instanceof ExpressionOperator) {
-                identified.addAll(identifyExtendedAttributesFields((ExpressionOperator) child, identified));
-            } else {
-                //Don't know what this is!
-                LOGGER.warn("Unknown ExpressionItem type " + child.getClass().getName() +
-                        " unable to optimise meta query");
-                //Allow search to succeed without optimisation
-                return IntStream.range(metaKeyDao.getMinId(),
-                        metaKeyDao.getMaxId()).boxed().collect(Collectors.toSet());
             }
         }
         return identified;
