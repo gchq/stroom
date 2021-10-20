@@ -692,3 +692,16 @@ td {
 .popupPanel-dragGlassVisible {
 	visibility: visible;
 }
+
+.clickableLabel.enabled {
+    cursor: pointer;
+}
+
+.clickableLabel.enabled:hover {
+    text-decoration: underline;
+}
+
+.clickableLabel.disabled {
+    color: #8f8f8f;
+    cursor: default;
+}

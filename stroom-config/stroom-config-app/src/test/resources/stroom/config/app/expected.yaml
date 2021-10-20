@@ -325,6 +325,9 @@ appConfig:
       expireAfterWrite: null
   lifecycle:
     enabled: true
+  lmdbLibrary:
+    providedSystemLibraryPath: null
+    systemLibraryExtractDir: "lmdb_library"
   node:
     db:
       connection:
@@ -353,9 +356,6 @@ appConfig:
     hostname: null
     port: null
     pathPrefix: null
-  path:
-    home: null
-    temp: null
   pipeline:
     httpClientCache:
       maximumSize: 1000
@@ -382,15 +382,17 @@ appConfig:
         maximumSize: 1000
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
-      lmdbSystemLibraryPath: null
+      lmdb:
+        localDir: "reference_data"
+        maxDbs: 7
+        maxReaders: 100
+        maxStoreSize: "50G"
+        readAheadEnabled: true
+        readerBlockedByWriter: true
       loadingLockStripes: 2048
-      localDir: "reference_data"
-      maxPutsBeforeCommit: 0
-      maxReaders: 100
-      maxStoreSize: "50G"
+      maxPurgeDeletesBeforeCommit: 200000
+      maxPutsBeforeCommit: 200000
       purgeAge: "P30D"
-      readAheadEnabled: true
-      readerBlockedByWriter: false
     xmlSchema:
       cache:
         maximumSize: 1000
@@ -501,24 +503,25 @@ appConfig:
         maximumSize: 2
         expireAfterAccess: "PT1M"
         expireAfterWrite: null
-    lmdb:
-      localDir: "search_results"
-      lmdbSystemLibraryPath: null
-      maxPutsBeforeCommit: 0
-      maxReaders: 10
-      maxStoreSize: "10G"
-      maxDbs: 10
-      minValueSize: "1K"
-      maxValueSize: "1M"
-      minPayloadSize: "1M"
-      maxPayloadSize: "1G"
-      readAheadEnabled: true
-      offHeapResults: true
-      payloadLimit: "0B"
     remoteSearchResultCache:
       maximumSize: 100
       expireAfterAccess: "PT1M"
       expireAfterWrite: null
+    resultStore:
+      maxPutsBeforeCommit: 100000
+      minValueSize: "1K"
+      maxValueSize: "1M"
+      minPayloadSize: "1M"
+      maxPayloadSize: "1G"
+      offHeapResults: true
+      payloadLimit: "0B"
+      lmdb:
+        localDir: "search_results"
+        maxDbs: 7
+        maxReaders: 10
+        maxStoreSize: "10G"
+        readAheadEnabled: true
+        readerBlockedByWriter: false
   searchable:
     storeSize: "1000000,100,10,1"
     searchResultCache:
@@ -813,6 +816,9 @@ appConfig:
         leakDetectionThreshold: "PT0S"
         minimumIdle: 10
         maxPoolSize: 30
+  path:
+    home: null
+    temp: null
   ui:
     aboutHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple\
       \ systems.</p>"

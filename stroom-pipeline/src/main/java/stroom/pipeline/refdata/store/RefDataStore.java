@@ -130,6 +130,10 @@ public interface RefDataStore {
      */
     void purge(final long refStreamId, final long partIndex);
 
+    default void purge(final long refStreamId) {
+        purge(refStreamId, RefStreamDefinition.DEFAULT_PART_INDEX);
+    }
+
     void logAllContents();
 
     void logAllContents(Consumer<String> logEntryConsumer);

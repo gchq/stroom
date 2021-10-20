@@ -7,6 +7,7 @@ import java.util.Map;
 
 public class MapDataStoreFactory implements DataStoreFactory {
 
+    @Override
     public DataStore create(final String queryKey,
                             final String componentId,
                             final TableSettings tableSettings,

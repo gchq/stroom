@@ -848,4 +848,12 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
                     value, e.getMessage()));
         }
     }
+
+    public CursorIterable<ByteBuffer> iterate(final Txn<ByteBuffer> txn) {
+        return lmdbDbi.iterate(txn);
+    }
+
+    public CursorIterable<ByteBuffer> iterate(final Txn<ByteBuffer> txn, final KeyRange<ByteBuffer> range) {
+        return lmdbDbi.iterate(txn, range);
+    }
 }

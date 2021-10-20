@@ -235,6 +235,7 @@ abstract class AbstractLookup extends StroomExtensionFunctionCall {
                         trace ||
                                 (!ignoreWarnings && lazyMessage.getSeverity().greaterThanOrEqual(Severity.WARNING)))
                 .forEach(lazyMessage -> {
+                    sb.append("\n");
                     sb.append(StoredError.MESSAGE_CAUSE_DELIMITER);
                     sb.append(lazyMessage.getSeverity().getDisplayValue());
                     sb.append(": ");

@@ -4,19 +4,26 @@
 package stroom.meta.impl.db.jooq.tables;
 
 
+import java.util.Arrays;
+import java.util.List;
+
 import javax.annotation.processing.Generated;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
+import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row2;
+import org.jooq.Row3;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
+import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.TableImpl;
 
+import stroom.meta.impl.db.jooq.Indexes;
+import stroom.meta.impl.db.jooq.Keys;
 import stroom.meta.impl.db.jooq.Stroom;
 import stroom.meta.impl.db.jooq.tables.records.MetaRetentionTrackerRecord;
 
@@ -34,7 +41,7 @@ import stroom.meta.impl.db.jooq.tables.records.MetaRetentionTrackerRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class MetaRetentionTracker extends TableImpl<MetaRetentionTrackerRecord> {
 
-    private static final long serialVersionUID = -1776764744;
+    private static final long serialVersionUID = 1681244366;
 
     /**
      * The reference instance of <code>stroom.meta_retention_tracker</code>
@@ -50,14 +57,19 @@ public class MetaRetentionTracker extends TableImpl<MetaRetentionTrackerRecord> 
     }
 
     /**
-     * The column <code>stroom.meta_retention_tracker.last_run_time</code>.
-     */
-    public final TableField<MetaRetentionTrackerRecord, Long> LAST_RUN_TIME = createField(DSL.name("last_run_time"), org.jooq.impl.SQLDataType.BIGINT.nullable(false), this, "");
-
-    /**
      * The column <code>stroom.meta_retention_tracker.retention_rules_version</code>.
      */
     public final TableField<MetaRetentionTrackerRecord, String> RETENTION_RULES_VERSION = createField(DSL.name("retention_rules_version"), org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
+
+    /**
+     * The column <code>stroom.meta_retention_tracker.rule_age</code>.
+     */
+    public final TableField<MetaRetentionTrackerRecord, String> RULE_AGE = createField(DSL.name("rule_age"), org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
+
+    /**
+     * The column <code>stroom.meta_retention_tracker.last_run_time</code>.
+     */
+    public final TableField<MetaRetentionTrackerRecord, Long> LAST_RUN_TIME = createField(DSL.name("last_run_time"), org.jooq.impl.SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
      * Create a <code>stroom.meta_retention_tracker</code> table reference
@@ -98,6 +110,21 @@ public class MetaRetentionTracker extends TableImpl<MetaRetentionTrackerRecord> 
     }
 
     @Override
+    public List<Index> getIndexes() {
+        return Arrays.<Index>asList(Indexes.META_RETENTION_TRACKER_PRIMARY);
+    }
+
+    @Override
+    public UniqueKey<MetaRetentionTrackerRecord> getPrimaryKey() {
+        return Keys.KEY_META_RETENTION_TRACKER_PRIMARY;
+    }
+
+    @Override
+    public List<UniqueKey<MetaRetentionTrackerRecord>> getKeys() {
+        return Arrays.<UniqueKey<MetaRetentionTrackerRecord>>asList(Keys.KEY_META_RETENTION_TRACKER_PRIMARY);
+    }
+
+    @Override
     public MetaRetentionTracker as(String alias) {
         return new MetaRetentionTracker(DSL.name(alias), this);
     }
@@ -124,11 +151,11 @@ public class MetaRetentionTracker extends TableImpl<MetaRetentionTrackerRecord> 
     }
 
     // -------------------------------------------------------------------------
-    // Row2 type methods
+    // Row3 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row2<Long, String> fieldsRow() {
-        return (Row2) super.fieldsRow();
+    public Row3<String, String, Long> fieldsRow() {
+        return (Row3) super.fieldsRow();
     }
 }

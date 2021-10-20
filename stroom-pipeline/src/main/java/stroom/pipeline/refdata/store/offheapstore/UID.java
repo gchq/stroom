@@ -33,6 +33,7 @@ import java.util.Objects;
  * {@link ByteBuffer} MUST not be mutated.
  */
 public class UID {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UID.class);
 
     public static final UnsignedBytes UNSIGNED_BYTES = UnsignedBytesInstances.FOUR;
@@ -92,6 +93,7 @@ public class UID {
 
     /**
      * Write the lowest uid value into the buffer and leave it ready for reading
+     *
      * @param byteBuffer
      */
     public static void writeMinimumValue(final ByteBuffer byteBuffer) {
@@ -176,11 +178,14 @@ public class UID {
         return ByteBufferUtils.byteBufferInfo(byteBuffer);
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final UID uid = (UID) o;
         return Objects.equals(byteBuffer, uid.byteBuffer);
     }

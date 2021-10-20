@@ -67,11 +67,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import javax.inject.Inject;
 
 import static java.util.Map.entry;
-import static java.util.Map.of;
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFeed.PROCESSOR_FEED;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FILTER;
@@ -157,11 +155,26 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 PROCESSOR_TASK.CREATE_TIME_MS,
                 value -> getDate(ProcessorTaskFields.CREATE_TIME, value));
         expressionMapper.map(ProcessorTaskFields.CREATE_TIME_MS, PROCESSOR_TASK.CREATE_TIME_MS, Long::valueOf);
+        expressionMapper.map(ProcessorTaskFields.START_TIME,
+                PROCESSOR_TASK.START_TIME_MS,
+                value -> getDate(ProcessorTaskFields.START_TIME, value));
+        expressionMapper.map(ProcessorTaskFields.START_TIME_MS, PROCESSOR_TASK.START_TIME_MS, Long::valueOf);
+        expressionMapper.map(ProcessorTaskFields.END_TIME,
+                PROCESSOR_TASK.END_TIME_MS,
+                value -> getDate(ProcessorTaskFields.END_TIME, value));
+        expressionMapper.map(ProcessorTaskFields.END_TIME_MS, PROCESSOR_TASK.END_TIME_MS, Long::valueOf);
+        expressionMapper.map(ProcessorTaskFields.STATUS_TIME,
+                PROCESSOR_TASK.STATUS_TIME_MS,
+                value -> getDate(ProcessorTaskFields.STATUS_TIME, value));
+        expressionMapper.map(ProcessorTaskFields.STATUS_TIME_MS, PROCESSOR_TASK.STATUS_TIME_MS, Long::valueOf);
         expressionMapper.map(ProcessorTaskFields.META_ID, PROCESSOR_TASK.META_ID, Long::valueOf);
         expressionMapper.map(ProcessorTaskFields.NODE_NAME, PROCESSOR_NODE.NAME, value -> value);
         expressionMapper.map(ProcessorTaskFields.FEED, PROCESSOR_FEED.NAME, value -> value, true);
         expressionMapper.map(ProcessorTaskFields.PIPELINE, PROCESSOR.PIPELINE_UUID, value -> value);
         expressionMapper.map(ProcessorTaskFields.PROCESSOR_FILTER_ID, PROCESSOR_FILTER.ID, Integer::valueOf);
+        expressionMapper.map(ProcessorTaskFields.PROCESSOR_FILTER_PRIORITY,
+                PROCESSOR_FILTER.PRIORITY,
+                Integer::valueOf);
         expressionMapper.map(ProcessorTaskFields.PROCESSOR_ID, PROCESSOR.ID, Integer::valueOf);
         expressionMapper.map(ProcessorTaskFields.STATUS,
                 PROCESSOR_TASK.STATUS,
@@ -171,11 +184,18 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         valueMapper = new ValueMapper();
         valueMapper.map(ProcessorTaskFields.CREATE_TIME, PROCESSOR_TASK.CREATE_TIME_MS, ValLong::create);
         valueMapper.map(ProcessorTaskFields.CREATE_TIME_MS, PROCESSOR_TASK.CREATE_TIME_MS, ValLong::create);
+        valueMapper.map(ProcessorTaskFields.START_TIME, PROCESSOR_TASK.START_TIME_MS, ValLong::create);
+        valueMapper.map(ProcessorTaskFields.START_TIME_MS, PROCESSOR_TASK.START_TIME_MS, ValLong::create);
+        valueMapper.map(ProcessorTaskFields.END_TIME, PROCESSOR_TASK.END_TIME_MS, ValLong::create);
+        valueMapper.map(ProcessorTaskFields.END_TIME_MS, PROCESSOR_TASK.END_TIME_MS, ValLong::create);
+        valueMapper.map(ProcessorTaskFields.STATUS_TIME, PROCESSOR_TASK.STATUS_TIME_MS, ValLong::create);
+        valueMapper.map(ProcessorTaskFields.STATUS_TIME_MS, PROCESSOR_TASK.STATUS_TIME_MS, ValLong::create);
         valueMapper.map(ProcessorTaskFields.META_ID, PROCESSOR_TASK.META_ID, ValLong::create);
         valueMapper.map(ProcessorTaskFields.NODE_NAME, PROCESSOR_NODE.NAME, ValString::create);
         valueMapper.map(ProcessorTaskFields.FEED, PROCESSOR_FEED.NAME, ValString::create);
         valueMapper.map(ProcessorTaskFields.PIPELINE, PROCESSOR.PIPELINE_UUID, this::getPipelineName);
         valueMapper.map(ProcessorTaskFields.PROCESSOR_FILTER_ID, PROCESSOR_FILTER.ID, ValInteger::create);
+        valueMapper.map(ProcessorTaskFields.PROCESSOR_FILTER_PRIORITY, PROCESSOR_FILTER.PRIORITY, ValInteger::create);
         valueMapper.map(ProcessorTaskFields.PROCESSOR_ID, PROCESSOR.ID, ValInteger::create);
         valueMapper.map(ProcessorTaskFields.STATUS,
                 PROCESSOR_TASK.STATUS,
@@ -623,18 +643,27 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         return ResultPage.createCriterialBasedList(list, criteria);
     }
 
+    private boolean isUsed(final Set<AbstractField> fieldSet,
+                           final List<AbstractField> resultFields,
+                           final ExpressionCriteria criteria) {
+        return resultFields.stream().anyMatch(fieldSet::contains) ||
+                ExpressionUtil.termCount(criteria.getExpression(), fieldSet) > 0;
+    }
+
     @Override
     public void search(final ExpressionCriteria criteria,
                        final AbstractField[] fields,
                        final Consumer<Val[]> consumer) {
+        final Set<AbstractField> processorFields = Set.of(
+                ProcessorTaskFields.PROCESSOR_FILTER_ID,
+                ProcessorTaskFields.PROCESSOR_FILTER_PRIORITY);
+
         final List<AbstractField> fieldList = Arrays.asList(fields);
-        final int nodeTermCount = ExpressionUtil.termCount(criteria.getExpression(), ProcessorTaskFields.NODE_NAME);
-        final boolean nodeValueExists = fieldList.stream().anyMatch(Predicate.isEqual(ProcessorTaskFields.NODE_NAME));
-        final int feedTermCount = ExpressionUtil.termCount(criteria.getExpression(), ProcessorTaskFields.FEED);
-        final boolean feedValueExists = fieldList.stream().anyMatch(Predicate.isEqual(ProcessorTaskFields.FEED));
-        final int pipelineTermCount = ExpressionUtil.termCount(criteria.getExpression(), ProcessorTaskFields.PIPELINE);
-        final boolean pipelineValueExists = fieldList.stream()
-                .anyMatch(Predicate.isEqual(ProcessorTaskFields.PIPELINE));
+        final boolean nodeUsed = isUsed(Set.of(ProcessorTaskFields.NODE_NAME), fieldList, criteria);
+        final boolean feedUsed = isUsed(Set.of(ProcessorTaskFields.FEED), fieldList, criteria);
+        final boolean processorFilterUsed = isUsed(processorFields, fieldList, criteria);
+        final boolean processorUsed = isUsed(Set.of(ProcessorTaskFields.PROCESSOR_ID), fieldList, criteria);
+        final boolean pipelineUsed = isUsed(Set.of(ProcessorTaskFields.PIPELINE), fieldList, criteria);
 
         final PageRequest pageRequest = criteria.getPageRequest();
         final Condition condition = expressionMapper.apply(criteria.getExpression());
@@ -652,17 +681,19 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
             }
 
             var select = context.select(dbFields).from(PROCESSOR_TASK);
-            if (nodeTermCount > 0 || nodeValueExists) {
+            if (nodeUsed) {
                 select = select.leftOuterJoin(PROCESSOR_NODE)
                         .on(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(PROCESSOR_NODE.ID));
             }
-            if (feedTermCount > 0 || feedValueExists) {
+            if (feedUsed) {
                 select = select.leftOuterJoin(PROCESSOR_FEED)
                         .on(PROCESSOR_TASK.FK_PROCESSOR_FEED_ID.eq(PROCESSOR_FEED.ID));
             }
-            if (pipelineTermCount > 0 || pipelineValueExists) {
+            if (processorFilterUsed || processorUsed || pipelineUsed) {
                 select = select.join(PROCESSOR_FILTER)
                         .on(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(PROCESSOR_FILTER.ID));
+            }
+            if (processorUsed || pipelineUsed) {
                 select = select.join(PROCESSOR)
                         .on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID));
             }

@@ -78,7 +78,6 @@ public class WrappedReader extends Reader {
         return reader.skip(n);
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object obj) {
         return reader.equals(obj);

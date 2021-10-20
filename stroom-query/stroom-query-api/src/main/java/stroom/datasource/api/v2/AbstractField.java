@@ -49,14 +49,15 @@ import java.util.Objects;
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public abstract class AbstractField implements Serializable, HasDisplayValue {
+
     private static final long serialVersionUID = 1272545271946712570L;
 
     @JsonProperty
-    private String name;
+    private final String name;
     @JsonProperty
-    private Boolean queryable;
+    private final Boolean queryable;
     @JsonProperty
-    private List<Condition> conditions;
+    private final List<Condition> conditions;
 
     @JsonCreator
     public AbstractField(@JsonProperty("name") final String name,
@@ -96,11 +97,14 @@ public abstract class AbstractField implements Serializable, HasDisplayValue {
         return name;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (!(o instanceof AbstractField)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof AbstractField)) {
+            return false;
+        }
         final AbstractField that = (AbstractField) o;
         return Objects.equals(name, that.name);
     }

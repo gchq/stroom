@@ -94,7 +94,7 @@ class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
         LOGGER.debug("value {}", ByteBufferUtils.byteBufferInfo(value));
 
         lmdbEnv.doWithWriteTxn(writeTxn -> {
-            long entryCount = LmdbUtils.getEntryCount(lmdbEnv, dbi);
+            long entryCount = LmdbUtils.getEntryCount(lmdbEnv, writeTxn, dbi);
             assertThat(entryCount).isEqualTo(0);
             dbi.put(writeTxn, key, value);
             entryCount = LmdbUtils.getEntryCount(lmdbEnv, writeTxn, dbi);
@@ -372,7 +372,7 @@ class TestMapDefinitionUIDStore extends AbstractLmdbDbTest {
 
         if (optMapUid.isPresent()) {
 
-            MapDefinition actualMapDefinition = mapUidReverseDb.get(optMapUid.get()).get();
+            MapDefinition actualMapDefinition = mapUidReverseDb.get(writeTxn, optMapUid.get()).get();
 
             assertThat(actualMapDefinition).isEqualTo(optExpectedMapDefinition.get());
 

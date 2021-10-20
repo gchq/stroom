@@ -32,7 +32,7 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class RefStreamDefinition {
 
-    private static final int DEFAULT_PART_INDEX = 0;
+    public static final int DEFAULT_PART_INDEX = 0;
 
     // TODO consider getting rid of DocRef and just storing the uuid
     @JsonProperty
@@ -118,7 +118,6 @@ public class RefStreamDefinition {
                         : pipelineDocRef.getUuid());
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

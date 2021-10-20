@@ -10,10 +10,7 @@ import stroom.security.shared.UserResource;
 import stroom.util.shared.ResultPage;
 
 import event.logging.CreateEventAction;
-import event.logging.MultiObject;
 import event.logging.Outcome;
-import event.logging.UpdateEventAction;
-import org.checkerframework.checker.units.qual.A;
 
 import java.util.List;
 import java.util.Optional;
@@ -56,15 +53,6 @@ public class UserResourceImpl implements UserResource {
                 list = userServiceProvider.get().findGroupsForUser(userRef.getUuid(), criteria.getQuickFilterInput());
             }
 
-//            if (criteria.getQuickFilterInput() != null) {
-//
-//                list = list.stream()
-////                        .filter(user ->
-////                                criteria.getName().isMatch(user.getName()))
-//                        .filter(predicate)
-//                        .collect(Collectors.toList());
-//            }
-
             // Create a result list limited by the page request.
             return ResultPage.createPageLimitedList(list, criteria.getPageRequest());
         }
@@ -93,21 +81,6 @@ public class UserResourceImpl implements UserResource {
         return userServiceProvider.get().loadByUuid(userUuid)
                 .orElseThrow(() -> new NotFoundException("User " + userUuid + " does not exist"));
     }
-
-//    @Override
-//    public List<User> findUsersInGroup(final String groupUuid) {
-//        return userService.findUsersInGroup(groupUuid);
-//    }
-//
-//    @Override
-//    public List<User> findGroupsForUserName(String userName) {
-//        return userService.findGroupsForUserName(userName);
-//    }
-//
-//    @Override
-//    public List<User> findGroupsForUser(final String userUuid) {
-//        return userService.findGroupsForUser(userUuid);
-//    }
 
     @Override
     @AutoLogged(OperationType.MANUALLY_LOGGED)
@@ -185,64 +158,8 @@ public class UserResourceImpl implements UserResource {
     }
 
     @Override
-    public Boolean deleteUser(final String uuid) {
+    public Boolean delete(final String uuid) {
         return userServiceProvider.get().delete(uuid);
-    }
-
-    @Override
-    @AutoLogged(OperationType.MANUALLY_LOGGED)
-    public Boolean setStatus(String userName, boolean status) {
-        //Todo confirm that this is no longer required and remove
-        UpdateEventAction.Builder<Void> builder = UpdateEventAction.builder();
-
-        try {
-            userServiceProvider.get().getUserByName(userName)
-                    .ifPresentOrElse(
-                            user -> {
-                                builder.withBefore(MultiObject.builder()
-                                        .addUser(
-                                                event.logging.User.builder()
-                                                        .withId(user.getUuid())
-                                                        .withName(user.getName())
-                                                        .withState(user.isEnabled() ? "Enabled" : "Disabled")
-                                                        .build()
-                                        ).build()
-                                );
-                                builder.withAfter(MultiObject.builder()
-                                        .addUser(
-                                                event.logging.User.builder()
-                                                        .withId(user.getUuid())
-                                                        .withName(user.getName())
-                                                        .withState(status ? "Enabled" : "Disabled")
-                                                        .build()
-                                        ).build()
-                                );
-
-                                user.setEnabled(status);
-                                userServiceProvider.get().update(user);
-                            },
-                            () -> {
-                                builder.withAfter(MultiObject.builder()
-                                        .addUser(
-                                                event.logging.User.builder()
-                                                        .withId(userName)
-                                                        .withName(userName)
-                                                        .withState(status ? "Enabled" : "Disabled")
-                                                        .build()
-                                        ).build()
-                                );
-                                throw new RuntimeException("User not found");
-                            });
-        } catch (Exception ex) {
-            builder.withOutcome()
-                    .withSuccess(false)
-                    .withDescription(ex.getMessage());
-        } finally {
-            stroomEventLoggingServiceProvider.get().log("UserResourceImpl.setStatus",
-                    status ? "Enabling" : "Disabling" + " user " + userName, builder.build());
-        }
-
-        return true;
     }
 
     @Override

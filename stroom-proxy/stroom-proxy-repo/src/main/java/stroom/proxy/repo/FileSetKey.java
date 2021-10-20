@@ -21,7 +21,6 @@ public class FileSetKey {
         return typeName;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

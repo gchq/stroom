@@ -28,6 +28,7 @@ import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
+import stroom.security.api.SecurityContext;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.Message;
 
@@ -43,13 +44,16 @@ public class FeedStoreImpl implements FeedStore {
 
     private final Store<FeedDoc> store;
     private final FeedNameValidator feedNameValidator;
+    private final SecurityContext securityContext;
 
     @Inject
     public FeedStoreImpl(final StoreFactory storeFactory,
                          final FeedNameValidator feedNameValidator,
-                         final FeedSerialiser serialiser) {
+                         final FeedSerialiser serialiser,
+                         final SecurityContext securityContext) {
         this.store = storeFactory.createStore(serialiser, FeedDoc.DOCUMENT_TYPE, FeedDoc.class);
         this.feedNameValidator = feedNameValidator;
+        this.securityContext = securityContext;
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -70,7 +74,10 @@ public class FeedStoreImpl implements FeedStore {
         // Double check the feed wasn't created elsewhere at the same time.
         if (checkDuplicateName(name, created.getUuid())) {
             // Delete the newly created document as the name is duplicated.
-            store.deleteDocument(created.getUuid());
+
+            // Delete as a processing user to ensure we are allowed to delete the item as documents do not have
+            // permissions added to them until after they are created in the store.
+            securityContext.asProcessingUser(() -> store.deleteDocument(created.getUuid()));
             throw new EntityServiceException("A feed named '" + name + "' already exists");
         }
 

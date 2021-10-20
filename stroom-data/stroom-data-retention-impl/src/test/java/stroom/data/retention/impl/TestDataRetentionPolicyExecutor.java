@@ -19,6 +19,7 @@ import stroom.util.time.TimePeriod;
 
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -31,13 +32,16 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Period;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -71,7 +75,7 @@ class TestDataRetentionPolicyExecutor {
 
         final Instant now = Instant.now();
 
-        runDataRretention(rules, now, null);
+        runDataRetention(rules, now, null);
 
         final List<List<DataRetentionRuleAction>> allRuleActions = ruleExpressionsCaptor.getAllValues();
         final List<TimePeriod> allPeriods = periodCaptor.getAllValues();
@@ -110,7 +114,7 @@ class TestDataRetentionPolicyExecutor {
 
         final Instant now = Instant.now();
 
-        runDataRretention(rules, now, null);
+        runDataRetention(rules, now, null);
 
         final List<List<DataRetentionRuleAction>> allRuleActions = ruleExpressionsCaptor.getAllValues();
         final List<TimePeriod> allPeriods = periodCaptor.getAllValues();
@@ -163,7 +167,7 @@ class TestDataRetentionPolicyExecutor {
 
         final Instant now = Instant.now();
 
-        runDataRretention(rules, now, null);
+        runDataRetention(rules, now, null);
 
         final List<List<DataRetentionRuleAction>> allRuleActions = ruleExpressionsCaptor.getAllValues();
         final List<TimePeriod> allPeriods = periodCaptor.getAllValues();
@@ -214,13 +218,14 @@ class TestDataRetentionPolicyExecutor {
                 buildRule(3, true, 1, TimeUnit.YEARS),
                 buildForeverRule(4, true));
 
+        final int trackerAgeDays = 2;
         final Instant now = Instant.now();
         final LocalDateTime nowUTC = LocalDateTime.ofInstant(now, ZoneOffset.UTC);
 
-        DataRetentionTracker tracker = new DataRetentionTracker(
-                now.minus(Duration.ofDays(2)), RULES_VERSION);
+        final List<DataRetentionTracker> trackers = createTrackers(
+                rules, RULES_VERSION, now.minus(Duration.ofDays(trackerAgeDays)));
 
-        runDataRretention(rules, now, tracker);
+        runDataRetention(rules, now, trackers);
 
         final List<List<DataRetentionRuleAction>> allRuleActions = ruleExpressionsCaptor.getAllValues();
         final List<TimePeriod> allPeriods = periodCaptor.getAllValues();
@@ -234,7 +239,11 @@ class TestDataRetentionPolicyExecutor {
 
         // -------------------------------------------------
 
-        assertPeriod(allPeriods.get(callNo), Period.ofDays(10).plusDays(2), Period.ofDays(10), now);
+        assertPeriod(
+                allPeriods.get(callNo),
+                Period.ofDays(10).plusDays(trackerAgeDays),
+                Period.ofDays(10), now);
+
         assertRuleActions(allRuleActions.get(callNo), List.of(
                 Tuple.of(1, RetentionRuleOutcome.DELETE),
                 Tuple.of(2, RetentionRuleOutcome.RETAIN),
@@ -244,7 +253,11 @@ class TestDataRetentionPolicyExecutor {
 
         // -------------------------------------------------
 
-        assertPeriod(allPeriods.get(callNo), Period.ofMonths(1).plusDays(2), Period.ofMonths(1), now);
+        assertPeriod(
+                allPeriods.get(callNo),
+                Period.ofMonths(1).plusDays(trackerAgeDays),
+                Period.ofMonths(1), now);
+
         assertRuleActions(allRuleActions.get(callNo), List.of(
                 Tuple.of(1, RetentionRuleOutcome.DELETE),
                 Tuple.of(2, RetentionRuleOutcome.DELETE),
@@ -254,7 +267,11 @@ class TestDataRetentionPolicyExecutor {
 
         // -------------------------------------------------
 
-        assertPeriod(allPeriods.get(callNo), Period.ofYears(1).plusDays(2), Period.ofYears(1), now);
+        assertPeriod(
+                allPeriods.get(callNo),
+                Period.ofYears(1).plusDays(trackerAgeDays),
+                Period.ofYears(1), now);
+
         assertRuleActions(allRuleActions.get(callNo), List.of(
                 Tuple.of(1, RetentionRuleOutcome.DELETE),
                 Tuple.of(2, RetentionRuleOutcome.DELETE),
@@ -278,10 +295,10 @@ class TestDataRetentionPolicyExecutor {
         // Tracker is 90days old so should be ignored for periods:
         // 1month ago => 10days ago
         // 2months ago => 1months ago
-        final DataRetentionTracker tracker = new DataRetentionTracker(
-                now.minus(Duration.ofDays(trackerAgeDays)), RULES_VERSION);
+        final List<DataRetentionTracker> trackers = createTrackers(
+                rules, RULES_VERSION, now.minus(Duration.ofDays(trackerAgeDays)));
 
-        runDataRretention(rules, now, tracker);
+        runDataRetention(rules, now, trackers);
 
         final List<List<DataRetentionRuleAction>> allRuleActions = ruleExpressionsCaptor.getAllValues();
         final List<TimePeriod> allPeriods = periodCaptor.getAllValues();
@@ -335,6 +352,95 @@ class TestDataRetentionPolicyExecutor {
     }
 
     @Test
+    void testDataRetention_fourRulesWithMissingTracker() {
+
+        final List<DataRetentionRule> rules = List.of(
+                buildRule(1, true, 10, TimeUnit.DAYS),
+                buildRule(2, true, 1, TimeUnit.MONTHS),
+                buildRule(3, true, 2, TimeUnit.MONTHS),
+                buildRule(4, true, 1, TimeUnit.YEARS)
+        );
+
+        // Use a nice fixed date to make the time calcs easier on the brain
+        final Instant now = LocalDate.of(2020, 10, 1)
+                .atStartOfDay()
+                .toInstant(ZoneOffset.UTC);
+
+        int trackerAgeDays = 1;
+        // Tracker is 90days old so should be ignored for periods:
+        // 1month ago => 10days ago
+        // 2months ago => 1months ago
+        List<DataRetentionTracker> trackers = createTrackers(
+                rules, RULES_VERSION, now.minus(Duration.ofDays(trackerAgeDays)));
+
+        Assertions.assertThat(trackers)
+                .hasSize(rules.size());
+
+        // Remove the 1 month and 1 year trackers
+        trackers = trackers.stream()
+                .filter(tracker ->
+                        !(tracker.getRuleAge().toLowerCase().contains("1 month")
+                                || tracker.getRuleAge().toLowerCase().contains("1 year")))
+                .collect(Collectors.toList());
+
+        Assertions.assertThat(trackers)
+                .hasSize(rules.size() - 2);
+
+        runDataRetention(rules, now, trackers);
+
+        final List<List<DataRetentionRuleAction>> allRuleActions = ruleExpressionsCaptor.getAllValues();
+        final List<TimePeriod> allPeriods = periodCaptor.getAllValues();
+
+        int expectedPeriodCount = 4;
+        assertThat(allPeriods).hasSize(expectedPeriodCount);
+        assertThat(allRuleActions).hasSize(expectedPeriodCount);
+
+        // The method call number
+        int callNo = 0;
+
+        // -------------------------------------------------
+
+        // non adjusted period as there is no tracker
+        assertPeriod(allPeriods.get(callNo), Period.ofMonths(1), Period.ofDays(10), now);
+        assertRuleActions(allRuleActions.get(callNo), List.of(
+                Tuple.of(1, RetentionRuleOutcome.DELETE),
+                Tuple.of(2, RetentionRuleOutcome.RETAIN),
+                Tuple.of(3, RetentionRuleOutcome.RETAIN),
+                Tuple.of(4, RetentionRuleOutcome.RETAIN)));
+        callNo++;
+
+        // -------------------------------------------------
+
+        assertPeriod(allPeriods.get(callNo), Period.ofMonths(1).plusDays(trackerAgeDays), Period.ofMonths(1), now);
+        assertRuleActions(allRuleActions.get(callNo), List.of(
+                Tuple.of(1, RetentionRuleOutcome.DELETE),
+                Tuple.of(2, RetentionRuleOutcome.DELETE),
+                Tuple.of(3, RetentionRuleOutcome.RETAIN),
+                Tuple.of(4, RetentionRuleOutcome.RETAIN)));
+        callNo++;
+
+        // -------------------------------------------------
+
+        // non adjusted period as there is no tracker
+        assertPeriod(allPeriods.get(callNo), Period.ofYears(1), Period.ofMonths(2), now);
+        assertRuleActions(allRuleActions.get(callNo), List.of(
+                Tuple.of(1, RetentionRuleOutcome.DELETE),
+                Tuple.of(2, RetentionRuleOutcome.DELETE),
+                Tuple.of(3, RetentionRuleOutcome.DELETE),
+                Tuple.of(4, RetentionRuleOutcome.RETAIN)));
+        callNo++;
+
+        // -------------------------------------------------
+
+        assertPeriod(allPeriods.get(callNo), Period.ofYears(1).plusDays(trackerAgeDays), Period.ofYears(1), now);
+        assertRuleActions(allRuleActions.get(callNo), List.of(
+                Tuple.of(1, RetentionRuleOutcome.DELETE),
+                Tuple.of(2, RetentionRuleOutcome.DELETE),
+                Tuple.of(3, RetentionRuleOutcome.DELETE),
+                Tuple.of(4, RetentionRuleOutcome.DELETE)));
+    }
+
+    @Test
     void testDataRetention_noRules() {
 
         final List<DataRetentionRule> rules = Collections.emptyList();
@@ -357,7 +463,7 @@ class TestDataRetentionPolicyExecutor {
 
         final Instant now = Instant.now();
 
-        runDataRretention(rules, now, null);
+        runDataRetention(rules, now, null);
 
         final List<List<DataRetentionRuleAction>> allRuleActions = ruleExpressionsCaptor.getAllValues();
         final List<TimePeriod> allPeriods = periodCaptor.getAllValues();
@@ -388,7 +494,7 @@ class TestDataRetentionPolicyExecutor {
 
         final Instant now = Instant.now();
 
-        runDataRretention(rules, now, null);
+        runDataRetention(rules, now, null);
 
         final List<List<DataRetentionRuleAction>> allRuleActions = ruleExpressionsCaptor.getAllValues();
         final List<TimePeriod> allPeriods = periodCaptor.getAllValues();
@@ -425,7 +531,7 @@ class TestDataRetentionPolicyExecutor {
 
         final Instant now = Instant.now();
 
-        runDataRretention(rules, now, null);
+        runDataRetention(rules, now, null);
 
         final List<List<DataRetentionRuleAction>> allRuleActions = ruleExpressionsCaptor.getAllValues();
         final List<TimePeriod> allPeriods = periodCaptor.getAllValues();
@@ -445,9 +551,9 @@ class TestDataRetentionPolicyExecutor {
                 Tuple.of(2, RetentionRuleOutcome.DELETE)));
     }
 
-    private void runDataRretention(final List<DataRetentionRule> rules,
-                                   final Instant now,
-                                   final DataRetentionTracker tracker) {
+    private void runDataRetention(final List<DataRetentionRule> rules,
+                                  final Instant now,
+                                  final List<DataRetentionTracker> trackers) {
         final DataRetentionPolicyExecutor dataRetentionPolicyExecutor = createExecutor(rules);
 
         when(metaService.delete(
@@ -455,8 +561,10 @@ class TestDataRetentionPolicyExecutor {
                 periodCaptor.capture()))
                 .thenReturn(0);
 
-        when(metaService.getRetentionTracker())
-                .thenReturn(Optional.ofNullable(tracker));
+        when(metaService.getRetentionTrackers())
+                .thenReturn(trackers != null
+                        ? trackers
+                        : Collections.emptyList());
 
         dataRetentionPolicyExecutor.exec(now);
     }
@@ -474,11 +582,14 @@ class TestDataRetentionPolicyExecutor {
                               final Period expectedTimeSinceFrom,
                               final Period expectedTimeSinceTo,
                               final Instant now) {
-        LOGGER.debug("actualPeriod: {}", actualPeriod);
+        LOGGER.debug("actualPeriod: ({}), expectedTimeSinceFrom: {}, expectedTimeSinceTo: {}",
+                actualPeriod, expectedTimeSinceFrom, expectedTimeSinceTo);
+
         assertThat(LocalDateTime.ofInstant(actualPeriod.getFrom(), ZoneOffset.UTC))
                 .isEqualTo(LocalDateTime.ofInstant(now, ZoneOffset.UTC)
                         .truncatedTo(ChronoUnit.MILLIS)
                         .minus(expectedTimeSinceFrom));
+
         assertThat(LocalDateTime.ofInstant(actualPeriod.getTo(), ZoneOffset.UTC))
                 .isEqualTo(LocalDateTime.ofInstant(now, ZoneOffset.UTC)
                         .truncatedTo(ChronoUnit.MILLIS)
@@ -571,4 +682,46 @@ class TestDataRetentionPolicyExecutor {
                 expressionOperator);
     }
 
+    private List<DataRetentionTracker> createTrackers(final List<DataRetentionRule> dataRetentionRules,
+                                                      final String rulesVersion,
+                                                      final Instant lastRunTime) {
+        final Instant aFixedTime = Instant.now();
+        final AtomicBoolean seenForeverRule = new AtomicBoolean(false);
+        final List<DataRetentionTracker> trackersFromRules = dataRetentionRules.stream()
+                .sorted(Comparator.comparing(
+                        rule ->
+                                // Usa a random but fixed time to convert the ages into instants for comparisons
+                                DataRetentionCreationTimeUtil.minus(aFixedTime, rule),
+                        Comparator.reverseOrder()))
+                .map(rule -> {
+                    if (rule.isForever()) {
+                        seenForeverRule.set(true);
+                    }
+                    return new DataRetentionTracker(
+                            rulesVersion,
+                            rule.getAgeString(),
+                            lastRunTime);
+                })
+                .collect(Collectors.toList());
+
+        final List<DataRetentionTracker> trackers;
+        if (seenForeverRule.get()) {
+            trackers = trackersFromRules;
+        } else {
+            // If there is no forever rule then make sure we have a tracker for that as the
+            // retention would have created a forever tracker on its last run
+            trackers = new ArrayList<>(trackersFromRules);
+            trackers.add(new DataRetentionTracker(rulesVersion, DataRetentionRule.FOREVER, lastRunTime));
+        }
+
+        // We will never have a tracker for the youngest age as we always retain that data
+        // so remove it
+        trackers.remove(0);
+
+        LOGGER.debug("Mocked up trackers:\n{}", trackers.stream()
+                .map(DataRetentionTracker::toString)
+                .collect(Collectors.joining("\n")));
+
+        return trackers;
+    }
 }

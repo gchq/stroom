@@ -29,6 +29,7 @@ stories.add("List", () => {
             of: 0,
           },
         },
+        keyExtractor: (account) => account.id.toString(),
       }}
       onClose={() => undefined}
     />

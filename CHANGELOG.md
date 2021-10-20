@@ -11,6 +11,83 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+* Issue **#2519** : Added validation for processor filter expressions and more info about filters to the UI.
+
+* Issue **#2501** : Change reference data store to use consistent approach to last access time truncation.
+
+* Issue **#2424** : Change security filter to 404 any unexpected URIs.
+
+* Issue **#2493** : Fix missing part nav controls when data can't be decoded.
+
+* Issue **#2497** : Added summary to orphan file finder.
+
+* Issue **#2500** : Add a primary key to the `meta_retention_tracker` table for MySQL Group Replication.
+
+* Change meta retention tracking to track at the time period level so a killed job preserves the position of the periods already processed.
+
+* Issue **#2513** : Fixed stepping to unique values.
+
+* Issue **#2496** : Fixed issue where data browser was showing duplicate streams.
+
+* Issue **#2511, #2512** : Fixed stepping error handling.
+
+* Issue **#2478** : Create a single place in config for the LMDB library path and extraction dir.
+
+* Issue **#2478** : Delete old LMDB library binaries on boot.
+
+* Issue **#2497** : Fixed issue with `OrphanFileFinder` incorrectly identifying some dirs as being empty.
+
+* Change `/api/refData/v1/purgeByAge/{purgeAge}`, `/api/refData/v1/purgeByStream/{refStreamId}` and `/api/refData/v1/clearBufferPool` to act on all nodes unless the `nodeName` query param is provided.
+
+
+## [v7.0-beta.151] - 2021-10-11
+
+* Issue **#2483** : Change reference data purge to delete entries in batchs to avoid large transactions that result in errors.
+
+* Fix performance issue with ref data range lookups.
+
+* Change default value for `stroom.pipeline.referenceData.readerBlockedByWriter` to true.
+
+* Fix locking for `stroom.pipeline.referenceData.readerBlockedByWriter`.
+
+
+## [v7.0-beta.150] - 2021-10-05
+
+* Issue **#2494** : Changed logging to help diagnose problem.
+
+* Issue **#2429** : The server tasks screen now handles errors that occur when trying to contact unreachable nodes.
+
+* Issue **#2492** : Fixed issue getting filter priorities in processor task data store.
+
+* Issue **#2489** : Change to wrap long error messages in stepping display.
+
+* Issue **#2487** : Fixed issue flushing and deleting index shards.
+
+* Issue **#2442** : Removed enabled/disabled states for permission users and user groups as these are now controlled by account authentication. 
+
+* Issue **#2431** : Fixed issue with item selection in account and token list pages.
+
+
+## [v7.0-beta.149] - 2021-10-04
+
+* Issue **#2484** : Fix failing ref lookups when one loader has range data.
+
+* Issue **#2485** : Autologger: UNLOGGED calls always being logged.
+
+* Issue **#2395** : Fixed timezone issue in API key display.
+
+* Issue **#2452** : New pipeline references now default to `Reference` data type.
+
+* Issue **#2414** : The processing tasks data source now exposes start, end and status times plus filter priorities.
+
+* Issue **#2441** : Improve logging and prevent autologger warning for `MetaResourcImpl`
+
+* Issue **#2440** : Prevent autologger warning for `ExplorerResourceImpl`
+
+* Issue **#2465** : `SaveAs` is now working for non admin users.
+
+* Issue **#2460** : Processing filters now reliably process feeds where wildcards are used to match feed names.
+
 
 ## [v7.0-beta.148] - 2021-09-30
 
@@ -3799,7 +3876,10 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.148...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.151...HEAD
+[v7.0-beta.151]: https://github.com/gchq/stroom/compare/v7.0-beta.150...v7.0-beta.151
+[v7.0-beta.150]: https://github.com/gchq/stroom/compare/v7.0-beta.149...v7.0-beta.150
+[v7.0-beta.149]: https://github.com/gchq/stroom/compare/v7.0-beta.148...v7.0-beta.149
 [v7.0-beta.148]: https://github.com/gchq/stroom/compare/v7.0-beta.147...v7.0-beta.148
 [v7.0-beta.147]: https://github.com/gchq/stroom/compare/v7.0-beta.146...v7.0-beta.147
 [v7.0-beta.146]: https://github.com/gchq/stroom/compare/v7.0-beta.145...v7.0-beta.146

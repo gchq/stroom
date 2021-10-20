@@ -42,6 +42,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.api.v2.ExpressionValidator;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.EventRef;
 import stroom.query.common.v2.EventRefs;
@@ -707,7 +708,21 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                     .orElse("");
 
             LOGGER.error(() -> "Error processing filter with id = " + filter.getId() + pipelineDetails);
-            LOGGER.error(e::getMessage, e);
+            LOGGER.debug(e::getMessage, e);
+
+            // Update the tracker with the error if we can.
+            try {
+                optionalProcessorFilter = processorFilterService.fetch(filter.getId());
+                optionalProcessorFilter.ifPresent(loadedFilter -> {
+                    ProcessorFilterTracker tracker = loadedFilter.getProcessorFilterTracker();
+                    tracker.setStatus("Error: " + e);
+                    processorFilterTrackerDao.update(tracker);
+                });
+            } catch (final RuntimeException e2) {
+                LOGGER.error(e.getMessage(), e);
+                LOGGER.error(e2.getMessage(), e2);
+            }
+
         } finally {
             if (!isSearching.get()) {
                 queue.setFilling(false);
@@ -914,10 +929,10 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                                             final BiConsumer<TaskContext, T> consumer) {
         return t ->
                 taskContextFactory.childContext(
-                        parentContext,
-                        taskName,
-                        taskContext ->
-                                consumer.accept(taskContext, t))
+                                parentContext,
+                                taskName,
+                                taskContext ->
+                                        consumer.accept(taskContext, t))
                         .run();
     }
 
@@ -1108,6 +1123,10 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                                   final DocRef pipelineDocRef,
                                   final boolean reprocess,
                                   final int length) {
+        // Validate expression.
+        final ExpressionValidator expressionValidator = new ExpressionValidator(MetaFields.getFields());
+        expressionValidator.validate(expression);
+
         if (reprocess) {
             // Don't select deleted streams.
             final ExpressionOperator statusExpression = ExpressionOperator.builder().op(Op.OR)

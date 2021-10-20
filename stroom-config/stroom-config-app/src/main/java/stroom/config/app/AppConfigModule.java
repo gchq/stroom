@@ -28,6 +28,7 @@ import stroom.job.impl.JobSystemConfig;
 import stroom.kafka.impl.KafkaConfig;
 import stroom.legacy.db.LegacyDbConfig;
 import stroom.lifecycle.impl.LifecycleConfig;
+import stroom.lmdb.LmdbLibraryConfig;
 import stroom.meta.impl.MetaServiceConfig;
 import stroom.meta.impl.MetaValueConfig;
 import stroom.node.impl.HeapHistogramConfig;
@@ -39,7 +40,7 @@ import stroom.pipeline.filter.XmlSchemaConfig;
 import stroom.pipeline.filter.XsltConfig;
 import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.processor.impl.ProcessorConfig;
-import stroom.query.common.v2.LmdbConfig;
+import stroom.query.common.v2.ResultStoreConfig;
 import stroom.search.extraction.ExtractionConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.impl.shard.IndexShardSearchConfig;
@@ -169,6 +170,7 @@ public class AppConfigModule extends AbstractModule {
         bindConfig(AppConfig::getJobSystemConfig, AppConfig::setJobSystemConfig, JobSystemConfig.class);
         bindConfig(AppConfig::getKafkaConfig, AppConfig::setKafkaConfig, KafkaConfig.class);
         bindConfig(AppConfig::getLifecycleConfig, AppConfig::setLifecycleConfig, LifecycleConfig.class);
+        bindConfig(AppConfig::getLmdbLibraryConfig, AppConfig::setLmdbLibraryConfig, LmdbLibraryConfig.class);
         bindConfig(AppConfig::getNodeConfig, AppConfig::setNodeConfig, NodeConfig.class, nodeConfig ->
                 bindConfig(nodeConfig,
                         NodeConfig::getStatusConfig,
@@ -216,7 +218,7 @@ public class AppConfigModule extends AbstractModule {
                     SearchConfig::getExtractionConfig,
                     SearchConfig::setExtractionConfig,
                     ExtractionConfig.class);
-            bindConfig(searchConfig, SearchConfig::getLmdbConfig, SearchConfig::setLmdbConfig, LmdbConfig.class);
+            bindConfig(searchConfig, SearchConfig::getLmdbConfig, SearchConfig::setLmdbConfig, ResultStoreConfig.class);
             bindConfig(searchConfig,
                     SearchConfig::getShardConfig,
                     SearchConfig::setShardConfig,

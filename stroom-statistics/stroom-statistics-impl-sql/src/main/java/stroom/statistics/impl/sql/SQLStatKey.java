@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class SQLStatKey {
+
     private final long ms;
     private final String name;
     private final int hashCode;
@@ -104,11 +105,14 @@ public class SQLStatKey {
         return name;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         final SQLStatKey that = (SQLStatKey) o;
         return ms == that.ms &&
                 name.equals(that.name);

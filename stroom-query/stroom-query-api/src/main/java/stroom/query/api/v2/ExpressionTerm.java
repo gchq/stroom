@@ -99,7 +99,6 @@ public final class ExpressionTerm extends ExpressionItem {
         return docRef;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object o) {
         if (this == o) {
