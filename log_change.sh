@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 
 ##########################################################################
+# Version: v0.1.7
+# Date: 2021-10-20T20:15:25+00:00
+#
 # Script to record changelog entries in individual files to get around
 # the issue of merge conflicts on the CHANGELOG file when doing PRs.
 #
@@ -12,9 +15,10 @@
 # change entries to the CHANGELOG at release time.
 ##########################################################################
 
+
 set -euo pipefail
 
-IS_DEBUG=true
+IS_DEBUG=false
 UNRELEASED_DIR_NAME="unreleased_changes"
 
 setup_echo_colours() {
@@ -95,7 +99,7 @@ get_git_issue_from_branch() {
   echo "${git_issue_from_branch}"
 }
 
-establish_git_namespace_and_repo() {
+establish_git_remote_namespace_and_repo() {
   # 'origin https://github.com/gchq/stroom.git (fetch)' => 'gchq stroom'
   # read the space delimited values into an array so we can split them
   local namespace_and_repo=()
@@ -128,7 +132,7 @@ validate_git_issue() {
   if [[ ! "${git_issue}" =~ ^([_.a-zA-Z0-9-]+\/[_.a-zA-Z0-9-]+\#[0-9]+|[0-9]+)$ ]]; then
     error_exit "Invalid github issue number ${BLUE}${git_issue}${NC}." \
       "Should be of the form ${BLUE}1234${NC}," \
-      "${BLUE}namespace/repo#1234${NC}, ${BLUE}0${NC} or ${BLUE}AUTO${NC}."
+      "${BLUE}namespace/repo#1234${NC}, ${BLUE}0${NC} or ${BLUE}auto${NC}."
   fi
 
   # global scope
@@ -195,8 +199,26 @@ validate_git_issue() {
 
     debug_value "curl_return_code" "${curl_return_code}"
 
+    # curl_return_code is NOT the http status, just sucess/fail
     if [[ "${curl_return_code}" -ne 0 ]]; then
-      error_exit "Issue ${BLUE}${git_issue}${NC} does not exist on GitHub"
+      # curl failed so check to see what the status code was
+      local http_status_code
+      http_status_code="$( \
+        curl \
+          --silent \
+          --output /dev/null \
+          --write-out "%{http_code}" \
+          "${github_issue_url}"\
+      )"
+      debug_value "http_status_code" "${http_status_code}"
+
+      if [[ "${http_status_code}" = "404" ]]; then
+        error_exit "Issue ${BLUE}${git_issue}${NC} does not exist on GitHub"
+      else
+        warn "Unable to obtain issue title for issue ${BLUE}${issue_number}${NC}" \
+          "from GitHub (HTTP status: ${BLUE}${http_status_code}${NC})"
+        issue_title=""
+      fi
     else
       info "Issue title: ${BLUE}${issue_title}${NC}"
     fi
@@ -294,12 +316,12 @@ write_change_entry() {
     issue_part="${issue_prefix}${git_issue}${issue_suffix}"
   fi
 
-  local line="${line_prefix}${issue_part}${change_text}"
-  local content
+  local change_entry_line="${line_prefix}${issue_part}${change_text}"
+  local all_content
 
   # Craft the content of the file
-  content="$( \
-    echo "${line}" 
+  all_content="$( \
+    echo "${change_entry_line}" 
     echo
     echo
     if [[ -n "${issue_title}" ]]; then
@@ -322,12 +344,12 @@ write_change_entry() {
     echo "# * A change with no associated GitHub issue."
   )"
 
-  info "Writing file ${BLUE}${change_file}${GREEN} with content:"
-  info "--------------------------------------------------------------------------------"
-  info "${YELLOW}${content}${NC}"
-  info "--------------------------------------------------------------------------------"
+  info "Writing file ${BLUE}${change_file}${GREEN}:"
+  info "${DGREY}------------------------------------------------------------------------${NC}"
+  info "${YELLOW}${change_entry_line}${NC}"
+  info "${DGREY}------------------------------------------------------------------------${NC}"
 
-  echo -e "${content}" > "${change_file}"
+  echo -e "${all_content}" > "${change_file}"
 
   if [[ -z "${change_text}" ]]; then
 
@@ -422,6 +444,43 @@ validate_change_file() {
   #fi
 }
 
+list_unreleased_changes() {
+
+  local found_change_files=false
+  local list_output=""
+
+  for file in "${unreleased_dir}/"*.md; do
+    if [[ -f "${file}" ]]; then
+      local filename
+      local change_entry_line
+
+      found_change_files=true
+      filename="$(basename "${file}" )"
+
+      change_entry_line="$( \
+        head \
+          -n1 \
+          "${file}" \
+      )"
+          #"s/(Issue [*]{2})([^*]+)([*]{2})/\1|\2|\3/"
+
+      list_output+="${BLUE}${filename}${NC}:\n${YELLOW}${change_entry_line}${NC}\n\n"
+    fi
+  done
+
+  #if [[ "${#entry_map[@]}" -gt 0 ]]; then
+  if [[ "${found_change_files}" = true ]]; then
+    #for filename in "${!MYMAP[@]}"; do echo $K; done
+
+    # Remove the trailing blank lines
+    list_output="$(echo -e "${list_output}" | head -n-2 )"
+
+    echo -e "${list_output}"
+  else
+    info "There are no unreleased changes"
+  fi
+}
+
 main() {
   #local SCRIPT_DIR
   #SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
@@ -433,17 +492,19 @@ main() {
     error "Invalid arguments"
     echo -e "Usage: $0 github_issue [change_text]" >&2
     echo -e "git_issue - GitHub issue number in one of the following formats:" >&2
+    echo -e "            0 - No issue exists for this change" >&2
     echo -e "            n - Just the issue number." >&2
     echo -e "            namespace/repo#n - Issue number on another repo." >&2
-    echo -e "            AUTO - Will derive the issue number from the current branch." >&2
-    echo -e "            0 - No issue exists for this change" >&2
+    echo -e "            auto - Will derive the issue number from the current branch." >&2
+    echo -e "            list - List all unreleased issues." >&2
     echo -e "change_text - The change text in github markdown format. This will be appended to" >&2
     echo -e "              change log entry" >&2
     echo -e "E.g:   $0 1234 \"Fix nasty bug\"" >&2
     echo -e "E.g:   $0 gchq/stroom#1234 \"Fix nasty bug\"" >&2
     echo -e "E.g:   $0 1234" >&2
-    echo -e "E.g:   $0 AUTO \"Fix nasty bug\"" >&2
+    echo -e "E.g:   $0 auto \"Fix nasty bug\"" >&2
     echo -e "E.g:   $0 0 \"Fix something without an issue number\"" >&2
+    echo -e "E.g:   $0 list" >&2
     exit 1
   fi
 
@@ -455,22 +516,27 @@ main() {
 
   validate_in_git_repo
 
-  establish_git_namespace_and_repo
-  
-  if [[ "${git_issue}" = "AUTO" ]]; then
-    git_issue="$(get_git_issue_from_branch)"
-  else
-    validate_git_issue "${git_issue}"
-  fi
+  establish_git_remote_namespace_and_repo
 
   local repo_root_dir
   repo_root_dir="$(git rev-parse --show-toplevel)"
   local unreleased_dir="${repo_root_dir}/${UNRELEASED_DIR_NAME}"
-
   mkdir -p "${unreleased_dir}"
 
-  if ! is_existing_change_file_present "${git_issue}" "${change_text:-}"; then
-    write_change_entry "${git_issue}" "${change_text:-}"
+  if [[ "${git_issue}" = "list" ]]; then
+    list_unreleased_changes
+  else
+    if [[ "${git_issue}" = "auto" ]]; then
+      git_issue="$(get_git_issue_from_branch)"
+    else
+      validate_git_issue "${git_issue}"
+    fi
+
+    if [[ "${git_issue}" = "0" ]] \
+      || ! is_existing_change_file_present "${git_issue}" "${change_text:-}"; then
+
+      write_change_entry "${git_issue}" "${change_text:-}"
+    fi
   fi
 }
 
