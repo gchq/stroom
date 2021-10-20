@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 ##########################################################################
-# Version: v0.1.7
-# Date: 2021-10-20T20:15:25+00:00
+# Version: v0.1.8
+# Date: 2021-10-20T20:34:08+00:00
 #
 # Script to record changelog entries in individual files to get around
 # the issue of merge conflicts on the CHANGELOG file when doing PRs.
@@ -319,29 +319,37 @@ write_change_entry() {
   local change_entry_line="${line_prefix}${issue_part}${change_text}"
   local all_content
 
+
   # Craft the content of the file
   all_content="$( \
     echo "${change_entry_line}" 
     echo
     echo
-    if [[ -n "${issue_title}" ]]; then
-      echo "# ********************************************************************************"
-      echo "# Issue title: ${issue_title}"
-      echo "# ********************************************************************************"
-      echo
-    fi
-    echo "# All blank and comment lines will be ignored when imported into the CHANGELOG."
-    echo "# Entries should be in GitHub flavour markdown and should be written on a single"
-    echo "# line on the first line of the file with no hard breaks."
-    echo "#"
-    echo "# Examples of accptable entires are:"
-    echo "#"
-    echo "#"
-    echo "# * Issue **1234** : A change with an associated GitHub issue in this repository"
-    echo "#"
-    echo "# * Issue **namespace/other-repo#1234** : A change with an associated GitHub issue in another repository"
-    echo "#"
-    echo "# * A change with no associated GitHub issue."
+    # shellcheck disable=SC2016
+    {
+      if [[ -n "${issue_title}" ]]; then
+        echo '```bash'
+        echo "# ********************************************************************************"
+        echo "# Issue title: ${issue_title}"
+        echo "# ********************************************************************************"
+        echo '```'
+        echo
+      fi
+      echo '```bash'
+      echo "# Only the top line will be included in the CHANGELOG."
+      echo "# Entries should be in GitHub flavour markdown and should be written on a single"
+      echo "# line with no hard breaks."
+      echo "#"
+      echo "# Examples of accptable entires are:"
+      echo "#"
+      echo "#"
+      echo "# * Issue **1234** : A change with an associated GitHub issue in this repository"
+      echo "#"
+      echo "# * Issue **namespace/other-repo#1234** : A change with an associated GitHub issue in another repository"
+      echo "#"
+      echo "# * A change with no associated GitHub issue."
+      echo '```'
+    }
   )"
 
   info "Writing file ${BLUE}${change_file}${GREEN}:"
