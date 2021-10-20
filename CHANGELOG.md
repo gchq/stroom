@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2424** : Change security filter to 404 any unexpected URIs.
 
+* Issue **#2493** : Fix missing part nav controls when data can't be decoded.
+
 * Issue **#2497** : Added summary to orphan file finder.
 
 * Issue **#2500** : Add a primary key to the `meta_retention_tracker` table for MySQL Group Replication.
