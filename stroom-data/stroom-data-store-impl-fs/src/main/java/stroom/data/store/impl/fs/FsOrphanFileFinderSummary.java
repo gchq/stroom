@@ -26,7 +26,7 @@ public class FsOrphanFileFinderSummary {
                 final String month = path.getName(i + 3).toString();
                 final String day = path.getName(i + 4).toString();
 
-                final String date = year + "/" + month + "/" + day;
+                final String date = year + "-" + month + "-" + day;
                 final SummaryLine summaryLine = new SummaryLine(type, feedName, date);
                 summaryMap
                         .computeIfAbsent(summaryLine, k -> new AtomicLong())
