@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2424** : Change security filter to 404 any unexpected URIs.
+
 * Issue **#2493** : Fix missing part nav controls when data can't be decoded.
 
 * Issue **#2497** : Added summary to orphan file finder.
