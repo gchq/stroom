@@ -57,23 +57,40 @@ public class DataViewImpl extends ViewImpl implements DataView {
     @UiField
     ButtonPanel buttonPanel;
 
+    private boolean sourceLinkEnabled = true;
+
 
     @Inject
     public DataViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         layerContainer.setFade(true);
         sourceLinkLabel.setText("View Source");
+        sourceLinkLabel.setVisible(true);
     }
 
     @Override
-    public void setSourceLinkVisible(final boolean isVisible) {
+    public void setSourceLinkVisible(final boolean isVisible, final boolean isEnabled) {
         sourceLinkLabel.setVisible(isVisible);
+
+        if (isEnabled) {
+            sourceLinkEnabled = true;
+            sourceLinkLabel.addStyleName("enabled");
+            sourceLinkLabel.removeStyleName("disabled");
+        } else {
+            sourceLinkEnabled = false;
+            sourceLinkLabel.removeStyleName("enabled");
+            sourceLinkLabel.addStyleName("disabled");
+        }
     }
 
     @Override
     public void addSourceLinkClickHandler(final ClickHandler clickHandler) {
         if (clickHandler != null) {
-            sourceLinkLabel.addClickHandler(clickHandler);
+            sourceLinkLabel.addClickHandler(event -> {
+                if (sourceLinkEnabled) {
+                    clickHandler.onClick(event);
+                }
+            });
         }
     }
 
