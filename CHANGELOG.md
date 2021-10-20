@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2519** : Added validation for processor filter expressions and more info about filters to the UI.
+
 * Issue **#2501** : Change reference data store to use consistent approach to last access time truncation.
 
 * Issue **#2424** : Change security filter to 404 any unexpected URIs.

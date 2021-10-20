@@ -9,14 +9,14 @@
     	border-bottom: 1px solid #c5cde2;
     	background-color: white;
     }
-    
+
     .south {
     	width: 100%;
     	height: 100%;
     	border-top: 1px solid #c5cde2;
     	background-color: white;
     }
-    
+
     .details {
     	padding: 5px;
     }
@@ -28,9 +28,19 @@
         addStyleNames="{style.north}" />
     </g:north>
     <g:center>
-      <g:MaxScrollPanel addStyleNames="{style.south}">
-        <g:SimplePanel ui:field="details" />
-      </g:MaxScrollPanel>
+
+        <g:MySplitLayoutPanel vSplits="0.5" width="100%" height="100%" addStyleNames="{style.south}">
+            <g:north size="200">
+                <view:ResizeSimplePanel ui:field="info"
+                                        addStyleNames="{style.north} {style.details}" />
+            </g:north>
+            <g:center>
+                <g:MaxScrollPanel addStyleNames="{style.south}">
+                    <g:SimplePanel ui:field="details" />
+                </g:MaxScrollPanel>
+            </g:center>
+        </g:MySplitLayoutPanel>
+
     </g:center>
   </g:MySplitLayoutPanel>
 </ui:UiBinder>

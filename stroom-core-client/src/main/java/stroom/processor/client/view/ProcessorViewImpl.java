@@ -19,8 +19,10 @@ package stroom.processor.client.view;
 import stroom.processor.client.presenter.ProcessorPresenter.ProcessorView;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -32,6 +34,8 @@ public class ProcessorViewImpl extends ViewImpl implements ProcessorView {
     private final Widget widget;
     @UiField
     ResizeSimplePanel processorList;
+    @UiField
+    ResizeSimplePanel info;
     @UiField
     SimplePanel details;
 
@@ -48,6 +52,11 @@ public class ProcessorViewImpl extends ViewImpl implements ProcessorView {
     @Override
     public void setProcessorList(final View view) {
         this.processorList.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void setInfo(final SafeHtml info) {
+        this.info.setWidget(new HTML(info));
     }
 
     @Override
