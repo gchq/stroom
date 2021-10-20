@@ -1,7 +1,8 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:tab="urn:import:stroom.widget.tab.client.view">
+             xmlns:tab="urn:import:stroom.widget.tab.client.view"
+             xmlns:b="urn:import:stroom.widget.button.client">
     <g:FlowPanel styleName="max dock-container-vertical stroom-content">
         <g:FlowPanel styleName="dock-container-horizontal dock-min">
             <g:FlowPanel styleName="dock-max dataViewImpl-tabBarOuter">
@@ -9,10 +10,11 @@
                                 addStyleNames="max dataViewImpl-tabBarInner"/>
             </g:FlowPanel>
             <g:FlowPanel styleName="dock-min dataViewImpl-rightPanel">
+                <b:ButtonPanel ui:field="buttonPanel" styleName="dataViewImpl-buttonPanel"/>
                 <g:SimplePanel ui:field="navigatorContainer"
-                                     styleName="dataViewImpl-navigatorContainer"/>
+                               styleName="dataViewImpl-navigatorContainer"/>
                 <g:Label ui:field="sourceLinkLabel"
-                         styleName="dataViewImpl-sourceLinkLabel"/>
+                         styleName="dataViewImpl-sourceLinkLabel clickableLabel"/>
             </g:FlowPanel>
         </g:FlowPanel>
         <g:SimplePanel ui:field="progressBarPanel" styleName="dock-min dataViewImpl-progressBarPanel"/>

@@ -235,7 +235,8 @@ public class DataFetcher {
                                 streamTypeName,
                                 sourceLocation,
                                 availableChildStreamTypes,
-                                null);
+                                null,
+                                new Count<>(0L, true));
                     }
 
                     long partIndex = fetchDataRequest.getSourceLocation().getPartIndex();
@@ -270,7 +271,8 @@ public class DataFetcher {
                         try (final SegmentInputStream segmentInputStream = inputStreamProvider.get(
                                 requestedChildStreamType)) {
 
-                            final boolean isSegmented = segmentInputStream.count() > 1;
+                            final long segmentCount = segmentInputStream.count();
+                            final boolean isSegmented = segmentCount > 1;
 
                             // segment no doesn't matter for non-segmented data
                             if (isSegmented && sourceLocation.getRecordIndex() < 0) {
@@ -281,7 +283,8 @@ public class DataFetcher {
                                         streamTypeName,
                                         sourceLocation,
                                         availableChildStreamTypes,
-                                        null);
+                                        null,
+                                        new Count<>(segmentCount, true));
                             }
 
                             // If this is an error stream and the UI is requesting markers then
@@ -345,7 +348,8 @@ public class DataFetcher {
                             streamTypeName,
                             sourceLocation,
                             availableChildStreamTypes,
-                            Collections.singletonList(message));
+                            Collections.singletonList(message),
+                            new Count<>(partCount, true));
                 }
             });
         }).get();
@@ -357,8 +361,8 @@ public class DataFetcher {
                                               final String streamTypeName,
                                               final SourceLocation sourceLocation,
                                               final Set<String> childStreamTypes,
-                                              final List<String> errors) {
-        final Count<Long> totalItemCount = new Count<>(0L, true);
+                                              final List<String> errors,
+                                              final Count<Long> itemCount) {
         final OffsetRange itemRange = new OffsetRange(0L, (long) 1);
         final Count<Long> totalCharCount = Count.zeroLong();
 
@@ -368,7 +372,7 @@ public class DataFetcher {
                 null,
                 sourceLocation,
                 itemRange,
-                totalItemCount,
+                itemCount,
                 totalCharCount,
                 null,
                 childStreamTypes,
