@@ -7,33 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **#2519** : Added validation for processor filter expressions and more info about filters to the UI.
-
-* Issue **#2501** : Change reference data store to use consistent approach to last access time truncation.
-
-* Issue **#2424** : Change security filter to 404 any unexpected URIs.
-
-* Issue **#2493** : Fix missing part nav controls when data can't be decoded.
-
-* Issue **#2497** : Added summary to orphan file finder.
-
-* Issue **#2500** : Add a primary key to the `meta_retention_tracker` table for MySQL Group Replication.
-
-* Change meta retention tracking to track at the time period level so a killed job preserves the position of the periods already processed.
-
-* Issue **#2513** : Fixed stepping to unique values.
-
-* Issue **#2496** : Fixed issue where data browser was showing duplicate streams.
-
-* Issue **#2511, #2512** : Fixed stepping error handling.
-
-* Issue **#2478** : Create a single place in config for the LMDB library path and extraction dir.
-
-* Issue **#2478** : Delete old LMDB library binaries on boot.
-
-* Issue **#2497** : Fixed issue with `OrphanFileFinder` incorrectly identifying some dirs as being empty.
-
-* Change `/api/refData/v1/purgeByAge/{purgeAge}`, `/api/refData/v1/purgeByStream/{refStreamId}` and `/api/refData/v1/clearBufferPool` to act on all nodes unless the `nodeName` query param is provided.
+~~~
+DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
+~~~
 
 
 ## [v7.0-beta.151] - 2021-10-11
