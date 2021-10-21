@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 ##########################################################################
-# Version: v0.1.8
-# Date: 2021-10-20T20:34:08+00:00
+# Version: v0.2.1
+# Date: 2021-10-21T14:36:30+00:00
 #
 # Script to record changelog entries in individual files to get around
 # the issue of merge conflicts on the CHANGELOG file when doing PRs.
@@ -18,7 +18,7 @@
 
 set -euo pipefail
 
-IS_DEBUG=false
+IS_DEBUG=${IS_DEBUG:-false}
 UNRELEASED_DIR_NAME="unreleased_changes"
 
 setup_echo_colours() {
@@ -239,29 +239,64 @@ is_existing_change_file_present() {
   local git_issue_str
   git_issue_str="$(format_git_issue_for_filename "${git_issue}")"
 
-  local existing_file
-  existing_file="$( \
-    find \
-      "${unreleased_dir}/" \
-      -maxdepth 1 \
-      -name "*__${git_issue_str}.md" \
-      -print \
-      -quit)"
+  local existing_files=()
 
-  debug_value "existing_file" "${existing_file}"
+  for existing_file in "${unreleased_dir}"/*__"${git_issue_str}".md; do
+    if [[ -f "${existing_file}" ]]; then
+      debug_value "existing_file" "${existing_file}"
+      local filename
+      filename="$(basename "${existing_file}" )"
+      existing_files+=( "${filename}" )
+    fi
+  done
 
-  if [[ -f "${existing_file}" ]]; then
-    # File exists for this issue so open it
-    info "A change entry file already exists for this issue"
+  debug_value "existing_files" "${existing_files[@]:-()}"
 
-    open_file_in_editor "${existing_file}"
+  local existing_file_count="${#existing_files[@]}"
+  debug_value "existing_file_count" "${existing_file_count}"
 
-    validate_change_file "${existing_file}"
-
-    return 0
-  else
+  if [[ "${existing_file_count}" -eq 0 ]]; then
     debug "File does not exist"
     return 1
+  else 
+    # Multiple files exist for this 
+    debug "${existing_file_count} files exist"
+
+    info "Change file(s) already exist for this issue:"
+    echo
+
+    list_unreleased_changes "${git_issue_str}"
+
+    echo
+    echo "Do you want to create a new change file for the issue or open an existing one?"
+    echo "If it is a different change tied to the same issue then you should create a new"
+    echo "file to avoid merge conflicts."
+
+    # Build the menu options
+    local menu_item_arr=()
+    menu_item_arr+=( "Create new file" )
+    for filename in "${existing_files[@]}"; do
+      menu_item_arr+=( "Open ${filename}" )
+    done
+
+    COLUMNS=1
+    select user_input in "${menu_item_arr[@]}"; do
+      if [[ "${user_input}" = "Create new file" ]]; then
+        write_change_entry "${git_issue}" "${change_text:-}"
+        break
+      elif [[ "${user_input}" =~ ^Open ]]; then
+        local chosen_file_name="${user_input#Open }"
+        debug_value "chosen_file_name" "${chosen_file_name}"
+        open_file_in_editor "${unreleased_dir}/${chosen_file_name}"
+        validate_issue_line "${unreleased_dir}/${chosen_file_name}"
+        break
+      else
+        echo "Invalid option. Try another one."
+        continue
+      fi
+    done
+
+    return 0
   fi
 }
 
@@ -319,37 +354,32 @@ write_change_entry() {
   local change_entry_line="${line_prefix}${issue_part}${change_text}"
   local all_content
 
-
   # Craft the content of the file
+  # shellcheck disable=SC2016
   all_content="$( \
     echo "${change_entry_line}" 
     echo
     echo
-    # shellcheck disable=SC2016
-    {
-      if [[ -n "${issue_title}" ]]; then
-        echo '```bash'
-        echo "# ********************************************************************************"
-        echo "# Issue title: ${issue_title}"
-        echo "# ********************************************************************************"
-        echo '```'
-        echo
-      fi
-      echo '```bash'
-      echo "# Only the top line will be included in the CHANGELOG."
-      echo "# Entries should be in GitHub flavour markdown and should be written on a single"
-      echo "# line with no hard breaks."
-      echo "#"
-      echo "# Examples of accptable entires are:"
-      echo "#"
-      echo "#"
-      echo "# * Issue **1234** : A change with an associated GitHub issue in this repository"
-      echo "#"
-      echo "# * Issue **namespace/other-repo#1234** : A change with an associated GitHub issue in another repository"
-      echo "#"
-      echo "# * A change with no associated GitHub issue."
-      echo '```'
-    }
+    echo '```sh'
+    if [[ -n "${issue_title:-}" ]]; then
+      echo "# ********************************************************************************"
+      echo "# Issue title: ${issue_title}"
+      echo "# ********************************************************************************"
+      echo
+    fi
+    echo "# ONLY the top line will be included in the CHANGELOG."
+    echo "# Entries should be in GitHub flavour markdown and should be written on a SINGLE"
+    echo "# line with no hard breaks. You can have multiple change files for a single GitHub issue."
+    echo "#"
+    echo "# Examples of acceptable entires are:"
+    echo "#"
+    echo "#"
+    echo "# * Issue **1234** : A change with an associated GitHub issue in this repository"
+    echo "#"
+    echo "# * Issue **namespace/other-repo#1234** : A change with an associated GitHub issue in another repository"
+    echo "#"
+    echo "# * A change with no associated GitHub issue."
+    echo '```'
   )"
 
   info "Writing file ${BLUE}${change_file}${GREEN}:"
@@ -360,17 +390,9 @@ write_change_entry() {
   echo -e "${all_content}" > "${change_file}"
 
   if [[ -z "${change_text}" ]]; then
-
-    read -n 1 -s -r -p "Press any key to continue"
-
-    # No change text so open the user's preferred editor or vi/vim if not set
-    #if ! open_file_in_editor "${change_file}"; then
-      ##rm "${change_file}"
-      #error_exit "Edit aborted by user. Deleting file ${BLUE}${change_file}${NC}"
-    #fi
     open_file_in_editor "${change_file}"
 
-    validate_change_file "${change_file}"
+    validate_issue_line "${change_file}"
   fi
 }
 
@@ -408,56 +430,58 @@ open_file_in_editor() {
   debug_value "return_code" "${return_code}" 
 }
 
-validate_change_file() {
-
+validate_issue_line() {
   local change_file="$1"; shift
-  # https://regex101.com/r/cSfrND/1 
-  local regex='^(#|(# |\* Issue \*\*([a-zA-Z0-9_\-.]+\/[a-zA-Z0-9_\-.]+\#[0-9]+|[0-9]+)\*\* : |\* ).+)$'
-  local bad_lines=()
+  # Used to look for lines that might be a change entry
+  local simple_issue_line_regex="^\* [A-Z]"
 
-  local bad_lines
-  bad_lines="$( \
+  # A more complex regex to make sure the change entries are a consistent format
+  # https://regex101.com/r/fOO8lQ/1
+  local issue_line_regex="^\* (Issue \*\*([a-zA-Z0-9_\-.]+\/[a-zA-Z0-9_\-.]+\#[0-9]+|#[0-9]+)\*\* : )?[A-Z][\w .!?\`\"'*\-]+$"
+
+  debug "Validating file ${change_file}"
+
+  local issue_line_count
+  issue_line_count="$( \
     grep \
-      --perl-regexp "${regex}" \
-      --invert-match \
-      "${change_file}" \
+      --count \
+      --perl-regexp \
+      "${simple_issue_line_regex}" \
+      "${change_file}"
     )"
 
-  if [[ -n "${bad_lines}" ]]; then
-    error "The following lines are not valid in ${BLUE}${change_file}${NC}:"
-    echo -e "--------------------------------------------------------------------------------"
-    echo -e "${bad_lines}"
-    echo -e "--------------------------------------------------------------------------------"
-    echo -e "Validation regex: ${BLUE}${regex}${NC}"
-    exit 1
+  debug_value "issue_line_count" "${issue_line_count}"
+
+  if [[ "${issue_line_count}" -eq 0 ]]; then
+      error_exit "No change entry line found in ${BLUE}${change_file}${NC}"
+  elif [[ "${issue_line_count}" -gt 1 ]]; then
+      error "Multiple change entry lines found in ${BLUE}${change_file}${NC}:"
+      echo -e "${DGREY}------------------------------------------------------------------------${NC}"
+      echo -e "$(grep --perl-regexp "${simple_issue_line_regex}" "${change_file}" )"
+      echo -e "${DGREY}------------------------------------------------------------------------${NC}"
+      echo -e "Validation regex: ${BLUE}${simple_issue_line_regex}${NC}"
+      exit 1
+  else
+    if ! head -n1 "${change_file}" | grep --quiet --perl-regexp "${issue_line_regex}"; then
+      error "The change entry is not valid in ${BLUE}${change_file}${NC}:"
+      echo -e "${DGREY}------------------------------------------------------------------------${NC}"
+      echo -e "$(head -n1 "${change_file}" )"
+      echo -e "${DGREY}------------------------------------------------------------------------${NC}"
+      echo -e "Validation regex: ${BLUE}${issue_line_regex}${NC}"
+      exit 1
+    fi
   fi
-  #while IFS= read -r line || [[ -n $line ]]; do
-    #if [[ ! "${line}" =~ ${regex} ]]; then
-      #debug_value "line" "${line}"
-      #bad_lines+=( "${line}" )
-    #fi
-  #done < "${change_file}"
-
-  #if [[ "${#bad_lines[@]}" -gt 0 ]]; then
-    #error "The following lines are not valid in ${BLUE}${change_file}${NC}:"
-    #echo -e "--------------------------------------------------------------------------------"
-
-    #for bad_line in "${bad_lines[@]}"; do
-      #echo -e "${bad_line}"
-    #done
-
-    #echo -e "--------------------------------------------------------------------------------"
-    #echo -e "Validation regex: ${BLUE}${regex}${NC}"
-    #exit 1
-  #fi
 }
 
 list_unreleased_changes() {
 
+  # if no git issue is provided use a wildcard so we can get all issues
+  local git_issue_str="${1:-*}"; shift
+  debug_value "git_issue_str" "${git_issue_str}"
   local found_change_files=false
   local list_output=""
 
-  for file in "${unreleased_dir}/"*.md; do
+  for file in "${unreleased_dir}/"*__${git_issue_str}.md; do
     if [[ -f "${file}" ]]; then
       local filename
       local change_entry_line
@@ -470,8 +494,6 @@ list_unreleased_changes() {
           -n1 \
           "${file}" \
       )"
-          #"s/(Issue [*]{2})([^*]+)([*]{2})/\1|\2|\3/"
-
       list_output+="${BLUE}${filename}${NC}:\n${YELLOW}${change_entry_line}${NC}\n\n"
     fi
   done
@@ -522,6 +544,9 @@ main() {
   debug_value "git_issue" "${git_issue}"
   debug_value "change_text" "${change_text}"
 
+  # TODO validate change_text against the text part of issue_line_regex if
+  # it is set
+
   validate_in_git_repo
 
   establish_git_remote_namespace_and_repo
@@ -532,13 +557,13 @@ main() {
   mkdir -p "${unreleased_dir}"
 
   if [[ "${git_issue}" = "list" ]]; then
-    list_unreleased_changes
+    list_unreleased_changes ""
   else
     if [[ "${git_issue}" = "auto" ]]; then
       git_issue="$(get_git_issue_from_branch)"
-    else
-      validate_git_issue "${git_issue}"
     fi
+
+    validate_git_issue "${git_issue}"
 
     if [[ "${git_issue}" = "0" ]] \
       || ! is_existing_change_file_present "${git_issue}" "${change_text:-}"; then

@@ -16,8 +16,8 @@
 # limitations under the License.
 # **********************************************************************
 
-# Version: v0.1.8
-# Date: 2021-10-20T20:34:08+00:00
+# Version: v0.2.1
+# Date: 2021-10-21T14:36:30+00:00
 
 # This script is for tagging a git repository for the purpose of driving a
 # separate release process from that tagged commit. It also updates the 
@@ -78,13 +78,6 @@
 
 # The format of the headings in compare links are critical to the parsing of
 # the file.
-
-# CHANGELOG for tag_release.sh
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#
-# v1.0 2019-10-04 Check if determined version has been tagged
-# v1.1 2019-10-04 Refactor to use tag_release_config.env
-# v1.2 2021-05-05 Add changelog updating
 
 set -eo pipefail
 
@@ -509,7 +502,7 @@ commit_changelog() {
   git add "./${UNRELEASED_CHANGES_REL_DIR}/*.md"
 
   info "Committing the staged changes"
-  git commit -m "Update CHANGELOG for release ${next_release_version}"
+  git commit -m "Update change log for release ${next_release_version}"
 
   info "Pushing the changelog changes to the remote repository"
   git push
@@ -534,7 +527,7 @@ modify_changelog() {
     "${changelog_file}"
 
   if [ "${IS_DEBUG_ENABLED:-false}" = true ]; then
-    debug "Catting CHANGELOG"
+    debug "Catting change log"
     debug "-------------------------------"
     cat "${changelog_file}"
     debug "-------------------------------"
@@ -617,18 +610,7 @@ modify_changelog() {
     "/${UNRELEASED_LINK_REGEX}/a ${new_link_line}" \
     "${changelog_file}"
 
-  # Treats the whole file as one big line which is a bit sub-prime
-  # for a big changelog, but not a massive issue.
-  # 1st expr - tidy up any instances of 3 or more blank lines replacing them
-  # with 2 blank lines
-  # 2nd expr - ensure all headings are preceeded with 2 blank lines
-  sed \
-    --regexp-extended \
-    --in-place'' \
-    --null-data \
-    --expression 's/\n{4,}/\n\n\n/g' \
-    --expression 's/\n*(^## )/\n\n\n\1/g' \
-    "${changelog_file}"
+  tidy_blank_lines "${changelog_file}"
 
   info "Deleting change entry files in ${BLUE}${unreleased_changes_dir}${NC}"
   rm \
@@ -636,6 +618,27 @@ modify_changelog() {
     "${unreleased_changes_dir}"/*.md
 
   commit_changelog "${next_release_version}"
+}
+
+tidy_blank_lines() {
+  local changelog_file="$1"; shift
+  
+  # Treats the whole file as one big line which is a bit sub-prime
+  # for a big changelog, but not a massive issue.
+  # 1st expr - tidy up any instances of 3 or more blank lines replacing them
+  # with 2 blank lines
+  # 2nd expr - ensure all headings are preceeded with 2 blank lines
+  # 3rd expr - ensure all version headings are followed by 1 blank line
+  # 4th expr - ensure all change lines are preceeded with 1 blank line
+  sed \
+    --regexp-extended \
+    --in-place'' \
+    --null-data \
+    --expression 's/\n{4,}/\n\n\n/g' \
+    --expression 's/\n*(## )/\n\n\n\1/g' \
+    --expression 's/(\n## \[[^]]+\] - [0-9\-]{10})\n*/\1\n\n/g' \
+    --expression 's/\n*(\n\* )/\n\1/g' \
+    "${changelog_file}"
 }
 
 prompt_user_for_version() {
@@ -662,12 +665,23 @@ prepare_changelog_for_release() {
   local next_release_version=""
   local next_release_version_guess=""
 
-  info "These are the unreleased changes that will be added to the CHANGELOG:" \
-    "\n\n${DGREY}------------------------------------------------------------------------" \
-    "\n${YELLOW}${unreleased_changes_text}" \
-    "\n${DGREY}------------------------------------------------------------------------${NC}" \
+  if [[ -n "${unreleased_changes_text}" ]]; then
+    info "These are the unreleased change file entries that will be added to the change log:" \
+      "\n${DGREY}------------------------------------------------------------------------" \
+      "\n${YELLOW}${unreleased_changes_text}" \
+      "\n${DGREY}------------------------------------------------------------------------${NC}"
+  fi
 
-  info "\nThe changelog will be modified for the new release version."
+  if [[ "${#unreleased_changes[@]}" -gt 0 ]]; then
+    info "These are the unreleased changes already in the change log:"
+    info "${DGREY}------------------------------------------------------------------------"
+    for change_text in "${unreleased_changes[@]}"; do
+      info "${YELLOW}${change_text}${NC}"
+    done
+    info "${DGREY}------------------------------------------------------------------------"
+  fi
+
+  info "\nThe change log will be modified for the new release version."
 
   if [ -n "${prev_release_version}" ]; then
     info "\nThe last release tag/version was:" \
@@ -913,10 +927,9 @@ main() {
 
   # Initial validation before we start modifying the changelog
   validate_unreleased_heading_in_changelog
+  validate_in_git_repo
   validate_for_uncommitted_work
   validate_local_vs_remote
-  validate_in_git_repo
-
 
   if [ $# -gt 0 ]; then
     # version passed as argument
@@ -927,23 +940,25 @@ main() {
 
   parse_changelog
 
-  if [[ "${are_unreleased_issues_in_changelog}" = true ]]; then
-    error_exit "There are unreleased change entries in the CHANGELOG.\n" \
-      "Changed should only be added using ${LOG_CHANGE_SCRIPT_NAME}"
-  fi
+  if [[ "${are_unreleased_issues_in_changelog}" = true ]] \
+    || [[ "${are_unreleased_issues_in_files}" = true ]]; then
 
-  if [[ "${are_unreleased_issues_in_files}" = true ]]; then
+    # TODO should really validate all change entry lines to make sure they
+    # follow the regex pattern used in log_change.sh.
+
     # Changelog contains changes that are unreleased so need to
     # set up the new release heading in it.
     prepare_changelog_for_release "${most_recent_release_version}"
   else
-    validation_exit "There are no unreleased changes in" \
-      "${BLUE}${unreleased_changes_dir}/${GREEN}, nothing to do."
-    #if [[ -n "${requested_version}" ]]; then
-      #version="${requested_version}"
-    #else
-      #determine_version_to_release
-    #fi
+    # No 'unreleased' changes according to the changelog so it may be in a
+    # ready state for a release, i.e. tag_release was aborted mid way
+    # previously
+
+    if [[ -n "${requested_version}" ]]; then
+      version="${requested_version}"
+    else
+      determine_version_to_release
+    fi
   fi
 
   do_validation
