@@ -60,7 +60,7 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
             CONFIG_PROPERTY_1,
             CONFIG_PROPERTY_2,
             CONFIG_PROPERTY_3
-    ));
+    ), "node1a");
 
     private static final int BASE_PORT = 7000;
 
@@ -96,7 +96,7 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
 
         final ListConfigResponse expectedResponse = new ListConfigResponse(List.of(
                 configProperty
-        ));
+        ), "node1a");
 
         final GlobalConfigCriteria criteria = new GlobalConfigCriteria("some");
 
@@ -324,7 +324,7 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                                 .peek(configProperty -> {
                                     configProperty.setYamlOverrideValue(node.getNodeName());
                                 })
-                                .collect(Collectors.toList()));
+                                .collect(Collectors.toList()), "node1a");
                     } catch (Exception e) {
                         e.printStackTrace(System.err);
                         throw e;
@@ -393,6 +393,7 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                 () -> globalConfigService,
                 () -> nodeService,
                 UiConfig::new,
-                null);
+                null,
+                () -> nodeInfo);
     }
 }

@@ -15,13 +15,24 @@ import java.util.List;
 @Schema(description = "List of config properties")
 public class ListConfigResponse extends ResultPage<ConfigProperty> {
 
-    public ListConfigResponse(@JsonProperty("values") final List<ConfigProperty> values) {
+    @JsonProperty
+    private final String nodeName;
+
+    public ListConfigResponse(@JsonProperty("values") final List<ConfigProperty> values,
+                              @JsonProperty("nodeName") final String nodeName) {
         super(values);
+        this.nodeName = nodeName;
     }
 
     @JsonCreator
     public ListConfigResponse(@JsonProperty("values") final List<ConfigProperty> values,
-                              @JsonProperty("pageResponse") final PageResponse pageResponse) {
+                              @JsonProperty("pageResponse") final PageResponse pageResponse,
+                              @JsonProperty("nodeName") final String nodeName) {
         super(values, pageResponse);
+        this.nodeName = nodeName;
+    }
+
+    public String getNodeName() {
+        return nodeName;
     }
 }
