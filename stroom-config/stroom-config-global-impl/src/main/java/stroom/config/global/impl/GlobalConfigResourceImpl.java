@@ -11,8 +11,11 @@ import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.ui.config.shared.UiConfig;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.rest.RestUtil;
 import stroom.util.shared.PropertyPath;
@@ -36,39 +39,48 @@ import javax.ws.rs.core.GenericType;
 @AutoLogged
 public class GlobalConfigResourceImpl implements GlobalConfigResource {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(GlobalConfigResourceImpl.class);
+
     private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
     private final Provider<GlobalConfigService> globalConfigServiceProvider;
     private final Provider<NodeService> nodeServiceProvider;
     private final Provider<UiConfig> uiConfig;
     private final Provider<UriFactory> uriFactory;
+    private final Provider<NodeInfo> nodeInfoProvider;
 
     @Inject
     GlobalConfigResourceImpl(final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider,
                              final Provider<GlobalConfigService> globalConfigServiceProvider,
                              final Provider<NodeService> nodeServiceProvider,
                              final Provider<UiConfig> uiConfig,
-                             final Provider<UriFactory> uriFactory) {
+                             final Provider<UriFactory> uriFactory,
+                             final Provider<NodeInfo> nodeInfoProvider) {
 
         this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
         this.globalConfigServiceProvider = Objects.requireNonNull(globalConfigServiceProvider);
         this.nodeServiceProvider = Objects.requireNonNull(nodeServiceProvider);
         this.uiConfig = uiConfig;
         this.uriFactory = uriFactory;
+        this.nodeInfoProvider = nodeInfoProvider;
     }
 
     @Timed
     @Override
     public ListConfigResponse list(final GlobalConfigCriteria criteria) {
+        LOGGER.info("list called for {}", criteria);
         final ListConfigResponse list = globalConfigServiceProvider.get().list(criteria);
         List<ConfigProperty> values = list.getValues();
-        values = values.stream().map(this::sanitise).collect(Collectors.toList());
-        return new ListConfigResponse(values, list.getPageResponse());
+        values = values.stream()
+                .map(this::sanitise)
+                .collect(Collectors.toList());
+        return new ListConfigResponse(values, list.getPageResponse(), nodeInfoProvider.get().getThisNodeName());
     }
 
     @Timed
     @Override
     public ListConfigResponse listByNode(final String nodeName,
                                          final GlobalConfigCriteria criteria) {
+        LOGGER.info("listByNode called for node: {}, criteria: {}", nodeName, criteria);
         return nodeServiceProvider.get().remoteRestResult(
                 nodeName,
                 ListConfigResponse.class,
