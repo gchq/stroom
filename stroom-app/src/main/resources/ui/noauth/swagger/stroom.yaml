@@ -7960,6 +7960,8 @@ components:
       type: object
       description: List of config properties
       properties:
+        nodeName:
+          type: string
         pageResponse:
           $ref: '#/components/schemas/PageResponse'
         values:

@@ -1603,6 +1603,8 @@ export interface Limits {
  * List of config properties
  */
 export interface ListConfigResponse {
+  nodeName?: string;
+
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: ConfigProperty[];
