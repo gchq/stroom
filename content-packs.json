@@ -24,9 +24,9 @@
     "name" : "internal-statistics-stroom-stats",
     "version" : "2.1"
   }, {
-    "url" : "https://github.com/gchq/stroom-content/releases/download/standard-pipelines-v0.3/standard-pipelines-v0.3.zip",
+    "url" : "https://github.com/gchq/stroom-content/releases/download/standard-pipelines-v0.4/standard-pipelines-v0.4.zip",
     "name" : "standard-pipelines",
-    "version" : "0.3"
+    "version" : "0.4"
   }, {
     "url" : "https://github.com/gchq/stroom-content/releases/download/stroom-101-v1.0/stroom-101-v1.0.zip",
     "name" : "stroom-101",
