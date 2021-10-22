@@ -118,6 +118,8 @@ RUN \
     mkdir -p /stroom/volumes && \
     chown -R stroom:stroom /stroom
 
+# IMPORTANT - if you add/change a dir above you need to do the same in entrypoint.sh
+
 # Those that are most likely to have changed get copied last to speed up build
 
 # Copy in the content packs downloaded by gradle
