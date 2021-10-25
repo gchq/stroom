@@ -51,8 +51,8 @@ public class ProxyRepoSourceEntries implements HasShutdown {
             Thread.NORM_PRIORITY - 1);
     private final ExecutorService executor = ScalingThreadPoolExecutor.newScalingThreadPool(
             1,
-            10,
-            100,
+            20,
+            Integer.MAX_VALUE,
             10,
             TimeUnit.MINUTES,
             threadFactory);
