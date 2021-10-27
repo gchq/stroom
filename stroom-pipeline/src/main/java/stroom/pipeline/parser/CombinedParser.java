@@ -40,10 +40,12 @@ import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.FeedHolder;
+import stroom.pipeline.state.LocationHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.textconverter.TextConverterStore;
 import stroom.pipeline.xml.converter.ParserFactory;
 import stroom.pipeline.xml.converter.json.JSONParserFactory;
+import stroom.pipeline.xml.converter.xmlfragment.XMLFragmentParser;
 import stroom.util.io.PathCreator;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
@@ -89,6 +91,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
     private final Provider<FeedHolder> feedHolder;
     private final Provider<PipelineHolder> pipelineHolder;
     private final DocFinder<TextConverterDoc> docHelper;
+    private final Provider<LocationHolder> locationHolderProvider;
 
     private String type;
     private boolean fixInvalidChars = false;
@@ -106,12 +109,14 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
                           final TextConverterStore textConverterStore,
                           final PathCreator pathCreator,
                           final Provider<FeedHolder> feedHolder,
-                          final Provider<PipelineHolder> pipelineHolder) {
+                          final Provider<PipelineHolder> pipelineHolder,
+                          final Provider<LocationHolder> locationHolderProvider) {
         super(errorReceiverProxy, locationFactory);
         this.parserFactoryPool = parserFactoryPool;
         this.textConverterStore = textConverterStore;
         this.feedHolder = feedHolder;
         this.pipelineHolder = pipelineHolder;
+        this.locationHolderProvider = locationHolderProvider;
 
         this.docHelper = new DocFinder<>(TextConverterDoc.DOCUMENT_TYPE, pathCreator, textConverterStore);
     }
@@ -187,7 +192,15 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
         final ParserFactory parserFactory = storedParserFactory.getParserFactory();
 
         if (storedErrorReceiver.getTotalErrors() == 0 && parserFactory != null) {
-            return parserFactory.getParser();
+            final XMLReader parser = parserFactory.getParser();
+
+            // Fragment xml needs to be handled differently as the parser sees the
+            // xml with the wrapper around it but the source does not include it.
+            if (parser instanceof XMLFragmentParser) {
+                locationHolderProvider.get().setFragmentXml(true);
+            }
+
+            return parser;
         } else {
             storedErrorReceiver.replay(new ErrorReceiverIdDecorator(getElementId(), getErrorReceiverProxy()));
         }

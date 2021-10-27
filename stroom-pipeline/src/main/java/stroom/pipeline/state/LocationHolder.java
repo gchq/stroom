@@ -16,8 +16,10 @@
 
 package stroom.pipeline.state;
 
+import stroom.meta.shared.Meta;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.xml.converter.ds3.DSLocator;
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -30,7 +32,6 @@ import stroom.util.shared.TextRange;
 import org.xml.sax.Locator;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import javax.inject.Inject;
 
@@ -51,15 +52,18 @@ public class LocationHolder implements Holder {
     private Location currentEndLocation;
     private Location markedStartLocation;
     private boolean hasMarkedStartLocation;
-    private static final Comparator<Location> LOCATION_COMPARATOR = Comparator
-            .comparing(Location::getLineNo)
-            .thenComparing(Location::getColNo);
     private boolean isFirstRecord = true;
+    private boolean isFragmentXml = false;
 
     @Inject
-    public LocationHolder(final MetaHolder metaHolder) {
+    public LocationHolder(final MetaHolder metaHolder,
+                          final PipelineHolder pipelineHolder) {
         this.metaHolder = metaHolder;
         reset();
+    }
+
+    public void setFragmentXml(final boolean isFragmentXml) {
+        this.isFragmentXml = isFragmentXml;
     }
 
     public void setDocumentLocator(final Locator locator, final int maxSize) {
@@ -86,11 +90,13 @@ public class LocationHolder implements Holder {
     }
 
     public void reset() {
+        LOGGER.trace("Reset() called");
         recordIndex = -1;
         currentStartLocation = new DefaultLocation(1, 1);
         currentEndLocation = new DefaultLocation(1, 1);
         markedStartLocation = new DefaultLocation(1, 1);
         hasMarkedStartLocation = false;
+        isFirstRecord = true;
     }
 
     public void markStartLocation() {
@@ -103,25 +109,31 @@ public class LocationHolder implements Holder {
         }
     }
 
+    private String dumpLocationState() {
+        return LogUtil.message("metaId: {} " +
+                        "currentStartLocation: {}, " +
+                        "markedStartLocation: {} " +
+                        "currentEndLocation: {}, " +
+                        "startLocator.getLineNo: {}, " +
+                        "startLocator.getColNo: {}, " +
+                        "isFirstRecord: {}, " +
+                        "hasMarkedStartLocation: {}," +
+                        "isFragmentXml: {}",
+                NullSafe.toStringOrElse(metaHolder, MetaHolder::getMeta, Meta::getId, () -> "null"),
+                currentStartLocation,
+                markedStartLocation != null
+                        ? markedStartLocation
+                        : "null",
+                currentEndLocation,
+                locator.getLineNumber(),
+                locator.getColumnNumber(),
+                isFirstRecord,
+                hasMarkedStartLocation,
+                isFragmentXml);
+    }
+
     public void storeLocation() {
-        LOGGER.trace(() ->
-                LogUtil.message("storeLocation() called. " +
-                                "currentStartLocation: {}, " +
-                                "markedStartLocation: {}" +
-                                "currentEndLocation: {}, " +
-                                "startLocator.getLineNo: {}, " +
-                                "startLocator.getColNo: {}, " +
-                                "isFirstRecord: {}, " +
-                                "hasMarkedStartLocation {}",
-                        currentStartLocation,
-                        markedStartLocation != null
-                                ? markedStartLocation
-                                : "null",
-                        currentEndLocation,
-                        locator.getLineNumber(),
-                        locator.getColumnNumber(),
-                        isFirstRecord,
-                        hasMarkedStartLocation));
+        LOGGER.trace(() -> "storeLocation() called. " + dumpLocationState());
 
         if (storeLocations
                 && locator != null
@@ -155,7 +167,8 @@ public class LocationHolder implements Holder {
                 // Special handling for XML fragment events. First marked location will be after the fragment
                 // wrapper so need to ignore that on the first rec only else we will start a few lines after
                 // where we need to
-                if (!isFirstRecord && hasMarkedStartLocation) {
+                if ((isFragmentXml && !isFirstRecord && hasMarkedStartLocation)
+                        || (!isFragmentXml && hasMarkedStartLocation)) {
                     // The start location has been marked so use that
                     LOGGER.trace("Using markedStartLocation as startLocation");
                     startLocation = DefaultLocation.of(
