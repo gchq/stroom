@@ -365,8 +365,17 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                       final String stem,
                       final boolean compareOutput,
                       final List<Exception> exceptions) throws IOException {
-        LOGGER.info("Testing input {}, feed {}, output {}, stem {}",
-                inputFile.getFileName().toString(), feed.getName(), outputDir.getFileName().toString(), stem);
+        LOGGER.info("Testing:" +
+                        "\n--------------------------------------------------------------------------------" +
+                        "\ninput:  {}" +
+                        "\nfeed:   {}" +
+                        "\noutput: {}" +
+                        "\nstem:   {}" +
+                        "\n--------------------------------------------------------------------------------",
+                inputFile.toAbsolutePath(),
+                feed.getName(),
+                outputDir.toAbsolutePath(),
+                stem);
 
         addStream(inputFile, feed);
 

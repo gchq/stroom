@@ -231,13 +231,15 @@ public class SteppingController {
                     .withHighlight(textRange)
                     .build();
 
-            LOGGER.debug(() -> LogUtil.message("creating stepData {}:{}:{} from foundLocation {}:{}:{}",
+            LOGGER.debug(() -> LogUtil.message("creating stepData {}:{}:{} " +
+                            "from foundLocation {}:{}:{} with textRange: {}",
                     sourceLocation.getMetaId(),
                     sourceLocation.getPartIndex(),
                     sourceLocation.getRecordIndex(),
                     foundLocation.getMetaId(),
                     foundLocation.getPartIndex(),
-                    foundLocation.getRecordIndex()));
+                    foundLocation.getRecordIndex(),
+                    textRange));
         } else {
             sourceLocation = null;
         }

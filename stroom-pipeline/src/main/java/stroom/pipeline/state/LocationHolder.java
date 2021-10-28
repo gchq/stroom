@@ -191,6 +191,8 @@ public class LocationHolder implements Holder {
                 currentEndLocation = endLocation;
             }
 
+            // The start/end locations coming out of the xml parsers are both based on the position
+            // of the start of the record or the start of the next
             final TextRange highlight = new TextRange(currentStartLocation, currentEndLocation);
             final DataRange dataRange = DataRange.between(currentStartLocation, currentEndLocation);
 
