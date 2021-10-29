@@ -3460,13 +3460,18 @@ paths:
   /refData/v1/clearBufferPool:
     delete:
       operationId: clearBufferPool
+      parameters:
+      - in: query
+        name: nodeName
+        schema:
+          type: string
       responses:
         default:
           content:
             application/json: {}
           description: default response
       summary: Clear all buffers currently available in the buffer pool to reclaim
-        memory.
+        memory. Performed on the named node or all nodes if null.
       tags:
       - Reference Data
   /refData/v1/entries:
@@ -3520,6 +3525,7 @@ paths:
           description: default response
       summary: Perform a reference data lookup using the supplied lookup request.
         Reference data will be loaded if required using the supplied reference pipeline.
+        Performed on this node only.
       tags:
       - Reference Data
   /refData/v1/purgeByAge/{purgeAge}:
@@ -3531,6 +3537,10 @@ paths:
         required: true
         schema:
           type: string
+      - in: query
+        name: nodeName
+        schema:
+          type: string
       responses:
         default:
           content:
@@ -3538,12 +3548,13 @@ paths:
               schema:
                 type: boolean
           description: default response
-      summary: Explicitly delete all entries that are older than purgeAge.
+      summary: Explicitly delete all entries that are older than purgeAge. Performed
+        on the named node, or all nodes if null.
       tags:
       - Reference Data
-  /refData/v1/purgeByStream/{refStreamId}/{partNo}:
+  /refData/v1/purgeByStream/{refStreamId}:
     delete:
-      operationId: purgeReferenceDataByStreamAndPartNo
+      operationId: purgeReferenceDataByStream
       parameters:
       - in: path
         name: refStreamId
@@ -3552,14 +3563,10 @@ paths:
           type: integer
           format: int64
           minimum: 1
-      - in: path
-        name: partNo
-        required: true
+      - in: query
+        name: nodeName
         schema:
-          type: integer
-          format: int64
-          default: 1
-          minimum: 1
+          type: string
       responses:
         default:
           content:
@@ -3567,14 +3574,15 @@ paths:
               schema:
                 type: boolean
           description: default response
-      summary: Delete all entries for a reference stream and part number (one based)
+      summary: Delete all entries for a reference stream. Performed on the named node
+        or all nodes if null.
       tags:
       - Reference Data
   /refData/v1/refStreamInfo:
     get:
       description: This is primarily intended  for small scale debugging in non-production
         environments. If no limit is set a default limit is applied else the results
-        will be limited to limit entries.
+        will be limited to limit entries. Performed on this node only.
       operationId: getReferenceStreamProcessingInfoEntries
       parameters:
       - in: query
@@ -5483,6 +5491,8 @@ components:
       properties:
         pageResponse:
           $ref: '#/components/schemas/PageResponse'
+        qualifiedFilterInput:
+          type: string
         values:
           type: array
           items:
@@ -7952,6 +7962,8 @@ components:
       type: object
       description: List of config properties
       properties:
+        nodeName:
+          type: string
         pageResponse:
           $ref: '#/components/schemas/PageResponse'
         values:
