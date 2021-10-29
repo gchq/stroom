@@ -38,14 +38,13 @@ import event.logging.MultiObject;
 import event.logging.OtherObject;
 import event.logging.Query;
 import event.logging.SearchEventAction;
-import event.logging.Term;
-import event.logging.TermCondition;
 import event.logging.UpdateEventAction;
 import event.logging.User;
 import event.logging.ViewEventAction;
 import event.logging.util.EventLoggingUtil;
 
 import java.math.BigInteger;
+import java.util.Objects;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -70,7 +69,7 @@ class AccountResourceImpl implements AccountResource {
 
     @Timed
     @Override
-    public AccountResultPage list(final HttpServletRequest httpServletRequest) {
+    public AccountResultPage list() {
         return stroomEventLoggingServiceProvider.get().loggedResult(
                 "ListAccounts",
                 "List all accounts",
@@ -99,35 +98,32 @@ class AccountResourceImpl implements AccountResource {
     @Timed
     @Override
     public AccountResultPage search(final SearchAccountRequest request) {
-        return stroomEventLoggingServiceProvider.get().loggedResult(
-                "SearchAccounts",
-                "Search for accounts by email",
-                SearchEventAction.builder()
-                        .withQuery(Query.builder()
-                                .withAdvanced(AdvancedQuery.builder()
-                                        .addAnd(And.builder()
-                                                .addTerm(Term.builder()
-                                                        .withName("Email")
-                                                        .withCondition(TermCondition.EQUALS)
-                                                        .withValue(request.getQuickFilter())
-                                                        .build())
-                                                .build())
-                                        .build())
-                                .build())
-                        .build(),
-                searchEventAction -> {
-                    // Do the work
-                    final AccountResultPage result = serviceProvider.get()
-                            .search(request);
+        if (request.getQuickFilter() == null || request.getQuickFilter().isBlank()) {
+            return list();
+        } else {
+            final String quickFilterValue = Objects.requireNonNullElse(request.getQuickFilter(), "");
+            return stroomEventLoggingServiceProvider.get().loggedResult(
+                    "SearchAccounts",
+                    "Search for accounts with quick filter",
+                    SearchEventAction.builder()
+                            .withQuery(Query.builder()
+                                    .withRaw("Account matches \"" + quickFilterValue + "\"")
+                                    .build())
+                            .build(),
+                    searchEventAction -> {
+                        // Do the work
+                        final AccountResultPage result = serviceProvider.get()
+                                .search(request);
 
-                    final SearchEventAction newSearchEventAction = searchEventAction.newCopyBuilder()
-                            .withResultPage(StroomEventLoggingUtil.createResultPage(result))
-                            .withTotalResults(BigInteger.valueOf(result.size()))
-                            .build();
+                        final SearchEventAction newSearchEventAction = searchEventAction.newCopyBuilder()
+                                .withResultPage(StroomEventLoggingUtil.createResultPage(result))
+                                .withTotalResults(BigInteger.valueOf(result.size()))
+                                .build();
 
-                    return ComplexLoggedOutcome.success(result, newSearchEventAction);
-                },
-                null);
+                        return ComplexLoggedOutcome.success(result, newSearchEventAction);
+                    },
+                    null);
+        }
     }
 
     @Timed
