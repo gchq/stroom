@@ -21,10 +21,14 @@ import stroom.pipeline.factory.PipelineFactoryException;
 import stroom.pipeline.factory.TakesInput;
 import stroom.pipeline.factory.TakesReader;
 import stroom.pipeline.factory.Target;
+import stroom.pipeline.parser.CombinedParser;
+import stroom.pipeline.parser.CombinedParser.Mode;
+import stroom.pipeline.parser.XMLParser;
 import stroom.pipeline.reader.ByteStreamDecoder.DecodedChar;
 import stroom.pipeline.stepping.Recorder;
 import stroom.util.shared.TextRange;
 
+import org.apache.commons.lang3.mutable.MutableInt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,17 +39,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class ReaderRecorder extends AbstractIOElement implements TakesInput, TakesReader, Target, Recorder {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ReaderRecorder.class);
 
     private static final int BASE_LINE_NO = 1;
     private static final int BASE_COL_NO = 1;
 
     private Buffer buffer;
+    private RangeMode rangeMode = RangeMode.INCLUSIVE_INCLUSIVE;
 
     @Override
     public void addTarget(final Target target) {
@@ -55,15 +60,28 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
                     && !(target instanceof TakesReader)) {
                 throw new PipelineFactoryException(
                         "Attempt to link to an element that does not accept input or reader: "
-                        + getElementId() + " > " + target.getElementId());
+                                + getElementId() + " > " + target.getElementId());
             }
             super.addTarget(target);
+
+            // You can have multiple targets which would make this code wrong but the stepper doesn't allow
+            // stepping on forks so we are ok.
+            // The XML( fragment) parser delimits records on the start char of the first element in the rec
+            // so we need to use an exclusive end
+            if (target instanceof XMLParser) {
+                rangeMode = RangeMode.INCLUSIVE_EXCLUSIVE;
+            } else if (target instanceof CombinedParser) {
+                final Mode parserMode = ((CombinedParser) target).getMode();
+                if (parserMode == Mode.XML || parserMode == Mode.XML_FRAGMENT) {
+                    rangeMode = RangeMode.INCLUSIVE_EXCLUSIVE;
+                }
+            }
         }
     }
 
     @Override
     public void setInputStream(final InputStream inputStream, final String encoding) throws IOException {
-        final InputBuffer inputBuffer = new InputBuffer(inputStream, encoding);
+        final InputBuffer inputBuffer = new InputBuffer(inputStream, encoding, rangeMode);
         buffer = inputBuffer;
         super.setInputStream(inputBuffer, encoding);
     }
@@ -105,6 +123,7 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
      * Buffer for reading character data
      */
     private static class ReaderBuffer extends FilterReader implements Buffer {
+
         private static final int MAX_BUFFER_SIZE = 1000000;
         private final StringBuilder stringBuilder = new StringBuilder();
 
@@ -194,7 +213,13 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
                     // Inclusive from
                     if (lineNo > lineFrom ||
                             (lineNo == lineFrom && colNo >= colFrom)) {
-                        inRecord = true;
+
+                        // This is the start of the range but we don't want to show any leading line breaks
+                        if (c != '\n') {
+                            inRecord = true;
+                        } else {
+                            LOGGER.debug("Ignoring line break at start of range");
+                        }
                     }
                 }
 
@@ -264,18 +289,25 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
      * Buffer for reading byte data with a provided encoding
      */
     private static class InputBuffer extends FilterInputStream implements Buffer {
+
         private static final int MAX_BUFFER_SIZE = 1000000;
         private final String encoding;
         private final ByteBuffer byteBuffer = new ByteBuffer();
         private final ByteStreamDecoder byteStreamDecoder;
+        private final RangeMode rangeMode;
 
         private int lineNo = BASE_LINE_NO;
         private int colNo = BASE_COL_NO;
 
-        InputBuffer(final InputStream in, final String encoding) {
+
+        InputBuffer(final InputStream in,
+                    final String encoding,
+                    final RangeMode rangeMode) {
             super(in);
             this.encoding = encoding;
             this.byteStreamDecoder = new ByteStreamDecoder(encoding);
+            this.rangeMode = rangeMode;
+            LOGGER.debug("Using rangeMode {}", rangeMode);
         }
 
         @Override
@@ -343,7 +375,7 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
 
         private void consumeHighlightedSection(final TextRange textRange,
                                                final Consumer<Byte> consumer) {
-            // range is inclusive at both ends
+            // range is inclusive at both ends by default unless specified differently by rangeMode
             final int lineFrom = textRange.getFrom().getLineNo();
             final int colFrom = textRange.getFrom().getColNo();
             final int lineTo = textRange.getTo().getLineNo();
@@ -351,9 +383,10 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
 
             boolean found = false;
             boolean inRecord = false;
+            boolean isEndInclusive = rangeMode.isEndInclusive();
 
             int advance = 0;
-            final AtomicInteger offset = new AtomicInteger(0);
+            final MutableInt offset = new MutableInt(0);
 
             final Supplier<Byte> byteSupplier = () ->
                     byteBuffer.getByte(offset.getAndIncrement());
@@ -363,10 +396,10 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
             //  we get to the line of interest.  From that point we need to decode each char to
             //  see how may bytes it occupies.
             //  Need a kind of jumpToLine method
-            while (offset.get() < length() && !found) {
+            while (offset.intValue() < length() && !found) {
 
                 // The offset where our potentially multi-byte char starts
-                final int startOffset = offset.get();
+                final int startOffset = offset.intValue();
 
                 // This will move offset by the number of bytes in the 'character', i.e. 1-4
                 final DecodedChar decodedChar = byteStreamDecoder.decodeNextChar(byteSupplier);
@@ -375,14 +408,21 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
                 if (!inRecord) {
                     if (lineNo > lineFrom ||
                             (lineNo == lineFrom && colNo >= colFrom)) {
-                        inRecord = true;
+
+                        // This is the start of the range but we don't want to show any leading line breaks
+                        if (!decodedChar.isLineBreak()) {
+                            inRecord = true;
+                        } else {
+                            LOGGER.debug("Ignoring line break at start of range");
+                        }
                     }
                 }
 
-                // Inclusive
+                // Inclusive or Exclusive depending on rangeMode
                 if (inRecord) {
                     if (lineNo > lineTo ||
-                            (lineNo == lineTo && colNo > colTo)) {
+                            (lineNo == lineTo && (
+                                    (!isEndInclusive && colNo >= colTo) || (isEndInclusive && colNo > colTo)))) {
                         // Gone past the desired range
                         inRecord = false;
                         found = true;
@@ -393,6 +433,7 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
 
                 if (inRecord) {
                     // Pass all the bytes that make up our char onto the consumer
+//                    LOGGER.info("Found [{}] at {}:{}", decodedChar.getAsString(), lineNo, colNo);
                     for (int j = 0; j < decodedChar.getByteCount(); j++) {
                         final byte b = byteAt(startOffset + j);
                         consumer.accept(b);
@@ -487,10 +528,38 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
 
 
     private interface Buffer {
+
         Object getData(TextRange textRange);
 
         void clear(TextRange textRange);
 
         void reset();
+    }
+
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+    private enum RangeMode {
+        INCLUSIVE_INCLUSIVE(true, true),
+        INCLUSIVE_EXCLUSIVE(true, false),
+        EXCLUSIVE_INCLUSIVE(false, true),
+        EXCLUSIVE_EXCLUSIVE(false, false);
+
+        private final boolean isStartInclusive;
+        private final boolean isEndInclusive;
+
+        RangeMode(final boolean isStartInclusive, final boolean isEndInclusive) {
+            this.isStartInclusive = isStartInclusive;
+            this.isEndInclusive = isEndInclusive;
+        }
+
+        public boolean isStartInclusive() {
+            return isStartInclusive;
+        }
+
+        public boolean isEndInclusive() {
+            return isEndInclusive;
+        }
     }
 }

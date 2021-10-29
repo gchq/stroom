@@ -69,6 +69,7 @@ import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Indicators;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,6 +87,8 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -124,6 +127,9 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     @Inject
     private CommonTranslationTestHelper commonTranslationTestHelper;
 
+    private static boolean HAVE_IMPORTED_CONTENT = false;
+    private static boolean HAVE_LOADED_REF_DATA = false;
+
     /**
      * NOTE some of the input data for this test is buried in the following zip file so you will need
      * to crack it open to see what is being loaded.
@@ -132,16 +138,13 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     protected void testTranslationTask(final boolean translate, final boolean compareOutput) {
         final List<Exception> exceptions = new ArrayList<>();
 
-        final Path dir = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve("samples");
-        final Path configDir = dir.resolve("config");
-        final Path inputDir = dir.resolve("input");
-        final Path outputDir = dir.resolve("output");
+        final Path samplesDir = getSamplesDir();
+        final Path inputDir = samplesDir.resolve("input");
+        final Path outputDir = samplesDir.resolve("output");
 
         FileUtil.mkdirs(outputDir);
 
-        importExportSerializer.read(configDir, null, ImportMode.IGNORE_CONFIRMATION);
-
-        contentImportService.importStandardPacks();
+        importConfig();
 
         // Process reference data.
         processData(inputDir, outputDir, true, compareOutput, exceptions);
@@ -153,8 +156,141 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         }
     }
 
-    private void processData(final Path inputDir, final Path outputDir, final boolean reference,
-                             final boolean compareOutput, final List<Exception> exceptions) {
+    protected void testTranslationTask(final String name,
+                                       final boolean isReference,
+                                       final boolean compareOutput) {
+        final List<Exception> exceptions = new ArrayList<>();
+
+        final Path samplesDir = getSamplesDir();
+        final Path inputDir = samplesDir.resolve("input");
+        final Path outputDir = samplesDir.resolve("output");
+
+        FileUtil.mkdirs(outputDir);
+
+        LOGGER.info("Processing data for {} in {}", name, inputDir.toAbsolutePath().normalize());
+        processData(name, inputDir, outputDir, isReference, compareOutput, exceptions);
+
+        if (exceptions.size() > 0) {
+            fail(exceptions.get(0).getMessage());
+        }
+    }
+
+    protected void loadAllRefData() {
+        if (!HAVE_LOADED_REF_DATA) {
+            final Path samplesDir = getSamplesDir();
+            final Path inputDir = samplesDir.resolve("input");
+            final Path outputDir = samplesDir.resolve("output");
+            FileUtil.mkdirs(outputDir);
+
+            LOGGER.info("Processing ref data in {}", inputDir.toAbsolutePath().normalize());
+            // Process reference data.
+            final List<Exception> exceptions = new ArrayList<>();
+            processData(inputDir, outputDir, true, false, exceptions);
+            if (exceptions.size() > 0) {
+                fail(exceptions.get(0).getMessage());
+            }
+            HAVE_LOADED_REF_DATA = true;
+        }
+    }
+
+    protected void importConfig() {
+        if (!HAVE_IMPORTED_CONTENT) {
+            final Path samplesDir = getSamplesDir();
+            final Path configDir = samplesDir.resolve("config");
+
+            importExportSerializer.read(configDir, null, ImportMode.IGNORE_CONFIRMATION);
+
+            contentImportService.importStandardPacks();
+            HAVE_IMPORTED_CONTENT = true;
+        }
+    }
+
+    @NotNull
+    private Path getSamplesDir() {
+        return StroomCoreServerTestFileUtil.getTestResourcesDir().resolve("samples");
+    }
+
+    private void processData(final String name,
+                             final Path inputDir,
+                             final Path outputDir,
+                             final boolean reference,
+                             final boolean compareOutput,
+                             final List<Exception> exceptions) {
+        // Create a stream processor for each pipeline.
+        final List<DocRef> pipelines = pipelineStore.findByName(name);
+
+        assertThat(pipelines)
+                .hasSize(1);
+
+        final DocRef pipelineRef = pipelines.get(0);
+
+        final List<DocRef> feedRefs = feedStore.findByName(pipelineRef.getName());
+
+        FeedDoc feed = null;
+        if (feedRefs.size() > 0) {
+            feed = feedStore.readDocument(feedRefs.get(0));
+        }
+        final FeedDoc feedDoc = feed;
+
+        if (feedDoc != null && feedDoc.isReference() == reference) {
+            int priority = 1;
+            if (feed.isReference()) {
+                priority++;
+            }
+
+            final String streamType = feed.isReference()
+                    ? StreamTypeNames.RAW_REFERENCE
+                    : StreamTypeNames.RAW_EVENTS;
+
+            final QueryData findStreamQueryData = QueryData.builder()
+                    .dataSource(MetaFields.STREAM_STORE_DOC_REF)
+                    .expression(ExpressionOperator.builder()
+                            .addTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
+                            .addTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, streamType)
+                            .build())
+                    .build();
+
+            processorFilterService.create(
+                    pipelineRef,
+                    findStreamQueryData,
+                    priority,
+                    false,
+                    true);
+
+            // Add data.
+            final List<Path> files = new ArrayList<>();
+            addFiles(inputDir, files, feed.getName(), "in");
+            addFiles(inputDir, files, feed.getName(), "zip");
+
+            files.sort(Comparator.naturalOrder());
+
+            LOGGER.info("Testing {} files: {}",
+                    files.size(),
+                    files.stream()
+                            .map(file ->
+                                    file.getFileName().toString())
+                            .collect(Collectors.joining(", ")));
+
+            files.forEach(filePath -> {
+                // Add and test each file.
+                final String fileName = filePath.getFileName().toString();
+                final int index = fileName.lastIndexOf(".");
+                final String stem = fileName.substring(0, index);
+
+                try {
+                    test(filePath, feedDoc, outputDir, stem, compareOutput, exceptions);
+                } catch (final IOException | RuntimeException e) {
+                    fail(e.getMessage());
+                }
+            });
+        }
+    }
+
+    private void processData(final Path inputDir,
+                             final Path outputDir,
+                             final boolean reference,
+                             final boolean compareOutput,
+                             final List<Exception> exceptions) {
         // Create a stream processor for each pipeline.
         final List<DocRef> pipelines = pipelineStore.list();
         for (final DocRef pipelineRef : pipelines) {
@@ -173,9 +309,9 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                 }
 
                 final String streamType = feed.isReference()
-                        ?
-                        StreamTypeNames.RAW_REFERENCE
+                        ? StreamTypeNames.RAW_REFERENCE
                         : StreamTypeNames.RAW_EVENTS;
+
                 final QueryData findStreamQueryData = QueryData.builder()
                         .dataSource(MetaFields.STREAM_STORE_DOC_REF)
                         .expression(ExpressionOperator.builder()
@@ -184,21 +320,26 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                                 .build())
                         .build();
 
-                processorFilterService.create(pipelineRef, findStreamQueryData, priority, false, true);
+                processorFilterService.create(
+                        pipelineRef,
+                        findStreamQueryData,
+                        priority,
+                        false,
+                        true);
 
                 // Add data.
                 final List<Path> files = new ArrayList<>();
                 addFiles(inputDir, files, feed.getName(), "in");
                 addFiles(inputDir, files, feed.getName(), "zip");
                 files.sort(Comparator.naturalOrder());
-                files.forEach(p -> {
+                files.forEach(filePath -> {
                     // Add and test each file.
-                    final String fileName = p.getFileName().toString();
+                    final String fileName = filePath.getFileName().toString();
                     final int index = fileName.lastIndexOf(".");
                     final String stem = fileName.substring(0, index);
 
                     try {
-                        test(p, feedDoc, outputDir, stem, compareOutput, exceptions);
+                        test(filePath, feedDoc, outputDir, stem, compareOutput, exceptions);
                     } catch (final IOException | RuntimeException e) {
                         fail(e.getMessage());
                     }
@@ -207,7 +348,10 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         }
     }
 
-    private void addFiles(final Path dir, final List<Path> files, final String feed, final String extension) {
+    private void addFiles(final Path dir,
+                          final List<Path> files,
+                          final String feed,
+                          final String extension) {
         try (final DirectoryStream<Path> stream = Files.newDirectoryStream(dir, feed + "*." + extension)) {
             stream.forEach(files::add);
         } catch (final IOException e) {
@@ -215,17 +359,34 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         }
     }
 
-    private void test(final Path inputFile, final FeedDoc feed, final Path outputDir, final String stem,
-                      final boolean compareOutput, final List<Exception> exceptions) throws IOException {
-        LOGGER.info("Testing input {}, feed {}, output {}, stem {}",
-                inputFile.getFileName().toString(), feed.getName(), outputDir.getFileName().toString(), stem);
+    private void test(final Path inputFile,
+                      final FeedDoc feed,
+                      final Path outputDir,
+                      final String stem,
+                      final boolean compareOutput,
+                      final List<Exception> exceptions) throws IOException {
+        LOGGER.info("Testing:" +
+                        "\n--------------------------------------------------------------------------------" +
+                        "\ninput:  {}" +
+                        "\nfeed:   {}" +
+                        "\noutput: {}" +
+                        "\nstem:   {}" +
+                        "\n--------------------------------------------------------------------------------",
+                inputFile.toAbsolutePath(),
+                feed.getName(),
+                outputDir.toAbsolutePath(),
+                stem);
 
         addStream(inputFile, feed);
 
         processorTaskManager.createTasks();
 
-        List<ProcessorTask> tasks = getTasks();
-        assertThat(tasks.size()).as("There should be one task here").isEqualTo(1);
+        final List<ProcessorTask> tasks = getTasks();
+        assertThat(tasks.size())
+                .as(() -> "There should be one task here. We found:\n" + tasks.stream()
+                        .map(Objects::toString)
+                        .collect(Collectors.joining("\n")))
+                .isEqualTo(1);
 
         for (final ProcessorTask task : tasks) {
             final long startStreamId = getLatestStreamId();
@@ -302,8 +463,12 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         }
 
         // Make sure there are no more tasks.
-        tasks = getTasks();
-        assertThat(tasks.size()).as("There should not be any more tasks here").isZero();
+        final List<ProcessorTask> tasks2 = getTasks();
+        assertThat(tasks2.size())
+                .as(() -> "There should not be any more tasks here. We found:\n" + tasks.stream()
+                        .map(Objects::toString)
+                        .collect(Collectors.joining("\n")))
+                .isZero();
     }
 
     private void addStream(final Path file, final FeedDoc feed) throws IOException {
@@ -391,11 +556,19 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 //        final Optional<FeedDoc> feeds = feedDocCache.get(feedName);
 //        assertThat(feeds.isPresent()).as("No feeds found").isTrue();
         final List<DocRef> pipelines = pipelineStore.findByName(feedName);
-        assertThat(pipelines != null && pipelines.size() > 0).as("No pipelines found").isTrue();
-        assertThat(pipelines.size()).as("Expected 1 pipeline").isEqualTo(1);
+        assertThat(pipelines != null && pipelines.size() > 0)
+                .as("No pipelines found")
+                .isTrue();
+        assertThat(pipelines.size()).as("Expected 1 pipeline")
+                .isEqualTo(1);
 
         final DocRef pipelineRef = pipelines.get(0);
 //        final FeedDoc feed = feeds.get();
+
+        LOGGER.info("Testing: {}, {}, {}",
+                feedName,
+                dir.toAbsolutePath().normalize(),
+                pipelineRef.getName());
 
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTerm(MetaFields.FEED, Condition.EQUALS, feedName)
@@ -466,7 +639,9 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         }
     }
 
-    private SteppingResult step(final StepType direction, final int steps, final PipelineStepRequest request,
+    private SteppingResult step(final StepType direction,
+                                final int steps,
+                                final PipelineStepRequest request,
                                 final SteppingResult existingResponse) {
         SteppingResult newResponse = existingResponse;
 
