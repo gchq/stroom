@@ -96,12 +96,13 @@ public class QuickFilterPredicateFactory {
 
     public static String fullyQualifyInput(final String userInput,
                                            final FilterFieldMappers<?> fieldMappers) {
-        if (userInput == null || userInput.isBlank()) {
-            LOGGER.trace("Null/empty input");
-            // blank input so include everything
+        if (userInput == null) {
+            LOGGER.trace("Null input");
+            return null;
+        } else if (userInput.isBlank()) {
+            LOGGER.trace("Blank input");
             return "";
         } else {
-            // We have some qualified fields so parse them
             final List<MatchToken> matchTokens = extractMatchTokens(userInput, fieldMappers);
             return matchTokens.stream()
                     .map(matchToken -> {

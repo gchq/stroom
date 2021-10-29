@@ -44,7 +44,6 @@ import event.logging.ViewEventAction;
 import event.logging.util.EventLoggingUtil;
 
 import java.math.BigInteger;
-import java.util.Objects;
 import java.util.Optional;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -101,21 +100,20 @@ class AccountResourceImpl implements AccountResource {
         if (request.getQuickFilter() == null || request.getQuickFilter().isBlank()) {
             return list();
         } else {
-            final String quickFilterValue = Objects.requireNonNullElse(request.getQuickFilter(), "");
+
             return stroomEventLoggingServiceProvider.get().loggedResult(
                     "SearchAccounts",
                     "Search for accounts with quick filter",
-                    SearchEventAction.builder()
-                            .withQuery(Query.builder()
-                                    .withRaw("Account matches \"" + quickFilterValue + "\"")
-                                    .build())
-                            .build(),
+                    new SearchEventAction(),
                     searchEventAction -> {
                         // Do the work
                         final AccountResultPage result = serviceProvider.get()
                                 .search(request);
 
                         final SearchEventAction newSearchEventAction = searchEventAction.newCopyBuilder()
+                                .withQuery(Query.builder()
+                                        .withRaw("Account matches \"" + result.getQualifiedFilterInput() + "\"")
+                                        .build())
                                 .withResultPage(StroomEventLoggingUtil.createResultPage(result))
                                 .withTotalResults(BigInteger.valueOf(result.size()))
                                 .build();
