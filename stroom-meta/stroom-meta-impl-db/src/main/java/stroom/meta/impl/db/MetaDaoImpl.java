@@ -292,9 +292,9 @@ class MetaDaoImpl implements MetaDao, Clearable {
     @Override
     public Long getMaxId() {
         return JooqUtil.contextResult(metaDbConnProvider, context -> context
-                        .select(DSL.max(meta.ID))
-                        .from(meta)
-                        .fetchOptional())
+                .select(DSL.max(meta.ID))
+                .from(meta)
+                .fetchOptional())
                 .map(Record1::value1)
                 .orElse(null);
     }
@@ -307,26 +307,26 @@ class MetaDaoImpl implements MetaDao, Clearable {
                 metaProperties.getProcessorUuid(), metaProperties.getPipelineUuid());
 
         final long id = JooqUtil.contextResult(metaDbConnProvider, context -> context
-                        .insertInto(META,
-                                META.CREATE_TIME,
-                                META.EFFECTIVE_TIME,
-                                META.PARENT_ID,
-                                META.STATUS,
-                                META.STATUS_TIME,
-                                META.FEED_ID,
-                                META.TYPE_ID,
-                                META.PROCESSOR_ID)
-                        .values(
-                                metaProperties.getCreateMs(),
-                                metaProperties.getEffectiveMs(),
-                                metaProperties.getParentId(),
-                                MetaStatusId.LOCKED,
-                                metaProperties.getStatusMs(),
-                                feedId,
-                                typeId,
-                                processorId)
-                        .returning(META.ID)
-                        .fetchOne())
+                .insertInto(META,
+                        META.CREATE_TIME,
+                        META.EFFECTIVE_TIME,
+                        META.PARENT_ID,
+                        META.STATUS,
+                        META.STATUS_TIME,
+                        META.FEED_ID,
+                        META.TYPE_ID,
+                        META.PROCESSOR_ID)
+                .values(
+                        metaProperties.getCreateMs(),
+                        metaProperties.getEffectiveMs(),
+                        metaProperties.getParentId(),
+                        MetaStatusId.LOCKED,
+                        metaProperties.getStatusMs(),
+                        feedId,
+                        typeId,
+                        processorId)
+                .returning(META.ID)
+                .fetchOne())
                 .getId();
 
         return Meta
@@ -449,13 +449,13 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                 .execute());
             } else {
                 Select ids = metaExpressionMapper.addJoins(
-                                DSL
-                                        .select(meta.ID)
-                                        .from(meta)
-                                        .leftOuterJoin(metaProcessor)
-                                        .on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),
-                                meta.ID,
-                                usedValKeys)
+                        DSL
+                                .select(meta.ID)
+                                .from(meta)
+                                .leftOuterJoin(metaProcessor)
+                                .on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),
+                        meta.ID,
+                        usedValKeys)
                         .where(conditions);
 
                 Condition extendedAttrCond = meta.ID.in(ids);
@@ -533,7 +533,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
             final Map<Integer, Condition> ruleNoToConditionMap = activeRules.stream()
                     .collect(Collectors.toMap(
                             DataRetentionRule::getRuleNumber,
-                            rule -> expressionMapper.apply(rule.getExpression())));
+                            rule ->
+                                    expressionMapper.apply(rule.getExpression())));
 
             final List<Condition> orConditions = activeRules.stream()
                     .map(rule -> ruleNoToConditionMap.get(rule.getRuleNumber()))
@@ -565,42 +566,42 @@ class MetaDaoImpl implements MetaDao, Clearable {
             final String typeNameFieldName = "type_name";
 
             return JooqUtil.contextResult(metaDbConnProvider,
-                            context -> {
-                                // Get all meta records that are impacted by a rule and for each determine
-                                // which rule wins and get its rule number, along with feed and type
-                                // The OR condition is here to try and help the DB use indexes.
-                                // TODO Should maybe move the ruleNoCaseField into a sub select so we don't need
-                                //   to compute it for the select and the where
-                                final var detailTable = context
-                                        .select(
-                                                metaFeed.NAME.as(feedNameFieldName),
-                                                metaType.NAME.as(typeNameFieldName),
-                                                ruleNoCaseField.as(ruleNoFieldName))
-                                        .from(meta)
-                                        .leftJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                                        .leftJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
-                                        .where(meta.STATUS.notEqual(statusIdDeleted))
-                                        .and(ruleNoCaseField.isNotNull()) // only want data that WILL be deleted
-                                        .and(DSL.or(orConditions)) // Here to help use indexes
-                                        .and(getFilterCriteriaCondition(criteria)) // UI filtering
-                                        .asTable("detail");
+                    context -> {
+                        // Get all meta records that are impacted by a rule and for each determine
+                        // which rule wins and get its rule number, along with feed and type
+                        // The OR condition is here to try and help the DB use indexes.
+                        // TODO Should maybe move the ruleNoCaseField into a sub select so we don't need
+                        //   to compute it for the select and the where
+                        final var detailTable = context
+                                .select(
+                                        metaFeed.NAME.as(feedNameFieldName),
+                                        metaType.NAME.as(typeNameFieldName),
+                                        ruleNoCaseField.as(ruleNoFieldName))
+                                .from(meta)
+                                .leftJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                                .leftJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                                .where(meta.STATUS.notEqual(statusIdDeleted))
+                                .and(ruleNoCaseField.isNotNull()) // only want data that WILL be deleted
+                                .and(DSL.or(orConditions)) // Here to help use indexes
+                                .and(getFilterCriteriaCondition(criteria)) // UI filtering
+                                .asTable("detail");
 
-                                // Now get counts grouped by feed, type and rule
-                                return context
-                                        .select(
-                                                detailTable.field(feedNameFieldName),
-                                                detailTable.field(typeNameFieldName),
-                                                detailTable.field(ruleNoFieldName),
-                                                DSL.count())
-                                        .from(detailTable)
-                                        // ignore rows not hit by a rule
-                                        .where(detailTable.field(ruleNoFieldName).isNotNull())
-                                        .groupBy(
-                                                detailTable.field(ruleNoFieldName),
-                                                detailTable.field(feedNameFieldName),
-                                                detailTable.field(typeNameFieldName))
-                                        .fetch();
-                            })
+                        // Now get counts grouped by feed, type and rule
+                        return context
+                                .select(
+                                        detailTable.field(feedNameFieldName),
+                                        detailTable.field(typeNameFieldName),
+                                        detailTable.field(ruleNoFieldName),
+                                        DSL.count())
+                                .from(detailTable)
+                                // ignore rows not hit by a rule
+                                .where(detailTable.field(ruleNoFieldName).isNotNull())
+                                .groupBy(
+                                        detailTable.field(ruleNoFieldName),
+                                        detailTable.field(feedNameFieldName),
+                                        detailTable.field(typeNameFieldName))
+                                .fetch();
+                    })
                     .map(record -> {
                         int ruleNo = (int) record.get(ruleNoFieldName);
 
@@ -734,28 +735,28 @@ class MetaDaoImpl implements MetaDao, Clearable {
         // get the create_time range for a batch n records
         final Optional<TimePeriod> timePeriod =
                 LOGGER.logDurationIfDebugEnabled(() -> JooqUtil.contextResult(metaDbConnProvider,
-                                context -> {
-                                    final Table<?> orderedFullSet = context
-                                            .select(meta.CREATE_TIME)
-                                            .from(meta)
-                                            .where(conditions)
-                                            .and(meta.CREATE_TIME.greaterOrEqual(startTimeInc.toEpochMilli()))
-                                            .orderBy(meta.CREATE_TIME)
-                                            .asTable("orderedFullSet");
+                        context -> {
+                            final Table<?> orderedFullSet = context
+                                    .select(meta.CREATE_TIME)
+                                    .from(meta)
+                                    .where(conditions)
+                                    .and(meta.CREATE_TIME.greaterOrEqual(startTimeInc.toEpochMilli()))
+                                    .orderBy(meta.CREATE_TIME)
+                                    .asTable("orderedFullSet");
 
-                                    final Table<?> limitedSet = context
-                                            .select(orderedFullSet.fields())
-                                            .from(orderedFullSet)
-                                            .limit(batchSize)
-                                            .asTable("limitedSet");
+                            final Table<?> limitedSet = context
+                                    .select(orderedFullSet.fields())
+                                    .from(orderedFullSet)
+                                    .limit(batchSize)
+                                    .asTable("limitedSet");
 
-                                    return context
-                                            .select(
-                                                    DSL.min(limitedSet.field(createTimeCol)).as(minCreateTimeCol),
-                                                    DSL.max(limitedSet.field(createTimeCol)).as(maxCreateTimeCol))
-                                            .from(limitedSet)
-                                            .fetchOne();
-                                })
+                            return context
+                                    .select(
+                                            DSL.min(limitedSet.field(createTimeCol)).as(minCreateTimeCol),
+                                            DSL.max(limitedSet.field(createTimeCol)).as(maxCreateTimeCol))
+                                    .from(limitedSet)
+                                    .fetchOne();
+                        })
                         .map(record -> {
                             Object min = record.get(minCreateTimeCol);
                             Object max = record.get(maxCreateTimeCol);
@@ -804,7 +805,6 @@ class MetaDaoImpl implements MetaDao, Clearable {
         for (DataRetentionRuleAction ruleAction : ruleActions) {
             final Condition ruleCondition = expressionMapper.apply(ruleAction.getRule().getExpression());
 
-            // TODO make this conditional based on config
             if (dataRetentionConfig.isUseQueryOptimisation()) {
                 orConditions.add(ruleCondition);
             }
@@ -861,18 +861,18 @@ class MetaDaoImpl implements MetaDao, Clearable {
         final Set<Integer> usedValKeys = identifyExtendedAttributesFields(criteria.getExpression(), new HashSet<>());
 
         final Object result = JooqUtil.contextResult(metaDbConnProvider, context ->
-                        metaExpressionMapper.addJoins(
-                                        context
-                                                .selectCount()
-                                                .from(meta)
-                                                .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                                                .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
-                                                .leftOuterJoin(metaProcessor)
-                                                .on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),
-                                        meta.ID,
-                                        usedValKeys)
-                                .where(conditions)
-                                .fetchOne())
+                metaExpressionMapper.addJoins(
+                        context
+                                .selectCount()
+                                .from(meta)
+                                .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                                .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                                .leftOuterJoin(metaProcessor)
+                                .on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),
+                        meta.ID,
+                        usedValKeys)
+                        .where(conditions)
+                        .fetchOne())
                 .get(0);
 
         return (Integer) result;
@@ -1090,30 +1090,30 @@ class MetaDaoImpl implements MetaDao, Clearable {
                             final Set<Integer> usedValKeys) {
 
         return JooqUtil.contextResult(metaDbConnProvider, context ->
-                        metaExpressionMapper.addJoins(context
-                                                .select(
-                                                        meta.ID,
-                                                        metaFeed.NAME,
-                                                        metaType.NAME,
-                                                        metaProcessor.PROCESSOR_UUID,
-                                                        metaProcessor.PIPELINE_UUID,
-                                                        meta.PARENT_ID,
-                                                        meta.STATUS,
-                                                        meta.STATUS_TIME,
-                                                        meta.CREATE_TIME,
-                                                        meta.EFFECTIVE_TIME
-                                                )
-                                                .from(meta)
-                                                .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                                                .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
-                                                .leftOuterJoin(metaProcessor)
-                                                .on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),
+                metaExpressionMapper.addJoins(context
+                                .select(
                                         meta.ID,
-                                        usedValKeys)
-                                .where(conditions)
-                                .orderBy(orderFields)
-                                .limit(offset, numberOfRows)
-                                .fetch())
+                                        metaFeed.NAME,
+                                        metaType.NAME,
+                                        metaProcessor.PROCESSOR_UUID,
+                                        metaProcessor.PIPELINE_UUID,
+                                        meta.PARENT_ID,
+                                        meta.STATUS,
+                                        meta.STATUS_TIME,
+                                        meta.CREATE_TIME,
+                                        meta.EFFECTIVE_TIME
+                                )
+                                .from(meta)
+                                .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                                .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                                .leftOuterJoin(metaProcessor)
+                                .on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),
+                        meta.ID,
+                        usedValKeys)
+                        .where(conditions)
+                        .orderBy(orderFields)
+                        .limit(offset, numberOfRows)
+                        .fetch())
                 .map(RECORD_TO_META_MAPPER::apply);
     }
 
@@ -1142,37 +1142,37 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                      final int numberOfRows,
                                      final Set<Integer> usedValKeys) {
         return JooqUtil.contextResult(metaDbConnProvider, context ->
-                        metaExpressionMapper.addJoins(
-                                        (context
-                                                .select(
-                                                        parent.ID,
-                                                        parentFeed.NAME,
-                                                        parentType.NAME,
-                                                        parentProcessor.PROCESSOR_UUID,
-                                                        parentProcessor.PIPELINE_UUID,
-                                                        parent.PARENT_ID,
-                                                        parent.STATUS,
-                                                        parent.STATUS_TIME,
-                                                        parent.CREATE_TIME,
-                                                        parent.EFFECTIVE_TIME
-                                                )
-                                                .from(meta)
-                                                .leftOuterJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                                                .leftOuterJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
-                                                .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
-                                                .leftOuterJoin(parent).on(meta.PARENT_ID.eq(parent.ID))
-                                                .leftOuterJoin(parentFeed).on(parent.FEED_ID.eq(parentFeed.ID))
-                                                .leftOuterJoin(parentType).on(parent.TYPE_ID.eq(parentType.ID))
-                                                .leftOuterJoin(parentProcessor)
-                                                .on(parent.PROCESSOR_ID.eq(parentProcessor.ID))),
-                                        meta.ID,
-                                        usedValKeys)
-                                .where(conditions)
-                                .and(parent.ID.isNotNull())
-                                .groupBy(parent.ID)
-                                .orderBy(parent.ID)
-                                .limit(offset, numberOfRows)
-                                .fetch())
+                metaExpressionMapper.addJoins(
+                        (context
+                                .select(
+                                        parent.ID,
+                                        parentFeed.NAME,
+                                        parentType.NAME,
+                                        parentProcessor.PROCESSOR_UUID,
+                                        parentProcessor.PIPELINE_UUID,
+                                        parent.PARENT_ID,
+                                        parent.STATUS,
+                                        parent.STATUS_TIME,
+                                        parent.CREATE_TIME,
+                                        parent.EFFECTIVE_TIME
+                                )
+                                .from(meta)
+                                .leftOuterJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                                .leftOuterJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                                .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
+                                .leftOuterJoin(parent).on(meta.PARENT_ID.eq(parent.ID))
+                                .leftOuterJoin(parentFeed).on(parent.FEED_ID.eq(parentFeed.ID))
+                                .leftOuterJoin(parentType).on(parent.TYPE_ID.eq(parentType.ID))
+                                .leftOuterJoin(parentProcessor)
+                                .on(parent.PROCESSOR_ID.eq(parentProcessor.ID))),
+                        meta.ID,
+                        usedValKeys)
+                        .where(conditions)
+                        .and(parent.ID.isNotNull())
+                        .groupBy(parent.ID)
+                        .orderBy(parent.ID)
+                        .limit(offset, numberOfRows)
+                        .fetch())
                 .map(RECORD_TO_PARENT_META_MAPPER::apply);
     }
 
@@ -1193,28 +1193,28 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                                  final int numberOfRows,
                                                  final Set<Integer> usedValKeys) {
         return JooqUtil.contextResult(metaDbConnProvider, context ->
-                        metaExpressionMapper.addJoins(
-                                        context
-                                                .select(
-                                                        DSL.count(),
-                                                        DSL.countDistinct(metaFeed.NAME),
-                                                        DSL.countDistinct(metaType.NAME),
-                                                        DSL.countDistinct(metaProcessor.PROCESSOR_UUID),
-                                                        DSL.countDistinct(metaProcessor.PIPELINE_UUID),
-                                                        DSL.countDistinct(meta.STATUS),
-                                                        DSL.min(meta.CREATE_TIME),
-                                                        DSL.max(meta.CREATE_TIME)
-                                                )
-                                                .from(meta)
-                                                .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                                                .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
-                                                .leftOuterJoin(metaProcessor)
-                                                .on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),
-                                        meta.ID,
-                                        usedValKeys)
-                                .where(conditions)
-                                .limit(offset, numberOfRows)
-                                .fetchOptional())
+                metaExpressionMapper.addJoins(
+                        context
+                                .select(
+                                        DSL.count(),
+                                        DSL.countDistinct(metaFeed.NAME),
+                                        DSL.countDistinct(metaType.NAME),
+                                        DSL.countDistinct(metaProcessor.PROCESSOR_UUID),
+                                        DSL.countDistinct(metaProcessor.PIPELINE_UUID),
+                                        DSL.countDistinct(meta.STATUS),
+                                        DSL.min(meta.CREATE_TIME),
+                                        DSL.max(meta.CREATE_TIME)
+                                )
+                                .from(meta)
+                                .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                                .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                                .leftOuterJoin(metaProcessor)
+                                .on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),
+                        meta.ID,
+                        usedValKeys)
+                        .where(conditions)
+                        .limit(offset, numberOfRows)
+                        .fetchOptional())
                 .map(record -> new SelectionSummary(
                         (Integer) record.get(0),
                         (Integer) record.get(1),
@@ -1244,29 +1244,29 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                                           final int numberOfRows,
                                                           final Set<Integer> usedValKeys) {
         return JooqUtil.contextResult(metaDbConnProvider, context ->
-                        metaExpressionMapper.addJoins(context
-                                                .select(
-                                                        DSL.countDistinct(parent.ID),
-                                                        DSL.countDistinct(parent.FEED_ID),
-                                                        DSL.countDistinct(parent.TYPE_ID),
-                                                        DSL.countDistinct(meta.PROCESSOR_ID),
-                                                        DSL.countDistinct(metaProcessor.PIPELINE_UUID),
-                                                        DSL.countDistinct(parent.STATUS),
-                                                        DSL.min(parent.CREATE_TIME),
-                                                        DSL.max(parent.CREATE_TIME)
-                                                )
-                                                .from(meta)
-                                                .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                                                .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
-                                                .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
-                                                .leftOuterJoin(parent).on(meta.PARENT_ID.eq(parent.ID)),
-                                        meta.ID,
-                                        usedValKeys)
-                                .where(conditions)
-                                .and(parent.ID.isNotNull())
-                                .and(parent.STATUS.eq(MetaStatusId.getPrimitiveValue(Status.UNLOCKED)))
-                                .limit(offset, numberOfRows)
-                                .fetchOptional())
+                metaExpressionMapper.addJoins(context
+                                .select(
+                                        DSL.countDistinct(parent.ID),
+                                        DSL.countDistinct(parent.FEED_ID),
+                                        DSL.countDistinct(parent.TYPE_ID),
+                                        DSL.countDistinct(meta.PROCESSOR_ID),
+                                        DSL.countDistinct(metaProcessor.PIPELINE_UUID),
+                                        DSL.countDistinct(parent.STATUS),
+                                        DSL.min(parent.CREATE_TIME),
+                                        DSL.max(parent.CREATE_TIME)
+                                )
+                                .from(meta)
+                                .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                                .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                                .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
+                                .leftOuterJoin(parent).on(meta.PARENT_ID.eq(parent.ID)),
+                        meta.ID,
+                        usedValKeys)
+                        .where(conditions)
+                        .and(parent.ID.isNotNull())
+                        .and(parent.STATUS.eq(MetaStatusId.getPrimitiveValue(Status.UNLOCKED)))
+                        .limit(offset, numberOfRows)
+                        .fetchOptional())
                 .map(record -> new SelectionSummary(
                         (Integer) record.get(0),
                         (Integer) record.get(1),
@@ -1292,23 +1292,23 @@ class MetaDaoImpl implements MetaDao, Clearable {
         final Condition condition = expressionMapper.apply(criteria.getExpression());
 
         return JooqUtil.contextResult(metaDbConnProvider, context -> context
-                        .select(meta.ID)
-                        .from(meta)
-                        .where(condition)
-                        .orderBy(meta.EFFECTIVE_TIME.desc())
-                        .limit(1)
-                        .fetchOptional())
+                .select(meta.ID)
+                .from(meta)
+                .where(condition)
+                .orderBy(meta.EFFECTIVE_TIME.desc())
+                .limit(1)
+                .fetchOptional())
                 .map(Record1::value1);
     }
 
     @Override
     public int getLockCount() {
         return JooqUtil.contextResult(metaDbConnProvider, context -> context
-                        .selectCount()
-                        .from(meta)
-                        .where(meta.STATUS.eq(MetaStatusId.LOCKED))
-                        .fetchOptional()
-                        .map(Record1::value1))
+                .selectCount()
+                .from(meta)
+                .where(meta.STATUS.eq(MetaStatusId.LOCKED))
+                .fetchOptional()
+                .map(Record1::value1))
                 .orElse(0);
     }
 
@@ -1366,25 +1366,25 @@ class MetaDaoImpl implements MetaDao, Clearable {
         final Set<Integer> usedValKeys = identifyExtendedAttributesFields(criteria.getExpression(), new HashSet<>());
 
         return JooqUtil.contextResult(metaDbConnProvider,
-                        context -> {
-                            SelectJoinStep<Record1<String>> select = context
-                                    .select(metaProcessor.PROCESSOR_UUID)
-                                    .from(meta);
+                context -> {
+                    SelectJoinStep<Record1<String>> select = context
+                            .select(metaProcessor.PROCESSOR_UUID)
+                            .from(meta);
 
-                            select = select
-                                    .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                                    .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
-                                    .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID));
+                    select = select
+                            .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                            .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                            .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID));
 
-                            // If the criteria contain many terms that come from meta_val then we need to join
-                            // to meta_val multiple times, each time with a new table alias
-                            select = metaExpressionMapper.addJoins(select, meta.ID, usedValKeys);
+                    // If the criteria contain many terms that come from meta_val then we need to join
+                    // to meta_val multiple times, each time with a new table alias
+                    select = metaExpressionMapper.addJoins(select, meta.ID, usedValKeys);
 
-                            return select
-                                    .where(conditions)
-                                    .groupBy(metaProcessor.PROCESSOR_UUID)
-                                    .fetch();
-                        })
+                    return select
+                            .where(conditions)
+                            .groupBy(metaProcessor.PROCESSOR_UUID)
+                            .fetch();
+                })
                 .map(Record1::value1);
     }
 }

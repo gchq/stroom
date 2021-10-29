@@ -38,8 +38,6 @@ import event.logging.MultiObject;
 import event.logging.OtherObject;
 import event.logging.Query;
 import event.logging.SearchEventAction;
-import event.logging.Term;
-import event.logging.TermCondition;
 import event.logging.UpdateEventAction;
 import event.logging.User;
 import event.logging.ViewEventAction;
@@ -70,7 +68,7 @@ class AccountResourceImpl implements AccountResource {
 
     @Timed
     @Override
-    public AccountResultPage list(final HttpServletRequest httpServletRequest) {
+    public AccountResultPage list() {
         return stroomEventLoggingServiceProvider.get().loggedResult(
                 "ListAccounts",
                 "List all accounts",
@@ -99,35 +97,31 @@ class AccountResourceImpl implements AccountResource {
     @Timed
     @Override
     public AccountResultPage search(final SearchAccountRequest request) {
-        return stroomEventLoggingServiceProvider.get().loggedResult(
-                "SearchAccounts",
-                "Search for accounts by email",
-                SearchEventAction.builder()
-                        .withQuery(Query.builder()
-                                .withAdvanced(AdvancedQuery.builder()
-                                        .addAnd(And.builder()
-                                                .addTerm(Term.builder()
-                                                        .withName("Email")
-                                                        .withCondition(TermCondition.EQUALS)
-                                                        .withValue(request.getQuickFilter())
-                                                        .build())
-                                                .build())
+        if (request.getQuickFilter() == null || request.getQuickFilter().isBlank()) {
+            return list();
+        } else {
+
+            return stroomEventLoggingServiceProvider.get().loggedResult(
+                    "SearchAccounts",
+                    "Search for accounts with quick filter",
+                    new SearchEventAction(),
+                    searchEventAction -> {
+                        // Do the work
+                        final AccountResultPage result = serviceProvider.get()
+                                .search(request);
+
+                        final SearchEventAction newSearchEventAction = searchEventAction.newCopyBuilder()
+                                .withQuery(Query.builder()
+                                        .withRaw("Account matches \"" + result.getQualifiedFilterInput() + "\"")
                                         .build())
-                                .build())
-                        .build(),
-                searchEventAction -> {
-                    // Do the work
-                    final AccountResultPage result = serviceProvider.get()
-                            .search(request);
+                                .withResultPage(StroomEventLoggingUtil.createResultPage(result))
+                                .withTotalResults(BigInteger.valueOf(result.size()))
+                                .build();
 
-                    final SearchEventAction newSearchEventAction = searchEventAction.newCopyBuilder()
-                            .withResultPage(StroomEventLoggingUtil.createResultPage(result))
-                            .withTotalResults(BigInteger.valueOf(result.size()))
-                            .build();
-
-                    return ComplexLoggedOutcome.success(result, newSearchEventAction);
-                },
-                null);
+                        return ComplexLoggedOutcome.success(result, newSearchEventAction);
+                    },
+                    null);
+        }
     }
 
     @Timed

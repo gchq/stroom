@@ -94,6 +94,39 @@ public class QuickFilterPredicateFactory {
         return predicate;
     }
 
+    public static String fullyQualifyInput(final String userInput,
+                                           final FilterFieldMappers<?> fieldMappers) {
+        if (userInput == null) {
+            LOGGER.trace("Null input");
+            return null;
+        } else if (userInput.isBlank()) {
+            LOGGER.trace("Blank input");
+            return "";
+        } else {
+            final List<MatchToken> matchTokens = extractMatchTokens(userInput, fieldMappers);
+            return matchTokens.stream()
+                    .map(matchToken -> {
+                        if (matchToken.isQualified()) {
+                            return matchToken.qualifier + ":" + matchToken.matchInput;
+                        } else {
+                            final String expandedTerms = fieldMappers.getDefaultFieldMappers()
+                                    .stream()
+                                    .map(filterFieldMapper ->
+                                            filterFieldMapper.getFieldDefinition().getFilterQualifier()
+                                                    + ":" + matchToken.matchInput)
+                                    .collect(Collectors.joining(" OR "));
+                            if (fieldMappers.getDefaultFieldMappers().size() > 1) {
+
+                                return "(" + expandedTerms + ")";
+                            } else {
+                                return expandedTerms;
+                            }
+                        }
+                    })
+                    .collect(Collectors.joining(" AND "));
+        }
+    }
+
     /**
      * When you have a stream of strings that you want to filter
      */

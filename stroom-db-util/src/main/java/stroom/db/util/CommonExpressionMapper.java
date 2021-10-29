@@ -93,7 +93,8 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
                 if (operator.getChildren() != null && !operator.getChildren().isEmpty()) {
                     final Collection<Condition> children = operator.getChildren()
                             .stream()
-                            .map(expressionItem -> apply(expressionItem, simplifyConditions))
+                            .map(expressionItem ->
+                                    apply(expressionItem, simplifyConditions))
                             .collect(Collectors.toList());
 
                     result = switch (operator.op()) {
