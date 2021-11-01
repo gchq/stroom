@@ -11,9 +11,15 @@ import java.util.Set;
 
 public class TreeModel {
 
-    private final long creationTime = System.currentTimeMillis();
+    private final long id;
+    private final long creationTime;
     private final Map<String, ExplorerNode> parentMap = new HashMap<>();
     private final Map<String, List<ExplorerNode>> childMap = new HashMap<>();
+
+    public TreeModel(final long id, final long creationTime) {
+        this.id = id;
+        this.creationTime = creationTime;
+    }
 
     public void add(final ExplorerNode parent, final ExplorerNode child) {
         parentMap.put(child != null
@@ -22,6 +28,10 @@ public class TreeModel {
         childMap.computeIfAbsent(parent != null
                 ? parent.getUuid()
                 : null, k -> new ArrayList<>()).add(child);
+    }
+
+    long getId() {
+        return id;
     }
 
     long getCreationTime() {
