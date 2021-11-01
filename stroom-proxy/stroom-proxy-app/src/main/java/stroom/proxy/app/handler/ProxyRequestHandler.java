@@ -2,10 +2,10 @@ package stroom.proxy.app.handler;
 
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
-import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.proxy.repo.StreamHandler;
 import stroom.receive.common.AttributeMapFilter;
+import stroom.receive.common.AttributeMapValidator;
 import stroom.receive.common.RequestHandler;
 import stroom.receive.common.StroomStreamException;
 import stroom.receive.common.StroomStreamProcessor;
@@ -66,12 +66,9 @@ public class ProxyRequestHandler implements RequestHandler {
 
         final long startTimeMs = System.currentTimeMillis();
         final AttributeMap attributeMap = AttributeMapUtil.create(request);
-
         try {
-            final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
-            if (feedName == null || feedName.trim().isEmpty()) {
-                throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED, attributeMap);
-            }
+            // Validate the supplied attributes.
+            AttributeMapValidator.validate(attributeMap);
 
             try (final ByteCountInputStream inputStream = new ByteCountInputStream(request.getInputStream())) {
                 // Test to see if we are going to accept this stream or drop the data.

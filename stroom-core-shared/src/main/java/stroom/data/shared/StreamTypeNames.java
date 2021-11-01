@@ -1,5 +1,7 @@
 package stroom.data.shared;
 
+import java.util.Set;
+
 public class StreamTypeNames {
 
     /**
@@ -50,4 +52,11 @@ public class StreamTypeNames {
      */
     public static final String DETECTIONS = "Detections";
 
+    public static final Set<String> VALID_RECEIVE_TYPE_NAMES = Set.of(
+            RAW_EVENTS,
+            RAW_REFERENCE,
+            EVENTS,
+            REFERENCE,
+            TEST_EVENTS,
+            TEST_REFERENCE);
 }
