@@ -7501,6 +7501,7 @@ components:
           - 200 - 0 - OK
           - 406 - 100 - Feed must be specified
           - 406 - 101 - Feed is not defined
+          - 406 - 102 - Data type is invalid
           - 406 - 110 - Feed is not set to receive data
           - 406 - 120 - Unexpected data type
           - 406 - 200 - Unknown compression
