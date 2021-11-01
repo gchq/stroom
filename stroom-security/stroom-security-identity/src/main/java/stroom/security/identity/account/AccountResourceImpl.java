@@ -103,7 +103,7 @@ class AccountResourceImpl implements AccountResource {
 
             return stroomEventLoggingServiceProvider.get().loggedResult(
                     "SearchAccounts",
-                    "Search for accounts with quick filter",
+                    "Search for accounts with a quick filter",
                     new SearchEventAction(),
                     searchEventAction -> {
                         // Do the work

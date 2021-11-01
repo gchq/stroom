@@ -19,6 +19,7 @@ package stroom.activity.impl;
 import stroom.activity.api.ActivityService;
 import stroom.activity.api.FindActivityCriteria;
 import stroom.activity.shared.Activity;
+import stroom.activity.shared.ActivityResultPage;
 import stroom.activity.shared.ActivityValidationResult;
 import stroom.security.api.SecurityContext;
 import stroom.util.AuditUtil;
@@ -109,7 +110,7 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     @Override
-    public ResultPage<Activity> find(final String filter) {
+    public ActivityResultPage find(final String filter) {
 
         return securityContext.secureResult(() -> {
             // We have to deser all the activities to be able to search them but hopefully
@@ -117,6 +118,7 @@ public class ActivityServiceImpl implements ActivityService {
             final List<Activity> allActivities = getAllUserActivities();
 
             final List<Activity> filteredActivities;
+            final String qualifiedFilterInput;
             if (!Strings.isNullOrEmpty(filter)) {
 
                 final List<FilterFieldDefinition> fieldDefinitions = buildFieldDefinitions(allActivities);
@@ -126,11 +128,14 @@ public class ActivityServiceImpl implements ActivityService {
                 filteredActivities = QuickFilterPredicateFactory.filterStream(
                         filter, fieldMappers, allActivities.stream())
                         .collect(Collectors.toList());
+
+                qualifiedFilterInput = QuickFilterPredicateFactory.fullyQualifyInput(filter, fieldMappers);
             } else {
                 filteredActivities = allActivities;
+                qualifiedFilterInput = filter;
             }
 
-            return ResultPage.createCriterialBasedList(filteredActivities, new FindActivityCriteria());
+            return ActivityResultPage.create(ResultPage.createUnboundedList(filteredActivities), qualifiedFilterInput);
         });
     }
 

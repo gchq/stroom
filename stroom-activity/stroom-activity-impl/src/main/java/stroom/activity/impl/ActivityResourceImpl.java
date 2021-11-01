@@ -5,16 +5,20 @@ import stroom.activity.api.CurrentActivity;
 import stroom.activity.shared.AcknowledgeSplashRequest;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.ActivityResource;
+import stroom.activity.shared.ActivityResultPage;
 import stroom.activity.shared.ActivityValidationResult;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.util.rest.RestUtil;
-import stroom.util.shared.ResultPage;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
+import com.google.common.base.Strings;
 import event.logging.Banner;
+import event.logging.ComplexLoggedOutcome;
+import event.logging.Query;
+import event.logging.SearchEventAction;
 import event.logging.ViewEventAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,10 +45,41 @@ class ActivityResourceImpl implements ActivityResource {
         this.eventLoggingServiceProvider = eventLoggingServiceProvider;
     }
 
+    @AutoLogged(value = OperationType.MANUALLY_LOGGED)
     @Override
-    public ResultPage<Activity> list(final String filter) {
+    public ActivityResultPage list(final String filter) {
         LOGGER.debug("filter: {}", filter);
-        return activityServiceProvider.get().find(filter);
+
+        final Query query = Strings.isNullOrEmpty(filter)
+                ? new Query()
+                : Query.builder()
+                        .withRaw("Activity matches filter \""
+                                + filter + "\"")
+                        .build();
+
+        return eventLoggingServiceProvider.get().loggedResult(
+                this.getClass().getSimpleName() + ".list",
+                "Search for activities with a quick filter",
+                SearchEventAction.builder()
+                        .withQuery(query)
+                        .build(),
+                searchEventAction -> {
+
+                    if (!"xxxxxxxxxx".equals(filter)) {
+                        throw new RuntimeException("bad stuff");
+                    }
+
+                    final ActivityResultPage activityResultPage = activityServiceProvider.get()
+                            .find(filter);
+
+                    if (!Strings.isNullOrEmpty(filter)) {
+                        searchEventAction.getQuery()
+                                .setRaw("Activity matches fully qualified filter \""
+                                        + activityResultPage.getQualifiedFilterInput() + "\"");
+                    }
+                    return ComplexLoggedOutcome.success(activityResultPage, searchEventAction);
+                },
+                null);
     }
 
     @AutoLogged(value = OperationType.UNLOGGED) // Not called by the user directly
