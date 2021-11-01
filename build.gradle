@@ -202,6 +202,10 @@ ext.libs = [
         hikari                         : "com.zaxxer:HikariCP:$versions.hikari",
         hsqldb                         : "org.hsqldb:hsqldb", // version controlled by DW BOM
         http_client                    : "org.apache.httpcomponents:httpclient:4.5.12",
+        ignite                         : "org.apache.ignite:ignite-core:2.11.0",
+        ignite_logging                 : "org.apache.ignite:ignite-slf4j:2.11.0",
+//        ignite                         : "org.apache.ignite:ignite-core:3.0.0-alpha2",
+
         jBCrypt                        : "de.svenkubiak:jBCrypt:0.4.1",
         jackson_annotations            : "com.fasterxml.jackson.core:jackson-annotations", // version controlled by DW BOM
         jackson_core                   : "com.fasterxml.jackson.core:jackson-core", // version controlled by DW BOM

@@ -272,3 +272,5 @@ include 'stroom-util-shared'
 
 include 'stroom-ssl-test'
 include 'stroom-alert:stroom-alert-mock'
+include 'stroom-ignite:stroom-ignite-api'
+include 'stroom-ignite:stroom-ignite-impl'
