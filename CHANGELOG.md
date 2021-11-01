@@ -12,6 +12,15 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0-beta.153] - 2021-11-01
+
+* Issue **#2535** : Added validation to data type names.
+
+* Issue **#2530** : Fixed explorer refresh on copy and move
+
+* Revert accidental whitespace change to V07_00_00_007__meta_retention_tracker.sql
+
+
 ## [v7.0-beta.152] - 2021-10-29
 
 * Issue **#2519** : Added validation for processor filter expressions and more info about filters to the UI.
@@ -3894,7 +3903,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.152...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.153...HEAD
+[v7.0-beta.153]: https://github.com/gchq/stroom/compare/v7.0-beta.152...v7.0-beta.153
 [v7.0-beta.152]: https://github.com/gchq/stroom/compare/v7.0-beta.151...v7.0-beta.152
 [v7.0-beta.151]: https://github.com/gchq/stroom/compare/v7.0-beta.150...v7.0-beta.151
 [v7.0-beta.150]: https://github.com/gchq/stroom/compare/v7.0-beta.149...v7.0-beta.150
