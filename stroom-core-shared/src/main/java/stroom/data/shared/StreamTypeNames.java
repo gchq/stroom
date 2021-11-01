@@ -1,5 +1,6 @@
 package stroom.data.shared;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public class StreamTypeNames {
@@ -52,11 +53,14 @@ public class StreamTypeNames {
      */
     public static final String DETECTIONS = "Detections";
 
-    public static final Set<String> VALID_RECEIVE_TYPE_NAMES = Set.of(
-            RAW_EVENTS,
-            RAW_REFERENCE,
-            EVENTS,
-            REFERENCE,
-            TEST_EVENTS,
-            TEST_REFERENCE);
+    public static final Set<String> VALID_RECEIVE_TYPE_NAMES = new HashSet<>();
+
+    static {
+        VALID_RECEIVE_TYPE_NAMES.add(RAW_EVENTS);
+        VALID_RECEIVE_TYPE_NAMES.add(RAW_REFERENCE);
+        VALID_RECEIVE_TYPE_NAMES.add(EVENTS);
+        VALID_RECEIVE_TYPE_NAMES.add(REFERENCE);
+        VALID_RECEIVE_TYPE_NAMES.add(TEST_EVENTS);
+        VALID_RECEIVE_TYPE_NAMES.add(TEST_REFERENCE);
+    }
 }
