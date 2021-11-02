@@ -16,8 +16,8 @@
 # limitations under the License.
 # **********************************************************************
 
-# Version: v0.2.1
-# Date: 2021-10-21T14:36:30+00:00
+# Version: v0.2.2
+# Date: 2021-11-02T12:20:20+00:00
 
 # This script is for tagging a git repository for the purpose of driving a
 # separate release process from that tagged commit. It also updates the 
@@ -272,7 +272,7 @@ init_changelog_file() {
       echo -e "## [Unreleased]"
       echo -e 
       echo -e "~~~"
-      echo -e "DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh"
+      echo -e "DO NOT ADD CHANGES HERE - Add them using ${LOG_CHANGE_SCRIPT_NAME}, view them with './${LOG_CHANGE_SCRIPT_NAME} list'"
       echo -e "~~~"
       echo -e
       echo -e
@@ -757,7 +757,7 @@ parse_changelog() {
 
 create_config_file() {
   info "Config file ${BLUE}${tag_release_config_file}${GREEN} does not" \
-    "exist so it will be created"
+    "exist so it will be created."
 
   # 'EOF' quoted to avoid any expansion/substitution
   cat <<'EOF' > "${tag_release_config_file}"
@@ -766,9 +766,11 @@ create_config_file() {
 
 # shellcheck disable=2034
 {
-  # The namespace/usser on github, i.e. github.com/<namespace>
+  # The namespace/user on github, i.e. github.com/<namespace>
+  # This should be the upstream namespace, not a fork.
   GITHUB_NAMESPACE='gchq'
   # The name of the git repository on github
+  # This should be the upstream repo, not a fork.
   GITHUB_REPO='stroom-test-data'
 
   # Git tags should match this regex to be a release tag
@@ -809,7 +811,7 @@ EOF
   local namespace_and_repo=()
   IFS=" " read -r -a namespace_and_repo <<< "$( \
     git remote -v \
-      | grep "(fetch)" \
+      | grep "^origin.*(fetch)$" \
       | sed -r 's#.*[/:]([^/]+)/(.*)\.git \(fetch\)#\1 \2#')"
 
   debug "namespace_and_repo: ${namespace_and_repo[*]}"
@@ -841,7 +843,7 @@ EOF
   fi
 
   info "Confirm the values in the generated config file are appropriate, then" \
-    "commit them to git and then finally re-run this script."
+    "commit it to git."
 }
 
 scan_change_files() {
