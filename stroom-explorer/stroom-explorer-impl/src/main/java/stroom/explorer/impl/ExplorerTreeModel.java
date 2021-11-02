@@ -23,11 +23,12 @@ import stroom.task.api.TaskContextFactory;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
+@Singleton
 class ExplorerTreeModel {
 
     private static final long ONE_HOUR = 60 * 60 * 1000;
@@ -41,6 +42,7 @@ class ExplorerTreeModel {
 
     private volatile TreeModel currentModel;
     private final AtomicLong minExplorerTreeModelBuildTime = new AtomicLong();
+    private final AtomicLong currentId = new AtomicLong();
     private final AtomicInteger performingRebuild = new AtomicInteger();
 
     @Inject
@@ -57,35 +59,33 @@ class ExplorerTreeModel {
     }
 
     TreeModel getModel() {
+        final long currentId = this.currentId.get();
         final long now = System.currentTimeMillis();
-        final AtomicBoolean done = new AtomicBoolean();
 
-        // Create a model synchronously if it is currently null or hasn't been rebuilt for an hour.
+        // Force synchronous rebuild of the tree model if it is older than the minimum build time for the current
+        // session.
+        final long minId = explorerSession.getMinExplorerTreeModelId().orElse(0L);
         final long oneHourAgo = now - ONE_HOUR;
-        if (requiresSynchronousRebuild(oneHourAgo)) {
-            done.set(ensureModelExists(oneHourAgo));
-        }
 
-        // Force synchronous rebuild of the tree model if it is older than the minimum build time
-        // for the current session.
-        if (!done.get()) {
-            explorerSession.getMinExplorerTreeModelBuildTime().ifPresent(buildTime -> {
-                if (buildTime > currentModel.getCreationTime()) {
-                    done.set(updateModel());
-                }
-            });
-        }
+        TreeModel model = currentModel;
 
-        // If the model has not been rebuilt in the last 10 minutes for anybody then do so asynchronously.
-        if (!done.get()) {
+        // Create a model synchronously if it is currently null or hasn't been rebuilt for an hour or is old for the
+        // current session.
+        if (model == null ||
+                model.getId() < minId ||
+                model.getCreationTime() < oneHourAgo) {
+            model = updateModel(currentId, now);
+
+        } else {
+            // If the model has not been rebuilt in the last 10 minutes for anybody then do so asynchronously.
             // Find out what the oldest tree model is that we will allow before performing an asynchronous rebuild.
             final long oldestAllowed = Math.max(minExplorerTreeModelBuildTime.get(), now - TEN_MINUTES);
-            if (currentModel.getCreationTime() < oldestAllowed) {
+            if (model.getCreationTime() < oldestAllowed) {
                 // Perform a build asynchronously if we aren't already building elsewhere.
                 if (performingRebuild.compareAndSet(0, 1)) {
                     try {
                         final Runnable runnable = taskContextFactory.context("Update Explorer Tree Model",
-                                taskContext -> updateModel());
+                                taskContext -> updateModel(currentId, now));
                         CompletableFuture
                                 .runAsync(runnable, executor)
                                 .thenRun(performingRebuild::decrementAndGet)
@@ -100,37 +100,23 @@ class ExplorerTreeModel {
             }
         }
 
-        return currentModel;
+        return model;
     }
 
-    private boolean requiresSynchronousRebuild(final long oldestAllowedForSynchronousRebuild) {
-        return currentModel == null || currentModel.getCreationTime() < oldestAllowedForSynchronousRebuild;
-    }
-
-    private synchronized boolean ensureModelExists(final long oldestAllowedForSynchronousRebuild) {
-        if (requiresSynchronousRebuild(oldestAllowedForSynchronousRebuild)) {
-            return updateModel();
-        }
-        return false;
-    }
-
-    private boolean updateModel() {
+    private TreeModel updateModel(final long id, final long creationTime) {
+        TreeModel newModel;
         performingRebuild.incrementAndGet();
         try {
-            setCurrentModel(createModel());
+            newModel = explorerTreeDao.createModel(this::getIconUrl, id, creationTime);
+
+            // Sort children.
+            newModel.values().forEach(this::sort);
+
+            setCurrentModel(newModel);
         } finally {
             performingRebuild.decrementAndGet();
         }
-        return true;
-    }
-
-    TreeModel createModel() {
-        final TreeModel treeModel = explorerTreeDao.createModel(this::getIconUrl);
-
-        // Sort children.
-        treeModel.values().forEach(this::sort);
-
-        return treeModel;
+        return newModel;
     }
 
     private String getIconUrl(final String type) {
@@ -164,25 +150,18 @@ class ExplorerTreeModel {
     }
 
     private synchronized void setCurrentModel(final TreeModel treeModel) {
-        if (currentModel == null || currentModel.getCreationTime() < treeModel.getCreationTime()) {
+        if (currentModel == null || currentModel.getId() < treeModel.getId()) {
             currentModel = treeModel;
         }
     }
 
     void rebuild() {
         final long now = System.currentTimeMillis();
-
-        minExplorerTreeModelBuildTime.getAndUpdate(prev -> {
-            if (prev < now) {
-                return now;
-            }
-            return prev;
-        });
-
-        explorerSession.setMinExplorerTreeModelBuildTime(now);
+        minExplorerTreeModelBuildTime.getAndUpdate(prev -> Math.max(prev, now));
+        explorerSession.setMinExplorerTreeModelId(currentId.incrementAndGet());
     }
 
     void clear() {
-        currentModel = null;
+        setCurrentModel(null);
     }
 }

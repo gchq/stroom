@@ -12,7 +12,7 @@ import javax.servlet.http.HttpSession;
 class ExplorerSessionImpl implements ExplorerSession {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExplorerSessionImpl.class);
-    private static final String MIN_EXPLORER_TREE_MODEL_BUILD_TIME = "MIN_EXPLORER_TREE_MODEL_BUILD_TIME";
+    private static final String MIN_EXPLORER_TREE_MODEL_ID = "MIN_EXPLORER_TREE_MODEL_ID";
 
     private final Provider<HttpServletRequest> httpServletRequestProvider;
 
@@ -22,9 +22,9 @@ class ExplorerSessionImpl implements ExplorerSession {
     }
 
     @Override
-    public Optional<Long> getMinExplorerTreeModelBuildTime() {
+    public Optional<Long> getMinExplorerTreeModelId() {
         try {
-            return getSession().map(session -> (Long) session.getAttribute(MIN_EXPLORER_TREE_MODEL_BUILD_TIME));
+            return getSession().map(session -> (Long) session.getAttribute(MIN_EXPLORER_TREE_MODEL_ID));
         } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
         }
@@ -32,9 +32,9 @@ class ExplorerSessionImpl implements ExplorerSession {
     }
 
     @Override
-    public void setMinExplorerTreeModelBuildTime(final long buildTime) {
+    public void setMinExplorerTreeModelId(final long id) {
         try {
-            getSession().ifPresent(session -> session.setAttribute(MIN_EXPLORER_TREE_MODEL_BUILD_TIME, buildTime));
+            getSession().ifPresent(session -> session.setAttribute(MIN_EXPLORER_TREE_MODEL_ID, id));
         } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
         }
