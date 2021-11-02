@@ -506,7 +506,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         }
 
         if (obj instanceof Properties) {
-            return getDataItemsFromProperties ((Properties) obj);
+            return getDataItemsFromProperties((Properties) obj);
         }
 
         return getDataItemsFromJavaBean(obj);
@@ -550,7 +550,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                 }).collect(Collectors.toList());
     }
 
-    private Data convertValToData (String name, Object valObj) {
+    private Data convertValToData(String name, Object valObj) {
         final Data.Builder<?> builder = Data.builder().withName(name);
 
         if (valObj != null) {

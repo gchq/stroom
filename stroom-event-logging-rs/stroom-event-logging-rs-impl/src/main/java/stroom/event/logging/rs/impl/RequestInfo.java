@@ -291,7 +291,7 @@ class RequestInfo {
         }
     }
 
-    public static class WithParameters extends Properties implements HasName{
+    public static class WithParameters extends Properties implements HasName {
 
 //        private Properties allParameters = new Properties();
 
