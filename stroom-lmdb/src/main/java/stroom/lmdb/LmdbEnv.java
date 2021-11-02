@@ -5,6 +5,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ModelStringUtil;
 
 import com.google.common.collect.ImmutableMap;
 import org.lmdbjava.Dbi;
@@ -14,8 +15,10 @@ import org.lmdbjava.EnvInfo;
 import org.lmdbjava.Stat;
 import org.lmdbjava.Txn;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
@@ -31,6 +34,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.concurrent.NotThreadSafe;
 
 /**
@@ -287,11 +291,43 @@ public class LmdbEnv implements AutoCloseable {
         if (!env.isClosed()) {
             throw new RuntimeException(("LMDB environment at {} is still open"));
         }
-        LOGGER.debug(() ->
-                LogUtil.message("Deleting {} and all its contents", localDir.toAbsolutePath().normalize()));
+
+        LOGGER.doIfDebugEnabled(() -> {
+            LOGGER.debug("Deleting {} and all its contents", localDir.toAbsolutePath().normalize());
+            // May be useful to see the sizes of db before they are deleted
+            dumpMdbFileSize();
+        });
 
         if (!FileUtil.deleteDir(localDir)) {
             throw new RuntimeException("Unable to delete dir: " + FileUtil.getCanonicalPath(localDir));
+        }
+    }
+
+    private void dumpMdbFileSize() {
+        if (Files.isDirectory(localDir)) {
+
+            try (Stream<Path> stream = Files.list(localDir)) {
+                stream
+                        .filter(path ->
+                                !Files.isDirectory(path))
+                        .filter(file ->
+                                file.toString().toLowerCase().endsWith("data.mdb"))
+                        .map(file -> {
+                            try {
+                                final long fileSizeBytes = Files.size(file);
+                                return localDir.getFileName().resolve(file.getFileName())
+                                        + " - file size: "
+                                        + ModelStringUtil.formatIECByteSizeString(fileSizeBytes);
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        })
+                        .forEach(LOGGER::debug);
+
+            } catch (IOException e) {
+                LOGGER.debug("Unable to list dir {} due to {}",
+                        localDir.toAbsolutePath().normalize(), e.getMessage());
+            }
         }
     }
 
