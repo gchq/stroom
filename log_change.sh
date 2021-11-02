@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 ##########################################################################
-# Version: v0.2.1
-# Date: 2021-10-21T14:36:30+00:00
+# Version: v0.2.2
+# Date: 2021-11-02T12:20:20+00:00
 #
 # Script to record changelog entries in individual files to get around
 # the issue of merge conflicts on the CHANGELOG file when doing PRs.
@@ -20,6 +20,10 @@ set -euo pipefail
 
 IS_DEBUG=${IS_DEBUG:-false}
 UNRELEASED_DIR_NAME="unreleased_changes"
+
+# File containing the configuration values for this script
+TAG_RELEASE_CONFIG_FILENAME='tag_release_config.env'
+TAG_RELEASE_SCRIPT_FILENAME='tag_release.sh'
 
 setup_echo_colours() {
   # Exit the script on any error
@@ -99,32 +103,6 @@ get_git_issue_from_branch() {
   echo "${git_issue_from_branch}"
 }
 
-establish_git_remote_namespace_and_repo() {
-  # 'origin https://github.com/gchq/stroom.git (fetch)' => 'gchq stroom'
-  # read the space delimited values into an array so we can split them
-  local namespace_and_repo=()
-  IFS=" " read -r -a namespace_and_repo <<< "$( \
-    git remote -v \
-      | grep "(fetch)" \
-      | sed -r 's#.*[/:]([^/]+)/(.*)\.git \(fetch\)#\1 \2#')"
-
-  debug_value "namespace_and_repo" "${namespace_and_repo[*]}"
-
-  # global scope
-  git_namespace=""
-  git_repo=""
-
-  if [[ "${#namespace_and_repo[@]}" -ne 2 ]]; then
-    warn "Unable to parse git namespace and repo from the remote URL."
-  else
-    git_namespace="${namespace_and_repo[0]}"
-    git_repo="${namespace_and_repo[1]}"
-
-    debug_value "git_namespace" "${git_namespace}"
-    debug_value "git_repo" "${git_repo}"
-  fi
-}
-
 validate_git_issue() {
   local git_issue="$1"; shift
   debug "Validating [${git_issue}]"
@@ -139,13 +117,10 @@ validate_git_issue() {
   issue_title=""
 
   if [[ ! "${git_issue}" = "0" ]]; then
-    local issue_namespace
-    local issue_repo
-    local issue_number
     if [[ "${git_issue}" =~ ^[1-9][0-9]*$ ]]; then
       # Issue in this repo so use the values we got from the local repo
-      issue_namespace="${git_namespace}"
-      issue_repo="${git_repo}"
+      issue_namespace="${GITHUB_NAMESPACE}"
+      issue_repo="${GITHUB_REPO}"
       issue_number="${git_issue}"
     else
       # Fully qualified issue so extract the parts by replacing / and # with
@@ -161,9 +136,9 @@ validate_git_issue() {
     debug_value "issue_repo" "${issue_repo}"
     debug_value "issue_number" "${issue_number}"
 
-    local github_issue_url="https://api.github.com/repos/${issue_namespace}/${issue_repo}/issues/${issue_number}"
+    local github_issue_api_url="https://api.github.com/repos/${issue_namespace}/${issue_repo}/issues/${issue_number}"
 
-    debug_value "github_issue_url" "${github_issue_url}"
+    debug_value "github_issue_api_url" "${github_issue_api_url}"
 
     local curl_return_code=0
     # Turn off exit on error so we can get the curl return code in the subshell
@@ -175,7 +150,7 @@ validate_git_issue() {
         curl \
           --silent \
           --fail \
-          "${github_issue_url}" \
+          "${github_issue_api_url}" \
         | jq \
           --raw-output \
           '.title' \
@@ -187,7 +162,7 @@ validate_git_issue() {
         curl \
           --silent \
           --fail \
-          "${github_issue_url}" \
+          "${github_issue_api_url}" \
         | grep \
           --only-matching \
           --prl-regexp \
@@ -208,15 +183,17 @@ validate_git_issue() {
           --silent \
           --output /dev/null \
           --write-out "%{http_code}" \
-          "${github_issue_url}"\
+          "${github_issue_api_url}"\
       )"
       debug_value "http_status_code" "${http_status_code}"
 
       if [[ "${http_status_code}" = "404" ]]; then
-        error_exit "Issue ${BLUE}${git_issue}${NC} does not exist on GitHub"
+        error_exit "Issue ${BLUE}${git_issue}${NC} does not exist on" \
+          "${BLUE}github.com/(${issue_namespace}/${issue_repo}${NC}"
       else
         warn "Unable to obtain issue title for issue ${BLUE}${issue_number}${NC}" \
-          "from GitHub (HTTP status: ${BLUE}${http_status_code}${NC})"
+          "from ${BLUE}github.com/(${issue_namespace}/${issue_repo}${NC}" \
+          "(HTTP status: ${BLUE}${http_status_code}${NC})"
         issue_title=""
       fi
     else
@@ -351,6 +328,7 @@ write_change_entry() {
     issue_part="${issue_prefix}${git_issue}${issue_suffix}"
   fi
 
+
   local change_entry_line="${line_prefix}${issue_part}${change_text}"
   local all_content
 
@@ -362,8 +340,10 @@ write_change_entry() {
     echo
     echo '```sh'
     if [[ -n "${issue_title:-}" ]]; then
+      local github_issue_url="https://github.com/${issue_namespace}/${issue_repo}/issues/${issue_number}"
       echo "# ********************************************************************************"
       echo "# Issue title: ${issue_title}"
+      echo "# Issue link:  ${github_issue_url}"
       echo "# ********************************************************************************"
       echo
     fi
@@ -494,7 +474,7 @@ list_unreleased_changes() {
           -n1 \
           "${file}" \
       )"
-      list_output+="${BLUE}${filename}${NC}:\n${YELLOW}${change_entry_line}${NC}\n\n"
+      list_output+="${BLUE}${filename}${NC}:\n${change_entry_line}\n\n"
     fi
   done
 
@@ -549,10 +529,23 @@ main() {
 
   validate_in_git_repo
 
-  establish_git_remote_namespace_and_repo
-
   local repo_root_dir
   repo_root_dir="$(git rev-parse --show-toplevel)"
+
+  local tag_release_config_file="${repo_root_dir}/${TAG_RELEASE_CONFIG_FILENAME}"
+  if [[ -f "${tag_release_config_file}" ]]; then
+    # Source any repo specific config
+    # shellcheck disable=SC1090
+    source "${tag_release_config_file}"
+  else
+    error_exit "Config file ${BLUE}${tag_release_config_file}${NC}" \
+      "doesn't exist. Run ${BLUE}./${TAG_RELEASE_SCRIPT_FILENAME}${NC}" \
+      "to generate it."
+  fi
+
+  debug_value "GITHUB_NAMESPACE" "${GITHUB_NAMESPACE}"
+  debug_value "GITHUB_REPO" "${GITHUB_REPO}"
+
   local unreleased_dir="${repo_root_dir}/${UNRELEASED_DIR_NAME}"
   mkdir -p "${unreleased_dir}"
 

@@ -299,19 +299,19 @@ public class LmdbEnvFactory {
 
         public LmdbEnv build() {
 
-            final Path dir;
+            final Path envDir;
             if (subDir != null && !subDir.isBlank()) {
-                dir = localDir.resolve(subDir);
+                envDir = localDir.resolve(subDir);
 
-                LOGGER.debug(() -> "Ensuring existence of directory " + dir.toAbsolutePath().normalize());
+                LOGGER.debug(() -> "Ensuring existence of directory " + envDir.toAbsolutePath().normalize());
                 try {
-                    Files.createDirectories(dir);
+                    Files.createDirectories(envDir);
                 } catch (IOException e) {
                     throw new RuntimeException(LogUtil.message(
-                            "Error creating directory {}: {}", dir.toAbsolutePath().normalize(), e));
+                            "Error creating directory {}: {}", envDir.toAbsolutePath().normalize(), e));
                 }
             } else {
-                dir = localDir;
+                envDir = localDir;
             }
 
             final Env<ByteBuffer> env;
@@ -332,7 +332,7 @@ public class LmdbEnvFactory {
 
                 LOGGER.info("Creating LMDB environment in dir {}, maxSize: {}, maxDbs {}, maxReaders {}, "
                                 + "isReadAheadEnabled {}, isReaderBlockedByWriter {}, envFlags {}",
-                        dir.toAbsolutePath().normalize(),
+                        envDir.toAbsolutePath().normalize(),
                         maxStoreSize,
                         maxDbs,
                         maxReaders,
@@ -341,13 +341,13 @@ public class LmdbEnvFactory {
                         envFlags);
 
                 final EnvFlags[] envFlagsArr = envFlags.toArray(new EnvFlags[0]);
-                env = builder.open(dir.toFile(), envFlagsArr);
+                env = builder.open(envDir.toFile(), envFlagsArr);
             } catch (Exception e) {
                 throw new RuntimeException(LogUtil.message(
                         "Error creating LMDB env at {}: {}",
-                        dir.toAbsolutePath().normalize(), e.getMessage()), e);
+                        envDir.toAbsolutePath().normalize(), e.getMessage()), e);
             }
-            return new LmdbEnv(localDir, env, isReaderBlockedByWriter);
+            return new LmdbEnv(envDir, env, isReaderBlockedByWriter);
         }
     }
 
