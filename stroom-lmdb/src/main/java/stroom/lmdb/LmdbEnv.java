@@ -287,6 +287,9 @@ public class LmdbEnv implements AutoCloseable {
         if (!env.isClosed()) {
             throw new RuntimeException(("LMDB environment at {} is still open"));
         }
+        LOGGER.debug(() ->
+                LogUtil.message("Deleting {} and all its contents", localDir.toAbsolutePath().normalize()));
+
         if (!FileUtil.deleteDir(localDir)) {
             throw new RuntimeException("Unable to delete dir: " + FileUtil.getCanonicalPath(localDir));
         }
