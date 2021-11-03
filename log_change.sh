@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 ##########################################################################
-# Version: v0.2.2
-# Date: 2021-11-02T12:20:20+00:00
+# Version: v0.2.3
+# Date: 2021-11-03T14:42:51+00:00
 #
 # Script to record changelog entries in individual files to get around
 # the issue of merge conflicts on the CHANGELOG file when doing PRs.
@@ -24,6 +24,20 @@ UNRELEASED_DIR_NAME="unreleased_changes"
 # File containing the configuration values for this script
 TAG_RELEASE_CONFIG_FILENAME='tag_release_config.env'
 TAG_RELEASE_SCRIPT_FILENAME='tag_release.sh'
+
+# e.g
+# * Fix bug
+# Used to look for lines that might be a change entry
+ISSUE_LINE_SIMPLE_PREFIX_REGEX="^\* [A-Z]"
+
+# e.g.
+# * Issue **#1234** : 
+# * Issue **gchq/stroom-resources#104** : 
+# https://regex101.com/r/VcvbFV/1
+ISSUE_LINE_NUMBERED_PREFIX_REGEX="^\* (Issue \*\*([a-zA-Z0-9_\-.]+\/[a-zA-Z0-9_\-.]+\#[0-9]+|#[0-9]+)\*\* : )"
+
+# https://regex101.com/r/Pgvckt/1
+ISSUE_LINE_TEXT_REGEX="^[A-Z].+\.$"
 
 setup_echo_colours() {
   # Exit the script on any error
@@ -209,6 +223,19 @@ validate_in_git_repo() {
   fi
 }
 
+validate_change_text_arg() {
+  local change_text="$1"; shift
+
+  if ! grep --quiet --perl-regexp "${ISSUE_LINE_TEXT_REGEX}" <<< "${change_text}"; then
+    error "The change entry text is not valid:"
+    echo -e "${DGREY}------------------------------------------------------------------------${NC}"
+    echo -e "${change_text}"
+    echo -e "${DGREY}------------------------------------------------------------------------${NC}"
+    echo -e "Validation regex: ${BLUE}${ISSUE_LINE_TEXT_REGEX}${NC}"
+    exit 1
+  fi
+}
+
 is_existing_change_file_present() {
   local git_issue="$1"; shift
   local change_text="$1"; shift
@@ -256,6 +283,7 @@ is_existing_change_file_present() {
       menu_item_arr+=( "Open ${filename}" )
     done
 
+    # Present the user with a menu of options in a single column
     COLUMNS=1
     select user_input in "${menu_item_arr[@]}"; do
       if [[ "${user_input}" = "Create new file" ]]; then
@@ -265,7 +293,7 @@ is_existing_change_file_present() {
         local chosen_file_name="${user_input#Open }"
         debug_value "chosen_file_name" "${chosen_file_name}"
         open_file_in_editor "${unreleased_dir}/${chosen_file_name}"
-        validate_issue_line "${unreleased_dir}/${chosen_file_name}"
+        validate_issue_line "${unreleased_dir}/${chosen_file_name}" "${git_issue}"
         break
       else
         echo "Invalid option. Try another one."
@@ -372,7 +400,7 @@ write_change_entry() {
   if [[ -z "${change_text}" ]]; then
     open_file_in_editor "${change_file}"
 
-    validate_issue_line "${change_file}"
+    validate_issue_line "${change_file}" "${git_issue}"
   fi
 }
 
@@ -412,42 +440,70 @@ open_file_in_editor() {
 
 validate_issue_line() {
   local change_file="$1"; shift
-  # Used to look for lines that might be a change entry
-  local simple_issue_line_regex="^\* [A-Z]"
-
-  # A more complex regex to make sure the change entries are a consistent format
-  # https://regex101.com/r/fOO8lQ/1
-  local issue_line_regex="^\* (Issue \*\*([a-zA-Z0-9_\-.]+\/[a-zA-Z0-9_\-.]+\#[0-9]+|#[0-9]+)\*\* : )?[A-Z][\w .!?\`\"'*\-]+$"
+  local git_issue="$1"; shift
+  
 
   debug "Validating file ${change_file}"
+  debug_value "git_issue" "${git_issue}"
+
+  local issue_line_prefix_regex
+  if [[ "${git_issue}" = "0" ]]; then
+    issue_line_prefix_regex="${ISSUE_LINE_SIMPLE_PREFIX_REGEX}"
+  else
+    issue_line_prefix_regex="${ISSUE_LINE_NUMBERED_PREFIX_REGEX}"
+  fi
+  debug_value "issue_line_prefix_regex" "${issue_line_prefix_regex}"
 
   local issue_line_count
   issue_line_count="$( \
     grep \
       --count \
       --perl-regexp \
-      "${simple_issue_line_regex}" \
-      "${change_file}"
+      "${issue_line_prefix_regex}" \
+      "${change_file}" \
+    || true
     )"
 
   debug_value "issue_line_count" "${issue_line_count}"
 
   if [[ "${issue_line_count}" -eq 0 ]]; then
-      error_exit "No change entry line found in ${BLUE}${change_file}${NC}"
+      error_exit "No change entry line found in ${BLUE}${change_file}${NC}" \
+        "starting with regex ${BLUE}${issue_line_prefix_regex}${NC}"
   elif [[ "${issue_line_count}" -gt 1 ]]; then
       error "Multiple change entry lines found in ${BLUE}${change_file}${NC}:"
       echo -e "${DGREY}------------------------------------------------------------------------${NC}"
-      echo -e "$(grep --perl-regexp "${simple_issue_line_regex}" "${change_file}" )"
+      echo -e "$(grep --perl-regexp "${issue_line_prefix_regex}" "${change_file}" )"
       echo -e "${DGREY}------------------------------------------------------------------------${NC}"
-      echo -e "Validation regex: ${BLUE}${simple_issue_line_regex}${NC}"
+      echo -e "Line prefix regex: ${BLUE}${issue_line_prefix_regex}${NC}"
       exit 1
   else
-    if ! head -n1 "${change_file}" | grep --quiet --perl-regexp "${issue_line_regex}"; then
-      error "The change entry is not valid in ${BLUE}${change_file}${NC}:"
+    # Found one issue line which should be on the top line so validate it
+    local issue_line
+    issue_line="$(head -n1 "${change_file}")"
+    local issue_line_text
+
+    if [[ "${git_issue}" = "0" ]]; then
+      # Line should look like
+      # * Fix something.
+      # Delete the prefix part
+      issue_line_text="${issue_line#* }"
+    else
+      # Line should look like one of
+      # * Issue **#1234** : Fix something.
+      # * Issue **gchq/stroom-resources#104** : Fix something.
+      # Delete the prefix part
+      issue_line_text="${issue_line#*: }"
+    fi
+
+    debug_value "issue_line" "${issue_line}"
+    debug_value "issue_line_text" "${issue_line_text}"
+
+    if ! grep --quiet --perl-regexp "${ISSUE_LINE_TEXT_REGEX}" <<< "${issue_line}"; then
+      error "The change entry text is not valid in ${BLUE}${change_file}${NC}:"
       echo -e "${DGREY}------------------------------------------------------------------------${NC}"
-      echo -e "$(head -n1 "${change_file}" )"
+      echo -e "${issue_line_text}"
       echo -e "${DGREY}------------------------------------------------------------------------${NC}"
-      echo -e "Validation regex: ${BLUE}${issue_line_regex}${NC}"
+      echo -e "Validation regex: ${BLUE}${ISSUE_LINE_TEXT_REGEX}${NC}"
       exit 1
     fi
   fi
@@ -528,6 +584,10 @@ main() {
   # it is set
 
   validate_in_git_repo
+
+  if [[ -n "${change_text}" ]]; then
+    validate_change_text_arg "${change_text}"
+  fi
 
   local repo_root_dir
   repo_root_dir="$(git rev-parse --show-toplevel)"
