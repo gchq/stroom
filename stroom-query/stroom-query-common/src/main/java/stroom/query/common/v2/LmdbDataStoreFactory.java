@@ -73,13 +73,13 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                 ResultStoreConfig::getLmdbConfig,
                 LmdbConfig::getLocalDir);
 
-        Objects.requireNonNull(dirFromConfig);
+        Objects.requireNonNull(dirFromConfig, "localDir not set");
 
         final String localDirStr = pathCreator.makeAbsolute(
                 pathCreator.replaceSystemProperties(dirFromConfig));
         final Path localDir = Paths.get(localDirStr);
 
-        LOGGER.info("Deleting contents of dir {}", localDir);
+        LOGGER.info("Deleting redundant search result stores from {}", localDir);
         // Delete contents.
         if (!FileUtil.deleteContents(localDir)) {
             throw new RuntimeException(LogUtil.message("Error deleting contents of {}", localDir));
