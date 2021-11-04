@@ -25,7 +25,7 @@ public class ReferenceDataConfig extends AbstractConfig {
     private int loadingLockStripes = 2048;
 
     private LmdbConfig lmdbConfig = LmdbConfig.builder("reference_data")
-            .withMaxReaders(100)
+            .withMaxReaders(150)
             .withMaxStoreSize(ByteSize.ofGibibytes(50))
             .withMaxDbs(7)
             .withReadAheadEnabledState(true)

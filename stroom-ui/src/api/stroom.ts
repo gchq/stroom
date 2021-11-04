@@ -89,6 +89,7 @@ export interface Account {
 export interface AccountResultPage {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
+  qualifiedFilterInput?: string;
   values?: Account[];
 }
 
@@ -1292,6 +1293,7 @@ export interface GetFeedStatusResponse {
     | "200 - 0 - OK"
     | "406 - 100 - Feed must be specified"
     | "406 - 101 - Feed is not defined"
+    | "406 - 102 - Data type is invalid"
     | "406 - 110 - Feed is not set to receive data"
     | "406 - 120 - Unexpected data type"
     | "406 - 200 - Unknown compression"
@@ -6552,6 +6554,23 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       this.request<any, boolean>({
         path: `/processor/v1/${id}`,
         method: "DELETE",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Processors
+     * @name FetchProcessor
+     * @summary Fetch a processor
+     * @request GET:/processor/v1/{id}
+     * @secure
+     */
+    fetchProcessor: (id: number, params: RequestParams = {}) =>
+      this.request<any, Processor>({
+        path: `/processor/v1/${id}`,
+        method: "GET",
         secure: true,
         ...params,
       }),
