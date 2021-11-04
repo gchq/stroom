@@ -1,7 +1,8 @@
 package stroom.explorer.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import java.util.Optional;
 import javax.inject.Inject;
@@ -11,7 +12,7 @@ import javax.servlet.http.HttpSession;
 
 class ExplorerSessionImpl implements ExplorerSession {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ExplorerSessionImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExplorerSessionImpl.class);
     private static final String MIN_EXPLORER_TREE_MODEL_ID = "MIN_EXPLORER_TREE_MODEL_ID";
 
     private final Provider<HttpServletRequest> httpServletRequestProvider;
@@ -24,7 +25,15 @@ class ExplorerSessionImpl implements ExplorerSession {
     @Override
     public Optional<Long> getMinExplorerTreeModelId() {
         try {
-            return getSession().map(session -> (Long) session.getAttribute(MIN_EXPLORER_TREE_MODEL_ID));
+            return getSession().map(session -> {
+                final Long minModelId = (Long) session.getAttribute(MIN_EXPLORER_TREE_MODEL_ID);
+
+                LOGGER.debug(() ->
+                        LogUtil.message("getMinExplorerTreeModelId - sessionId: {}, minModelId: {}",
+                                session.getId(), minModelId));
+
+                return minModelId;
+            });
         } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
         }
@@ -32,9 +41,15 @@ class ExplorerSessionImpl implements ExplorerSession {
     }
 
     @Override
-    public void setMinExplorerTreeModelId(final long id) {
+    public void setMinExplorerTreeModelId(final long minModelId) {
         try {
-            getSession().ifPresent(session -> session.setAttribute(MIN_EXPLORER_TREE_MODEL_ID, id));
+            getSession().ifPresent(session -> {
+                LOGGER.debug(() ->
+                        LogUtil.message(
+                                "setMinExplorerTreeModelId - sessionId: {}, minModelId: {}",
+                                session.getId(), minModelId));
+                session.setAttribute(MIN_EXPLORER_TREE_MODEL_ID, minModelId);
+            });
         } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
         }
@@ -47,7 +62,13 @@ class ExplorerSessionImpl implements ExplorerSession {
                 if (request == null) {
                     LOGGER.debug("Request provider has no current request");
                 } else {
-                    return Optional.ofNullable(request.getSession(false));
+                    // Need to create the session if there isn't one as the explorer tree model update process
+                    // relies on having a session available, which there may not be if auth is disabled.
+                    final Optional<HttpSession> optSession = Optional.ofNullable(request.getSession(true));
+
+                    LOGGER.debug(() -> "session id: " + optSession.map(HttpSession::getId).orElse("null"));
+
+                    return optSession;
                 }
             }
         } catch (final RuntimeException e) {
