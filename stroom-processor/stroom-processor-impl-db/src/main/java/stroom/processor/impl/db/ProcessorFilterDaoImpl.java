@@ -84,19 +84,10 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
     @Override
     public ProcessorFilter create(final ProcessorFilter processorFilter) {
-        return create(processorFilter, null, null);
-    }
-
-    @Override
-    public ProcessorFilter create(final ProcessorFilter processorFilter,
-                                  final Long minMetaCreateMs,
-                                  final Long maxMetaCreateMs) {
         LAMBDA_LOGGER.debug(() -> LogUtil.message("Creating a {}", PROCESSOR_FILTER.getName()));
 
         final ProcessorFilter marshalled = marshaller.marshal(processorFilter);
         final ProcessorFilterTracker tracker = new ProcessorFilterTracker();
-        tracker.setMinMetaCreateMs(minMetaCreateMs);
-        tracker.setMaxMetaCreateMs(maxMetaCreateMs);
 
         final ProcessorFilterTrackerRecord processorFilterTrackerRecord = PROCESSOR_FILTER_TRACKER.newRecord();
         processorFilterTrackerRecord.from(tracker);

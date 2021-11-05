@@ -12219,6 +12219,14 @@
             "type" : "integer",
             "format" : "int32"
           },
+          "maxMetaCreateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "minMetaCreateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
           "pipelineName" : {
             "type" : "string"
           },

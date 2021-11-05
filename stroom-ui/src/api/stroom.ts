@@ -1989,6 +1989,12 @@ export interface ProcessorFilter {
 
   /** @format int32 */
   id?: number;
+
+  /** @format int64 */
+  maxMetaCreateTimeMs?: number;
+
+  /** @format int64 */
+  minMetaCreateTimeMs?: number;
   pipelineName?: string;
   pipelineUuid?: string;
 

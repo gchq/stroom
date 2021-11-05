@@ -105,13 +105,13 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
 
             if (ImportState.State.NEW.equals(importState.getState())) {
                 final boolean enable;
-                final Long trackerStartMs;
+                final Long minMetaCreateTimeMs;
                 if (importState.getEnable() != null) {
                     enable = importState.getEnable();
-                    trackerStartMs = importState.getEnableTime();
+                    minMetaCreateTimeMs = importState.getEnableTime();
                 } else {
                     enable = processorFilter.isEnabled();
-                    trackerStartMs = null;
+                    minMetaCreateTimeMs = null;
                 }
 
                 ProcessorFilter filter = findProcessorFilter(docRef);
@@ -129,7 +129,7 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
                                 false,
                                 processorFilter.isReprocess(),
                                 enable,
-                                trackerStartMs);
+                                minMetaCreateTimeMs);
                     } else {
                         LOGGER.error("Processor not found on pipeline " + processorFilter.getPipelineName() +
                                 "(" + processorFilter.getPipelineUuid() + ")" +
