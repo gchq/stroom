@@ -61,7 +61,7 @@ public class ResultStoreLmdbConfig extends AbstractConfig implements LmdbConfig 
 
     @Override
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    @JsonPropertyDescription("The maximum size for the ref loader off heap store. There must be " +
+    @JsonPropertyDescription("The maximum size for the off heap store. There must be " +
             "available space on the disk to accommodate this size. It can be larger than the amount of available RAM " +
             "and will only be allocated as it is needed. Can be expressed in IEC units (multiples of 1024), " +
             "e.g. 1024, 1024B, 1024bytes, 1KiB, 1KB, 1K, etc.")
