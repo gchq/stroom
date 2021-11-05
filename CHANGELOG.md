@@ -12,6 +12,27 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0-beta.156] - 2021-11-05
+
+* Issue **#2542** : Improve autologged searches "raw" JSON.
+
+* Issue **#2534** : Implement ProcessorResource.fetch to fix event log.
+
+* Issue **#2533** : Fix corrupt event format for logout due to NPE.
+
+* Issue **#2530** : Fix issue of explorer tree not refreshing on copy, move and delete when auth is disabled.
+
+* Add wait time debug logging around LMDB locks.
+
+* Increase maxReaders default to 150 for reference data.
+
+* Issue **#2548** : Clear contents of `stroom.search.resultStore.lmdb.localDir` on boot.
+
+* Issue **#2549** : Remove `maxDbs` from `lmdb` config. Remove `readerBlockedByWriter` from `resultStore.lmdb` config.
+
+* Issue **#2544** : Add additional constraints to processor filter instead of using tracker state
+
+
 ## [v7.0-beta.155] - 2021-11-02
 
 * No changes. Previous build failed due to netowrking issues.
@@ -3915,7 +3936,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.155...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.156...HEAD
+[v7.0-beta.156]: https://github.com/gchq/stroom/compare/v7.0-beta.155...v7.0-beta.156
 [v7.0-beta.155]: https://github.com/gchq/stroom/compare/v7.0-beta.154...v7.0-beta.155
 [v7.0-beta.154]: https://github.com/gchq/stroom/compare/v7.0-beta.153...v7.0-beta.154
 [v7.0-beta.153]: https://github.com/gchq/stroom/compare/v7.0-beta.152...v7.0-beta.153
