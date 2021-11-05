@@ -19,7 +19,11 @@ package stroom.explorer.impl;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.task.api.TaskContextFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -30,6 +34,8 @@ import javax.inject.Singleton;
 
 @Singleton
 class ExplorerTreeModel {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExplorerTreeModel.class);
 
     private static final long ONE_HOUR = 60 * 60 * 1000;
     private static final long TEN_MINUTES = 10 * 60 * 1000;
@@ -67,25 +73,36 @@ class ExplorerTreeModel {
         final long minId = explorerSession.getMinExplorerTreeModelId().orElse(0L);
         final long oneHourAgo = now - ONE_HOUR;
 
-        TreeModel model = currentModel;
+        LOGGER.debug("currentId: {}, minId: {}", currentId, minId);
+
+        final TreeModel model;
 
         // Create a model synchronously if it is currently null or hasn't been rebuilt for an hour or is old for the
         // current session.
-        if (model == null ||
-                model.getId() < minId ||
-                model.getCreationTime() < oneHourAgo) {
+        if (currentModel == null ||
+                currentModel.getId() < minId ||
+                currentModel.getCreationTime() < oneHourAgo) {
+            LOGGER.debug("Synchronous model build");
             model = updateModel(currentId, now);
 
         } else {
             // If the model has not been rebuilt in the last 10 minutes for anybody then do so asynchronously.
             // Find out what the oldest tree model is that we will allow before performing an asynchronous rebuild.
             final long oldestAllowed = Math.max(minExplorerTreeModelBuildTime.get(), now - TEN_MINUTES);
-            if (model.getCreationTime() < oldestAllowed) {
+            LOGGER.debug(() -> LogUtil.message("oldestAllowed: {}, model createTime: {}",
+                    Instant.ofEpochMilli(oldestAllowed),
+                    Instant.ofEpochMilli(currentModel.getCreationTime())));
+
+            if (currentModel.getCreationTime() < oldestAllowed) {
                 // Perform a build asynchronously if we aren't already building elsewhere.
                 if (performingRebuild.compareAndSet(0, 1)) {
                     try {
+                        LOGGER.debug("Creating async rebuild task");
                         final Runnable runnable = taskContextFactory.context("Update Explorer Tree Model",
-                                taskContext -> updateModel(currentId, now));
+                                taskContext -> {
+                                    LOGGER.debug("Running async model rebuild");
+                                    updateModel(currentId, now);
+                                });
                         CompletableFuture
                                 .runAsync(runnable, executor)
                                 .thenRun(performingRebuild::decrementAndGet)
@@ -98,6 +115,7 @@ class ExplorerTreeModel {
                     }
                 }
             }
+            model = currentModel;
         }
 
         return model;
@@ -151,11 +169,19 @@ class ExplorerTreeModel {
 
     private synchronized void setCurrentModel(final TreeModel treeModel) {
         if (currentModel == null || currentModel.getId() < treeModel.getId()) {
+
+            LOGGER.debug(() -> LogUtil.message("Setting new model old id: {}, new id {}",
+                    currentModel == null
+                            ? "null"
+                            : currentModel.getId(),
+                    treeModel.getId()));
+
             currentModel = treeModel;
         }
     }
 
     void rebuild() {
+        LOGGER.debug("rebuild called");
         final long now = System.currentTimeMillis();
         minExplorerTreeModelBuildTime.getAndUpdate(prev -> Math.max(prev, now));
         explorerSession.setMinExplorerTreeModelId(currentId.incrementAndGet());
