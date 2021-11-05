@@ -53,7 +53,6 @@ public class LmdbEnvFactory {
                 lmdbConfig);
     }
 
-
     /**
      * @param dir The path where the environment will be located on the filesystem.
      *            Should be local disk and not shared storage.
@@ -80,6 +79,8 @@ public class LmdbEnvFactory {
                 Paths.get(pathCreator.makeAbsolute(pathCreator.replaceSystemProperties(dir))));
     }
 
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
     abstract static class AbstractEnvBuilder {
 
         private static final AtomicBoolean HAS_LIBRARY_BEEN_CONFIGURED = new AtomicBoolean(false);
@@ -92,7 +93,7 @@ public class LmdbEnvFactory {
 
         protected int maxReaders = LmdbConfig.DEFAULT_MAX_READERS;
         protected ByteSize maxStoreSize = LmdbConfig.DEFAULT_MAX_STORE_SIZE;
-        protected int maxDbs = LmdbConfig.DEFAULT_MAX_DATABASES;
+        protected int maxDbs = 1;
         protected boolean isReadAheadEnabled = LmdbConfig.DEFAULT_IS_READ_AHEAD_ENABLED;
         protected boolean isReaderBlockedByWriter = LmdbConfig.DEFAULT_IS_READER_BLOCKED_BY_WRITER;
         protected String subDir = null;
@@ -108,7 +109,6 @@ public class LmdbEnvFactory {
                     getLocalDirAsPath(pathCreator, lmdbConfig));
 
             this.maxReaders = lmdbConfig.getMaxReaders();
-            this.maxDbs = lmdbConfig.getMaxDbs();
             this.maxStoreSize = lmdbConfig.getMaxStoreSize();
             this.isReadAheadEnabled = lmdbConfig.isReadAheadEnabled();
             this.isReaderBlockedByWriter = lmdbConfig.isReaderBlockedByWriter();
@@ -129,6 +129,11 @@ public class LmdbEnvFactory {
                 configureLibrary();
                 HAS_LIBRARY_BEEN_CONFIGURED.set(true);
             }
+        }
+
+        public AbstractEnvBuilder withMaxDbCount(final int maxDbCount) {
+            this.maxDbs = maxDbCount;
+            return this;
         }
 
         public AbstractEnvBuilder addEnvFlag(final EnvFlags envFlag) {
@@ -351,6 +356,8 @@ public class LmdbEnvFactory {
         }
     }
 
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
     /**
      * A builder for when you don't have an {@link LmdbConfig}
      */
@@ -363,6 +370,7 @@ public class LmdbEnvFactory {
             super(pathCreator, tempDirProvider, lmdbLibraryConfig, dir);
         }
 
+        @Override
         public CustomEnvBuilder withMaxDbCount(final int maxDbCount) {
             this.maxDbs = maxDbCount;
             return this;
@@ -414,6 +422,8 @@ public class LmdbEnvFactory {
         }
     }
 
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
     /**
      * A builder for when you have an {@link LmdbConfig}
      */
@@ -424,6 +434,12 @@ public class LmdbEnvFactory {
                                  final LmdbLibraryConfig lmdbLibraryConfig,
                                  final LmdbConfig lmdbConfig) {
             super(pathCreator, tempDirProvider, lmdbLibraryConfig, lmdbConfig);
+        }
+
+        @Override
+        public SimpleEnvBuilder withMaxDbCount(final int maxDbCount) {
+            this.maxDbs = maxDbCount;
+            return this;
         }
 
         @Override

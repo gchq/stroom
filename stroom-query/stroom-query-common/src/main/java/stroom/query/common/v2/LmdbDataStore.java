@@ -133,6 +133,7 @@ public class LmdbDataStore implements DataStore {
         // Make safe for the file system.
         final String dirName = uuid.replaceAll("[^A-Za-z0-9]", "_");
         this.lmdbEnv = lmdbEnvFactory.builder(resultStoreConfig.getLmdbConfig())
+                .withMaxDbCount(1)
                 .withSubDirectory(dirName)
                 .addEnvFlag(EnvFlags.MDB_NOTLS)
                 .build();
