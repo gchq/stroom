@@ -3162,6 +3162,25 @@ paths:
       summary: Deletes a processor
       tags:
       - Processors
+    get:
+      operationId: fetchProcessor
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Processor'
+          description: default response
+      summary: Fetch a processor
+      tags:
+      - Processors
   /processor/v1/{id}/enabled:
     put:
       operationId: setProcessorEnabled
@@ -8588,6 +8607,12 @@ components:
         id:
           type: integer
           format: int32
+        maxMetaCreateTimeMs:
+          type: integer
+          format: int64
+        minMetaCreateTimeMs:
+          type: integer
+          format: int64
         pipelineName:
           type: string
         pipelineUuid:
