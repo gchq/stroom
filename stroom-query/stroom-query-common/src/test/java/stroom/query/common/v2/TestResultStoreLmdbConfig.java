@@ -43,7 +43,8 @@ class TestResultStoreLmdbConfig {
                     "maxReaders":99,
                     "maxStoreSize":"10G",
                     "readAheadEnabled":true,
-                    "readerBlockedByWriter": true}
+                    "readerBlockedByWriter": true
+                }
                  """;
 
         final ResultStoreLmdbConfig lmdbConfig = objectMapper.readValue(json, ResultStoreLmdbConfig.class);
@@ -82,5 +83,32 @@ class TestResultStoreLmdbConfig {
         Assertions.assertThat(lmdbConfig.isReaderBlockedByWriter())
                 .isEqualTo(ResultStoreLmdbConfig.DEFAULT_IS_READER_BLOCKED_BY_WRITER);
 
+    }
+
+    @Test
+    void testJsonDeserialisation_sparse2() throws IOException {
+
+        ObjectMapper objectMapper = new ObjectMapper()
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
+
+        final String json = """
+                {
+                    "localDir":"my_dir",
+                    "readerBlockedByWriter": false
+                }
+                 """;
+
+        final ResultStoreLmdbConfig lmdbConfig = objectMapper.readValue(json, ResultStoreLmdbConfig.class);
+
+        Assertions.assertThat(lmdbConfig.getLocalDir())
+                .isEqualTo("my_dir");
+        Assertions.assertThat(lmdbConfig.getMaxReaders())
+                .isEqualTo(ResultStoreLmdbConfig.DEFAULT_MAX_READERS);
+        Assertions.assertThat(lmdbConfig.getMaxStoreSize())
+                .isEqualTo(ResultStoreLmdbConfig.DEFAULT_MAX_STORE_SIZE);
+        Assertions.assertThat(lmdbConfig.isReadAheadEnabled())
+                .isEqualTo(ResultStoreLmdbConfig.DEFAULT_IS_READ_AHEAD_ENABLED);
+        Assertions.assertThat(lmdbConfig.isReaderBlockedByWriter())
+                .isFalse();
     }
 }
