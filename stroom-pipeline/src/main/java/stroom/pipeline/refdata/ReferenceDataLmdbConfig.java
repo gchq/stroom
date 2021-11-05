@@ -9,8 +9,10 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.annotation.Nonnull;
+import javax.inject.Singleton;
 import javax.validation.constraints.Min;
 
+@Singleton
 @JsonPropertyOrder(alphabetic = true)
 public class ReferenceDataLmdbConfig extends AbstractConfig implements LmdbConfig {
 
