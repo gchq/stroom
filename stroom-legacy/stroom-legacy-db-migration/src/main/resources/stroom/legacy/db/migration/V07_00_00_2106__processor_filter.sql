@@ -17,14 +17,10 @@
 -- Stop NOTE level warnings about objects (not)? existing
 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
---
--- Create the meta_val table
---
-CREATE TABLE IF NOT EXISTS `meta_retention_tracker` (
-    `last_run_time`            bigint   NOT NULL,
-    `retention_rules_version`  varchar(255) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+ALTER TABLE processor_filter ADD COLUMN min_meta_create_time_ms bigint DEFAULT NULL;
+ALTER TABLE processor_filter ADD COLUMN max_meta_create_time_ms bigint DEFAULT NULL;
+UPDATE processor_filter SET max_meta_create_time_ms = create_time_ms WHERE reprocess = true;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 
--- vim: set tabstop=4 shiftwidth=4 expandtab:
+-- vim: set shiftwidth=4 tabstop=4 expandtab:

@@ -221,6 +221,10 @@ public class ProcessorFilterTracker implements HasIntegerId {
     }
 
     public Integer getTrackerStreamCreatePercentage(final long now) {
+        if (ProcessorFilterTracker.COMPLETE.equals(status)) {
+            return 100;
+        }
+
         if (minMetaCreateMs != null && metaCreateMs != null) {
             long max = now;
             if (lastPollMs != null) {

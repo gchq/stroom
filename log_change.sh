@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 ##########################################################################
-# Version: v0.2.1
-# Date: 2021-10-21T14:36:30+00:00
+# Version: v0.3.0
+# Date: 2021-11-04T10:17:38+00:00
 #
 # Script to record changelog entries in individual files to get around
 # the issue of merge conflicts on the CHANGELOG file when doing PRs.
@@ -15,11 +15,31 @@
 # change entries to the CHANGELOG at release time.
 ##########################################################################
 
-
 set -euo pipefail
 
 IS_DEBUG=${IS_DEBUG:-false}
 UNRELEASED_DIR_NAME="unreleased_changes"
+
+# File containing the configuration values for this script
+TAG_RELEASE_CONFIG_FILENAME='tag_release_config.env'
+TAG_RELEASE_SCRIPT_FILENAME='tag_release.sh'
+
+# e.g
+# * Fix bug
+# Used to look for lines that might be a change entry
+ISSUE_LINE_SIMPLE_PREFIX_REGEX="^\* [A-Z]"
+
+# e.g.
+# * Issue **#1234** : 
+# * Issue **gchq/stroom-resources#104** : 
+# https://regex101.com/r/VcvbFV/1
+ISSUE_LINE_NUMBERED_PREFIX_REGEX="^\* (Issue \*\*([a-zA-Z0-9_\-.]+\/[a-zA-Z0-9_\-.]+\#[0-9]+|#[0-9]+)\*\* : )"
+
+# https://regex101.com/r/Pgvckt/1
+ISSUE_LINE_TEXT_REGEX="^[A-Z].+\.$"
+
+# Lines starting with a word in the past tense
+PAST_TENSE_FIRST_WORD_REGEX='^(Add|Allow|Alter|Attempt|Chang|Copi|Correct|Creat|Disabl|Extend|Fix|Import|Improv|Increas|Inherit|Introduc|Limit|Mark|Migrat|Modifi|Mov|Preferr|Recognis|Reduc|Remov|Renam|Reorder|Replac|Restor|Revert|Stopp|Supersed|Switch|Turn|Updat|Upgrad)ed[^a-z]'
 
 setup_echo_colours() {
   # Exit the script on any error
@@ -67,7 +87,7 @@ debug_value() {
   local value="$1"; shift
   
   if [ "${IS_DEBUG}" = true ]; then
-    echo -e "${DGREY}DEBUG ${name}: ${value}${NC}"
+    echo -e "${DGREY}DEBUG ${name}: [${value}]${NC}"
   fi
 }
 
@@ -99,32 +119,6 @@ get_git_issue_from_branch() {
   echo "${git_issue_from_branch}"
 }
 
-establish_git_remote_namespace_and_repo() {
-  # 'origin https://github.com/gchq/stroom.git (fetch)' => 'gchq stroom'
-  # read the space delimited values into an array so we can split them
-  local namespace_and_repo=()
-  IFS=" " read -r -a namespace_and_repo <<< "$( \
-    git remote -v \
-      | grep "(fetch)" \
-      | sed -r 's#.*[/:]([^/]+)/(.*)\.git \(fetch\)#\1 \2#')"
-
-  debug_value "namespace_and_repo" "${namespace_and_repo[*]}"
-
-  # global scope
-  git_namespace=""
-  git_repo=""
-
-  if [[ "${#namespace_and_repo[@]}" -ne 2 ]]; then
-    warn "Unable to parse git namespace and repo from the remote URL."
-  else
-    git_namespace="${namespace_and_repo[0]}"
-    git_repo="${namespace_and_repo[1]}"
-
-    debug_value "git_namespace" "${git_namespace}"
-    debug_value "git_repo" "${git_repo}"
-  fi
-}
-
 validate_git_issue() {
   local git_issue="$1"; shift
   debug "Validating [${git_issue}]"
@@ -139,13 +133,10 @@ validate_git_issue() {
   issue_title=""
 
   if [[ ! "${git_issue}" = "0" ]]; then
-    local issue_namespace
-    local issue_repo
-    local issue_number
     if [[ "${git_issue}" =~ ^[1-9][0-9]*$ ]]; then
       # Issue in this repo so use the values we got from the local repo
-      issue_namespace="${git_namespace}"
-      issue_repo="${git_repo}"
+      issue_namespace="${GITHUB_NAMESPACE}"
+      issue_repo="${GITHUB_REPO}"
       issue_number="${git_issue}"
     else
       # Fully qualified issue so extract the parts by replacing / and # with
@@ -161,9 +152,9 @@ validate_git_issue() {
     debug_value "issue_repo" "${issue_repo}"
     debug_value "issue_number" "${issue_number}"
 
-    local github_issue_url="https://api.github.com/repos/${issue_namespace}/${issue_repo}/issues/${issue_number}"
+    local github_issue_api_url="https://api.github.com/repos/${issue_namespace}/${issue_repo}/issues/${issue_number}"
 
-    debug_value "github_issue_url" "${github_issue_url}"
+    debug_value "github_issue_api_url" "${github_issue_api_url}"
 
     local curl_return_code=0
     # Turn off exit on error so we can get the curl return code in the subshell
@@ -175,7 +166,7 @@ validate_git_issue() {
         curl \
           --silent \
           --fail \
-          "${github_issue_url}" \
+          "${github_issue_api_url}" \
         | jq \
           --raw-output \
           '.title' \
@@ -187,7 +178,7 @@ validate_git_issue() {
         curl \
           --silent \
           --fail \
-          "${github_issue_url}" \
+          "${github_issue_api_url}" \
         | grep \
           --only-matching \
           --prl-regexp \
@@ -208,15 +199,17 @@ validate_git_issue() {
           --silent \
           --output /dev/null \
           --write-out "%{http_code}" \
-          "${github_issue_url}"\
+          "${github_issue_api_url}"\
       )"
       debug_value "http_status_code" "${http_status_code}"
 
       if [[ "${http_status_code}" = "404" ]]; then
-        error_exit "Issue ${BLUE}${git_issue}${NC} does not exist on GitHub"
+        error_exit "Issue ${BLUE}${git_issue}${NC} does not exist on" \
+          "${BLUE}github.com/(${issue_namespace}/${issue_repo}${NC}"
       else
         warn "Unable to obtain issue title for issue ${BLUE}${issue_number}${NC}" \
-          "from GitHub (HTTP status: ${BLUE}${http_status_code}${NC})"
+          "from ${BLUE}github.com/(${issue_namespace}/${issue_repo}${NC}" \
+          "(HTTP status: ${BLUE}${http_status_code}${NC})"
         issue_title=""
       fi
     else
@@ -229,6 +222,47 @@ validate_in_git_repo() {
   if ! git rev-parse --show-toplevel > /dev/null 2>&1; then
     error_exit "You are not in a git repository. This script should be run from" \
       "inside a repository.${NC}"
+  fi
+}
+
+validate_change_text_arg() {
+  local change_text="$1"; shift
+
+  if ! grep --quiet --perl-regexp "${ISSUE_LINE_TEXT_REGEX}" <<< "${change_text}"; then
+    error "The change entry text is not valid"
+    echo -e "${DGREY}------------------------------------------------------------------------${NC}"
+    echo -e "${YELLOW}${change_text}${NC}"
+    echo -e "${DGREY}------------------------------------------------------------------------${NC}"
+    echo -e "Validation regex: ${BLUE}${ISSUE_LINE_TEXT_REGEX}${NC}"
+    exit 1
+  fi
+
+  if ! validate_tense "${change_text}"; then
+    error "The change entry text should be in the imperitive mood" \
+      "\ni.e. \"Fix nasty bug\" rather than \"Fixed nasty bug\""
+    echo -e "${DGREY}------------------------------------------------------------------------${NC}"
+    echo -e "${YELLOW}${change_text}${NC}"
+    echo -e "${DGREY}------------------------------------------------------------------------${NC}"
+    exit 1
+  fi
+}
+
+validate_tense() {
+  debug "validate_tense()"
+  local change_text="$1"; shift
+  debug_value "change_text" "${change_text}"
+
+  if [[ "${IS_TENSE_VALIDATED:-true}" = true ]]; then
+    if echo "${change_text}" | grep --quiet --perl-regexp "${PAST_TENSE_FIRST_WORD_REGEX}"; then
+      debug "Found past tense first word"
+      return 1
+    else
+      debug "Tense validated ok"
+      return 0
+    fi
+  else
+    debug "Tense validation disabled"
+    return 0
   fi
 }
 
@@ -279,6 +313,7 @@ is_existing_change_file_present() {
       menu_item_arr+=( "Open ${filename}" )
     done
 
+    # Present the user with a menu of options in a single column
     COLUMNS=1
     select user_input in "${menu_item_arr[@]}"; do
       if [[ "${user_input}" = "Create new file" ]]; then
@@ -287,8 +322,7 @@ is_existing_change_file_present() {
       elif [[ "${user_input}" =~ ^Open ]]; then
         local chosen_file_name="${user_input#Open }"
         debug_value "chosen_file_name" "${chosen_file_name}"
-        open_file_in_editor "${unreleased_dir}/${chosen_file_name}"
-        validate_issue_line "${unreleased_dir}/${chosen_file_name}"
+        open_file_in_editor "${unreleased_dir}/${chosen_file_name}" "${git_issue}"
         break
       else
         echo "Invalid option. Try another one."
@@ -351,6 +385,7 @@ write_change_entry() {
     issue_part="${issue_prefix}${git_issue}${issue_suffix}"
   fi
 
+
   local change_entry_line="${line_prefix}${issue_part}${change_text}"
   local all_content
 
@@ -362,23 +397,27 @@ write_change_entry() {
     echo
     echo '```sh'
     if [[ -n "${issue_title:-}" ]]; then
+      local github_issue_url="https://github.com/${issue_namespace}/${issue_repo}/issues/${issue_number}"
       echo "# ********************************************************************************"
       echo "# Issue title: ${issue_title}"
+      echo "# Issue link:  ${github_issue_url}"
       echo "# ********************************************************************************"
       echo
     fi
-    echo "# ONLY the top line will be included in the CHANGELOG."
-    echo "# Entries should be in GitHub flavour markdown and should be written on a SINGLE"
+    echo "# ONLY the top line will be included as a change entry in the CHANGELOG."
+    echo "# The entry should be in GitHub flavour markdown and should be written on a SINGLE"
     echo "# line with no hard breaks. You can have multiple change files for a single GitHub issue."
+    echo "# The  entry should be written in the imperative mood, i.e. 'Fix nasty bug' rather than"
+    echo "# 'Fixed nasty bug'."
     echo "#"
-    echo "# Examples of acceptable entires are:"
+    echo "# Examples of acceptable entries are:"
     echo "#"
     echo "#"
-    echo "# * Issue **1234** : A change with an associated GitHub issue in this repository"
+    echo "# * Issue **123** : Fix bug with an associated GitHub issue in this repository"
     echo "#"
-    echo "# * Issue **namespace/other-repo#1234** : A change with an associated GitHub issue in another repository"
+    echo "# * Issue **namespace/other-repo#456** : Fix bug with an associated GitHub issue in another repository"
     echo "#"
-    echo "# * A change with no associated GitHub issue."
+    echo "# * Fix bug with no associated GitHub issue."
     echo '```'
   )"
 
@@ -390,85 +429,126 @@ write_change_entry() {
   echo -e "${all_content}" > "${change_file}"
 
   if [[ -z "${change_text}" ]]; then
-    open_file_in_editor "${change_file}"
-
-    validate_issue_line "${change_file}"
+    open_file_in_editor "${change_file}" "${git_issue}"
   fi
 }
 
 # Return zero if the file was changed, else non-zero
 open_file_in_editor() {
   local file_to_open="$1"; shift
+  local git_issue="$1"; shift
   
-  local return_code=0
-  local md5_before
-  md5_before="$(md5sum "${file_to_open}" | cut -d' ' -f1)"
-
   local editor
   editor="${VISUAL:-${EDITOR:-vi}}"
+
+  local is_first_pass=true
 
   info "Opening file ${BLUE}${file_to_open}${GREEN} in editor" \
     "(${BLUE}${editor}${GREEN})${NC}"
 
-  read -n 1 -s -r -p "Press any key to continue"
-  echo
+  while true; do
+    if [[ "${is_first_pass}" = true ]]; then
+      read -n 1 -s -r -p "Press any key to open the file"
+    else
+      read -n 1 -s -r -p "Press any key to re-open the file"
+      # Extra line break for subsequent passes to separate them
+      echo
+    fi
 
-  # Open the user's preferred editor or vi/vim if not set
-  "${editor}" "${file_to_open}"
+    echo
+    echo
 
-  local md5_after
-  md5_after="$(md5sum "${file_to_open}" | cut -d' ' -f1)"
+    # Open the user's preferred editor or vi/vim if not set
+    "${editor}" "${file_to_open}"
 
-  if [[ "${md5_before}" = "${md5_after}" ]]; then
-    debug "File unchanged"
-    return 1
-  else
-    debug "File changed"
-    return 0
-  fi
-
-  debug_value "return_code" "${return_code}" 
+    if validate_issue_line_in_file "${file_to_open}" "${git_issue}"; then
+      # Happy with the file so break out of loop
+      info "File passed validation"
+      break;
+    fi
+    is_first_pass=false
+  done
 }
 
-validate_issue_line() {
+validate_issue_line_in_file() {
+  debug "validate_issue_line_in_file ($*)"
   local change_file="$1"; shift
-  # Used to look for lines that might be a change entry
-  local simple_issue_line_regex="^\* [A-Z]"
-
-  # A more complex regex to make sure the change entries are a consistent format
-  # https://regex101.com/r/fOO8lQ/1
-  local issue_line_regex="^\* (Issue \*\*([a-zA-Z0-9_\-.]+\/[a-zA-Z0-9_\-.]+\#[0-9]+|#[0-9]+)\*\* : )?[A-Z][\w .!?\`\"'*\-]+$"
+  local git_issue="$1"; shift
 
   debug "Validating file ${change_file}"
+  debug_value "git_issue" "${git_issue}"
+
+  local issue_line_prefix_regex
+  if [[ "${git_issue}" = "0" ]]; then
+    issue_line_prefix_regex="${ISSUE_LINE_SIMPLE_PREFIX_REGEX}"
+  else
+    issue_line_prefix_regex="${ISSUE_LINE_NUMBERED_PREFIX_REGEX}"
+  fi
+  debug_value "issue_line_prefix_regex" "${issue_line_prefix_regex}"
 
   local issue_line_count
   issue_line_count="$( \
     grep \
       --count \
       --perl-regexp \
-      "${simple_issue_line_regex}" \
-      "${change_file}"
+      "${issue_line_prefix_regex}" \
+      "${change_file}" \
+    || true
     )"
 
   debug_value "issue_line_count" "${issue_line_count}"
 
   if [[ "${issue_line_count}" -eq 0 ]]; then
-      error_exit "No change entry line found in ${BLUE}${change_file}${NC}"
+    error "No change entry line found in ${BLUE}${change_file}${NC}"
+    echo -e "Line prefix regex: ${BLUE}${issue_line_prefix_regex}${NC}"
+    return 1
   elif [[ "${issue_line_count}" -gt 1 ]]; then
-      error "Multiple change entry lines found in ${BLUE}${change_file}${NC}:"
-      echo -e "${DGREY}------------------------------------------------------------------------${NC}"
-      echo -e "$(grep --perl-regexp "${simple_issue_line_regex}" "${change_file}" )"
-      echo -e "${DGREY}------------------------------------------------------------------------${NC}"
-      echo -e "Validation regex: ${BLUE}${simple_issue_line_regex}${NC}"
-      exit 1
+    local matching_change_lines
+    matching_change_lines="$(grep --perl-regexp "${issue_line_prefix_regex}" "${change_file}" )"
+    error "More than one entry lines found in ${BLUE}${change_file}${NC}:"
+    echo -e "${DGREY}------------------------------------------------------------------------${NC}"
+    echo -e "${YELLOW}${matching_change_lines}${NC}"
+    echo -e "${DGREY}------------------------------------------------------------------------${NC}"
+    echo -e "Line prefix regex: ${BLUE}${issue_line_prefix_regex}${NC}"
+    return 1
   else
-    if ! head -n1 "${change_file}" | grep --quiet --perl-regexp "${issue_line_regex}"; then
-      error "The change entry is not valid in ${BLUE}${change_file}${NC}:"
+    # Found one issue line which should be on the top line so validate it
+    local issue_line
+    issue_line="$(head -n1 "${change_file}")"
+    local issue_line_text
+
+    if [[ "${git_issue}" = "0" ]]; then
+      # Line should look like
+      # * Fix something.
+      # Delete the prefix part
+      issue_line_text="${issue_line#* }"
+    else
+      # Line should look like one of
+      # * Issue **#1234** : Fix something.
+      # * Issue **gchq/stroom-resources#104** : Fix something.
+      # Delete the prefix part
+      issue_line_text="${issue_line#*: }"
+    fi
+
+    debug_value "issue_line" "${issue_line}"
+    debug_value "issue_line_text" "${issue_line_text}"
+
+    if ! echo "${issue_line_text}" | grep --quiet --perl-regexp "${ISSUE_LINE_TEXT_REGEX}"; then
+      error "The change entry text is not valid in ${BLUE}${change_file}${NC}:"
       echo -e "${DGREY}------------------------------------------------------------------------${NC}"
-      echo -e "$(head -n1 "${change_file}" )"
+      echo -e "${YELLOW}${issue_line_text}${NC}"
       echo -e "${DGREY}------------------------------------------------------------------------${NC}"
-      echo -e "Validation regex: ${BLUE}${issue_line_regex}${NC}"
-      exit 1
+      echo -e "Validation regex: ${BLUE}${ISSUE_LINE_TEXT_REGEX}${NC}"
+      return 1
+    fi
+
+    if ! validate_tense "${issue_line_text}"; then
+      error "The change entry text should be in the imperitive mood" \
+        "\ni.e. \"Fix nasty bug\" rather than \"Fixed nasty bug\""
+      echo -e "${DGREY}------------------------------------------------------------------------${NC}"
+      echo -e "${YELLOW}${issue_line_text}${NC}"
+      echo -e "${DGREY}------------------------------------------------------------------------${NC}"
+      return 1
     fi
   fi
 }
@@ -494,7 +574,7 @@ list_unreleased_changes() {
           -n1 \
           "${file}" \
       )"
-      list_output+="${BLUE}${filename}${NC}:\n${YELLOW}${change_entry_line}${NC}\n\n"
+      list_output+="${BLUE}${filename}${NC}:\n${change_entry_line}\n\n"
     fi
   done
 
@@ -549,10 +629,27 @@ main() {
 
   validate_in_git_repo
 
-  establish_git_remote_namespace_and_repo
+  if [[ -n "${change_text}" ]]; then
+    validate_change_text_arg "${change_text}"
+  fi
 
   local repo_root_dir
   repo_root_dir="$(git rev-parse --show-toplevel)"
+
+  local tag_release_config_file="${repo_root_dir}/${TAG_RELEASE_CONFIG_FILENAME}"
+  if [[ -f "${tag_release_config_file}" ]]; then
+    # Source any repo specific config
+    # shellcheck disable=SC1090
+    source "${tag_release_config_file}"
+  else
+    error_exit "Config file ${BLUE}${tag_release_config_file}${NC}" \
+      "doesn't exist. Run ${BLUE}./${TAG_RELEASE_SCRIPT_FILENAME}${NC}" \
+      "to generate it."
+  fi
+
+  debug_value "GITHUB_NAMESPACE" "${GITHUB_NAMESPACE}"
+  debug_value "GITHUB_REPO" "${GITHUB_REPO}"
+
   local unreleased_dir="${repo_root_dir}/${UNRELEASED_DIR_NAME}"
   mkdir -p "${unreleased_dir}"
 

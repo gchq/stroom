@@ -26,6 +26,7 @@ import stroom.meta.api.StandardHeaderArguments;
 import stroom.meta.statistics.api.MetaStatistics;
 import stroom.proxy.StroomStatusCode;
 import stroom.receive.common.AttributeMapFilter;
+import stroom.receive.common.AttributeMapValidator;
 import stroom.receive.common.RequestHandler;
 import stroom.receive.common.StreamTargetStroomStreamHandler;
 import stroom.receive.common.StroomStreamException;
@@ -85,6 +86,9 @@ class ReceiveDataRequestHandler implements RequestHandler {
             final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();
 
             final AttributeMap attributeMap = AttributeMapUtil.create(request);
+            // Validate the supplied attributes.
+            AttributeMapValidator.validate(attributeMap);
+
             final String feedName;
             if (attributeMapFilter.filter(attributeMap)) {
                 debug("Receiving data", attributeMap);
@@ -92,9 +96,6 @@ class ReceiveDataRequestHandler implements RequestHandler {
                 feedName = Optional.ofNullable(attributeMap.get(StandardHeaderArguments.FEED))
                         .map(String::trim)
                         .orElse("");
-                if (feedName.isEmpty()) {
-                    throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED, attributeMap);
-                }
 
                 // Get the type name from the header arguments if supplied.
                 String typeName = Optional.ofNullable(attributeMap.get(StandardHeaderArguments.TYPE))

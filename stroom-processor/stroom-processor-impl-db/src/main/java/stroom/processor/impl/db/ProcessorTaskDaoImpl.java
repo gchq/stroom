@@ -439,7 +439,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 } else {
                     // We have completed all tasks so update the window to be from
                     // now
-                    tracker.setMinMetaCreateMs(streamTaskCreateMs);
+                    tracker.setMinMetaCreateMs(streamQueryTime);
 
                     // Report where we have got to.
                     tracker.setMetaCreateMs(streamQueryTime);
@@ -472,13 +472,16 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 tracker.setLastPollTaskCount(creationState.totalTasksCreated);
                 tracker.setStatus(null);
 
+                // If the filter has a max meta creation time then let the tracker know.
+                if (filter.getMaxMetaCreateTimeMs() != null && tracker.getMaxMetaCreateMs() == null) {
+                    tracker.setMaxMetaCreateMs(filter.getMaxMetaCreateTimeMs());
+                }
                 // Has this filter finished creating tasks for good, i.e. is there
                 // any possibility of getting more tasks in future?
                 if (tracker.getMaxMetaCreateMs() != null && tracker.getMetaCreateMs() != null
                         && tracker.getMetaCreateMs() > tracker.getMaxMetaCreateMs()) {
                     LOGGER.info(() ->
-                            LogUtil.message("processProcessorFilter() - Finished task creation for bounded filter {}",
-                                    filter));
+                            "processProcessorFilter() - Finished task creation for bounded filter " + filter);
                     tracker.setStatus(ProcessorFilterTracker.COMPLETE);
                 }
 

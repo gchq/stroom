@@ -384,8 +384,7 @@ appConfig:
         expireAfterWrite: null
       lmdb:
         localDir: "reference_data"
-        maxDbs: 7
-        maxReaders: 100
+        maxReaders: 150
         maxStoreSize: "50G"
         readAheadEnabled: true
         readerBlockedByWriter: true
@@ -517,11 +516,9 @@ appConfig:
       payloadLimit: "0B"
       lmdb:
         localDir: "search_results"
-        maxDbs: 7
         maxReaders: 10
         maxStoreSize: "10G"
         readAheadEnabled: true
-        readerBlockedByWriter: false
   searchable:
     storeSize: "1000000,100,10,1"
     searchResultCache:

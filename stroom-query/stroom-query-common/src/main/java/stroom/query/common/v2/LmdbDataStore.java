@@ -133,6 +133,7 @@ public class LmdbDataStore implements DataStore {
         // Make safe for the file system.
         final String dirName = uuid.replaceAll("[^A-Za-z0-9]", "_");
         this.lmdbEnv = lmdbEnvFactory.builder(resultStoreConfig.getLmdbConfig())
+                .withMaxDbCount(1)
                 .withSubDirectory(dirName)
                 .addEnvFlag(EnvFlags.MDB_NOTLS)
                 .build();
@@ -308,7 +309,7 @@ public class LmdbDataStore implements DataStore {
                 long lastCommitMs = System.currentTimeMillis();
 
                 while (running.get()) {
-                    LOGGER.debug("Polling");
+                    LOGGER.trace("Polling");
                     final QueueItem item = queue.poll(1, TimeUnit.SECONDS);
 
                     if (item != null) {
@@ -402,7 +403,7 @@ public class LmdbDataStore implements DataStore {
                                     final Generator[] newValue = rowValue.getGenerators().getGenerators();
                                     final Generator[] combined = combine(generators, newValue);
 
-                                    LOGGER.debug("Merging combined value to output");
+                                    LOGGER.trace("Merging combined value to output");
                                     final LmdbValue combinedValue = new LmdbValue(
                                             existingRowValue.getKey().getBytes(),
                                             new Generators(compiledFields, combined));

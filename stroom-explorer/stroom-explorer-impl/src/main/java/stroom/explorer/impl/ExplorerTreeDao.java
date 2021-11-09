@@ -21,7 +21,9 @@ import java.util.function.Function;
 
 public interface ExplorerTreeDao {
 
-    TreeModel createModel(Function<String, String> iconUrlProvider);
+    TreeModel createModel(Function<String, String> iconUrlProvider,
+                          long id,
+                          long creationTime);
 
     void update(ExplorerTreeNode node);
 

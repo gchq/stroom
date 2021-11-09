@@ -111,7 +111,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             allOpenItems.addAll(criteria.getTemporaryOpenedItems());
             allOpenItems.addAll(forcedOpenItems);
 
-            final TreeModel filteredModel = new TreeModel();
+            final TreeModel filteredModel = new TreeModel(masterTreeModel.getId(), masterTreeModel.getCreationTime());
             // Create the predicate for the current filter value
             final Predicate<DocRef> fuzzyMatchPredicate = QuickFilterPredicateFactory.createFuzzyMatchPredicate(
                     filter.getNameFilter(), FIELD_MAPPERS);

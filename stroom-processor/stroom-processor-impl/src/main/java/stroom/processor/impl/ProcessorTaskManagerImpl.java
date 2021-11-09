@@ -1021,8 +1021,8 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
             final List<Meta> streamList = runSelectMetaQuery(
                     queryData.getExpression(),
                     updatedTracker.getMinMetaId(),
-                    updatedTracker.getMinMetaCreateMs(),
-                    updatedTracker.getMaxMetaCreateMs(),
+                    filter.getMinMetaCreateTimeMs(),
+                    filter.getMaxMetaCreateTimeMs(),
                     filter.getPipeline(),
                     filter.isReprocess(),
                     requiredTasks);
@@ -1118,8 +1118,8 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
      */
     List<Meta> runSelectMetaQuery(final ExpressionOperator expression,
                                   final long minMetaId,
-                                  final Long minMetaCreateMs,
-                                  final Long maxMetaCreateMs,
+                                  final Long minMetaCreateTimeMs,
+                                  final Long maxMetaCreateTimeMs,
                                   final DocRef pipelineDocRef,
                                   final boolean reprocess,
                                   final int length) {
@@ -1142,15 +1142,15 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                 builder.addTerm(MetaFields.PIPELINE, Condition.IS_DOC_REF, pipelineDocRef);
             }
 
-            if (minMetaCreateMs != null) {
+            if (minMetaCreateTimeMs != null) {
                 builder = builder.addTerm(MetaFields.PARENT_CREATE_TIME,
                         Condition.GREATER_THAN_OR_EQUAL_TO,
-                        DateUtil.createNormalDateTimeString(minMetaCreateMs));
+                        DateUtil.createNormalDateTimeString(minMetaCreateTimeMs));
             }
-            if (maxMetaCreateMs != null) {
+            if (maxMetaCreateTimeMs != null) {
                 builder = builder.addTerm(MetaFields.PARENT_CREATE_TIME,
-                        Condition.LESS_THAN,
-                        DateUtil.createNormalDateTimeString(maxMetaCreateMs));
+                        Condition.LESS_THAN_OR_EQUAL_TO,
+                        DateUtil.createNormalDateTimeString(maxMetaCreateTimeMs));
             }
             builder = builder.addOperator(statusExpression);
 
@@ -1171,15 +1171,16 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
             ExpressionOperator.Builder builder = ExpressionOperator.builder()
                     .addOperator(expression)
                     .addTerm(MetaFields.ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
-            if (minMetaCreateMs != null) {
-                builder = builder.addTerm(MetaFields.CREATE_TIME,
+
+            if (minMetaCreateTimeMs != null) {
+                builder = builder.addTerm(MetaFields.PARENT_CREATE_TIME,
                         Condition.GREATER_THAN_OR_EQUAL_TO,
-                        DateUtil.createNormalDateTimeString(minMetaCreateMs));
+                        DateUtil.createNormalDateTimeString(minMetaCreateTimeMs));
             }
-            if (maxMetaCreateMs != null) {
-                builder = builder.addTerm(MetaFields.CREATE_TIME,
-                        Condition.LESS_THAN,
-                        DateUtil.createNormalDateTimeString(maxMetaCreateMs));
+            if (maxMetaCreateTimeMs != null) {
+                builder = builder.addTerm(MetaFields.PARENT_CREATE_TIME,
+                        Condition.LESS_THAN_OR_EQUAL_TO,
+                        DateUtil.createNormalDateTimeString(maxMetaCreateTimeMs));
             }
             builder = builder.addOperator(statusExpression);
 

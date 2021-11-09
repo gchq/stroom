@@ -14,6 +14,9 @@ public enum StroomStatusCode {
     FEED_IS_NOT_DEFINED(HttpServletResponse.SC_NOT_ACCEPTABLE, 101, "Feed is not defined",
             "The feed you have provided is not known within Stroom"),
 
+    INVALID_TYPE(HttpServletResponse.SC_NOT_ACCEPTABLE, 102, "Data type is invalid",
+            "If you provide a data type it must be valid"),
+
     FEED_IS_NOT_SET_TO_RECEIVED_DATA(HttpServletResponse.SC_NOT_ACCEPTABLE, 110, "Feed is not set to receive data",
             "The feed you have provided has not been setup to receive data"),
 

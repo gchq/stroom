@@ -27,20 +27,16 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.ProcessorFilterRow;
-import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorListRow;
-import stroom.processor.shared.ProcessorRow;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -169,70 +165,22 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
 
     private void updateData() {
         selectedProcessor = processorListPresenter.getSelectionModel().getSelected();
-
-        if (selectedProcessor == null) {
-            enableButtons(false);
-            setData(null);
-
-        } else if (selectedProcessor instanceof ProcessorRow) {
-            enableButtons(false);
-            setData(null);
-
-        } else if (selectedProcessor instanceof ProcessorFilterRow) {
-            enableButtons(true);
-
-            final ProcessorFilterRow row = (ProcessorFilterRow) selectedProcessor;
-            final ProcessorFilter processorFilter = row.getProcessorFilter();
-            setData(processorFilter);
-        }
+        setData(selectedProcessor);
+        enableButtons(selectedProcessor instanceof ProcessorFilterRow);
     }
 
-    private void setData(final ProcessorFilter processorFilter) {
-        ExpressionOperator expression = null;
+    private void setData(final ProcessorListRow row) {
+        final SafeHtml safeHtml = ProcessorInfoUtil.get(row);
+        getView().setInfo(safeHtml);
 
-        if (processorFilter != null) {
+        ExpressionOperator expression = null;
+        if (row instanceof ProcessorFilterRow) {
+            final ProcessorFilter processorFilter = ((ProcessorFilterRow) row).getProcessorFilter();
             final QueryData queryData = processorFilter.getQueryData();
             if (queryData != null && queryData.getExpression() != null) {
                 expression = queryData.getExpression();
             }
-
-            final ProcessorFilterTracker tracker = processorFilter.getProcessorFilterTracker();
-            final SafeHtmlBuilder builder = new SafeHtmlBuilder();
-
-            if (processorFilter.isReprocess()) {
-                builder.appendHtmlConstant("<b>This is a reprocessing filter</b><br/><br/>");
-            }
-
-            if (tracker != null) {
-                if (tracker.getStatus() != null) {
-                    builder.appendHtmlConstant("<b>Status: </b>");
-                    builder.appendEscaped(tracker.getStatus());
-                    builder.appendHtmlConstant("<br/>");
-                }
-
-                builder.appendHtmlConstant("<b>Constraints:</b>");
-                builder.appendHtmlConstant("<br/>");
-
-                builder.appendEscaped("Minimum data id: ");
-                builder.append(tracker.getMinMetaId());
-                builder.appendHtmlConstant("<br/>");
-
-                if (tracker.getMinMetaCreateMs() != null) {
-                    builder.appendEscaped("Minimum data create time: ");
-                    builder.appendEscaped(ClientDateUtil.toISOString(tracker.getMinMetaCreateMs()));
-                    builder.appendHtmlConstant("<br/>");
-                }
-
-                if (tracker.getMaxMetaCreateMs() != null) {
-                    builder.appendEscaped("Maximum data create time: ");
-                    builder.appendEscaped(ClientDateUtil.toISOString(tracker.getMaxMetaCreateMs()));
-                    builder.appendHtmlConstant("</br>");
-                }
-            }
-
-            getView().setInfo(builder.toSafeHtml());
         }
-
         expressionPresenter.read(expression);
     }
 

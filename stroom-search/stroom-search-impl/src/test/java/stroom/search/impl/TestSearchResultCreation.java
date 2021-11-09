@@ -79,7 +79,7 @@ class TestSearchResultCreation {
         final TempDirProvider tempDirProvider = () -> tempDir;
         final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
         final LmdbEnvFactory lmdbEnvFactory = new LmdbEnvFactory(pathCreator, tempDirProvider, lmdbLibraryConfig);
-        dataStoreFactory = new LmdbDataStoreFactory(lmdbEnvFactory, resultStoreConfig);
+        dataStoreFactory = new LmdbDataStoreFactory(lmdbEnvFactory, resultStoreConfig, pathCreator);
     }
 
     @Test
