@@ -578,8 +578,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                         metaType.NAME.as(typeNameFieldName),
                                         ruleNoCaseField.as(ruleNoFieldName))
                                 .from(meta)
-                                .leftJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                                .leftJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                                .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                                .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
                                 .where(meta.STATUS.notEqual(statusIdDeleted))
                                 .and(ruleNoCaseField.isNotNull()) // only want data that WILL be deleted
                                 .and(DSL.or(orConditions)) // Here to help use indexes
@@ -865,8 +865,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
                         context
                                 .selectCount()
                                 .from(meta)
-                                .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                                .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                                .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                                .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
                                 .leftOuterJoin(metaProcessor)
                                 .on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),
                         meta.ID,
@@ -937,10 +937,10 @@ class MetaDaoImpl implements MetaDao, Clearable {
 
             var select = context.select(dbFields).from(meta);
             if (feedUsed) {
-                select = select.join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID));
+                select = select.straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID));
             }
             if (typeUsed) {
-                select = select.join(metaType).on(meta.TYPE_ID.eq(metaType.ID));
+                select = select.straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID));
             }
             if (pipelineUsed) {
                 select = select.leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID));
@@ -1104,8 +1104,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                         meta.EFFECTIVE_TIME
                                 )
                                 .from(meta)
-                                .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                                .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                                .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                                .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
                                 .leftOuterJoin(metaProcessor)
                                 .on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),
                         meta.ID,
@@ -1157,14 +1157,13 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                         parent.EFFECTIVE_TIME
                                 )
                                 .from(meta)
-                                .leftOuterJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                                .leftOuterJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                                .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                                .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
                                 .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
                                 .leftOuterJoin(parent).on(meta.PARENT_ID.eq(parent.ID))
                                 .leftOuterJoin(parentFeed).on(parent.FEED_ID.eq(parentFeed.ID))
                                 .leftOuterJoin(parentType).on(parent.TYPE_ID.eq(parentType.ID))
-                                .leftOuterJoin(parentProcessor)
-                                .on(parent.PROCESSOR_ID.eq(parentProcessor.ID))),
+                                .leftOuterJoin(parentProcessor).on(parent.PROCESSOR_ID.eq(parentProcessor.ID))),
                         meta.ID,
                         usedValKeys)
                         .where(conditions)
@@ -1206,8 +1205,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                         DSL.max(meta.CREATE_TIME)
                                 )
                                 .from(meta)
-                                .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                                .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                                .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                                .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
                                 .leftOuterJoin(metaProcessor)
                                 .on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),
                         meta.ID,
@@ -1256,8 +1255,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                         DSL.max(parent.CREATE_TIME)
                                 )
                                 .from(meta)
-                                .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                                .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                                .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                                .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
                                 .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
                                 .leftOuterJoin(parent).on(meta.PARENT_ID.eq(parent.ID)),
                         meta.ID,
@@ -1372,8 +1371,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
                             .from(meta);
 
                     select = select
-                            .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                            .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                            .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                            .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
                             .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID));
 
                     // If the criteria contain many terms that come from meta_val then we need to join
