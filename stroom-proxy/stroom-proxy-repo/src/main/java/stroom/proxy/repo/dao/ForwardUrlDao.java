@@ -44,6 +44,12 @@ public class ForwardUrlDao {
         forwardUrlRecordId.set(maxForwardUrlRecordId);
     }
 
+    public void clear() {
+        jooq.deleteAll(FORWARD_URL);
+        jooq.checkEmpty(FORWARD_URL);
+        init();
+    }
+
     public List<ForwardUrl> getAllForwardUrls() {
         return jooq.contextResult(context -> context
                         .select(FORWARD_URL.ID, FORWARD_URL.URL)
@@ -70,16 +76,6 @@ public class ForwardUrlDao {
                 return newId;
             });
         });
-    }
-
-    public void clear() {
-        jooq.deleteAll(FORWARD_URL);
-        jooq
-                .getMaxId(FORWARD_URL, FORWARD_URL.ID)
-                .ifPresent(id -> {
-                    throw new RuntimeException("Unexpected ID");
-                });
-        init();
     }
 
     public int countForwardUrl() {

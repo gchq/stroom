@@ -12,9 +12,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.function.Supplier;
 
-public class SimpleExecutor implements Managed {
+public class ParallelExecutor implements Managed {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SimpleExecutor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ParallelExecutor.class);
 
     private final ExecutorService executorService;
     private final Supplier<Runnable> runnableSupplier;
@@ -22,9 +22,9 @@ public class SimpleExecutor implements Managed {
 
     private volatile boolean stop = false;
 
-    public SimpleExecutor(final String threadName,
-                          final Supplier<Runnable> runnableSupplier,
-                          final int threadCount) {
+    public ParallelExecutor(final String threadName,
+                            final Supplier<Runnable> runnableSupplier,
+                            final int threadCount) {
         this.runnableSupplier = runnableSupplier;
         this.threadCount = threadCount;
         final ThreadFactory threadFactory = new CustomThreadFactory(

@@ -281,6 +281,12 @@ public class JooqHelper {
                 .map(Record1::value1);
     }
 
+    public void checkEmpty(final Table<?> table) {
+        if (count(table) > 0) {
+            throw new RuntimeException("Unexpected data");
+        }
+    }
+
     /**
      * Used to build JOOQ conditions from our Criteria Range
      *

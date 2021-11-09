@@ -59,6 +59,9 @@ public class ProxyAggregationExecutor {
             final AggregateForwarder aggregateForwarder = aggregatorForwarderProvider.get();
             final Cleanup cleanup = cleanupProvider.get();
 
+            // We are going to do aggregate forwarding so reset source forwarder.
+            cleanup.resetSourceForwarder();
+
             this.exec = (boolean forceAggregation, boolean scanSorted) -> {
                 // Scan the proxy repo to find new files to aggregate.
                 proxyRepoFileScanner.scan(scanSorted);
@@ -91,6 +94,9 @@ public class ProxyAggregationExecutor {
             final ProxyRepoFileScanner proxyRepoFileScanner = proxyRepoFileScannerProvider.get();
             final SourceForwarder sourceForwarder = sourceForwarderProvider.get();
             final Cleanup cleanup = cleanupProvider.get();
+
+            // We are going to do source forwarding so reset aggregate forwarder.
+            cleanup.resetAggregateForwarder();
 
             this.exec = (boolean forceAggregation, boolean scanSorted) -> {
                 // Scan the proxy repo to find new files to aggregate.

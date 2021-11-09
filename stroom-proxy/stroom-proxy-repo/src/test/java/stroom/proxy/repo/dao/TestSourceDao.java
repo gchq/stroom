@@ -46,13 +46,13 @@ public class TestSourceDao {
         sourceOptional.ifPresent(source -> sourceDao.deleteSource(source.getId()));
         assertThat(sourceDao.countSources()).isZero();
 
-        sourceDao.deleteAll();
+        sourceDao.clear();
     }
 
     @Disabled
     @Test
     void testAddSourcePerformance() {
-        sourceDao.deleteAll();
+        sourceDao.clear();
 
         long now = System.currentTimeMillis();
         for (int i = 0; i < 1000000; i++) {

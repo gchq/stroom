@@ -53,6 +53,12 @@ public class AggregateDao {
         aggregateRecordId.set(maxAggregateRecordId);
     }
 
+    public void clear() {
+        jooq.deleteAll(AGGREGATE);
+        jooq.checkEmpty(AGGREGATE);
+        init();
+    }
+
     /**
      * Close all aggregates that meet the supplied criteria.
      */
@@ -277,28 +283,6 @@ public class AggregateDao {
                 });
 
         return resultMap;
-    }
-
-
-    public int deleteAll() {
-        return jooq.underLock(() ->
-                jooq.contextResult(context -> {
-                    int total = 0;
-                    total += context
-                            .deleteFrom(AGGREGATE)
-                            .execute();
-                    return total;
-                }));
-    }
-
-    public void clear() {
-        deleteAll();
-        jooq
-                .getMaxId(AGGREGATE, AGGREGATE.ID)
-                .ifPresent(id -> {
-                    throw new RuntimeException("Unexpected ID");
-                });
-        init();
     }
 
     public int countAggregates() {

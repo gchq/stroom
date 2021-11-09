@@ -16,6 +16,11 @@
 
 package stroom.proxy.repo;
 
+import stroom.proxy.repo.dao.AggregateDao;
+import stroom.proxy.repo.dao.ForwardAggregateDao;
+import stroom.proxy.repo.dao.ForwardSourceDao;
+import stroom.proxy.repo.dao.SourceDao;
+import stroom.proxy.repo.dao.SourceItemDao;
 import stroom.util.io.FileUtil;
 
 import org.slf4j.Logger;
@@ -33,14 +38,30 @@ public class Cleanup {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Cleanup.class);
 
+    private final SourceDao sourceDao;
+    private final SourceItemDao sourceItemDao;
+    private final AggregateDao aggregateDao;
+    private final ForwardSourceDao forwardSourceDao;
+    private final ForwardAggregateDao forwardAggregateDao;
+
     private final RepoSources sources;
     private final Path repoDir;
 
     @Inject
     Cleanup(final RepoSources sources,
-            final RepoDirProvider repoDirProvider) {
+            final RepoDirProvider repoDirProvider,
+            final SourceDao sourceDao,
+            final SourceItemDao sourceItemDao,
+            final AggregateDao aggregateDao,
+            final ForwardSourceDao forwardSourceDao,
+            final ForwardAggregateDao forwardAggregateDao) {
         this.sources = sources;
         this.repoDir = repoDirProvider.get();
+        this.sourceDao = sourceDao;
+        this.sourceItemDao = sourceItemDao;
+        this.aggregateDao = aggregateDao;
+        this.forwardSourceDao = forwardSourceDao;
+        this.forwardAggregateDao = forwardAggregateDao;
     }
 
     public void cleanupSources() {
@@ -62,5 +83,16 @@ public class Cleanup {
                 LOGGER.error(e.getMessage(), e);
             }
         }
+    }
+
+    public void resetAggregateForwarder() {
+        forwardAggregateDao.clear();
+        sourceItemDao.clear();
+        aggregateDao.clear();
+        sourceDao.resetExamined();
+    }
+
+    public void resetSourceForwarder() {
+        forwardSourceDao.clear();
     }
 }

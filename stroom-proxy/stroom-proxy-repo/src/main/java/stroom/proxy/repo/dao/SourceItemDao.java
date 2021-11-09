@@ -71,37 +71,11 @@ public class SourceItemDao {
         sourceEntryRecordId.set(maxSourceEntryRecordId);
     }
 
-    /**
-     * Delete all source entries and items.
-     *
-     * @return The number of rows changed.
-     */
-    public int deleteAll() {
-        return jooq.underLock(() ->
-                jooq.contextResult(context -> {
-                    int total = 0;
-                    total += context
-                            .deleteFrom(SOURCE_ENTRY)
-                            .execute();
-                    total += context
-                            .deleteFrom(SOURCE_ITEM)
-                            .execute();
-                    return total;
-                }));
-    }
-
     public void clear() {
-        deleteAll();
-        jooq
-                .getMaxId(SOURCE_ENTRY, SOURCE_ENTRY.ID)
-                .ifPresent(id -> {
-                    throw new RuntimeException("Unexpected ID");
-                });
-        jooq
-                .getMaxId(SOURCE_ITEM, SOURCE_ITEM.ID)
-                .ifPresent(id -> {
-                    throw new RuntimeException("Unexpected ID");
-                });
+        jooq.deleteAll(SOURCE_ENTRY);
+        jooq.deleteAll(SOURCE_ITEM);
+        jooq.checkEmpty(SOURCE_ENTRY);
+        jooq.checkEmpty(SOURCE_ITEM);
         init();
     }
 

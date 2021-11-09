@@ -44,6 +44,12 @@ public class SourceDao {
         sourceRecordId.set(maxSourceRecordId);
     }
 
+    public void clear() {
+        jooq.deleteAll(SOURCE);
+        jooq.checkEmpty(SOURCE);
+        init();
+    }
+
     public boolean pathExists(final String path) {
         return jooq.contextResult(context -> context
                 .fetchExists(
@@ -173,25 +179,11 @@ public class SourceDao {
                         .execute()));
     }
 
-    public void deleteAll() {
-        jooq.underLock(() -> {
-            jooq.deleteAll(SOURCE);
-            return null;
-        });
-    }
-
-    public void clear() {
-        deleteAll();
-        jooq
-                .getMaxId(SOURCE, SOURCE.ID)
-                .ifPresent(id -> {
-                    throw new RuntimeException("Unexpected ID");
-                });
-        jooq
-                .getMaxId(SOURCE, SOURCE.NEW_POSITION)
-                .ifPresent(id -> {
-                    throw new RuntimeException("Unexpected ID");
-                });
-        init();
+    public void resetExamined() {
+        jooq.underLock(() ->
+                jooq.contextResult(context -> context
+                        .update(SOURCE)
+                        .set(SOURCE.EXAMINED, false)
+                        .execute()));
     }
 }

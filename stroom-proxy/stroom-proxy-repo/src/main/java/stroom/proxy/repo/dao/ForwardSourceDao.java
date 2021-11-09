@@ -54,6 +54,12 @@ public class ForwardSourceDao {
         forwardSourceId.set(maxForwardSourceRecordId);
     }
 
+    public void clear() {
+        jooq.deleteAll(FORWARD_SOURCE);
+        jooq.checkEmpty(FORWARD_SOURCE);
+        init();
+    }
+
     /**
      * Delete all record of failed forward attempts so we can retry forwarding.
      *
@@ -64,18 +70,6 @@ public class ForwardSourceDao {
                 jooq.contextResult(context -> context
                         .deleteFrom(FORWARD_SOURCE)
                         .where(FORWARD_SOURCE.SUCCESS.isFalse())
-                        .execute()));
-    }
-
-    /**
-     * Delete all forward source records.
-     *
-     * @return The number of rows deleted.
-     */
-    public int deleteAll() {
-        return jooq.underLock(() ->
-                jooq.contextResult(context -> context
-                        .deleteFrom(FORWARD_SOURCE)
                         .execute()));
     }
 
@@ -296,16 +290,6 @@ public class ForwardSourceDao {
                 .set(FORWARD_SOURCE.RETRY_POSITION, retryPosition)
                 .where(FORWARD_SOURCE.ID.eq(forwardSource.getId()))
                 .execute();
-    }
-
-    public void clear() {
-        deleteAll();
-        jooq
-                .getMaxId(FORWARD_SOURCE, FORWARD_SOURCE.ID)
-                .ifPresent(id -> {
-                    throw new RuntimeException("Unexpected ID");
-                });
-        init();
     }
 
     public int countForwardSource() {

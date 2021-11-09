@@ -62,6 +62,12 @@ public class ForwardAggregateDao {
         forwardAggregateId.set(maxForwardAggregateRecordId);
     }
 
+    public void clear() {
+        jooq.deleteAll(FORWARD_AGGREGATE);
+        jooq.checkEmpty(FORWARD_AGGREGATE);
+        init();
+    }
+
     /**
      * Delete all record of failed forward attempts so we can retry forwarding.
      *
@@ -72,13 +78,6 @@ public class ForwardAggregateDao {
                 jooq.contextResult(context -> context
                         .deleteFrom(FORWARD_AGGREGATE)
                         .where(FORWARD_AGGREGATE.SUCCESS.isFalse())
-                        .execute()));
-    }
-
-    public int deleteAll() {
-        return jooq.underLock(() ->
-                jooq.contextResult(context -> context
-                        .deleteFrom(FORWARD_AGGREGATE)
                         .execute()));
     }
 
@@ -323,16 +322,6 @@ public class ForwardAggregateDao {
                 .deleteFrom(AGGREGATE)
                 .where(AGGREGATE.ID.eq(aggregateId))
                 .execute();
-    }
-
-    public void clear() {
-        deleteAll();
-        jooq
-                .getMaxId(FORWARD_AGGREGATE, FORWARD_AGGREGATE.ID)
-                .ifPresent(id -> {
-                    throw new RuntimeException("Unexpected ID");
-                });
-        init();
     }
 
     public int countForwardAggregates() {

@@ -78,6 +78,6 @@ public class TestSourceEntryDao {
         sourceDao.deleteSource(source.getId());
         assertThat(sourceDao.countSources()).isZero();
 
-        sourceDao.deleteAll();
+        sourceDao.clear();
     }
 }

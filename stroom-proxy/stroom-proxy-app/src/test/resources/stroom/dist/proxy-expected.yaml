@@ -67,4 +67,10 @@ proxyConfig:
   scanner:
     scanningEnabled: false
     scanFrequency: "PT10S"
+  threads:
+    aggregatorThreadCount: 5
+    examineSourceThreadCount: 5
+    forwardRecordThreadCount: 5
+    forwardRetryThreadCount: 5
+    forwardThreadCount: 5
   useDefaultOpenIdCredentials: true

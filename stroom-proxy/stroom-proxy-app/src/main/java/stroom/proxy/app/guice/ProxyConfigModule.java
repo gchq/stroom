@@ -7,6 +7,7 @@ import stroom.proxy.app.ProxyConfigMonitor;
 import stroom.proxy.app.ProxyPathConfig;
 import stroom.proxy.app.RestClientConfig;
 import stroom.proxy.app.forwarder.ForwarderConfig;
+import stroom.proxy.app.forwarder.ThreadConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.proxy.app.handler.ReceiptPolicyConfig;
 import stroom.proxy.repo.AggregatorConfig;
@@ -97,6 +98,7 @@ public class ProxyConfigModule extends AbstractModule {
                 ProxyRepoFileScannerConfig.class);
         bindConfig(ProxyConfig::getReceiptPolicyConfig, ProxyConfig::setReceiptPolicyConfig, ReceiptPolicyConfig.class);
         bindConfig(ProxyConfig::getRestClientConfig, ProxyConfig::setRestClientConfig, RestClientConfig.class);
+        bindConfig(ProxyConfig::getThreadConfig, ProxyConfig::setThreadConfig, ThreadConfig.class);
     }
 
     private <T extends IsProxyConfig> void bindConfig(

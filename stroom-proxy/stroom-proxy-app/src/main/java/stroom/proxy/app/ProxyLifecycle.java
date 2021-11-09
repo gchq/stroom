@@ -1,17 +1,18 @@
 package stroom.proxy.app;
 
 import stroom.proxy.app.forwarder.ForwarderConfig;
+import stroom.proxy.app.forwarder.ThreadConfig;
 import stroom.proxy.repo.AggregateForwarder;
 import stroom.proxy.repo.Aggregator;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.Cleanup;
 import stroom.proxy.repo.FrequencyExecutor;
+import stroom.proxy.repo.ParallelExecutor;
 import stroom.proxy.repo.ProxyRepo;
 import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.proxy.repo.ProxyRepoFileScanner;
 import stroom.proxy.repo.ProxyRepoFileScannerConfig;
 import stroom.proxy.repo.RepoSourceItems;
-import stroom.proxy.repo.SimpleExecutor;
 import stroom.proxy.repo.SourceForwarder;
 
 import io.dropwizard.lifecycle.Managed;
@@ -20,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -27,13 +29,14 @@ public class ProxyLifecycle implements Managed {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyLifecycle.class);
 
-    private final List<Managed> services;
+    private final List<Managed> services = new ArrayList<>();
 
     @Inject
     public ProxyLifecycle(final ProxyRepoConfig proxyRepoConfig,
                           final ProxyRepoFileScannerConfig proxyRepoFileScannerConfig,
                           final AggregatorConfig aggregatorConfig,
                           final ForwarderConfig forwarderConfig,
+                          final ThreadConfig threadConfig,
                           final Provider<ProxyRepo> proxyRepoProvider,
                           final Provider<ProxyRepoFileScanner> proxyRepoFileScannerProvider,
                           final Provider<RepoSourceItems> proxyRepoSourceEntriesProvider,
@@ -41,26 +44,23 @@ public class ProxyLifecycle implements Managed {
                           final Provider<AggregateForwarder> aggregatorForwarderProvider,
                           final Provider<SourceForwarder> sourceForwarderProvider,
                           final Provider<Cleanup> cleanupProvider) {
-        services = new ArrayList<>();
 
         // If storing isn't enabled then no lifecycle startup is needed.
         if (proxyRepoConfig.isStoringEnabled()) {
-            // Create a service to cleanup the repo to remove empty dirs and stale lock files.
+            final Cleanup cleanup = cleanupProvider.get();
             final ProxyRepo proxyRepo = proxyRepoProvider.get();
-            final FrequencyExecutor cleanupRepoExecutor = new FrequencyExecutor(
-                    "ProxyRepo - clean",
+
+            // Create a service to cleanup the repo to remove empty dirs and stale lock files.
+            addFrequencyExecutor("ProxyRepo - clean",
                     () -> proxyRepo::clean,
                     proxyRepoConfig.getCleanupFrequency().toMillis());
-            services.add(cleanupRepoExecutor);
 
             if (proxyRepoFileScannerConfig.isScanningEnabled()) {
                 // Add executor to scan proxy files from a repo where a repo is not populated by receiving data.
                 final ProxyRepoFileScanner proxyRepoFileScanner = proxyRepoFileScannerProvider.get();
-                final FrequencyExecutor proxyRepoFileScannerExecutor = new FrequencyExecutor(
-                        "ProxyRepoFileScanner - scan",
+                addFrequencyExecutor("ProxyRepoFileScanner - scan",
                         () -> proxyRepoFileScanner::scan,
                         proxyRepoFileScannerConfig.getScanFrequency().toMillis());
-                services.add(proxyRepoFileScannerExecutor);
             }
 
             // If we aren't forwarding then don't do anything else other than running repo cleanups.
@@ -68,6 +68,9 @@ public class ProxyLifecycle implements Managed {
                     forwarderConfig.getForwardDestinations() != null &&
                     forwarderConfig.getForwardDestinations().size() > 0) {
                 if (aggregatorConfig.isEnabled()) {
+                    // We are going to do aggregate forwarding so reset source forwarder.
+                    cleanup.resetSourceForwarder();
+
                     final RepoSourceItems repoSourceItems = proxyRepoSourceEntriesProvider.get();
                     final Aggregator aggregator = aggregatorProvider.get();
                     final AggregateForwarder aggregateForwarder = aggregatorForwarderProvider.get();
@@ -75,88 +78,90 @@ public class ProxyLifecycle implements Managed {
                     // Only examine source files if we are aggregating.
 
                     // Add executor to open source files and scan entries
-                    final SimpleExecutor proxyRepoSourceEntriesExecutor = new SimpleExecutor(
-                            "RepoSourceItems - examine",
+                    addParallelExecutor("RepoSourceItems - examine",
                             () -> repoSourceItems::examineNext,
-                            5);
-                    services.add(proxyRepoSourceEntriesExecutor);
+                            threadConfig.getExamineSourceThreadCount());
 
                     // Just kep trying to aggregate based on a frequency and not changes to source entries.
-                    final SimpleExecutor aggregatorExecutor = new SimpleExecutor(
-                            "Aggregator - aggregate",
+                    addParallelExecutor("Aggregator - aggregate",
                             () -> aggregator::aggregateNext,
-                            5);
-                    services.add(aggregatorExecutor);
+                            threadConfig.getAggregatorThreadCount());
 
                     // Periodically close old aggregates.
-                    final long aggregateFrequency = aggregatorConfig.getAggregationFrequency().toMillis();
-                    final FrequencyExecutor closeAggregatesExecutor = new FrequencyExecutor(
-                            "Aggregator - closeOldAggregates",
+                    addFrequencyExecutor("Aggregator - closeOldAggregates",
                             () -> aggregator::closeOldAggregates,
-                            aggregateFrequency);
-                    services.add(closeAggregatesExecutor);
+                            aggregatorConfig.getAggregationFrequency().toMillis());
 
                     // Create forward records.
-                    final SimpleExecutor createForwardRecordExecutor = new SimpleExecutor(
-                            "AggregateForwarder - createForwardRecord",
+                    addParallelExecutor("AggregateForwarder - createForwardRecord",
                             () -> aggregateForwarder::createNextForwardRecord,
-                            5);
-                    services.add(createForwardRecordExecutor);
+                            threadConfig.getForwardRecordThreadCount());
 
                     // Forward records.
-                    final SimpleExecutor forwarderExecutor = new SimpleExecutor(
-                            "AggregateForwarder = forwardNext",
+                    addParallelExecutor("AggregateForwarder = forwardNext",
                             () -> aggregateForwarder::forwardNext,
-                            5);
-                    services.add(forwarderExecutor);
+                            threadConfig.getForwardThreadCount());
 
                     // Retry forward records.
                     final long retryFrequency = forwarderConfig.getRetryFrequency().toMillis();
-                    final SimpleExecutor retryExecutor = new SimpleExecutor(
-                            "AggregateForwarder - forwardRetry",
+                    addParallelExecutor("AggregateForwarder - forwardRetry",
                             () -> {
                                 final long oldest = System.currentTimeMillis() - retryFrequency;
                                 return () -> aggregateForwarder.forwardRetry(oldest);
                             },
-                            5);
-                    services.add(retryExecutor);
+                            threadConfig.getForwardRetryThreadCount());
 
                 } else {
+                    // We are going to do source forwarding so reset aggregate forwarder.
+                    cleanup.resetAggregateForwarder();
+
                     final SourceForwarder sourceForwarder = sourceForwarderProvider.get();
                     // Create forward records.
-                    final SimpleExecutor createForwardRecordExecutor = new SimpleExecutor(
+                    addParallelExecutor(
                             "SourceForwarder - createForwardRecord",
                             () -> sourceForwarder::createNextForwardRecord,
-                            5);
-                    services.add(createForwardRecordExecutor);
+                            threadConfig.getForwardRecordThreadCount());
 
                     // Forward records.
-                    final SimpleExecutor forwarderExecutor = new SimpleExecutor(
-                            "SourceForwarder - forwardNext",
+                    addParallelExecutor("SourceForwarder - forwardNext",
                             () -> sourceForwarder::forwardNext,
-                            5);
-                    services.add(forwarderExecutor);
+                            threadConfig.getForwardThreadCount());
 
                     // Retry forward records.
                     final long retryFrequency = forwarderConfig.getRetryFrequency().toMillis();
-                    final SimpleExecutor retryExecutor = new SimpleExecutor(
-                            "SourceForwarder - forwardRetry",
+                    addParallelExecutor("SourceForwarder - forwardRetry",
                             () -> {
                                 final long oldest = System.currentTimeMillis() - retryFrequency;
                                 return () -> sourceForwarder.forwardRetry(oldest);
                             },
-                            5);
-                    services.add(retryExecutor);
+                            threadConfig.getForwardRetryThreadCount());
                 }
 
-                final Cleanup cleanup = cleanupProvider.get();
-                final FrequencyExecutor cleanupExecutor = new FrequencyExecutor(
-                        "Cleanup - cleanupSources",
+                addFrequencyExecutor("Cleanup - cleanupSources",
                         () -> cleanup::cleanupSources,
                         proxyRepoConfig.getCleanupFrequency().toMillis());
-                services.add(cleanupExecutor);
             }
         }
+    }
+
+    private void addParallelExecutor(final String threadName,
+                                     final Supplier<Runnable> runnableSupplier,
+                                     final int threadCount) {
+        final ParallelExecutor executor = new ParallelExecutor(
+                threadName,
+                runnableSupplier,
+                threadCount);
+        services.add(executor);
+    }
+
+    private void addFrequencyExecutor(final String threadName,
+                                      final Supplier<Runnable> runnableSupplier,
+                                      final long frequencyMs) {
+        final FrequencyExecutor executor = new FrequencyExecutor(
+                threadName,
+                runnableSupplier,
+                frequencyMs);
+        services.add(executor);
     }
 
     @Override
