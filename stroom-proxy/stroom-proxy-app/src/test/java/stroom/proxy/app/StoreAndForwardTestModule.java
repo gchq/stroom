@@ -18,11 +18,16 @@ import stroom.proxy.app.handler.RemoteFeedStatusService;
 import stroom.proxy.repo.ErrorReceiver;
 import stroom.proxy.repo.ErrorReceiverImpl;
 import stroom.proxy.repo.ForwarderDestinations;
+import stroom.proxy.repo.MockForwardDestinations;
+import stroom.proxy.repo.MockSender;
+import stroom.proxy.repo.ProgressLog;
+import stroom.proxy.repo.ProgressLogImpl;
 import stroom.proxy.repo.ProxyRepoDbModule;
 import stroom.proxy.repo.RepoDbDirProvider;
 import stroom.proxy.repo.RepoDbDirProviderImpl;
 import stroom.proxy.repo.RepoDirProvider;
 import stroom.proxy.repo.RepoDirProviderImpl;
+import stroom.proxy.repo.Sender;
 import stroom.receive.common.DataReceiptPolicyAttributeMapFilterFactory;
 import stroom.receive.common.FeedStatusService;
 import stroom.receive.common.RemoteFeedModule;
@@ -86,9 +91,11 @@ public class StoreAndForwardTestModule extends AbstractModule {
         bind(Serialiser2Factory.class).to(Serialiser2FactoryImpl.class);
         bind(StoreFactory.class).to(StoreFactoryImpl.class);
         bind(ForwarderDestinations.class).to(MockForwardDestinations.class);
+        bind(Sender.class).to(MockSender.class);
 
         bind(RepoDirProvider.class).to(RepoDirProviderImpl.class);
         bind(RepoDbDirProvider.class).to(RepoDbDirProviderImpl.class);
+        bind(ProgressLog.class).to(ProgressLogImpl.class);
     }
 
     @Provides

@@ -78,7 +78,7 @@ public class JooqHelper {
         return DSL.using(connection, sqlDialect, settings);
     }
 
-    <R> R useConnectionResult(final Function<Connection, R> function) {
+    protected <R> R useConnectionResult(final Function<Connection, R> function) {
         try {
             checkDataSource(dataSource);
             try (final Connection connection = dataSource.getConnection()) {
@@ -234,7 +234,7 @@ public class JooqHelper {
     public int getOffset(final PageRequest pageRequest) {
         if (pageRequest != null) {
             if (pageRequest.getOffset() != null) {
-                return pageRequest.getOffset().intValue();
+                return pageRequest.getOffset();
             }
         }
 
@@ -263,6 +263,14 @@ public class JooqHelper {
         return contextResult(context -> context
                 .deleteFrom(table)
                 .execute());
+    }
+
+    public <T> Optional<T> getMinId(final Table<?> table, final Field<T> idField) {
+        return contextResult(context -> context
+                .select(DSL.min(idField))
+                .from(table)
+                .fetchOptional())
+                .map(Record1::value1);
     }
 
     public <T> Optional<T> getMaxId(final Table<?> table, final Field<T> idField) {

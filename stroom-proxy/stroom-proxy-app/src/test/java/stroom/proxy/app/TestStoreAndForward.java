@@ -11,16 +11,18 @@ import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.forwarder.ForwardDestinationConfig;
 import stroom.proxy.app.handler.ReceiveStreamHandlers;
 import stroom.proxy.repo.ProgressHandler;
+import stroom.proxy.repo.ProgressLog;
 import stroom.proxy.repo.ProxyRepoDbConnProvider;
 import stroom.proxy.repo.ProxyRepoFileNames;
-import stroom.proxy.repo.ProxyRepoSourceEntries;
-import stroom.proxy.repo.ProxyRepoSources;
+import stroom.proxy.repo.RepoSource;
+import stroom.proxy.repo.RepoSourceEntry;
+import stroom.proxy.repo.RepoSourceItem;
+import stroom.proxy.repo.RepoSourceItems;
+import stroom.proxy.repo.RepoSources;
 import stroom.proxy.repo.dao.SourceDao;
-import stroom.proxy.repo.dao.SourceDao.Source;
-import stroom.proxy.repo.dao.SourceEntryDao;
-import stroom.proxy.repo.db.jooq.tables.records.SourceEntryRecord;
-import stroom.proxy.repo.db.jooq.tables.records.SourceItemRecord;
+import stroom.proxy.repo.dao.SourceItemDao;
 import stroom.test.common.util.test.FileSystemTestUtil;
+import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.time.StroomDuration;
@@ -38,20 +40,18 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 
-@Disabled
 class TestStoreAndForward {
 
     private final byte[] buffer = new byte[StreamUtil.BUFFER_SIZE];
@@ -61,15 +61,17 @@ class TestStoreAndForward {
     @Inject
     ReceiveStreamHandlers receiveStreamHandlers;
     @Inject
-    private ProxyRepoSources proxyRepoSources;
+    private RepoSources proxyRepoSources;
     @Inject
-    private ProxyRepoSourceEntries proxyRepoSourceEntries;
+    private RepoSourceItems proxyRepoSourceEntries;
     @Inject
     private SourceDao sourceDao;
     @Inject
-    private SourceEntryDao sourceEntryDao;
+    private SourceItemDao sourceItemDao;
     @Inject
     private ProxyRepoDbConnProvider proxyRepoDbConnProvider;
+    @Inject
+    private ProgressLog progressLog;
 
     @Test
     void testStoreAndForward() throws Exception {
@@ -79,6 +81,7 @@ class TestStoreAndForward {
         final Path tempDir = Files.createTempDirectory("stroom-proxy-temp");
         final Path homeDir = Files.createTempDirectory("stroom-proxy-home");
         final Path configPath = tempDir.resolve("temp-config.yml");
+        FileUtil.deleteContents(homeDir);
         final ProxyConfig proxyConfig = new ProxyConfig();
         proxyConfig.getPathConfig().setTemp(tempDir.toAbsolutePath().toString());
         proxyConfig.getPathConfig().setHome(homeDir.toAbsolutePath().toString());
@@ -111,7 +114,7 @@ class TestStoreAndForward {
         attributeMap1.put(StandardHeaderArguments.TYPE, StreamTypeNames.RAW_EVENTS);
         final ProgressHandler progressHandler = new ProgressHandler("Test");
 
-        for (int i = 0; i < 1000000; i++) {
+        for (int i = 0; i < 10; i++) {
             receiveStreamHandlers.handle(feedName1, StreamTypeNames.RAW_EVENTS, attributeMap1, handler -> {
                 try {
                     handler.addEntry("1" + StroomZipFileType.META.getExtension(),
@@ -127,17 +130,19 @@ class TestStoreAndForward {
         }
     }
 
-
+    @Disabled
     @Test
     void testForwardOldStore() throws Exception {
 //        final ForwardDestinationConfig forwardDestinationConfig = new ForwardDestinationConfig();
 //        forwardDestinationConfig.setForwardUrl("null");
+
+        final long iterations = 1000000;
 //
-        final Path tempDir = Paths.get("/home/stroomdev66/tmp/proxy_test/tmp");
-        //Files.createTempDirectory("stroom-proxy-temp");
-        final Path homeDir = Paths.get("/home/stroomdev66/tmp/proxy_test");
-        //Files.createTempDirectory("stroom-proxy-home");
+        final Path tempDir = Files.createTempDirectory("stroom-proxy-temp");
+        final Path homeDir = Files.createTempDirectory("stroom-proxy-home");
         final Path configPath = tempDir.resolve("temp-config.yml");
+        FileUtil.deleteContents(homeDir);
+
 //        final ProxyConfig proxyConfig = new ProxyConfig();
 //        proxyConfig.getPathConfig().setTemp(tempDir.toAbsolutePath().toString());
 //        proxyConfig.getPathConfig().setHome(homeDir.toAbsolutePath().toString());
@@ -160,7 +165,7 @@ class TestStoreAndForward {
 
         final Path repoDir = homeDir.resolve("repo");
         final AtomicLong fileCount = new AtomicLong();
-        for (int i = 0; i < 100000; i++) {
+        for (int i = 0; i < iterations; i++) {
             try (final StroomZipOutputStream stroomZipOutputStream =
                     getStroomZipOutputStream(
                             "test",
@@ -202,9 +207,15 @@ class TestStoreAndForward {
         final Injector injector = Guice.createInjector(proxyModule);
         injector.injectMembers(this);
 
+        // Always log after we hot the iteration count.
+        progressLog.selAutoLogCount(iterations);
+
         proxyLifecycle.start();
-//
-        Thread.sleep(1000000);
+
+//        while (true) {
+//            progressLog.report();
+//            Thread.sleep(1000);
+//        }
     }
 
     public long addEntry(final String entry,
@@ -221,15 +232,10 @@ class TestStoreAndForward {
 
     @Test
     void testForwardPerformance() throws Exception {
-//        final ForwardDestinationConfig forwardDestinationConfig = new ForwardDestinationConfig();
-//        forwardDestinationConfig.setForwardUrl("null");
-//
-        final Path tempDir = Paths.get("/home/stroomdev66/tmp/proxy_test/tmp");
-        //Files.createTempDirectory("stroom-proxy-temp");
-        final Path homeDir = Paths.get("/home/stroomdev66/tmp/proxy_test");
-        //Files.createTempDirectory("stroom-proxy-home");
+        final Path tempDir = Files.createTempDirectory("stroom-proxy-temp");
+        final Path homeDir = Files.createTempDirectory("stroom-proxy-home");
         final Path configPath = tempDir.resolve("temp-config.yml");
-
+        FileUtil.deleteContents(homeDir);
 
         final ForwardDestinationConfig forwardDestinationConfig = new ForwardDestinationConfig();
         forwardDestinationConfig.setForwardUrl("null");
@@ -262,7 +268,7 @@ class TestStoreAndForward {
         final ExecutorService executorService = Executors.newFixedThreadPool(24);
 
         long start = System.currentTimeMillis();
-        final CompletableFuture<?>[] futures = new CompletableFuture[2500]; // 4000 = 16 s  100000 = 5.6m  10000 = 38s
+        final CompletableFuture<?>[] futures = new CompletableFuture[10]; // 4000 = 16 s  100000 = 5.6m  10000 = 38s
         for (int i = 0; i < futures.length; i++) {
             final CompletableFuture<?> completableFuture =
                     CompletableFuture.runAsync(this::testUnique, executorService);
@@ -275,27 +281,21 @@ class TestStoreAndForward {
     }
 
     void testUnique() {
-        final Optional<Source> optional = proxyRepoSources
+        proxyRepoSources
                 .addSource(
                         UUID.randomUUID().toString(),
                         "test",
                         null,
                         System.currentTimeMillis(),
                         null);
-        optional.ifPresent(source -> {
-            final long sourceId = source.getSourceId();
-            final String path = source.getSourcePath();
-
-            addEntriesToSource(sourceId, path, 10, 10);
-        });
+        proxyRepoSources.getNewSource().ifPresent(source ->
+                addEntriesToSource(source, 10, 10));
     }
 
-    void addEntriesToSource(final long sourceId,
-                            final String path,
+    void addEntriesToSource(final RepoSource source,
                             final int loopCount,
                             final int feedCount) {
-        final Map<String, SourceItemRecord> itemNameMap = new HashMap<>();
-        final Map<Long, List<SourceEntryRecord>> entryMap = new HashMap<>();
+        final Map<String, RepoSourceItem.Builder> itemNameMap = new HashMap<>();
 
         final List<StroomZipFileType> types = List.of(
                 StroomZipFileType.META,
@@ -309,48 +309,30 @@ class TestStoreAndForward {
                 final String typeName = StreamTypeNames.RAW_EVENTS;
 
                 for (final StroomZipFileType type : types) {
-                    long sourceItemId;
-                    int extensionType = -1;
-                    if (StroomZipFileType.META.equals(type)) {
-                        extensionType = 1;
-                    } else if (StroomZipFileType.CONTEXT.equals(type)) {
-                        extensionType = 2;
-                    } else if (StroomZipFileType.DATA.equals(type)) {
-                        extensionType = 3;
-                    }
+                    final RepoSourceItem.Builder builder = itemNameMap.computeIfAbsent(dataName, k ->
+                            RepoSourceItem.builder()
+                                    .source(source)
+                                    .name(dataName)
+                                    .feedName(feedName)
+                                    .typeName(typeName));
 
-                    SourceItemRecord sourceItemRecord = itemNameMap.get(dataName);
-                    if (sourceItemRecord == null) {
-                        sourceItemId = sourceEntryDao.nextSourceItemId();
-                        sourceItemRecord = new SourceItemRecord(
-                                sourceItemId,
-                                dataName,
-                                feedName,
-                                typeName,
-                                sourceId,
-                                false);
-                        itemNameMap.put(dataName, sourceItemRecord);
-                    } else {
-                        sourceItemId = sourceItemRecord.getId();
-                    }
-
-                    entryMap
-                            .computeIfAbsent(sourceItemId, k -> new ArrayList<>())
-                            .add(new SourceEntryRecord(
-                                    sourceEntryDao.nextSourceEntryId(),
-                                    type.getExtension(),
-                                    extensionType,
-                                    1000L,
-                                    sourceItemId));
+                    builder.addEntry(RepoSourceEntry.builder()
+                            .type(type)
+                            .extension(type.getExtension())
+                            .byteSize(1000L)
+                            .build());
                 }
             }
         }
 
-        sourceEntryDao.addEntries(
-                Paths.get(path),
-                sourceId,
-                itemNameMap,
-                entryMap);
+        sourceItemDao.addItems(
+                Paths.get(source.getSourcePath()),
+                source.getId(),
+                itemNameMap
+                        .values()
+                        .stream()
+                        .map(RepoSourceItem.Builder::build)
+                        .collect(Collectors.toList()));
     }
 
 
@@ -404,5 +386,4 @@ class TestStoreAndForward {
             }
         };
     }
-
 }

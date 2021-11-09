@@ -68,7 +68,7 @@ public class ProxyRepo {
     private final long cleanDelayMs;
 
     private final String repositoryFormat;
-    private final ProxyRepoSources proxyRepoSources;
+    private final RepoSources proxyRepoSources;
 
     /**
      * Name of the repository while open
@@ -78,7 +78,7 @@ public class ProxyRepo {
 
     @Inject
     ProxyRepo(final ProxyRepoConfig proxyRepoConfig,
-              final ProxyRepoSources proxyRepoSources,
+              final RepoSources proxyRepoSources,
               final RepoDirProvider repoDirProvider) {
         this(repoDirProvider,
                 proxyRepoConfig.getFormat(),
@@ -92,7 +92,7 @@ public class ProxyRepo {
      */
     public ProxyRepo(final RepoDirProvider repoDirProvider,
                      final String repositoryFormat,
-                     final ProxyRepoSources proxyRepoSources,
+                     final RepoSources proxyRepoSources,
                      final long lockDeleteAgeMs,
                      final long cleanDelayMs) {
         this.proxyRepoSources = proxyRepoSources;
@@ -323,6 +323,10 @@ public class ProxyRepo {
                 }
             }
         };
+    }
+
+    public void clean() {
+        clean(false);
     }
 
     public void clean(final boolean deleteRootDirectory) {

@@ -37,7 +37,7 @@ class TestProxyRepo {
     @Inject
     private ProxyRepoConfig proxyRepoConfig;
     @Inject
-    private ProxyRepoSources proxyRepoSources;
+    private RepoSources proxyRepoSources;
 
     @BeforeEach
     void beforeEach() {
