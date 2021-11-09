@@ -1161,10 +1161,9 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                 .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
                                 .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
                                 .leftOuterJoin(parent).on(meta.PARENT_ID.eq(parent.ID))
-                                .straightJoin(parentFeed).on(parent.FEED_ID.eq(parentFeed.ID))
-                                .straightJoin(parentType).on(parent.TYPE_ID.eq(parentType.ID))
-                                .leftOuterJoin(parentProcessor)
-                                .on(parent.PROCESSOR_ID.eq(parentProcessor.ID))),
+                                .leftOuterJoin(parentFeed).on(parent.FEED_ID.eq(parentFeed.ID))
+                                .leftOuterJoin(parentType).on(parent.TYPE_ID.eq(parentType.ID))
+                                .leftOuterJoin(parentProcessor).on(parent.PROCESSOR_ID.eq(parentProcessor.ID))),
                         meta.ID,
                         usedValKeys)
                         .where(conditions)
