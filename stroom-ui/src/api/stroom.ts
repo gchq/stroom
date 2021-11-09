@@ -7284,14 +7284,15 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      *
      * @tags Reference Data
      * @name ClearBufferPool
-     * @summary Clear all buffers currently available in the buffer pool to reclaim memory.
+     * @summary Clear all buffers currently available in the buffer pool to reclaim memory. Performed on the named node or all nodes if null.
      * @request DELETE:/refData/v1/clearBufferPool
      * @secure
      */
-    clearBufferPool: (params: RequestParams = {}) =>
+    clearBufferPool: (query?: { nodeName?: string }, params: RequestParams = {}) =>
       this.request<any, void>({
         path: `/refData/v1/clearBufferPool`,
         method: "DELETE",
+        query: query,
         secure: true,
         ...params,
       }),
@@ -7322,7 +7323,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      *
      * @tags Reference Data
      * @name LookupReferenceData
-     * @summary Perform a reference data lookup using the supplied lookup request. Reference data will be loaded if required using the supplied reference pipeline.
+     * @summary Perform a reference data lookup using the supplied lookup request. Reference data will be loaded if required using the supplied reference pipeline. Performed on this node only.
      * @request POST:/refData/v1/lookup
      * @secure
      */
@@ -7341,14 +7342,15 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      *
      * @tags Reference Data
      * @name PurgeReferenceDataByAge
-     * @summary Explicitly delete all entries that are older than purgeAge.
+     * @summary Explicitly delete all entries that are older than purgeAge. Performed on the named node, or all nodes if null.
      * @request DELETE:/refData/v1/purgeByAge/{purgeAge}
      * @secure
      */
-    purgeReferenceDataByAge: (purgeAge: string, params: RequestParams = {}) =>
+    purgeReferenceDataByAge: (purgeAge: string, query?: { nodeName?: string }, params: RequestParams = {}) =>
       this.request<any, boolean>({
         path: `/refData/v1/purgeByAge/${purgeAge}`,
         method: "DELETE",
+        query: query,
         secure: true,
         ...params,
       }),
@@ -7357,21 +7359,22 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Reference Data
-     * @name PurgeReferenceDataByStreamAndPartNo
-     * @summary Delete all entries for a reference stream and part number (one based)
-     * @request DELETE:/refData/v1/purgeByStream/{refStreamId}/{partNo}
+     * @name PurgeReferenceDataByStream
+     * @summary Delete all entries for a reference stream. Performed on the named node or all nodes if null.
+     * @request DELETE:/refData/v1/purgeByStream/{refStreamId}
      * @secure
      */
-    purgeReferenceDataByStreamAndPartNo: (refStreamId: number, partNo: number, params: RequestParams = {}) =>
+    purgeReferenceDataByStream: (refStreamId: number, query?: { nodeName?: string }, params: RequestParams = {}) =>
       this.request<any, boolean>({
-        path: `/refData/v1/purgeByStream/${refStreamId}/${partNo}`,
+        path: `/refData/v1/purgeByStream/${refStreamId}`,
         method: "DELETE",
+        query: query,
         secure: true,
         ...params,
       }),
 
     /**
-     * @description This is primarily intended  for small scale debugging in non-production environments. If no limit is set a default limit is applied else the results will be limited to limit entries.
+     * @description This is primarily intended  for small scale debugging in non-production environments. If no limit is set a default limit is applied else the results will be limited to limit entries. Performed on this node only.
      *
      * @tags Reference Data
      * @name GetReferenceStreamProcessingInfoEntries

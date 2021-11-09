@@ -46,6 +46,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.ws.rs.HttpMethod;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 /**
  * Filter to avoid posts to the wrong place (e.g. the root of the app)
@@ -165,8 +166,8 @@ class SecurityFilter implements Filter {
                     LOGGER.debug("API request is unauthorised.");
                     response.setStatus(Response.Status.UNAUTHORIZED.getStatusCode());
 
-                } else {
-                    // We assume all other requests are from the UI, so instigate an OpenID authentication flow
+                } else if (request.getRequestURI().equals("/")) {
+                    // UI request, so instigate an OpenID authentication flow
                     // like the good relying party we are.
                     try {
                         final String postAuthRedirectUri = getPostAuthRedirectUri(request);
@@ -182,6 +183,10 @@ class SecurityFilter implements Filter {
                         LOGGER.error(e.getMessage(), e);
                         throw e;
                     }
+                } else {
+                    final int statusCode = Status.NOT_FOUND.getStatusCode();
+                    LOGGER.debug("Unexpected URI {}, returning {}", request.getRequestURI(), statusCode);
+                    response.setStatus(statusCode);
                 }
             }
         }

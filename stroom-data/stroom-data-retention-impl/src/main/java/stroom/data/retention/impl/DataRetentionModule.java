@@ -39,7 +39,7 @@ public class DataRetentionModule extends AbstractModule {
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(DataRetention.class, builder -> builder
-                        .name("Policy Based Data Retention")
+                        .name(DataRetentionPolicyExecutor.JOB_NAME)
                         .description("Delete data that exceeds the retention period " +
                                 "specified by data retention policy")
                         .schedule(CRON, "0 0 *"));

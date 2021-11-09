@@ -19,6 +19,8 @@ package stroom.query.common.v2;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.lmdb.LmdbEnvFactory;
+import stroom.lmdb.LmdbLibraryConfig;
 import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Format;
 import stroom.query.api.v2.OffsetRange;
@@ -29,6 +31,7 @@ import stroom.query.api.v2.TableSettings;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.util.io.PathCreator;
+import stroom.util.io.TempDirProvider;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,14 +57,15 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
     DataStore create(final TableSettings tableSettings, final Sizes maxResults, final Sizes storeSize) {
         final FieldIndex fieldIndex = new FieldIndex();
 
+        final TempDirProvider tempDirProvider = () -> tempDir;
         final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
-        final LmdbConfig lmdbConfig = new LmdbConfig();
-        final LmdbEnvironmentFactory lmdbEnvironmentFactory =
-                new LmdbEnvironmentFactory(lmdbConfig, pathCreator);
+        final ResultStoreConfig resultStoreConfig = new ResultStoreConfig();
+        final LmdbLibraryConfig lmdbLibraryConfig = new LmdbLibraryConfig();
+        final LmdbEnvFactory lmdbEnvFactory = new LmdbEnvFactory(pathCreator, tempDirProvider, lmdbLibraryConfig);
 
         return new LmdbDataStore(
-                lmdbEnvironmentFactory,
-                lmdbConfig,
+                lmdbEnvFactory,
+                resultStoreConfig,
                 UUID.randomUUID().toString(),
                 "0",
                 tableSettings,

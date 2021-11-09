@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import javax.inject.Singleton;
 
@@ -320,12 +319,17 @@ public class MockMetaService implements MetaService, Clearable {
     }
 
     @Override
-    public Optional<DataRetentionTracker> getRetentionTracker() {
-        return Optional.empty();
+    public List<DataRetentionTracker> getRetentionTrackers() {
+        return Collections.emptyList();
     }
 
     @Override
     public void setTracker(final DataRetentionTracker dataRetentionTracker) {
+
+    }
+
+    @Override
+    public void deleteTrackers(final String rulesVersion) {
 
     }
 

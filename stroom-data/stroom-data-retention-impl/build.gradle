@@ -20,6 +20,7 @@ dependencies {
 //    compile libs.jackson_annotations
 //    compile libs.jaxb_api
     compile libs.slf4j_api
+    compile libs.vavr
 
     testCompile project(':stroom-cluster:stroom-cluster-lock-mock')
 
@@ -27,7 +28,6 @@ dependencies {
     testCompile libs.junit_jupiter_api
     testCompile libs.mockito_core
     testCompile libs.mockito_junit_jupiter
-    testCompile libs.vavr
     
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

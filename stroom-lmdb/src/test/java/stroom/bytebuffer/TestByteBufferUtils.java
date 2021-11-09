@@ -153,19 +153,25 @@ class TestByteBufferUtils {
         buf2.putLong(val2);
         buf2.flip();
 
-        int cmpLong = Long.compare(val1, val2);
-        int cmpBuf = ByteBufferUtils.compareAsLong(buf1, buf2);
-        LOGGER.trace("Comparing {} [{}] to {} [{}], {} {}",
+        int cmpAsLongResult = Long.compare(val1, val2);
+        int cmpAsBufsResult = ByteBufferUtils.compareAsLong(buf1, buf2);
+        int cmpAsLongAndBufsResult = ByteBufferUtils.compareAsLong(val1, buf2);
+        LOGGER.trace("Comparing {} [{}] to {} [{}], {} {} {}",
                 val1, ByteBufferUtils.byteBufferToHex(buf1),
                 val2, ByteBufferUtils.byteBufferToHex(buf2),
-                cmpLong, cmpBuf);
+                cmpAsLongResult, cmpAsBufsResult, cmpAsLongAndBufsResult);
 
         // ensure comparison of the long value is the same (pos, neg or zero) as our func
-        if (cmpLong == cmpBuf ||
-                cmpLong < 0 && cmpBuf < 0 ||
-                cmpLong > 0 && cmpBuf > 0) {
+        if ((cmpAsLongResult == cmpAsBufsResult && cmpAsLongResult == cmpAsLongAndBufsResult) ||
+                (cmpAsLongResult < 0 && cmpAsBufsResult < 0 && cmpAsLongAndBufsResult < 0) ||
+                (cmpAsLongResult > 0 && cmpAsBufsResult > 0 && cmpAsLongAndBufsResult > 0)) {
             // comparison is the same
         } else {
+            LOGGER.error("Comparing {} [{}] to {} [{}], {} {} {}",
+                    val1, ByteBufferUtils.byteBufferToHex(buf1),
+                    val2, ByteBufferUtils.byteBufferToHex(buf2),
+                    cmpAsLongResult, cmpAsBufsResult, cmpAsLongAndBufsResult);
+
             fail("Mismatch on %s [%s] to %s [%s]",
                     val1, ByteBufferUtils.byteBufferToHex(buf1), val2, ByteBufferUtils.byteBufferToHex(buf2));
         }

@@ -825,3 +825,16 @@ input[type="file"]:disabled {
 .w-100 {
   width: 100% !important;
 }
+
+.clickableLabel.enabled {
+    cursor: pointer;
+}
+
+.clickableLabel.enabled:hover {
+    text-decoration: underline;
+}
+
+.clickableLabel.disabled {
+    color: #8f8f8f;
+    cursor: default;
+}

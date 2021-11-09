@@ -32,6 +32,9 @@ final class DataRetentionCreationTimeUtil {
         // Utility class.
     }
 
+    /**
+     * Subtracts the rule's age from the instant, e.g. now() - 30d
+     */
     static Instant minus(final Instant instant, final DataRetentionRule rule) {
         if (rule.isForever()) {
             return Instant.EPOCH;

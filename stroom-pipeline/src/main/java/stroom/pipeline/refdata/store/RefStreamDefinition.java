@@ -32,7 +32,7 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class RefStreamDefinition {
 
-    private static final int DEFAULT_PART_INDEX = 0;
+    public static final int DEFAULT_PART_INDEX = 0;
 
     // TODO consider getting rid of DocRef and just storing the uuid
     @JsonProperty

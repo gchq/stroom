@@ -54,6 +54,7 @@ class FsOrphanFileFinderExecutor {
     private final TaskContext taskContext;
 //    private final DataStoreServiceConfig config;
 
+
     @Inject
     FsOrphanFileFinderExecutor(final FsVolumeService volumeService,
                                final Provider<FsOrphanFileFinder> orphanFileFinderProvider,
@@ -76,12 +77,20 @@ class FsOrphanFileFinderExecutor {
 
     public void scan() {
         taskContext.info(() -> "Starting orphan file finder");
+
+        final FsOrphanFileFinderSummary summary = new FsOrphanFileFinderSummary();
         final Consumer<Path> orphanConsumer = path -> {
             LOGGER.debug(() -> "Unexpected file in store: " +
                     FileUtil.getCanonicalPath(path));
+
             ORPHAN_FILE_LOGGER.info(FileUtil.getCanonicalPath(path));
+
+            summary.addPath(path);
         };
+
         scan(orphanConsumer, taskContext);
+
+        ORPHAN_FILE_LOGGER.info(summary.toString());
     }
 
     public void scan(final Consumer<Path> orphanConsumer, final TaskContext parentContext) {

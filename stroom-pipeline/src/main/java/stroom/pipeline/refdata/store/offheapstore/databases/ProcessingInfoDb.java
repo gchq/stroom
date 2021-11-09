@@ -91,6 +91,28 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
                 });
     }
 
+    public void updateProcessingState(final Txn<ByteBuffer> writeTxn,
+                                      final ByteBuffer refStreamDefinitionBuffer,
+                                      final ProcessingState expectedProcessingState,
+                                      final ProcessingState newProcessingState,
+                                      final boolean touchLastAccessedTime) {
+
+        updateValue(writeTxn,
+                refStreamDefinitionBuffer, newValueBuf -> {
+                    final ProcessingState currentProcessingState =
+                            RefDataProcessingInfoSerde.extractProcessingState(newValueBuf);
+                    if (!currentProcessingState.equals(expectedProcessingState)) {
+                        throw new RuntimeException("currentProcessingState {} does not match expected. " +
+                                "Another thread may have changed it.");
+                    }
+
+                    valueSerde.updateState(newValueBuf, newProcessingState);
+                    if (touchLastAccessedTime) {
+                        valueSerde.updateLastAccessedTime(newValueBuf);
+                    }
+                });
+    }
+
     public ProcessingState getProcessingState(final RefStreamDefinition refStreamDefinition) {
         return getLmdbEnvironment().getWithReadTxn(readTxn ->
                 getByteBufferPool().getWithBuffer(keySerde.getBufferCapacity(), keyBuffer -> {

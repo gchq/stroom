@@ -47,7 +47,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import javax.inject.Inject;
 
@@ -90,7 +89,7 @@ class FsOrphanFileFinder {
             }
 
             final Map<Long, Set<Path>> fileMap = new HashMap<>();
-            final AtomicLong dirAge = new AtomicLong();
+            final Map<Path, Long> dirAges = new HashMap<>();
             try {
                 Files.walkFileTree(directory,
                         EnumSet.of(FileVisitOption.FOLLOW_LINKS),
@@ -99,15 +98,16 @@ class FsOrphanFileFinder {
                             @Override
                             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
                                 cleanProgress.addDir();
-                                dirAge.set(attrs.creationTime().toMillis());
+                                // Remember the dir age.
+                                dirAges.put(dir, attrs.creationTime().toMillis());
                                 return super.preVisitDirectory(dir, attrs);
                             }
 
                             @Override
                             public FileVisitResult postVisitDirectory(final Path dir, final IOException exc) {
                                 // If the dir is empty and old then record it.
-                                final long age = dirAge.get();
-                                if (age > 0 && age < oldestDirTime) {
+                                final Long age = dirAges.remove(dir);
+                                if (age != null && age < oldestDirTime) {
                                     LOGGER.trace(() -> "Orphan dir: " + FileUtil.getCanonicalPath(dir));
                                     orphanConsumer.accept(dir);
                                 }
@@ -117,7 +117,9 @@ class FsOrphanFileFinder {
 
                             @Override
                             public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
-                                dirAge.set(-1);
+                                // The parent dir has files so we won't be considering the dir for deletion.
+                                dirAges.remove(file.getParent());
+
                                 taskContext.info(() -> FileUtil.getCanonicalPath(file));
                                 cleanProgress.addFile();
 

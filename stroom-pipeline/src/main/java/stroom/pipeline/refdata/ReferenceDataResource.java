@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.List;
+import javax.annotation.Nullable;
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
@@ -36,6 +37,7 @@ public interface ReferenceDataResource extends RestResource {
     String PURGE_BY_AGE_SUB_PATH = "/purgeByAge";
     String PURGE_BY_STREAM_SUB_PATH = "/purgeByStream";
     String CLEAR_BUFFER_POOL_PATH = "/clearBufferPool";
+    String QUERY_PARAM_NODE_NAME = "nodeName";
 
     @GET
     @Path(ENTRIES_SUB_PATH)
@@ -53,7 +55,8 @@ public interface ReferenceDataResource extends RestResource {
     @Operation(
             summary = "List processing info entries for all ref streams",
             description = "This is primarily intended  for small scale debugging in non-production environments. If " +
-                    "no limit is set a default limit is applied else the results will be limited to limit entries.",
+                    "no limit is set a default limit is applied else the results will be limited to limit entries. " +
+                    "Performed on this node only.",
             operationId = "getReferenceStreamProcessingInfoEntries")
     List<ProcessingInfoResponse> refStreamInfo(@QueryParam("limit") final Integer limit,
                                                @QueryParam("refStreamId") final Long refStreamId,
@@ -63,29 +66,34 @@ public interface ReferenceDataResource extends RestResource {
     @Path(LOOKUP_SUB_PATH)
     @Operation(
             summary = "Perform a reference data lookup using the supplied lookup request. " +
-                    "Reference data will be loaded if required using the supplied reference pipeline.",
+                    "Reference data will be loaded if required using the supplied reference pipeline. " +
+                    "Performed on this node only.",
             operationId = "lookupReferenceData")
     String lookup(@Valid @NotNull final RefDataLookupRequest refDataLookupRequest);
 
     @DELETE
     @Path(PURGE_BY_AGE_SUB_PATH + "/{purgeAge}")
     @Operation(
-            summary = "Explicitly delete all entries that are older than purgeAge.",
+            summary = "Explicitly delete all entries that are older than purgeAge. Performed on the named node, " +
+                    "or all nodes if null.",
             operationId = "purgeReferenceDataByAge")
-    boolean purge(@NotNull @PathParam("purgeAge") final String purgeAge);
+    boolean purge(@NotNull @PathParam("purgeAge") final String purgeAge,
+                  @Nullable @QueryParam(QUERY_PARAM_NODE_NAME) final String nodeName);
 
     @DELETE
-    @Path(PURGE_BY_STREAM_SUB_PATH + "/{refStreamId}/{partNo}")
+    @Path(PURGE_BY_STREAM_SUB_PATH + "/{refStreamId}")
     @Operation(
-            summary = "Delete all entries for a reference stream and part number (one based)",
-            operationId = "purgeReferenceDataByStreamAndPartNo")
+            summary = "Delete all entries for a reference stream. " +
+                    "Performed on the named node or all nodes if null.",
+            operationId = "purgeReferenceDataByStream")
     boolean purge(@Min(1) @PathParam("refStreamId") final long refStreamId,
-                  @Min(1) @PathParam("partNo") final long partNo);
+                  @Nullable @QueryParam(QUERY_PARAM_NODE_NAME) final String nodeName);
 
     @DELETE
     @Path(CLEAR_BUFFER_POOL_PATH)
     @Operation(
-            summary = "Clear all buffers currently available in the buffer pool to reclaim memory.",
+            summary = "Clear all buffers currently available in the buffer pool to reclaim memory. " +
+                    "Performed on the named node or all nodes if null.",
             operationId = "clearBufferPool")
-    void clearBufferPool();
+    void clearBufferPool(@Nullable @QueryParam(QUERY_PARAM_NODE_NAME) final String nodeName);
 }

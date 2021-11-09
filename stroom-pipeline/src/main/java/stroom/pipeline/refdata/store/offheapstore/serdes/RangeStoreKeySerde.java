@@ -17,6 +17,7 @@
 
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
+import stroom.bytebuffer.ByteBufferUtils;
 import stroom.lmdb.Serde;
 import stroom.pipeline.refdata.store.offheapstore.RangeStoreKey;
 import stroom.pipeline.refdata.store.offheapstore.UID;
@@ -38,7 +39,8 @@ public class RangeStoreKeySerde implements Serde<RangeStoreKey> {
     private static final Logger LOGGER = LoggerFactory.getLogger(RangeStoreKeySerde.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(RangeStoreKeySerde.class);
 
-    public static final int RANGE_FROM_OFFSET = UID.UID_ARRAY_LENGTH;
+    public static final int UID_OFFSET = 0;
+    public static final int RANGE_FROM_OFFSET = UID_OFFSET + UID.UID_ARRAY_LENGTH;
     public static final int RANGE_TO_OFFSET = RANGE_FROM_OFFSET + Long.BYTES;
 
     private static final int BUFFER_CAPACITY = UID.UID_ARRAY_LENGTH + (Long.BYTES * 2);
@@ -68,21 +70,38 @@ public class RangeStoreKeySerde implements Serde<RangeStoreKey> {
     @Override
     public void serialize(final ByteBuffer byteBuffer, final RangeStoreKey rangeStoreKey) {
         UIDSerde.writeUid(byteBuffer, rangeStoreKey.getMapUid());
-        Range<Long> range = rangeStoreKey.getKeyRange();
+        final Range<Long> range = rangeStoreKey.getKeyRange();
         byteBuffer.putLong(range.getFrom());
         byteBuffer.putLong(range.getTo());
         byteBuffer.flip();
     }
 
-    public static boolean isKeyInRange(final ByteBuffer byteBuffer, final long key) {
+    public static CompareResult isKeyInRange(final ByteBuffer byteBuffer,
+                                             final UID mapDefinitionUid,
+                                             final long key) {
         // from = inclusive, to = exclusive
-        long rangeFromInc = byteBuffer.getLong(RANGE_FROM_OFFSET);
 
-        if (key >= rangeFromInc) {
-            final long rangeToExc = byteBuffer.getLong(RANGE_TO_OFFSET);
-            return key < rangeToExc;
+        // Create a view of just the uid part so we can do an equality check on it
+//        final ByteBuffer uidPartBuffer = byteBuffer.duplicate();
+//        uidPartBuffer.position(UID_OFFSET);
+//        uidPartBuffer.limit(UID.UID_ARRAY_LENGTH);
+
+        if (ByteBufferUtils.containsPrefix(byteBuffer, mapDefinitionUid.getBackingBuffer())) {
+            long rangeFromInc = byteBuffer.getLong(RANGE_FROM_OFFSET);
+
+            if (key >= rangeFromInc) {
+                final long rangeToExc = byteBuffer.getLong(RANGE_TO_OFFSET);
+                if (key < rangeToExc) {
+                    return CompareResult.IN_RANGE;
+                } else {
+                    return CompareResult.ABOVE_RANGE;
+                }
+            } else {
+                return CompareResult.BELOW_RANGE;
+            }
+        } else {
+            return CompareResult.MAP_UID_MISMATCH;
         }
-        return false;
     }
 
     public void serializeWithoutRangePart(final ByteBuffer byteBuffer, final RangeStoreKey key) {
@@ -96,5 +115,12 @@ public class RangeStoreKeySerde implements Serde<RangeStoreKey> {
     @Override
     public int getBufferCapacity() {
         return BUFFER_CAPACITY;
+    }
+
+    public enum CompareResult {
+        MAP_UID_MISMATCH,
+        IN_RANGE,
+        ABOVE_RANGE,
+        BELOW_RANGE
     }
 }

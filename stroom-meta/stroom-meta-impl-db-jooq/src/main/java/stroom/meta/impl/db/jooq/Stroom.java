@@ -18,9 +18,9 @@ import stroom.meta.impl.db.jooq.tables.Meta;
 import stroom.meta.impl.db.jooq.tables.MetaFeed;
 import stroom.meta.impl.db.jooq.tables.MetaKey;
 import stroom.meta.impl.db.jooq.tables.MetaProcessor;
+import stroom.meta.impl.db.jooq.tables.MetaRetentionTracker;
 import stroom.meta.impl.db.jooq.tables.MetaType;
 import stroom.meta.impl.db.jooq.tables.MetaVal;
-import stroom.meta.impl.db.jooq.tables.MetaRetentionTracker;
 
 
 /**
