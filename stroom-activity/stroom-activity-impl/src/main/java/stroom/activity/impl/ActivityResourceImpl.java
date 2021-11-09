@@ -54,13 +54,14 @@ class ActivityResourceImpl implements ActivityResource {
 
         final StroomEventLoggingService eventLoggingService = eventLoggingServiceProvider.get();
 
-        return eventLoggingService.loggedResult(
+        return eventLoggingService.loggedWorkBuilder(
                 StroomEventLoggingUtil.buildTypeId(this, "list"),
                 "Search for activities with a quick filter",
                 SearchEventAction.builder()
                         .withQuery(buildRawQuery(filter))
-                        .build(),
-                searchEventAction -> {
+                        .build())
+                .withLoggingRequired(!Strings.isNullOrEmpty(filter)) // Don't log non-filtered searches
+                .withComplexLoggedResult(searchEventAction -> {
                     // Do the work
                     final QuickFilterResultPage<Activity> result = activityServiceProvider.get().find(filter);
 
@@ -71,18 +72,16 @@ class ActivityResourceImpl implements ActivityResource {
                             .build();
 
                     return ComplexLoggedOutcome.success(result, newSearchEventAction);
-                },
-                null);
+                })
+                .getResultAndLog();
     }
 
     private Query buildRawQuery(final String userInput) {
-        return Strings.isNullOrEmpty(userInput)
-                ? new Query()
-                : Query.builder()
-                        .withRaw("Activity matches \""
-                                + Objects.requireNonNullElse(userInput, "")
-                                + "\"")
-                        .build();
+        return Query.builder()
+                .withRaw("Activity matches \""
+                        + Objects.requireNonNullElse(userInput, "")
+                        + "\"")
+                .build();
     }
 
     @AutoLogged(value = OperationType.UNLOGGED) // Not called by the user directly

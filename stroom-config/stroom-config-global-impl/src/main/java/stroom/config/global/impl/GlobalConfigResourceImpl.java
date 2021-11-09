@@ -22,6 +22,7 @@ import stroom.util.shared.PropertyPath;
 import stroom.util.shared.ResourcePaths;
 
 import com.codahale.metrics.annotation.Timed;
+import com.google.common.base.Strings;
 import event.logging.ComplexLoggedOutcome;
 import event.logging.Query;
 import event.logging.SearchEventAction;
@@ -229,13 +230,13 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
             final GlobalConfigService globalConfigService = globalConfigServiceProvider.get();
             final StroomEventLoggingService stroomEventLoggingService = stroomEventLoggingServiceProvider.get();
 
-            return stroomEventLoggingService.loggedResult(
+            return stroomEventLoggingService.loggedWorkBuilder(
                     StroomEventLoggingUtil.buildTypeId(this, "update"),
                     "Updating property " + configProperty.getNameAsString(),
                     UpdateEventAction.builder()
                             .withAfter(stroomEventLoggingService.convertToMulti(() -> configProperty))
-                            .build(),
-                    eventAction -> {
+                            .build())
+                    .withComplexLoggedResult(eventAction -> {
                         // Do the update
                         final ConfigProperty persistedProperty = globalConfigService.update(configProperty);
 
@@ -250,8 +251,8 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
                                                     .orElse(null);
                                         },
                                         () -> persistedProperty));
-                    },
-                    null);
+                    })
+                    .getResultAndLog();
         } catch (ConfigPropertyValidationException e) {
             throw RestUtil.badRequest(e);
         }
@@ -265,10 +266,12 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     }
 
     private Query buildRawQuery(final String userInput) {
-        return Query.builder()
-                .withRaw("Configuration property matches \""
-                        + Objects.requireNonNullElse(userInput, "")
-                        + "\"")
-                .build();
+        return Strings.isNullOrEmpty(userInput)
+                ? new Query()
+                : Query.builder()
+                        .withRaw("Configuration property matches \""
+                                + Objects.requireNonNullElse(userInput, "")
+                                + "\"")
+                        .build();
     }
 }

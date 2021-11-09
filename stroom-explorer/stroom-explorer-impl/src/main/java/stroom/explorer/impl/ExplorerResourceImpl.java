@@ -44,6 +44,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import com.google.common.base.Strings;
 import event.logging.ComplexLoggedOutcome;
 import event.logging.Query;
 import event.logging.SearchEventAction;
@@ -148,13 +149,14 @@ class ExplorerResourceImpl implements ExplorerResource {
     @AutoLogged(value = OperationType.MANUALLY_LOGGED)
     public FetchExplorerNodeResult fetchExplorerNodes(final FindExplorerNodeCriteria request) {
 
-        return stroomEventLoggingServiceProvider.get().loggedResult(
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder(
                 StroomEventLoggingUtil.buildTypeId(this, "fetchExplorerNodes"),
                 "Fetch explorer nodes using filter",
                 SearchEventAction.builder()
                         .withQuery(buildRawQuery(request.getFilter()))
-                        .build(),
-                searchEventAction -> {
+                        .build())
+                .withLoggingRequired(!Strings.isNullOrEmpty(request.getFilter().getNameFilter()))
+                .withComplexLoggedResult(searchEventAction -> {
                     // Do the work
                     final FetchExplorerNodeResult result = explorerServiceProvider.get().getData(request);
 
@@ -172,8 +174,8 @@ class ExplorerResourceImpl implements ExplorerResource {
                             .build();
 
                     return ComplexLoggedOutcome.success(result, newSearchEventAction);
-                },
-                null);
+                })
+                .getResultAndLog();
     }
 
     private Query buildRawQuery(final ExplorerTreeFilter explorerTreeFilter) {
