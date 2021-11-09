@@ -5,13 +5,13 @@ import stroom.activity.api.CurrentActivity;
 import stroom.activity.shared.AcknowledgeSplashRequest;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.ActivityResource;
-import stroom.activity.shared.ActivityResultPage;
 import stroom.activity.shared.ActivityValidationResult;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.util.rest.RestUtil;
+import stroom.util.shared.QuickFilterResultPage;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import com.google.common.base.Strings;
@@ -23,7 +23,9 @@ import event.logging.ViewEventAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigInteger;
 import java.util.List;
+import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -47,39 +49,40 @@ class ActivityResourceImpl implements ActivityResource {
 
     @AutoLogged(value = OperationType.MANUALLY_LOGGED)
     @Override
-    public ActivityResultPage list(final String filter) {
+    public QuickFilterResultPage<Activity> list(final String filter) {
         LOGGER.debug("filter: {}", filter);
 
-        final Query query = Strings.isNullOrEmpty(filter)
-                ? new Query()
-                : Query.builder()
-                        .withRaw("Activity matches filter \""
-                                + filter + "\"")
-                        .build();
+        final StroomEventLoggingService eventLoggingService = eventLoggingServiceProvider.get();
 
-        return eventLoggingServiceProvider.get().loggedResult(
-                this.getClass().getSimpleName() + ".list",
+        return eventLoggingService.loggedResult(
+                StroomEventLoggingUtil.buildTypeId(this, "list"),
                 "Search for activities with a quick filter",
                 SearchEventAction.builder()
-                        .withQuery(query)
+                        .withQuery(buildRawQuery(filter))
                         .build(),
                 searchEventAction -> {
+                    // Do the work
+                    final QuickFilterResultPage<Activity> result = activityServiceProvider.get().find(filter);
 
-                    if (!"xxxxxxxxxx".equals(filter)) {
-                        throw new RuntimeException("bad stuff");
-                    }
+                    final SearchEventAction newSearchEventAction = searchEventAction.newCopyBuilder()
+                            .withQuery(buildRawQuery(result.getQualifiedFilterInput()))
+                            .withResultPage(StroomEventLoggingUtil.createResultPage(result))
+                            .withTotalResults(BigInteger.valueOf(result.size()))
+                            .build();
 
-                    final ActivityResultPage activityResultPage = activityServiceProvider.get()
-                            .find(filter);
-
-                    if (!Strings.isNullOrEmpty(filter)) {
-                        searchEventAction.getQuery()
-                                .setRaw("Activity matches fully qualified filter \""
-                                        + activityResultPage.getQualifiedFilterInput() + "\"");
-                    }
-                    return ComplexLoggedOutcome.success(activityResultPage, searchEventAction);
+                    return ComplexLoggedOutcome.success(result, newSearchEventAction);
                 },
                 null);
+    }
+
+    private Query buildRawQuery(final String userInput) {
+        return Strings.isNullOrEmpty(userInput)
+                ? new Query()
+                : Query.builder()
+                        .withRaw("Activity matches \""
+                                + Objects.requireNonNullElse(userInput, "")
+                                + "\"")
+                        .build();
     }
 
     @AutoLogged(value = OperationType.UNLOGGED) // Not called by the user directly

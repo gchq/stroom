@@ -69,8 +69,9 @@ class AccountResourceImpl implements AccountResource {
     @Timed
     @Override
     public AccountResultPage list() {
-        return stroomEventLoggingServiceProvider.get().loggedResult(
-                "ListAccounts",
+        final StroomEventLoggingService eventLoggingService = stroomEventLoggingServiceProvider.get();
+        return eventLoggingService.loggedResult(
+                StroomEventLoggingUtil.buildTypeId(this, "list"),
                 "List all accounts",
                 SearchEventAction.builder()
                         .withQuery(Query.builder()
@@ -101,10 +102,16 @@ class AccountResourceImpl implements AccountResource {
             return list();
         } else {
 
-            return stroomEventLoggingServiceProvider.get().loggedResult(
-                    "SearchAccounts",
-                    "Search for accounts with a quick filter",
-                    new SearchEventAction(),
+            final StroomEventLoggingService eventLoggingService = stroomEventLoggingServiceProvider.get();
+            return eventLoggingService.loggedResult(
+                    StroomEventLoggingUtil.buildTypeId(this, "search"),
+                    "Search for accounts with quick filter",
+                    SearchEventAction.builder()
+                            .withQuery(Query.builder()
+                                    // Put in the unqualified input in case there is an exception
+                                    .withRaw("Account matches \"" + request.getQuickFilter() + "\"")
+                                    .build())
+                            .build(),
                     searchEventAction -> {
                         // Do the work
                         final AccountResultPage result = serviceProvider.get()

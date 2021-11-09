@@ -1,7 +1,7 @@
 package stroom.security.identity.account;
 
 import stroom.util.shared.PageResponse;
-import stroom.util.shared.ResultPage;
+import stroom.util.shared.QuickFilterResultPage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -13,20 +13,12 @@ import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
-public class AccountResultPage extends ResultPage<Account> {
-
-    @JsonProperty
-    private final String qualifiedFilterInput;
+public class AccountResultPage extends QuickFilterResultPage<Account> {
 
     @JsonCreator
     public AccountResultPage(@JsonProperty("values") final List<Account> values,
                              @JsonProperty("pageResponse") final PageResponse pageResponse,
                              @JsonProperty("qualifiedFilterInput") final String qualifiedFilterInput) {
-        super(values, pageResponse);
-        this.qualifiedFilterInput = qualifiedFilterInput;
-    }
-
-    public String getQualifiedFilterInput() {
-        return qualifiedFilterInput;
+        super(values, pageResponse, qualifiedFilterInput);
     }
 }

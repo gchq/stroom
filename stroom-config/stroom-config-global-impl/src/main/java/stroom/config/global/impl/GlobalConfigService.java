@@ -178,6 +178,10 @@ public class GlobalConfigService {
 
             final Optional<Comparator<ConfigProperty>> optConfigPropertyComparator = buildComparator(criteria);
 
+            final String fullyQualifyInput = QuickFilterPredicateFactory.fullyQualifyInput(
+                    criteria.getQuickFilterInput(),
+                    FIELD_MAPPERS);
+
             return QuickFilterPredicateFactory.filterStream(
                     criteria.getQuickFilterInput(),
                     FIELD_MAPPERS,
@@ -188,7 +192,8 @@ public class GlobalConfigService {
                             (configProperties, pageResponse) ->
                                     new ListConfigResponse(configProperties,
                                             pageResponse,
-                                            nodeInfo.getThisNodeName())));
+                                            nodeInfo.getThisNodeName(),
+                                            fullyQualifyInput)));
         });
     }
 

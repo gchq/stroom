@@ -1,7 +1,6 @@
 package stroom.event.logging.api;
 
 import stroom.docref.DocRef;
-import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -15,8 +14,6 @@ import event.logging.AdvancedQuery;
 import event.logging.AdvancedQueryItem;
 import event.logging.And;
 import event.logging.CopyMoveOutcome;
-import event.logging.Criteria;
-import event.logging.Data;
 import event.logging.MultiObject;
 import event.logging.Not;
 import event.logging.Or;
@@ -41,8 +38,8 @@ public class StroomEventLoggingUtil {
 
     public static <T extends RestResource> String buildTypeId(final T restResource, final String method) {
         return String.join(".",
-                restResource.getClass().getSimpleName(),
-                method);
+                Objects.requireNonNull(restResource.getClass().getSimpleName()),
+                Objects.requireNonNull(method));
     }
 
     public static OtherObject createOtherObject(final DocRef docRef) {

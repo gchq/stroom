@@ -23,8 +23,11 @@ import stroom.util.shared.ResourcePaths;
 
 import com.codahale.metrics.annotation.Timed;
 import event.logging.ComplexLoggedOutcome;
+import event.logging.Query;
+import event.logging.SearchEventAction;
 import event.logging.UpdateEventAction;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -64,18 +67,57 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
         this.nodeInfoProvider = nodeInfoProvider;
     }
 
+
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Timed
     @Override
     public ListConfigResponse list(final GlobalConfigCriteria criteria) {
-        LOGGER.info("list called for {}", criteria);
+        return listWithLogging(criteria);
+    }
+
+    private ListConfigResponse listWithoutLogging(final GlobalConfigCriteria criteria) {
         final ListConfigResponse list = globalConfigServiceProvider.get().list(criteria);
         List<ConfigProperty> values = list.getValues();
         values = values.stream()
                 .map(this::sanitise)
                 .collect(Collectors.toList());
-        return new ListConfigResponse(values, list.getPageResponse(), nodeInfoProvider.get().getThisNodeName());
+        return new ListConfigResponse(
+                values,
+                list.getPageResponse(),
+                nodeInfoProvider.get().getThisNodeName(),
+                list.getQualifiedFilterInput());
     }
 
+    private ListConfigResponse listWithLogging(final GlobalConfigCriteria criteria) {
+        LOGGER.info("list called for {}, is", criteria);
+
+        final StroomEventLoggingService eventLoggingService = stroomEventLoggingServiceProvider.get();
+
+        return eventLoggingService.loggedResult(
+                StroomEventLoggingUtil.buildTypeId(this, "list"),
+                "List filtered configuration properties",
+                SearchEventAction.builder()
+                        .withQuery(buildRawQuery(criteria.getQuickFilterInput()))
+                        .build(),
+                searchEventAction -> {
+                    // Do the work
+                    final ListConfigResponse sanitisedResult = listWithoutLogging(criteria);
+
+                    // Ignore the previous searchEventAction as it didn't have anything useful on it
+                    final SearchEventAction newSearchEventAction = SearchEventAction.builder()
+                            .withQuery(buildRawQuery(sanitisedResult.getQualifiedFilterInput()))
+                            .withResultPage(StroomEventLoggingUtil.createResultPage(sanitisedResult))
+                            .withTotalResults(BigInteger.valueOf(sanitisedResult.size()))
+                            .build();
+
+                    return ComplexLoggedOutcome.success(sanitisedResult, newSearchEventAction);
+                },
+                null);
+    }
+
+
+    // logging handled by initial call to list() on ui node. Don't want to log the call to each node
+    @AutoLogged(OperationType.UNLOGGED)
     @Timed
     @Override
     public ListConfigResponse listByNode(final String nodeName,
@@ -89,7 +131,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
                         GlobalConfigResource.NODE_PROPERTIES_SUB_PATH,
                         nodeName),
                 () ->
-                        list(criteria),
+                        listWithoutLogging(criteria),
                 builder ->
                         builder.post(Entity.json(criteria)));
     }
@@ -220,5 +262,13 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
     @Override
     public UiConfig fetchUiConfig() {
         return uiConfig.get();
+    }
+
+    private Query buildRawQuery(final String userInput) {
+        return Query.builder()
+                .withRaw("Configuration property matches \""
+                        + Objects.requireNonNullElse(userInput, "")
+                        + "\"")
+                .build();
     }
 }

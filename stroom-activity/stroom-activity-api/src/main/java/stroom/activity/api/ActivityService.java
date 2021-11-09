@@ -17,8 +17,8 @@
 package stroom.activity.api;
 
 import stroom.activity.shared.Activity;
-import stroom.activity.shared.ActivityResultPage;
 import stroom.activity.shared.ActivityValidationResult;
+import stroom.util.shared.QuickFilterResultPage;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import java.util.List;
@@ -33,7 +33,7 @@ public interface ActivityService {
 
     boolean delete(int id);
 
-    ActivityResultPage find(final String filter);
+    QuickFilterResultPage<Activity> find(final String filter);
 
     List<FilterFieldDefinition> listFieldDefinitions();
 
