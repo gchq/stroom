@@ -12,11 +12,11 @@ import javax.inject.Singleton;
 @JsonPropertyOrder(alphabetic = true)
 public class ThreadConfig extends AbstractConfig implements IsProxyConfig {
 
-    private int examineSourceThreadCount = 5;
-    private int aggregatorThreadCount = 5;
-    private int forwardRecordThreadCount = 5;
-    private int forwardThreadCount = 5;
-    private int forwardRetryThreadCount = 5;
+    private int examineSourceThreadCount = 3;
+    private int aggregatorThreadCount = 2;
+    private int createForwardRecordThreadCount = 2;
+    private int forwardThreadCount = 10;
+    private int forwardRetryThreadCount = 2;
 
     @JsonProperty
     public int getExamineSourceThreadCount() {
@@ -39,13 +39,13 @@ public class ThreadConfig extends AbstractConfig implements IsProxyConfig {
     }
 
     @JsonProperty
-    public int getForwardRecordThreadCount() {
-        return forwardRecordThreadCount;
+    public int getCreateForwardRecordThreadCount() {
+        return createForwardRecordThreadCount;
     }
 
     @JsonProperty
-    public void setForwardRecordThreadCount(final int forwardRecordThreadCount) {
-        this.forwardRecordThreadCount = forwardRecordThreadCount;
+    public void setCreateForwardRecordThreadCount(final int createForwardRecordThreadCount) {
+        this.createForwardRecordThreadCount = createForwardRecordThreadCount;
     }
 
     @JsonProperty

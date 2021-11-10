@@ -17,6 +17,7 @@ public class ProgressLogImpl implements ProgressLog {
     private final Map<String, AtomicLong> map = new ConcurrentHashMap<>();
     private final AtomicLong startTime = new AtomicLong(0);
     private long autoLogCount = -1;
+    private long lastLogTimeMs;
 
     @Override
     public void increment(final String name) {
@@ -47,15 +48,25 @@ public class ProgressLogImpl implements ProgressLog {
             ensureStart();
 
             final long count = map.computeIfAbsent(name, k -> new AtomicLong()).addAndGet(delta);
-//            if (autoLogCount > 0 && count >= autoLogCount) {
-            report();
-//            }
+            if (autoLogCount > 0 && count >= autoLogCount) {
+                report();
+            } else {
+                periodicReport();
+            }
         }
     }
 
     private void ensureStart() {
         if (startTime.get() == 0) {
             startTime.compareAndSet(0, System.currentTimeMillis());
+        }
+    }
+
+    private synchronized void periodicReport() {
+        final long now = System.currentTimeMillis();
+        if (lastLogTimeMs < now - 10000) {
+            lastLogTimeMs = now;
+            report();
         }
     }
 

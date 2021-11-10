@@ -95,10 +95,10 @@ public class ProxyLifecycle implements Managed {
                     // Create forward records.
                     addParallelExecutor("AggregateForwarder - createForwardRecord",
                             () -> aggregateForwarder::createNextForwardRecord,
-                            threadConfig.getForwardRecordThreadCount());
+                            threadConfig.getCreateForwardRecordThreadCount());
 
                     // Forward records.
-                    addParallelExecutor("AggregateForwarder = forwardNext",
+                    addParallelExecutor("AggregateForwarder - forwardNext",
                             () -> aggregateForwarder::forwardNext,
                             threadConfig.getForwardThreadCount());
 
@@ -120,7 +120,7 @@ public class ProxyLifecycle implements Managed {
                     addParallelExecutor(
                             "SourceForwarder - createForwardRecord",
                             () -> sourceForwarder::createNextForwardRecord,
-                            threadConfig.getForwardRecordThreadCount());
+                            threadConfig.getCreateForwardRecordThreadCount());
 
                     // Forward records.
                     addParallelExecutor("SourceForwarder - forwardNext",
