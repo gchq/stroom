@@ -18,12 +18,21 @@
 
 package stroom.security.identity.token;
 
+import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.identity.config.TokenConfig;
+import stroom.util.NullSafe;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.PageRequest;
 
 import com.codahale.metrics.annotation.Timed;
+import event.logging.ComplexLoggedOutcome;
+import event.logging.Query;
+import event.logging.SearchEventAction;
 
+import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.servlet.http.HttpServletRequest;
@@ -33,10 +42,13 @@ import javax.ws.rs.NotFoundException;
 public class TokenResourceImpl implements TokenResource {
 
     private final Provider<TokenService> serviceProvider;
+    private final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider;
 
     @Inject
-    public TokenResourceImpl(final Provider<TokenService> serviceProvider) {
+    public TokenResourceImpl(final Provider<TokenService> serviceProvider,
+                             final Provider<StroomEventLoggingService> stroomEventLoggingServiceProvider) {
         this.serviceProvider = serviceProvider;
+        this.stroomEventLoggingServiceProvider = stroomEventLoggingServiceProvider;
     }
 
     @Timed
@@ -47,10 +59,42 @@ public class TokenResourceImpl implements TokenResource {
         return null;
     }
 
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Timed
     @Override
-    public TokenResultPage search(final HttpServletRequest httpServletRequest, final SearchTokenRequest request) {
-        return serviceProvider.get().search(request);
+    public TokenResultPage search(final HttpServletRequest httpServletRequest,
+                                  final SearchTokenRequest request) {
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder(
+                StroomEventLoggingUtil.buildTypeId(this, "search"),
+                "List API keys using a quick filter",
+                SearchEventAction.builder()
+                        .withQuery(buildRawQuery(request, null))
+                        .build())
+                .withComplexLoggedResult(searchEventAction -> {
+                    final TokenResultPage result = serviceProvider.get().search(request);
+
+                    final SearchEventAction newSearchEventAction = StroomEventLoggingUtil.createSearchEventAction(
+                            result, () -> buildRawQuery(request, result.getQualifiedFilterInput()));
+                    return ComplexLoggedOutcome.success(result, newSearchEventAction);
+                })
+                .getResultAndLog();
+    }
+
+    private Query buildRawQuery(final SearchTokenRequest request, final String qualifiedFilterInput) {
+        final String filterInput = qualifiedFilterInput != null
+                ? qualifiedFilterInput
+                : request.getQuickFilter();
+
+        final String rawQuery = LogUtil.message("{\"filter\": \"{}\", "
+                        + "\"offset\": \"{}\", "
+                        + "\"length\": \"{}\"}",
+                Objects.requireNonNullElse(filterInput, ""),
+                NullSafe.toStringOrElse(request.getPageRequest(), PageRequest::getOffset, ""),
+                NullSafe.toStringOrElse(request.getPageRequest(), PageRequest::getLength, ""));
+
+        return Query.builder()
+                .withRaw(rawQuery)
+                .build();
     }
 
     @Timed

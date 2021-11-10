@@ -1,6 +1,7 @@
 package stroom.importexport.impl;
 
 import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.explorer.api.ExplorerNodeService;
@@ -14,11 +15,13 @@ import stroom.importexport.shared.ImportState;
 import stroom.security.api.SecurityContext;
 import stroom.util.rest.RestUtil;
 import stroom.util.shared.DocRefs;
+import stroom.util.shared.QuickFilterResultPage;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
-import stroom.util.shared.ResultPage;
 
+import com.google.common.base.Strings;
 import event.logging.AdvancedQuery;
+import event.logging.ComplexLoggedOutcome;
 import event.logging.Criteria;
 import event.logging.ExportEventAction;
 import event.logging.Folder;
@@ -27,11 +30,14 @@ import event.logging.MultiObject;
 import event.logging.Or;
 import event.logging.OtherObject;
 import event.logging.Query;
+import event.logging.SearchEventAction;
 import event.logging.Term;
 import event.logging.TermCondition;
 import event.logging.util.EventLoggingUtil;
 
+import java.math.BigInteger;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -159,8 +165,37 @@ public class ContentResourceImpl implements ContentResource {
                 .build();
     }
 
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
-    public ResultPage<Dependency> fetchDependencies(final DependencyCriteria criteria) {
-        return contentServiceProvider.get().fetchDependencies(criteria);
+    public QuickFilterResultPage<Dependency> fetchDependencies(final DependencyCriteria criteria) {
+        return eventLoggingServiceProvider.get().loggedWorkBuilder(
+                StroomEventLoggingUtil.buildTypeId(this, "fetchDependencies"),
+                "List filtered dependencies",
+                SearchEventAction.builder()
+                        .withQuery(buildRawQuery(criteria.getPartialName()))
+                        .build())
+                .withComplexLoggedResult(searchEventAction -> {
+                    final QuickFilterResultPage<Dependency> result = contentServiceProvider.get()
+                            .fetchDependencies(criteria);
+
+                    final SearchEventAction newSearchEventAction = searchEventAction.newCopyBuilder()
+                            .withQuery(buildRawQuery(result.getQualifiedFilterInput()))
+                            .withResultPage(StroomEventLoggingUtil.createResultPage(result))
+                            .withTotalResults(BigInteger.valueOf(result.size()))
+                            .build();
+
+                    return ComplexLoggedOutcome.success(result, newSearchEventAction);
+                })
+                .getResultAndLog();
+    }
+
+    private Query buildRawQuery(final String userInput) {
+        return Strings.isNullOrEmpty(userInput)
+                ? new Query()
+                : Query.builder()
+                        .withRaw("Activity matches \""
+                                + Objects.requireNonNullElse(userInput, "")
+                                + "\"")
+                        .build();
     }
 }

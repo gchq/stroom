@@ -28,6 +28,11 @@ public class QuickFilterResultPage<T> extends ResultPage<T> {
         this.qualifiedFilterInput = qualifiedFilterInput;
     }
 
+    public QuickFilterResultPage(final ResultPage<T> resultPage, final String qualifiedFilterInput) {
+        super(resultPage.getValues(), resultPage.getPageResponse());
+        this.qualifiedFilterInput = qualifiedFilterInput;
+    }
+
     public String getQualifiedFilterInput() {
         return qualifiedFilterInput;
     }
