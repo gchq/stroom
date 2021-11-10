@@ -165,12 +165,7 @@ class NodeResourceImpl implements NodeResource {
             }
 
             clusterNodeInfo.setPing(System.currentTimeMillis() - now);
-
-            documentEventLogProvider.get().view(clusterNodeInfo, null);
-
         } catch (Exception e) {
-            documentEventLogProvider.get().view(clusterNodeInfo, e);
-
             clusterNodeInfo = new ClusterNodeInfo();
             clusterNodeInfo.setNodeName(nodeName);
             clusterNodeInfo.setEndpointUrl(null);
@@ -181,7 +176,7 @@ class NodeResourceImpl implements NodeResource {
     }
 
     @Override
-    @AutoLogged(value = OperationType.PROCESS, verb = "Pinging other node")
+    @AutoLogged(OperationType.UNLOGGED) // Not a user action
     public Long ping(final String nodeName) {
         final long now = System.currentTimeMillis();
 
