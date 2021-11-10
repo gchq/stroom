@@ -43,7 +43,7 @@ public class FrequencyExecutor implements Managed {
 
     private void run() {
 
-        final long start = System.currentTimeMillis();
+//        final long start = System.currentTimeMillis();
 
         try {
             if (!stop) {
@@ -54,12 +54,16 @@ public class FrequencyExecutor implements Managed {
             LOGGER.error(e.getMessage(), e);
         }
 
-        // How long were we running for?
-        final long duration = System.currentTimeMillis() - start;
-        final long delay = Math.max(0, frequency - duration);
+//        // How long were we running for?
+//        final long duration = System.currentTimeMillis() - start;
+//        final long delay = Math.max(0, frequency - duration);
+//
+//        if (!stop) {
+//            executorService.schedule(this::run, delay, TimeUnit.MILLISECONDS);
+//        }
 
         if (!stop) {
-            executorService.schedule(this::run, delay, TimeUnit.MILLISECONDS);
+            executorService.schedule(this::run, frequency, TimeUnit.MILLISECONDS);
         }
     }
 

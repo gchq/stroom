@@ -12,7 +12,7 @@ import javax.inject.Singleton;
 @Singleton
 public class ProgressLogImpl implements ProgressLog {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProgressLog.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProgressLogImpl.class);
 
     private final Map<String, AtomicLong> map = new ConcurrentHashMap<>();
     private final AtomicLong startTime = new AtomicLong(0);
