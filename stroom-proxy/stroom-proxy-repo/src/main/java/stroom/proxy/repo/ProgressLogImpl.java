@@ -47,9 +47,9 @@ public class ProgressLogImpl implements ProgressLog {
             ensureStart();
 
             final long count = map.computeIfAbsent(name, k -> new AtomicLong()).addAndGet(delta);
-            if (autoLogCount > 0 && count >= autoLogCount) {
-                report();
-            }
+//            if (autoLogCount > 0 && count >= autoLogCount) {
+            report();
+//            }
         }
     }
 
