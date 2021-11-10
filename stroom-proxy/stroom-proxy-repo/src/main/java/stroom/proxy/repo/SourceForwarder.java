@@ -30,7 +30,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -109,13 +108,15 @@ public class SourceForwarder {
     }
 
     private void forwardSource(final ForwardSource forwardSource) {
-        progressLog.increment("AggregateForwarder - forwardSource");
+        progressLog.increment("SourceForwarder - forwardSource");
         forward(forwardSource);
     }
 
     public void forwardRetry(final long oldest) {
         final Optional<ForwardSource> optional = forwardSourceDao.getRetryForwardSource();
         optional.ifPresent(forwardSource -> {
+            progressLog.increment("SourceForwarder - forwardRetry");
+
             final long updateTime = forwardSource.getUpdateTimeMs();
             final long delay = updateTime - oldest;
             // Wait until the item is old enough before sending.
@@ -155,9 +156,6 @@ public class SourceForwarder {
 
         final StreamHandlers streamHandlers = forwarderDestinations.getProvider(forwardUrl);
         final Path zipFilePath = repoDir.resolve(source.getSourcePath());
-
-        final Consumer<Long> progressHandler = new ProgressHandler("Sending" +
-                zipFilePath);
 
         // Start the POST
         try {

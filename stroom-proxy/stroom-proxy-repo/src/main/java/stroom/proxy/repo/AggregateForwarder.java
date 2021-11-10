@@ -157,7 +157,7 @@ public class AggregateForwarder {
                 streamHandlers.handle(aggregate.getFeedName(), aggregate.getTypeName(), attributeMap, handler -> {
                     sender.sendDataToHandler(items, handler);
                     success.set(true);
-                    progressLog.increment("AggregateForwarder - forwardAggregate");
+                    progressLog.increment("AggregateForwarder - forward");
                 });
             } catch (final RuntimeException ex) {
                 error.set(ex.getMessage());
@@ -170,7 +170,7 @@ public class AggregateForwarder {
             }
         } else {
             success.set(true);
-            progressLog.increment("AggregateForwarder - forwardAggregate");
+            progressLog.increment("AggregateForwarder - forward");
         }
 
         // Record that we sent the data or if there was no data to send.
