@@ -26,7 +26,7 @@ public class ProxyAggregationConfig extends AbstractConfig implements IsStroomCo
 
     @Override
     @JsonProperty
-    @JsonPropertyDescription("Tee location of a proxy repository that we want to aggregate data from")
+    @JsonPropertyDescription("The location of a proxy repository that we want to aggregate data from")
     public String getRepoDir() {
         return repoDir;
     }
