@@ -11,6 +11,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import org.jooq.Condition;
 import org.jooq.impl.DSL;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -84,31 +85,38 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
 
             } else if (item instanceof ExpressionOperator) {
                 final ExpressionOperator operator = (ExpressionOperator) item;
-                if (operator.getChildren() != null && !operator.getChildren().isEmpty()) {
-                    final List<Condition> children = operator
-                            .getChildren()
-                            .stream()
-                            .map(this::innerApply)
-                            .filter(Optional::isPresent)
-                            .map(Optional::get)
-                            .collect(Collectors.toList());
+                List<ExpressionItem> items = operator.getChildren();
+                if (items == null) {
+                    items = Collections.emptyList();
+                }
 
-                    if (children.size() == 1) {
-                        final Condition child = children.get(0);
-                        if (Op.NOT.equals(operator.op())) {
-                            result = Optional.of(DSL.not(child));
-                        } else {
-                            result = Optional.of(child);
-                        }
+                final List<Condition> children = items
+                        .stream()
+                        .map(this::innerApply)
+                        .filter(Optional::isPresent)
+                        .map(Optional::get)
+                        .collect(Collectors.toList());
 
-                    } else if (children.size() > 1) {
-                        if (Op.NOT.equals(operator.op())) {
-                            throw new RuntimeException("Only a single term or operator allowed in NOT");
-                        } else if (Op.AND.equals(operator.op())) {
-                            result = Optional.of(DSL.and(children));
-                        } else if (Op.OR.equals(operator.op())) {
-                            result = Optional.of(DSL.or(children));
-                        }
+                if (children.size() == 0) {
+                    if (Op.NOT.equals(operator.op())) {
+                        throw new RuntimeException("NOT has no child term or operator");
+                    }
+
+                } else if (children.size() == 1) {
+                    final Condition child = children.get(0);
+                    if (Op.NOT.equals(operator.op())) {
+                        result = Optional.of(DSL.not(child));
+                    } else {
+                        result = Optional.of(child);
+                    }
+
+                } else {
+                    if (Op.NOT.equals(operator.op())) {
+                        throw new RuntimeException("Only a single term or operator allowed in NOT");
+                    } else if (Op.AND.equals(operator.op())) {
+                        result = Optional.of(DSL.and(children));
+                    } else if (Op.OR.equals(operator.op())) {
+                        result = Optional.of(DSL.or(children));
                     }
                 }
             }

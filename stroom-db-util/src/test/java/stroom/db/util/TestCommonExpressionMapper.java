@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestCommonExpressionMapper {
 
@@ -49,20 +50,18 @@ class TestCommonExpressionMapper {
 
                     final CommonExpressionMapper mapper = new CommonExpressionMapper();
 
-                    final Condition condition = mapper.apply(expressionOperator);
+                    if (Op.NOT.equals(expressionOperator.op())) {
+                        // We expect an exception thrown by the attempt to use `NOT` with no children.
+                        assertThatThrownBy(() -> doTest(expressionOperator))
+                                .hasMessage("NOT has no child term or operator");
+                    } else {
+                        final Condition condition = mapper.apply(expressionOperator);
 
-                    LOGGER.info("expressionItem: {}", expressionOperator);
-                    LOGGER.info("condition: {}", condition);
+                        LOGGER.info("expressionItem: {}", expressionOperator);
+                        LOGGER.info("condition: {}", condition);
 
-                    assertThat(condition).isEqualTo(DSL.noCondition());
-
-//                    if (expressionOperator.op().equals(Op.NOT)) {
-//                        assertThat(condition)
-//                                .isEqualTo(DSL.falseCondition());
-//                    } else {
-//                        assertThat(condition)
-//                                .isEqualTo(DSL.trueCondition());
-//                    }
+                        assertThat(condition).isEqualTo(DSL.noCondition());
+                    }
                 }))
                 .collect(Collectors.toList());
     }
@@ -73,12 +72,9 @@ class TestCommonExpressionMapper {
                 .op(Op.NOT)
                 .addOperator(ExpressionOperator.builder().build())
                 .build();
-
-        final Condition condition = doTest(expressionOperator);
-
-        // NOT { AND {} } == false
-        assertThat(condition)
-                .isEqualTo(DSL.noCondition());
+        // We expect an exception thrown by the attempt to use `NOT` with no children.
+        assertThatThrownBy(() -> doTest(expressionOperator))
+                .hasMessage("NOT has no child term or operator");
     }
 
     @Test
@@ -95,7 +91,7 @@ class TestCommonExpressionMapper {
     }
 
     @Test
-    void testAlwaysFalseAnd() {
+    void testAndEmptyNot() {
         final ExpressionOperator expressionOperator = ExpressionOperator.builder()
                 .addOperator(ExpressionOperator.builder().op(Op.NOT).build())
                 .addTerm(ExpressionTerm.builder()
@@ -104,11 +100,9 @@ class TestCommonExpressionMapper {
                         .value(FIELD_1_VALUE).build())
                 .build();
 
-        final Condition condition = doTest(expressionOperator);
-
-        // AND { 1=0, field1=123 } == false, terms condensed down to one false condition
-        assertThat(condition.toString())
-                .isEqualTo("(field1=123)");
+        // We expect an exception thrown by the attempt to use `NOT` with no children.
+        assertThatThrownBy(() -> doTest(expressionOperator))
+                .hasMessage("NOT has no child term or operator");
     }
 
     @Test
@@ -147,18 +141,15 @@ class TestCommonExpressionMapper {
     }
 
     @Test
-    void testAlwaysFalseOr() {
+    void testOrEmptyNot() {
         final ExpressionOperator expressionOperator = ExpressionOperator.builder()
                 .op(Op.OR)
                 .addOperator(ExpressionOperator.builder().op(Op.NOT).build())
                 .addOperator(ExpressionOperator.builder().op(Op.NOT).build())
                 .build();
-
-        final Condition condition = doTest(expressionOperator);
-
-        // OR { NOT{}, NOT{} } == true, terms condensed down to one true condition, so empty list
-        assertThat(condition)
-                .isEqualTo(DSL.noCondition());
+        // We expect an exception thrown by the attempt to use `NOT` with no children.
+        assertThatThrownBy(() -> doTest(expressionOperator))
+                .hasMessage("NOT has no child term or operator");
     }
 
     @Test
@@ -167,12 +158,9 @@ class TestCommonExpressionMapper {
                 .op(Op.NOT)
                 .addOperator(ExpressionOperator.builder().op(Op.NOT).build())
                 .build();
-
-        final Condition condition = doTest(expressionOperator);
-
-        // NOT { NOT {} } == true so simplifies to no condition.
-        assertThat(condition)
-                .isEqualTo(DSL.trueCondition());
+        // We expect an exception thrown by the attempt to use `NOT` with no children.
+        assertThatThrownBy(() -> doTest(expressionOperator))
+                .hasMessage("NOT has no child term or operator");
     }
 
     @Test

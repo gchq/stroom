@@ -50,6 +50,7 @@ import java.util.stream.IntStream;
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestMetaServiceImpl {
 
@@ -154,7 +155,7 @@ class TestMetaServiceImpl {
     }
 
     @Test
-    void testRetentionDelete_noData() {
+    void testRetentionDelete_failEmptyNot() {
 
         // Testing a true condition
         List<DataRetentionRuleAction> ruleActions = List.of(
@@ -169,10 +170,9 @@ class TestMetaServiceImpl {
 
         TimePeriod period = TimePeriod.between(Instant.EPOCH, Instant.now());
 
-        metaService.delete(ruleActions, period);
-
-        // Rules all say delete, but nothing will match
-        assertTotalRowCount(3, Status.DELETED);
+        // We expect an exception thrown by the attempt to use `NOT` with no children.
+        assertThatThrownBy(() -> metaService.delete(ruleActions, period))
+                .hasMessage("NOT has no child term or operator");
     }
 
     @Test
@@ -258,6 +258,28 @@ class TestMetaServiceImpl {
         // Only one feed is deleted
         assertTotalRowCount(1, Status.DELETED);
         assertTotalRowCount(2, Status.UNLOCKED);
+    }
+
+    @Test
+    void testRetentionDelete_noMatch() {
+
+        // Testing a true condition
+        List<DataRetentionRuleAction> ruleActions = List.of(
+                buildRuleAction(
+                        1,
+                        "NOT_FOUND_FEED",
+                        RetentionRuleOutcome.DELETE)
+        );
+        setupRetentionData();
+
+        assertTotalRowCount(3, Status.UNLOCKED);
+
+        TimePeriod period = TimePeriod.between(Instant.EPOCH, Instant.now());
+
+        metaService.delete(ruleActions, period);
+
+        // Nothing will match so no deletes.
+        assertTotalRowCount(0, Status.DELETED);
     }
 
     @Test

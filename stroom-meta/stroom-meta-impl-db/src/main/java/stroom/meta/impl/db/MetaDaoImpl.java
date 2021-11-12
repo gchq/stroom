@@ -418,13 +418,6 @@ class MetaDaoImpl implements MetaDao, Clearable {
 
         final Condition criteriaCondition = expressionMapper.apply(criteria.getExpression());
 
-        final int updateCount;
-//        // If a rule means we are retaining data then we will have a 1=0 condition in here
-//        // and as they are all to be ANDed together there is no point in running the sql.
-//        if (DSL.falseCondition().equals(criteriaCondition)) {
-//            LOGGER.info("Condition is FALSE so skipping SQL update");
-//            updateCount = 0;
-//        } else {
         // Add a condition if we should check current status.
         final List<Condition> conditions;
         if (currentStatus != null) {
@@ -439,6 +432,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
         final Set<Integer> usedValKeys = identifyExtendedAttributesFields(criteria.getExpression(),
                 new HashSet<>());
 
+        final int updateCount;
         if (usedValKeys.isEmpty() && !containsPipelineCondition(criteria.getExpression())) {
             updateCount = JooqUtil.contextResult(metaDbConnProvider, context ->
                     context
@@ -467,7 +461,6 @@ class MetaDaoImpl implements MetaDao, Clearable {
                             .where(extendedAttrCond)
                             .execute());
         }
-//        }
         return updateCount;
     }
 
@@ -784,7 +777,13 @@ class MetaDaoImpl implements MetaDao, Clearable {
         if (ruleActions.isEmpty()) {
             throw new IllegalArgumentException("Expected one or more rules");
         }
+
+        final List<Condition> conditions = new ArrayList<>();
         final byte statusIdUnlocked = MetaStatusId.getPrimitiveValue(Status.UNLOCKED);
+
+        // Ensure we only 'delete' unlocked records, also ensures we don't touch
+        // records we have already deleted in a previous pass
+        conditions.add(meta.STATUS.eq(statusIdUnlocked));
 
         // What we are building is roughly:
         // WHERE (CASE
@@ -799,15 +798,15 @@ class MetaDaoImpl implements MetaDao, Clearable {
         // of delete (true) or retain (false)
 
         CaseConditionStep<Boolean> caseConditionStep = null;
-//        List<Condition> orConditions = new ArrayList<>();
+        final List<Condition> orConditions = new ArrayList<>();
         // Order is critical here as we are building a case statement
         // Highest priority rules first, i.e. largest rule number
         for (DataRetentionRuleAction ruleAction : ruleActions) {
             final Condition ruleCondition = expressionMapper.apply(ruleAction.getRule().getExpression());
-
-//            if (dataRetentionConfig.isUseQueryOptimisation()) {
-//                orConditions.add(ruleCondition);
-//            }
+            if (dataRetentionConfig.isUseQueryOptimisation() &&
+                    !DSL.noCondition().equals(ruleCondition)) {
+                orConditions.add(ruleCondition);
+            }
 
             // The rule will either result in true or false depending on if it needs
             // to delete or retain the data
@@ -818,26 +817,27 @@ class MetaDaoImpl implements MetaDao, Clearable {
                 caseConditionStep.when(ruleCondition, caseResult);
             }
         }
-        // If none of the rules matches then we don't to delete so return false
-        final Field<Boolean> caseField = caseConditionStep.otherwise(Boolean.FALSE);
 
-        List<Condition> conditions = new ArrayList<>();
+        if (caseConditionStep != null) {
+            // If none of the rules matches then we don't to delete so return false
+            final Field<Boolean> caseField = caseConditionStep.otherwise(Boolean.FALSE);
 
-        // Ensure we only 'delete' unlocked records, also ensures we don't touch
-        // records we have already deleted in a previous pass
-        conditions.add(meta.STATUS.eq(statusIdUnlocked));
+            // Add our rule conditions
+            conditions.add(caseField.eq(true));
+        }
 
-        // Add our rule conditions
-        conditions.add(caseField.eq(true));
-
-//        // Now add all the rule conditions as an OR block
-//        // This is to improve the performance of the query as the OR can make use of other indexes,
-//        // e.g. range scanning the feedid+createTime index to reduce the number of rows scanned.
-//        // We are still reliant on the case statement block to get the right outcome for the rules.
-//        // It is possible this approach may slow things down as it makes the SQL more complex.
-//        if (dataRetentionConfig.isUseQueryOptimisation()) {
-//            conditions.add(DSL.or(orConditions));
-//        }
+        // Now add all the rule conditions as an OR block
+        // This is to improve the performance of the query as the OR can make use of other indexes,
+        // e.g. range scanning the feedid+createTime index to reduce the number of rows scanned.
+        // We are still reliant on the case statement block to get the right outcome for the rules.
+        // It is possible this approach may slow things down as it makes the SQL more complex.
+        if (dataRetentionConfig.isUseQueryOptimisation()) {
+            if (orConditions.size() > 1) {
+                conditions.add(DSL.or(orConditions));
+            } else if (orConditions.size() == 1) {
+                conditions.add(orConditions.get(0));
+            }
+        }
 
         LOGGER.debug("conditions {}", conditions);
         return conditions;
