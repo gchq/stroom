@@ -50,6 +50,7 @@ import java.util.stream.IntStream;
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestMetaServiceImpl {
 
@@ -60,13 +61,6 @@ class TestMetaServiceImpl {
     private static final String FEED_3 = "FEED3";
     private static final String FEED_4 = "FEED4";
     private static final String FEED_5 = "FEED5";
-
-    private static final List<String> ALL_FEEDS = List.of(
-            "FEED1",
-            "FEED2",
-            "FEED3",
-            "FEED4",
-            "FEED5");
 
     @Inject
     private Cleanup cleanup;
@@ -80,18 +74,18 @@ class TestMetaServiceImpl {
     @BeforeEach
     void setup() {
         Guice.createInjector(
-                new MetaModule(),
-                new MetaDbModule(),
-                new MockClusterLockModule(),
-                new MockSecurityContextModule(),
-                new MockCollectionModule(),
-                new MockDocRefInfoModule(),
-                new MockWordListProviderModule(),
-                new CacheModule(),
-                new DbTestModule(),
-                new MetaTestModule(),
-                new MockTaskModule(),
-                new MockStroomEventLoggingModule())
+                        new MetaModule(),
+                        new MetaDbModule(),
+                        new MockClusterLockModule(),
+                        new MockSecurityContextModule(),
+                        new MockCollectionModule(),
+                        new MockDocRefInfoModule(),
+                        new MockWordListProviderModule(),
+                        new CacheModule(),
+                        new DbTestModule(),
+                        new MetaTestModule(),
+                        new MockTaskModule(),
+                        new MockStroomEventLoggingModule())
                 .injectMembers(this);
         // Delete everything
         cleanup.cleanup();
@@ -161,7 +155,7 @@ class TestMetaServiceImpl {
     }
 
     @Test
-    void testRetentionDelete_noData() {
+    void testRetentionDelete_failEmptyNot() {
 
         // Testing a true condition
         List<DataRetentionRuleAction> ruleActions = List.of(
@@ -176,10 +170,9 @@ class TestMetaServiceImpl {
 
         TimePeriod period = TimePeriod.between(Instant.EPOCH, Instant.now());
 
-        metaService.delete(ruleActions, period);
-
-        // Rules all say delete, but nothing will match
-        assertTotalRowCount(0, Status.DELETED);
+        // We expect an exception thrown by the attempt to use `NOT` with no children.
+        assertThatThrownBy(() -> metaService.delete(ruleActions, period))
+                .hasMessage("NOT has no child term or operator");
     }
 
     @Test
@@ -265,6 +258,28 @@ class TestMetaServiceImpl {
         // Only one feed is deleted
         assertTotalRowCount(1, Status.DELETED);
         assertTotalRowCount(2, Status.UNLOCKED);
+    }
+
+    @Test
+    void testRetentionDelete_noMatch() {
+
+        // Testing a true condition
+        List<DataRetentionRuleAction> ruleActions = List.of(
+                buildRuleAction(
+                        1,
+                        "NOT_FOUND_FEED",
+                        RetentionRuleOutcome.DELETE)
+        );
+        setupRetentionData();
+
+        assertTotalRowCount(3, Status.UNLOCKED);
+
+        TimePeriod period = TimePeriod.between(Instant.EPOCH, Instant.now());
+
+        metaService.delete(ruleActions, period);
+
+        // Nothing will match so no deletes.
+        assertTotalRowCount(0, Status.DELETED);
     }
 
     @Test
