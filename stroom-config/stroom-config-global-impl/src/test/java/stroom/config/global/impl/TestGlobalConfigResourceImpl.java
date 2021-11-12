@@ -13,6 +13,8 @@ import stroom.ui.config.shared.UiConfig;
 import stroom.util.filter.FilterFieldMapper;
 import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PropertyPath;
 import stroom.util.shared.ResourcePaths;
 
@@ -36,6 +38,8 @@ import static org.mockito.Mockito.when;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalConfigResource> {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestGlobalConfigResourceImpl.class);
+
     private final Map<String, GlobalConfigService> globalConfigServiceMap = new HashMap<>();
 
     public static final ConfigProperty CONFIG_PROPERTY_1;
@@ -56,11 +60,10 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
         CONFIG_PROPERTY_3 = configProperty;
     }
 
-    private static final ListConfigResponse FULL_PROP_LIST = new ListConfigResponse(List.of(
-            CONFIG_PROPERTY_1,
-            CONFIG_PROPERTY_2,
-            CONFIG_PROPERTY_3
-    ), "node1a", "");
+    private static final ListConfigResponse FULL_PROP_LIST = new ListConfigResponse(
+            List.of(CONFIG_PROPERTY_1, CONFIG_PROPERTY_2, CONFIG_PROPERTY_3),
+            "node1a",
+            "");
 
     private static final int BASE_PORT = 7000;
 
@@ -301,6 +304,7 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                                                 final List<TestNode> allNodes,
                                                 final Map<String, String> baseEndPointUrls) {
 
+        LOGGER.info("Setting up mocked node {}", node);
         // Set up the GlobalConfigResource mock
         final GlobalConfigService globalConfigService = createNamedMock(GlobalConfigService.class, node);
         final StroomEventLoggingService stroomEventLoggingService = createNamedMock(
@@ -317,19 +321,19 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                     try {
                         GlobalConfigCriteria criteria = invocation.getArgument(0);
 
-                        return new ListConfigResponse(QuickFilterPredicateFactory.filterStream(
-                                criteria.getQuickFilterInput(),
-                                fieldMappers,
-                                FULL_PROP_LIST.stream())
-                                .peek(configProperty -> {
-                                    configProperty.setYamlOverrideValue(node.getNodeName());
-                                })
-                                .collect(
-                                        Collectors.toList()),
+                        final ListConfigResponse response = new ListConfigResponse(
+                                QuickFilterPredicateFactory.filterStream(
+                                        criteria.getQuickFilterInput(),
+                                        fieldMappers,
+                                        FULL_PROP_LIST.stream())
+                                        .peek(configProperty ->
+                                                configProperty.setYamlOverrideValue(node.getNodeName()))
+                                        .collect(Collectors.toList()),
                                 "node1a",
                                 QuickFilterPredicateFactory.fullyQualifyInput(
                                         criteria.getQuickFilterInput(),
                                         fieldMappers));
+                        return response;
                     } catch (Exception e) {
                         e.printStackTrace(System.err);
                         throw e;

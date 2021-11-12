@@ -10,6 +10,7 @@ import event.logging.Criteria;
 import event.logging.Data;
 import event.logging.Event;
 import event.logging.EventAction;
+import event.logging.EventLoggerBasicBuilder;
 import event.logging.EventLoggingService;
 import event.logging.LoggedWorkExceptionHandler;
 import event.logging.Purpose;
@@ -93,6 +94,26 @@ public class MockStroomEventLoggingService implements EventLoggingService, Stroo
         }
     }
 
+    @Override
+    public <T_EVENT_ACTION extends EventAction> EventLoggerBasicBuilder<T_EVENT_ACTION> loggedWorkBuilder(
+            final String eventTypeId,
+            final String description,
+            final T_EVENT_ACTION eventAction) {
+
+//        @SuppressWarnings("unchecked")
+//        EventLoggerBasicBuilder<T_EVENT_ACTION> basicBuilder = Mockito.mock(EventLoggerBasicBuilder.class);
+//
+//        Mockito.when(basicBuilder.withPurpose(Mockito.any()))
+//                .thenReturn(basicBuilder);
+//        Mockito.when(basicBuilder.withLoggingRequired(Mockito.any()))
+//                .thenReturn(basicBuilder);
+//        Mockito.when(basicBuilder.withCustomExceptionHandler(Mockito.any()))
+//                .thenReturn(basicBuilder);
+
+        // TODO 12/11/2021 AT: Need to use MockEventLoggerBuilder from event-logging.
+
+        return null;
+    }
 
     @Override
     public void setValidate(final Boolean validate) {
@@ -138,4 +159,5 @@ public class MockStroomEventLoggingService implements EventLoggingService, Stroo
     public List<Data> getDataItems(final Object obj) {
         return null;
     }
+
 }
