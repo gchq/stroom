@@ -61,13 +61,6 @@ class TestMetaServiceImpl {
     private static final String FEED_4 = "FEED4";
     private static final String FEED_5 = "FEED5";
 
-    private static final List<String> ALL_FEEDS = List.of(
-            "FEED1",
-            "FEED2",
-            "FEED3",
-            "FEED4",
-            "FEED5");
-
     @Inject
     private Cleanup cleanup;
     @Inject
@@ -80,18 +73,18 @@ class TestMetaServiceImpl {
     @BeforeEach
     void setup() {
         Guice.createInjector(
-                new MetaModule(),
-                new MetaDbModule(),
-                new MockClusterLockModule(),
-                new MockSecurityContextModule(),
-                new MockCollectionModule(),
-                new MockDocRefInfoModule(),
-                new MockWordListProviderModule(),
-                new CacheModule(),
-                new DbTestModule(),
-                new MetaTestModule(),
-                new MockTaskModule(),
-                new MockStroomEventLoggingModule())
+                        new MetaModule(),
+                        new MetaDbModule(),
+                        new MockClusterLockModule(),
+                        new MockSecurityContextModule(),
+                        new MockCollectionModule(),
+                        new MockDocRefInfoModule(),
+                        new MockWordListProviderModule(),
+                        new CacheModule(),
+                        new DbTestModule(),
+                        new MetaTestModule(),
+                        new MockTaskModule(),
+                        new MockStroomEventLoggingModule())
                 .injectMembers(this);
         // Delete everything
         cleanup.cleanup();
@@ -179,7 +172,7 @@ class TestMetaServiceImpl {
         metaService.delete(ruleActions, period);
 
         // Rules all say delete, but nothing will match
-        assertTotalRowCount(0, Status.DELETED);
+        assertTotalRowCount(3, Status.DELETED);
     }
 
     @Test
