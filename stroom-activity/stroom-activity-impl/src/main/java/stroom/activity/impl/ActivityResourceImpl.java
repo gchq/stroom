@@ -54,13 +54,12 @@ class ActivityResourceImpl implements ActivityResource {
 
         final StroomEventLoggingService eventLoggingService = eventLoggingServiceProvider.get();
 
-        return eventLoggingService.loggedWorkBuilder(
-                StroomEventLoggingUtil.buildTypeId(this, "list"),
-                "Search for activities with a quick filter",
-                SearchEventAction.builder()
+        return eventLoggingService.loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "list"))
+                .withDescription("Search for activities with a quick filter")
+                .withDefaultEventAction(SearchEventAction.builder()
                         .withQuery(buildRawQuery(filter))
                         .build())
-                .withLoggingRequired(!Strings.isNullOrEmpty(filter)) // Don't log non-filtered searches
                 .withComplexLoggedResult(searchEventAction -> {
                     // Do the work
                     final QuickFilterResultPage<Activity> result = activityServiceProvider.get().find(filter);
@@ -73,6 +72,7 @@ class ActivityResourceImpl implements ActivityResource {
 
                     return ComplexLoggedOutcome.success(result, newSearchEventAction);
                 })
+                .withLoggingRequiredWhen(!Strings.isNullOrEmpty(filter)) // Don't log non-filtered searches
                 .getResultAndLog();
     }
 
@@ -131,16 +131,17 @@ class ActivityResourceImpl implements ActivityResource {
         final CurrentActivity currentActivity = currentActivityProvider.get();
 
         final StroomEventLoggingService eventLoggingService = eventLoggingServiceProvider.get();
-        return eventLoggingService.loggedResult(
-                StroomEventLoggingUtil.buildTypeId(this, "setCurrentActivity"),
-                "User has changed activity",
-                eventLoggingService.buildUpdateEventAction(
+        return eventLoggingService.loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "setCurrentActivity"))
+                .withDescription("User has changed activity")
+                .withDefaultEventAction(eventLoggingService.buildUpdateEventAction(
                         currentActivity::getActivity,
-                        () -> activity),
-                () -> {
+                        () -> activity))
+                .withSimpleLoggedResult(() -> {
                     currentActivity.setActivity(activity);
                     return activity;
-                });
+                })
+                .getResultAndLog();
     }
 
     @AutoLogged(value = OperationType.MANUALLY_LOGGED)

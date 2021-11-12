@@ -72,10 +72,10 @@ class AccountResourceImpl implements AccountResource {
     @Override
     public AccountResultPage list() {
         final StroomEventLoggingService eventLoggingService = stroomEventLoggingServiceProvider.get();
-        return eventLoggingService.loggedWorkBuilder(
-                StroomEventLoggingUtil.buildTypeId(this, "list"),
-                "List all accounts",
-                SearchEventAction.builder()
+        return eventLoggingService.loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "list"))
+                .withDescription("List all accounts")
+                .withDefaultEventAction(SearchEventAction.builder()
                         .withQuery(Query.builder()
                                 .withAdvanced(AdvancedQuery.builder()
                                         .addAnd(new And())
@@ -104,10 +104,10 @@ class AccountResourceImpl implements AccountResource {
         } else {
 
             final StroomEventLoggingService eventLoggingService = stroomEventLoggingServiceProvider.get();
-            return eventLoggingService.loggedWorkBuilder(
-                    StroomEventLoggingUtil.buildTypeId(this, "search"),
-                    "Search for accounts with quick filter",
-                    SearchEventAction.builder()
+            return eventLoggingService.loggedWorkBuilder()
+                    .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "search"))
+                    .withDescription("Search for accounts with quick filter")
+                    .withDefaultEventAction(SearchEventAction.builder()
                             .withQuery(buildRawQuery(request.getQuickFilter()))
                             .build())
                     .withComplexLoggedResult(searchEventAction -> {
@@ -142,10 +142,10 @@ class AccountResourceImpl implements AccountResource {
     public Integer create(final HttpServletRequest httpServletRequest,
                           final CreateAccountRequest request) {
 
-        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder(
-                "CreateAccount",
-                "Create an account",
-                CreateEventAction.builder()
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId("CreateAccount")
+                .withDescription("Create an account")
+                .withDefaultEventAction(CreateEventAction.builder()
                         .addObject(OtherObject.builder()
                                 .withType("Account")
                                 .withName(request.getUserId())
@@ -178,10 +178,10 @@ class AccountResourceImpl implements AccountResource {
         if (userId == null) {
             return null;
         }
-        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder(
-                StroomEventLoggingUtil.buildTypeId(this, "fetch"),
-                "Get a user by ID",
-                ViewEventAction.builder()
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "fetch"))
+                .withDescription("Get a user by ID")
+                .withDefaultEventAction(ViewEventAction.builder()
                         .addUser(User.builder()
                                 .withId(String.valueOf(userId))
                                 .build())
@@ -252,10 +252,10 @@ class AccountResourceImpl implements AccountResource {
 
         final Boolean result;
         try {
-            result = stroomEventLoggingServiceProvider.get().loggedWorkBuilder(
-                    StroomEventLoggingUtil.buildTypeId(this, "update"),
-                    "Update account for user " + accountId,
-                    UpdateEventAction.builder()
+            result = stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                    .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "update"))
+                    .withDescription("Update account for user " + accountId)
+                    .withDefaultEventAction(UpdateEventAction.builder()
                             .withBefore(getBefore(accountId))
                             .withAfter(MultiObject.builder()
                                     .addUser(afterUser)
@@ -299,10 +299,10 @@ class AccountResourceImpl implements AccountResource {
     public Boolean delete(final HttpServletRequest httpServletRequest,
                           final int userId) {
 
-        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder(
-                StroomEventLoggingUtil.buildTypeId(this, "delete"),
-                "Deleting user account " + userId,
-                DeleteEventAction.builder()
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "delete"))
+                .withDescription("Deleting user account " + userId)
+                .withDefaultEventAction(DeleteEventAction.builder()
                         .addUser(User.builder()
                                 .withId(String.valueOf(userId))
                                 .build())

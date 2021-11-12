@@ -149,13 +149,12 @@ class ExplorerResourceImpl implements ExplorerResource {
     @AutoLogged(value = OperationType.MANUALLY_LOGGED)
     public FetchExplorerNodeResult fetchExplorerNodes(final FindExplorerNodeCriteria request) {
 
-        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder(
-                StroomEventLoggingUtil.buildTypeId(this, "fetchExplorerNodes"),
-                "Fetch explorer nodes using filter",
-                SearchEventAction.builder()
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "fetchExplorerNodes"))
+                .withDescription("Fetch explorer nodes using filter")
+                .withDefaultEventAction(SearchEventAction.builder()
                         .withQuery(buildRawQuery(request.getFilter()))
                         .build())
-                .withLoggingRequired(!Strings.isNullOrEmpty(request.getFilter().getNameFilter()))
                 .withComplexLoggedResult(searchEventAction -> {
                     // Do the work
                     final FetchExplorerNodeResult result = explorerServiceProvider.get().getData(request);
@@ -175,6 +174,7 @@ class ExplorerResourceImpl implements ExplorerResource {
 
                     return ComplexLoggedOutcome.success(result, newSearchEventAction);
                 })
+                .withLoggingRequiredWhen(!Strings.isNullOrEmpty(request.getFilter().getNameFilter()))
                 .getResultAndLog();
     }
 

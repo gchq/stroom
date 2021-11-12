@@ -64,17 +64,18 @@ public class TokenResourceImpl implements TokenResource {
     @Override
     public TokenResultPage search(final HttpServletRequest httpServletRequest,
                                   final SearchTokenRequest request) {
-        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder(
-                StroomEventLoggingUtil.buildTypeId(this, "search"),
-                "List API keys using a quick filter",
-                SearchEventAction.builder()
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "search"))
+                .withDescription("List API keys using a quick filter")
+                .withDefaultEventAction(SearchEventAction.builder()
                         .withQuery(buildRawQuery(request, null))
                         .build())
                 .withComplexLoggedResult(searchEventAction -> {
                     final TokenResultPage result = serviceProvider.get().search(request);
 
                     final SearchEventAction newSearchEventAction = StroomEventLoggingUtil.createSearchEventAction(
-                            result, () -> buildRawQuery(request, result.getQualifiedFilterInput()));
+                            result, () ->
+                                    buildRawQuery(request, result.getQualifiedFilterInput()));
                     return ComplexLoggedOutcome.success(result, newSearchEventAction);
                 })
                 .getResultAndLog();

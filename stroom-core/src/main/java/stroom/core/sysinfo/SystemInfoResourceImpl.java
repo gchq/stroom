@@ -35,25 +35,25 @@ public class SystemInfoResourceImpl implements SystemInfoResource {
     public SystemInfoResultList getAll() {
 
         return stroomEventLoggingServiceProvider.get()
-                .loggedResult(
-                        "getAllSystemInfo",
-                        "Getting all system info results",
-                        buildViewEventAction(""),
-                        () ->
-                                SystemInfoResultList.of(systemInfoServiceProvider.get().getAll())
-                );
+                .loggedWorkBuilder()
+                .withTypeId("getAllSystemInfo")
+                .withDescription("Getting all system info results")
+                .withDefaultEventAction(buildViewEventAction(""))
+                .withSimpleLoggedResult(() ->
+                        SystemInfoResultList.of(systemInfoServiceProvider.get().getAll()))
+                .getResultAndLog();
     }
 
     @Override
     public List<String> getNames() {
-        return stroomEventLoggingServiceProvider.get().loggedResult(
-                "getAllSystemInfo",
-                "Getting all system info result names",
-                buildViewEventAction(NAMES_PATH_PART),
-                () -> systemInfoServiceProvider.get().getNames().stream()
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId("getAllSystemInfo")
+                .withDescription("Getting all system info result names")
+                .withDefaultEventAction(buildViewEventAction(NAMES_PATH_PART))
+                .withSimpleLoggedResult(() -> systemInfoServiceProvider.get().getNames().stream()
                         .sorted()
-                        .collect(Collectors.toList())
-        );
+                        .collect(Collectors.toList()))
+                .getResultAndLog();
     }
 
     @Override
@@ -63,14 +63,15 @@ public class SystemInfoResourceImpl implements SystemInfoResource {
             throw RestUtil.badRequest("name not supplied");
         }
 
-        return stroomEventLoggingServiceProvider.get().loggedResult(
-                "getSystemInfo",
-                "Getting system info results for " + name,
-                buildViewEventAction("/"),
-                () -> systemInfoServiceProvider.get().get(name)
-                        .orElseThrow(() ->
-                                new NotFoundException(LogUtil.message("Name {} not found", name)))
-        );
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId("getSystemInfo")
+                .withDescription("Getting system info results for " + name)
+                .withDefaultEventAction(buildViewEventAction("/"))
+                .withSimpleLoggedResult(() ->
+                        systemInfoServiceProvider.get().get(name)
+                                .orElseThrow(() ->
+                                        new NotFoundException(LogUtil.message("Name {} not found", name))))
+                .getResultAndLog();
     }
 
     private ViewEventAction buildViewEventAction(final String subPath) {

@@ -68,12 +68,14 @@ public class ContentResourceImpl implements ContentResource {
             throw RestUtil.badRequest("Missing confirm list");
         }
 
-        return eventLoggingServiceProvider.get().loggedResult(
-                "ImportConfig",
-                "Importing Configuration",
-                buildImportEventAction(request),
-                () -> contentServiceProvider.get().performImport(request.getResourceKey(), request.getConfirmList())
-        );
+        return eventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId("ImportConfig")
+                .withDescription("Importing Configuration")
+                .withDefaultEventAction(buildImportEventAction(request))
+                .withSimpleLoggedResult(() ->
+                        contentServiceProvider.get()
+                                .performImport(request.getResourceKey(), request.getConfirmList()))
+                .getResultAndLog();
     }
 
     private ImportEventAction buildImportEventAction(final ImportConfigRequest importConfigRequest) {
@@ -137,13 +139,15 @@ public class ContentResourceImpl implements ContentResource {
                     }
                 });
 
-        return eventLoggingServiceProvider.get().loggedResult(
-                "ExportConfig",
-                "Exporting Configuration",
-                ExportEventAction.builder()
+        return eventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId("ExportConfig")
+                .withDescription("Exporting Configuration")
+                .withDefaultEventAction(ExportEventAction.builder()
                         .withSource(builder.build())
-                        .build(),
-                () -> contentServiceProvider.get().exportContent(docRefs));
+                        .build())
+                .withSimpleLoggedResult(() ->
+                        contentServiceProvider.get().exportContent(docRefs))
+                .getResultAndLog();
     }
 
     private Criteria buildCriteria(final DocRefs docRefs) {
@@ -168,10 +172,10 @@ public class ContentResourceImpl implements ContentResource {
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
     public QuickFilterResultPage<Dependency> fetchDependencies(final DependencyCriteria criteria) {
-        return eventLoggingServiceProvider.get().loggedWorkBuilder(
-                StroomEventLoggingUtil.buildTypeId(this, "fetchDependencies"),
-                "List filtered dependencies",
-                SearchEventAction.builder()
+        return eventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "fetchDependencies"))
+                .withDescription("List filtered dependencies")
+                .withDefaultEventAction(SearchEventAction.builder()
                         .withQuery(buildRawQuery(criteria.getPartialName()))
                         .build())
                 .withComplexLoggedResult(searchEventAction -> {

@@ -94,13 +94,13 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
 
         final StroomEventLoggingService eventLoggingService = stroomEventLoggingServiceProvider.get();
 
-        return eventLoggingService.loggedResult(
-                StroomEventLoggingUtil.buildTypeId(this, "list"),
-                "List filtered configuration properties",
-                SearchEventAction.builder()
+        return eventLoggingService.loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "list"))
+                .withDescription("List filtered configuration properties")
+                .withDefaultEventAction(SearchEventAction.builder()
                         .withQuery(buildRawQuery(criteria.getQuickFilterInput()))
-                        .build(),
-                searchEventAction -> {
+                        .build())
+                .withComplexLoggedResult(searchEventAction -> {
                     // Do the work
                     final ListConfigResponse sanitisedResult = listWithoutLogging(criteria);
 
@@ -112,8 +112,8 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
                             .build();
 
                     return ComplexLoggedOutcome.success(sanitisedResult, newSearchEventAction);
-                },
-                null);
+                })
+                .getResultAndLog();
     }
 
 
@@ -230,10 +230,10 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
             final GlobalConfigService globalConfigService = globalConfigServiceProvider.get();
             final StroomEventLoggingService stroomEventLoggingService = stroomEventLoggingServiceProvider.get();
 
-            return stroomEventLoggingService.loggedWorkBuilder(
-                    StroomEventLoggingUtil.buildTypeId(this, "update"),
-                    "Updating property " + configProperty.getNameAsString(),
-                    UpdateEventAction.builder()
+            return stroomEventLoggingService.loggedWorkBuilder()
+                    .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "update"))
+                    .withDescription("Updating property " + configProperty.getNameAsString())
+                    .withDefaultEventAction(UpdateEventAction.builder()
                             .withAfter(stroomEventLoggingService.convertToMulti(() -> configProperty))
                             .build())
                     .withComplexLoggedResult(eventAction -> {
