@@ -33,7 +33,6 @@ public class ProcessorInfoUtil {
                     } else if (row instanceof ProcessorFilterRow) {
                         final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
                         final ProcessorFilter filter = processorFilterRow.getProcessorFilter();
-                        final ProcessorFilterTracker tracker = filter.getProcessorFilterTracker();
                         tableBuilder.addHeaderRow("Stream Processor Filter");
 
                         if (filter.isReprocess()) {
@@ -64,18 +63,22 @@ public class ProcessorInfoUtil {
                         addRowDateString(tableBuilder, "Updated On", filter.getUpdateTimeMs());
                         tableBuilder.addRow("Pipeline",
                                 DocRefUtil.createSimpleDocRefString(filter.getPipeline()));
-                        addRowDateString(tableBuilder, "Min Stream Create Ms", tracker.getMinMetaCreateMs());
-                        addRowDateString(tableBuilder, "Max Stream Create Ms", tracker.getMaxMetaCreateMs());
-                        addRowDateString(tableBuilder, "Stream Create Ms", tracker.getMetaCreateMs());
-                        tableBuilder.addRow("Stream Create %", tracker.getTrackerStreamCreatePercentage());
-                        addRowDateString(tableBuilder, "Last Poll", tracker.getLastPollMs());
-                        tableBuilder.addRow("Last Poll Age", tracker.getLastPollAge());
-                        tableBuilder.addRow("Last Poll Task Count", tracker.getLastPollTaskCount());
-                        tableBuilder.addRow("Min Stream Id", tracker.getMinMetaId());
-                        tableBuilder.addRow("Min Event Id", tracker.getMinEventId());
-                        tableBuilder.addRow("Streams", tracker.getMetaCount());
-                        tableBuilder.addRow("Events", tracker.getEventCount());
-                        tableBuilder.addRow("Status", tracker.getStatus());
+
+                        final ProcessorFilterTracker tracker = filter.getProcessorFilterTracker();
+                        if (tracker != null) {
+                            addRowDateString(tableBuilder, "Min Stream Create Ms", tracker.getMinMetaCreateMs());
+                            addRowDateString(tableBuilder, "Max Stream Create Ms", tracker.getMaxMetaCreateMs());
+                            addRowDateString(tableBuilder, "Stream Create Ms", tracker.getMetaCreateMs());
+                            tableBuilder.addRow("Stream Create %", tracker.getTrackerStreamCreatePercentage());
+                            addRowDateString(tableBuilder, "Last Poll", tracker.getLastPollMs());
+                            tableBuilder.addRow("Last Poll Age", tracker.getLastPollAge());
+                            tableBuilder.addRow("Last Poll Task Count", tracker.getLastPollTaskCount());
+                            tableBuilder.addRow("Min Stream Id", tracker.getMinMetaId());
+                            tableBuilder.addRow("Min Event Id", tracker.getMinEventId());
+                            tableBuilder.addRow("Streams", tracker.getMetaCount());
+                            tableBuilder.addRow("Events", tracker.getEventCount());
+                            tableBuilder.addRow("Status", tracker.getStatus());
+                        }
                     }
                     return tableBuilder.build();
                 });
