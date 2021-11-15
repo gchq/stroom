@@ -97,12 +97,7 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
                         .map(Optional::get)
                         .collect(Collectors.toList());
 
-                if (children.size() == 0) {
-                    if (Op.NOT.equals(operator.op())) {
-                        throw new RuntimeException("NOT has no child term or operator");
-                    }
-
-                } else if (children.size() == 1) {
+                if (children.size() == 1) {
                     final Condition child = children.get(0);
                     if (Op.NOT.equals(operator.op())) {
                         result = Optional.of(DSL.not(child));
@@ -110,9 +105,9 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
                         result = Optional.of(child);
                     }
 
-                } else {
+                } else if (children.size() > 0) {
                     if (Op.NOT.equals(operator.op())) {
-                        throw new RuntimeException("Only a single term or operator allowed in NOT");
+                        result = Optional.of(DSL.not(DSL.and(children)));
                     } else if (Op.AND.equals(operator.op())) {
                         result = Optional.of(DSL.and(children));
                     } else if (Op.OR.equals(operator.op())) {

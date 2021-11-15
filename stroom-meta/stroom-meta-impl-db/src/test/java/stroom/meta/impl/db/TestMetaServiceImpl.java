@@ -155,7 +155,7 @@ class TestMetaServiceImpl {
     }
 
     @Test
-    void testRetentionDelete_failEmptyNot() {
+    void testRetentionDelete_emptyNot() {
 
         // Testing a true condition
         List<DataRetentionRuleAction> ruleActions = List.of(
@@ -170,9 +170,11 @@ class TestMetaServiceImpl {
 
         TimePeriod period = TimePeriod.between(Instant.EPOCH, Instant.now());
 
-        // We expect an exception thrown by the attempt to use `NOT` with no children.
-        assertThatThrownBy(() -> metaService.delete(ruleActions, period))
-                .hasMessage("NOT has no child term or operator");
+        // A NOT with no children does nothing.
+        metaService.delete(ruleActions, period);
+
+        // Rules all say delete
+        assertTotalRowCount(3, Status.DELETED);
     }
 
     @Test
