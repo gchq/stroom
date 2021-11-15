@@ -16,7 +16,6 @@
 
 package stroom.processor.impl;
 
-import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.processor.api.ProcessorFilterService;
@@ -44,8 +43,7 @@ class ProcessorFilterResourceImpl implements ProcessorFilterResource {
     private final Provider<ProcessorFilterService> processorFilterServiceProvider;
 
     @Inject
-    ProcessorFilterResourceImpl(final Provider<ProcessorFilterService> processorFilterServiceProvider,
-                                final DocumentEventLog documentEventLog) {
+    ProcessorFilterResourceImpl(final Provider<ProcessorFilterService> processorFilterServiceProvider) {
         this.processorFilterServiceProvider = processorFilterServiceProvider;
     }
 

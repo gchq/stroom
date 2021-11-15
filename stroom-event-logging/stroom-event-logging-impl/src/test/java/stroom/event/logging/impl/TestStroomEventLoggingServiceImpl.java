@@ -90,18 +90,19 @@ class TestStroomEventLoggingServiceImpl {
         Assertions
                 .assertThatExceptionOfType(RuntimeException.class)
                 .isThrownBy(() -> {
-                    stroomEventLoggingService.loggedAction(
-                            TYPE_ID,
-                            DESCRIPTION,
-                            ViewEventAction.builder()
+                    stroomEventLoggingService.loggedWorkBuilder()
+                            .withTypeId(TYPE_ID)
+                            .withDescription(DESCRIPTION)
+                            .withDefaultEventAction(ViewEventAction.builder()
                                     .addResource(Resource.builder()
                                             .withURL("localhost")
                                             .build())
-                                    .build(),
-                            () -> {
+                                    .build())
+                            .withSimpleLoggedAction(() -> {
                                 // Do some work
                                 throw new RuntimeException(exceptionMsg);
-                            });
+                            })
+                            .runActionAndLog();
                 })
                 .withMessage(exceptionMsg);
 
@@ -119,10 +120,10 @@ class TestStroomEventLoggingServiceImpl {
         Assertions
                 .assertThatExceptionOfType(RuntimeException.class)
                 .isThrownBy(() -> {
-                    stroomEventLoggingService.loggedAction(
-                            TYPE_ID,
-                            DESCRIPTION,
-                            ViewEventAction.builder()
+                    stroomEventLoggingService.loggedWorkBuilder()
+                            .withTypeId(TYPE_ID)
+                            .withDescription(DESCRIPTION)
+                            .withDefaultEventAction(ViewEventAction.builder()
                                     .addResource(Resource.builder()
                                             .withURL("localhost")
                                             .build())
@@ -130,11 +131,12 @@ class TestStroomEventLoggingServiceImpl {
                                             .withSuccess(true) // will be overwritten
                                             .withDescription("It worked") // will be overwritten
                                             .build())
-                                    .build(),
-                            () -> {
+                                    .build())
+                            .withSimpleLoggedAction(() -> {
                                 // Do some work
                                 throw new RuntimeException(exceptionMsg);
-                            });
+                            })
+                            .runActionAndLog();
                 })
                 .withMessage(exceptionMsg);
 
@@ -150,18 +152,19 @@ class TestStroomEventLoggingServiceImpl {
 
         AtomicBoolean wasWorkDone = new AtomicBoolean(false);
 
-        stroomEventLoggingService.loggedAction(
-                "typeId",
-                "desc",
-                ViewEventAction.builder()
+        stroomEventLoggingService.loggedWorkBuilder()
+                .withTypeId("typeId")
+                .withDescription("desc")
+                .withDefaultEventAction(ViewEventAction.builder()
                         .addResource(Resource.builder()
                                 .withURL("localhost")
                                 .build())
-                        .build(),
-                () -> {
+                        .build())
+                .withSimpleLoggedAction(() -> {
                     // Do some work
                     wasWorkDone.set(true);
-                });
+                })
+                .runActionAndLog();
 
         assertThat(wasWorkDone)
                 .isTrue();
@@ -181,18 +184,19 @@ class TestStroomEventLoggingServiceImpl {
         Assertions
                 .assertThatExceptionOfType(RuntimeException.class)
                 .isThrownBy(() -> {
-                    stroomEventLoggingService.loggedResult(
-                            "typeId",
-                            "desc",
-                            AuthenticateEventAction.builder()
+                    stroomEventLoggingService.loggedWorkBuilder()
+                            .withTypeId("typeId")
+                            .withDescription("desc")
+                            .withDefaultEventAction(AuthenticateEventAction.builder()
                                     .withUser(User.builder()
                                             .withName("jbloggs")
                                             .build())
-                                    .build(),
-                            () -> {
+                                    .build())
+                            .withSimpleLoggedResult(() -> {
                                 // Do some work
                                 throw new RuntimeException(exceptionMsg);
-                            });
+                            })
+                            .getResultAndLog();
                 })
                 .withMessage(exceptionMsg);
 
@@ -206,18 +210,19 @@ class TestStroomEventLoggingServiceImpl {
     @Test
     void testLoggedResult_success() {
 
-        final Boolean result = stroomEventLoggingService.loggedResult(
-                "typeId",
-                "desc",
-                AuthenticateEventAction.builder()
+        final Boolean result = stroomEventLoggingService.loggedWorkBuilder()
+                .withTypeId("typeId")
+                .withDescription("desc")
+                .withDefaultEventAction(AuthenticateEventAction.builder()
                         .withUser(User.builder()
                                 .withName("jbloggs")
                                 .build())
-                        .build(),
-                () -> {
+                        .build())
+                .withSimpleLoggedResult(() -> {
                     // Do some work
                     return true;
-                });
+                })
+                .getResultAndLog();
 
         assertThat(result)
                 .isTrue();
@@ -338,6 +343,7 @@ class TestStroomEventLoggingServiceImpl {
             return password;
         }
 
+        @Override
         public String getName() {
             return name;
         }

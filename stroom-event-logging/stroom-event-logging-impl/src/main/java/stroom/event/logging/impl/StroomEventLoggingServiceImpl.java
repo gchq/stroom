@@ -500,6 +500,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
      * @param obj POJO from which to extract properties
      * @return List of {@link Data} items representing properties of the supplied POJO
      */
+    @Override
     public List<Data> getDataItems(Object obj) {
         if (obj == null || loggingConfig.getMaxDataElementStringLength() == 0) {
             return null;
