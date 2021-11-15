@@ -36,6 +36,7 @@ import stroom.lmdb.LmdbEnvFactory;
 import stroom.query.api.v2.TableSettings;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -101,6 +102,8 @@ public class LmdbDataStore implements DataStore {
     private final CompletionState completionState = new CompletionStateImpl(this, complete);
     private final AtomicLong uniqueKey = new AtomicLong();
     private final CountDownLatch transferring = new CountDownLatch(1);
+    private final String queryKey;
+    private final String componentId;
 
     private final LmdbKey rootParentRowKey;
 
@@ -115,6 +118,8 @@ public class LmdbDataStore implements DataStore {
                   final Sizes storeSize) {
         this.resultStoreConfig = resultStoreConfig;
         this.maxResults = maxResults;
+        this.queryKey = queryKey;
+        this.componentId = componentId;
 
         minValueSize = (int) resultStoreConfig.getMinValueSize().getBytes();
         maxValueSize = (int) resultStoreConfig.getMaxValueSize().getBytes();
@@ -162,6 +167,7 @@ public class LmdbDataStore implements DataStore {
      */
     @Override
     public void add(final Val[] values) {
+        LOGGER.trace(() -> LogUtil.message("add() called for {} values", values.length));
         final int[] groupSizeByDepth = compiledDepths.getGroupSizeByDepth();
         final boolean[][] groupIndicesByDepth = compiledDepths.getGroupIndicesByDepth();
         final boolean[][] valueIndicesByDepth = compiledDepths.getValueIndicesByDepth();
@@ -329,6 +335,7 @@ public class LmdbDataStore implements DataStore {
                         // Commit
                         lastCommitMs = System.currentTimeMillis();
                         needsCommit = false;
+                        LOGGER.debug(() -> "Committing for new payload");
                         batchingWriteTxn.commit();
 
                         // Create payload and clear the DB.
@@ -341,6 +348,7 @@ public class LmdbDataStore implements DataStore {
                             // Commit
                             lastCommitMs = now;
                             needsCommit = false;
+                            LOGGER.debug(() -> "Committing for elapsed time");
                             batchingWriteTxn.commit();
                         }
                     }
@@ -540,17 +548,29 @@ public class LmdbDataStore implements DataStore {
      */
     @Override
     public Items get() {
+        LOGGER.debug("get() called");
         return get(Key.root());
     }
 
     /**
      * Get child items from the data store for the provided parent key.
+     * Synchronised with clear to prevent a shutdown happening while reads are going on.
      *
      * @param parentKey The parent key to get child items for.
      * @return The child items for the parent key.
      */
     @Override
-    public Items get(final Key parentKey) {
+    public synchronized Items get(final Key parentKey) {
+        LOGGER.debug("get() called for parentKey: {}", parentKey);
+
+        if (lmdbEnv.isClosed()) {
+            // If we query LMDB after the env has been closed then we are likely to crash the JVM
+            // see https://github.com/lmdbjava/lmdbjava/issues/185
+            throw new RuntimeException(LogUtil.message(
+                    "get() called for parentKey: {} (queryKey: {}, componentId: {}) after store has been shut down",
+                    parentKey, queryKey, componentId));
+        }
+
         return Metrics.measure("get", () -> {
             final int depth = parentKey.size();
             final int trimmedSize = maxResults.size(depth);
@@ -667,9 +687,10 @@ public class LmdbDataStore implements DataStore {
 
     /**
      * Clear the data store.
+     * Synchronised with get() to prevent a shutdown happening while reads are going on.
      */
     @Override
-    public void clear() {
+    public synchronized void clear() {
         try {
             LOGGER.debug("clear called");
             // Stop the transfer loop running, this has the effect of dropping the DB when it stops.
