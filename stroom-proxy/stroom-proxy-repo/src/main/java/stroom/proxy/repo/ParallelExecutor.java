@@ -31,7 +31,7 @@ public class ParallelExecutor implements Managed {
                 threadName + " ",
                 StroomThreadGroup.instance(),
                 Thread.NORM_PRIORITY - 1);
-        executorService = Executors.newScheduledThreadPool(threadCount, threadFactory);
+        executorService = Executors.newFixedThreadPool(threadCount, threadFactory);
     }
 
     @Override
