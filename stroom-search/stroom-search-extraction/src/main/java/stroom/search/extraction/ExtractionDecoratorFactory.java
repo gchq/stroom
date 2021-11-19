@@ -250,7 +250,7 @@ public class ExtractionDecoratorFactory {
         final Executor executor = executorProvider.get(EXTRACTION_THREAD_POOL);
         final List<CompletableFuture<Void>> futures = new ArrayList<>();
         for (int i = 0; i < extractionConfig.getMaxThreadsPerTask(); i++) {
-            final Runnable runnable = getNext(parentContext);
+            final Runnable runnable = extractData(parentContext);
             final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable, executor);
             futures.add(completableFuture);
         }
@@ -263,7 +263,7 @@ public class ExtractionDecoratorFactory {
                 });
     }
 
-    private Runnable getNext(final TaskContext parentContext) {
+    private Runnable extractData(final TaskContext parentContext) {
         final Consumer<TaskContext> consumer = tc -> {
             boolean complete = false;
             while (!complete) {
