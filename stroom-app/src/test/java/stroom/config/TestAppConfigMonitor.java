@@ -1,6 +1,7 @@
 package stroom.config;
 
 import stroom.config.app.AppConfig;
+import stroom.config.app.ConfigHolder;
 import stroom.config.app.YamlUtil;
 import stroom.config.global.impl.AppConfigMonitor;
 import stroom.config.global.impl.GlobalConfigService;
@@ -19,11 +20,13 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.validation.Validator;
 
@@ -35,29 +38,42 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
     private Validator validator;
     @Inject
     private GlobalConfigService globalConfigService;
+    @Inject
+    private ConfigHolder configHolder;
 
     @Test
     void test() throws Exception {
-        final Path devYamlFile = Paths.get(System.getProperty("user.dir"))
-                .getParent()
-                .resolve("stroom-app")
-                .resolve("dev.yml");
+        final Path yamlFile = configHolder.getConfigFile();
+        final AppConfig appConfig = configHolder.getAppConfig();
+//        final Path yamlFile = Paths.get(System.getProperty("user.dir"))
+//                .getParent()
+//                .resolve("stroom-app")
+//                .resolve("dev.yml");
 
-        LOGGER.info("Testing with config file {}", devYamlFile.toAbsolutePath().normalize());
+        LOGGER.info("Testing with config file {}", yamlFile.toAbsolutePath().normalize());
 
-        Assertions.assertThat(devYamlFile)
+        // AppConfigTestModule creates an appConfig instance but doesn't create the file.
+        YamlUtil.writeConfig(configHolder.getAppConfig(), configHolder.getConfigFile());
+
+        // Remove all the dropwiz stuff from the file to avoid (de)ser issues.
+        final List<String> outputLines = Files.lines(yamlFile)
+                .takeWhile(line -> !line.startsWith("server:"))
+                .collect(Collectors.toList());
+        Files.write(yamlFile, outputLines, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
+
+        Assertions.assertThat(yamlFile)
                 .isRegularFile();
 
-        final Path devYamlCopyPath = getCurrentTestDir().resolve(devYamlFile.getFileName());
+        final Path devYamlCopyPath = getCurrentTestDir().resolve(yamlFile.getFileName());
 
         LOGGER.info("devYamlCopyPath {}", devYamlCopyPath.toAbsolutePath().normalize());
 
         // Make a copy of dev.yml so we can hack about with it
-        Files.copy(devYamlFile, devYamlCopyPath);
+        Files.copy(yamlFile, devYamlCopyPath);
 
         // We need to craft our own instances of these classes rather than use guice
         // so that we can use our own config file
-        final AppConfig appConfig = YamlUtil.readAppConfig(devYamlCopyPath);
+//        final AppConfig appConfig = YamlUtil.readAppConfig(devYamlCopyPath);
 
         // Create the dirs so validation doesn't fail
         final Path tempDir = Path.of(FileUtil.replaceHome(appConfig.getPathConfig().getTemp()));
@@ -77,7 +93,7 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
         // start watching our copied file for changes, the start is async
         appConfigMonitor.start();
 
-        // with for the monitoring to start
+        // wait for the monitoring to start
         while (!appConfigMonitor.isRunning()) {
             Thread.sleep(100);
         }

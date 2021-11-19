@@ -48,7 +48,7 @@ public class LegacyIndexDeserialiser {
             document.setVolumeGroupName(volumeConfig.getDefaultIndexVolumeGroupName());
         } else {
             throw new RuntimeException("Property " +
-                    volumeConfig.getFullPath(VolumeConfig.PROP_NAME_DEFUALT_VOLUME_GROUP_NAME) +
+                    volumeConfig.getFullPathStr(VolumeConfig.PROP_NAME_DEFUALT_VOLUME_GROUP_NAME) +
                     " is not set. Unable to migrate index.");
         }
 

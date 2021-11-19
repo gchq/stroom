@@ -274,7 +274,7 @@ public class App extends Application<Config> {
 
     private void warnAboutDefaultOpenIdCreds(Config configuration) {
         if (configuration.getAppConfig().getSecurityConfig().getIdentityConfig().isUseDefaultOpenIdCredentials()) {
-            String propPath = configuration.getAppConfig().getSecurityConfig().getIdentityConfig().getFullPath(
+            String propPath = configuration.getAppConfig().getSecurityConfig().getIdentityConfig().getFullPathStr(
                     "useDefaultOpenIdCredentials");
             LOGGER.warn("\n" +
                     "\n  -----------------------------------------------------------------------------" +
@@ -322,7 +322,7 @@ public class App extends Application<Config> {
         if (result.hasErrors() && appConfig.isHaltBootOnConfigValidationFailure()) {
             LOGGER.error("Application configuration is invalid. Stopping Stroom. To run Stroom with invalid " +
                             "configuration, set {} to false, however this is not advised!",
-                    appConfig.getFullPath(AppConfig.PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE));
+                    appConfig.getFullPathStr(AppConfig.PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE));
             System.exit(1);
         }
     }

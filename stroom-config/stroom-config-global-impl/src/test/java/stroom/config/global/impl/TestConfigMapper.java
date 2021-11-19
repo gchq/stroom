@@ -221,7 +221,7 @@ class TestConfigMapper {
         final ConfigProperty configProperty = configProperties.stream()
                 .filter(confProp ->
                         confProp.getName().equalsIgnoreCase(PropertyPath.fromPathString(
-                                referenceDataLmdbConfig.getFullPath(LmdbConfig.LOCAL_DIR_PROP_NAME))))
+                                referenceDataLmdbConfig.getFullPathStr(LmdbConfig.LOCAL_DIR_PROP_NAME))))
                 .findFirst()
                 .orElseThrow();
 
@@ -250,7 +250,7 @@ class TestConfigMapper {
 
         final ConfigProperty configProperty = configProperties.stream()
                 .filter(confProp -> confProp.getName().equalsIgnoreCase(PropertyPath.fromPathString(
-                        lmdbConfig.getFullPath(LmdbConfig.LOCAL_DIR_PROP_NAME))))
+                        lmdbConfig.getFullPathStr(LmdbConfig.LOCAL_DIR_PROP_NAME))))
                 .findFirst()
                 .orElseThrow();
 

@@ -110,6 +110,7 @@ public class GlobalConfigService {
 
         LOGGER.debug("Initialising GlobalConfigService");
         initialise();
+        LOGGER.info("Config initialised with all effective values");
     }
 
     private void initialise() {
@@ -120,12 +121,18 @@ public class GlobalConfigService {
         LOGGER.info("Initialised application config with global database properties");
     }
 
+    public void updateConfigFromDb(final AppConfig newAppConfig) {
+        final List<ConfigProperty> validDbProps = getValidProperties(false);
+        configMapper.updateConfigFromYaml(newAppConfig, validDbProps);
+        LOGGER.info("Updated application config with global database properties");
+    }
+
     private void updateConfigFromDb() {
         updateConfigFromDb(false);
         LOGGER.info("Updated application config with global database properties");
     }
 
-    private void updateConfigFromDb(final boolean deleteUnknownProps) {
+    private List<ConfigProperty> getValidProperties(final boolean deleteUnknownProps) {
         // Get all props held in the DB, which may be a subset of those in the config
         // object model
 
@@ -135,7 +142,7 @@ public class GlobalConfigService {
         allDbProps.forEach(dbConfigProp -> {
             if (dbConfigProp.getName() == null || !configMapper.validatePropertyPath(dbConfigProp.getName())) {
                 LOGGER.debug("Property {} is in the database but not in the appConfig model",
-                        dbConfigProp.getName().toString());
+                        dbConfigProp.getName());
                 if (deleteUnknownProps) {
                     deleteFromDb(dbConfigProp.getName());
                 }
@@ -144,6 +151,11 @@ public class GlobalConfigService {
             }
         });
 
+        return validDbProps;
+    }
+
+    private void updateConfigFromDb(final boolean deleteUnknownProps) {
+        final List<ConfigProperty> validDbProps = getValidProperties(deleteUnknownProps);
         configMapper.decorateAllDbConfigProperty(validDbProps);
     }
 
@@ -152,11 +164,6 @@ public class GlobalConfigService {
      */
     void updateConfigObjects() {
         taskContext.info(() -> "Updating config from DB");
-        updateConfigFromDb();
-    }
-
-    void updateConfigObjects(final AppConfig newAppConfig) {
-        configMapper.refreshPropertyMap(newAppConfig);
         updateConfigFromDb();
     }
 
@@ -340,7 +347,13 @@ public class GlobalConfigService {
 
         final PropertyPath propertyPath = configProperty.getName();
         final String effectiveValueStr = configProperty.getEffectiveValue().orElse(null);
-        final Object effectiveValue = configMapper.convertValue(propertyPath, effectiveValueStr);
+        final Object effectiveValue;
+        try {
+            effectiveValue = configMapper.convertValue(propertyPath, effectiveValueStr);
+        } catch (Exception e) {
+            throw new ConfigPropertyValidationException(LogUtil.message("Error parsing [{}]: {}",
+                    effectiveValueStr, e.getMessage(), e));
+        }
 
         final PropertyUtil.Prop prop = configMapper.getProp(propertyPath)
                 .orElseThrow(() ->

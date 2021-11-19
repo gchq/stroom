@@ -4,6 +4,7 @@ import stroom.job.api.ScheduledJobsBinder;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasHealthCheckBinder;
+import stroom.util.guice.HasSystemInfoBinder;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.validation.ValidationModule;
 
@@ -20,6 +21,9 @@ public class GlobalConfigModule extends AbstractModule {
     protected void configure() {
         bind(AppConfigMonitor.class).asEagerSingleton();
 
+        // Need to ensure it initialises so any db props can be set on AppConfig
+        bind(GlobalConfigService.class).asEagerSingleton();
+
         HasHealthCheckBinder.create(binder())
                 .bind(AppConfigMonitor.class);
 
@@ -28,6 +32,9 @@ public class GlobalConfigModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(GlobalConfigResourceImpl.class);
+
+        HasSystemInfoBinder.create(binder())
+                .bind(AppConfigSystemInfo.class);
 
         install(new ValidationModule());
 
