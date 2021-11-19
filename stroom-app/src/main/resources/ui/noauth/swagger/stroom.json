@@ -4364,7 +4364,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/User"
+                    "$ref" : "#/components/schemas/SimpleUser"
                   }
                 }
               }
@@ -10074,6 +10074,9 @@
               "type" : "string"
             }
           },
+          "qualifiedFilterInput" : {
+            "type" : "string"
+          },
           "rootNodes" : {
             "type" : "array",
             "items" : {
@@ -10259,7 +10262,7 @@
           "users" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/User"
+              "$ref" : "#/components/schemas/SimpleUser"
             }
           }
         }
@@ -11386,6 +11389,9 @@
           },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
+          },
+          "qualifiedFilterInput" : {
+            "type" : "string"
           },
           "values" : {
             "type" : "array",
@@ -13686,6 +13692,17 @@
           }
         }
       },
+      "SimpleUser" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "uuid" : {
+            "type" : "string"
+          }
+        }
+      },
       "Size" : {
         "type" : "object",
         "properties" : {
@@ -14971,6 +14988,9 @@
         "properties" : {
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
+          },
+          "qualifiedFilterInput" : {
+            "type" : "string"
           },
           "values" : {
             "type" : "array",

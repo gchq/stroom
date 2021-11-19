@@ -999,6 +999,7 @@ export type FetchDataResult = AbstractFetchDataResult & {
 
 export interface FetchExplorerNodeResult {
   openedItems?: string[];
+  qualifiedFilterInput?: string;
   rootNodes?: ExplorerNode[];
   temporaryOpenedItems?: string[];
 }
@@ -1093,7 +1094,7 @@ export interface FilterFieldDefinition {
 
 export interface FilterUsersRequest {
   quickFilterInput?: string;
-  users?: User[];
+  users?: SimpleUser[];
 }
 
 export interface FindDBTableCriteria {
@@ -1609,6 +1610,7 @@ export interface ListConfigResponse {
 
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
+  qualifiedFilterInput?: string;
   values?: ConfigProperty[];
 }
 
@@ -2710,6 +2712,11 @@ export interface SharedStepData {
   sourceLocation?: SourceLocation;
 }
 
+export interface SimpleUser {
+  name?: string;
+  uuid?: string;
+}
+
 export interface Size {
   /** @format int32 */
   height?: number;
@@ -3284,6 +3291,7 @@ export interface TokenResponse {
 export interface TokenResultPage {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
+  qualifiedFilterInput?: string;
   values?: Token[];
 }
 
@@ -6409,7 +6417,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     filterUsers: (data: FilterUsersRequest, params: RequestParams = {}) =>
-      this.request<any, User[]>({
+      this.request<any, SimpleUser[]>({
         path: `/permission/doc/v1/filterUsers`,
         method: "POST",
         body: data,
