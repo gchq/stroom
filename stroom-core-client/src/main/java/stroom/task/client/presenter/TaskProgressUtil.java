@@ -38,6 +38,8 @@ import java.util.stream.Collectors;
 
 class TaskProgressUtil {
 
+    public static final String DEAD_TASK_NAME = "<<dead>>";
+
     private TaskProgressUtil() {
     }
 
@@ -91,7 +93,7 @@ class TaskProgressUtil {
                     parent.setId(parentId);
                     parent.setSubmitTimeMs(child.getSubmitTimeMs());
                     parent.setTimeNowMs(child.getTimeNowMs());
-                    parent.setTaskName("<<dead>>");
+                    parent.setTaskName(DEAD_TASK_NAME);
                     return parent;
                 });
 

@@ -68,6 +68,6 @@ public interface DocPermissionResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Get all permissions for a given document type",
             operationId = "filterUsers")
-    List<User> filterUsers(final FilterUsersRequest filterUsersRequest);
+    List<SimpleUser> filterUsers(final FilterUsersRequest filterUsersRequest);
 
 }

@@ -98,7 +98,9 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
     public FetchExplorerNodeResult getData(final FindExplorerNodeCriteria criteria) {
         try {
             final ExplorerTreeFilter filter = criteria.getFilter();
-            final FetchExplorerNodeResult result = new FetchExplorerNodeResult();
+            final String qualifiedFilterInput = QuickFilterPredicateFactory.fullyQualifyInput(
+                    filter.getNameFilter(), FIELD_MAPPERS);
+            final FetchExplorerNodeResult result = new FetchExplorerNodeResult(qualifiedFilterInput);
 
             // Get the master tree model.
             final TreeModel masterTreeModel = explorerTreeModel.getModel();

@@ -4,15 +4,14 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.event.logging.api.StroomEventLoggingService;
 
 import event.logging.BaseObject;
-import event.logging.ComplexLoggedOutcome;
-import event.logging.ComplexLoggedSupplier;
 import event.logging.Criteria;
 import event.logging.Data;
 import event.logging.Event;
 import event.logging.EventAction;
+import event.logging.EventLoggerBuilder.TypeIdStep;
 import event.logging.EventLoggingService;
-import event.logging.LoggedWorkExceptionHandler;
 import event.logging.Purpose;
+import event.logging.impl.MockEventLoggerBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,28 +70,9 @@ public class MockStroomEventLoggingService implements EventLoggingService, Stroo
     }
 
     @Override
-    public <T_RESULT, T_EVENT_ACTION extends EventAction> T_RESULT loggedResult(
-            final String eventTypeId,
-            final String description,
-            final Purpose purpose,
-            final T_EVENT_ACTION eventAction,
-            final ComplexLoggedSupplier<T_RESULT, T_EVENT_ACTION> loggedWork,
-            final LoggedWorkExceptionHandler<T_EVENT_ACTION> exceptionHandler) {
-
-        LOGGER.info("loggedResult called for typeId {}, description {}",
-                eventTypeId, description);
-
-        try {
-            final ComplexLoggedOutcome<T_RESULT, T_EVENT_ACTION> loggedResult = loggedWork.get(eventAction);
-            return loggedResult.getResult();
-        } catch (Exception e) {
-            if (exceptionHandler != null) {
-                exceptionHandler.handle(eventAction, e);
-            }
-            throw e;
-        }
+    public TypeIdStep loggedWorkBuilder() {
+        return new MockEventLoggerBuilder<>(this);
     }
-
 
     @Override
     public void setValidate(final Boolean validate) {
@@ -138,4 +118,5 @@ public class MockStroomEventLoggingService implements EventLoggingService, Stroo
     public List<Data> getDataItems(final Object obj) {
         return null;
     }
+
 }

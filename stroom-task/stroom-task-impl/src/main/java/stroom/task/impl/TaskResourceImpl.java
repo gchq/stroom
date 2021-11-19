@@ -64,6 +64,7 @@ class TaskResourceImpl implements TaskResource {
         return find(nodeName, new FindTaskProgressRequest(new FindTaskProgressCriteria()));
     }
 
+    @AutoLogged(OperationType.UNLOGGED) // Called for each node so too noisy to log and of limited benefit
     @Override
     public TaskProgressResponse find(final String nodeName, final FindTaskProgressRequest request) {
         try {
@@ -91,8 +92,8 @@ class TaskResourceImpl implements TaskResource {
         }
     }
 
+    @AutoLogged(OperationType.UNLOGGED) // Called for each node so too noisy to log and of limited benefit
     @Override
-    @AutoLogged(OperationType.SEARCH)
     public TaskProgressResponse userTasks(final String nodeName) {
         try {
             final String sessionId = sessionIdProvider.get().get();

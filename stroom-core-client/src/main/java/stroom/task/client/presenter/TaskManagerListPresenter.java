@@ -200,8 +200,14 @@ public class TaskManagerListPresenter
         final Column<TaskProgress, TickBoxState> column = new Column<TaskProgress, TickBoxState>(
                 TickBoxCell.create(tickBoxAppearance, false, false)) {
             @Override
-            public TickBoxState getValue(final TaskProgress object) {
-                return TickBoxState.fromBoolean(selectedTaskProgress.contains(object));
+            public TickBoxState getValue(final TaskProgress taskProgress) {
+                if (TaskProgressUtil.DEAD_TASK_NAME.equals(taskProgress.getTaskName())) {
+                    // Dead tasks cannot be deleted so don't show a checkbox
+                    // They are only there to show that an orphaned child task was a child of something
+                    return null;
+                } else {
+                    return TickBoxState.fromBoolean(selectedTaskProgress.contains(taskProgress));
+                }
             }
         };
 
@@ -253,9 +259,9 @@ public class TaskManagerListPresenter
         // Node.
         getView().addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(getColouredCellFunc(taskProgress ->
-                                taskProgress.getNodeName() != null
-                                        ? taskProgress.getNodeName()
-                                        : "?"))
+                        taskProgress.getNodeName() != null
+                                ? taskProgress.getNodeName()
+                                : "?"))
                         .withSorting(FindTaskProgressCriteria.FIELD_NODE)
                         .build(),
                 FindTaskProgressCriteria.FIELD_NODE,
@@ -280,7 +286,7 @@ public class TaskManagerListPresenter
         // Submit Time.
         getView().addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(getColouredCellFunc(taskProgress ->
-                                ClientDateUtil.toISOString(taskProgress.getSubmitTimeMs())))
+                        ClientDateUtil.toISOString(taskProgress.getSubmitTimeMs())))
                         .withSorting(FindTaskProgressCriteria.FIELD_SUBMIT_TIME)
                         .build(),
                 FindTaskProgressCriteria.FIELD_SUBMIT_TIME,
@@ -289,7 +295,7 @@ public class TaskManagerListPresenter
         // Age.
         getView().addResizableColumn(
                 DataGridUtil.htmlColumnBuilder(getColouredCellFunc(taskProgress ->
-                                ModelStringUtil.formatDurationString(taskProgress.getAgeMs())))
+                        ModelStringUtil.formatDurationString(taskProgress.getAgeMs())))
                         .withSorting(FindTaskProgressCriteria.FIELD_AGE)
                         .build(),
                 FindTaskProgressCriteria.FIELD_AGE,

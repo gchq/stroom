@@ -39,7 +39,18 @@ public class NullSafe {
 
     public static <T1> String toStringOrElse(final T1 value,
                                              final Function<T1, Object> getter,
-                                             final Supplier<String> otherSupplier) {
+                                             final String other) {
+        if (value == null) {
+            return other;
+        } else {
+            final Object value2 = Objects.requireNonNull(getter).apply(value);
+            return convertToString(value2, other);
+        }
+    }
+
+    public static <T1> String toStringOrElseGet(final T1 value,
+                                                final Function<T1, Object> getter,
+                                                final Supplier<String> otherSupplier) {
         if (value == null) {
             return handleNull(otherSupplier);
         } else {
@@ -273,6 +284,14 @@ public class NullSafe {
             } else {
                 return null;
             }
+        }
+    }
+
+    private static String convertToString(final Object value, final String other) {
+        if (value != null) {
+            return value.toString();
+        } else {
+            return other;
         }
     }
 }
