@@ -139,7 +139,7 @@ class AsyncSearchTaskHandler {
                         final List<Long> shards = entry.getValue();
                         if (targetNodes.contains(nodeName)) {
                             final Runnable runnable = taskContextFactory.childContext(parentContext,
-                                    "Node search",
+                                    "Search node: " + nodeName,
                                     taskContext -> {
                                         final NodeSearch nodeSearch;
                                         if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
