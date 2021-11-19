@@ -258,7 +258,7 @@ public class SearchResponseCreator {
                     if (fetch == null || Fetch.ALL.equals(fetch)) {
                         // If the fetch option has not been set or is set to ALL we deliver the full result.
                         results.add(result);
-                        LOGGER.info(() -> "Delivering " + result + " for " + componentId);
+                        LOGGER.debug(() -> "Delivering " + result + " for " + componentId);
 
                     } else if (Fetch.CHANGES.equals(fetch)) {
                         // Cache the new result and get the previous one.
@@ -292,7 +292,7 @@ public class SearchResponseCreator {
                             // Either we haven't returned a result before or this result
                             // is different from the one delivered previously so deliver it to the client.
                             results.add(result);
-                            LOGGER.info(() -> "Delivering " + result + " for " + componentId);
+                            LOGGER.debug(() -> "Delivering " + result + " for " + componentId);
                         }
                     }
                 }

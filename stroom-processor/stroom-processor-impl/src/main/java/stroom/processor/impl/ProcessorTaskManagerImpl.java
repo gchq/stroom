@@ -52,9 +52,9 @@ import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.task.api.ExecutorProvider;
-import stroom.task.api.SimpleThreadPool;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
@@ -100,7 +100,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
     private static final int POLL_INTERVAL_MS = 10000;
     private static final int DELETE_INTERVAL_MS = POLL_INTERVAL_MS * 10;
-    private static final ThreadPool THREAD_POOL = new SimpleThreadPool(3);
+    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Fill Task Store", 3);
 
     private final ProcessorFilterService processorFilterService;
     private final ProcessorFilterTrackerDao processorFilterTrackerDao;

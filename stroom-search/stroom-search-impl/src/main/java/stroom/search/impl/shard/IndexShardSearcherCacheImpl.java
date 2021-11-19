@@ -82,7 +82,7 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
         this.indexShardSearchConfig = indexShardSearchConfig;
         this.securityContext = securityContext;
 
-        final ThreadPool threadPool = new ThreadPoolImpl("Index Shard Searcher Cache", 3, 0, Integer.MAX_VALUE);
+        final ThreadPool threadPool = new ThreadPoolImpl("Index Shard Searcher Cache", 3);
         executor = executorProvider.get(threadPool);
     }
 

@@ -59,10 +59,7 @@ public class SolrSearchTaskHandler {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SolrSearchTaskHandler.class);
 
     private static final ThreadPool THREAD_POOL = new ThreadPoolImpl(
-            "Search Solr Index Shard",
-            5,
-            0,
-            Integer.MAX_VALUE);
+            "Search Solr Index Shard");
 
     private final SolrIndexClientCache solrIndexClientCache;
     private final Executor executor;

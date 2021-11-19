@@ -28,15 +28,17 @@ import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.Query;
-import stroom.search.impl.shard.IndexShardSearchTaskExecutor;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
+import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.TaskId;
+import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.SearchProgressLog;
 import stroom.util.shared.ResultPage;
 
 import java.util.ArrayList;
@@ -53,6 +55,8 @@ import javax.inject.Provider;
 class AsyncSearchTaskHandler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AsyncSearchTaskHandler.class);
+
+    public static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Search");
 
     private final TargetNodeSetFactory targetNodeSetFactory;
     private final IndexShardService indexShardService;
@@ -89,6 +93,7 @@ class AsyncSearchTaskHandler {
     }
 
     public void exec(final TaskContext parentContext, final AsyncSearchTask task) {
+        SearchProgressLog.clear();
         securityContext.secure(() -> securityContext.useAsRead(() -> {
             final ClusterSearchResultCollector resultCollector = task.getResultCollector();
 
@@ -99,7 +104,7 @@ class AsyncSearchTaskHandler {
                 try {
                     // Get the nodes that we are going to send the search request
                     // to.
-                    final Set<String> targetNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
+                    final Set<String> targetNodes = targetNodeSetFactory.getEnabledTargetNodeSet();
                     parentContext.info(() -> task.getSearchName() + " - initialising");
                     final Query query = task.getQuery();
 
@@ -127,7 +132,7 @@ class AsyncSearchTaskHandler {
                     }
 
                     // Start remote cluster search execution.
-                    final Executor executor = executorProvider.get(IndexShardSearchTaskExecutor.THREAD_POOL);
+                    final Executor executor = executorProvider.get(THREAD_POOL);
                     final List<CompletableFuture<Void>> futures = new ArrayList<>();
                     for (final Entry<String, List<Long>> entry : shardMap.entrySet()) {
                         final String nodeName = entry.getKey();

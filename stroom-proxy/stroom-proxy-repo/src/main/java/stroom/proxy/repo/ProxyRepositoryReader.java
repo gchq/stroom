@@ -4,12 +4,13 @@ import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
-import stroom.util.concurrent.ScalingThreadPoolExecutor;
 import stroom.util.date.DateUtil;
 import stroom.util.io.BufferFactory;
 import stroom.util.io.FileUtil;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
+import stroom.util.thread.CustomThreadFactory;
+import stroom.util.thread.StroomThreadGroup;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -75,12 +77,7 @@ public final class ProxyRepositoryReader {
         this.proxyRepositoryManager = proxyRepositoryManager;
         this.scheduler = createScheduler(proxyRepositoryReaderConfig.getReadCron());
 
-        threadPool = new ThreadPoolImpl(
-                "Proxy Repository Reader",
-                5,
-                0,
-                proxyRepositoryReaderConfig.getForwardThreadCount(),
-                proxyRepositoryReaderConfig.getForwardThreadCount());
+        threadPool = new ThreadPoolImpl("Proxy Repository Reader");
 
         executorProvider = new ExecutorProvider() {
             @Override
@@ -92,12 +89,13 @@ public final class ProxyRepositoryReader {
             public Executor get(final ThreadPool threadPool) {
                 return executorServiceMap.computeIfAbsent(
                         threadPool,
-                        k -> ScalingThreadPoolExecutor.newScalingThreadPool(
-                                threadPool.getCorePoolSize(),
-                                threadPool.getMaxPoolSize(),
-                                threadPool.getMaxQueueSize(),
-                                60L,
-                                TimeUnit.SECONDS));
+                        k -> {
+                            final ThreadGroup poolThreadGroup = new ThreadGroup(StroomThreadGroup.instance(),
+                                    threadPool.getName());
+                            final CustomThreadFactory taskThreadFactory = new CustomThreadFactory(
+                                    threadPool.getName() + " #", poolThreadGroup, threadPool.getPriority());
+                            return Executors.newCachedThreadPool(taskThreadFactory);
+                        });
             }
         };
     }

@@ -47,6 +47,8 @@ import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.logging.SearchProgressLog;
+import stroom.util.logging.SearchProgressLog.SearchPhase;
 import stroom.util.shared.StoredError;
 
 import org.slf4j.Logger;
@@ -54,7 +56,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import javax.inject.Inject;
 
 class ExtractionTaskHandler {
@@ -103,6 +107,7 @@ class ExtractionTaskHandler {
     }
 
     public void exec(final TaskContext taskContext, final ExtractionTask task) {
+        SearchProgressLog.increment(SearchPhase.EXTRACTION_TASK_HANDLER_EXEC);
         // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission on can be read.
         securityContext.useAsRead(() ->
                 LAMBDA_LOGGER.logDurationIfDebugEnabled(
@@ -119,6 +124,8 @@ class ExtractionTaskHandler {
     }
 
     private void extract(final TaskContext taskContext, final ExtractionTask task) {
+        SearchProgressLog.increment(SearchPhase.EXTRACTION_TASK_HANDLER_EXTRACT);
+        SearchProgressLog.add(SearchPhase.EXTRACTION_TASK_HANDLER_EXTRACT_EVENTS, task.getEventIds().length);
         try {
             this.task = task;
 
@@ -210,8 +217,12 @@ class ExtractionTaskHandler {
                         segmentInputStream.include(segmentInputStream.count() - 1);
 
                         // Include as many segments as we can.
-                        for (final long segmentId : eventIds) {
-                            segmentInputStream.include(segmentId);
+                        final Set<Long> existingId = new HashSet<>();
+                        for (final long eventId : eventIds) {
+                            if (!existingId.add(eventId)) {
+                                LOGGER.warn("Duplicate segment for streamId=" + streamId + ", eventId=" + eventId);
+                            }
+                            segmentInputStream.include(eventId);
                             count++;
                         }
 
@@ -250,6 +261,9 @@ class ExtractionTaskHandler {
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Reading " + count + " segments from stream " + source.getMeta().getId());
             }
+
+            SearchProgressLog.increment(SearchPhase.EXTRACTION_TASK_HANDLER_EXTRACT2);
+            SearchProgressLog.add(SearchPhase.EXTRACTION_TASK_HANDLER_EXTRACT2_EVENTS, count);
 
             try {
                 // Here we need to reload the feed as this will get the related

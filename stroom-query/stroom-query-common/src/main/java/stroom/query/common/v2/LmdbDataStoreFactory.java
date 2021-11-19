@@ -15,7 +15,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.Executor;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton // To ensure the localDir delete is done only once and before store creation
@@ -25,13 +27,16 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
 
     private final LmdbEnvFactory lmdbEnvFactory;
     private final ResultStoreConfig resultStoreConfig;
+    private final Provider<Executor> executorProvider;
 
     @Inject
     public LmdbDataStoreFactory(final LmdbEnvFactory lmdbEnvFactory,
                                 final ResultStoreConfig resultStoreConfig,
+                                final Provider<Executor> executorProvider,
                                 final PathCreator pathCreator) {
         this.lmdbEnvFactory = lmdbEnvFactory;
         this.resultStoreConfig = resultStoreConfig;
+        this.executorProvider = executorProvider;
         // As result stores are transient they serve no purpose after shutdown so delete any that
         // may still be there
         cleanStoresDir(pathCreator);
