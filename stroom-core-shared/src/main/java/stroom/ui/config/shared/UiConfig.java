@@ -35,6 +35,8 @@ import javax.validation.constraints.Pattern;
 @JsonInclude(Include.NON_NULL)
 public class UiConfig extends AbstractConfig {
 
+    private static final Boolean REQUIRE_REACT_WRAPPER_DEFAULT = Boolean.TRUE;
+
     @JsonProperty
     @JsonPropertyDescription("The welcome message that is displayed in the welcome tab when logging in to Stroom. " +
             "The welcome message is in HTML format.")
@@ -190,7 +192,7 @@ public class UiConfig extends AbstractConfig {
             source = new SourceConfig();
         }
         if (requireReactWrapper == null) {
-            requireReactWrapper = true;
+            requireReactWrapper = REQUIRE_REACT_WRAPPER_DEFAULT;
         }
     }
 
@@ -315,11 +317,11 @@ public class UiConfig extends AbstractConfig {
     }
 
     public Boolean getRequireReactWrapper() {
-        return requireReactWrapper;
+        return Objects.requireNonNullElse(requireReactWrapper, REQUIRE_REACT_WRAPPER_DEFAULT);
     }
 
     public void setRequireReactWrapper(final Boolean requireReactWrapper) {
-        this.requireReactWrapper = requireReactWrapper;
+        this.requireReactWrapper = Objects.requireNonNullElse(requireReactWrapper, REQUIRE_REACT_WRAPPER_DEFAULT);
     }
 
     @Override

@@ -4,20 +4,23 @@ import stroom.util.shared.AbstractConfig;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
+import java.util.Objects;
 import javax.inject.Singleton;
 
 @Singleton
 public class ExportConfig extends AbstractConfig {
 
-    private boolean enabled;
+    private static final Boolean ENABLED_DEFAULT = Boolean.TRUE;
+
+    private Boolean enabled;
 
     @JsonPropertyDescription("Determines if the system will allow configuration to be exported via the export servlet")
     public boolean isEnabled() {
-        return enabled;
+        return Objects.requireNonNullElse(enabled, ENABLED_DEFAULT);
     }
 
-    public void setEnabled(final boolean enabled) {
-        this.enabled = enabled;
+    public void setEnabled(final Boolean enabled) {
+        this.enabled = Objects.requireNonNullElse(enabled, ENABLED_DEFAULT);
     }
 
     @Override

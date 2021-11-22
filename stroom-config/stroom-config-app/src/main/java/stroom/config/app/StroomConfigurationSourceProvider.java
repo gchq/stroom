@@ -68,6 +68,7 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
             // substitutions
             final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
             final JsonNode rootNode = mapper.readTree(in);
+            rootNode.getNodeType()
 
             Objects.requireNonNull(rootNode, () ->
                     LogUtil.message("Config file {} appears to be empty or contains no YAML"));

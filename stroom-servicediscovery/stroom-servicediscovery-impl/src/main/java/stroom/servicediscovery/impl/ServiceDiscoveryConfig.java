@@ -5,12 +5,15 @@ import stroom.util.shared.AbstractConfig;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
+import java.util.Objects;
 import javax.inject.Singleton;
 
 @Singleton
 public class ServiceDiscoveryConfig extends AbstractConfig {
 
-    private boolean enabled = false;
+    private static final Boolean ENABLED_DEFAULT = Boolean.TRUE;
+
+    private Boolean enabled = false;
     private String zookeeperUrl = "localhost:2181";
     private String servicesHostNameOrIpAddress = "localhost";
     private int servicesPort = 8080;
@@ -23,11 +26,11 @@ public class ServiceDiscoveryConfig extends AbstractConfig {
     @JsonPropertyDescription("Set this to true to use Zookeeper for service discovery. Set this to false to use " +
             "resolve all services locally, i.e. 127.0.0.1")
     public boolean isEnabled() {
-        return enabled;
+        return Objects.requireNonNullElse(enabled, ENABLED_DEFAULT);
     }
 
-    public void setEnabled(final boolean enabled) {
-        this.enabled = enabled;
+    public void setEnabled(final Boolean enabled) {
+        this.enabled = Objects.requireNonNullElse(enabled, ENABLED_DEFAULT);
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.UI)

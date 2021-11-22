@@ -7,6 +7,7 @@ import stroom.util.time.StroomDuration;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
+import java.util.Objects;
 import javax.validation.constraints.Min;
 
 // The descriptions have mostly been taken from the Caffine javadoc
@@ -30,6 +31,27 @@ public class CacheConfig extends AbstractConfig {
         this.maximumSize = maximumSize;
         this.expireAfterAccess = expireAfterAccess;
         this.expireAfterWrite = expireAfterWrite;
+    }
+
+    /**
+     * Return an instance of {@link CacheConfig} with all values set to their defaults, if they are null.
+     */
+    public static CacheConfig withDefaults(final CacheConfig cacheConfig, final CacheConfig defaultCacheConfig) {
+        Objects.requireNonNull(defaultCacheConfig);
+        if (cacheConfig == null) {
+            return defaultCacheConfig;
+        } else {
+            if (cacheConfig.maximumSize == null) {
+                cacheConfig.maximumSize = defaultCacheConfig.maximumSize;
+            }
+            if (cacheConfig.expireAfterAccess == null) {
+                cacheConfig.expireAfterAccess = defaultCacheConfig.expireAfterAccess;
+            }
+            if (cacheConfig.expireAfterWrite == null) {
+                cacheConfig.expireAfterWrite = defaultCacheConfig.expireAfterWrite;
+            }
+            return cacheConfig;
+        }
     }
 
     @JsonPropertyDescription("Specifies the maximum number of entries the cache may contain. Note that the cache " +
@@ -84,6 +106,33 @@ public class CacheConfig extends AbstractConfig {
         return new Builder(this);
     }
 
+    @Override
+    public String toString() {
+        return "CacheConfig{" +
+                "maximumSize=" + maximumSize +
+                ", expireAfterAccess=" + expireAfterAccess +
+                ", expireAfterWrite=" + expireAfterWrite +
+                '}';
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final CacheConfig that = (CacheConfig) o;
+        return Objects.equals(maximumSize, that.maximumSize) && Objects.equals(expireAfterAccess,
+                that.expireAfterAccess) && Objects.equals(expireAfterWrite, that.expireAfterWrite);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(maximumSize, expireAfterAccess, expireAfterWrite);
+    }
+
     public static final class Builder {
 
         private Long maximumSize;
@@ -118,4 +167,5 @@ public class CacheConfig extends AbstractConfig {
             return new CacheConfig(maximumSize, expireAfterAccess, expireAfterWrite);
         }
     }
+
 }

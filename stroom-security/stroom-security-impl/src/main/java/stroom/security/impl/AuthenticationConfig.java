@@ -40,7 +40,8 @@ public class AuthenticationConfig extends AbstractConfig {
     }
 
     public void setAuthenticationRequired(final Boolean authenticationRequired) {
-        this.authenticationRequired = authenticationRequired;
+        this.authenticationRequired = Objects.requireNonNullElse(
+                authenticationRequired, AUTHENTICATION_REQUIRED_DEFAULT);
     }
 
     @JsonProperty(PROP_NAME_OPENID)
@@ -62,8 +63,7 @@ public class AuthenticationConfig extends AbstractConfig {
 
     @SuppressWarnings("unused")
     public void setPreventLogin(final Boolean preventLogin) {
-        this.preventLogin = preventLogin;
-        ;
+        this.preventLogin = Objects.requireNonNullElse(preventLogin, PREVENT_LOGIN_DEFAULT);
     }
 
     @Override

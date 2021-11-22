@@ -6,11 +6,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
 import javax.inject.Singleton;
 
 @Singleton
 @JsonPropertyOrder(alphabetic = true)
 public class DataRetentionConfig extends AbstractConfig {
+
+    private static final Boolean USE_QUERY_OPTIMISATION_DEFAULT = Boolean.TRUE;
 
     @JsonProperty
     @JsonPropertyDescription("The number of records that will be logically deleted in each pass of the data " +
@@ -22,7 +25,7 @@ public class DataRetentionConfig extends AbstractConfig {
     @JsonPropertyDescription("If true stroom will add additional clauses to the data retention deletion SQL in order " +
             "to make use of other database indexes in order to improve performance. Due to the varied nature of " +
             "possible retention rules and data held on the system, this optimisation may be counter productive.")
-    private boolean useQueryOptimisation = true;
+    private Boolean useQueryOptimisation = true;
 
 
     public int getDeleteBatchSize() {
@@ -35,11 +38,11 @@ public class DataRetentionConfig extends AbstractConfig {
     }
 
     public boolean isUseQueryOptimisation() {
-        return useQueryOptimisation;
+        return Objects.requireNonNullElse(useQueryOptimisation, USE_QUERY_OPTIMISATION_DEFAULT);
     }
 
     @SuppressWarnings("unused")
-    public void setUseQueryOptimisation(final boolean useQueryOptimisation) {
-        this.useQueryOptimisation = useQueryOptimisation;
+    public void setUseQueryOptimisation(final Boolean useQueryOptimisation) {
+        this.useQueryOptimisation = Objects.requireNonNullElse(useQueryOptimisation, USE_QUERY_OPTIMISATION_DEFAULT);
     }
 }

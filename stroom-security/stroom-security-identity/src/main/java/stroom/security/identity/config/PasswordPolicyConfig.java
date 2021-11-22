@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
 import javax.inject.Singleton;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
@@ -20,6 +21,9 @@ import javax.validation.constraints.NotNull;
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class PasswordPolicyConfig extends AbstractConfig {
+
+    private static final Boolean ALLOW_PASSWORD_RESETS_DEFAULT = Boolean.TRUE;
+    private static final Boolean FORCE_PASSWORD_CHANGE_ON_FIRST_LOGIN = Boolean.TRUE;
 
     @JsonProperty
     @JsonPropertyDescription("Will the UI allow password resets")
@@ -104,7 +108,7 @@ public class PasswordPolicyConfig extends AbstractConfig {
 
     private void setDefaults() {
         if (allowPasswordResets == null) {
-            allowPasswordResets = true;
+            allowPasswordResets = ALLOW_PASSWORD_RESETS_DEFAULT;
         }
         if (neverUsedAccountDeactivationThreshold == null) {
             neverUsedAccountDeactivationThreshold = StroomDuration.ofDays(30);
@@ -116,7 +120,7 @@ public class PasswordPolicyConfig extends AbstractConfig {
             mandatoryPasswordChangeDuration = StroomDuration.ofDays(90);
         }
         if (forcePasswordChangeOnFirstLogin == null) {
-            forcePasswordChangeOnFirstLogin = true;
+            forcePasswordChangeOnFirstLogin = FORCE_PASSWORD_CHANGE_ON_FIRST_LOGIN;
         }
         if (passwordComplexityRegex == null) {
             passwordComplexityRegex = ".*";
@@ -136,11 +140,11 @@ public class PasswordPolicyConfig extends AbstractConfig {
     }
 
     public boolean isAllowPasswordResets() {
-        return allowPasswordResets;
+        return Objects.requireNonNullElse(allowPasswordResets, ALLOW_PASSWORD_RESETS_DEFAULT);
     }
 
     public void setAllowPasswordResets(final boolean allowPasswordResets) {
-        this.allowPasswordResets = allowPasswordResets;
+        this.allowPasswordResets = Objects.requireNonNullElse(allowPasswordResets, ALLOW_PASSWORD_RESETS_DEFAULT);
     }
 
     public StroomDuration getNeverUsedAccountDeactivationThreshold() {
@@ -176,7 +180,8 @@ public class PasswordPolicyConfig extends AbstractConfig {
 
     @SuppressWarnings("unused")
     public void setForcePasswordChangeOnFirstLogin(final boolean forcePasswordChangeOnFirstLogin) {
-        this.forcePasswordChangeOnFirstLogin = forcePasswordChangeOnFirstLogin;
+        this.forcePasswordChangeOnFirstLogin = Objects.requireNonNullElse(
+                forcePasswordChangeOnFirstLogin, FORCE_PASSWORD_CHANGE_ON_FIRST_LOGIN);
     }
 
     public String getPasswordComplexityRegex() {

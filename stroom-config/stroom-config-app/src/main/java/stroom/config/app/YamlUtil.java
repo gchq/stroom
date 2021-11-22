@@ -16,12 +16,16 @@
 
 package stroom.config.app;
 
+import stroom.util.json.MyDoubleSerialiser;
 import stroom.util.logging.LogUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.dropwizard.configuration.ConfigurationException;
 import io.dropwizard.configuration.ConfigurationFactory;
@@ -182,6 +186,19 @@ public class YamlUtil {
         Config config = new Config();
         config.setAppConfig(appConfig);
         writeConfig(config, path);
+    }
+
+    public static ObjectMapper getMapper() {
+        final SimpleModule module = new SimpleModule();
+        module.addSerializer(Double.class, new MyDoubleSerialiser());
+
+        final YAMLFactory yamlFactory = new YAMLFactory();
+        final ObjectMapper mapper = new ObjectMapper(yamlFactory);
+        mapper.registerModule(module);
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+        mapper.setSerializationInclusion(Include.NON_NULL);
+        return mapper;
     }
 
     /**

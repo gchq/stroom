@@ -17,9 +17,11 @@ import javax.inject.Singleton;
 @JsonInclude(Include.NON_NULL)
 public class SplashConfig extends AbstractConfig {
 
+    private static final Boolean ENABLED_DEFAULT = Boolean.FALSE;
+
     @JsonProperty
     @JsonPropertyDescription("If you would like users to see a splash screen on login.")
-    private boolean enabled;
+    private Boolean enabled = ENABLED_DEFAULT;
     @JsonProperty
     @JsonPropertyDescription("The title of the splash screen popup.")
     private String title;
@@ -35,7 +37,7 @@ public class SplashConfig extends AbstractConfig {
     }
 
     @JsonCreator
-    public SplashConfig(@JsonProperty("enabled") final boolean enabled,
+    public SplashConfig(@JsonProperty("enabled") final Boolean enabled,
                         @JsonProperty("title") final String title,
                         @JsonProperty("body") final String body,
                         @JsonProperty("version") final String version) {
@@ -48,6 +50,9 @@ public class SplashConfig extends AbstractConfig {
     }
 
     private void setDefaults() {
+        if (enabled == null) {
+            enabled = ENABLED_DEFAULT;
+        }
         if (title == null) {
             title = "Splash Screen";
         }
@@ -60,11 +65,11 @@ public class SplashConfig extends AbstractConfig {
     }
 
     public boolean isEnabled() {
-        return enabled;
+        return Objects.requireNonNullElse(enabled, ENABLED_DEFAULT);
     }
 
-    public void setEnabled(final boolean enabled) {
-        this.enabled = enabled;
+    public void setEnabled(final Boolean enabled) {
+        this.enabled = Objects.requireNonNullElse(enabled, ENABLED_DEFAULT);
     }
 
     public String getTitle() {

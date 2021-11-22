@@ -6,25 +6,29 @@ import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
+import java.util.Objects;
 import javax.inject.Singleton;
 
 @Singleton
 public class ClusterConfig extends AbstractConfig {
 
-    private boolean clusterCallUseLocal = true;
+    private static final Boolean CLUSTER_CALL_USE_LOCAL_DEFAULT = Boolean.TRUE;
+    private static final Boolean CLUSTER_CALL_IGNORE_SSL_HOSTNAME_VERIFIER_DEFAULT = Boolean.TRUE;
+
+    private Boolean clusterCallUseLocal = CLUSTER_CALL_USE_LOCAL_DEFAULT;
     private StroomDuration clusterCallReadTimeout = StroomDuration.ofSeconds(30);
-    private boolean clusterCallIgnoreSSLHostnameVerifier = true;
+    private Boolean clusterCallIgnoreSSLHostnameVerifier = CLUSTER_CALL_IGNORE_SSL_HOSTNAME_VERIFIER_DEFAULT;
     private StroomDuration clusterResponseTimeout = StroomDuration.ofSeconds(30);
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("Do local calls when calling our own local services (true is an optimisation)")
     public boolean isClusterCallUseLocal() {
-        return clusterCallUseLocal;
+        return Objects.requireNonNullElse(clusterCallUseLocal, CLUSTER_CALL_USE_LOCAL_DEFAULT);
     }
 
     @SuppressWarnings("unused")
-    public void setClusterCallUseLocal(final boolean clusterCallUseLocal) {
-        this.clusterCallUseLocal = clusterCallUseLocal;
+    public void setClusterCallUseLocal(final Boolean clusterCallUseLocal) {
+        this.clusterCallUseLocal = Objects.requireNonNullElse(clusterCallUseLocal, CLUSTER_CALL_USE_LOCAL_DEFAULT);
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
@@ -42,12 +46,15 @@ public class ClusterConfig extends AbstractConfig {
     @JsonPropertyDescription("If cluster calls are using SSL then choose if we want to ignore host name " +
             "verification")
     public boolean isClusterCallIgnoreSSLHostnameVerifier() {
-        return clusterCallIgnoreSSLHostnameVerifier;
+        return Objects.requireNonNullElse(
+                clusterCallIgnoreSSLHostnameVerifier,
+                CLUSTER_CALL_IGNORE_SSL_HOSTNAME_VERIFIER_DEFAULT);
     }
 
     @SuppressWarnings("unused")
-    public void setClusterCallIgnoreSSLHostnameVerifier(final boolean clusterCallIgnoreSSLHostnameVerifier) {
-        this.clusterCallIgnoreSSLHostnameVerifier = clusterCallIgnoreSSLHostnameVerifier;
+    public void setClusterCallIgnoreSSLHostnameVerifier(final Boolean clusterCallIgnoreSSLHostnameVerifier) {
+        this.clusterCallIgnoreSSLHostnameVerifier = Objects.requireNonNullElse(
+                clusterCallIgnoreSSLHostnameVerifier, CLUSTER_CALL_IGNORE_SSL_HOSTNAME_VERIFIER_DEFAULT);
     }
 
     @JsonPropertyDescription("Time before giving up on cluster results")

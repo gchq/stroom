@@ -8,18 +8,25 @@ import stroom.config.app.YamlUtil;
 import stroom.config.common.CommonDbConfig;
 import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
+import stroom.event.logging.impl.LoggingConfig;
 import stroom.legacy.db.LegacyDbConfig;
+import stroom.lifecycle.impl.LifecycleConfig;
 import stroom.util.config.PropertyUtil;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.reflect.ClassPath;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
 import org.assertj.core.api.Assertions;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -28,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -47,6 +55,14 @@ class TestAppConfigModule {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestAppConfigModule.class);
     private static final String MODIFIED_JDBC_DRIVER = "modified.jdbc.driver";
     private static final String STROOM_PACKAGE_PREFIX = "stroom.";
+    private static final Predicate<String> STROOM_PACKAGE_NAME_FILTER = name ->
+            name.startsWith(STROOM_PACKAGE_PREFIX) && !name.contains("shaded");
+    private static final Predicate<Class<?>> CONFIG_CLASS_FILTER = clazz -> {
+
+        return clazz.getSimpleName().endsWith("Config")
+                && !clazz.equals(AbstractConfig.class)
+                && !clazz.equals(AppConfig.class);
+    };
 
     @AfterEach
     void afterEach() {
@@ -230,39 +246,12 @@ class TestAppConfigModule {
 //            }
 //        });
 
-        Predicate<String> packageNameFilter = name ->
-                name.startsWith(STROOM_PACKAGE_PREFIX) && !name.contains("shaded");
-
-        Predicate<Class<?>> classFilter = clazz -> {
-
-            return clazz.getSimpleName().endsWith("Config")
-                    && !clazz.equals(AbstractConfig.class)
-                    && !clazz.equals(AppConfig.class);
-        };
 
         LOGGER.info("Finding all AbstractConfig classes");
 
         // Find all classes that extend AbstractConfig
         final ClassLoader classLoader = getClass().getClassLoader();
-        final Set<Class<?>> abstractConfigConcreteClasses = ClassPath.from(classLoader)
-                .getAllClasses()
-                .stream()
-                .filter(classInfo -> packageNameFilter.test(classInfo.getPackageName()))
-                .map(ClassPath.ClassInfo::load)
-                .filter(classFilter)
-                .filter(AbstractConfig.class::isAssignableFrom)
-                .filter(clazz -> !IsProxyConfig.class.isAssignableFrom(clazz)) // ignore proxy classes
-                .filter(clazz -> {
-                    boolean isAbstract = Modifier.isAbstract(clazz.getModifiers());
-                    if (isAbstract) {
-                        LOGGER.info("Ignoring abstract class {}", clazz.getName());
-                    }
-                    return !isAbstract;
-                }) // Ignore abstract classes, e.g. UriConfig
-                .peek(clazz -> {
-                    LOGGER.debug(clazz.getSimpleName());
-                })
-                .collect(Collectors.toSet());
+        final Set<Class<?>> abstractConfigConcreteClasses = getAbstractConfigConcreteClasses(classLoader);
 
         LOGGER.info("Finding all classes in object tree");
 
@@ -272,7 +261,7 @@ class TestAppConfigModule {
         final Set<Class<?>> appConfigTreeClasses = new HashSet<>();
         PropertyUtil.walkObjectTree(
                 appConfig,
-                prop -> packageNameFilter.test(prop.getValueClass().getPackageName()),
+                prop -> STROOM_PACKAGE_NAME_FILTER.test(prop.getValueClass().getPackageName()),
                 prop -> {
                     // make sure we have a getter and a setter
                     Assertions.assertThat(prop.getGetter())
@@ -286,7 +275,7 @@ class TestAppConfigModule {
                             .isNotNull();
 
                     Class<?> valueClass = prop.getValueClass();
-                    if (classFilter.test(valueClass)) {
+                    if (CONFIG_CLASS_FILTER.test(valueClass)) {
                         appConfigTreeClasses.add(prop.getValueClass());
                         AbstractConfig propValue = (AbstractConfig) prop.getValueFromConfigObject();
                         // Keep a record of the instance ID of the instance in the tree
@@ -345,6 +334,211 @@ class TestAppConfigModule {
         Assertions.assertThat(classesWithMultipleInstances).isEmpty();
     }
 
+    @Test
+    void findPrimitiveBooleanSetters() throws IOException {
+        final ClassLoader classLoader = getClass().getClassLoader();
+        final Set<Class<?>> abstractConfigConcreteClasses = getAbstractConfigConcreteClasses(classLoader);
+        final List<Tuple2<? extends Class<?>, Method>> settersWithLittleBoolean = abstractConfigConcreteClasses.stream()
+                .flatMap(clazz ->
+                        Arrays.stream(clazz.getMethods())
+                                .filter(method -> method.getName().startsWith("set"))
+                                .filter(method -> Arrays.asList(method.getParameterTypes()).contains(boolean.class))
+                                .map(method -> Tuple.of(clazz, method)))
+                .peek(classAndMethod ->
+                        LOGGER.info("class: {}, method: {}",
+                                classAndMethod._1,
+                                classAndMethod._2.getName()))
+                .collect(Collectors.toList());
+        // Config classes with (b|B)oolean values should have:
+        //   a Boolean variable initialised to a default
+        //   a getter that returns a boolean or the default if null
+        //   a setter that accepts a Boolean and stores the default if null
+        Assertions.assertThat(settersWithLittleBoolean)
+                .isEmpty();
+    }
+
+    private Set<Class<?>> getAbstractConfigConcreteClasses(final ClassLoader classLoader) throws IOException {
+
+        final Set<Class<?>> abstractConfigConcreteClasses = ClassPath.from(classLoader)
+                .getAllClasses()
+                .stream()
+                .filter(classInfo -> STROOM_PACKAGE_NAME_FILTER.test(classInfo.getPackageName()))
+                .map(ClassPath.ClassInfo::load)
+                .filter(CONFIG_CLASS_FILTER)
+                .filter(AbstractConfig.class::isAssignableFrom)
+                .filter(clazz -> !IsProxyConfig.class.isAssignableFrom(clazz)) // ignore proxy classes
+                .filter(clazz -> {
+                    boolean isAbstract = Modifier.isAbstract(clazz.getModifiers());
+                    if (isAbstract) {
+                        LOGGER.info("Ignoring abstract class {}", clazz.getName());
+                    }
+                    return !isAbstract;
+                }) // Ignore abstract classes, e.g. UriConfig
+                .peek(clazz -> {
+                    LOGGER.debug(clazz.getSimpleName());
+                })
+                .collect(Collectors.toSet());
+        return abstractConfigConcreteClasses;
+    }
+
+    /**
+     * Verify behaviour of Boolean (de)ser with a default value
+     */
+    @Test
+    void testBooleanSerDeSer() throws IOException {
+        final ObjectMapper mapper = JsonUtil.getMapper();
+
+        final LifecycleConfig lifecycleConfigEnabled = new LifecycleConfig();
+        lifecycleConfigEnabled.setEnabled(true);
+        Assertions.assertThat(lifecycleConfigEnabled.isEnabled())
+                .isTrue();
+
+        final LifecycleConfig lifecycleConfigDisabled = new LifecycleConfig();
+        lifecycleConfigDisabled.setEnabled(false);
+        Assertions.assertThat(lifecycleConfigDisabled.isEnabled())
+                .isFalse();
+
+        final LifecycleConfig lifecycleConfigNull = new LifecycleConfig();
+        lifecycleConfigNull.setEnabled(null);
+        Assertions.assertThat(lifecycleConfigNull.isEnabled())
+                .isEqualTo((new LifecycleConfig()).isEnabled());
+
+        String json;
+        json = mapper.writeValueAsString(lifecycleConfigDisabled);
+
+        Assertions.assertThat(json)
+                .contains("false");
+
+        Assertions.assertThat(mapper.readValue(json, LifecycleConfig.class))
+                .isEqualTo(lifecycleConfigDisabled);
+
+
+        json = mapper.writeValueAsString(lifecycleConfigEnabled);
+
+        Assertions.assertThat(json)
+                .contains("true");
+
+        Assertions.assertThat(mapper.readValue(json, LifecycleConfig.class))
+                .isEqualTo(lifecycleConfigEnabled);
+    }
+
+    /**
+     * Verify behaviour of Boolean (de)ser with a default value
+     */
+    @Test
+    void testDefaultValueSerDeSer() throws IOException {
+        final ObjectMapper mapper = YamlUtil.getMapper();
+
+        // Use LoggingConfig as it has a true and a false default and a child object
+
+        final LoggingConfig loggingConfigVanilla = new LoggingConfig();
+
+        Assertions.assertThat(loggingConfigVanilla.isOmitRecordDetailsLoggingEnabled())
+                .isEqualTo(LoggingConfig.OMIT_RECORD_DETAILS_LOGGING_ENABLED_DEFAULT);
+        Assertions.assertThat(loggingConfigVanilla.isLogEveryRestCallEnabled())
+                .isEqualTo(LoggingConfig.LOG_EVERY_REST_CALL_ENABLED_DEFAULT);
+        Assertions.assertThat(loggingConfigVanilla.getMaxListElements())
+                .isEqualTo(LoggingConfig.MAX_LIST_ELEMENTS_DEFAULT);
+
+        doLoggingConfigTest(mapper, false, false, false);
+        doLoggingConfigTest(mapper, true, true, true);
+//        doLoggingConfigTest(
+//                mapper,
+//                null,
+//                LoggingConfig.OMIT_RECORD_DETAILS_LOGGING_ENABLED_DEFAULT,
+//                LoggingConfig.LOG_EVERY_REST_CALL_ENABLED_DEFAULT);
+    }
+
+    @Test
+    void testDefaultValueSerDeSer2() throws IOException {
+        // empty cache branch
+        final String yaml = """
+                maxDataElementStringLength: 0
+                deviceCache:
+                """;
+
+        final LoggingConfig loggingConfig2 = YamlUtil.getMapper()
+                .readValue(yaml, LoggingConfig.class);
+        Assertions.assertThat(loggingConfig2.isOmitRecordDetailsLoggingEnabled())
+                .isEqualTo(LoggingConfig.OMIT_RECORD_DETAILS_LOGGING_ENABLED_DEFAULT);
+        Assertions.assertThat(loggingConfig2.isLogEveryRestCallEnabled())
+                .isEqualTo(LoggingConfig.LOG_EVERY_REST_CALL_ENABLED_DEFAULT);
+        Assertions.assertThat(loggingConfig2.getMaxListElements())
+                .isEqualTo(LoggingConfig.MAX_LIST_ELEMENTS_DEFAULT);
+        Assertions.assertThat(loggingConfig2.getMaxDataElementStringLength())
+                .isEqualTo(0);
+        Assertions.assertThat(loggingConfig2.getDeviceCache())
+                .isNotNull();
+        Assertions.assertThat(loggingConfig2.getDeviceCache().getMaximumSize())
+                .isEqualTo(LoggingConfig.DEVICE_CACHE_DEFAULT.getMaximumSize());
+
+    }
+
+    @Test
+    void testDefaultValueSerDeSer3() throws IOException {
+
+        // sparse cache branch
+        final String yaml2 = """
+                maxDataElementStringLength: 0
+                deviceCache:
+                  maximumSize: 99
+                """;
+
+        final LoggingConfig loggingConfig3 = YamlUtil.getMapper()
+                .readValue(yaml2, LoggingConfig.class);
+        Assertions.assertThat(loggingConfig3.getDeviceCache().getMaximumSize())
+                .isEqualTo(99);
+        Assertions.assertThat(loggingConfig3.getDeviceCache().getExpireAfterWrite())
+                .isEqualTo(LoggingConfig.DEVICE_CACHE_DEFAULT.getExpireAfterWrite());
+    }
+
+    @Test
+    void testDefaultValueSerDeSer4() throws IOException {
+
+        // null leaf values
+        final String yaml2 = """
+                maxListElements:
+                logEveryRestCallEnabled:
+                omitRecordDetailsLoggingEnabled:
+                """;
+
+        final LoggingConfig loggingConfig3 = YamlUtil.getMapper()
+                .readValue(yaml2, LoggingConfig.class);
+
+        SoftAssertions.assertSoftly(softAssertions -> {
+            softAssertions.assertThat(loggingConfig3.getMaxListElements())
+                    .isEqualTo(LoggingConfig.MAX_LIST_ELEMENTS_DEFAULT);
+            softAssertions.assertThat(loggingConfig3.isOmitRecordDetailsLoggingEnabled())
+                    .isEqualTo(LoggingConfig.OMIT_RECORD_DETAILS_LOGGING_ENABLED_DEFAULT);
+            softAssertions.assertThat(loggingConfig3.isLogEveryRestCallEnabled())
+                    .isEqualTo(LoggingConfig.LOG_EVERY_REST_CALL_ENABLED_DEFAULT);
+        });
+    }
+
+
+    private void doLoggingConfigTest(final ObjectMapper objectMapper,
+                                     final Boolean value,
+                                     final boolean expectedOmitValue,
+                                     final boolean expectedLogValue) throws IOException {
+
+        final LoggingConfig loggingConfig = new LoggingConfig();
+        loggingConfig.setOmitRecordDetailsLoggingEnabled(value);
+        loggingConfig.setLogEveryRestCallEnabled(value);
+        Assertions.assertThat(loggingConfig.isOmitRecordDetailsLoggingEnabled())
+                .isEqualTo(expectedOmitValue);
+        Assertions.assertThat(loggingConfig.isLogEveryRestCallEnabled())
+                .isEqualTo(expectedLogValue);
+
+        String yaml;
+        yaml = objectMapper.writeValueAsString(loggingConfig);
+
+        LOGGER.info("yaml:\n{}", yaml);
+
+        final LoggingConfig loggingConfig2 = objectMapper.readValue(yaml, LoggingConfig.class);
+
+        Assertions.assertThat(loggingConfig2)
+                .isEqualTo(loggingConfig);
+    }
 
     static Path getDevYamlPath() throws FileNotFoundException {
         // Load dev.yaml

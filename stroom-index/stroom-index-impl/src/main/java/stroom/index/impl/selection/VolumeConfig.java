@@ -6,14 +6,17 @@ import stroom.util.shared.AbstractConfig;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import java.util.List;
+import java.util.Objects;
 import javax.inject.Singleton;
 
 @Singleton
 public class VolumeConfig extends AbstractConfig {
 
+    private static final Boolean CREATE_DEFAULT_INDEX_VOLUMES_ON_START_DEFAULT = Boolean.TRUE;
+
     public static final String PROP_NAME_DEFUALT_VOLUME_GROUP_NAME = "defaultIndexVolumeGroupName";
     private String volumeSelector = "RoundRobin";
-    private boolean createDefaultIndexVolumesOnStart = true;
+    private Boolean createDefaultIndexVolumesOnStart = CREATE_DEFAULT_INDEX_VOLUMES_ON_START_DEFAULT;
     private String defaultIndexVolumeGroupName = "Default Volume Group";
     private List<String> defaultIndexVolumeGroupPaths = List.of("volumes/default_index_volume");
     private double defaultIndexVolumeFilesystemUtilisation = 0.9;
@@ -34,11 +37,15 @@ public class VolumeConfig extends AbstractConfig {
     @JsonPropertyDescription("If no existing index volume groups are present a default volume group will be " +
             "created on application start. Use property defaultIndexVolumeGroupName to define its name")
     public boolean isCreateDefaultIndexVolumesOnStart() {
-        return createDefaultIndexVolumesOnStart;
+        return Objects.requireNonNullElse(
+                createDefaultIndexVolumesOnStart,
+                CREATE_DEFAULT_INDEX_VOLUMES_ON_START_DEFAULT);
     }
 
-    public void setCreateDefaultIndexVolumesOnStart(final boolean createDefaultIndexVolumesOnStart) {
-        this.createDefaultIndexVolumesOnStart = createDefaultIndexVolumesOnStart;
+    public void setCreateDefaultIndexVolumesOnStart(final Boolean createDefaultIndexVolumesOnStart) {
+        this.createDefaultIndexVolumesOnStart = Objects.requireNonNullElse(
+                createDefaultIndexVolumesOnStart,
+                CREATE_DEFAULT_INDEX_VOLUMES_ON_START_DEFAULT);
     }
 
     @JsonPropertyDescription("The name of the default index volume group that is created if none exist on " +

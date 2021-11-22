@@ -380,6 +380,7 @@ class TestJsonSerialisation {
                         .collect(Collectors.joining("\n")));
     }
 
+
     private Stream<DynamicTest> buildRelatedResourceTests(final Consumer<Class<?>> work) {
 
         return RESOURCE_RELATED_CLASSES.parallelStream()
