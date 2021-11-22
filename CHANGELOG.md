@@ -35,7 +35,7 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 ## [v7.0-beta.155] - 2021-11-02
 
-* No changes. Previous build failed due to netowrking issues.
+* No changes. Previous build failed due to networking issues.
 
 
 ## [v7.0-beta.154] - 2021-11-02
