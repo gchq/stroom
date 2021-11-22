@@ -12,6 +12,31 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0-beta.157] - 2021-11-22
+
+* Uplift event-logging library to `5.0-beta.27_schema-v4.0-beta.3` to fix missing failure outcomes on logged events.
+
+* Issue **#2557** : Optimise meta queries to ensure join order is as expected.
+
+* Issue **#2538** : Change logging of quick filter searches to log the fully qualified filter input.
+
+* Issue **#2565** : Stop orphan file finder reporting dirs that contain child dirs as empty.
+
+* Issue **#2563** : Fix bad expression logic.
+
+* Issue **#2562** : Fix NPE in the UI related to uninitialised processor filter trackers.
+
+* Stop logging audit events for most NodeResource call as they are not direct user actions.
+
+* Issue **#2553** : Prevent get and clear methods in LMDB data store from running at the same time. Add check for the LMDB env being closed to prevent JVM crash.
+
+* Issue **#2555** : Remove checkbox from dead tasks in the server tasks screen to stop users trying to delete them.
+
+* Issue **#2564** : Improve search performance.
+
+* Issue **#2582** : Fix DB migration for `processor_filter`.
+
+
 ## [v7.0-beta.156] - 2021-11-05
 
 * Issue **#2542** : Improve autologged searches "raw" JSON.
@@ -3936,7 +3961,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.156...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.157...HEAD
+[v7.0-beta.157]: https://github.com/gchq/stroom/compare/v7.0-beta.156...v7.0-beta.157
 [v7.0-beta.156]: https://github.com/gchq/stroom/compare/v7.0-beta.155...v7.0-beta.156
 [v7.0-beta.155]: https://github.com/gchq/stroom/compare/v7.0-beta.154...v7.0-beta.155
 [v7.0-beta.154]: https://github.com/gchq/stroom/compare/v7.0-beta.153...v7.0-beta.154
