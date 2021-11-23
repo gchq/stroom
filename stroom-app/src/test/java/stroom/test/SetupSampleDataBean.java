@@ -37,6 +37,7 @@ import stroom.meta.shared.MetaFields;
 import stroom.pipeline.PipelineStore;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
+import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.QueryData;
@@ -231,10 +232,11 @@ public final class SetupSampleDataBean {
                 LOGGER.info("Creating processor filter on {} for feed {}", pipeline.getName(), feed.getName());
                 final ProcessorFilter processorFilter = processorFilterService.create(
                         processor,
-                        criteria,
-                        10,
-                        false,
-                        true);
+                        CreateProcessFilterRequest
+                                .builder()
+                                .pipeline(pipeline)
+                                .queryData(criteria)
+                                .build());
                 LOGGER.debug(processorFilter.toString());
             }
         }

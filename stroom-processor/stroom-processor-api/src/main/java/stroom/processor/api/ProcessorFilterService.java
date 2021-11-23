@@ -19,11 +19,11 @@ package stroom.processor.api;
 
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.FetchProcessorRequest;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorListRow;
-import stroom.processor.shared.QueryData;
 import stroom.processor.shared.ReprocessDataInfo;
 import stroom.util.shared.HasIntCrud;
 import stroom.util.shared.ResultPage;
@@ -32,31 +32,16 @@ import java.util.List;
 
 public interface ProcessorFilterService extends HasIntCrud<ProcessorFilter> {
 
-    ProcessorFilter create(DocRef pipelineRef,
-                           QueryData queryData,
-                           int priority,
-                           boolean autoPriority,
-                           boolean enabled);
+    ProcessorFilter create(CreateProcessFilterRequest request);
 
     ProcessorFilter create(Processor processor,
-                           QueryData queryData,
-                           int priority,
-                           boolean autoPriority,
-                           boolean enabled);
+                           CreateProcessFilterRequest request);
 
-    List<ReprocessDataInfo> reprocess(QueryData criteria,
-                                      int priority,
-                                      boolean autoPriority,
-                                      boolean enabled);
+    List<ReprocessDataInfo> reprocess(CreateProcessFilterRequest request);
 
     ProcessorFilter importFilter(Processor processor,
                                  DocRef processorFilterDocRef,
-                                 QueryData queryData,
-                                 int priority,
-                                 boolean autoPriority,
-                                 boolean reprocess,
-                                 boolean enabled,
-                                 Long trackerStartMs);
+                                 CreateProcessFilterRequest request);
 
     ResultPage<ProcessorFilter> find(ExpressionCriteria criteria);
 

@@ -419,7 +419,12 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
     private void openEditor(final QueryData queryData, final DocRef pipeline) {
         // Now create the processor filter using the find stream criteria.
-        final CreateProcessFilterRequest request = new CreateProcessFilterRequest(pipeline, queryData, 1, false, true);
+        final CreateProcessFilterRequest request = CreateProcessFilterRequest
+                .builder()
+                .pipeline(pipeline)
+                .queryData(queryData)
+                .priority(1)
+                .build();
         final Rest<ProcessorFilter> rest = restFactory.create();
         rest
                 .onSuccess(streamProcessorFilter -> {

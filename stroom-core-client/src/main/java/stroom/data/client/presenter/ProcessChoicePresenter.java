@@ -1,5 +1,6 @@
 package stroom.data.client.presenter;
 
+import stroom.util.shared.Selection;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
@@ -18,7 +19,12 @@ public class ProcessChoicePresenter extends MyPresenterWidget<ProcessChoicePrese
         super(eventBus, view);
     }
 
-    public void show(final ProcessChoiceUiHandler processorChoiceUiHandler) {
+    public void show(final Selection<Long> selection,
+                     final ProcessChoiceUiHandler processorChoiceUiHandler) {
+        if (!selection.isMatchAll() && selection.size() > 0) {
+            getView().setMaxMetaCreateTimeMs(System.currentTimeMillis());
+        }
+
         ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, "Create Processors", new PopupUiHandlers() {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
@@ -27,7 +33,9 @@ public class ProcessChoicePresenter extends MyPresenterWidget<ProcessChoicePrese
                             getView().getPriority(),
                             getView().isAutoPriority(),
                             getView().isReprocess(),
-                            getView().isEnabled());
+                            getView().isEnabled(),
+                            getView().getMinMetaCreateTimeMs(),
+                            getView().getMaxMetaCreateTimeMs());
                     processorChoiceUiHandler.onChoice(processChoice);
                 }
                 hide();
@@ -52,5 +60,13 @@ public class ProcessChoicePresenter extends MyPresenterWidget<ProcessChoicePrese
         boolean isReprocess();
 
         boolean isEnabled();
+
+        Long getMinMetaCreateTimeMs();
+
+        void setMinMetaCreateTimeMs(Long minMetaCreateTimeMs);
+
+        Long getMaxMetaCreateTimeMs();
+
+        void setMaxMetaCreateTimeMs(Long maxMetaCreateTimeMs);
     }
 }

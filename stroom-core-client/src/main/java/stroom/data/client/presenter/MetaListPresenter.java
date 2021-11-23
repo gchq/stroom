@@ -23,7 +23,6 @@ import stroom.explorer.client.presenter.EntityChooser;
 import stroom.meta.shared.DataRetentionFields;
 import stroom.meta.shared.MetaFields;
 import stroom.util.shared.ModelStringUtil;
-import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -36,14 +35,12 @@ public class MetaListPresenter extends AbstractMetaListPresenter {
     @Inject
     public MetaListPresenter(final EventBus eventBus,
                              final RestFactory restFactory,
-                             final TooltipPresenter tooltipPresenter,
                              final LocationManager locationManager,
                              final Provider<SelectionSummaryPresenter> selectionSummaryPresenterProvider,
                              final Provider<ProcessChoicePresenter> processChoicePresenterProvider,
                              final Provider<EntityChooser> pipelineSelection) {
         super(eventBus,
                 restFactory,
-                tooltipPresenter,
                 locationManager,
                 selectionSummaryPresenterProvider,
                 processChoicePresenterProvider,

@@ -64,7 +64,7 @@ public interface ProcessorFilterResource extends RestResource, DirectRestService
             summary = "Create filters to reprocess data",
             operationId = "reprocessData")
     List<ReprocessDataInfo> reprocess(
-            @Parameter(description = "criteria", required = true) CreateReprocessFilterRequest request);
+            @Parameter(description = "criteria", required = true) CreateProcessFilterRequest request);
 
     @GET
     @Path("/{id}")
