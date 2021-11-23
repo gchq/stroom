@@ -18,6 +18,7 @@
 package stroom.processor.client.view;
 
 import stroom.processor.client.presenter.ProcessorEditPresenter.ProcessorEditView;
+import stroom.widget.customdatebox.client.MyDateBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -33,6 +34,10 @@ public class ProcessorEditViewImpl extends ViewImpl implements ProcessorEditView
 
     @UiField
     SimplePanel expression;
+    @UiField
+    MyDateBox minMetaCreateTimeMs;
+    @UiField
+    MyDateBox maxMetaCreateTimeMs;
 
     @Inject
     public ProcessorEditViewImpl(final ProcessorEditViewImpl.Binder binder) {
@@ -47,6 +52,26 @@ public class ProcessorEditViewImpl extends ViewImpl implements ProcessorEditView
     @Override
     public void setExpressionView(final View view) {
         expression.setWidget(view.asWidget());
+    }
+
+    @Override
+    public Long getMinMetaCreateTimeMs() {
+        return minMetaCreateTimeMs.getMilliseconds();
+    }
+
+    @Override
+    public void setMinMetaCreateTimeMs(final Long minMetaCreateTimeMs) {
+        this.minMetaCreateTimeMs.setMilliseconds(minMetaCreateTimeMs);
+    }
+
+    @Override
+    public Long getMaxMetaCreateTimeMs() {
+        return maxMetaCreateTimeMs.getMilliseconds();
+    }
+
+    @Override
+    public void setMaxMetaCreateTimeMs(final Long maxMetaCreateTimeMs) {
+        this.maxMetaCreateTimeMs.setMilliseconds(maxMetaCreateTimeMs);
     }
 
     public interface Binder extends UiBinder<Widget, ProcessorEditViewImpl> {
