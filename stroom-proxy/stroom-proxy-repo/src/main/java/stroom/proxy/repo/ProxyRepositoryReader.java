@@ -1,6 +1,7 @@
 package stroom.proxy.repo;
 
 import stroom.task.api.ExecutorProvider;
+import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
@@ -40,6 +41,7 @@ public final class ProxyRepositoryReader {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRepositoryReader.class);
 
     private final TaskContextFactory taskContextFactory;
+    private final TaskContext taskContext;
     private final BufferFactory bufferFactory;
     private final ProxyRepositoryManager proxyRepositoryManager;
 
@@ -66,11 +68,13 @@ public final class ProxyRepositoryReader {
 
     @Inject
     ProxyRepositoryReader(final TaskContextFactory taskContextFactory,
+                          final TaskContext taskContext,
                           final BufferFactory bufferFactory,
                           final ProxyRepositoryManager proxyRepositoryManager,
                           final ProxyRepositoryReaderConfig proxyRepositoryReaderConfig,
                           final StreamHandlerFactory handlerFactory) {
         this.taskContextFactory = taskContextFactory;
+        this.taskContext = taskContext;
         this.bufferFactory = bufferFactory;
         this.proxyRepositoryReaderConfig = proxyRepositoryReaderConfig;
         this.handlerFactory = handlerFactory;
@@ -216,7 +220,8 @@ public final class ProxyRepositoryReader {
                         proxyRepositoryReaderConfig.getMaxFileScan(),
                         proxyRepositoryReaderConfig.getMaxConcurrentMappedFiles(),
                         proxyRepositoryReaderConfig.getMaxAggregation(),
-                        proxyRepositoryReaderConfig.getMaxStreamSize());
+                        proxyRepositoryReaderConfig.getMaxStreamSize(),
+                        taskContext);
 
                 repositoryProcessor.process();
             }
