@@ -432,21 +432,19 @@ export interface CreateProcessFilterRequest {
   autoPriority?: boolean;
   enabled?: boolean;
 
+  /** @format int64 */
+  maxMetaCreateTimeMs?: number;
+
+  /** @format int64 */
+  minMetaCreateTimeMs?: number;
+
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   pipeline?: DocRef;
 
   /** @format int32 */
   priority?: number;
   queryData?: QueryData;
-}
-
-export interface CreateReprocessFilterRequest {
-  autoPriority?: boolean;
-  enabled?: boolean;
-
-  /** @format int32 */
-  priority?: number;
-  queryData?: QueryData;
+  reprocess?: boolean;
 }
 
 export interface CreateTokenRequest {
@@ -6656,7 +6654,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request POST:/processorFilter/v1/reprocess
      * @secure
      */
-    reprocessData: (data: CreateReprocessFilterRequest, params: RequestParams = {}) =>
+    reprocessData: (data: CreateProcessFilterRequest, params: RequestParams = {}) =>
       this.request<any, ReprocessDataInfo[]>({
         path: `/processorFilter/v1/reprocess`,
         method: "POST",

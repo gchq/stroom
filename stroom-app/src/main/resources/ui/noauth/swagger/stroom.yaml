@@ -3255,7 +3255,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateReprocessFilterRequest'
+              $ref: '#/components/schemas/CreateProcessFilterRequest'
         description: criteria
         required: true
       responses:
@@ -6078,6 +6078,12 @@ components:
           type: boolean
         enabled:
           type: boolean
+        maxMetaCreateTimeMs:
+          type: integer
+          format: int64
+        minMetaCreateTimeMs:
+          type: integer
+          format: int64
         pipeline:
           $ref: '#/components/schemas/DocRef'
         priority:
@@ -6085,18 +6091,8 @@ components:
           format: int32
         queryData:
           $ref: '#/components/schemas/QueryData'
-    CreateReprocessFilterRequest:
-      type: object
-      properties:
-        autoPriority:
+        reprocess:
           type: boolean
-        enabled:
-          type: boolean
-        priority:
-          type: integer
-          format: int32
-        queryData:
-          $ref: '#/components/schemas/QueryData'
     CreateTokenRequest:
       type: object
       properties:
