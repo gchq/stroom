@@ -11,15 +11,21 @@ import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.util.rest.RestUtil;
-import stroom.util.shared.ResultPage;
+import stroom.util.shared.QuickFilterResultPage;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
+import com.google.common.base.Strings;
 import event.logging.Banner;
+import event.logging.ComplexLoggedOutcome;
+import event.logging.Query;
+import event.logging.SearchEventAction;
 import event.logging.ViewEventAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigInteger;
 import java.util.List;
+import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -41,10 +47,41 @@ class ActivityResourceImpl implements ActivityResource {
         this.eventLoggingServiceProvider = eventLoggingServiceProvider;
     }
 
+    @AutoLogged(value = OperationType.MANUALLY_LOGGED)
     @Override
-    public ResultPage<Activity> list(final String filter) {
+    public QuickFilterResultPage<Activity> list(final String filter) {
         LOGGER.debug("filter: {}", filter);
-        return activityServiceProvider.get().find(filter);
+
+        final StroomEventLoggingService eventLoggingService = eventLoggingServiceProvider.get();
+
+        return eventLoggingService.loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "list"))
+                .withDescription("Search for activities with a quick filter")
+                .withDefaultEventAction(SearchEventAction.builder()
+                        .withQuery(buildRawQuery(filter))
+                        .build())
+                .withComplexLoggedResult(searchEventAction -> {
+                    // Do the work
+                    final QuickFilterResultPage<Activity> result = activityServiceProvider.get().find(filter);
+
+                    final SearchEventAction newSearchEventAction = searchEventAction.newCopyBuilder()
+                            .withQuery(buildRawQuery(result.getQualifiedFilterInput()))
+                            .withResultPage(StroomEventLoggingUtil.createResultPage(result))
+                            .withTotalResults(BigInteger.valueOf(result.size()))
+                            .build();
+
+                    return ComplexLoggedOutcome.success(result, newSearchEventAction);
+                })
+                .withLoggingRequiredWhen(!Strings.isNullOrEmpty(filter)) // Don't log non-filtered searches
+                .getResultAndLog();
+    }
+
+    private Query buildRawQuery(final String userInput) {
+        return Query.builder()
+                .withRaw("Activity matches \""
+                        + Objects.requireNonNullElse(userInput, "")
+                        + "\"")
+                .build();
     }
 
     @AutoLogged(value = OperationType.UNLOGGED) // Not called by the user directly
@@ -94,16 +131,17 @@ class ActivityResourceImpl implements ActivityResource {
         final CurrentActivity currentActivity = currentActivityProvider.get();
 
         final StroomEventLoggingService eventLoggingService = eventLoggingServiceProvider.get();
-        return eventLoggingService.loggedResult(
-                StroomEventLoggingUtil.buildTypeId(this, "setCurrentActivity"),
-                "User has changed activity",
-                eventLoggingService.buildUpdateEventAction(
+        return eventLoggingService.loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "setCurrentActivity"))
+                .withDescription("User has changed activity")
+                .withDefaultEventAction(eventLoggingService.buildUpdateEventAction(
                         currentActivity::getActivity,
-                        () -> activity),
-                () -> {
+                        () -> activity))
+                .withSimpleLoggedResult(() -> {
                     currentActivity.setActivity(activity);
                     return activity;
-                });
+                })
+                .getResultAndLog();
     }
 
     @AutoLogged(value = OperationType.MANUALLY_LOGGED)

@@ -39,10 +39,12 @@ import stroom.pipeline.destination.AppenderConfig;
 import stroom.pipeline.filter.XmlSchemaConfig;
 import stroom.pipeline.filter.XsltConfig;
 import stroom.pipeline.refdata.ReferenceDataConfig;
+import stroom.pipeline.refdata.ReferenceDataLmdbConfig;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.RepoConfig;
 import stroom.query.common.v2.ResultStoreConfig;
+import stroom.query.common.v2.ResultStoreLmdbConfig;
 import stroom.search.elastic.CryptoConfig;
 import stroom.search.elastic.ElasticConfig;
 import stroom.search.elastic.search.ElasticSearchConfig;
@@ -208,7 +210,12 @@ public class AppConfigModule extends AbstractModule {
             bindConfig(pipelineConfig,
                     PipelineConfig::getReferenceDataConfig,
                     PipelineConfig::setReferenceDataConfig,
-                    ReferenceDataConfig.class);
+                    ReferenceDataConfig.class, referenceDataConfig -> {
+                        bindConfig(referenceDataConfig,
+                                ReferenceDataConfig::getLmdbConfig,
+                                ReferenceDataConfig::setLmdbConfig,
+                                ReferenceDataLmdbConfig.class);
+                    });
             bindConfig(pipelineConfig,
                     PipelineConfig::getXmlSchemaConfig,
                     PipelineConfig::setXmlSchemaConfig,
@@ -235,7 +242,16 @@ public class AppConfigModule extends AbstractModule {
                     SearchConfig::getExtractionConfig,
                     SearchConfig::setExtractionConfig,
                     ExtractionConfig.class);
-            bindConfig(searchConfig, SearchConfig::getLmdbConfig, SearchConfig::setLmdbConfig, ResultStoreConfig.class);
+            bindConfig(searchConfig,
+                    SearchConfig::getLmdbConfig,
+                    SearchConfig::setLmdbConfig,
+                    ResultStoreConfig.class,
+                    resultStoreConfig -> {
+                        bindConfig(resultStoreConfig,
+                                ResultStoreConfig::getLmdbConfig,
+                                ResultStoreConfig::setLmdbConfig,
+                                ResultStoreLmdbConfig.class);
+                    });
             bindConfig(searchConfig,
                     SearchConfig::getShardConfig,
                     SearchConfig::setShardConfig,

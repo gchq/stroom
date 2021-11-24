@@ -29,9 +29,6 @@ import stroom.meta.shared.UpdateStatusRequest;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.ResultPage;
 
-import event.logging.AdvancedQuery;
-import event.logging.And;
-import event.logging.Query;
 import event.logging.SearchEventAction;
 
 import java.util.List;
@@ -60,23 +57,28 @@ class MetaResourceImpl implements MetaResource {
 
         final ExpressionOperator expression = request.getCriteria().getExpression();
 
-        final String currentStatus = (request.getCurrentStatus() != null) ?
-                request.getCurrentStatus().getDisplayValue() : "selected";
-        final String newStatus = (request.getNewStatus() != null) ?
-                request.getNewStatus().getDisplayValue() : "unspecified / unknown";
+        final String currentStatus = (request.getCurrentStatus() != null)
+                ?
+                request.getCurrentStatus().getDisplayValue()
+                : "selected";
+        final String newStatus = (request.getNewStatus() != null)
+                ?
+                request.getNewStatus().getDisplayValue()
+                : "unspecified / unknown";
 
         final SearchEventAction action = SearchEventAction.builder()
                 .withQuery(StroomEventLoggingUtil.convertExpression(expression))
                 .build();
 
-        return eventLoggingService.loggedResult(
-                StroomEventLoggingUtil.buildTypeId(this, "updateStatus"),
-                "Modify the status of " + currentStatus + " streams to " + newStatus,
-                action,
-                () ->  metaServiceProvider.get().updateStatus(
-                request.getCriteria(),
-                request.getCurrentStatus(),
-                request.getNewStatus()));
+        return eventLoggingService.loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "updateStatus"))
+                .withDescription("Modify the status of " + currentStatus + " streams to " + newStatus)
+                .withDefaultEventAction(action)
+                .withSimpleLoggedResult(() -> metaServiceProvider.get().updateStatus(
+                        request.getCriteria(),
+                        request.getCurrentStatus(),
+                        request.getNewStatus()))
+                .getResultAndLog();
     }
 
     @AutoLogged(OperationType.SEARCH)

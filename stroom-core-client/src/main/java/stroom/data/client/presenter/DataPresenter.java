@@ -369,7 +369,9 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                     && AceEditorMode.XML.equals(editorMode);
 
             textPresenter.getViewAsHexOption()
-                    .setOn(FetchDataRequest.DisplayMode.HEX.equals(lastResult.getDisplayMode()));
+                    .setOn(FetchDataRequest.DisplayMode.HEX.equals(lastResult != null
+                            ? lastResult.getDisplayMode()
+                            : FetchDataRequest.DisplayMode.TEXT));
             textPresenter.setMode(editorMode);
             textPresenter.setText(data, shouldFormatData);
             textPresenter.setControlsVisible(playButtonVisible);

@@ -138,7 +138,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                                         final boolean autoPriority,
                                         final boolean reprocess,
                                         final boolean enabled,
-                                        final Long minMetaCreateMs) {
+                                        final Long minMetaCreateTimeMs) {
         // Check the user has read permissions on the pipeline.
         if (!securityContext.hasDocumentPermission(processor.getPipelineUuid(), DocumentPermissionNames.READ)) {
             throw new PermissionException(securityContext.getUserId(),
@@ -161,13 +161,14 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
         processorFilter.setPriority(calculatedPriority);
         processorFilter.setProcessor(processor);
         processorFilter.setQueryData(queryData);
+        processorFilter.setMinMetaCreateTimeMs(minMetaCreateTimeMs);
 
         if (processorFilterDocRef != null) {
             processorFilter.setUuid(processorFilterDocRef.getUuid());
         }
 
         return securityContext.secureResult(PERMISSION, () ->
-                processorFilterDao.create(processorFilter, minMetaCreateMs, null));
+                processorFilterDao.create(processorFilter));
     }
 
     @Override
@@ -457,7 +458,10 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                             // Ensure all fields are complete.
                             processorFilter = ensureValid(processorFilter);
 
-                            processorFilterDao.create(processorFilter, null, now);
+                            // Don't reprocess data any newer than the current data.
+                            processorFilter.setMaxMetaCreateTimeMs(now);
+
+                            processorFilterDao.create(processorFilter);
 
                             info.add(new ReprocessDataInfo(Severity.INFO, "Added reprocess filter to " +
                                     getPipelineDetails(processor.getPipelineUuid()) +

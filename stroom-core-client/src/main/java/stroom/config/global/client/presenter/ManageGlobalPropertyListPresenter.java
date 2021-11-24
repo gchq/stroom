@@ -60,7 +60,13 @@ public class ManageGlobalPropertyListPresenter
     private static final String MULTIPLE_VALUES_MSG = "[Multiple values]";
     private static final String MULTIPLE_SOURCES_MSG = "[Multiple]";
     private static final String ERROR_CSS_COLOUR = "red";
-    private static final int TIMER_DELAY_MS = 50;
+
+    // This is the delay between getting the list of props and hitting all the other nodes
+    // to get their specific values.  Too low and we pepper the nodes for each key press of the filter.
+    // Too high and there is too big a delay in showing props with mixed source
+    private static final int REFRESH_ALL_NODES_TIMER_DELAY_MS = 500;
+
+    private static final int UPDATE_MAPS_TIMER_DELAY_MS = 50;
 
     private static final GlobalConfigResource GLOBAL_CONFIG_RESOURCE_RESOURCE = GWT.create(GlobalConfigResource.class);
 
@@ -84,6 +90,9 @@ public class ManageGlobalPropertyListPresenter
             refreshPropertiesForAllNodes();
         }
     };
+
+    // This is node that responded to the top level request
+    private String lastNodeName;
 
     private final Timer updateChildMapsTimer = new Timer() {
         @Override
@@ -122,6 +131,8 @@ public class ManageGlobalPropertyListPresenter
         rest
                 .onSuccess(listConfigResponse -> {
 
+                    lastNodeName = listConfigResponse.getNodeName();
+
                     // Build the table based on what we know from one node
                     final List<ConfigPropertyRow> rows = listConfigResponse.getValues().stream()
                             .map(ConfigPropertyRow::new)
@@ -130,12 +141,20 @@ public class ManageGlobalPropertyListPresenter
 //                GWT.log("Offset: " + listConfigResponse.getPageResponse().getOffset()
 //                    + " total: " + listConfigResponse.getPageResponse().getTotal());
 
-                    dataProvider.setPartialList(rows, listConfigResponse.getPageResponse().getTotal().intValue());
+                    dataProvider.setPartialList(
+                            rows,
+                            listConfigResponse.getPageResponse()
+                                    .getTotal()
+                                    .intValue());
+
+                    // The timer will fetch the node specific values for the other nodes
+                    // so we need to process the values for this node
+                    handleNodeResponse(listConfigResponse);
 
                     // now we have the props from one node, go off and get all the values/sources
                     // from all the nodes. Use a timer to delay it a bit
                     if (!refreshAllNodesTimer.isRunning()) {
-                        refreshAllNodesTimer.schedule(TIMER_DELAY_MS);
+                        refreshAllNodesTimer.schedule(REFRESH_ALL_NODES_TIMER_DELAY_MS);
                     }
                 })
                 .onFailure(throwable -> {
@@ -146,11 +165,15 @@ public class ManageGlobalPropertyListPresenter
     }
 
     private void refreshPropertiesForAllNodes() {
-        // Only care about enable nodes
+        // Only care about enabled nodes
         unreachableNodes.clear();
+        // No point hitting the node that we hit at the top level again as we already have its data
         nodeManager.listEnabledNodes(
                 nodeNames ->
-                        nodeNames.forEach(this::refreshPropertiesForNode),
+                        nodeNames
+                                .stream()
+                                .filter(nodeName -> !nodeName.equals(lastNodeName))
+                                .forEach(this::refreshPropertiesForNode),
                 throwable ->
                         showError(
                                 throwable,
@@ -165,23 +188,7 @@ public class ManageGlobalPropertyListPresenter
                 getView().getVisibleRange().getLength()));
 
         listPropertiesRest
-                .onSuccess(listConfigResponse -> {
-                    unreachableNodes.remove(nodeName);
-
-                    // Add the node's result to our maps
-                    listConfigResponse.getValues().forEach(configProperty -> {
-                        final String effectiveValue = configProperty.getEffectiveValue().orElse(null);
-                        final String source = configProperty.getSource().getName();
-
-                        updateNodeKeyedMaps(nodeName, configProperty.getNameAsString(), effectiveValue, source);
-
-                        // kick off the delayed action to update the maps keyed on prop name,
-                        // unless another node has already kicked it off
-                        if (!updateChildMapsTimer.isRunning()) {
-                            updateChildMapsTimer.schedule(TIMER_DELAY_MS);
-                        }
-                    });
-                })
+                .onSuccess(this::handleNodeResponse)
                 .onFailure(throwable -> {
                     unreachableNodes.add(nodeName);
 
@@ -201,11 +208,33 @@ public class ManageGlobalPropertyListPresenter
                     // kick off the delayed action to update the maps keyed on prop name,
                     // unless another node has already kicked it off
                     if (!updateChildMapsTimer.isRunning()) {
-                        updateChildMapsTimer.schedule(TIMER_DELAY_MS);
+                        updateChildMapsTimer.schedule(UPDATE_MAPS_TIMER_DELAY_MS);
                     }
                 })
                 .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
                 .listByNode(nodeName, criteria);
+    }
+
+    private void handleNodeResponse(final ListConfigResponse listConfigResponse) {
+        unreachableNodes.remove(listConfigResponse.getNodeName());
+
+        // Add the node's result to our maps
+        listConfigResponse.getValues().forEach(configProperty -> {
+            final String effectiveValue = configProperty.getEffectiveValue().orElse(null);
+            final String source = configProperty.getSource().getName();
+
+            updateNodeKeyedMaps(
+                    listConfigResponse.getNodeName(),
+                    configProperty.getNameAsString(),
+                    effectiveValue,
+                    source);
+
+            // kick off the delayed action to update the maps keyed on prop name,
+            // unless another node has already kicked it off
+            if (!updateChildMapsTimer.isRunning()) {
+                updateChildMapsTimer.schedule(UPDATE_MAPS_TIMER_DELAY_MS);
+            }
+        });
     }
 
     private void updateNodeKeyedMaps(final String nodeName,
@@ -366,7 +395,11 @@ public class ManageGlobalPropertyListPresenter
 
     void clearFilter() {
         this.criteria.setQuickFilterInput(null);
-        refresh();
+
+        if (!(lastNodeName == null || lastNodeName.isEmpty())) {
+            refresh();
+        }
+        lastNodeName = null;
     }
 
     private void showError(final Throwable throwable, final String message) {

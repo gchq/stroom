@@ -3315,7 +3315,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/User'
+                  $ref: '#/components/schemas/SimpleUser'
           description: default response
       summary: Get all permissions for a given document type
       tags:
@@ -3541,6 +3541,25 @@ paths:
                 type: boolean
           description: default response
       summary: Deletes a processor
+      tags:
+      - Processors
+    get:
+      operationId: fetchProcessor
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Processor'
+          description: default response
+      summary: Fetch a processor
       tags:
       - Processors
   /processor/v1/{id}/enabled:
@@ -5737,6 +5756,8 @@ components:
       properties:
         pageResponse:
           $ref: '#/components/schemas/PageResponse'
+        qualifiedFilterInput:
+          type: string
         values:
           type: array
           items:
@@ -5914,6 +5935,8 @@ components:
       properties:
         pageResponse:
           $ref: '#/components/schemas/PageResponse'
+        qualifiedFilterInput:
+          type: string
         values:
           type: array
           items:
@@ -7440,6 +7463,8 @@ components:
           type: array
           items:
             type: string
+        qualifiedFilterInput:
+          type: string
         rootNodes:
           type: array
           items:
@@ -7570,7 +7595,7 @@ components:
         users:
           type: array
           items:
-            $ref: '#/components/schemas/User'
+            $ref: '#/components/schemas/SimpleUser'
     FindDBTableCriteria:
       type: object
       properties:
@@ -7952,6 +7977,7 @@ components:
           - 200 - 0 - OK
           - 406 - 100 - Feed must be specified
           - 406 - 101 - Feed is not defined
+          - 406 - 102 - Data type is invalid
           - 406 - 110 - Feed is not set to receive data
           - 406 - 120 - Unexpected data type
           - 406 - 200 - Unknown compression
@@ -8413,8 +8439,12 @@ components:
       type: object
       description: List of config properties
       properties:
+        nodeName:
+          type: string
         pageResponse:
           $ref: '#/components/schemas/PageResponse'
+        qualifiedFilterInput:
+          type: string
         values:
           type: array
           items:
@@ -9057,6 +9087,12 @@ components:
         id:
           type: integer
           format: int32
+        maxMetaCreateTimeMs:
+          type: integer
+          format: int64
+        minMetaCreateTimeMs:
+          type: integer
+          format: int64
         pipelineName:
           type: string
         pipelineUuid:
@@ -10141,6 +10177,13 @@ components:
             $ref: '#/components/schemas/SharedElementData'
         sourceLocation:
           $ref: '#/components/schemas/SourceLocation'
+    SimpleUser:
+      type: object
+      properties:
+        name:
+          type: string
+        uuid:
+          type: string
     Size:
       type: object
       properties:

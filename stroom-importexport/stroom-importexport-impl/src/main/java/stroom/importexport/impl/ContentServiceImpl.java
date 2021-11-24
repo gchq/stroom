@@ -27,9 +27,9 @@ import stroom.security.shared.PermissionNames;
 import stroom.util.shared.DocRefs;
 import stroom.util.shared.Message;
 import stroom.util.shared.PermissionException;
+import stroom.util.shared.QuickFilterResultPage;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
-import stroom.util.shared.ResultPage;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -61,6 +61,7 @@ class ContentServiceImpl implements ContentService {
         this.exportConfig = exportConfig;
     }
 
+    @Override
     public ResourceKey performImport(final ResourceKey resourceKey, final List<ImportState> confirmList) {
         return securityContext.secureResult(PermissionNames.IMPORT_CONFIGURATION, () -> {
             // Import file.
@@ -115,7 +116,8 @@ class ContentServiceImpl implements ContentService {
         });
     }
 
-    public ResultPage<Dependency> fetchDependencies(final DependencyCriteria criteria) {
+    @Override
+    public QuickFilterResultPage<Dependency> fetchDependencies(final DependencyCriteria criteria) {
         return securityContext.secureResult(() -> dependencyService.getDependencies(criteria));
     }
 
@@ -125,7 +127,7 @@ class ContentServiceImpl implements ContentService {
             throw new PermissionException(securityContext.getUserId(),
                     "You do not have permission to export all config");
         }
-        if  (!exportConfig.isEnabled()) {
+        if (!exportConfig.isEnabled()) {
             throw new PermissionException(securityContext.getUserId(), "Export is not enabled");
         }
 

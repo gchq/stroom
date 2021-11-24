@@ -19,6 +19,7 @@ package stroom.node.impl;
 import stroom.cluster.api.ClusterNodeManager;
 import stroom.cluster.api.ClusterState;
 import stroom.event.logging.api.DocumentEventLog;
+import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.FindNodeCriteria;
@@ -72,6 +73,7 @@ class NodeResourceImpl implements NodeResource {
     }
 
     @Override
+    @AutoLogged(OperationType.UNLOGGED) // Too noisy and of little value
     public List<String> listAllNodes() {
         FetchNodeStatusResponse response = find();
         if (response != null && response.getValues() != null) {
@@ -85,6 +87,7 @@ class NodeResourceImpl implements NodeResource {
     }
 
     @Override
+    @AutoLogged(OperationType.UNLOGGED) // Too noisy and of little value
     public List<String> listEnabledNodes() {
         return find().getValues()
                 .stream()
@@ -95,6 +98,7 @@ class NodeResourceImpl implements NodeResource {
     }
 
     @Override
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
     public FetchNodeStatusResponse find() {
         FetchNodeStatusResponse response = null;
 
@@ -105,6 +109,7 @@ class NodeResourceImpl implements NodeResource {
                         .build())
                 .build();
 
+        final String typeId = StroomEventLoggingUtil.buildTypeId(this, "find");
         try {
             final List<Node> nodes = nodeServiceProvider.get()
                     .find(new FindNodeCriteria())
@@ -121,14 +126,14 @@ class NodeResourceImpl implements NodeResource {
             response = new FetchNodeStatusResponse(resultList);
 
             documentEventLogProvider.get().search(
-                    "List Nodes",
+                    typeId,
                     query,
                     Node.class.getSimpleName(),
                     response.getPageResponse(),
                     null);
         } catch (final RuntimeException e) {
             documentEventLogProvider.get().search(
-                    "List Nodes",
+                    typeId,
                     query,
                     Node.class.getSimpleName(),
                     null,
@@ -140,7 +145,7 @@ class NodeResourceImpl implements NodeResource {
     }
 
     @Override
-    @AutoLogged(OperationType.VIEW)
+    @AutoLogged(OperationType.UNLOGGED) // Too noisy and of little value
     public ClusterNodeInfo info(final String nodeName) {
         ClusterNodeInfo clusterNodeInfo = null;
 
@@ -170,12 +175,7 @@ class NodeResourceImpl implements NodeResource {
             }
 
             clusterNodeInfo.setPing(System.currentTimeMillis() - now);
-
-            documentEventLogProvider.get().view(clusterNodeInfo, null);
-
         } catch (Exception e) {
-            documentEventLogProvider.get().view(clusterNodeInfo, e);
-
             clusterNodeInfo = new ClusterNodeInfo();
             clusterNodeInfo.setNodeName(nodeName);
             clusterNodeInfo.setEndpointUrl(null);
@@ -186,7 +186,7 @@ class NodeResourceImpl implements NodeResource {
     }
 
     @Override
-    @AutoLogged(value = OperationType.PROCESS, verb = "Pinging other node")
+    @AutoLogged(OperationType.UNLOGGED) // Not a user action
     public Long ping(final String nodeName) {
         final long now = System.currentTimeMillis();
 

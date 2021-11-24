@@ -43,6 +43,8 @@ public class GlobalPropertyTabPresenter extends ContentTabPresenter<GlobalProper
     private final ButtonView warningsButton;
     private String currentWarnings;
 
+    private String lastFilterValue = null;
+
     @Inject
     public GlobalPropertyTabPresenter(final EventBus eventBus,
                                       final GlobalPropertyTabView view,
@@ -135,16 +137,16 @@ public class GlobalPropertyTabPresenter extends ContentTabPresenter<GlobalProper
     @Override
     public void changeNameFilter(final String name) {
         if (name.length() > 0) {
+            // This will initiate a timer to refresh the data
             listPresenter.setPartialName(name);
-//            listPresenter.getFindGlobalPropertyCriteria().getName().setString(name);
-//            listPresenter.getFindGlobalPropertyCriteria().getName()
-//                .setMatchStyle(StringCriteria.MatchStyle.WildStandAndEnd);
-//            listPresenter.getFindGlobalPropertyCriteria().getName().setCaseInsensitive(true);
         } else {
             listPresenter.clearFilter();
-//            listPresenter.getFindGlobalPropertyCriteria().getName().clear();
         }
-        listPresenter.refresh();
+
+//        if (!Objects.equals(name, lastFilterValue)) {
+//            listPresenter.refresh();
+//            lastFilterValue = name;
+//        }
     }
 
     public interface GlobalPropertyTabView extends View, HasUiHandlers<ManageGlobalPropertyUiHandlers> {

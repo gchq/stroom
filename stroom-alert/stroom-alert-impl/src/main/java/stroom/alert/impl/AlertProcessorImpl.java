@@ -195,9 +195,11 @@ public class AlertProcessorImpl implements AlertProcessor {
                 if (eventIds != null && eventIds.length > 0) {
                     final ExtractionReceiver receiver = new AlertProcessorReceiver(ruleConfig.getAlertDefinitions(),
                             ruleConfig.getParams());
-                    extractionDecoratorFactory.createAlertExtractionTask(receiver,
-                            currentStreamId, eventIds, pipeline,
-                            ruleConfig.getAlertDefinitions(), ruleConfig.getParams());
+
+                    // FIXME: This needs reimplementing after search changes.
+//                    extractionDecoratorFactory.createAlertExtractionTask(receiver,
+//                            currentStreamId, eventIds, pipeline,
+//                            ruleConfig.getAlertDefinitions(), ruleConfig.getParams());
                     numTasks++;
                 }
             }

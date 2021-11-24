@@ -9,7 +9,6 @@ import stroom.proxy.repo.dao.SourceDao.Source;
 import stroom.proxy.repo.dao.SourceEntryDao;
 import stroom.proxy.repo.db.jooq.tables.records.SourceEntryRecord;
 import stroom.proxy.repo.db.jooq.tables.records.SourceItemRecord;
-import stroom.util.concurrent.ScalingThreadPoolExecutor;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -32,6 +31,7 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -49,13 +49,7 @@ public class ProxyRepoSourceEntries implements HasShutdown {
             "Examine Proxy File",
             StroomThreadGroup.instance(),
             Thread.NORM_PRIORITY - 1);
-    private final ExecutorService executor = ScalingThreadPoolExecutor.newScalingThreadPool(
-            1,
-            10,
-            100,
-            10,
-            TimeUnit.MINUTES,
-            threadFactory);
+    private final ExecutorService executor = Executors.newCachedThreadPool(threadFactory);
 
     private final SourceDao sourceDao;
     private final SourceEntryDao sourceEntryDao;

@@ -38,6 +38,8 @@ import stroom.query.common.v2.CompiledFields;
 import stroom.query.common.v2.SearchDebugUtil;
 import stroom.query.common.v2.format.FieldFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
+import stroom.util.logging.SearchProgressLog;
+import stroom.util.logging.SearchProgressLog.SearchPhase;
 import stroom.util.shared.Severity;
 
 import org.slf4j.Logger;
@@ -109,6 +111,7 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
             throws SAXException {
         //Hold values for later use
         if (DATA.equals(localName) && values != null) {
+            SearchProgressLog.increment(SearchPhase.SEARCH_RESULT_OUTPUT_FILTER_START_DATA);
             String name = atts.getValue(NAME);
             String value = atts.getValue(VALUE);
             if (name != null && value != null) {
@@ -127,6 +130,7 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
                 }
             }
         } else if (RECORD.equals(localName)) {
+            SearchProgressLog.increment(SearchPhase.SEARCH_RESULT_OUTPUT_FILTER_START_RECORD);
             values = new Val[fieldIndexes.size()];
             recordAtts = atts;
             indexVals.clear();
@@ -156,8 +160,8 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
                 }
             } else {
                 //Standard (typically dashboard populating) search extraction, pass onto consumers (e.g. dashboards)
+                SearchProgressLog.increment(SearchPhase.SEARCH_RESULT_OUTPUT_FILTER_END_RECORD);
                 SearchDebugUtil.writeExtractionData(values);
-
                 consumer.accept(values);
                 count++;
                 values = null;

@@ -23,6 +23,8 @@ import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.SearchProgressLog;
+import stroom.util.logging.SearchProgressLog.SearchPhase;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -64,7 +66,7 @@ class StreamMapCreator {
         return index;
     }
 
-    boolean addEvent(final StreamEventMap storedDataMap, final Val[] storedData) {
+    void addEvent(final StreamEventMap storedDataMap, final Val[] storedData) {
         if (error != null) {
             throw error;
         } else {
@@ -74,10 +76,16 @@ class StreamMapCreator {
             // Stream may have been deleted but still be in the index
             final Optional<Val[]> optValues = getData(longStreamId, longEventId, storedData);
             optValues.ifPresent(data -> {
-                final Event event = new Event(longStreamId, longEventId, data);
-                storedDataMap.add(event);
+                try {
+                    final Event event = new Event(longStreamId, longEventId, data);
+                    SearchProgressLog.increment(SearchPhase.EXTRACTION_DECORATOR_FACTORY_STREAM_EVENT_MAP_PUT);
+                    storedDataMap.put(event);
+                } catch (final InterruptedException e) {
+                    LOGGER.debug(e::getMessage, e);
+                    // Continue to interrupt.
+                    Thread.currentThread().interrupt();
+                }
             });
-            return optValues.isPresent();
         }
     }
 

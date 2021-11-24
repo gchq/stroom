@@ -21,7 +21,9 @@ import stroom.cache.impl.CacheModule;
 import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.dictionary.mock.MockWordListProviderModule;
+import stroom.docref.DocRef;
 import stroom.docrefinfo.mock.MockDocRefInfoModule;
+import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.impl.MetaValueDao;
@@ -33,16 +35,23 @@ import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.task.mock.MockTaskModule;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.util.shared.ResultPage;
 
+import com.google.common.base.Strings;
 import com.google.inject.Guice;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -53,6 +62,13 @@ class TestMetaDaoImpl {
     private static final String PROCESSED_STREAM_TYPE_NAME = "TEST_STREAM_TYPE";
     private static final String TEST1_FEED_NAME = "TEST1";
     private static final String TEST2_FEED_NAME = "TEST2";
+    private static final String TEST3_FEED_NAME = "TEST3";
+    private static final DocRef TEST1_FEED =
+            new DocRef(FeedDoc.DOCUMENT_TYPE, UUID.randomUUID().toString(), TEST1_FEED_NAME);
+    private static final DocRef TEST2_FEED =
+            new DocRef(FeedDoc.DOCUMENT_TYPE, UUID.randomUUID().toString(), TEST2_FEED_NAME);
+    private static final DocRef TEST3_FEED =
+            new DocRef(FeedDoc.DOCUMENT_TYPE, UUID.randomUUID().toString(), TEST3_FEED_NAME);
 
     @Inject
     private Cleanup cleanup;
@@ -66,16 +82,16 @@ class TestMetaDaoImpl {
     @BeforeEach
     void setup() {
         Guice.createInjector(
-                        new MetaTestModule(),
-                        new MetaDbModule(),
-                        new MockClusterLockModule(),
-                        new MockSecurityContextModule(),
-                        new MockTaskModule(),
-                        new MockCollectionModule(),
-                        new MockDocRefInfoModule(),
-                        new MockWordListProviderModule(),
-                        new CacheModule(),
-                        new DbTestModule())
+                new MetaTestModule(),
+                new MetaDbModule(),
+                new MockClusterLockModule(),
+                new MockSecurityContextModule(),
+                new MockTaskModule(),
+                new MockCollectionModule(),
+                new MockDocRefInfoModule(),
+                new MockWordListProviderModule(),
+                new CacheModule(),
+                new DbTestModule())
                 .injectMembers(this);
         // Delete everything`
         cleanup.cleanup();
@@ -107,35 +123,166 @@ class TestMetaDaoImpl {
                 System.currentTimeMillis());
     }
 
-    @Test
-    void testFind() {
+    @TestFactory
+    Stream<DynamicTest> testFind() {
         setup();
 
-        ResultPage<Meta> resultPage = metaDao.find(new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(
-                TEST1_FEED_NAME)));
-        assertThat(resultPage.size())
-                .isEqualTo(20);
+        final AtomicInteger testNo = new AtomicInteger(1);
+        return Stream.of(
 
-        resultPage = metaDao.find(new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(TEST2_FEED_NAME)));
-        assertThat(resultPage.size())
-                .isEqualTo(20);
+                // Find all.
+                makeTest(testNo.getAndIncrement(), ExpressionOperator.builder().build(), 40),
 
-        resultPage = metaDao.find(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression(TEST1_FEED_NAME,
-                TEST2_FEED_NAME)));
-        assertThat(resultPage.size())
-                .isEqualTo(40);
+                // Find feed 1.
+                makeTest(testNo.getAndIncrement(), MetaExpressionUtil.createFeedExpression(
+                        TEST1_FEED_NAME), 20),
 
-        resultPage = metaDao.find(new FindMetaCriteria(MetaExpressionUtil.createFeedsExpression()));
-        assertThat(resultPage.size())
-                .isEqualTo(0);
+                // Find feed 2.
+                makeTest(testNo.getAndIncrement(), MetaExpressionUtil.createFeedExpression(TEST2_FEED_NAME), 20),
 
-        final ExpressionOperator expression = ExpressionOperator.builder()
-                .addTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
-                .addTerm(MetaFields.TYPE, Condition.EQUALS, RAW_STREAM_TYPE_NAME)
+                // Find both feeds.
+                makeTest(testNo.getAndIncrement(), MetaExpressionUtil.createFeedsExpression(TEST1_FEED_NAME,
+                        TEST2_FEED_NAME), 40),
+
+                // Find none.
+                makeTest(testNo.getAndIncrement(), MetaExpressionUtil.createFeedsExpression(), 0),
+
+                // Find with doc ref.
+                makeTest(testNo.getAndIncrement(), ExpressionOperator.builder()
+                        .addTerm(createFeedTerm(TEST1_FEED, true))
+                        .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                        .build(), 20),
+
+                makeTest(testNo.getAndIncrement(), ExpressionOperator.builder()
+                        .addTerm(createFeedTerm(TEST1_FEED, true))
+                        .addTerm(createFeedTerm(TEST2_FEED, true))
+                        .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                        .build(), 0),
+
+                makeTest(testNo.getAndIncrement(), ExpressionOperator.builder()
+                        .addTerm(createFeedTerm(TEST1_FEED, true))
+                        .addTerm(createFeedTerm(TEST2_FEED, true))
+                        .build(), 0),
+
+                makeTest(testNo.getAndIncrement(), ExpressionOperator.builder()
+                        .addTerm(createFeedTerm(TEST1_FEED, true))
+                        .addTerm(createFeedTerm(TEST2_FEED, false))
+                        .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                        .build(), 20),
+
+                makeTest(testNo.getAndIncrement(), ExpressionOperator.builder()
+                        .addTerm(createFeedTerm(TEST1_FEED, false))
+                        .addTerm(createFeedTerm(TEST2_FEED, true))
+                        .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                        .build(), 20),
+
+                makeTest(testNo.getAndIncrement(), ExpressionOperator.builder()
+                        .addTerm(createFeedTerm(TEST1_FEED, false))
+                        .addTerm(createFeedTerm(TEST2_FEED, false))
+                        .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                        .build(), 40),
+
+                makeTest(testNo.getAndIncrement(), ExpressionOperator.builder()
+                        .addTerm(createFeedTerm(TEST1_FEED, false))
+                        .addTerm(createFeedTerm(TEST2_FEED, false))
+                        .build(), 40),
+
+                makeTest(testNo.getAndIncrement(), ExpressionOperator.builder()
+                        .addTerm(createFeedTerm(TEST1_FEED, false))
+                        .addTerm(createFeedTerm(TEST2_FEED, false))
+                        .addTerm(createFeedTerm(TEST3_FEED, false))
+                        .build(), 40),
+
+                makeTest(testNo.getAndIncrement(), ExpressionOperator.builder()
+                        .addTerm(createFeedTerm(TEST1_FEED, false))
+                        .addTerm(createFeedTerm(TEST2_FEED, false))
+                        .addTerm(createFeedTerm(TEST3_FEED, true))
+                        .build(), 0),
+
+                makeTest(testNo.getAndIncrement(), ExpressionOperator.builder()
+                        .addTerm(MetaFields.FEED, Condition.EQUALS, TEST1_FEED_NAME)
+                        .addTerm(MetaFields.TYPE, Condition.EQUALS, RAW_STREAM_TYPE_NAME)
+                        .build(), 10),
+
+                // Or tests.
+                makeTest(testNo.getAndIncrement(), ExpressionOperator.builder()
+                        .addOperator(
+                                ExpressionOperator.builder()
+                                        .op(Op.OR)
+                                        .addTerm(createFeedTerm(TEST1_FEED, true))
+                                        .addTerm(createFeedTerm(TEST2_FEED, true))
+                                        .build())
+                        .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                        .build(), 40),
+
+                makeTest(testNo.getAndIncrement(), ExpressionOperator.builder()
+                        .addOperator(
+                                ExpressionOperator.builder()
+                                        .op(Op.OR)
+                                        .addTerm(createFeedTerm(TEST1_FEED, true))
+                                        .addTerm(createFeedTerm(TEST2_FEED, true))
+                                        .build())
+                        .build(), 40),
+
+                makeTest(testNo.getAndIncrement(), ExpressionOperator.builder()
+                        .addOperator(
+                                ExpressionOperator.builder()
+                                        .op(Op.OR)
+                                        .addTerm(createFeedTerm(TEST1_FEED, true))
+                                        .addTerm(createFeedTerm(TEST2_FEED, false))
+                                        .build())
+                        .build(), 20),
+
+                makeTest(testNo.getAndIncrement(), ExpressionOperator.builder()
+                        .addOperator(
+                                ExpressionOperator.builder()
+                                        .op(Op.OR)
+                                        .addTerm(createFeedTerm(TEST1_FEED, false))
+                                        .addTerm(createFeedTerm(TEST2_FEED, false))
+                                        .build())
+                        .build(), 40),
+
+                makeTest(testNo.getAndIncrement(), ExpressionOperator.builder()
+                        .addOperator(
+                                ExpressionOperator.builder()
+                                        .op(Op.OR)
+                                        .addTerm(createFeedTerm(TEST1_FEED, false))
+                                        .addTerm(createFeedTerm(TEST2_FEED, false))
+                                        .addTerm(createFeedTerm(TEST3_FEED, false))
+                                        .build())
+                        .build(), 40),
+
+                makeTest(testNo.getAndIncrement(), ExpressionOperator.builder()
+                        .addOperator(
+                                ExpressionOperator.builder()
+                                        .op(Op.OR)
+                                        .addTerm(createFeedTerm(TEST1_FEED, false))
+                                        .addTerm(createFeedTerm(TEST2_FEED, false))
+                                        .addTerm(createFeedTerm(TEST3_FEED, true))
+                                        .build())
+                        .build(), 0)
+        ).sequential();
+    }
+
+    private DynamicTest makeTest(final int testNo, final ExpressionOperator expression, final int expected) {
+        return DynamicTest.dynamicTest(
+                Strings.padStart(String.valueOf(testNo), 2, '0')
+                        + " - "
+                        + expression.toString(),
+                () -> {
+                    final ResultPage<Meta> resultPage = metaDao.find(new FindMetaCriteria(expression));
+                    assertThat(resultPage.size()).isEqualTo(expected);
+                });
+    }
+
+    private ExpressionTerm createFeedTerm(final DocRef feed, boolean enabled) {
+        return ExpressionTerm
+                .builder()
+                .field(MetaFields.FEED.getName())
+                .condition(Condition.IS_DOC_REF)
+                .docRef(feed)
+                .enabled(enabled)
                 .build();
-        resultPage = metaDao.find(new FindMetaCriteria(expression));
-        assertThat(resultPage.size())
-                .isEqualTo(10);
     }
 
     @Test

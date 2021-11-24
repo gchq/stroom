@@ -28,14 +28,14 @@ public class WelcomeResourceImpl implements WelcomeResource {
     @AutoLogged(value = OperationType.MANUALLY_LOGGED)
     @Override
     public Welcome fetch() {
-        return stroomEventLoggingServiceProvider.get().loggedResult(
-                StroomEventLoggingUtil.buildTypeId(this, "fetch"),
-                "Get the configured HTML welcome message",
-                ViewEventAction.builder()
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "fetch"))
+                .withDescription("Get the configured HTML welcome message")
+                .withDefaultEventAction(ViewEventAction.builder()
                         .addBanner(Banner.builder()
                                 .build())
-                        .build(),
-                eventAction -> {
+                        .build())
+                .withComplexLoggedResult(eventAction -> {
                     final String msg = uiConfigProvider.get().getWelcomeHtml();
                     final Welcome welcome = new Welcome(msg);
 
@@ -47,8 +47,7 @@ public class WelcomeResourceImpl implements WelcomeResource {
                                             .build())
                                     .build()
                     );
-                },
-                null
-        );
+                })
+                .getResultAndLog();
     }
 }

@@ -6,7 +6,6 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
 import stroom.task.api.TaskTerminatedException;
-import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.TaskId;
 import stroom.task.shared.ThreadPool;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -15,15 +14,10 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.IntStream;
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -38,105 +32,6 @@ class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
     private TaskContextFactory taskContextFactory;
     @Inject
     private TaskManager taskManager;
-
-    @Test
-    void testMoreItemsThanThreads_boundedPool() throws ExecutionException, InterruptedException {
-        LOGGER.info("Starting");
-        int poolSize = 4;
-        ThreadPool threadPool = new ThreadPoolImpl(getClass().getName(),
-                3,
-                poolSize,
-                poolSize);
-
-        final Executor executor = executorProvider.get(threadPool);
-        CompletableFuture.runAsync(() -> LOGGER.info("Warming up thread pool"), executor).get();
-
-        AtomicInteger counter = new AtomicInteger();
-        final Queue<Thread> threadsUsed = new ConcurrentLinkedQueue<>();
-
-        final int taskCount = 10;
-        CompletableFuture[] futures = IntStream.rangeClosed(1, taskCount)
-                .mapToObj(i -> {
-                    final Runnable runnable = taskContextFactory.context("Running task", taskContext -> {
-                        try {
-                            Thread.sleep(50);
-                            LOGGER.info("Running task {}", i);
-                            counter.incrementAndGet();
-                            threadsUsed.add(Thread.currentThread());
-                        } catch (final InterruptedException e) {
-                            LOGGER.error(e.getMessage(), e);
-
-                            // Continue to interrupt this thread.
-                            Thread.currentThread().interrupt();
-                        }
-                    });
-
-                    return CompletableFuture.runAsync(runnable, executor);
-                })
-                .toArray(CompletableFuture[]::new);
-
-        CompletableFuture.allOf(futures).join();
-
-        assertThat(counter.get()).isEqualTo(taskCount);
-
-        long distinctThreads = threadsUsed.stream()
-                .distinct()
-                .count();
-
-        LOGGER.info("Threads used: {}", distinctThreads);
-
-        assertThat(distinctThreads <= poolSize).isTrue();
-
-        LOGGER.info("Finished");
-    }
-
-    @Test
-    void testMoreItemsThanThreads_unBoundedPool() throws ExecutionException, InterruptedException {
-
-        LOGGER.info("Starting");
-        int poolSize = Integer.MAX_VALUE; //unbounded
-        ThreadPool threadPool = new ThreadPoolImpl(this.getClass().getName(),
-                3,
-                0,
-                poolSize);
-
-        final Executor executor = executorProvider.get(threadPool);
-        AtomicInteger counter = new AtomicInteger();
-        final Queue<Thread> threadsUsed = new ConcurrentLinkedQueue<>();
-
-        final int taskCount = 10;
-        CompletableFuture[] futures = IntStream.rangeClosed(1, taskCount)
-                .mapToObj(i -> {
-                    final Runnable runnable = taskContextFactory.context("Running task", taskContext -> {
-                        try {
-                            Thread.sleep(50);
-                            LOGGER.info("Running task {}", i);
-                            counter.incrementAndGet();
-                            threadsUsed.add(Thread.currentThread());
-                        } catch (final InterruptedException e) {
-                            LOGGER.error(e.getMessage(), e);
-
-                            // Continue to interrupt this thread.
-                            Thread.currentThread().interrupt();
-                        }
-                    });
-                    return CompletableFuture.runAsync(runnable, executor);
-                })
-                .toArray(CompletableFuture[]::new);
-
-        CompletableFuture.allOf(futures).get();
-
-        assertThat(counter.get()).isEqualTo(taskCount);
-
-        long distinctThreads = threadsUsed.stream()
-                .distinct()
-                .count();
-
-        LOGGER.info("Threads used: {}", distinctThreads);
-
-        assertThat(distinctThreads <= poolSize).isTrue();
-        LOGGER.info("Finished");
-    }
 
     @Test
     void testCompletedExceptionally() {

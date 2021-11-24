@@ -1,5 +1,6 @@
 package stroom.processor.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.datasource.api.v2.AbstractField;
@@ -14,6 +15,7 @@ import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.api.v2.ExpressionValidator;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -69,28 +71,37 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
         this.consumer = consumer;
 
         final QueryData queryData = getOrCreateQueryData(filter);
-        read(queryData.getExpression(), MetaFields.STREAM_STORE_DOC_REF, MetaFields.getFields());
+        final List<AbstractField> fields = MetaFields.getFields();
+        read(queryData.getExpression(), MetaFields.STREAM_STORE_DOC_REF, fields);
 
         final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
                     final ExpressionOperator expression = write();
-                    queryData.setDataSource(MetaFields.STREAM_STORE_DOC_REF);
-                    queryData.setExpression(expression);
 
-                    if (filter != null) {
-                        ConfirmEvent.fire(ProcessorEditPresenter.this,
-                                "You are about to update an existing filter. Any streams that might now be " +
-                                        "included by this filter but are older than the current tracker position " +
-                                        "will not be processed. Are you sure you wish to do this?",
-                                result -> {
-                                    if (result) {
-                                        validateFeed(filter, queryData);
-                                    }
-                                });
-                    } else {
-                        validateFeed(null, queryData);
+                    try {
+                        final ExpressionValidator expressionValidator = new ExpressionValidator(fields);
+                        expressionValidator.validate(expression);
+
+                        queryData.setDataSource(MetaFields.STREAM_STORE_DOC_REF);
+                        queryData.setExpression(expression);
+
+                        if (filter != null) {
+                            ConfirmEvent.fire(ProcessorEditPresenter.this,
+                                    "You are about to update an existing filter. Any streams that might now " +
+                                            "be included by this filter but are older than the current tracker " +
+                                            "position will not be processed. Are you sure you wish to do this?",
+                                    result -> {
+                                        if (result) {
+                                            validateFeed(filter, queryData);
+                                        }
+                                    });
+                        } else {
+                            validateFeed(null, queryData);
+                        }
+                    } catch (final RuntimeException e) {
+                        AlertEvent.fireError(ProcessorEditPresenter.this, e.getMessage(), null);
                     }
 
                 } else {

@@ -1,10 +1,8 @@
 package stroom.pipeline.refdata;
 
-import stroom.lmdb.LmdbConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.config.annotations.RequiresRestart.RestartScope;
-import stroom.util.io.ByteSize;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 import stroom.util.time.StroomDuration;
@@ -25,13 +23,7 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
     private StroomDuration purgeAge = StroomDuration.ofDays(30);
     private int loadingLockStripes = 2048;
 
-    private LmdbConfig lmdbConfig = LmdbConfig.builder("reference_data")
-            .withMaxReaders(100)
-            .withMaxStoreSize(ByteSize.ofGibibytes(50))
-            .withMaxDbs(7)
-            .withReadAheadEnabledState(true)
-            .withReadersBlockedByWritersState(true)
-            .build();
+    private ReferenceDataLmdbConfig lmdbConfig = new ReferenceDataLmdbConfig();
 
     private CacheConfig effectiveStreamCache = CacheConfig.builder()
             .maximumSize(1000L)
@@ -93,12 +85,12 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
     }
 
     @JsonProperty("lmdb")
-    public LmdbConfig getLmdbConfig() {
+    public ReferenceDataLmdbConfig getLmdbConfig() {
         return lmdbConfig;
     }
 
     @SuppressWarnings("unused")
-    public void setLmdbConfig(final LmdbConfig lmdbConfig) {
+    public void setLmdbConfig(final ReferenceDataLmdbConfig lmdbConfig) {
         this.lmdbConfig = lmdbConfig;
     }
 

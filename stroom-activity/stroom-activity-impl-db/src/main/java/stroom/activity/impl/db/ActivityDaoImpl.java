@@ -28,7 +28,9 @@ import org.jooq.Condition;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.inject.Inject;
 
 import static stroom.activity.impl.db.jooq.tables.Activity.ACTIVITY;
@@ -75,14 +77,41 @@ public class ActivityDaoImpl implements ActivityDao {
         final Integer limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
 
         return JooqUtil.contextResult(activityDbConnProvider, context -> context
-                        .select()
-                        .from(ACTIVITY)
-                        .where(conditions)
-                        .limit(offset, limit)
-                        .fetch())
+                .select()
+                .from(ACTIVITY)
+                .where(conditions)
+                .limit(offset, limit)
+                .fetch())
                 .into(Activity.class)
                 .stream()
                 .map(ActivitySerialiser::deserialise)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Activity> find(
+            final FindActivityCriteria criteria,
+            final Function<Stream<Activity>, Stream<Activity>> streamFunction) {
+        // Only filter on the user in the DB as we don't have a jooq/sql version of the
+        // QuickFilterPredicateFactory
+        final Collection<Condition> conditions = JooqUtil.conditions(
+                Optional.ofNullable(criteria.getUserId()).map(ACTIVITY.USER_ID::eq));
+        final int offset = JooqUtil.getOffset(criteria.getPageRequest());
+        final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
+
+        return JooqUtil.contextResult(activityDbConnProvider, context -> {
+            try (Stream<Activity> activityStream = context
+                    .select()
+                    .from(ACTIVITY)
+                    .where(conditions)
+                    .fetchStreamInto(Activity.class)
+                    .map(ActivitySerialiser::deserialise)) {
+
+                return streamFunction.apply(activityStream)
+                        .skip(offset)
+                        .limit(limit)
+                        .collect(Collectors.toList());
+            }
+        });
     }
 }

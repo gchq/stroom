@@ -89,6 +89,7 @@ export interface Account {
 export interface AccountResultPage {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
+  qualifiedFilterInput?: string;
   values?: Account[];
 }
 
@@ -214,6 +215,7 @@ export interface ApiKey {
 export interface ApiKeyResultPage {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
+  qualifiedFilterInput?: string;
   values?: ApiKey[];
 }
 
@@ -1143,6 +1145,7 @@ export type FetchDataResult = AbstractFetchDataResult & {
 
 export interface FetchExplorerNodeResult {
   openedItems?: string[];
+  qualifiedFilterInput?: string;
   rootNodes?: ExplorerNode[];
   temporaryOpenedItems?: string[];
 }
@@ -1237,7 +1240,7 @@ export interface FilterFieldDefinition {
 
 export interface FilterUsersRequest {
   quickFilterInput?: string;
-  users?: User[];
+  users?: SimpleUser[];
 }
 
 export interface FindDBTableCriteria {
@@ -1437,6 +1440,7 @@ export interface GetFeedStatusResponse {
     | "200 - 0 - OK"
     | "406 - 100 - Feed must be specified"
     | "406 - 101 - Feed is not defined"
+    | "406 - 102 - Data type is invalid"
     | "406 - 110 - Feed is not set to receive data"
     | "406 - 120 - Unexpected data type"
     | "406 - 200 - Unknown compression"
@@ -1748,8 +1752,11 @@ export interface Limits {
  * List of config properties
  */
 export interface ListConfigResponse {
+  nodeName?: string;
+
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
+  qualifiedFilterInput?: string;
   values?: ConfigProperty[];
 }
 
@@ -2141,6 +2148,12 @@ export interface ProcessorFilter {
 
   /** @format int32 */
   id?: number;
+
+  /** @format int64 */
+  maxMetaCreateTimeMs?: number;
+
+  /** @format int64 */
+  minMetaCreateTimeMs?: number;
   pipelineName?: string;
   pipelineUuid?: string;
 
@@ -2855,6 +2868,11 @@ export interface SharedElementData {
 export interface SharedStepData {
   elementMap?: Record<string, SharedElementData>;
   sourceLocation?: SourceLocation;
+}
+
+export interface SimpleUser {
+  name?: string;
+  uuid?: string;
 }
 
 export interface Size {
@@ -6805,7 +6823,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     filterUsers: (data: FilterUsersRequest, params: RequestParams = {}) =>
-      this.request<any, User[]>({
+      this.request<any, SimpleUser[]>({
         path: `/permission/doc/v1/filterUsers`,
         method: "POST",
         body: data,
@@ -7029,6 +7047,23 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       this.request<any, boolean>({
         path: `/processor/v1/${id}`,
         method: "DELETE",
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags Processors
+     * @name FetchProcessor
+     * @summary Fetch a processor
+     * @request GET:/processor/v1/{id}
+     * @secure
+     */
+    fetchProcessor: (id: number, params: RequestParams = {}) =>
+      this.request<any, Processor>({
+        path: `/processor/v1/${id}`,
+        method: "GET",
         secure: true,
         ...params,
       }),

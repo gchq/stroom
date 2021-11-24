@@ -43,11 +43,16 @@ public class MapDefinitionUIDStore {
     private final MapUidReverseDb mapUidReverseDb;
     private final LmdbEnv lmdbEnv;
 
-    // TODO may want a background process that scans the reverse table to look for gaps
-    // in the UID sequence and add the missing ones to another table which can be used
-    // for allocating next UIDs before falling back to getting the next highest. If we don't
-    // we could end up running out of UIDs in the LONG term. If that happened you could just delete
-    // the files off the DB and start again.
+    // TODO may want some way of reusing UIDs after they have been purged. Simplest solution would be to
+    //  have a new table to hold a pool of UIDs for reuse.  This would be populated during the purge of the
+    //  map def. Any neq requests for a UID would look in this table first (under write lock), if found use it,
+    //  if not create a new as we do now. If we don't
+    //  we could end up running out of UIDs in the LONG term. If that happened you could just delete
+    //  the files off the DB and start again. With a 4 byte UID we have approx 4 billion UIDs available
+    //  and we use a new one for each strm/map combo.  Even at 1000 new strm/maps per day that is still 4million
+    //  days!
+    //  However if we had UID reuse we could reduce the size of the UID to 3 or even 2 bytes, with the limiting
+    //  factor being the retention period of the data.
 
     MapDefinitionUIDStore(final LmdbEnv lmdbEnv,
                           final MapUidForwardDb mapUidForwardDb,

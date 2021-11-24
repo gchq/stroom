@@ -407,8 +407,7 @@ appConfig:
         expireAfterWrite: null
       lmdb:
         localDir: "reference_data"
-        maxDbs: 7
-        maxReaders: 100
+        maxReaders: 150
         maxStoreSize: "50G"
         readAheadEnabled: true
         readerBlockedByWriter: true
@@ -511,13 +510,11 @@ appConfig:
       expireAfterWrite: null
     extraction:
       maxStoredDataQueueSize: 1000
-      maxThreads: 4
-      maxThreadsPerTask: 2
+      maxThreadsPerTask: 5
       maxStreamEventMapSize: 1000000
     shard:
       maxDocIdQueueSize: 1000000
-      maxThreads: 4
-      maxThreadsPerTask: 2
+      maxThreadsPerTask: 5
       searchResultCache:
         maximumSize: 10000
         expireAfterAccess: "PT10M"
@@ -540,11 +537,9 @@ appConfig:
       payloadLimit: "0B"
       lmdb:
         localDir: "search_results"
-        maxDbs: 7
         maxReaders: 10
         maxStoreSize: "10G"
         readAheadEnabled: true
-        readerBlockedByWriter: false
   searchable:
     storeSize: "1000000,100,10,1"
     searchResultCache:

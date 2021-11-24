@@ -17,9 +17,8 @@
 package stroom.task.impl;
 
 import stroom.task.api.ExecutorProvider;
-import stroom.task.api.SimpleThreadPool;
+import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
-import stroom.util.concurrent.ScalingThreadPoolExecutor;
 import stroom.util.thread.CustomThreadFactory;
 import stroom.util.thread.StroomThreadGroup;
 
@@ -27,9 +26,9 @@ import java.util.Iterator;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
@@ -38,11 +37,11 @@ import javax.inject.Singleton;
 @Singleton
 public class ExecutorProviderImpl implements ExecutorProvider {
 
-    public static final ThreadPool DEFAULT_THREAD_POOL = new SimpleThreadPool(2);
+    public static final ThreadPool DEFAULT_THREAD_POOL = new ThreadPoolImpl("Stroom P2", 2);
     private final AtomicInteger currentAsyncTaskCount = new AtomicInteger();
 
     // The thread pools that will be used to execute tasks.
-    private final ConcurrentHashMap<ThreadPool, ThreadPoolExecutor> threadPoolMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<ThreadPool, ExecutorService> threadPoolMap = new ConcurrentHashMap<>();
     private final ReentrantLock poolCreationLock = new ReentrantLock();
     private final AtomicBoolean stop = new AtomicBoolean();
 
@@ -73,7 +72,7 @@ public class ExecutorProviderImpl implements ExecutorProvider {
 
     private Executor getRealExecutor(final ThreadPool threadPool) {
         Objects.requireNonNull(threadPool, "Null thread pool");
-        ThreadPoolExecutor executor = threadPoolMap.get(threadPool);
+        ExecutorService executor = threadPoolMap.get(threadPool);
         if (executor == null) {
             poolCreationLock.lock();
             try {
@@ -89,14 +88,7 @@ public class ExecutorProviderImpl implements ExecutorProvider {
                     final CustomThreadFactory taskThreadFactory = new CustomThreadFactory(
                             threadPool.getName() + " #", poolThreadGroup, threadPool.getPriority());
 
-                    // Create the new thread pool for this priority
-                    return ScalingThreadPoolExecutor.newScalingThreadPool(
-                            threadPool.getCorePoolSize(),
-                            threadPool.getMaxPoolSize(),
-                            threadPool.getMaxQueueSize(),
-                            60L,
-                            TimeUnit.SECONDS,
-                            taskThreadFactory);
+                    return Executors.newCachedThreadPool(taskThreadFactory);
                 });
             } finally {
                 poolCreationLock.unlock();
@@ -114,7 +106,7 @@ public class ExecutorProviderImpl implements ExecutorProvider {
         try {
             final Iterator<ThreadPool> iter = threadPoolMap.keySet().iterator();
             iter.forEachRemaining(threadPool -> {
-                final ThreadPoolExecutor executor = threadPoolMap.get(threadPool);
+                final ExecutorService executor = threadPoolMap.get(threadPool);
                 if (executor != null) {
                     executor.shutdown();
                     threadPoolMap.remove(threadPool);

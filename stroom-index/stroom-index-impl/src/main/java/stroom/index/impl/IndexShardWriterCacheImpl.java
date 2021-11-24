@@ -276,7 +276,10 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                     countDownLatch.await();
                 }
             } catch (final InterruptedException e) {
-                LOGGER.error(e::getMessage, e);
+                LOGGER.debug(e::getMessage, e);
+
+                // Continue to interrupt this thread.
+                Thread.currentThread().interrupt();
             }
         }, "flushAll()");
     }

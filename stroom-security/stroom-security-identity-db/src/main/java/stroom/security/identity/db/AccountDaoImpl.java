@@ -22,7 +22,6 @@ import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.security.identity.account.Account;
 import stroom.security.identity.account.AccountDao;
-import stroom.security.identity.account.AccountResource;
 import stroom.security.identity.account.AccountResultPage;
 import stroom.security.identity.account.SearchAccountRequest;
 import stroom.security.identity.authenticate.CredentialValidationResult;
@@ -31,8 +30,6 @@ import stroom.security.identity.db.jooq.tables.records.AccountRecord;
 import stroom.security.identity.exceptions.NoSuchUserException;
 import stroom.security.shared.User;
 import stroom.util.ResultPageFactory;
-import stroom.util.filter.FilterFieldMapper;
-import stroom.util.filter.FilterFieldMappers;
 import stroom.util.filter.QuickFilterPredicateFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -158,23 +155,6 @@ class AccountDaoImpl implements AccountDao {
             entry("processingAccount", ACCOUNT.PROCESSING_ACCOUNT),
             entry(FIELD_NAME_STATUS, ACCOUNT_STATUS));
 
-    private static final FilterFieldMappers<Account> FIELD_MAPPERS = FilterFieldMappers.of(
-            FilterFieldMapper.of(
-                    AccountResource.FIELD_DEF_USER_ID,
-                    Account::getUserId),
-            FilterFieldMapper.of(
-                    AccountResource.FIELD_DEF_EMAIL,
-                    Account::getEmail),
-            FilterFieldMapper.of(
-                    AccountResource.FIELD_DEF_STATUS,
-                    Account::getStatus),
-            FilterFieldMapper.of(
-                    AccountResource.FIELD_DEF_FIRST_NAME,
-                    Account::getFirstName),
-            FilterFieldMapper.of(
-                    AccountResource.FIELD_DEF_LAST_NAME,
-                    Account::getLastName));
-
     private static final Map<String, Comparator<Account>> FIELD_COMPARATORS = Map.of(
             FIELD_NAME_USER_ID,
             CompareUtil.getNullSafeCaseInsensitiveComparator(Account::getUserId),
@@ -212,7 +192,8 @@ class AccountDaoImpl implements AccountDao {
                         .orderBy(orderByUserIdField)
                         .fetch())
                 .map(RECORD_TO_ACCOUNT_MAPPER::apply);
-        return ResultPageFactory.createUnboundedList(list, AccountResultPage::new);
+        return ResultPageFactory.createUnboundedList(list, (accounts, pageResponse) ->
+                new AccountResultPage(accounts, pageResponse, null));
     }
 
     @Override
@@ -221,6 +202,9 @@ class AccountDaoImpl implements AccountDao {
 
         // Sort on user_id if no sort supplied
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, request, ACCOUNT.USER_ID);
+        final String fullyQualifyFilterInput = QuickFilterPredicateFactory.fullyQualifyInput(
+                request.getQuickFilter(),
+                AccountDao.FIELD_MAPPERS);
 
         return JooqUtil.contextResult(identityDbConnProvider, context -> {
             if (request.getQuickFilter() == null || request.getQuickFilter().length() == 0) {
@@ -278,7 +262,10 @@ class AccountDaoImpl implements AccountDao {
                         list.size(),
                         (long) count,
                         true);
-                return new AccountResultPage(list, pageResponse);
+                return new AccountResultPage(
+                        list,
+                        pageResponse,
+                        fullyQualifyFilterInput);
 
             } else {
                 try (final Stream<AccountRecord> stream = context
@@ -291,10 +278,13 @@ class AccountDaoImpl implements AccountDao {
 
                     return QuickFilterPredicateFactory.filterStream(
                                     request.getQuickFilter(),
-                                    FIELD_MAPPERS,
+                                    AccountDao.FIELD_MAPPERS,
                                     stream.map(RECORD_TO_ACCOUNT_MAPPER),
                                     comparator)
-                            .collect(AccountResultPage.collector(request.getPageRequest(), AccountResultPage::new));
+                            .collect(AccountResultPage.collector(
+                                    request.getPageRequest(),
+                                    (accounts, pageResponse) ->
+                                            new AccountResultPage(accounts, pageResponse, fullyQualifyFilterInput)));
                 }
             }
         });

@@ -319,8 +319,8 @@ class TaskManagerImpl implements TaskManager {
     @SuppressWarnings("unused") // Used in commented out debugging code
     private List<TaskProgress> buildDummyTaskDataForTesting(final Predicate<TaskProgress> fuzzyMatchPredicate) {
 
-        AtomicInteger id = new AtomicInteger(0);
-        List<String> taskNames = List.of(
+        final AtomicInteger id = new AtomicInteger(0);
+        final List<String> taskNames = List.of(
                 "Red",
                 "Blue",
                 "Green",
@@ -329,15 +329,15 @@ class TaskManagerImpl implements TaskManager {
                 "Pink",
                 "Orange");
 
-        List<String> users = List.of(
+        final List<String> users = List.of(
                 "joebloggs",
                 "johndoe");
 
-        Instant startTime = Instant.EPOCH;
-        Instant now = Instant.now();
-        String nodeName = nodeInfo.getThisNodeName();
+        final Instant startTime = Instant.EPOCH;
+        final Instant now = Instant.now();
+        final String nodeName = nodeInfo.getThisNodeName();
 
-        return taskNames.stream()
+        final List<TaskProgress> colourTasks = taskNames.stream()
                 .flatMap(taskname -> {
                     // Need to make sure task IDs are unique over the cluster
                     TaskId grandparentTaskId = new TaskId(nodeName + "-" + id.incrementAndGet(), null);
@@ -369,6 +369,24 @@ class TaskManagerImpl implements TaskManager {
                     return taskProgress;
 
                 })
+                .collect(Collectors.toList());
+
+        // If a parent task has died for some reason that leaves an orphaned task so the UI
+        // needs to be able to cope with those too.
+        final TaskId missingParentTask = new TaskId(Long.toString(Long.MAX_VALUE), null);
+        final TaskProgress orphanedTask = new TaskProgress(
+                new TaskId(Long.toString(id.incrementAndGet()), missingParentTask),
+                "Orphaned-task",
+                "taskInfo-Orphaned-task",
+                "janedoe",
+                "threadY",
+                nodeInfo.getThisNodeName(),
+                startTime.plus(id.get() * 100, ChronoUnit.DAYS).toEpochMilli(),
+                now.toEpochMilli(),
+                null,
+                null);
+
+        return Stream.concat(colourTasks.stream(), Stream.of(orphanedTask))
                 .collect(Collectors.toList());
     }
 }

@@ -5,6 +5,7 @@ import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.OverrideValue;
 import stroom.docref.DocRef;
 import stroom.lmdb.LmdbConfig;
+import stroom.pipeline.refdata.ReferenceDataLmdbConfig;
 import stroom.util.config.PropertyUtil.Prop;
 import stroom.util.io.ByteSize;
 import stroom.util.logging.AsciiTable;
@@ -205,10 +206,13 @@ class TestConfigMapper {
         AppConfig appConfig = getAppConfig();
 
         // simulate dropwiz setting a prop from the yaml
-        final LmdbConfig lmdbConfig = appConfig.getPipelineConfig().getReferenceDataConfig().getLmdbConfig();
-        final String initialValue = lmdbConfig.getLocalDir();
+        final ReferenceDataLmdbConfig referenceDataLmdbConfig = appConfig.getPipelineConfig()
+                .getReferenceDataConfig()
+                .getLmdbConfig();
+
+        final String initialValue = referenceDataLmdbConfig.getLocalDir();
         final String newValue = initialValue + "xxx";
-        lmdbConfig.setLocalDir(newValue);
+        referenceDataLmdbConfig.setLocalDir(newValue);
 
         ConfigMapper configMapper = new ConfigMapper(appConfig);
 
@@ -217,7 +221,7 @@ class TestConfigMapper {
         final ConfigProperty configProperty = configProperties.stream()
                 .filter(confProp ->
                         confProp.getName().equalsIgnoreCase(PropertyPath.fromPathString(
-                                lmdbConfig.getFullPath(LmdbConfig.LOCAL_DIR_PROP_NAME))))
+                                referenceDataLmdbConfig.getFullPath(LmdbConfig.LOCAL_DIR_PROP_NAME))))
                 .findFirst()
                 .orElseThrow();
 
@@ -233,7 +237,9 @@ class TestConfigMapper {
         AppConfig appConfig = getAppConfig();
 
         // simulate a prop not being defined in the yaml
-        final LmdbConfig lmdbConfig = appConfig.getPipelineConfig().getReferenceDataConfig().getLmdbConfig();
+        final ReferenceDataLmdbConfig lmdbConfig = appConfig.getPipelineConfig()
+                .getReferenceDataConfig()
+                .getLmdbConfig();
         final String initialValue = lmdbConfig.getLocalDir();
         final String newYamlValue = null;
         lmdbConfig.setLocalDir(newYamlValue);

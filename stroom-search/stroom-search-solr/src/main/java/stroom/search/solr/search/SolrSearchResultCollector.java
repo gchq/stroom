@@ -111,6 +111,7 @@ public class SolrSearchResultCollector implements Store {
 
     @Override
     public void destroy() {
+        complete();
         coprocessors.clear();
     }
 

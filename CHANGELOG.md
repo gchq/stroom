@@ -7,13 +7,71 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+~~~
+DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
+~~~
+
+* Uplift event-logging library to `5.0-beta.27_schema-v4.0-beta.3` to fix missing failure outcomes on logged events.
+
+* Issue **#2557** : Optimise meta queries to ensure join order is as expected.
+
+* Issue **#2538** : Change logging of quick filter searches to log the fully qualified filter input.
+
+* Issue **#2565** : Stop orphan file finder reporting dirs that contain child dirs as empty.
+
+* Issue **#2563** : Fix bad expression logic.
+
+* Issue **#2562** : Fix NPE in the UI related to uninitialised processor filter trackers.
+
+* Stop logging audit events for most NodeResource call as they are not direct user actions.
+
+* Issue **#2553** : Prevent get and clear methods in LMDB data store from running at the same time. Add check for the LMDB env being closed to prevent JVM crash.
+
+* Issue **#2555** : Remove checkbox from dead tasks in the server tasks screen to stop users trying to delete them.
+
+* Issue **#2564** : Improve search performance.
+
+* Issue **#2582** : Fix DB migration for `processor_filter`.
+
+* Issue **#2542** : Improve autologged searches "raw" JSON.
+
+* Issue **#2534** : Implement ProcessorResource.fetch to fix event log.
+
+* Issue **#2533** : Fix corrupt event format for logout due to NPE.
+
+* Issue **#2530** : Fix issue of explorer tree not refreshing on copy, move and delete when auth is disabled.
+
+* Add wait time debug logging around LMDB locks.
+
+* Increase maxReaders default to 150 for reference data.
+
+* Issue **#2548** : Clear contents of `stroom.search.resultStore.lmdb.localDir` on boot.
+
+* Issue **#2549** : Remove `maxDbs` from `lmdb` config. Remove `readerBlockedByWriter` from `resultStore.lmdb` config.
+
+* Issue **#2544** : Add additional constraints to processor filter instead of using tracker state
+
+* No changes. Previous build failed due to networking issues.
+
+* Issue **#2540** : No longer error when interrupting shard flush process
+
+* Issue **#2541** : Stop finished queries from deleting LMDB envs for all queries.
+
+* Issue **#2535** : Added validation to data type names.
+
+* Issue **#2530** : Fixed explorer refresh on copy and move
+
+* Revert accidental whitespace change to V07_00_00_007__meta_retention_tracker.sql
+
+* Issue **#2519** : Added validation for processor filter expressions and more info about filters to the UI.
+
 * Issue **#2501** : Change reference data store to use consistent approach to last access time truncation.
 
 * Issue **#2424** : Change security filter to 404 any unexpected URIs.
 
 * Issue **#2493** : Fix missing part nav controls when data can't be decoded.
 
-* Issue **#2497** : Added summary to orphan file finder.
+* Issue **#2497** : Added summary to orphan file finder. Fixed issue with `OrphanFileFinder` incorrectly identifying some dirs as being empty.
 
 * Issue **#2500** : Add a primary key to the `meta_retention_tracker` table for MySQL Group Replication.
 
@@ -23,17 +81,29 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#2496** : Fixed issue where data browser was showing duplicate streams.
 
-* Issue **#2511, #2512** : Fixed stepping error handling.
+* Issue **#2511** : Fixed stepping error handling.
 
-* Issue **#2478** : Create a single place in config for the LMDB library path and extraction dir.
+* Issue **#2512** : Fixed stepping error handling.
 
-* Issue **#2478** : Delete old LMDB library binaries on boot.
-
-* Issue **#2497** : Fixed issue with `OrphanFileFinder` incorrectly identifying some dirs as being empty.
+* Issue **#2478** : Create a single place in config for the LMDB library path and extraction dir. Delete old LMDB library binaries on boot.
 
 * Change `/api/refData/v1/purgeByAge/{purgeAge}`, `/api/refData/v1/purgeByStream/{refStreamId}` and `/api/refData/v1/clearBufferPool` to act on all nodes unless the `nodeName` query param is provided.
 
 * Issue **#2483** : Change reference data purge to delete entries in batchs to avoid large transactions that result in errors.
+
+* Issue **#2502** : Fix `Cannot read properties` error when switching streams after deleting one.
+
+* Issue **#2449** : Reduce the number of REST calls that property filtering in the UI makes.
+
+* Issue **#2523** : Uplift standard-pipelines to v0.4
+
+* Issue **#2527** : Fix stepping source hightlight for first record of fragment XML data.
+
+* Issue **#2526** : Fix incorrect input pane in stepper for cooked xml
+
+* Issue **#2531** : Fix incorrect value in Retention column in data browser and on Info tab when `Feed is` conditions are used.
+
+* Issue **#2532** : Change logged event for Manage Accounts quick filter use.
 
 * Fix performance issue with ref data range lookups.
 
@@ -1385,8 +1455,6 @@ Improve error handling during reference data initialisation.
 
 * Issue **#1701** : Fix crash when alternative pipeline is selected/used for processing.
 
-## [v7.0-beta.40] - 2020-07-27
-
 * Issue **#1756** : Fix for IdEnrichmentFilter where is attempts to change attribute values that already exist.
 
 * Issue **#1741** : Fix for search hanging issue.
@@ -2003,6 +2071,7 @@ Improve error handling during reference data initialisation.
 * Issue **#1297** : The UI now supplies API tokens to the backend for resource calls.
 
 * Issue **#1296** : Fixed NPE in StreamMapCreator caused when a stream can not be found.
+
 
 ## [v7.0-beta.7] - 2019-10-23
 
@@ -3006,6 +3075,7 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 * Issue **#675** : Fixed issue with datafeed requests authenticating incorrectly
 
 * Issue **#666** : Fixed the duplicate dictionary issue in processing filter migrations, made querying more efficient too
+
 * Database migration fixes and tools
 
 * Issue **#668** : Fixed the issue that prevented editing of stroom volumes

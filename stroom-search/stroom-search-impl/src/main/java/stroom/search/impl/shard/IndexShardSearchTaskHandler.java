@@ -28,9 +28,13 @@ import stroom.search.impl.SearchException;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.ThreadPoolImpl;
+import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.logging.SearchProgressLog;
+import stroom.util.logging.SearchProgressLog.SearchPhase;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexWriter;
@@ -51,6 +55,8 @@ public class IndexShardSearchTaskHandler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardSearchTaskHandler.class);
 
+    public static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Search Index Shard");
+
     private final IndexShardWriterCache indexShardWriterCache;
     private final IndexShardService indexShardService;
     private final IndexShardSearchConfig shardConfig;
@@ -66,7 +72,7 @@ public class IndexShardSearchTaskHandler {
         this.indexShardWriterCache = indexShardWriterCache;
         this.indexShardService = indexShardService;
         this.shardConfig = shardConfig;
-        this.executor = executorProvider.get(IndexShardSearchTaskExecutor.THREAD_POOL);
+        this.executor = executorProvider.get(THREAD_POOL);
         this.taskContextFactory = taskContextFactory;
     }
 
@@ -124,6 +130,8 @@ public class IndexShardSearchTaskHandler {
     private void searchShard(final TaskContext parentTaskContext,
                              final IndexShardSearchTask task,
                              final IndexShardSearcher indexShardSearcher) {
+        SearchProgressLog.increment(SearchPhase.INDEX_SHARD_SEARCH_TASK_HANDLER_SEARCH_SHARD);
+
         // Get the index shard that this searcher uses.
         final IndexShard indexShard = indexShardSearcher.getIndexShard();
         // Get the Lucene version being used.
@@ -152,24 +160,22 @@ public class IndexShardSearchTaskHandler {
                     final Runnable runnable = taskContextFactory.childContext(parentTaskContext,
                             "Index Searcher",
                             taskContext ->
-                                    LOGGER.logDurationIfDebugEnabled(
-                                            () -> {
-                                                try {
-                                                    searcher.search(query, collector);
-                                                } catch (final IOException e) {
-                                                    error(receiver, e.getMessage(), e);
-                                                }
+                                    LOGGER.logDurationIfDebugEnabled(() -> {
+                                        try {
+                                            searcher.search(query, collector);
+                                        } catch (final IOException e) {
+                                            error(receiver, e.getMessage(), e);
+                                        }
 
-                                                try {
-                                                    docIdStore.put(OptionalInt.empty());
-                                                } catch (final InterruptedException e) {
-                                                    error(receiver, e.getMessage(), e);
+                                        try {
+                                            docIdStore.put(OptionalInt.empty());
+                                        } catch (final InterruptedException e) {
+                                            error(receiver, e.getMessage(), e);
 
-                                                    // Continue to interrupt this thread.
-                                                    Thread.currentThread().interrupt();
-                                                }
-                                            },
-                                            () -> "searcher.search()"));
+                                            // Continue to interrupt this thread.
+                                            Thread.currentThread().interrupt();
+                                        }
+                                    }, () -> "searcher.search()"));
                     CompletableFuture.runAsync(runnable, executor);
 
                     // Get an array of field names.
@@ -182,6 +188,7 @@ public class IndexShardSearchTaskHandler {
                         final OptionalInt optDocId = docIdStore.take();
                         if (optDocId.isPresent()) {
                             // If we have a doc id then retrieve the stored data for it.
+                            SearchProgressLog.increment(SearchPhase.INDEX_SHARD_SEARCH_TASK_HANDLER_DOC_ID_STORE_TAKE);
                             getStoredData(storedFieldNames, receiver, searcher, optDocId.getAsInt());
                         } else {
                             complete = true;
@@ -214,6 +221,7 @@ public class IndexShardSearchTaskHandler {
                                final IndexSearcher searcher,
                                final int docId) {
         try {
+            SearchProgressLog.increment(SearchPhase.INDEX_SHARD_SEARCH_TASK_HANDLER_GET_STORED_DATA);
             final Val[] values = new Val[storedFieldNames.length];
             final Document document = searcher.doc(docId);
 

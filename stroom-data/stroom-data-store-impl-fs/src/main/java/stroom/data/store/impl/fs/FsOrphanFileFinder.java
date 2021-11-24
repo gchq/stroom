@@ -100,6 +100,13 @@ class FsOrphanFileFinder {
                                 cleanProgress.addDir();
                                 // Remember the dir age.
                                 dirAges.put(dir, attrs.creationTime().toMillis());
+
+                                // The parent dir has child dirs so we won't be considering the dir for deletion.
+                                final Path parent = dir.getParent();
+                                if (parent != null) {
+                                    dirAges.remove(parent);
+                                }
+
                                 return super.preVisitDirectory(dir, attrs);
                             }
 

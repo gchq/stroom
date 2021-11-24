@@ -27,7 +27,6 @@ import stroom.proxy.repo.dao.SourceDao.Source;
 import stroom.proxy.repo.dao.SourceEntryDao;
 import stroom.receive.common.StreamHandlers;
 import stroom.receive.common.StroomStreamProcessor;
-import stroom.util.concurrent.ScalingThreadPoolExecutor;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.net.HostNameUtil;
@@ -42,6 +41,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -63,13 +63,7 @@ public class SourceForwarder implements Forwarder {
             "Forward Data",
             StroomThreadGroup.instance(),
             Thread.NORM_PRIORITY - 1);
-    private final ExecutorService executor = ScalingThreadPoolExecutor.newScalingThreadPool(
-            1,
-            10,
-            100,
-            10,
-            TimeUnit.MINUTES,
-            threadFactory);
+    private final ExecutorService executor = Executors.newCachedThreadPool(threadFactory);
 
     private final SourceDao sourceDao;
     private final SourceEntryDao sourceEntryDao;

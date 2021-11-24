@@ -30,8 +30,9 @@ import javax.inject.Provider;
 
 public class DSChooser {
 
+    public static final String DATA_SPLITTER_2_ELEMENT = "<dataSplitter";
+
     private static final String DATA_SPLITTER_ELEMENT = "<dataSplitter";
-    private static final String DATA_SPLITTER_2_ELEMENT = "<dataSplitter";
     private static final String VERSION_ATTRIBUTE = "version=\"";
     private static final String VERSION2 = "2.0";
     private static final String VERSION3 = "3.0";

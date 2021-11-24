@@ -20,9 +20,9 @@ import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.importexport.shared.ImportState;
 import stroom.util.shared.DocRefs;
+import stroom.util.shared.QuickFilterResultPage;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
-import stroom.util.shared.ResultPage;
 
 import java.util.List;
 
@@ -34,7 +34,7 @@ public interface ContentService {
 
     ResourceGeneration exportContent(final DocRefs docRefs);
 
-    ResultPage<Dependency> fetchDependencies(final DependencyCriteria criteria);
+    QuickFilterResultPage<Dependency> fetchDependencies(final DependencyCriteria criteria);
 
     ResourceKey exportAll();
 

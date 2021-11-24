@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -22,21 +20,20 @@ public class TestStreamEventMap {
     @Test
     void test() {
         final StreamEventMap streamEventMap = new StreamEventMap(100000);
-        final CountDownLatch complete = new CountDownLatch(1);
         final List<CompletableFuture<Void>> futures = new ArrayList<>();
 
         // Start a producer.
         CompletableFuture<Void> producer = CompletableFuture.runAsync(() -> {
-//            try {
-            for (int i = 0; i < TOTAL_EVENTS; i++) {
+            try {
+                for (int i = 0; i < TOTAL_EVENTS; i++) {
 //                    Thread.sleep(1);
-                int streamId = (int) (Math.random() * 10);
-                streamEventMap.add(new Event(streamId, i, null));
+                    int streamId = (int) (Math.random() * 10);
+                    streamEventMap.put(new Event(streamId, i, null));
+                }
+                streamEventMap.put(null);
+            } catch (final InterruptedException e) {
+                // Ignore.
             }
-            complete.countDown();
-//            } catch (final InterruptedException e) {
-//                // Ignore.
-//            }
         });
         futures.add(producer);
 
@@ -47,9 +44,7 @@ public class TestStreamEventMap {
                 try {
                     boolean done = false;
                     while (!done) {
-                        final boolean state = complete.await(100, TimeUnit.MILLISECONDS);
-
-                        final Optional<Map.Entry<Long, List<Event>>> optional = streamEventMap.get();
+                        final Optional<Map.Entry<Long, List<Event>>> optional = streamEventMap.take();
                         if (optional.isPresent()) {
                             optional.ifPresent(entry -> {
                                 final long streamId = entry.getKey();
@@ -57,7 +52,7 @@ public class TestStreamEventMap {
                                 total.addAndGet(events.size());
                                 System.out.println(total.get() + " - " + streamId + ":" + events.size());
                             });
-                        } else if (state) {
+                        } else {
                             done = true;
                         }
                     }
