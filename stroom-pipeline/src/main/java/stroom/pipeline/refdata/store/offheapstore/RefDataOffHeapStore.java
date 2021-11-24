@@ -415,6 +415,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
     @Override
     public void purgeOldData() {
+        LOGGER.info("purgeAge in purgeOldData: {}", referenceDataConfig.getPurgeAge());
         purgeOldData(Instant.now(), referenceDataConfig.getPurgeAge());
     }
 

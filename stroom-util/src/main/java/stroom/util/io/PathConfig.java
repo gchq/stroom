@@ -1,9 +1,7 @@
 package stroom.util.io;
 
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.NotInjectableConfig;
 
-@NotInjectableConfig
 public abstract class PathConfig extends AbstractConfig {
 
     private String home;

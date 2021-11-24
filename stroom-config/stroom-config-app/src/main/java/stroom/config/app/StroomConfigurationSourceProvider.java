@@ -119,8 +119,7 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
                              final Function<String, String> valueMutator) {
         final JsonNode parentNode = rootNode.at(jsonPointerExpr);
         if (parentNode.isMissingNode()) {
-            throw new RuntimeException(LogUtil.message("jsonPointerExpr {}, not found in yaml",
-                    jsonPointerExpr));
+            LOGGER.warn("jsonPointerExpr {}, not found in yaml", jsonPointerExpr);
         } else {
             mutateNodes(parentNode, names, valueMutator, jsonPointerExpr);
         }

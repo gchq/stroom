@@ -74,10 +74,13 @@ class TestV07_00_00_1202__property_rename {
 
 
                         final String oldValue2 = defaultProperty.getDefaultValue();
-                        final String mappedValue2 = mapping.getSerialisationMappingFunc().apply(oldValue2);
-                        final Object value2 = configMapper.convertValue(propertyPath, mappedValue2);
+                        // Most legacy props don't have a default value set
+                        if (oldValue2 != null) {
+                            final String mappedValue2 = mapping.getSerialisationMappingFunc().apply(oldValue2);
+                            final Object value2 = configMapper.convertValue(propertyPath, mappedValue2);
 
-                        prop.getSetter().invoke(prop.getParentObject(), value2);
+                            prop.getSetter().invoke(prop.getParentObject(), value2);
+                        }
                     });
                 })
                 .filter(Objects::nonNull);

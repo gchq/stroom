@@ -130,7 +130,7 @@ class TestAppConfig {
         Assertions.assertThat(appConfig.getActivityConfig()
                 .getDbConfig()
                 .getConnectionConfig()
-                .getBasePath())
+                .getBasePathStr())
                 .isEqualTo("stroom.activity.db.connection");
     }
 

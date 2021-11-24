@@ -209,22 +209,22 @@ public abstract class AbstractFileChangeMonitor implements HasHealthCheck {
 
     protected void logUpdate(final Object destParent,
                              final Prop prop,
-                             final Object sourcePropValue,
-                             final Object destPropValue) {
-        final String fullPath = ((HasPropertyPath) destParent).getFullPath(prop.getName());
+                             final Object oldPropValue,
+                             final Object newPropValue) {
+        final String fullPath = ((HasPropertyPath) destParent).getFullPathStr(prop.getName());
         if (LOGGER.isInfoEnabled()) {
-            if (isStringTooLong(sourcePropValue) || isStringTooLong(destPropValue)) {
+            if (isStringTooLong(oldPropValue) || isStringTooLong(newPropValue)) {
                 LOGGER.info("  Updating config value of {} (class: {}) from:\n{}\nto:\n{}",
                         fullPath,
                         destParent.getClass().getSimpleName(),
-                        destPropValue,
-                        sourcePropValue);
+                        oldPropValue,
+                        newPropValue);
             } else {
                 LOGGER.info("  Updating config value of {} (class: {}) from: [{}] to: [{}]",
                         fullPath,
                         destParent.getClass().getSimpleName(),
-                        destPropValue,
-                        sourcePropValue);
+                        oldPropValue,
+                        newPropValue);
             }
         }
     }
