@@ -330,6 +330,8 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
     @Override
     public void clear() {
         thisNode = null;
+        // Ensure the node record for this node is in the DB
+        securityContext.asProcessingUser(this::ensureNodeCreated);
     }
 
     int setJobsEnabledForNode(final String nodeName,
