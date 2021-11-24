@@ -84,7 +84,7 @@ ext.versions = [
 
         //------Stroom-repos---------------
         //    stroomProxyRepo: 'v5.1-beta.8',
-        eventLogging      : '5.0-beta.16_schema-v4.0-beta.3',
+        eventLogging      : '5.0-beta.30_schema-v4.0-beta.3',
         hadoopCommonShaded: '2.6.4-9',
         hadoopHdfsShaded  : '2.6.4-7',
         stroomStats       : '1.0-alpha.6',
@@ -270,7 +270,7 @@ ext.libs = [
         simple_java_mail               : 'org.simplejavamail:simple-java-mail:4.3.0',
         slf4j_api                      : "org.slf4j:slf4j-api", // version controlled by DW BOM
         solrj                          : "org.apache.solr:solr-solrj:8.2.0",
-        sqlite                         : "org.xerial:sqlite-jdbc:3.34.0",
+        sqlite                         : "org.xerial:sqlite-jdbc:3.36.0.3",
         stax_api                       : "stax:stax-api:1.0.1",
         swagger_annotations            : "io.swagger.core.v3:swagger-annotations:$versions.swagger",
         unirest                        : "com.mashape.unirest:unirest-java:$versions.unirest",

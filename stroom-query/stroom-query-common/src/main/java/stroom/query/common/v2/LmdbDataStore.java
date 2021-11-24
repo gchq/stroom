@@ -30,9 +30,15 @@ import stroom.dashboard.expression.v1.Top.TopSelector;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValSerialiser;
+import stroom.lmdb.LmdbEnv;
+import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
+import stroom.lmdb.LmdbEnvFactory;
 import stroom.query.api.v2.TableSettings;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.logging.SearchProgressLog;
+import stroom.util.logging.SearchProgressLog.SearchPhase;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -41,6 +47,7 @@ import com.esotericsoftware.kryo.unsafe.UnsafeByteBufferOutput;
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Dbi;
+import org.lmdbjava.EnvFlags;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.PutFlags;
 import org.lmdbjava.Txn;
@@ -69,8 +76,10 @@ public class LmdbDataStore implements DataStore {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbDataStore.class);
 
     private static final long COMMIT_FREQUENCY_MS = 1000;
-    private final LmdbEnvironment environment;
-    private final LmdbConfig lmdbConfig;
+    private static final Executor EXECUTOR = Executors.newCachedThreadPool();
+
+    private final LmdbEnv lmdbEnv;
+    private final ResultStoreConfig resultStoreConfig;
     private final int minValueSize;
     private final int maxValueSize;
     private final int minPayloadSize;
@@ -97,11 +106,13 @@ public class LmdbDataStore implements DataStore {
     private final CompletionState completionState = new CompletionStateImpl(this, complete);
     private final AtomicLong uniqueKey = new AtomicLong();
     private final CountDownLatch transferring = new CountDownLatch(1);
+    private final String queryKey;
+    private final String componentId;
 
     private final LmdbKey rootParentRowKey;
 
-    LmdbDataStore(final LmdbEnvironmentFactory lmdbEnvironmentFactory,
-                  final LmdbConfig lmdbConfig,
+    LmdbDataStore(final LmdbEnvFactory lmdbEnvFactory,
+                  final ResultStoreConfig resultStoreConfig,
                   final String queryKey,
                   final String componentId,
                   final TableSettings tableSettings,
@@ -109,13 +120,15 @@ public class LmdbDataStore implements DataStore {
                   final Map<String, String> paramMap,
                   final Sizes maxResults,
                   final Sizes storeSize) {
-        this.lmdbConfig = lmdbConfig;
+        this.resultStoreConfig = resultStoreConfig;
         this.maxResults = maxResults;
+        this.queryKey = queryKey;
+        this.componentId = componentId;
 
-        minValueSize = (int) lmdbConfig.getMinValueSize().getBytes();
-        maxValueSize = (int) lmdbConfig.getMaxValueSize().getBytes();
-        minPayloadSize = (int) lmdbConfig.getMinPayloadSize().getBytes();
-        maxPayloadSize = (int) lmdbConfig.getMaxPayloadSize().getBytes();
+        minValueSize = (int) resultStoreConfig.getMinValueSize().getBytes();
+        maxValueSize = (int) resultStoreConfig.getMaxValueSize().getBytes();
+        minPayloadSize = (int) resultStoreConfig.getMinPayloadSize().getBytes();
+        maxPayloadSize = (int) resultStoreConfig.getMaxPayloadSize().getBytes();
 
         compiledFields = CompiledFields.create(tableSettings.getFields(), fieldIndex, paramMap);
         compiledDepths = new CompiledDepths(compiledFields, tableSettings.showDetail());
@@ -128,8 +141,12 @@ public class LmdbDataStore implements DataStore {
         final String uuid = (queryKey + "_" + componentId + "_" + UUID.randomUUID());
         // Make safe for the file system.
         final String dirName = uuid.replaceAll("[^A-Za-z0-9]", "_");
-        this.environment = lmdbEnvironmentFactory.createEnvironment(dirName);
-        this.dbi = environment.openDbi(uuid);
+        this.lmdbEnv = lmdbEnvFactory.builder(resultStoreConfig.getLmdbConfig())
+                .withMaxDbCount(1)
+                .withSubDirectory(dirName)
+                .addEnvFlag(EnvFlags.MDB_NOTLS)
+                .build();
+        this.dbi = lmdbEnv.openDbi(uuid);
 
         // Find out if we have any sorting.
         boolean hasSort = false;
@@ -143,8 +160,7 @@ public class LmdbDataStore implements DataStore {
 
         // Start transfer loop.
         // TODO : Use provided executor but don't allow it to be terminated by search termination.
-        final Executor executor = Executors.newSingleThreadExecutor();
-        executor.execute(this::transfer);
+        EXECUTOR.execute(this::transfer);
     }
 
     /**
@@ -154,6 +170,8 @@ public class LmdbDataStore implements DataStore {
      */
     @Override
     public void add(final Val[] values) {
+        SearchProgressLog.increment(SearchPhase.LMDB_DATA_STORE_ADD);
+        LOGGER.trace(() -> LogUtil.message("add() called for {} values", values.length));
         final int[] groupSizeByDepth = compiledDepths.getGroupSizeByDepth();
         final boolean[][] groupIndicesByDepth = compiledDepths.getGroupIndicesByDepth();
         final boolean[][] valueIndicesByDepth = compiledDepths.getValueIndicesByDepth();
@@ -268,6 +286,7 @@ public class LmdbDataStore implements DataStore {
     }
 
     private void put(final QueueItem item) {
+        SearchProgressLog.increment(SearchPhase.LMDB_DATA_STORE_PUT);
         LOGGER.trace(() -> "put");
         if (Thread.currentThread().isInterrupted() || hasEnoughData.get()) {
             return;
@@ -295,18 +314,19 @@ public class LmdbDataStore implements DataStore {
 
     private void transfer() {
         Metrics.measure("Transfer", () -> {
-            Txn<ByteBuffer> writeTxn = environment.txnWrite();
-            try {
+            try (final BatchingWriteTxn batchingWriteTxn = lmdbEnv.openBatchingWriteTxn(
+                    resultStoreConfig.getMaxPutsBeforeCommit())) {
                 boolean needsCommit = false;
                 long lastCommitMs = System.currentTimeMillis();
 
                 while (running.get()) {
-                    LOGGER.debug("Polling");
+                    LOGGER.trace("Polling");
+                    SearchProgressLog.increment(SearchPhase.LMDB_DATA_STORE_QUEUE_POLL);
                     final QueueItem item = queue.poll(1, TimeUnit.SECONDS);
 
                     if (item != null) {
                         if (item.getRowKey() != null) {
-                            insert(writeTxn, dbi, item);
+                            insert(batchingWriteTxn, dbi, item);
 
                         } else {
                             // Ensure commit.
@@ -321,11 +341,12 @@ public class LmdbDataStore implements DataStore {
                         // Commit
                         lastCommitMs = System.currentTimeMillis();
                         needsCommit = false;
-                        writeTxn = commit(writeTxn);
+                        LOGGER.debug(() -> "Committing for new payload");
+                        batchingWriteTxn.commit();
 
                         // Create payload and clear the DB.
-                        currentPayload.set(createPayload(writeTxn, dbi));
-                        writeTxn = commit(writeTxn);
+                        currentPayload.set(createPayload(batchingWriteTxn.getTxn(), dbi));
+                        batchingWriteTxn.commit();
 
                     } else if (needsCommit) {
                         final long now = System.currentTimeMillis();
@@ -333,7 +354,8 @@ public class LmdbDataStore implements DataStore {
                             // Commit
                             lastCommitMs = now;
                             needsCommit = false;
-                            writeTxn = commit(writeTxn);
+                            LOGGER.debug(() -> "Committing for elapsed time");
+                            batchingWriteTxn.commit();
                         }
                     }
 
@@ -351,25 +373,15 @@ public class LmdbDataStore implements DataStore {
                 // Continue to interrupt.
                 Thread.currentThread().interrupt();
             } finally {
-                try {
-                    writeTxn.close();
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e.getMessage(), e);
-                }
                 transferring.countDown();
             }
         });
     }
 
-    private Txn<ByteBuffer> commit(final Txn<ByteBuffer> txn) {
-        Metrics.measure("Commit", () -> {
-            txn.commit();
-            txn.close();
-        });
-        return environment.txnWrite();
-    }
-
-    private void insert(final Txn<ByteBuffer> txn, final Dbi<ByteBuffer> dbi, final QueueItem queueItem) {
+    private void insert(final BatchingWriteTxn batchingWriteTxn,
+                        final Dbi<ByteBuffer> dbi,
+                        final QueueItem queueItem) {
+        SearchProgressLog.increment(SearchPhase.LMDB_DATA_STORE_INSERT);
         Metrics.measure("Insert", () -> {
             try {
                 LOGGER.trace(() -> "insert");
@@ -379,7 +391,7 @@ public class LmdbDataStore implements DataStore {
 
                 // Just try to put first.
                 final boolean success = put(
-                        txn,
+                        batchingWriteTxn,
                         dbi,
                         rowKey.getByteBuffer(),
                         rowValue.getByteBuffer(),
@@ -389,7 +401,7 @@ public class LmdbDataStore implements DataStore {
 
                 } else if (rowKey.isGroup()) {
                     // Get the existing entry for this key.
-                    final ByteBuffer existingValueBuffer = dbi.get(txn, rowKey.getByteBuffer());
+                    final ByteBuffer existingValueBuffer = dbi.get(batchingWriteTxn.getTxn(), rowKey.getByteBuffer());
 
                     final int minValSize = Math.max(minValueSize, existingValueBuffer.remaining());
                     try (final UnsafeByteBufferOutput output =
@@ -406,7 +418,7 @@ public class LmdbDataStore implements DataStore {
                                     final Generator[] newValue = rowValue.getGenerators().getGenerators();
                                     final Generator[] combined = combine(generators, newValue);
 
-                                    LOGGER.debug("Merging combined value to output");
+                                    LOGGER.trace("Merging combined value to output");
                                     final LmdbValue combinedValue = new LmdbValue(
                                             existingRowValue.getKey().getBytes(),
                                             new Generators(compiledFields, combined));
@@ -435,7 +447,7 @@ public class LmdbDataStore implements DataStore {
                         }
 
                         final ByteBuffer newValue = output.getByteBuffer().flip();
-                        final boolean ok = put(txn, dbi, rowKey.getByteBuffer(), newValue);
+                        final boolean ok = put(batchingWriteTxn, dbi, rowKey.getByteBuffer(), newValue);
                         if (!ok) {
                             throw new RuntimeException("Unable to update");
                         }
@@ -452,13 +464,18 @@ public class LmdbDataStore implements DataStore {
         });
     }
 
-    private boolean put(final Txn<ByteBuffer> txn,
+    private boolean put(final BatchingWriteTxn batchingWriteTxn,
                         final Dbi<ByteBuffer> dbi,
                         final ByteBuffer key,
                         final ByteBuffer val,
                         final PutFlags... flags) {
         try {
-            return dbi.put(txn, key, val, flags);
+            SearchProgressLog.increment(SearchPhase.LMDB_DATA_STORE_DBI_PUT);
+            final boolean didPutSucceed = dbi.put(batchingWriteTxn.getTxn(), key, val, flags);
+            if (didPutSucceed) {
+                batchingWriteTxn.commitIfRequired();
+            }
+            return didPutSucceed;
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
@@ -467,6 +484,7 @@ public class LmdbDataStore implements DataStore {
     }
 
     private Generator[] combine(final Generator[] existing, final Generator[] value) {
+        SearchProgressLog.increment(SearchPhase.LMDB_DATA_STORE_COMBINE);
         return Metrics.measure("Combine", () -> {
             // Combine the new item into the original item.
             for (int i = 0; i < existing.length; i++) {
@@ -486,10 +504,11 @@ public class LmdbDataStore implements DataStore {
     }
 
     private byte[] createPayload(final Txn<ByteBuffer> writeTxn, final Dbi<ByteBuffer> dbi) {
+        SearchProgressLog.increment(SearchPhase.LMDB_DATA_STORE_CREATE_PAYLOAD);
         final PayloadOutput payloadOutput = new PayloadOutput(minPayloadSize, maxPayloadSize);
 
         Metrics.measure("createPayload", () -> {
-            final long limit = lmdbConfig.getPayloadLimit().getBytes();
+            final long limit = resultStoreConfig.getPayloadLimit().getBytes();
             if (limit > 0) {
                 final AtomicLong count = new AtomicLong();
                 try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(writeTxn)) {
@@ -539,17 +558,30 @@ public class LmdbDataStore implements DataStore {
      */
     @Override
     public Items get() {
+        LOGGER.debug("get() called");
         return get(Key.root());
     }
 
     /**
      * Get child items from the data store for the provided parent key.
+     * Synchronised with clear to prevent a shutdown happening while reads are going on.
      *
      * @param parentKey The parent key to get child items for.
      * @return The child items for the parent key.
      */
     @Override
-    public Items get(final Key parentKey) {
+    public synchronized Items get(final Key parentKey) {
+        SearchProgressLog.increment(SearchPhase.LMDB_DATA_STORE_GET);
+        LOGGER.debug("get() called for parentKey: {}", parentKey);
+
+        if (lmdbEnv.isClosed()) {
+            // If we query LMDB after the env has been closed then we are likely to crash the JVM
+            // see https://github.com/lmdbjava/lmdbjava/issues/185
+            throw new RuntimeException(LogUtil.message(
+                    "get() called for parentKey: {} (queryKey: {}, componentId: {}) after store has been shut down",
+                    parentKey, queryKey, componentId));
+        }
+
         return Metrics.measure("get", () -> {
             final int depth = parentKey.size();
             final int trimmedSize = maxResults.size(depth);
@@ -588,6 +620,7 @@ public class LmdbDataStore implements DataStore {
                                       final int trimmedSize,
                                       final boolean allowSort,
                                       final boolean trimTop) {
+        SearchProgressLog.increment(SearchPhase.LMDB_DATA_STORE_GET_CHILDREN);
         // If we don't have any children at the requested depth then return an empty list.
         if (compiledSorters.length <= depth) {
             return ItemArrayList.EMPTY;
@@ -609,7 +642,7 @@ public class LmdbDataStore implements DataStore {
         final AtomicBoolean trimmed = new AtomicBoolean(true);
         final AtomicBoolean inRange = new AtomicBoolean(true);
 
-        environment.doWithReadTxn(readTxn -> {
+        lmdbEnv.doWithReadTxn(readTxn -> {
             try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(readTxn, keyRange)) {
                 final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
 
@@ -666,9 +699,11 @@ public class LmdbDataStore implements DataStore {
 
     /**
      * Clear the data store.
+     * Synchronised with get() to prevent a shutdown happening while reads are going on.
      */
     @Override
-    public void clear() {
+    public synchronized void clear() {
+        SearchProgressLog.increment(SearchPhase.LMDB_DATA_STORE_CLEAR);
         try {
             LOGGER.debug("clear called");
             // Stop the transfer loop running, this has the effect of dropping the DB when it stops.
@@ -685,6 +720,7 @@ public class LmdbDataStore implements DataStore {
     }
 
     private synchronized void shutdown() {
+        SearchProgressLog.increment(SearchPhase.LMDB_DATA_STORE_SHUTDOWN);
         LOGGER.debug("Shutdown called");
         if (!shutdown.get()) {
 
@@ -709,13 +745,13 @@ public class LmdbDataStore implements DataStore {
                 }
 
                 try {
-                    environment.close();
+                    lmdbEnv.close();
                 } catch (final RuntimeException e) {
                     LOGGER.error(e.getMessage(), e);
                 }
 
                 try {
-                    environment.delete();
+                    lmdbEnv.delete();
                 } catch (final RuntimeException e) {
                     LOGGER.error(e.getMessage(), e);
                 }
@@ -746,6 +782,7 @@ public class LmdbDataStore implements DataStore {
      */
     @Override
     public boolean readPayload(final Input input) {
+        SearchProgressLog.increment(SearchPhase.LMDB_DATA_STORE_READ_PAYLOAD);
         // Return false if we aren't happy to accept any more data
         if (!acceptingData()) {
             return false;
@@ -798,6 +835,7 @@ public class LmdbDataStore implements DataStore {
      */
     @Override
     public void writePayload(final Output output) {
+        SearchProgressLog.increment(SearchPhase.LMDB_DATA_STORE_WRITE_PAYLOAD);
         Metrics.measure("writePayload", () -> {
             final boolean complete = getCompletionState().isComplete();
             createPayload.set(true);
@@ -852,6 +890,7 @@ public class LmdbDataStore implements DataStore {
      */
     @Override
     public boolean awaitTransfer(final long timeout, final TimeUnit unit) throws InterruptedException {
+        SearchProgressLog.increment(SearchPhase.LMDB_DATA_STORE_AWAIT_TRANSFER);
         if (Thread.currentThread().isInterrupted()) {
             throw new InterruptedException();
         }

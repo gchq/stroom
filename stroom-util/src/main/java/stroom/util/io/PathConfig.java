@@ -1,19 +1,13 @@
 package stroom.util.io;
 
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.IsStroomConfig;
-import stroom.util.shared.NotInjectableConfig;
 
-@NotInjectableConfig
-public abstract class PathConfig extends AbstractConfig implements IsStroomConfig {
+public abstract class PathConfig extends AbstractConfig implements IsProxyConfig, IsStroomConfig {
 
     private String home;
     private String temp;
-
-//    public PathConfig(final String home, final String temp) {
-//        this.home = home;
-//        this.temp = temp;
-//    }
 
     public String getHome() {
         return home;

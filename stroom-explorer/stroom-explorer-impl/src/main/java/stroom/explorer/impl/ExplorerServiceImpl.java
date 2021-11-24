@@ -102,6 +102,8 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             Set<String> temporaryOpenItems;
 
             final ExplorerTreeFilter filter = criteria.getFilter();
+            final String qualifiedFilterInput = QuickFilterPredicateFactory.fullyQualifyInput(
+                    filter.getNameFilter(), FIELD_MAPPERS);
 
             // Get the master tree model.
             final TreeModel masterTreeModel = explorerTreeModel.getModel();
@@ -114,7 +116,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
             allOpenItems.addAll(criteria.getTemporaryOpenedItems());
             allOpenItems.addAll(forcedOpenItems);
 
-            final TreeModel filteredModel = new TreeModel();
+            final TreeModel filteredModel = new TreeModel(masterTreeModel.getId(), masterTreeModel.getCreationTime());
             // Create the predicate for the current filter value
             final Predicate<DocRef> fuzzyMatchPredicate = QuickFilterPredicateFactory.createFuzzyMatchPredicate(
                     filter.getNameFilter(), FIELD_MAPPERS);
@@ -178,7 +180,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService, Clearab
                 }
             }
 
-            return new FetchExplorerNodeResult(rootNodes, openedItems, temporaryOpenItems);
+            return new FetchExplorerNodeResult(rootNodes, openedItems, temporaryOpenItems, qualifiedFilterInput);
         } catch (Exception e) {
             LOGGER.error("Error fetching nodes with criteria {}", criteria, e);
             throw e;

@@ -1,26 +1,19 @@
 package stroom.proxy.repo;
 
-import stroom.db.util.JooqHelper;
+import stroom.proxy.repo.dao.SqliteJooqHelper;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.apache.commons.lang3.StringUtils;
-import org.jooq.Condition;
-import org.jooq.Record;
-import org.jooq.SQLDialect;
-import org.jooq.Table;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import java.util.List;
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static stroom.proxy.repo.db.jooq.tables.Aggregate.AGGREGATE;
-import static stroom.proxy.repo.db.jooq.tables.AggregateItem.AGGREGATE_ITEM;
 import static stroom.proxy.repo.db.jooq.tables.ForwardAggregate.FORWARD_AGGREGATE;
-import static stroom.proxy.repo.db.jooq.tables.ForwardUrl.FORWARD_URL;
 import static stroom.proxy.repo.db.jooq.tables.Source.SOURCE;
 import static stroom.proxy.repo.db.jooq.tables.SourceEntry.SOURCE_ENTRY;
 import static stroom.proxy.repo.db.jooq.tables.SourceItem.SOURCE_ITEM;
@@ -30,9 +23,9 @@ import static stroom.proxy.repo.db.jooq.tables.SourceItem.SOURCE_ITEM;
 public class TestCleanup {
 
     @Inject
-    private ProxyRepoSources proxyRepoSources;
+    private RepoSources proxyRepoSources;
     @Inject
-    private ProxyRepoSourceEntries proxyRepoSourceEntries;
+    private RepoSourceItems proxyRepoSourceEntries;
     @Inject
     private Aggregator aggregator;
     @Inject
@@ -43,6 +36,8 @@ public class TestCleanup {
     private MockForwardDestinations mockForwardDestinations;
     @Inject
     private ProxyRepoDbConnProvider connProvider;
+    @Inject
+    private SqliteJooqHelper jooqHelper;
 
     @BeforeEach
     void beforeEach() {
@@ -55,13 +50,13 @@ public class TestCleanup {
 
     @Test
     void testCleanup() {
-        final JooqHelper jooq = new JooqHelper(connProvider, SQLDialect.SQLITE);
+        final SqliteJooqHelper jooq = new SqliteJooqHelper(connProvider);
         jooq.context(context -> {
             long sourceId = 0;
             long sourceItemId = 0;
             long sourceEntryId = 0;
             long aggregateId = 0;
-            long aggregateItemId = 0;
+            long forwardAggregateId = 0;
 
             for (int i = 1; i <= 2; i++) {
                 String feedName = "TEST_FEED_" + i;
@@ -81,61 +76,11 @@ public class TestCleanup {
                                     true)
                             .execute();
 
-                    // Add source items.
-                    for (int k = 1; k <= 4; k++) {
-                        context
-                                .insertInto(
-                                        SOURCE_ITEM,
-                                        SOURCE_ITEM.ID,
-                                        SOURCE_ITEM.NAME,
-                                        SOURCE_ITEM.FEED_NAME,
-                                        SOURCE_ITEM.TYPE_NAME,
-                                        SOURCE_ITEM.FK_SOURCE_ID,
-                                        SOURCE_ITEM.AGGREGATED)
-                                .values(
-                                        ++sourceItemId,
-                                        String.valueOf(k),
-                                        feedName,
-                                        null,
-                                        sourceId,
-                                        true)
-                                .execute();
+                    // Add an aggregate.
+                    for (int k = 0; k < 2; k++) {
+                        aggregateId++;
 
-                        // Add source entry.
-                        context
-                                .insertInto(
-                                        SOURCE_ENTRY,
-                                        SOURCE_ENTRY.ID,
-                                        SOURCE_ENTRY.EXTENSION,
-                                        SOURCE_ENTRY.EXTENSION_TYPE,
-                                        SOURCE_ENTRY.BYTE_SIZE,
-                                        SOURCE_ENTRY.FK_SOURCE_ITEM_ID)
-                                .values(
-                                        ++sourceEntryId,
-                                        ".hdr",
-                                        2,
-                                        84L,
-                                        sourceItemId)
-                                .execute();
-                        context
-                                .insertInto(
-                                        SOURCE_ENTRY,
-                                        SOURCE_ENTRY.ID,
-                                        SOURCE_ENTRY.EXTENSION,
-                                        SOURCE_ENTRY.EXTENSION_TYPE,
-                                        SOURCE_ENTRY.BYTE_SIZE,
-                                        SOURCE_ENTRY.FK_SOURCE_ITEM_ID)
-                                .values(
-                                        ++sourceEntryId,
-                                        ".dat",
-                                        4,
-                                        1L,
-                                        sourceItemId)
-                                .execute();
-                    }
-
-                    // Add aggregates
-                    for (int k = 1; k <= 2; k++) {
+                        // Add aggregate.
                         context
                                 .insertInto(
                                         AGGREGATE,
@@ -145,31 +90,88 @@ public class TestCleanup {
                                         AGGREGATE.TYPE_NAME,
                                         AGGREGATE.BYTE_SIZE,
                                         AGGREGATE.ITEMS,
-                                        AGGREGATE.COMPLETE,
-                                        AGGREGATE.FORWARD_ERROR)
+                                        AGGREGATE.COMPLETE)
                                 .values(
-                                        ++aggregateId,
+                                        aggregateId,
                                         System.currentTimeMillis(),
                                         feedName,
                                         null,
                                         170L,
                                         2,
-                                        true,
-                                        false)
+                                        true)
                                 .execute();
 
-                        for (int l = 1; l <= 2; l++) {
-                            // Add aggregate items.
+                        // Add aggregate forward.
+                        context
+                                .insertInto(
+                                        FORWARD_AGGREGATE,
+                                        FORWARD_AGGREGATE.ID,
+                                        FORWARD_AGGREGATE.UPDATE_TIME_MS,
+                                        FORWARD_AGGREGATE.FK_AGGREGATE_ID,
+                                        FORWARD_AGGREGATE.SUCCESS,
+                                        FORWARD_AGGREGATE.ERROR,
+                                        FORWARD_AGGREGATE.TRIES,
+                                        FORWARD_AGGREGATE.FK_FORWARD_URL_ID)
+                                .values(
+                                        ++forwardAggregateId,
+                                        System.currentTimeMillis(),
+                                        aggregateId,
+                                        false,
+                                        null,
+                                        null,
+                                        1)
+                                .execute();
+
+                        // Add source items.
+                        for (int l = 1; l <= 4; l++) {
                             context
                                     .insertInto(
-                                            AGGREGATE_ITEM,
-                                            AGGREGATE_ITEM.ID,
-                                            AGGREGATE_ITEM.FK_AGGREGATE_ID,
-                                            AGGREGATE_ITEM.FK_SOURCE_ITEM_ID)
+                                            SOURCE_ITEM,
+                                            SOURCE_ITEM.ID,
+                                            SOURCE_ITEM.NAME,
+                                            SOURCE_ITEM.FEED_NAME,
+                                            SOURCE_ITEM.TYPE_NAME,
+                                            SOURCE_ITEM.SOURCE_ID,
+                                            SOURCE_ITEM.AGGREGATE_ID)
                                     .values(
-                                            ++aggregateItemId,
-                                            aggregateId,
-                                            aggregateItemId)
+                                            ++sourceItemId,
+                                            i + "_" + j + "_" + k + "_" + l,
+                                            feedName,
+                                            null,
+                                            sourceId,
+                                            aggregateId)
+                                    .execute();
+
+                            // Add source entry.
+                            context
+                                    .insertInto(
+                                            SOURCE_ENTRY,
+                                            SOURCE_ENTRY.ID,
+                                            SOURCE_ENTRY.EXTENSION,
+                                            SOURCE_ENTRY.EXTENSION_TYPE,
+                                            SOURCE_ENTRY.BYTE_SIZE,
+                                            SOURCE_ENTRY.FK_SOURCE_ITEM_ID)
+                                    .values(
+                                            ++sourceEntryId,
+                                            ".hdr",
+                                            2,
+                                            84L,
+                                            sourceItemId)
+                                    .execute();
+                            context
+                                    .insertInto(
+                                            SOURCE_ENTRY,
+                                            SOURCE_ENTRY.ID,
+                                            SOURCE_ENTRY.EXTENSION,
+                                            SOURCE_ENTRY.EXTENSION_TYPE,
+                                            SOURCE_ENTRY.BYTE_SIZE,
+                                            SOURCE_ENTRY.FK_SOURCE_ITEM_ID)
+                                    .values(
+                                            ++sourceEntryId,
+                                            ".dat",
+                                            4,
+                                            1L,
+                                            sourceItemId)
                                     .execute();
                         }
                     }
@@ -178,51 +180,39 @@ public class TestCleanup {
         });
 
         // Make sure we can't delete any sources.
-        printAllTables();
-        assertThat(cleanup.deleteUnusedSourceEntries()).isEqualTo(0);
-        assertThat(cleanup.deleteUnusedSources()).isEqualTo(0);
+        jooqHelper.printAllTables();
+        assertThat(proxyRepoSources.getDeletableSources().size()).isZero();
 
-        // Now pretend we forwarded the first aggregate by deleting it.
-        printAllTables();
-        jooq.context(context -> {
-            context
-                    .deleteFrom(AGGREGATE_ITEM).where(AGGREGATE_ITEM.FK_AGGREGATE_ID.eq(1L)).execute();
-            context
-                    .deleteFrom(AGGREGATE).where(AGGREGATE.ID.eq(1L)).execute();
-        });
+        // Now pretend we forwarded the first aggregates.
+        jooqHelper.printAllTables();
+        forward(1);
 
         // Make sure we can delete source entries and items but not data.
-        printAllTables();
-        assertThat(cleanup.deleteUnusedSourceEntries()).isEqualTo(6);
-        assertThat(cleanup.deleteUnusedSources()).isEqualTo(0);
+        jooqHelper.printAllTables();
+        assertThat(proxyRepoSources.getDeletableSources().size()).isZero();
 
         // Now forward some more.
-        printAllTables();
-        jooq.context(context -> {
-            context
-                    .deleteFrom(AGGREGATE_ITEM).where(AGGREGATE_ITEM.FK_AGGREGATE_ID.eq(2L)).execute();
-            context
-                    .deleteFrom(AGGREGATE).where(AGGREGATE.ID.eq(2L)).execute();
-        });
+        jooqHelper.printAllTables();
+        forward(2);
 
         // Check we can now delete the first source.
-        printAllTables();
-        assertThat(cleanup.deleteUnusedSourceEntries()).isEqualTo(6);
-        assertThat(cleanup.deleteUnusedSources()).isEqualTo(1);
+        jooqHelper.printAllTables();
+        assertThat(proxyRepoSources.getDeletableSources().size()).isOne();
 
         // Forward remaining.
-        printAllTables();
-        jooq.context(context -> {
-            context
-                    .deleteFrom(AGGREGATE_ITEM).execute();
-            context
-                    .deleteFrom(AGGREGATE).execute();
-        });
+        jooqHelper.printAllTables();
+
+        final long minId = jooq.getMinId(FORWARD_AGGREGATE, FORWARD_AGGREGATE.ID).orElse(0L);
+        final long maxId = jooq.getMaxId(FORWARD_AGGREGATE, FORWARD_AGGREGATE.ID).orElse(0L);
+        for (long i = minId; i <= maxId; i++) {
+            forward(i);
+        }
 
         // Check everything is deleted.
-        printAllTables();
-        assertThat(cleanup.deleteUnusedSourceEntries()).isEqualTo(132);
-        assertThat(cleanup.deleteUnusedSources()).isEqualTo(11);
+        jooqHelper.printAllTables();
+        assertThat(proxyRepoSources.getDeletableSources().size()).isEqualTo(12);
+
+        cleanup.cleanupSources();
 
         // Check we have no source left
         assertThat(jooq.count(SOURCE_ENTRY)).isZero();
@@ -230,27 +220,15 @@ public class TestCleanup {
         assertThat(jooq.count(SOURCE)).isZero();
     }
 
-    void printAllTables() {
-        printTable(SOURCE, null, "SOURCE");
-        printTable(SOURCE_ITEM, null, "SOURCE_ITEM");
-        printTable(SOURCE_ENTRY, null, "SOURCE_ENTRY");
-        printTable(AGGREGATE, null, "AGGREGATE");
-        printTable(AGGREGATE_ITEM, null, "AGGREGATE_ITEM");
-        printTable(FORWARD_URL, null, "FORWARD_URL");
-        printTable(FORWARD_AGGREGATE, null, "FORWARD_AGGREGATE");
-    }
-
-    <R extends Record, T extends Table<R>> void printTable(final T table,
-                                                           final Condition condition,
-                                                           final String message) {
-        final JooqHelper jooq = new JooqHelper(connProvider, SQLDialect.SQLITE);
-        jooq.context(context -> {
-            final List<R> records = context.selectFrom(table).where(condition).fetch();
-            printRecords(records, message);
-        });
-    }
-
-    <R extends Record> void printRecords(final List<R> records, final String message) {
-        System.out.println(message + ": \n" + records);
+    private void forward(long aggregateId) {
+        final Aggregate aggregate = new Aggregate(aggregateId, null, null);
+        final ForwardUrl forwardUrl = new ForwardUrl(1, "test");
+        final ForwardAggregate forwardAggregate = ForwardAggregate
+                .builder()
+                .id(aggregateId)
+                .aggregate(aggregate)
+                .forwardUrl(forwardUrl)
+                .build();
+        aggregateForwarder.forward(forwardAggregate);
     }
 }

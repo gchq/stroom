@@ -42,6 +42,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.api.v2.ExpressionValidator;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.EventRef;
 import stroom.query.common.v2.EventRefs;
@@ -51,9 +52,9 @@ import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.task.api.ExecutorProvider;
-import stroom.task.api.SimpleThreadPool;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
@@ -99,7 +100,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
     private static final int POLL_INTERVAL_MS = 10000;
     private static final int DELETE_INTERVAL_MS = POLL_INTERVAL_MS * 10;
-    private static final ThreadPool THREAD_POOL = new SimpleThreadPool(3);
+    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Fill Task Store", 3);
 
     private final ProcessorFilterService processorFilterService;
     private final ProcessorFilterTrackerDao processorFilterTrackerDao;
@@ -707,7 +708,21 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                     .orElse("");
 
             LOGGER.error(() -> "Error processing filter with id = " + filter.getId() + pipelineDetails);
-            LOGGER.error(e::getMessage, e);
+            LOGGER.debug(e::getMessage, e);
+
+            // Update the tracker with the error if we can.
+            try {
+                optionalProcessorFilter = processorFilterService.fetch(filter.getId());
+                optionalProcessorFilter.ifPresent(loadedFilter -> {
+                    ProcessorFilterTracker tracker = loadedFilter.getProcessorFilterTracker();
+                    tracker.setStatus("Error: " + e);
+                    processorFilterTrackerDao.update(tracker);
+                });
+            } catch (final RuntimeException e2) {
+                LOGGER.error(e.getMessage(), e);
+                LOGGER.error(e2.getMessage(), e2);
+            }
+
         } finally {
             if (!isSearching.get()) {
                 queue.setFilling(false);
@@ -914,10 +929,10 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                                             final BiConsumer<TaskContext, T> consumer) {
         return t ->
                 taskContextFactory.childContext(
-                        parentContext,
-                        taskName,
-                        taskContext ->
-                                consumer.accept(taskContext, t))
+                                parentContext,
+                                taskName,
+                                taskContext ->
+                                        consumer.accept(taskContext, t))
                         .run();
     }
 
@@ -1006,8 +1021,8 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
             final List<Meta> streamList = runSelectMetaQuery(
                     queryData.getExpression(),
                     updatedTracker.getMinMetaId(),
-                    updatedTracker.getMinMetaCreateMs(),
-                    updatedTracker.getMaxMetaCreateMs(),
+                    filter.getMinMetaCreateTimeMs(),
+                    filter.getMaxMetaCreateTimeMs(),
                     filter.getPipeline(),
                     filter.isReprocess(),
                     requiredTasks);
@@ -1103,11 +1118,15 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
      */
     List<Meta> runSelectMetaQuery(final ExpressionOperator expression,
                                   final long minMetaId,
-                                  final Long minMetaCreateMs,
-                                  final Long maxMetaCreateMs,
+                                  final Long minMetaCreateTimeMs,
+                                  final Long maxMetaCreateTimeMs,
                                   final DocRef pipelineDocRef,
                                   final boolean reprocess,
                                   final int length) {
+        // Validate expression.
+        final ExpressionValidator expressionValidator = new ExpressionValidator(MetaFields.getAllFields());
+        expressionValidator.validate(expression);
+
         if (reprocess) {
             // Don't select deleted streams.
             final ExpressionOperator statusExpression = ExpressionOperator.builder().op(Op.OR)
@@ -1123,15 +1142,15 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                 builder.addTerm(MetaFields.PIPELINE, Condition.IS_DOC_REF, pipelineDocRef);
             }
 
-            if (minMetaCreateMs != null) {
+            if (minMetaCreateTimeMs != null) {
                 builder = builder.addTerm(MetaFields.PARENT_CREATE_TIME,
                         Condition.GREATER_THAN_OR_EQUAL_TO,
-                        DateUtil.createNormalDateTimeString(minMetaCreateMs));
+                        DateUtil.createNormalDateTimeString(minMetaCreateTimeMs));
             }
-            if (maxMetaCreateMs != null) {
+            if (maxMetaCreateTimeMs != null) {
                 builder = builder.addTerm(MetaFields.PARENT_CREATE_TIME,
-                        Condition.LESS_THAN,
-                        DateUtil.createNormalDateTimeString(maxMetaCreateMs));
+                        Condition.LESS_THAN_OR_EQUAL_TO,
+                        DateUtil.createNormalDateTimeString(maxMetaCreateTimeMs));
             }
             builder = builder.addOperator(statusExpression);
 
@@ -1152,15 +1171,16 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
             ExpressionOperator.Builder builder = ExpressionOperator.builder()
                     .addOperator(expression)
                     .addTerm(MetaFields.ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
-            if (minMetaCreateMs != null) {
+
+            if (minMetaCreateTimeMs != null) {
                 builder = builder.addTerm(MetaFields.CREATE_TIME,
                         Condition.GREATER_THAN_OR_EQUAL_TO,
-                        DateUtil.createNormalDateTimeString(minMetaCreateMs));
+                        DateUtil.createNormalDateTimeString(minMetaCreateTimeMs));
             }
-            if (maxMetaCreateMs != null) {
+            if (maxMetaCreateTimeMs != null) {
                 builder = builder.addTerm(MetaFields.CREATE_TIME,
-                        Condition.LESS_THAN,
-                        DateUtil.createNormalDateTimeString(maxMetaCreateMs));
+                        Condition.LESS_THAN_OR_EQUAL_TO,
+                        DateUtil.createNormalDateTimeString(maxMetaCreateTimeMs));
             }
             builder = builder.addOperator(statusExpression);
 

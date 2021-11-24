@@ -84,11 +84,15 @@ public class RefDataProcessingInfoSerde implements
 
     public void updateLastAccessedTime(final ByteBuffer byteBuffer, final long newLastAccessedTimeEpochMs) {
         // absolute put so no need to change the buffer position
-        byteBuffer.putLong(LAST_ACCESSED_TIME_OFFSET, newLastAccessedTimeEpochMs);
+        byteBuffer.putLong(
+                LAST_ACCESSED_TIME_OFFSET,
+                RefDataProcessingInfo.truncateLastAccessTime(newLastAccessedTimeEpochMs));
     }
 
     public void updateLastAccessedTime(final ByteBuffer byteBuffer) {
-        updateLastAccessedTime(byteBuffer, System.currentTimeMillis());
+        updateLastAccessedTime(
+                byteBuffer,
+                RefDataProcessingInfo.truncateLastAccessTime(System.currentTimeMillis()));
     }
 
     public static ProcessingState extractProcessingState(final ByteBuffer byteBuffer) {

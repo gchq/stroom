@@ -13,8 +13,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -91,13 +90,6 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
                 function);
     }
 
-
-
-
-
-
-
-
     @Override
     public Runnable context(final String taskName,
                             final TerminateHandlerFactory terminateHandlerFactory,
@@ -149,9 +141,6 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
                 terminateHandlerFactory,
                 function);
     }
-
-
-
 
     private TaskContext resolveParent(final TaskContext parentContext) {
         if (parentContext instanceof TaskContextFactoryImpl) {
@@ -227,8 +216,7 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
             }
 
             // Get the parent task thread if there is one.
-            final Set<TaskContextImpl> ancestorTaskSet = getAncestorTaskSet(parentTaskId);
-
+            final Optional<TaskContextImpl> parentTask = getTaskById(parentTaskId);
             final Thread currentThread = Thread.currentThread();
             final String oldThreadName = currentThread.getName();
 
@@ -243,8 +231,8 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
             subTaskContext.setTerminateHandler(terminateHandler);
 
             try {
-                // Let every ancestor know this descendant task is being executed.
-                ancestorTaskSet.forEach(ancestorTask -> ancestorTask.addChild(subTaskContext));
+                // Let the parent task know about the child task.
+                parentTask.ifPresent(parent -> parent.addChild(subTaskContext));
 
                 taskRegistry.put(taskId, subTaskContext);
                 LOGGER.debug(() -> "execAsync()->exec() - " + taskName + " took " + logExecutionTime);
@@ -280,8 +268,8 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
             } finally {
                 taskRegistry.remove(taskId);
 
-                // Let every ancestor know this descendant task has completed.
-                ancestorTaskSet.forEach(ancestorTask -> ancestorTask.removeChild(subTaskContext));
+                // Let the parent task know the child task has completed.
+                parentTask.ifPresent(parent -> parent.removeChild(subTaskContext));
 
                 try {
                     subTaskContext.setThread(null);
@@ -296,18 +284,11 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
         };
     }
 
-    private Set<TaskContextImpl> getAncestorTaskSet(final TaskId parentTask) {
-        // Get the parent task thread if there is one.
-        final Set<TaskContextImpl> ancestorTaskSet = new HashSet<>();
-        TaskId ancestor = parentTask;
-        while (ancestor != null) {
-            TaskContextImpl ancestorTaskState = taskRegistry.get(ancestor);
-            if (ancestorTaskState != null) {
-                ancestorTaskSet.add(ancestorTaskState);
-            }
-            ancestor = ancestor.getParentId();
+    private Optional<TaskContextImpl> getTaskById(final TaskId taskId) {
+        if (taskId == null) {
+            return Optional.empty();
         }
-        return ancestorTaskSet;
+        return Optional.ofNullable(taskRegistry.get(taskId));
     }
 
     void setStop(final boolean stop) {

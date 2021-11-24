@@ -18,12 +18,11 @@ package stroom.search.extraction;
 
 import stroom.alert.api.AlertDefinition;
 import stroom.docref.DocRef;
-import stroom.query.common.v2.Receiver;
 
 import java.util.List;
 import java.util.Map;
 
-class ExtractionTask {
+public class ExtractionTask {
 
     private final long streamId;
     private final long[] eventIds;
@@ -44,12 +43,12 @@ class ExtractionTask {
         this.paramMapForAlerting = null;
     }
 
-    ExtractionTask(final long streamId,
-                   final long[] eventIds,
-                   final DocRef pipelineRef,
-                   final ExtractionReceiver receiver,
-                   final List<AlertDefinition> alertTableSettings,
-                   final Map<String, String> paramMap) {
+    public ExtractionTask(final long streamId,
+                          final long[] eventIds,
+                          final DocRef pipelineRef,
+                          final ExtractionReceiver receiver,
+                          final List<AlertDefinition> alertTableSettings,
+                          final Map<String, String> paramMap) {
         this.streamId = streamId;
         this.eventIds = eventIds;
         this.pipelineRef = pipelineRef;
@@ -85,5 +84,4 @@ class ExtractionTask {
     final Map<String, String> getParamMapForAlerting() {
         return paramMapForAlerting;
     }
-
 }

@@ -34,6 +34,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.xmlschema.XmlSchemaStore;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
+import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.QueryData;
@@ -194,9 +195,14 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
         Processor processor = processorService.create(pipelineRef, true);
 
-        ProcessorFilter filter = processorFilterService.create(processor, filterConstraints, 10, false, true);
+        ProcessorFilter filter = processorFilterService.create(processor,
+                CreateProcessFilterRequest
+                        .builder()
+                        .pipeline(pipelineRef)
+                        .queryData(filterConstraints)
+                        .build());
 
-        HashSet<DocRef> forExport = new HashSet<DocRef>();
+        HashSet<DocRef> forExport = new HashSet<>();
 
 //        forExport.add (new DocRef(Processor.ENTITY_TYPE,processor.getUuid()));
         forExport.add(new DocRef(ProcessorFilter.ENTITY_TYPE, filter.getUuid()));

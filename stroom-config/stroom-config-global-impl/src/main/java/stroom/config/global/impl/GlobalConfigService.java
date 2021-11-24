@@ -24,6 +24,7 @@ import stroom.config.global.shared.ConfigPropertyValidationException;
 import stroom.config.global.shared.GlobalConfigCriteria;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.ListConfigResponse;
+import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.TaskContext;
@@ -91,21 +92,25 @@ public class GlobalConfigService {
     private final ConfigMapper configMapper;
     private final AppConfigValidator appConfigValidator;
     private final TaskContext taskContext;
+    private final NodeInfo nodeInfo;
 
     @Inject
     GlobalConfigService(final ConfigPropertyDao dao,
                         final SecurityContext securityContext,
                         final ConfigMapper configMapper,
                         final AppConfigValidator appConfigValidator,
-                        final TaskContext taskContext) {
+                        final TaskContext taskContext,
+                        final NodeInfo nodeInfo) {
         this.dao = dao;
         this.securityContext = securityContext;
         this.configMapper = configMapper;
         this.appConfigValidator = appConfigValidator;
         this.taskContext = taskContext;
+        this.nodeInfo = nodeInfo;
 
         LOGGER.debug("Initialising GlobalConfigService");
         initialise();
+        LOGGER.info("Config initialised with all effective values");
     }
 
     private void initialise() {
@@ -116,12 +121,18 @@ public class GlobalConfigService {
         LOGGER.info("Initialised application config with global database properties");
     }
 
+    public void updateConfigFromDb(final AppConfig newAppConfig) {
+        final List<ConfigProperty> validDbProps = getValidProperties(false);
+        configMapper.updateConfigFromYaml(newAppConfig, validDbProps);
+        LOGGER.info("Updated application config with global database properties");
+    }
+
     private void updateConfigFromDb() {
         updateConfigFromDb(false);
         LOGGER.info("Updated application config with global database properties");
     }
 
-    private void updateConfigFromDb(final boolean deleteUnknownProps) {
+    private List<ConfigProperty> getValidProperties(final boolean deleteUnknownProps) {
         // Get all props held in the DB, which may be a subset of those in the config
         // object model
 
@@ -131,7 +142,7 @@ public class GlobalConfigService {
         allDbProps.forEach(dbConfigProp -> {
             if (dbConfigProp.getName() == null || !configMapper.validatePropertyPath(dbConfigProp.getName())) {
                 LOGGER.debug("Property {} is in the database but not in the appConfig model",
-                        dbConfigProp.getName().toString());
+                        dbConfigProp.getName());
                 if (deleteUnknownProps) {
                     deleteFromDb(dbConfigProp.getName());
                 }
@@ -140,6 +151,11 @@ public class GlobalConfigService {
             }
         });
 
+        return validDbProps;
+    }
+
+    private void updateConfigFromDb(final boolean deleteUnknownProps) {
+        final List<ConfigProperty> validDbProps = getValidProperties(deleteUnknownProps);
         configMapper.decorateAllDbConfigProperty(validDbProps);
     }
 
@@ -151,28 +167,17 @@ public class GlobalConfigService {
         updateConfigFromDb();
     }
 
-    void updateConfigObjects(final AppConfig newAppConfig) {
-        configMapper.refreshPropertyMap(newAppConfig);
-        updateConfigFromDb();
-    }
-
-//    public List<ConfigProperty> list(final FindGlobalConfigCriteria criteria) {
-//        if (criteria.getName() != null) {
-//            return list(configProperty ->
-//                criteria.getName().isMatch(configProperty.getName().toString()));
-//        } else {
-//            return list();
-//        }
-//    }
-
     public ListConfigResponse list(final GlobalConfigCriteria criteria) {
         Objects.requireNonNull(criteria);
 
         return securityContext.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
-            // Ensure the global config properties are up to date with the db values
-            // TODO This is not ideal as each time the filter is changed we hit the db to
-            //   update the config props.
-            updateConfigFromDb();
+
+            // We don't need to be updating all the props from the db.
+            // Any updates to props from the UI will trigger updateConfigFromDb, so the only thing
+            // we need to update for is changes to a yaml file. If the yaml is changed on this node
+            // then updateConfigFromDb will be called. If the yaml is updated on another node then
+            // updateConfigFromDb will be called on that node. Thus when list is called on any node
+            // the in memory model should be up to date.
 
             final PageRequest pageRequest = criteria.getPageRequest() != null
                     ? criteria.getPageRequest()
@@ -180,12 +185,22 @@ public class GlobalConfigService {
 
             final Optional<Comparator<ConfigProperty>> optConfigPropertyComparator = buildComparator(criteria);
 
+            final String fullyQualifyInput = QuickFilterPredicateFactory.fullyQualifyInput(
+                    criteria.getQuickFilterInput(),
+                    FIELD_MAPPERS);
+
             return QuickFilterPredicateFactory.filterStream(
-                            criteria.getQuickFilterInput(),
-                            FIELD_MAPPERS,
-                            configMapper.getGlobalProperties().stream(),
-                            optConfigPropertyComparator.orElse(null))
-                    .collect(ListConfigResponse.collector(pageRequest, ListConfigResponse::new));
+                    criteria.getQuickFilterInput(),
+                    FIELD_MAPPERS,
+                    configMapper.getGlobalProperties().stream(),
+                    optConfigPropertyComparator.orElse(null))
+                    .collect(ListConfigResponse.collector(
+                            pageRequest,
+                            (configProperties, pageResponse) ->
+                                    new ListConfigResponse(configProperties,
+                                            pageResponse,
+                                            nodeInfo.getThisNodeName(),
+                                            fullyQualifyInput)));
         });
     }
 
@@ -318,6 +333,9 @@ public class GlobalConfigService {
             // Update property in the config object tree
             configMapper.decorateDbConfigProperty(persistedConfigProperty);
 
+            // Having updated a prop make sure the in mem config is correct.
+            updateConfigFromDb();
+
             return persistedConfigProperty;
         });
     }
@@ -329,7 +347,13 @@ public class GlobalConfigService {
 
         final PropertyPath propertyPath = configProperty.getName();
         final String effectiveValueStr = configProperty.getEffectiveValue().orElse(null);
-        final Object effectiveValue = configMapper.convertValue(propertyPath, effectiveValueStr);
+        final Object effectiveValue;
+        try {
+            effectiveValue = configMapper.convertValue(propertyPath, effectiveValueStr);
+        } catch (Exception e) {
+            throw new ConfigPropertyValidationException(LogUtil.message("Error parsing [{}]: {}",
+                    effectiveValueStr, e.getMessage(), e));
+        }
 
         final PropertyUtil.Prop prop = configMapper.getProp(propertyPath)
                 .orElseThrow(() ->

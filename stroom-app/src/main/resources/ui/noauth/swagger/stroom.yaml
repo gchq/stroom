@@ -3315,7 +3315,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/User'
+                  $ref: '#/components/schemas/SimpleUser'
           description: default response
       summary: Get all permissions for a given document type
       tags:
@@ -3543,6 +3543,25 @@ paths:
       summary: Deletes a processor
       tags:
       - Processors
+    get:
+      operationId: fetchProcessor
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Processor'
+          description: default response
+      summary: Fetch a processor
+      tags:
+      - Processors
   /processor/v1/{id}/enabled:
     put:
       operationId: setProcessorEnabled
@@ -3617,7 +3636,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateReprocessFilterRequest'
+              $ref: '#/components/schemas/CreateProcessFilterRequest'
         description: criteria
         required: true
       responses:
@@ -3841,13 +3860,18 @@ paths:
   /refData/v1/clearBufferPool:
     delete:
       operationId: clearBufferPool
+      parameters:
+      - in: query
+        name: nodeName
+        schema:
+          type: string
       responses:
         default:
           content:
             application/json: {}
           description: default response
       summary: Clear all buffers currently available in the buffer pool to reclaim
-        memory.
+        memory. Performed on the named node or all nodes if null.
       tags:
       - Reference Data
   /refData/v1/entries:
@@ -3901,6 +3925,7 @@ paths:
           description: default response
       summary: Perform a reference data lookup using the supplied lookup request.
         Reference data will be loaded if required using the supplied reference pipeline.
+        Performed on this node only.
       tags:
       - Reference Data
   /refData/v1/purgeByAge/{purgeAge}:
@@ -3912,6 +3937,10 @@ paths:
         required: true
         schema:
           type: string
+      - in: query
+        name: nodeName
+        schema:
+          type: string
       responses:
         default:
           content:
@@ -3919,12 +3948,13 @@ paths:
               schema:
                 type: boolean
           description: default response
-      summary: Explicitly delete all entries that are older than purgeAge.
+      summary: Explicitly delete all entries that are older than purgeAge. Performed
+        on the named node, or all nodes if null.
       tags:
       - Reference Data
-  /refData/v1/purgeByStream/{refStreamId}/{partNo}:
+  /refData/v1/purgeByStream/{refStreamId}:
     delete:
-      operationId: purgeReferenceDataByStreamAndPartNo
+      operationId: purgeReferenceDataByStream
       parameters:
       - in: path
         name: refStreamId
@@ -3933,13 +3963,10 @@ paths:
           type: integer
           format: int64
           minimum: 1
-      - in: path
-        name: partNo
-        required: true
+      - in: query
+        name: nodeName
         schema:
-          type: integer
-          format: int64
-          minimum: 1
+          type: string
       responses:
         default:
           content:
@@ -3947,14 +3974,15 @@ paths:
               schema:
                 type: boolean
           description: default response
-      summary: Delete all entries for a reference stream and part number (one based)
+      summary: Delete all entries for a reference stream. Performed on the named node
+        or all nodes if null.
       tags:
       - Reference Data
   /refData/v1/refStreamInfo:
     get:
       description: This is primarily intended  for small scale debugging in non-production
         environments. If no limit is set a default limit is applied else the results
-        will be limited to limit entries.
+        will be limited to limit entries. Performed on this node only.
       operationId: getReferenceStreamProcessingInfoEntries
       parameters:
       - in: query
@@ -5728,6 +5756,8 @@ components:
       properties:
         pageResponse:
           $ref: '#/components/schemas/PageResponse'
+        qualifiedFilterInput:
+          type: string
         values:
           type: array
           items:
@@ -5905,6 +5935,8 @@ components:
       properties:
         pageResponse:
           $ref: '#/components/schemas/PageResponse'
+        qualifiedFilterInput:
+          type: string
         values:
           type: array
           items:
@@ -6369,6 +6401,12 @@ components:
           type: boolean
         enabled:
           type: boolean
+        maxMetaCreateTimeMs:
+          type: integer
+          format: int64
+        minMetaCreateTimeMs:
+          type: integer
+          format: int64
         pipeline:
           $ref: '#/components/schemas/DocRef'
         priority:
@@ -6376,18 +6414,8 @@ components:
           format: int32
         queryData:
           $ref: '#/components/schemas/QueryData'
-    CreateReprocessFilterRequest:
-      type: object
-      properties:
-        autoPriority:
+        reprocess:
           type: boolean
-        enabled:
-          type: boolean
-        priority:
-          type: integer
-          format: int32
-        queryData:
-          $ref: '#/components/schemas/QueryData'
     CriteriaFieldSort:
       type: object
       properties:
@@ -7431,6 +7459,8 @@ components:
           type: array
           items:
             type: string
+        qualifiedFilterInput:
+          type: string
         rootNodes:
           type: array
           items:
@@ -7561,7 +7591,7 @@ components:
         users:
           type: array
           items:
-            $ref: '#/components/schemas/User'
+            $ref: '#/components/schemas/SimpleUser'
     FindDBTableCriteria:
       type: object
       properties:
@@ -7943,6 +7973,7 @@ components:
           - 200 - 0 - OK
           - 406 - 100 - Feed must be specified
           - 406 - 101 - Feed is not defined
+          - 406 - 102 - Data type is invalid
           - 406 - 110 - Feed is not set to receive data
           - 406 - 120 - Unexpected data type
           - 406 - 200 - Unknown compression
@@ -8404,8 +8435,12 @@ components:
       type: object
       description: List of config properties
       properties:
+        nodeName:
+          type: string
         pageResponse:
           $ref: '#/components/schemas/PageResponse'
+        qualifiedFilterInput:
+          type: string
         values:
           type: array
           items:
@@ -9048,6 +9083,12 @@ components:
         id:
           type: integer
           format: int32
+        maxMetaCreateTimeMs:
+          type: integer
+          format: int64
+        minMetaCreateTimeMs:
+          type: integer
+          format: int64
         pipelineName:
           type: string
         pipelineUuid:
@@ -10132,6 +10173,13 @@ components:
             $ref: '#/components/schemas/SharedElementData'
         sourceLocation:
           $ref: '#/components/schemas/SourceLocation'
+    SimpleUser:
+      type: object
+      properties:
+        name:
+          type: string
+        uuid:
+          type: string
     Size:
       type: object
       properties:

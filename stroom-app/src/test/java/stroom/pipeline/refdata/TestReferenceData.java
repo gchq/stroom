@@ -136,7 +136,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
 
         LOGGER.debug("Creating LMDB environment in dbDir {}", getDbDir().toAbsolutePath().toString());
 
-        referenceDataConfig.setLocalDir(getDbDir().toAbsolutePath().toString());
+        referenceDataConfig.getLmdbConfig().setLocalDir(getDbDir().toAbsolutePath().toString());
 
         setDbMaxSizeProperty(DB_MAX_SIZE);
         refDataStore = refDataStoreFactory.getOffHeapStore();
@@ -580,7 +580,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
     }
 
     private void setDbMaxSizeProperty(final ByteSize size) {
-        referenceDataConfig.setMaxStoreSize(size);
+        referenceDataConfig.getLmdbConfig().setMaxStoreSize(size);
     }
 
     private Path getDbDir() {

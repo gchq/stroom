@@ -39,6 +39,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -55,9 +57,6 @@ class DistributedTaskFetcher {
 
     private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
     private final AtomicBoolean stopping = new AtomicBoolean();
-    private final AtomicBoolean stopped = new AtomicBoolean();
-    private final AtomicBoolean fetchingTasks = new AtomicBoolean();
-    private final AtomicBoolean waitingToFetchTasks = new AtomicBoolean();
     private final Set<DistributedTask> runningTasks = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     private final ExecutorProvider executorProvider;
@@ -68,6 +67,9 @@ class DistributedTaskFetcher {
     private final TargetNodeSetFactory targetNodeSetFactory;
 
     private long lastFetch;
+    private final ReentrantLock lock = new ReentrantLock();
+    private final Condition condition = lock.newCondition();
+    private final AtomicBoolean running = new AtomicBoolean();
 
     @Inject
     DistributedTaskFetcher(final ExecutorProvider executorProvider,
@@ -91,17 +93,8 @@ class DistributedTaskFetcher {
     void shutdown() {
         try {
             stopping.set(true);
-
             Thread.sleep(1000);
 
-//            // Wait until we have stopped.
-//            while (runningTasks.size() > 0) {
-//                for (final DistributedTask task : runningTasks) {
-//                    taskManager.terminate(task.getId());
-//                }
-//
-//                Thread.sleep(1000);
-//            }
         } catch (final InterruptedException e) {
             LOGGER.debug(e.getMessage(), e);
 
@@ -114,7 +107,10 @@ class DistributedTaskFetcher {
      * The Stroom lifecycle service will try and fetch new tasks for execution.
      */
     void execute() {
-        fetch();
+        if (running.compareAndSet(false, true)) {
+            final Executor executor = executorProvider.get();
+            executor.execute(this::fetch);
+        }
     }
 
     /**
@@ -123,40 +119,45 @@ class DistributedTaskFetcher {
      * after the previous fetch.
      */
     private void fetch() {
-        securityContext.asProcessingUser(() -> {
-            try {
-                if (!stopped.get()) {
-                    // Only allow one set of tasks to be fetched at any one time.
-                    if (fetchingTasks.compareAndSet(false, true)) {
-                        if (!stopping.get()) {
-
-                            final Runnable runnable = taskContextFactory.context(
-                                    "Fetch Tasks", taskContext -> {
+        try {
+            securityContext.asProcessingUser(() -> {
+                try {
+                    while (!stopping.get()) {
+                        lock.lockInterruptibly();
+                        try {
+                            final int executingTaskCount =
+                                    taskContextFactory.contextResult("Fetch Tasks", taskContext -> {
                                         try {
-                                            doFetch(taskContext);
+                                            return doFetch(taskContext);
                                         } catch (final RuntimeException e) {
                                             LOGGER.error(e.getMessage(), e);
                                         }
-                                    });
+                                        return 0;
+                                    }).get();
 
-                            CompletableFuture
-                                    .runAsync(runnable, executorProvider.get())
-                                    .whenComplete((r, t) -> afterFetch());
-
-                        } else {
-                            stopped.set(true);
+                            if (executingTaskCount == 0) {
+                                // Wait a second before trying to get more tasks.
+                                Thread.sleep(1000);
+                            } else {
+                                // Just wait until a task completes.
+                                condition.await();
+                            }
+                        } finally {
+                            lock.unlock();
                         }
-                    } else {
-                        waitingToFetchTasks.set(true);
                     }
+                } catch (final InterruptedException e) {
+                    LOGGER.debug(e.getMessage(), e);
+                    Thread.currentThread().interrupt();
                 }
-            } catch (final RuntimeException e) {
-                LOGGER.error("Unable to fetch task!", e);
-            }
-        });
+            });
+        } catch (final RuntimeException e) {
+            LOGGER.error("Unable to fetch task!", e);
+        }
     }
 
-    private void doFetch(final TaskContext taskContext) {
+    private int doFetch(final TaskContext taskContext) {
+        int executingTaskCount = 0;
         taskContext.info(() -> "fetching tasks");
         LOGGER.trace("Trying to fetch tasks");
 
@@ -207,26 +208,14 @@ class DistributedTaskFetcher {
                             nodeName,
                             count);
                     handleResult(nodeName, jobName, tasks);
+                    executingTaskCount += tasks.size();
                 }
 
                 // Remember the last fetch time.
                 lastFetch = now;
             }
         }
-    }
-
-    /**
-     * Try and fetch more tasks after we have fetched some if there has been
-     * another request for tasks in the mean time.
-     */
-    private void afterFetch() {
-        fetchingTasks.set(false);
-
-        // Fetch more tasks if we have other threads that wanted
-        // to fetch more tasks.
-        if (waitingToFetchTasks.compareAndSet(true, false)) {
-            fetch();
-        }
+        return executingTaskCount;
     }
 
     private void handleResult(
@@ -246,13 +235,13 @@ class DistributedTaskFetcher {
             // Get the current time to record execution.
             final long now = System.currentTimeMillis();
 
-            // Execute all of the returned tasks.
+            // Execute the returned tasks.
             final JobNodeTrackerCache.Trackers trackers = jobNodeTrackerCache.getTrackers();
-            // Get the latest local tracker.
-            final JobNodeTracker tracker = trackers.getTrackerForJobName(jobName);
             taskStatusTraceLog.receiveOnWorkerNode(DistributedTaskFetcher.class, tasks, jobName);
 
             if (!stopping.get()) {
+                // Get the latest local tracker.
+                final JobNodeTracker tracker = trackers.getTrackerForJobName(jobName);
                 // Try and get more tasks.
                 tasks.forEach(task -> {
                     runningTasks.add(task);
@@ -266,11 +255,7 @@ class DistributedTaskFetcher {
                                 .whenComplete((r, t) -> {
                                     runningTasks.remove(task);
                                     tracker.decrementTaskCount();
-
-                                    if (t == null) {
-                                        // Try and get more tasks.
-                                        fetch();
-                                    }
+                                    signal();
                                 });
                     } else {
                         runningTasks.remove(task);
@@ -280,6 +265,20 @@ class DistributedTaskFetcher {
             }
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
+        }
+    }
+
+    private void signal() {
+        try {
+            lock.lockInterruptibly();
+            try {
+                condition.signal();
+            } finally {
+                lock.unlock();
+            }
+        } catch (final InterruptedException e) {
+            LOGGER.debug(e.getMessage(), e);
+            Thread.currentThread().interrupt();
         }
     }
 

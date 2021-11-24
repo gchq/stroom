@@ -133,7 +133,7 @@ public class StroomDuration implements Comparable<StroomDuration>, TemporalAmoun
     }
 
     private static Duration parseToDuration(final String value) {
-        if (value == null) {
+        if (value == null || value.isBlank()) {
             return null;
         } else {
             if (value.startsWith("P")) {

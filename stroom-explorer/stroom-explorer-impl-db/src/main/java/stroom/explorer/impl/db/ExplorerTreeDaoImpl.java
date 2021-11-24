@@ -134,8 +134,10 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
     }
 
     @Override
-    public TreeModel createModel(final Function<String, String> iconUrlProvider) {
-        final TreeModel treeModel = new TreeModel();
+    public TreeModel createModel(final Function<String, String> iconUrlProvider,
+                                 final long id,
+                                 final long creationTime) {
+        final TreeModel treeModel = new TreeModel(id, creationTime);
 
         final List<Integer> roots = JooqUtil.contextResult(explorerDbConnProvider, context -> context
                 .select(p.ANCESTOR)

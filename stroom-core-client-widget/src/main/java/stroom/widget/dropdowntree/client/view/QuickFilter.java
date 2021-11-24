@@ -28,18 +28,21 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.TextBox;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 
 public class QuickFilter extends FlowPanel
         implements HasText, HasValueChangeHandlers<String> {
 
+    private static final int REFRESH_ALL_NODES_TIMER_DELAY_MS = 500;
     private static final SafeHtml DEFAULT_POPUP_TEXT = TooltipUtil.builder()
             .addHeading("Quick Filter")
             .addLine("Field values containing the characters input will be included.")
@@ -50,6 +53,15 @@ public class QuickFilter extends FlowPanel
     private final SvgButton helpButton;
     private EventBus eventBus;
     private Supplier<SafeHtml> popupTextSupplier;
+    private String lastInput = "";
+
+    private final Timer filterRefreshTimer = new Timer() {
+        @Override
+        public void run() {
+            // Fire the event to update the data based on the filter
+            ValueChangeEvent.fire(QuickFilter.this, textBox.getText());
+        }
+    };
 
     public QuickFilter() {
         setStyleName("quickFilter");
@@ -92,11 +104,19 @@ public class QuickFilter extends FlowPanel
 
     private void onChange() {
         final String text = textBox.getText();
-        final boolean enabled = text.length() > 0;
-        clearButton.setEnabled(enabled);
-        clearButton.setVisible(enabled);
-        if (eventBus != null) {
-            ValueChangeEvent.fire(this, text);
+        final boolean isNotEmpty = text.length() > 0;
+        clearButton.setEnabled(isNotEmpty);
+        clearButton.setVisible(isNotEmpty);
+
+        if (!Objects.equals(text, lastInput)) {
+            lastInput = text;
+            if (eventBus != null) {
+                // Add in a slight delay to give the user a chance to type a few chars before we fire off
+                // a rest call. This helps to reduce the logging too
+                if (!filterRefreshTimer.isRunning()) {
+                    filterRefreshTimer.schedule(REFRESH_ALL_NODES_TIMER_DELAY_MS);
+                }
+            }
         }
     }
 

@@ -25,10 +25,10 @@ import stroom.query.common.v2.Store;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import com.esotericsoftware.kryo.io.Input;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -48,7 +48,7 @@ import javax.inject.Provider;
 
 public class ClusterSearchResultCollector implements Store {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterSearchResultCollector.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ClusterSearchResultCollector.class);
     private static final String TASK_NAME = "AsyncSearchTask";
 
     private final ConcurrentHashMap<String, Set<String>> errors = new ConcurrentHashMap<>();
@@ -101,7 +101,7 @@ public class ClusterSearchResultCollector implements Store {
                         // We can expect some tasks to throw a task terminated exception
                         // as they may be terminated before we even try to execute them.
                         if (!(t instanceof TaskTerminatedException)) {
-                            LOGGER.error(t.getMessage(), t);
+                            LOGGER.error(t::getMessage, t);
                             onFailure(nodeName, t);
                             coprocessors.getCompletionState().signalComplete();
                             throw new RuntimeException(t.getMessage(), t);
@@ -114,10 +114,14 @@ public class ClusterSearchResultCollector implements Store {
 
     @Override
     public void destroy() {
+        LOGGER.trace(() -> "destroy()");
+        complete();
+        LOGGER.trace(() -> "coprocessors.clear()");
         coprocessors.clear();
     }
 
     public void complete() {
+        LOGGER.trace(() -> "complete()");
         completionState.signalComplete();
     }
 
@@ -139,7 +143,12 @@ public class ClusterSearchResultCollector implements Store {
 
     public synchronized boolean onSuccess(final String nodeName,
                                           final InputStream inputStream) {
-        final AtomicBoolean complete = new AtomicBoolean();
+        // If we have already completed the finish immediately without worrying about this data.
+        if (isComplete()) {
+            return true;
+        }
+
+        final AtomicBoolean remoteNodeComplete = new AtomicBoolean();
 
         boolean success = true;
 
@@ -148,7 +157,7 @@ public class ClusterSearchResultCollector implements Store {
 
         try (final Input input = new Input(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()))) {
             final Set<String> errors = new HashSet<>();
-            success = NodeResultSerialiser.read(input, coprocessors, errors::add, complete::set);
+            success = NodeResultSerialiser.read(input, coprocessors, errors::add, remoteNodeComplete::set);
             if (errors.size() > 0) {
                 getErrorSet(nodeName).addAll(errors);
             }
@@ -157,15 +166,15 @@ public class ClusterSearchResultCollector implements Store {
         }
 
         // If we were told this payload belongs to a completed node then wait for this payload to be added.
-        if (complete.get()) {
+        if (remoteNodeComplete.get()) {
             try {
                 boolean consumed = false;
-                while (!consumed && !Thread.currentThread().isInterrupted()) {
+                while (!consumed && !Thread.currentThread().isInterrupted() && !isComplete()) {
                     consumed = coprocessors.awaitTransfer(1, TimeUnit.MINUTES);
                 }
             } catch (final InterruptedException e) {
                 Thread.currentThread().interrupt();
-                LOGGER.debug(e.getMessage(), e);
+                LOGGER.debug(e::getMessage, e);
             }
 
             return true;
@@ -173,7 +182,7 @@ public class ClusterSearchResultCollector implements Store {
 
         // If the result collector rejected the result it is because we have already collected enough data and can
         // therefore consider search complete.
-        return !success;
+        return isComplete() || !success;
     }
 
     public synchronized void onFailure(final String nodeName,

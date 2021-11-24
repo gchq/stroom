@@ -223,8 +223,13 @@ class AuthenticationServiceImpl implements AuthenticationService {
     public String logout(final HttpServletRequest request) {
         final HttpSession httpSession = request.getSession(false);
         if (httpSession != null) {
+            final AuthStateImpl authState = getAuthState(request);
+            if (authState == null) {
+                throw new IllegalStateException("No logged in user found");
+            }
+            final String userId = authState.getSubject();
             clearSession(request);
-            return request.getUserPrincipal().getName();
+            return userId;
         }
 
         throw new IllegalStateException("No open session found");

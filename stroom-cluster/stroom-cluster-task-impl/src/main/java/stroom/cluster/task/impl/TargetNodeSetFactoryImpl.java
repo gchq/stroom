@@ -81,7 +81,7 @@ public class TargetNodeSetFactoryImpl implements TargetNodeSetFactory {
         }
     }
 
-    //    @Override
+    @Override
     public Set<String> getEnabledTargetNodeSet() throws NullClusterStateException, NodeNotFoundException {
         final ClusterState clusterState = getClusterState();
         final Set<String> nodes = clusterState.getEnabledNodes();

@@ -16,25 +16,29 @@
 
 CREATE TABLE IF NOT EXISTS source (
   id                        BIGINT PRIMARY KEY,
-  path                      VARCHAR(255) NOT NULL UNIQUE,
+  path                      VARCHAR(255) NOT NULL,
   feed_name                 VARCHAR(255) DEFAULT NULL,
   type_name                 VARCHAR(255) DEFAULT NULL,
   last_modified_time_ms     BIGINT NOT NULL,
   examined                  BOOLEAN DEFAULT FALSE,
   forwarded                 BOOLEAN DEFAULT FALSE,
-  forward_error             BOOLEAN DEFAULT FALSE
+  new_position              BIGINT NULL
 );
+CREATE UNIQUE INDEX source_path_index ON source(path);
+CREATE UNIQUE INDEX new_position_source_index ON source(new_position);
 
 CREATE TABLE IF NOT EXISTS source_item (
   id                        BIGINT PRIMARY KEY,
   name                      VARCHAR(255) NOT NULL,
   feed_name                 VARCHAR(255) DEFAULT NULL,
   type_name                 VARCHAR(255) DEFAULT NULL,
-  fk_source_id              BIGINT NOT NULL,
-  aggregated                BOOLEAN DEFAULT FALSE,
-  UNIQUE                    (name, fk_source_id),
-  FOREIGN KEY               (fk_source_id) REFERENCES source (id)
+  byte_size                 BIGINT DEFAULT 0,
+  source_id                 BIGINT NOT NULL,
+  aggregate_id              BIGINT NULL,
+  new_position              BIGINT NULL,
+  UNIQUE                    (name, source_id)
 );
+CREATE UNIQUE INDEX new_position_source_item_index ON source_item(new_position);
 
 CREATE TABLE IF NOT EXISTS source_entry (
   id                        BIGINT PRIMARY KEY,
@@ -53,16 +57,10 @@ CREATE TABLE IF NOT EXISTS aggregate (
   byte_size                 BIGINT NOT NULL,
   items                     INTEGER NOT NULL,
   complete                  BOOLEAN DEFAULT FALSE,
-  forward_error             BOOLEAN DEFAULT FALSE
+  new_position              BIGINT NULL
 );
-
-CREATE TABLE IF NOT EXISTS aggregate_item (
-  id                        BIGINT PRIMARY KEY,
-  fk_aggregate_id           BIGINT NOT NULL,
-  fk_source_item_id         BIGINT NOT NULL,
-  FOREIGN KEY               (fk_aggregate_id) REFERENCES aggregate (id),
-  FOREIGN KEY               (fk_source_item_id) REFERENCES source_item (id)
-);
+CREATE INDEX aggregate_feed_type_index ON aggregate(feed_name, type_name);
+CREATE UNIQUE INDEX new_position_aggregate_index ON aggregate(new_position);
 
 CREATE TABLE IF NOT EXISTS forward_url (
   id                        INTEGER PRIMARY KEY,
@@ -72,22 +70,33 @@ CREATE TABLE IF NOT EXISTS forward_url (
 
 CREATE TABLE IF NOT EXISTS forward_source (
   id                        BIGINT PRIMARY KEY,
+  update_time_ms            BIGINT NOT NULL,
   fk_forward_url_id         INTEGER NOT NULL,
-  fk_source_id              BIGINT NOT NULL,
+  source_id                 BIGINT NOT NULL,
   success                   BOOLEAN NOT NULL,
   error                     VARCHAR(255),
-  FOREIGN KEY               (fk_forward_url_id) REFERENCES forward_url (id),
-  FOREIGN KEY               (fk_source_id) REFERENCES source (id)
+  tries                     BIGINT DEFAULT 0,
+  new_position              BIGINT NULL,
+  retry_position            BIGINT NULL,
+  FOREIGN KEY               (fk_forward_url_id) REFERENCES forward_url (id)
 );
+CREATE UNIQUE INDEX new_position_forward_source_index ON forward_source(new_position);
+CREATE UNIQUE INDEX retry_position_forward_source_index ON forward_source(retry_position);
 
 CREATE TABLE IF NOT EXISTS forward_aggregate (
   id                        BIGINT PRIMARY KEY,
+  update_time_ms            BIGINT NOT NULL,
   fk_forward_url_id         INTEGER NOT NULL,
   fk_aggregate_id           BIGINT NOT NULL,
   success                   BOOLEAN NOT NULL,
   error                     VARCHAR(255),
+  tries                     BIGINT DEFAULT 0,
+  new_position              BIGINT NULL,
+  retry_position            BIGINT NULL,
   FOREIGN KEY               (fk_forward_url_id) REFERENCES forward_url (id),
   FOREIGN KEY               (fk_aggregate_id) REFERENCES aggregate (id)
 );
+CREATE UNIQUE INDEX new_position_forward_aggregate_index ON forward_aggregate(new_position);
+CREATE UNIQUE INDEX retry_position_forward_aggregate_index ON forward_aggregate(retry_position);
 
 -- vim: set shiftwidth=4 tabstop=4 expandtab:

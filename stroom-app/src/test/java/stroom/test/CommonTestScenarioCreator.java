@@ -34,6 +34,7 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
+import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
@@ -85,7 +86,12 @@ public class CommonTestScenarioCreator {
         processor.setPipelineUuid(UUID.randomUUID().toString());
         processor.setEnabled(true);
         processor = streamProcessorService.create(processor);
-        processorFilterService.create(processor, queryData, 1, false, true);
+        processorFilterService.create(processor,
+                CreateProcessFilterRequest
+                        .builder()
+                        .queryData(queryData)
+                        .priority(1)
+                        .build());
     }
 
     public DocRef createIndex(final String name) {

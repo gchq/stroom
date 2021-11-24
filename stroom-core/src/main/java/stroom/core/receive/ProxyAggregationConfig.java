@@ -2,6 +2,7 @@ package stroom.core.receive;
 
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.RepoConfig;
+import stroom.proxy.repo.RepoDbConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
 
@@ -16,12 +17,16 @@ import javax.inject.Singleton;
 public class ProxyAggregationConfig extends AbstractConfig implements IsStroomConfig, RepoConfig {
 
     private String repoDir = "proxy_repo";
-    private String dbDir = "proxy_repo_db";
     private AggregatorConfig aggregatorConfig = new AggregatorConfig();
+    private RepoDbConfig repoDbConfig = new RepoDbConfig();
+
+    public ProxyAggregationConfig() {
+        repoDbConfig.setDbDir("proxy_repo_db");
+    }
 
     @Override
     @JsonProperty
-    @JsonPropertyDescription("Tee location of a proxy repository that we want to aggregate data from")
+    @JsonPropertyDescription("The location of a proxy repository that we want to aggregate data from")
     public String getRepoDir() {
         return repoDir;
     }
@@ -30,15 +35,14 @@ public class ProxyAggregationConfig extends AbstractConfig implements IsStroomCo
         this.repoDir = repoDir;
     }
 
-    @Override
     @JsonProperty
     @JsonPropertyDescription("The location of the local SQLite DB to use for the proxy aggregation process")
-    public String getDbDir() {
-        return dbDir;
+    public RepoDbConfig getRepoDbConfig() {
+        return repoDbConfig;
     }
 
-    public void setDbDir(final String dbDir) {
-        this.dbDir = dbDir;
+    public void setRepoDbConfig(final RepoDbConfig repoDbConfig) {
+        this.repoDbConfig = repoDbConfig;
     }
 
     @JsonProperty("aggregator")
@@ -55,7 +59,6 @@ public class ProxyAggregationConfig extends AbstractConfig implements IsStroomCo
     public String toString() {
         return "ProxyAggregationConfig{" +
                 "repoDir='" + repoDir + '\'' +
-                ", dbDir='" + dbDir + '\'' +
                 ", aggregatorConfig=" + aggregatorConfig +
                 '}';
     }

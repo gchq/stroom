@@ -15,6 +15,7 @@ import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
+import org.jooq.Record1;
 import org.jooq.SQLDialect;
 import org.jooq.Table;
 import org.jooq.UpdatableRecord;
@@ -112,8 +113,9 @@ public final class JooqUtil {
                 return context
                         .selectCount()
                         .from(table)
-                        .fetchOne()
-                        .value1();
+                        .fetchOptional()
+                        .map(Record1::value1)
+                        .orElse(0);
             } finally {
                 releaseDataSource();
             }
@@ -544,5 +546,4 @@ public final class JooqUtil {
     private static void releaseDataSource() {
         DATA_SOURCE_THREAD_LOCAL.set(null);
     }
-
 }

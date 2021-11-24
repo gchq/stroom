@@ -16,12 +16,20 @@
 
 package stroom.util.servlet;
 
+import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 
 @Singleton
 public class HttpServletRequestHolder implements Provider<HttpServletRequest> {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(HttpServletRequestHolder.class);
 
     private final ThreadLocal<HttpServletRequest> threadLocal = new InheritableThreadLocal<>();
 
@@ -31,6 +39,23 @@ public class HttpServletRequestHolder implements Provider<HttpServletRequest> {
     }
 
     public void set(final HttpServletRequest httpServletRequest) {
+
+        if (LOGGER.isDebugEnabled()) {
+            if (httpServletRequest == null) {
+                LOGGER.debug(() ->
+                        LogUtil.message("Clearing held request against thread {}",
+                                Thread.currentThread().getId()));
+            } else {
+                LOGGER.debug(() ->
+                        LogUtil.message("Holding request with session id {} against thread {}",
+                                NullSafe.get(
+                                        httpServletRequest,
+                                        request -> request.getSession(false),
+                                        HttpSession::getId),
+                                Thread.currentThread().getId()));
+            }
+        }
+
         threadLocal.set(httpServletRequest);
     }
 }

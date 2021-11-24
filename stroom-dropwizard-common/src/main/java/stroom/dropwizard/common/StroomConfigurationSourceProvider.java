@@ -9,6 +9,8 @@ import stroom.util.io.StreamUtil;
 import stroom.util.io.StroomPathConfig;
 import stroom.util.io.TempDirProvider;
 import stroom.util.io.TempDirProviderImpl;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -31,6 +33,7 @@ import javax.annotation.Nonnull;
 
 public class StroomConfigurationSourceProvider implements ConfigurationSourceProvider {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomConfigurationSourceProvider.class);
     private static final String SOURCE_DEFAULTS = "defaults";
     private static final String SOURCE_YAML = "YAML";
     private static final List<String> JSON_POINTERS_TO_INSPECT = List.of(
@@ -120,8 +123,7 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
                              final Function<String, String> valueMutator) {
         final JsonNode parentNode = rootNode.at(jsonPointerExpr);
         if (parentNode.isMissingNode()) {
-            throw new RuntimeException(LogUtil.message("jsonPointerExpr {}, not found in yaml",
-                    jsonPointerExpr));
+            LOGGER.warn("jsonPointerExpr {}, not found in yaml", jsonPointerExpr);
         } else {
             mutateNodes(parentNode, names, valueMutator, jsonPointerExpr);
         }

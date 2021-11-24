@@ -11,17 +11,15 @@ import stroom.util.logging.LambdaLoggerFactory;
 import org.jooq.Condition;
 import org.jooq.impl.DSL;
 
-import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import static org.jooq.impl.DSL.and;
-import static org.jooq.impl.DSL.or;
 
 public final class CommonExpressionMapper implements Function<ExpressionItem, Condition> {
 
@@ -58,16 +56,13 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
         LOGGER.debug(() -> item != null
                 ? item.toMultiLineString()
                 : null);
-        final Condition conditions = apply(item, true);
-        LOGGER.debug(() -> conditions != null
-                ? conditions.toString()
-                : null);
-        return conditions;
+        final Optional<Condition> optional = innerApply(item);
+        LOGGER.debug(() -> optional.map(Object::toString).orElse(null));
+        return optional.orElse(DSL.noCondition());
     }
 
-    public Condition apply(final ExpressionItem item,
-                           final boolean simplifyConditions) {
-        Condition result = null;
+    public Optional<Condition> innerApply(final ExpressionItem item) {
+        Optional<Condition> result = Optional.empty();
 
         if (item != null && item.enabled()) {
             if (item instanceof ExpressionTerm) {
@@ -81,130 +76,48 @@ public final class CommonExpressionMapper implements Function<ExpressionItem, Co
 
                 final Function<ExpressionTerm, Condition> termHandler = termHandlers.get(term.getField());
                 if (termHandler != null) {
-                    result = termHandler.apply(term);
+                    result = Optional.of(termHandler.apply(term));
                 } else if (delegateItemHandler != null) {
-                    result = delegateItemHandler.apply(term);
+                    result = Optional.of(delegateItemHandler.apply(term));
                 } else if (!ignoredFields.contains(term.getField())) {
                     throw new RuntimeException("No term handler supplied for term '" + term.getField() + "'");
                 }
 
             } else if (item instanceof ExpressionOperator) {
                 final ExpressionOperator operator = (ExpressionOperator) item;
-                if (operator.getChildren() != null && !operator.getChildren().isEmpty()) {
-                    final Collection<Condition> children = operator.getChildren()
-                            .stream()
-                            .map(expressionItem -> apply(expressionItem, simplifyConditions))
-                            .collect(Collectors.toList());
-
-                    result = switch (operator.op()) {
-                        case AND -> buildAndConditions(simplifyConditions, children);
-                        case OR -> buildOrConditions(simplifyConditions, operator.getChildren(), children);
-                        case NOT -> buildNotConditions(simplifyConditions, children);
-                    };
+                List<ExpressionItem> items = operator.getChildren();
+                if (items == null) {
+                    items = Collections.emptyList();
                 }
 
-                // AND {}, OR {}, equal true, so don't need to do anything with them
-                if (result == null) {
+                final List<Condition> children = items
+                        .stream()
+                        .map(this::innerApply)
+                        .filter(Optional::isPresent)
+                        .map(Optional::get)
+                        .collect(Collectors.toList());
+
+                if (children.size() == 1) {
+                    final Condition child = children.get(0);
                     if (Op.NOT.equals(operator.op())) {
-                        result = DSL.falseCondition();
+                        result = Optional.of(DSL.not(child));
                     } else {
-                        result = DSL.trueCondition();
+                        result = Optional.of(child);
+                    }
+
+                } else if (children.size() > 0) {
+                    if (Op.NOT.equals(operator.op())) {
+                        result = Optional.of(DSL.not(DSL.and(children)));
+                    } else if (Op.AND.equals(operator.op())) {
+                        result = Optional.of(DSL.and(children));
+                    } else if (Op.OR.equals(operator.op())) {
+                        result = Optional.of(DSL.or(children));
                     }
                 }
             }
         }
 
-        if (result == null || (simplifyConditions && isTrue(result))) {
-            result = DSL.trueCondition();
-        }
         LOGGER.debug("Converted expressionItem {} into condition {}", item, result);
         return result;
-    }
-
-    private Condition buildNotConditions(final boolean simplifyConditions,
-                                         final Collection<Condition> children) {
-        LOGGER.debug("buildNotConditions({}, {})", simplifyConditions, children);
-
-        final Collection<Condition> conditions;
-        conditions = children
-                .stream()
-                .map(childCondition -> {
-                    if (simplifyConditions && isFalse(childCondition)) {
-                        // Not(false) == true
-                        return DSL.trueCondition();
-                    } else if (simplifyConditions && isTrue(childCondition)) {
-                        // NOT(true) == false
-                        return DSL.falseCondition();
-                    } else {
-                        return DSL.not(childCondition);
-                    }
-                })
-                .collect(Collectors.toList());
-        // Stroom allows NOT {} expressions to have more than one child and so
-        // NOT { x=1, y=1 }
-        // is treated like an implicit AND, i.e.
-        // AND { NOT {x=1}, NOT {y=1}
-        Condition result = DSL.and(conditions);
-        LOGGER.debug("Returning {}", result);
-        return result;
-    }
-
-    private Condition buildOrConditions(final boolean simplifyConditions,
-                                        final List<ExpressionItem> expressionItems,
-                                        final Collection<Condition> children) {
-        LOGGER.debug("buildOrConditions({}, {}, {})", simplifyConditions, expressionItems, children);
-        final Condition result;
-
-        if (children.isEmpty()) {
-            result = DSL.trueCondition();
-        } else if (simplifyConditions
-                && (children.contains(DSL.trueCondition()) || children.size() < expressionItems.size())) {
-            // Either one of the OR items is TRUE so the whole is TRUE or we have less children than
-            // original expressionItems so one must have been simplified to true
-            // TODO There ought to be a neater way to work this out
-            LOGGER.debug("One of the conditions in the OR is 1=1 so " +
-                    "just return a true condition");
-            result = DSL.trueCondition();
-        } else if (children.stream().allMatch(this::isFalse)) {
-            result = DSL.falseCondition();
-        } else if (children.size() == 1) {
-            // Don't wrap with the OR condition as it is not needed
-            result = children.iterator().next();
-        } else {
-            result = or(children);
-        }
-        LOGGER.debug("Returning {}", result);
-        return result;
-    }
-
-    private Condition buildAndConditions(final boolean simplifyConditions,
-                                         final Collection<Condition> children) {
-        LOGGER.debug("buildAndConditions({}, {})", simplifyConditions, children);
-        final Condition result;
-
-        if (children.isEmpty()) {
-            result = DSL.trueCondition();
-        } else if (simplifyConditions && children.contains(DSL.falseCondition())) {
-            LOGGER.debug("One of the conditions in the AND is 1=0 " +
-                    "so just return false condition");
-            result = DSL.falseCondition();
-        } else if (simplifyConditions && children.stream().allMatch(this::isTrue)) {
-            result = DSL.trueCondition();
-        } else if (children.size() == 1) {
-            result = children.iterator().next();
-        } else {
-            result = and(children);
-        }
-        LOGGER.debug("Returning {}", result);
-        return result;
-    }
-
-    private boolean isTrue(final Condition condition) {
-        // Treat noCondition as true
-        return DSL.trueCondition().equals(condition) || DSL.noCondition().equals(condition);
-    }
-
-    private boolean isFalse(final Condition condition) {
-        return DSL.falseCondition().equals(condition);
     }
 }

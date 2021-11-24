@@ -40,9 +40,9 @@ import stroom.proxy.repo.AggregateForwarder;
 import stroom.proxy.repo.Aggregator;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.ProxyRepoFileNames;
-import stroom.proxy.repo.ProxyRepoSourceEntries;
-import stroom.proxy.repo.ProxyRepoSources;
 import stroom.proxy.repo.RepoDirProvider;
+import stroom.proxy.repo.RepoSourceItems;
+import stroom.proxy.repo.RepoSources;
 import stroom.security.api.SecurityContext;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
@@ -97,9 +97,9 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     @Inject
     private Aggregator aggregator;
     @Inject
-    private ProxyRepoSourceEntries proxyRepoSourceEntries;
+    private RepoSourceItems proxyRepoSourceEntries;
     @Inject
-    private ProxyRepoSources proxyRepoSources;
+    private RepoSources proxyRepoSources;
     @Inject
     private RepoDirProvider repoDirProvider;
     @Inject

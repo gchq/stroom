@@ -17,7 +17,6 @@ public class ProxyRepoConfig extends AbstractConfig implements IsProxyConfig, Re
 
     private boolean storingEnabled = false;
     private String repoDir = "repo";
-    private String dbDir = "repo";
     private String format = "${pathId}/${id}";
     private StroomDuration cleanupFrequency = StroomDuration.ofHours(1);
     private StroomDuration lockDeleteAge = StroomDuration.ofHours(1);
@@ -44,17 +43,6 @@ public class ProxyRepoConfig extends AbstractConfig implements IsProxyConfig, Re
 
     public void setRepoDir(final String repoDir) {
         this.repoDir = repoDir;
-    }
-
-    @RequiresRestart(value = RestartScope.SYSTEM)
-    @JsonProperty
-    @Override
-    public String getDbDir() {
-        return dbDir;
-    }
-
-    public void setDbDir(final String dbDir) {
-        this.dbDir = dbDir;
     }
 
     /**

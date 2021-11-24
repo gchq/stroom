@@ -8,6 +8,7 @@ import stroom.proxy.repo.CSVFormatter;
 import stroom.proxy.repo.LogStream;
 import stroom.proxy.repo.ProgressHandler;
 import stroom.receive.common.AttributeMapFilter;
+import stroom.receive.common.AttributeMapValidator;
 import stroom.receive.common.RequestHandler;
 import stroom.receive.common.StroomStreamException;
 import stroom.receive.common.StroomStreamProcessor;
@@ -63,8 +64,10 @@ public class ProxyRequestHandler implements RequestHandler {
 
         final long startTimeMs = System.currentTimeMillis();
         final AttributeMap attributeMap = AttributeMapUtil.create(request);
-
         try {
+            // Validate the supplied attributes.
+            AttributeMapValidator.validate(attributeMap);
+
             final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
             if (feedName == null || feedName.trim().isEmpty()) {
                 throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED, attributeMap);

@@ -415,55 +415,48 @@ class MetaDaoImpl implements MetaDao, Clearable {
 
         final Condition criteriaCondition = expressionMapper.apply(criteria.getExpression());
 
-        final int updateCount;
-        // If a rule means we are retaining data then we will have a 1=0 condition in here
-        // and as they are all to be ANDed together there is no point in running the sql.
-        if (DSL.falseCondition().equals(criteriaCondition)) {
-            LOGGER.info("Condition is FALSE so skipping SQL update");
-            updateCount = 0;
+        // Add a condition if we should check current status.
+        final List<Condition> conditions;
+        if (currentStatus != null) {
+            final byte currentStatusId = MetaStatusId.getPrimitiveValue(currentStatus);
+            conditions = Stream.of(criteriaCondition, meta.STATUS.eq(currentStatusId))
+                    .collect(Collectors.toList());
         } else {
-            // Add a condition if we should check current status.
-            final List<Condition> conditions;
-            if (currentStatus != null) {
-                final byte currentStatusId = MetaStatusId.getPrimitiveValue(currentStatus);
-                conditions = Stream.of(criteriaCondition, meta.STATUS.eq(currentStatusId))
-                        .collect(Collectors.toList());
-            } else {
-                conditions = Stream.of(criteriaCondition, meta.STATUS.ne(newStatusId))
-                        .collect(Collectors.toList());
-            }
+            conditions = Stream.of(criteriaCondition, meta.STATUS.ne(newStatusId))
+                    .collect(Collectors.toList());
+        }
 
-            final Set<Integer> usedValKeys = identifyExtendedAttributesFields(criteria.getExpression(),
-                    new HashSet<>());
+        final Set<Integer> usedValKeys = identifyExtendedAttributesFields(criteria.getExpression(),
+                new HashSet<>());
 
-            if (usedValKeys.isEmpty() && !containsPipelineCondition(criteria.getExpression())) {
-                updateCount = JooqUtil.contextResult(metaDbConnProvider, context ->
-                        context
-                                .update(meta)
-                                .set(meta.STATUS, newStatusId)
-                                .set(meta.STATUS_TIME, statusTime)
-                                .where(conditions)
-                                .execute());
-            } else {
-                Select ids = metaExpressionMapper.addJoins(
-                                DSL
-                                        .select(meta.ID)
-                                        .from(meta)
-                                        .leftOuterJoin(metaProcessor)
-                                        .on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),
-                                meta.ID,
-                                usedValKeys)
-                        .where(conditions);
+        final int updateCount;
+        if (usedValKeys.isEmpty() && !containsPipelineCondition(criteria.getExpression())) {
+            updateCount = JooqUtil.contextResult(metaDbConnProvider, context ->
+                    context
+                            .update(meta)
+                            .set(meta.STATUS, newStatusId)
+                            .set(meta.STATUS_TIME, statusTime)
+                            .where(conditions)
+                            .execute());
+        } else {
+            Select ids = metaExpressionMapper.addJoins(
+                            DSL
+                                    .select(meta.ID)
+                                    .from(meta)
+                                    .leftOuterJoin(metaProcessor)
+                                    .on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),
+                            meta.ID,
+                            usedValKeys)
+                    .where(conditions);
 
-                Condition extendedAttrCond = meta.ID.in(ids);
-                updateCount = JooqUtil.contextResult(metaDbConnProvider, context ->
-                        context
-                                .update(meta)
-                                .set(meta.STATUS, newStatusId)
-                                .set(meta.STATUS_TIME, statusTime)
-                                .where(extendedAttrCond)
-                                .execute());
-            }
+            Condition extendedAttrCond = meta.ID.in(ids);
+            updateCount = JooqUtil.contextResult(metaDbConnProvider, context ->
+                    context
+                            .update(meta)
+                            .set(meta.STATUS, newStatusId)
+                            .set(meta.STATUS_TIME, statusTime)
+                            .where(extendedAttrCond)
+                            .execute());
         }
         return updateCount;
     }
@@ -530,7 +523,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
             final Map<Integer, Condition> ruleNoToConditionMap = activeRules.stream()
                     .collect(Collectors.toMap(
                             DataRetentionRule::getRuleNumber,
-                            rule -> expressionMapper.apply(rule.getExpression())));
+                            rule ->
+                                    expressionMapper.apply(rule.getExpression())));
 
             final List<Condition> orConditions = activeRules.stream()
                     .map(rule -> ruleNoToConditionMap.get(rule.getRuleNumber()))
@@ -574,8 +568,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                                 metaType.NAME.as(typeNameFieldName),
                                                 ruleNoCaseField.as(ruleNoFieldName))
                                         .from(meta)
-                                        .leftJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                                        .leftJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                                        .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                                        .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
                                         .where(meta.STATUS.notEqual(statusIdDeleted))
                                         .and(ruleNoCaseField.isNotNull()) // only want data that WILL be deleted
                                         .and(DSL.or(orConditions)) // Here to help use indexes
@@ -780,7 +774,13 @@ class MetaDaoImpl implements MetaDao, Clearable {
         if (ruleActions.isEmpty()) {
             throw new IllegalArgumentException("Expected one or more rules");
         }
+
+        final List<Condition> conditions = new ArrayList<>();
         final byte statusIdUnlocked = MetaStatusId.getPrimitiveValue(Status.UNLOCKED);
+
+        // Ensure we only 'delete' unlocked records, also ensures we don't touch
+        // records we have already deleted in a previous pass
+        conditions.add(meta.STATUS.eq(statusIdUnlocked));
 
         // What we are building is roughly:
         // WHERE (CASE
@@ -795,14 +795,13 @@ class MetaDaoImpl implements MetaDao, Clearable {
         // of delete (true) or retain (false)
 
         CaseConditionStep<Boolean> caseConditionStep = null;
-        List<Condition> orConditions = new ArrayList<>();
+        final List<Condition> orConditions = new ArrayList<>();
         // Order is critical here as we are building a case statement
         // Highest priority rules first, i.e. largest rule number
         for (DataRetentionRuleAction ruleAction : ruleActions) {
             final Condition ruleCondition = expressionMapper.apply(ruleAction.getRule().getExpression());
-
-            // TODO make this conditional based on config
-            if (dataRetentionConfig.isUseQueryOptimisation()) {
+            if (dataRetentionConfig.isUseQueryOptimisation() &&
+                    !DSL.noCondition().equals(ruleCondition)) {
                 orConditions.add(ruleCondition);
             }
 
@@ -815,17 +814,14 @@ class MetaDaoImpl implements MetaDao, Clearable {
                 caseConditionStep.when(ruleCondition, caseResult);
             }
         }
-        // If none of the rules matches then we don't to delete so return false
-        final Field<Boolean> caseField = caseConditionStep.otherwise(Boolean.FALSE);
 
-        List<Condition> conditions = new ArrayList<>();
+        if (caseConditionStep != null) {
+            // If none of the rules matches then we don't to delete so return false
+            final Field<Boolean> caseField = caseConditionStep.otherwise(Boolean.FALSE);
 
-        // Ensure we only 'delete' unlocked records, also ensures we don't touch
-        // records we have already deleted in a previous pass
-        conditions.add(meta.STATUS.eq(statusIdUnlocked));
-
-        // Add our rule conditions
-        conditions.add(caseField.eq(true));
+            // Add our rule conditions
+            conditions.add(caseField.eq(true));
+        }
 
         // Now add all the rule conditions as an OR block
         // This is to improve the performance of the query as the OR can make use of other indexes,
@@ -833,7 +829,11 @@ class MetaDaoImpl implements MetaDao, Clearable {
         // We are still reliant on the case statement block to get the right outcome for the rules.
         // It is possible this approach may slow things down as it makes the SQL more complex.
         if (dataRetentionConfig.isUseQueryOptimisation()) {
-            conditions.add(DSL.or(orConditions));
+            if (orConditions.size() > 1) {
+                conditions.add(DSL.or(orConditions));
+            } else if (orConditions.size() == 1) {
+                conditions.add(orConditions.get(0));
+            }
         }
 
         LOGGER.debug("conditions {}", conditions);
@@ -862,8 +862,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                         context
                                                 .selectCount()
                                                 .from(meta)
-                                                .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                                                .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                                                .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                                                .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
                                                 .leftOuterJoin(metaProcessor)
                                                 .on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),
                                         meta.ID,
@@ -934,10 +934,10 @@ class MetaDaoImpl implements MetaDao, Clearable {
 
             var select = context.select(dbFields).from(meta);
             if (feedUsed) {
-                select = select.join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID));
+                select = select.straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID));
             }
             if (typeUsed) {
-                select = select.join(metaType).on(meta.TYPE_ID.eq(metaType.ID));
+                select = select.straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID));
             }
             if (pipelineUsed) {
                 select = select.leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID));
@@ -1056,22 +1056,24 @@ class MetaDaoImpl implements MetaDao, Clearable {
             return identified;
         }
         for (ExpressionItem child : expr.getChildren()) {
-            if (child instanceof ExpressionTerm) {
-                ExpressionTerm term = (ExpressionTerm) child;
+            if (child.enabled()) {
+                if (child instanceof ExpressionTerm) {
+                    ExpressionTerm term = (ExpressionTerm) child;
 
-                if (extendedFieldNames.contains(term.getField())) {
-                    Optional<Integer> key = metaKeyDao.getIdForName(term.getField());
-                    key.ifPresent(identified::add);
+                    if (extendedFieldNames.contains(term.getField())) {
+                        Optional<Integer> key = metaKeyDao.getIdForName(term.getField());
+                        key.ifPresent(identified::add);
+                    }
+                } else if (child instanceof ExpressionOperator) {
+                    identified.addAll(identifyExtendedAttributesFields((ExpressionOperator) child, identified));
+                } else {
+                    //Don't know what this is!
+                    LOGGER.warn("Unknown ExpressionItem type " + child.getClass().getName() +
+                            " unable to optimise meta query");
+                    //Allow search to succeed without optimisation
+                    return IntStream.range(metaKeyDao.getMinId(),
+                            metaKeyDao.getMaxId()).boxed().collect(Collectors.toSet());
                 }
-            } else if (child instanceof ExpressionOperator) {
-                identified.addAll(identifyExtendedAttributesFields((ExpressionOperator) child, identified));
-            } else {
-                //Don't know what this is!
-                LOGGER.warn("Unknown ExpressionItem type " + child.getClass().getName() +
-                        " unable to optimise meta query");
-                //Allow search to succeed without optimisation
-                return IntStream.range(metaKeyDao.getMinId(),
-                        metaKeyDao.getMaxId()).boxed().collect(Collectors.toSet());
             }
         }
         return identified;
@@ -1099,8 +1101,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                                         meta.EFFECTIVE_TIME
                                                 )
                                                 .from(meta)
-                                                .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                                                .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                                                .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                                                .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
                                                 .leftOuterJoin(metaProcessor)
                                                 .on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),
                                         meta.ID,
@@ -1152,14 +1154,14 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                                         parent.EFFECTIVE_TIME
                                                 )
                                                 .from(meta)
-                                                .leftOuterJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                                                .leftOuterJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                                                .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                                                .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
                                                 .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
                                                 .leftOuterJoin(parent).on(meta.PARENT_ID.eq(parent.ID))
                                                 .leftOuterJoin(parentFeed).on(parent.FEED_ID.eq(parentFeed.ID))
                                                 .leftOuterJoin(parentType).on(parent.TYPE_ID.eq(parentType.ID))
-                                                .leftOuterJoin(parentProcessor)
-                                                .on(parent.PROCESSOR_ID.eq(parentProcessor.ID))),
+                                                .leftOuterJoin(parentProcessor).on(parent.PROCESSOR_ID
+                                                        .eq(parentProcessor.ID))),
                                         meta.ID,
                                         usedValKeys)
                                 .where(conditions)
@@ -1201,8 +1203,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                                         DSL.max(meta.CREATE_TIME)
                                                 )
                                                 .from(meta)
-                                                .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                                                .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                                                .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                                                .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
                                                 .leftOuterJoin(metaProcessor)
                                                 .on(meta.PROCESSOR_ID.eq(metaProcessor.ID)),
                                         meta.ID,
@@ -1251,8 +1253,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                                         DSL.max(parent.CREATE_TIME)
                                                 )
                                                 .from(meta)
-                                                .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                                                .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                                                .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                                                .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
                                                 .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
                                                 .leftOuterJoin(parent).on(meta.PARENT_ID.eq(parent.ID)),
                                         meta.ID,
@@ -1367,8 +1369,8 @@ class MetaDaoImpl implements MetaDao, Clearable {
                                     .from(meta);
 
                             select = select
-                                    .join(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                                    .join(metaType).on(meta.TYPE_ID.eq(metaType.ID))
+                                    .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
+                                    .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
                                     .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID));
 
                             // If the criteria contain many terms that come from meta_val then we need to join

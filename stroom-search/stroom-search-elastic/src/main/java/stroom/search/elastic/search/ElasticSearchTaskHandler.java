@@ -71,11 +71,7 @@ public class ElasticSearchTaskHandler {
      */
     private static final int SCROLL_SIZE = 1000;
 
-    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl(
-            "Search Elasticsearch Index",
-            5,
-            0,
-            Integer.MAX_VALUE);
+    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Search Elasticsearch Index");
 
     private final ElasticClientCache elasticClientCache;
     private final ElasticClusterStore elasticClusterStore;

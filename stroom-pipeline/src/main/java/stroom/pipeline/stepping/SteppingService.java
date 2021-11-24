@@ -42,13 +42,10 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 
 public class SteppingService {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SteppingService.class);
 
-    static final ThreadPool THREAD_POOL = new ThreadPoolImpl(
-            "Stepping",
-            5,
-            0,
-            Integer.MAX_VALUE);
+    static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Stepping");
 
     private final TaskContextFactory taskContextFactory;
     private final Provider<SteppingRequestHandler> steppingRequestHandlerProvider;

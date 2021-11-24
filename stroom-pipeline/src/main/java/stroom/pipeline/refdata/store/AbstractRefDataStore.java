@@ -81,7 +81,9 @@ public abstract class AbstractRefDataStore implements RefDataStore {
                 // so we can drop out.
                 LOGGER.info("Reference Data is already loaded for {}, so doing nothing", refStreamDefinition);
                 result = false;
-            } else if (optLoadState.isEmpty() || optLoadState.get().equals(ProcessingState.TERMINATED)) {
+            } else if (optLoadState.isEmpty()
+                    || optLoadState.get().equals(ProcessingState.TERMINATED)
+                    || optLoadState.get().equals(ProcessingState.PURGE_FAILED)) {
                 // Ref stream not in the store or a previous load was terminated part way through so
                 // do the load (again)
                 LOGGER.debug("Performing work with loader for {}", refStreamDefinition);

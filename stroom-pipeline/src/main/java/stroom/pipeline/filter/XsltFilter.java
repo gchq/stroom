@@ -280,7 +280,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
         if (handler != null) {
             try {
                 handler.endDocument();
-            } catch (final RuntimeException e) {
+            } catch (final Throwable e) {
                 try {
                     final Throwable throwable = unwrapException(e);
 

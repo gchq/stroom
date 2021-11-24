@@ -4,6 +4,8 @@ import stroom.config.app.AppConfig;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.OverrideValue;
 import stroom.docref.DocRef;
+import stroom.lmdb.LmdbConfig;
+import stroom.pipeline.refdata.ReferenceDataLmdbConfig;
 import stroom.util.config.PropertyUtil.Prop;
 import stroom.util.io.ByteSize;
 import stroom.util.logging.AsciiTable;
@@ -204,9 +206,13 @@ class TestConfigMapper {
         AppConfig appConfig = getAppConfig();
 
         // simulate dropwiz setting a prop from the yaml
-        String initialValue = appConfig.getPipelineConfig().getReferenceDataConfig().getLocalDir();
-        String newValue = initialValue + "xxx";
-        appConfig.getPipelineConfig().getReferenceDataConfig().setLocalDir(newValue);
+        final ReferenceDataLmdbConfig referenceDataLmdbConfig = appConfig.getPipelineConfig()
+                .getReferenceDataConfig()
+                .getLmdbConfig();
+
+        final String initialValue = referenceDataLmdbConfig.getLocalDir();
+        final String newValue = initialValue + "xxx";
+        referenceDataLmdbConfig.setLocalDir(newValue);
 
         ConfigMapper configMapper = new ConfigMapper(appConfig);
 
@@ -215,7 +221,7 @@ class TestConfigMapper {
         final ConfigProperty configProperty = configProperties.stream()
                 .filter(confProp ->
                         confProp.getName().equalsIgnoreCase(PropertyPath.fromPathString(
-                                "stroom.pipeline.referenceData.localDir")))
+                                referenceDataLmdbConfig.getFullPathStr(LmdbConfig.LOCAL_DIR_PROP_NAME))))
                 .findFirst()
                 .orElseThrow();
 
@@ -231,9 +237,12 @@ class TestConfigMapper {
         AppConfig appConfig = getAppConfig();
 
         // simulate a prop not being defined in the yaml
-        String initialValue = appConfig.getPipelineConfig().getReferenceDataConfig().getLocalDir();
-        String newYamlValue = null;
-        appConfig.getPipelineConfig().getReferenceDataConfig().setLocalDir(newYamlValue);
+        final ReferenceDataLmdbConfig lmdbConfig = appConfig.getPipelineConfig()
+                .getReferenceDataConfig()
+                .getLmdbConfig();
+        final String initialValue = lmdbConfig.getLocalDir();
+        final String newYamlValue = null;
+        lmdbConfig.setLocalDir(newYamlValue);
 
         ConfigMapper configMapper = new ConfigMapper(appConfig);
 
@@ -241,7 +250,7 @@ class TestConfigMapper {
 
         final ConfigProperty configProperty = configProperties.stream()
                 .filter(confProp -> confProp.getName().equalsIgnoreCase(PropertyPath.fromPathString(
-                        "stroom.pipeline.referenceData.localDir")))
+                        lmdbConfig.getFullPathStr(LmdbConfig.LOCAL_DIR_PROP_NAME))))
                 .findFirst()
                 .orElseThrow();
 
@@ -427,11 +436,13 @@ class TestConfigMapper {
         final ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath)
                 .orElseThrow();
 
-        // make sure our new value differs from the current one
-        assertThat(configProperty.getDefaultValue().get()).isNotEqualTo(newValueAsStr);
+        final ConfigProperty configPropertyCopy = copyConfigProperty(configProperty);
 
-        configProperty.setDatabaseOverrideValue(newValueAsStr);
-        configMapper.decorateDbConfigProperty(configProperty);
+        // make sure our new value differs from the current one
+        assertThat(configPropertyCopy.getDefaultValue().get()).isNotEqualTo(newValueAsStr);
+
+        configPropertyCopy.setDatabaseOverrideValue(newValueAsStr);
+        configMapper.decorateDbConfigProperty(configPropertyCopy);
 
         final T newObj = parseFunc.apply(prop, newValueAsStr);
 
@@ -464,8 +475,11 @@ class TestConfigMapper {
         PropertyPath fullPath = PropertyPath.fromPathString("stroom.docRefListProp");
 
         ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
-        configProperty.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
-        configMapper.decorateDbConfigProperty(configProperty);
+        // Make a copy as decorateDbConfigProperty will be comparing the one from the map
+        // against this one.
+        ConfigProperty configPropertyCopy = copyConfigProperty(configProperty);
+        configPropertyCopy.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
+        configMapper.decorateDbConfigProperty(configPropertyCopy);
 
         assertThat(getter.get()).isEqualTo(newValue);
     }
@@ -482,8 +496,11 @@ class TestConfigMapper {
         PropertyPath fullPath = PropertyPath.fromPathString("stroom.stateListProp");
 
         ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
-        configProperty.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
-        configMapper.decorateDbConfigProperty(configProperty);
+        // Make a copy as decorateDbConfigProperty will be comparing the one from the map
+        // against this one.
+        ConfigProperty configPropertyCopy = copyConfigProperty(configProperty);
+        configPropertyCopy.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
+        configMapper.decorateDbConfigProperty(configPropertyCopy);
 
         assertThat(getter.get()).isEqualTo(newValue);
     }
@@ -502,8 +519,11 @@ class TestConfigMapper {
         PropertyPath fullPath = PropertyPath.fromPathString("stroom.stringListProp");
 
         ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
-        configProperty.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
-        configMapper.decorateDbConfigProperty(configProperty);
+        // Make a copy as decorateDbConfigProperty will be comparing the one from the map
+        // against this one.
+        ConfigProperty configPropertyCopy = copyConfigProperty(configProperty);
+        configPropertyCopy.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
+        configMapper.decorateDbConfigProperty(configPropertyCopy);
 
         assertThat(getter.get()).isEqualTo(newValue);
     }
@@ -524,8 +544,11 @@ class TestConfigMapper {
         String newValueStr = ConfigMapper.convertToString(newValue);
 
         ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
-        configProperty.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
-        configMapper.decorateDbConfigProperty(configProperty);
+        // Make a copy as decorateDbConfigProperty will be comparing the one from the map
+        // against this one.
+        ConfigProperty configPropertyCopy = copyConfigProperty(configProperty);
+        configPropertyCopy.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
+        configMapper.decorateDbConfigProperty(configPropertyCopy);
 
         assertThat(getter.get()).isEqualTo(newValue);
     }
@@ -672,6 +695,28 @@ class TestConfigMapper {
 
     private AppConfig getAppConfig() {
         return new AppConfig();
+    }
+
+    private ConfigProperty copyConfigProperty(final ConfigProperty configProperty) {
+        ConfigProperty newConfigProperty = new ConfigProperty(
+                configProperty.getId(),
+                configProperty.getVersion(),
+                configProperty.getCreateTimeMs(),
+                configProperty.getCreateUser(),
+                configProperty.getUpdateTimeMs(),
+                configProperty.getUpdateUser(),
+                configProperty.getName(),
+                configProperty.getDefaultValue().orElse(null),
+                configProperty.getDatabaseOverrideValue(),
+                configProperty.getYamlOverrideValue(),
+                configProperty.getDescription(),
+                configProperty.isEditable(),
+                configProperty.isPassword(),
+                configProperty.isRequireRestart(),
+                configProperty.isRequireUiRestart(),
+                configProperty.getDataTypeName());
+
+        return newConfigProperty;
     }
 
 //    private AppConfig getDevYamlAppConfig() throws IOException, ConfigurationException {

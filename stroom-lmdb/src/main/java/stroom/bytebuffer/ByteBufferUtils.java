@@ -133,6 +133,40 @@ public class ByteBufferUtils {
         return compareAs(left, leftPos, right, rightPos, Long.BYTES);
     }
 
+    public static int compareAsLong(final long left, final ByteBuffer right) {
+        return compareAsLong(left, right, 0);
+    }
+
+    public static int compareAsLong(final long left, final ByteBuffer right, final int rightPos) {
+
+        long val = left;
+        byte[] leftBytes = new byte[8];
+        for (int i = 7; i >= 0; i--) {
+            leftBytes[i] = (byte) (val & 0xFF);
+            val >>= 8;
+        }
+
+        return compareAsLong(leftBytes, right, rightPos);
+    }
+
+    public static int compareAsLong(final byte[] leftBytes, final ByteBuffer right, final int rightPos) {
+
+        int cmp = 0;
+
+        for (int i = 0; i < Long.BYTES && cmp == 0; i++) {
+            int iRight = i + rightPos;
+            cmp = (i == 0 || (leftBytes[i] >= 0 == right.get(iRight) >= 0))
+                    ? leftBytes[i] - right.get(iRight)
+                    : right.get(iRight) - leftBytes[i];
+        }
+//        final int cmp2 = cmp;
+//        LAMBDA_LOGGER.info(() -> LogUtil.message("Comparing {}, {}, {}, {} - {}",
+//                byteBufferInfo(left), leftPos,
+//                byteBufferInfo(right), rightPos,
+//                cmp2));
+        return cmp;
+    }
+
     /**
      * Compare two {@link ByteBuffer} objects as if they are int
      *
@@ -170,9 +204,9 @@ public class ByteBufferUtils {
                 }
             }
         }
-        boolean result2 = result;
-        LOGGER.trace(() -> LogUtil.message("containsPrefix({} {}) returns {}",
-                ByteBufferUtils.byteBufferInfo(buffer), ByteBufferUtils.byteBufferInfo(prefixBuffer), result2));
+//        boolean result2 = result;
+//        LOGGER.trace(() -> LogUtil.message("containsPrefix({} {}) returns {}",
+//                ByteBufferUtils.byteBufferInfo(buffer), ByteBufferUtils.byteBufferInfo(prefixBuffer), result2));
         return result;
     }
 
@@ -229,6 +263,7 @@ public class ByteBufferUtils {
 //                cmp2));
         return cmp;
     }
+
 
     /**
      * Generate a fast non-crypto 64bit hash of the passed buffer

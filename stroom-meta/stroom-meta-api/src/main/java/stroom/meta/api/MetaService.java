@@ -14,7 +14,6 @@ import stroom.util.shared.ResultPage;
 import stroom.util.time.TimePeriod;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 public interface MetaService {
@@ -203,9 +202,11 @@ public interface MetaService {
     List<String> getProcessorUuidList(FindMetaCriteria criteria);
 
 
-    Optional<DataRetentionTracker> getRetentionTracker();
+    List<DataRetentionTracker> getRetentionTrackers();
 
     void setTracker(final DataRetentionTracker dataRetentionTracker);
+
+    void deleteTrackers(final String rulesVersion);
 
     List<DataRetentionDeleteSummary> getRetentionDeleteSummary(final String queryId,
                                                                final DataRetentionRules rules,

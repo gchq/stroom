@@ -7,6 +7,7 @@ import stroom.proxy.app.ProxyConfigMonitor;
 import stroom.proxy.app.ProxyPathConfig;
 import stroom.proxy.app.RestClientConfig;
 import stroom.proxy.app.forwarder.ForwarderConfig;
+import stroom.proxy.app.forwarder.ThreadConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.proxy.app.handler.ReceiptPolicyConfig;
 import stroom.proxy.repo.AggregatorConfig;
@@ -14,6 +15,7 @@ import stroom.proxy.repo.LogStreamConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.proxy.repo.ProxyRepoFileScannerConfig;
 import stroom.proxy.repo.RepoConfig;
+import stroom.proxy.repo.RepoDbConfig;
 import stroom.util.config.ConfigLocation;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasHealthCheckBinder;
@@ -84,6 +86,9 @@ public class ProxyConfigModule extends AbstractModule {
                 ProxyConfig::setPathConfig,
                 ProxyPathConfig.class,
                 PathConfig.class);
+        bindConfig(ProxyConfig::getProxyDbConfig,
+                ProxyConfig::setProxyDbConfig,
+                RepoDbConfig.class);
         bindConfig(ProxyConfig::getProxyRepositoryConfig,
                 ProxyConfig::setProxyRepositoryConfig,
                 ProxyRepoConfig.class,
@@ -93,6 +98,7 @@ public class ProxyConfigModule extends AbstractModule {
                 ProxyRepoFileScannerConfig.class);
         bindConfig(ProxyConfig::getReceiptPolicyConfig, ProxyConfig::setReceiptPolicyConfig, ReceiptPolicyConfig.class);
         bindConfig(ProxyConfig::getRestClientConfig, ProxyConfig::setRestClientConfig, RestClientConfig.class);
+        bindConfig(ProxyConfig::getThreadConfig, ProxyConfig::setThreadConfig, ThreadConfig.class);
     }
 
     private <T extends IsProxyConfig> void bindConfig(

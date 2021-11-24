@@ -216,7 +216,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         itemNavigatorPresenter.setDisplay(noNavigatorData);
         view.addSourceLinkClickHandler(event ->
                 openSourcePresenter());
-        view.setSourceLinkVisible(true);
+        view.setSourceLinkVisible(true, true);
         view.setNavigatorView(itemNavigatorPresenter.getView());
         view.setProgressView(progressPresenter.getView());
         progressPresenter.setVisible(false);
@@ -290,14 +290,14 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                     effectiveChildStreamType = INFO_PSEUDO_STREAM_TYPE;
                     showHtmlPresenter();
                     fetchMetaInfoData(getCurrentMetaId());
-                    getView().setSourceLinkVisible(false);
+                    getView().setSourceLinkVisible(false, false);
                     setNavigationControlsVisible(false);
                     getView().setProgressView(null);
                     itemNavigatorPresenter.refreshNavigator();
                     refreshProgressBar(false);
                     refreshTextPresenterContent();
                 } else {
-                    getView().setSourceLinkVisible(true);
+//                    getView().setSourceLinkVisible(true, true);
                     setNavigationControlsVisible(true);
                     getView().setProgressView(progressPresenter.getView());
                     if (META_TAB_NAME.equals(tab.getLabel())) {
@@ -369,7 +369,9 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                     && AceEditorMode.XML.equals(editorMode);
 
             textPresenter.getViewAsHexOption()
-                    .setOn(FetchDataRequest.DisplayMode.HEX.equals(lastResult.getDisplayMode()));
+                    .setOn(FetchDataRequest.DisplayMode.HEX.equals(lastResult != null
+                            ? lastResult.getDisplayMode()
+                            : FetchDataRequest.DisplayMode.TEXT));
             textPresenter.setMode(editorMode);
             textPresenter.setText(data, shouldFormatData);
             textPresenter.setControlsVisible(playButtonVisible);
@@ -928,14 +930,17 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 ? result.getSourceLocation().getMetaId()
                 : null);
 
+        // Need pagers even if we have errors as data may be multi-part
+        setPagers(result);
+
         if (result != null && result.hasErrors()) {
-            setNavigationControlsVisible(false);
-            getView().setSourceLinkVisible(false);
+            // Data may be multi-part so one part may have errors but the rest not
+            setNavigationControlsVisible(true);
+            getView().setSourceLinkVisible(true, false);
             getView().setProgressView(null);
         } else {
             setNavigationControlsVisible(true);
-            getView().setSourceLinkVisible(true);
-            setPagers(result);
+            getView().setSourceLinkVisible(true, true);
             getView().setProgressView(progressPresenter.getView());
             refreshProgressBar(result != null);
             itemNavigatorPresenter.refreshNavigator();
@@ -1120,7 +1125,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         void addSourceLinkClickHandler(final ClickHandler clickHandler);
 
-        void setSourceLinkVisible(final boolean isVisible);
+        void setSourceLinkVisible(final boolean isVisible, final boolean isEnabled);
 
         TabBar getTabBar();
 

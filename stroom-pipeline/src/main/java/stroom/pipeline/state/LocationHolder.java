@@ -16,27 +16,29 @@
 
 package stroom.pipeline.state;
 
+import stroom.meta.shared.Meta;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.xml.converter.ds3.DSLocator;
+import stroom.util.NullSafe;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScoped;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.Location;
 import stroom.util.shared.TextRange;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.xml.sax.Locator;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import javax.inject.Inject;
 
 @PipelineScoped
 public class LocationHolder implements Holder {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(LocationHolder.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LocationHolder.class);
     private final MetaHolder metaHolder;
     private List<SourceLocation> locations;
     private SourceLocation currentLocation;
@@ -50,14 +52,18 @@ public class LocationHolder implements Holder {
     private Location currentEndLocation;
     private Location markedStartLocation;
     private boolean hasMarkedStartLocation;
-    private static final Comparator<Location> LOCATION_COMPARATOR = Comparator
-            .comparing(Location::getLineNo)
-            .thenComparing(Location::getColNo);
+    private boolean isFirstRecord = true;
+    private boolean isFragmentXml = false;
 
     @Inject
-    public LocationHolder(final MetaHolder metaHolder) {
+    public LocationHolder(final MetaHolder metaHolder,
+                          final PipelineHolder pipelineHolder) {
         this.metaHolder = metaHolder;
         reset();
+    }
+
+    public void setFragmentXml(final boolean isFragmentXml) {
+        this.isFragmentXml = isFragmentXml;
     }
 
     public void setDocumentLocator(final Locator locator, final int maxSize) {
@@ -84,11 +90,13 @@ public class LocationHolder implements Holder {
     }
 
     public void reset() {
+        LOGGER.trace("Reset() called");
         recordIndex = -1;
         currentStartLocation = new DefaultLocation(1, 1);
         currentEndLocation = new DefaultLocation(1, 1);
         markedStartLocation = new DefaultLocation(1, 1);
         hasMarkedStartLocation = false;
+        isFirstRecord = true;
     }
 
     public void markStartLocation() {
@@ -96,18 +104,36 @@ public class LocationHolder implements Holder {
             markedStartLocation = DefaultLocation.of(
                     locator.getLineNumber(),
                     locator.getColumnNumber());
-            LOGGER.trace("Marking location: {}", markedStartLocation);
+            LOGGER.trace("Marking start location: {}", markedStartLocation);
             hasMarkedStartLocation = true;
         }
     }
 
-    public void storeLocation() {
-        LOGGER.trace("currentStartLocation: {}, currentEndLocation: {}, " +
-                        "startLocator.getLineNo: {}, startLocator.getColNo: {}",
+    private String dumpLocationState() {
+        return LogUtil.message("metaId: {} " +
+                        "currentStartLocation: {}, " +
+                        "markedStartLocation: {} " +
+                        "currentEndLocation: {}, " +
+                        "startLocator.getLineNo: {}, " +
+                        "startLocator.getColNo: {}, " +
+                        "isFirstRecord: {}, " +
+                        "hasMarkedStartLocation: {}," +
+                        "isFragmentXml: {}",
+                NullSafe.toStringOrElse(metaHolder, MetaHolder::getMeta, Meta::getId, () -> "null"),
                 currentStartLocation,
+                markedStartLocation != null
+                        ? markedStartLocation
+                        : "null",
                 currentEndLocation,
                 locator.getLineNumber(),
-                locator.getColumnNumber());
+                locator.getColumnNumber(),
+                isFirstRecord,
+                hasMarkedStartLocation,
+                isFragmentXml);
+    }
+
+    public void storeLocation() {
+        LOGGER.trace(() -> "storeLocation() called. " + dumpLocationState());
 
         if (storeLocations
                 && locator != null
@@ -138,17 +164,19 @@ public class LocationHolder implements Holder {
                         locator.getLineNumber(),
                         locator.getColumnNumber());
 
-                // TODO The location comparator test is a bit of a hack to deal with the XML
-                //  fragment parser as that seems
-                //  to skip forward then back, presumably where it is reading each entity.
-                if (hasMarkedStartLocation
-                        && (LOCATION_COMPARATOR.compare(markedStartLocation, endLocation) <= 0)) {
+                // Special handling for XML fragment events. First marked location will be after the fragment
+                // wrapper so need to ignore that on the first rec only else we will start a few lines after
+                // where we need to
+                if ((isFragmentXml && !isFirstRecord && hasMarkedStartLocation)
+                        || (!isFragmentXml && hasMarkedStartLocation)) {
                     // The start location has been marked so use that
+                    LOGGER.trace("Using markedStartLocation as startLocation");
                     startLocation = DefaultLocation.of(
                             markedStartLocation.getLineNo(),
                             markedStartLocation.getColNo());
                 } else {
                     // Locator can provide only one location so we have to work off out previous endLocation.
+                    LOGGER.trace("Using currentEndLocation as startLocation");
                     startLocation = DefaultLocation.of(
                             currentEndLocation.getLineNo(),
                             currentEndLocation.getColNo());
@@ -163,6 +191,8 @@ public class LocationHolder implements Holder {
                 currentEndLocation = endLocation;
             }
 
+            // The start/end locations coming out of the xml parsers are both based on the position
+            // of the start of the record or the start of the next
             final TextRange highlight = new TextRange(currentStartLocation, currentEndLocation);
             final DataRange dataRange = DataRange.between(currentStartLocation, currentEndLocation);
 
@@ -176,6 +206,10 @@ public class LocationHolder implements Holder {
                     .withDataRange(dataRange)
                     .withHighlight(highlight)
                     .build();
+
+            if (isFirstRecord) {
+                isFirstRecord = false;
+            }
 
             if (maxSize <= 1) {
                 currentLocation = sourceLocation;

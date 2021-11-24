@@ -33,10 +33,12 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Field;
 import stroom.query.common.v2.CompiledField;
 import stroom.query.common.v2.CompiledFields;
-import stroom.search.extraction.ExtractionDecoratorFactory;
 import stroom.search.extraction.ExtractionReceiver;
+import stroom.search.extraction.ExtractionTask;
+import stroom.search.extraction.ExtractionTaskHandler;
 import stroom.search.impl.SearchException;
 import stroom.search.impl.SearchExpressionQueryBuilder;
+import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -56,6 +58,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import javax.inject.Provider;
 
 public class AlertProcessorImpl implements AlertProcessor {
 
@@ -71,13 +74,15 @@ public class AlertProcessorImpl implements AlertProcessor {
 
     private final Map<String, Analyzer> analyzerMap;
 
-    private final ExtractionDecoratorFactory extractionDecoratorFactory;
+    private final TaskContext taskContext;
+    private final Provider<ExtractionTaskHandler> handlerProvider;
 
     private Long currentStreamId = null;
 
     private final DateTimeSettings dateTimeSettings;
 
-    public AlertProcessorImpl(final ExtractionDecoratorFactory extractionDecoratorFactory,
+    public AlertProcessorImpl(final TaskContext taskContext,
+                              final Provider<ExtractionTaskHandler> handlerProvider,
                               final List<RuleConfig> rules,
                               final IndexStructure indexStructure,
                               final WordListProvider wordListProvider,
@@ -97,7 +102,8 @@ public class AlertProcessorImpl implements AlertProcessor {
             }
         }
         alertQueryHits = new AlertQueryHits();
-        this.extractionDecoratorFactory = extractionDecoratorFactory;
+        this.taskContext = taskContext;
+        this.handlerProvider = handlerProvider;
         this.dateTimeSettings = dateTimeSettings;
     }
 
@@ -195,9 +201,14 @@ public class AlertProcessorImpl implements AlertProcessor {
                 if (eventIds != null && eventIds.length > 0) {
                     final ExtractionReceiver receiver = new AlertProcessorReceiver(ruleConfig.getAlertDefinitions(),
                             ruleConfig.getParams());
-                    extractionDecoratorFactory.createAlertExtractionTask(receiver,
-                            currentStreamId, eventIds, pipeline,
-                            ruleConfig.getAlertDefinitions(), ruleConfig.getParams());
+                    final ExtractionTask task = new ExtractionTask(
+                            currentStreamId,
+                            eventIds,
+                            pipeline,
+                            receiver,
+                            ruleConfig.getAlertDefinitions(),
+                            ruleConfig.getParams());
+                    handlerProvider.get().exec(taskContext, task);
                     numTasks++;
                 }
             }

@@ -33,15 +33,19 @@ public class FetchExplorerNodeResult {
     @JsonProperty
     private final List<String> openedItems;
     @JsonProperty
-    private final Set<String> temporaryOpenedItems;
+    private Set<String> temporaryOpenedItems;
+    @JsonProperty
+    private final String qualifiedFilterInput;
 
     @JsonCreator
     public FetchExplorerNodeResult(@JsonProperty("rootNodes") final List<ExplorerNode> rootNodes,
                                    @JsonProperty("openedItems") final List<String> openedItems,
-                                   @JsonProperty("temporaryOpenedItems") final Set<String> temporaryOpenedItems) {
+                                   @JsonProperty("temporaryOpenedItems") final Set<String> temporaryOpenedItems,
+                                   @JsonProperty("qualifiedFilterInput") final String qualifiedFilterInput) {
         this.rootNodes = rootNodes;
         this.openedItems = openedItems;
         this.temporaryOpenedItems = temporaryOpenedItems;
+        this.qualifiedFilterInput = qualifiedFilterInput;
     }
 
     public List<ExplorerNode> getRootNodes() {
@@ -56,6 +60,14 @@ public class FetchExplorerNodeResult {
         return temporaryOpenedItems;
     }
 
+    public String getQualifiedFilterInput() {
+        return qualifiedFilterInput;
+    }
+
+    public void setTemporaryOpenedItems(final Set<String> temporaryOpenedItems) {
+        this.temporaryOpenedItems = temporaryOpenedItems;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -65,13 +77,14 @@ public class FetchExplorerNodeResult {
             return false;
         }
         final FetchExplorerNodeResult that = (FetchExplorerNodeResult) o;
-        return Objects.equals(rootNodes, that.rootNodes) &&
-                Objects.equals(openedItems, that.openedItems) &&
-                Objects.equals(temporaryOpenedItems, that.temporaryOpenedItems);
+        return Objects.equals(rootNodes, that.rootNodes)
+                && Objects.equals(openedItems, that.openedItems)
+                && Objects.equals(temporaryOpenedItems, that.temporaryOpenedItems)
+                && Objects.equals(qualifiedFilterInput, that.qualifiedFilterInput);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(rootNodes, openedItems, temporaryOpenedItems);
+        return Objects.hash(rootNodes, openedItems, temporaryOpenedItems, qualifiedFilterInput);
     }
 }

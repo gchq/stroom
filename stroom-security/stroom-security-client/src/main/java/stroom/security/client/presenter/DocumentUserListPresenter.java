@@ -20,6 +20,7 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.shared.DocPermissionResource;
 import stroom.security.shared.FilterUsersRequest;
+import stroom.security.shared.SimpleUser;
 import stroom.security.shared.User;
 
 import com.google.gwt.core.client.GWT;
@@ -27,15 +28,20 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class DocumentUserListPresenter extends AbstractUserListPresenter {
 
     private static final DocPermissionResource DOC_PERMISSION_RESOURCE = GWT.create(DocPermissionResource.class);
 
     private List<User> userList;
+    private Map<String, User> uuidToUserMap;
 
     private String filter;
     private final RestFactory restFactory;
@@ -64,6 +70,12 @@ public class DocumentUserListPresenter extends AbstractUserListPresenter {
     }
 
     public void setDocumentPermissions(final List<User> userList) {
+
+        this.uuidToUserMap = userList == null
+                ? Collections.emptyMap()
+                : userList.stream()
+                        .collect(Collectors.toMap(User::getUuid, Function.identity()));
+
         this.userList = userList;
         refresh();
     }
@@ -93,12 +105,24 @@ public class DocumentUserListPresenter extends AbstractUserListPresenter {
     }
 
     private void filterUsers(final List<User> users) {
-        final Rest<List<User>> rest = restFactory.create();
+        final Rest<List<SimpleUser>> rest = restFactory.create();
+
+        // Convert our users to a simpler object to avoid sending a lot of rich
+        // objects over the network when all we need is to filter on the user name
+        final List<SimpleUser> allSimpleUsers = users.stream()
+                .map(SimpleUser::new)
+                .collect(Collectors.toList());
 
         rest
-                .onSuccess(this::updateGrid)
+                .onSuccess(filteredSimpleUsers -> {
+                    // Map the users back again
+                    final List<User> filteredUsers = filteredSimpleUsers.stream()
+                            .map(simpleUser -> uuidToUserMap.get(simpleUser.getUuid()))
+                            .collect(Collectors.toList());
+                    updateGrid(filteredUsers);
+                })
                 .call(DOC_PERMISSION_RESOURCE)
-                .filterUsers(new FilterUsersRequest(users, filter));
+                .filterUsers(new FilterUsersRequest(allSimpleUsers, filter));
     }
 
 }

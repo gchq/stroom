@@ -15,6 +15,8 @@ import com.google.inject.Provides;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.SQLException;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
 
@@ -35,13 +37,14 @@ public class ProxyRepoDbModule extends AbstractModule {
     @Singleton
     public ProxyRepoDbConnProvider getConnectionProvider(
             final RepoDbDirProvider repoDbDirProvider,
-            final DataSourceFactory dataSourceFactory) {
+            final DataSourceFactory dataSourceFactory,
+            final RepoDbConfig proxyDbConfig) {
         LOGGER.debug(() -> "Getting connection provider for " + MODULE);
 
         final DbConfig config = getDbConfig(repoDbDirProvider);
         final DataSource dataSource = dataSourceFactory.create(() -> config, MODULE, true);
         FlywayUtil.migrate(dataSource, FLYWAY_LOCATIONS, FLYWAY_TABLE, MODULE);
-        return new DataSourceImpl(dataSource);
+        return new DataSourceImpl(dataSource, proxyDbConfig);
     }
 
     private DbConfig getDbConfig(final RepoDbDirProvider repoDbDirProvider) {
@@ -59,17 +62,39 @@ public class ProxyRepoDbModule extends AbstractModule {
         final ConnectionConfig connectionConfig = new ConnectionConfig();
         connectionConfig.setClassName("org.sqlite.JDBC");
         connectionConfig.setUrl("jdbc:sqlite:" + fullPath);
-//            connectionConfig.setUser("sa");
-//            connectionConfig.setPassword("sa");
-
         dbConfig.setConnectionConfig(connectionConfig);
         return dbConfig;
     }
 
     public static class DataSourceImpl extends DataSourceProxy implements ProxyRepoDbConnProvider {
 
-        private DataSourceImpl(final DataSource dataSource) {
+        private final RepoDbConfig proxyDbConfig;
+
+        private DataSourceImpl(final DataSource dataSource,
+                               final RepoDbConfig proxyDbConfig) {
             super(dataSource);
+            this.proxyDbConfig = proxyDbConfig;
+
+            for (final String pragma : proxyDbConfig.getGlobalPragma()) {
+                try (final Connection connection = super.getConnection()) {
+                    pragma(connection, pragma);
+                } catch (final SQLException e) {
+                    throw new RuntimeException(e.getMessage(), e);
+                }
+            }
+        }
+
+        @Override
+        public Connection getConnection() throws SQLException {
+            final Connection connection = super.getConnection();
+            for (final String pragma : proxyDbConfig.getConnectionPragma()) {
+                pragma(connection, pragma);
+            }
+            return connection;
+        }
+
+        public void pragma(final Connection connection, final String pragma) throws SQLException {
+            connection.prepareStatement(pragma).execute();
         }
     }
 }

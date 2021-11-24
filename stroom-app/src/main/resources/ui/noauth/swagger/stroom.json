@@ -4819,7 +4819,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/User"
+                    "$ref" : "#/components/schemas/SimpleUser"
                   }
                 }
               }
@@ -5157,6 +5157,32 @@
         },
         "summary" : "Deletes a processor",
         "tags" : [ "Processors" ]
+      },
+      "get" : {
+        "operationId" : "fetchProcessor",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Processor"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch a processor",
+        "tags" : [ "Processors" ]
       }
     },
     "/processor/v1/{id}/enabled" : {
@@ -5265,7 +5291,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/CreateReprocessFilterRequest"
+                "$ref" : "#/components/schemas/CreateProcessFilterRequest"
               }
             }
           },
@@ -5594,6 +5620,13 @@
     "/refData/v1/clearBufferPool" : {
       "delete" : {
         "operationId" : "clearBufferPool",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "nodeName",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
         "responses" : {
           "default" : {
             "content" : {
@@ -5602,7 +5635,7 @@
             "description" : "default response"
           }
         },
-        "summary" : "Clear all buffers currently available in the buffer pool to reclaim memory.",
+        "summary" : "Clear all buffers currently available in the buffer pool to reclaim memory. Performed on the named node or all nodes if null.",
         "tags" : [ "Reference Data" ]
       }
     },
@@ -5675,7 +5708,7 @@
             "description" : "default response"
           }
         },
-        "summary" : "Perform a reference data lookup using the supplied lookup request. Reference data will be loaded if required using the supplied reference pipeline.",
+        "summary" : "Perform a reference data lookup using the supplied lookup request. Reference data will be loaded if required using the supplied reference pipeline. Performed on this node only.",
         "tags" : [ "Reference Data" ]
       }
     },
@@ -5686,6 +5719,12 @@
           "in" : "path",
           "name" : "purgeAge",
           "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "nodeName",
           "schema" : {
             "type" : "string"
           }
@@ -5702,13 +5741,13 @@
             "description" : "default response"
           }
         },
-        "summary" : "Explicitly delete all entries that are older than purgeAge.",
+        "summary" : "Explicitly delete all entries that are older than purgeAge. Performed on the named node, or all nodes if null.",
         "tags" : [ "Reference Data" ]
       }
     },
-    "/refData/v1/purgeByStream/{refStreamId}/{partNo}" : {
+    "/refData/v1/purgeByStream/{refStreamId}" : {
       "delete" : {
-        "operationId" : "purgeReferenceDataByStreamAndPartNo",
+        "operationId" : "purgeReferenceDataByStream",
         "parameters" : [ {
           "in" : "path",
           "name" : "refStreamId",
@@ -5719,13 +5758,10 @@
             "minimum" : 1
           }
         }, {
-          "in" : "path",
-          "name" : "partNo",
-          "required" : true,
+          "in" : "query",
+          "name" : "nodeName",
           "schema" : {
-            "type" : "integer",
-            "format" : "int64",
-            "minimum" : 1
+            "type" : "string"
           }
         } ],
         "responses" : {
@@ -5740,13 +5776,13 @@
             "description" : "default response"
           }
         },
-        "summary" : "Delete all entries for a reference stream and part number (one based)",
+        "summary" : "Delete all entries for a reference stream. Performed on the named node or all nodes if null.",
         "tags" : [ "Reference Data" ]
       }
     },
     "/refData/v1/refStreamInfo" : {
       "get" : {
-        "description" : "This is primarily intended  for small scale debugging in non-production environments. If no limit is set a default limit is applied else the results will be limited to limit entries.",
+        "description" : "This is primarily intended  for small scale debugging in non-production environments. If no limit is set a default limit is applied else the results will be limited to limit entries. Performed on this node only.",
         "operationId" : "getReferenceStreamProcessingInfoEntries",
         "parameters" : [ {
           "in" : "query",
@@ -8312,6 +8348,9 @@
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
           },
+          "qualifiedFilterInput" : {
+            "type" : "string"
+          },
           "values" : {
             "type" : "array",
             "items" : {
@@ -8574,6 +8613,9 @@
         "properties" : {
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
+          },
+          "qualifiedFilterInput" : {
+            "type" : "string"
           },
           "values" : {
             "type" : "array",
@@ -9241,6 +9283,14 @@
           "enabled" : {
             "type" : "boolean"
           },
+          "maxMetaCreateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "minMetaCreateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
           "pipeline" : {
             "$ref" : "#/components/schemas/DocRef"
           },
@@ -9250,24 +9300,9 @@
           },
           "queryData" : {
             "$ref" : "#/components/schemas/QueryData"
-          }
-        }
-      },
-      "CreateReprocessFilterRequest" : {
-        "type" : "object",
-        "properties" : {
-          "autoPriority" : {
+          },
+          "reprocess" : {
             "type" : "boolean"
-          },
-          "enabled" : {
-            "type" : "boolean"
-          },
-          "priority" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "queryData" : {
-            "$ref" : "#/components/schemas/QueryData"
           }
         }
       },
@@ -10669,6 +10704,9 @@
               "type" : "string"
             }
           },
+          "qualifiedFilterInput" : {
+            "type" : "string"
+          },
           "rootNodes" : {
             "type" : "array",
             "items" : {
@@ -10854,7 +10892,7 @@
           "users" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/User"
+              "$ref" : "#/components/schemas/SimpleUser"
             }
           }
         }
@@ -11380,7 +11418,7 @@
           },
           "stroomStatusCode" : {
             "type" : "string",
-            "enum" : [ "200 - 0 - OK", "406 - 100 - Feed must be specified", "406 - 101 - Feed is not defined", "406 - 110 - Feed is not set to receive data", "406 - 120 - Unexpected data type", "406 - 200 - Unknown compression", "401 - 300 - Client Certificate Required", "403 - 310 - Client Certificate not authorised", "500 - 400 - Compressed stream invalid", "500 - 999 - Unknown error" ]
+            "enum" : [ "200 - 0 - OK", "406 - 100 - Feed must be specified", "406 - 101 - Feed is not defined", "406 - 102 - Data type is invalid", "406 - 110 - Feed is not set to receive data", "406 - 120 - Unexpected data type", "406 - 200 - Unknown compression", "401 - 300 - Client Certificate Required", "403 - 310 - Client Certificate not authorised", "500 - 400 - Compressed stream invalid", "500 - 999 - Unknown error" ]
           }
         }
       },
@@ -11976,8 +12014,14 @@
         "type" : "object",
         "description" : "List of config properties",
         "properties" : {
+          "nodeName" : {
+            "type" : "string"
+          },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
+          },
+          "qualifiedFilterInput" : {
+            "type" : "string"
           },
           "values" : {
             "type" : "array",
@@ -12841,6 +12885,14 @@
           "id" : {
             "type" : "integer",
             "format" : "int32"
+          },
+          "maxMetaCreateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "minMetaCreateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
           },
           "pipelineName" : {
             "type" : "string"
@@ -14303,6 +14355,17 @@
           },
           "sourceLocation" : {
             "$ref" : "#/components/schemas/SourceLocation"
+          }
+        }
+      },
+      "SimpleUser" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "uuid" : {
+            "type" : "string"
           }
         }
       },
