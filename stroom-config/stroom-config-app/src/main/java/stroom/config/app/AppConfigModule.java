@@ -43,6 +43,7 @@ import stroom.pipeline.refdata.ReferenceDataLmdbConfig;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.RepoConfig;
+import stroom.proxy.repo.RepoDbConfig;
 import stroom.query.common.v2.ResultStoreConfig;
 import stroom.query.common.v2.ResultStoreLmdbConfig;
 import stroom.search.elastic.CryptoConfig;
@@ -240,6 +241,10 @@ public class AppConfigModule extends AbstractModule {
                             ProxyAggregationConfig::getAggregatorConfig,
                             ProxyAggregationConfig::setAggregatorConfig,
                             AggregatorConfig.class);
+                    bindConfig(proxyAggregationConfig,
+                            ProxyAggregationConfig::getRepoDbConfig,
+                            ProxyAggregationConfig::setRepoDbConfig,
+                            RepoDbConfig.class);
                 });
         bindConfig(AppConfig::getPublicUri, AppConfig::setPublicUri, PublicUriConfig.class);
         bindConfig(AppConfig::getReceiveDataConfig, AppConfig::setReceiveDataConfig, ReceiveDataConfig.class);

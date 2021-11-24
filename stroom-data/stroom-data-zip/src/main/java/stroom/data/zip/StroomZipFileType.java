@@ -24,6 +24,12 @@ public enum StroomZipFileType {
             entry(".dat", StroomZipFileType.DATA)
     );
 
+    public static final Map<Integer, StroomZipFileType> TYPE_MAP = Map.of(
+            MANIFEST.id, MANIFEST,
+            META.id, META,
+            CONTEXT.getId(), CONTEXT,
+            DATA.id, DATA);
+
     /**
      * We need to be able to sort by type so we hold a numeric id that allows meta to be found before accompanying data.
      */

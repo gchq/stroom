@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+* Issue **#2471** : Changes to ensure SQLite DB connection is only used by one process at a time.
+
+* Issue **#2471** : Changes to help diagnose proxy aggregation issues.
+
 * Issue **#2582** : Remove unnecessary legacy migration for processor filter.
 
 * Issue **#2577** : Fix issue with expression terms changing conditions incorrectly.

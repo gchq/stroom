@@ -1,12 +1,14 @@
 package stroom.proxy.app;
 
 import stroom.proxy.app.forwarder.ForwarderConfig;
+import stroom.proxy.app.forwarder.ThreadConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.proxy.app.handler.ReceiptPolicyConfig;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.LogStreamConfig;
 import stroom.proxy.repo.ProxyRepoConfig;
 import stroom.proxy.repo.ProxyRepoFileScannerConfig;
+import stroom.proxy.repo.RepoDbConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.PropertyPath;
@@ -32,6 +34,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     private String contentDir;
 
     private ProxyPathConfig pathConfig = new ProxyPathConfig();
+    private RepoDbConfig proxyDbConfig = new RepoDbConfig();
     private ReceiptPolicyConfig receiptPolicyConfig = new ReceiptPolicyConfig();
     private ProxyRepoConfig proxyRepoConfig = new ProxyRepoConfig();
     private ProxyRepoFileScannerConfig proxyRepoFileScannerConfig = new ProxyRepoFileScannerConfig();
@@ -41,6 +44,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     private ContentSyncConfig contentSyncConfig = new ContentSyncConfig();
     private FeedStatusConfig feedStatusConfig = new FeedStatusConfig();
     private RestClientConfig restClientConfig = new RestClientConfig();
+    private ThreadConfig threadConfig = new ThreadConfig();
 
     @AssertTrue(
             message = "proxyConfig." + PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE + " is set to false. " +
@@ -88,6 +92,15 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
     public void setPathConfig(final ProxyPathConfig pathConfig) {
         this.pathConfig = pathConfig;
+    }
+
+    @JsonProperty("db")
+    public RepoDbConfig getProxyDbConfig() {
+        return proxyDbConfig;
+    }
+
+    public void setProxyDbConfig(final RepoDbConfig proxyDbConfig) {
+        this.proxyDbConfig = proxyDbConfig;
     }
 
     @JsonProperty("receiptPolicy")
@@ -175,5 +188,15 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     @JsonProperty("restClient")
     public void setRestClientConfig(final RestClientConfig restClientConfig) {
         this.restClientConfig = restClientConfig;
+    }
+
+    @JsonProperty("threads")
+    public ThreadConfig getThreadConfig() {
+        return threadConfig;
+    }
+
+    @JsonProperty("threads")
+    public void setThreadConfig(final ThreadConfig threadConfig) {
+        this.threadConfig = threadConfig;
     }
 }
