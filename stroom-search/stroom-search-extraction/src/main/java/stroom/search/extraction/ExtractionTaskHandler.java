@@ -61,7 +61,7 @@ import java.util.List;
 import java.util.Set;
 import javax.inject.Inject;
 
-class ExtractionTaskHandler {
+public class ExtractionTaskHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExtractionTaskHandler.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ExtractionTaskHandler.class);
