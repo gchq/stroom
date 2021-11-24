@@ -46,6 +46,7 @@ import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.pipeline.stepping.SteppingService;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.impl.ProcessorTaskManager;
+import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskList;
 import stroom.processor.shared.QueryData;
@@ -245,11 +246,12 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                     .build();
 
             processorFilterService.create(
-                    pipelineRef,
-                    findStreamQueryData,
-                    priority,
-                    false,
-                    true);
+                    CreateProcessFilterRequest
+                            .builder()
+                            .pipeline(pipelineRef)
+                            .queryData(findStreamQueryData)
+                            .priority(priority)
+                            .build());
 
             // Add data.
             final List<Path> files = new ArrayList<>();
@@ -315,11 +317,12 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                         .build();
 
                 processorFilterService.create(
-                        pipelineRef,
-                        findStreamQueryData,
-                        priority,
-                        false,
-                        true);
+                        CreateProcessFilterRequest
+                                .builder()
+                                .pipeline(pipelineRef)
+                                .queryData(findStreamQueryData)
+                                .priority(priority)
+                                .build());
 
                 // Add data.
                 final List<Path> files = new ArrayList<>();

@@ -59,9 +59,33 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
         }
     }
 
+    private PropertyPath(final List<String> parts1, final List<String> parts2) {
+        parts = new ArrayList<>(parts1.size() + parts2.size());
+        parts.addAll(parts1);
+        parts.addAll(parts2);
+        validateParts(parts);
+    }
+
+    private PropertyPath(final List<String> parts1, final String finalPart) {
+        parts = new ArrayList<>(parts1.size() + 1);
+        parts.addAll(parts1);
+        parts.add(finalPart);
+        validateParts(parts);
+    }
+
     public static PropertyPath blank() {
         return EMPTY_INSTANCE;
     }
+
+    @JsonIgnore
+    public boolean isBlank() {
+        return parts.isEmpty();
+    }
+
+    public boolean containsPart(final String part) {
+        return parts.contains(part);
+    }
+
 
     /**
      * Create a {@link PropertyPath} from a path string, e.g "stroom.node.name"
@@ -113,18 +137,22 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
      * Merge otherPath onto the end of this and return a new {@link PropertyPath}
      */
     public PropertyPath merge(final PropertyPath otherPath) {
-        List<String> mergedParts = new ArrayList<>(this.parts);
-        mergedParts.addAll(otherPath.parts);
-        return new PropertyPath(mergedParts);
+        if (otherPath == null || otherPath.isBlank()) {
+            return this;
+        } else {
+            return new PropertyPath(this.parts, otherPath.parts);
+        }
     }
 
     /**
      * Merge part onto the end of this and return a new {@link PropertyPath}
      */
     public PropertyPath merge(final String part) {
-        List<String> mergedParts = new ArrayList<>(this.parts);
-        mergedParts.add(part);
-        return new PropertyPath(mergedParts);
+        if (part == null || part.isEmpty()) {
+            return this;
+        } else {
+            return new PropertyPath(this.parts, part);
+        }
     }
 
     /**
@@ -146,7 +174,7 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
     @Override
     public String toString() {
         if (parts == null || parts.isEmpty()) {
-            return null;
+            return "";
         } else {
             return String.join(DELIMITER, parts);
         }

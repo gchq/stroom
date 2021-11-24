@@ -2,7 +2,8 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
-             xmlns:v="urn:import:stroom.widget.valuespinner.client">
+             xmlns:v="urn:import:stroom.widget.valuespinner.client"
+             xmlns:c="urn:import:stroom.widget.customdatebox.client">
     <g:FlowPanel styleName="stroom-control-page">
         <g:Grid styleName="stroom-control-grid">
             <g:row>
@@ -27,6 +28,18 @@
                 <g:cell>Enable new filters:</g:cell>
                 <g:customCell>
                     <tickbox:TickBox ui:field="enabled"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Min Create Time:</g:cell>
+                <g:customCell>
+                    <c:MyDateBox ui:field="minMetaCreateTimeMs"/>
+                </g:customCell>
+            </g:row>
+            <g:row>
+                <g:cell>Max Create Time:</g:cell>
+                <g:customCell>
+                    <c:MyDateBox ui:field="maxMetaCreateTimeMs"/>
                 </g:customCell>
             </g:row>
         </g:Grid>

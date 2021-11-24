@@ -171,27 +171,27 @@ public class LmdbEnvFactory {
             try {
                 LOGGER.debug(() -> LogUtil.message("Ensuring directory {} exists (from configuration property {})",
                         localDir.toAbsolutePath(),
-                        lmdbConfig.getFullPath(LmdbConfig.LOCAL_DIR_PROP_NAME)));
+                        lmdbConfig.getFullPathStr(LmdbConfig.LOCAL_DIR_PROP_NAME)));
                 Files.createDirectories(localDir);
             } catch (IOException e) {
                 throw new RuntimeException(
                         LogUtil.message("Error ensuring directory {} exists (from configuration property {})",
                                 localDir.toAbsolutePath(),
-                                lmdbConfig.getFullPath(LmdbConfig.LOCAL_DIR_PROP_NAME)), e);
+                                lmdbConfig.getFullPathStr(LmdbConfig.LOCAL_DIR_PROP_NAME)), e);
             }
 
             if (!Files.isReadable(localDir)) {
                 throw new RuntimeException(
                         LogUtil.message("Directory {} (from configuration property {}) is not readable",
                                 localDir.toAbsolutePath(),
-                                lmdbConfig.getFullPath(LmdbConfig.LOCAL_DIR_PROP_NAME)));
+                                lmdbConfig.getFullPathStr(LmdbConfig.LOCAL_DIR_PROP_NAME)));
             }
 
             if (!Files.isWritable(localDir)) {
                 throw new RuntimeException(
                         LogUtil.message("Directory {} (from configuration property {}) is not writable",
                                 localDir.toAbsolutePath(),
-                                lmdbConfig.getFullPath(LmdbConfig.LOCAL_DIR_PROP_NAME)));
+                                lmdbConfig.getFullPathStr(LmdbConfig.LOCAL_DIR_PROP_NAME)));
             }
 
             return localDir;
@@ -200,7 +200,7 @@ public class LmdbEnvFactory {
         private Path getLibraryExtractDir() {
             String extractDirStr = lmdbLibraryConfig.getSystemLibraryExtractDir();
 
-            final String extractDirPropName = lmdbLibraryConfig.getFullPath(LmdbLibraryConfig.EXTRACT_DIR_PROP_NAME);
+            final String extractDirPropName = lmdbLibraryConfig.getFullPathStr(LmdbLibraryConfig.EXTRACT_DIR_PROP_NAME);
 
             Path extractDir;
             if (extractDirStr == null) {

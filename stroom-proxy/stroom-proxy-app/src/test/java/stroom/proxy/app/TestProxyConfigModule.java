@@ -153,7 +153,7 @@ class TestProxyConfigModule {
                     .sorted(Comparator.comparing(Class::getName))
                     .forEach(clazz -> {
                         AbstractConfig config = (AbstractConfig) injector.getInstance(clazz);
-                        LOGGER.info("  {}", config.getBasePath());
+                        LOGGER.info("  {}", config.getBasePathStr());
                     });
         }
 

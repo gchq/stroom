@@ -104,7 +104,7 @@ public class ExpressionValidator {
                     "'");
         }
         final String[] parts = value.split(",");
-        if (parts.length > min && parts.length < max) {
+        if (parts.length < min || parts.length > max) {
             throw new ExpressionValidationException("" +
                     "Expression term has unexpected number of values '" +
                     term.getValue() +

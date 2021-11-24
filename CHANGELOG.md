@@ -11,6 +11,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+* Issue **#2582** : Remove unnecessary legacy migration for processor filter.
+
+* Issue **#2577** : Fix issue with expression terms changing conditions incorrectly.
+
+* Issue **#2585** : Fix proxy aggregation task nesting.
+
+* Issue **#2574** : Improve processor filter creation to allow min and max create times.
+
+* Issue **#2579** : Fix processor filter creation from stream multi selection.
+
+* Issue **#2580** : Fix completion of processor filters by allowing the user to specify an end time.
+
+* Issue **#2576** : Fix scrolling of processor filter info pane.
+
 * Uplift event-logging library to `5.0-beta.27_schema-v4.0-beta.3` to fix missing failure outcomes on logged events.
 
 * Issue **#2557** : Optimise meta queries to ensure join order is as expected.

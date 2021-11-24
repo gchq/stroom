@@ -139,7 +139,7 @@ class SecurityFilter implements Filter {
 
             if (!authenticationConfig.isAuthenticationRequired()) {
                 // If authentication is turned off then proceed as admin.
-                final String propPath = authenticationConfig.getFullPath(
+                final String propPath = authenticationConfig.getFullPathStr(
                         AuthenticationConfig.PROP_NAME_AUTHENTICATION_REQUIRED);
                 LOGGER.debug("{} is false, authenticating as admin for {}", propPath, fullPath);
                 securityContext.asAdminUser(() -> {

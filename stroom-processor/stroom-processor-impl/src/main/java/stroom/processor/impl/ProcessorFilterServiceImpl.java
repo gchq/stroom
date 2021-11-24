@@ -26,6 +26,7 @@ import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
+import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.FetchProcessorRequest;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFields;
@@ -89,27 +90,20 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
     }
 
     @Override
-    public ProcessorFilter create(final DocRef pipelineRef,
-                                  final QueryData queryData,
-                                  final int priority,
-                                  final boolean autoPriority,
-                                  final boolean enabled) {
+    public ProcessorFilter create(final CreateProcessFilterRequest request) {
         // Check the user has read permissions on the pipeline.
-        if (!securityContext.hasDocumentPermission(pipelineRef.getUuid(), DocumentPermissionNames.READ)) {
+        if (!securityContext.hasDocumentPermission(request.getPipeline().getUuid(), DocumentPermissionNames.READ)) {
             throw new PermissionException(securityContext.getUserId(),
                     "You do not have permission to create this processor filter");
         }
 
-        final Processor processor = processorService.create(pipelineRef, enabled);
-        return create(processor, queryData, priority, autoPriority, enabled);
+        final Processor processor = processorService.create(request.getPipeline(), request.isEnabled());
+        return create(processor, request);
     }
 
     @Override
     public ProcessorFilter create(final Processor processor,
-                                  final QueryData queryData,
-                                  final int priority,
-                                  final boolean autoPriority,
-                                  final boolean enabled) {
+                                  final CreateProcessFilterRequest request) {
         // Check the user has read permissions on the pipeline.
         if (!securityContext.hasDocumentPermission(processor.getPipelineUuid(), DocumentPermissionNames.READ)) {
             throw new PermissionException(securityContext.getUserId(),
@@ -117,28 +111,25 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
         }
 
         // If we are using auto priority then try and get a priority.
-        final int calculatedPriority = getAutoPriority(processor, priority, autoPriority);
+        final int calculatedPriority = getAutoPriority(processor, request.getPriority(), request.isAutoPriority());
 
         // now create the filter and tracker
         final ProcessorFilter processorFilter = new ProcessorFilter();
-        AuditUtil.stamp(securityContext.getUserId(), processorFilter);
         // Blank tracker
-        processorFilter.setEnabled(enabled);
+        processorFilter.setReprocess(request.isReprocess());
+        processorFilter.setEnabled(request.isEnabled());
         processorFilter.setPriority(calculatedPriority);
         processorFilter.setProcessor(processor);
-        processorFilter.setQueryData(queryData);
+        processorFilter.setQueryData(request.getQueryData());
+        processorFilter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
+        processorFilter.setMaxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
         return create(processorFilter);
     }
 
     @Override
     public ProcessorFilter importFilter(final Processor processor,
                                         final DocRef processorFilterDocRef,
-                                        final QueryData queryData,
-                                        final int priority,
-                                        final boolean autoPriority,
-                                        final boolean reprocess,
-                                        final boolean enabled,
-                                        final Long minMetaCreateTimeMs) {
+                                        final CreateProcessFilterRequest request) {
         // Check the user has read permissions on the pipeline.
         if (!securityContext.hasDocumentPermission(processor.getPipelineUuid(), DocumentPermissionNames.READ)) {
             throw new PermissionException(securityContext.getUserId(),
@@ -146,22 +137,23 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
         }
 
         // If we are using auto priority then try and get a priority.
-        final int calculatedPriority = getAutoPriority(processor, priority, autoPriority);
+        final int calculatedPriority = getAutoPriority(processor, request.getPriority(), request.isAutoPriority());
 
-        if (queryData != null && queryData.getDataSource() == null) {
-            queryData.setDataSource(MetaFields.STREAM_STORE_DOC_REF);
+        if (request.getQueryData() != null && request.getQueryData().getDataSource() == null) {
+            request.getQueryData().setDataSource(MetaFields.STREAM_STORE_DOC_REF);
         }
 
         // now create the filter and tracker
         final ProcessorFilter processorFilter = new ProcessorFilter();
         AuditUtil.stamp(securityContext.getUserId(), processorFilter);
         // Blank tracker
-        processorFilter.setReprocess(reprocess);
-        processorFilter.setEnabled(enabled);
+        processorFilter.setReprocess(request.isReprocess());
+        processorFilter.setEnabled(request.isEnabled());
         processorFilter.setPriority(calculatedPriority);
         processorFilter.setProcessor(processor);
-        processorFilter.setQueryData(queryData);
-        processorFilter.setMinMetaCreateTimeMs(minMetaCreateTimeMs);
+        processorFilter.setQueryData(request.getQueryData());
+        processorFilter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
+        processorFilter.setMaxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
 
         if (processorFilterDocRef != null) {
             processorFilter.setUuid(processorFilterDocRef.getUuid());
@@ -419,54 +411,23 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
     }
 
     @Override
-    public List<ReprocessDataInfo> reprocess(final QueryData queryData,
-                                             final int priority,
-                                             final boolean autoPriority,
-                                             final boolean enabled) {
-        final long now = System.currentTimeMillis();
-
+    public List<ReprocessDataInfo> reprocess(final CreateProcessFilterRequest request) {
         return securityContext.secureResult(PERMISSION, () -> {
             final List<ReprocessDataInfo> info = new ArrayList<>();
 
             try {
                 // We want to find all processors that need reprocessing filters.
                 final List<String> processorUuidList = metaService.getProcessorUuidList(
-                        new FindMetaCriteria(queryData.getExpression()));
+                        new FindMetaCriteria(request.getQueryData().getExpression()));
                 processorUuidList.forEach(processorUuid -> {
                     try {
                         processorService.fetchByUuid(processorUuid).ifPresent(processor -> {
-                            // Check the user has read permissions on the pipeline.
-                            if (!securityContext.hasDocumentPermission(processor.getPipelineUuid(),
-                                    DocumentPermissionNames.READ)) {
-                                throw new PermissionException(securityContext.getUserId(),
-                                        "You do not have permission to create this processor filter");
-                            }
-
-                            // If we are using auto priority then try and get a priority.
-                            final int calculatedPriority = getAutoPriority(processor, priority, autoPriority);
-
-                            // now create the filter and tracker
-                            ProcessorFilter processorFilter = new ProcessorFilter();
-
-                            // Blank tracker
-                            processorFilter.setReprocess(true);
-                            processorFilter.setEnabled(enabled);
-                            processorFilter.setPriority(calculatedPriority);
-                            processorFilter.setProcessor(processor);
-                            processorFilter.setQueryData(queryData);
-
-                            // Ensure all fields are complete.
-                            processorFilter = ensureValid(processorFilter);
-
-                            // Don't reprocess data any newer than the current data.
-                            processorFilter.setMaxMetaCreateTimeMs(now);
-
-                            processorFilterDao.create(processorFilter);
+                            final ProcessorFilter processorFilter = create(processor, request);
 
                             info.add(new ReprocessDataInfo(Severity.INFO, "Added reprocess filter to " +
                                     getPipelineDetails(processor.getPipelineUuid()) +
                                     " with priority " +
-                                    calculatedPriority,
+                                    processorFilter.getPriority(),
                                     null));
                         });
                     } catch (final RuntimeException e) {

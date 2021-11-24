@@ -221,12 +221,14 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
             // Now create the processor filter using the find stream criteria.
             final ProcessorFilterRow row = (ProcessorFilterRow) selectedProcessor;
             final ProcessorFilter processorFilter = row.getProcessorFilter();
-            final CreateProcessFilterRequest request = new CreateProcessFilterRequest(
-                    row.getProcessorFilter().getPipeline(),
-                    processorFilter.getQueryData(),
-                    processorFilter.getPriority(),
-                    true,
-                    false);
+            final CreateProcessFilterRequest request = CreateProcessFilterRequest
+                    .builder()
+                    .pipeline(row.getProcessorFilter().getPipeline())
+                    .queryData(processorFilter.getQueryData())
+                    .priority(processorFilter.getPriority())
+                    .autoPriority(true)
+                    .enabled(false)
+                    .build();
             final Rest<ProcessorFilter> rest = restFactory.create();
             rest.onSuccess(result -> processorListPresenter.refresh()).call(PROCESSOR_FILTER_RESOURCE).create(request);
         }

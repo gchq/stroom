@@ -32,6 +32,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorFilterUtil;
 import stroom.processor.api.ProcessorService;
+import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFields;
 import stroom.processor.shared.ProcessorFilter;
@@ -122,17 +123,29 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
                             processorFilter.getPipelineName());
 
                     if (processor != null) {
-                        processorFilterService.importFilter(processor,
-                                new DocRef(ProcessorFilter.ENTITY_TYPE, processorFilter.getUuid(), null),
-                                processorFilter.getQueryData(),
-                                processorFilter.getPriority(),
-                                false,
-                                processorFilter.isReprocess(),
-                                enable,
-                                minMetaCreateTimeMs);
+                        final DocRef processorFilterRef = new DocRef(ProcessorFilter.ENTITY_TYPE,
+                                processorFilter.getUuid(),
+                                null);
+                        final CreateProcessFilterRequest request = CreateProcessFilterRequest
+                                .builder()
+                                .queryData(processorFilter.getQueryData())
+                                .priority(processorFilter.getPriority())
+                                .autoPriority(false)
+                                .reprocess(processorFilter.isReprocess())
+                                .enabled(enable)
+                                .minMetaCreateTimeMs(minMetaCreateTimeMs)
+                                .maxMetaCreateTimeMs(processorFilter.getMaxMetaCreateTimeMs())
+                                .build();
+                        processorFilterService.importFilter(
+                                processor,
+                                processorFilterRef,
+                                request);
                     } else {
-                        LOGGER.error("Processor not found on pipeline " + processorFilter.getPipelineName() +
-                                "(" + processorFilter.getPipelineUuid() + ")" +
+                        LOGGER.error("Processor not found on pipeline " +
+                                processorFilter.getPipelineName() +
+                                "(" +
+                                processorFilter.getPipelineUuid() +
+                                ")" +
                                 " and failed to create");
                     }
                 }
