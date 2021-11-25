@@ -41,7 +41,7 @@ class TestV07_00_00_1202__property_rename {
 
     Stream<DynamicTest> testDefaultProperties(final List<GlobalProperty> defaultProperties) {
         final Mappings mappings = new V07_00_00_1202__property_rename.Mappings();
-        final ConfigMapper configMapper = new ConfigMapper(new AppConfig());
+        final ConfigMapper configMapper = new ConfigMapper(AppConfig::new);
 
         return defaultProperties
                 .stream()

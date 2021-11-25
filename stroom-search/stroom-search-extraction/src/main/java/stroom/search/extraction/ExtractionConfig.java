@@ -1,11 +1,13 @@
 package stroom.search.extraction;
 
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.NotInjectableConfig;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.inject.Singleton;
 
+@NotInjectableConfig
 @Singleton
 public class ExtractionConfig extends AbstractConfig {
 

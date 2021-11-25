@@ -3,6 +3,7 @@ package stroom.config.common;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.NotInjectableConfig;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
@@ -21,8 +22,9 @@ public class DbConfig extends AbstractConfig {
         connectionPoolConfig = new ConnectionPoolConfig();
     }
 
-    public DbConfig(final ConnectionConfig connectionConfig,
-                    final ConnectionPoolConfig connectionPoolConfig) {
+    @JsonCreator
+    public DbConfig(@JsonProperty("connection") final ConnectionConfig connectionConfig,
+                    @JsonProperty("connectionPool") final ConnectionPoolConfig connectionPoolConfig) {
         this.connectionConfig = connectionConfig;
         this.connectionPoolConfig = connectionPoolConfig;
     }

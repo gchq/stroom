@@ -22,11 +22,18 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.BeanDescription;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.introspect.BeanPropertyDefinition;
 import com.google.common.base.CaseFormat;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.AnnotatedElement;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -34,6 +41,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -41,8 +49,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public final class PropertyUtil {
@@ -140,6 +151,135 @@ public final class PropertyUtil {
                 .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
     }
 
+    /**
+     * Builds a map of property names to a {@link Prop} object that provides access to the getter/setter.
+     * Only includes public properties, not package private
+     */
+    public static <T> ObjectInfo<T> getObjectInfo(final ObjectMapper objectMapper,
+                                                  final String name,
+                                                  final T object) {
+        Objects.requireNonNull(object);
+        LOGGER.trace("getProperties called for {}", object);
+        final Map<String, Prop> propMap = new HashMap<>();
+
+        final Class<T> clazz = (Class<T>) object.getClass();
+
+        final JavaType userType = objectMapper.getTypeFactory().constructType(object.getClass());
+        final BeanDescription beanDescription =
+                objectMapper.getSerializationConfig().introspect(userType);
+
+        final List<BeanPropertyDefinition> props = beanDescription.findProperties();
+        final Set<String> propNames = props.stream()
+                .map(BeanPropertyDefinition::getName)
+                .collect(Collectors.toSet());
+
+        // Now filter out all the prop objects that are not pojo props with getter+setter
+        final Map<String, Prop> propertyMap = props
+                .stream()
+                .map(propDef -> {
+                    final String propName = propDef.getName();
+
+                    final Prop prop = new Prop(propName, object);
+                    if (propDef.getField() != null) {
+                        propDef.getField()
+                                .getAllAnnotations()
+                                .annotations()
+                                .forEach(prop::addFieldAnnotation);
+                    }
+                    if (propDef.hasGetter()) {
+                        prop.setGetter(propDef.getGetter().getAnnotated());
+                    }
+                    if (propDef.hasSetter()) {
+                        prop.setSetter(propDef.getSetter().getAnnotated());
+                    }
+
+                    LOGGER.trace(() -> LogUtil.message(
+                            "name: {}, hasGetter: {}, hasSetter: {}, field annotations: {}, getter annotations: {}",
+                            prop.name,
+                            prop.getter != null,
+                            prop.setter != null,
+                            prop.getFieldAnnotations(),
+                            prop.getGetterAnnotations()));
+
+                    return prop;
+                })
+                .collect(Collectors.toMap(Prop::getName, Function.identity()));
+
+        final Optional<Constructor<T>> optJsonCreatorConstructor = getJsonCreatorConstructor(beanDescription);
+        final List<String> constructorArgNames = optJsonCreatorConstructor
+                .map(PropertyUtil::getConstructorArgNames)
+                .orElseGet(Collections::emptyList);
+
+        constructorArgNames.forEach(argName -> {
+            if (!propNames.contains(argName)) {
+                throw new RuntimeException("No matching property found for constructor property " + argName);
+            }
+        });
+
+        return new ObjectInfo<>(
+                name,
+                object,
+                clazz,
+                propertyMap,
+                constructorArgNames,
+                optJsonCreatorConstructor.orElse(null));
+    }
+
+    private static <T> Optional<Constructor<T>> getJsonCreatorConstructor(final Class<T> clazz) {
+        final List<Constructor<T>> jsonCreatorConstructors = Arrays.stream(clazz.getConstructors())
+                .filter(constructor ->
+                        constructor.isAnnotationPresent(JsonCreator.class))
+                .map(constructor -> (Constructor<T>) constructor)
+                .collect(Collectors.toList());
+
+        final Optional<Constructor<T>> optConstructor;
+        if (!jsonCreatorConstructors.isEmpty()) {
+            if (jsonCreatorConstructors.size() > 1) {
+                LOGGER.warn("Found multiple @JsonCreator annotations on {}. Using first one.", clazz.getName());
+            }
+            final Constructor<T> constructor = jsonCreatorConstructors.get(0);
+
+            optConstructor = Optional.of(constructor);
+        } else {
+            optConstructor = Optional.empty();
+        }
+        return optConstructor;
+    }
+
+    private static <T> Optional<Constructor<T>> getJsonCreatorConstructor(final BeanDescription beanDescription) {
+        final List<Constructor<T>> jsonCreatorConstructors = beanDescription.getConstructors()
+                .stream()
+                .map(constructor -> (Constructor<T>) constructor.getAnnotated())
+                .collect(Collectors.toList());
+
+        final Optional<Constructor<T>> optConstructor;
+        if (!jsonCreatorConstructors.isEmpty()) {
+            if (jsonCreatorConstructors.size() > 1) {
+                LOGGER.warn("Found multiple @JsonCreator annotations on {}. Using first one.",
+                        beanDescription.getBeanClass().getName());
+            }
+            final Constructor<T> constructor = jsonCreatorConstructors.get(0);
+
+            optConstructor = Optional.of(constructor);
+        } else {
+            optConstructor = Optional.empty();
+        }
+        return optConstructor;
+    }
+
+    private static <T> List<String> getConstructorArgNames(final Constructor<T> constructor) {
+        return Arrays.stream(constructor.getParameters())
+                .map(parameter -> {
+                    if (parameter.isAnnotationPresent(JsonProperty.class)) {
+                        return parameter.getAnnotation(JsonProperty.class).value();
+                    } else {
+                        LOGGER.warn("No @JsonProperty annotation on {} {}", constructor, parameter.getName());
+                        return parameter.getName();
+                    }
+                })
+                .collect(Collectors.toList());
+    }
+
     public static Class<?> getDataType(Class<?> clazz) {
         if (clazz.isPrimitive()) {
             return clazz;
@@ -183,10 +323,24 @@ public final class PropertyUtil {
 
         for (final Field declaredField : clazz.getDeclaredFields()) {
             if (declaredField.getDeclaredAnnotation(JsonIgnore.class) == null) {
+//                final String name = getName(declaredField, declaredField::getName);
                 final String name = declaredField.getName();
                 final Prop prop = propMap.computeIfAbsent(name, k -> new Prop(name, object));
                 prop.addFieldAnnotations(declaredField.getDeclaredAnnotations());
             }
+        }
+    }
+
+    private static String getName(final AnnotatedElement annotatedElement,
+                                  final Supplier<String> defaultNameSupplier) {
+        final JsonProperty jsonPropertyAnno = annotatedElement.getAnnotation(JsonProperty.class);
+        if (jsonPropertyAnno == null) {
+            return defaultNameSupplier.get();
+        } else {
+            final String jsonPropertyValue = jsonPropertyAnno.value();
+            return jsonPropertyValue.isEmpty()
+                    ? defaultNameSupplier.get()
+                    : jsonPropertyValue;
         }
     }
 
@@ -209,6 +363,8 @@ public final class PropertyUtil {
                             && method.getParameterTypes().length == 0
                             && !method.getReturnType().equals(Void.TYPE)) {
                         final String name = getPropertyName(methodName, 2);
+//                        final String name = getName(method, () ->
+//                                getPropertyName(methodName, 2));
                         final Prop prop = propMap.computeIfAbsent(name, k -> new Prop(name, object));
                         prop.setGetter(method);
                         propsWithGetter.add(name);
@@ -222,6 +378,8 @@ public final class PropertyUtil {
                             && method.getParameterTypes().length == 0
                             && !method.getReturnType().equals(Void.TYPE)) {
                         final String name = getPropertyName(methodName, 3);
+//                        final String name = getName(method, () ->
+//                                getPropertyName(methodName, 3));
                         final Prop prop = propMap.computeIfAbsent(name, k -> new Prop(name, object));
                         prop.setGetter(method);
                         propsWithGetter.add(name);
@@ -233,6 +391,7 @@ public final class PropertyUtil {
                             && method.getParameterTypes().length == 1
                             && method.getReturnType().equals(Void.TYPE)) {
                         final String name = getPropertyName(methodName, 3);
+//                        final String name = getName(method, () -> getPropertyName(methodName, 3));
                         final Prop prop = propMap.computeIfAbsent(name, k -> new Prop(name, object));
                         prop.setSetter(method);
                         propsWithSetter.add(name);
@@ -245,6 +404,80 @@ public final class PropertyUtil {
     private static String getPropertyName(final String methodName, final int len) {
         final String name = methodName.substring(len);
         return CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_CAMEL, name);
+    }
+
+
+    public static class ObjectInfo<T> {
+
+        // The unqualified name of the property branch, e.g. 'node'
+        private final String name;
+
+        private final T object;
+
+        private final Class<T> objectClass;
+
+        private final Map<String, Prop> propertyMap;
+
+        // The unqualified property names in the order they appear in the @JsonCreator constructor
+        // if there is one.
+        private final List<String> constructorArgList;
+
+        private final Constructor<T> constructor;
+
+        public ObjectInfo(final String name,
+                          final T object, final Class<T> objectClass,
+                          final Map<String, Prop> propertyMap,
+                          final List<String> constructorArgList,
+                          final Constructor<T> constructor) {
+            this.name = name;
+            this.object = object;
+            this.objectClass = objectClass;
+            this.propertyMap = propertyMap;
+            this.constructorArgList = constructorArgList;
+            this.constructor = constructor;
+        }
+
+        public T getObject() {
+            return object;
+        }
+
+        public Class<T> getObjectClass() {
+            return objectClass;
+        }
+
+        public Type getObjectType() {
+            return objectClass;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public Map<String, Prop> getPropertyMap() {
+            return propertyMap;
+        }
+
+        public List<String> getConstructorArgList() {
+            return constructorArgList;
+        }
+
+        public Constructor<T> getConstructor() {
+            return constructor;
+        }
+
+        public T createInstance(final Function<String, Object> valueSupplier) {
+            final Object[] args = constructorArgList.stream()
+                    .map(valueSupplier)
+                    .toArray(Object[]::new);
+            try {
+                return constructor.newInstance(args);
+            } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+                throw new RuntimeException(LogUtil.message("Error creating new instance of {} with args {}. {}",
+                        objectClass.getName(),
+                        args,
+                        e), e);
+            }
+        }
     }
 
     /**
@@ -301,15 +534,22 @@ public final class PropertyUtil {
             return setter != null;
         }
 
-        void setSetter(final Method setter) {
+        private void setSetter(final Method setter) {
             this.setter = Objects.requireNonNull(setter);
         }
 
-        void addFieldAnnotations(final Annotation... annotations) {
+        private void addFieldAnnotations(final Annotation... annotations) {
             for (final Annotation annotation : Objects.requireNonNull(annotations)) {
                 this.fieldAnnotationsMap.put(annotation.annotationType(), annotation);
             }
         }
+
+        private void addFieldAnnotation(final Annotation annotation) {
+            this.fieldAnnotationsMap.put(annotation.annotationType(), annotation);
+        }
+
+//        private void addConstructorArgs(final String)
+
 
         /**
          * @return True if the field has the passed {@link Annotation} class.
@@ -335,6 +575,10 @@ public final class PropertyUtil {
             return fieldAnnotationsMap.containsKey(clazz) || getterAnnotationsMap.containsKey(clazz);
         }
 
+        public Collection<Annotation> getFieldAnnotations() {
+            return fieldAnnotationsMap.values();
+        }
+
         public <T extends Annotation> Optional<T> getFieldAnnotation(final Class<T> clazz) {
             Objects.requireNonNull(clazz);
             return Optional.ofNullable(fieldAnnotationsMap.get(clazz))
@@ -345,6 +589,10 @@ public final class PropertyUtil {
             Objects.requireNonNull(clazz);
             return Optional.ofNullable(getterAnnotationsMap.get(clazz))
                     .map(clazz::cast);
+        }
+
+        public Collection<Annotation> getGetterAnnotations() {
+            return getterAnnotationsMap.values();
         }
 
         /**
@@ -360,6 +608,14 @@ public final class PropertyUtil {
         public Object getValueFromConfigObject() {
             try {
                 return getter.invoke(parentObject);
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                throw new RuntimeException(LogUtil.message("Error getting value for prop {}", name), e);
+            }
+        }
+
+        public Object getValueFromConfigObject(final Object obj) {
+            try {
+                return getter.invoke(obj);
             } catch (IllegalAccessException | InvocationTargetException e) {
                 throw new RuntimeException(LogUtil.message("Error getting value for prop {}", name), e);
             }

@@ -14,7 +14,12 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.PropertyPath;
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.reflect.TypeToken;
 import io.dropwizard.Configuration;
 import io.dropwizard.configuration.ConfigurationException;
@@ -22,7 +27,7 @@ import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.Tuple7;
 import org.apache.commons.lang3.StringUtils;
-import org.junit.jupiter.api.Assertions;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -317,7 +322,7 @@ class TestConfigMapper {
                         LOGGER.info("{}", name))
                 .collect(Collectors.toList());
 
-        org.assertj.core.api.Assertions.assertThat(propsWithNoDesc)
+        Assertions.assertThat(propsWithNoDesc)
                 .isEmpty();
     }
 
@@ -577,9 +582,10 @@ class TestConfigMapper {
 
     @Test
     void testValidateDelimiter_bad() {
-        Assertions.assertThrows(RuntimeException.class, () -> {
+        Assertions.assertThatThrownBy(() -> {
             ConfigMapper.validateDelimiter("xxxx", 0, "first", "dummy example");
-        });
+        })
+                .isInstanceOf(RuntimeException.class);
     }
 
     @Test
@@ -678,6 +684,27 @@ class TestConfigMapper {
     }
 
 
+    //    @Test
+//    void testRefreshConfig() {
+//
+//        final AppConfig appConfig = new AppConfig();
+//        ConfigMapper configMapper = new ConfigMapper(appConfig);
+//
+//        configMapper.refreshConfig(appConfig);
+//    }
+
+    private static ObjectMapper createYamlObjectMapper() {
+        final YAMLFactory yamlFactory = new YAMLFactory();
+        final ObjectMapper mapper = new ObjectMapper(yamlFactory);
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+//        mapper.configure(DeserializationFeature.UNWRAP_ROOT_VALUE, true);
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, false);
+//        mapper.configure(SerializationFeature.WRAP_ROOT_VALUE, true);
+        mapper.setSerializationInclusion(Include.NON_NULL);
+
+        return mapper;
+    }
+
     private void doValidateStringValueTest(final String path, final String value, boolean shouldValidate) {
         TestConfig testConfig = new TestConfig();
         ConfigMapper configMapper = new ConfigMapper(testConfig);
@@ -686,10 +713,11 @@ class TestConfigMapper {
         if (shouldValidate) {
             configMapper.validateValueSerialisation(propertyPath, value);
         } else {
-            Assertions.assertThrows(RuntimeException.class, () -> {
+            Assertions.assertThatThrownBy(() -> {
                 // no leading delimiter
                 configMapper.validateValueSerialisation(propertyPath, value);
-            });
+            })
+                    .isInstanceOf(RuntimeException.class);
         }
     }
 
@@ -1018,4 +1046,5 @@ class TestConfigMapper {
 
 
     }
+
 }

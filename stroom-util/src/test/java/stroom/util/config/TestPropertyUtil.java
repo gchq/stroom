@@ -1,14 +1,22 @@
 package stroom.util.config;
 
+import stroom.util.config.PropertyUtil.ObjectInfo;
 import stroom.util.config.annotations.ReadOnly;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonCreator.Mode;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -39,7 +47,30 @@ class TestPropertyUtil {
         testProp(propMap, "myInt", 99, 101, myClass::getMyInt, int.class);
         testProp(propMap, "myString", "abc", "def", myClass::getMyString, String.class);
         testProp(propMap, "myClass", myChildClass1, myChildClass2, myClass::getMyClass, MyClass.class);
+    }
 
+    @Test
+    void testGetBranchProperties() {
+        final ImmutablePojo immutablePojo = new ImmutablePojo();
+
+        final ObjectInfo<ImmutablePojo> objectInfo = PropertyUtil.getObjectInfo(
+                createObjectMapper(), "stroom", immutablePojo);
+
+        assertThat(objectInfo.getName())
+                .isEqualTo("stroom");
+
+        assertThat(objectInfo.getPropertyMap().keySet())
+                .contains("myCustomBoolean", "myInt", "myString", "immutableChild");
+
+        assertThat(objectInfo.getConstructorArgList())
+                .containsExactly("myCustomBoolean", "myInt", "myString", "immutableChild");
+
+        // use the original object as a source of values to create a new instance that has the same values
+        final ImmutablePojo immutablePojo2 = objectInfo.createInstance(name ->
+                objectInfo.getPropertyMap().get(name).getValueFromConfigObject());
+
+        assertThat(immutablePojo2)
+                .isEqualTo(immutablePojo);
     }
 
     @Test
@@ -118,6 +149,17 @@ class TestPropertyUtil {
         assertThat(booleanProp.getValueClass())
                 .isEqualTo(clazz);
     }
+
+    private static ObjectMapper createObjectMapper() {
+        final ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, false);
+        mapper.setSerializationInclusion(Include.NON_NULL);
+
+        return mapper;
+    }
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     private static class MyClass {
 
@@ -199,6 +241,127 @@ class TestPropertyUtil {
 
         public void setIgnoredField(final String ignoredField) {
             this.ignoredField = ignoredField;
+        }
+    }
+
+    private static class ImmutablePojo {
+
+        @JsonProperty("myCustomBoolean")
+        private Boolean myBoolean = true;
+        @JsonProperty
+        private Integer myInt = 99;
+
+        private String myString = "abc";
+        @JsonProperty
+        private ImmutableChildPojo immutableChild = new ImmutableChildPojo();
+
+        // should not appear in the property map
+        private final String nonPublicString = "xxx";
+
+        public ImmutablePojo() {
+        }
+
+        @JsonCreator(mode = Mode.PROPERTIES)
+        public ImmutablePojo(@JsonProperty("myCustomBoolean") final Boolean myBoolean,
+                             @JsonProperty("myInt") final Integer myInt,
+                             @JsonProperty("myString") final String myString,
+                             @JsonProperty("immutableChild") final ImmutableChildPojo immutableChild) {
+            this.myBoolean = myBoolean;
+            this.myInt = myInt;
+            this.myString = myString;
+            this.immutableChild = immutableChild;
+        }
+
+        @JsonIgnore
+        public String getNonPublicString() {
+            return nonPublicString;
+        }
+
+        public Boolean getMyBoolean() {
+            return myBoolean;
+        }
+
+        public Integer getMyInt() {
+            return myInt;
+        }
+
+        public String getMyString() {
+            return myString;
+        }
+
+        public ImmutableChildPojo getImmutableChild() {
+            return immutableChild;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final ImmutablePojo that = (ImmutablePojo) o;
+            return Objects.equals(myBoolean, that.myBoolean) && Objects.equals(myInt,
+                    that.myInt) && Objects.equals(myString, that.myString) && Objects.equals(immutableChild,
+                    that.immutableChild) && Objects.equals(nonPublicString, that.nonPublicString);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(myBoolean, myInt, myString, immutableChild, nonPublicString);
+        }
+    }
+
+    private static class ImmutableChildPojo {
+
+        @JsonProperty
+        private Boolean myBoolean = false;
+        @JsonProperty
+        private Integer myInt = 13;
+        @JsonProperty
+        private String myString = "def";
+
+        public ImmutableChildPojo() {
+        }
+
+        @JsonCreator
+        public ImmutableChildPojo(@JsonProperty("myBoolean") final Boolean myBoolean,
+                                  @JsonProperty("myInt") final Integer myInt,
+                                  @JsonProperty("myString") final String myString) {
+            this.myBoolean = myBoolean;
+            this.myInt = myInt;
+            this.myString = myString;
+        }
+
+        public Boolean getMyBoolean() {
+            return myBoolean;
+        }
+
+        public Integer getMyInt() {
+            return myInt;
+        }
+
+        public String getMyString() {
+            return myString;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final ImmutableChildPojo that = (ImmutableChildPojo) o;
+            return Objects.equals(myBoolean, that.myBoolean) && Objects.equals(myInt,
+                    that.myInt) && Objects.equals(myString, that.myString);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(myBoolean, myInt, myString);
         }
     }
 

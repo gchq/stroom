@@ -19,6 +19,7 @@ package stroom.test;
 import stroom.config.app.Config;
 import stroom.config.app.YamlUtil;
 import stroom.importexport.impl.ContentPackImport;
+import stroom.importexport.impl.ContentPackImportConfig;
 import stroom.task.api.TaskManager;
 import stroom.test.common.util.test.ContentPackDownloader;
 import stroom.util.io.PathCreator;
@@ -57,7 +58,7 @@ public final class SetupSampleData {
         final Path configFile = YamlUtil.getYamlFileFromArgs(args);
         Config config;
         try {
-            config = YamlUtil.readConfig(configFile);
+            config = YamlUtil.readAppConfig(configFile);
         } catch (final IOException e) {
             throw new RuntimeException("Unable to read yaml config");
         }
@@ -94,12 +95,12 @@ public final class SetupSampleData {
 
     private static void downloadContent(final Path contentPacksDefinition,
                                         final PathCreator pathCreator,
-                                        final Config config) {
+                                        final ContentPackImportConfig contentPackImportConfig) {
         try {
             final String downloadDir = pathCreator.makeAbsolute(pathCreator.replaceSystemProperties(
                     ContentPackDownloader.CONTENT_PACK_DOWNLOAD_DIR));
             final String importDir = pathCreator.makeAbsolute(pathCreator.replaceSystemProperties(
-                    config.getAppConfig().getContentPackImportConfig().getImportDirectory()));
+                    contentPackImportConfig.getImportDirectory()));
 
             final Path contentPackDownloadPath = Paths.get(downloadDir);
             final Path contentPackImportPath = Paths.get(importDir);

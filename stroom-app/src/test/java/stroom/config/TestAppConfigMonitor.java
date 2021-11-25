@@ -88,7 +88,7 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
         final AppConfigValidator appConfigValidator = new AppConfigValidator(validator);
 
         final AbstractFileChangeMonitor appConfigMonitor = new AppConfigMonitor(
-                appConfig, configLocation, globalConfigService, appConfigValidator);
+                appConfig, configLocation, globalConfigService, configMapper, appConfigValidator);
 
         // start watching our copied file for changes, the start is async
         appConfigMonitor.start();

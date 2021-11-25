@@ -22,11 +22,14 @@ import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.NotInjectableConfig;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
+@JsonPropertyOrder(alphabetic = true)
 @NotInjectableConfig
 public class ConnectionConfig extends AbstractConfig {
 
@@ -52,13 +55,15 @@ public class ConnectionConfig extends AbstractConfig {
     private String user;
     private String password;
 
+    // TODO 24/11/2021 AT: Remove once we go immutable
     public ConnectionConfig() {
     }
 
-    public ConnectionConfig(final String className,
-                            final String url,
-                            final String user,
-                            final String password) {
+    @JsonCreator
+    public ConnectionConfig(@JsonProperty(PROP_NAME_JDBC_DRIVER_CLASS_NAME) final String className,
+                            @JsonProperty(PROP_NAME_JDBC_DRIVER_URL) final String url,
+                            @JsonProperty(PROP_NAME_JDBC_DRIVER_USERNAME) final String user,
+                            @JsonProperty(PROP_NAME_JDBC_DRIVER_PASSWORD) final String password) {
         this.className = className;
         this.url = url;
         this.user = user;

@@ -24,9 +24,9 @@ public class CacheConfig extends AbstractConfig {
     public CacheConfig() {
     }
 
-    private CacheConfig(final Long maximumSize,
-                        final StroomDuration expireAfterAccess,
-                        final StroomDuration expireAfterWrite) {
+    private CacheConfig(@JsonProperty(PROP_NAME_MAXIMUM_SIZE) final Long maximumSize,
+                        @JsonProperty(PROP_NAME_EXPIRE_AFTER_ACCESS) final StroomDuration expireAfterAccess,
+                        @JsonProperty(PROP_NAME_EXPIRE_AFTER_WRITE) final StroomDuration expireAfterWrite) {
         this.maximumSize = maximumSize;
         this.expireAfterAccess = expireAfterAccess;
         this.expireAfterWrite = expireAfterWrite;

@@ -98,50 +98,183 @@ public class AppConfig extends AbstractConfig {
     public static final String PROP_NAME_UI_URI = "uiUri";
     public static final String PROP_NAME_VOLUMES = "volumes";
 
-    private boolean haltBootOnConfigValidationFailure = true;
+    private final boolean haltBootOnConfigValidationFailure;
 
-    private ActivityConfig activityConfig = new ActivityConfig();
-    private AnnotationConfig annotationConfig = new AnnotationConfig();
-    private ByteBufferPoolConfig byteBufferPoolConfig = new ByteBufferPoolConfig();
-    private ClusterConfig clusterConfig = new ClusterConfig();
-    private ClusterLockConfig clusterLockConfig = new ClusterLockConfig();
-    private CommonDbConfig commonDbConfig = new CommonDbConfig();
-    private ContentPackImportConfig contentPackImportConfig = new ContentPackImportConfig();
-    private LegacyDbConfig legacyDbConfig = new LegacyDbConfig();
-    private DashboardConfig dashboardConfig = new DashboardConfig();
-    private DataConfig dataConfig = new DataConfig();
-    private DataSourceUrlConfig dataSourceUrlConfig = new DataSourceUrlConfig();
-    private DocStoreConfig docStoreConfig = new DocStoreConfig();
-    private ExplorerConfig explorerConfig = new ExplorerConfig();
-    private ExportConfig exportConfig = new ExportConfig();
-    private FeedConfig feedConfig = new FeedConfig();
-    private IndexConfig indexConfig = new IndexConfig();
-    private JobSystemConfig jobSystemConfig = new JobSystemConfig();
-    private KafkaConfig kafkaConfig = new KafkaConfig();
-    private LifecycleConfig lifecycleConfig = new LifecycleConfig();
-    private LmdbLibraryConfig lmdbLibraryConfig = new LmdbLibraryConfig();
-    private LoggingConfig loggingConfig = new LoggingConfig();
-    private NodeConfig nodeConfig = new NodeConfig();
-    private NodeUriConfig nodeUri = new NodeUriConfig();
-    private PipelineConfig pipelineConfig = new PipelineConfig();
-    private ProcessorConfig processorConfig = new ProcessorConfig();
-    private PropertyServiceConfig propertyServiceConfig = new PropertyServiceConfig();
-    private ProxyAggregationConfig proxyAggregationConfig = new ProxyAggregationConfig();
-    private PublicUriConfig publicUri = new PublicUriConfig();
-    private ReceiveDataConfig receiveDataConfig = new ReceiveDataConfig();
-    private SearchConfig searchConfig = new SearchConfig();
-    private SearchableConfig searchableConfig = new SearchableConfig();
-    private SecurityConfig securityConfig = new SecurityConfig();
-    private ServiceDiscoveryConfig serviceDiscoveryConfig = new ServiceDiscoveryConfig();
-    private SessionCookieConfig sessionCookieConfig = new SessionCookieConfig();
-    private SolrConfig solrConfig = new SolrConfig();
-    private StatisticsConfig statisticsConfig = new StatisticsConfig();
-    private StoredQueryConfig storedQueryConfig = new StoredQueryConfig();
-    private StroomPathConfig pathConfig = new StroomPathConfig();
-    private UiConfig uiConfig = new UiConfig();
-    private UiUriConfig uiUri = new UiUriConfig();
-    private VolumeConfig volumeConfig = new VolumeConfig();
+    private final ActivityConfig activityConfig;
+    private final AnnotationConfig annotationConfig;
+    private final ByteBufferPoolConfig byteBufferPoolConfig;
+    private final ClusterConfig clusterConfig;
+    private final ClusterLockConfig clusterLockConfig;
+    private final CommonDbConfig commonDbConfig;
+    private final ContentPackImportConfig contentPackImportConfig;
+    private final LegacyDbConfig legacyDbConfig;
+    private final DashboardConfig dashboardConfig;
+    private final DataConfig dataConfig;
+    private final DataSourceUrlConfig dataSourceUrlConfig;
+    private final DocStoreConfig docStoreConfig;
+    private final ExplorerConfig explorerConfig;
+    private final ExportConfig exportConfig;
+    private final FeedConfig feedConfig;
+    private final IndexConfig indexConfig;
+    private final JobSystemConfig jobSystemConfig;
+    private final KafkaConfig kafkaConfig;
+    private final LifecycleConfig lifecycleConfig;
+    private final LmdbLibraryConfig lmdbLibraryConfig;
+    private final LoggingConfig loggingConfig;
+    private final NodeConfig nodeConfig;
+    private final NodeUriConfig nodeUri;
+    private final PipelineConfig pipelineConfig;
+    private final ProcessorConfig processorConfig;
+    private final PropertyServiceConfig propertyServiceConfig;
+    private final ProxyAggregationConfig proxyAggregationConfig;
+    private final PublicUriConfig publicUri;
+    private final ReceiveDataConfig receiveDataConfig;
+    private final SearchConfig searchConfig;
+    private final SearchableConfig searchableConfig;
+    private final SecurityConfig securityConfig;
+    private final ServiceDiscoveryConfig serviceDiscoveryConfig;
+    private final SessionCookieConfig sessionCookieConfig;
+    private final SolrConfig solrConfig;
+    private final StatisticsConfig statisticsConfig;
+    private final StoredQueryConfig storedQueryConfig;
+    private final StroomPathConfig pathConfig;
+    private final UiConfig uiConfig;
+    private final UiUriConfig uiUri;
+    private final VolumeConfig volumeConfig;
 
+    /**
+     * Will construct a full immutable AppConfig tree will ALL defaults set.
+     */
+    public AppConfig() {
+        this(true,
+                new ActivityConfig(),
+                new AnnotationConfig(),
+                new ByteBufferPoolConfig(),
+                new ClusterConfig(),
+                new ClusterLockConfig(),
+                new CommonDbConfig(),
+                new ContentPackImportConfig(),
+                new LegacyDbConfig(),
+                new DashboardConfig(),
+                new DataConfig(),
+                new DataSourceUrlConfig(),
+                new DocStoreConfig(),
+                new ExplorerConfig(),
+                new ExportConfig(),
+                new FeedConfig(),
+                new IndexConfig(),
+                new JobSystemConfig(),
+                new KafkaConfig(),
+                new LifecycleConfig(),
+                new LmdbLibraryConfig(),
+                new LoggingConfig(),
+                new NodeConfig(),
+                new NodeUriConfig(),
+                new PipelineConfig(),
+                new ProcessorConfig(),
+                new PropertyServiceConfig(),
+                new ProxyAggregationConfig(),
+                new PublicUriConfig(),
+                new ReceiveDataConfig(),
+                new SearchConfig(),
+                new SearchableConfig(),
+                new SecurityConfig(),
+                new ServiceDiscoveryConfig(),
+                new SessionCookieConfig(),
+                new SolrConfig(),
+                new StatisticsConfig(),
+                new StoredQueryConfig(),
+                new StroomPathConfig(),
+                new UiConfig(),
+                new UiUriConfig(),
+                new VolumeConfig());
+    }
+
+    public AppConfig(@JsonProperty(PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE) final boolean haltBootOnConfigValidationFailure,
+                     @JsonProperty(PROP_NAME_ACTIVITY) final ActivityConfig activityConfig,
+                     @JsonProperty(PROP_NAME_ANNOTATION) final AnnotationConfig annotationConfig,
+                     @JsonProperty(PROP_NAME_BYTE_BUFFER_POOL) final ByteBufferPoolConfig byteBufferPoolConfig,
+                     @JsonProperty(PROP_NAME_CLUSTER) final ClusterConfig clusterConfig,
+                     @JsonProperty(PROP_NAME_CLUSTER_LOCK) final ClusterLockConfig clusterLockConfig,
+                     @JsonProperty(PROP_NAME_COMMON_DB_DETAILS) final CommonDbConfig commonDbConfig,
+                     @JsonProperty(PROP_NAME_CONTENT_PACK_IMPORT) final ContentPackImportConfig contentPackImportConfig,
+                     @JsonProperty(PROP_NAME_CORE) final LegacyDbConfig legacyDbConfig,
+                     @JsonProperty(PROP_NAME_DASHBOARD) final DashboardConfig dashboardConfig,
+                     @JsonProperty(PROP_NAME_DATA) final DataConfig dataConfig,
+                     @JsonProperty(PROP_NAME_DATA_SOURCE_URL) final DataSourceUrlConfig dataSourceUrlConfig,
+                     @JsonProperty(PROP_NAME_DOCSTORE) final DocStoreConfig docStoreConfig,
+                     @JsonProperty(PROP_NAME_EXPLORER) final ExplorerConfig explorerConfig,
+                     @JsonProperty(PROP_NAME_EXPORT) final ExportConfig exportConfig,
+                     @JsonProperty(PROP_NAME_FEED) final FeedConfig feedConfig,
+                     @JsonProperty(PROP_NAME_INDEX) final IndexConfig indexConfig,
+                     @JsonProperty(PROP_NAME_JOB) final JobSystemConfig jobSystemConfig,
+                     @JsonProperty(PROP_NAME_KAFKA) final KafkaConfig kafkaConfig,
+                     @JsonProperty(PROP_NAME_LIFECYCLE) final LifecycleConfig lifecycleConfig,
+                     @JsonProperty(PROP_NAME_LMDB_LIBRARY) final LmdbLibraryConfig lmdbLibraryConfig,
+                     @JsonProperty(PROP_NAME_LOGGING) final LoggingConfig loggingConfig,
+                     @JsonProperty(PROP_NAME_NODE) final NodeConfig nodeConfig,
+                     @JsonProperty(PROP_NAME_NODE_URI) final NodeUriConfig nodeUri,
+                     @JsonProperty(PROP_NAME_PIPELINE) final PipelineConfig pipelineConfig,
+                     @JsonProperty(PROP_NAME_PROCESSOR) final ProcessorConfig processorConfig,
+                     @JsonProperty(PROP_NAME_PROPERTIES) final PropertyServiceConfig propertyServiceConfig,
+                     @JsonProperty(PROP_NAME_PROXY_AGGREGATION) final ProxyAggregationConfig proxyAggregationConfig,
+                     @JsonProperty(PROP_NAME_PUBLIC_URI) final PublicUriConfig publicUri,
+                     @JsonProperty(PROP_NAME_RECEIVE) final ReceiveDataConfig receiveDataConfig,
+                     @JsonProperty(PROP_NAME_SEARCH) final SearchConfig searchConfig,
+                     @JsonProperty(PROP_NAME_SEARCHABLE) final SearchableConfig searchableConfig,
+                     @JsonProperty(PROP_NAME_SECURITY) final SecurityConfig securityConfig,
+                     @JsonProperty(PROP_NAME_SERVICE_DISCOVERY) final ServiceDiscoveryConfig serviceDiscoveryConfig,
+                     @JsonProperty(PROP_NAME_SESSION_COOKIE) final SessionCookieConfig sessionCookieConfig,
+                     @JsonProperty(PROP_NAME_SOLR) final SolrConfig solrConfig,
+                     @JsonProperty(PROP_NAME_STATISTICS) final StatisticsConfig statisticsConfig,
+                     @JsonProperty(PROP_NAME_QUERY_HISTORY) final StoredQueryConfig storedQueryConfig,
+                     @JsonProperty(PROP_NAME_PATH) final StroomPathConfig pathConfig,
+                     @JsonProperty(PROP_NAME_UI) final UiConfig uiConfig,
+                     @JsonProperty(PROP_NAME_UI_URI) final UiUriConfig uiUri,
+                     @JsonProperty(PROP_NAME_VOLUMES) final VolumeConfig volumeConfig) {
+        this.haltBootOnConfigValidationFailure = haltBootOnConfigValidationFailure;
+        this.activityConfig = activityConfig;
+        this.annotationConfig = annotationConfig;
+        this.byteBufferPoolConfig = byteBufferPoolConfig;
+        this.clusterConfig = clusterConfig;
+        this.clusterLockConfig = clusterLockConfig;
+        this.commonDbConfig = commonDbConfig;
+        this.contentPackImportConfig = contentPackImportConfig;
+        this.legacyDbConfig = legacyDbConfig;
+        this.dashboardConfig = dashboardConfig;
+        this.dataConfig = dataConfig;
+        this.dataSourceUrlConfig = dataSourceUrlConfig;
+        this.docStoreConfig = docStoreConfig;
+        this.explorerConfig = explorerConfig;
+        this.exportConfig = exportConfig;
+        this.feedConfig = feedConfig;
+        this.indexConfig = indexConfig;
+        this.jobSystemConfig = jobSystemConfig;
+        this.kafkaConfig = kafkaConfig;
+        this.lifecycleConfig = lifecycleConfig;
+        this.lmdbLibraryConfig = lmdbLibraryConfig;
+        this.loggingConfig = loggingConfig;
+        this.nodeConfig = nodeConfig;
+        this.nodeUri = nodeUri;
+        this.pipelineConfig = pipelineConfig;
+        this.processorConfig = processorConfig;
+        this.propertyServiceConfig = propertyServiceConfig;
+        this.proxyAggregationConfig = proxyAggregationConfig;
+        this.publicUri = publicUri;
+        this.receiveDataConfig = receiveDataConfig;
+        this.searchConfig = searchConfig;
+        this.searchableConfig = searchableConfig;
+        this.securityConfig = securityConfig;
+        this.serviceDiscoveryConfig = serviceDiscoveryConfig;
+        this.sessionCookieConfig = sessionCookieConfig;
+        this.solrConfig = solrConfig;
+        this.statisticsConfig = statisticsConfig;
+        this.storedQueryConfig = storedQueryConfig;
+        this.pathConfig = pathConfig;
+        this.uiConfig = uiConfig;
+        this.uiUri = uiUri;
+        this.volumeConfig = volumeConfig;
+    }
 
     @AssertTrue(
             message = "stroom." + PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE + " is set to false. If there is " +
@@ -154,19 +287,9 @@ public class AppConfig extends AbstractConfig {
         return haltBootOnConfigValidationFailure;
     }
 
-    @SuppressWarnings("unused")
-    public void setHaltBootOnConfigValidationFailure(final boolean haltBootOnConfigValidationFailure) {
-        this.haltBootOnConfigValidationFailure = haltBootOnConfigValidationFailure;
-    }
-
     @JsonProperty(PROP_NAME_ACTIVITY)
     public ActivityConfig getActivityConfig() {
         return activityConfig;
-    }
-
-    @SuppressWarnings("unused")
-    public void setActivityConfig(final ActivityConfig activityConfig) {
-        this.activityConfig = activityConfig;
     }
 
     @JsonProperty(PROP_NAME_ANNOTATION)
@@ -174,19 +297,9 @@ public class AppConfig extends AbstractConfig {
         return annotationConfig;
     }
 
-    @SuppressWarnings("unused")
-    public void setAnnotationConfig(final AnnotationConfig annotationConfig) {
-        this.annotationConfig = annotationConfig;
-    }
-
     @JsonProperty(PROP_NAME_BYTE_BUFFER_POOL)
     public ByteBufferPoolConfig getByteBufferPoolConfig() {
         return byteBufferPoolConfig;
-    }
-
-    @SuppressWarnings("unused")
-    public void setByteBufferPoolConfig(final ByteBufferPoolConfig byteBufferPoolConfig) {
-        this.byteBufferPoolConfig = byteBufferPoolConfig;
     }
 
     @JsonProperty(PROP_NAME_CLUSTER)
@@ -194,19 +307,9 @@ public class AppConfig extends AbstractConfig {
         return clusterConfig;
     }
 
-    @SuppressWarnings("unused")
-    public void setClusterConfig(final ClusterConfig clusterConfig) {
-        this.clusterConfig = clusterConfig;
-    }
-
     @JsonProperty(PROP_NAME_CLUSTER_LOCK)
     public ClusterLockConfig getClusterLockConfig() {
         return clusterLockConfig;
-    }
-
-    @SuppressWarnings("unused")
-    public void setClusterLockConfig(ClusterLockConfig clusterLockConfig) {
-        this.clusterLockConfig = clusterLockConfig;
     }
 
     @JsonProperty(PROP_NAME_COMMON_DB_DETAILS)
@@ -217,19 +320,9 @@ public class AppConfig extends AbstractConfig {
         return commonDbConfig;
     }
 
-    @SuppressWarnings("unused")
-    public void setCommonDbConfig(final CommonDbConfig commonDbConfig) {
-        this.commonDbConfig = commonDbConfig;
-    }
-
     @JsonProperty(PROP_NAME_CONTENT_PACK_IMPORT)
     public ContentPackImportConfig getContentPackImportConfig() {
         return contentPackImportConfig;
-    }
-
-    @SuppressWarnings("unused")
-    public void setContentPackImportConfig(final ContentPackImportConfig contentPackImportConfig) {
-        this.contentPackImportConfig = contentPackImportConfig;
     }
 
     @JsonProperty(PROP_NAME_CORE)
@@ -238,19 +331,9 @@ public class AppConfig extends AbstractConfig {
         return legacyDbConfig;
     }
 
-    @SuppressWarnings("unused")
-    public void setLegacyDbConfig(final LegacyDbConfig legacyDbConfig) {
-        this.legacyDbConfig = legacyDbConfig;
-    }
-
     @JsonProperty(PROP_NAME_DASHBOARD)
     public DashboardConfig getDashboardConfig() {
         return dashboardConfig;
-    }
-
-    @SuppressWarnings("unused")
-    public void setDashboardConfig(final DashboardConfig dashboardConfig) {
-        this.dashboardConfig = dashboardConfig;
     }
 
     @JsonProperty(PROP_NAME_DATA)
@@ -259,19 +342,9 @@ public class AppConfig extends AbstractConfig {
         return dataConfig;
     }
 
-    @SuppressWarnings("unused")
-    public void setDataConfig(final DataConfig dataConfig) {
-        this.dataConfig = dataConfig;
-    }
-
     @JsonProperty(PROP_NAME_DATA_SOURCE_URL)
     public DataSourceUrlConfig getDataSourceUrlConfig() {
         return dataSourceUrlConfig;
-    }
-
-    @SuppressWarnings("unused")
-    public void setDataSourceUrlConfig(final DataSourceUrlConfig dataSourceUrlConfig) {
-        this.dataSourceUrlConfig = dataSourceUrlConfig;
     }
 
     @JsonProperty(PROP_NAME_DOCSTORE)
@@ -279,19 +352,9 @@ public class AppConfig extends AbstractConfig {
         return docStoreConfig;
     }
 
-    @SuppressWarnings("unused")
-    public void setDocStoreConfig(final DocStoreConfig docStoreConfig) {
-        this.docStoreConfig = docStoreConfig;
-    }
-
     @JsonProperty(PROP_NAME_EXPLORER)
     public ExplorerConfig getExplorerConfig() {
         return explorerConfig;
-    }
-
-    @SuppressWarnings("unused")
-    public void setExplorerConfig(final ExplorerConfig explorerConfig) {
-        this.explorerConfig = explorerConfig;
     }
 
     @JsonProperty(PROP_NAME_FEED)
@@ -299,19 +362,9 @@ public class AppConfig extends AbstractConfig {
         return feedConfig;
     }
 
-    @SuppressWarnings("unused")
-    public void setFeedConfig(final FeedConfig feedConfig) {
-        this.feedConfig = feedConfig;
-    }
-
     @JsonProperty(PROP_NAME_EXPORT)
     public ExportConfig getExportConfig() {
         return exportConfig;
-    }
-
-    @SuppressWarnings("unused")
-    public void setExportConfig(final ExportConfig exportConfig) {
-        this.exportConfig = exportConfig;
     }
 
     @JsonProperty(PROP_NAME_INDEX)
@@ -319,19 +372,9 @@ public class AppConfig extends AbstractConfig {
         return indexConfig;
     }
 
-    @SuppressWarnings("unused")
-    public void setIndexConfig(final IndexConfig indexConfig) {
-        this.indexConfig = indexConfig;
-    }
-
     @JsonProperty(PROP_NAME_JOB)
     public JobSystemConfig getJobSystemConfig() {
         return jobSystemConfig;
-    }
-
-    @SuppressWarnings("unused")
-    public void setJobSystemConfig(final JobSystemConfig jobSystemConfig) {
-        this.jobSystemConfig = jobSystemConfig;
     }
 
     @JsonProperty(PROP_NAME_KAFKA)
@@ -339,18 +382,9 @@ public class AppConfig extends AbstractConfig {
         return kafkaConfig;
     }
 
-    public void setKafkaConfig(final KafkaConfig kafkaConfig) {
-        this.kafkaConfig = kafkaConfig;
-    }
-
     @JsonProperty(PROP_NAME_LIFECYCLE)
     public LifecycleConfig getLifecycleConfig() {
         return lifecycleConfig;
-    }
-
-    @SuppressWarnings("unused")
-    public void setLifecycleConfig(final LifecycleConfig lifecycleConfig) {
-        this.lifecycleConfig = lifecycleConfig;
     }
 
     @JsonProperty(PROP_NAME_LMDB_LIBRARY)
@@ -358,19 +392,9 @@ public class AppConfig extends AbstractConfig {
         return lmdbLibraryConfig;
     }
 
-    @SuppressWarnings("unused")
-    public void setLmdbLibraryConfig(final LmdbLibraryConfig lmdbLibraryConfig) {
-        this.lmdbLibraryConfig = lmdbLibraryConfig;
-    }
-
     @JsonProperty(PROP_NAME_NODE)
     public NodeConfig getNodeConfig() {
         return nodeConfig;
-    }
-
-    @SuppressWarnings("unused")
-    public void setNodeConfig(final NodeConfig nodeConfig) {
-        this.nodeConfig = nodeConfig;
     }
 
     @JsonPropertyDescription("This is the base endpoint of the node for all inter-node communications, " +
@@ -383,18 +407,9 @@ public class AppConfig extends AbstractConfig {
         return nodeUri;
     }
 
-    public void setNodeUri(final NodeUriConfig nodeUri) {
-        this.nodeUri = nodeUri;
-    }
-
     @JsonProperty(PROP_NAME_PATH)
     public StroomPathConfig getPathConfig() {
         return pathConfig;
-    }
-
-    @SuppressWarnings("unused")
-    public void setPathConfig(final StroomPathConfig pathConfig) {
-        this.pathConfig = pathConfig;
     }
 
     @JsonProperty(PROP_NAME_PIPELINE)
@@ -402,19 +417,9 @@ public class AppConfig extends AbstractConfig {
         return pipelineConfig;
     }
 
-    @SuppressWarnings("unused")
-    public void setPipelineConfig(final PipelineConfig pipelineConfig) {
-        this.pipelineConfig = pipelineConfig;
-    }
-
     @JsonProperty(PROP_NAME_PROCESSOR)
     public ProcessorConfig getProcessorConfig() {
         return processorConfig;
-    }
-
-    @SuppressWarnings("unused")
-    public void setProcessorConfig(final ProcessorConfig processorConfig) {
-        this.processorConfig = processorConfig;
     }
 
     @JsonProperty(PROP_NAME_PROPERTIES)
@@ -423,19 +428,9 @@ public class AppConfig extends AbstractConfig {
         return propertyServiceConfig;
     }
 
-    @SuppressWarnings("unused")
-    public void setPropertyServiceConfig(final PropertyServiceConfig propertyServiceConfig) {
-        this.propertyServiceConfig = propertyServiceConfig;
-    }
-
     @JsonProperty(PROP_NAME_PROXY_AGGREGATION)
     public ProxyAggregationConfig getProxyAggregationConfig() {
         return proxyAggregationConfig;
-    }
-
-    @SuppressWarnings("unused")
-    public void setProxyAggregationConfig(final ProxyAggregationConfig proxyAggregationConfig) {
-        this.proxyAggregationConfig = proxyAggregationConfig;
     }
 
     @JsonPropertyDescription("This is public facing URI of stroom which may be different from the local host if " +
@@ -445,18 +440,9 @@ public class AppConfig extends AbstractConfig {
         return publicUri;
     }
 
-    public void setPublicUri(final PublicUriConfig publicUri) {
-        this.publicUri = publicUri;
-    }
-
     @JsonProperty(PROP_NAME_QUERY_HISTORY)
     public StoredQueryConfig getStoredQueryConfig() {
         return storedQueryConfig;
-    }
-
-    @SuppressWarnings("unused")
-    public void setStoredQueryConfig(final StoredQueryConfig storedQueryConfig) {
-        this.storedQueryConfig = storedQueryConfig;
     }
 
     @JsonProperty(PROP_NAME_RECEIVE)
@@ -464,19 +450,9 @@ public class AppConfig extends AbstractConfig {
         return receiveDataConfig;
     }
 
-    @SuppressWarnings("unused")
-    public void setReceiveDataConfig(final ReceiveDataConfig receiveDataConfig) {
-        this.receiveDataConfig = receiveDataConfig;
-    }
-
     @JsonProperty(PROP_NAME_LOGGING)
     public LoggingConfig getRequestLoggingConfig() {
         return loggingConfig;
-    }
-
-    @SuppressWarnings("unused")
-    public void setRequestLoggingConfig(final LoggingConfig loggingConfig) {
-        this.loggingConfig = loggingConfig;
     }
 
     @JsonProperty(PROP_NAME_SEARCH)
@@ -484,19 +460,9 @@ public class AppConfig extends AbstractConfig {
         return searchConfig;
     }
 
-    @SuppressWarnings("unused")
-    public void setSearchConfig(final SearchConfig searchConfig) {
-        this.searchConfig = searchConfig;
-    }
-
     @JsonProperty(PROP_NAME_SEARCHABLE)
     public SearchableConfig getSearchableConfig() {
         return searchableConfig;
-    }
-
-    @SuppressWarnings("unused")
-    public void setSearchableConfig(final SearchableConfig searchableConfig) {
-        this.searchableConfig = searchableConfig;
     }
 
     @JsonProperty(PROP_NAME_SOLR)
@@ -504,19 +470,9 @@ public class AppConfig extends AbstractConfig {
         return solrConfig;
     }
 
-    @SuppressWarnings("unused")
-    public void setSolrConfig(final SolrConfig solrConfig) {
-        this.solrConfig = solrConfig;
-    }
-
     @JsonProperty(PROP_NAME_SECURITY)
     public SecurityConfig getSecurityConfig() {
         return securityConfig;
-    }
-
-    @SuppressWarnings("unused")
-    public void setSecurityConfig(final SecurityConfig securityConfig) {
-        this.securityConfig = securityConfig;
     }
 
     @JsonProperty(PROP_NAME_SERVICE_DISCOVERY)
@@ -524,19 +480,9 @@ public class AppConfig extends AbstractConfig {
         return serviceDiscoveryConfig;
     }
 
-    @SuppressWarnings("unused")
-    public void setServiceDiscoveryConfig(final ServiceDiscoveryConfig serviceDiscoveryConfig) {
-        this.serviceDiscoveryConfig = serviceDiscoveryConfig;
-    }
-
     @JsonProperty(PROP_NAME_SESSION_COOKIE)
     public SessionCookieConfig getSessionCookieConfig() {
         return sessionCookieConfig;
-    }
-
-    @SuppressWarnings("unused")
-    public void setSessionCookieConfig(final SessionCookieConfig sessionCookieConfig) {
-        this.sessionCookieConfig = sessionCookieConfig;
     }
 
     @JsonProperty(PROP_NAME_STATISTICS)
@@ -545,19 +491,9 @@ public class AppConfig extends AbstractConfig {
         return statisticsConfig;
     }
 
-    @SuppressWarnings("unused")
-    public void setStatisticsConfig(final StatisticsConfig statisticsConfig) {
-        this.statisticsConfig = statisticsConfig;
-    }
-
     @JsonProperty(PROP_NAME_UI)
     public UiConfig getUiConfig() {
         return uiConfig;
-    }
-
-    @SuppressWarnings("unused")
-    public void setUiConfig(final UiConfig uiConfig) {
-        this.uiConfig = uiConfig;
     }
 
     @JsonPropertyDescription("This is the URI where the UI is hosted if different to the public facing URI of the " +
@@ -567,17 +503,8 @@ public class AppConfig extends AbstractConfig {
         return uiUri;
     }
 
-    public void setUiUri(final UiUriConfig uiUri) {
-        this.uiUri = uiUri;
-    }
-
     @JsonProperty(PROP_NAME_VOLUMES)
     public VolumeConfig getVolumeConfig() {
         return volumeConfig;
-    }
-
-    @SuppressWarnings("unused")
-    public void setVolumeConfig(final VolumeConfig volumeConfig) {
-        this.volumeConfig = volumeConfig;
     }
 }

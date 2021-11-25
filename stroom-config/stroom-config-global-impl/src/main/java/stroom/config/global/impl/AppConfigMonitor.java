@@ -27,17 +27,20 @@ public class AppConfigMonitor extends AbstractFileChangeMonitor implements Manag
     private final AppConfig appConfig;
     private final Path configFile;
     private final GlobalConfigService globalConfigService;
+    private final ConfigMapper configMapper;
     private final AppConfigValidator appConfigValidator;
 
     @Inject
     public AppConfigMonitor(final AppConfig appConfig,
                             final ConfigLocation configLocation,
                             final GlobalConfigService globalConfigService,
+                            final ConfigMapper configMapper,
                             final AppConfigValidator appConfigValidator) {
         super(configLocation.getConfigFilePath());
         this.appConfig = appConfig;
         this.configFile = configLocation.getConfigFilePath();
         this.globalConfigService = globalConfigService;
+        this.configMapper = configMapper;
         this.appConfigValidator = appConfigValidator;
     }
 
@@ -64,6 +67,7 @@ public class AppConfigMonitor extends AbstractFileChangeMonitor implements Manag
             } else {
                 try {
                     LOGGER.info("Updating application config from file.");
+                    configMapper.upd
                     globalConfigService.updateConfigFromDb(newAppConfig);
 
                     // Update the config objects using the DB as the removal of a yaml value may trigger

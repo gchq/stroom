@@ -48,6 +48,7 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
     // many times over all the config objects
     @JsonProperty("parts")
     private final List<String> parts;
+    private final int hashCode;
 
     @JsonCreator
     PropertyPath(@JsonProperty("parts") final List<String> parts) {
@@ -57,6 +58,7 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
             validateParts(parts);
             this.parts = new ArrayList<>(parts);
         }
+        hashCode = buildHashCode(this.parts);
     }
 
     private PropertyPath(final List<String> parts1, final List<String> parts2) {
@@ -64,6 +66,7 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
         parts.addAll(parts1);
         parts.addAll(parts2);
         validateParts(parts);
+        hashCode = buildHashCode(this.parts);
     }
 
     private PropertyPath(final List<String> parts1, final String finalPart) {
@@ -71,6 +74,11 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
         parts.addAll(parts1);
         parts.add(finalPart);
         validateParts(parts);
+        hashCode = buildHashCode(this.parts);
+    }
+
+    private int buildHashCode(final List<String> parts) {
+        return Objects.hashCode(parts);
     }
 
     public static PropertyPath blank() {
@@ -85,7 +93,6 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
     public boolean containsPart(final String part) {
         return parts.contains(part);
     }
-
 
     /**
      * Create a {@link PropertyPath} from a path string, e.g "stroom.node.name"
@@ -180,6 +187,14 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
         }
     }
 
+    public String delimitedBy(final String delimiter) {
+        if (parts == null || parts.isEmpty()) {
+            return "";
+        } else {
+            return String.join(delimiter, parts);
+        }
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -212,7 +227,7 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
 
     @Override
     public int hashCode() {
-        return Objects.hash(parts);
+        return hashCode;
     }
 
     public static Builder builder() {
