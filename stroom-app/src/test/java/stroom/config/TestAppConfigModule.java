@@ -120,7 +120,7 @@ class TestAppConfigModule {
             protected void configure() {
                 install(new AppConfigModule(new ConfigHolder() {
                     @Override
-                    public AppConfig getAppConfig() {
+                    public AppConfig getBootStrapConfig() {
                         return modifiedConfig.getAppConfig();
                     }
 
@@ -203,7 +203,7 @@ class TestAppConfigModule {
         AppConfig appConfig = new AppConfig();
         AppConfigModule appConfigModule = new AppConfigModule(new ConfigHolder() {
             @Override
-            public AppConfig getAppConfig() {
+            public AppConfig getBootStrapConfig() {
                 return appConfig;
             }
 

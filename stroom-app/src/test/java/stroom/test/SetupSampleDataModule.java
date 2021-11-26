@@ -29,7 +29,7 @@ public class SetupSampleDataModule extends AbstractModule {
 
         configHolder = new ConfigHolder() {
             @Override
-            public AppConfig getAppConfig() {
+            public AppConfig getBootStrapConfig() {
                 return configuration.getAppConfig();
             }
 

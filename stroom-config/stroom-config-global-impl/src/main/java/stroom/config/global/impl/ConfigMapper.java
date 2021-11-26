@@ -166,6 +166,8 @@ public class ConfigMapper {
 
     private final CountDownLatch configReadyForUseLatch = new CountDownLatch(1);
 
+    private volatile boolean haveYamlOverridesBeenInitialised = false;
+
     // TODO Created this with a view to improving the ser/deser of the values but it needs
     //   more thought.  Leaving it here for now.
 //    private static final Map<Class<?>, Mapping> MAPPERS = new HashMap<>();
@@ -300,24 +302,9 @@ public class ConfigMapper {
      */
     public synchronized void updateConfigFromYaml() {
 
-        final Map<PropertyPath, Prop> newPropertyMap = new HashMap<>();
+        final int changeCount = refreshGlobalPropYamlOverrides();
 
-        final Map<PropertyPath, Optional<String>> currentEffectiveValues = globalPropertiesMap.values()
-                .stream()
-                .collect(Collectors.toMap(ConfigProperty::getName, ConfigProperty::getEffectiveValue));
-
-        final Map<PropertyPath, SourceType> currentSources = globalPropertiesMap.values()
-                .stream()
-                .collect(Collectors.toMap(ConfigProperty::getName, ConfigProperty::getSource));
-
-        final AppConfig yamlAppConfig = buildAppConfigFromFile();
-
-        refreshGlobalPropYamlOverrides(yamlAppConfig);
-
-        final boolean isObjectRefreshRequired = haveAnyEffectiveValuesChanged(
-                currentEffectiveValues, currentSources);
-
-        if (isObjectRefreshRequired) {
+        if (changeCount > 0) {
             rebuildObjectInstanceMap();
         }
 
@@ -343,19 +330,23 @@ public class ConfigMapper {
         //  connected.
         // globalPropertiesMap should now have an up to date picture of the override
         // values so apply all the effective values to this.appConfig
-        allPropertyPaths.forEach(propertyPath ->
-                hasEffectiveValueChanged(propertyPath, currentEffectiveValues, currentSources));
+//        allPropertyPaths.forEach(propertyPath ->
+//                hasEffectiveValueChanged(propertyPath, currentEffectiveValues, currentSources));
     }
 
     private synchronized void rebuildObjectInstanceMap() {
-        final Map<PropertyPath, AbstractConfig> newInstanceMap = new HashMap<>();
+        LOGGER.debug("Rebuilding object instance map");
+        final Map<Class<?>, AbstractConfig> newInstanceMap = new HashMap<>();
         rebuildObjectInstance(AppConfig.ROOT_PROPERTY_PATH, newInstanceMap);
 
+        // Now swap out the current map with the new one
+        this.configInstanceMap = newInstanceMap;
+        LOGGER.debug("Completed rebuild of object instance map");
     }
 
     private synchronized AbstractConfig rebuildObjectInstance(
             final PropertyPath propertyPath,
-            final Map<PropertyPath, AbstractConfig> newInstanceMap) {
+            final Map<Class<?>, AbstractConfig> newInstanceMap) {
 
         final ObjectInfo<? extends AbstractConfig> objectInfo = objectInfoMap.get(propertyPath);
 
@@ -375,34 +366,37 @@ public class ConfigMapper {
             }
         });
 
-        newInstanceMap.put(propertyPath, instance);
+        // We only want to hold the injectable instances
+        if (!instance.getClass().isAnnotationPresent(NotInjectableConfig.class)) {
+            newInstanceMap.put(instance.getClass(), instance);
+        }
 
         return instance;
     }
 
-    public synchronized void updateConfigFromDb(final Collection<ConfigProperty> dbProps) {
-
-        final Map<PropertyPath, Optional<String>> currentEffectiveValues = globalPropertiesMap.values()
-                .stream()
-                .collect(Collectors.toMap(ConfigProperty::getName, ConfigProperty::getEffectiveValue));
-
-        final Map<PropertyPath, SourceType> currentSources = globalPropertiesMap.values()
-                .stream()
-                .collect(Collectors.toMap(ConfigProperty::getName, ConfigProperty::getSource));
-
-        // Ensure we have the latest picture of the db override values
-        // This will update newAppConfig with the effective values
-        decorateAllDbConfigProperty(dbProps, defaultPropertiesMap);
-
-        // TODO 24/11/2021 AT: Need to rebuild an app config tree using the ctors we hold and
-        //  getting the args from the glob prop map.  Need to rebuild the whole thing as they are all
-        //  connected.
-        // globalPropertiesMap should now have an up to date picture of the override
-        // values so apply all the effective values to this.appConfig
-        allPropertyPaths.forEach(propertyPath ->
-                hasEffectiveValueChanged(propertyPath, currentEffectiveValues, currentSources));
-
-    }
+//    public synchronized void updateConfigFromDb(final Collection<ConfigProperty> dbProps) {
+//
+//        final Map<PropertyPath, Optional<String>> currentEffectiveValues = globalPropertiesMap.values()
+//                .stream()
+//                .collect(Collectors.toMap(ConfigProperty::getName, ConfigProperty::getEffectiveValue));
+//
+//        final Map<PropertyPath, SourceType> currentSources = globalPropertiesMap.values()
+//                .stream()
+//                .collect(Collectors.toMap(ConfigProperty::getName, ConfigProperty::getSource));
+//
+//        // Ensure we have the latest picture of the db override values
+//        // This will update newAppConfig with the effective values
+//        decorateAllDbConfigProperty(dbProps, defaultPropertiesMap);
+//
+//        // TODO 24/11/2021 AT: Need to rebuild an app config tree using the ctors we hold and
+//        //  getting the args from the glob prop map.  Need to rebuild the whole thing as they are all
+//        //  connected.
+//        // globalPropertiesMap should now have an up to date picture of the override
+//        // values so apply all the effective values to this.appConfig
+//        allPropertyPaths.forEach(propertyPath ->
+//                hasEffectiveValueChanged(propertyPath, currentEffectiveValues, currentSources));
+//
+//    }
 
     /**
      * Merge the config.yml content with the default AppConfig tree to get a complete
@@ -427,12 +421,22 @@ public class ConfigMapper {
         }
     }
 
-    private void refreshGlobalPropYamlOverrides(final AppConfig appConfig) {
+    private synchronized int refreshGlobalPropYamlOverrides() {
+
+        final Map<PropertyPath, Optional<String>> currentEffectiveValues = globalPropertiesMap.values()
+                .stream()
+                .collect(Collectors.toMap(ConfigProperty::getName, ConfigProperty::getEffectiveValue));
+
+        final Map<PropertyPath, SourceType> currentSources = globalPropertiesMap.values()
+                .stream()
+                .collect(Collectors.toMap(ConfigProperty::getName, ConfigProperty::getSource));
+
+        final AppConfig yamlAppConfig = buildAppConfigFromFile();
 
         final Map<PropertyPath, Prop> newPropertyMap = new HashMap<>();
-        // walk the newAppConfig tree and update the globalPropertiesMap with the yaml overrides
+        // walk the yamlAppConfig tree and update the globalPropertiesMap with the yaml overrides
         addConfigObjectMethods(
-                appConfig,
+                yamlAppConfig,
                 AppConfig.ROOT_PROPERTY_PATH,
                 newPropertyMap,
                 null,
@@ -440,6 +444,16 @@ public class ConfigMapper {
 
         allPropertyPaths.forEach(propertyPath ->
                 yamlOverridePropertyConsumer(propertyPath, newPropertyMap.get(propertyPath)));
+
+        // We assume that the all the db overrides in the glob props are up to date at this point
+        final int changeCount = haveAnyEffectiveValuesChanged(
+                currentEffectiveValues, currentSources);
+
+        if (!haveYamlOverridesBeenInitialised) {
+            haveYamlOverridesBeenInitialised = true;
+        }
+
+        return changeCount;
     }
 
     /**
@@ -485,18 +499,13 @@ public class ConfigMapper {
         }
     }
 
-    void decorateAllDbConfigProperty(final Collection<ConfigProperty> dbConfigProperties) {
-        decorateAllDbConfigProperty(dbConfigProperties, defaultPropertiesMap);
-    }
-
-    private synchronized void decorateAllDbConfigProperty(final Collection<ConfigProperty> dbConfigProperties,
-                                                          final Map<PropertyPath, Prop> propertyMap) {
+    synchronized void decorateAllDbConfigProperties(final Collection<ConfigProperty> dbConfigProperties) {
 
         int changeCount = dbConfigProperties.stream()
                 .mapToInt(configProperty -> {
                     final Tuple2<ConfigProperty, Boolean> tuple2 = decorateDbConfigProperty(
                             configProperty,
-                            propertyMap);
+                            defaultPropertiesMap);
 
                     final boolean hasChanged = tuple2._2;
                     return hasChanged
@@ -504,6 +513,8 @@ public class ConfigMapper {
                             : 0;
                 })
                 .sum();
+
+        LOGGER.debug("Change count A: {}", changeCount);
 
         // Now ensure all propertyMap props not in the list of db props have no db override set.
         // I.e. another node could have removed the db override.
@@ -541,6 +552,15 @@ public class ConfigMapper {
 //                    }
                 })
                 .sum();
+
+        LOGGER.debug("Change count B: {}", changeCount);
+
+        // This may be the first call after booting the app so ensure the yaml is set up too
+        if (!haveYamlOverridesBeenInitialised) {
+            changeCount += refreshGlobalPropYamlOverrides();
+        }
+
+        LOGGER.debug("Change count C: {}", changeCount);
 
         if (changeCount > 0) {
             rebuildObjectInstanceMap();
@@ -719,10 +739,10 @@ public class ConfigMapper {
         });
     }
 
-    private boolean haveAnyEffectiveValuesChanged(final Map<PropertyPath, Optional<String>> currentEffectiveValues,
-                                                  final Map<PropertyPath, SourceType> currentSources) {
+    private int haveAnyEffectiveValuesChanged(final Map<PropertyPath, Optional<String>> currentEffectiveValues,
+                                              final Map<PropertyPath, SourceType> currentSources) {
 
-        final long changeCount = allPropertyPaths.stream()
+        final int changeCount = allPropertyPaths.stream()
                 .mapToInt(propertyPath -> {
 
                     final Optional<String> effectiveValueBefore = currentEffectiveValues
@@ -750,7 +770,7 @@ public class ConfigMapper {
                 })
                 .sum();
 
-        return changeCount > 0;
+        return changeCount;
     }
 
     private boolean hasEffectiveValueChanged(final PropertyPath fullPath,

@@ -26,14 +26,14 @@ public class AppConfigModule extends AbstractModule {
     @Override
     protected void configure() {
         LOGGER.debug(() ->
-                "Binding appConfig with id " + System.identityHashCode(configHolder.getAppConfig()));
+                "Binding appConfig with id " + System.identityHashCode(configHolder.getBootStrapConfig()));
 
         bind(ConfigHolder.class).toInstance(configHolder);
 
         // Bind the de-serialised yaml config to a singleton AppConfig object, whose parts
         // can be injected all over the app.
         // ConfigMapper is responsible for mutating it if the yaml file or database props change.
-        bind(AppConfig.class).toProvider(configHolder::getAppConfig);
+        bind(AppConfig.class).toProvider(configHolder::getBootStrapConfig);
 
         // Holder for the location of the yaml config file so the AppConfigMonitor can
         // get hold of it via guice
@@ -277,7 +277,7 @@ public class AppConfigModule extends AbstractModule {
             final Function<AppConfig, T> configGetter,
             final BiConsumer<AppConfig, T> configSetter,
             final Class<T> clazz) {
-        bindConfig(configHolder.getAppConfig(), configGetter, configSetter, clazz, clazz, null);
+        bindConfig(configHolder.getBootStrapConfig(), configGetter, configSetter, clazz, clazz, null);
     }
 
     private <T extends AbstractConfig> void bindConfig(
@@ -285,7 +285,7 @@ public class AppConfigModule extends AbstractModule {
             final BiConsumer<AppConfig, T> configSetter,
             final Class<T> instanceClass,
             final Class<? super T> bindClass) {
-        bindConfig(configHolder.getAppConfig(), configGetter, configSetter, instanceClass, bindClass, null);
+        bindConfig(configHolder.getBootStrapConfig(), configGetter, configSetter, instanceClass, bindClass, null);
     }
 
     private <T extends AbstractConfig> void bindConfig(
@@ -293,7 +293,7 @@ public class AppConfigModule extends AbstractModule {
             final BiConsumer<AppConfig, T> configSetter,
             final Class<T> clazz,
             final Consumer<T> childConfigConsumer) {
-        bindConfig(configHolder.getAppConfig(), configGetter, configSetter, clazz, clazz, childConfigConsumer);
+        bindConfig(configHolder.getBootStrapConfig(), configGetter, configSetter, clazz, clazz, childConfigConsumer);
     }
 
     private <X extends AbstractConfig, T extends AbstractConfig> void bindConfig(

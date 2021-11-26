@@ -44,7 +44,7 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
     @Test
     void test() throws Exception {
         final Path yamlFile = configHolder.getConfigFile();
-        final AppConfig appConfig = configHolder.getAppConfig();
+        final AppConfig appConfig = configHolder.getBootStrapConfig();
 //        final Path yamlFile = Paths.get(System.getProperty("user.dir"))
 //                .getParent()
 //                .resolve("stroom-app")
@@ -53,7 +53,7 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
         LOGGER.info("Testing with config file {}", yamlFile.toAbsolutePath().normalize());
 
         // AppConfigTestModule creates an appConfig instance but doesn't create the file.
-        YamlUtil.writeConfig(configHolder.getAppConfig(), configHolder.getConfigFile());
+        YamlUtil.writeConfig(configHolder.getBootStrapConfig(), configHolder.getConfigFile());
 
         // Remove all the dropwiz stuff from the file to avoid (de)ser issues.
         final List<String> outputLines = Files.lines(yamlFile)

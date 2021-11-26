@@ -47,7 +47,7 @@ public class AppConfigTestModule extends AppConfigModule {
         }
 
         @Override
-        public AppConfig getAppConfig() {
+        public AppConfig getBootStrapConfig() {
             return appConfig;
         }
 

@@ -67,8 +67,8 @@ public class AppConfigMonitor extends AbstractFileChangeMonitor implements Manag
             } else {
                 try {
                     LOGGER.info("Updating application config from file.");
-                    configMapper.upd
-                    globalConfigService.updateConfigFromDb(newAppConfig);
+                    configMapper.updateConfigFromYaml();
+//                    globalConfigService.updateConfigFromDb();
 
                     // Update the config objects using the DB as the removal of a yaml value may trigger
                     // a DB value to be effective

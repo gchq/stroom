@@ -18,7 +18,6 @@
 package stroom.config.global.impl;
 
 
-import stroom.config.app.AppConfig;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.ConfigPropertyValidationException;
 import stroom.config.global.shared.GlobalConfigCriteria;
@@ -109,26 +108,21 @@ public class GlobalConfigService {
         this.nodeInfo = nodeInfo;
 
         LOGGER.debug("Initialising GlobalConfigService");
-        initialise();
+        updateConfigFromDb(true);
         LOGGER.info("Config initialised with all effective values");
     }
 
-    private void initialise() {
-        // At this point the configMapper.getGlobalProperties() will contain the name, defaultValue
-        // and the yamlValue. It will also contain any info gained from the config class annotations,
-        // e.g. @Readonly
-        updateConfigFromDb(true);
-        LOGGER.info("Initialised application config with global database properties");
-    }
+//    private void initialise() {
+//        // At this point the configMapper.getGlobalProperties() will contain the name, defaultValue
+//        // and the yamlValue. It will also contain any info gained from the config class annotations,
+//        // e.g. @Readonly
+//        updateConfigFromDb(true);
+//        LOGGER.info("Initialised application config with global database properties");
+//    }
 
-    public void updateConfigFromDb(final AppConfig newAppConfig) {
-        final List<ConfigProperty> validDbProps = getValidProperties(false);
-        configMapper.updateConfigFromYaml(newAppConfig, validDbProps);
-        LOGGER.info("Updated application config with global database properties");
-    }
-
-    private void updateConfigFromDb() {
-        updateConfigFromDb(false);
+    private void updateConfigFromDb(final boolean deleteUnknownProps) {
+        final List<ConfigProperty> validDbProps = getValidProperties(deleteUnknownProps);
+        configMapper.decorateAllDbConfigProperties(validDbProps);
         LOGGER.info("Updated application config with global database properties");
     }
 
@@ -154,17 +148,13 @@ public class GlobalConfigService {
         return validDbProps;
     }
 
-    private void updateConfigFromDb(final boolean deleteUnknownProps) {
-        final List<ConfigProperty> validDbProps = getValidProperties(deleteUnknownProps);
-        configMapper.decorateAllDbConfigProperty(validDbProps);
-    }
 
     /**
      * Refresh in background
      */
     void updateConfigObjects() {
         taskContext.info(() -> "Updating config from DB");
-        updateConfigFromDb();
+        updateConfigFromDb(false);
     }
 
     public ListConfigResponse list(final GlobalConfigCriteria criteria) {
@@ -334,7 +324,7 @@ public class GlobalConfigService {
             configMapper.decorateDbConfigProperty(persistedConfigProperty);
 
             // Having updated a prop make sure the in mem config is correct.
-            updateConfigFromDb();
+            updateConfigFromDb(false);
 
             return persistedConfigProperty;
         });
