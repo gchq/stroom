@@ -258,9 +258,7 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
     }
 
     Node getNode(final String nodeName) {
-        return securityContext.secureResult(() -> {
-            return nodeDao.getNode(nodeName);
-        });
+        return securityContext.secureResult(() -> nodeDao.getNode(nodeName));
     }
 
     private void ensureNodeCreated() {
