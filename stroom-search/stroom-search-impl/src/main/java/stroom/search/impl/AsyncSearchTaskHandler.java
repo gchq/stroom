@@ -205,12 +205,14 @@ class AsyncSearchTaskHandler {
     }
 
     public void terminateTasks(final AsyncSearchTask task, final TaskId taskId) {
-        // Terminate this task.
-        taskManager.terminate(taskId);
+        securityContext.asProcessingUser(() -> {
+            // Terminate this task.
+            taskManager.terminate(taskId);
 
-        // We have to wrap the cluster termination task in another task or
-        // ClusterDispatchAsyncImpl
-        // will not execute it if the parent task is terminated.
-        clusterTaskTerminator.terminate(task.getSearchName(), taskId, "AsyncSearchTask");
+            // We have to wrap the cluster termination task in another task or
+            // ClusterDispatchAsyncImpl
+            // will not execute it if the parent task is terminated.
+            clusterTaskTerminator.terminate(task.getSearchName(), taskId, "AsyncSearchTask");
+        });
     }
 }

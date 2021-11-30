@@ -142,7 +142,7 @@ public class ExtractionDecoratorFactory {
         CompletableFuture
                 .allOf(futures.toArray(new CompletableFuture[0]))
                 .whenCompleteAsync((r, e) -> {
-                    LOGGER.info("Completed extraction");
+                    LOGGER.debug("Completed extraction");
                     completionState.signalComplete();
                 });
 
@@ -260,7 +260,7 @@ public class ExtractionDecoratorFactory {
                 LOGGER.debug(() -> "Complete");
                 LOGGER.trace(e::getMessage, e);
             } finally {
-                LOGGER.info("Completed extraction thread");
+                LOGGER.debug("Completed extraction thread");
             }
         };
         return taskContextFactory.childContext(parentContext, "Extraction Task", consumer);
