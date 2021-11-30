@@ -12,6 +12,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0-beta.159] - 2021-11-30
+
+* Issue **#2472** : Fix the way the in memory config is updated by the file monitor. Improve the logging when config properties are changed on a node.
+
+* Issue **#2595** : Improve search performance and fix issues.
+
+
 ## [v7.0-beta.158] - 2021-11-23
 
 * Issue **#2582** : Remove unnecessary legacy migration for processor filter.
@@ -3978,7 +3985,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.158...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.159...HEAD
+[v7.0-beta.159]: https://github.com/gchq/stroom/compare/v7.0-beta.158...v7.0-beta.159
 [v7.0-beta.158]: https://github.com/gchq/stroom/compare/v7.0-beta.157...v7.0-beta.158
 [v7.0-beta.157]: https://github.com/gchq/stroom/compare/v7.0-beta.156...v7.0-beta.157
 [v7.0-beta.156]: https://github.com/gchq/stroom/compare/v7.0-beta.155...v7.0-beta.156
