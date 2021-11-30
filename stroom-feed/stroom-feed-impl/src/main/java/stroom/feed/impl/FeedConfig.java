@@ -10,7 +10,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.inject.Singleton;
 
-@Singleton
 public class FeedConfig extends AbstractConfig {
 
     public static final String PROP_NAME_FEED_NAME_PATTERN = "feedNamePattern";

@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Singleton;
 
-@Singleton
 public class AnnotationConfig extends AbstractConfig implements HasDbConfig {
 
     private final AnnotationDBConfig dbConfig;

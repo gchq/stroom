@@ -26,7 +26,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import javax.inject.Singleton;
 
 
-@Singleton
 public class LoggingConfig extends AbstractConfig {
 
     private boolean logEveryRestCallEnabled = false;

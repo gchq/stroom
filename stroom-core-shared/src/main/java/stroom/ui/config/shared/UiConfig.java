@@ -30,7 +30,6 @@ import java.util.Objects;
 import javax.inject.Singleton;
 import javax.validation.constraints.Pattern;
 
-@Singleton
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class UiConfig extends AbstractConfig {

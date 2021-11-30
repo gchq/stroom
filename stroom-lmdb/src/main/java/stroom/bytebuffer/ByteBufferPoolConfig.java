@@ -11,7 +11,6 @@ import javax.inject.Singleton;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 
-@Singleton
 public class ByteBufferPoolConfig extends AbstractConfig {
 
     private int warningThresholdPercentage = 90;

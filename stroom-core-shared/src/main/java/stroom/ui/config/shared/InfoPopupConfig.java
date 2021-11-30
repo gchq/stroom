@@ -13,7 +13,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.Objects;
 import javax.inject.Singleton;
 
-@Singleton
 @JsonPropertyOrder({"enabled", "title", "validationRegex"})
 @JsonInclude(Include.NON_NULL)
 public class InfoPopupConfig extends AbstractConfig {

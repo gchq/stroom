@@ -11,7 +11,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.inject.Singleton;
 
-@Singleton
 public class PropertyServiceConfig extends AbstractConfig implements HasDbConfig {
 
     private final PropertyServiceDbConfig dbConfig;

@@ -9,7 +9,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.inject.Singleton;
 
-@Singleton
 public class ParserConfig extends AbstractConfig {
 
     private CacheConfig cacheConfig = CacheConfig.builder()

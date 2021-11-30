@@ -8,7 +8,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.inject.Singleton;
 
-@Singleton
 public class IndexShardSearchConfig extends AbstractConfig {
 
     private static final int DEFAULT_MAX_THREADS = 4;

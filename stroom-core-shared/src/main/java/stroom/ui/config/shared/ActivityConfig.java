@@ -12,7 +12,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.Objects;
 import javax.inject.Singleton;
 
-@Singleton
 @JsonPropertyOrder({"enabled", "chooseOnStartup", "managerTitle", "editorTitle", "editorBody"})
 @JsonInclude(Include.NON_NULL)
 public class ActivityConfig extends AbstractConfig {

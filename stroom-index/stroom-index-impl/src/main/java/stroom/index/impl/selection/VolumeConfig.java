@@ -8,7 +8,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import java.util.List;
 import javax.inject.Singleton;
 
-@Singleton
 public class VolumeConfig extends AbstractConfig {
 
     public static final String PROP_NAME_DEFUALT_VOLUME_GROUP_NAME = "defaultIndexVolumeGroupName";

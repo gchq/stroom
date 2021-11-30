@@ -10,7 +10,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.inject.Singleton;
 
-@Singleton
 public class SecurityConfig extends AbstractConfig {
 
     public static final String PROP_NAME_IDENTITY = "identity";

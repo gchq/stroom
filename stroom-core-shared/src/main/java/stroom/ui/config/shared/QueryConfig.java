@@ -12,7 +12,6 @@ import java.util.Objects;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-@Singleton
 @JsonPropertyOrder({"infoPopup"})
 @JsonInclude(Include.NON_NULL)
 public class QueryConfig extends AbstractConfig {

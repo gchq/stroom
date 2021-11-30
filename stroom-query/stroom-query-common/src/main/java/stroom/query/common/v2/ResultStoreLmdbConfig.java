@@ -13,7 +13,6 @@ import javax.annotation.Nonnull;
 import javax.inject.Singleton;
 import javax.validation.constraints.Min;
 
-@Singleton
 @JsonPropertyOrder(alphabetic = true)
 public class ResultStoreLmdbConfig extends AbstractConfig implements LmdbConfig {
 

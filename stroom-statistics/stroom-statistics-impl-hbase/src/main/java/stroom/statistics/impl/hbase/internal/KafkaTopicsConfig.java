@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.inject.Singleton;
 
-@Singleton
 public class KafkaTopicsConfig extends AbstractConfig {
 
     private String count = "statisticEvents-Count";

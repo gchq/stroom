@@ -11,7 +11,6 @@ import java.util.Objects;
 import javax.inject.Singleton;
 import javax.validation.constraints.AssertTrue;
 
-@Singleton
 public class AuthenticationConfig extends AbstractConfig {
 
     public static final String PROP_NAME_AUTHENTICATION_REQUIRED = "authenticationRequired";

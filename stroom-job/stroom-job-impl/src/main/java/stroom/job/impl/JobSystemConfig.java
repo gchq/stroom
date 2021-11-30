@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Singleton;
 
-@Singleton
 public class JobSystemConfig extends AbstractConfig implements HasDbConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JobSystemConfig.class);

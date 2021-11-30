@@ -11,7 +11,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.inject.Singleton;
 
-@Singleton
 public class DocStoreConfig extends AbstractConfig implements HasDbConfig {
 
     private final DocStoreDbConfig dbConfig;

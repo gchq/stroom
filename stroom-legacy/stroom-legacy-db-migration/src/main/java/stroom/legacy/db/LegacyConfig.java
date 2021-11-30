@@ -11,7 +11,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.inject.Singleton;
 
-@Singleton
 @Deprecated
 public class LegacyConfig extends AbstractConfig implements HasDbConfig {
 

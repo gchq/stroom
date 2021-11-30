@@ -13,7 +13,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.inject.Singleton;
 
-@Singleton
 public class DataStoreServiceConfig extends AbstractConfig implements HasDbConfig {
 
     private final DataStoreServiceDbConfig dbConfig;

@@ -14,7 +14,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import javax.inject.Singleton;
 import javax.validation.constraints.NotNull;
 
-@Singleton
 public class NodeConfig extends AbstractConfig implements HasDbConfig {
 
     public static final String PROP_NAME_NAME = "name";

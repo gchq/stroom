@@ -9,7 +9,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.Map;
 import javax.inject.Singleton;
 
-@Singleton
 @JsonPropertyOrder(alphabetic = true)
 public class ContentSyncConfig extends AbstractConfig implements IsProxyConfig {
 

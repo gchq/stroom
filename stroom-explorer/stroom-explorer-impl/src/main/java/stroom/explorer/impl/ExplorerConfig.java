@@ -13,7 +13,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.inject.Singleton;
 
-@Singleton
 public class ExplorerConfig extends AbstractConfig implements HasDbConfig {
 
     private final ExplorerDbConfig dbConfig;

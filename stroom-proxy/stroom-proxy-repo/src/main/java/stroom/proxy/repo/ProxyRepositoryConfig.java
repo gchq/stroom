@@ -9,7 +9,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.inject.Singleton;
 
-@Singleton
 @JsonPropertyOrder(alphabetic = true)
 public class ProxyRepositoryConfig extends AbstractConfig implements IsProxyConfig {
 

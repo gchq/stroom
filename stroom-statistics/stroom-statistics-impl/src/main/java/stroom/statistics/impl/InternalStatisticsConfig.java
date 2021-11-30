@@ -22,7 +22,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.inject.Singleton;
 
-@Singleton
 public class InternalStatisticsConfig extends AbstractConfig {
 
     private static final String DESCRIPTION_PREFIX = "A list of DocRefs, one for each statistic store that " +

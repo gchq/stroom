@@ -15,7 +15,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import javax.inject.Singleton;
 
 @SuppressWarnings("unused")
-@Singleton
 public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
 
     private final ProcessorDbConfig dbConfig;

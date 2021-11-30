@@ -9,7 +9,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.inject.Singleton;
 
-@Singleton
 public class ProxyAggregationConfig extends AbstractConfig {
 
     private String proxyDir = "proxy_repo";

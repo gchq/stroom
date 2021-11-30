@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.inject.Singleton;
 
-@Singleton
 public class AppenderConfig extends AbstractConfig {
 
     private static final int DEFAULT_MAX_ACTIVE_DESTINATIONS = 100;

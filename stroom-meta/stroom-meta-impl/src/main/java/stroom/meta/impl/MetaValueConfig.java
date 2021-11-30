@@ -11,7 +11,6 @@ import java.util.Objects;
 import javax.inject.Singleton;
 import javax.validation.constraints.NotNull;
 
-@Singleton
 @JsonPropertyOrder(alphabetic = true)
 public class MetaValueConfig extends AbstractConfig {
 

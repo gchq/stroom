@@ -30,7 +30,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import javax.inject.Singleton;
 import javax.validation.constraints.NotNull;
 
-@Singleton
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
 public class TokenConfig extends AbstractConfig {

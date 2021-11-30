@@ -9,7 +9,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import javax.inject.Singleton;
 import javax.validation.constraints.Min;
 
-@Singleton
 public class ResultStoreConfig extends AbstractConfig {
 
     private int maxPutsBeforeCommit = 100_000;

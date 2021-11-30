@@ -39,7 +39,6 @@ import javax.validation.constraints.AssertFalse;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
-@Singleton
 @JsonPropertyOrder(alphabetic = true)
 public class IdentityConfig extends AbstractConfig implements HasDbConfig {
 

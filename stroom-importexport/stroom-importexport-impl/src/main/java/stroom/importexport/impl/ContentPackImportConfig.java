@@ -7,7 +7,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.inject.Singleton;
 
-@Singleton
 public class ContentPackImportConfig extends AbstractConfig {
 
     private boolean enabled;

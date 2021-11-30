@@ -9,7 +9,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.inject.Singleton;
 
-@Singleton
 public class XsltConfig extends AbstractConfig {
 
     private static final int DEFAULT_MAX_ELEMENTS = 1000000;

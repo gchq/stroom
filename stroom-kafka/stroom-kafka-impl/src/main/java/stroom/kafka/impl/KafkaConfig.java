@@ -9,7 +9,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.inject.Singleton;
 
-@Singleton
 public class KafkaConfig extends AbstractConfig {
 
     private String skeletonConfigContent = DEFAULT_SKELETON_CONFIG_CONTENT;

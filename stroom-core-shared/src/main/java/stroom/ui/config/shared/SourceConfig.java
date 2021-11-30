@@ -12,7 +12,6 @@ import java.util.Objects;
 import javax.inject.Singleton;
 import javax.validation.constraints.Min;
 
-@Singleton
 @JsonPropertyOrder({"maxCharactersInPreviewFetch"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class SourceConfig extends AbstractConfig {

@@ -18,7 +18,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import javax.inject.Singleton;
 import javax.validation.constraints.AssertTrue;
 
-@Singleton
 @JsonPropertyOrder(alphabetic = true)
 public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 

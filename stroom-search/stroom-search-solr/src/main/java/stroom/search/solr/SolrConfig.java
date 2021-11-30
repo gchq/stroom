@@ -9,7 +9,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.inject.Singleton;
 
-@Singleton
 public class SolrConfig extends AbstractConfig {
 
     private SolrSearchConfig solrSearchConfig = new SolrSearchConfig();

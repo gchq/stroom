@@ -14,7 +14,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.inject.Singleton;
 
-@Singleton
 public class IndexConfig extends AbstractConfig implements HasDbConfig {
 
     private final IndexDbConfig dbConfig;

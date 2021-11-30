@@ -13,7 +13,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import javax.inject.Singleton;
 import javax.validation.constraints.Min;
 
-@Singleton
 @JsonPropertyOrder(alphabetic = true)
 public class ReferenceDataConfig extends AbstractConfig {
 

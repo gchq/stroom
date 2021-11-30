@@ -8,7 +8,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.inject.Singleton;
 
-@Singleton
 public class SearchConfig extends AbstractConfig {
 
     private String storeSize = "1000000,100,10,1";

@@ -6,7 +6,6 @@ import stroom.util.time.StroomDuration;
 
 import javax.inject.Singleton;
 
-@Singleton
 public class DashboardConfig extends AbstractConfig {
 
     private CacheConfig activeQueriesCache = CacheConfig.builder()

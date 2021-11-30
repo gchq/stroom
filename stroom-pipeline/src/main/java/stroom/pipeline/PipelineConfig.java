@@ -13,7 +13,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.inject.Singleton;
 
-@Singleton
 public class PipelineConfig extends AbstractConfig {
 
     private AppenderConfig appenderConfig = new AppenderConfig();

@@ -13,7 +13,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import javax.inject.Singleton;
 import javax.validation.constraints.Min;
 
-@Singleton
 public class StoredQueryConfig extends AbstractConfig implements HasDbConfig {
 
     private final int itemsRetention;

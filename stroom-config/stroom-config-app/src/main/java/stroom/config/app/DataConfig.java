@@ -10,7 +10,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.inject.Singleton;
 
-@Singleton
 public class DataConfig extends AbstractConfig {
 
     public static final String NAME = "data";

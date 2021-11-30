@@ -7,7 +7,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.inject.Singleton;
 
-@Singleton
 public class OpenIdConfig extends AbstractConfig {
 
     public static final String PROP_NAME_CLIENT_ID = "clientId";

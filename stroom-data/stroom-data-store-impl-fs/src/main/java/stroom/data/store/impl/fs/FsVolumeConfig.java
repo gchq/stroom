@@ -11,7 +11,6 @@ import java.util.List;
 import javax.inject.Singleton;
 import javax.validation.constraints.Pattern;
 
-@Singleton
 public class FsVolumeConfig extends AbstractConfig {
 
     private String volumeSelector = "RoundRobin";

@@ -12,7 +12,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.Objects;
 import javax.inject.Singleton;
 
-@Singleton
 @JsonPropertyOrder({
         "backgroundAttachment",
         "backgroundColour",

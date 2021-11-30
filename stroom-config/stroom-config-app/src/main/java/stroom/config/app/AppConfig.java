@@ -48,7 +48,6 @@ import javax.inject.Singleton;
 import javax.validation.constraints.AssertTrue;
 
 @JsonRootName(AppConfig.NAME)
-@Singleton
 public class AppConfig extends AbstractConfig {
 
     public static final String NAME = "stroom";
