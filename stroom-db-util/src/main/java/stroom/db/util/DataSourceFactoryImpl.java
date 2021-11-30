@@ -1,9 +1,9 @@
 package stroom.db.util;
 
-import stroom.config.common.CommonDbConfig;
-import stroom.config.common.ConnectionConfig;
 import stroom.config.common.AbstractDbConfig;
-import stroom.config.common.HasDbConfig;
+import stroom.config.common.CommonDbConfig;
+import stroom.config.common.CommonDbConfig.MergedDbConfig;
+import stroom.config.common.ConnectionConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -43,16 +43,15 @@ public class DataSourceFactoryImpl implements DataSourceFactory {
     }
 
     @Override
-    public DataSource create(final HasDbConfig config, final String name, final boolean unique) {
-        final AbstractDbConfig dbConfig = config.getDbConfig();
+    public DataSource create(final AbstractDbConfig dbConfig, final String name, final boolean unique) {
 
         // Create a merged config using the common db config as a base.
-        final AbstractDbConfig mergedConfig = commonDbConfig.mergeConfig(dbConfig);
+        final MergedDbConfig mergedConfig = commonDbConfig.mergeConfig(dbConfig);
         final DataSourceKey key = new DataSourceKey(mergedConfig, name, unique);
 
         LOGGER.debug(() ->
                 LogUtil.message("Class: {}\n  {}\n  {}\n  {}",
-                        config.getClass().getSimpleName(),
+                        mergedConfig.getModuleName(),
                         dbConfig.getConnectionConfig(),
                         commonDbConfig.getConnectionConfig(),
                         key));

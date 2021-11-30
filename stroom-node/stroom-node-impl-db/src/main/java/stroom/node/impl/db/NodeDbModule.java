@@ -2,12 +2,12 @@ package stroom.node.impl.db;
 
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
-import stroom.node.impl.NodeConfig;
+import stroom.node.impl.NodeConfig.NodeDbConfig;
 import stroom.node.impl.NodeDao;
 
 import javax.sql.DataSource;
 
-public class NodeDbModule extends AbstractFlyWayDbModule<NodeConfig, NodeDbConnProvider> {
+public class NodeDbModule extends AbstractFlyWayDbModule<NodeDbConfig, NodeDbConnProvider> {
 
     private static final String MODULE = "stroom-node";
     private static final String FLYWAY_LOCATIONS = "stroom/node/impl/db/migration";

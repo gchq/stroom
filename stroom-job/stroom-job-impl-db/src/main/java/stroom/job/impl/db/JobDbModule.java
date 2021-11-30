@@ -4,11 +4,11 @@ import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 import stroom.job.impl.JobDao;
 import stroom.job.impl.JobNodeDao;
-import stroom.job.impl.JobSystemConfig;
+import stroom.job.impl.JobSystemConfig.JobSystemDbConfig;
 
 import javax.sql.DataSource;
 
-public class JobDbModule extends AbstractFlyWayDbModule<JobSystemConfig, JobDbConnProvider> {
+public class JobDbModule extends AbstractFlyWayDbModule<JobSystemDbConfig, JobDbConnProvider> {
 
     private static final String MODULE = "stroom-job";
     private static final String FLYWAY_LOCATIONS = "stroom/job/impl/db/migration";

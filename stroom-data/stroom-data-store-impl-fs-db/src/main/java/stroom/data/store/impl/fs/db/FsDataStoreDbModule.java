@@ -16,7 +16,7 @@
 
 package stroom.data.store.impl.fs.db;
 
-import stroom.data.store.impl.fs.DataStoreServiceConfig;
+import stroom.data.store.impl.fs.DataStoreServiceConfig.DataStoreServiceDbConfig;
 import stroom.data.store.impl.fs.DataVolumeDao;
 import stroom.data.store.impl.fs.FsFeedPathDao;
 import stroom.data.store.impl.fs.FsTypePathDao;
@@ -27,7 +27,7 @@ import stroom.db.util.DataSourceProxy;
 
 import javax.sql.DataSource;
 
-public class FsDataStoreDbModule extends AbstractFlyWayDbModule<DataStoreServiceConfig, FsDataStoreDbConnProvider> {
+public class FsDataStoreDbModule extends AbstractFlyWayDbModule<DataStoreServiceDbConfig, FsDataStoreDbConnProvider> {
 
     private static final String MODULE = "stroom-data-store";
     private static final String FLYWAY_LOCATIONS = "stroom/data/store/impl/fs/db/migration";

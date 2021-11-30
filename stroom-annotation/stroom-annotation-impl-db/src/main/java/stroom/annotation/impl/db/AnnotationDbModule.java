@@ -1,6 +1,6 @@
 package stroom.annotation.impl.db;
 
-import stroom.annotation.impl.AnnotationConfig;
+import stroom.annotation.impl.AnnotationConfig.AnnotationDBConfig;
 import stroom.annotation.impl.AnnotationDao;
 import stroom.annotation.impl.AnnotationModule;
 import stroom.db.util.AbstractFlyWayDbModule;
@@ -9,7 +9,7 @@ import stroom.util.guice.GuiceUtil;
 
 import javax.sql.DataSource;
 
-public class AnnotationDbModule extends AbstractFlyWayDbModule<AnnotationConfig, AnnotationDbConnProvider> {
+public class AnnotationDbModule extends AbstractFlyWayDbModule<AnnotationDBConfig, AnnotationDbConnProvider> {
 
     private static final String MODULE = "stroom-annotation";
     private static final String FLYWAY_LOCATIONS = "stroom/annotation/impl/db/migration";

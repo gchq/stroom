@@ -20,6 +20,7 @@ import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.lifecycle.api.LifecycleBinder;
+import stroom.statistics.impl.sql.SQLStatisticsConfig.SQLStatisticsDbConfig;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.HasSystemInfoBinder;
 
@@ -29,7 +30,8 @@ import javax.sql.DataSource;
 import static stroom.job.api.Schedule.ScheduleType.CRON;
 import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
-public class SQLStatisticsModule extends AbstractFlyWayDbModule<SQLStatisticsConfig, SQLStatisticsDbConnProvider> {
+public class SQLStatisticsModule extends AbstractFlyWayDbModule<SQLStatisticsDbConfig, SQLStatisticsDbConnProvider> {
+
     private static final String MODULE = "stroom-statistics";
     private static final String FLYWAY_LOCATIONS = "stroom/statistics/impl/sql/db/migration";
     private static final String FLYWAY_TABLE = "statistics_schema_history";
@@ -91,12 +93,14 @@ public class SQLStatisticsModule extends AbstractFlyWayDbModule<SQLStatisticsCon
     }
 
     private static class DataSourceImpl extends DataSourceProxy implements SQLStatisticsDbConnProvider {
+
         private DataSourceImpl(final DataSource dataSource) {
             super(dataSource);
         }
     }
 
     private static class EvictFromObjectPool extends RunnableWrapper {
+
         @Inject
         EvictFromObjectPool(final SQLStatisticEventStore sqlStatisticEventStore) {
             super(sqlStatisticEventStore::evict);
@@ -104,6 +108,7 @@ public class SQLStatisticsModule extends AbstractFlyWayDbModule<SQLStatisticsCon
     }
 
     private static class SQLStatsFlush extends RunnableWrapper {
+
         @Inject
         SQLStatsFlush(final SQLStatisticCache sqlStatisticCache) {
             super(sqlStatisticCache::execute);
@@ -111,6 +116,7 @@ public class SQLStatisticsModule extends AbstractFlyWayDbModule<SQLStatisticsCon
     }
 
     private static class SQLStatsAggregation extends RunnableWrapper {
+
         @Inject
         SQLStatsAggregation(final SQLStatisticAggregationManager sqlStatisticAggregationManager) {
             super(sqlStatisticAggregationManager::aggregate);
@@ -118,6 +124,7 @@ public class SQLStatisticsModule extends AbstractFlyWayDbModule<SQLStatisticsCon
     }
 
     private static class SQLStatisticShutdown extends RunnableWrapper {
+
         @Inject
         SQLStatisticShutdown(final Statistics statistics) {
             super(statistics::flushAllEvents);

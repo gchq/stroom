@@ -2,12 +2,12 @@ package stroom.storedquery.impl.db;
 
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
-import stroom.storedquery.impl.StoredQueryConfig;
+import stroom.storedquery.impl.StoredQueryConfig.StoredQueryDbConfig;
 import stroom.storedquery.impl.StoredQueryDao;
 
 import javax.sql.DataSource;
 
-public class StoredQueryDbModule extends AbstractFlyWayDbModule<StoredQueryConfig, StoredQueryDbConnProvider> {
+public class StoredQueryDbModule extends AbstractFlyWayDbModule<StoredQueryDbConfig, StoredQueryDbConnProvider> {
 
     private static final String MODULE = "stroom-storedquery";
     private static final String FLYWAY_LOCATIONS = "stroom/storedquery/impl/db/migration";

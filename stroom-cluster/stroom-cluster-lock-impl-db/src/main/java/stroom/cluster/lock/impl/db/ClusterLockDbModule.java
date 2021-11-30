@@ -1,6 +1,7 @@
 package stroom.cluster.lock.impl.db;
 
 import stroom.cluster.lock.api.ClusterLockService;
+import stroom.cluster.lock.impl.db.ClusterLockConfig.ClusterLockDbConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 import stroom.job.api.ScheduledJobsBinder;
@@ -14,7 +15,7 @@ import javax.sql.DataSource;
 
 import static stroom.job.api.Schedule.ScheduleType.PERIODIC;
 
-public class ClusterLockDbModule extends AbstractFlyWayDbModule<ClusterLockConfig, ClusterLockDbConnProvider> {
+public class ClusterLockDbModule extends AbstractFlyWayDbModule<ClusterLockDbConfig, ClusterLockDbConnProvider> {
 
     private static final String MODULE = "stroom-cluster-lock";
     private static final String FLYWAY_LOCATIONS = "stroom/cluster/lock/impl/db/migration";

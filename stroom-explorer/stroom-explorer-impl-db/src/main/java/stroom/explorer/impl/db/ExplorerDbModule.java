@@ -2,12 +2,12 @@ package stroom.explorer.impl.db;
 
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
-import stroom.explorer.impl.ExplorerConfig;
+import stroom.explorer.impl.ExplorerConfig.ExplorerDbConfig;
 import stroom.explorer.impl.ExplorerTreeDao;
 
 import javax.sql.DataSource;
 
-public class ExplorerDbModule extends AbstractFlyWayDbModule<ExplorerConfig, ExplorerDbConnProvider> {
+public class ExplorerDbModule extends AbstractFlyWayDbModule<ExplorerDbConfig, ExplorerDbConnProvider> {
 
     private static final String MODULE = "stroom-explorer";
     private static final String FLYWAY_LOCATIONS = "stroom/explorer/impl/db/migration";

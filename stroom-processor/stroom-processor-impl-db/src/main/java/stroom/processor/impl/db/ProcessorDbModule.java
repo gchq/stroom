@@ -2,7 +2,7 @@ package stroom.processor.impl.db;
 
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
-import stroom.processor.impl.ProcessorConfig;
+import stroom.processor.impl.ProcessorConfig.ProcessorDbConfig;
 import stroom.processor.impl.ProcessorDao;
 import stroom.processor.impl.ProcessorFilterDao;
 import stroom.processor.impl.ProcessorFilterTrackerDao;
@@ -13,7 +13,7 @@ import stroom.util.shared.Clearable;
 
 import javax.sql.DataSource;
 
-public class ProcessorDbModule extends AbstractFlyWayDbModule<ProcessorConfig, ProcessorDbConnProvider> {
+public class ProcessorDbModule extends AbstractFlyWayDbModule<ProcessorDbConfig, ProcessorDbConnProvider> {
 
     private static final String MODULE = "stroom-processor";
     private static final String FLYWAY_LOCATIONS = "stroom/processor/impl/db/migration";

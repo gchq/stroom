@@ -17,7 +17,7 @@
 package stroom.data.store.impl.fs.db;
 
 
-import stroom.data.store.impl.fs.DataStoreServiceConfig;
+import stroom.data.store.impl.fs.DataStoreServiceConfig.DataStoreServiceDbConfig;
 import stroom.data.store.impl.fs.FsVolumeConfig;
 import stroom.data.store.impl.fs.FsVolumeDao;
 import stroom.data.store.impl.fs.FsVolumeService;
@@ -30,7 +30,6 @@ import stroom.node.mock.MockNodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
 import stroom.task.api.SimpleTaskContext;
-import stroom.task.api.SimpleTaskContextFactory;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
@@ -94,7 +93,7 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
         final NodeInfo nodeInfo = new MockNodeInfo();
 
         final FsDataStoreDbConnProvider fsDataStoreDbConnProvider = DbTestUtil.getTestDbDatasource(
-                new FsDataStoreDbModule(), new DataStoreServiceConfig());
+                new FsDataStoreDbModule(), new DataStoreServiceDbConfig());
 
         final FsVolumeDao fsVolumeDao = new FsVolumeDaoImpl(fsDataStoreDbConnProvider);
         final FsVolumeStateDao fsVolumeStateDao = new FsVolumeStateDaoImpl(fsDataStoreDbConnProvider);

@@ -19,6 +19,7 @@ package stroom.legacy.db;
 import stroom.db.util.DataSourceFactory;
 import stroom.db.util.DataSourceProxy;
 import stroom.db.util.DbUtil;
+import stroom.legacy.db.LegacyConfig.LegacyDbConfig;
 import stroom.util.db.ForceLegacyMigration;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasHealthCheckBinder;
@@ -92,7 +93,7 @@ public class LegacyDbModule extends AbstractModule {
 
     @Provides
     @Singleton
-    public LegacyDbConnProvider getConnectionProvider(final Provider<LegacyConfig> configProvider,
+    public LegacyDbConnProvider getConnectionProvider(final Provider<LegacyDbConfig> configProvider,
                                                       final DataSourceFactory dataSourceFactory) {
         LOGGER.debug(() -> "Getting connection provider for " + getModuleName());
 

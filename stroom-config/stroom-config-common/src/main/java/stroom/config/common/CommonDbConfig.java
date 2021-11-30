@@ -34,7 +34,7 @@ public class CommonDbConfig extends AbstractDbConfig {
      * Thus allowing otherDbConfig to override values in this {@link CommonDbConfig}
      */
     @JsonIgnore
-    public AbstractDbConfig mergeConfig(final AbstractDbConfig otherDbConfig) {
+    public MergedDbConfig mergeConfig(final AbstractDbConfig otherDbConfig) {
 
 //        // These will contain all hard coded defaults
 //        final DbConfig outputConfig = new CommonDbConfig();
@@ -69,7 +69,9 @@ public class CommonDbConfig extends AbstractDbConfig {
         return new MergedDbConfig(
                 mergedConnectionConfig,
                 mergedPoolConfig,
-                otherDbConfig.getClass().getSimpleName());
+                otherDbConfig.getClass()
+                        .getSimpleName()
+                        .replaceAll("DbConfig$", ""));
     }
 
 //    private void applyDefaultConnectionProperties(final ConnectionConfig connectionConfig) {

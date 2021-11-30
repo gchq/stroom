@@ -34,7 +34,7 @@ class TestDbClusterLock {
     void test() throws InterruptedException {
 
         final ClusterLockDbConnProvider clusterLockDbConnProvider = DbTestUtil.getTestDbDatasource(
-                new ClusterLockDbModule(), new ClusterLockConfig());
+                new ClusterLockDbModule(), new ClusterLockConfig.ClusterLockDbConfig());
 
         final DbClusterLock dbClusterLock = new DbClusterLock(clusterLockDbConnProvider);
         final DbClusterLockThreads dbClusterLockThreads = new DbClusterLockThreads(dbClusterLock);

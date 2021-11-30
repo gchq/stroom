@@ -3,7 +3,7 @@ package stroom.security.identity.db;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 import stroom.security.identity.account.AccountDao;
-import stroom.security.identity.config.IdentityConfig;
+import stroom.security.identity.config.IdentityConfig.IdentityDbConfig;
 import stroom.security.identity.openid.OpenIdClientDao;
 import stroom.security.identity.token.JwkDao;
 import stroom.security.identity.token.TokenDao;
@@ -11,7 +11,7 @@ import stroom.security.identity.token.TokenTypeDao;
 
 import javax.sql.DataSource;
 
-public class IdentityDbModule extends AbstractFlyWayDbModule<IdentityConfig, IdentityDbConnProvider> {
+public class IdentityDbModule extends AbstractFlyWayDbModule<IdentityDbConfig, IdentityDbConnProvider> {
 
     private static final String MODULE = "stroom-security-identity";
     private static final String FLYWAY_LOCATIONS = "stroom/security/identity/db/migration";

@@ -9,7 +9,7 @@ import stroom.meta.impl.MetaFeedDao;
 import stroom.meta.impl.MetaKeyDao;
 import stroom.meta.impl.MetaProcessorDao;
 import stroom.meta.impl.MetaRetentionTrackerDao;
-import stroom.meta.impl.MetaServiceConfig;
+import stroom.meta.impl.MetaServiceConfig.MetaServiceDbConfig;
 import stroom.meta.impl.MetaTypeDao;
 import stroom.meta.impl.MetaValueDao;
 import stroom.util.RunnableWrapper;
@@ -19,7 +19,7 @@ import stroom.util.shared.Clearable;
 import javax.inject.Inject;
 import javax.sql.DataSource;
 
-public class MetaDbModule extends AbstractFlyWayDbModule<MetaServiceConfig, MetaDbConnProvider> {
+public class MetaDbModule extends AbstractFlyWayDbModule<MetaServiceDbConfig, MetaDbConnProvider> {
 
     private static final String MODULE = "stroom-meta";
     private static final String FLYWAY_LOCATIONS = "stroom/meta/impl/db/migration";

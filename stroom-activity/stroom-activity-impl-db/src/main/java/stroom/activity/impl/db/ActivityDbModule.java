@@ -2,12 +2,13 @@ package stroom.activity.impl.db;
 
 import stroom.activity.impl.ActivityDao;
 import stroom.activity.impl.ActivityModule;
+import stroom.activity.impl.db.ActivityConfig.ActivityDbConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 
 import javax.sql.DataSource;
 
-public class ActivityDbModule extends AbstractFlyWayDbModule<ActivityConfig, ActivityDbConnProvider> {
+public class ActivityDbModule extends AbstractFlyWayDbModule<ActivityDbConfig, ActivityDbConnProvider> {
 
     private static final String MODULE = "stroom-activity";
     private static final String FLYWAY_LOCATIONS = "stroom/activity/impl/db/migration";

@@ -4,7 +4,6 @@ import stroom.config.common.AbstractDbConfig;
 import stroom.config.common.CommonDbConfig;
 import stroom.config.common.CommonDbConfig.MergedDbConfig;
 import stroom.config.common.ConnectionConfig;
-import stroom.config.common.HasDbConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceKey;
 import stroom.db.util.DbUrl;
@@ -78,7 +77,7 @@ public class DbTestUtil {
     /**
      * Gets an embedded DB datasource for use in tests that don't use guice injection
      */
-    public static <T_CONFIG extends HasDbConfig, T_CONN_PROV extends DataSource> T_CONN_PROV getTestDbDatasource(
+    public static <T_CONFIG extends AbstractDbConfig, T_CONN_PROV extends DataSource> T_CONN_PROV getTestDbDatasource(
             final AbstractFlyWayDbModule<T_CONFIG, T_CONN_PROV> dbModule,
             final T_CONFIG config) {
 

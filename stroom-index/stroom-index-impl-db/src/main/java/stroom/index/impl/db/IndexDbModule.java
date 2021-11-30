@@ -2,14 +2,14 @@ package stroom.index.impl.db;
 
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
-import stroom.index.impl.IndexConfig;
+import stroom.index.impl.IndexConfig.IndexDbConfig;
 import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexVolumeDao;
 import stroom.index.impl.IndexVolumeGroupDao;
 
 import javax.sql.DataSource;
 
-public class IndexDbModule extends AbstractFlyWayDbModule<IndexConfig, IndexDbConnProvider> {
+public class IndexDbModule extends AbstractFlyWayDbModule<IndexDbConfig, IndexDbConnProvider> {
 
     private static final String MODULE = "stroom-index";
     private static final String FLYWAY_LOCATIONS = "stroom/index/impl/db/migration";

@@ -1,6 +1,6 @@
 package stroom.config.global.impl.db;
 
-import stroom.config.app.PropertyServiceConfig;
+import stroom.config.app.PropertyServiceConfig.PropertyServiceDbConfig;
 import stroom.config.global.impl.ConfigPropertyDao;
 import stroom.config.global.impl.GlobalConfigModule;
 import stroom.db.util.AbstractFlyWayDbModule;
@@ -8,7 +8,7 @@ import stroom.db.util.DataSourceProxy;
 
 import javax.sql.DataSource;
 
-public class GlobalConfigDbModule extends AbstractFlyWayDbModule<PropertyServiceConfig, GlobalConfigDbConnProvider> {
+public class GlobalConfigDbModule extends AbstractFlyWayDbModule<PropertyServiceDbConfig, GlobalConfigDbConnProvider> {
 
     private static final String MODULE = "stroom-config";
     private static final String FLYWAY_LOCATIONS = "stroom/config/global/impl/db/migration";
