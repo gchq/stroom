@@ -1,5 +1,7 @@
 package stroom.config.common;
 
+import stroom.util.shared.NotInjectableConfig;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -82,6 +84,7 @@ public class CommonDbConfig extends AbstractDbConfig {
 //        connectionConfig.setPassword(ConnectionConfig.DEFAULT_JDBC_DRIVER_PASSWORD);
 //    }
 
+    @NotInjectableConfig
     public static class MergedDbConfig extends AbstractDbConfig {
 
         private final String moduleName;

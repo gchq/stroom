@@ -197,7 +197,6 @@ public class ConfigMapper {
         // This is the de-serialised form of the config.yaml so should contain all compile time defaults except
         // where set to other values in the yaml file. AppConfigModule should have ensured that all null
         // branches have been replaced with a default instance to ensure we have a full tree.
-//        this.appConfig = appConfigProvider.get();
         this.configFile = configFile;
         this.defaultAppConfigSupplier = defaultAppConfigSupplier;
 
@@ -214,25 +213,6 @@ public class ConfigMapper {
         // globalPropertiesMap with the defaults.
         LOGGER.debug("Building globalPropertiesMap from compile-time default values and annotations");
         this.allPropertyPaths = initialiseMaps();
-
-        // No point in reading the yaml file at this stage as we may as well wait till GlobalPropertyService
-        // calls into us with its DB values and do it all at once.
-
-        // Now walk the guice bound appConfig tree, create a Prop for each leaf and add it to the
-        // propertyMap. Ensure all branches have a default value.
-//        addConfigObjectMethods(
-//                this.appConfig,
-//                AppConfig.ROOT_PROPERTY_PATH,
-//                this.propertyMap,
-//                null,
-//                true);
-
-//        if (allPropertyPaths.size() != propertyMap.size()) {
-//            LOGGER.warn("Different number of props. allPropertyPaths: {}, propertyMap: {}",
-//                    allPropertyPaths.size(), propertyMap.size());
-//        }
-
-        // update globalPropertiesMap with all the yaml overrides from the de-serialised file
 
         // decorateAllDbConfigProperty will be called as soon as GlobalPropertyService
         // is initialised to update the globalPropertiesMap with the DB overrides and update
@@ -353,7 +333,7 @@ public class ConfigMapper {
                 return rebuildObjectInstance(childPropertyPath, newInstanceMap);
             } else {
                 // leaf
-                return Optional.ofNullable(globalPropertiesMap.get(propertyPath))
+                return Optional.ofNullable(globalPropertiesMap.get(childPropertyPath))
                         .flatMap(ConfigProperty::getEffectiveValue)
                         .map(strVal ->
                                 convertToObject(childProp, strVal, childProp.getValueType()))
@@ -392,15 +372,15 @@ public class ConfigMapper {
 //                hasEffectiveValueChanged(propertyPath, currentEffectiveValues, currentSources));
 //
 //    }
-    AppConfig buildMergedAppConfigFromFile() {
-        return buildMergedAppConfigFromFile(configFile);
+    AppConfig buildMergedAppConfig() {
+        return buildMergedAppConfig(configFile);
     }
 
     /**
      * Merge the config.yml content with the default AppConfig tree to get a complete
      * tree that includes any yaml overrides.
      */
-    public static AppConfig buildMergedAppConfigFromFile(final Path configFile) {
+    public static AppConfig buildMergedAppConfig(final Path configFile) {
 
         final AppConfig defaultAppConfig = new AppConfig();
         if (configFile == null) {
@@ -408,14 +388,14 @@ public class ConfigMapper {
         } else {
             try {
                 final AppConfig yamlAppConfig = YamlUtil.readAppConfig(configFile);
-                return buildMergedAppConfigFromFile(yamlAppConfig);
+                return buildMergedAppConfig(yamlAppConfig);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
         }
     }
 
-    public static AppConfig buildMergedAppConfigFromFile(final AppConfig yamlAppConfig) {
+    public static AppConfig buildMergedAppConfig(final AppConfig yamlAppConfig) {
 
         final AppConfig defaultAppConfig = new AppConfig();
 
@@ -429,8 +409,18 @@ public class ConfigMapper {
     }
 
     private synchronized int refreshGlobalPropYamlOverrides() {
-        final AppConfig yamlAppConfig = buildMergedAppConfigFromFile();
+        final AppConfig yamlAppConfig = buildMergedAppConfig();
         return refreshGlobalPropYamlOverrides(yamlAppConfig);
+    }
+
+    /**
+     * Only for use in testing as this does not wait for DB props to be included
+     * in the effective values
+     */
+    public void updateConfigInstances(final AppConfig appConfig) {
+        refreshGlobalPropYamlOverrides(appConfig);
+        rebuildObjectInstanceMap();
+        configReadyForUseLatch.countDown();
     }
 
     synchronized int refreshGlobalPropYamlOverrides(final AppConfig yamlAppConfig) {

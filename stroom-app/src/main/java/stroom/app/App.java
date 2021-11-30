@@ -193,7 +193,7 @@ public class App extends Application<Config> {
 
         // Merge the sparse de-serialised config with our default AppConfig tree
         // so we have a full config tree but with any yaml overrides
-        final AppConfig mergedAppConfig = ConfigMapper.buildMergedAppConfigFromFile(configuration.getAppConfig());
+        final AppConfig mergedAppConfig = ConfigMapper.buildMergedAppConfig(configuration.getAppConfig());
         configuration.setAppConfig(mergedAppConfig);
 
         // Turn on Jersey logging of request/response payloads

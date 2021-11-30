@@ -256,7 +256,6 @@ public final class PropertyUtil {
 
         return new ObjectInfo<>(
                 name,
-                object,
                 clazz,
                 propertyMap,
                 constructorArgNames,
@@ -470,8 +469,6 @@ public final class PropertyUtil {
         // The unqualified name of the property branch, e.g. 'node'
         private final String name;
 
-        private final T object;
-
         private final Class<T> objectClass;
 
         private final Map<String, Prop> propertyMap;
@@ -483,20 +480,15 @@ public final class PropertyUtil {
         private final Constructor<T> constructor;
 
         public ObjectInfo(final String name,
-                          final T object, final Class<T> objectClass,
+                          final Class<T> objectClass,
                           final Map<String, Prop> propertyMap,
                           final List<String> constructorArgList,
                           final Constructor<T> constructor) {
             this.name = name;
-            this.object = object;
             this.objectClass = objectClass;
             this.propertyMap = propertyMap;
             this.constructorArgList = constructorArgList;
             this.constructor = constructor;
-        }
-
-        public T getObject() {
-            return object;
         }
 
         public Class<T> getObjectClass() {
@@ -532,14 +524,25 @@ public final class PropertyUtil {
                     throw new RuntimeException("Missing @JsonCreator constructor for class " + objectClass.getName());
                 }
                 return constructor.newInstance(args);
-            } catch (InvocationTargetException | IllegalAccessException | InstantiationException e) {
+            } catch (InvocationTargetException
+                    | IllegalAccessException
+                    | InstantiationException
+                    | IllegalArgumentException e) {
                 throw new RuntimeException(
-                        LogUtil.message("Error creating new instance of {} with args {}. {}",
+                        LogUtil.message("Error creating new instance of {} with args {}. Message: {}",
                                 objectClass.getName(),
                                 args,
                                 NullSafe.get(e, Throwable::getMessage)),
                         e);
             }
+        }
+
+        @Override
+        public String toString() {
+            return "ObjectInfo{" +
+                    "name='" + name + '\'' +
+                    ", objectClass=" + objectClass +
+                    '}';
         }
     }
 

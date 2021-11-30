@@ -19,6 +19,10 @@ public class GlobalConfigModule extends AbstractModule {
 
     @Override
     protected void configure() {
+
+        install(new ConfigProvidersModule());
+        install(new ValidationModule());
+
         bind(AppConfigMonitor.class).asEagerSingleton();
 
         // Need to ensure it initialises so any db props can be set on AppConfig
@@ -35,8 +39,6 @@ public class GlobalConfigModule extends AbstractModule {
 
         HasSystemInfoBinder.create(binder())
                 .bind(AppConfigSystemInfo.class);
-
-        install(new ValidationModule());
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(PropertyCacheReload.class, builder -> builder

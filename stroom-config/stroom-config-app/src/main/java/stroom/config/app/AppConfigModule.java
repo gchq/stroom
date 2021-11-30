@@ -33,7 +33,7 @@ public class AppConfigModule extends AbstractModule {
         // Bind the de-serialised yaml config to a singleton AppConfig object, whose parts
         // can be injected all over the app.
         // ConfigMapper is responsible for mutating it if the yaml file or database props change.
-        bind(AppConfig.class).toProvider(configHolder::getBootStrapConfig);
+//        bind(AppConfig.class).toProvider(configHolder::getBootStrapConfig);
 
         // Holder for the location of the yaml config file so the AppConfigMonitor can
         // get hold of it via guice

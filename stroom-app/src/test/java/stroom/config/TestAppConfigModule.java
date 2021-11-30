@@ -8,6 +8,8 @@ import stroom.config.app.YamlUtil;
 import stroom.config.common.AbstractDbConfig;
 import stroom.config.common.CommonDbConfig;
 import stroom.config.common.HasDbConfig;
+import stroom.config.global.impl.ConfigMapper;
+import stroom.config.global.impl.ConfigProvidersModule;
 import stroom.legacy.db.LegacyConfig;
 import stroom.util.config.PropertyUtil;
 import stroom.util.logging.LogUtil;
@@ -93,24 +95,26 @@ class TestAppConfigModule {
 
         // Modify the value on the common connection pool so it gets applied to all other config objects
         final Config modifiedConfig = YamlUtil.readConfig(devYamlPath);
-//        modifiedConfig.getAppConfig().getCommonDbConfig().getConnectionPoolConfig().setPrepStmtCacheSize(250);
-        final int currentValue = modifiedConfig.getAppConfig()
+        // Merge all the default values in
+        final AppConfig modifiedAppConfig = ConfigMapper.buildMergedAppConfig(modifiedConfig.getAppConfig());
+
+        final int currentValue = modifiedAppConfig
                 .getCommonDbConfig()
                 .getConnectionPoolConfig()
                 .getPrepStmtCacheSize();
         final int newCacheValue = currentValue + 1000;
 
-        modifiedConfig.getAppConfig()
+        modifiedAppConfig
                 .getCommonDbConfig()
                 .getConnectionPoolConfig()
                 .setPrepStmtCacheSize(newCacheValue);
 
-        final String newUser = modifiedConfig.getAppConfig()
+        final String newUser = modifiedAppConfig
                 .getCommonDbConfig()
                 .getConnectionConfig()
                 .getUser() + "XXX";
 
-        modifiedConfig.getAppConfig()
+        modifiedAppConfig
                 .getCommonDbConfig()
                 .getConnectionConfig()
                 .setUser(newUser);
@@ -121,7 +125,7 @@ class TestAppConfigModule {
                 install(new AppConfigModule(new ConfigHolder() {
                     @Override
                     public AppConfig getBootStrapConfig() {
-                        return modifiedConfig.getAppConfig();
+                        return modifiedAppConfig;
                     }
 
                     @Override
@@ -129,11 +133,14 @@ class TestAppConfigModule {
                         return devYamlPath;
                     }
                 }));
+                install(new ConfigProvidersModule());
             }
         });
 
-        AppConfig appConfig = injector.getInstance(AppConfig.class);
-        CommonDbConfig commonDbConfig = injector.getInstance(CommonDbConfig.class);
+        final ConfigMapper configMapper = injector.getInstance(ConfigMapper.class);
+        configMapper.updateConfigInstances(modifiedAppConfig);
+        final AppConfig appConfig = injector.getInstance(AppConfig.class);
+        final CommonDbConfig commonDbConfig = injector.getInstance(CommonDbConfig.class);
 
 //        Assertions.assertThat(commonDbConfig.getConnectionConfig().getClassName())
 //                .isNotNull();
@@ -252,6 +259,7 @@ class TestAppConfigModule {
                 .filter(classFilter)
                 .filter(AbstractConfig.class::isAssignableFrom)
                 .filter(clazz -> !IsProxyConfig.class.isAssignableFrom(clazz)) // ignore proxy classes
+                .filter(clazz -> !clazz.isAnnotationPresent(NotInjectableConfig.class))
                 .filter(clazz -> {
                     boolean isAbstract = Modifier.isAbstract(clazz.getModifiers());
                     if (isAbstract) {
@@ -280,10 +288,10 @@ class TestAppConfigModule {
                                     prop.getParentObject().getClass().getSimpleName(), prop.getGetter().getName()))
                             .isNotNull();
 
-                    Assertions.assertThat(prop.getSetter())
-                            .as(LogUtil.message("{} {}",
-                                    prop.getParentObject().getClass().getSimpleName(), prop.getSetter().getName()))
-                            .isNotNull();
+//                    Assertions.assertThat(prop.getSetter())
+//                            .as(LogUtil.message("{} {}",
+//                                    prop.getParentObject().getClass().getSimpleName(), prop.getSetter().getName()))
+//                            .isNotNull();
 
                     Class<?> valueClass = prop.getValueClass();
                     if (classFilter.test(valueClass)) {

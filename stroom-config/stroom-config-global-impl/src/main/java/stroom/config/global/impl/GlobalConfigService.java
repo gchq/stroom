@@ -148,7 +148,6 @@ public class GlobalConfigService {
         return validDbProps;
     }
 
-
     /**
      * Refresh in background
      */

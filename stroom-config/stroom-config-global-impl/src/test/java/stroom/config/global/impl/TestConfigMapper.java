@@ -727,7 +727,7 @@ class TestConfigMapper {
         final Path configFile = Path.of("../../stroom-app/dev.yml");
         assertThat(configFile)
                 .isRegularFile();
-        final AppConfig appConfig = ConfigMapper.buildMergedAppConfigFromFile(configFile);
+        final AppConfig appConfig = ConfigMapper.buildMergedAppConfig(configFile);
         assertThat(appConfig)
                 .isNotNull();
     }
