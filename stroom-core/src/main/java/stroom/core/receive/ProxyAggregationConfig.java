@@ -7,7 +7,6 @@ import stroom.util.shared.ModelStringUtil;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
-import javax.inject.Singleton;
 
 public class ProxyAggregationConfig extends AbstractConfig {
 

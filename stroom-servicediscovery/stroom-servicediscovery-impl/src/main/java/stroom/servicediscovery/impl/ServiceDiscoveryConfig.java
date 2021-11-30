@@ -5,7 +5,6 @@ import stroom.util.shared.AbstractConfig;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
-import javax.inject.Singleton;
 
 public class ServiceDiscoveryConfig extends AbstractConfig {
 

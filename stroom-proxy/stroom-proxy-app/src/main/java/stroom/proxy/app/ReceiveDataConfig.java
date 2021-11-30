@@ -6,7 +6,6 @@ import stroom.util.shared.validation.ValidRegex;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
-import javax.inject.Singleton;
 
 public class ReceiveDataConfig extends AbstractConfig {
 

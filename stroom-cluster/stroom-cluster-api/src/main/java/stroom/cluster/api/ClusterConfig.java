@@ -6,7 +6,6 @@ import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
-import javax.inject.Singleton;
 
 public class ClusterConfig extends AbstractConfig {
 

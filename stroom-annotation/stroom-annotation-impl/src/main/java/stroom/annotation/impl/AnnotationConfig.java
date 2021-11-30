@@ -12,7 +12,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.inject.Singleton;
 
 public class AnnotationConfig extends AbstractConfig implements HasDbConfig {
 

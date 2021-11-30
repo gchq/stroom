@@ -15,7 +15,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Singleton;
 
 public class JobSystemConfig extends AbstractConfig implements HasDbConfig {
 

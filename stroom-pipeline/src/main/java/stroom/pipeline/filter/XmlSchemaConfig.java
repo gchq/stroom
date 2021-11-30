@@ -7,7 +7,6 @@ import stroom.util.time.StroomDuration;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
-import javax.inject.Singleton;
 
 public class XmlSchemaConfig extends AbstractConfig {
 

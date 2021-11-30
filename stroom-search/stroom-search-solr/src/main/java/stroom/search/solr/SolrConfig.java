@@ -7,7 +7,6 @@ import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import javax.inject.Singleton;
 
 public class SolrConfig extends AbstractConfig {
 

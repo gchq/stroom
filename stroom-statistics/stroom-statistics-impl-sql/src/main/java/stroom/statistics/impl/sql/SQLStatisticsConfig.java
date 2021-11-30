@@ -14,7 +14,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.annotation.Nullable;
-import javax.inject.Singleton;
 
 public class SQLStatisticsConfig extends AbstractConfig implements HasDbConfig {
 

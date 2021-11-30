@@ -7,7 +7,6 @@ import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
-import javax.inject.Singleton;
 import javax.validation.constraints.NotNull;
 
 public class IndexCacheConfig extends AbstractConfig {

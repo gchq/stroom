@@ -8,7 +8,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import java.util.Objects;
-import javax.inject.Singleton;
 import javax.validation.constraints.AssertTrue;
 
 public class AuthenticationConfig extends AbstractConfig {

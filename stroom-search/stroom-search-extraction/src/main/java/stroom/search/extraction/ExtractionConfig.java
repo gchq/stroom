@@ -5,7 +5,6 @@ import stroom.util.shared.NotInjectableConfig;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
-import javax.inject.Singleton;
 
 @NotInjectableConfig
 public class ExtractionConfig extends AbstractConfig {

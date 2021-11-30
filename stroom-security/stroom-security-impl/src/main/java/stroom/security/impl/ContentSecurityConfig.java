@@ -21,7 +21,6 @@ import stroom.util.shared.AbstractConfig;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
-import javax.inject.Singleton;
 
 public class ContentSecurityConfig extends AbstractConfig {
 

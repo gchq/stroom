@@ -4,7 +4,6 @@ import stroom.util.shared.AbstractConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import javax.inject.Singleton;
 
 public class IndexWriterConfig extends AbstractConfig {
 

@@ -10,7 +10,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 
 @JsonPropertyOrder({"infoPopup"})
 @JsonInclude(Include.NON_NULL)

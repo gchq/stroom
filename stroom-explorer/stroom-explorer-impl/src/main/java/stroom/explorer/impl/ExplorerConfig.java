@@ -11,7 +11,6 @@ import stroom.util.time.StroomDuration;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import javax.inject.Singleton;
 
 public class ExplorerConfig extends AbstractConfig implements HasDbConfig {
 

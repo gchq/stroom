@@ -8,7 +8,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.inject.Singleton;
 
 @JsonPropertyOrder(alphabetic = true)
 public class ForwardStreamConfig extends AbstractConfig implements IsProxyConfig {

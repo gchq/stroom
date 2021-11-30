@@ -44,7 +44,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonRootName;
 
-import javax.inject.Singleton;
 import javax.validation.constraints.AssertTrue;
 
 @JsonRootName(AppConfig.NAME)

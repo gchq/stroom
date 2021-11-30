@@ -4,7 +4,6 @@ import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
 
-import javax.inject.Singleton;
 
 public class DashboardConfig extends AbstractConfig {
 

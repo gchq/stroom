@@ -11,7 +11,6 @@ import stroom.util.xml.ParserConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import javax.inject.Singleton;
 
 public class PipelineConfig extends AbstractConfig {
 
