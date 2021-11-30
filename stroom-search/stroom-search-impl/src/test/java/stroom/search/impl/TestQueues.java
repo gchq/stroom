@@ -25,14 +25,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestQueues {
 
-    private static final long MAX = 10000;
+    private static final long MAX = 1000;
 
     @Test
     @SuppressWarnings("unchecked")
     void testShardIdQueue() throws InterruptedException {
         final int threads = 10;
         final ShardIdQueue queue = new ShardIdQueue(LongStream
-                .rangeClosed(1, MAX)
+                .rangeClosed(1, 1000)
                 .boxed()
                 .collect(Collectors.toList()));
         final AtomicLong consumed = new AtomicLong();
@@ -54,7 +54,7 @@ class TestQueues {
         }
         CompletableFuture.allOf(futures).join();
 
-        assertThat(consumed.get()).isEqualTo(MAX);
+        assertThat(consumed.get()).isEqualTo(1000);
     }
 
     @Test

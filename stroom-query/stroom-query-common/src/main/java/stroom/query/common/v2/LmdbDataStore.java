@@ -101,6 +101,9 @@ public class LmdbDataStore implements DataStore {
 
     private final LmdbKey rootParentRowKey;
 
+    private volatile boolean running = true;
+    private volatile Thread transferThread;
+
     LmdbDataStore(final LmdbEnvFactory lmdbEnvFactory,
                   final ResultStoreConfig resultStoreConfig,
                   final String queryKey,
@@ -329,7 +332,8 @@ public class LmdbDataStore implements DataStore {
                 long batchSize = 0;
 
                 try {
-                    while (true) {
+                    setTransferThread(Thread.currentThread());
+                    while (running && !transferThread.isInterrupted()) {
                         LOGGER.trace("Transferring");
                         SearchProgressLog.increment(SearchPhase.LMDB_DATA_STORE_QUEUE_POLL);
                         final LmdbKV lmdbKV = queue.poll(1, TimeUnit.SECONDS);
@@ -370,13 +374,14 @@ public class LmdbDataStore implements DataStore {
                     LOGGER.trace(e::getMessage, e);
                 }
 
-                if (batchSize > 0) {
+                if (running && batchSize > 0) {
                     LOGGER.debug(() -> "Final commit");
                     batchingWriteTxn.commit();
                 }
 
                 // Create final payloads and ensure they are all delivered before we complete.
-                if (producePayloads) {
+                if (running && producePayloads) {
+                    LOGGER.debug(() -> "Producing final payloads");
                     // Create payload and clear the DB.
                     boolean finalPayload = false;
                     while (!finalPayload) {
@@ -385,6 +390,7 @@ public class LmdbDataStore implements DataStore {
                     // Make sure we end with an empty payload to indicate completion.
                     // Adding a final empty payload to the queue ensures that a consuming node will have to request the
                     // payload from the queue before we complete.
+                    LOGGER.debug(() -> "Final payload");
                     payloadCreator.finalPayload();
                 }
 
@@ -394,6 +400,7 @@ public class LmdbDataStore implements DataStore {
                 // Ensure we complete.
                 complete.countDown();
                 LOGGER.debug("Finished transfer while loop");
+                setTransferThread(null);
             }
         });
     }
@@ -532,7 +539,7 @@ public class LmdbDataStore implements DataStore {
      */
     @Override
     public Items get() {
-        LOGGER.debug("get() called");
+        LOGGER.trace("get() called");
         return get(Key.root());
     }
 
@@ -546,7 +553,7 @@ public class LmdbDataStore implements DataStore {
     @Override
     public synchronized Items get(final Key parentKey) {
         SearchProgressLog.increment(SearchPhase.LMDB_DATA_STORE_GET);
-        LOGGER.debug("get() called for parentKey: {}", parentKey);
+        LOGGER.trace("get() called for parentKey: {}", parentKey);
 
         if (lmdbEnv.isClosed()) {
             // If we query LMDB after the env has been closed then we are likely to crash the JVM
@@ -671,6 +678,16 @@ public class LmdbDataStore implements DataStore {
         return list;
     }
 
+    private synchronized void setTransferThread(final Thread transferThread) {
+        this.transferThread = transferThread;
+    }
+
+    private synchronized void interruptTransferThread() {
+        if (transferThread != null) {
+            transferThread.interrupt();
+        }
+    }
+
     /**
      * Clear the data store.
      * Synchronised with get() to prevent a shutdown happening while reads are going on.
@@ -680,6 +697,12 @@ public class LmdbDataStore implements DataStore {
         LOGGER.debug("clear called");
         if (shutdown.compareAndSet(false, true)) {
             SearchProgressLog.increment(SearchPhase.LMDB_DATA_STORE_CLEAR);
+
+            // Let the transfer loop know it should stop ASAP.
+            running = false;
+
+            // Interrupt the transfer thread.
+            interruptTransferThread();
 
             // Clear the queue.
             queue.clear();

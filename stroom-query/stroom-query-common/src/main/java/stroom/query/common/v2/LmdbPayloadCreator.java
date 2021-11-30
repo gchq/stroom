@@ -7,6 +7,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.SearchProgressLog;
 import stroom.util.logging.SearchProgressLog.SearchPhase;
 
+import com.esotericsoftware.kryo.KryoException;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.lmdbjava.CursorIterable;
@@ -101,6 +102,9 @@ public class LmdbPayloadCreator {
                         output.writeInt(data.length);
                         output.writeBytes(data);
                     }
+                } catch (final KryoException e) {
+                    // Expected as sometimes the output stream is closed by the receiving node.
+                    LOGGER.debug(e::getMessage, e);
                 } catch (final InterruptedException e) {
                     // There will be 0 bytes to read so just write 0.
                     output.writeInt(0);

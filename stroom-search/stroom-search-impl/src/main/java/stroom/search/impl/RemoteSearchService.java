@@ -11,6 +11,8 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.SearchProgressLog;
 
+import com.esotericsoftware.kryo.KryoException;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Optional;
@@ -147,6 +149,9 @@ public class RemoteSearchService {
 
             outputStream.flush();
             outputStream.close();
+        } catch (final KryoException e) {
+            // Expected as sometimes the output stream is closed by the receiving node.
+            LOGGER.debug(e::getMessage, e);
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
             throw e;

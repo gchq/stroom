@@ -54,25 +54,24 @@ public class StreamEventMap {
             while (count == capacity) {
                 notFull.await();
             }
-            storedDataMap.compute(event.getStreamId(), (k, v) -> {
+            final Set<Event> eventSet = storedDataMap.compute(event.getStreamId(), (k, v) -> {
                 if (v == null) {
                     // The value is null so this is a new entry in the map.
                     // Remember this fact for use after we have added the new value.
                     v = new HashSet<>();
                     streamIdQueue.addLast(k);
                 }
-
-                if (!v.add(event)) {
-                    LOGGER.warn("Duplicate segment for streamId=" +
-                            event.getStreamId() +
-                            ", eventId=" +
-                            event.getEventId());
-                }
-
                 return v;
             });
-            ++count;
-            notEmpty.signal();
+            if (eventSet.add(event)) {
+                ++count;
+                notEmpty.signal();
+            } else {
+                LOGGER.warn("Duplicate segment for streamId=" +
+                        event.getStreamId() +
+                        ", eventId=" +
+                        event.getEventId());
+            }
         } finally {
             lock.unlock();
         }
