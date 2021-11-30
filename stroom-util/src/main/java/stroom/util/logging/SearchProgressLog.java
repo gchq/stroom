@@ -122,7 +122,6 @@ public class SearchProgressLog {
         LMDB_DATA_STORE_GET("LmdbDataStore - get"),
         LMDB_DATA_STORE_GET_CHILDREN("LmdbDataStore - getChildren"),
         LMDB_DATA_STORE_CLEAR("LmdbDataStore - clear"),
-        LMDB_DATA_STORE_SHUTDOWN("LmdbDataStore - shutdown"),
         LMDB_DATA_STORE_READ_PAYLOAD("LmdbDataStore - readPayload"),
         LMDB_DATA_STORE_WRITE_PAYLOAD("LmdbDataStore - writePayload"),
         EXTRACTION_TASK_HANDLER_EXEC("ExtractionTaskHandler - exec"),

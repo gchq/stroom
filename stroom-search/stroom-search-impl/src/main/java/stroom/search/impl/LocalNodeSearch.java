@@ -57,7 +57,6 @@ public class LocalNodeSearch implements NodeSearch {
                 }
 
                 if (coprocessors != null && coprocessors.size() > 0) {
-                    taskContext.getTaskId().setParentId(clusterSearchTask.getSourceTaskId());
                     final ClusterSearchTaskHandler clusterSearchTaskHandler =
                             clusterSearchTaskHandlerProvider.get();
                     clusterSearchTaskHandler.search(taskContext,

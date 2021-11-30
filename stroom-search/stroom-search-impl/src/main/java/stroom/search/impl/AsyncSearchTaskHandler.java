@@ -204,7 +204,7 @@ class AsyncSearchTaskHandler {
         }));
     }
 
-    private void terminateTasks(final AsyncSearchTask task, final TaskId taskId) {
+    public void terminateTasks(final AsyncSearchTask task, final TaskId taskId) {
         // Terminate this task.
         taskManager.terminate(taskId);
 

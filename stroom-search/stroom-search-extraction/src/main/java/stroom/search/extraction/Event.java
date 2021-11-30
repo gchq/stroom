@@ -20,13 +20,13 @@ import stroom.dashboard.expression.v1.Val;
 
 import java.util.Objects;
 
-class Event implements Comparable<Event> {
+public class Event implements Comparable<Event> {
 
     private final long streamId;
     private final long eventId;
     private final Val[] values;
 
-    Event(final long streamId, final long eventId, final Val[] values) {
+    public Event(final long streamId, final long eventId, final Val[] values) {
         this.streamId = streamId;
         this.eventId = eventId;
         this.values = values;

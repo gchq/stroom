@@ -5,13 +5,13 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ArrayBlockingQueue;
 
 public class ErrorConsumerImpl implements ErrorConsumer {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ErrorConsumerImpl.class);
 
-    private final LinkedBlockingQueue<String> errors = new LinkedBlockingQueue<>(1000);
+    private final ArrayBlockingQueue<String> errors = new ArrayBlockingQueue<>(1000);
 
     @Override
     public void add(final Throwable exception) {

@@ -15,7 +15,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-class StreamEventMap {
+public class StreamEventMap {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StreamEventMap.class);
 
@@ -28,13 +28,13 @@ class StreamEventMap {
     private final Condition notFull = lock.newCondition();
     private final Condition notEmpty = lock.newCondition();
 
-    StreamEventMap(final int capacity) {
+    public StreamEventMap(final int capacity) {
         this.storedDataMap = new HashMap<>();
         this.streamIdQueue = new LinkedList<>();
         this.capacity = capacity;
     }
 
-    void complete() throws InterruptedException {
+    public void complete() throws InterruptedException {
         lock.lockInterruptibly();
         try {
             while (count == capacity) {
@@ -48,7 +48,7 @@ class StreamEventMap {
         }
     }
 
-    void put(final Event event) throws InterruptedException {
+    public void put(final Event event) throws InterruptedException {
         lock.lockInterruptibly();
         try {
             while (count == capacity) {
@@ -72,14 +72,13 @@ class StreamEventMap {
                 return v;
             });
             ++count;
-            LOGGER.debug(() -> "size=" + count);
             notEmpty.signal();
         } finally {
             lock.unlock();
         }
     }
 
-    Entry<Long, Set<Event>> take() throws InterruptedException, CompleteException {
+    public Entry<Long, Set<Event>> take() throws InterruptedException, CompleteException {
         Entry<Long, Set<Event>> entry = null;
         lock.lockInterruptibly();
         try {
@@ -107,7 +106,7 @@ class StreamEventMap {
         return entry;
     }
 
-    int size() {
+    public int size() {
         return count;
     }
 }

@@ -1,58 +1,64 @@
 package stroom.util.concurrent;
 
-import java.util.Optional;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class CompletableQueue<T> {
 
-    private final LinkedBlockingQueue<Optional<T>> queue;
+    private static final CompleteException COMPLETE = new CompleteException();
+
+    private final ArrayBlockingQueue<Object> queue;
 
     public CompletableQueue(final int capacity) {
-        queue = new LinkedBlockingQueue<>(capacity);
+        queue = new ArrayBlockingQueue<>(capacity);
     }
 
     public void put(final T value) throws InterruptedException {
-        queue.put(Optional.of(value));
+        queue.put(value);
     }
 
+    @SuppressWarnings("unchecked")
     public T take() throws InterruptedException, CompleteException {
-        final Optional<T> optional = queue.take();
-        if (optional.isEmpty()) {
+        final Object object = queue.take();
+        if (COMPLETE == object) {
             complete();
-            throw new CompleteException();
+            throw COMPLETE;
         }
-        return optional.get();
+        return (T) object;
     }
 
+    @SuppressWarnings("unchecked")
     public T poll() throws InterruptedException, CompleteException {
-        final Optional<T> optional = queue.poll();
-        if (optional == null) {
+        final Object object = queue.poll();
+        if (object == null) {
             return null;
         }
 
-        if (optional.isEmpty()) {
+        if (COMPLETE == object) {
             complete();
-            throw new CompleteException();
+            throw COMPLETE;
         }
-        return optional.get();
+
+        return (T) object;
     }
 
+    @SuppressWarnings("unchecked")
     public T poll(final long timeout, final TimeUnit unit) throws InterruptedException, CompleteException {
-        final Optional<T> optional = queue.poll(timeout, unit);
-        if (optional == null) {
+        final Object object = queue.poll(timeout, unit);
+        if (object == null) {
             return null;
         }
 
-        if (optional.isEmpty()) {
+        if (COMPLETE == object) {
             complete();
-            throw new CompleteException();
+            throw COMPLETE;
         }
-        return optional.get();
+
+        return (T) object;
     }
 
     public void complete() throws InterruptedException {
-        queue.put(Optional.empty());
+        queue.put(COMPLETE);
     }
 
     public void clear() {

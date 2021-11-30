@@ -1,31 +1,32 @@
 package stroom.util.concurrent;
 
-import java.util.OptionalLong;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ArrayBlockingQueue;
 
 public class CompletableLongQueue {
 
-    private final LinkedBlockingQueue<OptionalLong> queue;
+    private static final CompleteException COMPLETE = new CompleteException();
+
+    private final ArrayBlockingQueue<Object> queue;
 
     public CompletableLongQueue(final int capacity) {
-        queue = new LinkedBlockingQueue<>(capacity);
+        queue = new ArrayBlockingQueue<>(capacity);
     }
 
     public void put(final long value) throws InterruptedException {
-        queue.put(OptionalLong.of(value));
+        queue.put(value);
     }
 
     public long take() throws InterruptedException, CompleteException {
-        final OptionalLong optional = queue.take();
-        if (optional.isEmpty()) {
+        final Object object = queue.take();
+        if (COMPLETE == object) {
             complete();
-            throw new CompleteException();
+            throw COMPLETE;
         }
-        return optional.getAsLong();
+        return (long) object;
     }
 
     public void complete() throws InterruptedException {
-        queue.put(OptionalLong.empty());
+        queue.put(COMPLETE);
     }
 
     public int size() {

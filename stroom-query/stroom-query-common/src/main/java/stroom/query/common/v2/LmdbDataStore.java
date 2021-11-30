@@ -388,13 +388,12 @@ public class LmdbDataStore implements DataStore {
                     payloadCreator.finalPayload();
                 }
 
-                LOGGER.debug("Finished transfer while loop");
-
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             } finally {
                 // Ensure we complete.
                 complete.countDown();
+                LOGGER.debug("Finished transfer while loop");
             }
         });
     }
@@ -678,38 +677,21 @@ public class LmdbDataStore implements DataStore {
      */
     @Override
     public synchronized void clear() {
-        SearchProgressLog.increment(SearchPhase.LMDB_DATA_STORE_CLEAR);
-        try {
-            LOGGER.debug("clear called");
+        LOGGER.debug("clear called");
+        if (shutdown.compareAndSet(false, true)) {
+            SearchProgressLog.increment(SearchPhase.LMDB_DATA_STORE_CLEAR);
+
             // Clear the queue.
             queue.clear();
-            // Tell the queue it is complete to ensure shutdown.
-            try {
-                queue.complete();
-            } catch (final InterruptedException e) {
-                LOGGER.trace(e::getMessage, e);
-                // Keep interrupting this thread.
-                Thread.currentThread().interrupt();
-            }
-            // Ensure we complete.
-            complete.countDown();
+
             // If the transfer loop is waiting on new queue items ensure it loops once more.
             completionState.signalComplete();
-        } finally {
-            shutdown();
-        }
-    }
-
-    private synchronized void shutdown() {
-        SearchProgressLog.increment(SearchPhase.LMDB_DATA_STORE_SHUTDOWN);
-        LOGGER.debug("Shutdown called");
-        if (!shutdown.get()) {
 
             // Wait for transferring to stop.
             try {
                 final boolean interrupted = Thread.interrupted();
                 LOGGER.debug("Waiting for transfer to stop");
-                complete.await();
+                completionState.awaitCompletion();
                 if (interrupted) {
                     Thread.currentThread().interrupt();
                 }
@@ -740,7 +722,6 @@ public class LmdbDataStore implements DataStore {
             } finally {
                 resultCount.set(0);
                 totalResultCount.set(0);
-                shutdown.set(true);
             }
         }
     }
@@ -947,7 +928,6 @@ public class LmdbDataStore implements DataStore {
                     // Add an empty item to the transfer queue.
                     lmdbDataStore.queue.complete();
                 } catch (final InterruptedException e) {
-                    complete.countDown();
                     LOGGER.trace(e.getMessage(), e);
                     // Keep interrupting this thread.
                     Thread.currentThread().interrupt();

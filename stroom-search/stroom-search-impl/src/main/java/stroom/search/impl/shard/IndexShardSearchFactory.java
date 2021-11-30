@@ -24,7 +24,6 @@ import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
-import stroom.util.concurrent.CompletableLongQueue;
 import stroom.util.concurrent.CompleteException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -120,14 +119,8 @@ public class IndexShardSearchFactory {
 
                 final Executor executor = executorProvider.get(INDEX_SHARD_SEARCH_THREAD_POOL);
 
-                // Make the queue big enough for all shards plus the completion state.
-                final CompletableLongQueue queue = new CompletableLongQueue(task.getShards().size() + 1);
-                for (final Long shard : task.getShards()) {
-                    queue.put(shard);
-                }
-                // Tell the queue there will be no more items.
-                queue.complete();
-
+                // Create a queue of shards to search.
+                final ShardIdQueue queue = new ShardIdQueue(task.getShards());
                 final AtomicInteger shardNo = new AtomicInteger();
                 for (int i = 0; i < indexShardSearchConfig.getMaxThreadsPerTask(); i++) {
                     final Runnable runnable = taskContextFactory

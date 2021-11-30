@@ -20,6 +20,7 @@ import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.NodeResultSerialiser;
 import stroom.query.common.v2.Store;
+import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.io.StreamUtil;
@@ -59,6 +60,11 @@ public class ClusterSearchResultCollector implements Store {
     private final Set<String> highlights;
     private final Coprocessors coprocessors;
 
+
+    private volatile AsyncSearchTaskHandler asyncSearchTaskHandler;
+    private volatile TaskContext taskContext;
+    private volatile boolean complete;
+
     public ClusterSearchResultCollector(final Executor executor,
                                         final TaskContextFactory taskContextFactory,
                                         final Provider<AsyncSearchTaskHandler> asyncSearchTaskHandlerProvider,
@@ -82,9 +88,11 @@ public class ClusterSearchResultCollector implements Store {
     public void start() {
         // Start asynchronous search execution.
         final Runnable runnable = taskContextFactory.context(TASK_NAME, taskContext -> {
+            this.taskContext = taskContext;
+            this.asyncSearchTaskHandler = asyncSearchTaskHandlerProvider.get();
+
             // Don't begin execution if we have been asked to complete already.
-            if (!coprocessors.getCompletionState().isComplete()) {
-                final AsyncSearchTaskHandler asyncSearchTaskHandler = asyncSearchTaskHandlerProvider.get();
+            if (!complete) {
                 asyncSearchTaskHandler.exec(taskContext, task);
             }
         });
@@ -113,7 +121,11 @@ public class ClusterSearchResultCollector implements Store {
     @Override
     public void destroy() {
         LOGGER.trace(() -> "destroy()");
-        complete();
+        complete = true;
+        if (asyncSearchTaskHandler != null) {
+            asyncSearchTaskHandler.terminateTasks(task, taskContext.getTaskId());
+        }
+
         LOGGER.trace(() -> "coprocessors.clear()");
         coprocessors.clear();
     }
