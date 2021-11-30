@@ -18,6 +18,7 @@
 package stroom.util.config;
 
 
+import stroom.util.NullSafe;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -46,7 +47,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -110,45 +110,82 @@ public final class PropertyUtil {
      * Builds a map of property names to a {@link Prop} object that provides access to the getter/setter.
      * Only includes public properties, not package private
      */
+//    public static Map<String, Prop> getProperties(final Object object) {
+//        Objects.requireNonNull(object);
+//        LOGGER.trace("getProperties called for {}", object);
+//        final Map<String, Prop> propMap = new HashMap<>();
+//        final Class<?> clazz = object.getClass();
+//
+//        // Scan all the fields and methods on the object to build up a map of possible props
+//        getPropsFromFields(object, propMap);
+//        getPropsFromMethods(object, propMap);
+//
+//        // Now filter out all the prop objects that are not pojo props with getter+setter
+//        return propMap
+//                .entrySet()
+//                .stream()
+//                .filter(e -> {
+//                    final String name = e.getKey();
+//                    final Prop prop = e.getValue();
+//                    final boolean hasJsonPropertyAnno = prop.hasAnnotation(JsonProperty.class);
+//
+//                    LOGGER.trace(() -> "Property " + name + " on " + clazz.getName() +
+//                            " hasJsonProperty: " + hasJsonPropertyAnno +
+//                            " hasSetter:" + prop.hasSetter());
+//
+//                    if (prop.hasGetter() && !prop.hasSetter() && hasJsonPropertyAnno) {
+//                        // Need to check for the jsonProperty anno to ignore props of non-pojo classes,
+//                        // e.g when it recurses into TreeMap or something like that.
+//                        throw new RuntimeException("Property " + name + " on " + clazz.getName() +
+//                                " has no setter. Either add a setter or remove @JsonProperty from its " +
+//                                "getter/field");
+//                    } else if (prop.getter == null || prop.setter == null) {
+//                        // could be a static field for internal use
+//                        LOGGER.trace(() -> "Property " + name + " on " + clazz.getName() +
+//                                " has no getter or setter, ignoring.");
+//                        return false;
+//                    } else {
+//                        return true;
+//                    }
+//                })
+//                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+//    }
     public static Map<String, Prop> getProperties(final Object object) {
-        Objects.requireNonNull(object);
-        LOGGER.trace("getProperties called for {}", object);
-        final Map<String, Prop> propMap = new HashMap<>();
-        final Class<?> clazz = object.getClass();
+        final ObjectMapper objectMapper = new ObjectMapper();
+        return getProperties(objectMapper, object);
+    }
 
-        // Scan all the fields and methods on the object to build up a map of possible props
-        getPropsFromFields(object, propMap);
-        getPropsFromMethods(object, propMap);
+    public static <T> Map<String, Prop> getProperties(final ObjectMapper objectMapper, final T object) {
+        final Class<T> clazz = (Class<T>) object.getClass();
 
-        // Now filter out all the prop objects that are not pojo props with getter+setter
-        return propMap
-                .entrySet()
-                .stream()
-                .filter(e -> {
-                    final String name = e.getKey();
-                    final Prop prop = e.getValue();
-                    final boolean hasJsonPropertyAnno = prop.hasAnnotation(JsonProperty.class);
+        final JavaType userType = objectMapper.getTypeFactory().constructType(object.getClass());
+        final BeanDescription beanDescription =
+                objectMapper.getSerializationConfig().introspect(userType);
 
-                    LOGGER.trace(() -> "Property " + name + " on " + clazz.getName() +
-                            " hasJsonProperty: " + hasJsonPropertyAnno +
-                            " hasSetter:" + prop.hasSetter());
-
-                    if (prop.hasGetter() && !prop.hasSetter() && hasJsonPropertyAnno) {
-                        // Need to check for the jsonProperty anno to ignore props of non-pojo classes,
-                        // e.g when it recurses into TreeMap or something like that.
-                        throw new RuntimeException("Property " + name + " on " + clazz.getName() +
-                                " has no setter. Either add a setter or remove @JsonProperty from its " +
-                                "getter/field");
-                    } else if (prop.getter == null || prop.setter == null) {
-                        // could be a static field for internal use
-                        LOGGER.trace(() -> "Property " + name + " on " + clazz.getName() +
-                                " has no getter or setter, ignoring.");
-                        return false;
-                    } else {
-                        return true;
+        final List<BeanPropertyDefinition> beanPropDefs = beanDescription.findProperties();
+        final Map<String, Prop> propMap = beanPropDefs.stream()
+                .map(propDef -> {
+                    final Prop prop = new Prop(propDef.getName(), object);
+                    if (propDef.getField() != null) {
+                        propDef.getField()
+                                .getAllAnnotations()
+                                .annotations()
+                                .forEach(prop::addFieldAnnotation);
                     }
+                    if (propDef.hasGetter()) {
+                        prop.setGetter(propDef.getGetter().getAnnotated());
+                    } else {
+                        throw new RuntimeException("Property " + propDef.getName() + " on " + clazz.getName() +
+                                " has no getter");
+                    }
+                    if (propDef.hasSetter()) {
+                        prop.setSetter(propDef.getSetter().getAnnotated());
+                    }
+                    return prop;
                 })
-                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+                .collect(Collectors.toMap(Prop::getName, Function.identity()));
+
+        return propMap;
     }
 
     /**
@@ -212,7 +249,8 @@ public final class PropertyUtil {
 
         constructorArgNames.forEach(argName -> {
             if (!propNames.contains(argName)) {
-                throw new RuntimeException("No matching property found for constructor property " + argName);
+                throw new RuntimeException(LogUtil.message(
+                        "No matching property found for constructor property {} on {}", argName, object));
             }
         });
 
@@ -223,6 +261,25 @@ public final class PropertyUtil {
                 propertyMap,
                 constructorArgNames,
                 optJsonCreatorConstructor.orElse(null));
+    }
+
+    /**
+     * @return otherValue if it is non-null or copyNulls is true, else thisValue
+     */
+    public static <T> T mergeValues(final T thisValue,
+                                    final T otherValue,
+                                    final T defaultValue,
+                                    final boolean copyNulls,
+                                    final boolean copyDefaults) {
+        if (otherValue != null || copyNulls) {
+            if (!Objects.equals(defaultValue, otherValue) || copyDefaults) {
+                return otherValue;
+            } else {
+                return thisValue;
+            }
+        } else {
+            return thisValue;
+        }
     }
 
     private static <T> Optional<Constructor<T>> getJsonCreatorConstructor(final Class<T> clazz) {
@@ -317,6 +374,7 @@ public final class PropertyUtil {
                     type.getClass().getName()));
         }
     }
+
 
     private static void getPropsFromFields(final Object object, final Map<String, Prop> propMap) {
         final Class<?> clazz = object.getClass();
@@ -470,12 +528,17 @@ public final class PropertyUtil {
                     .map(valueSupplier)
                     .toArray(Object[]::new);
             try {
+                if (constructor == null) {
+                    throw new RuntimeException("Missing @JsonCreator constructor for class " + objectClass.getName());
+                }
                 return constructor.newInstance(args);
-            } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-                throw new RuntimeException(LogUtil.message("Error creating new instance of {} with args {}. {}",
-                        objectClass.getName(),
-                        args,
-                        e), e);
+            } catch (InvocationTargetException | IllegalAccessException | InstantiationException e) {
+                throw new RuntimeException(
+                        LogUtil.message("Error creating new instance of {} with args {}. {}",
+                                objectClass.getName(),
+                                args,
+                                NullSafe.get(e, Throwable::getMessage)),
+                        e);
             }
         }
     }
@@ -630,7 +693,8 @@ public final class PropertyUtil {
         }
 
         public Type getValueType() {
-            return setter.getGenericParameterTypes()[0];
+            return getter.getGenericReturnType();
+//            setter.getGenericParameterTypes()[0];
         }
 
         public Class<?> getValueClass() {

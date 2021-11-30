@@ -55,9 +55,6 @@ import io.vavr.Tuple2;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.nio.file.Path;
@@ -77,11 +74,10 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 
 
@@ -142,7 +138,7 @@ public class ConfigMapper {
     // be the hard coded default or a value set in the yaml. Value are later updated based on property values
     // in the DB if no value no non-default value is set in the yaml.
     // yaml trumps DB trumps default.
-    private final AppConfig appConfig;
+//    private final AppConfig appConfig;
     private final Path configFile;
 
     // A map of config properties keyed on the fully qualified prop path (i.e. stroom.path.temp)
@@ -168,6 +164,8 @@ public class ConfigMapper {
 
     private volatile boolean haveYamlOverridesBeenInitialised = false;
 
+    private final Supplier<AppConfig> defaultAppConfigSupplier;
+
     // TODO Created this with a view to improving the ser/deser of the values but it needs
     //   more thought.  Leaving it here for now.
 //    private static final Map<Class<?>, Mapping> MAPPERS = new HashMap<>();
@@ -183,18 +181,25 @@ public class ConfigMapper {
 //    }
 
     // For testing
-    ConfigMapper(final AppConfig appConfig) {
-        this(null, () -> appConfig);
+    ConfigMapper() {
+        this(null, AppConfig::new);
     }
 
-    @Inject
-    public ConfigMapper(final Path configFile,
-                        final Provider<AppConfig> appConfigProvider) {
+    ConfigMapper(final Supplier<AppConfig> defaultAppConfigSupplier) {
+        this(null, defaultAppConfigSupplier);
+    }
+
+    public ConfigMapper(final Path configFile) {
+        this(configFile, AppConfig::new);
+    }
+
+    private ConfigMapper(final Path configFile, final Supplier<AppConfig> defaultAppConfigSupplier) {
         // This is the de-serialised form of the config.yaml so should contain all compile time defaults except
         // where set to other values in the yaml file. AppConfigModule should have ensured that all null
         // branches have been replaced with a default instance to ensure we have a full tree.
-        this.appConfig = appConfigProvider.get();
+//        this.appConfig = appConfigProvider.get();
         this.configFile = configFile;
+        this.defaultAppConfigSupplier = defaultAppConfigSupplier;
 
         LOGGER.debug(() -> LogUtil.message("Initialising ConfigMapper with file {}", configFile));
 
@@ -209,6 +214,9 @@ public class ConfigMapper {
         // globalPropertiesMap with the defaults.
         LOGGER.debug("Building globalPropertiesMap from compile-time default values and annotations");
         this.allPropertyPaths = initialiseMaps();
+
+        // No point in reading the yaml file at this stage as we may as well wait till GlobalPropertyService
+        // calls into us with its DB values and do it all at once.
 
         // Now walk the guice bound appConfig tree, create a Prop for each leaf and add it to the
         // propertyMap. Ensure all branches have a default value.
@@ -246,7 +254,7 @@ public class ConfigMapper {
     private Set<PropertyPath> initialiseMaps() {
 
         // Init the tree containing all the hard coded default values
-        final AppConfig defaultAppConfig = getDefaultAppConfig();
+        final AppConfig defaultAppConfig = defaultAppConfigSupplier.get();
 
         // build a map of prop objects that give us access to the default AppConfig tree
         // to get default values
@@ -281,19 +289,6 @@ public class ConfigMapper {
 //        // This will add all the property paths to the passed AppConfig instance
 //        new ConfigMapper(() -> appConfig);
 //    }
-
-    private AppConfig getDefaultAppConfig() {
-        try {
-            // We do this rather than new AppConfig() so that tests can sub class AppConfig
-            return appConfig.getClass().getDeclaredConstructor().newInstance();
-        } catch (InstantiationException
-                | IllegalAccessException
-                | InvocationTargetException
-                | NoSuchMethodException e) {
-            throw new RuntimeException(LogUtil.message("Unable to call constructor on class {}",
-                    appConfig.getClass().getName()), e);
-        }
-    }
 
     /**
      * Will copy the contents of the passed {@link AppConfig} into the guice bound {@link AppConfig}
@@ -358,8 +353,8 @@ public class ConfigMapper {
                 return rebuildObjectInstance(childPropertyPath, newInstanceMap);
             } else {
                 // leaf
-                return globalPropertiesMap.get(propertyPath)
-                        .getEffectiveValue()
+                return Optional.ofNullable(globalPropertiesMap.get(propertyPath))
+                        .flatMap(ConfigProperty::getEffectiveValue)
                         .map(strVal ->
                                 convertToObject(childProp, strVal, childProp.getValueType()))
                         .orElse(null);
@@ -374,7 +369,7 @@ public class ConfigMapper {
         return instance;
     }
 
-//    public synchronized void updateConfigFromDb(final Collection<ConfigProperty> dbProps) {
+    //    public synchronized void updateConfigFromDb(final Collection<ConfigProperty> dbProps) {
 //
 //        final Map<PropertyPath, Optional<String>> currentEffectiveValues = globalPropertiesMap.values()
 //                .stream()
@@ -397,31 +392,48 @@ public class ConfigMapper {
 //                hasEffectiveValueChanged(propertyPath, currentEffectiveValues, currentSources));
 //
 //    }
+    AppConfig buildMergedAppConfigFromFile() {
+        return buildMergedAppConfigFromFile(configFile);
+    }
 
     /**
      * Merge the config.yml content with the default AppConfig tree to get a complete
      * tree that includes any yaml overrides.
      */
-    private AppConfig buildAppConfigFromFile() {
+    public static AppConfig buildMergedAppConfigFromFile(final Path configFile) {
 
-        final AppConfig defaultAppConfig = getDefaultAppConfig();
+        final AppConfig defaultAppConfig = new AppConfig();
         if (configFile == null) {
             return defaultAppConfig;
         } else {
-            return YamlUtil.mergeYamlNodeTrees(AppConfig.class,
-                    objectMapper -> {
-                        try {
-                            return objectMapper.readTree(configFile.toFile());
-                        } catch (IOException e) {
-                            throw new UncheckedIOException(e);
-                        }
-                    },
-                    objectMapper ->
-                            objectMapper.valueToTree(defaultAppConfig));
+            try {
+                final AppConfig yamlAppConfig = YamlUtil.readAppConfig(configFile);
+                return buildMergedAppConfigFromFile(yamlAppConfig);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
         }
     }
 
+    public static AppConfig buildMergedAppConfigFromFile(final AppConfig yamlAppConfig) {
+
+        final AppConfig defaultAppConfig = new AppConfig();
+
+        final AppConfig mergedAppConfig = YamlUtil.mergeYamlNodeTrees(
+                AppConfig.class,
+                objectMapper ->
+                        objectMapper.valueToTree(yamlAppConfig),
+                objectMapper ->
+                        objectMapper.valueToTree(defaultAppConfig));
+        return mergedAppConfig;
+    }
+
     private synchronized int refreshGlobalPropYamlOverrides() {
+        final AppConfig yamlAppConfig = buildMergedAppConfigFromFile();
+        return refreshGlobalPropYamlOverrides(yamlAppConfig);
+    }
+
+    synchronized int refreshGlobalPropYamlOverrides(final AppConfig yamlAppConfig) {
 
         final Map<PropertyPath, Optional<String>> currentEffectiveValues = globalPropertiesMap.values()
                 .stream()
@@ -430,8 +442,6 @@ public class ConfigMapper {
         final Map<PropertyPath, SourceType> currentSources = globalPropertiesMap.values()
                 .stream()
                 .collect(Collectors.toMap(ConfigProperty::getName, ConfigProperty::getSource));
-
-        final AppConfig yamlAppConfig = buildAppConfigFromFile();
 
         final Map<PropertyPath, Prop> newPropertyMap = new HashMap<>();
         // walk the yamlAppConfig tree and update the globalPropertiesMap with the yaml overrides
@@ -565,6 +575,9 @@ public class ConfigMapper {
         if (changeCount > 0) {
             rebuildObjectInstanceMap();
         }
+
+        // Allow classes injecting config providers to use them
+        configReadyForUseLatch.countDown();
     }
 
     ConfigProperty decorateDbConfigProperty(final ConfigProperty dbConfigProperty) {
@@ -642,19 +655,19 @@ public class ConfigMapper {
         }
     }
 
-    private void applyEffectiveValueToProp(final ConfigProperty globalConfigProperty, final Prop prop) {
-        final Type genericType = prop.getValueType();
-        final Object typedValue = convertToObject(
-                prop,
-                globalConfigProperty.getEffectiveValue().orElse(null),
-                genericType);
-
-        LOGGER.trace(() -> LogUtil.message("Setting {} to [{}] on the AppConfig tree",
-                globalConfigProperty.getName(),
-                typedValue));
-
-        prop.setValueOnConfigObject(typedValue);
-    }
+//    private void applyEffectiveValueToProp(final ConfigProperty globalConfigProperty, final Prop prop) {
+//        final Type genericType = prop.getValueType();
+//        final Object typedValue = convertToObject(
+//                prop,
+//                globalConfigProperty.getEffectiveValue().orElse(null),
+//                genericType);
+//
+//        LOGGER.trace(() -> LogUtil.message("Setting {} to [{}] on the AppConfig tree",
+//                globalConfigProperty.getName(),
+//                typedValue));
+//
+//        prop.setValueOnConfigObject(typedValue);
+//    }
 
     private void addConfigObjectMethods(final AbstractConfig config,
                                         final PropertyPath path,
@@ -668,10 +681,9 @@ public class ConfigMapper {
         final Map<String, Prop> properties = PropertyUtil.getProperties(config);
         properties.forEach((k, prop) -> {
             LOGGER.trace("prop: {}", prop);
-            final Method getter = prop.getGetter();
 
             // The prop may have a JsonPropery annotation that defines its name
-            final String specifiedName = getNameFromAnnotation(getter);
+            final String specifiedName = getNameFromAnnotation(prop);
             final String name = Strings.isNullOrEmpty(specifiedName)
                     ? prop.getName()
                     : specifiedName;
@@ -685,11 +697,11 @@ public class ConfigMapper {
             if (isSupportedPropertyType(valueType)) {
 
                 if (!prop.hasSetter()) {
-                    throw new RuntimeException(LogUtil.message("Prop {} in class {} has no setter.",
-                            prop.getName(),
-                            (prop.getParentObject() != null
-                                    ? prop.getParentObject().getClass().getName()
-                                    : "null")));
+//                    throw new RuntimeException(LogUtil.message("Prop {} in class {} has no setter.",
+//                            prop.getName(),
+//                            (prop.getParentObject() != null
+//                                    ? prop.getParentObject().getClass().getName()
+//                                    : "null")));
                 }
                 // This is a leaf, i.e. a property so add it to our map
                 propertyMap.put(fullPath, prop);
@@ -964,14 +976,18 @@ public class ConfigMapper {
         }
     }
 
-    private String getNameFromAnnotation(final Method method) {
-        for (final Annotation declaredAnnotation : method.getDeclaredAnnotations()) {
-            if (declaredAnnotation.annotationType().equals(JsonProperty.class)) {
-                final JsonProperty jsonProperty = (JsonProperty) declaredAnnotation;
-                return jsonProperty.value();
-            }
-        }
-        return null;
+    private String getNameFromAnnotation(final Prop prop) {
+        return prop.getAnnotation(JsonProperty.class)
+                .map(JsonProperty::value)
+                .orElse(null);
+
+//        for (final Annotation declaredAnnotation : method.getDeclaredAnnotations()) {
+//            if (declaredAnnotation.annotationType().equals(JsonProperty.class)) {
+//                final JsonProperty jsonProperty = (JsonProperty) declaredAnnotation;
+//                return jsonProperty.value();
+//            }
+//        }
+//        return null;
     }
 
 
@@ -1458,6 +1474,12 @@ public class ConfigMapper {
                 objectMapper,
                 path.getPropertyName(),
                 config);
+
+        if (objectInfo.getConstructor() == null) {
+            // TODO 29/11/2021 AT: Replace warn with throw once all ctors are in place
+            LOGGER.warn("No JsonCreator constructor for " + config.getClass().getName());
+//            throw new RuntimeException("No JsonCreator constructor for " + config.getClass().getName());
+        }
 
         objectInfoMap.put(path, objectInfo);
 

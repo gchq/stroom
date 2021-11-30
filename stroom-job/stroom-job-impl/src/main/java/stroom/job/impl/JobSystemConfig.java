@@ -1,11 +1,14 @@
 package stroom.job.impl;
 
-import stroom.config.common.DbConfig;
+import stroom.config.common.AbstractDbConfig;
+import stroom.config.common.ConnectionConfig;
+import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.ModelStringUtil;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -24,20 +27,37 @@ public class JobSystemConfig extends AbstractConfig implements HasDbConfig {
     private static final int ONE_SECOND = 1000;
     private static final long DEFAULT_INTERVAL = 10 * ONE_SECOND;
 
-    private DbConfig dbConfig = new DbConfig();
-    private boolean enabled = true;
-    private boolean enableJobsOnBootstrap;
-    private String executionInterval = "10s";
+    private final JobSystemDbConfig dbConfig;
+    private final boolean enabled;
+    private final boolean enableJobsOnBootstrap;
+    private final String executionInterval;
 
+    public JobSystemConfig() {
+        dbConfig = new JobSystemDbConfig();
+        enabled = true;
+        enableJobsOnBootstrap = false;
+        executionInterval = "10s";
+    }
+
+    @SuppressWarnings("unused")
+    @JsonCreator
+    public JobSystemConfig(@JsonProperty("db") final JobSystemDbConfig dbConfig,
+                           @JsonProperty("enabled") final boolean enabled,
+                           @JsonProperty(PROP_NAME_ENABLE_PROCESSING) final boolean enableJobsOnBootstrap,
+                           @JsonProperty("executionInterval") final String executionInterval) {
+        this.dbConfig = dbConfig;
+        this.enabled = enabled;
+        this.enableJobsOnBootstrap = enableJobsOnBootstrap;
+        this.executionInterval = executionInterval;
+    }
+
+    @Override
     @JsonProperty("db")
-    public DbConfig getDbConfig() {
+    public JobSystemDbConfig getDbConfig() {
         return dbConfig;
     }
 
     @SuppressWarnings("unused")
-    public void setDbConfig(final DbConfig dbConfig) {
-        this.dbConfig = dbConfig;
-    }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("Enables/disables the job system that manages the execution of Stroom's enabled " +
@@ -46,11 +66,6 @@ public class JobSystemConfig extends AbstractConfig implements HasDbConfig {
             "try and process files automatically outside of test cases.")
     public boolean isEnabled() {
         return enabled;
-    }
-
-    @SuppressWarnings("unused")
-    public void setEnabled(final boolean enabled) {
-        this.enabled = enabled;
     }
 
     @JsonPropertyDescription("On boot Stroom will ensure all jobs are created. " +
@@ -62,21 +77,11 @@ public class JobSystemConfig extends AbstractConfig implements HasDbConfig {
         return enableJobsOnBootstrap;
     }
 
-    @SuppressWarnings("unused")
-    public void setEnableJobsOnBootstrap(final boolean enableJobsOnBootstrap) {
-        this.enableJobsOnBootstrap = enableJobsOnBootstrap;
-    }
-
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("How frequently should the lifecycle service attempt to execute any jobs that " +
             "are ready (by their frequency or schedule) to be executed.")
     public String getExecutionInterval() {
         return executionInterval;
-    }
-
-    @SuppressWarnings("unused")
-    public void setExecutionInterval(final String executionInterval) {
-        this.executionInterval = executionInterval;
     }
 
     @JsonIgnore
@@ -101,5 +106,20 @@ public class JobSystemConfig extends AbstractConfig implements HasDbConfig {
                 "enabled=" + enabled +
                 ", executionInterval='" + executionInterval + '\'' +
                 '}';
+    }
+
+    public static class JobSystemDbConfig extends AbstractDbConfig {
+
+        public JobSystemDbConfig() {
+            super();
+        }
+
+        @SuppressWarnings("unused")
+        @JsonCreator
+        public JobSystemDbConfig(
+                @JsonProperty(PROP_NAME_CONNECTION) final ConnectionConfig connectionConfig,
+                @JsonProperty(PROP_NAME_CONNECTION_POOL) final ConnectionPoolConfig connectionPoolConfig) {
+            super(connectionConfig, connectionPoolConfig);
+        }
     }
 }

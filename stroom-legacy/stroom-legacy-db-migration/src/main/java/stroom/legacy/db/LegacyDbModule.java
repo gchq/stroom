@@ -92,7 +92,7 @@ public class LegacyDbModule extends AbstractModule {
 
     @Provides
     @Singleton
-    public LegacyDbConnProvider getConnectionProvider(final Provider<LegacyDbConfig> configProvider,
+    public LegacyDbConnProvider getConnectionProvider(final Provider<LegacyConfig> configProvider,
                                                       final DataSourceFactory dataSourceFactory) {
         LOGGER.debug(() -> "Getting connection provider for " + getModuleName());
 

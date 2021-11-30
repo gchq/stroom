@@ -1,9 +1,12 @@
 package stroom.docstore.impl.db;
 
-import stroom.config.common.DbConfig;
+import stroom.config.common.AbstractDbConfig;
+import stroom.config.common.ConnectionConfig;
+import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.shared.AbstractConfig;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.inject.Singleton;
@@ -11,14 +14,36 @@ import javax.inject.Singleton;
 @Singleton
 public class DocStoreConfig extends AbstractConfig implements HasDbConfig {
 
-    private DbConfig dbConfig = new DbConfig();
+    private final DocStoreDbConfig dbConfig;
 
+    public DocStoreConfig() {
+        dbConfig = new DocStoreDbConfig();
+    }
+
+    @SuppressWarnings("unused")
+    @JsonCreator
+    public DocStoreConfig(@JsonProperty("db") final DocStoreDbConfig dbConfig) {
+        this.dbConfig = dbConfig;
+    }
+
+    @Override
     @JsonProperty("db")
-    public DbConfig getDbConfig() {
+    public DocStoreDbConfig getDbConfig() {
         return dbConfig;
     }
 
-    public void setDbConfig(final DbConfig dbConfig) {
-        this.dbConfig = dbConfig;
+    public static class DocStoreDbConfig extends AbstractDbConfig {
+
+        public DocStoreDbConfig() {
+            super();
+        }
+
+        @SuppressWarnings("unused")
+        @JsonCreator
+        public DocStoreDbConfig(
+                @JsonProperty(PROP_NAME_CONNECTION) final ConnectionConfig connectionConfig,
+                @JsonProperty(PROP_NAME_CONNECTION_POOL) final ConnectionPoolConfig connectionPoolConfig) {
+            super(connectionConfig, connectionPoolConfig);
+        }
     }
 }

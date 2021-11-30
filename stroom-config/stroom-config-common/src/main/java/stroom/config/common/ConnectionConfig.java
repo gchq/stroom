@@ -50,13 +50,17 @@ public class ConnectionConfig extends AbstractConfig {
     public static final String DEFAULT_JDBC_DRIVER_USERNAME = "stroomuser";
     public static final String DEFAULT_JDBC_DRIVER_PASSWORD = "stroompassword1";
 
-    private String className;
-    private String url;
+    private final String className;
+    private final String url;
+    // TODO 30/11/2021 AT: Make final
     private String user;
-    private String password;
+    private final String password;
 
-    // TODO 24/11/2021 AT: Remove once we go immutable
     public ConnectionConfig() {
+        className = null;
+        url = null;
+        user = null;
+        password = null;
     }
 
     @JsonCreator
@@ -70,6 +74,14 @@ public class ConnectionConfig extends AbstractConfig {
         this.password = password;
     }
 
+    public static ConnectionConfig defaults() {
+        return new ConnectionConfig(
+                DEFAULT_JDBC_DRIVER_CLASS_NAME,
+                DEFAULT_JDBC_DRIVER_URL,
+                DEFAULT_JDBC_DRIVER_USERNAME,
+                DEFAULT_JDBC_DRIVER_PASSWORD);
+    }
+
     @ReadOnly
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("The class name for the JDBC database connection, e.g. com.mysql.cj.jdbc.Driver. "
@@ -77,10 +89,6 @@ public class ConnectionConfig extends AbstractConfig {
     @JsonProperty(PROP_NAME_JDBC_DRIVER_CLASS_NAME)
     public String getClassName() {
         return className;
-    }
-
-    public void setClassName(final String className) {
-        this.className = className;
     }
 
     @ReadOnly
@@ -93,10 +101,6 @@ public class ConnectionConfig extends AbstractConfig {
         return url;
     }
 
-    public void setUrl(final String url) {
-        this.url = url;
-    }
-
     @ReadOnly
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("The username to connect to the database with. "
@@ -106,6 +110,7 @@ public class ConnectionConfig extends AbstractConfig {
         return user;
     }
 
+    @Deprecated(forRemoval = true)
     public void setUser(final String user) {
         this.user = user;
     }
@@ -120,8 +125,35 @@ public class ConnectionConfig extends AbstractConfig {
         return password;
     }
 
-    public void setPassword(final String password) {
-        this.password = password;
+//    public ConnectionConfig withClassName(final String className) {
+//        return new ConnectionConfig(className, url, user, password);
+//    }
+//
+//    public ConnectionConfig withUrl(final String url) {
+//        return new ConnectionConfig(className, url, user, password);
+//    }
+//
+//    public ConnectionConfig withUser(final String user) {
+//        return new ConnectionConfig(className, url, user, password);
+//    }
+//
+//    public ConnectionConfig withPassword(final String password) {
+//        return new ConnectionConfig(className, url, user, password);
+//    }
+
+    /**
+     * Merges the non-null values of other into this. If other is null return this.
+     */
+    public ConnectionConfig merge(final ConnectionConfig other) {
+        if (other == null) {
+            return this;
+        } else {
+            return new ConnectionConfig(
+                    Objects.requireNonNullElse(other.className, className),
+                    Objects.requireNonNullElse(other.url, url),
+                    Objects.requireNonNullElse(other.user, user),
+                    Objects.requireNonNullElse(other.password, password));
+        }
     }
 
     @Override

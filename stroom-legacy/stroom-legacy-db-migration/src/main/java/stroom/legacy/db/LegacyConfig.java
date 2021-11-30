@@ -1,4 +1,4 @@
-package stroom.cluster.lock.impl.db;
+package stroom.legacy.db;
 
 import stroom.config.common.AbstractDbConfig;
 import stroom.config.common.ConnectionConfig;
@@ -12,35 +12,37 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import javax.inject.Singleton;
 
 @Singleton
-public class ClusterLockConfig extends AbstractConfig implements HasDbConfig {
+@Deprecated
+public class LegacyConfig extends AbstractConfig implements HasDbConfig {
 
-    private final ClusterLockDbConfig dbConfig;
+    private final LegacyDbConfig dbConfig;
 
-    public ClusterLockConfig() {
-        dbConfig = new ClusterLockDbConfig();
+    public LegacyConfig() {
+        dbConfig = new LegacyDbConfig();
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public ClusterLockConfig(@JsonProperty("db") final ClusterLockDbConfig dbConfig) {
+    public LegacyConfig(@JsonProperty("db") final LegacyDbConfig dbConfig) {
         this.dbConfig = dbConfig;
     }
 
     @Override
     @JsonProperty("db")
-    public ClusterLockDbConfig getDbConfig() {
+    public LegacyDbConfig getDbConfig() {
         return dbConfig;
     }
 
-    public static class ClusterLockDbConfig extends AbstractDbConfig {
 
-        public ClusterLockDbConfig() {
+    public static class LegacyDbConfig extends AbstractDbConfig {
+
+        public LegacyDbConfig() {
             super();
         }
 
         @SuppressWarnings("unused")
         @JsonCreator
-        public ClusterLockDbConfig(
+        public LegacyDbConfig(
                 @JsonProperty(PROP_NAME_CONNECTION) final ConnectionConfig connectionConfig,
                 @JsonProperty(PROP_NAME_CONNECTION_POOL) final ConnectionPoolConfig connectionPoolConfig) {
             super(connectionConfig, connectionPoolConfig);

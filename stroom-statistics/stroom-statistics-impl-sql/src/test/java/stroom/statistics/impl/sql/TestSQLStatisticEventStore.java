@@ -50,7 +50,7 @@ class TestSQLStatisticEventStore extends StroomUnitTest {
     private final AtomicLong destroyCount = new AtomicLong();
     private final AtomicLong eventCount = new AtomicLong();
     private final AtomicSequence atomicSequence = new AtomicSequence(10);
-    private final SQLStatisticsConfig sqlStatisticsConfig = new SQLStatisticsConfig();
+    private SQLStatisticsConfig sqlStatisticsConfig = new SQLStatisticsConfig();
     private final SecurityContext securityContext = new MockSecurityContext();
 
     private final StatisticStoreCache mockStatisticsDataSourceCache = new StatisticStoreCache() {
@@ -179,7 +179,7 @@ class TestSQLStatisticEventStore extends StroomUnitTest {
         final int eventCount = 100;
         final long firstEventTimeMs = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(1);
 
-        sqlStatisticsConfig.setMaxProcessingAge(null);
+        sqlStatisticsConfig = sqlStatisticsConfig.withMaxProcessingAge(null);
 
         processEvents(eventCount, eventCount, firstEventTimeMs, TimeUnit.MINUTES.toMillis(1));
 
@@ -192,7 +192,7 @@ class TestSQLStatisticEventStore extends StroomUnitTest {
         final long firstEventTimeMs = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(10);
 
         // only process stuff younger than a day
-        sqlStatisticsConfig.setMaxProcessingAge(StroomDuration.ofDays(1));
+        sqlStatisticsConfig = sqlStatisticsConfig.withMaxProcessingAge(StroomDuration.ofDays(1));
 
         // no events should be processed
         processEvents(eventCount, 0, firstEventTimeMs, TimeUnit.MINUTES.toMillis(1));
@@ -209,7 +209,7 @@ class TestSQLStatisticEventStore extends StroomUnitTest {
                 + TimeUnit.SECONDS.toMillis(10);
 
         // only process stuff younger than 25days
-        sqlStatisticsConfig.setMaxProcessingAge(StroomDuration.ofDays(25));
+        sqlStatisticsConfig = sqlStatisticsConfig.withMaxProcessingAge(StroomDuration.ofDays(25));
 
         // no events should be processed
         processEvents(eventCount, 25, firstEventTimeMs, TimeUnit.DAYS.toMillis(1));

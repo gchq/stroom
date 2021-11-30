@@ -1,8 +1,9 @@
 package stroom.test.common.util.db;
 
+import stroom.config.common.AbstractDbConfig;
 import stroom.config.common.CommonDbConfig;
+import stroom.config.common.CommonDbConfig.MergedDbConfig;
 import stroom.config.common.ConnectionConfig;
-import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceKey;
@@ -65,7 +66,7 @@ public class DbTestUtil {
             "WHERE TABLE_SCHEMA = database() " +
             "AND TABLE_TYPE LIKE '%BASE TABLE%' " +
             "AND TABLE_NAME NOT LIKE '%schema%';";
-    private static final ThreadLocal<DbConfig> THREAD_LOCAL = new ThreadLocal<>();
+    private static final ThreadLocal<AbstractDbConfig> THREAD_LOCAL = new ThreadLocal<>();
     private static final ThreadLocal<Set<DataSource>> LOCAL_DATA_SOURCES = new ThreadLocal<>();
     private static final ConcurrentMap<DataSourceKey, DataSource> DATA_SOURCE_MAP = new ConcurrentHashMap<>();
     private static volatile EmbeddedMysql EMBEDDED_MYSQL;
@@ -118,9 +119,11 @@ public class DbTestUtil {
                 .orElseGet(valueSupplier);
     }
 
-    public static DataSource createTestDataSource(final DbConfig dbConfig, final String name, final boolean unique) {
+    public static DataSource createTestDataSource(final AbstractDbConfig dbConfig,
+                                                  final String name,
+                                                  final boolean unique) {
         // See if we have a local data source.
-        DbConfig testDbConfig = THREAD_LOCAL.get();
+        AbstractDbConfig testDbConfig = THREAD_LOCAL.get();
         if (testDbConfig == null) {
             // Create a merged config using the common db config as a base.
             ConnectionConfig connectionConfig = dbConfig.getConnectionConfig();
@@ -204,7 +207,10 @@ public class DbTestUtil {
                     .url(url)
                     .build();
             LOGGER.info("Using DB connection url: {}", url);
-            testDbConfig = new DbConfig(newConnectionConfig, dbConfig.getConnectionPoolConfig());
+            testDbConfig = new MergedDbConfig(
+                    newConnectionConfig,
+                    dbConfig.getConnectionPoolConfig(),
+                    "TestDataSource");
             THREAD_LOCAL.set(testDbConfig);
         }
 
@@ -271,11 +277,11 @@ public class DbTestUtil {
                 .build()
                 .toString();
 
-        final ConnectionConfig connectionConfig = new ConnectionConfig();
-        connectionConfig.setClassName(DEFAULT_JDBC_DRIVER_CLASS_NAME);
-        connectionConfig.setUrl(url);
-        connectionConfig.setUser(mysqlConfig.getUsername());
-        connectionConfig.setPassword(mysqlConfig.getPassword());
+        final ConnectionConfig connectionConfig = new ConnectionConfig(
+                DEFAULT_JDBC_DRIVER_CLASS_NAME,
+                url,
+                mysqlConfig.getUsername(),
+                mysqlConfig.getPassword());
 
         return connectionConfig;
 
@@ -307,23 +313,6 @@ public class DbTestUtil {
 //
 //
 //        return createConnectionConfig(dbName, mysqlConfig);
-    }
-
-    private static ConnectionConfig createConnectionConfig(final String dbName, final MysqldConfig mysqlConfig) {
-        final String url = DbUrl
-                .builder()
-                .port(mysqlConfig.getPort())
-                .dbName(dbName)
-                .query("useUnicode=yes&characterEncoding=UTF-8")
-                .build()
-                .toString();
-
-        final ConnectionConfig connectionConfig = new ConnectionConfig();
-        connectionConfig.setUrl(url);
-        connectionConfig.setUser(mysqlConfig.getUsername());
-        connectionConfig.setPassword(mysqlConfig.getPassword());
-
-        return connectionConfig;
     }
 
     private static synchronized EmbeddedMysql createEmbeddedMysql() {

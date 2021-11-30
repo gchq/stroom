@@ -25,6 +25,7 @@ import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
 import stroom.config.app.SuperDevUtil;
 import stroom.config.app.YamlUtil;
+import stroom.config.global.impl.ConfigMapper;
 import stroom.dropwizard.common.Filters;
 import stroom.dropwizard.common.HealthChecks;
 import stroom.dropwizard.common.ManagedServices;
@@ -189,6 +190,11 @@ public class App extends Application<Config> {
         LOGGER.info("Using application configuration file {}", configFile.toAbsolutePath().normalize());
 
         validateAppConfig(configuration, configFile);
+
+        // Merge the sparse de-serialised config with our default AppConfig tree
+        // so we have a full config tree but with any yaml overrides
+        final AppConfig mergedAppConfig = ConfigMapper.buildMergedAppConfigFromFile(configuration.getAppConfig());
+        configuration.setAppConfig(mergedAppConfig);
 
         // Turn on Jersey logging of request/response payloads
         // I can't seem to get this to work unless Level is SEVERE

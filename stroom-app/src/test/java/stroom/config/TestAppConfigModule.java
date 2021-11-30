@@ -5,10 +5,10 @@ import stroom.config.app.AppConfigModule;
 import stroom.config.app.Config;
 import stroom.config.app.ConfigHolder;
 import stroom.config.app.YamlUtil;
+import stroom.config.common.AbstractDbConfig;
 import stroom.config.common.CommonDbConfig;
-import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
-import stroom.legacy.db.LegacyDbConfig;
+import stroom.legacy.db.LegacyConfig;
 import stroom.util.config.PropertyUtil;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
@@ -156,12 +156,12 @@ class TestAppConfigModule {
                 });
 
         Stream.concat(
-                Stream.of(new LegacyDbConfig()), // This is not in the tree but we want to test it
+                Stream.of(new LegacyConfig()), // This is not in the tree but we want to test it
                 hasDbConfigsStream)
                 .forEach(hasDbConfig -> {
                     LOGGER.info("Testing class: {}", hasDbConfig.getClass().getName());
 
-                    final DbConfig mergedConfig = commonDbConfig.mergeConfig(hasDbConfig.getDbConfig());
+                    final AbstractDbConfig mergedConfig = commonDbConfig.mergeConfig(hasDbConfig.getDbConfig());
 
                     // mergedConfig won't be the same as commonDbConfig as the driver class
                     // is not set in the yaml so is reliant on the default value. The default value

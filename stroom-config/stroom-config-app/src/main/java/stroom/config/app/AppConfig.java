@@ -23,7 +23,7 @@ import stroom.index.impl.IndexConfig;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.job.impl.JobSystemConfig;
 import stroom.kafka.impl.KafkaConfig;
-import stroom.legacy.db.LegacyDbConfig;
+import stroom.legacy.db.LegacyConfig;
 import stroom.lifecycle.impl.LifecycleConfig;
 import stroom.lmdb.LmdbLibraryConfig;
 import stroom.node.impl.NodeConfig;
@@ -107,7 +107,7 @@ public class AppConfig extends AbstractConfig {
     private final ClusterLockConfig clusterLockConfig;
     private final CommonDbConfig commonDbConfig;
     private final ContentPackImportConfig contentPackImportConfig;
-    private final LegacyDbConfig legacyDbConfig;
+    private final LegacyConfig legacyConfig;
     private final DashboardConfig dashboardConfig;
     private final DataConfig dataConfig;
     private final DataSourceUrlConfig dataSourceUrlConfig;
@@ -154,7 +154,7 @@ public class AppConfig extends AbstractConfig {
                 new ClusterLockConfig(),
                 new CommonDbConfig(),
                 new ContentPackImportConfig(),
-                new LegacyDbConfig(),
+                new LegacyConfig(),
                 new DashboardConfig(),
                 new DataConfig(),
                 new DataSourceUrlConfig(),
@@ -198,7 +198,7 @@ public class AppConfig extends AbstractConfig {
                      @JsonProperty(PROP_NAME_CLUSTER_LOCK) final ClusterLockConfig clusterLockConfig,
                      @JsonProperty(PROP_NAME_COMMON_DB_DETAILS) final CommonDbConfig commonDbConfig,
                      @JsonProperty(PROP_NAME_CONTENT_PACK_IMPORT) final ContentPackImportConfig contentPackImportConfig,
-                     @JsonProperty(PROP_NAME_CORE) final LegacyDbConfig legacyDbConfig,
+                     @JsonProperty(PROP_NAME_CORE) final LegacyConfig legacyConfig,
                      @JsonProperty(PROP_NAME_DASHBOARD) final DashboardConfig dashboardConfig,
                      @JsonProperty(PROP_NAME_DATA) final DataConfig dataConfig,
                      @JsonProperty(PROP_NAME_DATA_SOURCE_URL) final DataSourceUrlConfig dataSourceUrlConfig,
@@ -240,7 +240,7 @@ public class AppConfig extends AbstractConfig {
         this.clusterLockConfig = clusterLockConfig;
         this.commonDbConfig = commonDbConfig;
         this.contentPackImportConfig = contentPackImportConfig;
-        this.legacyDbConfig = legacyDbConfig;
+        this.legacyConfig = legacyConfig;
         this.dashboardConfig = dashboardConfig;
         this.dataConfig = dataConfig;
         this.dataSourceUrlConfig = dataSourceUrlConfig;
@@ -327,8 +327,8 @@ public class AppConfig extends AbstractConfig {
 
     @JsonProperty(PROP_NAME_CORE)
     @JsonPropertyDescription("Configuration for the core stroom DB")
-    public LegacyDbConfig getLegacyDbConfig() {
-        return legacyDbConfig;
+    public LegacyConfig getLegacyDbConfig() {
+        return legacyConfig;
     }
 
     @JsonProperty(PROP_NAME_DASHBOARD)

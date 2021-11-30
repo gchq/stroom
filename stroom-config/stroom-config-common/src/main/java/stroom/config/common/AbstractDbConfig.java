@@ -1,15 +1,19 @@
 package stroom.config.common;
 
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.NotInjectableConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
+@JsonPropertyOrder(alphabetic = true)
+@BootStrapConfig
 @NotInjectableConfig
-public class DbConfig extends AbstractConfig {
+public abstract class AbstractDbConfig extends AbstractConfig {
 
     public static final String PROP_NAME_CONNECTION = "connection";
     public static final String PROP_NAME_CONNECTION_POOL = "connectionPool";
@@ -17,14 +21,14 @@ public class DbConfig extends AbstractConfig {
     private ConnectionConfig connectionConfig;
     private ConnectionPoolConfig connectionPoolConfig;
 
-    public DbConfig() {
+    public AbstractDbConfig() {
         connectionConfig = new ConnectionConfig();
         connectionPoolConfig = new ConnectionPoolConfig();
     }
 
     @JsonCreator
-    public DbConfig(@JsonProperty("connection") final ConnectionConfig connectionConfig,
-                    @JsonProperty("connectionPool") final ConnectionPoolConfig connectionPoolConfig) {
+    public AbstractDbConfig(@JsonProperty(PROP_NAME_CONNECTION) final ConnectionConfig connectionConfig,
+                            @JsonProperty(PROP_NAME_CONNECTION_POOL) final ConnectionPoolConfig connectionPoolConfig) {
         this.connectionConfig = connectionConfig;
         this.connectionPoolConfig = connectionPoolConfig;
     }
@@ -65,7 +69,7 @@ public class DbConfig extends AbstractConfig {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final DbConfig dbConfig = (DbConfig) o;
+        final AbstractDbConfig dbConfig = (AbstractDbConfig) o;
         return connectionConfig.equals(dbConfig.connectionConfig) &&
                 connectionPoolConfig.equals(dbConfig.connectionPoolConfig);
     }

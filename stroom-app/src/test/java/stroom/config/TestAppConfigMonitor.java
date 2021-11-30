@@ -4,7 +4,7 @@ import stroom.config.app.AppConfig;
 import stroom.config.app.ConfigHolder;
 import stroom.config.app.YamlUtil;
 import stroom.config.global.impl.AppConfigMonitor;
-import stroom.config.global.impl.GlobalConfigService;
+import stroom.config.global.impl.ConfigMapper;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.config.AbstractFileChangeMonitor;
 import stroom.util.config.AppConfigValidator;
@@ -37,7 +37,7 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
     @Inject
     private Validator validator;
     @Inject
-    private GlobalConfigService globalConfigService;
+    private ConfigMapper configMapper;
     @Inject
     private ConfigHolder configHolder;
 
@@ -88,7 +88,7 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
         final AppConfigValidator appConfigValidator = new AppConfigValidator(validator);
 
         final AbstractFileChangeMonitor appConfigMonitor = new AppConfigMonitor(
-                appConfig, configLocation, globalConfigService, configMapper, appConfigValidator);
+                configLocation, configMapper, appConfigValidator);
 
         // start watching our copied file for changes, the start is async
         appConfigMonitor.start();

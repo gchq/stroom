@@ -1,7 +1,7 @@
 package stroom.test.common.util.db;
 
 import stroom.config.common.CommonDbConfig;
-import stroom.config.common.DbConfig;
+import stroom.config.common.AbstractDbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.db.util.DataSourceFactory;
 import stroom.db.util.DataSourceFactoryImpl;
@@ -32,8 +32,8 @@ class TestDataSourceFactory implements DataSourceFactory, Clearable {
 
     @Override
     public DataSource create(final HasDbConfig config, final String name, final boolean unique) {
-        final DbConfig dbConfig = config.getDbConfig();
-        final DbConfig mergedConfig = commonDbConfig.mergeConfig(dbConfig);
+        final AbstractDbConfig dbConfig = config.getDbConfig();
+        final AbstractDbConfig mergedConfig = commonDbConfig.mergeConfig(dbConfig);
         return DbTestUtil.createTestDataSource(mergedConfig, name, unique);
     }
 

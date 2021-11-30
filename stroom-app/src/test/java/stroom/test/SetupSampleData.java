@@ -58,7 +58,7 @@ public final class SetupSampleData {
         final Path configFile = YamlUtil.getYamlFileFromArgs(args);
         Config config;
         try {
-            config = YamlUtil.readAppConfig(configFile);
+            config = YamlUtil.readConfig(configFile);
         } catch (final IOException e) {
             throw new RuntimeException("Unable to read yaml config");
         }
@@ -69,7 +69,7 @@ public final class SetupSampleData {
         final Injector injector = Guice.createInjector(new SetupSampleDataModule(config, configFile));
 
         final PathCreator pathCreator = injector.getInstance(PathCreator.class);
-        downloadContent(contentPackDefinition, pathCreator, config);
+        downloadContent(contentPackDefinition, pathCreator, config.getAppConfig().getContentPackImportConfig());
 
         // Start task manager
         injector.getInstance(TaskManager.class).startup();

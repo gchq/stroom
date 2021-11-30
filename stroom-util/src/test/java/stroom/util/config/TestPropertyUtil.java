@@ -132,6 +132,44 @@ class TestPropertyUtil {
 
     }
 
+    @Test
+    void testMerge1_nonNull() {
+        doMergeValueTest("a", "b", "c", true, true, "b");
+    }
+
+    @Test
+    void testMerge2_null_copy() {
+        doMergeValueTest("a", null, "c", true, true, null);
+    }
+
+    @Test
+    void testMerge2_null_dontCopy() {
+        doMergeValueTest("a", null, "c", false, true, "a");
+    }
+
+    @Test
+    void testMerge2_default_copy() {
+        doMergeValueTest("a", "c", "c", true, true, "c");
+    }
+
+    @Test
+    void testMerge2_default_dontCopy() {
+        doMergeValueTest("a", "c", "c", true, false, "a");
+    }
+
+
+    private void doMergeValueTest(final String thisValue,
+                                  final String otherValue,
+                                  final String defaultValue,
+                                  final boolean copyNulls,
+                                  final boolean copyDefaults,
+                                  final String expectedValue) {
+        final String actualValue = PropertyUtil.mergeValues(
+                thisValue, otherValue, defaultValue, copyNulls, copyDefaults);
+        Assertions.assertThat(actualValue)
+                .isEqualTo(expectedValue);
+    }
+
     private void testProp(final Map<String, PropertyUtil.Prop> propMap,
                           final String name,
                           final Object expectedValue,

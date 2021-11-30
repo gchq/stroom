@@ -1,6 +1,5 @@
 package stroom.legacy.db.migration;
 
-import stroom.config.app.AppConfig;
 import stroom.config.global.impl.ConfigMapper;
 import stroom.legacy.db.migration.V07_00_00_1202__property_rename.Mapping;
 import stroom.legacy.db.migration.V07_00_00_1202__property_rename.Mappings;
@@ -41,7 +40,7 @@ class TestV07_00_00_1202__property_rename {
 
     Stream<DynamicTest> testDefaultProperties(final List<GlobalProperty> defaultProperties) {
         final Mappings mappings = new V07_00_00_1202__property_rename.Mappings();
-        final ConfigMapper configMapper = new ConfigMapper(AppConfig::new);
+        final ConfigMapper configMapper = new ConfigMapper(null);
 
         return defaultProperties
                 .stream()
