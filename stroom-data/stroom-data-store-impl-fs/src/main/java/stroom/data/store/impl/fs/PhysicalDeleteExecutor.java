@@ -208,7 +208,8 @@ public class PhysicalDeleteExecutor {
         } catch (final InterruptedException e) {
             LOGGER.debug("{} - {}", TASK_NAME, e.getMessage(), e);
 
-            // Continue to interrupt.
+            LOGGER.trace(e::getMessage, e);
+            // Keep interrupting this thread.
             Thread.currentThread().interrupt();
         }
     }
@@ -305,9 +306,8 @@ public class PhysicalDeleteExecutor {
                 successfulMetaIdDeleteQueue.add(meta.getId());
 
             } catch (final InterruptedException e) {
-                LOGGER.debug(e::getMessage, e);
-
-                // Continue to interrupt.
+                LOGGER.trace(e::getMessage, e);
+                // Keep interrupting this thread.
                 Thread.currentThread().interrupt();
             }
         });

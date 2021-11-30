@@ -171,7 +171,7 @@ public class FlatResultCreator implements ResultCreator {
                     for (final Field field : fields) {
                         if (field.getGroup() != null) {
                             groupFields.computeIfAbsent(field.getGroup(), k ->
-                                    new ArrayList<>())
+                                            new ArrayList<>())
                                     .add(field);
                         }
                     }
@@ -362,7 +362,8 @@ public class FlatResultCreator implements ResultCreator {
                     childFieldIndex,
                     paramMap,
                     maxResults,
-                    Sizes.create(Integer.MAX_VALUE));
+                    Sizes.create(Integer.MAX_VALUE),
+                    false);
         }
 
         public DataStore map(final DataStore data) {

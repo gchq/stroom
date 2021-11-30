@@ -5,6 +5,7 @@ import stroom.dashboard.expression.v1.ValInteger;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.data.retention.api.DataRetentionConfig;
 import stroom.data.retention.api.DataRetentionRuleAction;
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
@@ -80,7 +81,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -888,7 +888,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
     @Override
     public void search(final ExpressionCriteria criteria,
                        final AbstractField[] fields,
-                       final Consumer<Val[]> consumer) {
+                       final ValuesConsumer consumer) {
         final List<AbstractField> fieldList = Arrays.asList(fields);
         final boolean feedUsed = isUsed(Set.of(MetaFields.FEED), fieldList, criteria);
         final boolean typeUsed = isUsed(Set.of(MetaFields.TYPE), fieldList, criteria);
@@ -989,7 +989,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
                             }
                             arr[i] = val;
                         }
-                        consumer.accept(arr);
+                        consumer.add(arr);
                     });
                 }
             }

@@ -39,7 +39,8 @@ import javax.inject.Inject;
  * instance. The first level elements are assumed to be records in the context
  * of event processing.
  */
-@ConfigurableElement(type = "IdEnrichmentFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
+@ConfigurableElement(type = "IdEnrichmentFilter", category = Category.FILTER, roles = {
+        PipelineElementType.ROLE_TARGET,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_STEPPING,
         PipelineElementType.ROLE_MUTATOR}, icon = ElementIcons.ID)
 public class IdEnrichmentFilter extends AbstractXMLFilter {
@@ -137,9 +138,14 @@ public class IdEnrichmentFilter extends AbstractXMLFilter {
                 if (eventIds != null) {
                     // Check we haven't found more events than we are expecting to extract.
                     if (count > eventIds.length) {
-                        LOGGER.debug("Expected " + eventIds.length + " events but extracted " + count);
+                        final String msg = "Expected " +
+                                eventIds.length +
+                                " events but extracted " +
+                                count +
+                                " from stream " +
+                                streamId;
 
-                        final String msg = "Unexpected number of events being extracted";
+                        LOGGER.debug(msg);
                         final ProcessException searchException = new ProcessException(msg);
                         errorReceiverProxy.log(Severity.WARNING, null, getElementId(), msg, searchException);
                     }

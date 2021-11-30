@@ -101,7 +101,8 @@ public class LuceneSearchStoreFactory implements StoreFactory {
         final Coprocessors coprocessors = coprocessorsFactory.create(
                 modifiedSearchRequest.getKey().getUuid(),
                 coprocessorSettingsList,
-                query.getParams());
+                query.getParams(),
+                false);
 
         // Create an asynchronous search task.
         final String searchName = "Search '" + modifiedSearchRequest.getKey().toString() + "'";

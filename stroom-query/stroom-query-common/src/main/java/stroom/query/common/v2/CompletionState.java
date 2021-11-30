@@ -17,9 +17,8 @@
 package stroom.query.common.v2;
 
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
-public interface CompletionState extends Consumer<Long> {
+public interface CompletionState {
 
     /**
      * Call to notify the object or stage holding this completion state that the upstream process has completed and will

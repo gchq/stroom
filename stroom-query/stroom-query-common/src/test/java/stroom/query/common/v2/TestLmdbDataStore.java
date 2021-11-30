@@ -40,6 +40,8 @@ import org.junit.jupiter.api.io.TempDir;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.UUID;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -62,6 +64,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         final ResultStoreConfig resultStoreConfig = new ResultStoreConfig();
         final LmdbLibraryConfig lmdbLibraryConfig = new LmdbLibraryConfig();
         final LmdbEnvFactory lmdbEnvFactory = new LmdbEnvFactory(pathCreator, tempDirProvider, lmdbLibraryConfig);
+        final Executor executor = Executors.newCachedThreadPool();
 
         return new LmdbDataStore(
                 lmdbEnvFactory,
@@ -72,7 +75,8 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 fieldIndex,
                 Collections.emptyMap(),
                 maxResults,
-                storeSize);
+                false,
+                () -> executor);
     }
 
     @Test

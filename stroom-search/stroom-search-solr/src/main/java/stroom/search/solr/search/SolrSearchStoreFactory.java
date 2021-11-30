@@ -120,7 +120,8 @@ class SolrSearchStoreFactory implements StoreFactory {
         final Coprocessors coprocessors = coprocessorsFactory.create(
                 modifiedSearchRequest.getKey().getUuid(),
                 coprocessorSettingsList,
-                modifiedSearchRequest.getQuery().getParams());
+                modifiedSearchRequest.getQuery().getParams(),
+                false);
 
         // Create an asynchronous search task.
         final String searchName = "Search '" + modifiedSearchRequest.getKey().toString() + "'";

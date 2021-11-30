@@ -5,6 +5,7 @@ import stroom.dashboard.expression.v1.ValInteger;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DateField;
 import stroom.db.util.ExpressionMapper;
@@ -656,7 +657,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     @Override
     public void search(final ExpressionCriteria criteria,
                        final AbstractField[] fields,
-                       final Consumer<Val[]> consumer) {
+                       final ValuesConsumer consumer) {
         final Set<AbstractField> processorFields = Set.of(
                 ProcessorTaskFields.PROCESSOR_FILTER_ID,
                 ProcessorTaskFields.PROCESSOR_FILTER_PRIORITY);
@@ -720,7 +721,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                             }
                             arr[i] = val;
                         }
-                        consumer.accept(arr);
+                        consumer.add(arr);
                     });
                 }
             }

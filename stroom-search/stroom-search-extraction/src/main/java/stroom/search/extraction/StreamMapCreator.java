@@ -66,7 +66,7 @@ class StreamMapCreator {
         return index;
     }
 
-    void addEvent(final StreamEventMap storedDataMap, final Val[] storedData) {
+    void addEvent(final StreamEventMap streamEventMap, final Val[] storedData) {
         if (error != null) {
             throw error;
         } else {
@@ -79,10 +79,10 @@ class StreamMapCreator {
                 try {
                     final Event event = new Event(longStreamId, longEventId, data);
                     SearchProgressLog.increment(SearchPhase.EXTRACTION_DECORATOR_FACTORY_STREAM_EVENT_MAP_PUT);
-                    storedDataMap.put(event);
+                    streamEventMap.put(event);
                 } catch (final InterruptedException e) {
-                    LOGGER.debug(e::getMessage, e);
-                    // Continue to interrupt.
+                    LOGGER.trace(e::getMessage, e);
+                    // Keep interrupting this thread.
                     Thread.currentThread().interrupt();
                 }
             });

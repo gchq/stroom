@@ -16,6 +16,7 @@
 
 package stroom.search.extraction;
 
+import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.pipeline.LocationFactoryProxy;
@@ -164,9 +165,10 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
 
 
     private void createXPathExecutables() {
-        xPathExecutables = new XPathExecutable[fieldIndexes.size()];
+        final FieldIndex fieldIndex = receiver.getFieldMap();
+        xPathExecutables = new XPathExecutable[fieldIndex.size()];
 
-        fieldIndexes.forEach((fieldName, index) -> {
+        fieldIndex.forEach((fieldName, index) -> {
             String xpathPart = fieldName;
 
             if (EVENT_ID.equals(xpathPart)) {
@@ -239,7 +241,7 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
                         String serialisedForm = complexElementToJson(node.toString());
                         thisVal.append(serialisedForm);
                     } else {
-                        thisVal.append(node.toString());
+                        thisVal.append(node);
                     }
                     numberOfVals++;
                 } else {
@@ -321,7 +323,7 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
 
                         values[field] = ValString.create(thisVal.toString());
                     }
-                    consumer.accept(values);
+                    receiver.add(values);
 
                 } catch (SaxonApiException ex) {
                     log(Severity.ERROR, "Unable to evaluate XPaths", ex);
@@ -416,7 +418,6 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
 
         super.endPrefixMapping(prefix);
     }
-
 
     @PipelineProperty(
             description = "The string to delimit multiple simple values.",

@@ -16,7 +16,8 @@
 
 package stroom.search.solr.search;
 
-import stroom.query.common.v2.Receiver;
+import stroom.dashboard.expression.v1.ValuesConsumer;
+import stroom.query.common.v2.ErrorConsumer;
 import stroom.search.solr.CachedSolrIndex;
 
 import org.apache.solr.common.params.SolrParams;
@@ -26,18 +27,21 @@ class SolrSearchTask {
     private final CachedSolrIndex solrIndex;
     private final SolrParams solrParams;
     private final String[] fieldNames;
-    private final Receiver receiver;
+    private final ValuesConsumer valuesConsumer;
+    private final ErrorConsumer errorConsumer;
     private final Tracker tracker;
 
     SolrSearchTask(final CachedSolrIndex solrIndex,
                    final SolrParams solrParams,
                    final String[] fieldNames,
-                   final Receiver receiver,
+                   final ValuesConsumer valuesConsumer,
+                   final ErrorConsumer errorConsumer,
                    final Tracker tracker) {
         this.solrIndex = solrIndex;
         this.solrParams = solrParams;
         this.fieldNames = fieldNames;
-        this.receiver = receiver;
+        this.valuesConsumer = valuesConsumer;
+        this.errorConsumer = errorConsumer;
         this.tracker = tracker;
     }
 
@@ -53,8 +57,12 @@ class SolrSearchTask {
         return fieldNames;
     }
 
-    Receiver getReceiver() {
-        return receiver;
+    public ValuesConsumer getValuesConsumer() {
+        return valuesConsumer;
+    }
+
+    public ErrorConsumer getErrorConsumer() {
+        return errorConsumer;
     }
 
     Tracker getTracker() {

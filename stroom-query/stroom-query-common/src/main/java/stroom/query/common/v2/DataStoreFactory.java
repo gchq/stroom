@@ -13,5 +13,6 @@ public interface DataStoreFactory {
                      FieldIndex fieldIndex,
                      Map<String, String> paramMap,
                      Sizes maxResults,
-                     Sizes storeSize);
+                     Sizes storeSize,
+                     boolean producePayloads);
 }

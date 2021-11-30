@@ -511,7 +511,6 @@ appConfig:
       minPayloadSize: "1M"
       maxPayloadSize: "1G"
       offHeapResults: true
-      payloadLimit: "0B"
       lmdb:
         localDir: "search_results"
         maxReaders: 10

@@ -49,6 +49,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -178,6 +179,18 @@ class AsyncSearchTaskHandler {
                     // Ensure search is complete even if we had errors.
                     LOGGER.debug(() -> "Search complete");
                     resultCollector.complete();
+
+                    // Wait for the result collector to complete.
+                    try {
+                        boolean complete = false;
+                        while (!complete) {
+                            complete = resultCollector.awaitCompletion(1, TimeUnit.MINUTES);
+                        }
+                    } catch (final InterruptedException e) {
+                        LOGGER.trace(e.getMessage(), e);
+                        // Keep interrupting this thread.
+                        Thread.currentThread().interrupt();
+                    }
 
                     // We need to wait here for the client to keep getting results if
                     // this is an interactive search.

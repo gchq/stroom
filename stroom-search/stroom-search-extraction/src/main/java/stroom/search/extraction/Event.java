@@ -18,6 +18,8 @@ package stroom.search.extraction;
 
 import stroom.dashboard.expression.v1.Val;
 
+import java.util.Objects;
+
 class Event implements Comparable<Event> {
 
     private final long streamId;
@@ -50,5 +52,22 @@ class Event implements Comparable<Event> {
     @Override
     public String toString() {
         return streamId + ":" + eventId;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final Event event = (Event) o;
+        return streamId == event.streamId && eventId == event.eventId;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(streamId, eventId);
     }
 }

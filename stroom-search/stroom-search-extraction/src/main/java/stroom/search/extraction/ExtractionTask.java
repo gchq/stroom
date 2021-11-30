@@ -17,6 +17,7 @@
 package stroom.search.extraction;
 
 import stroom.docref.DocRef;
+import stroom.query.common.v2.ErrorConsumer;
 
 class ExtractionTask {
 
@@ -24,15 +25,18 @@ class ExtractionTask {
     private final long[] eventIds;
     private final DocRef pipelineRef;
     private final ExtractionReceiver receiver;
+    private final ErrorConsumer errorConsumer;
 
     ExtractionTask(final long streamId,
                    final long[] eventIds,
                    final DocRef pipelineRef,
-                   final ExtractionReceiver receiver) {
+                   final ExtractionReceiver receiver,
+                   final ErrorConsumer errorConsumer) {
         this.streamId = streamId;
         this.eventIds = eventIds;
         this.pipelineRef = pipelineRef;
         this.receiver = receiver;
+        this.errorConsumer = errorConsumer;
     }
 
     long getStreamId() {
@@ -49,5 +53,9 @@ class ExtractionTask {
 
     ExtractionReceiver getReceiver() {
         return receiver;
+    }
+
+    ErrorConsumer getErrorConsumer() {
+        return errorConsumer;
     }
 }

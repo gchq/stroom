@@ -8,6 +8,7 @@ import stroom.dashboard.expression.v1.ValInteger;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
@@ -34,7 +35,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import javax.inject.Inject;
@@ -82,7 +82,7 @@ class SearchableTaskProgress implements Searchable {
     @Override
     public void search(final ExpressionCriteria criteria,
                        final AbstractField[] fields,
-                       final Consumer<Val[]> consumer) {
+                       final ValuesConsumer consumer) {
         securityContext.secure(PermissionNames.MANAGE_TASKS_PERMISSION, () -> {
             final Map<String, TaskProgressResponse> nodeResponses = searchAllNodes();
 
@@ -120,7 +120,7 @@ class SearchableTaskProgress implements Searchable {
                             }
                             arr[i] = val;
                         }
-                        consumer.accept(arr);
+                        consumer.add(arr);
                     });
         });
     }

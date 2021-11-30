@@ -16,6 +16,7 @@
 
 package stroom.search.extraction;
 
+import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -43,6 +44,7 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
             throws SAXException {
+        final FieldIndex fieldIndex = receiver.getFieldMap();
         if (DATA.equals(localName) && values != null) {
             SearchProgressLog.increment(SearchPhase.SEARCH_RESULT_OUTPUT_FILTER_START_DATA);
             String name = atts.getValue(NAME);
@@ -52,7 +54,7 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
                 value = value.trim();
 
                 if (name.length() > 0 && value.length() > 0) {
-                    final Integer pos = fieldIndexes.getPos(name);
+                    final Integer pos = fieldIndex.getPos(name);
                     if (pos != null) {
                         values[pos] = ValString.create(value);
                     }
@@ -60,7 +62,7 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
             }
         } else if (RECORD.equals(localName)) {
             SearchProgressLog.increment(SearchPhase.SEARCH_RESULT_OUTPUT_FILTER_START_RECORD);
-            values = new Val[fieldIndexes.size()];
+            values = new Val[fieldIndex.size()];
         }
         super.startElement(uri, localName, qName, atts);
     }
@@ -70,7 +72,7 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
         if (RECORD.equals(localName)) {
             SearchProgressLog.increment(SearchPhase.SEARCH_RESULT_OUTPUT_FILTER_END_RECORD);
             SearchDebugUtil.writeExtractionData(values);
-            consumer.accept(values);
+            receiver.add(values);
             count++;
             values = null;
         }

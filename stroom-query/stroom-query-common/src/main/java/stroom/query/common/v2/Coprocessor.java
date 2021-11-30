@@ -16,19 +16,14 @@
 
 package stroom.query.common.v2;
 
+import stroom.dashboard.expression.v1.ValuesConsumer;
+
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
-import java.util.concurrent.TimeUnit;
+public interface Coprocessor extends ValuesConsumer {
 
-public interface Coprocessor extends Receiver {
-
-    /**
-     * Get the number of values that have been added to the coprocessor.
-     *
-     * @return The number of values that have been added to the coprocessor.
-     */
-    long getValuesCount();
+    ErrorConsumer getErrorConsumer();
 
     /**
      * Clear the data store.
@@ -58,14 +53,4 @@ public interface Coprocessor extends Receiver {
      * @param output The output to write to.
      */
     void writePayload(Output output);
-
-    /**
-     * Wait for all current items that might be queued for adding to be added.
-     *
-     * @param timeout How long to wait for items to be added.
-     * @param unit    The time unit for the wait period.
-     * @return True if we didn't timeout and all items are now added.
-     * @throws InterruptedException Thrown if the thread is interrupted while waiting.
-     */
-    boolean awaitTransfer(long timeout, TimeUnit unit) throws InterruptedException;
 }

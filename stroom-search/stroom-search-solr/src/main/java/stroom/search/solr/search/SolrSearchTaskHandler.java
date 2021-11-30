@@ -24,6 +24,8 @@ import stroom.dashboard.expression.v1.ValInteger;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.dashboard.expression.v1.ValuesConsumer;
+import stroom.query.common.v2.ErrorConsumer;
 import stroom.search.solr.CachedSolrIndex;
 import stroom.search.solr.SolrIndexClientCache;
 import stroom.search.solr.shared.SolrConnectionConfig;
@@ -131,27 +133,27 @@ public class SolrSearchTaskHandler {
         }
     }
 
-    private void fastStreamingDocsSearch(final SolrSearchTask task,
-                                         final SolrIndexDoc solrIndexDoc,
-                                         final SolrConnectionConfig connectionConfig) {
-        final Callback2 callback = new Callback2(
-                task.getTracker(),
-                task.getFieldNames(),
-                task.getSolrIndex().getFieldsMap(),
-                task.getReceiver().getValuesConsumer(),
-                task.getReceiver().getErrorConsumer(),
-                task.getReceiver().getCompletionConsumer());
-        solrIndexClientCache.context(connectionConfig, solrClient -> {
-            try {
-                final QueryResponse response = solrClient.queryAndStreamResponse(solrIndexDoc.getCollection(),
-                        task.getSolrParams(),
-                        callback);
-                LOGGER.debug(() -> "fastStreamingDocsSearch() - response=" + response);
-            } catch (final SolrServerException | IOException | RuntimeException e) {
-                error(task, e.getMessage(), e);
-            }
-        });
-    }
+//    private void fastStreamingDocsSearch(final SolrSearchTask task,
+//                                         final SolrIndexDoc solrIndexDoc,
+//                                         final SolrConnectionConfig connectionConfig) {
+//        final Callback2 callback = new Callback2(
+//                task.getTracker(),
+//                task.getFieldNames(),
+//                task.getSolrIndex().getFieldsMap(),
+//                task.getReceiver().getValuesConsumer(),
+//                task.getReceiver().getErrorConsumer(),
+//                task.getReceiver().getCompletionConsumer());
+//        solrIndexClientCache.context(connectionConfig, solrClient -> {
+//            try {
+//                final QueryResponse response = solrClient.queryAndStreamResponse(solrIndexDoc.getCollection(),
+//                        task.getSolrParams(),
+//                        callback);
+//                LOGGER.debug(() -> "fastStreamingDocsSearch() - response=" + response);
+//            } catch (final SolrServerException | IOException | RuntimeException e) {
+//                error(task, e.getMessage(), e);
+//            }
+//        });
+//    }
 
     private void streamingSearch(final SolrSearchTask task,
                                  final SolrIndexDoc solrIndexDoc,
@@ -159,8 +161,8 @@ public class SolrSearchTaskHandler {
         final Callback callback = new Callback(
                 task.getTracker(),
                 task.getFieldNames(),
-                task.getReceiver().getValuesConsumer(),
-                task.getReceiver().getErrorConsumer());
+                task.getValuesConsumer(),
+                task.getErrorConsumer());
         solrIndexClientCache.context(connectionConfig, solrClient -> {
             try {
                 final QueryResponse response = solrClient.queryAndStreamResponse(solrIndexDoc.getCollection(),
@@ -191,7 +193,7 @@ public class SolrSearchTaskHandler {
         if (task == null) {
             LOGGER.error(() -> message, t);
         } else {
-            task.getReceiver().getErrorConsumer().accept(t);
+            task.getErrorConsumer().add(t);
         }
     }
 
@@ -203,15 +205,15 @@ public class SolrSearchTaskHandler {
 
         private final Tracker tracker;
         private final String[] fieldNames;
-        private final Consumer<Val[]> valuesConsumer;
-        private final Consumer<Throwable> errorConsumer;
+        private final ValuesConsumer valuesConsumer;
+        private final ErrorConsumer errorConsumer;
 
         private DocListInfo docListInfo;
 
         Callback(final Tracker tracker,
                  final String[] fieldNames,
-                 final Consumer<Val[]> valuesConsumer,
-                 final Consumer<Throwable> errorConsumer) {
+                 final ValuesConsumer valuesConsumer,
+                 final ErrorConsumer errorConsumer) {
             this.tracker = tracker;
             this.fieldNames = fieldNames;
             this.valuesConsumer = valuesConsumer;
@@ -249,7 +251,7 @@ public class SolrSearchTaskHandler {
                 }
 
                 if (values != null) {
-                    valuesConsumer.accept(values);
+                    valuesConsumer.add(values);
                 }
             } catch (final RuntimeException e) {
                 error(e.getMessage(), e);
@@ -266,7 +268,7 @@ public class SolrSearchTaskHandler {
             if (errorConsumer == null) {
                 LOGGER.error(() -> message, t);
             } else {
-                errorConsumer.accept(new Error(message, t));
+                errorConsumer.add(new Error(message, t));
             }
         }
 

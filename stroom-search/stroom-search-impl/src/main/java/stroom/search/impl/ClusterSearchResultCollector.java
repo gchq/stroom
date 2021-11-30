@@ -16,8 +16,6 @@
 
 package stroom.search.impl;
 
-import stroom.query.common.v2.CompletionState;
-import stroom.query.common.v2.CompletionStateImpl;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.NodeResultSerialiser;
@@ -34,6 +32,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
@@ -43,7 +42,7 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import javax.inject.Provider;
 
 public class ClusterSearchResultCollector implements Store {
@@ -59,7 +58,6 @@ public class ClusterSearchResultCollector implements Store {
     private final String nodeName;
     private final Set<String> highlights;
     private final Coprocessors coprocessors;
-    private final CompletionState completionState = new CompletionStateImpl();
 
     public ClusterSearchResultCollector(final Executor executor,
                                         final TaskContextFactory taskContextFactory,
@@ -122,23 +120,23 @@ public class ClusterSearchResultCollector implements Store {
 
     public void complete() {
         LOGGER.trace(() -> "complete()");
-        completionState.signalComplete();
+        coprocessors.getCompletionState().signalComplete();
     }
 
     @Override
     public boolean isComplete() {
-        return completionState.isComplete();
+        return coprocessors.getCompletionState().isComplete();
     }
 
     @Override
     public void awaitCompletion() throws InterruptedException {
-        completionState.awaitCompletion();
+        coprocessors.getCompletionState().awaitCompletion();
     }
 
     @Override
     public boolean awaitCompletion(final long timeout,
                                    final TimeUnit unit) throws InterruptedException {
-        return completionState.awaitCompletion(timeout, unit);
+        return coprocessors.getCompletionState().awaitCompletion(timeout, unit);
     }
 
     public synchronized boolean onSuccess(final String nodeName,
@@ -147,59 +145,45 @@ public class ClusterSearchResultCollector implements Store {
         if (isComplete()) {
             return true;
         }
-
-        final AtomicBoolean remoteNodeComplete = new AtomicBoolean();
-
-        boolean success = true;
+        boolean complete = true;
 
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         StreamUtil.streamToStream(inputStream, byteArrayOutputStream);
 
         try (final Input input = new Input(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()))) {
             final Set<String> errors = new HashSet<>();
-            success = NodeResultSerialiser.read(input, coprocessors, errors::add, remoteNodeComplete::set);
-            if (errors.size() > 0) {
-                getErrorSet(nodeName).addAll(errors);
-            }
+            final Consumer<String> errorConsumer = (error) -> {
+                LOGGER.debug(() -> error);
+                errors.add(error);
+            };
+
+            complete = NodeResultSerialiser.read(input, coprocessors, errorConsumer);
+            addErrors(nodeName, errors);
         } catch (final RuntimeException e) {
             onFailure(nodeName, e);
         }
 
-        // If we were told this payload belongs to a completed node then wait for this payload to be added.
-        if (remoteNodeComplete.get()) {
-            try {
-                boolean consumed = false;
-                while (!consumed && !Thread.currentThread().isInterrupted() && !isComplete()) {
-                    consumed = coprocessors.awaitTransfer(1, TimeUnit.MINUTES);
-                }
-            } catch (final InterruptedException e) {
-                Thread.currentThread().interrupt();
-                LOGGER.debug(e::getMessage, e);
-            }
-
-            return true;
-        }
-
         // If the result collector rejected the result it is because we have already collected enough data and can
         // therefore consider search complete.
-        return isComplete() || !success;
+        return isComplete() || complete;
     }
 
     public synchronized void onFailure(final String nodeName,
                                        final Throwable throwable) {
-        getErrorSet(nodeName).add(throwable.getMessage());
+        LOGGER.debug(throwable::getMessage, throwable);
+        addErrors(nodeName, Collections.singleton(throwable.getMessage()));
     }
 
-    private Set<String> getErrorSet(final String nodeName) {
-        Set<String> errorSet = errors.get(nodeName);
-        if (errorSet == null) {
-            errorSet = new HashSet<>();
-            final Set<String> existing = errors.putIfAbsent(nodeName, errorSet);
-            if (existing != null) {
-                errorSet = existing;
+    private void addErrors(final String nodeName,
+                           final Set<String> newErrors) {
+        if (newErrors != null && newErrors.size() > 0) {
+            final Set<String> errorSet = errors.computeIfAbsent(nodeName, k ->
+                    Collections.newSetFromMap(new ConcurrentHashMap<>()));
+            for (final String error : newErrors) {
+                LOGGER.debug(() -> error);
+                errorSet.add(error);
             }
         }
-        return errorSet;
     }
 
     @Override
