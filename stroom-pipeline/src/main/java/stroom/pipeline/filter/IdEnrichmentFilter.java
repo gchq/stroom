@@ -24,14 +24,17 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaHolder;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import javax.inject.Inject;
 
 /**
@@ -45,7 +48,7 @@ import javax.inject.Inject;
         PipelineElementType.ROLE_MUTATOR}, icon = ElementIcons.ID)
 public class IdEnrichmentFilter extends AbstractXMLFilter {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(IdEnrichmentFilter.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IdEnrichmentFilter.class);
 
     private static final String URI = "";
     private static final String STRING = "string";
@@ -145,9 +148,24 @@ public class IdEnrichmentFilter extends AbstractXMLFilter {
                                 " from stream " +
                                 streamId;
 
-                        LOGGER.debug(msg);
-                        final ProcessException searchException = new ProcessException(msg);
-                        errorReceiverProxy.log(Severity.WARNING, null, getElementId(), msg, searchException);
+                        LOGGER.debug(() -> msg);
+                        LOGGER.trace(() -> Arrays.toString(eventIds));
+                        errorReceiverProxy.log(Severity.WARNING, null, getElementId(), msg, null);
+
+                        // Double check for duplicated ids.
+                        final Set<Long> duplicateSet = new HashSet<>();
+                        boolean duplicate = false;
+                        for (final long id : eventIds) {
+                            if (!duplicateSet.add(id)) {
+                                duplicate = true;
+                                break;
+                            }
+                        }
+                        if (duplicate) {
+                            final String err = "Duplicate id found in event id list: " + Arrays.toString(eventIds);
+                            LOGGER.error(() -> err);
+                            errorReceiverProxy.log(Severity.ERROR, null, getElementId(), err, null);
+                        }
                     }
 
                     final int index = (int) (count - 1);
