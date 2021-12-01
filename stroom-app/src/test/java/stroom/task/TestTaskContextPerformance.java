@@ -5,6 +5,7 @@ import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
 import stroom.test.AbstractCoreIntegrationTest;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +15,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
 
+@Disabled
 class TestTaskContextPerformance extends AbstractCoreIntegrationTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestTaskContextPerformance.class);
