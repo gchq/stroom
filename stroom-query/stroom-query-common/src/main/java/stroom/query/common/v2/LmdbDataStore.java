@@ -96,6 +96,7 @@ public class LmdbDataStore implements DataStore {
     private final String queryKey;
     private final String componentId;
     private final boolean producePayloads;
+    private final ErrorConsumer errorConsumer;
     private final LmdbPayloadCreator payloadCreator;
 
     private final LmdbKey rootParentRowKey;
@@ -112,12 +113,14 @@ public class LmdbDataStore implements DataStore {
                   final Map<String, String> paramMap,
                   final Sizes maxResults,
                   final boolean producePayloads,
-                  final Provider<Executor> executorProvider) {
+                  final Provider<Executor> executorProvider,
+                  final ErrorConsumer errorConsumer) {
         this.resultStoreConfig = resultStoreConfig;
         this.maxResults = maxResults;
         this.queryKey = queryKey;
         this.componentId = componentId;
         this.producePayloads = producePayloads;
+        this.errorConsumer = errorConsumer;
 
         minValueSize = (int) resultStoreConfig.getMinValueSize().getBytes();
         maxValueSize = (int) resultStoreConfig.getMaxValueSize().getBytes();
@@ -395,6 +398,7 @@ public class LmdbDataStore implements DataStore {
 
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
+                errorConsumer.add(e);
             } finally {
                 // Ensure we complete.
                 complete.countDown();
@@ -488,6 +492,7 @@ public class LmdbDataStore implements DataStore {
 
             } catch (final RuntimeException | IOException e) {
                 LOGGER.error("Error putting " + queueItem + " (" + e.getMessage() + ")", e);
+                errorConsumer.add(new RuntimeException("Error putting " + queueItem + " (" + e.getMessage() + ")", e));
             }
         });
     }
@@ -504,8 +509,9 @@ public class LmdbDataStore implements DataStore {
                 batchingWriteTxn.commitIfRequired();
             }
             return didPutSucceed;
-        } catch (final RuntimeException e) {
+        } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
+            errorConsumer.add(e);
         }
 
         return false;
@@ -728,18 +734,21 @@ public class LmdbDataStore implements DataStore {
                     dbi.close();
                 } catch (final RuntimeException e) {
                     LOGGER.error(e.getMessage(), e);
+                    errorConsumer.add(e);
                 }
 
                 try {
                     lmdbEnv.close();
                 } catch (final RuntimeException e) {
                     LOGGER.error(e.getMessage(), e);
+                    errorConsumer.add(e);
                 }
 
                 try {
                     lmdbEnv.delete();
                 } catch (final RuntimeException e) {
                     LOGGER.error(e.getMessage(), e);
+                    errorConsumer.add(e);
                 }
             } finally {
                 resultCount.set(0);

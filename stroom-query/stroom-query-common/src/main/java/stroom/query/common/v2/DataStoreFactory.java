@@ -14,5 +14,6 @@ public interface DataStoreFactory {
                      Map<String, String> paramMap,
                      Sizes maxResults,
                      Sizes storeSize,
-                     boolean producePayloads);
+                     boolean producePayloads,
+                     ErrorConsumer errorConsumer);
 }

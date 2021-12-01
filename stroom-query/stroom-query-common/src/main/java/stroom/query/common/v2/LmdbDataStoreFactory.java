@@ -50,7 +50,8 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                             final Map<String, String> paramMap,
                             final Sizes maxResults,
                             final Sizes storeSize,
-                            final boolean producePayloads) {
+                            final boolean producePayloads,
+                            final ErrorConsumer errorConsumer) {
 
         if (!resultStoreConfig.isOffHeapResults()) {
             if (producePayloads) {
@@ -62,7 +63,8 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                     fieldIndex,
                     paramMap,
                     maxResults,
-                    storeSize);
+                    storeSize,
+                    errorConsumer);
         } else {
             return new LmdbDataStore(
                     lmdbEnvFactory,
@@ -74,7 +76,8 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                     paramMap,
                     maxResults,
                     producePayloads,
-                    executorProvider);
+                    executorProvider,
+                    errorConsumer);
         }
     }
 

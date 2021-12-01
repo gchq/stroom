@@ -71,7 +71,8 @@ public class MapDataStore implements DataStore {
                         final FieldIndex fieldIndex,
                         final Map<String, String> paramMap,
                         final Sizes maxResults,
-                        final Sizes storeSize) {
+                        final Sizes storeSize,
+                        final ErrorConsumer errorConsumer) {
         compiledFields = CompiledFields.create(tableSettings.getFields(), fieldIndex, paramMap);
         final CompiledDepths compiledDepths = new CompiledDepths(compiledFields, tableSettings.showDetail());
         this.compiledSorters = CompiledSorter.create(compiledDepths.getMaxDepth(), compiledFields);

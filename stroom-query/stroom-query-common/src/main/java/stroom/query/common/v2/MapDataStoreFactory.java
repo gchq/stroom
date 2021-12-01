@@ -15,7 +15,8 @@ public class MapDataStoreFactory implements DataStoreFactory {
                             final Map<String, String> paramMap,
                             final Sizes maxResults,
                             final Sizes storeSize,
-                            boolean producePayloads) {
+                            boolean producePayloads,
+                            final ErrorConsumer errorConsumer) {
         if (producePayloads) {
             throw new RuntimeException("MapDataStore cannot produce payloads");
         }
@@ -25,6 +26,7 @@ public class MapDataStoreFactory implements DataStoreFactory {
                 fieldIndex,
                 paramMap,
                 maxResults,
-                storeSize);
+                storeSize,
+                errorConsumer);
     }
 }

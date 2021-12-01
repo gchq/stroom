@@ -9,4 +9,6 @@ public interface ErrorConsumer {
     List<String> getErrors();
 
     List<String> drain();
+
+    boolean hasErrors();
 }

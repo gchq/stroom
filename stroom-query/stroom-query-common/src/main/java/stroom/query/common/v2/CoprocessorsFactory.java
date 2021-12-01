@@ -143,7 +143,8 @@ public class CoprocessorsFactory {
                     tableSettings,
                     fieldIndex,
                     paramMap,
-                    producePayloads);
+                    producePayloads,
+                    errorConsumer);
             return new TableCoprocessor(tableSettings, dataStore, errorConsumer);
         } else if (settings instanceof EventCoprocessorSettings) {
             final EventCoprocessorSettings eventCoprocessorSettings = (EventCoprocessorSettings) settings;
@@ -158,7 +159,8 @@ public class CoprocessorsFactory {
                              final TableSettings tableSettings,
                              final FieldIndex fieldIndex,
                              final Map<String, String> paramMap,
-                             final boolean producePayloads) {
+                             final boolean producePayloads,
+                             final ErrorConsumer errorConsumer) {
         final Sizes storeSizes = sizesProvider.getStoreSizes();
 
         // Create a set of sizes that are the minimum values for the combination of user provided sizes for the table
@@ -174,6 +176,7 @@ public class CoprocessorsFactory {
                 paramMap,
                 maxResults,
                 storeSizes,
-                producePayloads);
+                producePayloads,
+                errorConsumer);
     }
 }

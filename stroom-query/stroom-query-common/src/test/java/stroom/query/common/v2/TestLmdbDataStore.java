@@ -76,7 +76,8 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 Collections.emptyMap(),
                 maxResults,
                 false,
-                () -> executor);
+                () -> executor,
+                new ErrorConsumerImpl());
     }
 
     @Test
