@@ -100,9 +100,7 @@ public class LmdbDataStore implements DataStore {
     private final LmdbPayloadCreator payloadCreator;
 
     private final LmdbKey rootParentRowKey;
-
-    private volatile boolean running = true;
-    private volatile Thread transferThread;
+    private final TransferState transferState = new TransferState();
 
     LmdbDataStore(final LmdbEnvFactory lmdbEnvFactory,
                   final ResultStoreConfig resultStoreConfig,
@@ -328,14 +326,15 @@ public class LmdbDataStore implements DataStore {
 
     private void transfer() {
         Metrics.measure("Transfer", () -> {
+            transferState.setThread(Thread.currentThread());
+
             final int maxPutsBeforeCommit = resultStoreConfig.getMaxPutsBeforeCommit();
             try (final BatchingWriteTxn batchingWriteTxn = lmdbEnv.openBatchingWriteTxn(maxPutsBeforeCommit)) {
                 long lastCommitMs = System.currentTimeMillis();
                 long uncommittedCount = 0;
 
                 try {
-                    setTransferThread(Thread.currentThread());
-                    while (running && !transferThread.isInterrupted()) {
+                    while (!transferState.isTerminated()) {
                         LOGGER.trace("Transferring");
                         SearchProgressLog.increment(SearchPhase.LMDB_DATA_STORE_QUEUE_POLL);
                         final LmdbKV lmdbKV = queue.poll(1, TimeUnit.SECONDS);
@@ -376,13 +375,13 @@ public class LmdbDataStore implements DataStore {
                     LOGGER.trace(e::getMessage, e);
                 }
 
-                if (running && uncommittedCount > 0) {
+                if (!transferState.isTerminated() && uncommittedCount > 0) {
                     LOGGER.debug(() -> "Final commit");
                     batchingWriteTxn.commit();
                 }
 
                 // Create final payloads and ensure they are all delivered before we complete.
-                if (running && producePayloads) {
+                if (!transferState.isTerminated() && producePayloads) {
                     LOGGER.debug(() -> "Producing final payloads");
                     // Create payload and clear the DB.
                     boolean finalPayload = false;
@@ -403,7 +402,7 @@ public class LmdbDataStore implements DataStore {
                 // Ensure we complete.
                 complete.countDown();
                 LOGGER.debug("Finished transfer while loop");
-                setTransferThread(null);
+                transferState.setThread(null);
             }
         });
     }
@@ -683,16 +682,6 @@ public class LmdbDataStore implements DataStore {
         return list;
     }
 
-    private synchronized void setTransferThread(final Thread transferThread) {
-        this.transferThread = transferThread;
-    }
-
-    private synchronized void interruptTransferThread() {
-        if (transferThread != null) {
-            transferThread.interrupt();
-        }
-    }
-
     /**
      * Clear the data store.
      * Synchronised with get() to prevent a shutdown happening while reads are going on.
@@ -704,10 +693,7 @@ public class LmdbDataStore implements DataStore {
             SearchProgressLog.increment(SearchPhase.LMDB_DATA_STORE_CLEAR);
 
             // Let the transfer loop know it should stop ASAP.
-            running = false;
-
-            // Interrupt the transfer thread.
-            interruptTransferThread();
+            transferState.terminate();
 
             // Clear the queue.
             queue.clear();
@@ -717,12 +703,8 @@ public class LmdbDataStore implements DataStore {
 
             // Wait for transferring to stop.
             try {
-                final boolean interrupted = Thread.interrupted();
                 LOGGER.debug("Waiting for transfer to stop");
                 completionState.awaitCompletion();
-                if (interrupted) {
-                    Thread.currentThread().interrupt();
-                }
             } catch (final InterruptedException e) {
                 LOGGER.trace(e.getMessage(), e);
                 // Keep interrupting this thread.
@@ -988,6 +970,34 @@ public class LmdbDataStore implements DataStore {
         @Override
         public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
             return complete.await(timeout, unit);
+        }
+    }
+
+    private static class TransferState {
+
+        private final AtomicBoolean terminated = new AtomicBoolean();
+        private volatile Thread thread;
+
+        public boolean isTerminated() {
+            return terminated.get();
+        }
+
+        public synchronized void terminate() {
+            terminated.set(true);
+            if (thread != null) {
+                thread.interrupt();
+            }
+        }
+
+        public synchronized void setThread(final Thread thread) {
+            this.thread = thread;
+            if (terminated.get()) {
+                if (thread != null) {
+                    thread.interrupt();
+                } else if (Thread.interrupted()) {
+                    LOGGER.debug("Cleared interrupt state");
+                }
+            }
         }
     }
 }
