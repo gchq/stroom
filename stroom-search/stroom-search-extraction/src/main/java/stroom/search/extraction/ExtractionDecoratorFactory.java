@@ -181,13 +181,13 @@ public class ExtractionDecoratorFactory {
                                 final StreamMapCreator streamMapCreator,
                                 final Map<DocRef, ExtractionReceiver> receivers,
                                 final ErrorConsumer errorConsumer) {
-        final Consumer<TaskContext> consumer = tc -> {
+        final Consumer<TaskContext> consumer = taskContext -> {
             // Elevate permissions so users with only `Use` feed permission can `Read` streams.
             securityContext.asProcessingUser(() -> {
-                info(tc, () -> "Starting extraction task producer");
+                info(taskContext, () -> "Starting extraction task producer");
                 try {
-                    while (true) { // Run until interrupted or we get a completion exception.
-                        info(tc, () -> "" +
+                    while (!taskContext.isTerminated()) {
+                        info(taskContext, () -> "" +
                                 "Creating extraction tasks - stored data queue size: " +
                                 storedDataQueue.size() +
                                 " stream event map size: " +
@@ -217,7 +217,7 @@ public class ExtractionDecoratorFactory {
                 } catch (final RuntimeException e) {
                     LOGGER.error(e::getMessage, e);
                 } finally {
-                    info(tc, () -> "Finished creating extraction tasks");
+                    info(taskContext, () -> "Finished creating extraction tasks");
                 }
             });
         };
@@ -235,35 +235,35 @@ public class ExtractionDecoratorFactory {
         final Executor executor = executorProvider.get(EXTRACTION_THREAD_POOL);
         final List<CompletableFuture<Void>> futures = new ArrayList<>();
         for (int i = 0; i < extractionConfig.getMaxThreadsPerTask(); i++) {
-            final Runnable runnable = extractData(parentContext, extractionCount, errorConsumer);
-            futures.add(CompletableFuture.runAsync(runnable, executor));
+            futures.add(CompletableFuture.runAsync(() ->
+                    extractData(parentContext, extractionCount, errorConsumer), executor));
         }
         return futures;
     }
 
-    private Runnable extractData(final TaskContext parentContext,
-                                 final AtomicLong extractionCount,
-                                 final ErrorConsumer errorConsumer) {
-        final Consumer<TaskContext> consumer = tc -> {
-            try {
-                while (true) {
-                    final Entry<Long, Set<Event>> entry = streamEventMap.take();
+    private void extractData(final TaskContext parentContext,
+                             final AtomicLong extractionCount,
+                             final ErrorConsumer errorConsumer) {
+        try {
+            while (!parentContext.isTerminated()) {
+                final Entry<Long, Set<Event>> entry = streamEventMap.take();
+
+                taskContextFactory.childContext(parentContext, "Extraction Task", taskContext -> {
                     SearchProgressLog.add(SearchPhase.EXTRACTION_DECORATOR_FACTORY_STREAM_EVENT_MAP_TAKE,
                             entry.getValue().size());
-                    extractEvents(tc, entry.getKey(), entry.getValue(), extractionCount, errorConsumer);
-                }
-            } catch (final InterruptedException e) {
-                LOGGER.trace(e::getMessage, e);
-                // Keep interrupting this thread.
-                Thread.currentThread().interrupt();
-            } catch (final CompleteException e) {
-                LOGGER.debug(() -> "Complete");
-                LOGGER.trace(e::getMessage, e);
-            } finally {
-                LOGGER.debug("Completed extraction thread");
+                    extractEvents(taskContext, entry.getKey(), entry.getValue(), extractionCount, errorConsumer);
+                }).run();
             }
-        };
-        return taskContextFactory.childContext(parentContext, "Extraction Task", consumer);
+        } catch (final InterruptedException e) {
+            LOGGER.trace(e::getMessage, e);
+            // Keep interrupting this thread.
+            Thread.currentThread().interrupt();
+        } catch (final CompleteException e) {
+            LOGGER.debug(() -> "Complete");
+            LOGGER.trace(e::getMessage, e);
+        } finally {
+            LOGGER.debug("Completed extraction thread");
+        }
     }
 
     private void extractEvents(final TaskContext taskContext,

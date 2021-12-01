@@ -81,7 +81,7 @@ public class IndexShardSearchFactory {
     public void search(final ClusterSearchTask task,
                        final ExpressionOperator expression,
                        final FieldIndex fieldIndex,
-                       final TaskContext taskContext,
+                       final TaskContext parentContext,
                        final AtomicLong hitCount,
                        final ValuesConsumer valuesConsumer,
                        final ErrorConsumer errorConsumer) {
@@ -123,30 +123,31 @@ public class IndexShardSearchFactory {
                 final ShardIdQueue queue = new ShardIdQueue(task.getShards());
                 final AtomicInteger shardNo = new AtomicInteger();
                 for (int i = 0; i < indexShardSearchConfig.getMaxThreadsPerTask(); i++) {
-                    final Runnable runnable = taskContextFactory
-                            .childContext(taskContext, "Search Index Shard", tc -> {
-                                try {
-                                    while (true) {
-                                        final long shard = queue.take();
-                                        final IndexShardSearchTask t = new IndexShardSearchTask(queryFactory,
-                                                shard,
-                                                storedFieldNames,
-                                                hitCount);
-                                        t.setShardTotal(task.getShards().size());
-                                        t.setShardNumber(shardNo.incrementAndGet());
-                                        final IndexShardSearchTaskHandler handler =
-                                                indexShardSearchTaskHandlerProvider.get();
-                                        handler.exec(tc, t, valuesConsumer, errorConsumer);
-                                    }
-                                } catch (final CompleteException e) {
-                                    LOGGER.trace(() -> "Complete");
-                                } catch (final InterruptedException e) {
-                                    LOGGER.trace(e::getMessage, e);
-                                    // Keep interrupting this thread.
-                                    Thread.currentThread().interrupt();
-                                }
-                            });
-                    futures.add(CompletableFuture.runAsync(runnable, executor));
+                    futures.add(CompletableFuture.runAsync(() -> {
+                        try {
+                            while (!parentContext.isTerminated()) {
+                                final long shard = queue.take();
+                                taskContextFactory
+                                        .childContext(parentContext, "Search Index Shard", taskContext -> {
+                                            final IndexShardSearchTask t = new IndexShardSearchTask(queryFactory,
+                                                    shard,
+                                                    storedFieldNames,
+                                                    hitCount);
+                                            t.setShardTotal(task.getShards().size());
+                                            t.setShardNumber(shardNo.incrementAndGet());
+                                            final IndexShardSearchTaskHandler handler =
+                                                    indexShardSearchTaskHandlerProvider.get();
+                                            handler.exec(taskContext, t, valuesConsumer, errorConsumer);
+                                        }).run();
+                            }
+                        } catch (final CompleteException e) {
+                            LOGGER.trace(() -> "Complete");
+                        } catch (final InterruptedException e) {
+                            LOGGER.trace(e::getMessage, e);
+                            // Keep interrupting this thread.
+                            Thread.currentThread().interrupt();
+                        }
+                    }, executor));
                 }
             } catch (final InterruptedException e) {
                 LOGGER.trace(e::getMessage, e);

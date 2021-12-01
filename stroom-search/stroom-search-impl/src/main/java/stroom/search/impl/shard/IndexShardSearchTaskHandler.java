@@ -130,7 +130,7 @@ public class IndexShardSearchTaskHandler {
         return indexWriter;
     }
 
-    private void searchShard(final TaskContext parentTaskContext,
+    private void searchShard(final TaskContext parentContext,
                              final IndexShardSearchTask task,
                              final IndexShardSearcher indexShardSearcher,
                              final ValuesConsumer valuesConsumer,
@@ -151,7 +151,7 @@ public class IndexShardSearchTaskHandler {
             final DocIdQueue docIdQueue = new DocIdQueue(maxDocIdQueueSize);
 
             // Create a collector.
-            final IndexShardHitCollector collector = new IndexShardHitCollector(parentTaskContext,
+            final IndexShardHitCollector collector = new IndexShardHitCollector(parentContext,
                     docIdQueue,
                     task.getHitCount());
 
@@ -159,7 +159,7 @@ public class IndexShardSearchTaskHandler {
                 final SearcherManager searcherManager = indexShardSearcher.getSearcherManager();
                 final IndexSearcher searcher = searcherManager.acquire();
                 try {
-                    final Runnable runnable = taskContextFactory.childContext(parentTaskContext,
+                    final Runnable runnable = taskContextFactory.childContext(parentContext,
                             "Index Searcher",
                             taskContext ->
                                     LOGGER.logDurationIfDebugEnabled(() -> {
@@ -183,7 +183,7 @@ public class IndexShardSearchTaskHandler {
                     final String[] storedFieldNames = task.getStoredFieldNames();
 
                     // Start converting found docIds into stored data values
-                    while (true) { // Run until interrupted or we get a completion exception.
+                    while (!parentContext.isTerminated()) {
                         // Take the next item
                         final int docId = docIdQueue.take();
                         // If we have a doc id then retrieve the stored data for it.
