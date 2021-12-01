@@ -38,14 +38,20 @@ public class ErrorConsumerImpl implements ErrorConsumer {
 
     @Override
     public List<String> getErrors() {
-        return new ArrayList<>(errors);
+        if (hasErrors()) {
+            return new ArrayList<>(errors);
+        }
+        return Collections.emptyList();
     }
 
     @Override
     public List<String> drain() {
-        final List<String> copy = new ArrayList<>(errors);
-        copy.forEach(errors::remove);
-        return copy;
+        if (hasErrors()) {
+            final List<String> copy = new ArrayList<>(errors);
+            copy.forEach(errors::remove);
+            return copy;
+        }
+        return Collections.emptyList();
     }
 
     @Override
@@ -55,9 +61,9 @@ public class ErrorConsumerImpl implements ErrorConsumer {
 
     @Override
     public String toString() {
-        if (errorCount.get() == 0) {
-            return null;
+        if (hasErrors()) {
+            return String.join("\n", errors);
         }
-        return String.join("\n", errors);
+        return null;
     }
 }
