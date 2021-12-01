@@ -71,7 +71,6 @@ public class LmdbDataStore implements DataStore {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbDataStore.class);
 
     private static final long COMMIT_FREQUENCY_MS = 1000;
-    private static final long MAX_COMMIT_BATCH_SIZE = 100000;
 
     private final LmdbEnv lmdbEnv;
     private final ResultStoreConfig resultStoreConfig;
@@ -326,10 +325,10 @@ public class LmdbDataStore implements DataStore {
 
     private void transfer() {
         Metrics.measure("Transfer", () -> {
-            try (final BatchingWriteTxn batchingWriteTxn = lmdbEnv.openBatchingWriteTxn(
-                    resultStoreConfig.getMaxPutsBeforeCommit())) {
+            final int maxPutsBeforeCommit = resultStoreConfig.getMaxPutsBeforeCommit();
+            try (final BatchingWriteTxn batchingWriteTxn = lmdbEnv.openBatchingWriteTxn(maxPutsBeforeCommit)) {
                 long lastCommitMs = System.currentTimeMillis();
-                long batchSize = 0;
+                long uncommittedCount = 0;
 
                 try {
                     setTransferThread(Thread.currentThread());
@@ -340,7 +339,7 @@ public class LmdbDataStore implements DataStore {
 
                         if (lmdbKV != null) {
                             insert(batchingWriteTxn, dbi, lmdbKV);
-                            batchSize++;
+                            uncommittedCount++;
                         }
 
                         if (producePayloads && payloadCreator.isEmpty()) {
@@ -348,20 +347,20 @@ public class LmdbDataStore implements DataStore {
                             LOGGER.debug(() -> "Committing for new payload");
                             batchingWriteTxn.commit();
                             lastCommitMs = System.currentTimeMillis();
-                            batchSize = 0;
+                            uncommittedCount = 0;
 
                             // Create payload and clear the DB.
                             payloadCreator.addPayload(batchingWriteTxn, dbi, false);
 
-                        } else if (batchSize > 0) {
-                            if (batchSize >= MAX_COMMIT_BATCH_SIZE ||
+                        } else if (uncommittedCount > 0) {
+                            if (uncommittedCount >= maxPutsBeforeCommit ||
                                     lastCommitMs < System.currentTimeMillis() - COMMIT_FREQUENCY_MS) {
 
                                 // Commit
                                 LOGGER.debug(() -> "Committing for elapsed time");
                                 batchingWriteTxn.commit();
                                 lastCommitMs = System.currentTimeMillis();
-                                batchSize = 0;
+                                uncommittedCount = 0;
                             }
                         }
                     }
@@ -374,7 +373,7 @@ public class LmdbDataStore implements DataStore {
                     LOGGER.trace(e::getMessage, e);
                 }
 
-                if (running && batchSize > 0) {
+                if (running && uncommittedCount > 0) {
                     LOGGER.debug(() -> "Final commit");
                     batchingWriteTxn.commit();
                 }
