@@ -147,32 +147,15 @@ public class StreamAppender extends AbstractAppender {
     }
 
     @Override
-    protected void afterHeader() throws IOException {
-        super.afterHeader();
-        // Always insert a segment marker after the header has been written.
-        insertSegmentMarker();
-    }
-
-    @Override
     public Destination borrowDestination() throws IOException {
         count++;
         return super.borrowDestination();
     }
 
-    @Override
-    public void returnDestination(final Destination destination) throws IOException {
-        // We assume that the parent will write an entire segment when it borrows a destination so add a segment marker
-        // here after a segment is written.
-
-        // Writing a segment marker here ensures there is always a marker written before the footer regardless or
-        // whether a footer is actually written. We do this because we always make an allowance for a footer for data
-        // display purposes.
-        insertSegmentMarker();
-
-        super.returnDestination(destination);
-    }
-
-    private void insertSegmentMarker() throws IOException {
+    /**
+     * Insert segment markers after the header and after every record.
+     */
+    void insertSegmentMarker() throws IOException {
         // Add a segment marker to the output stream if we are segmenting.
         if (segmentOutput) {
             if (wrappedSegmentOutputStream != null) {
