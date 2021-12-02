@@ -13,6 +13,17 @@ import javax.annotation.processing.Generated;
 @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
 public class ConfigProvidersModule extends AbstractModule {
 
+    // Special case to allow StroomPathConfig to be injected as itself or as
+    // PathConfig
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.util.io.PathConfig getPathConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.util.io.StroomPathConfig.class);
+    }
+
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")

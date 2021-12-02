@@ -5,18 +5,14 @@ import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import java.util.List;
 import javax.validation.constraints.Pattern;
 
 public class FsVolumeConfig extends AbstractConfig {
-
-    private String volumeSelector = "RoundRobin";
-
-    private List<String> defaultStreamVolumePaths = List.of("volumes/default_stream_volume");
-    private double defaultStreamVolumeFilesystemUtilisation = 0.9;
-    private boolean createDefaultStreamVolumesOnStart = true;
 
     private static final String VOLUME_SELECTOR_PATTERN = "^(" +
             RoundRobinVolumeSelector.NAME + "|" +
@@ -29,14 +25,49 @@ public class FsVolumeConfig extends AbstractConfig {
             WeightedFreePercentRandomVolumeSelector.NAME + "|" +
             WeightedFreeRandomVolumeSelector.NAME + ")$";
 
-    private CacheConfig feedPathCache = CacheConfig.builder()
-            .maximumSize(1000L)
-            .expireAfterAccess(StroomDuration.ofMinutes(10))
-            .build();
-    private CacheConfig typePathCache = CacheConfig.builder()
-            .maximumSize(1000L)
-            .expireAfterAccess(StroomDuration.ofMinutes(10))
-            .build();
+    private final String volumeSelector;
+
+    // TODO 02/12/2021 AT: Make final
+    private List<String> defaultStreamVolumePaths;
+    private final double defaultStreamVolumeFilesystemUtilisation;
+    private final boolean createDefaultStreamVolumesOnStart;
+
+    private final CacheConfig feedPathCache;
+    private final CacheConfig typePathCache;
+
+    public FsVolumeConfig() {
+        volumeSelector = "RoundRobin";
+        defaultStreamVolumePaths = List.of("volumes/default_stream_volume");
+        defaultStreamVolumeFilesystemUtilisation = 0.9;
+        createDefaultStreamVolumesOnStart = true;
+
+        feedPathCache = CacheConfig.builder()
+                .maximumSize(1000L)
+                .expireAfterAccess(StroomDuration.ofMinutes(10))
+                .build();
+
+        typePathCache = CacheConfig.builder()
+                .maximumSize(1000L)
+                .expireAfterAccess(StroomDuration.ofMinutes(10))
+                .build();
+    }
+
+    @JsonCreator
+    @SuppressWarnings("checkstyle:linelength")
+    public FsVolumeConfig(
+            @JsonProperty("volumeSelector") final String volumeSelector,
+            @JsonProperty("defaultStreamVolumePaths") final List<String> defaultStreamVolumePaths,
+            @JsonProperty("defaultStreamVolumeFilesystemUtilisation") final double defaultStreamVolumeFilesystemUtilisation,
+            @JsonProperty("createDefaultStreamVolumesOnStart") final boolean createDefaultStreamVolumesOnStart,
+            @JsonProperty("feedPathCache") final CacheConfig feedPathCache,
+            @JsonProperty("typePathCache") final CacheConfig typePathCache) {
+        this.volumeSelector = volumeSelector;
+        this.defaultStreamVolumePaths = defaultStreamVolumePaths;
+        this.defaultStreamVolumeFilesystemUtilisation = defaultStreamVolumeFilesystemUtilisation;
+        this.createDefaultStreamVolumesOnStart = createDefaultStreamVolumesOnStart;
+        this.feedPathCache = feedPathCache;
+        this.typePathCache = typePathCache;
+    }
 
     @JsonPropertyDescription("How should volumes be selected for use? Possible volume selectors " +
             "include ('MostFreePercent', 'MostFree', 'Random', 'RoundRobinIgnoreLeastFreePercent', " +
@@ -47,10 +78,6 @@ public class FsVolumeConfig extends AbstractConfig {
         return volumeSelector;
     }
 
-    public void setVolumeSelector(final String volumeSelector) {
-        this.volumeSelector = volumeSelector;
-    }
-
     @RequiresRestart(RequiresRestart.RestartScope.UI)
     @JsonPropertyDescription("If no existing stream volumes are present default volumes will be created on " +
             "application start.  Use property defaultStreamVolumePaths to define the volumes created.")
@@ -58,24 +85,12 @@ public class FsVolumeConfig extends AbstractConfig {
         return createDefaultStreamVolumesOnStart;
     }
 
-    public void setCreateDefaultStreamVolumesOnStart(final boolean createDefaultStreamVolumesOnStart) {
-        this.createDefaultStreamVolumesOnStart = createDefaultStreamVolumesOnStart;
-    }
-
     public CacheConfig getFeedPathCache() {
         return feedPathCache;
     }
 
-    public void setFeedPathCache(final CacheConfig feedPathCache) {
-        this.feedPathCache = feedPathCache;
-    }
-
     public CacheConfig getTypePathCache() {
         return typePathCache;
-    }
-
-    public void setTypePathCache(final CacheConfig typePathCache) {
-        this.typePathCache = typePathCache;
     }
 
     @JsonPropertyDescription("The paths used if the default stream volumes are created on application start." +
@@ -84,10 +99,10 @@ public class FsVolumeConfig extends AbstractConfig {
         return defaultStreamVolumePaths;
     }
 
+    @Deprecated(forRemoval = true)
     public void setDefaultStreamVolumePaths(final List<String> defaultStreamVolumePaths) {
         this.defaultStreamVolumePaths = defaultStreamVolumePaths;
     }
-
 
     @JsonPropertyDescription("Fraction of the filesystem beyond which the system will stop writing to the " +
             "default stream volumes that may be created on application start.")
@@ -95,8 +110,13 @@ public class FsVolumeConfig extends AbstractConfig {
         return defaultStreamVolumeFilesystemUtilisation;
     }
 
-    public void setDefaultStreamVolumeFilesystemUtilisation(final double defaultStreamVolumeFilesystemUtilisation) {
-        this.defaultStreamVolumeFilesystemUtilisation = defaultStreamVolumeFilesystemUtilisation;
+    public FsVolumeConfig withDefaultStreamVolumePaths(List<String> defaultStreamVolumePaths) {
+        return new FsVolumeConfig(
+                volumeSelector,
+                defaultStreamVolumePaths,
+                defaultStreamVolumeFilesystemUtilisation,
+                createDefaultStreamVolumesOnStart,
+                feedPathCache, typePathCache);
     }
 
     @Override

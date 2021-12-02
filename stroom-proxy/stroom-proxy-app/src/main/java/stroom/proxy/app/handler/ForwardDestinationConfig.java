@@ -5,6 +5,7 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
@@ -12,11 +13,34 @@ import java.util.Objects;
 @NotInjectableConfig
 public class ForwardDestinationConfig extends AbstractConfig implements IsProxyConfig {
 
-    private String forwardUrl;
-    private Integer forwardTimeoutMs = 30000;
-    private Integer forwardDelayMs;
-    private Integer forwardChunkSize;
+    private final String forwardUrl;
+    private final Integer forwardTimeoutMs;
+    private final Integer forwardDelayMs;
+    private final Integer forwardChunkSize;
+    // TODO 02/12/2021 AT: Make final
     private SSLConfig sslConfig;
+
+    public ForwardDestinationConfig() {
+        forwardUrl = null;
+        forwardTimeoutMs = 30000;
+        forwardDelayMs = null;
+        forwardChunkSize = null;
+        sslConfig = null;
+    }
+
+    @SuppressWarnings("unused")
+    @JsonCreator
+    public ForwardDestinationConfig(@JsonProperty("forwardUrl") final String forwardUrl,
+                                    @JsonProperty("forwardTimeoutMs") final Integer forwardTimeoutMs,
+                                    @JsonProperty("forwardDelayMs") final Integer forwardDelayMs,
+                                    @JsonProperty("forwardChunkSize") final Integer forwardChunkSize,
+                                    @JsonProperty("sslConfig") final SSLConfig sslConfig) {
+        this.forwardUrl = forwardUrl;
+        this.forwardTimeoutMs = forwardTimeoutMs;
+        this.forwardDelayMs = forwardDelayMs;
+        this.forwardChunkSize = forwardChunkSize;
+        this.sslConfig = sslConfig;
+    }
 
     /**
      * The URL's to forward onto. This is pass-through mode if repoDir is not set
@@ -24,11 +48,6 @@ public class ForwardDestinationConfig extends AbstractConfig implements IsProxyC
     @JsonProperty
     public String getForwardUrl() {
         return forwardUrl;
-    }
-
-    @JsonProperty
-    public void setForwardUrl(final String forwardUrl) {
-        this.forwardUrl = forwardUrl;
     }
 
     /**
@@ -39,22 +58,12 @@ public class ForwardDestinationConfig extends AbstractConfig implements IsProxyC
         return forwardTimeoutMs;
     }
 
-    @JsonProperty
-    public void setForwardTimeoutMs(final Integer forwardTimeoutMs) {
-        this.forwardTimeoutMs = forwardTimeoutMs;
-    }
-
     /**
      * Debug setting to add a delay
      */
     @JsonProperty
     public Integer getForwardDelayMs() {
         return forwardDelayMs;
-    }
-
-    @JsonProperty
-    public void setForwardDelayMs(final Integer forwardDelayMs) {
-        this.forwardDelayMs = forwardDelayMs;
     }
 
     /**
@@ -66,18 +75,17 @@ public class ForwardDestinationConfig extends AbstractConfig implements IsProxyC
     }
 
     @JsonProperty
-    public void setForwardChunkSize(final Integer forwardChunkSize) {
-        this.forwardChunkSize = forwardChunkSize;
-    }
-
-    @JsonProperty
     public SSLConfig getSslConfig() {
         return sslConfig;
     }
 
-    @JsonProperty
+    @Deprecated(forRemoval = true)
     public void setSslConfig(final SSLConfig sslConfig) {
         this.sslConfig = sslConfig;
+    }
+
+    public ForwardDestinationConfig withForwardUrl(final String forwardUrl) {
+        return new ForwardDestinationConfig(forwardUrl, forwardTimeoutMs, forwardDelayMs, forwardChunkSize, sslConfig);
     }
 
     @Override

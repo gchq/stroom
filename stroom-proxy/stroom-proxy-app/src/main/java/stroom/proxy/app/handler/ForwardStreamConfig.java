@@ -3,6 +3,7 @@ package stroom.proxy.app.handler;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
@@ -12,9 +13,26 @@ import java.util.List;
 @JsonPropertyOrder(alphabetic = true)
 public class ForwardStreamConfig extends AbstractConfig implements IsProxyConfig {
 
-    private boolean isForwardingEnabled = false;
-    private String userAgent;
-    private List<ForwardDestinationConfig> forwardDestinations = new ArrayList<>();
+    private final boolean isForwardingEnabled;
+    private final String userAgent;
+    private final List<ForwardDestinationConfig> forwardDestinations;
+
+    public ForwardStreamConfig() {
+        isForwardingEnabled = false;
+        userAgent = null;
+        forwardDestinations = new ArrayList<>();
+    }
+
+    @JsonCreator
+    public ForwardStreamConfig(
+            @JsonProperty("isForwardingEnabled") final boolean isForwardingEnabled,
+            @JsonProperty("userAgent") final String userAgent,
+            @JsonProperty("forwardDestinations") final List<ForwardDestinationConfig> forwardDestinations) {
+
+        this.isForwardingEnabled = isForwardingEnabled;
+        this.userAgent = userAgent;
+        this.forwardDestinations = List.copyOf(forwardDestinations);
+    }
 
     /**
      * True if received streams should be forwarded to another stroom(-proxy) instance.
@@ -22,11 +40,6 @@ public class ForwardStreamConfig extends AbstractConfig implements IsProxyConfig
     @JsonProperty
     public boolean isForwardingEnabled() {
         return isForwardingEnabled;
-    }
-
-    @JsonProperty
-    public void setForwardingEnabled(final boolean forwardingEnabled) {
-        isForwardingEnabled = forwardingEnabled;
     }
 
     /**
@@ -37,11 +50,6 @@ public class ForwardStreamConfig extends AbstractConfig implements IsProxyConfig
         return userAgent;
     }
 
-    @JsonProperty
-    public void setUserAgent(final String userAgent) {
-        this.userAgent = userAgent;
-    }
-
     /**
      * A list of destinations to forward each batch of data to
      */
@@ -50,8 +58,11 @@ public class ForwardStreamConfig extends AbstractConfig implements IsProxyConfig
         return forwardDestinations;
     }
 
-    @JsonProperty
-    public void setForwardDestinations(final List<ForwardDestinationConfig> forwardDestinations) {
-        this.forwardDestinations = forwardDestinations;
+    public ForwardStreamConfig withForwardingEnabled(final boolean isForwardingEnabled) {
+        return new ForwardStreamConfig(isForwardingEnabled, userAgent, forwardDestinations);
+    }
+
+    public ForwardStreamConfig withForwardDestinations(final List<ForwardDestinationConfig> forwardDestinations) {
+        return new ForwardStreamConfig(isForwardingEnabled, userAgent, forwardDestinations);
     }
 }

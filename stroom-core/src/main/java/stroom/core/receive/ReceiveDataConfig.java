@@ -4,6 +4,7 @@ import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.validation.ValidRegex;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 
@@ -14,19 +15,31 @@ public class ReceiveDataConfig extends AbstractConfig {
      */
     private static final int DEFAULT_BUFFER_SIZE = 8192;
 
-    private String receiptPolicyUuid;
-    private int bufferSize = DEFAULT_BUFFER_SIZE;
-    private String unknownClassification = "UNKNOWN CLASSIFICATION";
-    private String feedNamePattern = "^[A-Z0-9_-]{3,}$";
+    private final String receiptPolicyUuid;
+    private final int bufferSize;
+    private final String unknownClassification;
+    private final String feedNamePattern;
+
+    public ReceiveDataConfig() {
+        receiptPolicyUuid = null;
+        bufferSize = DEFAULT_BUFFER_SIZE;
+        unknownClassification = "UNKNOWN CLASSIFICATION";
+        feedNamePattern = "^[A-Z0-9_-]{3,}$";
+    }
+
+    public ReceiveDataConfig(@JsonProperty("receiptPolicyUuid") final String receiptPolicyUuid,
+                             @JsonProperty("bufferSize") final int bufferSize,
+                             @JsonProperty("unknownClassification") final String unknownClassification,
+                             @JsonProperty("feedNamePattern") final String feedNamePattern) {
+        this.receiptPolicyUuid = receiptPolicyUuid;
+        this.bufferSize = bufferSize;
+        this.unknownClassification = unknownClassification;
+        this.feedNamePattern = feedNamePattern;
+    }
 
     @JsonPropertyDescription("The UUID of the data receipt policy to use")
     public String getReceiptPolicyUuid() {
         return receiptPolicyUuid;
-    }
-
-    @SuppressWarnings("unused")
-    public void setReceiptPolicyUuid(final String receiptPolicyUuid) {
-        this.receiptPolicyUuid = receiptPolicyUuid;
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
@@ -35,30 +48,15 @@ public class ReceiveDataConfig extends AbstractConfig {
         return bufferSize;
     }
 
-    @SuppressWarnings("unused")
-    public void setBufferSize(final int bufferSize) {
-        this.bufferSize = bufferSize;
-    }
-
     @JsonPropertyDescription("The classification banner to display for data if one is not defined")
     public String getUnknownClassification() {
         return unknownClassification;
-    }
-
-    @SuppressWarnings("unused")
-    public void setUnknownClassification(final String unknownClassification) {
-        this.unknownClassification = unknownClassification;
     }
 
     @ValidRegex
     @JsonPropertyDescription("The regex pattern for feed names")
     public String getFeedNamePattern() {
         return feedNamePattern;
-    }
-
-    @SuppressWarnings("unused")
-    public void setFeedNamePattern(final String feedNamePattern) {
-        this.feedNamePattern = feedNamePattern;
     }
 
     @Override

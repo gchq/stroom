@@ -96,7 +96,7 @@ class TestAppConfigModule {
         // Modify the value on the common connection pool so it gets applied to all other config objects
         final Config modifiedConfig = YamlUtil.readConfig(devYamlPath);
         // Merge all the default values in
-        final AppConfig modifiedAppConfig = ConfigMapper.buildMergedAppConfig(modifiedConfig.getAppConfig());
+        final AppConfig modifiedAppConfig = ConfigMapper.buildMergedAppConfig(devYamlPath);
 
         final int currentValue = modifiedAppConfig
                 .getCommonDbConfig()

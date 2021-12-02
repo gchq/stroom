@@ -2,20 +2,27 @@ package stroom.importexport.impl;
 
 import stroom.util.shared.AbstractConfig;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 
 public class ExportConfig extends AbstractConfig {
 
-    private boolean enabled;
+    private final boolean enabled;
+
+    public ExportConfig() {
+        enabled = false;
+    }
+
+    @JsonCreator
+    public ExportConfig(@JsonProperty("enabled") final boolean enabled) {
+        this.enabled = enabled;
+    }
 
     @JsonPropertyDescription("Determines if the system will allow configuration to be exported via the export servlet")
     public boolean isEnabled() {
         return enabled;
-    }
-
-    public void setEnabled(final boolean enabled) {
-        this.enabled = enabled;
     }
 
     @Override

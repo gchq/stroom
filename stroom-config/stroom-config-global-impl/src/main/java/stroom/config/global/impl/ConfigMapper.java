@@ -19,6 +19,7 @@ package stroom.config.global.impl;
 
 
 import stroom.config.app.AppConfig;
+import stroom.config.app.SuperDevUtil;
 import stroom.config.app.YamlUtil;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.ConfigProperty.SourceType;
@@ -39,6 +40,8 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.NotInjectableConfig;
 import stroom.util.shared.PropertyPath;
 import stroom.util.time.StroomDuration;
+import stroom.util.xml.ParserConfig;
+import stroom.util.xml.SAXParserSettings;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -166,6 +169,8 @@ public class ConfigMapper {
 
     private final Supplier<AppConfig> defaultAppConfigSupplier;
 
+    private final boolean inSuperDevMode;
+
     // TODO Created this with a view to improving the ser/deser of the values but it needs
     //   more thought.  Leaving it here for now.
 //    private static final Map<Class<?>, Mapping> MAPPERS = new HashMap<>();
@@ -199,6 +204,10 @@ public class ConfigMapper {
         // branches have been replaced with a default instance to ensure we have a full tree.
         this.configFile = configFile;
         this.defaultAppConfigSupplier = defaultAppConfigSupplier;
+        this.inSuperDevMode = SuperDevUtil.isInSuperDevMode();
+        if (inSuperDevMode) {
+            SuperDevUtil.showSuperDevBanner();
+        }
 
         LOGGER.debug(() -> LogUtil.message("Initialising ConfigMapper with file {}", configFile));
 
@@ -261,15 +270,6 @@ public class ConfigMapper {
         return allPropertyPaths;
     }
 
-//    public static ConfigMapper vanillaMapper() {
-//        return new ConfigMapper(AppConfig::new);
-//    }
-
-//    public static void decorateWithPropertyPaths(final AppConfig appConfig) {
-//        // This will add all the property paths to the passed AppConfig instance
-//        new ConfigMapper(() -> appConfig);
-//    }
-
     /**
      * Will copy the contents of the passed {@link AppConfig} into the guice bound {@link AppConfig}
      * and update the globalPropertiesMap.
@@ -282,31 +282,6 @@ public class ConfigMapper {
         if (changeCount > 0) {
             rebuildObjectInstanceMap();
         }
-
-        // walk the newAppConfig tree and update the globalPropertiesMap with the yaml overrides
-//        addConfigObjectMethods(
-//                newAppConfig,
-//                AppConfig.ROOT_PROPERTY_PATH,
-//                newPropertyMap,
-//                null,
-//                true);
-
-        // update globalPropertiesMap with the yaml overrides for all props whether in newAppConfig or not
-        // as ones previously overridden may no longer be
-//        allPropertyPaths.forEach(propertyPath ->
-//                yamlOverridePropertyConsumer(propertyPath, newPropertyMap.get(propertyPath)));
-
-        // Ensure we have the latest picture of the db override values
-        // This will update newAppConfig with the effective values
-//        decorateAllDbConfigProperty(dbProps, newPropertyMap);
-
-        // TODO 24/11/2021 AT: Need to rebuild an app config tree using the ctors we hold and
-        //  getting the args from the glob prop map.  Need to rebuild the whole thing as they are all
-        //  connected.
-        // globalPropertiesMap should now have an up to date picture of the override
-        // values so apply all the effective values to this.appConfig
-//        allPropertyPaths.forEach(propertyPath ->
-//                hasEffectiveValueChanged(propertyPath, currentEffectiveValues, currentSources));
     }
 
     private synchronized void rebuildObjectInstanceMap() {
@@ -316,7 +291,19 @@ public class ConfigMapper {
 
         // Now swap out the current map with the new one
         this.configInstanceMap = newInstanceMap;
+
+        updateXmlSecureProcessing();
+
         LOGGER.debug("Completed rebuild of object instance map");
+    }
+
+    /**
+     * This is a bit of nastiness is due to the fact that the {@link javax.xml.parsers.SAXParserFactory}
+     * is held statically
+     */
+    private void updateXmlSecureProcessing() {
+        final ParserConfig parserConfig = getConfigObject(ParserConfig.class);
+        SAXParserSettings.setSecureProcessingEnabled(parserConfig.isSecureProcessing());
     }
 
     private synchronized AbstractConfig rebuildObjectInstance(
@@ -346,32 +333,14 @@ public class ConfigMapper {
             newInstanceMap.put(instance.getClass(), instance);
         }
 
-        return instance;
+        if (inSuperDevMode) {
+            // Nasty hack to tweak the config to relax the security when we are in superdev mode
+            return SuperDevUtil.relaxSecurityInSuperDevMode(instance);
+        } else {
+            return instance;
+        }
     }
 
-    //    public synchronized void updateConfigFromDb(final Collection<ConfigProperty> dbProps) {
-//
-//        final Map<PropertyPath, Optional<String>> currentEffectiveValues = globalPropertiesMap.values()
-//                .stream()
-//                .collect(Collectors.toMap(ConfigProperty::getName, ConfigProperty::getEffectiveValue));
-//
-//        final Map<PropertyPath, SourceType> currentSources = globalPropertiesMap.values()
-//                .stream()
-//                .collect(Collectors.toMap(ConfigProperty::getName, ConfigProperty::getSource));
-//
-//        // Ensure we have the latest picture of the db override values
-//        // This will update newAppConfig with the effective values
-//        decorateAllDbConfigProperty(dbProps, defaultPropertiesMap);
-//
-//        // TODO 24/11/2021 AT: Need to rebuild an app config tree using the ctors we hold and
-//        //  getting the args from the glob prop map.  Need to rebuild the whole thing as they are all
-//        //  connected.
-//        // globalPropertiesMap should now have an up to date picture of the override
-//        // values so apply all the effective values to this.appConfig
-//        allPropertyPaths.forEach(propertyPath ->
-//                hasEffectiveValueChanged(propertyPath, currentEffectiveValues, currentSources));
-//
-//    }
     AppConfig buildMergedAppConfig() {
         return buildMergedAppConfig(configFile);
     }
@@ -387,26 +356,48 @@ public class ConfigMapper {
             return defaultAppConfig;
         } else {
             try {
-                final AppConfig yamlAppConfig = YamlUtil.readAppConfig(configFile);
-                return buildMergedAppConfig(yamlAppConfig);
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
+                return YamlUtil.mergeYamlNodeTrees(
+                        AppConfig.class,
+                        objectMapper -> {
+                            try {
+                                return objectMapper.readTree(configFile.toFile());
+                            } catch (IOException e) {
+                                throw new UncheckedIOException(e);
+                            }
+                        },
+                        objectMapper ->
+                                objectMapper.valueToTree(defaultAppConfig));
+            } catch (Exception e) {
+                throw new RuntimeException(LogUtil.message("Error merging yaml trees with file {}. Message: {}",
+                        configFile.toAbsolutePath(),
+                        e.getMessage()), e);
             }
         }
     }
 
-    public static AppConfig buildMergedAppConfig(final AppConfig yamlAppConfig) {
-
-        final AppConfig defaultAppConfig = new AppConfig();
-
-        final AppConfig mergedAppConfig = YamlUtil.mergeYamlNodeTrees(
-                AppConfig.class,
-                objectMapper ->
-                        objectMapper.valueToTree(yamlAppConfig),
-                objectMapper ->
-                        objectMapper.valueToTree(defaultAppConfig));
-        return mergedAppConfig;
-    }
+//    /**
+//     * FOR TESTING ONLY. If our custom config is in a file then we must use
+//     * {@link ConfigMapper#buildMergedAppConfig(Path)} so there is no defaulting of
+//     * null primitives. It is ok for use when you
+//     */
+//    @Deprecated // For testing only
+//    public static AppConfig buildMergedAppConfig(final AppConfig yamlAppConfig) {
+//
+//        final AppConfig defaultAppConfig = new AppConfig();
+//
+//        if (yamlAppConfig == null) {
+//            return defaultAppConfig;
+//        } else {
+//            final AppConfig mergedAppConfig = YamlUtil.mergeYamlNodeTrees(
+//                    AppConfig.class,
+//                    objectMapper ->
+//                            objectMapper.valueToTree(yamlAppConfig),
+//                    objectMapper ->
+//                            objectMapper.valueToTree(defaultAppConfig));
+//            return mergedAppConfig;
+//        }
+//
+//    }
 
     private synchronized int refreshGlobalPropYamlOverrides() {
         final AppConfig yamlAppConfig = buildMergedAppConfig();
@@ -539,17 +530,6 @@ public class ConfigMapper {
                     return hasChanged
                             ? 1
                             : 0;
-//                        final Prop prop = propertyMap.get(entry.getKey());
-//                        if (prop != null) {
-//                            // Now set the new effective value on our guice bound appConfig instance
-//                            applyEffectiveValueToProp(globalProp, prop);
-//                        } else {
-//                            throw new RuntimeException(LogUtil.message(
-//                                    "Not expecting prop to be null for {}", entry.getKey().toString()));
-//                        }
-//                    } catch (final RuntimeException e) {
-//                        LOGGER.error(e.getMessage(), e);
-//                    }
                 })
                 .sum();
 
@@ -617,27 +597,6 @@ public class ConfigMapper {
                 final boolean hasChanged = hasEffectiveValueChanged(
                         fullPath, effectiveValueBefore, sourceBefore);
 
-//                final Optional<String> effectiveValueAfter = globalConfigProperty.getEffectiveValue();
-//                final SourceType sourceAfter = globalConfigProperty.getSource();
-//
-//                if (!Objects.equals(effectiveValueBefore, effectiveValueAfter)) {
-//                    // Now we have updated the globalConfigProperty with the value from the DB
-//                    // we can ask it what the effective value is now and set that on our
-//                    // guice bound appConfig instance.
-//                    applyEffectiveValueToProp(globalConfigProperty, prop);
-//
-//                    LOGGER.info(
-//                            "Effective value of {} has changed on this node from [{}] ({}) to [{}] ({})",
-//                            fullPath,
-//                            effectiveValueBefore.orElse(""),
-//                            sourceBefore,
-//                            effectiveValueAfter.orElse(""),
-//                            sourceAfter);
-//                } else {
-//                    LOGGER.debug("Property {} has not changed its effective value [{}]",
-//                            fullPath, effectiveValueBefore);
-//                }
-
                 return Tuple.of(globalConfigProperty, hasChanged);
             } else {
                 throw new UnknownPropertyException(LogUtil.message("No prop object for {}", fullPath));
@@ -686,13 +645,6 @@ public class ConfigMapper {
 
             if (isSupportedPropertyType(valueType)) {
 
-                if (!prop.hasSetter()) {
-//                    throw new RuntimeException(LogUtil.message("Prop {} in class {} has no setter.",
-//                            prop.getName(),
-//                            (prop.getParentObject() != null
-//                                    ? prop.getParentObject().getClass().getName()
-//                                    : "null")));
-                }
                 // This is a leaf, i.e. a property so add it to our map
                 propertyMap.put(fullPath, prop);
 
@@ -759,16 +711,6 @@ public class ConfigMapper {
                     return wasChanged
                             ? 1
                             : 0;
-//            final ConfigProperty configProperty = globalPropertiesMap.get(propertyPath);
-//            final Optional<String> effectiveValueAfter = configProperty.getEffectiveValue();
-//            final SourceType sourceAfter = configProperty.getSource();
-//
-//            LOGGER.trace(() -> LogUtil.message("{} - effectiveValueBefore: [{}] ({}), effectiveValueAfter [{}] ({})",
-//                    propertyPath,
-//                    effectiveValueBefore,
-//                    sourceBefore,
-//                    effectiveValueAfter,
-//                    sourceAfter));
                 })
                 .sum();
 
@@ -778,12 +720,6 @@ public class ConfigMapper {
     private boolean hasEffectiveValueChanged(final PropertyPath fullPath,
                                              final Optional<String> effectiveValueBefore,
                                              final SourceType sourceBefore) {
-
-//        final Optional<Prop> optDestProp = Optional.ofNullable(defaultPropertiesMap.get(fullPath));
-
-//        final Optional<String> effectiveValueBefore = currentEffectiveValues
-//                .getOrDefault(fullPath, Optional.empty());
-//        final SourceType sourceBefore = currentSources.get(fullPath);
 
         final ConfigProperty configProperty = globalPropertiesMap.get(fullPath);
         final Optional<String> effectiveValueAfter = configProperty.getEffectiveValue();
@@ -796,15 +732,6 @@ public class ConfigMapper {
                 sourceAfter));
 
         if (!Objects.equals(effectiveValueBefore, effectiveValueAfter)) {
-
-//            if (optDestProp.isEmpty()) {
-//                throw new RuntimeException(LogUtil.message("No prop object for {}, unable to update property value",
-//                        fullPath));
-//            }
-
-            // mutate the guice injected appConfig with the new effective value
-//            applyEffectiveValueToProp(configProperty, optDestProp.get());
-
             LOGGER.info(
                     "Effective value of {} has changed on this node from [{}] ({}) to [{}] ({})",
                     fullPath,
@@ -1401,26 +1328,7 @@ public class ConfigMapper {
         }
     }
 
-//    public void refreshConfig(final AppConfig newAppConfig) {
-//
-//        final Map<PropertyPath, Prop> newPropertyMap = new HashMap<>();
-//        addConfigObjectMethods(
-//                newAppConfig,
-//                AppConfig.ROOT_PROPERTY_PATH,
-//                newPropertyMap,
-//                null,
-//                false);
-//
-//        newPropertyMap.
-//
-//                LOGGER.info("here");
-//    }
-
-    private void buildObjectInfoMap(final AppConfig defaultAppConfig) {
-    }
-
     public <T extends AbstractConfig> T getConfigObject(final Class<T> clazz) {
-
         try {
             // wait for the config to be fully initialised before letting other classes inject it
             configReadyForUseLatch.await();
@@ -1431,7 +1339,14 @@ public class ConfigMapper {
 
         final AbstractConfig config = configInstanceMap.get(clazz);
         Objects.requireNonNull(config, "No config instance found for class " + clazz.getName());
-        return clazz.cast(config);
+        try {
+            return clazz.cast(config);
+        } catch (Exception e) {
+            throw new RuntimeException(LogUtil.message(
+                    "Error casting config object to {}, found {}",
+                    clazz.getName(),
+                    config.getClass().getName()), e);
+        }
     }
 
     public List<Class<? extends AbstractConfig>> getInjectableConfigClasses() {

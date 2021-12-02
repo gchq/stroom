@@ -54,6 +54,7 @@ public class NodeConfig extends AbstractConfig implements HasDbConfig {
         return nodeName;
     }
 
+    @Deprecated(forRemoval = true)
     public void setNodeName(final String nodeName) {
         this.nodeName = nodeName;
     }

@@ -23,7 +23,6 @@ import stroom.app.commands.ResetPasswordCommand;
 import stroom.app.guice.AppModule;
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
-import stroom.config.app.SuperDevUtil;
 import stroom.config.app.YamlUtil;
 import stroom.config.global.impl.ConfigMapper;
 import stroom.dropwizard.common.Filters;
@@ -33,9 +32,6 @@ import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.dropwizard.common.SessionListeners;
 import stroom.event.logging.rs.api.RestResourceAutoLogger;
-import stroom.security.impl.AuthenticationConfig;
-import stroom.util.ColouredStringBuilder;
-import stroom.util.ConsoleColour;
 import stroom.util.config.AppConfigValidator;
 import stroom.util.config.ConfigValidator;
 import stroom.util.config.PropertyPathDecorator;
@@ -87,7 +83,7 @@ public class App extends Application<Config> {
 
     private static final String APP_NAME = "Stroom";
     public static final String SESSION_COOKIE_NAME = "STROOM_SESSION_ID";
-    private static final boolean SUPER_DEV_AUTHENTICATION_REQUIRED_VALUE = false;
+//    private static final boolean SUPER_DEV_AUTHENTICATION_REQUIRED_VALUE = false;
 
     @Inject
     private HealthChecks healthChecks;
@@ -193,7 +189,7 @@ public class App extends Application<Config> {
 
         // Merge the sparse de-serialised config with our default AppConfig tree
         // so we have a full config tree but with any yaml overrides
-        final AppConfig mergedAppConfig = ConfigMapper.buildMergedAppConfig(configuration.getAppConfig());
+        final AppConfig mergedAppConfig = ConfigMapper.buildMergedAppConfig(configFile);
         configuration.setAppConfig(mergedAppConfig);
 
         // Turn on Jersey logging of request/response payloads
@@ -206,9 +202,6 @@ public class App extends Application<Config> {
                         Level.INFO,
                         LoggingFeature.Verbosity.PAYLOAD_ANY,
                         LoggingFeature.DEFAULT_MAX_ENTITY_SIZE));
-
-        // Check if we are running GWT Super Dev Mode, if so relax security
-        SuperDevUtil.relaxSecurityInSuperDevMode(configuration.getAppConfig());
 
         // Add useful logging setup.
         registerLogConfiguration(environment);
@@ -375,29 +368,29 @@ public class App extends Application<Config> {
         environment.admin().addTask(new LogConfigurationTask());
     }
 
-    private void disableAuthentication(final AppConfig appConfig) {
-        LOGGER.warn("\n" + ConsoleColour.red(
-                "" +
-                        "\n           ***************************************************************" +
-                        "\n           FOR DEVELOPER USE ONLY!  DO NOT RUN IN PRODUCTION ENVIRONMENTS!" +
-                        "\n" +
-                        "\n                          ALL AUTHENTICATION IS DISABLED!" +
-                        "\n           ***************************************************************"));
-
-        final AuthenticationConfig authenticationConfig = appConfig.getSecurityConfig().getAuthenticationConfig();
-
-        // Auth needs HTTPS and GWT super dev mode cannot work in HTTPS
-        String msg = new ColouredStringBuilder()
-                .appendRed("In GWT Super Dev Mode, overriding ")
-                .appendCyan(AuthenticationConfig.PROP_NAME_AUTHENTICATION_REQUIRED)
-                .appendRed(" to [")
-                .appendCyan(Boolean.toString(SUPER_DEV_AUTHENTICATION_REQUIRED_VALUE))
-                .appendRed("] in appConfig")
-                .toString();
-
-        LOGGER.warn(msg);
-        authenticationConfig.setAuthenticationRequired(SUPER_DEV_AUTHENTICATION_REQUIRED_VALUE);
-    }
+//    private void disableAuthentication(final AppConfig appConfig) {
+//        LOGGER.warn("\n" + ConsoleColour.red(
+//                "" +
+//                        "\n           ***************************************************************" +
+//                        "\n           FOR DEVELOPER USE ONLY!  DO NOT RUN IN PRODUCTION ENVIRONMENTS!" +
+//                        "\n" +
+//                        "\n                          ALL AUTHENTICATION IS DISABLED!" +
+//                        "\n           ***************************************************************"));
+//
+//        final AuthenticationConfig authenticationConfig = appConfig.getSecurityConfig().getAuthenticationConfig();
+//
+//        // Auth needs HTTPS and GWT super dev mode cannot work in HTTPS
+//        String msg = new ColouredStringBuilder()
+//                .appendRed("In GWT Super Dev Mode, overriding ")
+//                .appendCyan(AuthenticationConfig.PROP_NAME_AUTHENTICATION_REQUIRED)
+//                .appendRed(" to [")
+//                .appendCyan(Boolean.toString(SUPER_DEV_AUTHENTICATION_REQUIRED_VALUE))
+//                .appendRed("] in appConfig")
+//                .toString();
+//
+//        LOGGER.warn(msg);
+//        authenticationConfig.setAuthenticationRequired(SUPER_DEV_AUTHENTICATION_REQUIRED_VALUE);
+//    }
 
     /**
      * Creates a separate guice injector just for doing javax validation on the config

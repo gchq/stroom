@@ -22,6 +22,7 @@ import stroom.util.config.annotations.Password;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.NotInjectableConfig;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -37,66 +38,68 @@ public class SmtpConfig extends AbstractConfig {
     @NotNull
     @JsonProperty("host")
     @JsonPropertyDescription("The fully qualified hostname of the SMTP server.")
-    private String host = "localhost";
+    private final String host;
 
     @Min(0)
     @Max(65535)
     @JsonProperty("port")
     @JsonPropertyDescription("The port for the SMTP server.")
-    private int port = 2525;
+    private final int port;
 
     @NotNull
     @JsonProperty("transport")
     @JsonPropertyDescription("The transport type for communicating with the SMTP server.")
-    private String transport = "plain";
+    private final String transport;
 
     @JsonProperty("username")
     @JsonPropertyDescription("The username to authenticate with on the SMTP server.")
-    private String username;
+    private final String username;
 
     @Password
     @JsonProperty("password")
     @JsonPropertyDescription("The password to authenticate with on the SMTP server.")
-    private String password;
+    private final String password;
+
+    public SmtpConfig() {
+        host = "localhost";
+        port = 2525;
+        transport = "plain";
+        password = null;
+        username = null;
+    }
+
+    @SuppressWarnings("unused")
+    @JsonCreator
+    public SmtpConfig(@JsonProperty("host") final String host,
+                      @JsonProperty("port") final int port,
+                      @JsonProperty("transport") final String transport,
+                      @JsonProperty("username") final String username,
+                      @JsonProperty("password") final String password) {
+        this.host = host;
+        this.port = port;
+        this.transport = transport;
+        this.username = username;
+        this.password = password;
+    }
 
     public String getHost() {
         return host;
-    }
-
-    public void setHost(final String host) {
-        this.host = host;
     }
 
     public int getPort() {
         return port;
     }
 
-    public void setPort(final int port) {
-        this.port = port;
-    }
-
     public String getUsername() {
         return username;
-    }
-
-    public void setUsername(final String username) {
-        this.username = username;
     }
 
     public String getPassword() {
         return password;
     }
 
-    public void setPassword(final String password) {
-        this.password = password;
-    }
-
     public String getTransport() {
         return transport;
-    }
-
-    public void setTransport(final String transport) {
-        this.transport = transport;
     }
 
     @JsonIgnore
@@ -111,5 +114,16 @@ public class SmtpConfig extends AbstractConfig {
             default:
                 return TransportStrategy.SMTP_PLAIN;
         }
+    }
+
+    @Override
+    public String toString() {
+        return "SmtpConfig{" +
+                "host='" + host + '\'' +
+                ", port=" + port +
+                ", transport='" + transport + '\'' +
+                ", username='" + username + '\'' +
+                ", password='" + password + '\'' +
+                '}';
     }
 }

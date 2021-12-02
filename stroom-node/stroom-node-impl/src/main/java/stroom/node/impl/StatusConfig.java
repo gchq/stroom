@@ -2,20 +2,26 @@ package stroom.node.impl;
 
 import stroom.util.shared.AbstractConfig;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 
 public class StatusConfig extends AbstractConfig {
 
-    private HeapHistogramConfig heapHistogramConfig = new HeapHistogramConfig();
+    private final HeapHistogramConfig heapHistogramConfig;
+
+    public StatusConfig() {
+        heapHistogramConfig = new HeapHistogramConfig();
+    }
+
+    @JsonCreator
+    public StatusConfig(@JsonProperty("heapHistogram") final HeapHistogramConfig heapHistogramConfig) {
+        this.heapHistogramConfig = heapHistogramConfig;
+    }
 
     @JsonProperty("heapHistogram")
     public HeapHistogramConfig getHeapHistogramConfig() {
         return heapHistogramConfig;
-    }
-
-    public void setHeapHistogramConfig(final HeapHistogramConfig heapHistogramConfig) {
-        this.heapHistogramConfig = heapHistogramConfig;
     }
 
     @Override

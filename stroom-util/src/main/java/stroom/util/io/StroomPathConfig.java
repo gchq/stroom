@@ -2,6 +2,8 @@ package stroom.util.io;
 
 import stroom.util.config.annotations.ReadOnly;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
@@ -11,6 +13,16 @@ import javax.inject.Singleton;
 @Singleton
 @JsonPropertyOrder(alphabetic = true)
 public class StroomPathConfig extends PathConfig {
+
+    public StroomPathConfig() {
+        super();
+    }
+
+    @JsonCreator
+    public StroomPathConfig(@JsonProperty("home") final String home,
+                            @JsonProperty("temp") final String temp) {
+        super(home, temp);
+    }
 
 //    private static final String DEFAULT_HOME_DIR = ".";
 //    private static final String DEFAULT_TEMP_DIR = "/tmp/stroom";

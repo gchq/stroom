@@ -4,6 +4,8 @@ import stroom.util.config.annotations.ReadOnly;
 import stroom.util.io.PathConfig;
 import stroom.util.shared.IsProxyConfig;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
@@ -14,12 +16,14 @@ import javax.inject.Singleton;
 @JsonPropertyOrder(alphabetic = true)
 public class ProxyPathConfig extends PathConfig implements IsProxyConfig {
 
-//    private static final String DEFAULT_HOME_DIR = ".";
-//    private static final String DEFAULT_TEMP_DIR = "/tmp/stroom-proxy";
-//
-//    public ProxyPathConfig() {
-//        super(DEFAULT_HOME_DIR, DEFAULT_TEMP_DIR);
-//    }
+    public ProxyPathConfig() {
+    }
+
+    @JsonCreator
+    public ProxyPathConfig(@JsonProperty("home") final String home,
+                           @JsonProperty("temp") final String temp) {
+        super(home, temp);
+    }
 
     /**
      * Will be created on boot in App

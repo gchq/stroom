@@ -176,7 +176,7 @@ public final class PropertyUtil {
                         prop.setGetter(propDef.getGetter().getAnnotated());
                     } else {
                         throw new RuntimeException("Property " + propDef.getName() + " on " + clazz.getName() +
-                                " has no getter");
+                                " has no getter. Do the constructor and field/getter @JsonProperty names match up?");
                     }
                     if (propDef.hasSetter()) {
                         prop.setSetter(propDef.getSetter().getAnnotated());
@@ -464,6 +464,9 @@ public final class PropertyUtil {
     }
 
 
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
     public static class ObjectInfo<T> {
 
         // The unqualified name of the property branch, e.g. 'node'
@@ -515,9 +518,10 @@ public final class PropertyUtil {
             return constructor;
         }
 
-        public T createInstance(final Function<String, Object> valueSupplier) {
+        public T createInstance(final Function<String, Object> propertyValueSupplier) {
+            // For each property in the arg list, extract its value
             final Object[] args = constructorArgList.stream()
-                    .map(valueSupplier)
+                    .map(propertyValueSupplier)
                     .toArray(Object[]::new);
             try {
                 if (constructor == null) {
@@ -545,6 +549,8 @@ public final class PropertyUtil {
                     '}';
         }
     }
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     /**
      * Class to define a config property in the config object tree

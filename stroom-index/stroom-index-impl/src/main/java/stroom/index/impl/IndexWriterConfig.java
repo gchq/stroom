@@ -2,17 +2,25 @@ package stroom.index.impl;
 
 import stroom.util.shared.AbstractConfig;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 
 public class IndexWriterConfig extends AbstractConfig {
 
-    private IndexCacheConfig indexCacheConfig;
+    private final IndexCacheConfig indexCacheConfig;
 
     public IndexWriterConfig() {
-        this.indexCacheConfig = new IndexCacheConfig();
-        indexCacheConfig.setCoreItems(50);
-        indexCacheConfig.setMaxItems(100);
+        indexCacheConfig = IndexCacheConfig.builder()
+                .withCoreItems(50)
+                .withMaxItems(100)
+                .build();
+    }
+
+    @SuppressWarnings("unused")
+    @JsonCreator
+    public IndexWriterConfig(@JsonProperty("cache") final IndexCacheConfig indexCacheConfig) {
+        this.indexCacheConfig = indexCacheConfig;
     }
 
     @JsonProperty("cache")
@@ -20,7 +28,4 @@ public class IndexWriterConfig extends AbstractConfig {
         return indexCacheConfig;
     }
 
-    public void setIndexCacheConfig(final IndexCacheConfig indexCacheConfig) {
-        this.indexCacheConfig = indexCacheConfig;
-    }
 }

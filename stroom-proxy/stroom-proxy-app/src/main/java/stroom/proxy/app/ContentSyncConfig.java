@@ -3,6 +3,7 @@ package stroom.proxy.app;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
@@ -11,18 +12,33 @@ import java.util.Map;
 @JsonPropertyOrder(alphabetic = true)
 public class ContentSyncConfig extends AbstractConfig implements IsProxyConfig {
 
-    private boolean isContentSyncEnabled = false;
-    private Map<String, String> upstreamUrl;
-    private long syncFrequency;
-    private String apiKey;
+    private final boolean isContentSyncEnabled;
+    private final Map<String, String> upstreamUrl;
+    private final long syncFrequency;
+    private final String apiKey;
+
+    public ContentSyncConfig() {
+        isContentSyncEnabled = false;
+        upstreamUrl = null;
+        syncFrequency = 60_000;
+        apiKey = null;
+    }
+
+    @SuppressWarnings("unused")
+    @JsonCreator
+    public ContentSyncConfig(@JsonProperty("isContentSyncEnabled") final boolean isContentSyncEnabled,
+                             @JsonProperty("String") final Map<String, String> upstreamUrl,
+                             @JsonProperty("syncFrequency") final long syncFrequency,
+                             @JsonProperty("apiKey") final String apiKey) {
+        this.isContentSyncEnabled = isContentSyncEnabled;
+        this.upstreamUrl = upstreamUrl;
+        this.syncFrequency = syncFrequency;
+        this.apiKey = apiKey;
+    }
 
     @JsonProperty
     public boolean isContentSyncEnabled() {
         return isContentSyncEnabled;
-    }
-
-    public void setContentSyncEnabled(final boolean contentSyncEnabled) {
-        isContentSyncEnabled = contentSyncEnabled;
     }
 
     @JsonProperty
@@ -31,28 +47,13 @@ public class ContentSyncConfig extends AbstractConfig implements IsProxyConfig {
     }
 
     @JsonProperty
-    public void setUpstreamUrl(final Map<String, String> upstreamUrl) {
-        this.upstreamUrl = upstreamUrl;
-    }
-
-    @JsonProperty
     public long getSyncFrequency() {
         return syncFrequency;
     }
 
     @JsonProperty
-    public void setSyncFrequency(final long syncFrequency) {
-        this.syncFrequency = syncFrequency;
-    }
-
-    @JsonProperty
     public String getApiKey() {
         return apiKey;
-    }
-
-    @JsonProperty
-    public void setApiKey(final String apiKey) {
-        this.apiKey = apiKey;
     }
 
     public void validateConfiguration() {

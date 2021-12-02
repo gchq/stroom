@@ -5,6 +5,7 @@ import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
 import stroom.util.shared.validation.ValidFilePath;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
@@ -12,16 +13,51 @@ import java.util.Objects;
 @NotInjectableConfig
 public class SSLConfig extends AbstractConfig implements IsProxyConfig {
 
-    private String keyStorePath;
-    private String keyStoreType = "JKS";
-    private String keyStorePassword;
+    protected static final String DEFAULT_KEYSTORE_TYPE = "JKS";
+    protected static final String DEFAULT_SSL_PROTOCOL = "TLSv1.2";
+    protected static final boolean DEFAULT_HOSTNAME_VERIFICATION_ENABLED = true;
 
-    private String trustStorePath;
-    private String trustStoreType = "JKS";
-    private String trustStorePassword;
+    private final String keyStorePath;
+    private final String keyStoreType;
+    private final String keyStorePassword;
 
-    private boolean isHostnameVerificationEnabled = true;
-    private String sslProtocol = "TLSv1.2";
+    private final String trustStorePath;
+    private final String trustStoreType;
+    private final String trustStorePassword;
+
+    private final boolean isHostnameVerificationEnabled;
+    private final String sslProtocol;
+
+    public SSLConfig() {
+        keyStorePath = null;
+        keyStoreType = DEFAULT_KEYSTORE_TYPE;
+        keyStorePassword = null;
+        trustStorePath = null;
+        trustStoreType = DEFAULT_KEYSTORE_TYPE;
+        trustStorePassword = null;
+        isHostnameVerificationEnabled = DEFAULT_HOSTNAME_VERIFICATION_ENABLED;
+        sslProtocol = DEFAULT_SSL_PROTOCOL;
+    }
+
+    @SuppressWarnings("unused")
+    @JsonCreator
+    public SSLConfig(@JsonProperty("keyStorePath") final String keyStorePath,
+                     @JsonProperty("keyStoreType") final String keyStoreType,
+                     @JsonProperty("keyStorePassword") final String keyStorePassword,
+                     @JsonProperty("trustStorePath") final String trustStorePath,
+                     @JsonProperty("trustStoreType") final String trustStoreType,
+                     @JsonProperty("trustStorePassword") final String trustStorePassword,
+                     @JsonProperty("isHostnameVerificationEnabled") final boolean isHostnameVerificationEnabled,
+                     @JsonProperty("sslProtocol") final String sslProtocol) {
+        this.keyStorePath = keyStorePath;
+        this.keyStoreType = keyStoreType;
+        this.keyStorePassword = keyStorePassword;
+        this.trustStorePath = trustStorePath;
+        this.trustStoreType = trustStoreType;
+        this.trustStorePassword = trustStorePassword;
+        this.isHostnameVerificationEnabled = isHostnameVerificationEnabled;
+        this.sslProtocol = sslProtocol;
+    }
 
     /**
      * The path to the keystore file that will be used for client authentication during forwarding
@@ -32,11 +68,6 @@ public class SSLConfig extends AbstractConfig implements IsProxyConfig {
         return keyStorePath;
     }
 
-    @JsonProperty
-    public void setKeyStorePath(final String keyStorePath) {
-        this.keyStorePath = keyStorePath;
-    }
-
     /**
      * The type of the keystore, e.g. JKS
      */
@@ -45,22 +76,12 @@ public class SSLConfig extends AbstractConfig implements IsProxyConfig {
         return keyStoreType;
     }
 
-    @JsonProperty
-    public void setKeyStoreType(final String keyStoreType) {
-        this.keyStoreType = keyStoreType;
-    }
-
     /**
      * The password for the keystore
      */
     @JsonProperty
     public String getKeyStorePassword() {
         return keyStorePassword;
-    }
-
-    @JsonProperty
-    public void setKeyStorePassword(final String keyStorePassword) {
-        this.keyStorePassword = keyStorePassword;
     }
 
     /**
@@ -72,11 +93,6 @@ public class SSLConfig extends AbstractConfig implements IsProxyConfig {
         return trustStorePath;
     }
 
-    @JsonProperty
-    public void setTrustStorePath(final String trustStorePath) {
-        this.trustStorePath = trustStorePath;
-    }
-
     /**
      * The type of the truststore, e.g. JKS
      */
@@ -85,22 +101,12 @@ public class SSLConfig extends AbstractConfig implements IsProxyConfig {
         return trustStoreType;
     }
 
-    @JsonProperty
-    public void setTrustStoreType(final String trustStoreType) {
-        this.trustStoreType = trustStoreType;
-    }
-
     /**
      * The password for the truststore
      */
     @JsonProperty
     public String getTrustStorePassword() {
         return trustStorePassword;
-    }
-
-    @JsonProperty
-    public void setTrustStorePassword(final String trustStorePassword) {
-        this.trustStorePassword = trustStorePassword;
     }
 
     /**
@@ -112,11 +118,6 @@ public class SSLConfig extends AbstractConfig implements IsProxyConfig {
         return isHostnameVerificationEnabled;
     }
 
-    @JsonProperty
-    public void setHostnameVerificationEnabled(final boolean hostnameVerificationEnabled) {
-        isHostnameVerificationEnabled = hostnameVerificationEnabled;
-    }
-
     /**
      * The SSL protocol to use, e.g. TLSv1.2
      */
@@ -125,9 +126,8 @@ public class SSLConfig extends AbstractConfig implements IsProxyConfig {
         return sslProtocol;
     }
 
-    @JsonProperty
-    public void setSslProtocol(final String sslProtocol) {
-        this.sslProtocol = sslProtocol;
+    public static Builder builder() {
+        return new Builder();
     }
 
     @Override
@@ -173,5 +173,69 @@ public class SSLConfig extends AbstractConfig implements IsProxyConfig {
                 ", isHostnameVerificationEnabled=" + isHostnameVerificationEnabled +
                 ", sslProtocol='" + sslProtocol + '\'' +
                 '}';
+    }
+
+    public static class Builder {
+
+        private String keyStorePath = null;
+        private String keyStoreType = DEFAULT_KEYSTORE_TYPE;
+        private String keyStorePassword = null;
+        private String trustStorePath = null;
+        private String trustStoreType = DEFAULT_KEYSTORE_TYPE;
+        private String trustStorePassword = null;
+        private boolean isHostnameVerificationEnabled = DEFAULT_HOSTNAME_VERIFICATION_ENABLED;
+        private String sslProtocol = DEFAULT_SSL_PROTOCOL;
+
+        public Builder withKeyStorePath(final String keyStorePath) {
+            this.keyStorePath = keyStorePath;
+            return this;
+        }
+
+        public Builder withKeyStoreType(final String keyStoreType) {
+            this.keyStoreType = keyStoreType;
+            return this;
+        }
+
+        public Builder withKeyStorePassword(final String keyStorePassword) {
+            this.keyStorePassword = keyStorePassword;
+            return this;
+        }
+
+        public Builder withTrustStorePath(final String trustStorePath) {
+            this.trustStorePath = trustStorePath;
+            return this;
+        }
+
+        public Builder withTrustStoreType(final String trustStoreType) {
+            this.trustStoreType = trustStoreType;
+            return this;
+        }
+
+        public Builder withTrustStorePassword(final String trustStorePassword) {
+            this.trustStorePassword = trustStorePassword;
+            return this;
+        }
+
+        public Builder withHostnameVerificationEnabled(final boolean hostnameVerificationEnabled) {
+            isHostnameVerificationEnabled = hostnameVerificationEnabled;
+            return this;
+        }
+
+        public Builder withSslProtocol(final String sslProtocol) {
+            this.sslProtocol = sslProtocol;
+            return this;
+        }
+
+        public SSLConfig build() {
+            return new SSLConfig(
+                    keyStorePath,
+                    keyStoreType,
+                    keyStorePassword,
+                    trustStorePath,
+                    trustStoreType,
+                    trustStorePassword,
+                    isHostnameVerificationEnabled,
+                    sslProtocol);
+        }
     }
 }

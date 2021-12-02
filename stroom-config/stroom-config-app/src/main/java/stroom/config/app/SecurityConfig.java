@@ -6,6 +6,7 @@ import stroom.security.impl.AuthorisationConfig;
 import stroom.security.impl.ContentSecurityConfig;
 import stroom.util.shared.AbstractConfig;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 
@@ -13,18 +14,33 @@ public class SecurityConfig extends AbstractConfig {
 
     public static final String PROP_NAME_IDENTITY = "identity";
 
-    private AuthenticationConfig authenticationConfig = new AuthenticationConfig();
-    private AuthorisationConfig authorisationConfig = new AuthorisationConfig();
-    private ContentSecurityConfig contentSecurityConfig = new ContentSecurityConfig();
-    private IdentityConfig identityConfig = new IdentityConfig();
+    private final AuthenticationConfig authenticationConfig;
+    private final AuthorisationConfig authorisationConfig;
+    private final ContentSecurityConfig contentSecurityConfig;
+    private final IdentityConfig identityConfig;
+
+    public SecurityConfig() {
+        authenticationConfig = new AuthenticationConfig();
+        authorisationConfig = new AuthorisationConfig();
+        contentSecurityConfig = new ContentSecurityConfig();
+        identityConfig = new IdentityConfig();
+    }
+
+    @SuppressWarnings("unused")
+    @JsonCreator
+    public SecurityConfig(@JsonProperty("authentication") final AuthenticationConfig authenticationConfig,
+                          @JsonProperty("authorisation") final AuthorisationConfig authorisationConfig,
+                          @JsonProperty("webContent") final ContentSecurityConfig contentSecurityConfig,
+                          @JsonProperty(PROP_NAME_IDENTITY) final IdentityConfig identityConfig) {
+        this.authenticationConfig = authenticationConfig;
+        this.authorisationConfig = authorisationConfig;
+        this.contentSecurityConfig = contentSecurityConfig;
+        this.identityConfig = identityConfig;
+    }
 
     @JsonProperty("authentication")
     public AuthenticationConfig getAuthenticationConfig() {
         return authenticationConfig;
-    }
-
-    public void setAuthenticationConfig(final AuthenticationConfig authenticationConfig) {
-        this.authenticationConfig = authenticationConfig;
     }
 
     @JsonProperty("authorisation")
@@ -32,27 +48,14 @@ public class SecurityConfig extends AbstractConfig {
         return authorisationConfig;
     }
 
-    public void setAuthorisationConfig(final AuthorisationConfig authorisationConfig) {
-        this.authorisationConfig = authorisationConfig;
-    }
-
     @JsonProperty("webContent")
     public ContentSecurityConfig getContentSecurityConfig() {
         return contentSecurityConfig;
     }
 
-    public void setContentSecurityConfig(final ContentSecurityConfig contentSecurityConfig) {
-        this.contentSecurityConfig = contentSecurityConfig;
-    }
-
     @JsonProperty(PROP_NAME_IDENTITY)
     public IdentityConfig getIdentityConfig() {
         return identityConfig;
-    }
-
-    @SuppressWarnings("unused")
-    public void setIdentityConfig(final IdentityConfig identityConfig) {
-        this.identityConfig = identityConfig;
     }
 
     @Override

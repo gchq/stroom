@@ -1,7 +1,6 @@
 package stroom.config.global.impl;
 
 import stroom.config.app.AppConfig;
-import stroom.config.app.SuperDevUtil;
 import stroom.config.app.YamlUtil;
 import stroom.util.HasHealthCheck;
 import stroom.util.config.AbstractFileChangeMonitor;
@@ -49,9 +48,6 @@ public class AppConfigMonitor extends AbstractFileChangeMonitor implements Manag
             LOGGER.info("Reading updated config file");
             newAppConfig = YamlUtil.readAppConfig(configFile);
 
-            // Check if we are running GWT Super Dev Mode, if so relax security
-            SuperDevUtil.relaxSecurityInSuperDevMode(newAppConfig);
-
             final ConfigValidator.Result<AbstractConfig> result = validateNewConfig(newAppConfig);
 
             if (result.hasErrors()) {
@@ -62,10 +58,7 @@ public class AppConfigMonitor extends AbstractFileChangeMonitor implements Manag
                 try {
                     LOGGER.info("Updating application config from file.");
                     configMapper.updateConfigFromYaml();
-//                    globalConfigService.updateConfigFromDb();
 
-                    // Update the config objects using the DB as the removal of a yaml value may trigger
-                    // a DB value to be effective
                     LOGGER.info("Completed updating application config from file.");
                 } catch (Throwable e) {
                     // Swallow error as we don't want to break the app because the new config is bad

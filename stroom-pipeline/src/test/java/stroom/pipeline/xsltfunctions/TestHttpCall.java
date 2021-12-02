@@ -24,12 +24,13 @@ class TestHttpCall {
 
     @Test
     void test(@TempDir final Path tempDir) throws JsonProcessingException {
-        final SSLConfig sslConfig = new SSLConfig();
-        sslConfig.setKeyStorePath("/Users/stroomdev66/work/stroom-6.0/stroom-ssl-test/client.jks");
-        sslConfig.setKeyStorePassword("password");
-        sslConfig.setTrustStorePath("/Users/stroomdev66/work/stroom-6.0/stroom-ssl-test/ca.jks");
-        sslConfig.setTrustStorePassword("password");
-        sslConfig.setHostnameVerificationEnabled(false);
+        final SSLConfig sslConfig = SSLConfig.builder()
+                .withKeyStorePath("/Users/stroomdev66/work/stroom-6.0/stroom-ssl-test/client.jks")
+                .withKeyStorePassword("password")
+                .withTrustStorePath("/Users/stroomdev66/work/stroom-6.0/stroom-ssl-test/ca.jks")
+                .withTrustStorePassword("password")
+                .withHostnameVerificationEnabled(false)
+                .build();
 
         final ObjectMapper mapper = new ObjectMapper();
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);

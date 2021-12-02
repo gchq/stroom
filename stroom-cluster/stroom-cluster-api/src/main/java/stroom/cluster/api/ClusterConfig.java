@@ -4,15 +4,37 @@ import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 
 public class ClusterConfig extends AbstractConfig {
 
-    private boolean clusterCallUseLocal = true;
-    private StroomDuration clusterCallReadTimeout = StroomDuration.ofSeconds(30);
-    private boolean clusterCallIgnoreSSLHostnameVerifier = true;
-    private StroomDuration clusterResponseTimeout = StroomDuration.ofSeconds(30);
+    private final boolean clusterCallUseLocal;
+    private final StroomDuration clusterCallReadTimeout;
+    private final boolean clusterCallIgnoreSSLHostnameVerifier;
+    private final StroomDuration clusterResponseTimeout;
+
+    public ClusterConfig() {
+        clusterCallUseLocal = true;
+        clusterCallReadTimeout = StroomDuration.ofSeconds(30);
+        clusterCallIgnoreSSLHostnameVerifier = true;
+        clusterResponseTimeout = StroomDuration.ofSeconds(30);
+    }
+
+    @SuppressWarnings("unused")
+    @JsonCreator
+    public ClusterConfig(
+            @JsonProperty("clusterCallUseLocal") final boolean clusterCallUseLocal,
+            @JsonProperty("clusterCallReadTimeout") final StroomDuration clusterCallReadTimeout,
+            @JsonProperty("clusterCallIgnoreSSLHostnameVerifier") final boolean clusterCallIgnoreSSLHostnameVerifier,
+            @JsonProperty("clusterResponseTimeout") final StroomDuration clusterResponseTimeout) {
+        this.clusterCallUseLocal = clusterCallUseLocal;
+        this.clusterCallReadTimeout = clusterCallReadTimeout;
+        this.clusterCallIgnoreSSLHostnameVerifier = clusterCallIgnoreSSLHostnameVerifier;
+        this.clusterResponseTimeout = clusterResponseTimeout;
+    }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("Do local calls when calling our own local services (true is an optimisation)")
@@ -20,20 +42,10 @@ public class ClusterConfig extends AbstractConfig {
         return clusterCallUseLocal;
     }
 
-    @SuppressWarnings("unused")
-    public void setClusterCallUseLocal(final boolean clusterCallUseLocal) {
-        this.clusterCallUseLocal = clusterCallUseLocal;
-    }
-
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("Time before throwing read timeout")
     public StroomDuration getClusterCallReadTimeout() {
         return clusterCallReadTimeout;
-    }
-
-    @SuppressWarnings("unused")
-    public void setClusterCallReadTimeout(final StroomDuration clusterCallReadTimeout) {
-        this.clusterCallReadTimeout = clusterCallReadTimeout;
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
@@ -43,19 +55,9 @@ public class ClusterConfig extends AbstractConfig {
         return clusterCallIgnoreSSLHostnameVerifier;
     }
 
-    @SuppressWarnings("unused")
-    public void setClusterCallIgnoreSSLHostnameVerifier(final boolean clusterCallIgnoreSSLHostnameVerifier) {
-        this.clusterCallIgnoreSSLHostnameVerifier = clusterCallIgnoreSSLHostnameVerifier;
-    }
-
     @JsonPropertyDescription("Time before giving up on cluster results")
     public StroomDuration getClusterResponseTimeout() {
         return clusterResponseTimeout;
-    }
-
-    @SuppressWarnings("unused")
-    public void setClusterResponseTimeout(final StroomDuration clusterResponseTimeout) {
-        this.clusterResponseTimeout = clusterResponseTimeout;
     }
 
     @Override

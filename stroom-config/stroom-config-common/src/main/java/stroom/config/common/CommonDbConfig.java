@@ -95,8 +95,8 @@ public class CommonDbConfig extends AbstractDbConfig {
 
         @JsonCreator
         public MergedDbConfig(
-                @JsonProperty("connectionConfig") final ConnectionConfig connectionConfig,
-                @JsonProperty("connectionPoolConfig") final ConnectionPoolConfig connectionPoolConfig,
+                @JsonProperty("connection") final ConnectionConfig connectionConfig,
+                @JsonProperty("connectionPool") final ConnectionPoolConfig connectionPoolConfig,
                 final String moduleName) {
             super(connectionConfig, connectionPoolConfig);
             this.moduleName = moduleName;

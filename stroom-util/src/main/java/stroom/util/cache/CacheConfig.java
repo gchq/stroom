@@ -4,6 +4,7 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.NotInjectableConfig;
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
@@ -17,16 +18,20 @@ public class CacheConfig extends AbstractConfig {
     public static final String PROP_NAME_EXPIRE_AFTER_ACCESS = "expireAfterAccess";
     public static final String PROP_NAME_EXPIRE_AFTER_WRITE = "expireAfterWrite";
 
-    private Long maximumSize;
-    private StroomDuration expireAfterAccess;
-    private StroomDuration expireAfterWrite;
+    private final Long maximumSize;
+    private final StroomDuration expireAfterAccess;
+    private final StroomDuration expireAfterWrite;
 
     public CacheConfig() {
+        maximumSize = null;
+        expireAfterAccess = null;
+        expireAfterWrite = null;
     }
 
-    private CacheConfig(@JsonProperty(PROP_NAME_MAXIMUM_SIZE) final Long maximumSize,
-                        @JsonProperty(PROP_NAME_EXPIRE_AFTER_ACCESS) final StroomDuration expireAfterAccess,
-                        @JsonProperty(PROP_NAME_EXPIRE_AFTER_WRITE) final StroomDuration expireAfterWrite) {
+    @JsonCreator
+    public CacheConfig(@JsonProperty(PROP_NAME_MAXIMUM_SIZE) final Long maximumSize,
+                       @JsonProperty(PROP_NAME_EXPIRE_AFTER_ACCESS) final StroomDuration expireAfterAccess,
+                       @JsonProperty(PROP_NAME_EXPIRE_AFTER_WRITE) final StroomDuration expireAfterWrite) {
         this.maximumSize = maximumSize;
         this.expireAfterAccess = expireAfterAccess;
         this.expireAfterWrite = expireAfterWrite;
@@ -45,10 +50,6 @@ public class CacheConfig extends AbstractConfig {
         return maximumSize;
     }
 
-    public void setMaximumSize(final Long maximumSize) {
-        this.maximumSize = maximumSize;
-    }
-
     @JsonPropertyDescription("Specifies that each entry should be automatically removed from the cache once " +
             "this duration has elapsed after the entry's creation, the most recent replacement of " +
             "its value, or its last read. In ISO-8601 duration format, e.g. 'PT10M'. If no value is set then " +
@@ -58,10 +59,6 @@ public class CacheConfig extends AbstractConfig {
         return expireAfterAccess;
     }
 
-    public void setExpireAfterAccess(final StroomDuration expireAfterAccess) {
-        this.expireAfterAccess = expireAfterAccess;
-    }
-
     @JsonPropertyDescription("Specifies that each entry should be automatically removed from the cache once " +
             "a fixed duration has elapsed after the entry's creation, or the most recent replacement of its value. " +
             "In ISO-8601 duration format, e.g. 'PT5M'. If no value is set then entries will not be aged out based on " +
@@ -69,11 +66,6 @@ public class CacheConfig extends AbstractConfig {
     @JsonProperty(PROP_NAME_EXPIRE_AFTER_WRITE)
     public StroomDuration getExpireAfterWrite() {
         return expireAfterWrite;
-    }
-
-    @SuppressWarnings("unused")
-    public void setExpireAfterWrite(final StroomDuration expireAfterWrite) {
-        this.expireAfterWrite = expireAfterWrite;
     }
 
     public static Builder builder() {

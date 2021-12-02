@@ -4,36 +4,50 @@ import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 
 public class SearchConfig extends AbstractConfig {
 
-    private String storeSize = "1000000,100,10,1";
-    private int maxResults = 100000;
-    private int fetchSize = 5000;
-    private CacheConfig searchResultCache = CacheConfig.builder()
-            .maximumSize(10000L)
-            .expireAfterAccess(StroomDuration.ofMinutes(10))
-            .build();
+    private final String storeSize;
+    private final int maxResults;
+    private final int fetchSize;
+    private final CacheConfig searchResultCache;
+
+    public SearchConfig() {
+        storeSize = "1000000,100,10,1";
+        maxResults = 100000;
+        fetchSize = 5000;
+
+        searchResultCache = CacheConfig.builder()
+                .maximumSize(10000L)
+                .expireAfterAccess(StroomDuration.ofMinutes(10))
+                .build();
+    }
+
+    @SuppressWarnings("unused")
+    @JsonCreator
+    public SearchConfig(@JsonProperty("storeSize") final String storeSize,
+                        @JsonProperty("maxResults") final int maxResults,
+                        @JsonProperty("fetchSize") final int fetchSize,
+                        @JsonProperty("searchResultCache") final CacheConfig searchResultCache) {
+        this.storeSize = storeSize;
+        this.maxResults = maxResults;
+        this.fetchSize = fetchSize;
+        this.searchResultCache = searchResultCache;
+    }
 
     @JsonPropertyDescription("The maximum number of search results to keep in memory at each level.")
     public String getStoreSize() {
         return storeSize;
     }
 
-    public void setStoreSize(final String storeSize) {
-        this.storeSize = storeSize;
-    }
-
     @JsonPropertyDescription("The maximum number of records that can be returned from the statistics DB in a " +
             "single query prior to aggregation")
     public int getMaxResults() {
         return maxResults;
-    }
-
-    public void setMaxResults(final int maxResults) {
-        this.maxResults = maxResults;
     }
 
     @JsonPropertyDescription("Gives the JDBC driver a hint as to the number of rows that should be fetched from " +
@@ -44,16 +58,8 @@ public class SearchConfig extends AbstractConfig {
         return fetchSize;
     }
 
-    public void setFetchSize(final int fetchSize) {
-        this.fetchSize = fetchSize;
-    }
-
     public CacheConfig getSearchResultCache() {
         return searchResultCache;
-    }
-
-    public void setSearchResultCache(final CacheConfig searchResultCache) {
-        this.searchResultCache = searchResultCache;
     }
 
     @Override

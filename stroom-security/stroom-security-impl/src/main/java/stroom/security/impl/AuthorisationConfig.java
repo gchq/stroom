@@ -21,7 +21,6 @@ public class AuthorisationConfig extends AbstractConfig implements HasDbConfig {
     private final AuthorisationDbConfig dbConfig;
 
     public AuthorisationConfig() {
-
         userGroupsCache = CacheConfig.builder()
                 .maximumSize(1000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(30))
@@ -39,7 +38,6 @@ public class AuthorisationConfig extends AbstractConfig implements HasDbConfig {
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
                 .build();
         dbConfig = new AuthorisationDbConfig();
-
     }
 
     @JsonCreator
@@ -77,6 +75,17 @@ public class AuthorisationConfig extends AbstractConfig implements HasDbConfig {
     @JsonProperty("db")
     public AuthorisationDbConfig getDbConfig() {
         return dbConfig;
+    }
+
+    @Override
+    public String toString() {
+        return "AuthorisationConfig{" +
+                "userGroupsCache=" + userGroupsCache +
+                ", userAppPermissionsCache=" + userAppPermissionsCache +
+                ", userCache=" + userCache +
+                ", userDocumentPermissionsCache=" + userDocumentPermissionsCache +
+                ", dbConfig=" + dbConfig +
+                '}';
     }
 
     public static class AuthorisationDbConfig extends AbstractDbConfig {
