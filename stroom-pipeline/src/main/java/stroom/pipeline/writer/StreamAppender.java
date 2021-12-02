@@ -72,7 +72,6 @@ public class StreamAppender extends AbstractAppender {
     private boolean segmentOutput = true;
     private Target streamTarget;
     private WrappedSegmentOutputStream wrappedSegmentOutputStream;
-    private boolean doneHeader;
     private long count;
 
     private ProcessStatistics lastProcessStatistics;
@@ -118,15 +117,11 @@ public class StreamAppender extends AbstractAppender {
 
         String processorUuid = null;
         String pipelineUuid = null;
-        Long streamTaskId = null;
 
         final Processor processor = streamProcessorHolder.getStreamProcessor();
         if (processor != null) {
             processorUuid = processor.getUuid();
             pipelineUuid = processor.getPipelineUuid();
-        }
-        if (streamProcessorHolder.getStreamTask() != null) {
-            streamTaskId = streamProcessorHolder.getStreamTask().getId();
         }
 
         final MetaProperties metaProperties = MetaProperties.builder()
@@ -147,17 +142,15 @@ public class StreamAppender extends AbstractAppender {
                 StreamAppender.this.close();
             }
         };
+
         return wrappedSegmentOutputStream;
     }
 
     @Override
-    public OutputStream getOutputStream(final byte[] header, final byte[] footer) throws IOException {
-        final OutputStream outputStream = super.getOutputStream(header, footer);
-        if (!doneHeader) {
-            doneHeader = true;
-            insertSegmentMarker();
-        }
-        return outputStream;
+    protected void afterHeader() throws IOException {
+        super.afterHeader();
+        // Always insert a segment marker after the header has been written.
+        insertSegmentMarker();
     }
 
     @Override

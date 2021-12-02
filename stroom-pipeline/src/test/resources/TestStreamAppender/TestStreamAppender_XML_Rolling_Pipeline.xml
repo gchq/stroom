@@ -148,7 +148,7 @@
         <element>streamAppender</element>
         <name>rollSize</name>
         <value>
-          <string>1K</string>
+          <string>2K</string>
         </value>
       </property>
     </add> 

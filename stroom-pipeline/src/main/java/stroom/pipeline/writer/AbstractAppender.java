@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 public abstract class AbstractAppender extends AbstractDestinationProvider implements Destination {
+
     private final ErrorReceiverProxy errorReceiverProxy;
 
     private OutputStream outputStream;
@@ -107,9 +108,17 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
                 // Write the header.
                 write(header);
             }
+
+            afterHeader();
         }
 
         return outputStream;
+    }
+
+    /**
+     * Method to allow subclasses to perform actions after the header has been written.
+     */
+    protected void afterHeader() throws IOException {
     }
 
     private void writeFooter() throws IOException {
