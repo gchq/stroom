@@ -12,6 +12,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0-beta.161] - 2021-12-02
+
+* Issue **#2608** : Fix segments for rolled streams created using the `StreamAppender`.
+
+
 ## [v7.0-beta.160] - 2021-12-01
 
 * Issue **#2604** : Add code to diagnose unexpected event counts in search extraction.
@@ -3994,7 +3999,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.160...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.161...HEAD
+[v7.0-beta.161]: https://github.com/gchq/stroom/compare/v7.0-beta.160...v7.0-beta.161
 [v7.0-beta.160]: https://github.com/gchq/stroom/compare/v7.0-beta.159...v7.0-beta.160
 [v7.0-beta.159]: https://github.com/gchq/stroom/compare/v7.0-beta.158...v7.0-beta.159
 [v7.0-beta.158]: https://github.com/gchq/stroom/compare/v7.0-beta.157...v7.0-beta.158
