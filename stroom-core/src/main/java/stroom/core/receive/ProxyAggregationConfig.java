@@ -32,12 +32,14 @@ public class ProxyAggregationConfig extends AbstractConfig {
     @SuppressWarnings("unused")
     @JsonCreator
     public ProxyAggregationConfig(@JsonProperty("proxyDir") final String proxyDir,
+                                  @JsonProperty("bufferSize") final int bufferSize,
                                   @JsonProperty("proxyThreads") final int proxyThreads,
                                   @JsonProperty("maxFileScan") final int maxFileScan,
                                   @JsonProperty("maxConcurrentMappedFiles") final int maxConcurrentMappedFiles,
                                   @JsonProperty("maxFilesPerAggregate") final int maxFilesPerAggregate,
                                   @JsonProperty("maxUncompressedFileSize") final String maxUncompressedFileSize) {
         this.proxyDir = proxyDir;
+        BufferSizeUtil.setValue(bufferSize);
         this.proxyThreads = proxyThreads;
         this.maxFileScan = maxFileScan;
         this.maxConcurrentMappedFiles = maxConcurrentMappedFiles;
@@ -53,7 +55,7 @@ public class ProxyAggregationConfig extends AbstractConfig {
     }
 
     @JsonPropertyDescription("The amount of memory to use for buffering reads/writes")
-    public int getBuffferSize() {
+    public int getBufferSize() {
         return BufferSizeUtil.get();
     }
 

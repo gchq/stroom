@@ -47,7 +47,7 @@ public class SSLConfig extends AbstractConfig implements IsProxyConfig {
                      @JsonProperty("trustStorePath") final String trustStorePath,
                      @JsonProperty("trustStoreType") final String trustStoreType,
                      @JsonProperty("trustStorePassword") final String trustStorePassword,
-                     @JsonProperty("isHostnameVerificationEnabled") final boolean isHostnameVerificationEnabled,
+                     @JsonProperty("hostnameVerificationEnabled") final boolean isHostnameVerificationEnabled,
                      @JsonProperty("sslProtocol") final String sslProtocol) {
         this.keyStorePath = keyStorePath;
         this.keyStoreType = keyStoreType;
@@ -113,7 +113,7 @@ public class SSLConfig extends AbstractConfig implements IsProxyConfig {
      * If true default verification of the destination hostname against the server certificate will be used.
      * If false any destination hostname will be permitted.
      */
-    @JsonProperty
+    @JsonProperty("hostnameVerificationEnabled")
     public boolean isHostnameVerificationEnabled() {
         return isHostnameVerificationEnabled;
     }

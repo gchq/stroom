@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.proxy.app;
+package stroom.config.app;
 
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.dropwizard.configuration.ConfigurationException;
@@ -31,27 +34,30 @@ import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.FileConfigurationSourceProvider;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.jackson.Jackson;
+import org.yaml.snakeyaml.Yaml;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Path;
+import java.util.Map;
+import java.util.Objects;
 
-public class ProxyYamlUtil {
+public class StroomYamlUtil {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProxyYamlUtil.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomYamlUtil.class);
 
-    private ProxyYamlUtil() {
+    private StroomYamlUtil() {
         // Utility
     }
 
-    public static ProxyConfig readProxyConfig(final Path configFile) throws IOException {
-        return readConfig(configFile).getProxyConfig();
+
+    public static AppConfig readAppConfig(final Path configFile) throws IOException {
+        return readConfig(configFile).getAppConfig();
     }
 
     /**
-     * Reads a yaml file that matches the structure of a complete DropWizard {@link Config} object tree.
-     *
-     * @throws IOException
+     * Reads a yaml file that matches the structure of a complete DropWizard {@link Config}
+     * object tree. The file undergoes substitution and validation.
      */
     public static Config readConfig(final Path configFile) throws IOException {
 
@@ -83,10 +89,34 @@ public class ProxyYamlUtil {
             final ConfigurationSourceProvider baseConfigurationSourceProvider,
             final boolean logChanges) {
 
-        return new ProxyConfigurationSourceProvider(
+        return new StroomConfigurationSourceProvider(
                 new SubstitutingSourceProvider(
                         baseConfigurationSourceProvider,
-                        new EnvironmentVariableSubstitutor(false)), logChanges);
+                        new EnvironmentVariableSubstitutor(false)),
+                logChanges);
+    }
+
+    /**
+     * Reads a YAML string that has already been through the drop wizard env var substitution.
+     */
+    public static AppConfig readDropWizardSubstitutedAppConfig(final String yamlStr) {
+
+        Objects.requireNonNull(yamlStr);
+
+        final Yaml yaml = new Yaml();
+        final Map<String, Object> obj = yaml.load(yamlStr);
+
+        // fail on unknown so it skips over all the drop wiz yaml content that has no
+        // corresponding annotated props in DummyConfig
+        final ObjectMapper mapper = new ObjectMapper()
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+        try {
+            final DummyConfig dummyConfig = mapper.convertValue(obj, DummyConfig.class);
+            return dummyConfig.getAppConfig();
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Error parsing yaml string", e);
+        }
     }
 
     public static void writeConfig(final Config config, final OutputStream outputStream) throws IOException {
@@ -97,9 +127,9 @@ public class ProxyYamlUtil {
 
     }
 
-    public static void writeConfig(final ProxyConfig proxyConfig, final OutputStream outputStream) throws IOException {
+    public static void writeConfig(final AppConfig appConfig, final OutputStream outputStream) throws IOException {
         Config config = new Config();
-        config.setProxyConfig(proxyConfig);
+        config.setAppConfig(appConfig);
         writeConfig(config, outputStream);
     }
 
@@ -110,9 +140,29 @@ public class ProxyYamlUtil {
         mapper.writeValue(path.toFile(), config);
     }
 
-    public static void writeConfig(final ProxyConfig proxyConfig, final Path path) throws IOException {
+    public static void writeConfig(final AppConfig appConfig, final Path path) throws IOException {
         Config config = new Config();
-        config.setProxyConfig(proxyConfig);
+        config.setAppConfig(appConfig);
         writeConfig(config, path);
+    }
+
+
+    /**
+     * Used to simulate the {@link Config} class that wraps {@link AppConfig} when we are not
+     * interested in anything in {@link Config} except {@link AppConfig}.
+     */
+    private static class DummyConfig {
+
+        @JsonProperty("appConfig")
+        private final AppConfig appConfig;
+
+        @JsonCreator
+        public DummyConfig(@JsonProperty("appConfig") final AppConfig appConfig) {
+            this.appConfig = appConfig;
+        }
+
+        public AppConfig getAppConfig() {
+            return appConfig;
+        }
     }
 }

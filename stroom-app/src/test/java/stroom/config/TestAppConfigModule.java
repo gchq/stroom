@@ -4,7 +4,7 @@ import stroom.config.app.AppConfig;
 import stroom.config.app.AppConfigModule;
 import stroom.config.app.Config;
 import stroom.config.app.ConfigHolder;
-import stroom.config.app.YamlUtil;
+import stroom.config.app.StroomYamlUtil;
 import stroom.config.common.AbstractDbConfig;
 import stroom.config.common.CommonDbConfig;
 import stroom.config.common.HasDbConfig;
@@ -94,7 +94,7 @@ class TestAppConfigModule {
         LOGGER.debug("dev yaml path: {}", devYamlPath.toAbsolutePath());
 
         // Modify the value on the common connection pool so it gets applied to all other config objects
-        final Config modifiedConfig = YamlUtil.readConfig(devYamlPath);
+        final Config modifiedConfig = StroomYamlUtil.readConfig(devYamlPath);
         // Merge all the default values in
         final AppConfig modifiedAppConfig = ConfigMapper.buildMergedAppConfig(devYamlPath);
 

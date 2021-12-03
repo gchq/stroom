@@ -4,6 +4,7 @@ import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.validation.ValidRegex;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
@@ -27,6 +28,8 @@ public class ReceiveDataConfig extends AbstractConfig {
         feedNamePattern = "^[A-Z0-9_-]{3,}$";
     }
 
+    @SuppressWarnings("unused")
+    @JsonCreator
     public ReceiveDataConfig(@JsonProperty("receiptPolicyUuid") final String receiptPolicyUuid,
                              @JsonProperty("bufferSize") final int bufferSize,
                              @JsonProperty("unknownClassification") final String unknownClassification,

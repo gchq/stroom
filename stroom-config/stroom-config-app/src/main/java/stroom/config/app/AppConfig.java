@@ -52,6 +52,8 @@ public class AppConfig extends AbstractConfig {
     public static final String NAME = "stroom";
     public static final PropertyPath ROOT_PROPERTY_PATH = PropertyPath.fromParts(NAME);
 
+    public static final String ROOT_PROPERTY_NAME = "appConfig";
+
     public static final String PROP_NAME_ACTIVITY = "activity";
     public static final String PROP_NAME_ANNOTATION = "annotation";
     public static final String PROP_NAME_BYTE_BUFFER_POOL = "byteBufferPool";
@@ -325,7 +327,7 @@ public class AppConfig extends AbstractConfig {
 
     @JsonProperty(PROP_NAME_CORE)
     @JsonPropertyDescription("Configuration for the core stroom DB")
-    public LegacyConfig getLegacyDbConfig() {
+    public LegacyConfig getLegacyConfig() {
         return legacyConfig;
     }
 

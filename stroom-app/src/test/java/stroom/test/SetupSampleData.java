@@ -17,12 +17,13 @@
 package stroom.test;
 
 import stroom.config.app.Config;
-import stroom.config.app.YamlUtil;
+import stroom.config.app.StroomYamlUtil;
 import stroom.importexport.impl.ContentPackImport;
 import stroom.importexport.impl.ContentPackImportConfig;
 import stroom.task.api.TaskManager;
 import stroom.test.common.util.test.ContentPackDownloader;
 import stroom.util.io.PathCreator;
+import stroom.util.yaml.YamlUtil;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -58,7 +59,7 @@ public final class SetupSampleData {
         final Path configFile = YamlUtil.getYamlFileFromArgs(args);
         Config config;
         try {
-            config = YamlUtil.readConfig(configFile);
+            config = StroomYamlUtil.readConfig(configFile);
         } catch (final IOException e) {
             throw new RuntimeException("Unable to read yaml config");
         }

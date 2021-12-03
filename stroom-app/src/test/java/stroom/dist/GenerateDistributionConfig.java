@@ -1,7 +1,7 @@
 package stroom.dist;
 
 import stroom.config.app.AppConfig;
-import stroom.config.app.YamlUtil;
+import stroom.config.app.StroomYamlUtil;
 import stroom.util.io.DiffUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LogUtil;
@@ -140,7 +140,7 @@ public class GenerateDistributionConfig {
         // Ensures the output file can be read into the appConfig tree
         final AppConfig appConfig;
         try {
-            appConfig = YamlUtil.readAppConfig(configFile);
+            appConfig = StroomYamlUtil.readAppConfig(configFile);
             Assertions.assertThat(appConfig)
                     .isNotNull();
         } catch (IOException e) {

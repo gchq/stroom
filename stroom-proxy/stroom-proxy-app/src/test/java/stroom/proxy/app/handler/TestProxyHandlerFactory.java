@@ -76,10 +76,9 @@ class TestProxyHandlerFactory extends StroomUnitTest {
                                                               final boolean isStoringEnabled,
                                                               final boolean isForwardingenabled) {
         final LogStreamConfig logRequestConfig = null;
-        final ProxyRepositoryConfig proxyRepositoryConfig = new ProxyRepositoryConfig();
-
-        proxyRepositoryConfig.setRepoDir(FileUtil.getCanonicalPath(getCurrentTestDir()));
-        proxyRepositoryConfig.setStoringEnabled(isStoringEnabled);
+        final ProxyRepositoryConfig proxyRepositoryConfig = new ProxyRepositoryConfig()
+                .withRepoDir(FileUtil.getCanonicalPath(getCurrentTestDir()))
+                .withStoringEnabled(isStoringEnabled);
 
         ForwardDestinationConfig destinationConfig1 = new ForwardDestinationConfig()
                 .withForwardUrl("https://url1");

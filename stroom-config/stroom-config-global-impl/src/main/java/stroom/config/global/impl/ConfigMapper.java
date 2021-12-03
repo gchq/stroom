@@ -19,8 +19,8 @@ package stroom.config.global.impl;
 
 
 import stroom.config.app.AppConfig;
+import stroom.config.app.ConfigHolder;
 import stroom.config.app.SuperDevUtil;
-import stroom.config.app.YamlUtil;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.ConfigProperty.SourceType;
 import stroom.config.global.shared.ConfigPropertyValidationException;
@@ -42,6 +42,7 @@ import stroom.util.shared.PropertyPath;
 import stroom.util.time.StroomDuration;
 import stroom.util.xml.ParserConfig;
 import stroom.util.xml.SAXParserSettings;
+import stroom.util.yaml.YamlUtil;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -81,6 +82,7 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
 
@@ -136,12 +138,10 @@ public class ConfigMapper {
             + DOCREF_PREFIX
             + "(StatisticStore,934a1600-b456-49bf-9aea-f1e84025febd,Heap Histogram Bytes)";
 
-    // The guice bound appConfig. This will initially be set to the de-serialised form of the config.yml
-    // file that is read on boot. As it contains sensible defaults for most properties, each prop will either
-    // be the hard coded default or a value set in the yaml. Value are later updated based on property values
-    // in the DB if no value no non-default value is set in the yaml.
-    // yaml trumps DB trumps default.
-//    private final AppConfig appConfig;
+    // The de-serialised form of the config.yml with defaults merged in.
+    // As it contains sensible defaults for most properties, each prop will either
+    // be the hard coded default or a value set in the yaml.
+    private final AppConfig bootStrapConfig;
     private final Path configFile;
 
     // A map of config properties keyed on the fully qualified prop path (i.e. stroom.path.temp)
@@ -185,24 +185,38 @@ public class ConfigMapper {
 //
 //    }
 
-    // For testing
+    @Inject
+    public ConfigMapper(final ConfigHolder configHolder) {
+        this(configHolder.getConfigFile(), configHolder.getBootStrapConfig(), AppConfig::new);
+    }
+
     ConfigMapper() {
-        this(null, AppConfig::new);
+        this(null, null, AppConfig::new);
     }
 
-    ConfigMapper(final Supplier<AppConfig> defaultAppConfigSupplier) {
-        this(null, defaultAppConfigSupplier);
+    // For testing
+    ConfigMapper(final AppConfig bootStrapConfig) {
+        this(null, bootStrapConfig, AppConfig::new);
     }
 
-    public ConfigMapper(final Path configFile) {
-        this(configFile, AppConfig::new);
+    ConfigMapper(final AppConfig bootStrapConfig, final Supplier<AppConfig> defaultAppConfigSupplier) {
+        this(null, bootStrapConfig, defaultAppConfigSupplier);
     }
 
-    private ConfigMapper(final Path configFile, final Supplier<AppConfig> defaultAppConfigSupplier) {
+
+    public ConfigMapper(final Path configFile, final AppConfig bootstrapConfig) {
+        this(configFile, bootstrapConfig, AppConfig::new);
+    }
+
+    private ConfigMapper(final Path configFile,
+                         final AppConfig bootStrapConfig,
+                         final Supplier<AppConfig> defaultAppConfigSupplier) {
+
         // This is the de-serialised form of the config.yaml so should contain all compile time defaults except
         // where set to other values in the yaml file. AppConfigModule should have ensured that all null
         // branches have been replaced with a default instance to ensure we have a full tree.
         this.configFile = configFile;
+        this.bootStrapConfig = bootStrapConfig;
         this.defaultAppConfigSupplier = defaultAppConfigSupplier;
         this.inSuperDevMode = SuperDevUtil.isInSuperDevMode();
         if (inSuperDevMode) {
@@ -278,6 +292,15 @@ public class ConfigMapper {
     public synchronized void updateConfigFromYaml() {
 
         final int changeCount = refreshGlobalPropYamlOverrides();
+
+        if (changeCount > 0) {
+            rebuildObjectInstanceMap();
+        }
+    }
+
+    public synchronized void updateConfigFromYaml(final AppConfig newAppConfig) {
+
+        final int changeCount = refreshGlobalPropYamlOverrides(newAppConfig);
 
         if (changeCount > 0) {
             rebuildObjectInstanceMap();
@@ -537,7 +560,7 @@ public class ConfigMapper {
 
         // This may be the first call after booting the app so ensure the yaml is set up too
         if (!haveYamlOverridesBeenInitialised) {
-            changeCount += refreshGlobalPropYamlOverrides();
+            changeCount += refreshGlobalPropYamlOverrides(bootStrapConfig);
         }
 
         LOGGER.debug("Change count C: {}", changeCount);
@@ -1360,7 +1383,8 @@ public class ConfigMapper {
         return objectInfoMap.values()
                 .stream()
                 .map(ObjectInfo::getObjectClass)
-                .filter(clazz -> !clazz.isAnnotationPresent(NotInjectableConfig.class))
+                .filter(clazz ->
+                        !clazz.isAnnotationPresent(NotInjectableConfig.class))
                 .collect(Collectors.toList());
     }
 

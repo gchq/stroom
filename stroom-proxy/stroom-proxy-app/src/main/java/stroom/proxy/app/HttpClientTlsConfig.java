@@ -5,6 +5,7 @@ import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
 import stroom.util.shared.validation.ValidFilePath;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
 import io.dropwizard.validation.ValidationMethod;
@@ -24,45 +25,86 @@ import javax.annotation.Nullable;
 public class HttpClientTlsConfig extends AbstractConfig implements IsProxyConfig {
 
     @NotEmpty
-    private String protocol = "TLSv1.2";
+    private final String protocol;
 
     @Nullable
-    private String provider;
+    private final String provider;
 
     @Nullable
-    private String keyStorePath;
+    private final String keyStorePath;
 
     @Nullable
-    private String keyStorePassword;
+    private final String keyStorePassword;
 
     @NotEmpty
-    private String keyStoreType = "JKS";
+    private final String keyStoreType;
 
     @Nullable
-    private String trustStorePath;
+    private final String trustStorePath;
 
     @Nullable
-    private String trustStorePassword;
+    private final String trustStorePassword;
 
     @NotEmpty
-    private String trustStoreType = "JKS";
+    private final String trustStoreType;
 
-    private boolean trustSelfSignedCertificates = false;
+    private final boolean trustSelfSignedCertificates;
 
-    private boolean verifyHostname = true;
-
-    @Nullable
-    private List<String> supportedProtocols = null;
+    private final boolean verifyHostname;
 
     @Nullable
-    private List<String> supportedCiphers = null;
+    private final List<String> supportedProtocols;
 
     @Nullable
-    private String certAlias = null;
+    private final List<String> supportedCiphers;
 
-    @JsonProperty
-    public void setTrustSelfSignedCertificates(boolean trustSelfSignedCertificates) {
+    @Nullable
+    private final String certAlias;
+
+    public HttpClientTlsConfig() {
+        protocol = "TLSv1.2";
+        provider = null;
+        keyStorePath = null;
+        keyStorePassword = null;
+        keyStoreType = "JKS";
+        trustStorePath = null;
+        trustStorePassword = null;
+        trustStoreType = "JKS";
+        trustSelfSignedCertificates = false;
+        verifyHostname = true;
+        supportedProtocols = null;
+        supportedCiphers = null;
+        certAlias = null;
+    }
+
+    @SuppressWarnings("unused")
+    @JsonCreator
+    public HttpClientTlsConfig(@JsonProperty("protocol") final String protocol,
+                               @Nullable @JsonProperty("provider") final String provider,
+                               @Nullable @JsonProperty("keyStorePath") final String keyStorePath,
+                               @Nullable @JsonProperty("keyStorePassword") final String keyStorePassword,
+                               @JsonProperty("keyStoreType") final String keyStoreType,
+                               @Nullable @JsonProperty("trustStorePath") final String trustStorePath,
+                               @Nullable @JsonProperty("trustStorePassword") final String trustStorePassword,
+                               @JsonProperty("trustStoreType") final String trustStoreType,
+                               @JsonProperty("trustSelfSignedCertificates") final boolean trustSelfSignedCertificates,
+                               @JsonProperty("verifyHostname") final boolean verifyHostname,
+                               @Nullable @JsonProperty("supportedProtocols") final List<String> supportedProtocols,
+                               @Nullable @JsonProperty("supportedCiphers") final List<String> supportedCiphers,
+                               @Nullable @JsonProperty("certAlias") final String certAlias) {
+        this.protocol = protocol;
+        this.provider = provider;
+        this.keyStorePath = keyStorePath;
+        this.keyStorePassword = keyStorePassword;
+        this.keyStoreType = keyStoreType;
+        this.trustStorePath = trustStorePath;
+        this.trustStorePassword = trustStorePassword;
+        this.trustStoreType = trustStoreType;
         this.trustSelfSignedCertificates = trustSelfSignedCertificates;
+        this.verifyHostname = verifyHostname;
+        this.supportedProtocols = supportedProtocols;
+        this.supportedCiphers = supportedCiphers;
+        this.certAlias = certAlias;
     }
 
     @JsonProperty
@@ -78,19 +120,9 @@ public class HttpClientTlsConfig extends AbstractConfig implements IsProxyConfig
     }
 
     @JsonProperty
-    public void setKeyStorePath(String keyStorePath) {
-        this.keyStorePath = keyStorePath;
-    }
-
-    @JsonProperty
     @Nullable
     public String getKeyStorePassword() {
         return keyStorePassword;
-    }
-
-    @JsonProperty
-    public void setKeyStorePassword(String keyStorePassword) {
-        this.keyStorePassword = keyStorePassword;
     }
 
     @JsonProperty
@@ -99,18 +131,8 @@ public class HttpClientTlsConfig extends AbstractConfig implements IsProxyConfig
     }
 
     @JsonProperty
-    public void setKeyStoreType(String keyStoreType) {
-        this.keyStoreType = keyStoreType;
-    }
-
-    @JsonProperty
     public String getTrustStoreType() {
         return trustStoreType;
-    }
-
-    @JsonProperty
-    public void setTrustStoreType(String trustStoreType) {
-        this.trustStoreType = trustStoreType;
     }
 
     @ValidFilePath
@@ -121,19 +143,9 @@ public class HttpClientTlsConfig extends AbstractConfig implements IsProxyConfig
     }
 
     @JsonProperty
-    public void setTrustStorePath(String trustStorePath) {
-        this.trustStorePath = trustStorePath;
-    }
-
-    @JsonProperty
     @Nullable
     public String getTrustStorePassword() {
         return trustStorePassword;
-    }
-
-    @JsonProperty
-    public void setTrustStorePassword(String trustStorePassword) {
-        this.trustStorePassword = trustStorePassword;
     }
 
     @JsonProperty
@@ -142,18 +154,8 @@ public class HttpClientTlsConfig extends AbstractConfig implements IsProxyConfig
     }
 
     @JsonProperty
-    public void setVerifyHostname(boolean verifyHostname) {
-        this.verifyHostname = verifyHostname;
-    }
-
-    @JsonProperty
     public String getProtocol() {
         return protocol;
-    }
-
-    @JsonProperty
-    public void setProtocol(String protocol) {
-        this.protocol = protocol;
     }
 
     @JsonProperty
@@ -162,20 +164,10 @@ public class HttpClientTlsConfig extends AbstractConfig implements IsProxyConfig
         return provider;
     }
 
-    @JsonProperty
-    public void setProvider(@Nullable String provider) {
-        this.provider = provider;
-    }
-
     @Nullable
     @JsonProperty
     public List<String> getSupportedCiphers() {
         return supportedCiphers;
-    }
-
-    @JsonProperty
-    public void setSupportedCiphers(@Nullable List<String> supportedCiphers) {
-        this.supportedCiphers = supportedCiphers;
     }
 
     @Nullable
@@ -184,20 +176,10 @@ public class HttpClientTlsConfig extends AbstractConfig implements IsProxyConfig
         return supportedProtocols;
     }
 
-    @JsonProperty
-    public void setSupportedProtocols(@Nullable List<String> supportedProtocols) {
-        this.supportedProtocols = supportedProtocols;
-    }
-
     @Nullable
     @JsonProperty
     public String getCertAlias() {
         return certAlias;
-    }
-
-    @JsonProperty
-    public void setCertAlias(@Nullable String certAlias) {
-        this.certAlias = certAlias;
     }
 
     @ValidationMethod(message = "keyStorePassword should not be null or empty if keyStorePath not null")
@@ -209,5 +191,125 @@ public class HttpClientTlsConfig extends AbstractConfig implements IsProxyConfig
     public boolean isValidTrustStorePassword() {
         return trustStorePath == null || trustStoreType.startsWith("Windows-") || !Strings.isNullOrEmpty(
                 trustStorePassword);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+
+        private String protocol;
+        private String provider;
+        private String keyStorePath;
+        private String keyStorePassword;
+        private String keyStoreType;
+        private String trustStorePath;
+        private String trustStorePassword;
+        private String trustStoreType;
+        private boolean trustSelfSignedCertificates;
+        private boolean verifyHostname;
+        private List<String> supportedProtocols;
+        private List<String> supportedCiphers;
+        private String certAlias;
+
+        public Builder() {
+            final HttpClientTlsConfig httpClientTlsConfig = new HttpClientTlsConfig();
+            protocol = httpClientTlsConfig.getProtocol();
+            provider = httpClientTlsConfig.getProvider();
+            keyStorePath = httpClientTlsConfig.getKeyStorePath();
+            keyStorePassword = httpClientTlsConfig.getKeyStorePassword();
+            keyStoreType = httpClientTlsConfig.getKeyStoreType();
+            trustStorePath = httpClientTlsConfig.getTrustStorePath();
+            trustStorePassword = httpClientTlsConfig.getTrustStorePassword();
+            trustStoreType = httpClientTlsConfig.getTrustStoreType();
+            trustSelfSignedCertificates = httpClientTlsConfig.isTrustSelfSignedCertificates();
+            verifyHostname = httpClientTlsConfig.isVerifyHostname();
+            supportedProtocols = httpClientTlsConfig.getSupportedProtocols();
+            supportedCiphers = httpClientTlsConfig.getSupportedCiphers();
+            certAlias = httpClientTlsConfig.getCertAlias();
+        }
+
+        public Builder withProtocol(final String protocol) {
+            this.protocol = protocol;
+            return this;
+        }
+
+        public Builder withProvider(final String provider) {
+            this.provider = provider;
+            return this;
+        }
+
+        public Builder withKeyStorePath(final String keyStorePath) {
+            this.keyStorePath = keyStorePath;
+            return this;
+        }
+
+        public Builder withKeyStorePassword(final String keyStorePassword) {
+            this.keyStorePassword = keyStorePassword;
+            return this;
+        }
+
+        public Builder withKeyStoreType(final String keyStoreType) {
+            this.keyStoreType = keyStoreType;
+            return this;
+        }
+
+        public Builder withTrustStorePath(final String trustStorePath) {
+            this.trustStorePath = trustStorePath;
+            return this;
+        }
+
+        public Builder withTrustStorePassword(final String trustStorePassword) {
+            this.trustStorePassword = trustStorePassword;
+            return this;
+        }
+
+        public Builder withTrustStoreType(final String trustStoreType) {
+            this.trustStoreType = trustStoreType;
+            return this;
+        }
+
+        public Builder withTrustSelfSignedCertificates(final boolean trustSelfSignedCertificates) {
+            this.trustSelfSignedCertificates = trustSelfSignedCertificates;
+            return this;
+        }
+
+        public Builder withVerifyHostname(final boolean verifyHostname) {
+            this.verifyHostname = verifyHostname;
+            return this;
+        }
+
+        public Builder withSupportedProtocols(final List<String> supportedProtocols) {
+            this.supportedProtocols = supportedProtocols;
+            return this;
+        }
+
+        public Builder withSupportedCiphers(final List<String> supportedCiphers) {
+            this.supportedCiphers = supportedCiphers;
+            return this;
+        }
+
+        public Builder withCertAlias(final String certAlias) {
+            this.certAlias = certAlias;
+            return this;
+        }
+
+        public HttpClientTlsConfig build() {
+            return new HttpClientTlsConfig(
+                    protocol,
+                    provider,
+                    keyStorePath,
+                    keyStorePassword,
+                    keyStoreType,
+                    trustStorePath,
+                    trustStorePassword,
+                    trustStoreType,
+                    trustSelfSignedCertificates,
+                    verifyHostname,
+                    supportedProtocols,
+                    supportedCiphers,
+                    certAlias);
+        }
     }
 }

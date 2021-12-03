@@ -23,7 +23,7 @@ import stroom.app.commands.ResetPasswordCommand;
 import stroom.app.guice.AppModule;
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
-import stroom.config.app.YamlUtil;
+import stroom.config.app.StroomYamlUtil;
 import stroom.config.global.impl.ConfigMapper;
 import stroom.dropwizard.common.Filters;
 import stroom.dropwizard.common.HealthChecks;
@@ -48,6 +48,7 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.validation.ValidationModule;
+import stroom.util.yaml.YamlUtil;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -141,7 +142,7 @@ public class App extends Application<Config> {
     @Override
     public void initialize(final Bootstrap<Config> bootstrap) {
         // This allows us to use env var templating and relative (to stroom home) paths in the YAML configuration.
-        bootstrap.setConfigurationSourceProvider(YamlUtil.createConfigurationSourceProvider(
+        bootstrap.setConfigurationSourceProvider(StroomYamlUtil.createConfigurationSourceProvider(
                 bootstrap.getConfigurationSourceProvider(), true));
 
         // Add the GWT UI assets.
@@ -401,7 +402,7 @@ public class App extends Application<Config> {
             // We need to read the AppConfig in the same way that dropwiz will so we can get the
             // possibly substituted values for stroom.(home|temp) for use with PathCreator
             LOGGER.info("Parsing config file to establish home and temp");
-            final AppConfig appConfig = YamlUtil.readAppConfig(configFile);
+            final AppConfig appConfig = StroomYamlUtil.readAppConfig(configFile);
             LOGGER.debug(() -> "pathConfig " + appConfig.getPathConfig());
 
             // Allow for someone having pathConfig set to null in the yaml, e.g. just

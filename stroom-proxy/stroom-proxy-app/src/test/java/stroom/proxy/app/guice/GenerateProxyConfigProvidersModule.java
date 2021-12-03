@@ -1,6 +1,6 @@
-package stroom.config.global.impl;
+package stroom.proxy.app.guice;
 
-import stroom.config.common.AbstractDbConfig;
+import stroom.proxy.app.ProxyConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.AbstractConfig;
@@ -20,15 +20,15 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Generates the file {@link ConfigProvidersModule} with provider methods for each injectable
+ * Generates the file {@link ProxyConfigProvidersModule} with provider methods for each injectable
  * config object
  */
-public class GenerateConfigProvidersModule {
+public class GenerateProxyConfigProvidersModule {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(GenerateConfigProvidersModule.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(GenerateProxyConfigProvidersModule.class);
 
     private static final String CLASS_HEADER = """
-            package stroom.config.global.impl;
+            package stroom.proxy.app.guice;
 
             import com.google.inject.AbstractModule;
             import com.google.inject.Provides;
@@ -41,17 +41,17 @@ public class GenerateConfigProvidersModule {
              * DO NOT edit it directly
              */
             @Generated("%s")
-            public class ConfigProvidersModule extends AbstractModule {
+            public class ProxyConfigProvidersModule extends AbstractModule {
                         
-                // Special case to allow StroomPathConfig to be injected as itself or as
+                // Special case to allow ProxyPathConfig to be injected as itself or as
                 // PathConfig
-                @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+                @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")
                 @Provides
                 @SuppressWarnings("unused")
                 stroom.util.io.PathConfig getPathConfig(
-                        final ConfigMapper configMapper) {
-                    return configMapper.getConfigObject(
-                            stroom.util.io.StroomPathConfig.class);
+                        final ProxyConfigProvider proxyConfigProvider) {
+                    return proxyConfigProvider.getConfigObject(
+                            stroom.proxy.app.ProxyPathConfig.class);
                 }
             """;
 
@@ -60,22 +60,23 @@ public class GenerateConfigProvidersModule {
             """;
 
     public static void main(String[] args) {
-        final ConfigMapper configMapper = new ConfigMapper();
+//        final ConfigMapper configMapper = new ConfigMapper();
         final Set<String> simpleNames = new HashSet<>();
         final Map<String, List<String>> simpleNameToFullNamesMap = new HashMap<>();
 
-        // Filter out the DB ones as they are bound separately.
-        final String methodsStr = configMapper.getInjectableConfigClasses()
+        final ProxyConfigProvider proxyConfigProvider = new ProxyConfigProvider(new ProxyConfig());
+        final Set<Class<? extends AbstractConfig>> injectableClasses = proxyConfigProvider.getInjectableClasses();
+
+        final String methodsStr = injectableClasses
                 .stream()
                 .sorted(Comparator.comparing(Class::getName))
-                .filter(clazz -> !AbstractDbConfig.class.isAssignableFrom(clazz))
                 .map(clazz ->
                         buildMethod(simpleNames, simpleNameToFullNamesMap, clazz))
                 .collect(Collectors.joining("\n"));
 
         final String header = String.format(CLASS_HEADER,
-                GenerateConfigProvidersModule.class.getName(),
-                GenerateConfigProvidersModule.class.getName());
+                GenerateProxyConfigProvidersModule.class.getName(),
+                GenerateProxyConfigProvidersModule.class.getName());
 
         final String fileContent = String.join(
                 "\n",
@@ -98,15 +99,12 @@ public class GenerateConfigProvidersModule {
                 .add(fullClassName);
 
         String methodNameSuffix = simpleClassName;
-        int i = 1;
+        int i = 2;
         while (simpleNames.contains(methodNameSuffix)) {
-            methodNameSuffix = simpleClassName + ++i;
-        }
-        if (i != 1) {
-            LOGGER.warn("Simple class name {} is used by multiple classes {}, using method name suffix {}",
-                    simpleClassName,
-                    simpleNameToFullNamesMap.get(simpleClassName),
-                    methodNameSuffix);
+            LOGGER.warn("Simple class name {} is used by multiple classes {}",
+                    methodNameSuffix,
+                    simpleNameToFullNamesMap.get(simpleClassName));
+            methodNameSuffix = simpleClassName + i++;
         }
         simpleNames.add(methodNameSuffix);
 
@@ -115,14 +113,14 @@ public class GenerateConfigProvidersModule {
                     @Provides
                     @SuppressWarnings("unused")
                     %s get%s(
-                            final ConfigMapper configMapper) {
-                        return configMapper.getConfigObject(
+                            final ProxyConfigProvider proxyConfigProvider) {
+                        return proxyConfigProvider.getConfigObject(
                                 %s.class);
                     }
                 """;
         return String.format(
                 template,
-                GenerateConfigProvidersModule.class.getName(),
+                GenerateProxyConfigProvidersModule.class.getName(),
                 fullClassName,
                 methodNameSuffix,
                 fullClassName);
@@ -135,8 +133,8 @@ public class GenerateConfigProvidersModule {
 
         LOGGER.debug("PWD: {}", pwd.toString());
 
-        Path moduleFile = pwd.resolve("stroom-config/stroom-config-global-impl/src/main/java")
-                .resolve(ConfigProvidersModule.class.getName().replace(".", File.separator) + ".java")
+        Path moduleFile = pwd.resolve("stroom-proxy/stroom-proxy-app/src/main/java")
+                .resolve(ProxyConfigProvidersModule.class.getName().replace(".", File.separator) + ".java")
                 .normalize();
 
         if (!Files.isRegularFile(moduleFile)) {

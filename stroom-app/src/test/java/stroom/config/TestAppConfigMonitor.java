@@ -2,7 +2,7 @@ package stroom.config;
 
 import stroom.config.app.AppConfig;
 import stroom.config.app.ConfigHolder;
-import stroom.config.app.YamlUtil;
+import stroom.config.app.StroomYamlUtil;
 import stroom.config.global.impl.AppConfigMonitor;
 import stroom.config.global.impl.ConfigMapper;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -53,7 +53,7 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
         LOGGER.info("Testing with config file {}", yamlFile.toAbsolutePath().normalize());
 
         // AppConfigTestModule creates an appConfig instance but doesn't create the file.
-        YamlUtil.writeConfig(configHolder.getBootStrapConfig(), configHolder.getConfigFile());
+        StroomYamlUtil.writeConfig(configHolder.getBootStrapConfig(), configHolder.getConfigFile());
 
         // Remove all the dropwiz stuff from the file to avoid (de)ser issues.
         final List<String> outputLines = Files.lines(yamlFile)

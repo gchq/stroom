@@ -6,6 +6,7 @@ import stroom.util.shared.IsProxyConfig;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.dropwizard.validation.ValidationMethod;
 
 import java.util.Map;
 
@@ -26,8 +27,8 @@ public class ContentSyncConfig extends AbstractConfig implements IsProxyConfig {
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public ContentSyncConfig(@JsonProperty("isContentSyncEnabled") final boolean isContentSyncEnabled,
-                             @JsonProperty("String") final Map<String, String> upstreamUrl,
+    public ContentSyncConfig(@JsonProperty("contentSyncEnabled") final boolean isContentSyncEnabled,
+                             @JsonProperty("upstreamUrl") final Map<String, String> upstreamUrl,
                              @JsonProperty("syncFrequency") final long syncFrequency,
                              @JsonProperty("apiKey") final String apiKey) {
         this.isContentSyncEnabled = isContentSyncEnabled;
@@ -36,7 +37,7 @@ public class ContentSyncConfig extends AbstractConfig implements IsProxyConfig {
         this.apiKey = apiKey;
     }
 
-    @JsonProperty
+    @JsonProperty("contentSyncEnabled")
     public boolean isContentSyncEnabled() {
         return isContentSyncEnabled;
     }
@@ -54,6 +55,12 @@ public class ContentSyncConfig extends AbstractConfig implements IsProxyConfig {
     @JsonProperty
     public String getApiKey() {
         return apiKey;
+    }
+
+    @SuppressWarnings("unused")
+    @ValidationMethod(message = "Content sync is enabled but no upstreamUrls have been provided in 'upstreamUrl'")
+    public boolean areUpstreamUrlsValid() {
+        return isContentSyncEnabled && (upstreamUrl == null || upstreamUrl.isEmpty());
     }
 
     public void validateConfiguration() {

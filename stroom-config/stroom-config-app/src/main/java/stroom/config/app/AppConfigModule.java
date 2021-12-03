@@ -1,17 +1,44 @@
 package stroom.config.app;
 
+import stroom.activity.impl.db.ActivityConfig;
+import stroom.activity.impl.db.ActivityConfig.ActivityDbConfig;
+import stroom.annotation.impl.AnnotationConfig;
+import stroom.annotation.impl.AnnotationConfig.AnnotationDBConfig;
+import stroom.cluster.lock.impl.db.ClusterLockConfig;
+import stroom.cluster.lock.impl.db.ClusterLockConfig.ClusterLockDbConfig;
+import stroom.config.app.PropertyServiceConfig.PropertyServiceDbConfig;
+import stroom.data.store.impl.fs.DataStoreServiceConfig;
+import stroom.data.store.impl.fs.DataStoreServiceConfig.DataStoreServiceDbConfig;
+import stroom.docstore.impl.db.DocStoreConfig;
+import stroom.docstore.impl.db.DocStoreConfig.DocStoreDbConfig;
+import stroom.explorer.impl.ExplorerConfig;
+import stroom.explorer.impl.ExplorerConfig.ExplorerDbConfig;
+import stroom.index.impl.IndexConfig;
+import stroom.index.impl.IndexConfig.IndexDbConfig;
+import stroom.job.impl.JobSystemConfig;
+import stroom.job.impl.JobSystemConfig.JobSystemDbConfig;
+import stroom.legacy.db.LegacyConfig;
+import stroom.legacy.db.LegacyConfig.LegacyDbConfig;
+import stroom.meta.impl.MetaServiceConfig;
+import stroom.meta.impl.MetaServiceConfig.MetaServiceDbConfig;
+import stroom.node.impl.NodeConfig;
+import stroom.node.impl.NodeConfig.NodeDbConfig;
+import stroom.processor.impl.ProcessorConfig;
+import stroom.processor.impl.ProcessorConfig.ProcessorDbConfig;
+import stroom.security.identity.config.IdentityConfig;
+import stroom.security.identity.config.IdentityConfig.IdentityDbConfig;
+import stroom.security.impl.AuthorisationConfig;
+import stroom.security.impl.AuthorisationConfig.AuthorisationDbConfig;
+import stroom.statistics.impl.sql.SQLStatisticsConfig;
+import stroom.statistics.impl.sql.SQLStatisticsConfig.SQLStatisticsDbConfig;
+import stroom.storedquery.impl.StoredQueryConfig;
+import stroom.storedquery.impl.StoredQueryConfig.StoredQueryDbConfig;
+import stroom.util.NullSafe;
 import stroom.util.config.ConfigLocation;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
-import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.NotInjectableConfig;
 
 import com.google.inject.AbstractModule;
-
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 public class AppConfigModule extends AbstractModule {
 
@@ -39,6 +66,11 @@ public class AppConfigModule extends AbstractModule {
         // get hold of it via guice
         bind(ConfigLocation.class)
                 .toInstance(new ConfigLocation(configHolder.getConfigFile()));
+
+        // Bind the AbstractDbConfig instances in bootStrapConfig so we can inject the config
+        // to connect to the DBs. Once the DB is up we can read the db config props and work
+        // out all the effective config.
+        bindDbConfigInstances();
 
         // AppConfig will instantiate all of its child config objects so
         // bind each of these instances so we can inject these objects on their own.
@@ -273,108 +305,236 @@ public class AppConfigModule extends AbstractModule {
 //        bindConfig(AppConfig::getVolumeConfig, AppConfig::setVolumeConfig, VolumeConfig.class);
     }
 
-    private <T extends AbstractConfig> void bindConfig(
-            final Function<AppConfig, T> configGetter,
-            final BiConsumer<AppConfig, T> configSetter,
-            final Class<T> clazz) {
-        bindConfig(configHolder.getBootStrapConfig(), configGetter, configSetter, clazz, clazz, null);
-    }
+//    private <T extends AbstractConfig> void bindConfig(
+//            final Function<AppConfig, T> configGetter,
+//            final BiConsumer<AppConfig, T> configSetter,
+//            final Class<T> clazz) {
+//        bindConfig(configHolder.getBootStrapConfig(), configGetter, configSetter, clazz, clazz, null);
+//    }
+//
+//    private <T extends AbstractConfig> void bindConfig(
+//            final Function<AppConfig, T> configGetter,
+//            final BiConsumer<AppConfig, T> configSetter,
+//            final Class<T> instanceClass,
+//            final Class<? super T> bindClass) {
+//        bindConfig(configHolder.getBootStrapConfig(), configGetter, configSetter, instanceClass, bindClass, null);
+//    }
+//
+//    private <T extends AbstractConfig> void bindConfig(
+//            final Function<AppConfig, T> configGetter,
+//            final BiConsumer<AppConfig, T> configSetter,
+//            final Class<T> clazz,
+//            final Consumer<T> childConfigConsumer) {
+//        bindConfig(configHolder.getBootStrapConfig(), configGetter, configSetter, clazz, clazz, childConfigConsumer);
+//    }
+//
+//    private <X extends AbstractConfig, T extends AbstractConfig> void bindConfig(
+//            final X parentObject,
+//            final Function<X, T> configGetter,
+//            final BiConsumer<X, T> configSetter,
+//            final Class<T> clazz) {
+//        bindConfig(parentObject, configGetter, configSetter, clazz, clazz, null);
+//    }
+//
+//    private <X extends AbstractConfig, T extends AbstractConfig> void bindConfig(
+//            final X parentObject,
+//            final Function<X, T> configGetter,
+//            final BiConsumer<X, T> configSetter,
+//            final Class<T> clazz,
+//            final Consumer<T> childConfigConsumer) {
+//        bindConfig(parentObject, configGetter, configSetter, clazz, clazz, childConfigConsumer);
+//    }
+//
+//    private <X extends AbstractConfig, T extends AbstractConfig> void bindConfig(
+//            final X parentObject,
+//            final Function<X, T> configGetter,
+//            final BiConsumer<X, T> configSetter,
+//            final Class<T> instanceClass,
+//            final Class<? super T> bindClass,
+//            final Consumer<T> childConfigConsumer) {
+//
+//        // If a class is marked with NotInjectableConfig then it is likely used by multiple parent config
+//        // classes so should be accessed via its parent rather than by injection
+//        if (instanceClass.isAnnotationPresent(NotInjectableConfig.class)) {
+//            throw new RuntimeException(LogUtil.message(
+//                    "You should not be binding an instance class annotated with {} - {}",
+//                    NotInjectableConfig.class.getSimpleName(),
+//                    instanceClass.getName()));
+//        }
+//        if (bindClass.isAnnotationPresent(NotInjectableConfig.class)) {
+//            throw new RuntimeException(LogUtil.message("You should not be binding a bind class annotated with {} - {}",
+//                    NotInjectableConfig.class.getSimpleName(),
+//                    bindClass.getName()));
+//        }
+//        if (parentObject == null) {
+//            throw new RuntimeException(LogUtil.message("Unable to bind config to {} as the parent is null. " +
+//                            "You may have an empty branch in your config YAML file.",
+//                    instanceClass.getCanonicalName()));
+//        }
+//
+//        try {
+//            // Get the config instance
+//            T configInstance = configGetter.apply(parentObject);
+//
+//            if (configInstance == null) {
+//                // branch with no children in the yaml so just create a default one
+//                try {
+//                    LOGGER.debug(() -> LogUtil.message("Constructing new default instance of {} on {}",
+//                            instanceClass.getSimpleName(), parentObject.getClass().getSimpleName()));
+//                    configInstance = instanceClass.getConstructor().newInstance();
+//                    // Now set the new instance on the parent
+//                    configSetter.accept(parentObject, configInstance);
+//                } catch (Exception e) {
+//                    throw new RuntimeException(LogUtil.message(
+//                            "Class {} does not have a no args constructor", instanceClass.getName()));
+//                }
+//            }
+//
+//            LOGGER.debug("Binding instance of {} to class {}", instanceClass.getName(), bindClass.getName());
+//            bind(bindClass).toInstance(configInstance);
+//            if (!bindClass.equals(instanceClass)) {
+//                // bind class and instance class differ so bind to both, e.g.
+//                // an instance of StroomPathConfig gets bound to PathConfig and ProxyPathConfig
+//                LOGGER.debug("Binding instance of {} to class {}", instanceClass.getName(), instanceClass.getName());
+//                bind(instanceClass).toInstance(configInstance);
+//            }
+//            if (childConfigConsumer != null) {
+//                childConfigConsumer.accept(configInstance);
+//            }
+//        } catch (Exception e) {
+//            throw new RuntimeException(LogUtil.message("Error binding getter on object {} to class {}",
+//                    parentObject.getClass().getCanonicalName(),
+//                    bindClass.getCanonicalName()),
+//                    e);
+//        }
+//    }
 
-    private <T extends AbstractConfig> void bindConfig(
-            final Function<AppConfig, T> configGetter,
-            final BiConsumer<AppConfig, T> configSetter,
-            final Class<T> instanceClass,
-            final Class<? super T> bindClass) {
-        bindConfig(configHolder.getBootStrapConfig(), configGetter, configSetter, instanceClass, bindClass, null);
-    }
+    private void bindDbConfigInstances() {
+        final AppConfig bootStrapConfig = configHolder.getBootStrapConfig();
 
-    private <T extends AbstractConfig> void bindConfig(
-            final Function<AppConfig, T> configGetter,
-            final BiConsumer<AppConfig, T> configSetter,
-            final Class<T> clazz,
-            final Consumer<T> childConfigConsumer) {
-        bindConfig(configHolder.getBootStrapConfig(), configGetter, configSetter, clazz, clazz, childConfigConsumer);
-    }
+        bind(ActivityDbConfig.class)
+                .toInstance(NullSafe.getAsOptional(
+                        bootStrapConfig,
+                        AppConfig::getActivityConfig,
+                        ActivityConfig::getDbConfig)
+                        .orElseGet(ActivityDbConfig::new));
 
-    private <X extends AbstractConfig, T extends AbstractConfig> void bindConfig(
-            final X parentObject,
-            final Function<X, T> configGetter,
-            final BiConsumer<X, T> configSetter,
-            final Class<T> clazz) {
-        bindConfig(parentObject, configGetter, configSetter, clazz, clazz, null);
-    }
+        bind(AnnotationDBConfig.class)
+                .toInstance(NullSafe.getAsOptional(
+                        bootStrapConfig,
+                        AppConfig::getAnnotationConfig,
+                        AnnotationConfig::getDbConfig)
+                        .orElseGet(AnnotationDBConfig::new));
 
-    private <X extends AbstractConfig, T extends AbstractConfig> void bindConfig(
-            final X parentObject,
-            final Function<X, T> configGetter,
-            final BiConsumer<X, T> configSetter,
-            final Class<T> clazz,
-            final Consumer<T> childConfigConsumer) {
-        bindConfig(parentObject, configGetter, configSetter, clazz, clazz, childConfigConsumer);
-    }
+        bind(AuthorisationDbConfig.class)
+                .toInstance(NullSafe.getAsOptional(
+                        bootStrapConfig,
+                        AppConfig::getSecurityConfig,
+                        SecurityConfig::getAuthorisationConfig,
+                        AuthorisationConfig::getDbConfig)
+                        .orElseGet(AuthorisationDbConfig::new));
 
-    private <X extends AbstractConfig, T extends AbstractConfig> void bindConfig(
-            final X parentObject,
-            final Function<X, T> configGetter,
-            final BiConsumer<X, T> configSetter,
-            final Class<T> instanceClass,
-            final Class<? super T> bindClass,
-            final Consumer<T> childConfigConsumer) {
+        bind(ClusterLockDbConfig.class)
+                .toInstance(NullSafe.getAsOptional(
+                        bootStrapConfig,
+                        AppConfig::getClusterLockConfig,
+                        ClusterLockConfig::getDbConfig)
+                        .orElseGet(ClusterLockDbConfig::new));
 
-        // If a class is marked with NotInjectableConfig then it is likely used by multiple parent config
-        // classes so should be accessed via its parent rather than by injection
-        if (instanceClass.isAnnotationPresent(NotInjectableConfig.class)) {
-            throw new RuntimeException(LogUtil.message(
-                    "You should not be binding an instance class annotated with {} - {}",
-                    NotInjectableConfig.class.getSimpleName(),
-                    instanceClass.getName()));
-        }
-        if (bindClass.isAnnotationPresent(NotInjectableConfig.class)) {
-            throw new RuntimeException(LogUtil.message("You should not be binding a bind class annotated with {} - {}",
-                    NotInjectableConfig.class.getSimpleName(),
-                    bindClass.getName()));
-        }
-        if (parentObject == null) {
-            throw new RuntimeException(LogUtil.message("Unable to bind config to {} as the parent is null. " +
-                            "You may have an empty branch in your config YAML file.",
-                    instanceClass.getCanonicalName()));
-        }
+        bind(DataStoreServiceDbConfig.class)
+                .toInstance(NullSafe.getAsOptional(
+                        bootStrapConfig,
+                        AppConfig::getDataConfig,
+                        DataConfig::getDataStoreServiceConfig,
+                        DataStoreServiceConfig::getDbConfig)
+                        .orElseGet(DataStoreServiceDbConfig::new));
 
-        try {
-            // Get the config instance
-            T configInstance = configGetter.apply(parentObject);
+        bind(DocStoreDbConfig.class)
+                .toInstance(NullSafe.getAsOptional(
+                        bootStrapConfig,
+                        AppConfig::getDocStoreConfig,
+                        DocStoreConfig::getDbConfig)
+                        .orElseGet(DocStoreDbConfig::new));
 
-            if (configInstance == null) {
-                // branch with no children in the yaml so just create a default one
-                try {
-                    LOGGER.debug(() -> LogUtil.message("Constructing new default instance of {} on {}",
-                            instanceClass.getSimpleName(), parentObject.getClass().getSimpleName()));
-                    configInstance = instanceClass.getConstructor().newInstance();
-                    // Now set the new instance on the parent
-                    configSetter.accept(parentObject, configInstance);
-                } catch (Exception e) {
-                    throw new RuntimeException(LogUtil.message(
-                            "Class {} does not have a no args constructor", instanceClass.getName()));
-                }
-            }
+        bind(ExplorerDbConfig.class)
+                .toInstance(NullSafe.getAsOptional(
+                        bootStrapConfig,
+                        AppConfig::getExplorerConfig,
+                        ExplorerConfig::getDbConfig)
+                        .orElseGet(ExplorerDbConfig::new));
 
-            LOGGER.debug("Binding instance of {} to class {}", instanceClass.getName(), bindClass.getName());
-            bind(bindClass).toInstance(configInstance);
-            if (!bindClass.equals(instanceClass)) {
-                // bind class and instance class differ so bind to both, e.g.
-                // an instance of StroomPathConfig gets bound to PathConfig and ProxyPathConfig
-                LOGGER.debug("Binding instance of {} to class {}", instanceClass.getName(), instanceClass.getName());
-                bind(instanceClass).toInstance(configInstance);
-            }
-            if (childConfigConsumer != null) {
-                childConfigConsumer.accept(configInstance);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(LogUtil.message("Error binding getter on object {} to class {}",
-                    parentObject.getClass().getCanonicalName(),
-                    bindClass.getCanonicalName()),
-                    e);
-        }
+        bind(IdentityDbConfig.class)
+                .toInstance(NullSafe.getAsOptional(
+                        bootStrapConfig,
+                        AppConfig::getSecurityConfig,
+                        SecurityConfig::getIdentityConfig,
+                        IdentityConfig::getDbConfig)
+                        .orElseGet(IdentityDbConfig::new));
+
+        bind(IndexDbConfig.class)
+                .toInstance(NullSafe.getAsOptional(
+                        bootStrapConfig,
+                        AppConfig::getIndexConfig,
+                        IndexConfig::getDbConfig)
+                        .orElseGet(IndexDbConfig::new));
+
+        bind(JobSystemDbConfig.class)
+                .toInstance(NullSafe.getAsOptional(
+                        bootStrapConfig,
+                        AppConfig::getJobSystemConfig,
+                        JobSystemConfig::getDbConfig)
+                        .orElseGet(JobSystemDbConfig::new));
+
+        bind(LegacyDbConfig.class)
+                .toInstance(NullSafe.getAsOptional(
+                        bootStrapConfig,
+                        AppConfig::getLegacyConfig,
+                        LegacyConfig::getDbConfig)
+                        .orElseGet(LegacyDbConfig::new));
+
+        bind(MetaServiceDbConfig.class)
+                .toInstance(NullSafe.getAsOptional(
+                        bootStrapConfig,
+                        AppConfig::getDataConfig,
+                        DataConfig::getMetaServiceConfig,
+                        MetaServiceConfig::getDbConfig)
+                        .orElseGet(MetaServiceDbConfig::new));
+
+        bind(NodeDbConfig.class)
+                .toInstance(NullSafe.getAsOptional(
+                        bootStrapConfig,
+                        AppConfig::getNodeConfig,
+                        NodeConfig::getDbConfig)
+                        .orElseGet(NodeDbConfig::new));
+
+        bind(ProcessorDbConfig.class)
+                .toInstance(NullSafe.getAsOptional(
+                        bootStrapConfig,
+                        AppConfig::getProcessorConfig,
+                        ProcessorConfig::getDbConfig)
+                        .orElseGet(ProcessorDbConfig::new));
+
+        bind(PropertyServiceDbConfig.class)
+                .toInstance(NullSafe.getAsOptional(
+                        bootStrapConfig,
+                        AppConfig::getPropertyServiceConfig,
+                        PropertyServiceConfig::getDbConfig)
+                        .orElseGet(PropertyServiceDbConfig::new));
+
+        bind(SQLStatisticsDbConfig.class)
+                .toInstance(NullSafe.getAsOptional(
+                        bootStrapConfig,
+                        AppConfig::getStatisticsConfig,
+                        StatisticsConfig::getSqlStatisticsConfig,
+                        SQLStatisticsConfig::getDbConfig)
+                        .orElseGet(SQLStatisticsDbConfig::new));
+
+        bind(StoredQueryDbConfig.class)
+                .toInstance(NullSafe.getAsOptional(
+                        bootStrapConfig,
+                        AppConfig::getStoredQueryConfig,
+                        StoredQueryConfig::getDbConfig)
+                        .orElseGet(StoredQueryDbConfig::new));
     }
 
     protected ConfigHolder getConfigHolder() {

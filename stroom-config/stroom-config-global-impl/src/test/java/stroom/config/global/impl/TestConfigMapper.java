@@ -316,7 +316,7 @@ class TestConfigMapper {
     void testGetGlobalProperties2() {
         TestConfig testConfig = new TestConfig();
 
-        ConfigMapper configMapper = new ConfigMapper(() -> testConfig);
+        ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
 
         Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
 
@@ -468,7 +468,7 @@ class TestConfigMapper {
 
         final PropertyPath fullPath = PropertyPath.fromPathString(path);
 
-        ConfigMapper configMapper = new ConfigMapper(() -> testConfig);
+        ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
 
         final Prop prop = configMapper.getProp(fullPath)
                 .orElseThrow();
@@ -501,7 +501,7 @@ class TestConfigMapper {
     @Test
     void update_docRefList() {
         TestConfig testConfig = new TestConfig();
-        ConfigMapper configMapper = new ConfigMapper(() -> testConfig);
+        ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
 
         Supplier<List<DocRef>> getter = testConfig::getDocRefListProp;
         List<DocRef> initialValue = getter.get();
@@ -531,7 +531,7 @@ class TestConfigMapper {
     @Test
     void update_enumList() {
         TestConfig testConfig = new TestConfig();
-        ConfigMapper configMapper = new ConfigMapper(() -> testConfig);
+        ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
 
         Supplier<List<TestConfig.State>> getter = testConfig::getStateListProp;
         List<TestConfig.State> initialValue = getter.get();
@@ -552,7 +552,7 @@ class TestConfigMapper {
     @Test
     void update_stringList() {
         TestConfig testConfig = new TestConfig();
-        ConfigMapper configMapper = new ConfigMapper(() -> testConfig);
+        ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
 
         Supplier<List<String>> getter = testConfig::getStringListProp;
         List<String> initialValue = getter.get();
@@ -575,7 +575,7 @@ class TestConfigMapper {
     @Test
     void update_stringLongMap() {
         TestConfig testConfig = new TestConfig();
-        ConfigMapper configMapper = new ConfigMapper(() -> testConfig);
+        ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
 
         Supplier<Map<String, Long>> getter = testConfig::getStringLongMapProp;
         Map<String, Long> initialValue = getter.get();
@@ -602,7 +602,7 @@ class TestConfigMapper {
         TestConfig testConfig = new TestConfig();
         String defaultValue = testConfig.getStringProp();
 
-        ConfigMapper configMapper = new ConfigMapper(() -> testConfig);
+        ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
 
         ConfigProperty configProperty = configMapper
                 .getGlobalProperty(PropertyPath.fromPathString("stroom.stringProp"))
@@ -755,7 +755,7 @@ class TestConfigMapper {
 
     private void doValidateStringValueTest(final String path, final String value, boolean shouldValidate) {
         TestConfig testConfig = new TestConfig();
-        ConfigMapper configMapper = new ConfigMapper(() -> testConfig);
+        ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
         PropertyPath propertyPath = PropertyPath.fromPathString(path);
 
         if (shouldValidate) {
@@ -887,6 +887,8 @@ class TestConfigMapper {
             testBoxedConfig = new TestBoxedConfig();
         }
 
+
+        @SuppressWarnings("checkstyle:LineLength")
         public TestConfig(
                 @JsonProperty(PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE) final boolean haltBootOnConfigValidationFailure,
                 @JsonProperty(PROP_NAME_ACTIVITY) final ActivityConfig activityConfig,

@@ -25,7 +25,7 @@ public class ForwardStreamConfig extends AbstractConfig implements IsProxyConfig
 
     @JsonCreator
     public ForwardStreamConfig(
-            @JsonProperty("isForwardingEnabled") final boolean isForwardingEnabled,
+            @JsonProperty("forwardingEnabled") final boolean isForwardingEnabled,
             @JsonProperty("userAgent") final String userAgent,
             @JsonProperty("forwardDestinations") final List<ForwardDestinationConfig> forwardDestinations) {
 
@@ -37,7 +37,7 @@ public class ForwardStreamConfig extends AbstractConfig implements IsProxyConfig
     /**
      * True if received streams should be forwarded to another stroom(-proxy) instance.
      */
-    @JsonProperty
+    @JsonProperty("forwardingEnabled")
     public boolean isForwardingEnabled() {
         return isForwardingEnabled;
     }

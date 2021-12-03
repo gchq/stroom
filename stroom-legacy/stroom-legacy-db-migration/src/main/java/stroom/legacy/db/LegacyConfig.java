@@ -32,6 +32,7 @@ public class LegacyConfig extends AbstractConfig implements HasDbConfig {
     }
 
 
+    @Deprecated
     public static class LegacyDbConfig extends AbstractDbConfig {
 
         public LegacyDbConfig() {

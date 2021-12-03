@@ -5,6 +5,8 @@ import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.io.ByteSize;
 import stroom.util.shared.AbstractConfig;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
@@ -20,11 +22,34 @@ public class ReferenceDataLmdbConfig extends AbstractConfig implements LmdbConfi
     static final boolean DEFAULT_IS_READ_AHEAD_ENABLED = true;
     static final boolean DEFAULT_IS_READER_BLOCKED_BY_WRITER = true;
 
-    private String localDir = DEFAULT_LOCAL_DIR;
-    private int maxReaders = DEFAULT_MAX_READERS;
-    private ByteSize maxStoreSize = DEFAULT_MAX_STORE_SIZE;
-    private boolean isReadAheadEnabled = DEFAULT_IS_READ_AHEAD_ENABLED;
-    private boolean isReaderBlockedByWriter = DEFAULT_IS_READER_BLOCKED_BY_WRITER;
+    // TODO 03/12/2021 AT: make final
+    private String localDir;
+    private final int maxReaders;
+    private final ByteSize maxStoreSize;
+    private final boolean isReadAheadEnabled;
+    private final boolean isReaderBlockedByWriter;
+
+    public ReferenceDataLmdbConfig() {
+        localDir = DEFAULT_LOCAL_DIR;
+        maxReaders = DEFAULT_MAX_READERS;
+        maxStoreSize = DEFAULT_MAX_STORE_SIZE;
+        isReadAheadEnabled = DEFAULT_IS_READ_AHEAD_ENABLED;
+        isReaderBlockedByWriter = DEFAULT_IS_READER_BLOCKED_BY_WRITER;
+    }
+
+    @SuppressWarnings("unused")
+    @JsonCreator
+    public ReferenceDataLmdbConfig(@JsonProperty("localDir") final String localDir,
+                                   @JsonProperty("maxReaders") final int maxReaders,
+                                   @JsonProperty("maxStoreSize") final ByteSize maxStoreSize,
+                                   @JsonProperty("readAheadEnabled") final boolean isReadAheadEnabled,
+                                   @JsonProperty("readerBlockedByWriter") final boolean isReaderBlockedByWriter) {
+        this.localDir = localDir;
+        this.maxReaders = maxReaders;
+        this.maxStoreSize = maxStoreSize;
+        this.isReadAheadEnabled = isReadAheadEnabled;
+        this.isReaderBlockedByWriter = isReaderBlockedByWriter;
+    }
 
     @Override
     @Nonnull
@@ -37,7 +62,7 @@ public class ReferenceDataLmdbConfig extends AbstractConfig implements LmdbConfi
         return localDir;
     }
 
-    @SuppressWarnings("unused")
+    @Deprecated(forRemoval = true)
     public void setLocalDir(final String localDir) {
         this.localDir = localDir;
     }
@@ -50,11 +75,6 @@ public class ReferenceDataLmdbConfig extends AbstractConfig implements LmdbConfi
         return maxReaders;
     }
 
-    @SuppressWarnings("unused")
-    public void setMaxReaders(final int maxReaders) {
-        this.maxReaders = maxReaders;
-    }
-
     @Override
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("The maximum size for the off heap store. There must be " +
@@ -63,11 +83,6 @@ public class ReferenceDataLmdbConfig extends AbstractConfig implements LmdbConfi
             "e.g. 1024, 1024B, 1024bytes, 1KiB, 1KB, 1K, etc.")
     public ByteSize getMaxStoreSize() {
         return maxStoreSize;
-    }
-
-    @SuppressWarnings("unused")
-    public void setMaxStoreSize(final ByteSize maxStoreSize) {
-        this.maxStoreSize = maxStoreSize;
     }
 
     @Override
@@ -79,11 +94,6 @@ public class ReferenceDataLmdbConfig extends AbstractConfig implements LmdbConfi
             "entries to make space for pre-fetched data.")
     public boolean isReadAheadEnabled() {
         return isReadAheadEnabled;
-    }
-
-    @SuppressWarnings("unused")
-    public void setReadAheadEnabled(final boolean isReadAheadEnabled) {
-        this.isReadAheadEnabled = isReadAheadEnabled;
     }
 
     @Override
@@ -99,9 +109,19 @@ public class ReferenceDataLmdbConfig extends AbstractConfig implements LmdbConfi
         return isReaderBlockedByWriter;
     }
 
-    @SuppressWarnings("unused")
-    public void setReaderBlockedByWriter(final boolean readerBlockedByWriter) {
-        isReaderBlockedByWriter = readerBlockedByWriter;
+    public ReferenceDataLmdbConfig withLocalDir(final String localDir) {
+        return new ReferenceDataLmdbConfig(
+                localDir, maxReaders, maxStoreSize, isReadAheadEnabled, isReaderBlockedByWriter);
+    }
+
+    public ReferenceDataLmdbConfig withMaxStoreSize(final ByteSize maxStoreSize) {
+        return new ReferenceDataLmdbConfig(
+                localDir, maxReaders, maxStoreSize, isReadAheadEnabled, isReaderBlockedByWriter);
+    }
+
+    public ReferenceDataLmdbConfig withReadAheadEnabled(final boolean isReadAheadEnabled) {
+        return new ReferenceDataLmdbConfig(
+                localDir, maxReaders, maxStoreSize, isReadAheadEnabled, isReaderBlockedByWriter);
     }
 
     @Override

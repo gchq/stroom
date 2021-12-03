@@ -1,7 +1,7 @@
 package stroom.config.global.impl;
 
 import stroom.config.app.AppConfig;
-import stroom.config.app.YamlUtil;
+import stroom.config.app.StroomYamlUtil;
 import stroom.util.HasHealthCheck;
 import stroom.util.config.AbstractFileChangeMonitor;
 import stroom.util.config.AppConfigValidator;
@@ -46,7 +46,7 @@ public class AppConfigMonitor extends AbstractFileChangeMonitor implements Manag
         final AppConfig newAppConfig;
         try {
             LOGGER.info("Reading updated config file");
-            newAppConfig = YamlUtil.readAppConfig(configFile);
+            newAppConfig = StroomYamlUtil.readAppConfig(configFile);
 
             final ConfigValidator.Result<AbstractConfig> result = validateNewConfig(newAppConfig);
 
@@ -57,7 +57,7 @@ public class AppConfigMonitor extends AbstractFileChangeMonitor implements Manag
             } else {
                 try {
                     LOGGER.info("Updating application config from file.");
-                    configMapper.updateConfigFromYaml();
+                    configMapper.updateConfigFromYaml(newAppConfig);
 
                     LOGGER.info("Completed updating application config from file.");
                 } catch (Throwable e) {

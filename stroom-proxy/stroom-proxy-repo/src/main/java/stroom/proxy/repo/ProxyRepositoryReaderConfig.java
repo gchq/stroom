@@ -5,21 +5,47 @@ import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.validation.ValidSimpleCron;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 
-@JsonPropertyOrder({"storingEnabled", "repoDir", "format", "rollCron"})
+@JsonPropertyOrder(alphabetic = true)
 public class ProxyRepositoryReaderConfig extends AbstractConfig implements IsProxyConfig {
 
-    private String readCron;
-    private int forwardThreadCount = 3;
-    private int maxFileScan = 100000;
-    private int maxConcurrentMappedFiles = 100000;
-    private int maxAggregation = 1000;
-    private long maxStreamSize = ModelStringUtil.parseIECByteSizeString("1G");
+    private final String readCron;
+    private final int forwardThreadCount;
+    private final int maxFileScan;
+    private final int maxConcurrentMappedFiles;
+    private final int maxAggregation;
+    private final long maxStreamSize;
+
+    public ProxyRepositoryReaderConfig() {
+        readCron = null;
+        forwardThreadCount = 3;
+        maxFileScan = 100000;
+        maxConcurrentMappedFiles = 100000;
+        maxAggregation = 1000;
+        maxStreamSize = ModelStringUtil.parseIECByteSizeString("1G");
+    }
+
+    @SuppressWarnings("unused")
+    @JsonCreator
+    public ProxyRepositoryReaderConfig(@JsonProperty("readCron") final String readCron,
+                                       @JsonProperty("forwardThreadCount") final int forwardThreadCount,
+                                       @JsonProperty("maxFileScan") final int maxFileScan,
+                                       @JsonProperty("maxConcurrentMappedFiles") final int maxConcurrentMappedFiles,
+                                       @JsonProperty("maxAggregation") final int maxAggregation,
+                                       @JsonProperty("maxStreamSize") final long maxStreamSize) {
+        this.readCron = readCron;
+        this.forwardThreadCount = forwardThreadCount;
+        this.maxFileScan = maxFileScan;
+        this.maxConcurrentMappedFiles = maxConcurrentMappedFiles;
+        this.maxAggregation = maxAggregation;
+        this.maxStreamSize = maxStreamSize;
+    }
 
     @JsonPropertyDescription("Cron style interval (e.g. every hour '0 * *', every half hour '0,30 * *') to read " +
             "any ready repositories (if not defined we read all the time)")
@@ -29,20 +55,10 @@ public class ProxyRepositoryReaderConfig extends AbstractConfig implements IsPro
         return readCron;
     }
 
-    @JsonProperty
-    public void setReadCron(final String readCron) {
-        this.readCron = readCron;
-    }
-
     @JsonPropertyDescription("Number of threads to forward with")
     @JsonProperty
     public int getForwardThreadCount() {
         return forwardThreadCount;
-    }
-
-    @JsonProperty
-    public void setForwardThreadCount(final int forwardThreadCount) {
-        this.forwardThreadCount = forwardThreadCount;
     }
 
 
@@ -53,21 +69,11 @@ public class ProxyRepositoryReaderConfig extends AbstractConfig implements IsPro
         return maxFileScan;
     }
 
-    @JsonProperty
-    public void setMaxFileScan(final int maxFileScan) {
-        this.maxFileScan = maxFileScan;
-    }
-
     @JsonPropertyDescription("The maximum number of concurrent mapped files we can hold before we send the " +
             "largest set for aggregation")
     @JsonProperty
     public int getMaxConcurrentMappedFiles() {
         return maxConcurrentMappedFiles;
-    }
-
-    @JsonProperty
-    public void setMaxConcurrentMappedFiles(final int maxConcurrentMappedFiles) {
-        this.maxConcurrentMappedFiles = maxConcurrentMappedFiles;
     }
 
     @JsonPropertyDescription("Aggregate size to break at when building an aggregate. 1G stream maybe a file " +
@@ -77,29 +83,14 @@ public class ProxyRepositoryReaderConfig extends AbstractConfig implements IsPro
         return maxAggregation;
     }
 
-    @JsonProperty
-    public void setMaxAggregation(final int maxAggregation) {
-        this.maxAggregation = maxAggregation;
-    }
-
     @JsonPropertyDescription("Stream size to break at when building an aggregate")
     @JsonProperty("maxStreamSize")
     public String getMaxStreamSizeString() {
         return ModelStringUtil.formatIECByteSizeString(maxStreamSize);
     }
 
-    @JsonProperty("maxStreamSize")
-    public void setMaxStreamSizeString(final String maxStreamSize) {
-        this.maxStreamSize = ModelStringUtil.parseIECByteSizeString(maxStreamSize);
-    }
-
     @JsonIgnore
     public long getMaxStreamSize() {
         return maxStreamSize;
-    }
-
-    @JsonIgnore
-    public void setMaxStreamSize(final long maxStreamSize) {
-        this.maxStreamSize = maxStreamSize;
     }
 }
