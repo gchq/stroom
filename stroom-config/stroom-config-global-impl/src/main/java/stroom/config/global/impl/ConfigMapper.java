@@ -21,6 +21,7 @@ package stroom.config.global.impl;
 import stroom.config.app.AppConfig;
 import stroom.config.app.ConfigHolder;
 import stroom.config.app.SuperDevUtil;
+import stroom.config.common.AbstractDbConfig;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.ConfigProperty.SourceType;
 import stroom.config.global.shared.ConfigPropertyValidationException;
@@ -325,7 +326,7 @@ public class ConfigMapper {
      * is held statically
      */
     private void updateXmlSecureProcessing() {
-        final ParserConfig parserConfig = getConfigObject(ParserConfig.class);
+        final ParserConfig parserConfig = getConfigObject(ParserConfig.class, false);
         SAXParserSettings.setSecureProcessingEnabled(parserConfig.isSecureProcessing());
     }
 
@@ -352,8 +353,11 @@ public class ConfigMapper {
         });
 
         // We only want to hold the injectable instances
-        if (!instance.getClass().isAnnotationPresent(NotInjectableConfig.class)) {
-            newInstanceMap.put(instance.getClass(), instance);
+        // DB config objects are bound separately in AppConfigModule
+        final Class<?> configClass = instance.getClass();
+        if (!configClass.isAnnotationPresent(NotInjectableConfig.class)
+                && !AbstractDbConfig.class.isAssignableFrom(configClass)) {
+            newInstanceMap.put(configClass, instance);
         }
 
         if (inSuperDevMode) {
@@ -1352,12 +1356,19 @@ public class ConfigMapper {
     }
 
     public <T extends AbstractConfig> T getConfigObject(final Class<T> clazz) {
-        try {
-            // wait for the config to be fully initialised before letting other classes inject it
-            configReadyForUseLatch.await();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Thread interrupted getting config instance for class " + clazz.getName());
+        return getConfigObject(clazz, true);
+    }
+
+    public <T extends AbstractConfig> T getConfigObject(final Class<T> clazz,
+                                                        final boolean isBlocking) {
+        if (isBlocking) {
+            try {
+                // wait for the config to be fully initialised before letting other classes inject it
+                configReadyForUseLatch.await();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("Thread interrupted getting config instance for class " + clazz.getName());
+            }
         }
 
         final AbstractConfig config = configInstanceMap.get(clazz);
@@ -1373,21 +1384,29 @@ public class ConfigMapper {
     }
 
     public List<Class<? extends AbstractConfig>> getInjectableConfigClasses() {
-        final Map<PropertyPath, ObjectInfo<? extends AbstractConfig>> objectInfoMap = new HashMap<>();
-        buildObjectInfoMap(
-                createObjectMapper(),
-                new AppConfig(),
-                PropertyPath.fromParts("stroom"),
-                objectInfoMap);
+
+        final Map<PropertyPath, ObjectInfo<? extends AbstractConfig>> objectInfoMap;
+        if (this.objectInfoMap.isEmpty()) {
+            objectInfoMap = new HashMap<>();
+
+            buildObjectInfoMap(
+                    createObjectMapper(),
+                    new AppConfig(),
+                    PropertyPath.fromParts("stroom"),
+                    objectInfoMap);
+        } else {
+            objectInfoMap = this.objectInfoMap;
+        }
 
         return objectInfoMap.values()
                 .stream()
                 .map(ObjectInfo::getObjectClass)
                 .filter(clazz ->
                         !clazz.isAnnotationPresent(NotInjectableConfig.class))
+                .filter(clazz ->
+                        !AbstractDbConfig.class.isAssignableFrom(clazz))
                 .collect(Collectors.toList());
     }
-
 
     private static void buildObjectInfoMap(
             final ObjectMapper objectMapper,
@@ -1405,9 +1424,7 @@ public class ConfigMapper {
                 config);
 
         if (objectInfo.getConstructor() == null) {
-            // TODO 29/11/2021 AT: Replace warn with throw once all ctors are in place
-            LOGGER.warn("No JsonCreator constructor for " + config.getClass().getName());
-//            throw new RuntimeException("No JsonCreator constructor for " + config.getClass().getName());
+            throw new RuntimeException("No JsonCreator constructor for " + config.getClass().getName());
         }
 
         objectInfoMap.put(path, objectInfo);

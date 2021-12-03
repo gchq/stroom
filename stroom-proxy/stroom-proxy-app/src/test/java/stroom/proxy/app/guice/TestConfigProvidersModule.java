@@ -1,11 +1,12 @@
-package stroom.config.global.impl;
+package stroom.proxy.app.guice;
 
-import stroom.config.app.AppConfig;
+import stroom.proxy.app.ProxyConfig;
+import stroom.proxy.app.ProxyPathConfig;
 import stroom.util.io.PathConfig;
-import stroom.util.io.StroomPathConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.AbstractConfig;
 
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
@@ -23,16 +24,15 @@ public class TestConfigProvidersModule {
 
     @Test
     void testProviderMethodPresence() {
-        final ConfigMapper configMapper = new ConfigMapper();
+        final ProxyConfigProvider proxyConfigProvider = new ProxyConfigProvider(new ProxyConfig());
 
-        final Set<Class<?>> methodReturnClasses = Arrays.stream(ConfigProvidersModule.class.getDeclaredMethods())
+        final Set<Class<?>> methodReturnClasses = Arrays.stream(ProxyConfigProvidersModule.class.getDeclaredMethods())
                 .map(Method::getReturnType)
                 .filter(clazz ->
                         !clazz.equals(PathConfig.class)) // PathConfig is a special case
                 .collect(Collectors.toSet());
 
-        final Set<Class<?>> injectableConfigClasses = new HashSet<>(
-                configMapper.getInjectableConfigClasses());
+        final Set<Class<? extends AbstractConfig>> injectableConfigClasses = proxyConfigProvider.getInjectableClasses();
 
         SoftAssertions.assertSoftly(softAssertions -> {
             softAssertions.assertThat(methodReturnClasses)
@@ -48,11 +48,11 @@ public class TestConfigProvidersModule {
                                         "Found the following unwanted method return types {}. " +
                                         "injectableConfigClasses: {}, methodReturnClasses: {}. " +
                                         "See {}.",
-                                ConfigProvidersModule.class.getSimpleName(),
+                                ProxyConfigProvidersModule.class.getSimpleName(),
                                 unwantedMethods,
                                 injectableConfigClasses.size(),
                                 methodReturnClasses.size(),
-                                GenerateConfigProvidersModule.class.getSimpleName());
+                                GenerateProxyConfigProvidersModule.class.getSimpleName());
                     })
                     .isTrue();
 
@@ -66,11 +66,11 @@ public class TestConfigProvidersModule {
                                         "Found the following missing method return types {}. " +
                                         "injectableConfigClasses: {}, methodReturnClasses: {}. " +
                                         "See {}.",
-                                ConfigProvidersModule.class.getSimpleName(),
+                                ProxyConfigProvidersModule.class.getSimpleName(),
                                 missingMethods,
                                 injectableConfigClasses.size(),
                                 methodReturnClasses.size(),
-                                GenerateConfigProvidersModule.class.getSimpleName());
+                                GenerateProxyConfigProvidersModule.class.getSimpleName());
                     })
                     .isTrue();
         });
@@ -78,17 +78,16 @@ public class TestConfigProvidersModule {
 
     @Test
     void testCallingProviderMethods() {
-        final ConfigProvidersModule configProvidersModule = new ConfigProvidersModule();
-        final ConfigMapper configMapper = new ConfigMapper();
-        configMapper.updateConfigInstances(new AppConfig());
+        final ProxyConfigProvidersModule configProvidersModule = new ProxyConfigProvidersModule();
+        final ProxyConfigProvider proxyConfigProvider = new ProxyConfigProvider(new ProxyConfig());
 
         SoftAssertions.assertSoftly(softAssertions -> {
-            Arrays.stream(ConfigProvidersModule.class.getDeclaredMethods())
+            Arrays.stream(ProxyConfigProvidersModule.class.getDeclaredMethods())
                     .forEach(method -> {
                         LOGGER.debug("method: {}", method.getName());
 
                         try {
-                            final Object config = method.invoke(configProvidersModule, configMapper);
+                            final Object config = method.invoke(configProvidersModule, proxyConfigProvider);
                             softAssertions.assertThat(config)
                                     .withFailMessage(() ->
                                             LogUtil.message("method {} returned null", method.getName()))
@@ -101,7 +100,7 @@ public class TestConfigProvidersModule {
                             if (method.getName().equals("getPathConfig")) {
                                 // StroomPathConfig is also mapped to PathConfig
                                 softAssertions.assertThat(config.getClass())
-                                        .isEqualTo(StroomPathConfig.class);
+                                        .isEqualTo(ProxyPathConfig.class);
                             } else {
                                 softAssertions.assertThat(config.getClass().getSimpleName())
                                         .withFailMessage(LogUtil.message("method {} returned {}, expecting {}",
