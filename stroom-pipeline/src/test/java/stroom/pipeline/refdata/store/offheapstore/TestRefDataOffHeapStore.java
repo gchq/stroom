@@ -142,7 +142,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                 new AbstractModule() {
                     @Override
                     protected void configure() {
-                        bind(ReferenceDataConfig.class).toInstance(referenceDataConfig);
+                        bind(ReferenceDataConfig.class).toProvider(() -> getReferenceDataConfig());
                         bind(HomeDirProvider.class).toInstance(() -> getCurrentTestDir());
                         bind(TempDirProvider.class).toInstance(() -> getCurrentTestDir());
                         install(new RefDataStoreModule());

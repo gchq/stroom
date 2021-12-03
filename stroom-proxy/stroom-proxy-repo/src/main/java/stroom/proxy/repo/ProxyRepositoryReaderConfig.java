@@ -38,13 +38,13 @@ public class ProxyRepositoryReaderConfig extends AbstractConfig implements IsPro
                                        @JsonProperty("maxFileScan") final int maxFileScan,
                                        @JsonProperty("maxConcurrentMappedFiles") final int maxConcurrentMappedFiles,
                                        @JsonProperty("maxAggregation") final int maxAggregation,
-                                       @JsonProperty("maxStreamSize") final long maxStreamSize) {
+                                       @JsonProperty("maxStreamSize") final String maxStreamSize) {
         this.readCron = readCron;
         this.forwardThreadCount = forwardThreadCount;
         this.maxFileScan = maxFileScan;
         this.maxConcurrentMappedFiles = maxConcurrentMappedFiles;
         this.maxAggregation = maxAggregation;
-        this.maxStreamSize = maxStreamSize;
+        this.maxStreamSize = ModelStringUtil.parseIECByteSizeString(maxStreamSize);
     }
 
     @JsonPropertyDescription("Cron style interval (e.g. every hour '0 * *', every half hour '0,30 * *') to read " +
