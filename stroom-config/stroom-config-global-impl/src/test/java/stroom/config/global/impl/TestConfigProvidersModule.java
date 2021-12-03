@@ -1,17 +1,22 @@
 package stroom.config.global.impl;
 
 import stroom.config.app.AppConfig;
+import stroom.config.app.AppConfigModule;
+import stroom.config.app.ConfigHolder;
 import stroom.util.io.PathConfig;
 import stroom.util.io.StroomPathConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -79,8 +84,25 @@ public class TestConfigProvidersModule {
     @Test
     void testCallingProviderMethods() {
         final ConfigProvidersModule configProvidersModule = new ConfigProvidersModule();
-        final ConfigMapper configMapper = new ConfigMapper();
-        configMapper.updateConfigInstances(new AppConfig());
+        final ConfigHolder configHolder = new ConfigHolder() {
+            @Override
+            public AppConfig getBootStrapConfig() {
+                return new AppConfig();
+            }
+
+            @Override
+            public Path getConfigFile() {
+                return Path.of("DUMMY");
+            }
+        };
+
+        final Injector injector = Guice.createInjector(
+                configProvidersModule,
+                new AppConfigModule(configHolder));
+
+        final ConfigMapper configMapper = injector.getInstance(ConfigMapper.class);
+        configMapper.markConfigAsReady();
+//        configMapper.updateConfigInstances(new AppConfig());
 
         SoftAssertions.assertSoftly(softAssertions -> {
             Arrays.stream(ConfigProvidersModule.class.getDeclaredMethods())
@@ -111,10 +133,16 @@ public class TestConfigProvidersModule {
                                         .isEqualTo(className);
                             }
 
+                            // Make sure guice gives us the same instance as ConfigMapper
+                            final Object guiceObject = injector.getInstance(config.getClass());
+                            softAssertions.assertThat(System.identityHashCode(guiceObject))
+                                    .isEqualTo(System.identityHashCode(config));
+
                         } catch (IllegalAccessException | InvocationTargetException e) {
                             throw new RuntimeException(e);
                         }
                     });
         });
+
     }
 }

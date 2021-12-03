@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 
-@NotInjectableConfig
+@NotInjectableConfig // used by multiple config classes
 public class ExtractionConfig extends AbstractConfig {
 
     /**

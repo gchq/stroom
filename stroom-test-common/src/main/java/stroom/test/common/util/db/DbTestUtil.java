@@ -2,8 +2,8 @@ package stroom.test.common.util.db;
 
 import stroom.config.common.AbstractDbConfig;
 import stroom.config.common.CommonDbConfig;
-import stroom.config.common.CommonDbConfig.MergedDbConfig;
 import stroom.config.common.ConnectionConfig;
+import stroom.config.common.ConnectionPoolConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceKey;
 import stroom.db.util.DbUrl;
@@ -206,10 +206,18 @@ public class DbTestUtil {
                     .url(url)
                     .build();
             LOGGER.info("Using DB connection url: {}", url);
-            testDbConfig = new MergedDbConfig(
-                    newConnectionConfig,
-                    dbConfig.getConnectionPoolConfig(),
-                    "TestDataSource");
+            testDbConfig = new AbstractDbConfig() {
+                @Override
+                public ConnectionConfig getConnectionConfig() {
+                    return newConnectionConfig;
+                }
+
+                @Override
+                public ConnectionPoolConfig getConnectionPoolConfig() {
+                    return dbConfig.getConnectionPoolConfig();
+                }
+            };
+
             THREAD_LOCAL.set(testDbConfig);
         }
 

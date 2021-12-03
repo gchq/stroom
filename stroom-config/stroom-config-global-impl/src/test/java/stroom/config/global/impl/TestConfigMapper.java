@@ -256,7 +256,7 @@ class TestConfigMapper {
         referenceDataLmdbConfig.setLocalDir(newValue);
 
         ConfigMapper configMapper = new ConfigMapper();
-        configMapper.updateConfigFromYaml();
+//        configMapper.updateConfigFromYaml();
 
         final Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
 
@@ -722,15 +722,15 @@ class TestConfigMapper {
         doValidateStringValueTest("stroom.byteSizeProp", "xxxxx", false);
     }
 
-    @Test
-    void testBuildAppConfigFromFile() {
-        final Path configFile = Path.of("../../stroom-app/dev.yml");
-        assertThat(configFile)
-                .isRegularFile();
-        final AppConfig appConfig = ConfigMapper.buildMergedAppConfig(configFile);
-        assertThat(appConfig)
-                .isNotNull();
-    }
+//    @Test
+//    void testBuildAppConfigFromFile() {
+//        final Path configFile = Path.of("../../stroom-app/dev.yml");
+//        assertThat(configFile)
+//                .isRegularFile();
+//        final AppConfig appConfig = ConfigMapper.buildMergedAppConfig(configFile);
+//        assertThat(appConfig)
+//                .isNotNull();
+//    }
 
     //    @Test
 //    void testRefreshConfig() {

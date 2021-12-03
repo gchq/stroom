@@ -1,6 +1,7 @@
 package stroom.config.common;
 
-import stroom.util.shared.NotInjectableConfig;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -10,6 +11,8 @@ import javax.inject.Singleton;
 
 @Singleton
 public class CommonDbConfig extends AbstractDbConfig {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CommonDbConfig.class);
 
     public CommonDbConfig() {
         // IMPORTANT - setting the defaults in this way means that they will be ignored by
@@ -36,7 +39,7 @@ public class CommonDbConfig extends AbstractDbConfig {
      * Thus allowing otherDbConfig to override values in this {@link CommonDbConfig}
      */
     @JsonIgnore
-    public MergedDbConfig mergeConfig(final AbstractDbConfig otherDbConfig) {
+    public AbstractDbConfig mergeConfig(final AbstractDbConfig otherDbConfig) {
 
 //        // These will contain all hard coded defaults
 //        final DbConfig outputConfig = new CommonDbConfig();
@@ -52,28 +55,34 @@ public class CommonDbConfig extends AbstractDbConfig {
         // A new instance of ConnectionConfig has all nulls so use defaults()
         final ConnectionConfig defaultConnectionConfig = ConnectionConfig.defaults();
 
-        ConnectionConfig mergedConnectionConfig = defaultConnectionConfig.merge(this.getConnectionConfig());
-        mergedConnectionConfig = mergedConnectionConfig.merge(otherDbConfig.getConnectionConfig());
-
+        final ConnectionConfig mergedConnectionConfig1 = defaultConnectionConfig.merge(getConnectionConfig());
+        final ConnectionConfig mergedConnectionConfig2 = mergedConnectionConfig1.merge(
+                otherDbConfig.getConnectionConfig());
 
         final ConnectionPoolConfig defaultPoolConfig = new ConnectionPoolConfig();
 
         // common trumps ctor defaults
-        ConnectionPoolConfig mergedPoolConfig = defaultPoolConfig.merge(
+        final ConnectionPoolConfig mergedPoolConfig1 = defaultPoolConfig.merge(
                 this.getConnectionPoolConfig(), true, false);
 
         // merge non-null values from the module specific config over the common ones.
-        mergedPoolConfig = mergedPoolConfig.merge(
+        final ConnectionPoolConfig mergedPoolConfig2 = mergedPoolConfig1.merge(
                 otherDbConfig.getConnectionPoolConfig(),
                 false,
                 false);
 
-        return new MergedDbConfig(
-                mergedConnectionConfig,
-                mergedPoolConfig,
-                otherDbConfig.getClass()
-                        .getSimpleName()
-                        .replaceAll("DbConfig$", ""));
+        final AbstractDbConfig mergedConfig = new AbstractDbConfig(mergedConnectionConfig2, mergedPoolConfig2) {
+        };
+        LOGGER.debug("""
+                        mergeConfig() called for {}
+                        common: {}
+                        other: {}
+                        merged: {}""",
+                otherDbConfig.getClass().getName(),
+                this,
+                otherDbConfig,
+                mergedConfig);
+        return mergedConfig;
     }
 
 //    private void applyDefaultConnectionProperties(final ConnectionConfig connectionConfig) {
@@ -84,26 +93,4 @@ public class CommonDbConfig extends AbstractDbConfig {
 //        connectionConfig.setPassword(ConnectionConfig.DEFAULT_JDBC_DRIVER_PASSWORD);
 //    }
 
-    @NotInjectableConfig
-    public static class MergedDbConfig extends AbstractDbConfig {
-
-        private final String moduleName;
-
-        public MergedDbConfig(final String moduleName) {
-            this.moduleName = moduleName;
-        }
-
-        @JsonCreator
-        public MergedDbConfig(
-                @JsonProperty("connection") final ConnectionConfig connectionConfig,
-                @JsonProperty("connectionPool") final ConnectionPoolConfig connectionPoolConfig,
-                final String moduleName) {
-            super(connectionConfig, connectionPoolConfig);
-            this.moduleName = moduleName;
-        }
-
-        public String getModuleName() {
-            return moduleName;
-        }
-    }
 }

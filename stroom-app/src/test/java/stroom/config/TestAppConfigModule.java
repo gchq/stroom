@@ -34,10 +34,8 @@ import java.lang.reflect.Modifier;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -96,7 +94,8 @@ class TestAppConfigModule {
         // Modify the value on the common connection pool so it gets applied to all other config objects
         final Config modifiedConfig = StroomYamlUtil.readConfig(devYamlPath);
         // Merge all the default values in
-        final AppConfig modifiedAppConfig = ConfigMapper.buildMergedAppConfig(devYamlPath);
+//        final AppConfig modifiedAppConfig = ConfigMapper.buildMergedAppConfig(devYamlPath);
+        final AppConfig modifiedAppConfig = modifiedConfig.getAppConfig();
 
         final int currentValue = modifiedAppConfig
                 .getCommonDbConfig()
@@ -130,7 +129,7 @@ class TestAppConfigModule {
 
                     @Override
                     public Path getConfigFile() {
-                        return devYamlPath;
+                        return Path.of("DUMMY");
                     }
                 }));
                 install(new ConfigProvidersModule());
@@ -138,7 +137,8 @@ class TestAppConfigModule {
         });
 
         final ConfigMapper configMapper = injector.getInstance(ConfigMapper.class);
-        configMapper.updateConfigInstances(modifiedAppConfig);
+        configMapper.markConfigAsReady();
+//        configMapper.updateConfigInstances(modifiedAppConfig);
         final AppConfig appConfig = injector.getInstance(AppConfig.class);
         final CommonDbConfig commonDbConfig = injector.getInstance(CommonDbConfig.class);
 
@@ -220,22 +220,6 @@ class TestAppConfigModule {
             }
         });
         final Injector injector = Guice.createInjector(appConfigModule);
-//        Injector injector = Guice.createInjector(new AbstractModule() {
-//            @Override
-//            protected void configure() {
-//                install(new AppConfigModule(new ConfigHolder() {
-//                    @Override
-//                    public AppConfig getAppConfig() {
-//                        return new AppConfig();
-//                    }
-//
-//                    @Override
-//                    public Path getConfigFile() {
-//                        return Paths.get("NOT USED");
-//                    }
-//                }));
-//            }
-//        });
 
         Predicate<String> packageNameFilter = name ->
                 name.startsWith(STROOM_PACKAGE_PREFIX) && !name.contains("shaded");
@@ -259,7 +243,6 @@ class TestAppConfigModule {
                 .filter(classFilter)
                 .filter(AbstractConfig.class::isAssignableFrom)
                 .filter(clazz -> !IsProxyConfig.class.isAssignableFrom(clazz)) // ignore proxy classes
-                .filter(clazz -> !clazz.isAnnotationPresent(NotInjectableConfig.class))
                 .filter(clazz -> {
                     boolean isAbstract = Modifier.isAbstract(clazz.getModifiers());
                     if (isAbstract) {
@@ -302,13 +285,6 @@ class TestAppConfigModule {
                     }
                 });
 
-        Map<Class<?>, Integer> injectedInstanceIdMap = abstractConfigConcreteClasses.stream()
-                .collect(Collectors.toMap(
-                        clazz -> clazz,
-                        clazz -> {
-                            Object object = injector.getInstance(clazz);
-                            return System.identityHashCode(object);
-                        }));
 
         // Make sure all config classes extend AbstractConfig and all AbstractConfig classes are in
         // the AppConfig tree. If there is a mismatch then it may be due to the getter/setter not
@@ -320,37 +296,14 @@ class TestAppConfigModule {
         Assertions.assertThat(appConfigTreeClasses)
                 .containsAll(abstractConfigConcreteClasses);
 
-        // Now we know the appConfig tree contains all the concrete AbstractConfig classes
-        // check that guice will give us the right instance. This ensures
-
-        List<Class<?>> classesWithMultipleInstances = appConfigTreeClassToIdMap.entrySet()
-                .stream()
-                .filter(entry -> {
-                    Integer appConfigTreeInstanceId = entry.getValue();
-                    Integer injectedInstanceId = injectedInstanceIdMap.get(entry.getKey());
-
-                    // Some AbstractConfig classes are shared so can't be injected themselves
-                    // so filter them out
-                    boolean isInjectableClass = entry.getKey().getAnnotation(NotInjectableConfig.class) == null;
-
-                    return !injectedInstanceId.equals(appConfigTreeInstanceId) && isInjectableClass;
-                })
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
-
-        if (!classesWithMultipleInstances.isEmpty()) {
-            LOGGER.error("The following AbstractConfig classes have a different injected instance to the " +
-                    "instance in the AppConfig tree.\n" +
-                    "You need to add Guice bindings for them in AppConfigModule");
-            classesWithMultipleInstances.stream()
-                    .sorted(Comparator.comparing(Class::getName))
-                    .forEach(clazz -> {
-                        AbstractConfig config = (AbstractConfig) injector.getInstance(clazz);
-                        LOGGER.info("  {}", clazz.getName());
-                    });
-        }
-
-        Assertions.assertThat(classesWithMultipleInstances).isEmpty();
+        final Map<Class<?>, Integer> injectedInstanceIdMap = abstractConfigConcreteClasses.stream()
+                .filter(clazz -> !clazz.isAnnotationPresent(NotInjectableConfig.class))
+                .collect(Collectors.toMap(
+                        clazz -> clazz,
+                        clazz -> {
+                            Object object = injector.getInstance(clazz);
+                            return System.identityHashCode(object);
+                        }));
     }
 
 

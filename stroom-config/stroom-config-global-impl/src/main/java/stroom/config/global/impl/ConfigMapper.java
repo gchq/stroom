@@ -43,7 +43,6 @@ import stroom.util.shared.PropertyPath;
 import stroom.util.time.StroomDuration;
 import stroom.util.xml.ParserConfig;
 import stroom.util.xml.SAXParserSettings;
-import stroom.util.yaml.YamlUtil;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -58,8 +57,6 @@ import com.google.common.base.Strings;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.nio.file.Path;
@@ -77,6 +74,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -238,6 +236,8 @@ public class ConfigMapper {
         LOGGER.debug("Building globalPropertiesMap from compile-time default values and annotations");
         this.allPropertyPaths = initialiseMaps();
 
+        updateConfigFromYaml(bootStrapConfig);
+
         // decorateAllDbConfigProperty will be called as soon as GlobalPropertyService
         // is initialised to update the globalPropertiesMap with the DB overrides and update
         // the appConfig tree with effective values accordingly.
@@ -285,25 +285,35 @@ public class ConfigMapper {
         return allPropertyPaths;
     }
 
+//    /**
+//     * Will copy the contents of the passed {@link AppConfig} into the guice bound {@link AppConfig}
+//     * and update the globalPropertiesMap.
+//     * It will also apply common database config to all other database config objects.
+//     */
+//    public synchronized void updateConfigFromYaml() {
+//
+//        final int changeCount = refreshGlobalPropYamlOverrides();
+//
+//        if (changeCount > 0) {
+//            rebuildObjectInstanceMap();
+//        }
+//    }
+
     /**
-     * Will copy the contents of the passed {@link AppConfig} into the guice bound {@link AppConfig}
-     * and update the globalPropertiesMap.
-     * It will also apply common database config to all other database config objects.
+     * Intended for tests to use
      */
-    public synchronized void updateConfigFromYaml() {
-
-        final int changeCount = refreshGlobalPropYamlOverrides();
-
-        if (changeCount > 0) {
-            rebuildObjectInstanceMap();
-        }
+    public void markConfigAsReady() {
+        configReadyForUseLatch.countDown();
     }
 
     public synchronized void updateConfigFromYaml(final AppConfig newAppConfig) {
 
         final int changeCount = refreshGlobalPropYamlOverrides(newAppConfig);
 
-        if (changeCount > 0) {
+        if (changeCount > 0 || configInstanceMap == null) {
+            if (configInstanceMap == null) {
+                configInstanceMap = new HashMap<>();
+            }
             rebuildObjectInstanceMap();
         }
     }
@@ -368,39 +378,39 @@ public class ConfigMapper {
         }
     }
 
-    AppConfig buildMergedAppConfig() {
-        return buildMergedAppConfig(configFile);
-    }
+//    AppConfig buildMergedAppConfig() {
+//        return buildMergedAppConfig(configFile);
+//    }
 
-    /**
-     * Merge the config.yml content with the default AppConfig tree to get a complete
-     * tree that includes any yaml overrides.
-     */
-    public static AppConfig buildMergedAppConfig(final Path configFile) {
-
-        final AppConfig defaultAppConfig = new AppConfig();
-        if (configFile == null) {
-            return defaultAppConfig;
-        } else {
-            try {
-                return YamlUtil.mergeYamlNodeTrees(
-                        AppConfig.class,
-                        objectMapper -> {
-                            try {
-                                return objectMapper.readTree(configFile.toFile());
-                            } catch (IOException e) {
-                                throw new UncheckedIOException(e);
-                            }
-                        },
-                        objectMapper ->
-                                objectMapper.valueToTree(defaultAppConfig));
-            } catch (Exception e) {
-                throw new RuntimeException(LogUtil.message("Error merging yaml trees with file {}. Message: {}",
-                        configFile.toAbsolutePath(),
-                        e.getMessage()), e);
-            }
-        }
-    }
+//    /**
+//     * Merge the config.yml content with the default AppConfig tree to get a complete
+//     * tree that includes any yaml overrides.
+//     */
+//    public static AppConfig buildMergedAppConfig(final Path configFile) {
+//
+//        final AppConfig defaultAppConfig = new AppConfig();
+//        if (configFile == null) {
+//            return defaultAppConfig;
+//        } else {
+//            try {
+//                return YamlUtil.mergeYamlNodeTrees(
+//                        AppConfig.class,
+//                        objectMapper -> {
+//                            try {
+//                                return objectMapper.readTree(configFile.toFile());
+//                            } catch (IOException e) {
+//                                throw new UncheckedIOException(e);
+//                            }
+//                        },
+//                        objectMapper ->
+//                                objectMapper.valueToTree(defaultAppConfig));
+//            } catch (Exception e) {
+//                throw new RuntimeException(LogUtil.message("Error merging yaml trees with file {}. Message: {}",
+//                        configFile.toAbsolutePath(),
+//                        e.getMessage()), e);
+//            }
+//        }
+//    }
 
 //    /**
 //     * FOR TESTING ONLY. If our custom config is in a file then we must use
@@ -426,10 +436,10 @@ public class ConfigMapper {
 //
 //    }
 
-    private synchronized int refreshGlobalPropYamlOverrides() {
-        final AppConfig yamlAppConfig = buildMergedAppConfig();
-        return refreshGlobalPropYamlOverrides(yamlAppConfig);
-    }
+//    private synchronized int refreshGlobalPropYamlOverrides() {
+//        final AppConfig yamlAppConfig = buildMergedAppConfig();
+//        return refreshGlobalPropYamlOverrides(yamlAppConfig);
+//    }
 
     /**
      * Only for use in testing as this does not wait for DB props to be included
@@ -1363,8 +1373,12 @@ public class ConfigMapper {
                                                         final boolean isBlocking) {
         if (isBlocking) {
             try {
-                // wait for the config to be fully initialised before letting other classes inject it
-                configReadyForUseLatch.await();
+                boolean isReady = false;
+                while (!isReady) {
+                    // wait for the config to be fully initialised before letting other classes inject it
+                    isReady = configReadyForUseLatch.await(10, TimeUnit.SECONDS);
+                    LOGGER.warn("Waiting for config to be initialised");
+                }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 throw new RuntimeException("Thread interrupted getting config instance for class " + clazz.getName());

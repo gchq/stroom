@@ -95,8 +95,8 @@ public class YamlUtil {
             mergedNode = sparseRootNode;
         }
 
-        LOGGER.doIfDebugEnabled(() -> {
-            LOGGER.debug("Comparing default config (old) to the merged config (new)");
+        LOGGER.doIfTraceEnabled(() -> {
+            LOGGER.trace("Comparing default config (old) to the merged config (new)");
             diffNodeTrees(yamlObjectMapper, defaultRootNode, mergedNode);
         });
 

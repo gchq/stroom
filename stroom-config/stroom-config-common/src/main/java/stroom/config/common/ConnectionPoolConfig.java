@@ -103,9 +103,24 @@ public class ConnectionPoolConfig extends AbstractConfig {
             return this;
         } else {
             return new ConnectionPoolConfig(
-                    other.cachePrepStmts,
-                    other.prepStmtCacheSize,
-                    other.prepStmtCacheSqlLimit,
+                    PropertyUtil.mergeValues(
+                            other.cachePrepStmts,
+                            cachePrepStmts,
+                            DEFAULTS.cachePrepStmts,
+                            copyNulls,
+                            copyDefaults),
+                    PropertyUtil.mergeValues(
+                            other.prepStmtCacheSize,
+                            prepStmtCacheSize,
+                            DEFAULTS.prepStmtCacheSize,
+                            copyNulls,
+                            copyDefaults),
+                    PropertyUtil.mergeValues(
+                            other.prepStmtCacheSqlLimit,
+                            prepStmtCacheSqlLimit,
+                            DEFAULTS.prepStmtCacheSqlLimit,
+                            copyNulls,
+                            copyDefaults),
                     PropertyUtil.mergeValues(
                             other.connectionTimeout,
                             connectionTimeout,
@@ -130,8 +145,18 @@ public class ConnectionPoolConfig extends AbstractConfig {
                             DEFAULTS.leakDetectionThreshold,
                             copyNulls,
                             copyDefaults),
-                    other.minimumIdle,
-                    other.maxPoolSize);
+                    PropertyUtil.mergeValues(
+                            other.minimumIdle,
+                            minimumIdle,
+                            DEFAULTS.minimumIdle,
+                            copyNulls,
+                            copyDefaults),
+                    PropertyUtil.mergeValues(
+                            other.maxPoolSize,
+                            maxPoolSize,
+                            DEFAULTS.maxPoolSize,
+                            copyNulls,
+                            copyDefaults));
         }
     }
 

@@ -16,7 +16,7 @@
         </encoder>
     </appender>
 
-    <logger name="stroom" level="info" />
+    <logger name="stroom" level="debug" />
 
     <logger name="stroom.proxy" level="info" />
 
