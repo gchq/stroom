@@ -32,24 +32,24 @@ public class OpenIdClientDaoImpl implements OpenIdClientDao {
     @Override
     public Optional<OpenIdClient> getClientForClientId(final String clientId) {
         return JooqUtil.contextResult(identityDbConnProvider, context -> context
-                .selectFrom(OauthClient.OAUTH_CLIENT)
-                .where(OauthClient.OAUTH_CLIENT.CLIENT_ID.eq(clientId))
-                .fetchOptional()
+                        .selectFrom(OauthClient.OAUTH_CLIENT)
+                        .where(OauthClient.OAUTH_CLIENT.CLIENT_ID.eq(clientId))
+                        .fetchOptional())
                 .map(record -> new OpenIdClient(record.getName(),
                         record.getClientId(),
                         record.getClientSecret(),
-                        record.getUriPattern())));
+                        record.getUriPattern()));
     }
 
     @Override
     public Optional<OpenIdClient> getClientByName(final String name) {
         return JooqUtil.contextResult(identityDbConnProvider, context -> context
-                .selectFrom(OauthClient.OAUTH_CLIENT)
-                .where(OauthClient.OAUTH_CLIENT.NAME.eq(name))
-                .fetchOptional()
+                        .selectFrom(OauthClient.OAUTH_CLIENT)
+                        .where(OauthClient.OAUTH_CLIENT.NAME.eq(name))
+                        .fetchOptional())
                 .map(record -> new OpenIdClient(record.getName(),
                         record.getClientId(),
                         record.getClientSecret(),
-                        record.getUriPattern())));
+                        record.getUriPattern()));
     }
 }

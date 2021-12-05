@@ -7,6 +7,142 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#2501** : Change reference data store to use consistent approach to last access time truncation.
+
+* Issue **#2424** : Change security filter to 404 any unexpected URIs.
+
+* Issue **#2493** : Fix missing part nav controls when data can't be decoded.
+
+* Issue **#2497** : Added summary to orphan file finder.
+
+* Issue **#2500** : Add a primary key to the `meta_retention_tracker` table for MySQL Group Replication.
+
+* Change meta retention tracking to track at the time period level so a killed job preserves the position of the periods already processed.
+
+* Issue **#2513** : Fixed stepping to unique values.
+
+* Issue **#2496** : Fixed issue where data browser was showing duplicate streams.
+
+* Issue **#2511, #2512** : Fixed stepping error handling.
+
+* Issue **#2478** : Create a single place in config for the LMDB library path and extraction dir.
+
+* Issue **#2478** : Delete old LMDB library binaries on boot.
+
+* Issue **#2497** : Fixed issue with `OrphanFileFinder` incorrectly identifying some dirs as being empty.
+
+* Change `/api/refData/v1/purgeByAge/{purgeAge}`, `/api/refData/v1/purgeByStream/{refStreamId}` and `/api/refData/v1/clearBufferPool` to act on all nodes unless the `nodeName` query param is provided.
+
+* Issue **#2483** : Change reference data purge to delete entries in batchs to avoid large transactions that result in errors.
+
+* Fix performance issue with ref data range lookups.
+
+* Change default value for `stroom.pipeline.referenceData.readerBlockedByWriter` to true.
+
+* Fix locking for `stroom.pipeline.referenceData.readerBlockedByWriter`.
+
+* Issue **#2494** : Changed logging to help diagnose problem.
+
+* Issue **#2429** : The server tasks screen now handles errors that occur when trying to contact unreachable nodes.
+
+* Issue **#2492** : Fixed issue getting filter priorities in processor task data store.
+
+* Issue **#2489** : Change to wrap long error messages in stepping display.
+
+* Issue **#2487** : Fixed issue flushing and deleting index shards.
+
+* Issue **#2442** : Removed enabled/disabled states for permission users and user groups as these are now controlled by account authentication. 
+
+* Issue **#2431** : Fixed issue with item selection in account and token list pages.
+
+* Issue **#2484** : Fix failing ref lookups when one loader has range data.
+
+* Issue **#2485** : Autologger: UNLOGGED calls always being logged.
+
+* Issue **#2395** : Fixed timezone issue in API key display.
+
+* Issue **#2452** : New pipeline references now default to `Reference` data type.
+
+* Issue **#2414** : The processing tasks data source now exposes start, end and status times plus filter priorities.
+
+* Issue **#2441** : Improve logging and prevent autologger warning for `MetaResourcImpl`
+
+* Issue **#2440** : Prevent autologger warning for `ExplorerResourceImpl`
+
+* Issue **#2465** : `SaveAs` is now working for non admin users.
+
+* Issue **#2460** : Processing filters now reliably process feeds where wildcards are used to match feed names.
+
+* Issue **#2475** : Orphan file and meta finder now show the correct task progress.
+
+* Issue **#2474** : Fixed orphan file finder.
+
+* Issue **#2467** : Fix viewing of streams that can't be decoded. Errors now displayed in large banner rather than as text in the editor.
+
+* Add a view as hex option to the Data Preview panes.
+
+* Add option to show/hide the editor indent guides.
+
+* Remove white space on editor context menu.
+
+* Change data viewing 'progress' bar to have a minimum width of 3px to make it more visible.
+
+* Issue **#2469** : Made `SafeXmlFilter` available for use in the application.
+
+* Issue **#2403** : Fix guice bind errors in stroom and proxy when the `path` config branch is empty or set to null.
+
+* Issue **#2462** : Made changes to stop DB connections being used within the context of other open connections.
+
+* Uplift LMDBJava to 0.8.2 to fix LMDBJava cursor comparator bug.
+
+* Issue **#2464** : Add `leakDetectionThreshold` to the hikari pool config.
+
+* Issue **#2463** : Integrate the hikari connection pool with drop wizard's health checks and metrics.
+
+* Add debug logging to AuthenticationStateSessionUtil
+
+* Issue **#2448** : Change data receipt ERROR log messages to WARN. Also improve log message content for success and failure.
+
+* Issue **#2412** : You are now able to view locked streams or deleted data if it is still accessible.
+
+* Issue **#2413** : Removed duplication of data retention fields in info pane.
+
+* Issue **#2443** : Internal meta statistics are now added with processing user permissions.
+
+* Issue **#2455** : Improved error handling when streams not found.
+
+* Issue **#2399** : Now changing expression fields keeps the same condition if it is still applicable to the new field.
+
+* Issue **#2426** : Fixed user selection problem for document permissions.
+
+* Issue **#2436** : Fixed small UI issue whereby a user or group was not immediately removed from document permissions when the remove button was clicked.
+
+* Issue **#2416** : Added logging to identify cause of slow meta listing.
+
+* Improve termination handling in reference data purge.
+
+* Improve the data in the `/api/refData/v1/refStreamInfo` api method.
+
+* Add API method to clear the byte buffer pool.
+
+* Improve the output of the system info api call for the byte buffer pool.
+
+* Issue **#2439** : Change log level for an error in the byte buffer pool.
+
+* Issue **#2444** : Fix release of buffers to the pool that was causing ref data searches to hang.
+
+* Issue **#2433, #2434** : Fixed shutdown task order.
+
+* Issue **#2430** : Removed file system clean task and replaced with orphan finding jobs for files and meta.
+
+* Issue **#2432** : Volume state is now updated without optimistic locking.
+
+* Issue **#2382** : Improved charset resolution.
+
+* Issue **#2447** : Correctly offset displayed date/time values by the configured user timezone.
+
+* Issue **#2457** : Display a tooltip when hovering the mouse over a grid column cell.
+
 * Issue **#2382** : Improve error message for invalid feed encodings.
 
 * Issue **#2387** : Fix reference data load/lookup failure handling.

@@ -222,7 +222,7 @@ public class StreamAppender extends AbstractAppender {
                     }
                 } catch (final IOException | RuntimeException e) {
                     try {
-                        LOGGER.debug(e.getMessage(), e);
+                        LOGGER.error(e.getMessage(), e);
                         // Log the error.
                         fatal(e.getMessage());
                     } finally {

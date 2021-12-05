@@ -49,7 +49,7 @@ New pipeline elements for writing XML or text data to a Kafka topic. This provid
 # v7.0
 
 ## Reference data storage
-Reference data uses a memory-mapped disk-based store rather than direct memory to reduce the memory overhead associated with storing reference data. Reference data is also enhanced to cope with changes (additions and removals) of state information rather than always relying on complete snapshots.
+Reference data uses a memory-mapped disk-based store rather than direct memory to reduce the memory overhead associated with storing reference data.
 
 ## Search result storage
 Search results are stored on disk rather than in memory during creation to reduce the memory overhead incurred by search.
@@ -68,17 +68,24 @@ Search results in dashboards can be annotated to provide status and notes relati
 ## Elastic search integration
 Elastic search can be used for indexing data. Data can be sent to an elastic index via a pipeline element and an elastic index can be queried from a Stroom dashboard.
 
-# v8.0
+## Interactive Visualisations
+Selecting or manipulating parts of visualisations can be used to trigger further queries to zoom in or select specific data etc.
 
-## HDFS Storage Support
-Add support for HDFS as a data storage option.
+## Improved Proxy Aggregation
+Proxy aggregation can better match user defined aggregate sizes and forward to multiple destinations.
 
-# v9.0
+## User Preferences
+The UI can be customised to meet the needs of an end user including theme (dark mode), date and time format, font, layout.
 
-## New UI
-Replace the GWT UI with a React-based implementation.
+# v7.2
 
-# v10+
+## XSLT 3
+Add support for XSLT 3.
+
+## Accessibility Improvements
+Refactoring some elements of the UI to improve accessibility.
+
+# v8+
 
 ## Authorisation enhancements
 The Stroom authorisation system is split out into a separate service and provides integration with external authorisation mechanisms.
@@ -100,4 +107,8 @@ Stroom exposes the use of Apache Kafka Streams for performing certain complex an
 
 ## Query fusion
 Stroom allows multiple data sources to be queried at the same time and the results of the queries to be fused. This might be for fusing data from multiple search indexes, e.g. events and annotations, or to effectively decorate results with additional data at search time.
+
+## Reference data deltas
+ Reference data is enhanced to cope with changes (additions and removals) of state information rather than always relying on complete snapshots.
+
 

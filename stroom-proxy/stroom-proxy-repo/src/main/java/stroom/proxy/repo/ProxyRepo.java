@@ -304,7 +304,7 @@ public class ProxyRepo {
 
                         // If we have added a new source to the repo then add a DB record for it.
                         final long lastModifiedTime = System.currentTimeMillis();
-                        proxyRepoSources.addSource(zipFileName, feedName, typeName, lastModifiedTime);
+                        proxyRepoSources.addSource(zipFileName, feedName, typeName, lastModifiedTime, attributeMap);
 
                     } catch (final IOException e) {
                         LOGGER.error(e.getMessage(), e);

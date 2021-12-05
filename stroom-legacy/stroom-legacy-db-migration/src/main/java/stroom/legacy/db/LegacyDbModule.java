@@ -96,7 +96,7 @@ public class LegacyDbModule extends AbstractModule {
                                                       final DataSourceFactory dataSourceFactory) {
         LOGGER.debug(() -> "Getting connection provider for " + getModuleName());
 
-        final DataSource dataSource = dataSourceFactory.create(configProvider.get());
+        final DataSource dataSource = dataSourceFactory.create(configProvider.get(), getModuleName(), false);
 
         // Prevent migrations from being re-run for each test
         final boolean required = COMPLETED_MIGRATIONS

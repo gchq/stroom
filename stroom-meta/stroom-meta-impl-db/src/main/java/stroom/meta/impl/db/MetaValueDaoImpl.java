@@ -141,11 +141,7 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
             batchBindStep.execute();
         });
 
-        if (logExecutionTime.getDuration() > 1000) {
-            LOGGER.warn(() -> "Saved " + rows.size() + " updates, completed in " + logExecutionTime);
-        } else {
-            LOGGER.debug(() -> "Saved " + rows.size() + " updates, completed in " + logExecutionTime);
-        }
+        LOGGER.debug(() -> "Saved " + rows.size() + " updates, completed in " + logExecutionTime);
     }
 
     @Override
@@ -194,12 +190,7 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
                                 batchSize)
         );
 
-        if (logExecutionTime.getDuration() > 1000) {
-            LOGGER.warn(() -> "Deleted " + count + ", completed in " + logExecutionTime);
-        } else {
-            LOGGER.debug(() -> "Deleted " + count + ", completed in " + logExecutionTime);
-        }
-
+        LOGGER.debug(() -> "Deleted " + count + ", completed in " + logExecutionTime);
         return count;
 
 //        final SqlBuilder sql = new SqlBuilder();
@@ -238,15 +229,15 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
                 .map(Meta::getId)
                 .collect(Collectors.toList());
 
-        JooqUtil.context(metaDbConnProvider, context -> context
-                .select(
-                        META_VAL.META_ID,
-                        META_VAL.META_KEY_ID,
-                        META_VAL.VAL
-                )
-                .from(META_VAL)
-                .where(META_VAL.META_ID.in(idList))
-                .fetch()
+        JooqUtil.contextResult(metaDbConnProvider, context -> context
+                        .select(
+                                META_VAL.META_ID,
+                                META_VAL.META_KEY_ID,
+                                META_VAL.VAL
+                        )
+                        .from(META_VAL)
+                        .where(META_VAL.META_ID.in(idList))
+                        .fetch())
                 .forEach(r -> {
                     final int keyId = r.get(META_VAL.META_KEY_ID);
                     metaKeyService.getNameForId(keyId).ifPresent(name -> {
@@ -254,8 +245,7 @@ class MetaValueDaoImpl implements MetaValueDao, Clearable {
                         final String value = String.valueOf(r.get(META_VAL.VAL));
                         attributeMap.computeIfAbsent(dataId, k -> new HashMap<>()).put(name, value);
                     });
-                })
-        );
+                });
 
         return attributeMap;
 

@@ -16,12 +16,14 @@ import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -120,11 +122,11 @@ public class MapDefinitionUIDStore {
         return entryCountForward;
     }
 
-    Optional<UID> getNextMapDefinition(final Txn<ByteBuffer> writeTxn,
+    Optional<UID> getNextMapDefinition(final Txn<ByteBuffer> readTxn,
                                        final RefStreamDefinition refStreamDefinition,
                                        final Supplier<ByteBuffer> uidBufferSupplier) {
 
-        return mapUidForwardDb.getNextMapDefinition(writeTxn, refStreamDefinition, uidBufferSupplier);
+        return mapUidForwardDb.getNextMapDefinition(readTxn, refStreamDefinition, uidBufferSupplier);
     }
 
     void deletePair(final Txn<ByteBuffer> writeTxn,
@@ -207,6 +209,14 @@ public class MapDefinitionUIDStore {
 
     public Set<String> getMapNames(final Txn<ByteBuffer> readTxn,
                                    final RefStreamDefinition refStreamDefinition) {
-        return mapUidForwardDb.getMapNames(readTxn, refStreamDefinition);
+        return mapUidForwardDb.getMapDefinitions(readTxn, refStreamDefinition)
+                .stream()
+                .map(MapDefinition::getMapName)
+                .collect(Collectors.toSet());
+    }
+
+    public List<MapDefinition> getMapDefinitions(final Txn<ByteBuffer> readTxn,
+                                                 final RefStreamDefinition refStreamDefinition) {
+        return mapUidForwardDb.getMapDefinitions(readTxn, refStreamDefinition);
     }
 }

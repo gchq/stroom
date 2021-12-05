@@ -62,6 +62,13 @@ public class ClusterLockDbModule extends AbstractFlyWayDbModule<ClusterLockConfi
     }
 
     @Override
+    protected boolean createUniquePool() {
+        // We need the cluster lock connection pool to be unique as cluster lock connections are held open while other
+        // DB operations are performed and if the pool were not unique then we would run the risk of deadlocks.
+        return true;
+    }
+
+    @Override
     protected Class<ClusterLockDbConnProvider> getConnectionProviderType() {
         return ClusterLockDbConnProvider.class;
     }

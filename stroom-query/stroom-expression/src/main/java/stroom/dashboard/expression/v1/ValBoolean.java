@@ -71,7 +71,7 @@ public final class ValBoolean implements Val {
 
     @Override
     public void appendString(final StringBuilder sb) {
-        sb.append(toString());
+        sb.append(this);
     }
 
     @Override
@@ -79,7 +79,6 @@ public final class ValBoolean implements Val {
         return TYPE;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

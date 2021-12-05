@@ -29,13 +29,14 @@ import stroom.receive.common.StroomStreamProcessor;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskProgressHandler;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -49,7 +50,7 @@ import javax.servlet.http.HttpServletResponse;
  */
 class ReceiveDataRequestHandler implements RequestHandler {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ReceiveDataRequestHandler.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReceiveDataRequestHandler.class);
 
     private final SecurityContext securityContext;
     private final AttributeMapFilterFactory attributeMapFilterFactory;
@@ -73,11 +74,18 @@ class ReceiveDataRequestHandler implements RequestHandler {
             final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();
 
             final AttributeMap attributeMap = AttributeMapUtil.create(request);
+            final String feedName;
             if (attributeMapFilter.filter(attributeMap)) {
                 debug("Receiving data", attributeMap);
 
-                final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
-                final String typeName = attributeMap.get(StandardHeaderArguments.TYPE);
+                feedName = Optional.ofNullable(attributeMap.get(StandardHeaderArguments.FEED))
+                        .map(String::trim)
+                        .orElse("");
+
+                // Get the type name from the header arguments if supplied.
+                String typeName = Optional.ofNullable(attributeMap.get(StandardHeaderArguments.TYPE))
+                        .map(String::trim)
+                        .orElse("");
 
                 taskContextFactory.context("Receiving Data", taskContext -> {
                     final Consumer<Long> progressHandler =
@@ -93,7 +101,7 @@ class ReceiveDataRequestHandler implements RequestHandler {
                         });
                     } catch (final RuntimeException | IOException e) {
                         LOGGER.error(e.getMessage(), e);
-                        StroomStreamException.create(e);
+                        StroomStreamException.createAndThrow(e, attributeMap);
                     }
                 }).run();
             } else {
@@ -102,14 +110,40 @@ class ReceiveDataRequestHandler implements RequestHandler {
             }
 
             // Set the response status.
-            response.setStatus(StroomStatusCode.OK.getHttpCode());
-            LOGGER.info("handleRequest response " + StroomStatusCode.OK);
+            final StroomStatusCode stroomStatusCode = StroomStatusCode.OK;
+            response.setStatus(stroomStatusCode.getHttpCode());
+            logSuccess(attributeMap, stroomStatusCode);
         });
+    }
+
+    private void logSuccess(final AttributeMap attributeMap, final StroomStatusCode stroomStatusCode) {
+        final StringBuilder clientDetailsStringBuilder = new StringBuilder();
+        AttributeMapUtil.appendAttributes(
+                attributeMap,
+                clientDetailsStringBuilder,
+                StandardHeaderArguments.X_FORWARDED_FOR,
+                StandardHeaderArguments.REMOTE_HOST,
+                StandardHeaderArguments.REMOTE_ADDRESS,
+                StandardHeaderArguments.RECEIVED_PATH);
+
+        final String clientDetailsStr = clientDetailsStringBuilder.isEmpty()
+                ? ""
+                : " - " + clientDetailsStringBuilder;
+
+        LOGGER.info(() -> LogUtil.message(
+                "Sending success response {} - {}{}",
+                stroomStatusCode.getHttpCode(),
+                StroomStreamException.buildStatusMessage(stroomStatusCode, attributeMap),
+                clientDetailsStr));
     }
 
     private void debug(final String message, final AttributeMap attributeMap) {
         if (LOGGER.isDebugEnabled()) {
-            final List<String> keys = attributeMap.keySet().stream().sorted().collect(Collectors.toList());
+            final List<String> keys = attributeMap
+                    .keySet()
+                    .stream()
+                    .sorted()
+                    .collect(Collectors.toList());
             final StringBuilder sb = new StringBuilder();
             keys.forEach(key -> {
                 sb.append(key);
@@ -121,7 +155,7 @@ class ReceiveDataRequestHandler implements RequestHandler {
                 sb.setLength(sb.length() - 1);
             }
 
-            LOGGER.debug(message + " (" + sb.toString() + ")");
+            LOGGER.debug(message + " (" + sb + ")");
         }
     }
 }

@@ -22,6 +22,7 @@ import com.google.inject.multibindings.MapBinder;
 import java.util.Objects;
 
 public abstract class PipelineElementModule extends AbstractModule {
+
     private MapBinder<ElementType, Element> mapBinder;
 
     @Override
@@ -40,6 +41,7 @@ public abstract class PipelineElementModule extends AbstractModule {
     }
 
     public static class ElementType {
+
         private final Class<?> elementClass;
 
         <T extends Element> ElementType(final Class<T> elementClass) {
@@ -50,11 +52,14 @@ public abstract class PipelineElementModule extends AbstractModule {
             return elementClass;
         }
 
-        @SuppressWarnings("checkstyle:needbraces")
         @Override
         public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
             final ElementType that = (ElementType) o;
             return Objects.equals(elementClass, that.elementClass);
         }

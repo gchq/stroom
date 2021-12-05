@@ -92,10 +92,10 @@ public class MetaFields {
         // Counts
         EXTENDED_FIELDS.add(REC_READ);
         EXTENDED_FIELDS.add(REC_WRITE);
-        EXTENDED_FIELDS.add(REC_FATAL);
-        EXTENDED_FIELDS.add(REC_ERROR);
-        EXTENDED_FIELDS.add(REC_WARN);
         EXTENDED_FIELDS.add(REC_INFO);
+        EXTENDED_FIELDS.add(REC_WARN);
+        EXTENDED_FIELDS.add(REC_ERROR);
+        EXTENDED_FIELDS.add(REC_FATAL);
 
         // Sizes
         EXTENDED_FIELDS.add(FILE_SIZE);

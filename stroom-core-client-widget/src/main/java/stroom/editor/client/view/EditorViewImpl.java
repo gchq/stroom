@@ -39,9 +39,14 @@ import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.ViewImpl;
 import edu.ycp.cs.dh.acegwt.client.ace.AceAnnotationType;
@@ -73,22 +78,23 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
     private final Option lineNumbersOption;
     private final Option indicatorsOption;
     private final Option lineWrapOption;
+    private final Option showIndentGuides;
     private final Option showInvisiblesOption;
     private final Option useVimBindingsOption;
     private final Option basicAutoCompletionOption;
     private final Option snippetsOption;
     private final Option liveAutoCompletionOption;
     private final Option highlightActiveLineOption;
+    private final Option viewAsHexOption;
 
     private final Widget widget;
 
     @UiField(provided = true)
-    FlowPanel layout;
-    @UiField
-    Editor editor;
+    SimplePanel content;
     @UiField
     RightBar rightBar;
 
+    private final Editor editor;
     private IndicatorLines indicators;
     private AceEditorMode mode = AceEditorMode.XML;
     private int firstLineNumber = 1;
@@ -96,7 +102,7 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
 
     @Inject
     public EditorViewImpl(final Binder binder) {
-        layout = new FlowPanel() {
+        content = new SimplePanel() {
             @Override
             protected void onAttach() {
                 super.onAttach();
@@ -111,6 +117,10 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
         };
 
         widget = binder.createAndBindUi(this);
+
+        editor = new Editor();
+        content.setWidget(editor.asWidget());
+
         formatAction = new Action("Format", false, this::format);
 
         // Don't forget to add any new options into EditorPresenter
@@ -122,6 +132,8 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
                 "Indicators", SHOW_INDICATORS_DEFAULT, false, this::doLayout);
         lineWrapOption = new Option(
                 "Wrap Lines", false, true, (on) -> editor.setUseWrapMode(on));
+        showIndentGuides = new Option(
+                "Show Indent Guides", true, true, (on) -> editor.setShowIndentGuides(on));
         showInvisiblesOption = new Option(
                 "Show Hidden Characters", false, true, (on) -> editor.setShowInvisibles(on));
         useVimBindingsOption = new Option(
@@ -134,6 +146,7 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
                 "Snippets", true, true, (on) -> editor.setUseSnippets(on));
         highlightActiveLineOption = new Option(
                 "Highlight Active Line", true, true, (on) -> editor.setHighlightActiveLine(on));
+        viewAsHexOption = new Option("View as Hex", false, false, null);
 
         editor.getElement().setClassName("editor");
         editor.addDomHandler(this::handleMouseDown, MouseDownEvent.getType());
@@ -185,6 +198,7 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
 
     @Override
     public void setText(final String text, final boolean format) {
+        content.setWidget(editor.asWidget());
         if (text == null) {
             editor.setText("");
         } else {
@@ -258,7 +272,7 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
                                 throw new RuntimeException("Unexpected severity " + severity);
                         }
 
-                        // Ace munges all the msgs together in one popup for annotaions on the same line/col
+                        // Ace munges all the msgs together in one popup for annotations on the same line/col
                         // so add the severity as if we have some info + warnings then we get a warning
                         // icon whose popup contains all the msgs.
                         annotations.add(new Annotation(
@@ -319,6 +333,32 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
                 editor.setMarkers(null);
             }
         });
+    }
+
+    @Override
+    public void setErrorText(final String title, final String errorText) {
+
+        final SafeHtmlBuilder safeHtmlBuilder = new SafeHtmlBuilder()
+                .appendHtmlConstant("<div class=\"editor-error\">")
+                .appendHtmlConstant("<p>")
+                .append(SafeHtmlUtils.fromString(title))
+                .appendHtmlConstant("</p>");
+
+        final String[] errorTextLines = errorText.split("\n");
+        for (final String line : errorTextLines) {
+            safeHtmlBuilder
+                    .appendHtmlConstant("<p>")
+                    .append(SafeHtmlUtils.fromString(line))
+                    .appendHtmlConstant("</p>");
+        }
+
+        safeHtmlBuilder
+                .appendHtmlConstant("</div>");
+
+        final ScrollPanel scrollPanel = new ScrollPanel();
+        final HTMLPanel htmlPanel = new HTMLPanel(safeHtmlBuilder.toSafeHtml());
+        scrollPanel.setWidget(htmlPanel.asWidget());
+        content.setWidget(scrollPanel.asWidget());
     }
 
     @Override
@@ -419,6 +459,11 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
     }
 
     @Override
+    public Option getShowIndentGuides() {
+        return showIndentGuides;
+    }
+
+    @Override
     public Option getShowInvisiblesOption() {
         return showInvisiblesOption;
     }
@@ -449,6 +494,11 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
     }
 
     @Override
+    public Option getViewAsHexOption() {
+        return viewAsHexOption;
+    }
+
+    @Override
     public void setControlsVisible(final boolean controlsVisible) {
         if (controlsVisible) {
             editor.setScrollMargin(0, 69, 0, 0);
@@ -459,7 +509,7 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
 
     @Override
     public HandlerRegistration addKeyDownHandler(final KeyDownHandler handler) {
-        return layout.addDomHandler(handler, KeyDownEvent.getType());
+        return content.addDomHandler(handler, KeyDownEvent.getType());
     }
 
     @Override
@@ -469,29 +519,28 @@ public class EditorViewImpl extends ViewImpl implements EditorView {
 
     @Override
     public HandlerRegistration addFormatHandler(final FormatHandler handler) {
-        return layout.addHandler(handler, FormatEvent.TYPE);
+        return content.addHandler(handler, FormatEvent.TYPE);
     }
 
     @Override
     public HandlerRegistration addMouseDownHandler(final MouseDownHandler handler) {
-        return layout.addHandler(handler, MouseDownEvent.getType());
+        return content.addHandler(handler, MouseDownEvent.getType());
     }
 
     @Override
     public HandlerRegistration addContextMenuHandler(final ContextMenuEvent.Handler handler) {
-        return layout.addHandler(handler, ContextMenuEvent.getType());
+        return content.addHandler(handler, ContextMenuEvent.getType());
     }
 
     @Override
     public void fireEvent(final GwtEvent<?> event) {
-        layout.fireEvent(event);
+        content.fireEvent(event);
     }
 
     @Override
     public void onResize() {
         doLayout();
     }
-
 
     public interface Binder extends UiBinder<FlowPanel, EditorViewImpl> {
 

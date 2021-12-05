@@ -57,7 +57,7 @@ public class TestSourceEntries {
 
     @Test
     void testUnique() {
-        proxyRepoSources.addSource("path", "test", null, System.currentTimeMillis());
+        proxyRepoSources.addSource("path", "test", null, System.currentTimeMillis(), null);
 
         // Check that we have a new source.
         final List<Source> sources = sourceDao.getNewSources(1000);
@@ -78,7 +78,7 @@ public class TestSourceEntries {
 
 
     long addEntries() {
-        proxyRepoSources.addSource("path", "test", null, System.currentTimeMillis());
+        proxyRepoSources.addSource("path", "test", null, System.currentTimeMillis(), null);
 
         // Check that we have a new source.
         final List<Source> sources = sourceDao.getNewSources(1000);

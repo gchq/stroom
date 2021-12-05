@@ -81,6 +81,9 @@ VOLUME /stroom/reference_data/
 # Create Docker volume for Stroom's off-heap search result data
 VOLUME /stroom/search_results/
 
+# Create Docker volume for Stroom's LMDB system library binary
+VOLUME /stroom/lmdb_library/
+
 # Create Docker volume for Stroom's volumes dir
 VOLUME /stroom/volumes/
 
@@ -106,6 +109,7 @@ RUN \
     mkdir -p /stroom/config && \
     mkdir -p /stroom/config_fallback && \
     mkdir -p /stroom/content_pack_import && \
+    mkdir -p /stroom/lmdb_library && \
     mkdir -p /stroom/logs/access && \
     mkdir -p /stroom/logs/app && \
     mkdir -p /stroom/logs/migration && \

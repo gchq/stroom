@@ -62,13 +62,13 @@ class LifecycleService implements Managed {
 
         startPending = startupTaskMap.entrySet()
                 .stream()
-                .sorted(Comparator.comparingInt(e -> e.getKey().getPriority()))
+                .sorted((o1, o2) -> o2.getKey().getPriority() - o1.getKey().getPriority())
                 .map(Entry::getValue)
                 .collect(Collectors.toCollection(ConcurrentLinkedDeque::new));
 
         stopPending = shutdownTaskMap.entrySet()
                 .stream()
-                .sorted(Comparator.comparingInt(e -> e.getKey().getPriority()))
+                .sorted((o1, o2) -> o2.getKey().getPriority() - o1.getKey().getPriority())
                 .map(Entry::getValue)
                 .collect(Collectors.toCollection(ConcurrentLinkedDeque::new));
     }
@@ -130,7 +130,7 @@ class LifecycleService implements Managed {
             }
 
         } else {
-            final Provider<Runnable> runnableProvider = startPending.pollLast();
+            final Provider<Runnable> runnableProvider = startPending.pollFirst();
             if (runnableProvider != null) {
                 final Runnable runnable = runnableProvider.get();
                 LOGGER.info("Lifecycle " + runnable.getClass().getSimpleName() + " starting up");

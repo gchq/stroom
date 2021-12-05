@@ -102,12 +102,12 @@ class MetaFeedDaoImpl implements MetaFeedDao, Clearable {
 
     Optional<Integer> create(final String name) {
         return JooqUtil.contextResult(metaDbConnProvider, context -> context
-                .insertInto(META_FEED, META_FEED.NAME)
-                .values(name)
-                .onDuplicateKeyIgnore()
-                .returning(META_FEED.ID)
-                .fetchOptional()
-                .map(MetaFeedRecord::getId));
+                        .insertInto(META_FEED, META_FEED.NAME)
+                        .values(name)
+                        .onDuplicateKeyIgnore()
+                        .returning(META_FEED.ID)
+                        .fetchOptional())
+                .map(MetaFeedRecord::getId);
     }
 
     @Override

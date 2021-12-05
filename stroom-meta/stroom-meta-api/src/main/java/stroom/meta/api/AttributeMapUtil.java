@@ -42,10 +42,13 @@ import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.SignStyle;
 import java.time.format.TextStyle;
 import java.time.temporal.ChronoField;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.StringTokenizer;
+import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 
 public class AttributeMapUtil {
@@ -90,6 +93,7 @@ public class AttributeMapUtil {
         addAllSecureTokens(httpServletRequest, attributeMap);
         addAllHeaders(httpServletRequest, attributeMap);
         addAllQueryString(httpServletRequest, attributeMap);
+        addRemoteClientDetails(httpServletRequest, attributeMap);
 
         return attributeMap;
     }
@@ -118,6 +122,37 @@ public class AttributeMapUtil {
 
     public static void write(final AttributeMap attributeMap, final OutputStream outputStream) throws IOException {
         write(attributeMap, new OutputStreamWriter(outputStream, DEFAULT_CHARSET));
+    }
+
+    public static void appendAttributes(final AttributeMap attributeMap,
+                                        final StringBuilder builder,
+                                        final String... attributeKeys) {
+
+        if (builder != null && attributeMap != null && attributeKeys != null) {
+
+            final String attributesStr = Arrays.stream(attributeKeys)
+                    .map(key ->
+                            getAttributeStr(attributeMap, key))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.joining(", "));
+
+            if (!attributesStr.isBlank()) {
+                builder.append(" [")
+                        .append(attributesStr)
+                        .append("]");
+            }
+        }
+    }
+
+    private static String getAttributeStr(final AttributeMap attributeMap, final String attributeKey) {
+        final String attributeValue = attributeMap.get(attributeKey);
+        final String str;
+        if (attributeValue != null && !attributeValue.isBlank()) {
+            str = attributeKey + ": " + attributeValue;
+        } else {
+            str = null;
+        }
+        return str;
     }
 
     private static void write(final AttributeMap attributeMap, final Writer writer) throws IOException {
@@ -178,6 +213,20 @@ public class AttributeMapUtil {
             String header = headerNames.nextElement();
             putHeader(header, httpServletRequest, attributeMap);
         }
+    }
+
+    private static void addRemoteClientDetails(final HttpServletRequest httpServletRequest,
+                                               final AttributeMap attributeMap) {
+        attributeMap.computeIfAbsent(StandardHeaderArguments.REMOTE_HOST, key ->
+                nullIfBlank(httpServletRequest.getRemoteHost()));
+        attributeMap.computeIfAbsent(StandardHeaderArguments.REMOTE_ADDRESS, key ->
+                nullIfBlank(httpServletRequest.getRemoteHost()));
+    }
+
+    private static String nullIfBlank(final String str) {
+        return (str == null || str.isBlank())
+                ? null
+                : str;
     }
 
     private static void putHeader(final String headerToken,

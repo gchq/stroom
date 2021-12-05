@@ -24,7 +24,7 @@ public class DateTimeFormatter {
 
         Use use = Use.UTC;
         String pattern = "YYYY-MM-DDTHH:mm:ss.SSS[Z]";
-        String offset = "0000";
+        int offsetMinutes = 0;
         String zoneId = "UTC";
 
         final UserPreferences userPreferences = userPreferencesManager.getCurrentPreferences();
@@ -40,24 +40,11 @@ public class DateTimeFormatter {
                         use = timeZone.getUse();
                     }
 
-                    if (timeZone.getOffsetHours() == null) {
-                        offset += "00";
-                    } else {
-                        if (timeZone.getOffsetHours() < 0) {
-                            offset = "-";
-                        }
-                        if (Math.abs(timeZone.getOffsetHours()) < 10) {
-                            offset += "0";
-                        }
-                        offset += Math.abs(timeZone.getOffsetHours());
+                    if (timeZone.getOffsetHours() != null) {
+                        offsetMinutes += timeZone.getOffsetHours() * 60;
                     }
-                    if (timeZone.getOffsetMinutes() == null) {
-                        offset += "00";
-                    } else {
-                        if (Math.abs(timeZone.getOffsetMinutes()) < 10) {
-                            offset += "0";
-                        }
-                        offset += Math.abs(timeZone.getOffsetMinutes());
+                    if (timeZone.getOffsetMinutes() != null) {
+                        offsetMinutes += timeZone.getOffsetMinutes();
                     }
 
                     zoneId = timeZone.getId();
@@ -65,7 +52,7 @@ public class DateTimeFormatter {
             }
         }
 
-        return nativeToDateString(ms, use.getDisplayValue(), pattern, zoneId, offset);
+        return nativeToDateString(ms, use.getDisplayValue(), pattern, zoneId, offsetMinutes);
     }
 
     private String convertJavaDateTimePattern(final String pattern) {
@@ -84,9 +71,8 @@ public class DateTimeFormatter {
                                                     final String use,
                                                     final String dateTimePattern,
                                                     final String id,
-                                                    final String offset)/*-{
-        var moment = $wnd.moment(ms);
-        var m = moment.utc(ms);
+                                                    final Integer offsetMinutes)/*-{
+        var m = $wnd.moment.utc(ms);
         switch (use) {
             case "UTC": {
                 m = m.utc();
@@ -97,7 +83,7 @@ public class DateTimeFormatter {
                 return m.format(dateTimePattern);
             }
             case "Offset": {
-                m = m.utcOffset(offset);
+                m = m.utcOffset(offsetMinutes);
                 return m.format(dateTimePattern);
             }
             case "Id": {

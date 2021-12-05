@@ -19,10 +19,12 @@ package stroom.pipeline.refdata.store.offheapstore.databases;
 
 import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbEnvFactory;
+import stroom.lmdb.LmdbLibraryConfig;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.ByteSize;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
+import stroom.util.io.TempDirProvider;
 import stroom.util.shared.ModelStringUtil;
 
 import org.junit.jupiter.api.AfterEach;
@@ -46,19 +48,23 @@ public abstract class AbstractLmdbDbTest extends StroomUnitTest {
     @BeforeEach
     final void createEnv() throws IOException {
         dbDir = Files.createTempDirectory("stroom");
-        final EnvFlags[] envFlags = new EnvFlags[]{EnvFlags.MDB_NOTLS};
+        final EnvFlags[] envFlags = new EnvFlags[]{
+                EnvFlags.MDB_NOTLS
+        };
+
         LOGGER.info("Creating LMDB environment with maxSize: {}, dbDir {}, envFlags {}",
                 getMaxSizeBytes(),
                 dbDir.toAbsolutePath(),
                 Arrays.toString(envFlags));
 
         final PathCreator pathCreator = new PathCreator(() -> dbDir, () -> dbDir);
+        final TempDirProvider tempDirProvider = () -> dbDir;
 
-        lmdbEnv = new LmdbEnvFactory(pathCreator)
+        lmdbEnv = new LmdbEnvFactory(pathCreator, tempDirProvider, new LmdbLibraryConfig())
                 .builder(dbDir)
                 .withMapSize(getMaxSizeBytes())
                 .withMaxDbCount(10)
-                .addEnvFlag(EnvFlags.MDB_NOTLS)
+                .withEnvFlags(envFlags)
                 .makeWritersBlockReaders()
                 .build();
     }

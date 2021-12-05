@@ -48,6 +48,7 @@ public class ConnectionPoolConfig extends AbstractConfig implements IsStroomConf
     private StroomDuration connectionTimeout = StroomDuration.ofSeconds(30);
     private StroomDuration idleTimeout = StroomDuration.ofMinutes(10);
     private StroomDuration maxLifetime = StroomDuration.ofMinutes(30);
+    private StroomDuration leakDetectionThreshold = StroomDuration.ZERO;
     private int minimumIdle = 10;
     private int maxPoolSize = 30;
 
@@ -162,7 +163,21 @@ public class ConnectionPoolConfig extends AbstractConfig implements IsStroomConf
         this.maxPoolSize = maxPoolSize;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
+    @JsonPropertyDescription(
+            "The amount of time that a connection can be out of the pool before a message is logged indicating " +
+                    "a possible connection leak. A value of 0 means leak detection is disabled. Lowest acceptable " +
+                    "value for enabling leak detection is 2 seconds." +
+                    COMMON_CONN_POOL_DESC)
+    public StroomDuration getLeakDetectionThreshold() {
+        return leakDetectionThreshold;
+    }
+
+    @SuppressWarnings("unused")
+    public void setLeakDetectionThreshold(final StroomDuration leakDetectionThreshold) {
+        this.leakDetectionThreshold = leakDetectionThreshold;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -172,12 +187,15 @@ public class ConnectionPoolConfig extends AbstractConfig implements IsStroomConf
             return false;
         }
         final ConnectionPoolConfig that = (ConnectionPoolConfig) o;
-        return cachePrepStmts == that.cachePrepStmts &&
-                prepStmtCacheSize == that.prepStmtCacheSize &&
-                prepStmtCacheSqlLimit == that.prepStmtCacheSqlLimit &&
-                Objects.equals(idleTimeout, that.idleTimeout) &&
-                Objects.equals(maxLifetime, that.maxLifetime) &&
-                Objects.equals(maxPoolSize, that.maxPoolSize);
+        return cachePrepStmts == that.cachePrepStmts
+                && prepStmtCacheSize == that.prepStmtCacheSize
+                && prepStmtCacheSqlLimit == that.prepStmtCacheSqlLimit
+                && minimumIdle == that.minimumIdle
+                && maxPoolSize == that.maxPoolSize
+                && Objects.equals(connectionTimeout, that.connectionTimeout)
+                && Objects.equals(idleTimeout, that.idleTimeout)
+                && Objects.equals(maxLifetime, that.maxLifetime)
+                && Objects.equals(leakDetectionThreshold, that.leakDetectionThreshold);
     }
 
     @Override
@@ -185,11 +203,13 @@ public class ConnectionPoolConfig extends AbstractConfig implements IsStroomConf
         return Objects.hash(cachePrepStmts,
                 prepStmtCacheSize,
                 prepStmtCacheSqlLimit,
+                connectionTimeout,
                 idleTimeout,
                 maxLifetime,
+                leakDetectionThreshold,
+                minimumIdle,
                 maxPoolSize);
     }
-
 
     @Override
     public String toString() {
@@ -200,6 +220,7 @@ public class ConnectionPoolConfig extends AbstractConfig implements IsStroomConf
                 ", connectionTimeout=" + connectionTimeout +
                 ", idleTimeout=" + idleTimeout +
                 ", maxLifetime=" + maxLifetime +
+                ", leakDetectionThreshold=" + leakDetectionThreshold +
                 ", minimumIdle=" + minimumIdle +
                 ", maxPoolSize=" + maxPoolSize +
                 '}';

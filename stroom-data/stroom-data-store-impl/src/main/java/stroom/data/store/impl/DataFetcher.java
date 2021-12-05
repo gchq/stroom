@@ -1,3 +1,4 @@
+
 /*
  *
  *  * Copyright 2018 Crown Copyright
@@ -40,6 +41,7 @@ import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.reader.ByteStreamDecoder.DecodedChar;
 import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.pipeline.shared.FetchDataRequest;
+import stroom.pipeline.shared.FetchDataRequest.DisplayMode;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.FetchMarkerResult;
 import stroom.pipeline.shared.PipelineDoc;
@@ -72,8 +74,10 @@ import stroom.util.shared.Marker;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.Severity;
 import stroom.util.shared.TextRange;
+import stroom.util.string.HexDumpUtil;
 
 import org.apache.commons.io.ByteOrderMark;
+import org.apache.commons.io.input.CountingInputStream;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedOutputStream;
@@ -85,7 +89,9 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -205,10 +211,10 @@ public class DataFetcher {
 
             // Allow users with 'Use' permission to read data, pipelines and XSLT.
             return securityContext.useAsReadResult(() -> {
-                Set<String> availableChildStreamTypes;
+                Set<String> availableChildStreamTypes = null;
+                Meta meta = null;
                 String feedName = null;
                 String streamTypeName = null;
-                Meta meta = null;
                 final SourceLocation sourceLocation = fetchDataRequest.getSourceLocation();
 
 
@@ -217,22 +223,10 @@ public class DataFetcher {
                         fetchDataRequest.getSourceLocation().getMetaId(),
                         true)) {
 
-                    // If we have no stream then let the client know it has been
-                    // deleted.
-                    if (source == null) {
-                        return createEmptyResult(
-                                fetchDataRequest,
-                                feedName,
-                                null,
-                                sourceLocation,
-                                "## Stream has been deleted ## ");
-                    }
-
                     meta = source.getMeta();
                     feedName = meta.getFeedName();
                     streamTypeName = meta.getTypeName();
 
-//                if (sourceLocation.getPartNo() < 0 || sourceLocation.getSegmentNo() < 0) {
                     if (sourceLocation.getPartIndex() < 0) {
                         // Handle cases during stepping when we have not yet stepped
                         return createEmptyResult(
@@ -240,16 +234,18 @@ public class DataFetcher {
                                 feedName,
                                 streamTypeName,
                                 sourceLocation,
-                                "## No data ##");
+                                availableChildStreamTypes,
+                                null,
+                                new Count<>(0L, true));
                     }
 
                     long partIndex = fetchDataRequest.getSourceLocation().getPartIndex();
-                    partCount = source.count();
+
 
                     // Prevent user going past last part
-                    if (partIndex >= partCount) {
-                        partIndex = partCount - 1;
-                    }
+//                    if (partIndex >= partCount) {
+//                        partIndex = partCount - 1;
+//                    }
 
                     try (final InputStreamProvider inputStreamProvider = source.get(partIndex)) {
                         // Find out which child stream types are available.
@@ -257,10 +253,26 @@ public class DataFetcher {
 
                         final String requestedChildStreamType = sourceLocation.getOptChildType()
                                 .orElse(null);
+
+                        // Establish the number of parts. even though the parts in the child stream should
+                        // be the same as the data stream the data stream may be corrupt so this allows
+                        // us to view the other child streams
+                        // We need to do this after getAvailableChildStreamTypes so if this count fails then we
+                        // still know what the other strm types are.
+                        partCount = source.count(requestedChildStreamType);
+
+                        if (partIndex >= partCount) {
+                            throw new RuntimeException(LogUtil.message(
+                                    "Part number requested [{}] is greater than the number of parts [{}]",
+                                    partIndex + 1,
+                                    partCount));
+                        }
+
                         try (final SegmentInputStream segmentInputStream = inputStreamProvider.get(
                                 requestedChildStreamType)) {
 
-                            final boolean isSegmented = segmentInputStream.count() > 1;
+                            final long segmentCount = segmentInputStream.count();
+                            final boolean isSegmented = segmentCount > 1;
 
                             // segment no doesn't matter for non-segmented data
                             if (isSegmented && sourceLocation.getRecordIndex() < 0) {
@@ -270,12 +282,16 @@ public class DataFetcher {
                                         feedName,
                                         streamTypeName,
                                         sourceLocation,
-                                        "## No data ##");
+                                        availableChildStreamTypes,
+                                        null,
+                                        new Count<>(segmentCount, true));
                             }
 
                             // If this is an error stream and the UI is requesting markers then
                             // create a list of markers.
-                            if (StreamTypeNames.ERROR.equals(streamTypeName) && fetchDataRequest.isMarkerMode()) {
+                            if (StreamTypeNames.ERROR.equals(streamTypeName)
+                                    && DisplayMode.MARKER.equals(fetchDataRequest.getDisplayMode())) {
+
                                 return createErrorMarkerResult(
                                         feedName,
                                         streamTypeName,
@@ -283,38 +299,58 @@ public class DataFetcher {
                                         fetchDataRequest.getSourceLocation(),
                                         availableChildStreamTypes,
                                         fetchDataRequest.getExpandedSeverities());
+                            } else if (DisplayMode.MARKER.equals(fetchDataRequest.getDisplayMode())) {
+                                throw new RuntimeException(LogUtil.message(
+                                        "Invalid display mode {} for stream type {}",
+                                        fetchDataRequest.getDisplayMode(), streamTypeName));
+                            } else {
+                                return createDataResult(
+                                        feedName,
+                                        streamTypeName,
+                                        segmentInputStream,
+                                        availableChildStreamTypes,
+                                        source,
+                                        inputStreamProvider,
+                                        fetchDataRequest,
+                                        taskContext);
                             }
-
-                            return createDataResult(
-                                    feedName,
-                                    streamTypeName,
-                                    segmentInputStream,
-                                    availableChildStreamTypes,
-                                    source,
-                                    inputStreamProvider,
-                                    fetchDataRequest,
-                                    taskContext);
                         }
                     }
-
                 } catch (final IOException | RuntimeException e) {
+                    final String message;
                     if (e.getCause() instanceof ClosedByInterruptException) {
-                        throw new ViewDataException(sourceLocation, e.getMessage());
+                        message = e.getMessage();
+                    } else if (meta != null && Status.LOCKED.equals(meta.getStatus())) {
+                        message = "You cannot view locked streams.";
+                    } else if (meta != null && Status.DELETED.equals(meta.getStatus())) {
+                        message = "This data may no longer exist.";
+                    } else {
+                        message = "Error fetching data: " + e.getMessage();
                     }
 
-                    if (meta != null) {
-                        if (Status.LOCKED.equals(meta.getStatus())) {
-                            throw new ViewDataException(sourceLocation, "You cannot view locked streams.");
-                        }
-                        if (Status.DELETED.equals(meta.getStatus())) {
-                            throw new ViewDataException(sourceLocation, "This data may no longer exist.");
+                    if (availableChildStreamTypes == null && fetchDataRequest.getSourceLocation() != null) {
+                        try (final Source source = streamStore.openSource(
+                                fetchDataRequest.getSourceLocation().getMetaId(), true);
+                                final InputStreamProvider inputStreamProvider = source.get(
+                                        fetchDataRequest.getSourceLocation().getPartIndex())) {
+                            // Have a stab at getting the types so we can display all possible tabs
+                            // It is possible the partindex is out of range but we will swallow any ex.
+                            availableChildStreamTypes = getAvailableChildStreamTypes(inputStreamProvider);
+                        } catch (Exception e2) {
+                            LOGGER.debug("Error trying to get child stream types", e2);
                         }
                     }
 
-                    LOGGER.error("Error fetching data", e);
-                    throw new ViewDataException(sourceLocation, e.getMessage());
+                    LOGGER.debug(message, e);
+                    return createEmptyResult(
+                            fetchDataRequest,
+                            feedName,
+                            streamTypeName,
+                            sourceLocation,
+                            availableChildStreamTypes,
+                            Collections.singletonList(message),
+                            new Count<>(partCount, true));
                 }
-
             });
         }).get();
     }
@@ -324,10 +360,11 @@ public class DataFetcher {
                                               final String feedName,
                                               final String streamTypeName,
                                               final SourceLocation sourceLocation,
-                                              final String message) {
-        final Count<Long> totalItemCount = new Count<>(0L, true);
+                                              final Set<String> childStreamTypes,
+                                              final List<String> errors,
+                                              final Count<Long> itemCount) {
         final OffsetRange itemRange = new OffsetRange(0L, (long) 1);
-        final Count<Long> totalCharCount = new Count<>((long) message.length(), true);
+        final Count<Long> totalCharCount = Count.zeroLong();
 
         return new FetchDataResult(
                 feedName,
@@ -335,13 +372,15 @@ public class DataFetcher {
                 null,
                 sourceLocation,
                 itemRange,
-                totalItemCount,
+                itemCount,
                 totalCharCount,
                 null,
+                childStreamTypes,
                 null,
-                message,
                 fetchDataRequest.isShowAsHtml(),
-                null);  // Don't really know segmented state as stream is gone
+                null,
+                fetchDataRequest.getDisplayMode(),
+                errors);  // Don't really know segmented state as stream is gone
     }
 
     private FetchMarkerResult createErrorMarkerResult(final String feedName,
@@ -393,7 +432,9 @@ public class DataFetcher {
                 totalItemCount,
                 totalCharCount,
                 availableChildStreamTypes,
-                new ArrayList<>(resultList));
+                new ArrayList<>(resultList),
+                DisplayMode.MARKER,
+                null);
     }
 
     private FetchDataResult createDataResult(final String feedName,
@@ -427,11 +468,27 @@ public class DataFetcher {
         final RawResult rawResult;
 
         if (DataType.SEGMENTED.equals(dataType)) {
-            rawResult = getSegmentedData(sourceLocation, segmentInputStream, encoding);
+            rawResult = getSegmentedData(
+                    sourceLocation,
+                    segmentInputStream,
+                    encoding,
+                    fetchDataRequest.getDisplayMode());
         } else {
             // Non-segmented data
-            rawResult = getNonSegmentedData(sourceLocation, segmentInputStream, encoding);
+            rawResult = getNonSegmentedData(
+                    sourceLocation,
+                    segmentInputStream,
+                    encoding,
+                    fetchDataRequest.getDisplayMode());
         }
+
+        // Useful for testing the displaying of errors in the UI
+//        if (!feedName.isBlank()) {
+//            throw new RuntimeException("Bad things happened. Lorem ipsum dolor sit amet, consectetur adipiscing " +
+//                    "elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim " +
+//                    "ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea " +
+//                    "commodo consequat.");
+//        }
 
         // We are viewing the data with the BOM removed, so remove the size of the BOM from the
         // total bytes else the progress bar is messed up
@@ -503,22 +560,8 @@ public class DataFetcher {
                 availableChildStreamTypes,
                 output,
                 fetchDataRequest.isShowAsHtml(),
-                dataType);
-    }
-
-    private FetchDataResult createErrorResult(final SourceLocation sourceLocation, final String error) {
-        return new FetchDataResult(
-                null,
-                StreamTypeNames.RAW_EVENTS,
-                null,
-                sourceLocation,
-                new OffsetRange(0L, 0L),
-                Count.of(0L, true),
-                Count.of(0L, true),
-                0L,
-                null,
-                error,
-                false,
+                dataType,
+                rawResult.getDisplayMode(),
                 null);
     }
 
@@ -529,7 +572,8 @@ public class DataFetcher {
 
     private RawResult getSegmentedData(final SourceLocation sourceLocation,
                                        final SegmentInputStream segmentInputStream,
-                                       final String encoding) throws IOException {
+                                       final String encoding,
+                                       final DisplayMode displayMode) throws IOException {
 //        // Get the appropriate encoding for the stream type.
 //        final String encoding = feedProperties.getEncoding(feedName, streamTypeName);
 
@@ -559,11 +603,19 @@ public class DataFetcher {
 
         // Get the data from the stream.
 //        return StreamUtil.streamToString(segmentInputStream, Charset.forName(encoding));
-        final RawResult rawResult = extractDataRange(
-                sourceLocation,
-                segmentInputStream,
-                encoding,
-                segmentInputStream.size());
+        final RawResult rawResult = switch (displayMode) {
+            case TEXT -> extractDataRange(
+                    sourceLocation,
+                    segmentInputStream,
+                    encoding,
+                    segmentInputStream.size());
+            case HEX -> extractDataRangeAsHex(
+                    sourceLocation,
+                    segmentInputStream,
+                    encoding,
+                    segmentInputStream.size());
+            default -> throw new IllegalArgumentException("Unexpected display mode " + displayMode);
+        };
 
         // Override the page items range/total as we are dealing in segments/records
         rawResult.setItemRange(new OffsetRange(recordIndex, 1L));
@@ -573,18 +625,70 @@ public class DataFetcher {
 
     private RawResult getNonSegmentedData(final SourceLocation sourceLocation,
                                           final SegmentInputStream segmentInputStream,
-                                          final String encoding) throws IOException {
+                                          final String encoding,
+                                          final DisplayMode displayMode) throws IOException {
 
-        final RawResult rawResult = extractDataRange(
-                sourceLocation,
-                segmentInputStream,
-                encoding,
-                segmentInputStream.size());
-
+        final RawResult rawResult = switch (displayMode) {
+            case TEXT -> extractDataRange(
+                    sourceLocation,
+                    segmentInputStream,
+                    encoding,
+                    segmentInputStream.size());
+            case HEX -> extractDataRangeAsHex(
+                    sourceLocation,
+                    segmentInputStream,
+                    encoding,
+                    segmentInputStream.size());
+            default -> throw new IllegalArgumentException("Unexpected display mode " + displayMode);
+        };
 
         // Non-segmented data exists within parts so set the item info
         rawResult.setItemRange(new OffsetRange(sourceLocation.getPartIndex(), 1L));
         rawResult.setTotalItemCount(Count.of(partCount, true));
+        return rawResult;
+    }
+
+    private RawResult extractDataRangeAsHex(final SourceLocation sourceLocation,
+                                            final InputStream inputStream,
+                                            final String encoding,
+                                            final long streamSizeBytes) throws IOException {
+
+        final CountingInputStream countingInputStream = new CountingInputStream(inputStream);
+        // Always use utf8 for the right hand decoded col as we are decoding single bytes at a time.
+        // If we used the charset of the feed and the feed is say utf16 (which is all multi-byte) then
+        // you will never see anything in the
+        final String hexDump = HexDumpUtil.hexDump(
+                countingInputStream,
+                StandardCharsets.UTF_8,
+                sourceConfig.getMaxHexDumpLines());
+
+        final long len = hexDump.length();
+        final long bytesRead = countingInputStream.getByteCount();
+
+        final SourceLocation.Builder sourceLocationBuilder = SourceLocation.builder(sourceLocation.getMetaId())
+                .withPartIndex(sourceLocation.getPartIndex())
+                .withChildStreamType(sourceLocation.getOptChildType()
+                        .orElse(null))
+                .withHighlight(sourceLocation.getHighlight()) // pass the requested highlight back
+                .withDataRange(DataRange.builder()
+                        .fromCharOffset(0L)
+                        .toCharOffset(len - 1)
+                        .toByteOffset(bytesRead - 1)
+                        .build());
+
+        final RawResult rawResult = new RawResult(
+                sourceLocationBuilder.build(),
+                hexDump,
+                0,
+                DisplayMode.HEX);
+        if (bytesRead == streamSizeBytes) {
+            rawResult.setTotalCharacterCount(Count.exactly(len));
+        } else {
+            // Extrapolate the total char count using the chars we have and the proportion
+            // of all bytes we consumed to get there
+            final long approxCharCount = (streamSizeBytes / bytesRead) * len;
+            rawResult.setTotalCharacterCount(Count.approximately(approxCharCount));
+        }
         return rawResult;
     }
 
@@ -842,7 +946,11 @@ public class DataFetcher {
                 .map(ByteOrderMark::length)
                 .orElse(0);
 
-        final RawResult rawResult = new RawResult(resultLocation, charData, byteOrderMarkLength);
+        final RawResult rawResult = new RawResult(
+                resultLocation,
+                charData,
+                byteOrderMarkLength,
+                DisplayMode.TEXT);
         rawResult.setTotalCharacterCount(totalCharCount);
         return rawResult;
     }
@@ -1066,6 +1174,7 @@ public class DataFetcher {
         private final SourceLocation sourceLocation;
         private final String rawData;
         private final int byteOrderMarkLength;
+        private final DisplayMode displayMode;
 
         private OffsetRange itemRange; // part/segment/marker
         private Count<Long> totalItemCount; // part/segment/marker
@@ -1074,10 +1183,12 @@ public class DataFetcher {
 
         public RawResult(final SourceLocation sourceLocation,
                          final String rawData,
-                         final int byteOrderMarkLength) {
+                         final int byteOrderMarkLength,
+                         final DisplayMode displayMode) {
             this.sourceLocation = sourceLocation;
             this.rawData = rawData;
             this.byteOrderMarkLength = byteOrderMarkLength;
+            this.displayMode = displayMode;
         }
 
         public SourceLocation getSourceLocation() {
@@ -1125,6 +1236,10 @@ public class DataFetcher {
 
         public void setTotalBytes(final long totalBytes) {
             this.totalBytes = totalBytes;
+        }
+
+        public DisplayMode getDisplayMode() {
+            return displayMode;
         }
     }
 

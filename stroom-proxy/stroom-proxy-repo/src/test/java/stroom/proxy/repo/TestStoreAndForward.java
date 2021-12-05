@@ -63,7 +63,7 @@ public class TestStoreAndForward {
     @Test
     void test() {
         // Add source
-        proxyRepoSources.addSource("path", "test", null, System.currentTimeMillis());
+        proxyRepoSources.addSource("path", "test", null, System.currentTimeMillis(), null);
         final List<Source> sources = sourceDao.getNewSources(1000);
         assertThat(sources.size()).isOne();
 //        final Source source = sources.get(0);

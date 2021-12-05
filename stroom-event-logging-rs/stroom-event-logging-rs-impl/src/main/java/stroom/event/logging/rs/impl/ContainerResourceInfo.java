@@ -44,13 +44,19 @@ public class ContainerResourceInfo {
 
     public ContainerResourceInfo(final ResourceContext resourceContext,
                                  final ResourceInfo resourceInfo,
-                                 final ContainerRequestContext requestContext) {
+                                 final ContainerRequestContext requestContext,
+                                 final boolean logAllRestCalls) {
         this.resourceContext = resourceContext;
         this.resourceInfo = resourceInfo;
         this.requestContext = requestContext;
-        final Optional<OperationType> operationType = getOperationTypeFromAnnotations(getMethod(), getResourceClass());
+        final Optional<OperationType> operationType =
+                getOperationTypeFromAnnotations(getMethod(), getResourceClass());
         this.autologgerAnnotationPresent = operationType.isPresent();
-        this.operationType = findOperationType(operationType, getMethod().getName(), requestContext.getMethod());
+        if (logAllRestCalls && operationType.isPresent() && OperationType.UNLOGGED.equals(operationType.get())) {
+            this.operationType = OperationType.UNKNOWN;
+        } else {
+            this.operationType = findOperationType(operationType, getMethod().getName(), requestContext.getMethod());
+        }
         this.eventActionDecoratorClass = findEventActionDecorator(getMethod(), getResourceClass());
     }
 
@@ -170,8 +176,7 @@ public class ContainerResourceInfo {
                                             final String methodName,
                                             final String httpMethod) {
 
-        if (type.isPresent() && !OperationType.ALLOCATE_AUTOMATICALLY.equals(type.get()) &&
-                !OperationType.UNLOGGED.equals(type.get())) {
+        if (type.isPresent() && !OperationType.ALLOCATE_AUTOMATICALLY.equals(type.get())) {
             return type.get();
         } else if (HttpMethod.DELETE.equals(httpMethod)) {
             return OperationType.DELETE;

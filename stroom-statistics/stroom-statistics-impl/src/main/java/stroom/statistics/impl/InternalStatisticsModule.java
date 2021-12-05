@@ -31,7 +31,7 @@ public class InternalStatisticsModule extends AbstractModule {
         bind(InternalStatisticsReceiver.class).to(InternalStatisticsReceiverImpl.class);
 
         LifecycleBinder.create(binder())
-                .bindStartupTaskTo(InternalStatisticsReceiverInit.class, 100);
+                .bindStartupTaskTo(InternalStatisticsReceiverInit.class, 7);
     }
 
     private static class InternalStatisticsReceiverInit extends RunnableWrapper {

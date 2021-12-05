@@ -38,7 +38,7 @@ class StoredQueryDaoImpl implements StoredQueryDao {
 
     @Inject
     StoredQueryDaoImpl(final StoredQueryDbConnProvider storedQueryDbConnProvider) {
-        genericDao = new GenericDao<>(QUERY, QUERY.ID, StoredQuery.class, storedQueryDbConnProvider);
+        genericDao = new GenericDao<>(storedQueryDbConnProvider, QUERY, QUERY.ID, StoredQuery.class);
         this.storedQueryDbConnProvider = storedQueryDbConnProvider;
     }
 
@@ -79,14 +79,14 @@ class StoredQueryDaoImpl implements StoredQueryDao {
                     Optional.ofNullable(criteria.getFavourite()).map(QUERY.FAVOURITE::eq));
 
             final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
-
+            final int offset = JooqUtil.getOffset(criteria.getPageRequest());
+            final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
             return context
                     .select()
                     .from(QUERY)
                     .where(conditions)
                     .orderBy(orderFields)
-                    .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
-                    .offset(JooqUtil.getOffset(criteria.getPageRequest()))
+                    .limit(offset, limit)
                     .fetch()
                     .into(StoredQuery.class);
         });

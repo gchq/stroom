@@ -108,9 +108,10 @@ public class Version implements Serializable, Comparable<Version> {
     }
 
     private int[] toArray(final Version v) {
-        return new int[]{v.major != null
-                ? v.major
-                : 0, v.minor != null
+        return new int[]{
+                v.major != null
+                        ? v.major
+                        : 0, v.minor != null
                 ? v.minor
                 : 0, v.patch != null
                 ? v.patch
@@ -152,7 +153,6 @@ public class Version implements Serializable, Comparable<Version> {
         }
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof Version)) {

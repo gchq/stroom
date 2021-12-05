@@ -26,8 +26,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import com.google.common.base.Preconditions;
-import io.vavr.Tuple;
-import io.vavr.Tuple2;
 import org.lmdbjava.Cursor;
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.Dbi;
@@ -774,7 +772,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
 
     @Override
     public void logDatabaseContents() {
-        logDatabaseContents(LOGGER::debug);
+        logDatabaseContents(LOGGER::info);
     }
 
     @Override
@@ -788,7 +786,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
 
     @Override
     public void logRawDatabaseContents(final Txn<ByteBuffer> txn) {
-        logRawDatabaseContents(txn, LOGGER::debug);
+        logRawDatabaseContents(txn, LOGGER::info);
     }
 
     /**
@@ -808,7 +806,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
 
     @Override
     public void logRawDatabaseContents() {
-        logRawDatabaseContents(LOGGER::debug);
+        logRawDatabaseContents(LOGGER::info);
     }
 
     public K deserializeKey(final ByteBuffer keyBuffer) {
@@ -849,5 +847,13 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
             throw new RuntimeException(LogUtil.message("Error serialising value [{}]: {}",
                     value, e.getMessage()));
         }
+    }
+
+    public CursorIterable<ByteBuffer> iterate(final Txn<ByteBuffer> txn) {
+        return lmdbDbi.iterate(txn);
+    }
+
+    public CursorIterable<ByteBuffer> iterate(final Txn<ByteBuffer> txn, final KeyRange<ByteBuffer> range) {
+        return lmdbDbi.iterate(txn, range);
     }
 }

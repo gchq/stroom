@@ -30,7 +30,7 @@ class ProcessorDaoImpl implements ProcessorDao {
     public ProcessorDaoImpl(final ProcessorDbConnProvider processorDbConnProvider,
                             final ExpressionMapperFactory expressionMapperFactory) {
         this.processorDbConnProvider = processorDbConnProvider;
-        this.genericDao = new GenericDao<>(PROCESSOR, PROCESSOR.ID, Processor.class, processorDbConnProvider);
+        this.genericDao = new GenericDao<>(processorDbConnProvider, PROCESSOR, PROCESSOR.ID, Processor.class);
 
         expressionMapper = expressionMapperFactory.create();
         expressionMapper.map(ProcessorFields.ID, PROCESSOR.ID, Integer::valueOf);
@@ -103,7 +103,7 @@ class ProcessorDaoImpl implements ProcessorDao {
                 .update(PROCESSOR)
                 .set(PROCESSOR.DELETED, true)
                 .where(PROCESSOR.ID.eq(id))
-                .execute() > 0);
+                .execute()) > 0;
     }
 
     @Override
@@ -114,26 +114,25 @@ class ProcessorDaoImpl implements ProcessorDao {
     @Override
     public Optional<Processor> fetchByUuid(final String uuid) {
         return JooqUtil.contextResult(processorDbConnProvider, context -> context
-                .select()
-                .from(PROCESSOR)
-                .where(PROCESSOR.UUID.eq(uuid))
-                .fetchOptional()
-                .map(record -> record.into(Processor.class)));
+                        .select()
+                        .from(PROCESSOR)
+                        .where(PROCESSOR.UUID.eq(uuid))
+                        .fetchOptional())
+                .map(record -> record.into(Processor.class));
     }
 
     @Override
     public ResultPage<Processor> find(final ExpressionCriteria criteria) {
         final Condition condition = expressionMapper.apply(criteria.getExpression());
-
+        final int offset = JooqUtil.getOffset(criteria.getPageRequest());
+        final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
         final List<Processor> list = JooqUtil.contextResult(processorDbConnProvider, context -> context
-                .select()
-                .from(PROCESSOR)
-                .where(condition)
-                .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
-                .offset(JooqUtil.getOffset(criteria.getPageRequest()))
-                .fetch()
-                .into(Processor.class));
-
+                        .select()
+                        .from(PROCESSOR)
+                        .where(condition)
+                        .limit(offset, limit)
+                        .fetch())
+                .into(Processor.class);
         return ResultPage.createCriterialBasedList(list, criteria);
     }
 }

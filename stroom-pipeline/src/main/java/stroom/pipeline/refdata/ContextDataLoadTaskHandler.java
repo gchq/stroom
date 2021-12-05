@@ -193,7 +193,7 @@ class ContextDataLoadTaskHandler {
                         if (LOGGER.isDebugEnabled()) {
                             LOGGER.debug("Finished loading context data " + contextIdentifier);
                         }
-                    } catch (final RuntimeException e) {
+                    } catch (final  IOException | RuntimeException e) {
                         log(Severity.FATAL_ERROR, "Error loading context data: " + e.getMessage(), e);
                     } finally {
                         try {

@@ -17,7 +17,9 @@
 
 package stroom.bytebuffer;
 
+import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasSystemInfoBinder;
+import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
 
@@ -30,5 +32,7 @@ public class ByteBufferModule extends AbstractModule {
 
         HasSystemInfoBinder.create(binder())
                 .bind(ByteBufferPoolImpl4.class);
+
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(ByteBufferPoolImpl4.class);
     }
 }

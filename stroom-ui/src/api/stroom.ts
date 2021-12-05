@@ -12,6 +12,8 @@
 export interface AbstractFetchDataResult {
   availableChildStreamTypes?: string[];
   classification?: string;
+  displayMode?: "TEXT" | "HEX" | "MARKER";
+  errors?: string[];
   feedName?: string;
 
   /** The offset and length of a range of data in a sub-set of a query result set */
@@ -918,6 +920,14 @@ export interface Entry {
   value?: string;
 }
 
+export interface EntryCounts {
+  /** @format int64 */
+  keyValueCount?: number;
+
+  /** @format int64 */
+  rangeValueCount?: number;
+}
+
 export type EventCoprocessorSettings = CoprocessorSettings & {
   maxEvent?: EventRef;
   maxEvents?: number;
@@ -1112,8 +1122,8 @@ export interface FetchAllDocumentPermissionsRequest {
 }
 
 export interface FetchDataRequest {
+  displayMode?: "TEXT" | "HEX" | "MARKER";
   expandedSeverities?: ("INFO" | "WARN" | "ERROR" | "FATAL")[];
-  markerMode?: boolean;
 
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   pipeline?: DocRef;
@@ -2090,6 +2100,15 @@ export interface ProcessConfig {
   defaultTimeLimit?: number;
 }
 
+export interface ProcessingInfoResponse {
+  createTime?: string;
+  effectiveTime?: string;
+  lastAccessedTime?: string;
+  maps?: Record<string, EntryCounts>;
+  processingState?: "LOAD_IN_PROGRESS" | "PURGE_IN_PROGRESS" | "COMPLETE" | "FAILED" | "TERMINATED" | "PURGE_FAILED";
+  refStreamDefinition?: RefStreamDefinition;
+}
+
 export interface Processor {
   /** @format int64 */
   createTimeMs?: number;
@@ -2375,7 +2394,7 @@ export interface RefDataProcessingInfo {
 
   /** @format int64 */
   lastAccessedTimeEpochMs?: number;
-  processingState?: "LOAD_IN_PROGRESS" | "PURGE_IN_PROGRESS" | "COMPLETE";
+  processingState?: "LOAD_IN_PROGRESS" | "PURGE_IN_PROGRESS" | "COMPLETE" | "FAILED" | "TERMINATED" | "PURGE_FAILED";
 }
 
 export interface RefStoreEntry {
@@ -2400,18 +2419,13 @@ export interface RefStreamDefinition {
   streamId?: number;
 }
 
-export interface RefStreamProcessingInfo {
-  mapNames?: string[];
-  refDataProcessingInfo?: RefDataProcessingInfo;
-  refStreamDefinition?: RefStreamDefinition;
-}
-
 export interface ReferenceLoader {
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   loaderPipeline: DocRef;
 
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   referenceFeed: DocRef;
+  streamType?: string;
 }
 
 export type RemovePermissionEvent = PermissionChangeEvent & {
@@ -2982,6 +2996,12 @@ export interface SourceConfig {
    * @min 0
    */
   maxCharactersToCompleteLine?: number;
+
+  /**
+   * @format int32
+   * @min 1
+   */
+  maxHexDumpLines?: number;
 }
 
 export interface SourceLocation {
@@ -3256,6 +3276,8 @@ export interface TaskProgress {
 }
 
 export interface TaskProgressResponse {
+  errors?: string[];
+
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
   values?: TaskProgress[];
@@ -3415,7 +3437,6 @@ export interface User {
   /** @format int64 */
   createTimeMs?: number;
   createUser?: string;
-  enabled?: boolean;
   group?: boolean;
 
   /** @format int32 */
@@ -7259,6 +7280,24 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
   };
   refData = {
     /**
+     * No description
+     *
+     * @tags Reference Data
+     * @name ClearBufferPool
+     * @summary Clear all buffers currently available in the buffer pool to reclaim memory. Performed on the named node or all nodes if null.
+     * @request DELETE:/refData/v1/clearBufferPool
+     * @secure
+     */
+    clearBufferPool: (query?: { nodeName?: string }, params: RequestParams = {}) =>
+      this.request<any, void>({
+        path: `/refData/v1/clearBufferPool`,
+        method: "DELETE",
+        query: query,
+        secure: true,
+        ...params,
+      }),
+
+    /**
      * @description This is primarily intended  for small scale debugging in non-production environments. If no limit is set a default limit is applied else the results will be limited to limit entries.
      *
      * @tags Reference Data
@@ -7284,7 +7323,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      *
      * @tags Reference Data
      * @name LookupReferenceData
-     * @summary Perform a reference data lookup using the supplied lookup request. Reference data will be loaded if required using the supplied reference pipeline.
+     * @summary Perform a reference data lookup using the supplied lookup request. Reference data will be loaded if required using the supplied reference pipeline. Performed on this node only.
      * @request POST:/refData/v1/lookup
      * @secure
      */
@@ -7302,21 +7341,40 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * No description
      *
      * @tags Reference Data
-     * @name PurgeReferenceData
-     * @summary Explicitly delete all entries that are older than purgeAge.
-     * @request DELETE:/refData/v1/purge/{purgeAge}
+     * @name PurgeReferenceDataByAge
+     * @summary Explicitly delete all entries that are older than purgeAge. Performed on the named node, or all nodes if null.
+     * @request DELETE:/refData/v1/purgeByAge/{purgeAge}
      * @secure
      */
-    purgeReferenceData: (purgeAge: string, params: RequestParams = {}) =>
+    purgeReferenceDataByAge: (purgeAge: string, query?: { nodeName?: string }, params: RequestParams = {}) =>
       this.request<any, boolean>({
-        path: `/refData/v1/purge/${purgeAge}`,
+        path: `/refData/v1/purgeByAge/${purgeAge}`,
         method: "DELETE",
+        query: query,
         secure: true,
         ...params,
       }),
 
     /**
-     * @description This is primarily intended  for small scale debugging in non-production environments. If no limit is set a default limit is applied else the results will be limited to limit entries.
+     * No description
+     *
+     * @tags Reference Data
+     * @name PurgeReferenceDataByStream
+     * @summary Delete all entries for a reference stream. Performed on the named node or all nodes if null.
+     * @request DELETE:/refData/v1/purgeByStream/{refStreamId}
+     * @secure
+     */
+    purgeReferenceDataByStream: (refStreamId: number, query?: { nodeName?: string }, params: RequestParams = {}) =>
+      this.request<any, boolean>({
+        path: `/refData/v1/purgeByStream/${refStreamId}`,
+        method: "DELETE",
+        query: query,
+        secure: true,
+        ...params,
+      }),
+
+    /**
+     * @description This is primarily intended  for small scale debugging in non-production environments. If no limit is set a default limit is applied else the results will be limited to limit entries. Performed on this node only.
      *
      * @tags Reference Data
      * @name GetReferenceStreamProcessingInfoEntries
@@ -7328,7 +7386,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
       query?: { limit?: number; refStreamId?: number; mapName?: string },
       params: RequestParams = {},
     ) =>
-      this.request<any, RefStreamProcessingInfo[]>({
+      this.request<any, ProcessingInfoResponse[]>({
         path: `/refData/v1/refStreamInfo`,
         method: "GET",
         query: query,
@@ -8612,24 +8670,6 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         body: data,
         secure: true,
         type: ContentType.Json,
-        ...params,
-      }),
-
-    /**
-     * No description
-     *
-     * @tags Authorisation
-     * @name SetUserStatus
-     * @summary Enables/disables the Stroom user with the supplied username
-     * @request PUT:/users/v1/{userName}/status
-     * @secure
-     */
-    setUserStatus: (userName: string, query?: { enabled?: boolean }, params: RequestParams = {}) =>
-      this.request<any, boolean>({
-        path: `/users/v1/${userName}/status`,
-        method: "PUT",
-        query: query,
-        secure: true,
         ...params,
       }),
 

@@ -60,7 +60,7 @@ public class ReferenceDataResourceImpl implements ReferenceDataResource {
 
     @AutoLogged(OperationType.DELETE)
     @Override
-    public boolean purge(final String purgeAge) {
+    public boolean purge(final String purgeAge, final String nodeName) {
         StroomDuration purgeAgeDuration;
         try {
             purgeAgeDuration = StroomDuration.parse(purgeAge);
@@ -70,7 +70,7 @@ public class ReferenceDataResourceImpl implements ReferenceDataResource {
         }
         try {
             referenceDataServiceProvider.get()
-                    .purge(purgeAgeDuration);
+                    .purge(purgeAgeDuration, nodeName);
             return true;
         } catch (Exception e) {
             LOGGER.error("Failed to purgeAge " + purgeAge, e);
@@ -80,15 +80,26 @@ public class ReferenceDataResourceImpl implements ReferenceDataResource {
 
     @AutoLogged(OperationType.DELETE)
     @Override
-    public boolean purge(final long refStreamId, final long partNo) {
+    public boolean purge(final long refStreamId, final String nodeName) {
         try {
             // partNo is one based, partIndex is zero based
-            final long partIndex = partNo - 1;
             referenceDataServiceProvider.get()
-                    .purge(refStreamId, partIndex);
+                    .purge(refStreamId, nodeName);
             return true;
         } catch (Exception e) {
-            LOGGER.error("Failed to purge " + refStreamId + ":" + partNo, e);
+            LOGGER.error("Failed to purge stream " + refStreamId, e);
+            throw e;
+        }
+    }
+
+    @AutoLogged(OperationType.UNLOGGED)
+    @Override
+    public void clearBufferPool(final String nodeName) {
+        try {
+            referenceDataServiceProvider.get()
+                    .clearBufferPool(nodeName);
+        } catch (RuntimeException e) {
+            LOGGER.error("Failed to clear buffer pool", e);
             throw e;
         }
     }

@@ -120,14 +120,11 @@ class TestRefDataProcessingInfoSerde extends AbstractSerdeTest<RefDataProcessing
                 100L,
                 ProcessingState.COMPLETE);
 
-
         ByteBuffer valueBuffer = serialize(refDataProcessingInfo);
 
-        doAccessTest(1000L, valueBuffer, false);
-        doAccessTest(999L, valueBuffer, true);
-        doAccessTest(1001L, valueBuffer, false);
-
-
+        doAccessTest(refDataProcessingInfo.getLastAccessedTimeEpochMs(), valueBuffer, false);
+        doAccessTest(refDataProcessingInfo.getLastAccessedTimeEpochMs() - 1, valueBuffer, true);
+        doAccessTest(refDataProcessingInfo.getLastAccessedTimeEpochMs() + 1, valueBuffer, false);
     }
 
     private void doAccessTest(final long timeUnderTestMs, final ByteBuffer valueBuffer, final boolean expectedResult) {

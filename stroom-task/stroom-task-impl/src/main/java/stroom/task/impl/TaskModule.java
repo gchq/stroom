@@ -53,11 +53,10 @@ public class TaskModule extends AbstractModule {
 
         // Make sure the first thing to start and the last thing to stop is the task manager.
         LifecycleBinder.create(binder())
-                .bindStartupTaskTo(TaskManagerStartup.class, Integer.MAX_VALUE)
-                .bindShutdownTaskTo(TaskManagerShutdown.class, Integer.MAX_VALUE);
+                .bindStartupTaskTo(TaskManagerStartup.class, 10)
+                .bindShutdownTaskTo(TaskManagerShutdown.class, 8);
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

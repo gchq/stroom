@@ -188,8 +188,13 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
                         return ComplexLoggedOutcome.success(
                                 persistedProperty,
                                 stroomEventLoggingService.buildUpdateEventAction(
-                                        () -> globalConfigService.fetch(configProperty.getId())
-                                                .orElse(null),
+                                        () -> {
+                                            if (configProperty.getId() == null) {
+                                                return null;
+                                            }
+                                            return globalConfigService.fetch(configProperty.getId())
+                                                    .orElse(null);
+                                        },
                                         () -> persistedProperty));
                     },
                     null);

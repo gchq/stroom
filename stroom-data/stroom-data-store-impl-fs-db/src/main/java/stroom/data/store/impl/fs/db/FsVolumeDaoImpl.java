@@ -1,21 +1,18 @@
 package stroom.data.store.impl.fs.db;
 
 import stroom.data.store.impl.fs.FsVolumeDao;
-import stroom.data.store.impl.fs.FsVolumeService;
 import stroom.data.store.impl.fs.db.jooq.tables.records.FsVolumeRecord;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
 import stroom.data.store.impl.fs.shared.FsVolumeState;
 import stroom.db.util.JooqUtil;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 
 import org.jooq.Condition;
 import org.jooq.Record;
+import org.jooq.Result;
 import org.jooq.TableField;
 
 import java.util.Collection;
@@ -31,8 +28,6 @@ import static stroom.data.store.impl.fs.db.jooq.tables.FsVolumeState.FS_VOLUME_S
 @Singleton
 public class FsVolumeDaoImpl implements FsVolumeDao {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsVolumeService.class);
-
     private final FsDataStoreDbConnProvider fsDataStoreDbConnProvider;
 
     @Inject
@@ -42,26 +37,18 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
 
     @Override
     public FsVolume create(final FsVolume fileVolume) {
-        return JooqUtil.contextResultWithOptimisticLocking(fsDataStoreDbConnProvider, (context) -> {
-            final FsVolumeRecord record = context.newRecord(FS_VOLUME, fileVolume);
-            volumeToRecord(fileVolume, record);
-            record.store();
-            return recordToVolume(record, fileVolume.getVolumeState());
-        });
+        final FsVolumeRecord record = FS_VOLUME.newRecord();
+        volumeToRecord(fileVolume, record);
+        final FsVolumeRecord persistedRecord = JooqUtil.create(fsDataStoreDbConnProvider, record);
+        return recordToVolume(persistedRecord, fileVolume.getVolumeState());
     }
 
     @Override
     public FsVolume update(final FsVolume fileVolume) {
-        final FsVolume result = JooqUtil.contextResultWithOptimisticLocking(fsDataStoreDbConnProvider, (context) -> {
-            final FsVolumeRecord record = context.newRecord(FS_VOLUME, fileVolume);
-            volumeToRecord(fileVolume, record);
-            // This depends on there being a field named 'id' that is what we expect it to be.
-            // I'd rather this was implicit/opinionated than forced into place with an interface.
-            LOGGER.debug(() -> LogUtil.message("Updating a {} with id {}",
-                    FS_VOLUME.getName(), record.getValue("id")));
-            record.update();
-            return recordToVolume(record, fileVolume.getVolumeState());
-        });
+        final FsVolumeRecord record = FS_VOLUME.newRecord();
+        volumeToRecord(fileVolume, record);
+        final FsVolumeRecord persistedRecord = JooqUtil.updateWithOptimisticLocking(fsDataStoreDbConnProvider, record);
+        final FsVolume result = recordToVolume(persistedRecord, fileVolume.getVolumeState());
         result.setVolumeState(fileVolume.getVolumeState());
         return result;
     }
@@ -92,14 +79,14 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
     @Override
     public FsVolume fetch(final int id) {
         return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
-                .select()
-                .from(FS_VOLUME)
-                .join(FS_VOLUME_STATE)
-                .on(FS_VOLUME_STATE.ID.eq(FS_VOLUME.FK_FS_VOLUME_STATE_ID))
-                .where(FS_VOLUME.ID.eq(id))
-                .fetchOptional()
+                        .select()
+                        .from(FS_VOLUME)
+                        .join(FS_VOLUME_STATE)
+                        .on(FS_VOLUME_STATE.ID.eq(FS_VOLUME.FK_FS_VOLUME_STATE_ID))
+                        .where(FS_VOLUME.ID.eq(id))
+                        .fetchOptional())
                 .map(this::recordToVolume)
-                .orElse(null));
+                .orElse(null);
     }
 
     @Override
@@ -107,20 +94,23 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
         final Collection<Condition> conditions = JooqUtil.conditions(
                 volumeStatusCriteriaSetToCondition(FS_VOLUME.STATUS, criteria.getSelection()));
 
-        final List<FsVolume> list = JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
+        final int offset = JooqUtil.getOffset(criteria.getPageRequest());
+        final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
+        final Result<Record> result = JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
                 .select()
                 .from(FS_VOLUME)
                 .join(FS_VOLUME_STATE)
                 .on(FS_VOLUME_STATE.ID.eq(FS_VOLUME.FK_FS_VOLUME_STATE_ID))
                 .where(conditions)
-                .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
-                .offset(JooqUtil.getOffset(criteria.getPageRequest()))
-                .fetch()
-                .map(this::recordToVolume));
+                .limit(offset, limit)
+                .fetch());
+
+        final List<FsVolume> list = result.map(this::recordToVolume);
         return ResultPage.createCriterialBasedList(list, criteria);
     }
 
     private void volumeToRecord(final FsVolume fileVolume, final FsVolumeRecord record) {
+        record.from(fileVolume);
         record.set(FS_VOLUME.STATUS, fileVolume.getStatus().getPrimitiveValue());
         record.set(FS_VOLUME.FK_FS_VOLUME_STATE_ID, fileVolume.getVolumeState().getId());
     }

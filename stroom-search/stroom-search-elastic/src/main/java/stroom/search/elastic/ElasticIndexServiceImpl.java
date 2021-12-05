@@ -146,12 +146,13 @@ public class ElasticIndexServiceImpl implements ElasticIndexService {
                         final String fieldType = (String) propertiesMap.get("type");
                         final boolean sourceFieldEnabled = sourceFieldIsEnabled(fieldMappings);
                         final boolean stored = fieldIsStored(key, fieldMeta);
-
-                        fieldsMap.put(fieldName, new ElasticIndexField(
-                                ElasticIndexFieldType.fromNativeType(fieldName, fieldType),
-                                fieldName,
-                                fieldType,
-                                sourceFieldEnabled || stored));
+                        if (fieldType != null) {
+                            fieldsMap.put(fieldName, new ElasticIndexField(
+                                    ElasticIndexFieldType.fromNativeType(fieldName, fieldType),
+                                    fieldName,
+                                    fieldType,
+                                    sourceFieldEnabled || stored));
+                        }
                     } catch (Exception e) {
                         LOGGER.error(e::getMessage, e);
                     }

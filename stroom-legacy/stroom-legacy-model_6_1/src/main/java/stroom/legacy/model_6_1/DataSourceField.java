@@ -39,6 +39,7 @@ import javax.xml.bind.annotation.XmlType;
 @Schema(description = "The definition of a field within a data source")
 @Deprecated
 public final class DataSourceField implements Serializable, HasDisplayValue {
+
     private static final long serialVersionUID = 1272545271946712570L;
 
     @XmlElement
@@ -120,26 +121,49 @@ public final class DataSourceField implements Serializable, HasDisplayValue {
         return name;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         final DataSourceField that = (DataSourceField) o;
 
-        if (type != that.type) return false;
-        if (name != null ? !name.equals(that.name) : that.name != null) return false;
-        if (queryable != null ? !queryable.equals(that.queryable) : that.queryable != null) return false;
-        return conditions != null ? conditions.equals(that.conditions) : that.conditions == null;
+        if (type != that.type) {
+            return false;
+        }
+        if (name != null
+                ? !name.equals(that.name)
+                : that.name != null) {
+            return false;
+        }
+        if (queryable != null
+                ? !queryable.equals(that.queryable)
+                : that.queryable != null) {
+            return false;
+        }
+        return conditions != null
+                ? conditions.equals(that.conditions)
+                : that.conditions == null;
     }
 
     @Override
     public int hashCode() {
-        int result = type != null ? type.hashCode() : 0;
-        result = 31 * result + (name != null ? name.hashCode() : 0);
-        result = 31 * result + (queryable != null ? queryable.hashCode() : 0);
-        result = 31 * result + (conditions != null ? conditions.hashCode() : 0);
+        int result = type != null
+                ? type.hashCode()
+                : 0;
+        result = 31 * result + (name != null
+                ? name.hashCode()
+                : 0);
+        result = 31 * result + (queryable != null
+                ? queryable.hashCode()
+                : 0);
+        result = 31 * result + (conditions != null
+                ? conditions.hashCode()
+                : 0);
         return result;
     }
 
@@ -210,7 +234,7 @@ public final class DataSourceField implements Serializable, HasDisplayValue {
             return this;
         }
 
-        public Builder addConditions(final Condition...values) {
+        public Builder addConditions(final Condition... values) {
             this.conditions.addAll(Arrays.asList(values));
             return this;
         }

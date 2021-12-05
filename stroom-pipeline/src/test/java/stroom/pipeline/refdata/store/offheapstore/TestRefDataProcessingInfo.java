@@ -18,8 +18,11 @@
 package stroom.pipeline.refdata.store.offheapstore;
 
 import stroom.pipeline.refdata.store.ProcessingState;
+import stroom.pipeline.refdata.store.RefDataProcessingInfo;
 
 import org.junit.jupiter.api.Test;
+
+import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -33,5 +36,17 @@ class TestRefDataProcessingInfo {
             ProcessingState outputState = ProcessingState.fromByte(id);
             assertThat(outputState).isEqualTo(state);
         }
+    }
+
+    @Test
+    void testTimeTruncation() {
+        final Instant now = Instant.now();
+        final long nowMs = now.toEpochMilli();
+
+        final Instant truncatedNow = RefDataProcessingInfo.truncateLastAccessTime(now);
+        final long truncatedNowMs = RefDataProcessingInfo.truncateLastAccessTime(nowMs);
+
+        assertThat(truncatedNow.toEpochMilli())
+                .isEqualTo(truncatedNowMs);
     }
 }

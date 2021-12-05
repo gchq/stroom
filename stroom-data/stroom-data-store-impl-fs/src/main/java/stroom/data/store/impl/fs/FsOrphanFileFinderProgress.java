@@ -17,46 +17,56 @@
 package stroom.data.store.impl.fs;
 
 import stroom.data.store.impl.ScanVolumePathResult;
+import stroom.task.api.TaskContext;
 import stroom.util.shared.ModelStringUtil;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-class FsCleanProgress {
+class FsOrphanFileFinderProgress {
 
+    private final String volume;
+    private final TaskContext taskContext;
     private final AtomicLong scanDirCount = new AtomicLong();
     private final AtomicLong scanFileCount = new AtomicLong();
-    private final AtomicLong scanDeleteCount = new AtomicLong();
+    private final AtomicLong scanOrphanCount = new AtomicLong();
     private final AtomicLong scanTooNewToDeleteCount = new AtomicLong();
     private final AtomicLong scanPending = new AtomicLong(0);
     private final AtomicLong scanComplete = new AtomicLong(0);
 
-    FsCleanProgress() {
+    FsOrphanFileFinderProgress(final String volume,
+                               final TaskContext taskContext) {
+        this.volume = volume;
+        this.taskContext = taskContext;
+        log();
     }
 
     void addResult(final ScanVolumePathResult result) {
         scanDirCount.incrementAndGet();
         scanFileCount.addAndGet(result.getFileCount());
-        scanDeleteCount.addAndGet(result.getDeleteList().size());
+        scanOrphanCount.addAndGet(result.getDeleteList().size());
         scanTooNewToDeleteCount.addAndGet(result.getTooNewToDeleteCount());
     }
 
     String traceInfo() {
         return "scanDirCount " + ModelStringUtil.formatCsv(scanDirCount) + ", scanFileCount "
                 + ModelStringUtil.formatCsv(scanFileCount) + ", scanDeleteCount "
-                + ModelStringUtil.formatCsv(scanDeleteCount) + ", scanTooNewToDeleteCount "
+                + ModelStringUtil.formatCsv(scanOrphanCount) + ", scanTooNewToDeleteCount "
                 + ModelStringUtil.formatCsv(scanTooNewToDeleteCount);
     }
 
-    AtomicLong getScanDirCount() {
-        return scanDirCount;
+    void addDir() {
+        scanDirCount.incrementAndGet();
+        log();
     }
 
-    AtomicLong getScanDeleteCount() {
-        return scanDeleteCount;
+    void addOrphanCount() {
+        scanOrphanCount.incrementAndGet();
+        log();
     }
 
-    AtomicLong getScanFileCount() {
-        return scanFileCount;
+    void addFile() {
+        scanFileCount.incrementAndGet();
+        log();
     }
 
     void addScanPending(int value) {
@@ -66,5 +76,16 @@ class FsCleanProgress {
     void addScanComplete() {
         scanComplete.incrementAndGet();
         scanPending.decrementAndGet();
+    }
+
+    void log() {
+        taskContext.info(() -> volume +
+                " (Scan Dir/File " +
+                scanDirCount.get() +
+                "/" +
+                scanFileCount.get() +
+                ") found " +
+                scanOrphanCount.get() +
+                " orphans");
     }
 }

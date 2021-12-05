@@ -23,6 +23,7 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
 import stroom.util.io.FileUtil;
+import stroom.util.logging.LogUtil;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +37,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -196,6 +198,15 @@ final class FsSource implements InternalSource, SegmentInputStreamProviderFactor
             count = new RASegmentInputStream(data, boundaryIndex).count();
         }
         return count;
+    }
+
+    @Override
+    public long count(final String childStreamType) throws IOException {
+        final InternalSource childSource = getChild(childStreamType);
+        Objects.requireNonNull(childSource, () ->
+                LogUtil.message("No source found for childStreamType {}", childStreamType));
+
+        return childSource.count();
     }
 
     @Override

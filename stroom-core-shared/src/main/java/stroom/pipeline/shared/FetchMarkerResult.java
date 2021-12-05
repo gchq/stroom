@@ -16,6 +16,7 @@
 
 package stroom.pipeline.shared;
 
+import stroom.pipeline.shared.FetchDataRequest.DisplayMode;
 import stroom.util.shared.Count;
 import stroom.util.shared.Marker;
 import stroom.util.shared.OffsetRange;
@@ -41,17 +42,13 @@ public class FetchMarkerResult extends AbstractFetchDataResult {
                              @JsonProperty("streamTypeName") final String streamTypeName,
                              @JsonProperty("classification") final String classification,
                              @JsonProperty("sourceLocation") final SourceLocation sourceLocation,
-//                             @JsonProperty("streamRange") final OffsetRange streamRange,
-//                                   @JsonProperty("streamRowCount") final RowCount<Long> streamRowCount,
-//                                   @JsonProperty("pageRange") final OffsetRange pageRange,
-//                                   @JsonProperty("pageRowCount") final RowCount<Long> pageRowCount,
                              @JsonProperty("itemRange") final OffsetRange itemRange,
                              @JsonProperty("totalItemCount") final Count<Long> totalItemCount,
                              @JsonProperty("totalCharacterCount") final Count<Long> totalCharacterCount,
                              @JsonProperty("availableChildStreamTypes") final Set<String> availableChildStreamTypes,
-                             @JsonProperty("markers") final List<Marker> markers) {
-//        super(streamTypeName, classification, streamRange,
-//        streamRowCount, pageRange, pageRowCount, availableChildStreamTypes);
+                             @JsonProperty("markers") final List<Marker> markers,
+                             @JsonProperty("displayMode") final DisplayMode displayMode,
+                             @JsonProperty("errors") final List<String> errors) {
         super(feedName,
                 streamTypeName,
                 classification,
@@ -59,7 +56,16 @@ public class FetchMarkerResult extends AbstractFetchDataResult {
                 itemRange,
                 totalItemCount,
                 totalCharacterCount,
-                availableChildStreamTypes);
+                availableChildStreamTypes,
+                displayMode,
+                errors);
+
+        if (!DisplayMode.MARKER.equals(displayMode)) {
+            throw new IllegalArgumentException(
+                    "Invalid displayMode " + displayMode + ". " +
+                            "FetchMarkerResult should only ever have a display mode of MARKER");
+        }
+
         this.markers = markers;
     }
 

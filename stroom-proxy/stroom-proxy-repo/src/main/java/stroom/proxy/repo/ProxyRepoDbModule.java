@@ -39,7 +39,7 @@ public class ProxyRepoDbModule extends AbstractModule {
         LOGGER.debug(() -> "Getting connection provider for " + MODULE);
 
         final DbConfig config = getDbConfig(repoDbDirProvider);
-        final DataSource dataSource = dataSourceFactory.create(() -> config);
+        final DataSource dataSource = dataSourceFactory.create(() -> config, MODULE, true);
         FlywayUtil.migrate(dataSource, FLYWAY_LOCATIONS, FLYWAY_TABLE, MODULE);
         return new DataSourceImpl(dataSource);
     }

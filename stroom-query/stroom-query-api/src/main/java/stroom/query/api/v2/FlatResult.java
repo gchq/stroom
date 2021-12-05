@@ -69,7 +69,6 @@ public final class FlatResult extends Result {
         return size;
     }
 
-    @SuppressWarnings("checkstyle:needbraces")
     @Override
     public boolean equals(Object o) {
         if (this == o) {

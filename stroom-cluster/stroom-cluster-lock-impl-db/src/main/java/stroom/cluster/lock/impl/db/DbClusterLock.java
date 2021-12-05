@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -47,6 +48,13 @@ class DbClusterLock implements Clearable {
     }
 
     public void lock(final String lockName, final Runnable runnable) {
+        lockResult(lockName, () -> {
+            runnable.run();
+            return null;
+        });
+    }
+
+    public <T> T lockResult(final String lockName, final Supplier<T> supplier) {
         LOGGER.debug("lock({}) - >>>", lockName);
 
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
@@ -54,7 +62,7 @@ class DbClusterLock implements Clearable {
         // This happens outside this transaction
         checkLockCreated(lockName);
 
-        JooqUtil.transaction(clusterLockDbConnProvider, context -> {
+        return JooqUtil.transactionResult(clusterLockDbConnProvider, context -> {
             final Optional<Record> optional = context
                     .select()
                     .from(CLUSTER_LOCK)
@@ -62,13 +70,13 @@ class DbClusterLock implements Clearable {
                     .forUpdate()
                     .fetchOptional();
 
-            if (!optional.isPresent()) {
+            if (optional.isEmpty()) {
                 throw new IllegalStateException("No cluster lock has been found or created: " + lockName);
             }
 
             LOGGER.debug("lock({}) - <<< {}", lockName, logExecutionTime);
 
-            runnable.run();
+            return supplier.get();
         });
     }
 
@@ -93,24 +101,23 @@ class DbClusterLock implements Clearable {
 
     private Integer get(final String name) {
         return JooqUtil.contextResult(clusterLockDbConnProvider, context -> context
-                .select(CLUSTER_LOCK.ID)
-                .from(CLUSTER_LOCK)
-                .where(CLUSTER_LOCK.NAME.eq(name))
-                .fetchOptional()
+                        .select(CLUSTER_LOCK.ID)
+                        .from(CLUSTER_LOCK)
+                        .where(CLUSTER_LOCK.NAME.eq(name))
+                        .fetchOptional())
                 .map(r -> r.get(CLUSTER_LOCK.ID))
-                .orElse(null));
+                .orElse(null);
     }
 
     private Integer create(final String name) {
         return JooqUtil.contextResult(clusterLockDbConnProvider, context -> context
-                .insertInto(CLUSTER_LOCK, CLUSTER_LOCK.NAME)
-                .values(name)
-                .onDuplicateKeyIgnore()
-                .returning(CLUSTER_LOCK.ID)
-                .fetchOptional()
+                        .insertInto(CLUSTER_LOCK, CLUSTER_LOCK.NAME)
+                        .values(name)
+                        .onDuplicateKeyIgnore()
+                        .returning(CLUSTER_LOCK.ID)
+                        .fetchOptional())
                 .map(r -> r.get(CLUSTER_LOCK.ID))
-                .orElseGet(() -> get(name))
-        );
+                .orElseGet(() -> get(name));
     }
 
     @Override
