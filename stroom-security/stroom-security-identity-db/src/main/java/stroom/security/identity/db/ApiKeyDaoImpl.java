@@ -166,12 +166,17 @@ class ApiKeyDaoImpl implements ApiKeyDao {
                         .orderBy(stroom.security.identity.db.jooq.tables.Token.TOKEN.CREATE_TIME_MS)
                         .fetch())
                 .map(RECORD_TO_TOKEN_MAPPER::apply);
-        return ResultPageFactory.createUnboundedList(list, ApiKeyResultPage::new);
+        return ResultPageFactory.createUnboundedList(list, (tokens, pageResponse) ->
+                new ApiKeyResultPage(tokens, pageResponse, null));
     }
 
     @Override
     public ApiKeyResultPage search(final SearchApiKeyRequest request) {
         final Condition condition = createCondition();
+
+        final String qualifiedFilterInput = QuickFilterPredicateFactory.fullyQualifyInput(
+                request.getQuickFilter(),
+                FIELD_MAPPERS);
 
         final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(
                 FIELD_MAP,
@@ -232,7 +237,7 @@ class ApiKeyDaoImpl implements ApiKeyDao {
                         list.size(),
                         (long) count,
                         true);
-                return new ApiKeyResultPage(list, pageResponse);
+                return new ApiKeyResultPage(list, pageResponse, qualifiedFilterInput);
 
             } else {
                 try (final Stream<Record12<Integer, Integer, Long, Long, String, String,
@@ -267,7 +272,9 @@ class ApiKeyDaoImpl implements ApiKeyDao {
                             FIELD_MAPPERS,
                             stream.map(RECORD_TO_TOKEN_MAPPER),
                             comparator
-                    ).collect(ResultPageFactory.collector(request.getPageRequest(), ApiKeyResultPage::new));
+                    ).collect(ResultPageFactory.collector(
+                            request.getPageRequest(), (tokens, pageResponse) ->
+                                    new ApiKeyResultPage(tokens, pageResponse, qualifiedFilterInput)));
                 }
             }
         });

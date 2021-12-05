@@ -21,14 +21,14 @@ package stroom.security.identity.config;
 
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
-import stroom.util.shared.NotInjectableConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
+import javax.inject.Singleton;
 import javax.validation.constraints.NotNull;
 
-@NotInjectableConfig
+@Singleton
 public class EmailConfig extends AbstractConfig implements IsStroomConfig {
 
     public static final String PROP_NAME_SMTP = "smtp";

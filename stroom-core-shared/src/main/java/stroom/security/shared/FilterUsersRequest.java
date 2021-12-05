@@ -13,18 +13,18 @@ import java.util.List;
 public class FilterUsersRequest {
 
     @JsonProperty
-    private final List<User> users;
+    private final List<SimpleUser> users;
     @JsonProperty
     private final String quickFilterInput;
 
     @JsonCreator
-    public FilterUsersRequest(@JsonProperty("users") final List<User> users,
+    public FilterUsersRequest(@JsonProperty("users") final List<SimpleUser> users,
                               @JsonProperty("quickFilterInput") final String quickFilterInput) {
         this.users = users;
         this.quickFilterInput = quickFilterInput;
     }
 
-    public List<User> getUsers() {
+    public List<SimpleUser> getUsers() {
         return users;
     }
 

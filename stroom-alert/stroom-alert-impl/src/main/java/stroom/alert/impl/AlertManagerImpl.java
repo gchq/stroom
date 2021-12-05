@@ -33,8 +33,9 @@ import stroom.index.impl.IndexStructure;
 import stroom.index.impl.IndexStructureCache;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.search.extraction.ExtractionDecoratorFactory;
+import stroom.search.extraction.ExtractionTaskHandler;
 import stroom.search.impl.SearchConfig;
+import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -45,6 +46,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton
@@ -52,32 +54,35 @@ public class AlertManagerImpl implements AlertManager {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AlertManagerImpl.class);
 
+    private final TaskContext taskContext;
     private final ExplorerNodeService explorerNodeService;
     private final DashboardStore dashboardStore;
     private final int maxBooleanClauseCount;
     private final WordListProvider wordListProvider;
     private final IndexStructureCache indexStructureCache;
-    private final ExtractionDecoratorFactory extractionDecoratorFactory;
+    private final Provider<ExtractionTaskHandler> handlerProvider;
     private final AlertConfig alertConfig;
     private Map<DocRef, List<RuleConfig>> indexToRules = new HashMap<>();
 
     private boolean initialised = false;
 
     @Inject
-    AlertManagerImpl(final AlertConfig config,
+    AlertManagerImpl(final TaskContext taskContext,
+                     final AlertConfig config,
                      final ExplorerNodeService explorerNodeService,
                      final DashboardStore dashboardStore,
                      final WordListProvider wordListProvider,
                      final SearchConfig searchConfig,
                      final IndexStructureCache indexStructureCache,
-                     final ExtractionDecoratorFactory extractionDecoratorFactory) {
+                     final Provider<ExtractionTaskHandler> handlerProvider) {
+        this.taskContext = taskContext;
         this.alertConfig = config;
         this.explorerNodeService = explorerNodeService;
         this.dashboardStore = dashboardStore;
         this.wordListProvider = wordListProvider;
         this.maxBooleanClauseCount = searchConfig.getMaxBooleanClauseCount();
         this.indexStructureCache = indexStructureCache;
-        this.extractionDecoratorFactory = extractionDecoratorFactory;
+        this.handlerProvider = handlerProvider;
     }
 
     @Override
@@ -97,8 +102,9 @@ public class AlertManagerImpl implements AlertManager {
                 LOGGER.warn("Unable to locate index " + indexDocRef + " specified in rule");
                 return Optional.empty();
             } else {
-                AlertProcessorImpl processor = new AlertProcessorImpl(
-                        extractionDecoratorFactory,
+                final AlertProcessorImpl processor = new AlertProcessorImpl(
+                        taskContext,
+                        handlerProvider,
                         rules,
                         indexStructure,
                         wordListProvider,
@@ -136,7 +142,7 @@ public class AlertManagerImpl implements AlertManager {
         for (String name : path) {
             List<ExplorerNode> matchingChildren =
                     explorerNodeService.getNodesByName(currentNode, name).stream().filter(explorerNode ->
-                            ExplorerConstants.FOLDER.equals(explorerNode.getDocRef().getType()))
+                                    ExplorerConstants.FOLDER.equals(explorerNode.getDocRef().getType()))
                             .collect(Collectors.toList());
 
             if (matchingChildren.size() == 0) {

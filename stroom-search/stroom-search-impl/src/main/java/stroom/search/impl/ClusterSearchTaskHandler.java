@@ -30,6 +30,8 @@ import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.SearchProgressLog;
+import stroom.util.logging.SearchProgressLog.SearchPhase;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -55,6 +57,7 @@ class ClusterSearchTaskHandler {
     public void exec(final TaskContext taskContext,
                      final ClusterSearchTask task,
                      final Coprocessors coprocessors) {
+        SearchProgressLog.increment(SearchPhase.CLUSTER_SEARCH_TASK_HANDLER_EXEC);
         securityContext.useAsRead(() -> {
             if (!Thread.currentThread().isInterrupted()) {
                 taskContext.info(() -> "Initialising...");
@@ -81,6 +84,7 @@ class ClusterSearchTaskHandler {
                        final ClusterSearchTask task,
                        final Query query,
                        final Coprocessors coprocessors) {
+        SearchProgressLog.increment(SearchPhase.CLUSTER_SEARCH_TASK_HANDLER_SEARCH);
         taskContext.info(() -> "Searching...");
         LOGGER.debug(() -> "Incoming search request:\n" + query.getExpression().toString());
 

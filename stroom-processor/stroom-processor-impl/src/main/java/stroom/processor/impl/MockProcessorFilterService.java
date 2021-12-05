@@ -4,11 +4,11 @@ import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
+import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.FetchProcessorRequest;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorListRow;
-import stroom.processor.shared.QueryData;
 import stroom.processor.shared.ReprocessDataInfo;
 import stroom.util.shared.ResultPage;
 
@@ -32,17 +32,15 @@ public class MockProcessorFilterService implements ProcessorFilterService {
     }
 
     @Override
-    public ProcessorFilter create(DocRef pipelineRef,
-                                  QueryData queryData,
-                                  int priority,
-                                  boolean autoPriority,
-                                  boolean enabled) {
+    public ProcessorFilter create(final CreateProcessFilterRequest request) {
         ProcessorFilter filter = new ProcessorFilter();
-        filter.setPipelineUuid(pipelineRef.getUuid());
-        filter.setQueryData(queryData);
-        filter.setPriority(priority);
-        filter.setEnabled(enabled);
-        Processor processor = processorService.create(pipelineRef, enabled);
+        filter.setPipelineUuid(request.getPipeline().getUuid());
+        filter.setQueryData(request.getQueryData());
+        filter.setPriority(request.getPriority());
+        filter.setEnabled(request.isEnabled());
+        filter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
+        filter.setMaxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
+        Processor processor = processorService.create(request.getPipeline(), request.isEnabled());
 
         filter.setProcessor(processor);
         return dao.create(filter);
@@ -55,47 +53,35 @@ public class MockProcessorFilterService implements ProcessorFilterService {
 //    }
 //
     @Override
-    public ProcessorFilter create(Processor processor,
-                                  QueryData queryData,
-                                  int priority,
-                                  boolean autoPriority,
-                                  boolean enabled) {
+    public ProcessorFilter create(final Processor processor,
+                                  final CreateProcessFilterRequest request) {
         ProcessorFilter filter = new ProcessorFilter();
         filter.setProcessor(processor);
-        filter.setQueryData(queryData);
-        filter.setPriority(priority);
-        filter.setEnabled(enabled);
+        filter.setQueryData(request.getQueryData());
+        filter.setPriority(request.getPriority());
+        filter.setEnabled(request.isEnabled());
+        filter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
+        filter.setMaxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
         return dao.create(filter);
     }
 
     @Override
-    public List<ReprocessDataInfo> reprocess(final QueryData criteria,
-                                             final int priority,
-                                             final boolean autoPriority,
-                                             final boolean enabled) {
+    public List<ReprocessDataInfo> reprocess(final CreateProcessFilterRequest request) {
         return null;
     }
-
-    //    @Override
-//    public ProcessorFilter create(Processor processor, QueryData queryData, int priority, boolean enabled) {
-//        return create (processor, queryData, priority, enabled);
-//    }
 
     @Override
     public ProcessorFilter importFilter(final Processor processor,
                                         final DocRef processorFilterDocRef,
-                                        final QueryData queryData,
-                                        final int priority,
-                                        boolean autoPriority,
-                                        final boolean enabled,
-                                        final boolean reprocess,
-                                        final Long trackerStartMs) {
+                                        final CreateProcessFilterRequest request) {
         ProcessorFilter filter = new ProcessorFilter();
         filter.setProcessor(processor);
-        filter.setQueryData(queryData);
-        filter.setPriority(priority);
+        filter.setQueryData(request.getQueryData());
+        filter.setPriority(request.getPriority());
         filter.setUuid(processorFilterDocRef.getUuid());
-        filter.setEnabled(enabled);
+        filter.setEnabled(request.isEnabled());
+        filter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
+        filter.setMaxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
         return dao.create(filter);
     }
 

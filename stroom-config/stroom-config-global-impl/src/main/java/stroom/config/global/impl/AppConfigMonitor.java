@@ -8,7 +8,6 @@ import stroom.util.config.AbstractFileChangeMonitor;
 import stroom.util.config.AppConfigValidator;
 import stroom.util.config.ConfigLocation;
 import stroom.util.config.ConfigValidator;
-import stroom.util.config.FieldMapper;
 import stroom.util.config.PropertyPathDecorator;
 import stroom.util.shared.AbstractConfig;
 
@@ -17,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
-import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -65,25 +63,12 @@ public class AppConfigMonitor extends AbstractFileChangeMonitor implements Manag
                         configFile.toAbsolutePath().normalize().toString());
             } else {
                 try {
-                    // Don't have to worry about the DB config merging that goes on in DataSourceFactoryImpl
-                    // as that doesn't mutate the config objects
-
-                    final AtomicInteger updateCount = new AtomicInteger(0);
-                    final FieldMapper.UpdateAction updateAction =
-                            (destParent, prop, sourcePropValue, destPropValue) -> {
-                                logUpdate(destParent, prop, sourcePropValue, destPropValue);
-                                updateCount.incrementAndGet();
-                            };
-
                     LOGGER.info("Updating application config from file.");
-                    // Copy changed values from the newly modified appConfig into the guice bound one
-                    FieldMapper.copy(newAppConfig, this.appConfig, updateAction);
+                    globalConfigService.updateConfigFromDb(newAppConfig);
 
                     // Update the config objects using the DB as the removal of a yaml value may trigger
                     // a DB value to be effective
-                    LOGGER.info("Completed updating application config from file. Changes: {}", updateCount.get());
-                    globalConfigService.updateConfigObjects(newAppConfig);
-
+                    LOGGER.info("Completed updating application config from file.");
                 } catch (Throwable e) {
                     // Swallow error as we don't want to break the app because the new config is bad
                     // The admins can fix the problem and let it have another go.

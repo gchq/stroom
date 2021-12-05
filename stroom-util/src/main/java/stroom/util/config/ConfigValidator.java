@@ -170,7 +170,7 @@ public class ConfigValidator<T> {
         final String path;
         if (config instanceof HasPropertyPath) {
             final HasPropertyPath hasPropertyPath = ((HasPropertyPath) config);
-            final String propPath = hasPropertyPath.getFullPath(propName);
+            final String propPath = hasPropertyPath.getFullPathStr(propName);
             path = propPath != null
                     ? propPath
                     : config.getClass().getName();

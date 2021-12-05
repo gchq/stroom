@@ -1,6 +1,5 @@
 package stroom.query.common.v2;
 
-import stroom.lmdb.LmdbConfig;
 import stroom.util.io.ByteSize;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
@@ -23,13 +22,7 @@ public class ResultStoreConfig extends AbstractConfig implements IsStroomConfig 
     private ByteSize minPayloadSize = ByteSize.ofMebibytes(1);
     private ByteSize maxPayloadSize = ByteSize.ofGibibytes(1);
 
-    private LmdbConfig lmdbConfig = LmdbConfig.builder("search_results")
-            .withMaxReaders(10)
-            .withMaxStoreSize(ByteSize.ofGibibytes(10))
-            .withMaxDbs(7)
-            .withReadAheadEnabledState(true)
-            .withReadersBlockedByWritersState(false)
-            .build();
+    private ResultStoreLmdbConfig lmdbConfig = new ResultStoreLmdbConfig();
 
     @Min(0)
     @JsonPropertyDescription("The maximum number of puts into the store (in a single load) before the " +
@@ -109,12 +102,12 @@ public class ResultStoreConfig extends AbstractConfig implements IsStroomConfig 
     }
 
     @JsonProperty("lmdb")
-    public LmdbConfig getLmdbConfig() {
+    public ResultStoreLmdbConfig getLmdbConfig() {
         return lmdbConfig;
     }
 
     @SuppressWarnings("unused")
-    public void setLmdbConfig(final LmdbConfig lmdbConfig) {
+    public void setLmdbConfig(final ResultStoreLmdbConfig lmdbConfig) {
         this.lmdbConfig = lmdbConfig;
     }
 

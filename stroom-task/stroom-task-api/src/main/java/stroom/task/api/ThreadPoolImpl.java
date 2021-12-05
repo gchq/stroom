@@ -24,28 +24,15 @@ public class ThreadPoolImpl implements ThreadPool {
 
     private final String name;
     private final int priority;
-    private final int corePoolSize;
-    private final int maxPoolSize;
-    private final int maxQueueSize;
 
-    public ThreadPoolImpl(final String name, final int priority, final int corePoolSize, final int maxPoolSize) {
+    public ThreadPoolImpl(final String name) {
         this.name = name;
-        this.priority = priority;
-        this.corePoolSize = corePoolSize;
-        this.maxPoolSize = maxPoolSize;
-        this.maxQueueSize = Integer.MAX_VALUE;
+        this.priority = Thread.NORM_PRIORITY;
     }
 
-    public ThreadPoolImpl(final String name,
-                          final int priority,
-                          final int corePoolSize,
-                          final int maxPoolSize,
-                          final int maxQueueSize) {
+    public ThreadPoolImpl(final String name, final int priority) {
         this.name = name;
         this.priority = priority;
-        this.corePoolSize = corePoolSize;
-        this.maxPoolSize = maxPoolSize;
-        this.maxQueueSize = maxQueueSize;
     }
 
     @Override
@@ -59,21 +46,6 @@ public class ThreadPoolImpl implements ThreadPool {
     }
 
     @Override
-    public int getCorePoolSize() {
-        return corePoolSize;
-    }
-
-    @Override
-    public int getMaxPoolSize() {
-        return maxPoolSize;
-    }
-
-    @Override
-    public int getMaxQueueSize() {
-        return maxQueueSize;
-    }
-
-    @Override
     public boolean equals(final Object o) {
         if (this == o) {
             return true;
@@ -83,15 +55,12 @@ public class ThreadPoolImpl implements ThreadPool {
         }
         final ThreadPoolImpl that = (ThreadPoolImpl) o;
         return priority == that.priority &&
-                corePoolSize == that.corePoolSize &&
-                maxPoolSize == that.maxPoolSize &&
-                maxQueueSize == that.maxQueueSize &&
                 Objects.equals(name, that.name);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, priority, corePoolSize, maxPoolSize, maxQueueSize);
+        return Objects.hash(name, priority);
     }
 
     @Override

@@ -258,9 +258,7 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
     }
 
     Node getNode(final String nodeName) {
-        return securityContext.secureResult(() -> {
-            return nodeDao.getNode(nodeName);
-        });
+        return securityContext.secureResult(() -> nodeDao.getNode(nodeName));
     }
 
     private void ensureNodeCreated() {
@@ -330,6 +328,8 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
     @Override
     public void clear() {
         thisNode = null;
+        // Ensure the node record for this node is in the DB
+        securityContext.asProcessingUser(this::ensureNodeCreated);
     }
 
     int setJobsEnabledForNode(final String nodeName,

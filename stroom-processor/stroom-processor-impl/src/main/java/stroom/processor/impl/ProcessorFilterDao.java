@@ -9,9 +9,5 @@ public interface ProcessorFilterDao extends HasIntCrud<ProcessorFilter> {
 
     ResultPage<ProcessorFilter> find(ExpressionCriteria criteria);
 
-    ProcessorFilter create(ProcessorFilter processorFilter,
-                           Long minMetaCreateMs,
-                           Long maxMetaCreateMs);
-
     boolean logicalDelete(int id);
 }

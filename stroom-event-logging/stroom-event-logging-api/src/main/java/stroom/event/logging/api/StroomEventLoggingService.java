@@ -144,7 +144,7 @@ public interface StroomEventLoggingService extends EventLoggingService {
      * actual conversion.
      * Otherwise, Java introspection is used to derive {@link event.logging.Data} items from Java bean properties.
      *
-     * @param object POJO
+     * @param object           POJO
      * @param useInfoProviders Set to false to not use {@link ObjectInfoProvider} classes.
      * @return BaseObject
      */
@@ -159,7 +159,8 @@ public interface StroomEventLoggingService extends EventLoggingService {
      * If an {@link ObjectInfoProvider} implementation is registered for this class, then it is used to perform the
      * actual conversion.
      * Otherwise, Java introspection is used to derive {@link event.logging.Data} items from Java bean properties.
-     * @param objectSupplier Supplier of the POJO. get() will be called as the processing user
+     *
+     * @param objectSupplier   Supplier of the POJO. get() will be called as the processing user
      * @param useInfoProviders Set to false to not use {@link ObjectInfoProvider} classes.
      * @return BaseObject
      */
@@ -216,5 +217,4 @@ public interface StroomEventLoggingService extends EventLoggingService {
      * @return List of {@link Data} items representing properties of the supplied POJO
      */
     List<Data> getDataItems(java.lang.Object obj);
-
 }

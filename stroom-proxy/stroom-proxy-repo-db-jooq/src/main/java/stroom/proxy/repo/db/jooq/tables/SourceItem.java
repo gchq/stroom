@@ -9,9 +9,10 @@ import java.util.List;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
+import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
-import org.jooq.Row6;
+import org.jooq.Row8;
 import org.jooq.Schema;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -22,6 +23,7 @@ import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
 import stroom.proxy.repo.db.jooq.DefaultSchema;
+import stroom.proxy.repo.db.jooq.Indexes;
 import stroom.proxy.repo.db.jooq.Keys;
 import stroom.proxy.repo.db.jooq.tables.records.SourceItemRecord;
 
@@ -68,14 +70,24 @@ public class SourceItem extends TableImpl<SourceItemRecord> {
     public final TableField<SourceItemRecord, String> TYPE_NAME = createField(DSL.name("type_name"), SQLDataType.VARCHAR(255).defaultValue(DSL.field("NULL", SQLDataType.VARCHAR)), this, "");
 
     /**
-     * The column <code>source_item.fk_source_id</code>.
+     * The column <code>source_item.byte_size</code>.
      */
-    public final TableField<SourceItemRecord, Long> FK_SOURCE_ID = createField(DSL.name("fk_source_id"), SQLDataType.BIGINT.nullable(false), this, "");
+    public final TableField<SourceItemRecord, Long> BYTE_SIZE = createField(DSL.name("byte_size"), SQLDataType.BIGINT.defaultValue(DSL.field("0", SQLDataType.BIGINT)), this, "");
 
     /**
-     * The column <code>source_item.aggregated</code>.
+     * The column <code>source_item.source_id</code>.
      */
-    public final TableField<SourceItemRecord, Boolean> AGGREGATED = createField(DSL.name("aggregated"), SQLDataType.BOOLEAN.defaultValue(DSL.field("FALSE", SQLDataType.BOOLEAN)), this, "");
+    public final TableField<SourceItemRecord, Long> SOURCE_ID = createField(DSL.name("source_id"), SQLDataType.BIGINT.nullable(false), this, "");
+
+    /**
+     * The column <code>source_item.aggregate_id</code>.
+     */
+    public final TableField<SourceItemRecord, Long> AGGREGATE_ID = createField(DSL.name("aggregate_id"), SQLDataType.BIGINT, this, "");
+
+    /**
+     * The column <code>source_item.new_position</code>.
+     */
+    public final TableField<SourceItemRecord, Long> NEW_POSITION = createField(DSL.name("new_position"), SQLDataType.BIGINT, this, "");
 
     private SourceItem(Name alias, Table<SourceItemRecord> aliased) {
         this(alias, aliased, null);
@@ -116,6 +128,11 @@ public class SourceItem extends TableImpl<SourceItemRecord> {
     }
 
     @Override
+    public List<Index> getIndexes() {
+        return Arrays.<Index>asList(Indexes.NEW_POSITION_SOURCE_ITEM_INDEX);
+    }
+
+    @Override
     public UniqueKey<SourceItemRecord> getPrimaryKey() {
         return Keys.PK_SOURCE_ITEM;
     }
@@ -123,20 +140,6 @@ public class SourceItem extends TableImpl<SourceItemRecord> {
     @Override
     public List<UniqueKey<SourceItemRecord>> getKeys() {
         return Arrays.<UniqueKey<SourceItemRecord>>asList(Keys.PK_SOURCE_ITEM, Keys.SQLITE_AUTOINDEX_SOURCE_ITEM_2);
-    }
-
-    @Override
-    public List<ForeignKey<SourceItemRecord, ?>> getReferences() {
-        return Arrays.<ForeignKey<SourceItemRecord, ?>>asList(Keys.FK_SOURCE_ITEM_SOURCE_1);
-    }
-
-    private transient Source _source;
-
-    public Source source() {
-        if (_source == null)
-            _source = new Source(this, Keys.FK_SOURCE_ITEM_SOURCE_1);
-
-        return _source;
     }
 
     @Override
@@ -166,11 +169,11 @@ public class SourceItem extends TableImpl<SourceItemRecord> {
     }
 
     // -------------------------------------------------------------------------
-    // Row6 type methods
+    // Row8 type methods
     // -------------------------------------------------------------------------
 
     @Override
-    public Row6<Long, String, String, String, Long, Boolean> fieldsRow() {
-        return (Row6) super.fieldsRow();
+    public Row8<Long, String, String, String, Long, Long, Long, Long> fieldsRow() {
+        return (Row8) super.fieldsRow();
     }
 }

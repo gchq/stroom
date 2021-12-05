@@ -68,6 +68,8 @@ public final class GlobalPropertyEditViewImpl
     TickBox requireUiRestart;
     @UiField
     TickBox readOnly;
+    // TODO This btn panel doesn't appear to be used. Probably not needed as the effectiveValueButtonPanel
+    //  does the job of showing what values are effective on the nodes.
     @UiField
     ButtonPanel yamlValueButtonPanel;
     @UiField

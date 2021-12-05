@@ -20,6 +20,8 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.SearchProgressLog;
+import stroom.util.logging.SearchProgressLog.SearchPhase;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.SimpleCollector;
@@ -62,6 +64,7 @@ class IndexShardHitCollector extends SimpleCollector {
         final int docId = docBase + doc;
 
         try {
+            SearchProgressLog.increment(SearchPhase.INDEX_SHARD_SEARCH_TASK_HANDLER_DOC_ID_STORE_PUT);
             docIdStore.put(OptionalInt.of(docId));
             info(() -> "Found " + hitCount + " hits");
         } catch (final InterruptedException e) {

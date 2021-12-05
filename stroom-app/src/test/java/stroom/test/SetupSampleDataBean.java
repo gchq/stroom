@@ -37,6 +37,7 @@ import stroom.meta.shared.MetaFields;
 import stroom.pipeline.PipelineStore;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
+import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.QueryData;
@@ -49,7 +50,6 @@ import stroom.statistics.impl.sql.entity.StatisticStoreStore;
 import stroom.test.common.StroomCoreServerTestFileUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.logging.LogUtil;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,7 +65,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -143,32 +143,7 @@ public final class SetupSampleDataBean {
         this.streamTargetStreamHandlers = streamTargetStreamHandlers;
     }
 
-//    private void createStreamAttributes() {
-//        final BaseResultList<StreamAttributeKey> list = metaKeyService
-//                .find(new FindStreamAttributeKeyCriteria());
-//        final HashSet<String> existingItems = new HashSet<>();
-//        for (final StreamAttributeKey streamAttributeKey : list) {
-//            existingItems.add(streamAttributeKey.getName());
-//        }
-//        for (final String name : StreamAttributeConstants.SYSTEM_ATTRIBUTE_FIELD_TYPE_MAP.keySet()) {
-//            if (!existingItems.contains(name)) {
-//                try {
-//                    metaKeyService.save(new StreamAttributeKey(name,
-//                            StreamAttributeConstants.SYSTEM_ATTRIBUTE_FIELD_TYPE_MAP.get(name)));
-//                } catch (final RuntimeException e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//        }
-//    }
-
     public void run(final boolean shutdown) {
-        // Ensure admin user exists.
-//        LOGGER.info("Creating admin user");
-//        authenticationService.getUser(new AuthenticationToken("admin", null));
-
-//        createRandomExplorerNode(null, "", 0, 2);
-
         checkVolumesExist();
 
         // Sample data/config can exist in many projects so here we define all
@@ -191,23 +166,9 @@ public final class SetupSampleDataBean {
             loadDirectory(shutdown, dir);
         }
 
-        //Additional content is loaded by the gradle build in task downloadStroomContent
-
         // Add volumes to all indexes.
         final List<DocRef> indexList = indexStore.list();
         logDocRefs(indexList, "indexes");
-
-        // TODO replace this with new volumes index
-//        for (final DocRef indexRef : indexList) {
-//            indexVolumeService.setVolumesForIndex(indexRef, volumeSet);
-//        }
-
-        // Create index pipeline processor filters
-        createIndexingProcessorFilter("Example index", StreamTypeNames.EVENTS, Optional.empty());
-        createIndexingProcessorFilter(
-                "LAX_CARGO_VOLUME-INDEX", StreamTypeNames.RECORDS, Optional.of("LAX_CARGO_VOLUME"));
-        createIndexingProcessorFilter(
-                "BROADBAND_SPEED_TESTS-INDEX", StreamTypeNames.RECORDS, Optional.of("BROADBAND_SPEED_TESTS"));
 
         final List<DocRef> feeds = getSortedDocRefs(feedStore::list);
 
@@ -272,10 +233,11 @@ public final class SetupSampleDataBean {
                 LOGGER.info("Creating processor filter on {} for feed {}", pipeline.getName(), feed.getName());
                 final ProcessorFilter processorFilter = processorFilterService.create(
                         processor,
-                        criteria,
-                        10,
-                        false,
-                        true);
+                        CreateProcessFilterRequest
+                                .builder()
+                                .pipeline(pipeline)
+                                .queryData(criteria)
+                                .build());
                 LOGGER.debug(processorFilter.toString());
             }
         }
@@ -301,52 +263,6 @@ public final class SetupSampleDataBean {
         if (dataVolumes.isEmpty() || indexVolumes.isEmpty()) {
             LOGGER.error("Missing volumes, quiting");
             System.exit(1);
-        }
-    }
-
-    private void createIndexingProcessorFilter(
-            final String pipelineName,
-            final String sourceStreamType,
-            final Optional<String> optFeedName) {
-
-        // Find the pipeline for this index.
-        final List<DocRef> pipelines = pipelineStore.list()
-                .stream()
-                .filter(docRef -> pipelineName.equals(docRef.getName()))
-                .collect(Collectors.toList());
-
-        if (pipelines == null || pipelines.size() == 0) {
-            throw new RuntimeException(LogUtil.message(
-                    "Expecting to find one pipeline with name [{}]", pipelineName));
-        } else if (pipelines.size() > 1) {
-            throw new RuntimeException(LogUtil.message(
-                    "More than 1 pipeline found for index [{}]", pipelineName));
-        } else {
-            final DocRef pipeline = pipelines.get(0);
-
-            final ExpressionOperator.Builder expressionBuilder = ExpressionOperator.builder()
-                    .addTerm(
-                            MetaFields.TYPE,
-                            ExpressionTerm.Condition.EQUALS,
-                            sourceStreamType);
-
-            optFeedName.ifPresent(feedName ->
-                    expressionBuilder.addTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedName));
-
-            // Create a processor for this index.
-            final QueryData criteria = QueryData.builder()
-                    .dataSource(MetaFields.STREAM_STORE_DOC_REF)
-                    .expression(expressionBuilder.build())
-                    .build();
-
-            final Processor processor = processorService.create(pipeline, true);
-            final ProcessorFilter processorFilter = processorFilterService.create(
-                    processor,
-                    criteria,
-                    10,
-                    false,
-                    true);
-            LOGGER.debug(processorFilter.toString());
         }
     }
 
@@ -402,33 +318,38 @@ public final class SetupSampleDataBean {
             // layout start 2 weeks ago.
             final long dayMs = 1000 * 60 * 60 * 24;
             final long tenMinMs = 1000 * 60 * 10;
-            long startTime = System.currentTimeMillis() - (14 * dayMs);
 
             // Load each data item 10 times to create a reasonable amount to
             // test.
             final String feedName = "DATA_SPLITTER-EVENTS";
+            final CompletableFuture[] futures = new CompletableFuture[LOAD_CYCLES];
             for (int i = 0; i < LOAD_CYCLES; i++) {
                 LOGGER.info("Loading data from {}, iteration {}",
-                        dataDir.toAbsolutePath().normalize().toString(), i);
-                // Load reference data first.
-                dataLoader.read(dataDir, true, startTime);
-                startTime += tenMinMs;
+                        dataDir.toAbsolutePath().normalize(), i);
+                futures[i] = CompletableFuture.runAsync(() -> {
+                    long startTime = System.currentTimeMillis() - (14 * dayMs);
 
-                // Then load event data.
-                dataLoader.read(dataDir, false, startTime);
-                startTime += tenMinMs;
+                    // Load reference data first.
+                    dataLoader.read(dataDir, true, startTime);
+                    startTime += tenMinMs;
 
-                // Load some randomly generated data.
-                final String randomData = createRandomData();
-                dataLoader.loadInputStream(
-                        feedName,
-                        "Gen data",
+                    // Then load event data.
+                    dataLoader.read(dataDir, false, startTime);
+                    startTime += tenMinMs;
+
+                    // Load some randomly generated data.
+                    final String randomData = createRandomData();
+                    dataLoader.loadInputStream(
+                            feedName,
+                            "Gen data",
                         null,
-                        StreamUtil.stringToStream(randomData),
-                        false,
-                        startTime);
-                startTime += tenMinMs;
+                            StreamUtil.stringToStream(randomData),
+                            false,
+                            startTime);
+                    startTime += tenMinMs;
+                });
             }
+            CompletableFuture.allOf(futures).join();
         } else {
             LOGGER.info("Directory {} doesn't exist so skipping", dataDir.toAbsolutePath().normalize());
         }
@@ -437,7 +358,7 @@ public final class SetupSampleDataBean {
         List.of(exampleDataDir, generatedDataDir)
                 .forEach(dir -> {
                     if (Files.exists(dir)) {
-                        LOGGER.info("Loading data from {}", dir.toAbsolutePath().normalize().toString());
+                        LOGGER.info("Loading data from {}", dir.toAbsolutePath().normalize());
                         // Load data.
                         final DataLoader dataLoader = new DataLoader(feedProperties, streamTargetStreamHandlers);
                         long startTime = System.currentTimeMillis();

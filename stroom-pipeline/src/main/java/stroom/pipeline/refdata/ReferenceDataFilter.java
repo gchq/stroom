@@ -672,7 +672,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
 
     @Override
     public void endProcessing() {
-        LOGGER.info("Processed {} XML ref data entries for ref stream {}",
+        LOGGER.debug("Processed {} XML ref data entries for ref stream {}",
                 valueCount,
                 refStreamDefinition);
 

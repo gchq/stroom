@@ -407,8 +407,7 @@ appConfig:
         expireAfterWrite: null
       lmdb:
         localDir: "reference_data"
-        maxDbs: 7
-        maxReaders: 100
+        maxReaders: 150
         maxStoreSize: "50G"
         readAheadEnabled: true
         readerBlockedByWriter: true
@@ -490,7 +489,14 @@ appConfig:
       maxAggregateAge: "PT10M"
       maxItemsPerAggregate: 1000
       maxUncompressedByteSize: "1.0G"
-    dbDir: "proxy_repo_db"
+    repoDbConfig:
+      connectionPragma:
+      - "pragma synchronous = normal;"
+      - "pragma temp_store = memory;"
+      - "pragma mmap_size = 30000000000;"
+      dbDir: "proxy_repo_db"
+      globalPragma:
+      - "pragma journal_mode = WAL;"
     repoDir: "proxy_repo"
   publicUri:
     scheme: "https"
@@ -511,13 +517,11 @@ appConfig:
       expireAfterWrite: null
     extraction:
       maxStoredDataQueueSize: 1000
-      maxThreads: 4
-      maxThreadsPerTask: 2
+      maxThreadsPerTask: 5
       maxStreamEventMapSize: 1000000
     shard:
       maxDocIdQueueSize: 1000000
-      maxThreads: 4
-      maxThreadsPerTask: 2
+      maxThreadsPerTask: 5
       searchResultCache:
         maximumSize: 10000
         expireAfterAccess: "PT10M"
@@ -540,11 +544,9 @@ appConfig:
       payloadLimit: "0B"
       lmdb:
         localDir: "search_results"
-        maxDbs: 7
         maxReaders: 10
         maxStoreSize: "10G"
         readAheadEnabled: true
-        readerBlockedByWriter: false
   searchable:
     storeSize: "1000000,100,10,1"
     searchResultCache:

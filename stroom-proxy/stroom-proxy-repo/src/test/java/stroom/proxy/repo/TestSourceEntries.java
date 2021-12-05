@@ -3,10 +3,7 @@ package stroom.proxy.repo;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.zip.StroomZipFileType;
 import stroom.proxy.repo.dao.SourceDao;
-import stroom.proxy.repo.dao.SourceDao.Source;
-import stroom.proxy.repo.dao.SourceEntryDao;
-import stroom.proxy.repo.db.jooq.tables.records.SourceEntryRecord;
-import stroom.proxy.repo.db.jooq.tables.records.SourceItemRecord;
+import stroom.proxy.repo.dao.SourceItemDao;
 
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
@@ -16,11 +13,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -31,13 +30,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public class TestSourceEntries {
 
     @Inject
-    private ProxyRepoSources proxyRepoSources;
+    private RepoSources proxyRepoSources;
     @Inject
-    private ProxyRepoSourceEntries proxyRepoSourceEntries;
+    private RepoSourceItems proxyRepoSourceEntries;
     @Inject
     private SourceDao sourceDao;
     @Inject
-    private SourceEntryDao sourceEntryDao;
+    private SourceItemDao sourceItemDao;
 
     @BeforeEach
     void beforeEach() {
@@ -60,20 +59,18 @@ public class TestSourceEntries {
         proxyRepoSources.addSource("path", "test", null, System.currentTimeMillis(), null);
 
         // Check that we have a new source.
-        final List<Source> sources = sourceDao.getNewSources(1000);
-        assertThat(sources.size()).isOne();
-        final Source source = sources.get(0);
-        final long sourceId = source.getSourceId();
-        final String path = source.getSourcePath();
+        final Optional<RepoSource> optionalSource = sourceDao.getNewSource();
+        assertThat(optionalSource.isPresent()).isTrue();
+        final RepoSource source = optionalSource.get();
 
-        addEntriesToSource(sourceId, path, 1, 1);
+        addEntriesToSource(source, 1, 1);
 
         assertThatThrownBy(() ->
-                addEntriesToSource(sourceId, path, 1, 1)).isInstanceOf(DataAccessException.class);
+                addEntriesToSource(source, 1, 1)).isInstanceOf(DataAccessException.class);
 
         proxyRepoSourceEntries.clear();
 
-        addEntriesToSource(sourceId, path, 1, 1);
+        addEntriesToSource(source, 1, 1);
     }
 
 
@@ -81,31 +78,28 @@ public class TestSourceEntries {
         proxyRepoSources.addSource("path", "test", null, System.currentTimeMillis(), null);
 
         // Check that we have a new source.
-        final List<Source> sources = sourceDao.getNewSources(1000);
-        assertThat(sources.size()).isOne();
-        final Source source = sources.get(0);
-        final long sourceId = source.getSourceId();
-        final String path = source.getSourcePath();
+        final Optional<RepoSource> optionalSource = sourceDao.getNewSource();
+        assertThat(optionalSource.isPresent()).isTrue();
+        final RepoSource source = optionalSource.get();
+        final long sourceId = source.getId();
 
-        addEntriesToSource(sourceId, path, 100, 10);
+        addEntriesToSource(source, 100, 10);
 
         assertThat(sourceDao.countSources()).isOne();
-        assertThat(sourceEntryDao.countItems()).isEqualTo(1000);
-        assertThat(sourceEntryDao.countEntries()).isEqualTo(3000);
+        assertThat(sourceItemDao.countItems()).isEqualTo(1000);
+        assertThat(sourceItemDao.countEntries()).isEqualTo(3000);
 
         // Check that we have no new sources.
-        final List<Source> sources2 = sourceDao.getNewSources(1000);
-        assertThat(sources2.size()).isZero();
+        final Optional<RepoSource> optionalSource2 = sourceDao.getNewSource(0, TimeUnit.MILLISECONDS);
+        assertThat(optionalSource2.isPresent()).isFalse();
 
         return sourceId;
     }
 
-    void addEntriesToSource(final long sourceId,
-                            final String path,
+    void addEntriesToSource(final RepoSource source,
                             final int loopCount,
                             final int feedCount) {
-        final Map<String, SourceItemRecord> itemNameMap = new HashMap<>();
-        final Map<Long, List<SourceEntryRecord>> entryMap = new HashMap<>();
+        final Map<String, RepoSourceItem.Builder> itemNameMap = new HashMap<>();
         final AtomicLong sourceItemRecordId = new AtomicLong();
         final AtomicLong sourceEntryRecordId = new AtomicLong();
         final List<StroomZipFileType> types = List.of(
@@ -120,47 +114,29 @@ public class TestSourceEntries {
                 final String typeName = StreamTypeNames.RAW_EVENTS;
 
                 for (final StroomZipFileType type : types) {
-                    long sourceItemId;
-                    int extensionType = -1;
-                    if (StroomZipFileType.META.equals(type)) {
-                        extensionType = 1;
-                    } else if (StroomZipFileType.CONTEXT.equals(type)) {
-                        extensionType = 2;
-                    } else if (StroomZipFileType.DATA.equals(type)) {
-                        extensionType = 3;
-                    }
+                    final RepoSourceItem.Builder builder = itemNameMap.computeIfAbsent(dataName, k ->
+                            RepoSourceItem.builder()
+                                    .source(source)
+                                    .name(dataName)
+                                    .feedName(feedName)
+                                    .typeName(typeName));
 
-                    SourceItemRecord sourceItemRecord = itemNameMap.get(dataName);
-                    if (sourceItemRecord == null) {
-                        sourceItemId = sourceItemRecordId.incrementAndGet();
-                        sourceItemRecord = new SourceItemRecord(
-                                sourceItemId,
-                                dataName,
-                                feedName,
-                                typeName,
-                                sourceId,
-                                false);
-                        itemNameMap.put(dataName, sourceItemRecord);
-                    } else {
-                        sourceItemId = sourceItemRecord.getId();
-                    }
-
-                    entryMap
-                            .computeIfAbsent(sourceItemId, k -> new ArrayList<>())
-                            .add(new SourceEntryRecord(
-                                    sourceEntryRecordId.incrementAndGet(),
-                                    type.getExtension(),
-                                    extensionType,
-                                    1000L,
-                                    sourceItemId));
+                    builder.addEntry(RepoSourceEntry.builder()
+                            .type(type)
+                            .extension(type.getExtension())
+                            .byteSize(1000L)
+                            .build());
                 }
             }
         }
 
-        sourceEntryDao.addEntries(
-                Paths.get(path),
-                sourceId,
-                itemNameMap,
-                entryMap);
+        sourceItemDao.addItems(
+                Paths.get(source.getSourcePath()),
+                source.getId(),
+                itemNameMap
+                        .values()
+                        .stream()
+                        .map(RepoSourceItem.Builder::build)
+                        .collect(Collectors.toList()));
     }
 }

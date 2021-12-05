@@ -29,7 +29,6 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.ProcessorFilterRow;
 import stroom.processor.shared.ProcessorListRow;
-import stroom.processor.shared.ProcessorRow;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
@@ -38,6 +37,7 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -53,6 +53,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     private final Provider<ProcessorEditPresenter> processorEditPresenterProvider;
     private final ExpressionTreePresenter expressionPresenter;
     private final RestFactory restFactory;
+    private final ProcessorInfoBuilder processorInfoBuilder;
 
     private DocRef docRef;
     private PipelineDoc pipelineDoc;
@@ -70,12 +71,14 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                               final ProcessorListPresenter processorListPresenter,
                               final Provider<ProcessorEditPresenter> processorEditPresenterProvider,
                               final ExpressionTreePresenter expressionPresenter,
-                              final RestFactory restFactory) {
+                              final RestFactory restFactory,
+                              final ProcessorInfoBuilder processorInfoBuilder) {
         super(eventBus, view);
         this.processorListPresenter = processorListPresenter;
         this.processorEditPresenterProvider = processorEditPresenterProvider;
         this.expressionPresenter = expressionPresenter;
         this.restFactory = restFactory;
+        this.processorInfoBuilder = processorInfoBuilder;
 
         // Stop users from selecting expression items.
         expressionPresenter.setSelectionModel(null);
@@ -181,31 +184,22 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
 
     private void updateData() {
         selectedProcessor = processorListPresenter.getSelectionModel().getSelected();
-
-        if (selectedProcessor == null) {
-            enableButtons(false);
-            setData(null);
-
-        } else if (selectedProcessor instanceof ProcessorRow) {
-            enableButtons(false);
-            setData(null);
-
-        } else if (selectedProcessor instanceof ProcessorFilterRow) {
-            enableButtons(true);
-
-            final ProcessorFilterRow row = (ProcessorFilterRow) selectedProcessor;
-            final ProcessorFilter processorFilter = row.getProcessorFilter();
-            final QueryData queryData = processorFilter.getQueryData();
-            setData(queryData);
-        }
+        setData(selectedProcessor);
+        enableButtons(selectedProcessor instanceof ProcessorFilterRow);
     }
 
-    private void setData(final QueryData queryData) {
-        ExpressionOperator expression = null;
-        if (queryData != null && queryData.getExpression() != null) {
-            expression = queryData.getExpression();
-        }
+    private void setData(final ProcessorListRow row) {
+        final SafeHtml safeHtml = processorInfoBuilder.get(row);
+        getView().setInfo(safeHtml);
 
+        ExpressionOperator expression = null;
+        if (row instanceof ProcessorFilterRow) {
+            final ProcessorFilter processorFilter = ((ProcessorFilterRow) row).getProcessorFilter();
+            final QueryData queryData = processorFilter.getQueryData();
+            if (queryData != null && queryData.getExpression() != null) {
+                expression = queryData.getExpression();
+            }
+        }
         expressionPresenter.read(expression);
     }
 
@@ -227,12 +221,14 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
             // Now create the processor filter using the find stream criteria.
             final ProcessorFilterRow row = (ProcessorFilterRow) selectedProcessor;
             final ProcessorFilter processorFilter = row.getProcessorFilter();
-            final CreateProcessFilterRequest request = new CreateProcessFilterRequest(
-                    row.getProcessorFilter().getPipeline(),
-                    processorFilter.getQueryData(),
-                    processorFilter.getPriority(),
-                    true,
-                    false);
+            final CreateProcessFilterRequest request = CreateProcessFilterRequest
+                    .builder()
+                    .pipeline(row.getProcessorFilter().getPipeline())
+                    .queryData(processorFilter.getQueryData())
+                    .priority(processorFilter.getPriority())
+                    .autoPriority(true)
+                    .enabled(false)
+                    .build();
             final Rest<ProcessorFilter> rest = restFactory.create();
             rest.onSuccess(result -> processorListPresenter.refresh()).call(PROCESSOR_FILTER_RESOURCE).create(request);
         }
@@ -314,6 +310,8 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     public interface ProcessorView extends View {
 
         void setProcessorList(View view);
+
+        void setInfo(SafeHtml info);
 
         void setDetailsView(View view);
     }

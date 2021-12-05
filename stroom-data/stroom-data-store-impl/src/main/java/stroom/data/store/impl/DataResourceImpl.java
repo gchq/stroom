@@ -76,17 +76,18 @@ class DataResourceImpl implements DataResource, FetchWithLongId<List<DataInfoSec
                 .build();
 
         final ResourceGeneration resourceGeneration = stroomEventLoggingServiceProvider.get()
-                .loggedResult(
-                        StroomEventLoggingUtil.buildTypeId(this, "download"),
-                        "Downloading stream data",
-                        exportEventAction,
-                        () -> {
-                            try {
-                                return dataServiceProvider.get().download(criteria);
-                            } catch (final RuntimeException e) {
-                                throw EntityServiceExceptionUtil.create(e);
-                            }
-                        });
+                .loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "download"))
+                .withDescription("Downloading stream data")
+                .withDefaultEventAction(exportEventAction)
+                .withSimpleLoggedResult(() -> {
+                    try {
+                        return dataServiceProvider.get().download(criteria);
+                    } catch (final RuntimeException e) {
+                        throw EntityServiceExceptionUtil.create(e);
+                    }
+                })
+                .getResultAndLog();
 
         return resourceGeneration;
     }
@@ -97,19 +98,20 @@ class DataResourceImpl implements DataResource, FetchWithLongId<List<DataInfoSec
 
         final StroomEventLoggingService stroomEventLoggingService = stroomEventLoggingServiceProvider.get();
 
-        final ResourceKey resourceKey = stroomEventLoggingService.loggedResult(
-                StroomEventLoggingUtil.buildTypeId(this, "upload"),
-                "Uploading stream data",
-                ImportEventAction.builder()
+        final ResourceKey resourceKey = stroomEventLoggingService.loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "upload"))
+                .withDescription("Uploading stream data")
+                .withDefaultEventAction(ImportEventAction.builder()
                         .withSource(stroomEventLoggingService.convertToMulti(request))
-                        .build(),
-                () -> {
+                        .build())
+                .withSimpleLoggedResult(() -> {
                     try {
                         return dataServiceProvider.get().upload(request);
                     } catch (final RuntimeException e) {
                         throw EntityServiceExceptionUtil.create(e);
                     }
-                });
+                })
+                .getResultAndLog();
 
         return resourceKey;
     }
@@ -134,12 +136,12 @@ class DataResourceImpl implements DataResource, FetchWithLongId<List<DataInfoSec
                 : "?";
         final StroomEventLoggingService stroomEventLoggingService = stroomEventLoggingServiceProvider.get();
 
-        return stroomEventLoggingService.loggedResult(
-                StroomEventLoggingUtil.buildTypeId(this, "fetch"),
-                "Viewing stream " + idStr,
-                ViewEventAction.builder()
-                        .build(),
-                eventAction -> {
+        return stroomEventLoggingService.loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "fetch"))
+                .withDescription("Viewing stream " + idStr)
+                .withDefaultEventAction(ViewEventAction.builder()
+                        .build())
+                .withComplexLoggedResult(eventAction -> {
                     ComplexLoggedOutcome<AbstractFetchDataResult, ViewEventAction> outcome;
                     try {
                         // Do the fetch
@@ -163,8 +165,8 @@ class DataResourceImpl implements DataResource, FetchWithLongId<List<DataInfoSec
                                 vde.getMessage());
                     }
                     return outcome;
-                },
-                null);
+                })
+                .getResultAndLog();
     }
 
     @AutoLogged(OperationType.UNLOGGED) // Not an explicit user action

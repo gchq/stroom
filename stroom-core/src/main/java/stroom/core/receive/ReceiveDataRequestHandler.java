@@ -22,6 +22,7 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.receive.common.AttributeMapFilter;
+import stroom.receive.common.AttributeMapValidator;
 import stroom.receive.common.RequestHandler;
 import stroom.receive.common.StreamTargetStreamHandlers;
 import stroom.receive.common.StroomStreamException;
@@ -74,6 +75,9 @@ class ReceiveDataRequestHandler implements RequestHandler {
             final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();
 
             final AttributeMap attributeMap = AttributeMapUtil.create(request);
+            // Validate the supplied attributes.
+            AttributeMapValidator.validate(attributeMap);
+
             final String feedName;
             if (attributeMapFilter.filter(attributeMap)) {
                 debug("Receiving data", attributeMap);

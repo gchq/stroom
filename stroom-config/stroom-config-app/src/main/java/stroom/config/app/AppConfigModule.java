@@ -39,10 +39,13 @@ import stroom.pipeline.destination.AppenderConfig;
 import stroom.pipeline.filter.XmlSchemaConfig;
 import stroom.pipeline.filter.XsltConfig;
 import stroom.pipeline.refdata.ReferenceDataConfig;
+import stroom.pipeline.refdata.ReferenceDataLmdbConfig;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.RepoConfig;
+import stroom.proxy.repo.RepoDbConfig;
 import stroom.query.common.v2.ResultStoreConfig;
+import stroom.query.common.v2.ResultStoreLmdbConfig;
 import stroom.search.elastic.CryptoConfig;
 import stroom.search.elastic.ElasticConfig;
 import stroom.search.elastic.search.ElasticSearchConfig;
@@ -76,13 +79,14 @@ import stroom.ui.config.shared.UiConfig;
 import stroom.util.config.ConfigLocation;
 import stroom.util.io.PathConfig;
 import stroom.util.io.StroomPathConfig;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.IsStroomConfig;
+import stroom.util.shared.NotInjectableConfig;
 import stroom.util.xml.ParserConfig;
 
 import com.google.inject.AbstractModule;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -90,7 +94,7 @@ import java.util.function.Function;
 
 public class AppConfigModule extends AbstractModule {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AppConfigModule.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AppConfigModule.class);
 
     private final ConfigHolder configHolder;
 
@@ -100,8 +104,14 @@ public class AppConfigModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        LOGGER.debug(() ->
+                "Binding appConfig with id " + System.identityHashCode(configHolder.getAppConfig()));
+
+        bind(ConfigHolder.class).toInstance(configHolder);
+
         // Bind the de-serialised yaml config to a singleton AppConfig object, whose parts
         // can be injected all over the app.
+        // ConfigMapper is responsible for mutating it if the yaml file or database props change.
         bind(AppConfig.class).toInstance(configHolder.getAppConfig());
 
         // Holder for the location of the yaml config file so the AppConfigMonitor can
@@ -208,7 +218,12 @@ public class AppConfigModule extends AbstractModule {
             bindConfig(pipelineConfig,
                     PipelineConfig::getReferenceDataConfig,
                     PipelineConfig::setReferenceDataConfig,
-                    ReferenceDataConfig.class);
+                    ReferenceDataConfig.class, referenceDataConfig -> {
+                        bindConfig(referenceDataConfig,
+                                ReferenceDataConfig::getLmdbConfig,
+                                ReferenceDataConfig::setLmdbConfig,
+                                ReferenceDataLmdbConfig.class);
+                    });
             bindConfig(pipelineConfig,
                     PipelineConfig::getXmlSchemaConfig,
                     PipelineConfig::setXmlSchemaConfig,
@@ -226,6 +241,10 @@ public class AppConfigModule extends AbstractModule {
                             ProxyAggregationConfig::getAggregatorConfig,
                             ProxyAggregationConfig::setAggregatorConfig,
                             AggregatorConfig.class);
+                    bindConfig(proxyAggregationConfig,
+                            ProxyAggregationConfig::getRepoDbConfig,
+                            ProxyAggregationConfig::setRepoDbConfig,
+                            RepoDbConfig.class);
                 });
         bindConfig(AppConfig::getPublicUri, AppConfig::setPublicUri, PublicUriConfig.class);
         bindConfig(AppConfig::getReceiveDataConfig, AppConfig::setReceiveDataConfig, ReceiveDataConfig.class);
@@ -235,7 +254,16 @@ public class AppConfigModule extends AbstractModule {
                     SearchConfig::getExtractionConfig,
                     SearchConfig::setExtractionConfig,
                     ExtractionConfig.class);
-            bindConfig(searchConfig, SearchConfig::getLmdbConfig, SearchConfig::setLmdbConfig, ResultStoreConfig.class);
+            bindConfig(searchConfig,
+                    SearchConfig::getLmdbConfig,
+                    SearchConfig::setLmdbConfig,
+                    ResultStoreConfig.class,
+                    resultStoreConfig -> {
+                        bindConfig(resultStoreConfig,
+                                ResultStoreConfig::getLmdbConfig,
+                                ResultStoreConfig::setLmdbConfig,
+                                ResultStoreLmdbConfig.class);
+                    });
             bindConfig(searchConfig,
                     SearchConfig::getShardConfig,
                     SearchConfig::setShardConfig,
@@ -391,6 +419,19 @@ public class AppConfigModule extends AbstractModule {
             final Class<? super T> bindClass,
             final Consumer<T> childConfigConsumer) {
 
+        // If a class is marked with NotInjectableConfig then it is likely used by multiple parent config
+        // classes so should be accessed via its parent rather than by injection
+        if (instanceClass.isAnnotationPresent(NotInjectableConfig.class)) {
+            throw new RuntimeException(LogUtil.message(
+                    "You should not be binding an instance class annotated with {} - {}",
+                    NotInjectableConfig.class.getSimpleName(),
+                    instanceClass.getName()));
+        }
+        if (bindClass.isAnnotationPresent(NotInjectableConfig.class)) {
+            throw new RuntimeException(LogUtil.message("You should not be binding a bind class annotated with {} - {}",
+                    NotInjectableConfig.class.getSimpleName(),
+                    bindClass.getName()));
+        }
         if (parentObject == null) {
             throw new RuntimeException(LogUtil.message("Unable to bind config to {} as the parent is null. " +
                             "You may have an empty branch in your config YAML file.",
@@ -404,6 +445,8 @@ public class AppConfigModule extends AbstractModule {
             if (configInstance == null) {
                 // branch with no children in the yaml so just create a default one
                 try {
+                    LOGGER.debug(() -> LogUtil.message("Constructing new default instance of {} on {}",
+                            instanceClass.getSimpleName(), parentObject.getClass().getSimpleName()));
                     configInstance = instanceClass.getConstructor().newInstance();
                     // Now set the new instance on the parent
                     configSetter.accept(parentObject, configInstance);

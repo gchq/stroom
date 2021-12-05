@@ -16,9 +16,11 @@
 
 package stroom.proxy.repo;
 
+import stroom.proxy.repo.dao.AggregateDao;
+import stroom.proxy.repo.dao.ForwardAggregateDao;
+import stroom.proxy.repo.dao.ForwardSourceDao;
 import stroom.proxy.repo.dao.SourceDao;
-import stroom.proxy.repo.dao.SourceDao.Source;
-import stroom.proxy.repo.dao.SourceEntryDao;
+import stroom.proxy.repo.dao.SourceItemDao;
 import stroom.util.io.FileUtil;
 
 import org.slf4j.Logger;
@@ -28,7 +30,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -36,56 +37,62 @@ import javax.inject.Singleton;
 public class Cleanup {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Cleanup.class);
-    private static final int BATCH_SIZE = 1000000;
 
     private final SourceDao sourceDao;
-    private final SourceEntryDao sourceEntryDao;
+    private final SourceItemDao sourceItemDao;
+    private final AggregateDao aggregateDao;
+    private final ForwardSourceDao forwardSourceDao;
+    private final ForwardAggregateDao forwardAggregateDao;
+
+    private final RepoSources sources;
     private final Path repoDir;
 
     @Inject
-    Cleanup(final SourceDao sourceDao,
-            final SourceEntryDao sourceEntryDao,
-            final RepoDirProvider repoDirProvider) {
-        this.sourceDao = sourceDao;
-        this.sourceEntryDao = sourceEntryDao;
+    Cleanup(final RepoSources sources,
+            final RepoDirProvider repoDirProvider,
+            final SourceDao sourceDao,
+            final SourceItemDao sourceItemDao,
+            final AggregateDao aggregateDao,
+            final ForwardSourceDao forwardSourceDao,
+            final ForwardAggregateDao forwardAggregateDao) {
+        this.sources = sources;
         this.repoDir = repoDirProvider.get();
+        this.sourceDao = sourceDao;
+        this.sourceItemDao = sourceItemDao;
+        this.aggregateDao = aggregateDao;
+        this.forwardSourceDao = forwardSourceDao;
+        this.forwardAggregateDao = forwardAggregateDao;
     }
 
-    public synchronized int deleteUnusedSourceEntries() {
-        return sourceEntryDao.deleteUnused();
-    }
+    public void cleanupSources() {
+        final List<RepoSource> list = sources.getDeletableSources();
+        for (final RepoSource source : list) {
+            try {
+                // Source path is the zip.
+                final Path sourceFile = repoDir.resolve(ProxyRepoFileNames.getZip(source.getSourcePath()));
+                LOGGER.debug("Deleting: " + FileUtil.getCanonicalPath(sourceFile));
+                Files.deleteIfExists(sourceFile);
 
-    public int deleteUnusedSources() {
-        final AtomicInteger total = new AtomicInteger();
+                final Path metaFile = repoDir.resolve(ProxyRepoFileNames.getMeta(source.getSourcePath()));
+                LOGGER.debug("Deleting: " + FileUtil.getCanonicalPath(metaFile));
+                Files.deleteIfExists(metaFile);
 
-        boolean run = true;
-        while (run) {
-            final List<Source> sources = sourceDao.getDeletableSources(BATCH_SIZE);
-            sources.forEach(source -> {
-                try {
-                    // Source path is the zip.
-                    final Path sourceFile = repoDir.resolve(ProxyRepoFileNames.getZip(source.getSourcePath()));
-                    LOGGER.debug("Deleting: " + FileUtil.getCanonicalPath(sourceFile));
-                    Files.deleteIfExists(sourceFile);
+                sources.deleteSource(source);
 
-                    final Path metaFile = repoDir.resolve(ProxyRepoFileNames.getMeta(source.getSourcePath()));
-                    LOGGER.debug("Deleting: " + FileUtil.getCanonicalPath(metaFile));
-                    Files.deleteIfExists(metaFile);
-
-                    final int count = sourceDao.deleteSource(source.getSourceId());
-                    total.addAndGet(count);
-
-                } catch (final IOException e) {
-                    LOGGER.error(e.getMessage(), e);
-                }
-            });
-
-            // Stop deleting if the last query did not return a result as big as the batch size.
-            if (sources.size() < BATCH_SIZE || Thread.currentThread().isInterrupted()) {
-                run = false;
+            } catch (final IOException e) {
+                LOGGER.error(e.getMessage(), e);
             }
         }
+    }
 
-        return total.get();
+    public void resetAggregateForwarder() {
+        forwardAggregateDao.clear();
+        sourceItemDao.clear();
+        aggregateDao.clear();
+        sourceDao.resetExamined();
+    }
+
+    public void resetSourceForwarder() {
+        forwardSourceDao.clear();
     }
 }

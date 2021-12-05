@@ -22,8 +22,7 @@ import stroom.proxy.repo.Aggregator;
 import stroom.proxy.repo.AggregatorConfig;
 import stroom.proxy.repo.Cleanup;
 import stroom.proxy.repo.ProxyRepoFileScanner;
-import stroom.proxy.repo.ProxyRepoSourceEntries;
-import stroom.proxy.repo.ProxyRepoSources;
+import stroom.proxy.repo.RepoSourceItems;
 import stroom.proxy.repo.SourceForwarder;
 
 import org.slf4j.Logger;
@@ -46,73 +45,71 @@ public class ProxyAggregationExecutor {
     private final Exec exec;
 
     @Inject
-    public ProxyAggregationExecutor(final ProxyRepoFileScanner proxyRepoFileScanner,
-                                    final ProxyRepoSources proxyRepoSources,
-                                    final ProxyRepoSourceEntries proxyRepoSourceEntries,
-                                    final AggregatorConfig aggregatorConfig,
-                                    final Aggregator aggregator,
-                                    final Provider<AggregateForwarder> aggregateForwarderProvider,
+    public ProxyAggregationExecutor(final AggregatorConfig aggregatorConfig,
+                                    final Provider<ProxyRepoFileScanner> proxyRepoFileScannerProvider,
+                                    final Provider<RepoSourceItems> proxyRepoSourceEntriesProvider,
+                                    final Provider<Aggregator> aggregatorProvider,
+                                    final Provider<AggregateForwarder> aggregatorForwarderProvider,
                                     final Provider<SourceForwarder> sourceForwarderProvider,
-                                    final Cleanup cleanup) {
+                                    final Provider<Cleanup> cleanupProvider) {
         if (aggregatorConfig.isEnabled()) {
-            final AggregateForwarder aggregateForwarder = aggregateForwarderProvider.get();
+            final ProxyRepoFileScanner proxyRepoFileScanner = proxyRepoFileScannerProvider.get();
+            final RepoSourceItems repoSourceItems = proxyRepoSourceEntriesProvider.get();
+            final Aggregator aggregator = aggregatorProvider.get();
+            final AggregateForwarder aggregateForwarder = aggregatorForwarderProvider.get();
+            final Cleanup cleanup = cleanupProvider.get();
 
-            // Cleanup as part of the start up process in case aggregation has been turned on/off.
-            aggregateForwarder.cleanup();
-
-            // If we are aggregating then we need to tell the source entry service to examine new sources when they are
-            // added.
-            proxyRepoSources.addChangeListener(proxyRepoSourceEntries::examineSource);
-            // When new source entries have been added tell teh aggregator that they are ready to be added to
-            // aggregates.
-            proxyRepoSourceEntries.addChangeListener(aggregator::aggregate);
-            // When new aggregates are complete tell the forwarder that it can forward them.
-            aggregator.addChangeListener(count -> aggregateForwarder.forward());
-            // When we have finished forwarding some data tell the cleanup process it can delete DB entries and files
-            // that are no longer needed.
-            aggregateForwarder.addChangeListener(() -> {
-                cleanup.deleteUnusedSourceEntries();
-                cleanup.deleteUnusedSources();
-            });
+            // We are going to do aggregate forwarding so reset source forwarder.
+            cleanup.resetSourceForwarder();
 
             this.exec = (boolean forceAggregation, boolean scanSorted) -> {
-                // Try aggregating again.
-                aggregator.aggregate();
-
                 // Scan the proxy repo to find new files to aggregate.
                 proxyRepoFileScanner.scan(scanSorted);
 
+                // Examine all sources.
+                repoSourceItems.examineAll();
+
+                // Aggregate all of the examined source items.
+                aggregator.aggregateAll();
+
+                // Close old aggregates.
                 if (forceAggregation) {
                     // Force close of old aggregates.
                     aggregator.closeOldAggregates(System.currentTimeMillis());
+                } else {
+                    aggregator.closeOldAggregates();
                 }
 
-                // Retry failed forwards.
-                if (aggregateForwarder.retryFailures() > 0) {
-                    aggregateForwarder.forward();
-                }
+                // Creating forward state tracking records.
+                aggregateForwarder.createAllForwardRecords();
+
+                // Forward.
+                aggregateForwarder.forwardAll();
+
+                // Cleanup
+                cleanup.cleanupSources();
             };
 
         } else {
+            final ProxyRepoFileScanner proxyRepoFileScanner = proxyRepoFileScannerProvider.get();
             final SourceForwarder sourceForwarder = sourceForwarderProvider.get();
+            final Cleanup cleanup = cleanupProvider.get();
 
-            // Cleanup as part of the start up process in case aggregation has been turned on/off.
-            sourceForwarder.cleanup();
-
-            // If we are not aggregating then just tell the forwarder directly when there is new source to forward.
-            proxyRepoSources.addChangeListener((source) -> sourceForwarder.forward());
-            // When we have finished forwarding some data tell the cleanup process it can delete DB entries and files
-            // that are no longer needed.
-            sourceForwarder.addChangeListener(cleanup::deleteUnusedSources);
+            // We are going to do source forwarding so reset aggregate forwarder.
+            cleanup.resetAggregateForwarder();
 
             this.exec = (boolean forceAggregation, boolean scanSorted) -> {
                 // Scan the proxy repo to find new files to aggregate.
                 proxyRepoFileScanner.scan(scanSorted);
 
-                // Retry failed forwards.
-                if (sourceForwarder.retryFailures() > 0) {
-                    sourceForwarder.forward();
-                }
+                // Creating forward state tracking records.
+                sourceForwarder.createAllForwardRecords();
+
+                // Forward.
+                sourceForwarder.forwardAll();
+
+                // Cleanup
+                cleanup.cleanupSources();
             };
         }
     }

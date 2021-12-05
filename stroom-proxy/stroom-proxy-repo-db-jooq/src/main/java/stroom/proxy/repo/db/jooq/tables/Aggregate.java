@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
+import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
 import org.jooq.Row8;
@@ -22,6 +23,7 @@ import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
 import stroom.proxy.repo.db.jooq.DefaultSchema;
+import stroom.proxy.repo.db.jooq.Indexes;
 import stroom.proxy.repo.db.jooq.Keys;
 import stroom.proxy.repo.db.jooq.tables.records.AggregateRecord;
 
@@ -83,9 +85,9 @@ public class Aggregate extends TableImpl<AggregateRecord> {
     public final TableField<AggregateRecord, Boolean> COMPLETE = createField(DSL.name("complete"), SQLDataType.BOOLEAN.defaultValue(DSL.field("FALSE", SQLDataType.BOOLEAN)), this, "");
 
     /**
-     * The column <code>aggregate.forward_error</code>.
+     * The column <code>aggregate.new_position</code>.
      */
-    public final TableField<AggregateRecord, Boolean> FORWARD_ERROR = createField(DSL.name("forward_error"), SQLDataType.BOOLEAN.defaultValue(DSL.field("FALSE", SQLDataType.BOOLEAN)), this, "");
+    public final TableField<AggregateRecord, Long> NEW_POSITION = createField(DSL.name("new_position"), SQLDataType.BIGINT, this, "");
 
     private Aggregate(Name alias, Table<AggregateRecord> aliased) {
         this(alias, aliased, null);
@@ -123,6 +125,11 @@ public class Aggregate extends TableImpl<AggregateRecord> {
     @Override
     public Schema getSchema() {
         return DefaultSchema.DEFAULT_SCHEMA;
+    }
+
+    @Override
+    public List<Index> getIndexes() {
+        return Arrays.<Index>asList(Indexes.AGGREGATE_FEED_TYPE_INDEX, Indexes.NEW_POSITION_AGGREGATE_INDEX);
     }
 
     @Override
@@ -166,7 +173,7 @@ public class Aggregate extends TableImpl<AggregateRecord> {
     // -------------------------------------------------------------------------
 
     @Override
-    public Row8<Long, Long, String, String, Long, Integer, Boolean, Boolean> fieldsRow() {
+    public Row8<Long, Long, String, String, Long, Integer, Boolean, Long> fieldsRow() {
         return (Row8) super.fieldsRow();
     }
 }

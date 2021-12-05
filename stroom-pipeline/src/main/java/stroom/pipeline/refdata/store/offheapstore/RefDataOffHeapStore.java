@@ -22,12 +22,12 @@ import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
 import stroom.bytebuffer.PooledByteBufferPair;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.lmdb.LmdbConfig;
 import stroom.lmdb.LmdbDb;
 import stroom.lmdb.LmdbEnv;
 import stroom.lmdb.LmdbEnv.BatchingWriteTxn;
 import stroom.lmdb.LmdbEnvFactory;
 import stroom.pipeline.refdata.ReferenceDataConfig;
+import stroom.pipeline.refdata.ReferenceDataLmdbConfig;
 import stroom.pipeline.refdata.store.AbstractRefDataStore;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.ProcessingInfoResponse;
@@ -205,7 +205,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         this.refStreamDefStripedReentrantLock = Striped.lazyWeakLock(stripesCount);
     }
 
-    private LmdbEnv createEnvironment(final LmdbConfig lmdbConfig) {
+    private LmdbEnv createEnvironment(final ReferenceDataLmdbConfig lmdbConfig) {
 
         // By default LMDB opens with readonly mmaps so you cannot mutate the bytebuffers inside a txn.
         // Instead you need to create a new bytebuffer for the value and put that. If you want faster writes
@@ -219,6 +219,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         // set it larger than the amount of free space on the filesystem.
 
         final LmdbEnv env = lmdbEnvFactory.builder(lmdbConfig)
+                .withMaxDbCount(7)
                 .addEnvFlag(EnvFlags.MDB_NOTLS)
                 .build();
 
@@ -414,6 +415,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
     @Override
     public void purgeOldData() {
+        LOGGER.info("purgeAge in purgeOldData: {}", referenceDataConfig.getPurgeAge());
         purgeOldData(Instant.now(), referenceDataConfig.getPurgeAge());
     }
 

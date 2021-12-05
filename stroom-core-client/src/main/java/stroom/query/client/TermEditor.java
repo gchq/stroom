@@ -172,6 +172,7 @@ public class TermEditor extends Composite {
         }
 
         fieldListBox.setSelectedItem(termField);
+        conditionListBox.setSelectedItem(null);
         changeField(termField, false);
 
         reading = false;

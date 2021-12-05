@@ -102,12 +102,12 @@ class TestProcessorFilter {
 
         final long now = System.currentTimeMillis();
 
-        final ProcessorFilterTracker filter = new ProcessorFilterTracker();
-        filter.setMinMetaCreateMs(0L);
-        filter.setMaxMetaCreateMs(1000L);
-        filter.setMetaCreateMs(500L);
+        final ProcessorFilterTracker tracker = new ProcessorFilterTracker();
+        tracker.setMinMetaCreateMs(0L);
+        tracker.setMaxMetaCreateMs(1000L);
+        tracker.setMetaCreateMs(500L);
 
-        assertThat(filter.getTrackerStreamCreatePercentage(now).intValue()).isEqualTo(50);
+        assertThat(tracker.getTrackerStreamCreatePercentage(now).intValue()).isEqualTo(50);
     }
 
     @Test

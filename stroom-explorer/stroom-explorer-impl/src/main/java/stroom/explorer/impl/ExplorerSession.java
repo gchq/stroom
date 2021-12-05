@@ -4,7 +4,7 @@ import java.util.Optional;
 
 interface ExplorerSession {
 
-    Optional<Long> getMinExplorerTreeModelBuildTime();
+    Optional<Long> getMinExplorerTreeModelId();
 
-    void setMinExplorerTreeModelBuildTime(long buildTime);
+    void setMinExplorerTreeModelId(long id);
 }

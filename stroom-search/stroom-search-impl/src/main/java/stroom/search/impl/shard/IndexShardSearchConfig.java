@@ -12,11 +12,9 @@ import javax.inject.Singleton;
 @Singleton
 public class IndexShardSearchConfig extends AbstractConfig implements IsStroomConfig {
 
-    private static final int DEFAULT_MAX_THREADS = 4;
-    private static final int DEFAULT_MAX_THREADS_PER_TASK = 2;
+    private static final int DEFAULT_MAX_THREADS_PER_TASK = 5;
 
     private int maxDocIdQueueSize = 1000000;
-    private int maxThreads = DEFAULT_MAX_THREADS;
     private int maxThreadsPerTask = DEFAULT_MAX_THREADS_PER_TASK;
     private CacheConfig searchResultCache = CacheConfig.builder()
             .maximumSize(10000L)
@@ -35,16 +33,6 @@ public class IndexShardSearchConfig extends AbstractConfig implements IsStroomCo
 
     public void setMaxDocIdQueueSize(final int maxDocIdQueueSize) {
         this.maxDocIdQueueSize = maxDocIdQueueSize;
-    }
-
-    @JsonPropertyDescription("The absolute maximum number of threads per node, used to search Lucene index " +
-            "shards across all searches")
-    public int getMaxThreads() {
-        return maxThreads;
-    }
-
-    public void setMaxThreads(final int maxThreads) {
-        this.maxThreads = maxThreads;
     }
 
     @JsonPropertyDescription("The maximum number of threads per search, per node, used to search Lucene index shards")
@@ -76,7 +64,6 @@ public class IndexShardSearchConfig extends AbstractConfig implements IsStroomCo
     public String toString() {
         return "IndexShardSearchConfig{" +
                 "maxDocIdQueueSize=" + maxDocIdQueueSize +
-                ", maxThreads=" + maxThreads +
                 ", maxThreadsPerTask=" + maxThreadsPerTask +
                 ", searchResultCache=" + searchResultCache +
                 ", indexShardSearcherCache=" + indexShardSearcherCache +

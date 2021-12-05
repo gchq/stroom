@@ -4,6 +4,8 @@ dependencies {
     compile project(':stroom-event-logging:stroom-event-logging-api')
 
     compile libs.eventLogging
+    compile libs.mockito_core
+    compile libs.mockito_junit_jupiter
     compile libs.slf4j_api
 
     testRuntimeOnly libs.jcl_over_slf4j

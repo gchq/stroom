@@ -2,9 +2,9 @@ package stroom.importexport.impl;
 
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
-import stroom.util.shared.ResultPage;
+import stroom.util.shared.QuickFilterResultPage;
 
 public interface DependencyService {
 
-    ResultPage<Dependency> getDependencies(final DependencyCriteria criteria);
+    QuickFilterResultPage<Dependency> getDependencies(final DependencyCriteria criteria);
 }

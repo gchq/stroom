@@ -6,18 +6,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import java.util.Optional;
 import javax.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ExtendWith(GuiceExtension.class)
 @IncludeModule(ProxyRepoTestModule.class)
 public class TestSource {
 
     @Inject
-    private ProxyRepoSources proxyRepoSources;
+    private RepoSources proxyRepoSources;
 
     @BeforeEach
     void beforeEach() {
@@ -38,19 +36,26 @@ public class TestSource {
 
     @Test
     void testUniquePath() {
-        assertThatThrownBy(() -> {
-            for (int i = 0; i < 10; i++) {
-                proxyRepoSources.addSource("path", "test", null, System.currentTimeMillis(), null);
-            }
-        }, "Expected error");
+        proxyRepoSources.addSource(
+                "path",
+                "test",
+                null,
+                System.currentTimeMillis(),
+                null);
+        proxyRepoSources.addSource(
+                "path",
+                "test",
+                null,
+                System.currentTimeMillis(),
+                null);
         proxyRepoSources.clear();
         proxyRepoSources.addSource("path", "test", null, System.currentTimeMillis(), null);
     }
 
     @Test
-    void testGetSourceId() {
+    void testSourceExists() {
         proxyRepoSources.addSource("path", "test", null, System.currentTimeMillis(), null);
-        final Optional<Long> sourceId = proxyRepoSources.getSourceId("path");
-        assertThat(sourceId.isPresent()).isTrue();
+        final boolean exists = proxyRepoSources.sourceExists("path");
+        assertThat(exists).isTrue();
     }
 }

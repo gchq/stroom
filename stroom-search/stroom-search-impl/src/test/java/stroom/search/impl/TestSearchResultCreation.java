@@ -61,6 +61,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -83,7 +84,9 @@ class TestSearchResultCreation {
         final LmdbEnvFactory lmdbEnvFactory = new LmdbEnvFactory(pathCreator, tempDirProvider, lmdbLibraryConfig);
         dataStoreFactory = new LmdbDataStoreFactory(
                 lmdbEnvFactory,
-                resultStoreConfig);
+                resultStoreConfig,
+                Executors::newSingleThreadExecutor,
+                pathCreator);
     }
 
     @Test

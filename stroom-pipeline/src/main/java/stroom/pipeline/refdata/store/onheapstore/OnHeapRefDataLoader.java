@@ -128,7 +128,8 @@ class OnHeapRefDataLoader implements RefDataLoader {
             final Duration loadDuration = Duration.between(startTime, Instant.now());
 
             if (processingState.equals(ProcessingState.COMPLETE)) {
-                LOGGER.info("Successfully loaded {} entries out of {} attempts with map names [{}] in {} for {}",
+                // INFO is a bit noisy for context loads
+                LOGGER.debug("Successfully loaded {} entries out of {} attempts with map names [{}] in {} for {}",
                         successfulPutsCounter,
                         putsCounter,
                         mapNames,

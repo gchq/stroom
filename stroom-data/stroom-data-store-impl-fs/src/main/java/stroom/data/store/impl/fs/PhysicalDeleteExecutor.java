@@ -31,6 +31,7 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
+import stroom.util.concurrent.WorkQueue;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
@@ -49,7 +50,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -127,12 +127,7 @@ public class PhysicalDeleteExecutor {
 
             long minId = 0;
             if (!Thread.currentThread().isInterrupted()) {
-                final ThreadPool threadPool = new ThreadPoolImpl(
-                        "Data Delete#",
-                        1,
-                        1,
-                        config.getFileSystemCleanBatchSize(),
-                        Integer.MAX_VALUE);
+                final ThreadPool threadPool = new ThreadPoolImpl("Data Delete#", Thread.MIN_PRIORITY);
                 final Executor executor = executorProvider.get(threadPool);
 
                 do {
@@ -158,7 +153,11 @@ public class PhysicalDeleteExecutor {
                         }
 
                         total += count;
-                        deleteCurrentBatch(taskContext, metaList, deleteThresholdEpochMs, executor);
+                        final WorkQueue workQueue = new WorkQueue(
+                                executor,
+                                config.getFileSystemCleanBatchSize(),
+                                metaList.size());
+                        deleteCurrentBatch(taskContext, metaList, deleteThresholdEpochMs, workQueue);
                     }
                 } while (!Thread.currentThread().isInterrupted() && count >= deleteBatchSize);
             }
@@ -170,21 +169,19 @@ public class PhysicalDeleteExecutor {
     private void deleteCurrentBatch(final TaskContext taskContext,
                                     final List<Meta> metaList,
                                     final long deleteThresholdEpochMs,
-                                    final Executor executor) {
+                                    final WorkQueue workQueue) {
         try {
             final LinkedBlockingQueue<Long> successfulMetaIdDeleteQueue = new LinkedBlockingQueue<>();
             final Map<Path, Path> directoryMap = new ConcurrentHashMap<>();
 
             // Delete all matching files.
-            final List<CompletableFuture<Void>> futures = new ArrayList<>();
             for (final Meta meta : metaList) {
                 final Runnable runnable = deleteFiles(meta, taskContext, successfulMetaIdDeleteQueue, directoryMap);
-                final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable, executor);
-                futures.add(completableFuture);
+                workQueue.exec(runnable);
             }
 
             // Wait for all completable futures to complete.
-            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+            workQueue.join();
             if (Thread.interrupted()) {
                 throw new InterruptedException();
             }

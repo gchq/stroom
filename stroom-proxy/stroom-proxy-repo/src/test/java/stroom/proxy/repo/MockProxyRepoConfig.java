@@ -13,7 +13,6 @@ import javax.inject.Singleton;
 public class MockProxyRepoConfig extends ProxyRepoConfig {
 
     private boolean storingEnabled = false;
-    private final String dbDir;
     private final String repoDir;
     private String format = "${pathId}/${id}";
     private StroomDuration lockDeleteAge = StroomDuration.of(Duration.ofHours(1));
@@ -21,7 +20,6 @@ public class MockProxyRepoConfig extends ProxyRepoConfig {
 
     @Inject
     public MockProxyRepoConfig() throws IOException {
-        dbDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom-proxy-db"));
         repoDir = FileUtil.getCanonicalPath(Files.createTempDirectory("stroom-proxy-repo"));
     }
 
@@ -37,11 +35,6 @@ public class MockProxyRepoConfig extends ProxyRepoConfig {
     @Override
     public String getRepoDir() {
         return repoDir;
-    }
-
-    @Override
-    public String getDbDir() {
-        return dbDir;
     }
 
     @Override

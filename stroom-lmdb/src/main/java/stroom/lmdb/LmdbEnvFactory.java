@@ -52,7 +52,6 @@ public class LmdbEnvFactory {
                 lmdbConfig);
     }
 
-
     /**
      * @param dir The path where the environment will be located on the filesystem.
      *            Should be local disk and not shared storage.
@@ -79,6 +78,8 @@ public class LmdbEnvFactory {
                 pathCreator.toAppPath(dir));
     }
 
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
     abstract static class AbstractEnvBuilder {
 
         private static final AtomicBoolean HAS_LIBRARY_BEEN_CONFIGURED = new AtomicBoolean(false);
@@ -91,7 +92,7 @@ public class LmdbEnvFactory {
 
         protected int maxReaders = LmdbConfig.DEFAULT_MAX_READERS;
         protected ByteSize maxStoreSize = LmdbConfig.DEFAULT_MAX_STORE_SIZE;
-        protected int maxDbs = LmdbConfig.DEFAULT_MAX_DATABASES;
+        protected int maxDbs = 1;
         protected boolean isReadAheadEnabled = LmdbConfig.DEFAULT_IS_READ_AHEAD_ENABLED;
         protected boolean isReaderBlockedByWriter = LmdbConfig.DEFAULT_IS_READER_BLOCKED_BY_WRITER;
         protected String subDir = null;
@@ -107,7 +108,6 @@ public class LmdbEnvFactory {
                     getLocalDirAsPath(pathCreator, lmdbConfig));
 
             this.maxReaders = lmdbConfig.getMaxReaders();
-            this.maxDbs = lmdbConfig.getMaxDbs();
             this.maxStoreSize = lmdbConfig.getMaxStoreSize();
             this.isReadAheadEnabled = lmdbConfig.isReadAheadEnabled();
             this.isReaderBlockedByWriter = lmdbConfig.isReaderBlockedByWriter();
@@ -128,6 +128,11 @@ public class LmdbEnvFactory {
                 configureLibrary();
                 HAS_LIBRARY_BEEN_CONFIGURED.set(true);
             }
+        }
+
+        public AbstractEnvBuilder withMaxDbCount(final int maxDbCount) {
+            this.maxDbs = maxDbCount;
+            return this;
         }
 
         public AbstractEnvBuilder addEnvFlag(final EnvFlags envFlag) {
@@ -166,27 +171,27 @@ public class LmdbEnvFactory {
             try {
                 LOGGER.debug(() -> LogUtil.message("Ensuring directory {} exists (from configuration property {})",
                         localDir.toAbsolutePath(),
-                        lmdbConfig.getFullPath(LmdbConfig.LOCAL_DIR_PROP_NAME)));
+                        lmdbConfig.getFullPathStr(LmdbConfig.LOCAL_DIR_PROP_NAME)));
                 Files.createDirectories(localDir);
             } catch (IOException e) {
                 throw new RuntimeException(
                         LogUtil.message("Error ensuring directory {} exists (from configuration property {})",
                                 localDir.toAbsolutePath(),
-                                lmdbConfig.getFullPath(LmdbConfig.LOCAL_DIR_PROP_NAME)), e);
+                                lmdbConfig.getFullPathStr(LmdbConfig.LOCAL_DIR_PROP_NAME)), e);
             }
 
             if (!Files.isReadable(localDir)) {
                 throw new RuntimeException(
                         LogUtil.message("Directory {} (from configuration property {}) is not readable",
                                 localDir.toAbsolutePath(),
-                                lmdbConfig.getFullPath(LmdbConfig.LOCAL_DIR_PROP_NAME)));
+                                lmdbConfig.getFullPathStr(LmdbConfig.LOCAL_DIR_PROP_NAME)));
             }
 
             if (!Files.isWritable(localDir)) {
                 throw new RuntimeException(
                         LogUtil.message("Directory {} (from configuration property {}) is not writable",
                                 localDir.toAbsolutePath(),
-                                lmdbConfig.getFullPath(LmdbConfig.LOCAL_DIR_PROP_NAME)));
+                                lmdbConfig.getFullPathStr(LmdbConfig.LOCAL_DIR_PROP_NAME)));
             }
 
             return localDir;
@@ -195,7 +200,7 @@ public class LmdbEnvFactory {
         private Path getLibraryExtractDir() {
             String extractDirStr = lmdbLibraryConfig.getSystemLibraryExtractDir();
 
-            final String extractDirPropName = lmdbLibraryConfig.getFullPath(LmdbLibraryConfig.EXTRACT_DIR_PROP_NAME);
+            final String extractDirPropName = lmdbLibraryConfig.getFullPathStr(LmdbLibraryConfig.EXTRACT_DIR_PROP_NAME);
 
             Path extractDir;
             if (extractDirStr == null) {
@@ -291,19 +296,19 @@ public class LmdbEnvFactory {
 
         public LmdbEnv build() {
 
-            final Path dir;
+            final Path envDir;
             if (subDir != null && !subDir.isBlank()) {
-                dir = localDir.resolve(subDir);
+                envDir = localDir.resolve(subDir);
 
-                LOGGER.debug(() -> "Ensuring existence of directory " + dir.toAbsolutePath().normalize());
+                LOGGER.debug(() -> "Ensuring existence of directory " + envDir.toAbsolutePath().normalize());
                 try {
-                    Files.createDirectories(dir);
+                    Files.createDirectories(envDir);
                 } catch (IOException e) {
                     throw new RuntimeException(LogUtil.message(
-                            "Error creating directory {}: {}", dir.toAbsolutePath().normalize(), e));
+                            "Error creating directory {}: {}", envDir.toAbsolutePath().normalize(), e));
                 }
             } else {
-                dir = localDir;
+                envDir = localDir;
             }
 
             final Env<ByteBuffer> env;
@@ -324,7 +329,7 @@ public class LmdbEnvFactory {
 
                 LOGGER.info("Creating LMDB environment in dir {}, maxSize: {}, maxDbs {}, maxReaders {}, "
                                 + "isReadAheadEnabled {}, isReaderBlockedByWriter {}, envFlags {}",
-                        dir.toAbsolutePath().normalize(),
+                        envDir.toAbsolutePath().normalize(),
                         maxStoreSize,
                         maxDbs,
                         maxReaders,
@@ -333,15 +338,17 @@ public class LmdbEnvFactory {
                         envFlags);
 
                 final EnvFlags[] envFlagsArr = envFlags.toArray(new EnvFlags[0]);
-                env = builder.open(dir.toFile(), envFlagsArr);
+                env = builder.open(envDir.toFile(), envFlagsArr);
             } catch (Exception e) {
                 throw new RuntimeException(LogUtil.message(
                         "Error creating LMDB env at {}: {}",
-                        dir.toAbsolutePath().normalize(), e.getMessage()), e);
+                        envDir.toAbsolutePath().normalize(), e.getMessage()), e);
             }
-            return new LmdbEnv(localDir, env, isReaderBlockedByWriter);
+            return new LmdbEnv(envDir, env, isReaderBlockedByWriter);
         }
     }
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     /**
      * A builder for when you don't have an {@link LmdbConfig}
@@ -355,6 +362,7 @@ public class LmdbEnvFactory {
             super(pathCreator, tempDirProvider, lmdbLibraryConfig, dir);
         }
 
+        @Override
         public CustomEnvBuilder withMaxDbCount(final int maxDbCount) {
             this.maxDbs = maxDbCount;
             return this;
@@ -406,6 +414,8 @@ public class LmdbEnvFactory {
         }
     }
 
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
     /**
      * A builder for when you have an {@link LmdbConfig}
      */
@@ -416,6 +426,12 @@ public class LmdbEnvFactory {
                                  final LmdbLibraryConfig lmdbLibraryConfig,
                                  final LmdbConfig lmdbConfig) {
             super(pathCreator, tempDirProvider, lmdbLibraryConfig, lmdbConfig);
+        }
+
+        @Override
+        public SimpleEnvBuilder withMaxDbCount(final int maxDbCount) {
+            this.maxDbs = maxDbCount;
+            return this;
         }
 
         @Override

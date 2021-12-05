@@ -68,7 +68,7 @@ public class ProxyRepo {
     private final long cleanDelayMs;
 
     private final String repositoryFormat;
-    private final ProxyRepoSources proxyRepoSources;
+    private final RepoSources proxyRepoSources;
 
     /**
      * Name of the repository while open
@@ -78,7 +78,7 @@ public class ProxyRepo {
 
     @Inject
     ProxyRepo(final ProxyRepoConfig proxyRepoConfig,
-              final ProxyRepoSources proxyRepoSources,
+              final RepoSources proxyRepoSources,
               final RepoDirProvider repoDirProvider) {
         this(repoDirProvider,
                 proxyRepoConfig.getFormat(),
@@ -92,7 +92,7 @@ public class ProxyRepo {
      */
     public ProxyRepo(final RepoDirProvider repoDirProvider,
                      final String repositoryFormat,
-                     final ProxyRepoSources proxyRepoSources,
+                     final RepoSources proxyRepoSources,
                      final long lockDeleteAgeMs,
                      final long cleanDelayMs) {
         this.proxyRepoSources = proxyRepoSources;
@@ -199,11 +199,11 @@ public class ProxyRepo {
                         public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
                             try {
                                 if (file.toString().endsWith(ProxyRepoFileNames.ZIP_EXTENSION)) {
-                                    LOGGER.debug("Examining " + file.toString());
+                                    LOGGER.debug("Examining " + file);
 
                                     final String idString = getIdPart(file);
                                     if (idString.length() == 0) {
-                                        LOGGER.warn("File is not a valid repository file " + file.toString());
+                                        LOGGER.warn("File is not a valid repository file " + file);
                                     } else {
                                         final long id = Long.parseLong(idString);
 
@@ -325,6 +325,10 @@ public class ProxyRepo {
         };
     }
 
+    public void clean() {
+        clean(false);
+    }
+
     public void clean(final boolean deleteRootDirectory) {
         LOGGER.info("clean() " + repoDir);
         clean(repoDir, deleteRootDirectory);
@@ -387,10 +391,9 @@ public class ProxyRepo {
         if (lastModified != null && lastModified.toMillis() < oldestLockFileMs) {
             try {
                 Files.delete(file);
-                LOGGER.info("Removed old lock file due to age " + file.toString());
+                LOGGER.info("Removed old lock file due to age " + file);
             } catch (final IOException e) {
-                LOGGER.error("Unable to remove old lock file due to age " +
-                        file.toString());
+                LOGGER.error("Unable to remove old lock file due to age " + file);
             }
         }
     }
@@ -443,16 +446,16 @@ public class ProxyRepo {
                                 try {
                                     if (!dir.equals(path)) {
                                         if (LOGGER.isDebugEnabled()) {
-                                            LOGGER.debug("Attempting to delete dir: " + dir.toString());
+                                            LOGGER.debug("Attempting to delete dir: " + dir);
                                         }
                                         Files.delete(dir);
                                         if (LOGGER.isDebugEnabled()) {
-                                            LOGGER.debug("Deleted dir: " + dir.toString());
+                                            LOGGER.debug("Deleted dir: " + dir);
                                         }
                                     }
                                 } catch (final RuntimeException | IOException e) {
                                     if (LOGGER.isDebugEnabled()) {
-                                        LOGGER.debug("Failed to delete dir: " + dir.toString());
+                                        LOGGER.debug("Failed to delete dir: " + dir);
                                     }
                                     LOGGER.trace(e.getMessage(), e);
                                 }
@@ -468,9 +471,9 @@ public class ProxyRepo {
             success = false;
         }
         if (success) {
-            LOGGER.debug("Deleted dir: " + path.toString());
+            LOGGER.debug("Deleted dir: " + path);
         } else {
-            LOGGER.debug("Failed to delete dir: " + path.toString());
+            LOGGER.debug("Failed to delete dir: " + path);
         }
         return success;
     }
@@ -478,11 +481,11 @@ public class ProxyRepo {
     private void deleteDir(final Path path) throws IOException {
         try {
             if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace("delete() - Attempting to delete: " + path.toString());
+                LOGGER.trace("delete() - Attempting to delete: " + path);
             }
             Files.delete(path);
         } catch (final DirectoryNotEmptyException e) {
-            LOGGER.trace("delete() - Unable to delete dir as it was not empty: " + path.toString());
+            LOGGER.trace("delete() - Unable to delete dir as it was not empty: " + path);
         }
     }
 
