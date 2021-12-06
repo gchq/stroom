@@ -181,8 +181,10 @@ class ExtractionTaskHandler {
                              final DocRef pipelineRef,
                              final Pipeline pipeline) {
         final ErrorReceiver errorReceiver = (severity, location, elementId, message, e) -> {
-            final StoredError storedError = new StoredError(severity, location, elementId, message);
-            task.getErrorConsumer().add(new Error(storedError.toString(), e));
+            if (!(e instanceof TaskTerminatedException)) {
+                final StoredError storedError = new StoredError(severity, location, elementId, message);
+                task.getErrorConsumer().add(new Error(storedError.toString(), e));
+            }
             throw ProcessException.wrap(message, e);
         };
 
