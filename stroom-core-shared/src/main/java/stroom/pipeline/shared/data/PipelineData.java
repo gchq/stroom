@@ -27,6 +27,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -228,5 +229,26 @@ public class PipelineData {
     @JsonIgnore
     public List<Processor> getProcessors() {
         return processors;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final PipelineData that = (PipelineData) o;
+        return Objects.equals(elements, that.elements) &&
+                Objects.equals(properties, that.properties) &&
+                Objects.equals(pipelineReferences, that.pipelineReferences) &&
+                Objects.equals(links, that.links) &&
+                Objects.equals(processors, that.processors);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(elements, properties, pipelineReferences, links, processors);
     }
 }

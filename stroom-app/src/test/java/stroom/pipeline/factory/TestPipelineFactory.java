@@ -16,7 +16,6 @@
 
 package stroom.pipeline.factory;
 
-
 import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.pipeline.PipelineSerialiser;
 import stroom.pipeline.PipelineTestUtil;
