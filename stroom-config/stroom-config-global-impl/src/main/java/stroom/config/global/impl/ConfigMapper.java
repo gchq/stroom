@@ -190,7 +190,7 @@ public class ConfigMapper {
     }
 
     ConfigMapper() {
-        this(null, null, AppConfig::new);
+        this(null, new AppConfig(), AppConfig::new);
     }
 
     // For testing

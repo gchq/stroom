@@ -55,6 +55,7 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.PropertyPath;
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -255,7 +256,7 @@ class TestConfigMapper {
         final String newValue = initialValue + "xxx";
         referenceDataLmdbConfig.setLocalDir(newValue);
 
-        ConfigMapper configMapper = new ConfigMapper();
+        ConfigMapper configMapper = new ConfigMapper(appConfig);
 //        configMapper.updateConfigFromYaml();
 
         final Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
@@ -494,8 +495,11 @@ class TestConfigMapper {
 
         assertThat(newObj).isNotEqualTo(originalObj);
 
+        final TestConfig newTestConfig = configMapper.getConfigObject(TestConfig.class, false);
+
         // make sure the db override value has made it into the config obj
-        assertThat(getter.apply(testConfig)).isEqualTo(newObj);
+        assertThat(getter.apply(newTestConfig))
+                .isEqualTo(newObj);
     }
 
     @Test
@@ -503,8 +507,7 @@ class TestConfigMapper {
         TestConfig testConfig = new TestConfig();
         ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
 
-        Supplier<List<DocRef>> getter = testConfig::getDocRefListProp;
-        List<DocRef> initialValue = getter.get();
+        List<DocRef> initialValue = testConfig.getDocRefListProp();
         List<DocRef> newValue = new ArrayList<>();
         initialValue.forEach(docRef ->
                 newValue.add(DocRef.builder()
@@ -525,7 +528,9 @@ class TestConfigMapper {
         configPropertyCopy.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
         configMapper.decorateDbConfigProperty(configPropertyCopy);
 
-        assertThat(getter.get()).isEqualTo(newValue);
+        final TestConfig newTestConfig = configMapper.getConfigObject(TestConfig.class, false);
+
+        assertThat(newTestConfig.getDocRefListProp()).isEqualTo(newValue);
     }
 
     @Test
@@ -533,8 +538,7 @@ class TestConfigMapper {
         TestConfig testConfig = new TestConfig();
         ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
 
-        Supplier<List<TestConfig.State>> getter = testConfig::getStateListProp;
-        List<TestConfig.State> initialValue = getter.get();
+        List<TestConfig.State> initialValue = testConfig.getStateListProp();
         List<TestConfig.State> newValue = new ArrayList<>(initialValue);
         newValue.add(TestConfig.State.ON);
         PropertyPath fullPath = PropertyPath.fromPathString("stroom.stateListProp");
@@ -546,7 +550,9 @@ class TestConfigMapper {
         configPropertyCopy.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
         configMapper.decorateDbConfigProperty(configPropertyCopy);
 
-        assertThat(getter.get()).isEqualTo(newValue);
+        final TestConfig newTestConfig = configMapper.getConfigObject(TestConfig.class, false);
+
+        assertThat(newTestConfig.getStateListProp()).isEqualTo(newValue);
     }
 
     @Test
@@ -554,8 +560,7 @@ class TestConfigMapper {
         TestConfig testConfig = new TestConfig();
         ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
 
-        Supplier<List<String>> getter = testConfig::getStringListProp;
-        List<String> initialValue = getter.get();
+        List<String> initialValue = testConfig.getStringListProp();
         List<String> newValue = Stream.of(initialValue, initialValue)
                 .flatMap(List::stream)
                 .map(str -> str + "x")
@@ -569,32 +574,34 @@ class TestConfigMapper {
         configPropertyCopy.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
         configMapper.decorateDbConfigProperty(configPropertyCopy);
 
-        assertThat(getter.get()).isEqualTo(newValue);
+        final TestConfig newtTestConfig = configMapper.getConfigObject(TestConfig.class, false);
+
+        assertThat(newtTestConfig.getStringListProp())
+                .isEqualTo(newValue);
     }
 
     @Test
     void update_stringLongMap() {
-        TestConfig testConfig = new TestConfig();
-        ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
+        final TestConfig testConfig = new TestConfig();
+        final ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
 
-        Supplier<Map<String, Long>> getter = testConfig::getStringLongMapProp;
-        Map<String, Long> initialValue = getter.get();
-        Map<String, Long> newValue = new HashMap<>();
+        final Supplier<Map<String, Long>> getter = testConfig::getStringLongMapProp;
+        final Map<String, Long> initialValue = getter.get();
+        final Map<String, Long> newValue = new HashMap<>();
         initialValue.forEach((k, v) ->
                 newValue.put(k, v + 10));
         newValue.put("k4", 14L);
-        PropertyPath fullPath = PropertyPath.fromPathString("stroom.stringLongMapProp");
+        final PropertyPath fullPath = PropertyPath.fromPathString("stroom.stringLongMapProp");
 
-        String newValueStr = ConfigMapper.convertToString(newValue);
-
-        ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
+        final ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
         // Make a copy as decorateDbConfigProperty will be comparing the one from the map
         // against this one.
-        ConfigProperty configPropertyCopy = copyConfigProperty(configProperty);
+        final ConfigProperty configPropertyCopy = copyConfigProperty(configProperty);
         configPropertyCopy.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
         configMapper.decorateDbConfigProperty(configPropertyCopy);
 
-        assertThat(getter.get()).isEqualTo(newValue);
+        final TestConfig newTestConfig = configMapper.getConfigObject(TestConfig.class, false);
+        assertThat(newTestConfig.getStringLongMapProp()).isEqualTo(newValue);
     }
 
     @Test
@@ -888,6 +895,7 @@ class TestConfigMapper {
         }
 
 
+        @JsonCreator
         @SuppressWarnings("checkstyle:LineLength")
         public TestConfig(
                 @JsonProperty(PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE) final boolean haltBootOnConfigValidationFailure,
@@ -1067,105 +1075,101 @@ class TestConfigMapper {
 
     public static class TestPrimitiveConfig extends AbstractConfig {
 
-        private boolean booleanProp = false;
-        private int intProp = 123;
-        private long longProp = 123L;
-        private double doubleProp = 1.23;
-        private short shortProp = 123;
+        private final boolean booleanProp;
+        private final int intProp;
+        private final long longProp;
+        private final double doubleProp;
+        private final short shortProp;
+
+        public TestPrimitiveConfig() {
+            booleanProp = false;
+            intProp = 123;
+            longProp = 123L;
+            doubleProp = 1.23;
+            shortProp = 123;
+        }
+
+        @JsonCreator
+        public TestPrimitiveConfig(@JsonProperty("booleanProp") final boolean booleanProp,
+                                   @JsonProperty("intProp") final int intProp,
+                                   @JsonProperty("longProp") final long longProp,
+                                   @JsonProperty("doubleProp") final double doubleProp,
+                                   @JsonProperty("shortProp") final short shortProp) {
+            this.booleanProp = booleanProp;
+            this.intProp = intProp;
+            this.longProp = longProp;
+            this.doubleProp = doubleProp;
+            this.shortProp = shortProp;
+        }
 
         public boolean isBooleanProp() {
             return booleanProp;
-        }
-
-        public void setBooleanProp(final boolean booleanProp) {
-            this.booleanProp = booleanProp;
         }
 
         public int getIntProp() {
             return intProp;
         }
 
-        public void setIntProp(final int intProp) {
-            this.intProp = intProp;
-        }
-
         public long getLongProp() {
             return longProp;
-        }
-
-        public void setLongProp(final long longProp) {
-            this.longProp = longProp;
         }
 
         public double getDoubleProp() {
             return doubleProp;
         }
 
-        public void setDoubleProp(final double doubleProp) {
-            this.doubleProp = doubleProp;
-        }
-
         public short getShortProp() {
             return shortProp;
-        }
-
-        public void setShortProp(final short shortProp) {
-            this.shortProp = shortProp;
         }
     }
 
     public static class TestBoxedConfig extends AbstractConfig {
 
-        private Boolean booleanProp = false;
-        private Integer intProp = 123;
-        private Long longProp = 123L;
-        private Double doubleProp = 1.23;
-        private Short shortProp = 123;
+        private final Boolean booleanProp;
+        private final Integer intProp;
+        private final Long longProp;
+        private final Double doubleProp;
+        private final Short shortProp;
+
+        public TestBoxedConfig() {
+            booleanProp = false;
+            intProp = 123;
+            longProp = 123L;
+            doubleProp = 1.23;
+            shortProp = 123;
+        }
+
+        @JsonCreator
+        public TestBoxedConfig(@JsonProperty("booleanProp") final Boolean booleanProp,
+                               @JsonProperty("intProp") final Integer intProp,
+                               @JsonProperty("longProp") final Long longProp,
+                               @JsonProperty("doubleProp") final Double doubleProp,
+                               @JsonProperty("shortProp") final Short shortProp) {
+            this.booleanProp = booleanProp;
+            this.intProp = intProp;
+            this.longProp = longProp;
+            this.doubleProp = doubleProp;
+            this.shortProp = shortProp;
+        }
 
         public Boolean getBooleanProp() {
             return booleanProp;
-        }
-
-        public void setBooleanProp(final Boolean booleanProp) {
-            this.booleanProp = booleanProp;
         }
 
         public Integer getIntProp() {
             return intProp;
         }
 
-        public void setIntProp(final Integer intProp) {
-            this.intProp = intProp;
-        }
-
         public Long getLongProp() {
             return longProp;
-        }
-
-        public void setLongProp(final Long longProp) {
-            this.longProp = longProp;
         }
 
         public Double getDoubleProp() {
             return doubleProp;
         }
 
-        public void setDoubleProp(final Double doubleProp) {
-            this.doubleProp = doubleProp;
-        }
-
         public Short getShortProp() {
             return shortProp;
         }
-
-        public void setShortProp(final Short shortProp) {
-            this.shortProp = shortProp;
-        }
     }
-
-    public static class TestOtherTypesConfig extends AbstractConfig {
-
-
-    }
-
 }
