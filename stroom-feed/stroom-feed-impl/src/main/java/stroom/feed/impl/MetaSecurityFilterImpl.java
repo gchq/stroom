@@ -18,8 +18,13 @@ import javax.inject.Singleton;
 @Singleton
 class MetaSecurityFilterImpl implements MetaSecurityFilter {
 
+    private static final long THIRTY_SECONDS = 30000;
+
     private final FeedStore feedStore;
     private final SecurityContext securityContext;
+
+    private volatile List<DocRef> feedCache;
+    private volatile long lastUpdate;
 
     @Inject
     MetaSecurityFilterImpl(final FeedStore feedStore,
@@ -41,11 +46,18 @@ class MetaSecurityFilterImpl implements MetaSecurityFilter {
         ExpressionOperator expressionOperator = null;
         if (!securityContext.isAdmin()) {
 
-            // Get all feeds.
-            final List<DocRef> feeds = feedStore.list();
+            // Get all feeds as seen by the processing user.
+            List<DocRef> feeds = feedCache;
+            final long now = System.currentTimeMillis();
+            if (feeds == null || lastUpdate < now - THIRTY_SECONDS) {
+                securityContext.asProcessingUser(() -> feedCache = feedStore.list());
+                feeds = feedCache;
+                lastUpdate = now;
+            }
 
             // Filter feeds that the current user has the requested permission on.
-            final String filteredFeeds = feeds.stream()
+            final String filteredFeeds = feeds
+                    .stream()
                     .filter(docRef -> securityContext.hasDocumentPermission(docRef.getUuid(), permission))
                     .map(DocRef::getName)
                     .collect(Collectors.joining(","));
