@@ -24,6 +24,7 @@ import stroom.query.common.v2.Coprocessors;
 import stroom.search.extraction.ExpressionFilter;
 import stroom.search.extraction.ExtractionDecoratorFactory;
 import stroom.search.extraction.StoredDataQueue;
+import stroom.search.extraction.StreamMapCreator;
 import stroom.search.impl.shard.IndexShardSearchFactory;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
@@ -32,6 +33,8 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.SearchProgressLog;
 import stroom.util.logging.SearchProgressLog.SearchPhase;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.inject.Inject;
@@ -75,10 +78,8 @@ class ClusterSearchTaskHandler {
                 try {
                     if (task.getShards().size() > 0) {
 
-                        final StoredDataQueue storedDataQueue = extractionDecoratorFactory.create(
-                                taskContext,
+                        final StoredDataQueue storedDataQueue = extractionDecoratorFactory.createStoredDataQueue(
                                 coprocessors,
-                                extractionCount,
                                 query);
 
                         // Search all index shards.
@@ -86,7 +87,7 @@ class ClusterSearchTaskHandler {
                                 .addPrefixExcludeFilter(AnnotationFields.ANNOTATION_FIELD_PREFIX)
                                 .build();
                         final ExpressionOperator expression = expressionFilter.copy(query.getExpression());
-                        indexShardSearchFactory.search(
+                        final CompletableFuture<Void> indexShardSearchFuture = indexShardSearchFactory.search(
                                 task,
                                 expression,
                                 coprocessors.getFieldIndex(),
@@ -95,18 +96,34 @@ class ClusterSearchTaskHandler {
                                 storedDataQueue,
                                 coprocessors.getErrorConsumer());
 
-                        // Wait for index search to complete.
-                        LOGGER.debug("Wait for index searches");
-                        while (!indexShardSearchFactory.awaitCompletion(1, TimeUnit.SECONDS)) {
-                            updateInfo();
-                        }
+                        // When we complete the index shard search tell teh stored data queue we are complete.
+                        indexShardSearchFuture.whenCompleteAsync((r, t) -> {
+                            LOGGER.debug("Complete stored data queue");
+                            storedDataQueue.onComplete();
+                        });
 
-                        LOGGER.debug("Complete stored data queue");
-                        storedDataQueue.onComplete();
+                        // Create an object to make event lists from raw index data.
+                        final StreamMapCreator streamMapCreator = new StreamMapCreator(
+                                coprocessors.getFieldIndex());
 
-                        // Wait for extraction to complete.
-                        LOGGER.debug("Wait for extraction to complete");
-                        while (!extractionDecoratorFactory.awaitCompletion(1, TimeUnit.SECONDS)) {
+                        // Start mapping streams.
+                        final CompletableFuture<Void> streamMappingFuture = extractionDecoratorFactory
+                                .startMapping(taskContext, streamMapCreator, coprocessors.getErrorConsumer());
+
+                        // Start extracting data.
+                        final CompletableFuture<Void> extractionFuture = extractionDecoratorFactory
+                                .startExtraction(taskContext, extractionCount, coprocessors.getErrorConsumer());
+
+                        // Create a countdown latch to keep updating status until we complete.
+                        final CountDownLatch complete = new CountDownLatch(1);
+
+                        // Wait for all to complete.
+                        final CompletableFuture<Void> all = CompletableFuture
+                                .allOf(indexShardSearchFuture, streamMappingFuture, extractionFuture);
+                        all.whenCompleteAsync((r, t) -> complete.countDown());
+
+                        // Update status until we complete.
+                        while (!complete.await(1, TimeUnit.SECONDS)) {
                             updateInfo();
                         }
 

@@ -9,8 +9,6 @@ import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldsMap;
 import stroom.pipeline.errorhandler.MessageUtil;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.common.v2.CompletionState;
-import stroom.query.common.v2.CompletionStateImpl;
 import stroom.query.common.v2.ErrorConsumer;
 import stroom.search.impl.ClusterSearchTask;
 import stroom.search.impl.SearchConfig;
@@ -33,14 +31,11 @@ import stroom.util.logging.SearchProgressLog.SearchPhase;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.inject.Inject;
@@ -59,7 +54,6 @@ public class IndexShardSearchFactory {
     private final WordListProvider dictionaryStore;
     private final TaskContextFactory taskContextFactory;
     private final int maxBooleanClauseCount;
-    private final CompletionState completionState = new CompletionStateImpl();
 
     @Inject
     IndexShardSearchFactory(final IndexStore indexStore,
@@ -78,13 +72,14 @@ public class IndexShardSearchFactory {
         this.maxBooleanClauseCount = searchConfig.getMaxBooleanClauseCount();
     }
 
-    public void search(final ClusterSearchTask task,
-                       final ExpressionOperator expression,
-                       final FieldIndex fieldIndex,
-                       final TaskContext parentContext,
-                       final AtomicLong hitCount,
-                       final ValuesConsumer valuesConsumer,
-                       final ErrorConsumer errorConsumer) {
+    @SuppressWarnings("unchecked")
+    public CompletableFuture<Void> search(final ClusterSearchTask task,
+                                          final ExpressionOperator expression,
+                                          final FieldIndex fieldIndex,
+                                          final TaskContext parentContext,
+                                          final AtomicLong hitCount,
+                                          final ValuesConsumer valuesConsumer,
+                                          final ErrorConsumer errorConsumer) {
         SearchProgressLog.increment(SearchPhase.INDEX_SHARD_SEARCH_FACTORY_SEARCH);
 
         // Reload the index.
@@ -109,7 +104,8 @@ public class IndexShardSearchFactory {
             }
         }
 
-        final List<CompletableFuture<Void>> futures = new ArrayList<>();
+        final int threadCount = indexShardSearchConfig.getMaxThreadsPerTask();
+        final CompletableFuture<Void>[] futures = new CompletableFuture[threadCount];
 
         if (task.getShards().size() > 0) {
             try {
@@ -123,7 +119,7 @@ public class IndexShardSearchFactory {
                 final ShardIdQueue queue = new ShardIdQueue(task.getShards());
                 final AtomicInteger shardNo = new AtomicInteger();
                 for (int i = 0; i < indexShardSearchConfig.getMaxThreadsPerTask(); i++) {
-                    futures.add(CompletableFuture.runAsync(() -> {
+                    futures[i] = CompletableFuture.runAsync(() -> {
                         try {
                             while (!parentContext.isTerminated()) {
                                 final long shard = queue.take();
@@ -147,7 +143,7 @@ public class IndexShardSearchFactory {
                             // Keep interrupting this thread.
                             Thread.currentThread().interrupt();
                         }
-                    }, executor));
+                    }, executor);
                 }
             } catch (final InterruptedException e) {
                 LOGGER.trace(e::getMessage, e);
@@ -156,14 +152,7 @@ public class IndexShardSearchFactory {
             }
         }
 
-        // Start extracting data.
-        CompletableFuture
-                .allOf(futures.toArray(new CompletableFuture[0]))
-                .whenCompleteAsync((r, e) -> completionState.signalComplete());
-    }
-
-    public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
-        return completionState.awaitCompletion(timeout, unit);
+        return CompletableFuture.allOf(futures);
     }
 
     private IndexShardQueryFactory createIndexShardQueryFactory(
