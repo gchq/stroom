@@ -7,6 +7,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
+import stroom.util.shared.Clearable;
 
 import java.util.List;
 import java.util.Objects;
@@ -16,7 +17,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-class MetaSecurityFilterImpl implements MetaSecurityFilter {
+class MetaSecurityFilterImpl implements MetaSecurityFilter, Clearable {
 
     private static final long THIRTY_SECONDS = 30000;
 
@@ -70,5 +71,11 @@ class MetaSecurityFilterImpl implements MetaSecurityFilter {
         }
 
         return Optional.ofNullable(expressionOperator);
+    }
+
+    @Override
+    public void clear() {
+        feedCache = null;
+        lastUpdate = 0;
     }
 }
