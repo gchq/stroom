@@ -5,6 +5,7 @@ import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValInteger;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.data.shared.StreamTypeNames;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
@@ -65,7 +66,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -274,12 +274,12 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         // TODO @AT This is a lot of cross over between ReferenceData and ReferenceDataServiceImpl
 
         return securityContext.secureResult(PermissionNames.VIEW_DATA_PERMISSION, () ->
-                taskContextFactory.contextResult("Reference Data Lookup (API)",
-                        taskContext ->
-                                LOGGER.logDurationIfDebugEnabled(
-                                        () ->
-                                                performLookup(refDataLookupRequest),
-                                        LogUtil.message("Performing lookup for {}", refDataLookupRequest))))
+                        taskContextFactory.contextResult("Reference Data Lookup (API)",
+                                taskContext ->
+                                        LOGGER.logDurationIfDebugEnabled(
+                                                () ->
+                                                        performLookup(refDataLookupRequest),
+                                                LogUtil.message("Performing lookup for {}", refDataLookupRequest))))
                 .get();
     }
 
@@ -616,18 +616,18 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     @Override
     public void search(final ExpressionCriteria criteria,
                        final AbstractField[] fields,
-                       final Consumer<Val[]> consumer) {
+                       final ValuesConsumer consumer) {
 
         withPermissionCheck(() -> LOGGER.logDurationIfInfoEnabled(
                 () -> taskContextFactory.context("Querying reference data store", taskContext ->
-                        doSearch(criteria, fields, consumer, taskContext))
+                                doSearch(criteria, fields, consumer, taskContext))
                         .run(),
                 "Querying ref store"));
     }
 
     private void doSearch(final ExpressionCriteria criteria,
                           final AbstractField[] fields,
-                          final Consumer<Val[]> consumer,
+                          final ValuesConsumer consumer,
                           final TaskContext taskContext) {
         // TODO @AT This is a temporary very crude impl to see if it works.
         //  The search code ought to be pushed down to the offHeapStore so it can query the many DBs
@@ -688,7 +688,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                 valArr[i] = convertToVal(value, fields[i]);
                             }
                         }
-                        consumer.accept(valArr);
+                        consumer.add(valArr);
                     });
             return null;
         });

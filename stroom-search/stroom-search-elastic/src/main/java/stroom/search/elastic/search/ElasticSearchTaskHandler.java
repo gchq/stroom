@@ -23,6 +23,8 @@ import stroom.dashboard.expression.v1.ValDouble;
 import stroom.dashboard.expression.v1.ValInteger;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.dashboard.expression.v1.ValuesConsumer;
+import stroom.query.common.v2.ErrorConsumer;
 import stroom.search.elastic.ElasticClientCache;
 import stroom.search.elastic.ElasticClusterStore;
 import stroom.search.elastic.shared.ElasticClusterDoc;
@@ -53,7 +55,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
@@ -107,7 +108,7 @@ public class ElasticSearchTaskHandler {
 
                                     } catch (final RuntimeException e) {
                                         LOGGER.debug(e::getMessage, e);
-                                        error(task, e.getMessage(), e);
+                                        error(task.getErrorConsumer(), e.getMessage(), e);
                                     }
                                 },
                                 "exec()"))
@@ -127,7 +128,7 @@ public class ElasticSearchTaskHandler {
                                 try {
                                     streamingSearch(task, elasticIndex, connectionConfig);
                                 } catch (final RuntimeException e) {
-                                    error(task, e.getMessage(), e);
+                                    error(task.getErrorConsumer(), e.getMessage(), e);
                                 } finally {
                                     task.getTracker().complete();
                                     completionLatch.countDown();
@@ -136,7 +137,7 @@ public class ElasticSearchTaskHandler {
                             () -> "searcher.search()");
             CompletableFuture.runAsync(runnable, executor);
         } catch (final RuntimeException e) {
-            error(task, e.getMessage(), e);
+            error(task.getErrorConsumer(), e.getMessage(), e);
         }
     }
 
@@ -182,7 +183,7 @@ public class ElasticSearchTaskHandler {
 
                 LOGGER.debug(() -> "Total hits: " + task.getTracker().getHitCount());
             } catch (final IOException | RuntimeException e) {
-                error(task, e.getMessage(), e);
+                error(task.getErrorConsumer(), e.getMessage(), e);
             }
         });
     }
@@ -190,8 +191,8 @@ public class ElasticSearchTaskHandler {
     private void processBatch(final ElasticSearchTask task, final SearchHit[] searchHits) {
         final Tracker tracker = task.getTracker();
         final FieldIndex fieldIndex = task.getFieldIndex();
-        final Consumer<Val[]> valuesConsumer = task.getReceiver().getValuesConsumer();
-        final Consumer<Throwable> errorConsumer = task.getReceiver().getErrorConsumer();
+        final ValuesConsumer valuesConsumer = task.getValuesConsumer();
+        final ErrorConsumer errorConsumer = task.getErrorConsumer();
 
         try {
             for (final SearchHit searchHit : searchHits) {
@@ -264,23 +265,23 @@ public class ElasticSearchTaskHandler {
                 }
 
                 if (values != null) {
-                    valuesConsumer.accept(values);
+                    valuesConsumer.add(values);
                 }
             }
         } catch (final RuntimeException e) {
             if (errorConsumer == null) {
                 LOGGER.error(e::getMessage, e);
             } else {
-                errorConsumer.accept(new Error(e.getMessage(), e));
+                errorConsumer.add(new Error(e.getMessage(), e));
             }
         }
     }
 
-    private void error(final ElasticSearchTask task, final String message, final Throwable t) {
-        if (task == null) {
+    private void error(final ErrorConsumer errorConsumer, final String message, final Throwable t) {
+        if (errorConsumer == null) {
             LOGGER.error(() -> message, t);
         } else {
-            task.getReceiver().getErrorConsumer().accept(new Error(message, t));
+            errorConsumer.add(new Error(message, t));
         }
     }
 }

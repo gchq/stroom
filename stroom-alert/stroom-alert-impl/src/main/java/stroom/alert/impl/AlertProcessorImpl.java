@@ -31,8 +31,8 @@ import stroom.index.shared.IndexFieldsMap;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Field;
-import stroom.query.common.v2.CompiledField;
 import stroom.query.common.v2.CompiledFields;
+import stroom.query.common.v2.ErrorConsumer;
 import stroom.search.extraction.ExtractionReceiver;
 import stroom.search.extraction.ExtractionTask;
 import stroom.search.extraction.ExtractionTaskHandler;
@@ -56,7 +56,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.inject.Provider;
 
@@ -173,7 +172,6 @@ public class AlertProcessorImpl implements AlertProcessor {
                             rule.getAlertDefinitions().stream()
                                     .map(a -> a.getAttributes().get(AlertManager.DASHBOARD_NAME_KEY))
                                     .collect(Collectors.joining(", ")));
-                    ;
                 } else {
                     LOGGER.trace("Not adding {}:{} to rule {} from dashboards {}", currentStreamId,
                             eventId, rule.getQueryId(),
@@ -201,11 +199,34 @@ public class AlertProcessorImpl implements AlertProcessor {
                 if (eventIds != null && eventIds.length > 0) {
                     final ExtractionReceiver receiver = new AlertProcessorReceiver(ruleConfig.getAlertDefinitions(),
                             ruleConfig.getParams());
+                    final ErrorConsumer errorConsumer = new ErrorConsumer() {
+                        @Override
+                        public void add(final Throwable exception) {
+                            LOGGER.error(exception.getMessage(), exception.getCause());
+                        }
+
+                        @Override
+                        public List<String> getErrors() {
+                            return null;
+                        }
+
+                        @Override
+                        public List<String> drain() {
+                            return null;
+                        }
+
+                        @Override
+                        public boolean hasErrors() {
+                            return false;
+                        }
+                    };
+
                     final ExtractionTask task = new ExtractionTask(
                             currentStreamId,
                             eventIds,
                             pipeline,
                             receiver,
+                            errorConsumer,
                             ruleConfig.getAlertDefinitions(),
                             ruleConfig.getParams());
                     handlerProvider.get().exec(taskContext, task);
@@ -267,7 +288,6 @@ public class AlertProcessorImpl implements AlertProcessor {
 
     private static class AlertProcessorReceiver implements ExtractionReceiver {
 
-        private final CompiledField[] compiledFields;
         private final FieldIndex fieldIndexMap = FieldIndex.forFields();
 
         AlertProcessorReceiver(final List<AlertDefinition> alertDefinitions,
@@ -279,27 +299,15 @@ public class AlertProcessorImpl implements AlertProcessor {
                         return a;
                     });
 
-            compiledFields = CompiledFields.create(fields, fieldIndexMap, paramMap);
+            CompiledFields.create(fields, fieldIndexMap, paramMap);
         }
 
         @Override
-        public Consumer<Val[]> getValuesConsumer() {
-            return values -> {
-            };
+        public void add(final Val[] values) {
         }
 
         @Override
-        public Consumer<Throwable> getErrorConsumer() {
-            return error -> LOGGER.error(error.getMessage(), error.getCause());
-        }
-
-        @Override
-        public Consumer<Long> getCompletionConsumer() {
-            return null;
-        }
-
-        @Override
-        public FieldIndex getFieldMap() {
+        public FieldIndex getFieldIndex() {
             return fieldIndexMap;
         }
     }

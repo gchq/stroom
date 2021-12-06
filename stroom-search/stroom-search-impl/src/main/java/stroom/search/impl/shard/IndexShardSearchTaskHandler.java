@@ -18,18 +18,20 @@ package stroom.search.impl.shard;
 
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
+import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.index.impl.IndexShardService;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.impl.LuceneVersionUtil;
 import stroom.index.shared.IndexShard;
-import stroom.query.common.v2.Receiver;
+import stroom.query.common.v2.ErrorConsumer;
 import stroom.search.impl.SearchException;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
+import stroom.util.concurrent.CompleteException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -45,10 +47,8 @@ import org.apache.lucene.search.SearcherManager;
 import org.apache.lucene.util.Version;
 
 import java.io.IOException;
-import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.concurrent.LinkedBlockingQueue;
 import javax.inject.Inject;
 
 public class IndexShardSearchTaskHandler {
@@ -76,7 +76,10 @@ public class IndexShardSearchTaskHandler {
         this.taskContextFactory = taskContextFactory;
     }
 
-    public void exec(final TaskContext taskContext, final IndexShardSearchTask task) {
+    public void exec(final TaskContext taskContext,
+                     final IndexShardSearchTask task,
+                     final ValuesConsumer valuesConsumer,
+                     final ErrorConsumer errorConsumer) {
         LOGGER.logDurationIfDebugEnabled(
                 () -> {
                     final long indexShardId = task.getIndexShardId();
@@ -99,11 +102,11 @@ public class IndexShardSearchTaskHandler {
                             indexShardSearcher = new IndexShardSearcher(indexShard, indexWriter);
 
                             // Start searching.
-                            searchShard(taskContext, task, indexShardSearcher);
+                            searchShard(taskContext, task, indexShardSearcher, valuesConsumer, errorConsumer);
                         }
                     } catch (final RuntimeException e) {
                         LOGGER.debug(e::getMessage, e);
-                        error(task.getReceiver(), e.getMessage(), e);
+                        error(errorConsumer, e.getMessage(), e);
 
                     } finally {
                         taskContext.info(() -> "Closing searcher for index shard " + indexShardId);
@@ -127,9 +130,11 @@ public class IndexShardSearchTaskHandler {
         return indexWriter;
     }
 
-    private void searchShard(final TaskContext parentTaskContext,
+    private void searchShard(final TaskContext parentContext,
                              final IndexShardSearchTask task,
-                             final IndexShardSearcher indexShardSearcher) {
+                             final IndexShardSearcher indexShardSearcher,
+                             final ValuesConsumer valuesConsumer,
+                             final ErrorConsumer errorConsumer) {
         SearchProgressLog.increment(SearchPhase.INDEX_SHARD_SEARCH_TASK_HANDLER_SEARCH_SHARD);
 
         // Get the index shard that this searcher uses.
@@ -143,69 +148,62 @@ public class IndexShardSearchTaskHandler {
         if (query != null) {
             final int maxDocIdQueueSize = shardConfig.getMaxDocIdQueueSize();
             LOGGER.debug(() -> "Creating docIdStore with size " + maxDocIdQueueSize);
-            final LinkedBlockingQueue<OptionalInt> docIdStore = new LinkedBlockingQueue<>(maxDocIdQueueSize);
+            final DocIdQueue docIdQueue = new DocIdQueue(maxDocIdQueueSize);
 
             // Create a collector.
-            final IndexShardHitCollector collector = new IndexShardHitCollector(parentTaskContext,
-                    docIdStore,
+            final IndexShardHitCollector collector = new IndexShardHitCollector(parentContext,
+                    docIdQueue,
                     task.getHitCount());
-
-            // Get the receiver.
-            final Receiver receiver = task.getReceiver();
 
             try {
                 final SearcherManager searcherManager = indexShardSearcher.getSearcherManager();
                 final IndexSearcher searcher = searcherManager.acquire();
                 try {
-                    final Runnable runnable = taskContextFactory.childContext(parentTaskContext,
+                    final Runnable runnable = taskContextFactory.childContext(parentContext,
                             "Index Searcher",
                             taskContext ->
                                     LOGGER.logDurationIfDebugEnabled(() -> {
                                         try {
                                             searcher.search(query, collector);
                                         } catch (final IOException e) {
-                                            error(receiver, e.getMessage(), e);
-                                        }
-
-                                        try {
-                                            docIdStore.put(OptionalInt.empty());
-                                        } catch (final InterruptedException e) {
-                                            error(receiver, e.getMessage(), e);
-
-                                            // Continue to interrupt this thread.
-                                            Thread.currentThread().interrupt();
+                                            error(errorConsumer, e.getMessage(), e);
                                         }
                                     }, () -> "searcher.search()"));
-                    CompletableFuture.runAsync(runnable, executor);
+                    CompletableFuture.runAsync(runnable, executor).whenCompleteAsync((v, t) -> {
+                        try {
+                            docIdQueue.complete();
+                        } catch (final InterruptedException e) {
+                            LOGGER.trace(e::getMessage, e);
+                            // Keep interrupting this thread.
+                            Thread.currentThread().interrupt();
+                        }
+                    });
 
                     // Get an array of field names.
                     final String[] storedFieldNames = task.getStoredFieldNames();
 
                     // Start converting found docIds into stored data values
-                    boolean complete = false;
-                    while (!complete) {
+                    while (!parentContext.isTerminated()) {
                         // Take the next item
-                        final OptionalInt optDocId = docIdStore.take();
-                        if (optDocId.isPresent()) {
-                            // If we have a doc id then retrieve the stored data for it.
-                            SearchProgressLog.increment(SearchPhase.INDEX_SHARD_SEARCH_TASK_HANDLER_DOC_ID_STORE_TAKE);
-                            getStoredData(storedFieldNames, receiver, searcher, optDocId.getAsInt());
-                        } else {
-                            complete = true;
-                        }
+                        final int docId = docIdQueue.take();
+                        // If we have a doc id then retrieve the stored data for it.
+                        SearchProgressLog.increment(SearchPhase.INDEX_SHARD_SEARCH_TASK_HANDLER_DOC_ID_STORE_TAKE);
+                        getStoredData(storedFieldNames, valuesConsumer, searcher, docId, errorConsumer);
                     }
+                } catch (final InterruptedException e) {
+                    LOGGER.trace(e::getMessage, e);
+                    // Keep interrupting this thread.
+                    Thread.currentThread().interrupt();
+                } catch (final CompleteException e) {
+                    LOGGER.debug(() -> "Complete");
+                    LOGGER.trace(e::getMessage, e);
                 } catch (final RuntimeException e) {
-                    error(receiver, e.getMessage(), e);
+                    error(errorConsumer, e.getMessage(), e);
                 } finally {
                     searcherManager.release(searcher);
                 }
-            } catch (final InterruptedException e) {
-                error(receiver, e.getMessage(), e);
-
-                // Continue to interrupt.
-                Thread.currentThread().interrupt();
             } catch (final RuntimeException | IOException e) {
-                error(receiver, e.getMessage(), e);
+                error(errorConsumer, e.getMessage(), e);
             }
         }
     }
@@ -217,9 +215,10 @@ public class IndexShardSearchTaskHandler {
      * retrieved, only stream and event ids.
      */
     private void getStoredData(final String[] storedFieldNames,
-                               final Receiver receiver,
+                               final ValuesConsumer valuesConsumer,
                                final IndexSearcher searcher,
-                               final int docId) {
+                               final int docId,
+                               final ErrorConsumer errorConsumer) {
         try {
             SearchProgressLog.increment(SearchPhase.INDEX_SHARD_SEARCH_TASK_HANDLER_GET_STORED_DATA);
             final Val[] values = new Val[storedFieldNames.length];
@@ -245,19 +244,19 @@ public class IndexShardSearchTaskHandler {
                 }
             }
 
-            receiver.getValuesConsumer().accept(values);
+            valuesConsumer.add(values);
         } catch (final IOException | RuntimeException e) {
-            error(receiver, e.getMessage(), e);
+            error(errorConsumer, e.getMessage(), e);
         }
     }
 
-    private void error(final Receiver receiver,
+    private void error(final ErrorConsumer errorConsumer,
                        final String message,
                        final Throwable t) {
-        if (receiver == null) {
+        if (errorConsumer == null) {
             LOGGER.error(() -> message, t);
         } else {
-            receiver.getErrorConsumer().accept(new Error(message, t));
+            errorConsumer.add(new Error(message, t));
         }
     }
 }

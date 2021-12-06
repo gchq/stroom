@@ -32,6 +32,7 @@ class TestMapDataStore extends AbstractDataStoreTest {
                 fieldIndex,
                 Collections.emptyMap(),
                 maxResults,
-                storeSize);
+                storeSize,
+                new ErrorConsumerImpl());
     }
 }

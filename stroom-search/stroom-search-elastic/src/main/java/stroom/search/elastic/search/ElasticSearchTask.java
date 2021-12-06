@@ -17,17 +17,20 @@
 package stroom.search.elastic.search;
 
 import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.query.common.v2.Receiver;
+import stroom.dashboard.expression.v1.ValuesConsumer;
+import stroom.query.common.v2.ErrorConsumer;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 
 import org.elasticsearch.index.query.QueryBuilder;
 
 class ElasticSearchTask {
+
     private final ElasticAsyncSearchTask asyncSearchTask;
     private final ElasticIndexDoc elasticIndex;
     private final QueryBuilder query;
     private final FieldIndex fieldIndex;
-    private final Receiver receiver;
+    private final ValuesConsumer valuesConsumer;
+    private final ErrorConsumer errorConsumer;
     private final Tracker tracker;
     private final ElasticSearchResultCollector resultCollector;
 
@@ -35,14 +38,16 @@ class ElasticSearchTask {
                       final ElasticIndexDoc elasticIndex,
                       final QueryBuilder query,
                       final FieldIndex fieldIndex,
-                      final Receiver receiver,
+                      final ValuesConsumer valuesConsumer,
+                      final ErrorConsumer errorConsumer,
                       final Tracker tracker,
                       final ElasticSearchResultCollector resultCollector) {
         this.asyncSearchTask = asyncSearchTask;
         this.elasticIndex = elasticIndex;
         this.query = query;
         this.fieldIndex = fieldIndex;
-        this.receiver = receiver;
+        this.valuesConsumer = valuesConsumer;
+        this.errorConsumer = errorConsumer;
         this.tracker = tracker;
         this.resultCollector = resultCollector;
     }
@@ -63,8 +68,12 @@ class ElasticSearchTask {
         return fieldIndex;
     }
 
-    Receiver getReceiver() {
-        return receiver;
+    ValuesConsumer getValuesConsumer() {
+        return valuesConsumer;
+    }
+
+    ErrorConsumer getErrorConsumer() {
+        return errorConsumer;
     }
 
     Tracker getTracker() {

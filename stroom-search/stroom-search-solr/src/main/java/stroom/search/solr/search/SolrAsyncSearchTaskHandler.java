@@ -84,12 +84,13 @@ public class SolrAsyncSearchTaskHandler {
 
                     // Await completion.
                     taskContext.info(() -> task.getSearchName() + " - searching");
+                    coprocessors.getCompletionState().signalComplete();
                     resultCollector.awaitCompletion();
 
                 } catch (final RuntimeException e) {
-                    coprocessors.getErrorConsumer().accept(e);
+                    coprocessors.getErrorConsumer().add(e);
                 } catch (final InterruptedException e) {
-                    coprocessors.getErrorConsumer().accept(e);
+                    coprocessors.getErrorConsumer().add(e);
 
                     // Continue to interrupt this thread.
                     Thread.currentThread().interrupt();

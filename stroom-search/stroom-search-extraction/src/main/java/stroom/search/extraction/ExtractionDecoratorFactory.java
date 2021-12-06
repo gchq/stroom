@@ -6,31 +6,32 @@ import stroom.docref.DocRef;
 import stroom.index.shared.IndexConstants;
 import stroom.meta.api.MetaService;
 import stroom.query.api.v2.Query;
+import stroom.query.common.v2.CompletionState;
+import stroom.query.common.v2.CompletionStateImpl;
 import stroom.query.common.v2.Coprocessor;
 import stroom.query.common.v2.Coprocessors;
-import stroom.query.common.v2.Receiver;
-import stroom.query.common.v2.ReceiverImpl;
+import stroom.query.common.v2.ErrorConsumer;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
+import stroom.util.concurrent.CompleteException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.SearchProgressLog;
 import stroom.util.logging.SearchProgressLog.SearchPhase;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -52,11 +53,10 @@ public class ExtractionDecoratorFactory {
     private final AnnotationsDecoratorFactory receiverDecoratorFactory;
     private final SecurityContext securityContext;
     private final StreamEventMap streamEventMap;
-    private final LinkedBlockingQueue<Optional<Val[]>> storedDataQueue;
+    private final StoredDataQueue storedDataQueue;
     private final Map<DocRef, ExtractionReceiver> receivers;
-    private final AtomicLong indexSearchTotalValues = new AtomicLong();
     private final Provider<ExtractionTaskHandler> handlerProvider;
-    private final ExtractionProgressTracker tracker = new ExtractionProgressTracker();
+    private final CompletionState completionState = new CompletionStateImpl();
 
     @Inject
     ExtractionDecoratorFactory(final ExtractionConfig extractionConfig,
@@ -76,13 +76,14 @@ public class ExtractionDecoratorFactory {
 
         // Create a queue to receive values and store them for asynchronous processing.
         streamEventMap = new StreamEventMap(extractionConfig.getMaxStreamEventMapSize());
-        storedDataQueue = new LinkedBlockingQueue<>(extractionConfig.getMaxStoredDataQueueSize());
+        storedDataQueue = new StoredDataQueue(extractionConfig.getMaxStoredDataQueueSize());
         receivers = new HashMap<>();
     }
 
-    public Receiver create(final TaskContext parentContext,
-                           final Coprocessors coprocessors,
-                           final Query query) {
+    public StoredDataQueue create(final TaskContext parentContext,
+                                  final Coprocessors coprocessors,
+                                  final AtomicLong extractionCount,
+                                  final Query query) {
         // We are going to do extraction or at least filter streams so add fields to the field index to do this.
         coprocessors.getFieldIndex().create(IndexConstants.STREAM_ID);
         coprocessors.getFieldIndex().create(IndexConstants.EVENT_ID);
@@ -93,29 +94,37 @@ public class ExtractionDecoratorFactory {
                 metaService);
 
         coprocessors.forEachExtractionCoprocessor((docRef, coprocessorSet) -> {
+            // We assume all coprocessors for the same extraction use the same field index map.
+            // This is only the case at the moment as the CoprocessorsFactory creates field index maps this way.
+            final FieldIndex fieldIndex = coprocessors.getFieldIndex();
+
             // Create a receiver that will send data to all coprocessors.
             ExtractionReceiver receiver;
             if (coprocessorSet.size() == 1) {
                 final Coprocessor coprocessor = coprocessorSet.iterator().next();
-                final FieldIndex fieldIndex = coprocessors.getFieldIndex();
-                final Consumer<Val[]> valuesConsumer = coprocessor.getValuesConsumer();
-                final Consumer<Throwable> errorConsumer = coprocessor.getErrorConsumer();
-                final Consumer<Long> completionConsumer = coprocessor.getCompletionConsumer();
-                receiver = new ExtractionReceiverImpl(valuesConsumer, errorConsumer, completionConsumer, fieldIndex);
+                receiver = new ExtractionReceiver() {
+                    @Override
+                    public void add(final Val[] values) {
+                        coprocessor.add(values);
+                    }
+
+                    @Override
+                    public FieldIndex getFieldIndex() {
+                        return fieldIndex;
+                    }
+                };
             } else {
-                // We assume all coprocessors for the same extraction use the same field index map.
-                // This is only the case at the moment as the CoprocessorsFactory creates field index maps this way.
-                final FieldIndex fieldIndex = coprocessors.getFieldIndex();
-                final Consumer<Val[]> valuesConsumer = values ->
-                        coprocessorSet.forEach(coprocessor ->
-                                coprocessor.getValuesConsumer().accept(values));
-                final Consumer<Throwable> errorConsumer = error ->
-                        coprocessorSet.forEach(coprocessor ->
-                                coprocessor.getErrorConsumer().accept(error));
-                final Consumer<Long> completionConsumer = delta ->
-                        coprocessorSet.forEach(coprocessor ->
-                                coprocessor.getCompletionConsumer().accept(delta));
-                receiver = new ExtractionReceiverImpl(valuesConsumer, errorConsumer, completionConsumer, fieldIndex);
+                receiver = new ExtractionReceiver() {
+                    @Override
+                    public void add(final Val[] values) {
+                        coprocessorSet.forEach(coprocessor -> coprocessor.add(values));
+                    }
+
+                    @Override
+                    public FieldIndex getFieldIndex() {
+                        return fieldIndex;
+                    }
+                };
             }
 
             // Decorate result with annotations.
@@ -125,101 +134,90 @@ public class ExtractionDecoratorFactory {
         });
 
         // Start mapping streams.
-        startMapping(parentContext, streamMapCreator);
+        startMapping(parentContext, streamMapCreator, coprocessors.getErrorConsumer());
 
         // Start extracting data.
-        startExtraction(parentContext);
-
-        return new ReceiverImpl(
-                this::addToStoredDataQueue,
-                coprocessors.getErrorConsumer(),
-                count -> {
-                    indexSearchTotalValues.set(count);
-
-                    // Add null values to signal completion.
-                    try {
-                        storedDataQueue.put(Optional.empty());
-                    } catch (final InterruptedException e) {
-                        LOGGER.debug(e::getMessage, e);
-                        // Continue to interrupt.
-                        Thread.currentThread().interrupt();
-                        throw new RuntimeException(e.getMessage(), e);
-                    }
+        final List<CompletableFuture<Void>> futures = startExtraction(parentContext, extractionCount,
+                coprocessors.getErrorConsumer());
+        CompletableFuture
+                .allOf(futures.toArray(new CompletableFuture[0]))
+                .whenCompleteAsync((r, e) -> {
+                    LOGGER.debug("Completed extraction");
+                    completionState.signalComplete();
                 });
+
+        return storedDataQueue;
+    }
+
+    public boolean awaitCompletion(final long timeout, final TimeUnit unit) throws InterruptedException {
+        return completionState.awaitCompletion(timeout, unit);
     }
 
     private void startMapping(final TaskContext parentContext,
-                              final StreamMapCreator streamMapCreator) {
+                              final StreamMapCreator streamMapCreator,
+                              final ErrorConsumer errorConsumer) {
         final Executor executor = executorProvider.get(STREAM_MAP_CREATOR_THREAD_POOL);
-        final Runnable runnable = create(
+        final Runnable runnable = mapStreams(
                 parentContext,
                 storedDataQueue,
                 streamMapCreator,
-                receivers);
-        CompletableFuture.runAsync(runnable, executor);
+                receivers,
+                errorConsumer);
+        CompletableFuture.runAsync(runnable, executor).whenCompleteAsync((v, t) -> {
+            try {
+                // We have finished mapping streams so mark the stream event map as complete.
+                LOGGER.debug(() -> "Completed stream mapping");
+                streamEventMap.complete();
+            } catch (final InterruptedException e) {
+                LOGGER.trace(e::getMessage, e);
+                // Keep interrupting this thread.
+                Thread.currentThread().interrupt();
+            }
+        });
     }
 
-    private Runnable create(final TaskContext parentContext,
-                            final LinkedBlockingQueue<Optional<Val[]>> storedDataQueue,
-                            final StreamMapCreator streamMapCreator,
-                            final Map<DocRef, ExtractionReceiver> receivers) {
-        final Consumer<TaskContext> consumer = tc -> {
+    private Runnable mapStreams(final TaskContext parentContext,
+                                final StoredDataQueue storedDataQueue,
+                                final StreamMapCreator streamMapCreator,
+                                final Map<DocRef, ExtractionReceiver> receivers,
+                                final ErrorConsumer errorConsumer) {
+        final Consumer<TaskContext> consumer = taskContext -> {
             // Elevate permissions so users with only `Use` feed permission can `Read` streams.
             securityContext.asProcessingUser(() -> {
-                info(tc, () -> "Starting extraction task producer");
+                info(taskContext, () -> "Starting extraction task producer");
                 try {
-                    boolean complete = false;
-                    while (!complete && !Thread.currentThread().isInterrupted()) {
-                        info(tc, () -> "" +
+                    while (!taskContext.isTerminated()) {
+                        info(taskContext, () -> "" +
                                 "Creating extraction tasks - stored data queue size: " +
                                 storedDataQueue.size() +
                                 " stream event map size: " +
                                 streamEventMap.size());
 
                         // Poll for the next set of values.
-                        final Optional<Val[]> optional = storedDataQueue.take();
+                        final Val[] values = storedDataQueue.take();
                         try {
-                            // We will have a value here unless index search has finished adding values in which case we
-                            // will have an empty optional.
-                            if (optional.isPresent()) {
-                                try {
-                                    // If we have some values then map them.
-                                    SearchProgressLog
-                                            .increment(SearchPhase.EXTRACTION_DECORATOR_FACTORY_STORED_DATA_QUEUE_TAKE);
-                                    streamMapCreator.addEvent(streamEventMap, optional.get());
+                            // If we have some values then map them.
+                            SearchProgressLog
+                                    .increment(SearchPhase.EXTRACTION_DECORATOR_FACTORY_STORED_DATA_QUEUE_TAKE);
+                            streamMapCreator.addEvent(streamEventMap, values);
 
-                                } catch (final RuntimeException e) {
-                                    LOGGER.debug(e::getMessage, e);
-                                    receivers.values().forEach(receiver ->
-                                            receiver.getErrorConsumer().accept(e));
-                                }
-                            } else {
-                                // We got no values from the topic so if index search ois complete then we have finished
-                                // mapping too.
-                                complete = true;
-                            }
                         } catch (final RuntimeException e) {
                             LOGGER.debug(e::getMessage, e);
-                            throw e;
+                            receivers.values().forEach(receiver ->
+                                    errorConsumer.add(e));
                         }
                     }
                 } catch (final InterruptedException e) {
-                    LOGGER.debug(e::getMessage, e);
-                    // Continue to interrupt.
+                    LOGGER.trace(e::getMessage, e);
+                    // Keep interrupting this thread.
                     Thread.currentThread().interrupt();
+                } catch (final CompleteException e) {
+                    LOGGER.debug(() -> "Complete");
+                    LOGGER.trace(e::getMessage, e);
                 } catch (final RuntimeException e) {
                     LOGGER.error(e::getMessage, e);
                 } finally {
-                    info(tc, () -> "Finished creating extraction tasks");
-
-                    try {
-                        // Put null to signal we are complete.
-                        streamEventMap.put(null);
-                    } catch (final InterruptedException e) {
-                        LOGGER.debug(e::getMessage, e);
-                        // Continue to interrupt.
-                        Thread.currentThread().interrupt();
-                    }
+                    info(taskContext, () -> "Finished creating extraction tasks");
                 }
             });
         };
@@ -231,113 +229,80 @@ public class ExtractionDecoratorFactory {
         LOGGER.debug(messageSupplier);
     }
 
-    public void addToStoredDataQueue(final Val[] values) {
-        try {
-            SearchProgressLog.increment(SearchPhase.EXTRACTION_DECORATOR_FACTORY_STORED_DATA_QUEUE_PUT);
-            storedDataQueue.put(Optional.of(values));
-        } catch (final InterruptedException e) {
-            LOGGER.debug(e::getMessage, e);
-            // Continue to interrupt.
-            Thread.currentThread().interrupt();
-            throw new RuntimeException(e.getMessage(), e);
-        } catch (final RuntimeException e) {
-            LOGGER.debug(e::getMessage, e);
-            throw e;
-        }
-    }
-
-    private void startExtraction(final TaskContext parentContext) {
+    private List<CompletableFuture<Void>> startExtraction(final TaskContext parentContext,
+                                                          final AtomicLong extractionCount,
+                                                          final ErrorConsumer errorConsumer) {
         final Executor executor = executorProvider.get(EXTRACTION_THREAD_POOL);
         final List<CompletableFuture<Void>> futures = new ArrayList<>();
         for (int i = 0; i < extractionConfig.getMaxThreadsPerTask(); i++) {
-            final Runnable runnable = extractData(parentContext);
-            final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable, executor);
-            futures.add(completableFuture);
+            futures.add(CompletableFuture.runAsync(() ->
+                    extractData(parentContext, extractionCount, errorConsumer), executor));
         }
-        CompletableFuture
-                .allOf(futures.toArray(new CompletableFuture[0]))
-                .whenCompleteAsync((r, e) -> {
-                    tracker.finishedAddingTasks();
-                    receivers.forEach((docRef, receiver) ->
-                            receiver.getCompletionConsumer().accept(indexSearchTotalValues.get()));
-                });
+        return futures;
     }
 
-    private Runnable extractData(final TaskContext parentContext) {
-        final Consumer<TaskContext> consumer = tc -> {
-            boolean complete = false;
-            while (!complete) {
-                try {
-                    final Optional<Entry<Long, List<Event>>> optional = streamEventMap.take();
-                    if (optional.isPresent()) {
-                        final Entry<Long, List<Event>> entry = optional.get();
-                        SearchProgressLog.add(SearchPhase.EXTRACTION_DECORATOR_FACTORY_STREAM_EVENT_MAP_TAKE,
-                                entry.getValue().size());
-                        createTasks(tc, entry.getKey(), entry.getValue());
+    private void extractData(final TaskContext parentContext,
+                             final AtomicLong extractionCount,
+                             final ErrorConsumer errorConsumer) {
+        try {
+            while (!parentContext.isTerminated()) {
+                final Entry<Long, Set<Event>> entry = streamEventMap.take();
 
-                    } else {
-                        // if we didn't get any events from the event map and we have completed event mapping then
-                        // there are no more tasks to create.
-                        complete = true;
-                    }
-                } catch (final InterruptedException e) {
-                    LOGGER.debug(e::getMessage, e);
-                    Thread.currentThread().interrupt();
-                    complete = true;
-                }
+                taskContextFactory.childContext(parentContext, "Extraction Task", taskContext -> {
+                    SearchProgressLog.add(SearchPhase.EXTRACTION_DECORATOR_FACTORY_STREAM_EVENT_MAP_TAKE,
+                            entry.getValue().size());
+                    extractEvents(taskContext, entry.getKey(), entry.getValue(), extractionCount, errorConsumer);
+                }).run();
             }
-        };
-        return taskContextFactory.childContext(parentContext, "Extraction Task", consumer);
+        } catch (final InterruptedException e) {
+            LOGGER.trace(e::getMessage, e);
+            // Keep interrupting this thread.
+            Thread.currentThread().interrupt();
+        } catch (final CompleteException e) {
+            LOGGER.debug(() -> "Complete");
+            LOGGER.trace(e::getMessage, e);
+        } finally {
+            LOGGER.debug("Completed extraction thread");
+        }
     }
 
-    private void createTasks(final TaskContext taskContext,
-                             final long streamId,
-                             final List<Event> events) {
+    private void extractEvents(final TaskContext taskContext,
+                               final long streamId,
+                               final Set<Event> events,
+                               final AtomicLong extractionCount,
+                               final ErrorConsumer errorConsumer) {
         SearchProgressLog.increment(SearchPhase.EXTRACTION_DECORATOR_FACTORY_CREATE_TASKS);
         SearchProgressLog.add(SearchPhase.EXTRACTION_DECORATOR_FACTORY_CREATE_TASKS_EVENTS, events.size());
-        final long[] eventIds = createEventIdArray(events, receivers);
-        receivers.forEach((docRef, receiver) -> {
-            tracker.incrementTasksTotal();
 
-            if (docRef != null) {
-                SearchProgressLog.add(SearchPhase.EXTRACTION_DECORATOR_FACTORY_CREATE_TASKS_DOCREF, events.size());
-                try {
+        // Sort events if we are performing extraction.
+        final long[] eventIds;
+        if (receivers.size() > 1 ||
+                (receivers.size() == 1 && receivers.keySet().iterator().next() != null)) {
+            eventIds = events.stream().sorted().mapToLong(Event::getEventId).toArray();
+        } else {
+            eventIds = null;
+        }
+
+        if (receivers.size() > 0) {
+            receivers.forEach((docRef, receiver) -> {
+                if (docRef != null) {
+                    SearchProgressLog.add(SearchPhase.EXTRACTION_DECORATOR_FACTORY_CREATE_TASKS_DOCREF,
+                            events.size());
                     final ExtractionTaskHandler handler = handlerProvider.get();
-                    handler.exec(taskContext, new ExtractionTask(streamId, eventIds, docRef, receiver));
-                } finally {
-                    tracker.incrementTasksCompleted();
-                }
+                    handler.exec(taskContext, new ExtractionTask(streamId, eventIds, docRef, receiver, errorConsumer));
+                    extractionCount.addAndGet(events.size());
 
-            } else {
-                SearchProgressLog.add(SearchPhase.EXTRACTION_DECORATOR_FACTORY_CREATE_TASKS_NO_DOCREF, events.size());
-                try {
+                } else {
+                    SearchProgressLog.add(SearchPhase.EXTRACTION_DECORATOR_FACTORY_CREATE_TASKS_NO_DOCREF,
+                            events.size());
                     info(taskContext, () -> "Transferring " + events.size() + " records from stream " + streamId);
                     // Pass raw values to coprocessors that are not requesting values to be extracted.
                     for (final Event event : events) {
-                        receiver.getValuesConsumer().accept(event.getValues());
+                        receiver.add(event.getValues());
+                        extractionCount.incrementAndGet();
                     }
-                } finally {
-                    tracker.incrementTasksCompleted();
                 }
-            }
-        });
-    }
-
-    private long[] createEventIdArray(final List<Event> events,
-                                      final Map<DocRef, ExtractionReceiver> receivers) {
-        // If we don't have any coprocessors that will perform extraction then don't bother sorting events.
-        if (receivers.size() == 0 ||
-                (receivers.size() == 1 && receivers.keySet().iterator().next() == null)) {
-            return null;
+            });
         }
-
-        // Get a list of the event ids we are extracting for this stream and sort them.
-        final long[] eventIds = new long[events.size()];
-        for (int i = 0; i < eventIds.length; i++) {
-            eventIds[i] = events.get(i).getEventId();
-        }
-        // Sort the ids as the extraction expects them in order.
-        Arrays.sort(eventIds);
-        return eventIds;
     }
 }

@@ -67,8 +67,8 @@ class SearchableService {
 
             final DocRef docRef = Preconditions.checkNotNull(
                     Preconditions.checkNotNull(
-                            Preconditions.checkNotNull(modifiedSearchRequest)
-                                    .getQuery())
+                                    Preconditions.checkNotNull(modifiedSearchRequest)
+                                            .getQuery())
                             .getDataSource());
             Preconditions.checkNotNull(modifiedSearchRequest.getResultRequests(),
                     "searchRequest must have at least one resultRequest");

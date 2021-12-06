@@ -1,6 +1,6 @@
 package stroom.meta.impl;
 
-import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.data.retention.api.DataRetentionRuleAction;
 import stroom.data.retention.api.DataRetentionTracker;
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
@@ -53,7 +53,6 @@ import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -156,7 +155,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
                     .statusMs(now)
                     .build();
         } else {
-            final Meta existingMeta = getMeta(meta.getId());
+            final Meta existingMeta = getMeta(meta.getId(), true);
             if (existingMeta == null) {
                 throw new RuntimeException("Meta with id=" + meta.getId() + " does not exist");
             }
@@ -275,7 +274,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     @Override
     public void search(final ExpressionCriteria criteria,
                        final AbstractField[] fields,
-                       final Consumer<Val[]> consumer) {
+                       final ValuesConsumer consumer) {
 
         LOGGER.logDurationIfTraceEnabled(() -> {
             final ExpressionOperator expression = addPermissionConstraints(criteria.getExpression(),

@@ -11,6 +11,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
+
+* Issue **#2608** : Fix segments for rolled streams created using the `StreamAppender`.
+
+* Issue **#2604** : Add code to diagnose unexpected event counts in search extraction.
+
+* Issue **#2605** : Create sub tasks for all search processes.
+
+* Issue **#2606** : Improve error handling during search.
+
+* Issue **#2472** : Fix the way the in memory config is updated by the file monitor. Improve the logging when config properties are changed on a node.
+
+* Issue **#2595** : Improve search performance and fix issues.
+
 * Issue **#2471** : Changes to ensure SQLite DB connection is only used by one process at a time.
 
 * Issue **#2471** : Changes to help diagnose proxy aggregation issues.

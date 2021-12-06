@@ -22,21 +22,16 @@ import stroom.query.api.v2.TableSettings;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
-
 public class TableCoprocessor implements Coprocessor {
 
     private final TableSettings tableSettings;
     private final DataStore dataStore;
 
-    private final Consumer<Throwable> errorConsumer;
-    private final AtomicLong valuesCount = new AtomicLong();
+    private final ErrorConsumer errorConsumer;
 
     public TableCoprocessor(final TableSettings tableSettings,
                             final DataStore dataStore,
-                            final Consumer<Throwable> errorConsumer) {
+                            final ErrorConsumer errorConsumer) {
         this.tableSettings = tableSettings;
         this.dataStore = dataStore;
         this.errorConsumer = errorConsumer;
@@ -47,21 +42,13 @@ public class TableCoprocessor implements Coprocessor {
     }
 
     @Override
-    public Consumer<Val[]> getValuesConsumer() {
-        return values -> {
-            valuesCount.incrementAndGet();
-            dataStore.add(values);
-        };
+    public void add(final Val[] values) {
+        dataStore.add(values);
     }
 
     @Override
-    public Consumer<Throwable> getErrorConsumer() {
+    public ErrorConsumer getErrorConsumer() {
         return errorConsumer;
-    }
-
-    @Override
-    public Consumer<Long> getCompletionConsumer() {
-        return dataStore.getCompletionState();
     }
 
     @Override
@@ -72,16 +59,6 @@ public class TableCoprocessor implements Coprocessor {
     @Override
     public void writePayload(final Output output) {
         dataStore.writePayload(output);
-    }
-
-    @Override
-    public boolean awaitTransfer(final long timeout, final TimeUnit unit) throws InterruptedException {
-        return dataStore.awaitTransfer(timeout, unit);
-    }
-
-    @Override
-    public long getValuesCount() {
-        return valuesCount.get();
     }
 
     @Override

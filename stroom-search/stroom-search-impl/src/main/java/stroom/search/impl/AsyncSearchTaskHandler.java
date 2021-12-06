@@ -49,6 +49,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -179,6 +180,18 @@ class AsyncSearchTaskHandler {
                     LOGGER.debug(() -> "Search complete");
                     resultCollector.complete();
 
+                    // Wait for the result collector to complete.
+                    try {
+                        boolean complete = false;
+                        while (!complete) {
+                            complete = resultCollector.awaitCompletion(1, TimeUnit.MINUTES);
+                        }
+                    } catch (final InterruptedException e) {
+                        LOGGER.trace(e.getMessage(), e);
+                        // Keep interrupting this thread.
+                        Thread.currentThread().interrupt();
+                    }
+
                     // We need to wait here for the client to keep getting results if
                     // this is an interactive search.
                     parentContext.info(() -> task.getSearchName() + " - staying alive for UI requests");
@@ -191,13 +204,15 @@ class AsyncSearchTaskHandler {
         }));
     }
 
-    private void terminateTasks(final AsyncSearchTask task, final TaskId taskId) {
-        // Terminate this task.
-        taskManager.terminate(taskId);
+    public void terminateTasks(final AsyncSearchTask task, final TaskId taskId) {
+        securityContext.asProcessingUser(() -> {
+            // Terminate this task.
+            taskManager.terminate(taskId);
 
-        // We have to wrap the cluster termination task in another task or
-        // ClusterDispatchAsyncImpl
-        // will not execute it if the parent task is terminated.
-        clusterTaskTerminator.terminate(task.getSearchName(), taskId, "AsyncSearchTask");
+            // We have to wrap the cluster termination task in another task or
+            // ClusterDispatchAsyncImpl
+            // will not execute it if the parent task is terminated.
+            clusterTaskTerminator.terminate(task.getSearchName(), taskId, "AsyncSearchTask");
+        });
     }
 }

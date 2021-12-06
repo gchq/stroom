@@ -1,10 +1,11 @@
 package stroom.search.solr.search;
 
 import stroom.dashboard.expression.v1.FieldIndex;
+import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.dictionary.api.WordListProvider;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.common.v2.Receiver;
+import stroom.query.common.v2.ErrorConsumer;
 import stroom.search.solr.CachedSolrIndex;
 import stroom.search.solr.search.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.search.solr.shared.SolrIndexField;
@@ -40,7 +41,8 @@ public class SolrSearchFactory {
                        final FieldIndex fieldIndex,
                        final long now,
                        final ExpressionOperator expression,
-                       final Receiver receiver,
+                       final ValuesConsumer valuesConsumer,
+                       final ErrorConsumer errorConsumer,
                        final TaskContext taskContext,
                        final AtomicLong hitCount,
                        final DateTimeSettings dateTimeSettings) {
@@ -58,7 +60,12 @@ public class SolrSearchFactory {
 
         final Tracker tracker = new Tracker(hitCount);
         final SolrSearchTask solrSearchTask = new SolrSearchTask(
-                index, solrQuery, fieldIndex, receiver, tracker);
+                index,
+                solrQuery,
+                fieldIndex,
+                valuesConsumer,
+                errorConsumer,
+                tracker);
         solrSearchTaskHandler.exec(taskContext, solrSearchTask);
 
         // Wait until we finish.
@@ -75,9 +82,6 @@ public class SolrSearchFactory {
             // Keep interrupting.
             Thread.currentThread().interrupt();
         }
-
-        // Let the receiver know we are complete.
-        receiver.getCompletionConsumer().accept(hitCount.get());
     }
 
     private SearchExpressionQuery getQuery(final ExpressionOperator expression,

@@ -18,26 +18,26 @@ package stroom.search.extraction;
 
 import stroom.alert.api.AlertDefinition;
 import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.Val;
 import stroom.pipeline.filter.AbstractXMLFilter;
 
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 public abstract class AbstractSearchResultOutputFilter extends AbstractXMLFilter {
-    List<AlertDefinition> alertDefinitions = null;
-    Map<String, String> paramMapForAlerting = null;
-    FieldIndex fieldIndexes;
-    Consumer<Val[]> consumer;
+
+    List<AlertDefinition> alertDefinitions;
+    Map<String, String> paramMapForAlerting;
+    ExtractionReceiver receiver;
+    FieldIndex fieldIndex;
     int count;
 
-    public void setup(final FieldIndex fieldIndexes, final Consumer<Val[]> consumer) {
-        this.fieldIndexes = fieldIndexes;
-        this.consumer = consumer;
+    public void setup(final ExtractionReceiver receiver) {
+        this.receiver = receiver;
+        this.fieldIndex = receiver.getFieldIndex();
     }
 
-    public void setupForAlerting(final List<AlertDefinition> alertDefinitions, final Map<String, String> paramMap) {
+    public void setupForAlerting(final List<AlertDefinition> alertDefinitions,
+                                 final Map<String, String> paramMap) {
         this.alertDefinitions = alertDefinitions;
         this.paramMapForAlerting = paramMap;
     }

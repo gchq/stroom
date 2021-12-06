@@ -296,7 +296,7 @@ class TestSearchResponseCreator {
 
         return new DataStore() {
             @Override
-            public void add(final Val[] values) {
+            public void add(final Val[] queueItem) {
             }
 
             @Override
@@ -325,11 +325,6 @@ class TestSearchResponseCreator {
 
             @Override
             public void writePayload(final Output output) {
-            }
-
-            @Override
-            public boolean awaitTransfer(final long timeout, final TimeUnit unit) {
-                return true;
             }
         };
     }

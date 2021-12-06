@@ -15,7 +15,6 @@ public class ResultStoreConfig extends AbstractConfig implements IsStroomConfig 
 
     private int maxPutsBeforeCommit = 100_000;
     private boolean offHeapResults = true;
-    private ByteSize payloadLimit = ByteSize.ofMebibytes(0);
 
     private ByteSize minValueSize = ByteSize.ofKibibytes(1);
     private ByteSize maxValueSize = ByteSize.ofMebibytes(1);
@@ -48,17 +47,6 @@ public class ResultStoreConfig extends AbstractConfig implements IsStroomConfig 
     @SuppressWarnings("unused")
     public void setOffHeapResults(final boolean offHeapResults) {
         this.offHeapResults = offHeapResults;
-    }
-
-    @JsonPropertyDescription("Do we want to limit the size of payloads (0 by default means no limit).")
-    @JsonProperty("payloadLimit")
-    public ByteSize getPayloadLimit() {
-        return payloadLimit;
-    }
-
-    @SuppressWarnings("unused")
-    public void setPayloadLimit(final ByteSize payloadLimit) {
-        this.payloadLimit = payloadLimit;
     }
 
     @JsonPropertyDescription("The minimum byte size of a value byte buffer.")
@@ -116,7 +104,6 @@ public class ResultStoreConfig extends AbstractConfig implements IsStroomConfig 
         return "ResultStoreConfig{" +
                 "maxPutsBeforeCommit=" + maxPutsBeforeCommit +
                 ", offHeapResults=" + offHeapResults +
-                ", payloadLimit=" + payloadLimit +
                 ", minValueSize=" + minValueSize +
                 ", maxValueSize=" + maxValueSize +
                 ", minPayloadSize=" + minPayloadSize +

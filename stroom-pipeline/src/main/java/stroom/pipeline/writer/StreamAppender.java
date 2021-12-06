@@ -72,7 +72,6 @@ public class StreamAppender extends AbstractAppender {
     private boolean segmentOutput = true;
     private Target streamTarget;
     private WrappedSegmentOutputStream wrappedSegmentOutputStream;
-    private boolean doneHeader;
     private long count;
 
     private ProcessStatistics lastProcessStatistics;
@@ -118,15 +117,11 @@ public class StreamAppender extends AbstractAppender {
 
         String processorUuid = null;
         String pipelineUuid = null;
-        Long streamTaskId = null;
 
         final Processor processor = streamProcessorHolder.getStreamProcessor();
         if (processor != null) {
             processorUuid = processor.getUuid();
             pipelineUuid = processor.getPipelineUuid();
-        }
-        if (streamProcessorHolder.getStreamTask() != null) {
-            streamTaskId = streamProcessorHolder.getStreamTask().getId();
         }
 
         final MetaProperties metaProperties = MetaProperties.builder()
@@ -147,17 +142,8 @@ public class StreamAppender extends AbstractAppender {
                 StreamAppender.this.close();
             }
         };
-        return wrappedSegmentOutputStream;
-    }
 
-    @Override
-    public OutputStream getOutputStream(final byte[] header, final byte[] footer) throws IOException {
-        final OutputStream outputStream = super.getOutputStream(header, footer);
-        if (!doneHeader) {
-            doneHeader = true;
-            insertSegmentMarker();
-        }
-        return outputStream;
+        return wrappedSegmentOutputStream;
     }
 
     @Override
@@ -166,20 +152,10 @@ public class StreamAppender extends AbstractAppender {
         return super.borrowDestination();
     }
 
-    @Override
-    public void returnDestination(final Destination destination) throws IOException {
-        // We assume that the parent will write an entire segment when it borrows a destination so add a segment marker
-        // here after a segment is written.
-
-        // Writing a segment marker here ensures there is always a marker written before the footer regardless or
-        // whether a footer is actually written. We do this because we always make an allowance for a footer for data
-        // display purposes.
-        insertSegmentMarker();
-
-        super.returnDestination(destination);
-    }
-
-    private void insertSegmentMarker() throws IOException {
+    /**
+     * Insert segment markers after the header and after every record.
+     */
+    void insertSegmentMarker() throws IOException {
         // Add a segment marker to the output stream if we are segmenting.
         if (segmentOutput) {
             if (wrappedSegmentOutputStream != null) {

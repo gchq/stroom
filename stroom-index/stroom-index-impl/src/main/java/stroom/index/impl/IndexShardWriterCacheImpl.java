@@ -199,7 +199,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
         // Mark the index shard as opening.
         LOGGER.debug(() -> "Opening " + indexShardId);
-        LOGGER.trace(() -> "Opening " + indexShardId + " - " + indexShardKey.toString());
+        LOGGER.trace(() -> "Opening " + indexShardId + " - " + indexShardKey);
         indexShardManager.setStatus(indexShardId, IndexShardStatus.OPENING);
 
         try {
@@ -229,7 +229,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
         } catch (final IOException | RuntimeException e) {
             // Something unexpected went wrong.
-            LOGGER.error(() -> "Setting index shard status to corrupt because (" + e.toString() + ")", e);
+            LOGGER.error(() -> "Setting index shard status to corrupt because (" + e + ")", e);
             indexShardManager.setStatus(indexShardId, IndexShardStatus.CORRUPT);
         }
 
@@ -276,8 +276,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                     countDownLatch.await();
                 }
             } catch (final InterruptedException e) {
-                LOGGER.debug(e::getMessage, e);
-
+                LOGGER.trace(e::getMessage, e);
                 // Continue to interrupt this thread.
                 Thread.currentThread().interrupt();
             }
@@ -519,7 +518,6 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                     }
                 } catch (final InterruptedException e) {
                     LOGGER.error(e::getMessage, e);
-
                     // Continue to interrupt this thread.
                     Thread.currentThread().interrupt();
                 } finally {

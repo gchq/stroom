@@ -1,10 +1,11 @@
 package stroom.search.elastic.search;
 
 import stroom.dashboard.expression.v1.FieldIndex;
+import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.dictionary.api.WordListProvider;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.common.v2.Receiver;
+import stroom.query.common.v2.ErrorConsumer;
 import stroom.search.elastic.ElasticIndexService;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
@@ -29,10 +30,8 @@ public class ElasticSearchFactory {
 
     @Inject
     public ElasticSearchFactory(final WordListProvider wordListProvider,
-                                final ElasticSearchConfig elasticSearchConfig,
                                 final ElasticSearchTaskHandler elasticSearchTaskHandler,
-                                final ElasticIndexService elasticIndexService
-    ) {
+                                final ElasticIndexService elasticIndexService) {
         this.wordListProvider = wordListProvider;
         this.elasticSearchTaskHandler = elasticSearchTaskHandler;
         this.elasticIndexService = elasticIndexService;
@@ -43,10 +42,12 @@ public class ElasticSearchFactory {
                        final FieldIndex fieldIndex,
                        final long now,
                        final ExpressionOperator expression,
-                       final Receiver receiver,
+                       final ValuesConsumer valuesConsumer,
+                       final ErrorConsumer errorConsumer,
                        final TaskContext taskContext,
                        final AtomicLong hitCount,
                        final DateTimeSettings dateTimeSettings) {
+        // Make sure we have a search index.
         if (index == null) {
             throw new SearchException("Search index has not been set");
         }
@@ -56,7 +57,7 @@ public class ElasticSearchFactory {
         final QueryBuilder queryBuilder = getQuery(expression, indexFieldsMap, dateTimeSettings, now);
         final Tracker tracker = new Tracker(hitCount);
         final ElasticSearchTask elasticSearchTask = new ElasticSearchTask(
-                asyncSearchTask, index, queryBuilder, fieldIndex, receiver, tracker,
+                asyncSearchTask, index, queryBuilder, fieldIndex, valuesConsumer, errorConsumer, tracker,
                 asyncSearchTask.getResultCollector());
 
         elasticSearchTaskHandler.exec(taskContext, elasticSearchTask);
@@ -72,12 +73,9 @@ public class ElasticSearchFactory {
             }
         } catch (final InterruptedException e) {
             LOGGER.debug(this::toString);
-            // Keep interrupting
+            // Keep interrupting.
             Thread.currentThread().interrupt();
         }
-
-        // Let the receiver know we are complete
-        receiver.getCompletionConsumer().accept(hitCount.get());
     }
 
     private QueryBuilder getQuery(final ExpressionOperator expression,

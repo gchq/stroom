@@ -18,6 +18,7 @@ package stroom.search.extraction;
 
 import stroom.alert.api.AlertDefinition;
 import stroom.docref.DocRef;
+import stroom.query.common.v2.ErrorConsumer;
 
 import java.util.List;
 import java.util.Map;
@@ -28,17 +29,20 @@ public class ExtractionTask {
     private final long[] eventIds;
     private final DocRef pipelineRef;
     private final ExtractionReceiver receiver;
+    private final ErrorConsumer errorConsumer;
     private final List<AlertDefinition> alertDefinitions;
     private final Map<String, String> paramMapForAlerting;
 
     ExtractionTask(final long streamId,
                    final long[] eventIds,
                    final DocRef pipelineRef,
-                   final ExtractionReceiver receiver) {
+                   final ExtractionReceiver receiver,
+                   final ErrorConsumer errorConsumer) {
         this.streamId = streamId;
         this.eventIds = eventIds;
         this.pipelineRef = pipelineRef;
         this.receiver = receiver;
+        this.errorConsumer = errorConsumer;
         this.alertDefinitions = null;
         this.paramMapForAlerting = null;
     }
@@ -47,12 +51,14 @@ public class ExtractionTask {
                           final long[] eventIds,
                           final DocRef pipelineRef,
                           final ExtractionReceiver receiver,
+                          final ErrorConsumer errorConsumer,
                           final List<AlertDefinition> alertTableSettings,
                           final Map<String, String> paramMap) {
         this.streamId = streamId;
         this.eventIds = eventIds;
         this.pipelineRef = pipelineRef;
         this.receiver = receiver;
+        this.errorConsumer = errorConsumer;
         this.alertDefinitions = alertTableSettings;
         this.paramMapForAlerting = paramMap;
     }
@@ -71,6 +77,10 @@ public class ExtractionTask {
 
     ExtractionReceiver getReceiver() {
         return receiver;
+    }
+
+    ErrorConsumer getErrorConsumer() {
+        return errorConsumer;
     }
 
     boolean isAlerting() {

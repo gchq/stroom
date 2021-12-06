@@ -31,8 +31,8 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
     @Inject
     public LmdbDataStoreFactory(final LmdbEnvFactory lmdbEnvFactory,
                                 final ResultStoreConfig resultStoreConfig,
-                                final Provider<Executor> executorProvider,
-                                final PathCreator pathCreator) {
+                                final PathCreator pathCreator,
+                                final Provider<Executor> executorProvider) {
         this.lmdbEnvFactory = lmdbEnvFactory;
         this.resultStoreConfig = resultStoreConfig;
         this.executorProvider = executorProvider;
@@ -48,15 +48,22 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                             final FieldIndex fieldIndex,
                             final Map<String, String> paramMap,
                             final Sizes maxResults,
-                            final Sizes storeSize) {
+                            final Sizes storeSize,
+                            final boolean producePayloads,
+                            final ErrorConsumer errorConsumer) {
 
         if (!resultStoreConfig.isOffHeapResults()) {
+            if (producePayloads) {
+                throw new RuntimeException("MapDataStore cannot produce payloads");
+            }
+
             return new MapDataStore(
                     tableSettings,
                     fieldIndex,
                     paramMap,
                     maxResults,
-                    storeSize);
+                    storeSize,
+                    errorConsumer);
         } else {
             return new LmdbDataStore(
                     lmdbEnvFactory,
@@ -67,7 +74,9 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                     fieldIndex,
                     paramMap,
                     maxResults,
-                    storeSize);
+                    producePayloads,
+                    executorProvider,
+                    errorConsumer);
         }
     }
 

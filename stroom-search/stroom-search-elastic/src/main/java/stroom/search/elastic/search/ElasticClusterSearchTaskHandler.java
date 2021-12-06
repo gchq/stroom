@@ -23,10 +23,10 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.Coprocessor;
 import stroom.query.common.v2.Coprocessors;
-import stroom.query.common.v2.Receiver;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.extraction.ExpressionFilter;
 import stroom.search.extraction.ExtractionDecoratorFactory;
+import stroom.search.extraction.StoredDataQueue;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
@@ -44,11 +44,15 @@ class ElasticClusterSearchTaskHandler {
     private final ExtractionDecoratorFactory extractionDecoratorFactory;
     private final SecurityContext securityContext;
 
+    private final AtomicLong hitCount = new AtomicLong();
+    private final AtomicLong extractionCount = new AtomicLong();
+
+    private TaskContext taskContext;
+
     @Inject
     ElasticClusterSearchTaskHandler(final ElasticSearchFactory elasticSearchFactory,
                                     final ExtractionDecoratorFactory extractionDecoratorFactory,
-                                    final SecurityContext securityContext
-    ) {
+                                    final SecurityContext securityContext) {
         this.elasticSearchFactory = elasticSearchFactory;
         this.extractionDecoratorFactory = extractionDecoratorFactory;
         this.securityContext = securityContext;
@@ -84,7 +88,7 @@ class ElasticClusterSearchTaskHandler {
                     }
                 } catch (final RuntimeException e) {
                     try {
-                        coprocessors.getErrorConsumer().accept(e);
+                        coprocessors.getErrorConsumer().add(e);
                     } catch (final RuntimeException e2) {
                         // If we failed to send the result or the source node rejected the result because the
                         // source task has been terminated then terminate the task.
@@ -112,7 +116,11 @@ class ElasticClusterSearchTaskHandler {
         LOGGER.debug(() -> "Incoming search request:\n" + query.getExpression().toString());
 
         try {
-            final Receiver extractionReceiver = extractionDecoratorFactory.create(taskContext, coprocessors, query);
+            final StoredDataQueue storedDataQueue = extractionDecoratorFactory.create(
+                    taskContext,
+                    coprocessors,
+                    extractionCount,
+                    query);
 
             // Search all index shards.
             final ExpressionFilter expressionFilter = ExpressionFilter.builder()
@@ -127,42 +135,35 @@ class ElasticClusterSearchTaskHandler {
                     coprocessors.getFieldIndex(),
                     now,
                     expression,
-                    extractionReceiver,
+                    storedDataQueue,
+                    coprocessors.getErrorConsumer(),
                     taskContext,
                     hitCount,
                     dateTimeSettings);
 
-            // Wait for search completion.
-            boolean allComplete = false;
-            while (!allComplete) {
-                allComplete = true;
-                for (final Coprocessor coprocessor : coprocessors) {
-                    if (!Thread.currentThread().isInterrupted()) {
-                        taskContext.info(() -> "" +
-                                "Searching... " +
-                                "found " +
-                                hitCount.get() +
-                                " documents" +
-                                " performed "
-                                + coprocessor.getValuesCount() +
-                                " extractions");
-
-                        final boolean complete = coprocessor.getCompletionState()
-                                .awaitCompletion(1, TimeUnit.SECONDS);
-                        if (!complete) {
-                            allComplete = false;
-                        }
-                    }
-                }
+            // Wait for extraction to complete.
+            while (!extractionDecoratorFactory.awaitCompletion(1, TimeUnit.SECONDS)) {
+                updateInfo();
             }
 
             LOGGER.debug(() -> "Complete");
         } catch (final InterruptedException e) {
-            // Continue to interrupt.
+            LOGGER.trace(e::getMessage, e);
+            // Keep interrupting this thread.
             Thread.currentThread().interrupt();
-            LOGGER.debug(e::getMessage, e);
         } catch (final RuntimeException e) {
             throw SearchException.wrap(e);
         }
+    }
+
+    public void updateInfo() {
+        taskContext.info(() -> "" +
+                "Searching... " +
+                "found "
+                + hitCount.get() +
+                " documents" +
+                " performed " +
+                extractionCount.get() +
+                " extractions");
     }
 }

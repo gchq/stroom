@@ -104,7 +104,7 @@ public class ElasticSearchResultCollector implements Store {
                         // as they may be terminated before we even try to execute them.
                         if (!(t instanceof TaskTerminatedException)) {
                             LOGGER.error(t.getMessage(), t);
-                            coprocessors.getErrorConsumer().accept(t);
+                            coprocessors.getErrorConsumer().add(t);
                             coprocessors.getCompletionState().signalComplete();
                             throw new RuntimeException(t.getMessage(), t);
                         }

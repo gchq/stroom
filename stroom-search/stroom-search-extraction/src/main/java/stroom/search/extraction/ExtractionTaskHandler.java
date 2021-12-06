@@ -56,9 +56,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import javax.inject.Inject;
 
 public class ExtractionTaskHandler {
@@ -167,7 +165,7 @@ public class ExtractionTaskHandler {
             final AbstractSearchResultOutputFilter searchResultOutputFilter = getFilter(pipeline,
                     AbstractSearchResultOutputFilter.class);
 
-            searchResultOutputFilter.setup(task.getReceiver().getFieldMap(), task.getReceiver().getValuesConsumer());
+            searchResultOutputFilter.setup(task.getReceiver());
             if (task.isAlerting()) {
                 searchResultOutputFilter.setupForAlerting(task.getAlertTableSettings(), task.getParamMapForAlerting());
             }
@@ -181,7 +179,7 @@ public class ExtractionTaskHandler {
             }
 
         } catch (final RuntimeException e) {
-            task.getReceiver().getErrorConsumer().accept(new Error(e.getMessage(), e));
+            task.getErrorConsumer().add(new Error(e.getMessage(), e));
         }
     }
 
@@ -201,7 +199,7 @@ public class ExtractionTaskHandler {
                              final Pipeline pipeline) {
         final ErrorReceiver errorReceiver = (severity, location, elementId, message, e) -> {
             final StoredError storedError = new StoredError(severity, location, elementId, message);
-            task.getReceiver().getErrorConsumer().accept(new Error(storedError.toString(), e));
+            task.getErrorConsumer().add(new Error(storedError.toString(), e));
             throw ProcessException.wrap(message, e);
         };
 
@@ -220,11 +218,7 @@ public class ExtractionTaskHandler {
                         segmentInputStream.include(segmentInputStream.count() - 1);
 
                         // Include as many segments as we can.
-                        final Set<Long> existingId = new HashSet<>();
                         for (final long eventId : eventIds) {
-                            if (!existingId.add(eventId)) {
-                                LOGGER.warn("Duplicate segment for streamId=" + streamId + ", eventId=" + eventId);
-                            }
                             segmentInputStream.include(eventId);
                             count++;
                         }

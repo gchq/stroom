@@ -1,6 +1,6 @@
 package stroom.meta.impl;
 
-import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.data.retention.api.DataRetentionRuleAction;
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
 import stroom.data.retention.shared.DataRetentionRules;
@@ -17,7 +17,6 @@ import stroom.util.time.TimePeriod;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 public interface MetaDao {
 
@@ -25,7 +24,7 @@ public interface MetaDao {
 
     Meta create(MetaProperties metaProperties);
 
-    void search(ExpressionCriteria criteria, AbstractField[] fields, Consumer<Val[]> consumer);
+    void search(ExpressionCriteria criteria, AbstractField[] fields, ValuesConsumer consumer);
 
     int count(FindMetaCriteria criteria);
 

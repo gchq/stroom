@@ -1,6 +1,6 @@
 package stroom.processor.impl;
 
-import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.Meta;
@@ -131,8 +131,7 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
     @Override
     public void search(final ExpressionCriteria criteria,
                        final AbstractField[] fields,
-                       final Consumer<Val[]> consumer) {
-
+                       final ValuesConsumer consumer) {
     }
 
     @Override
