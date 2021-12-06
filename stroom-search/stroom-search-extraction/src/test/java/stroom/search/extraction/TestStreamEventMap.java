@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Disabled
-public class TestStreamEventMap {
+class TestStreamEventMap {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestStreamEventMap.class);
     private static final int TOTAL_EVENTS = 1000000;
@@ -31,11 +31,10 @@ public class TestStreamEventMap {
         CompletableFuture<Void> producer = CompletableFuture.runAsync(() -> {
             try {
                 for (int i = 0; i < TOTAL_EVENTS; i++) {
-//                    Thread.sleep(1);
                     int streamId = (int) (Math.random() * 10);
                     streamEventMap.put(new Event(streamId, i, null));
                 }
-                streamEventMap.put(null);
+                streamEventMap.complete();
             } catch (final InterruptedException e) {
                 // Ignore.
             }
@@ -49,10 +48,8 @@ public class TestStreamEventMap {
                 try {
                     while (true) {
                         final Entry<Long, Set<Event>> entry = streamEventMap.take();
-                        final long streamId = entry.getKey();
                         final Set<Event> events = entry.getValue();
                         total.addAndGet(events.size());
-                        System.out.println(total.get() + " - " + streamId + ":" + events.size());
                     }
                 } catch (final InterruptedException e) {
                     LOGGER.trace(e::getMessage, e);
