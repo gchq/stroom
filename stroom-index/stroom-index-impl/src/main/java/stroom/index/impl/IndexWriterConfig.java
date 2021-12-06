@@ -3,9 +3,11 @@ package stroom.index.impl;
 import stroom.util.shared.AbstractConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 
+@JsonPropertyOrder(alphabetic = true)
 public class IndexWriterConfig extends AbstractConfig {
 
     private final IndexCacheConfig indexCacheConfig;

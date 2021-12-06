@@ -5,11 +5,13 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.validation.ValidationSeverity;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.validation.constraints.AssertTrue;
 
+@JsonPropertyOrder(alphabetic = true)
 public class AuthenticationConfig extends AbstractConfig {
 
     public static final String PROP_NAME_AUTHENTICATION_REQUIRED = "authenticationRequired";

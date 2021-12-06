@@ -4,10 +4,12 @@ import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 
+@JsonPropertyOrder(alphabetic = true)
 public class ContentPackImportConfig extends AbstractConfig {
 
     private final boolean enabled;

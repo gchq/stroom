@@ -41,12 +41,14 @@ import stroom.util.shared.PropertyPath;
 import stroom.util.shared.validation.ValidationSeverity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonRootName;
 
 import javax.validation.constraints.AssertTrue;
 
 @JsonRootName(AppConfig.NAME)
+@JsonPropertyOrder(alphabetic = true)
 public class AppConfig extends AbstractConfig {
 
     public static final String NAME = "stroom";

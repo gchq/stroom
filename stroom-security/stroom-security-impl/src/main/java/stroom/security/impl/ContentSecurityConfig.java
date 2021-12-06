@@ -19,10 +19,12 @@ package stroom.security.impl;
 import stroom.util.shared.AbstractConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 
+@JsonPropertyOrder(alphabetic = true)
 public class ContentSecurityConfig extends AbstractConfig {
 
     public static final String PROP_NAME_CONTENT_SECURITY_POLICY = "contentSecurityPolicy";

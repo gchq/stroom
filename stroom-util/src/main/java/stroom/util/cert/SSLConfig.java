@@ -6,11 +6,13 @@ import stroom.util.shared.NotInjectableConfig;
 import stroom.util.shared.validation.ValidFilePath;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
 
 @NotInjectableConfig
+@JsonPropertyOrder(alphabetic = true)
 public class SSLConfig extends AbstractConfig implements IsProxyConfig {
 
     protected static final String DEFAULT_KEYSTORE_TYPE = "JKS";

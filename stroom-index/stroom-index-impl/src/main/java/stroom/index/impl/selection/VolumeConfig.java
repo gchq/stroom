@@ -4,11 +4,13 @@ import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import java.util.List;
 
+@JsonPropertyOrder(alphabetic = true)
 public class VolumeConfig extends AbstractConfig {
 
     public static final String PROP_NAME_DEFUALT_VOLUME_GROUP_NAME = "defaultIndexVolumeGroupName";

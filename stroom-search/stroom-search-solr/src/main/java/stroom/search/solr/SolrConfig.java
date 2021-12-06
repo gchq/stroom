@@ -6,9 +6,11 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 
+@JsonPropertyOrder(alphabetic = true)
 public class SolrConfig extends AbstractConfig {
 
     private final SolrSearchConfig solrSearchConfig;

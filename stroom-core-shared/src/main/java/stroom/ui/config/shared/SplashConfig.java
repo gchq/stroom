@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
-@JsonPropertyOrder({"enabled", "title", "body", "version"})
+@JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class SplashConfig extends AbstractConfig {
 

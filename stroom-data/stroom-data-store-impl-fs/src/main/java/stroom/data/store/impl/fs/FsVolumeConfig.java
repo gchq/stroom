@@ -6,12 +6,14 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import java.util.List;
 import javax.validation.constraints.Pattern;
 
+@JsonPropertyOrder(alphabetic = true)
 public class FsVolumeConfig extends AbstractConfig {
 
     private static final String VOLUME_SELECTOR_PATTERN = "^(" +

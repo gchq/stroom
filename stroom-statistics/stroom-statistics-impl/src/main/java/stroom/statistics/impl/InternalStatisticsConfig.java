@@ -9,6 +9,7 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.validation.IsSubsetOf;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -22,6 +23,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@JsonPropertyOrder(alphabetic = true)
 public class InternalStatisticsConfig extends AbstractConfig {
 
     private static final String DESCRIPTION_PREFIX = "A list of DocRefs, one for each statistic store that " +

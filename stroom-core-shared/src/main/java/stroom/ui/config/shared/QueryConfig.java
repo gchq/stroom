@@ -10,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
-@JsonPropertyOrder({"infoPopup"})
+@JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class QueryConfig extends AbstractConfig {
 

@@ -7,6 +7,7 @@ import stroom.util.shared.NotInjectableConfig;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 import javax.validation.constraints.Max;
@@ -14,6 +15,7 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.Pattern;
 
 @NotInjectableConfig
+@JsonPropertyOrder(alphabetic = true)
 public abstract class UriConfig extends AbstractConfig {
 
     private static final String PROP_NAME_SCHEME = "scheme";

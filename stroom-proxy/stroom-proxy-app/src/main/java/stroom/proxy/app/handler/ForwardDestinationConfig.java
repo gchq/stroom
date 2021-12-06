@@ -6,11 +6,13 @@ import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
 
 @NotInjectableConfig
+@JsonPropertyOrder(alphabetic = true)
 public class ForwardDestinationConfig extends AbstractConfig implements IsProxyConfig {
 
     private final String forwardUrl;

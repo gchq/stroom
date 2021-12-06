@@ -3,10 +3,12 @@ package stroom.dashboard.impl.datasource;
 import stroom.util.shared.AbstractConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 
+@JsonPropertyOrder(alphabetic = true)
 public class DataSourceUrlConfig extends AbstractConfig {
 
     private final String index;

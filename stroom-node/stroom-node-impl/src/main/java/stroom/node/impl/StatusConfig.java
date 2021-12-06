@@ -3,9 +3,11 @@ package stroom.node.impl;
 import stroom.util.shared.AbstractConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 
+@JsonPropertyOrder(alphabetic = true)
 public class StatusConfig extends AbstractConfig {
 
     private final HeapHistogramConfig heapHistogramConfig;

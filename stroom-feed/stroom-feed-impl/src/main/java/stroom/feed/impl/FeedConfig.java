@@ -6,10 +6,12 @@ import stroom.util.shared.validation.ValidRegex;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 
+@JsonPropertyOrder(alphabetic = true)
 public class FeedConfig extends AbstractConfig {
 
     public static final String PROP_NAME_FEED_NAME_PATTERN = "feedNamePattern";

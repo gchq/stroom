@@ -6,9 +6,11 @@ import stroom.statistics.impl.sql.SQLStatisticsConfig;
 import stroom.util.shared.AbstractConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 
+@JsonPropertyOrder(alphabetic = true)
 public class StatisticsConfig extends AbstractConfig {
 
     public static final String PROP_NAME_SQL = "sql";

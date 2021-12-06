@@ -5,6 +5,7 @@ import stroom.util.shared.NotInjectableConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
@@ -12,6 +13,7 @@ import javax.validation.constraints.Min;
 
 // The descriptions have mostly been taken from the Caffine javadoc
 @NotInjectableConfig
+@JsonPropertyOrder(alphabetic = true)
 public class CacheConfig extends AbstractConfig {
 
     public static final String PROP_NAME_MAXIMUM_SIZE = "maximumSize";

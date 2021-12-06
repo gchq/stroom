@@ -9,6 +9,7 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.ModelStringUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -16,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
+@JsonPropertyOrder(alphabetic = true)
 public class JobSystemConfig extends AbstractConfig implements HasDbConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JobSystemConfig.class);

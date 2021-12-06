@@ -12,7 +12,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
-@JsonPropertyOrder({"enabled", "title", "validationRegex"})
+@JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class InfoPopupConfig extends AbstractConfig {
 

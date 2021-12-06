@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.Objects;
 import javax.validation.constraints.Min;
 
-@JsonPropertyOrder({"maxCharactersInPreviewFetch"})
+@JsonPropertyOrder(alphabetic = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class SourceConfig extends AbstractConfig {
 

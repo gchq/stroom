@@ -8,11 +8,13 @@ import stroom.util.config.annotations.ReadOnly;
 import stroom.util.shared.AbstractConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.validation.constraints.NotNull;
 
+@JsonPropertyOrder(alphabetic = true)
 public class NodeConfig extends AbstractConfig implements HasDbConfig {
 
     public static final String PROP_NAME_NAME = "name";

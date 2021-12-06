@@ -4,11 +4,13 @@ import stroom.util.io.ByteSize;
 import stroom.util.shared.AbstractConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import javax.validation.constraints.Min;
 
+@JsonPropertyOrder(alphabetic = true)
 public class ResultStoreConfig extends AbstractConfig {
 
     private final int maxPutsBeforeCommit;

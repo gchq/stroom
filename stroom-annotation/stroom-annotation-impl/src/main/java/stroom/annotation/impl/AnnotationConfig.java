@@ -7,12 +7,14 @@ import stroom.config.common.HasDbConfig;
 import stroom.util.shared.AbstractConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@JsonPropertyOrder(alphabetic = true)
 public class AnnotationConfig extends AbstractConfig implements HasDbConfig {
 
     private final AnnotationDBConfig dbConfig;

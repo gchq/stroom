@@ -6,6 +6,7 @@ import stroom.util.shared.NotInjectableConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.annotation.Nullable;
@@ -20,6 +21,7 @@ import javax.validation.constraints.NotNull;
  * for consistency with the rest of the config.
  */
 @NotInjectableConfig
+@JsonPropertyOrder(alphabetic = true)
 public class HttpClientConfig extends AbstractConfig implements IsProxyConfig {
 
     @NotNull

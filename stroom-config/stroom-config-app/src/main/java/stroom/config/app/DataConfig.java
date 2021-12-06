@@ -7,9 +7,11 @@ import stroom.meta.impl.MetaServiceConfig;
 import stroom.util.shared.AbstractConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 
+@JsonPropertyOrder(alphabetic = true)
 public class DataConfig extends AbstractConfig {
 
     public static final String NAME = "data";

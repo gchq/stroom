@@ -4,8 +4,10 @@ import stroom.util.shared.AbstractConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 // Can be injected either as PathConfig or one of its sub-classes
+@JsonPropertyOrder(alphabetic = true)
 public abstract class PathConfig extends AbstractConfig {
 
     @JsonProperty

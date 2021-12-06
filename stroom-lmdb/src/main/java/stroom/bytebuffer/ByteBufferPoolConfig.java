@@ -4,6 +4,7 @@ import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
@@ -12,6 +13,7 @@ import java.util.TreeMap;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 
+@JsonPropertyOrder(alphabetic = true)
 public class ByteBufferPoolConfig extends AbstractConfig {
 
     private final int warningThresholdPercentage;

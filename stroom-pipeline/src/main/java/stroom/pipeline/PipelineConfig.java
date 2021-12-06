@@ -10,9 +10,11 @@ import stroom.util.time.StroomDuration;
 import stroom.util.xml.ParserConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 
+@JsonPropertyOrder(alphabetic = true)
 public class PipelineConfig extends AbstractConfig {
 
     private final AppenderConfig appenderConfig;

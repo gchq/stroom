@@ -5,11 +5,13 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.ModelStringUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 
+@JsonPropertyOrder(alphabetic = true)
 public class ProxyAggregationConfig extends AbstractConfig {
 
     private final String proxyDir;
