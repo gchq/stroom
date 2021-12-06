@@ -12,6 +12,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0-beta.163] - 2021-12-06
+
+* Issue **#2625** : Disable test temporarily to fix build.
+
+
 ## [v7.0-beta.162] - 2021-12-06
 
 * Issue **#2615** : Fix meta status change triggered by check superseded.
@@ -4014,7 +4019,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.162...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.163...HEAD
+[v7.0-beta.163]: https://github.com/gchq/stroom/compare/v7.0-beta.162...v7.0-beta.163
 [v7.0-beta.162]: https://github.com/gchq/stroom/compare/v7.0-beta.161...v7.0-beta.162
 [v7.0-beta.161]: https://github.com/gchq/stroom/compare/v7.0-beta.160...v7.0-beta.161
 [v7.0-beta.160]: https://github.com/gchq/stroom/compare/v7.0-beta.159...v7.0-beta.160
