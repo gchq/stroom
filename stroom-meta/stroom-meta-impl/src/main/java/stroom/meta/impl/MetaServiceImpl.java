@@ -70,7 +70,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     private final MetaFeedDao metaFeedDao;
     private final MetaValueDao metaValueDao;
     private final MetaRetentionTrackerDao metaRetentionTrackerDao;
-    private final MetaServiceConfig metaServiceConfig;
+    private final Provider<MetaServiceConfig> metaServiceConfigProvider;
     private final DocRefInfoService docRefInfoService;
     private final Provider<StreamAttributeMapRetentionRuleDecorator> decoratorProvider;
     private final Optional<MetaSecurityFilter> metaSecurityFilter;
@@ -87,7 +87,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
                     final MetaFeedDao metaFeedDao,
                     final MetaValueDao metaValueDao,
                     final MetaRetentionTrackerDao metaRetentionTrackerDao,
-                    final MetaServiceConfig metaServiceConfig,
+                    final Provider<MetaServiceConfig> metaServiceConfigProvider,
                     final DocRefInfoService docRefInfoService,
                     final Provider<StreamAttributeMapRetentionRuleDecorator> decoratorProvider,
                     final Optional<MetaSecurityFilter> metaSecurityFilter,
@@ -99,7 +99,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
         this.metaFeedDao = metaFeedDao;
         this.metaValueDao = metaValueDao;
         this.metaRetentionTrackerDao = metaRetentionTrackerDao;
-        this.metaServiceConfig = metaServiceConfig;
+        this.metaServiceConfigProvider = metaServiceConfigProvider;
         this.docRefInfoService = docRefInfoService;
         this.decoratorProvider = decoratorProvider;
         this.metaSecurityFilter = metaSecurityFilter;
@@ -472,7 +472,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
     @Override
     public Set<String> getTypes() {
-        final String mt = metaServiceConfig.getMetaTypes();
+        final String mt = metaServiceConfigProvider.get().getMetaTypes();
 
         if (!Objects.equals(metaTypes, mt)) {
             if (mt != null) {

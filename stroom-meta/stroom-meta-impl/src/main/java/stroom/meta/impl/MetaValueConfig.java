@@ -75,6 +75,10 @@ public class MetaValueConfig extends AbstractConfig {
         this.addAsync = addAsync;
     }
 
+    public MetaValueConfig withAddAsync(final boolean addAsync) {
+        return new MetaValueConfig(deleteAge, deleteBatchSize, flushBatchSize, addAsync);
+    }
+
     @Override
     public String toString() {
         return "MetaValueConfig{" +

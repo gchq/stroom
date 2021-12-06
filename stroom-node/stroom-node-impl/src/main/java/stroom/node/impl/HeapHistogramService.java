@@ -18,6 +18,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanException;
@@ -46,13 +47,13 @@ class HeapHistogramService {
 
     private static final int STRING_TRUNCATE_LIMIT = 200;
 
-    private final HeapHistogramConfig heapHistogramConfig;
+    private final Provider<HeapHistogramConfig> heapHistogramConfigProvider;
     private final Pattern lineMatchPattern;
 
     @SuppressWarnings("unused")
     @Inject
-    HeapHistogramService(final HeapHistogramConfig heapHistogramConfig) {
-        this.heapHistogramConfig = heapHistogramConfig;
+    HeapHistogramService(final Provider<HeapHistogramConfig> heapHistogramConfigProvider) {
+        this.heapHistogramConfigProvider = heapHistogramConfigProvider;
         this.lineMatchPattern = Pattern.compile(
                 "\\s*\\d+:\\s+(?<instances>\\d+)\\s+(?<bytes>\\d+)\\s+(?<class>.*)");
     }
@@ -106,7 +107,7 @@ class HeapHistogramService {
     }
 
     private Predicate<String> getClassNameMatchPredicate() {
-        String classNameRegexStr = heapHistogramConfig.getClassNameMatchRegex();
+        String classNameRegexStr = heapHistogramConfigProvider.get().getClassNameMatchRegex();
 
         if (classNameRegexStr == null || classNameRegexStr.isEmpty()) {
             //no prop value so return an always true predicate
@@ -122,7 +123,7 @@ class HeapHistogramService {
     }
 
     private Function<String, String> getClassReplacementMapper() {
-        final String anonymousIdRegex = heapHistogramConfig.getClassNameReplacementRegex();
+        final String anonymousIdRegex = heapHistogramConfigProvider.get().getClassNameReplacementRegex();
 
         if (anonymousIdRegex == null || anonymousIdRegex.isEmpty()) {
             return Function.identity();

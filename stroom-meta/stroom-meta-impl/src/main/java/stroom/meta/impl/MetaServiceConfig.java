@@ -9,9 +9,9 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 
 @JsonPropertyOrder(alphabetic = true)
@@ -84,6 +84,16 @@ public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
     @JsonPropertyDescription("List of accepted meta type names.")
     public String getMetaTypes() {
         return metaTypes;
+    }
+
+    public MetaServiceConfig withMetaValueConfig(final MetaValueConfig metaValueConfig) {
+        return new MetaServiceConfig(
+                dbConfig,
+                metaValueConfig,
+                metaFeedCache,
+                metaProcessorCache,
+                metaTypeCache,
+                metaTypes);
     }
 
     public static class MetaServiceDbConfig extends AbstractDbConfig {
