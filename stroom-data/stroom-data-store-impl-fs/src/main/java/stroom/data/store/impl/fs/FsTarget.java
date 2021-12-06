@@ -298,7 +298,7 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
                 LOGGER.error("closeStreamTarget() - Error on closing stream {}", this, e);
             }
 
-            // Only write meta for the root target.
+            // Only delete the root target.
             if (parent == null) {
                 // Mark the target meta as deleted.
                 this.meta = metaService.updateStatus(meta, Status.LOCKED, Status.DELETED);

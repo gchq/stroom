@@ -155,7 +155,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
                     .statusMs(now)
                     .build();
         } else {
-            final Meta existingMeta = getMeta(meta.getId());
+            final Meta existingMeta = getMeta(meta.getId(), true);
             if (existingMeta == null) {
                 throw new RuntimeException("Meta with id=" + meta.getId() + " does not exist");
             }
