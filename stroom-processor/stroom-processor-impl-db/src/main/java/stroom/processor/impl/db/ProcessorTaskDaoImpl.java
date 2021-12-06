@@ -64,6 +64,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -650,7 +651,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     private boolean isUsed(final Set<AbstractField> fieldSet,
                            final List<AbstractField> resultFields,
                            final ExpressionCriteria criteria) {
-        return resultFields.stream().anyMatch(fieldSet::contains) ||
+        return resultFields.stream().filter(Objects::nonNull).anyMatch(fieldSet::contains) ||
                 ExpressionUtil.termCount(criteria.getExpression(), fieldSet) > 0;
     }
 
