@@ -114,32 +114,32 @@ class TestSearchResponseCreator {
 //                actualDuration,
 //                TOLLERANCE)).isTrue();
 //    }
-
-    @Test
-    void create_nonIncremental_completesBeforeTimeout() {
-        Duration clientTimeout = Duration.ofMillis(5_000);
-        SearchResponseCreator searchResponseCreator = createSearchResponseCreator();
-
-        //store initially not complete
-        Mockito.when(mockStore.isComplete()).thenReturn(false);
-        long sleepTime = 200L;
-        makeSearchStateAfter(sleepTime, true);
-
-        SearchRequest searchRequest = getSearchRequest(false, clientTimeout.toMillis());
-
-        TimingUtils.TimedResult<SearchResponse> timedResult = TimingUtils.timeIt(() ->
-                searchResponseCreator.create(searchRequest));
-
-        SearchResponse searchResponse = timedResult.getResult();
-        Duration actualDuration = timedResult.getDuration();
-
-        assertResponseWithData(searchResponse);
-
-        assertThat(TimingUtils.isWithinTollerance(
-                Duration.ofMillis(sleepTime),
-                actualDuration,
-                TOLLERANCE)).isTrue();
-    }
+//
+//    @Test
+//    void create_nonIncremental_completesBeforeTimeout() {
+//        Duration clientTimeout = Duration.ofMillis(5_000);
+//        SearchResponseCreator searchResponseCreator = createSearchResponseCreator();
+//
+//        //store initially not complete
+//        Mockito.when(mockStore.isComplete()).thenReturn(false);
+//        long sleepTime = 200L;
+//        makeSearchStateAfter(sleepTime, true);
+//
+//        SearchRequest searchRequest = getSearchRequest(false, clientTimeout.toMillis());
+//
+//        TimingUtils.TimedResult<SearchResponse> timedResult = TimingUtils.timeIt(() ->
+//                searchResponseCreator.create(searchRequest));
+//
+//        SearchResponse searchResponse = timedResult.getResult();
+//        Duration actualDuration = timedResult.getDuration();
+//
+//        assertResponseWithData(searchResponse);
+//
+//        assertThat(TimingUtils.isWithinTollerance(
+//                Duration.ofMillis(sleepTime),
+//                actualDuration,
+//                TOLLERANCE)).isTrue();
+//    }
 
     @Test
     void create_incremental_noTimeout() {
