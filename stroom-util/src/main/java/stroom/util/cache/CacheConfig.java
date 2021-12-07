@@ -1,13 +1,15 @@
 package stroom.util.cache;
 
+import stroom.util.config.annotations.RequiresRestart;
+import stroom.util.config.annotations.RequiresRestart.RestartScope;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.NotInjectableConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.validation.constraints.Min;
 
@@ -48,6 +50,7 @@ public class CacheConfig extends AbstractConfig {
             "no size limit will be applied.")
     @JsonProperty(PROP_NAME_MAXIMUM_SIZE)
     @Min(0)
+    @RequiresRestart(RestartScope.SYSTEM)
     public Long getMaximumSize() {
         return maximumSize;
     }
@@ -57,6 +60,7 @@ public class CacheConfig extends AbstractConfig {
             "its value, or its last read. In ISO-8601 duration format, e.g. 'PT10M'. If no value is set then " +
             " entries will not be aged out based these criteria.")
     @JsonProperty(PROP_NAME_EXPIRE_AFTER_ACCESS)
+    @RequiresRestart(RestartScope.SYSTEM)
     public StroomDuration getExpireAfterAccess() {
         return expireAfterAccess;
     }
@@ -66,6 +70,7 @@ public class CacheConfig extends AbstractConfig {
             "In ISO-8601 duration format, e.g. 'PT5M'. If no value is set then entries will not be aged out based on " +
             " these criteria.")
     @JsonProperty(PROP_NAME_EXPIRE_AFTER_WRITE)
+    @RequiresRestart(RestartScope.SYSTEM)
     public StroomDuration getExpireAfterWrite() {
         return expireAfterWrite;
     }

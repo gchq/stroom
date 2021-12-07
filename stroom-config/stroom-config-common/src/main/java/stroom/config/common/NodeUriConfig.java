@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 public class NodeUriConfig extends UriConfig {
 
     public NodeUriConfig() {
+        super();
     }
 
     @JsonCreator

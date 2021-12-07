@@ -189,7 +189,7 @@ public class ConfigMapper {
         this(configHolder.getConfigFile(), configHolder.getBootStrapConfig(), AppConfig::new);
     }
 
-    ConfigMapper() {
+    public ConfigMapper() {
         this(null, new AppConfig(), AppConfig::new);
     }
 
@@ -1377,7 +1377,7 @@ public class ConfigMapper {
                 while (!isReady) {
                     // wait for the config to be fully initialised before letting other classes inject it
                     isReady = configReadyForUseLatch.await(10, TimeUnit.SECONDS);
-                    LOGGER.warn("Waiting for config to be initialised");
+                    LOGGER.warn("Waiting for config to be initialised. Requested {}", clazz.getSimpleName());
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();

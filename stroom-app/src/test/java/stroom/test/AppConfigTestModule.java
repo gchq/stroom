@@ -4,6 +4,7 @@ import stroom.config.app.AppConfig;
 import stroom.config.app.AppConfigModule;
 import stroom.config.app.Config;
 import stroom.config.app.ConfigHolder;
+import stroom.config.global.impl.ConfigMapper;
 import stroom.util.io.FileUtil;
 
 import com.google.inject.Provides;
@@ -15,8 +16,20 @@ import java.nio.file.Path;
 
 public class AppConfigTestModule extends AppConfigModule {
 
+    private final ConfigHolder configHolder = new ConfigHolderImpl();
+    private final ConfigMapperSpy configMapperSpy = new ConfigMapperSpy(configHolder);
+
     public AppConfigTestModule() {
         super(new ConfigHolderImpl());
+    }
+
+    @Override
+    protected void configure() {
+        super.configure();
+
+        bind(ConfigMapper.class).toInstance(configMapperSpy);
+        // Also bind instance to its superclass
+        bind(ConfigMapperSpy.class).toInstance(configMapperSpy);
     }
 
     @Provides

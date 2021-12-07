@@ -115,7 +115,9 @@ class UriFactoryImpl implements UriFactory {
                 // Allow explicit configuration of the host/port in case they differ from what will be discovered,
                 // e.g. if running inside a docker container, or there is some sort of port mapping going on.
                 uriConfig = uriConfig.withHostname(appConfig.getNodeUri().getHostname());
-                uriConfig = uriConfig.withPort(appConfig.getNodeUri().getPort());
+                if (appConfig.getNodeUri().getPort() != null) {
+                    uriConfig = uriConfig.withPort(appConfig.getNodeUri().getPort());
+                }
 
                 if (connectorFactory instanceof HttpsConnectorFactory) {
                     final HttpsConnectorFactory httpsConnectorFactory = (HttpsConnectorFactory) connectorFactory;
