@@ -10,6 +10,7 @@ import stroom.util.config.AbstractFileChangeMonitor;
 import stroom.util.config.AppConfigValidator;
 import stroom.util.config.ConfigLocation;
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathConfig;
 import stroom.util.logging.LogUtil;
 
 import org.assertj.core.api.Assertions;
@@ -28,6 +29,7 @@ import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.validation.Validator;
 
 class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
@@ -40,6 +42,8 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
     private ConfigMapper configMapper;
     @Inject
     private ConfigHolder configHolder;
+    @Inject
+    Provider<PathConfig> pathConfigProvider;
 
     @Test
     void test() throws Exception {
@@ -76,11 +80,11 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
 //        final AppConfig appConfig = YamlUtil.readAppConfig(devYamlCopyPath);
 
         // Create the dirs so validation doesn't fail
-        final Path tempDir = Path.of(FileUtil.replaceHome(appConfig.getPathConfig().getTemp()));
+        final Path tempDir = Path.of(FileUtil.replaceHome(pathConfigProvider.get().getTemp()));
         LOGGER.info("Ensuring temp directory {}", tempDir.toAbsolutePath().normalize());
         Files.createDirectories(tempDir);
 
-        final Path homeDir = Path.of(FileUtil.replaceHome(appConfig.getPathConfig().getHome()));
+        final Path homeDir = Path.of(FileUtil.replaceHome(pathConfigProvider.get().getHome()));
         LOGGER.info("Ensuring home directory {}", homeDir.toAbsolutePath().normalize());
         Files.createDirectories(homeDir);
 
@@ -126,7 +130,7 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
         LOGGER.info("---------------------------------------------------------------");
         LOGGER.info("Updating value in file to {}", newPathStr);
 
-        Assertions.assertThat(appConfig.getPathConfig().getTemp())
+        Assertions.assertThat(pathConfigProvider.get().getTemp())
                 .isNotEqualTo(newPathStr);
 
         final Pattern pattern = Pattern.compile("temp:\\s*\"[^\"]+\"");
@@ -176,14 +180,14 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
         // Now keep checking if the appConfig has been updated, or we timeout
         Instant startTime = Instant.now();
         Instant timeOutTime = startTime.plusSeconds(10);
-        while (!appConfig.getPathConfig().getTemp().equals(newPathStr)
+        while (!pathConfigProvider.get().getTemp().equals(newPathStr)
                 && Instant.now().isBefore(timeOutTime)) {
 
-            LOGGER.debug("value {}", appConfig.getPathConfig().getTemp());
+            LOGGER.debug("value {}", pathConfigProvider.get().getTemp());
             Thread.sleep(200);
         }
 
-        Assertions.assertThat(appConfig.getPathConfig().getTemp())
+        Assertions.assertThat(pathConfigProvider.get().getTemp())
                 .isEqualTo(newPathStr);
 
         Files.deleteIfExists(Path.of(newPathStr));

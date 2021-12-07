@@ -27,6 +27,7 @@ import stroom.config.global.shared.ConfigProperty.SourceType;
 import stroom.config.global.shared.ConfigPropertyValidationException;
 import stroom.config.global.shared.OverrideValue;
 import stroom.docref.DocRef;
+import stroom.util.NullSafe;
 import stroom.util.config.PropertyUtil;
 import stroom.util.config.PropertyUtil.ObjectInfo;
 import stroom.util.config.PropertyUtil.Prop;
@@ -186,7 +187,10 @@ public class ConfigMapper {
 
     @Inject
     public ConfigMapper(final ConfigHolder configHolder) {
-        this(configHolder.getConfigFile(), configHolder.getBootStrapConfig(), AppConfig::new);
+        this(NullSafe.get(configHolder, ConfigHolder::getConfigFile),
+                NullSafe.getAsOptional(configHolder, ConfigHolder::getBootStrapConfig)
+                        .orElseGet(AppConfig::new),
+                AppConfig::new);
     }
 
     public ConfigMapper() {
@@ -1377,7 +1381,9 @@ public class ConfigMapper {
                 while (!isReady) {
                     // wait for the config to be fully initialised before letting other classes inject it
                     isReady = configReadyForUseLatch.await(10, TimeUnit.SECONDS);
-                    LOGGER.warn("Waiting for config to be initialised. Requested {}", clazz.getSimpleName());
+                    if (!isReady) {
+                        LOGGER.warn("Waiting for config to be initialised. Requested {}", clazz.getSimpleName());
+                    }
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();

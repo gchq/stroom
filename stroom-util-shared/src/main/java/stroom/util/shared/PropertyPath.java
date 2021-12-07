@@ -34,7 +34,8 @@ import java.util.Objects;
  * Class for representing a path to a property in an object tree, i.e
  * stroom.node.name
  * The aim is to break the dot delimited path strings into its parts to
- * reduce the memory overhead of holding all the paths as many parts are similar
+ * reduce the memory overhead of holding all the paths as many parts are similar.
+ * Also makes it easier to merge property paths together.
  */
 @JsonInclude(Include.NON_NULL)
 public class PropertyPath implements Comparable<PropertyPath>, HasName {
@@ -48,6 +49,9 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
     // many times over all the config objects
     @JsonProperty("parts")
     private final List<String> parts;
+
+    // Cache the hash to speed up map look-ups
+    @JsonIgnore
     private final int hashCode;
 
     @JsonCreator
@@ -56,23 +60,25 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
             this.parts = Collections.emptyList();
         } else {
             validateParts(parts);
-            this.parts = new ArrayList<>(parts);
+            this.parts = List.copyOf(parts);
         }
         hashCode = buildHashCode(this.parts);
     }
 
     private PropertyPath(final List<String> parts1, final List<String> parts2) {
-        parts = new ArrayList<>(parts1.size() + parts2.size());
-        parts.addAll(parts1);
-        parts.addAll(parts2);
+        final List<String> mutableParts = new ArrayList<>(parts1.size() + parts2.size());
+        mutableParts.addAll(parts1);
+        mutableParts.addAll(parts2);
+        parts = Collections.unmodifiableList(mutableParts);
         validateParts(parts);
         hashCode = buildHashCode(this.parts);
     }
 
     private PropertyPath(final List<String> parts1, final String finalPart) {
-        parts = new ArrayList<>(parts1.size() + 1);
-        parts.addAll(parts1);
-        parts.add(finalPart);
+        final List<String> mutableParts = new ArrayList<>(parts1.size() + 1);
+        mutableParts.addAll(parts1);
+        mutableParts.add(finalPart);
+        parts = Collections.unmodifiableList(mutableParts);
         validateParts(parts);
         hashCode = buildHashCode(this.parts);
     }
@@ -136,7 +142,7 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
         if (parts.isEmpty()) {
             return Collections.emptyList();
         } else {
-            return new ArrayList<>(parts);
+            return parts;
         }
     }
 
