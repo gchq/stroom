@@ -32,7 +32,7 @@ public class GenerateProxyConfigProvidersModule {
 
             import com.google.inject.AbstractModule;
             import com.google.inject.Provides;
-                        
+
             import javax.annotation.processing.Generated;
 
             /**
@@ -42,7 +42,7 @@ public class GenerateProxyConfigProvidersModule {
              */
             @Generated("%s")
             public class ProxyConfigProvidersModule extends AbstractModule {
-                        
+
                 // Special case to allow ProxyPathConfig to be injected as itself or as
                 // PathConfig
                 @Generated("stroom.proxy.app.guice.GenerateProxyConfigProvidersModule")

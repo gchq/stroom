@@ -6,8 +6,8 @@ import stroom.util.shared.NotInjectableConfig;
 import stroom.util.shared.validation.ValidFilePath;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 

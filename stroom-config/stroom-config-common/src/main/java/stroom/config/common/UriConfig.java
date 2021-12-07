@@ -80,7 +80,7 @@ public abstract class UriConfig extends AbstractConfig {
         return pathPrefix;
     }
 
-    
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();

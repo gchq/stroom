@@ -10,9 +10,9 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.annotation.Nullable;
 
@@ -78,9 +78,9 @@ public class SQLStatisticsConfig extends AbstractConfig implements HasDbConfig {
 
     @Nullable
     @JsonPropertyDescription("The maximum age of statistics to process and retain, i.e. any " +
-            "statistics with an statistic event time older than the current time minus maxProcessingAge will be silently " +
-            "dropped.  Existing statistic data over this age will be purged during statistic aggregation. " +
-            "Set to null to process/retain all data.")
+            "statistics with an statistic event time older than the current time minus maxProcessingAge will " +
+            "be silently dropped.  Existing statistic data over this age will be purged during statistic " +
+            "aggregation. Set to null to process/retain all data.")
     public StroomDuration getMaxProcessingAge() {
         return maxProcessingAge;
     }

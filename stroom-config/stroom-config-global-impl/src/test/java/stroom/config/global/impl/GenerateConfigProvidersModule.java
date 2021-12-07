@@ -32,7 +32,7 @@ public class GenerateConfigProvidersModule {
 
             import com.google.inject.AbstractModule;
             import com.google.inject.Provides;
-                        
+
             import javax.annotation.processing.Generated;
 
             /**
@@ -42,7 +42,7 @@ public class GenerateConfigProvidersModule {
              */
             @Generated("%s")
             public class ConfigProvidersModule extends AbstractModule {
-                        
+
                 // Special case to allow StroomPathConfig to be injected as itself or as
                 // PathConfig
                 @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")

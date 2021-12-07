@@ -5,8 +5,8 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.validation.ValidRegex;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 
 @JsonPropertyOrder(alphabetic = true)

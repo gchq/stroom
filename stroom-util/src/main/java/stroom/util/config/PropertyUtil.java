@@ -540,7 +540,6 @@ public final class PropertyUtil {
                         e);
             }
         }
-        
 
         @Override
         public String toString() {
