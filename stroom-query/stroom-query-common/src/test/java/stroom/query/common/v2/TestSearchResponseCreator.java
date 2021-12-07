@@ -75,10 +75,10 @@ class TestSearchResponseCreator {
         assertThat(searchResponse).isNotNull();
         assertThat(searchResponse.getResults()).isNullOrEmpty();
 
-        assertThat(TimingUtils.isWithinTollerance(
+        TimingUtils.isWithinTollerance(
                 serverTimeout,
                 actualDuration,
-                TOLLERANCE)).isTrue();
+                TOLLERANCE);
 
         assertThat(searchResponse.getErrors()).hasSize(1);
         assertThat(searchResponse.getErrors().get(0)).containsIgnoringCase("timed out");
@@ -90,56 +90,56 @@ class TestSearchResponseCreator {
                 mockStore);
     }
 
-//    @Test
-//    void create_nonIncremental_completesImmediately() {
-//        SearchResponseCreator searchResponseCreator = createSearchResponseCreator();
-//
-//        //store is immediately complete to replicate a synchronous store
-//        Mockito.when(mockStore.isComplete()).thenReturn(true);
-//        makeSearchStateAfter(0, true);
-//
-//        SearchRequest searchRequest = getSearchRequest(false, null);
-//
-//        TimingUtils.TimedResult<SearchResponse> timedResult = TimingUtils.timeIt(() ->
-//                searchResponseCreator.create(searchRequest));
-//
-//        SearchResponse searchResponse = timedResult.getResult();
-//        Duration actualDuration = timedResult.getDuration();
-//
-//        assertResponseWithData(searchResponse);
-//
-//        //allow 100ms for java to run the code, it will never be 0
-//        assertThat(TimingUtils.isWithinTollerance(
-//                Duration.ZERO,
-//                actualDuration,
-//                TOLLERANCE)).isTrue();
-//    }
-//
-//    @Test
-//    void create_nonIncremental_completesBeforeTimeout() {
-//        Duration clientTimeout = Duration.ofMillis(5_000);
-//        SearchResponseCreator searchResponseCreator = createSearchResponseCreator();
-//
-//        //store initially not complete
-//        Mockito.when(mockStore.isComplete()).thenReturn(false);
-//        long sleepTime = 200L;
-//        makeSearchStateAfter(sleepTime, true);
-//
-//        SearchRequest searchRequest = getSearchRequest(false, clientTimeout.toMillis());
-//
-//        TimingUtils.TimedResult<SearchResponse> timedResult = TimingUtils.timeIt(() ->
-//                searchResponseCreator.create(searchRequest));
-//
-//        SearchResponse searchResponse = timedResult.getResult();
-//        Duration actualDuration = timedResult.getDuration();
-//
-//        assertResponseWithData(searchResponse);
-//
-//        assertThat(TimingUtils.isWithinTollerance(
-//                Duration.ofMillis(sleepTime),
-//                actualDuration,
-//                TOLLERANCE)).isTrue();
-//    }
+    @Test
+    void create_nonIncremental_completesImmediately() {
+        SearchResponseCreator searchResponseCreator = createSearchResponseCreator();
+
+        //store is immediately complete to replicate a synchronous store
+        Mockito.when(mockStore.isComplete()).thenReturn(true);
+        makeSearchStateAfter(0, true);
+
+        SearchRequest searchRequest = getSearchRequest(false, null);
+
+        TimingUtils.TimedResult<SearchResponse> timedResult = TimingUtils.timeIt(() ->
+                searchResponseCreator.create(searchRequest));
+
+        SearchResponse searchResponse = timedResult.getResult();
+        Duration actualDuration = timedResult.getDuration();
+
+        assertResponseWithData(searchResponse);
+
+        //allow 100ms for java to run the code, it will never be 0
+        TimingUtils.isWithinTollerance(
+                Duration.ZERO,
+                actualDuration,
+                TOLLERANCE);
+    }
+
+    @Test
+    void create_nonIncremental_completesBeforeTimeout() {
+        Duration clientTimeout = Duration.ofMillis(5_000);
+        SearchResponseCreator searchResponseCreator = createSearchResponseCreator();
+
+        //store initially not complete
+        Mockito.when(mockStore.isComplete()).thenReturn(false);
+        long sleepTime = 200L;
+        makeSearchStateAfter(sleepTime, true);
+
+        SearchRequest searchRequest = getSearchRequest(false, clientTimeout.toMillis());
+
+        TimingUtils.TimedResult<SearchResponse> timedResult = TimingUtils.timeIt(() ->
+                searchResponseCreator.create(searchRequest));
+
+        SearchResponse searchResponse = timedResult.getResult();
+        Duration actualDuration = timedResult.getDuration();
+
+        assertResponseWithData(searchResponse);
+
+        TimingUtils.isWithinTollerance(
+                Duration.ofMillis(sleepTime),
+                actualDuration,
+                TOLLERANCE);
+    }
 
     @Test
     void create_incremental_noTimeout() {
@@ -165,10 +165,10 @@ class TestSearchResponseCreator {
         assertThat(searchResponse).isNotNull();
         assertThat(searchResponse.getResults()).isNullOrEmpty();
 
-        assertThat(TimingUtils.isWithinTollerance(
+        TimingUtils.isWithinTollerance(
                 clientTimeout,
                 actualDuration,
-                TOLLERANCE)).isTrue();
+                TOLLERANCE);
 
         assertThat(searchResponse.getErrors()).isNullOrEmpty();
     }
@@ -193,11 +193,10 @@ class TestSearchResponseCreator {
         assertResponseWithData(searchResponse);
 
         //allow 100ms for java to run the code, it will never be 0
-        assertThat(TimingUtils.isWithinTollerance(
+        TimingUtils.isWithinTollerance(
                 clientTimeout,
                 actualDuration,
-                TOLLERANCE)).isTrue();
-
+                TOLLERANCE);
 
         //Now the search request is sent again but this time the data will be available and the search complete
         //so should return immediately
@@ -215,10 +214,10 @@ class TestSearchResponseCreator {
         assertResponseWithData(searchResponse2);
 
         //allow 100ms for java to run the code, it will never be 0
-        assertThat(TimingUtils.isWithinTollerance(
+        TimingUtils.isWithinTollerance(
                 Duration.ofMillis(sleepTime),
                 actualDuration,
-                TOLLERANCE)).isTrue();
+                TOLLERANCE);
     }
 
     private void makeSearchStateAfter(final long sleepTime, final boolean state) {
