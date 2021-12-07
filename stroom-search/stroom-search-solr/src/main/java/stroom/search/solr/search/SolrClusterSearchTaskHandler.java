@@ -20,17 +20,19 @@ package stroom.search.solr.search;
 import stroom.annotation.api.AnnotationFields;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
-import stroom.query.common.v2.Coprocessor;
 import stroom.query.common.v2.Coprocessors;
-import stroom.query.common.v2.Receiver;
 import stroom.search.extraction.ExpressionFilter;
 import stroom.search.extraction.ExtractionDecoratorFactory;
+import stroom.search.extraction.StoredDataQueue;
+import stroom.search.extraction.StreamMapCreator;
 import stroom.search.solr.CachedSolrIndex;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.inject.Inject;
@@ -42,6 +44,11 @@ class SolrClusterSearchTaskHandler {
     private final SolrSearchFactory solrSearchFactory;
     private final ExtractionDecoratorFactory extractionDecoratorFactory;
     private final SecurityContext securityContext;
+
+    private final AtomicLong hitCount = new AtomicLong();
+    private final AtomicLong extractionCount = new AtomicLong();
+
+    private TaskContext taskContext;
 
     @Inject
     SolrClusterSearchTaskHandler(final SolrSearchFactory solrSearchFactory,
@@ -59,6 +66,7 @@ class SolrClusterSearchTaskHandler {
                      final long now,
                      final String dateTimeLocale,
                      final Coprocessors coprocessors) {
+        this.taskContext = taskContext;
         securityContext.useAsRead(() -> {
             if (!Thread.currentThread().isInterrupted()) {
                 taskContext.info(() -> "Initialising...");
@@ -80,7 +88,7 @@ class SolrClusterSearchTaskHandler {
                     }
                 } catch (final RuntimeException e) {
                     try {
-                        coprocessors.getErrorConsumer().accept(e);
+                        coprocessors.getErrorConsumer().add(e);
                     } catch (final RuntimeException e2) {
                         // If we failed to send the result or the source node rejected the result because the
                         // source task has been terminated then terminate the task.
@@ -108,8 +116,7 @@ class SolrClusterSearchTaskHandler {
         LOGGER.debug(() -> "Incoming search request:\n" + query.getExpression().toString());
 
         try {
-            final Receiver extractionReceiver = extractionDecoratorFactory.create(
-                    taskContext,
+            final StoredDataQueue storedDataQueue = extractionDecoratorFactory.createStoredDataQueue(
                     coprocessors,
                     query);
 
@@ -118,47 +125,65 @@ class SolrClusterSearchTaskHandler {
                     .addPrefixExcludeFilter(AnnotationFields.ANNOTATION_FIELD_PREFIX)
                     .build();
             final ExpressionOperator expression = expressionFilter.copy(query.getExpression());
-            final AtomicLong hitCount = new AtomicLong();
-            solrSearchFactory.search(cachedSolrIndex,
+            final CompletableFuture<Void> indexShardSearchFuture = solrSearchFactory.search(cachedSolrIndex,
                     storedFields,
                     now,
                     expression,
-                    extractionReceiver,
+                    storedDataQueue,
+                    coprocessors.getErrorConsumer(),
                     taskContext,
                     hitCount,
                     dateTimeLocale);
 
-            // Wait for search completion.
-            boolean allComplete = false;
-            while (!allComplete) {
-                allComplete = true;
-                for (final Coprocessor coprocessor : coprocessors) {
-                    if (!Thread.currentThread().isInterrupted()) {
-                        taskContext.info(() -> "" +
-                                "Searching... " +
-                                "found " +
-                                hitCount.get() +
-                                " documents" +
-                                " performed "
-                                + coprocessor.getValuesCount() +
-                                " extractions");
+            // When we complete the index shard search tell teh stored data queue we are complete.
+            indexShardSearchFuture.whenCompleteAsync((r, t) -> {
+                LOGGER.debug("Complete stored data queue");
+                storedDataQueue.onComplete();
+            });
 
-                        final boolean complete = coprocessor.getCompletionState()
-                                .awaitCompletion(1, TimeUnit.SECONDS);
-                        if (!complete) {
-                            allComplete = false;
-                        }
-                    }
-                }
+            // Create an object to make event lists from raw index data.
+            final StreamMapCreator streamMapCreator = new StreamMapCreator(
+                    coprocessors.getFieldIndex());
+
+            // Start mapping streams.
+            final CompletableFuture<Void> streamMappingFuture = extractionDecoratorFactory
+                    .startMapping(taskContext, streamMapCreator, coprocessors.getErrorConsumer());
+
+            // Start extracting data.
+            final CompletableFuture<Void> extractionFuture = extractionDecoratorFactory
+                    .startExtraction(taskContext, extractionCount, coprocessors.getErrorConsumer());
+
+            // Create a countdown latch to keep updating status until we complete.
+            final CountDownLatch complete = new CountDownLatch(1);
+
+            // Wait for all to complete.
+            final CompletableFuture<Void> all = CompletableFuture
+                    .allOf(indexShardSearchFuture, streamMappingFuture, extractionFuture);
+            all.whenCompleteAsync((r, t) -> complete.countDown());
+
+            // Update status until we complete.
+            while (!complete.await(1, TimeUnit.SECONDS)) {
+                updateInfo();
             }
 
             LOGGER.debug(() -> "Complete");
         } catch (final InterruptedException e) {
-            // Continue to interrupt.
+            LOGGER.trace(e::getMessage, e);
+            // Keep interrupting this thread.
             Thread.currentThread().interrupt();
-            LOGGER.debug(e::getMessage, e);
         } catch (final RuntimeException e) {
             throw SearchException.wrap(e);
         }
+    }
+
+    public void updateInfo() {
+        taskContext.info(() -> "" +
+                "Searching... " +
+                "found "
+                + hitCount.get() +
+                " documents" +
+                " performed " +
+                extractionCount.get() +
+                " extractions");
     }
 }

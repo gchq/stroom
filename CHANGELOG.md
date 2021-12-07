@@ -12,6 +12,96 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0-beta.164] - 2021-12-07
+
+* Issue **#2625** : Disable test temporarily to fix build.
+
+* Issue **#2630** : Fix NPE and improve logging.
+
+
+## [v7.0-beta.163] - 2021-12-06
+
+* Issue **#2625** : Disable test temporarily to fix build.
+
+
+## [v7.0-beta.162] - 2021-12-06
+
+* Issue **#2615** : Fix meta status change triggered by check superseded.
+
+* Issue **#2614** : Fix NPE.
+
+* Issue **#2621** : Improve search performance.
+
+* Issue **#2617** : Fix pipeline data equality for pipeline structure cache to be useful.
+
+* Issue **#2619** : Improve meta DAO performance.
+
+* Issue **#2611** : Fix java lang error.
+
+
+## [v7.0-beta.161] - 2021-12-02
+
+* Issue **#2608** : Fix segments for rolled streams created using the `StreamAppender`.
+
+
+## [v7.0-beta.160] - 2021-12-01
+
+* Issue **#2604** : Add code to diagnose unexpected event counts in search extraction.
+
+* Issue **#2605** : Create sub tasks for all search processes.
+
+* Issue **#2606** : Improve error handling during search.
+
+
+## [v7.0-beta.159] - 2021-11-30
+
+* Issue **#2472** : Fix the way the in memory config is updated by the file monitor. Improve the logging when config properties are changed on a node.
+
+* Issue **#2595** : Improve search performance and fix issues.
+
+
+## [v7.0-beta.158] - 2021-11-23
+
+* Issue **#2582** : Remove unnecessary legacy migration for processor filter.
+
+* Issue **#2577** : Fix issue with expression terms changing conditions incorrectly.
+
+* Issue **#2585** : Fix proxy aggregation task nesting.
+
+* Issue **#2574** : Improve processor filter creation to allow min and max create times.
+
+* Issue **#2579** : Fix processor filter creation from stream multi selection.
+
+* Issue **#2580** : Fix completion of processor filters by allowing the user to specify an end time.
+
+* Issue **#2576** : Fix scrolling of processor filter info pane.
+
+
+## [v7.0-beta.157] - 2021-11-22
+
+* Uplift event-logging library to `5.0-beta.27_schema-v4.0-beta.3` to fix missing failure outcomes on logged events.
+
+* Issue **#2557** : Optimise meta queries to ensure join order is as expected.
+
+* Issue **#2538** : Change logging of quick filter searches to log the fully qualified filter input.
+
+* Issue **#2565** : Stop orphan file finder reporting dirs that contain child dirs as empty.
+
+* Issue **#2563** : Fix bad expression logic.
+
+* Issue **#2562** : Fix NPE in the UI related to uninitialised processor filter trackers.
+
+* Stop logging audit events for most NodeResource call as they are not direct user actions.
+
+* Issue **#2553** : Prevent get and clear methods in LMDB data store from running at the same time. Add check for the LMDB env being closed to prevent JVM crash.
+
+* Issue **#2555** : Remove checkbox from dead tasks in the server tasks screen to stop users trying to delete them.
+
+* Issue **#2564** : Improve search performance.
+
+* Issue **#2582** : Fix DB migration for `processor_filter`.
+
+
 ## [v7.0-beta.156] - 2021-11-05
 
 * Issue **#2542** : Improve autologged searches "raw" JSON.
@@ -35,7 +125,7 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 ## [v7.0-beta.155] - 2021-11-02
 
-* No changes. Previous build failed due to netowrking issues.
+* No changes. Previous build failed due to networking issues.
 
 
 ## [v7.0-beta.154] - 2021-11-02
@@ -3936,7 +4026,15 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.156...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.164...HEAD
+[v7.0-beta.164]: https://github.com/gchq/stroom/compare/v7.0-beta.163...v7.0-beta.164
+[v7.0-beta.163]: https://github.com/gchq/stroom/compare/v7.0-beta.162...v7.0-beta.163
+[v7.0-beta.162]: https://github.com/gchq/stroom/compare/v7.0-beta.161...v7.0-beta.162
+[v7.0-beta.161]: https://github.com/gchq/stroom/compare/v7.0-beta.160...v7.0-beta.161
+[v7.0-beta.160]: https://github.com/gchq/stroom/compare/v7.0-beta.159...v7.0-beta.160
+[v7.0-beta.159]: https://github.com/gchq/stroom/compare/v7.0-beta.158...v7.0-beta.159
+[v7.0-beta.158]: https://github.com/gchq/stroom/compare/v7.0-beta.157...v7.0-beta.158
+[v7.0-beta.157]: https://github.com/gchq/stroom/compare/v7.0-beta.156...v7.0-beta.157
 [v7.0-beta.156]: https://github.com/gchq/stroom/compare/v7.0-beta.155...v7.0-beta.156
 [v7.0-beta.155]: https://github.com/gchq/stroom/compare/v7.0-beta.154...v7.0-beta.155
 [v7.0-beta.154]: https://github.com/gchq/stroom/compare/v7.0-beta.153...v7.0-beta.154

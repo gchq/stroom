@@ -1,35 +1,42 @@
 package stroom.search.impl.shard;
 
 import stroom.dashboard.expression.v1.FieldIndex;
+import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.dictionary.api.WordListProvider;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldsMap;
-import stroom.pipeline.errorhandler.MessageUtil;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.common.v2.Receiver;
+import stroom.query.common.v2.ErrorConsumer;
 import stroom.search.impl.ClusterSearchTask;
 import stroom.search.impl.SearchConfig;
 import stroom.search.impl.SearchException;
 import stroom.search.impl.SearchExpressionQueryBuilder;
 import stroom.search.impl.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.search.impl.shard.IndexShardSearchTask.IndexShardQueryFactory;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
+import stroom.task.api.ThreadPoolImpl;
+import stroom.task.shared.ThreadPool;
+import stroom.util.concurrent.CompleteException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.SearchProgressLog;
+import stroom.util.logging.SearchProgressLog.SearchPhase;
 
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Consumer;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -37,8 +44,10 @@ public class IndexShardSearchFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardSearchFactory.class);
 
+    public static final ThreadPool INDEX_SHARD_SEARCH_THREAD_POOL = new ThreadPoolImpl("Search Index Shard");
+
     private final IndexStore indexStore;
-    private final IndexShardSearchTaskExecutor indexShardSearchTaskExecutor;
+    private final ExecutorProvider executorProvider;
     private final IndexShardSearchConfig indexShardSearchConfig;
     private final Provider<IndexShardSearchTaskHandler> indexShardSearchTaskHandlerProvider;
     private final WordListProvider dictionaryStore;
@@ -47,14 +56,14 @@ public class IndexShardSearchFactory {
 
     @Inject
     IndexShardSearchFactory(final IndexStore indexStore,
-                            final IndexShardSearchTaskExecutor indexShardSearchTaskExecutor,
+                            final ExecutorProvider executorProvider,
                             final IndexShardSearchConfig indexShardSearchConfig,
                             final Provider<IndexShardSearchTaskHandler> indexShardSearchTaskHandlerProvider,
                             final WordListProvider dictionaryStore,
                             final TaskContextFactory taskContextFactory,
                             final SearchConfig searchConfig) {
         this.indexStore = indexStore;
-        this.indexShardSearchTaskExecutor = indexShardSearchTaskExecutor;
+        this.executorProvider = executorProvider;
         this.indexShardSearchConfig = indexShardSearchConfig;
         this.indexShardSearchTaskHandlerProvider = indexShardSearchTaskHandlerProvider;
         this.dictionaryStore = dictionaryStore;
@@ -62,12 +71,16 @@ public class IndexShardSearchFactory {
         this.maxBooleanClauseCount = searchConfig.getMaxBooleanClauseCount();
     }
 
-    public void search(final ClusterSearchTask task,
-                       final ExpressionOperator expression,
-                       final FieldIndex fieldIndex,
-                       final Receiver receiver,
-                       final TaskContext taskContext,
-                       final AtomicLong hitCount) {
+    @SuppressWarnings("unchecked")
+    public CompletableFuture<Void> search(final ClusterSearchTask task,
+                                          final ExpressionOperator expression,
+                                          final FieldIndex fieldIndex,
+                                          final TaskContext parentContext,
+                                          final AtomicLong hitCount,
+                                          final ValuesConsumer valuesConsumer,
+                                          final ErrorConsumer errorConsumer) {
+        SearchProgressLog.increment(SearchPhase.INDEX_SHARD_SEARCH_FACTORY_SEARCH);
+
         // Reload the index.
         final IndexDoc index = indexStore.readDocument(task.getQuery().getDataSource());
 
@@ -90,50 +103,55 @@ public class IndexShardSearchFactory {
             }
         }
 
-        final IndexShardSearchProgressTracker tracker = new IndexShardSearchProgressTracker(
-                hitCount,
-                task.getShards().size());
+        final int threadCount = indexShardSearchConfig.getMaxThreadsPerTask();
+        final CompletableFuture<Void>[] futures = new CompletableFuture[threadCount];
+
         if (task.getShards().size() > 0) {
-            // Update config for the index shard search task executor.
-            indexShardSearchTaskExecutor.setMaxThreads(indexShardSearchConfig.getMaxThreads());
+            try {
+                final Map<Version, Optional<SearchExpressionQuery>> queryMap = new ConcurrentHashMap<>();
+                final IndexShardQueryFactory queryFactory = createIndexShardQueryFactory(
+                        task, expression, indexFieldsMap, queryMap, errorConsumer);
 
-            final Map<Version, Optional<SearchExpressionQuery>> queryMap = new HashMap<>();
-            final IndexShardQueryFactory queryFactory = createIndexShardQueryFactory(
-                    task, expression, indexFieldsMap, queryMap, receiver.getErrorConsumer());
+                final Executor executor = executorProvider.get(INDEX_SHARD_SEARCH_THREAD_POOL);
 
-            final IndexShardSearchTaskProducer indexShardSearchTaskProducer = new IndexShardSearchTaskProducer(
-                    indexShardSearchTaskExecutor,
-                    receiver,
-                    task.getShards(),
-                    queryFactory,
-                    storedFieldNames,
-                    indexShardSearchConfig.getMaxThreadsPerTask(),
-                    taskContextFactory,
-                    taskContext,
-                    indexShardSearchTaskHandlerProvider,
-                    tracker);
-
-            indexShardSearchTaskProducer.process();
-        }
-
-        // Wait until we finish.
-        try {
-            while (!tracker.awaitCompletion(1, TimeUnit.SECONDS)) {
-                taskContext.info(() -> "" +
-                        "Searching... " +
-                        "found "
-                        + hitCount.get() +
-                        " hits");
-                LOGGER.debug(tracker::toString);
+                // Create a queue of shards to search.
+                final ShardIdQueue queue = new ShardIdQueue(task.getShards());
+                final AtomicInteger shardNo = new AtomicInteger();
+                for (int i = 0; i < indexShardSearchConfig.getMaxThreadsPerTask(); i++) {
+                    futures[i] = CompletableFuture.runAsync(() -> {
+                        try {
+                            while (!parentContext.isTerminated()) {
+                                final long shard = queue.take();
+                                taskContextFactory
+                                        .childContext(parentContext, "Search Index Shard", taskContext -> {
+                                            final IndexShardSearchTask t = new IndexShardSearchTask(queryFactory,
+                                                    shard,
+                                                    storedFieldNames,
+                                                    hitCount);
+                                            t.setShardTotal(task.getShards().size());
+                                            t.setShardNumber(shardNo.incrementAndGet());
+                                            final IndexShardSearchTaskHandler handler =
+                                                    indexShardSearchTaskHandlerProvider.get();
+                                            handler.exec(taskContext, t, valuesConsumer, errorConsumer);
+                                        }).run();
+                            }
+                        } catch (final CompleteException e) {
+                            LOGGER.trace(() -> "Complete");
+                        } catch (final InterruptedException e) {
+                            LOGGER.trace(e::getMessage, e);
+                            // Keep interrupting this thread.
+                            Thread.currentThread().interrupt();
+                        }
+                    }, executor);
+                }
+            } catch (final InterruptedException e) {
+                LOGGER.trace(e::getMessage, e);
+                // Keep interrupting this thread.
+                Thread.currentThread().interrupt();
             }
-        } catch (final InterruptedException e) {
-            LOGGER.debug(this::toString);
-            // Keep interrupting.
-            Thread.currentThread().interrupt();
         }
 
-        // Let the receiver know we are complete.
-        receiver.getCompletionConsumer().accept(hitCount.get());
+        return CompletableFuture.allOf(futures);
     }
 
     private IndexShardQueryFactory createIndexShardQueryFactory(
@@ -141,7 +159,7 @@ public class IndexShardSearchFactory {
             final ExpressionOperator expression,
             final IndexFieldsMap indexFieldsMap,
             final Map<Version, Optional<SearchExpressionQuery>> queryMap,
-            final Consumer<Throwable> errorConsumer) {
+            final ErrorConsumer errorConsumer) {
 
         return new IndexShardQueryFactory() {
             @Override
@@ -169,7 +187,7 @@ public class IndexShardSearchFactory {
                     if (query.getQuery() == null) {
                         throw new SearchException("Failed to build Lucene query given expression");
                     } else {
-                        LOGGER.debug(() -> "Lucene Query is " + query.toString());
+                        LOGGER.debug(() -> "Lucene Query is " + query);
                     }
 
                     return Optional.of(query);
@@ -177,7 +195,7 @@ public class IndexShardSearchFactory {
                     LOGGER.debug(e::getMessage, e);
                 } catch (final RuntimeException e) {
                     LOGGER.debug(e::getMessage, e);
-                    errorConsumer.accept(new Error(MessageUtil.getMessage(e.getMessage(), e), e));
+                    errorConsumer.add(e);
                 }
 
                 return Optional.empty();

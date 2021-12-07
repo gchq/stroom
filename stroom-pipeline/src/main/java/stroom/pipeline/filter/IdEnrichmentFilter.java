@@ -24,14 +24,17 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaHolder;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import javax.inject.Inject;
 
 /**
@@ -39,12 +42,13 @@ import javax.inject.Inject;
  * instance. The first level elements are assumed to be records in the context
  * of event processing.
  */
-@ConfigurableElement(type = "IdEnrichmentFilter", category = Category.FILTER, roles = {PipelineElementType.ROLE_TARGET,
+@ConfigurableElement(type = "IdEnrichmentFilter", category = Category.FILTER, roles = {
+        PipelineElementType.ROLE_TARGET,
         PipelineElementType.ROLE_HAS_TARGETS, PipelineElementType.VISABILITY_STEPPING,
         PipelineElementType.ROLE_MUTATOR}, icon = ElementIcons.ID)
 public class IdEnrichmentFilter extends AbstractXMLFilter {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(IdEnrichmentFilter.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IdEnrichmentFilter.class);
 
     private static final String URI = "";
     private static final String STRING = "string";
@@ -137,11 +141,31 @@ public class IdEnrichmentFilter extends AbstractXMLFilter {
                 if (eventIds != null) {
                     // Check we haven't found more events than we are expecting to extract.
                     if (count > eventIds.length) {
-                        LOGGER.debug("Expected " + eventIds.length + " events but extracted " + count);
+                        final String msg = "Expected " +
+                                eventIds.length +
+                                " events but extracted " +
+                                count +
+                                " from stream " +
+                                streamId;
 
-                        final String msg = "Unexpected number of events being extracted";
-                        final ProcessException searchException = new ProcessException(msg);
-                        errorReceiverProxy.log(Severity.WARNING, null, getElementId(), msg, searchException);
+                        LOGGER.debug(() -> msg);
+                        LOGGER.trace(() -> Arrays.toString(eventIds));
+                        errorReceiverProxy.log(Severity.WARNING, null, getElementId(), msg, null);
+
+                        // Double check for duplicated ids.
+                        final Set<Long> duplicateSet = new HashSet<>();
+                        boolean duplicate = false;
+                        for (final long id : eventIds) {
+                            if (!duplicateSet.add(id)) {
+                                duplicate = true;
+                                break;
+                            }
+                        }
+                        if (duplicate) {
+                            final String err = "Duplicate id found in event id list: " + Arrays.toString(eventIds);
+                            LOGGER.error(() -> err);
+                            errorReceiverProxy.log(Severity.ERROR, null, getElementId(), err, null);
+                        }
                     }
 
                     final int index = (int) (count - 1);

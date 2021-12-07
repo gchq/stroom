@@ -432,21 +432,19 @@ export interface CreateProcessFilterRequest {
   autoPriority?: boolean;
   enabled?: boolean;
 
+  /** @format int64 */
+  maxMetaCreateTimeMs?: number;
+
+  /** @format int64 */
+  minMetaCreateTimeMs?: number;
+
   /** A class for describing a unique reference to a 'document' in stroom.  A 'document' is an entity in stroom such as a data source dictionary or pipeline. */
   pipeline?: DocRef;
 
   /** @format int32 */
   priority?: number;
   queryData?: QueryData;
-}
-
-export interface CreateReprocessFilterRequest {
-  autoPriority?: boolean;
-  enabled?: boolean;
-
-  /** @format int32 */
-  priority?: number;
-  queryData?: QueryData;
+  reprocess?: boolean;
 }
 
 export interface CreateTokenRequest {
@@ -999,6 +997,7 @@ export type FetchDataResult = AbstractFetchDataResult & {
 
 export interface FetchExplorerNodeResult {
   openedItems?: string[];
+  qualifiedFilterInput?: string;
   rootNodes?: ExplorerNode[];
   temporaryOpenedItems?: string[];
 }
@@ -1093,7 +1092,7 @@ export interface FilterFieldDefinition {
 
 export interface FilterUsersRequest {
   quickFilterInput?: string;
-  users?: User[];
+  users?: SimpleUser[];
 }
 
 export interface FindDBTableCriteria {
@@ -1609,6 +1608,7 @@ export interface ListConfigResponse {
 
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
+  qualifiedFilterInput?: string;
   values?: ConfigProperty[];
 }
 
@@ -2710,6 +2710,11 @@ export interface SharedStepData {
   sourceLocation?: SourceLocation;
 }
 
+export interface SimpleUser {
+  name?: string;
+  uuid?: string;
+}
+
 export interface Size {
   /** @format int32 */
   height?: number;
@@ -3284,6 +3289,7 @@ export interface TokenResponse {
 export interface TokenResultPage {
   /** Details of the page of results being returned. */
   pageResponse?: PageResponse;
+  qualifiedFilterInput?: string;
   values?: Token[];
 }
 
@@ -6409,7 +6415,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @secure
      */
     filterUsers: (data: FilterUsersRequest, params: RequestParams = {}) =>
-      this.request<any, User[]>({
+      this.request<any, SimpleUser[]>({
         path: `/permission/doc/v1/filterUsers`,
         method: "POST",
         body: data,
@@ -6648,7 +6654,7 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
      * @request POST:/processorFilter/v1/reprocess
      * @secure
      */
-    reprocessData: (data: CreateReprocessFilterRequest, params: RequestParams = {}) =>
+    reprocessData: (data: CreateProcessFilterRequest, params: RequestParams = {}) =>
       this.request<any, ReprocessDataInfo[]>({
         path: `/processorFilter/v1/reprocess`,
         method: "POST",

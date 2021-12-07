@@ -31,6 +31,7 @@ import stroom.task.shared.TaskId;
 import javax.inject.Inject;
 
 public class SolrAsyncSearchTaskHandler {
+
     private final SolrIndexCache solrIndexCache;
     private final SecurityContext securityContext;
     private final SolrClusterSearchTaskHandler clusterSearchTaskHandler;
@@ -80,12 +81,13 @@ public class SolrAsyncSearchTaskHandler {
 
                     // Await completion.
                     taskContext.info(() -> task.getSearchName() + " - searching");
+                    coprocessors.getCompletionState().signalComplete();
                     resultCollector.awaitCompletion();
 
                 } catch (final RuntimeException e) {
-                    coprocessors.getErrorConsumer().accept(e);
+                    coprocessors.getErrorConsumer().add(e);
                 } catch (final InterruptedException e) {
-                    coprocessors.getErrorConsumer().accept(e);
+                    coprocessors.getErrorConsumer().add(e);
 
                     // Continue to interrupt this thread.
                     Thread.currentThread().interrupt();

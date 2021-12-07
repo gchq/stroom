@@ -20,15 +20,12 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.CreateProcessFilterRequest;
-import stroom.processor.shared.CreateReprocessFilterRequest;
 import stroom.processor.shared.FetchProcessorRequest;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ProcessorListRowResultPage;
 import stroom.processor.shared.ReprocessDataInfo;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
 
 import java.util.List;
@@ -37,8 +34,6 @@ import javax.inject.Provider;
 
 @AutoLogged
 class ProcessorFilterResourceImpl implements ProcessorFilterResource {
-
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorFilterResourceImpl.class);
 
     private final Provider<ProcessorFilterService> processorFilterServiceProvider;
 
@@ -49,23 +44,13 @@ class ProcessorFilterResourceImpl implements ProcessorFilterResource {
 
     @Override
     public ProcessorFilter create(final CreateProcessFilterRequest request) {
-        ProcessorFilter filter = processorFilterServiceProvider.get().create(
-                request.getPipeline(),
-                request.getQueryData(),
-                request.getPriority(),
-                request.isAutoPriority(),
-                request.isEnabled());
-        return filter;
+        return processorFilterServiceProvider.get().create(request);
     }
 
     @AutoLogged(value = OperationType.PROCESS, verb = "Reprocessing")
     @Override
-    public List<ReprocessDataInfo> reprocess(final CreateReprocessFilterRequest request) {
-        return processorFilterServiceProvider.get().reprocess(
-                request.getQueryData(),
-                request.getPriority(),
-                request.isAutoPriority(),
-                request.isEnabled());
+    public List<ReprocessDataInfo> reprocess(final CreateProcessFilterRequest request) {
+        return processorFilterServiceProvider.get().reprocess(request);
     }
 
     @Override

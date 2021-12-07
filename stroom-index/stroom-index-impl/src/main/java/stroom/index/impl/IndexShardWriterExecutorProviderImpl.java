@@ -15,7 +15,7 @@ public class IndexShardWriterExecutorProviderImpl implements IndexShardWriterExe
     @Inject
     public IndexShardWriterExecutorProviderImpl(final ExecutorProvider executorProvider,
                                                 final SecurityContext securityContext) {
-        final ThreadPool threadPool = new ThreadPoolImpl("Index Shard Writer Cache", 3, 0, Integer.MAX_VALUE);
+        final ThreadPool threadPool = new ThreadPoolImpl("Index Shard Writer Cache", 3);
         asyncExecutor = securityContext.asProcessingUserResult(() -> executorProvider.get(threadPool));
     }
 

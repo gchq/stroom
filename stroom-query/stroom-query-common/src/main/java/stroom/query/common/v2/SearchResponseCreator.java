@@ -30,7 +30,6 @@ import stroom.query.util.LambdaLoggerFactory;
 
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,24 +79,23 @@ public class SearchResponseCreator {
      * @param errorMessages List of errors to add to the {@link SearchResponse}
      * @return An empty {@link SearchResponse} with the passed error messages
      */
-    public static SearchResponse createErrorResponse(final List<String> errorMessages) {
-        Objects.requireNonNull(errorMessages);
-        final List<String> errors = new ArrayList<>(errorMessages);
+    private static SearchResponse createErrorResponse(final Store store, final Throwable throwable) {
+        Objects.requireNonNull(store);
+        Objects.requireNonNull(throwable);
+
+        LOGGER.debug(throwable::getMessage, throwable);
+        final List<String> errors = new ArrayList<>();
+        if (throwable.getMessage() != null) {
+            errors.add(throwable.getMessage());
+        }
+        if (store.getErrors() != null) {
+            errors.addAll(store.getErrors());
+        }
         return new SearchResponse(
                 null,
                 null,
                 errors,
                 false);
-    }
-
-    private static SearchResponse createErrorResponse(final Store store, List<String> errorMessages) {
-        Objects.requireNonNull(store);
-        Objects.requireNonNull(errorMessages);
-        final List<String> errors = new ArrayList<>(errorMessages);
-        if (store.getErrors() != null) {
-            errors.addAll(store.getErrors());
-        }
-        return createErrorResponse(errors);
     }
 
     /**
@@ -143,14 +141,17 @@ public class SearchResponseCreator {
                     // Search didn't complete non-incremental search in time so return a timed out error response
                     return createErrorResponse(
                             store,
-                            Collections.singletonList("The search timed out after " + effectiveTimeout));
+                            new RuntimeException("The search timed out after " + effectiveTimeout));
                 }
 
             } catch (InterruptedException e) {
+                LOGGER.trace(e::getMessage, e);
+                // Keep interrupting this thread.
                 Thread.currentThread().interrupt();
-                LOGGER.debug(() -> "Thread " + Thread.currentThread().getName() + " interrupted", e);
+
                 return createErrorResponse(
-                        store, Collections.singletonList("Thread was interrupted before the search could complete"));
+                        store,
+                        new RuntimeException("Thread was interrupted before the search could complete"));
             }
         }
 
@@ -197,10 +198,10 @@ public class SearchResponseCreator {
         } catch (final RuntimeException e) {
             LOGGER.error(() -> "Error getting search results for query " + searchRequest.getKey().toString(), e);
 
-            return createErrorResponse(store, Collections.singletonList(
-                    "Error getting search results: [" +
+            return createErrorResponse(store,
+                    new RuntimeException("Error getting search results: [" +
                             e.getMessage() +
-                            "], see service's logs for details"));
+                            "], see service's logs for details", e));
         }
     }
 
@@ -258,7 +259,7 @@ public class SearchResponseCreator {
                     if (fetch == null || Fetch.ALL.equals(fetch)) {
                         // If the fetch option has not been set or is set to ALL we deliver the full result.
                         results.add(result);
-                        LOGGER.info(() -> "Delivering " + result + " for " + componentId);
+                        LOGGER.debug(() -> "Delivering " + result + " for " + componentId);
 
                     } else if (Fetch.CHANGES.equals(fetch)) {
                         // Cache the new result and get the previous one.
@@ -292,7 +293,7 @@ public class SearchResponseCreator {
                             // Either we haven't returned a result before or this result
                             // is different from the one delivered previously so deliver it to the client.
                             results.add(result);
-                            LOGGER.info(() -> "Delivering " + result + " for " + componentId);
+                            LOGGER.debug(() -> "Delivering " + result + " for " + componentId);
                         }
                     }
                 }

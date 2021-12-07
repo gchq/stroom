@@ -15,7 +15,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.Executor;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 @Singleton // To ensure the localDir delete is done only once and before store creation
@@ -25,13 +27,16 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
 
     private final LmdbEnvFactory lmdbEnvFactory;
     private final ResultStoreConfig resultStoreConfig;
+    private final Provider<Executor> executorProvider;
 
     @Inject
     public LmdbDataStoreFactory(final LmdbEnvFactory lmdbEnvFactory,
                                 final ResultStoreConfig resultStoreConfig,
-                                final PathCreator pathCreator) {
+                                final PathCreator pathCreator,
+                                final Provider<Executor> executorProvider) {
         this.lmdbEnvFactory = lmdbEnvFactory;
         this.resultStoreConfig = resultStoreConfig;
+        this.executorProvider = executorProvider;
         // As result stores are transient they serve no purpose after shutdown so delete any that
         // may still be there
         cleanStoresDir(pathCreator);
@@ -44,15 +49,22 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                             final FieldIndex fieldIndex,
                             final Map<String, String> paramMap,
                             final Sizes maxResults,
-                            final Sizes storeSize) {
+                            final Sizes storeSize,
+                            final boolean producePayloads,
+                            final ErrorConsumer errorConsumer) {
 
         if (!resultStoreConfig.isOffHeapResults()) {
+            if (producePayloads) {
+                throw new RuntimeException("MapDataStore cannot produce payloads");
+            }
+
             return new MapDataStore(
                     tableSettings,
                     fieldIndex,
                     paramMap,
                     maxResults,
-                    storeSize);
+                    storeSize,
+                    errorConsumer);
         } else {
             return new LmdbDataStore(
                     lmdbEnvFactory,
@@ -63,7 +75,9 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                     fieldIndex,
                     paramMap,
                     maxResults,
-                    storeSize);
+                    producePayloads,
+                    executorProvider,
+                    errorConsumer);
         }
     }
 

@@ -4364,7 +4364,7 @@
                 "schema" : {
                   "type" : "array",
                   "items" : {
-                    "$ref" : "#/components/schemas/User"
+                    "$ref" : "#/components/schemas/SimpleUser"
                   }
                 }
               }
@@ -4744,7 +4744,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/CreateReprocessFilterRequest"
+                "$ref" : "#/components/schemas/CreateProcessFilterRequest"
               }
             }
           },
@@ -8814,6 +8814,14 @@
           "enabled" : {
             "type" : "boolean"
           },
+          "maxMetaCreateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "minMetaCreateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
           "pipeline" : {
             "$ref" : "#/components/schemas/DocRef"
           },
@@ -8823,24 +8831,9 @@
           },
           "queryData" : {
             "$ref" : "#/components/schemas/QueryData"
-          }
-        }
-      },
-      "CreateReprocessFilterRequest" : {
-        "type" : "object",
-        "properties" : {
-          "autoPriority" : {
+          },
+          "reprocess" : {
             "type" : "boolean"
-          },
-          "enabled" : {
-            "type" : "boolean"
-          },
-          "priority" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "queryData" : {
-            "$ref" : "#/components/schemas/QueryData"
           }
         }
       },
@@ -10074,6 +10067,9 @@
               "type" : "string"
             }
           },
+          "qualifiedFilterInput" : {
+            "type" : "string"
+          },
           "rootNodes" : {
             "type" : "array",
             "items" : {
@@ -10259,7 +10255,7 @@
           "users" : {
             "type" : "array",
             "items" : {
-              "$ref" : "#/components/schemas/User"
+              "$ref" : "#/components/schemas/SimpleUser"
             }
           }
         }
@@ -11386,6 +11382,9 @@
           },
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
+          },
+          "qualifiedFilterInput" : {
+            "type" : "string"
           },
           "values" : {
             "type" : "array",
@@ -13686,6 +13685,17 @@
           }
         }
       },
+      "SimpleUser" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "uuid" : {
+            "type" : "string"
+          }
+        }
+      },
       "Size" : {
         "type" : "object",
         "properties" : {
@@ -14971,6 +14981,9 @@
         "properties" : {
           "pageResponse" : {
             "$ref" : "#/components/schemas/PageResponse"
+          },
+          "qualifiedFilterInput" : {
+            "type" : "string"
           },
           "values" : {
             "type" : "array",

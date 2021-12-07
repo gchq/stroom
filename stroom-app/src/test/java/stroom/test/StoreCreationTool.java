@@ -57,6 +57,7 @@ import stroom.pipeline.textconverter.TextConverterStore;
 import stroom.pipeline.xslt.XsltStore;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
+import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorExpressionUtil;
 import stroom.processor.shared.QueryData;
@@ -237,7 +238,13 @@ public final class StoreCreationTool {
                                     StreamTypeNames.RAW_REFERENCE)
                             .build())
                     .build();
-            processorFilterService.create(pipelineRef, findStreamQueryData, 2, false, true);
+            processorFilterService.create(
+                    CreateProcessFilterRequest
+                            .builder()
+                            .pipeline(pipelineRef)
+                            .queryData(findStreamQueryData)
+                            .priority(2)
+                            .build());
         }
 
         return docRef;
@@ -489,7 +496,13 @@ public final class StoreCreationTool {
                             .build())
                     .build();
 
-            processorFilterService.create(pipelineRef, findStreamQueryData, 1, false, true);
+            processorFilterService.create(
+                    CreateProcessFilterRequest
+                            .builder()
+                            .pipeline(pipelineRef)
+                            .queryData(findStreamQueryData)
+                            .priority(1)
+                            .build());
         }
 
         return docRef;
@@ -828,7 +841,7 @@ public final class StoreCreationTool {
         final DocRef pipelineRef = getIndexingPipeline(indexRef, translationXsltLocation);
 
         final Processor streamProcessor = processorService.find(new ExpressionCriteria(
-                ProcessorExpressionUtil.createPipelineExpression(pipelineRef)))
+                        ProcessorExpressionUtil.createPipelineExpression(pipelineRef)))
                 .getFirst();
         if (streamProcessor == null) {
             // Setup the stream processor filter.
@@ -838,7 +851,13 @@ public final class StoreCreationTool {
                             .addTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
                             .build())
                     .build();
-            processorFilterService.create(pipelineRef, findStreamQueryData, 1, false, true);
+            processorFilterService.create(
+                    CreateProcessFilterRequest
+                            .builder()
+                            .pipeline(pipelineRef)
+                            .queryData(findStreamQueryData)
+                            .priority(1)
+                            .build());
         }
 
         return indexRef;

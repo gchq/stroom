@@ -16,6 +16,7 @@
 
 package stroom.search.extraction;
 
+import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -23,6 +24,8 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.query.common.v2.SearchDebugUtil;
+import stroom.util.logging.SearchProgressLog;
+import stroom.util.logging.SearchProgressLog.SearchPhase;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -41,7 +44,9 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
             throws SAXException {
+        final FieldIndex fieldIndex = receiver.getFieldMap();
         if (DATA.equals(localName) && values != null) {
+            SearchProgressLog.increment(SearchPhase.SEARCH_RESULT_OUTPUT_FILTER_START_DATA);
             String name = atts.getValue(NAME);
             String value = atts.getValue(VALUE);
             if (name != null && value != null) {
@@ -49,14 +54,15 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
                 value = value.trim();
 
                 if (name.length() > 0 && value.length() > 0) {
-                    final Integer pos = fieldIndexes.getPos(name);
+                    final Integer pos = fieldIndex.getPos(name);
                     if (pos != null) {
                         values[pos] = ValString.create(value);
                     }
                 }
             }
         } else if (RECORD.equals(localName)) {
-            values = new Val[fieldIndexes.size()];
+            SearchProgressLog.increment(SearchPhase.SEARCH_RESULT_OUTPUT_FILTER_START_RECORD);
+            values = new Val[fieldIndex.size()];
         }
         super.startElement(uri, localName, qName, atts);
     }
@@ -64,9 +70,9 @@ public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
         if (RECORD.equals(localName)) {
+            SearchProgressLog.increment(SearchPhase.SEARCH_RESULT_OUTPUT_FILTER_END_RECORD);
             SearchDebugUtil.writeExtractionData(values);
-
-            consumer.accept(values);
+            receiver.add(values);
             count++;
             values = null;
         }

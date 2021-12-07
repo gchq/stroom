@@ -23,12 +23,11 @@ import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.EventLink;
 import stroom.annotation.shared.SetAssignedToRequest;
 import stroom.annotation.shared.SetStatusRequest;
-import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.entity.shared.ExpressionCriteria;
 
 import java.util.List;
-import java.util.function.Consumer;
 
 public interface AnnotationDao {
 
@@ -52,5 +51,5 @@ public interface AnnotationDao {
 
     Integer setAssignedTo(SetAssignedToRequest request, String user);
 
-    void search(ExpressionCriteria criteria, AbstractField[] fields, Consumer<Val[]> consumer);
+    void search(ExpressionCriteria criteria, AbstractField[] fields, ValuesConsumer consumer);
 }

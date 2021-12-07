@@ -1,15 +1,17 @@
 package stroom.query.test.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.function.Supplier;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class TimingUtils {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TimingUtils.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TimingUtils.class);
 
     /**
      * Execute resultSupplier, time how long it takes, then return its result and the duration
@@ -22,20 +24,20 @@ public class TimingUtils {
         return new TimedResult<>(Duration.between(startTime, Instant.now()), result);
     }
 
-    public static boolean isWithinTollerance(final Duration expectedDuration,
-                                             final Duration actualDuration,
-                                             final Duration tolerance) {
+    public static void isWithinTollerance(final Duration expectedDuration,
+                                          final Duration actualDuration,
+                                          final Duration tolerance) {
+        LOGGER.info(() -> "Expected: " +
+                expectedDuration +
+                ", actual: " +
+                actualDuration +
+                ", tolerance: " +
+                tolerance +
+                ", diff " +
+                expectedDuration.minus(actualDuration).abs());
 
-        Duration diff = expectedDuration.minus(actualDuration).abs();
-
-        boolean result = diff.toMillis() <= tolerance.toMillis();
-
-        LOGGER.info("Expected: {}, actual: {}, tolerance: {}, diff {}",
-                expectedDuration,
-                actualDuration,
-                tolerance,
-                diff);
-        return result;
+        assertThat(actualDuration).isGreaterThanOrEqualTo(expectedDuration);
+        assertThat(actualDuration).isLessThanOrEqualTo(expectedDuration.plus(tolerance));
     }
 
     public static boolean sleep(final long millis) {

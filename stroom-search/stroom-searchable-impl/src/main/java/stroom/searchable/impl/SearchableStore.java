@@ -85,9 +85,10 @@ class SearchableStore implements Store {
         final Instant queryStart = Instant.now();
         try {
             // Give the data array to each of our coprocessors
-            searchable.search(criteria, fieldArray, coprocessors.getValuesConsumer());
+            searchable.search(criteria, fieldArray, coprocessors);
 
         } catch (final RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
             errors.add(e.getMessage());
         }
 
@@ -111,6 +112,7 @@ class SearchableStore implements Store {
                 thread.interrupt();
             }
 
+            complete();
             coprocessors.clear();
         }
     }

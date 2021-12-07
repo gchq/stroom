@@ -6,7 +6,8 @@ import stroom.dashboard.expression.v1.ValDouble;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
-import stroom.query.common.v2.Receiver;
+import stroom.dashboard.expression.v1.ValuesConsumer;
+import stroom.query.common.v2.ErrorConsumer;
 import stroom.statistics.impl.sql.PreparedStatementUtil;
 import stroom.statistics.impl.sql.SQLStatisticConstants;
 import stroom.statistics.impl.sql.SQLStatisticNames;
@@ -110,7 +111,8 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                        final StatisticStoreDoc statisticStoreEntity,
                        final FindEventCriteria criteria,
                        final FieldIndex fieldIndex,
-                       final Receiver receiver) {
+                       final ValuesConsumer valuesConsumer,
+                       final ErrorConsumer errorConsumer) {
         try {
             List<String> selectCols = getSelectColumns(statisticStoreEntity, fieldIndex);
             SqlBuilder sql = buildSql(statisticStoreEntity, criteria, fieldIndex);
@@ -120,9 +122,9 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
             Function<ResultSet, Val[]> resultSetMapper = buildResultSetMapper(fieldIndex, statisticStoreEntity);
 
             // the query will not be executed until somebody subscribes to the flowable
-            getFlowableQueryResults(taskContext, sql, resultSetMapper, receiver);
+            getFlowableQueryResults(taskContext, sql, resultSetMapper, valuesConsumer);
         } catch (final RuntimeException e) {
-            receiver.getErrorConsumer().accept(new Error(e.getMessage(), e));
+            errorConsumer.add(e);
         }
     }
 
@@ -222,7 +224,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         final int maxResults = searchConfig.getMaxResults();
         sql.append(" LIMIT " + maxResults);
 
-        LOGGER.debug("Search query: {}", sql.toString());
+        LOGGER.debug("Search query: {}", sql);
 
         return sql;
     }
@@ -365,8 +367,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
             Val value = cache.get(fieldName);
             if (value == null) {
                 //populate our cache of
-                extractTagsMapFromColumn(getResultSetString(rs, SQLStatisticNames.NAME))
-                        .forEach(cache::put);
+                cache.putAll(extractTagsMapFromColumn(getResultSetString(rs, SQLStatisticNames.NAME)));
             }
             value = cache.get(fieldName);
             arr[fieldIndex] = value;
@@ -392,7 +393,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     private void getFlowableQueryResults(final TaskContext taskContext,
                                          final SqlBuilder sql,
                                          final Function<ResultSet, Val[]> resultSetMapper,
-                                         final Receiver receiver) {
+                                         final ValuesConsumer valuesConsumer) {
         long count = 0;
 
         try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
@@ -410,9 +411,9 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                 preparedStatement.setFetchSize(fetchSize);
 
                 PreparedStatementUtil.setArguments(preparedStatement, sql.getArgs());
-                LAMBDA_LOGGER.debug(() -> String.format("Created preparedStatement %s", preparedStatement.toString()));
+                LAMBDA_LOGGER.debug(() -> String.format("Created preparedStatement %s", preparedStatement));
 
-                final String message = String.format("Executing query %s", sql.toString());
+                final String message = String.format("Executing query %s", sql);
                 taskContext.info(() -> message);
                 LAMBDA_LOGGER.debug(() -> message);
 
@@ -423,7 +424,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                             !Thread.currentThread().isInterrupted()) {
                         LOGGER.trace("Adding resultt");
                         final Val[] values = resultSetMapper.apply(resultSet);
-                        receiver.getValuesConsumer().accept(values);
+                        valuesConsumer.add(values);
                         count++;
                     }
 
@@ -435,21 +436,15 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
                 } catch (SQLException e) {
                     throw new RuntimeException(String.format("Error executing query %s, %s",
-                            preparedStatement.toString(), e.getMessage()), e);
-
-                } finally {
-                    receiver.getCompletionConsumer().accept(count);
+                            preparedStatement, e.getMessage()), e);
                 }
 
             } catch (SQLException e) {
-                throw new RuntimeException(String.format("Error preparing statement for sql [%s]", sql.toString()), e);
+                throw new RuntimeException(String.format("Error preparing statement for sql [%s]", sql), e);
             }
 
         } catch (final SQLException e) {
             throw new RuntimeException("Error getting connection", e);
-
-        } finally {
-            receiver.getCompletionConsumer().accept(count);
         }
     }
 

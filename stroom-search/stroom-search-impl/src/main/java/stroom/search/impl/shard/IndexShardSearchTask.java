@@ -16,8 +16,6 @@
 
 package stroom.search.impl.shard;
 
-import stroom.query.common.v2.Receiver;
-
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
 
@@ -28,7 +26,6 @@ class IndexShardSearchTask {
     private final IndexShardQueryFactory queryFactory;
     private final long indexShardId;
     private final String[] storedFieldNames;
-    private final Receiver receiver;
     private final AtomicLong hitCount;
     private int shardNumber;
     private int shardTotal;
@@ -36,12 +33,10 @@ class IndexShardSearchTask {
     IndexShardSearchTask(final IndexShardQueryFactory queryFactory,
                          final long indexShardId,
                          final String[] storedFieldNames,
-                         final Receiver receiver,
                          final AtomicLong hitCount) {
         this.queryFactory = queryFactory;
         this.indexShardId = indexShardId;
         this.storedFieldNames = storedFieldNames;
-        this.receiver = receiver;
         this.hitCount = hitCount;
     }
 
@@ -55,10 +50,6 @@ class IndexShardSearchTask {
 
     String[] getStoredFieldNames() {
         return storedFieldNames;
-    }
-
-    Receiver getReceiver() {
-        return receiver;
     }
 
     AtomicLong getHitCount() {

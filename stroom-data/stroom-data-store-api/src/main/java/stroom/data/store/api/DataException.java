@@ -21,8 +21,6 @@ package stroom.data.store.api;
  */
 public class DataException extends RuntimeException {
 
-    private static final long serialVersionUID = 4306974171835279325L;
-
     public DataException(final String msg) {
         super(msg);
     }
@@ -34,5 +32,4 @@ public class DataException extends RuntimeException {
     public DataException(final Throwable throwable) {
         super(throwable);
     }
-
 }

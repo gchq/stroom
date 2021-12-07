@@ -20,13 +20,13 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.SearchProgressLog;
+import stroom.util.logging.SearchProgressLog.SearchPhase;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.SimpleCollector;
 
 import java.io.IOException;
-import java.util.OptionalInt;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
@@ -36,14 +36,14 @@ class IndexShardHitCollector extends SimpleCollector {
 
     private final TaskContext taskContext;
     //an empty optional is used as a marker to indicate no more items will be added
-    private final LinkedBlockingQueue<OptionalInt> docIdStore;
+    private final DocIdQueue docIdQueue;
     private final AtomicLong hitCount;
     private int docBase;
 
     IndexShardHitCollector(final TaskContext taskContext,
-                           final LinkedBlockingQueue<OptionalInt> docIdStore,
+                           final DocIdQueue docIdQueue,
                            final AtomicLong hitCount) {
-        this.docIdStore = docIdStore;
+        this.docIdQueue = docIdQueue;
         this.taskContext = taskContext;
         this.hitCount = hitCount;
 
@@ -62,13 +62,14 @@ class IndexShardHitCollector extends SimpleCollector {
         final int docId = docBase + doc;
 
         try {
-            docIdStore.put(OptionalInt.of(docId));
+            SearchProgressLog.increment(SearchPhase.INDEX_SHARD_SEARCH_TASK_HANDLER_DOC_ID_STORE_PUT);
+            docIdQueue.put(docId);
             info(() -> "Found " + hitCount + " hits");
         } catch (final InterruptedException e) {
-            // Continue to interrupt.
             info(() -> "Quitting...");
+            LOGGER.trace(e::getMessage, e);
+            // Keep interrupting this thread.
             Thread.currentThread().interrupt();
-            LOGGER.debug(e::getMessage, e);
             throw new TaskTerminatedException();
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);

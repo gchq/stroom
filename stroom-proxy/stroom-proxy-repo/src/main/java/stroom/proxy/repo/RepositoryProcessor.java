@@ -21,6 +21,7 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
+import stroom.util.concurrent.WorkQueue;
 import stroom.util.date.DateUtil;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
@@ -38,13 +39,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -70,6 +68,7 @@ public final class RepositoryProcessor {
     private final int maxConcurrentMappedFiles;
     private final int maxFilesPerAggregate;
     private final long maxUncompressedFileSize;
+    private final TaskContext parentTaskContext;
     private final Path repoPath;
     private final String repoDir;
 
@@ -81,7 +80,8 @@ public final class RepositoryProcessor {
                                final int maxFileScan,
                                final int maxConcurrentMappedFiles,
                                final int maxFilesPerAggregate,
-                               final long maxUncompressedFileSize) {
+                               final long maxUncompressedFileSize,
+                               final TaskContext parentTaskContext) {
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
         this.fileSetProcessorProvider = fileSetProcessorProvider;
@@ -90,6 +90,7 @@ public final class RepositoryProcessor {
         this.maxConcurrentMappedFiles = maxConcurrentMappedFiles;
         this.maxFilesPerAggregate = maxFilesPerAggregate;
         this.maxUncompressedFileSize = maxUncompressedFileSize;
+        this.parentTaskContext = parentTaskContext;
         repoPath = Paths.get(proxyDir);
         repoDir = FileUtil.getCanonicalPath(repoPath);
     }
@@ -152,7 +153,9 @@ public final class RepositoryProcessor {
 
             LOGGER.info("Completed in {}", logExecutionTime);
         };
-        final Runnable runnable = taskContextFactory.context("Proxy Repository Processor", consumer);
+        final Runnable runnable = taskContextFactory.childContext(parentTaskContext,
+                "Proxy Repository Processor",
+                consumer);
         runnable.run();
     }
 
@@ -303,12 +306,11 @@ public final class RepositoryProcessor {
         private final long maxUncompressedFileSize;
         private final ErrorReceiver errorReceiver;
         private final Provider<FileSetProcessor> fileSetProcessorProvider;
-        private final Executor executor;
         private final TaskContext parentContext;
         private final TaskContextFactory taskContextFactory;
 
         private final Map<FileSetKey, FileSet> fileSetMap = new ConcurrentHashMap<>();
-        private final Set<CompletableFuture<Void>> futures = Collections.newSetFromMap(new ConcurrentHashMap<>());
+        private final WorkQueue workQueue;
 
         private int totalMappedFiles;
 
@@ -329,13 +331,9 @@ public final class RepositoryProcessor {
             this.parentContext = parentContext;
             this.taskContextFactory = taskContextFactory;
 
-            final ThreadPool threadPool = new ThreadPoolImpl(
-                    "File Set Processor",
-                    5,
-                    0,
-                    threadCount,
-                    2 * threadCount);
-            executor = executorProvider.get(threadPool);
+            final ThreadPool threadPool = new ThreadPoolImpl("File Set Processor");
+            final Executor executor = executorProvider.get(threadPool);
+            workQueue = new WorkQueue(executor, threadCount, 1000);
         }
 
         @Override
@@ -409,9 +407,7 @@ public final class RepositoryProcessor {
                             final FileSetProcessor fileSetProcessor = fileSetProcessorProvider.get();
                             fileSetProcessor.process(fileSet);
                         });
-                final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable, executor);
-                completableFuture.whenComplete((r, t) -> futures.remove(completableFuture));
-                futures.add(completableFuture);
+                workQueue.exec(runnable);
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             }
@@ -422,7 +418,7 @@ public final class RepositoryProcessor {
             fileSetMap.values().forEach(this::processFileSet);
 
             try {
-                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+                workQueue.join();
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
                 throw e;
@@ -433,26 +429,21 @@ public final class RepositoryProcessor {
     private static class ZipFragmenterFileProcessor {
 
         private final ZipFragmenter zipFragmenter;
-        private final Executor executor;
         private final TaskContext parentContext;
         private final TaskContextFactory taskContextFactory;
-        private final Set<CompletableFuture<Void>> futures = Collections.newSetFromMap(new ConcurrentHashMap<>());
+        private final WorkQueue queue;
 
         ZipFragmenterFileProcessor(final ExecutorProvider executorProvider,
                                    final TaskContext parentContext,
                                    final TaskContextFactory taskContextFactory,
                                    final int threadCount,
                                    final ErrorReceiver errorReceiver) {
-            final ThreadPool fileInspectorThreadPool = new ThreadPoolImpl(
-                    "Proxy File Fragmenter",
-                    5,
-                    0,
-                    threadCount,
-                    2 * threadCount);
-            this.executor = executorProvider.get(fileInspectorThreadPool);
+            final ThreadPool fileInspectorThreadPool = new ThreadPoolImpl("Proxy File Fragmenter");
+            final Executor executor = executorProvider.get(fileInspectorThreadPool);
             this.parentContext = parentContext;
             this.taskContextFactory = taskContextFactory;
             zipFragmenter = new ZipFragmenter(errorReceiver);
+            queue = new WorkQueue(executor, threadCount, 1000);
         }
 
         public void process(final Path file) {
@@ -468,10 +459,7 @@ public final class RepositoryProcessor {
                                 zipFragmenter.fragment(file);
                             }
                         });
-
-                final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable, executor);
-                completableFuture.whenComplete((r, t) -> futures.remove(completableFuture));
-                futures.add(completableFuture);
+                queue.exec(runnable);
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             }
@@ -479,7 +467,7 @@ public final class RepositoryProcessor {
 
         public void await() {
             try {
-                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+                queue.join();
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
                 throw e;
@@ -490,11 +478,10 @@ public final class RepositoryProcessor {
     private static class ZipInfoExtractorFileProcessor {
 
         private final ZipInfoExtractor zipInfoExtractor;
-        private final Executor executor;
         private final TaskContext parentContext;
         private final TaskContextFactory taskContextFactory;
         private final Consumer<ZipInfo> zipInfoConsumer;
-        private final Set<CompletableFuture<Void>> futures = Collections.newSetFromMap(new ConcurrentHashMap<>());
+        private final WorkQueue workQueue;
 
         ZipInfoExtractorFileProcessor(final ZipInfoExtractor zipInfoExtractor,
                                       final Consumer<ZipInfo> zipInfoConsumer,
@@ -507,12 +494,9 @@ public final class RepositoryProcessor {
             this.parentContext = parentContext;
             this.taskContextFactory = taskContextFactory;
 
-            final ThreadPool fileInspectorThreadPool = new ThreadPoolImpl("Proxy File Inspection",
-                    5,
-                    0,
-                    threadCount,
-                    2 * threadCount);
-            executor = executorProvider.get(fileInspectorThreadPool);
+            final ThreadPool fileInspectorThreadPool = new ThreadPoolImpl("Proxy File Inspection");
+            final Executor executor = executorProvider.get(fileInspectorThreadPool);
+            workQueue = new WorkQueue(executor, threadCount, 1000);
         }
 
         public void process(final Path file, final BasicFileAttributes attrs) {
@@ -534,9 +518,7 @@ public final class RepositoryProcessor {
                                 }
                             }
                         });
-                final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable, executor);
-                completableFuture.whenComplete((r, t) -> futures.remove(completableFuture));
-                futures.add(completableFuture);
+                workQueue.exec(runnable);
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
             }
@@ -553,7 +535,7 @@ public final class RepositoryProcessor {
 
         public void await() {
             try {
-                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+                workQueue.join();
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
                 throw e;

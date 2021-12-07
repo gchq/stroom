@@ -10,11 +10,6 @@ import stroom.task.shared.TaskId;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
-import java.util.UUID;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
-
 public class MockTaskModule extends AbstractModule {
 
     @Override

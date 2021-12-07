@@ -15,7 +15,6 @@ public class ResultStoreConfig extends AbstractConfig {
 
     private final int maxPutsBeforeCommit;
     private final boolean offHeapResults;
-    private final ByteSize payloadLimit;
 
     private final ByteSize minValueSize;
     private final ByteSize maxValueSize;
@@ -27,7 +26,6 @@ public class ResultStoreConfig extends AbstractConfig {
     public ResultStoreConfig() {
         maxPutsBeforeCommit = 100_000;
         offHeapResults = true;
-        payloadLimit = ByteSize.ofMebibytes(0);
 
         minValueSize = ByteSize.ofKibibytes(1);
         maxValueSize = ByteSize.ofMebibytes(1);
@@ -41,7 +39,6 @@ public class ResultStoreConfig extends AbstractConfig {
     @JsonCreator
     public ResultStoreConfig(@JsonProperty("maxPutsBeforeCommit") final int maxPutsBeforeCommit,
                              @JsonProperty("offHeapResults") final boolean offHeapResults,
-                             @JsonProperty("payloadLimit") final ByteSize payloadLimit,
                              @JsonProperty("minValueSize") final ByteSize minValueSize,
                              @JsonProperty("maxValueSize") final ByteSize maxValueSize,
                              @JsonProperty("minPayloadSize") final ByteSize minPayloadSize,
@@ -49,7 +46,6 @@ public class ResultStoreConfig extends AbstractConfig {
                              @JsonProperty("lmdb") final ResultStoreLmdbConfig lmdbConfig) {
         this.maxPutsBeforeCommit = maxPutsBeforeCommit;
         this.offHeapResults = offHeapResults;
-        this.payloadLimit = payloadLimit;
         this.minValueSize = minValueSize;
         this.maxValueSize = maxValueSize;
         this.minPayloadSize = minPayloadSize;
@@ -71,12 +67,6 @@ public class ResultStoreConfig extends AbstractConfig {
     @JsonProperty("offHeapResults")
     public boolean isOffHeapResults() {
         return offHeapResults;
-    }
-
-    @JsonPropertyDescription("Do we want to limit the size of payloads (0 by default means no limit).")
-    @JsonProperty("payloadLimit")
-    public ByteSize getPayloadLimit() {
-        return payloadLimit;
     }
 
     @JsonPropertyDescription("The minimum byte size of a value byte buffer.")
@@ -109,7 +99,6 @@ public class ResultStoreConfig extends AbstractConfig {
         return "ResultStoreConfig{" +
                 "maxPutsBeforeCommit=" + maxPutsBeforeCommit +
                 ", offHeapResults=" + offHeapResults +
-                ", payloadLimit=" + payloadLimit +
                 ", minValueSize=" + minValueSize +
                 ", maxValueSize=" + maxValueSize +
                 ", minPayloadSize=" + minPayloadSize +

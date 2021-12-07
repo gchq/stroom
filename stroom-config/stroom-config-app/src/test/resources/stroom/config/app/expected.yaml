@@ -512,8 +512,7 @@ appConfig:
     extraction:
       maxStoredDataQueueSize: 1000
       maxStreamEventMapSize: 1000000
-      maxThreads: 4
-      maxThreadsPerTask: 2
+      maxThreadsPerTask: 5
     maxBooleanClauseCount: 1024
     maxStoredDataQueueSize: 1000
     remoteSearchResultCache:
@@ -532,7 +531,6 @@ appConfig:
       minPayloadSize: "1M"
       minValueSize: "1K"
       offHeapResults: true
-      payloadLimit: "0B"
     resultStoreCache:
       expireAfterAccess: "PT1M"
       expireAfterWrite: null
@@ -543,8 +541,7 @@ appConfig:
         expireAfterWrite: null
         maximumSize: 2
       maxDocIdQueueSize: 1000000
-      maxThreads: 4
-      maxThreadsPerTask: 2
+      maxThreadsPerTask: 5
       searchResultCache:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
@@ -696,8 +693,7 @@ appConfig:
       extraction:
         maxStoredDataQueueSize: 1000
         maxStreamEventMapSize: 1000000
-        maxThreads: 4
-        maxThreadsPerTask: 2
+        maxThreadsPerTask: 5
       maxBooleanClauseCount: 1024
       maxStoredDataQueueSize: 1000
       searchResultCache:

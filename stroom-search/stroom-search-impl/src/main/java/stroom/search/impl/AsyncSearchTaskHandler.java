@@ -28,15 +28,17 @@ import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.Query;
-import stroom.search.impl.shard.IndexShardSearchTaskExecutor;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
+import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.TaskId;
+import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.SearchProgressLog;
 import stroom.util.shared.ResultPage;
 
 import java.util.ArrayList;
@@ -47,12 +49,15 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Provider;
 
 class AsyncSearchTaskHandler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AsyncSearchTaskHandler.class);
+
+    public static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Search");
 
     private final TargetNodeSetFactory targetNodeSetFactory;
     private final IndexShardService indexShardService;
@@ -89,6 +94,7 @@ class AsyncSearchTaskHandler {
     }
 
     public void exec(final TaskContext parentContext, final AsyncSearchTask task) {
+        SearchProgressLog.clear();
         securityContext.secure(() -> securityContext.useAsRead(() -> {
             final ClusterSearchResultCollector resultCollector = task.getResultCollector();
 
@@ -99,7 +105,7 @@ class AsyncSearchTaskHandler {
                 try {
                     // Get the nodes that we are going to send the search request
                     // to.
-                    final Set<String> targetNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
+                    final Set<String> targetNodes = targetNodeSetFactory.getEnabledTargetNodeSet();
                     parentContext.info(() -> task.getSearchName() + " - initialising");
                     final Query query = task.getQuery();
 
@@ -127,14 +133,14 @@ class AsyncSearchTaskHandler {
                     }
 
                     // Start remote cluster search execution.
-                    final Executor executor = executorProvider.get(IndexShardSearchTaskExecutor.THREAD_POOL);
+                    final Executor executor = executorProvider.get(THREAD_POOL);
                     final List<CompletableFuture<Void>> futures = new ArrayList<>();
                     for (final Entry<String, List<Long>> entry : shardMap.entrySet()) {
                         final String nodeName = entry.getKey();
                         final List<Long> shards = entry.getValue();
                         if (targetNodes.contains(nodeName)) {
                             final Runnable runnable = taskContextFactory.childContext(parentContext,
-                                    "Node search",
+                                    "Search node: " + nodeName,
                                     taskContext -> {
                                         final NodeSearch nodeSearch;
                                         if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
@@ -174,6 +180,18 @@ class AsyncSearchTaskHandler {
                     LOGGER.debug(() -> "Search complete");
                     resultCollector.complete();
 
+                    // Wait for the result collector to complete.
+                    try {
+                        boolean complete = false;
+                        while (!complete) {
+                            complete = resultCollector.awaitCompletion(1, TimeUnit.MINUTES);
+                        }
+                    } catch (final InterruptedException e) {
+                        LOGGER.trace(e.getMessage(), e);
+                        // Keep interrupting this thread.
+                        Thread.currentThread().interrupt();
+                    }
+
                     // We need to wait here for the client to keep getting results if
                     // this is an interactive search.
                     parentContext.info(() -> task.getSearchName() + " - staying alive for UI requests");
@@ -186,13 +204,15 @@ class AsyncSearchTaskHandler {
         }));
     }
 
-    private void terminateTasks(final AsyncSearchTask task, final TaskId taskId) {
-        // Terminate this task.
-        taskManager.terminate(taskId);
+    public void terminateTasks(final AsyncSearchTask task, final TaskId taskId) {
+        securityContext.asProcessingUser(() -> {
+            // Terminate this task.
+            taskManager.terminate(taskId);
 
-        // We have to wrap the cluster termination task in another task or
-        // ClusterDispatchAsyncImpl
-        // will not execute it if the parent task is terminated.
-        clusterTaskTerminator.terminate(task.getSearchName(), taskId, "AsyncSearchTask");
+            // We have to wrap the cluster termination task in another task or
+            // ClusterDispatchAsyncImpl
+            // will not execute it if the parent task is terminated.
+            clusterTaskTerminator.terminate(task.getSearchName(), taskId, "AsyncSearchTask");
+        });
     }
 }

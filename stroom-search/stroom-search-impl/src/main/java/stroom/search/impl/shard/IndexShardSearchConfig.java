@@ -13,22 +13,18 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonPropertyOrder(alphabetic = true)
 public class IndexShardSearchConfig extends AbstractConfig {
 
-    private static final int DEFAULT_MAX_THREADS = 4;
-    private static final int DEFAULT_MAX_THREADS_PER_TASK = 2;
+    private static final int DEFAULT_MAX_THREADS_PER_TASK = 5;
 
     private final int maxDocIdQueueSize;
-    // TODO 01/12/2021 AT: Make final
-    private int maxThreads;
     private final int maxThreadsPerTask;
     private final CacheConfig searchResultCache;
     private final CacheConfig indexShardSearcherCache;
 
     public IndexShardSearchConfig() {
-        maxDocIdQueueSize = 1000000;
-        maxThreads = DEFAULT_MAX_THREADS;
+        maxDocIdQueueSize = 1_000_000;
         maxThreadsPerTask = DEFAULT_MAX_THREADS_PER_TASK;
         searchResultCache = CacheConfig.builder()
-                .maximumSize(10000L)
+                .maximumSize(10_000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
                 .build();
         indexShardSearcherCache = CacheConfig.builder()
@@ -39,12 +35,10 @@ public class IndexShardSearchConfig extends AbstractConfig {
 
     @JsonCreator
     public IndexShardSearchConfig(@JsonProperty("maxDocIdQueueSize") final int maxDocIdQueueSize,
-                                  @JsonProperty("maxThreads") final int maxThreads,
                                   @JsonProperty("maxThreadsPerTask") final int maxThreadsPerTask,
                                   @JsonProperty("searchResultCache") final CacheConfig searchResultCache,
                                   @JsonProperty("indexShardSearcherCache") final CacheConfig indexShardSearcherCache) {
         this.maxDocIdQueueSize = maxDocIdQueueSize;
-        this.maxThreads = maxThreads;
         this.maxThreadsPerTask = maxThreadsPerTask;
         this.searchResultCache = searchResultCache;
         this.indexShardSearcherCache = indexShardSearcherCache;
@@ -54,17 +48,6 @@ public class IndexShardSearchConfig extends AbstractConfig {
             "retrieved from the index shard")
     public int getMaxDocIdQueueSize() {
         return maxDocIdQueueSize;
-    }
-
-    @JsonPropertyDescription("The absolute maximum number of threads per node, used to search Lucene index " +
-            "shards across all searches")
-    public int getMaxThreads() {
-        return maxThreads;
-    }
-
-    @Deprecated(forRemoval = true)
-    public void setMaxThreads(final int maxThreads) {
-        this.maxThreads = maxThreads;
     }
 
     @JsonPropertyDescription("The maximum number of threads per search, per node, used to search Lucene index shards")
@@ -84,7 +67,6 @@ public class IndexShardSearchConfig extends AbstractConfig {
     public String toString() {
         return "IndexShardSearchConfig{" +
                 "maxDocIdQueueSize=" + maxDocIdQueueSize +
-                ", maxThreads=" + maxThreads +
                 ", maxThreadsPerTask=" + maxThreadsPerTask +
                 ", searchResultCache=" + searchResultCache +
                 ", indexShardSearcherCache=" + indexShardSearcherCache +

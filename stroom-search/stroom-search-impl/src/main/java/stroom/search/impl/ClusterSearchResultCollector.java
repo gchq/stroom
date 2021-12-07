@@ -16,24 +16,24 @@
 
 package stroom.search.impl;
 
-import stroom.query.common.v2.CompletionState;
-import stroom.query.common.v2.CompletionStateImpl;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.NodeResultSerialiser;
 import stroom.query.common.v2.Store;
+import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import com.esotericsoftware.kryo.io.Input;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
@@ -43,12 +43,12 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import javax.inject.Provider;
 
 public class ClusterSearchResultCollector implements Store {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterSearchResultCollector.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ClusterSearchResultCollector.class);
     private static final String TASK_NAME = "AsyncSearchTask";
 
     private final ConcurrentHashMap<String, Set<String>> errors = new ConcurrentHashMap<>();
@@ -59,7 +59,11 @@ public class ClusterSearchResultCollector implements Store {
     private final String nodeName;
     private final Set<String> highlights;
     private final Coprocessors coprocessors;
-    private final CompletionState completionState = new CompletionStateImpl();
+
+
+    private volatile AsyncSearchTaskHandler asyncSearchTaskHandler;
+    private volatile TaskContext taskContext;
+    private volatile boolean complete;
 
     public ClusterSearchResultCollector(final Executor executor,
                                         final TaskContextFactory taskContextFactory,
@@ -84,9 +88,11 @@ public class ClusterSearchResultCollector implements Store {
     public void start() {
         // Start asynchronous search execution.
         final Runnable runnable = taskContextFactory.context(TASK_NAME, taskContext -> {
+            this.taskContext = taskContext;
+            this.asyncSearchTaskHandler = asyncSearchTaskHandlerProvider.get();
+
             // Don't begin execution if we have been asked to complete already.
-            if (!coprocessors.getCompletionState().isComplete()) {
-                final AsyncSearchTaskHandler asyncSearchTaskHandler = asyncSearchTaskHandlerProvider.get();
+            if (!complete) {
                 asyncSearchTaskHandler.exec(taskContext, task);
             }
         });
@@ -101,7 +107,7 @@ public class ClusterSearchResultCollector implements Store {
                         // We can expect some tasks to throw a task terminated exception
                         // as they may be terminated before we even try to execute them.
                         if (!(t instanceof TaskTerminatedException)) {
-                            LOGGER.error(t.getMessage(), t);
+                            LOGGER.error(t::getMessage, t);
                             onFailure(nodeName, t);
                             coprocessors.getCompletionState().signalComplete();
                             throw new RuntimeException(t.getMessage(), t);
@@ -114,83 +120,82 @@ public class ClusterSearchResultCollector implements Store {
 
     @Override
     public void destroy() {
+        LOGGER.trace(() -> "destroy()");
+        complete = true;
+        if (asyncSearchTaskHandler != null) {
+            asyncSearchTaskHandler.terminateTasks(task, taskContext.getTaskId());
+        }
+
+        LOGGER.trace(() -> "coprocessors.clear()");
         coprocessors.clear();
     }
 
     public void complete() {
-        completionState.signalComplete();
+        LOGGER.trace(() -> "complete()");
+        coprocessors.getCompletionState().signalComplete();
     }
 
     @Override
     public boolean isComplete() {
-        return completionState.isComplete();
+        return coprocessors.getCompletionState().isComplete();
     }
 
     @Override
     public void awaitCompletion() throws InterruptedException {
-        completionState.awaitCompletion();
+        coprocessors.getCompletionState().awaitCompletion();
     }
 
     @Override
     public boolean awaitCompletion(final long timeout,
                                    final TimeUnit unit) throws InterruptedException {
-        return completionState.awaitCompletion(timeout, unit);
+        return coprocessors.getCompletionState().awaitCompletion(timeout, unit);
     }
 
     public synchronized boolean onSuccess(final String nodeName,
                                           final InputStream inputStream) {
-        final AtomicBoolean complete = new AtomicBoolean();
-
-        boolean success = true;
+        // If we have already completed the finish immediately without worrying about this data.
+        if (isComplete()) {
+            return true;
+        }
+        boolean complete = true;
 
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         StreamUtil.streamToStream(inputStream, byteArrayOutputStream);
 
         try (final Input input = new Input(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()))) {
             final Set<String> errors = new HashSet<>();
-            success = NodeResultSerialiser.read(input, coprocessors, errors::add, complete::set);
-            if (errors.size() > 0) {
-                getErrorSet(nodeName).addAll(errors);
-            }
+            final Consumer<String> errorConsumer = (error) -> {
+                LOGGER.debug(() -> error);
+                errors.add(error);
+            };
+
+            complete = NodeResultSerialiser.read(input, coprocessors, errorConsumer);
+            addErrors(nodeName, errors);
         } catch (final RuntimeException e) {
             onFailure(nodeName, e);
         }
 
-        // If we were told this payload belongs to a completed node then wait for this payload to be added.
-        if (complete.get()) {
-            try {
-                boolean consumed = false;
-                while (!consumed && !Thread.currentThread().isInterrupted()) {
-                    consumed = coprocessors.awaitTransfer(1, TimeUnit.MINUTES);
-                }
-            } catch (final InterruptedException e) {
-                Thread.currentThread().interrupt();
-                LOGGER.debug(e.getMessage(), e);
-            }
-
-            return true;
-        }
-
         // If the result collector rejected the result it is because we have already collected enough data and can
         // therefore consider search complete.
-        return !success;
+        return isComplete() || complete;
     }
 
     public synchronized void onFailure(final String nodeName,
                                        final Throwable throwable) {
-        getErrorSet(nodeName).add(throwable.getMessage());
+        LOGGER.debug(throwable::getMessage, throwable);
+        addErrors(nodeName, Collections.singleton(throwable.getMessage()));
     }
 
-    private Set<String> getErrorSet(final String nodeName) {
-        Set<String> errorSet = errors.get(nodeName);
-        if (errorSet == null) {
-            errorSet = new HashSet<>();
-            final Set<String> existing = errors.putIfAbsent(nodeName, errorSet);
-            if (existing != null) {
-                errorSet = existing;
+    private void addErrors(final String nodeName,
+                           final Set<String> newErrors) {
+        if (newErrors != null && newErrors.size() > 0) {
+            final Set<String> errorSet = errors.computeIfAbsent(nodeName, k ->
+                    Collections.newSetFromMap(new ConcurrentHashMap<>()));
+            for (final String error : newErrors) {
+                LOGGER.debug(() -> error);
+                errorSet.add(error);
             }
         }
-        return errorSet;
     }
 
     @Override

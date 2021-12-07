@@ -2995,7 +2995,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/User'
+                  $ref: '#/components/schemas/SimpleUser'
           description: default response
       summary: Get all permissions for a given document type
       tags:
@@ -3255,7 +3255,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateReprocessFilterRequest'
+              $ref: '#/components/schemas/CreateProcessFilterRequest'
         description: criteria
         required: true
       responses:
@@ -6078,6 +6078,12 @@ components:
           type: boolean
         enabled:
           type: boolean
+        maxMetaCreateTimeMs:
+          type: integer
+          format: int64
+        minMetaCreateTimeMs:
+          type: integer
+          format: int64
         pipeline:
           $ref: '#/components/schemas/DocRef'
         priority:
@@ -6085,18 +6091,8 @@ components:
           format: int32
         queryData:
           $ref: '#/components/schemas/QueryData'
-    CreateReprocessFilterRequest:
-      type: object
-      properties:
-        autoPriority:
+        reprocess:
           type: boolean
-        enabled:
-          type: boolean
-        priority:
-          type: integer
-          format: int32
-        queryData:
-          $ref: '#/components/schemas/QueryData'
     CreateTokenRequest:
       type: object
       properties:
@@ -7008,6 +7004,8 @@ components:
           type: array
           items:
             type: string
+        qualifiedFilterInput:
+          type: string
         rootNodes:
           type: array
           items:
@@ -7138,7 +7136,7 @@ components:
         users:
           type: array
           items:
-            $ref: '#/components/schemas/User'
+            $ref: '#/components/schemas/SimpleUser'
     FindDBTableCriteria:
       type: object
       properties:
@@ -7986,6 +7984,8 @@ components:
           type: string
         pageResponse:
           $ref: '#/components/schemas/PageResponse'
+        qualifiedFilterInput:
+          type: string
         values:
           type: array
           items:
@@ -9696,6 +9696,13 @@ components:
             $ref: '#/components/schemas/SharedElementData'
         sourceLocation:
           $ref: '#/components/schemas/SourceLocation'
+    SimpleUser:
+      type: object
+      properties:
+        name:
+          type: string
+        uuid:
+          type: string
     Size:
       type: object
       properties:
@@ -10675,6 +10682,8 @@ components:
       properties:
         pageResponse:
           $ref: '#/components/schemas/PageResponse'
+        qualifiedFilterInput:
+          type: string
         values:
           type: array
           items:

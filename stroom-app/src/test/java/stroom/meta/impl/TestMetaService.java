@@ -168,9 +168,9 @@ class TestMetaService extends StroomIntegrationTest {
                 assertThat(readExpression).isNotEmpty();
                 assertThat(readExpression.get().getChildren().size() == 1);
 
-                createMeta(FEED_NO_PERMISSION);
-                createMeta(FEED_USE_PERMISSION);
-                createMeta(FEED_READ_PERMISSION);
+                final Meta noPermissionMeta = createMeta(FEED_NO_PERMISSION);
+                final Meta usePermissionMeta = createMeta(FEED_USE_PERMISSION);
+                final Meta readPermissionMeta = createMeta(FEED_READ_PERMISSION);
 
                 final SelectionSummary selectionSummary = metaService.getSelectionSummary(new FindMetaCriteria());
                 assertThat(selectionSummary.getItemCount()).isEqualTo(1);
@@ -190,6 +190,10 @@ class TestMetaService extends StroomIntegrationTest {
 
                     final SelectionSummary selectionSummary2 = metaService.getSelectionSummary(new FindMetaCriteria());
                     assertThat(selectionSummary2.getItemCount()).isEqualTo(2);
+
+                    assertThat(metaService.getMeta(noPermissionMeta.getId(), true)).isNull();
+                    assertThat(metaService.getMeta(usePermissionMeta.getId(), true)).isNotNull();
+                    assertThat(metaService.getMeta(readPermissionMeta.getId(), true)).isNotNull();
                 });
             });
         });

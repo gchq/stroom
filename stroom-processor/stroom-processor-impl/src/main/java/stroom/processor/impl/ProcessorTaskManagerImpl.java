@@ -52,9 +52,9 @@ import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.task.api.ExecutorProvider;
-import stroom.task.api.SimpleThreadPool;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
@@ -100,7 +100,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
     private static final int POLL_INTERVAL_MS = 10000;
     private static final int DELETE_INTERVAL_MS = POLL_INTERVAL_MS * 10;
-    private static final ThreadPool THREAD_POOL = new SimpleThreadPool(3);
+    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Fill Task Store", 3);
 
     private final ProcessorFilterService processorFilterService;
     private final ProcessorFilterTrackerDao processorFilterTrackerDao;
@@ -1124,7 +1124,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                                   final boolean reprocess,
                                   final int length) {
         // Validate expression.
-        final ExpressionValidator expressionValidator = new ExpressionValidator(MetaFields.getFields());
+        final ExpressionValidator expressionValidator = new ExpressionValidator(MetaFields.getAllFields());
         expressionValidator.validate(expression);
 
         if (reprocess) {
@@ -1173,12 +1173,12 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                     .addTerm(MetaFields.ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
 
             if (minMetaCreateTimeMs != null) {
-                builder = builder.addTerm(MetaFields.PARENT_CREATE_TIME,
+                builder = builder.addTerm(MetaFields.CREATE_TIME,
                         Condition.GREATER_THAN_OR_EQUAL_TO,
                         DateUtil.createNormalDateTimeString(minMetaCreateTimeMs));
             }
             if (maxMetaCreateTimeMs != null) {
-                builder = builder.addTerm(MetaFields.PARENT_CREATE_TIME,
+                builder = builder.addTerm(MetaFields.CREATE_TIME,
                         Condition.LESS_THAN_OR_EQUAL_TO,
                         DateUtil.createNormalDateTimeString(maxMetaCreateTimeMs));
             }

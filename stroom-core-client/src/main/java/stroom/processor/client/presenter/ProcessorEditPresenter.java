@@ -52,7 +52,11 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
         view.setExpressionView(editExpressionPresenter.getView());
     }
 
-    public void read(final ExpressionOperator expression, final DocRef dataSource, final List<AbstractField> fields) {
+    public void read(final ExpressionOperator expression,
+                     final DocRef dataSource,
+                     final List<AbstractField> fields,
+                     final Long minMetaCreateTimeMs,
+                     final Long maxMetaCreateTimeMs) {
         editExpressionPresenter.init(restFactory, dataSource, fields);
 
         if (expression != null) {
@@ -60,6 +64,9 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
         } else {
             editExpressionPresenter.read(ExpressionOperator.builder().build());
         }
+
+        getView().setMinMetaCreateTimeMs(minMetaCreateTimeMs);
+        getView().setMaxMetaCreateTimeMs(maxMetaCreateTimeMs);
     }
 
     public ExpressionOperator write() {
@@ -71,14 +78,32 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
         this.consumer = consumer;
 
         final QueryData queryData = getOrCreateQueryData(filter);
-        final List<AbstractField> fields = MetaFields.getFields();
-        read(queryData.getExpression(), MetaFields.STREAM_STORE_DOC_REF, fields);
+        final List<AbstractField> fields = MetaFields.getAllFields();
+
+        final Long minMetaCreateTimeMs;
+        final Long maxMetaCreateTimeMs;
+        if (filter == null) {
+            minMetaCreateTimeMs = null;
+            maxMetaCreateTimeMs = null;
+        } else {
+            minMetaCreateTimeMs = filter.getMinMetaCreateTimeMs();
+            maxMetaCreateTimeMs = filter.getMaxMetaCreateTimeMs();
+        }
+
+        read(
+                queryData.getExpression(),
+                MetaFields.STREAM_STORE_DOC_REF,
+                fields,
+                minMetaCreateTimeMs,
+                maxMetaCreateTimeMs);
 
         final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
                     final ExpressionOperator expression = write();
+                    final Long minMetaCreateTimeMs = getView().getMinMetaCreateTimeMs();
+                    final Long maxMetaCreateTimeMs = getView().getMaxMetaCreateTimeMs();
 
                     try {
                         final ExpressionValidator expressionValidator = new ExpressionValidator(fields);
@@ -94,11 +119,11 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
                                             "position will not be processed. Are you sure you wish to do this?",
                                     result -> {
                                         if (result) {
-                                            validateFeed(filter, queryData);
+                                            validateFeed(filter, queryData, minMetaCreateTimeMs, maxMetaCreateTimeMs);
                                         }
                                     });
                         } else {
-                            validateFeed(null, queryData);
+                            validateFeed(null, queryData, minMetaCreateTimeMs, maxMetaCreateTimeMs);
                         }
                     } catch (final RuntimeException e) {
                         AlertEvent.fireError(ProcessorEditPresenter.this, e.getMessage(), null);
@@ -153,7 +178,10 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
         return new QueryData();
     }
 
-    private void validateFeed(final ProcessorFilter filter, final QueryData queryData) {
+    private void validateFeed(final ProcessorFilter filter,
+                              final QueryData queryData,
+                              final Long minMetaCreateTimeMs,
+                              final Long maxMetaCreateTimeMs) {
         final int feedCount = termCount(queryData, MetaFields.FEED);
         final int streamIdCount = termCount(queryData, MetaFields.ID);
         final int parentStreamIdCount = termCount(queryData, MetaFields.PARENT_ID);
@@ -164,15 +192,18 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
             ConfirmEvent.fire(this,
                     "You are about to process all feeds. Are you sure you wish to do this?", result -> {
                         if (result) {
-                            validateStreamType(filter, queryData);
+                            validateStreamType(filter, queryData, minMetaCreateTimeMs, maxMetaCreateTimeMs);
                         }
                     });
         } else {
-            createOrUpdateProcessor(filter, queryData);
+            createOrUpdateProcessor(filter, queryData, minMetaCreateTimeMs, maxMetaCreateTimeMs);
         }
     }
 
-    private void validateStreamType(final ProcessorFilter filter, final QueryData queryData) {
+    private void validateStreamType(final ProcessorFilter filter,
+                                    final QueryData queryData,
+                                    final Long minMetaCreateTimeMs,
+                                    final Long maxMetaCreateTimeMs) {
         final int streamTypeCount = termCount(queryData, MetaFields.TYPE);
         final int streamIdCount = termCount(queryData, MetaFields.ID);
         final int parentStreamIdCount = termCount(queryData, MetaFields.PARENT_ID);
@@ -184,11 +215,11 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
                     "You are about to process all stream types. Are you sure you wish to do this?",
                     result -> {
                         if (result) {
-                            createOrUpdateProcessor(filter, queryData);
+                            createOrUpdateProcessor(filter, queryData, minMetaCreateTimeMs, maxMetaCreateTimeMs);
                         }
                     });
         } else {
-            createOrUpdateProcessor(filter, queryData);
+            createOrUpdateProcessor(filter, queryData, minMetaCreateTimeMs, maxMetaCreateTimeMs);
         }
     }
 
@@ -200,21 +231,29 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
     }
 
     private void createOrUpdateProcessor(final ProcessorFilter filter,
-                                         final QueryData queryData) {
+                                         final QueryData queryData,
+                                         final Long minMetaCreateTimeMs,
+                                         final Long maxMetaCreateTimeMs) {
         if (filter != null) {
             // Now update the processor filter using the find stream criteria.
             filter.setQueryData(queryData);
+            filter.setMinMetaCreateTimeMs(minMetaCreateTimeMs);
+            filter.setMaxMetaCreateTimeMs(maxMetaCreateTimeMs);
 
             final Rest<ProcessorFilter> rest = restFactory.create();
             rest.onSuccess(this::hide).call(PROCESSOR_FILTER_RESOURCE).update(filter.getId(), filter);
 
         } else {
             // Now create the processor filter using the find stream criteria.
-            final CreateProcessFilterRequest request = new CreateProcessFilterRequest(pipelineRef,
-                    queryData,
-                    10,
-                    true,
-                    false);
+            final CreateProcessFilterRequest request = CreateProcessFilterRequest
+                    .builder()
+                    .pipeline(pipelineRef)
+                    .queryData(queryData)
+                    .autoPriority(true)
+                    .enabled(false)
+                    .minMetaCreateTimeMs(minMetaCreateTimeMs)
+                    .maxMetaCreateTimeMs(maxMetaCreateTimeMs)
+                    .build();
             final Rest<ProcessorFilter> rest = restFactory.create();
             rest.onSuccess(this::hide).call(PROCESSOR_FILTER_RESOURCE).create(request);
         }
@@ -223,6 +262,14 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
     public interface ProcessorEditView extends View {
 
         void setExpressionView(View view);
+
+        Long getMinMetaCreateTimeMs();
+
+        void setMinMetaCreateTimeMs(Long minMetaCreateTimeMs);
+
+        Long getMaxMetaCreateTimeMs();
+
+        void setMaxMetaCreateTimeMs(Long maxMetaCreateTimeMs);
     }
 
 
