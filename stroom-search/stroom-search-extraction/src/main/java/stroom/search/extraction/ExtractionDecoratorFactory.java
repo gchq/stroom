@@ -231,18 +231,16 @@ public class ExtractionDecoratorFactory {
             while (!parentContext.isTerminated()) {
                 final Entry<Long, Set<Event>> entry = streamEventMap.take();
 
-                taskContextFactory.childContext(parentContext, "Extraction Task", taskContext -> {
-                    securityContext.useAsRead(() -> {
-                        SearchProgressLog.add(SearchPhase.EXTRACTION_DECORATOR_FACTORY_STREAM_EVENT_MAP_TAKE,
-                                entry.getValue().size());
-                        extractEvents(taskContext,
-                                entry.getKey(),
-                                entry.getValue(),
-                                extractionCount,
-                                errorConsumer);
-                    });
-
-                }).run();
+                taskContextFactory.childContext(parentContext, "Extraction Task", taskContext ->
+                        securityContext.useAsRead(() -> {
+                            SearchProgressLog.add(SearchPhase.EXTRACTION_DECORATOR_FACTORY_STREAM_EVENT_MAP_TAKE,
+                                    entry.getValue().size());
+                            extractEvents(taskContext,
+                                    entry.getKey(),
+                                    entry.getValue(),
+                                    extractionCount,
+                                    errorConsumer);
+                        })).run();
             }
         } catch (final InterruptedException e) {
             LOGGER.trace(e::getMessage, e);
@@ -317,13 +315,13 @@ public class ExtractionDecoratorFactory {
                 LOGGER.debug(e::getMessage, e);
             } catch (final ExtractionException e) {
                 // Something went wrong extracting data from this stream.
-                errorConsumer.add(new Error(e.getMessage(), e));
+                errorConsumer.add(e);
             } catch (final RuntimeException e) {
                 // Something went wrong extracting data from this stream.
                 final ExtractionException extractionException =
                         new ExtractionException("Unable to extract data from stream source with id: " +
                                 streamId + " - " + e.getMessage(), e);
-                errorConsumer.add(new Error(extractionException.getMessage(), extractionException));
+                errorConsumer.add(extractionException);
             }
         }
     }

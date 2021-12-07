@@ -124,7 +124,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
             // the query will not be executed until somebody subscribes to the flowable
             getFlowableQueryResults(taskContext, sql, resultSetMapper, valuesConsumer);
         } catch (final RuntimeException e) {
-            errorConsumer.add(new Error(e.getMessage(), e));
+            errorConsumer.add(e);
         }
     }
 
@@ -367,8 +367,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
             Val value = cache.get(fieldName);
             if (value == null) {
                 //populate our cache of
-                extractTagsMapFromColumn(getResultSetString(rs, SQLStatisticNames.NAME))
-                        .forEach(cache::put);
+                cache.putAll(extractTagsMapFromColumn(getResultSetString(rs, SQLStatisticNames.NAME)));
             }
             value = cache.get(fieldName);
             arr[fieldIndex] = value;

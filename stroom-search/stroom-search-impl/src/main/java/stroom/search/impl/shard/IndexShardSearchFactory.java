@@ -7,7 +7,6 @@ import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldsMap;
-import stroom.pipeline.errorhandler.MessageUtil;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.common.v2.ErrorConsumer;
 import stroom.search.impl.ClusterSearchTask;
@@ -31,10 +30,10 @@ import stroom.util.logging.SearchProgressLog.SearchPhase;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -109,7 +108,7 @@ public class IndexShardSearchFactory {
 
         if (task.getShards().size() > 0) {
             try {
-                final Map<Version, Optional<SearchExpressionQuery>> queryMap = new HashMap<>();
+                final Map<Version, Optional<SearchExpressionQuery>> queryMap = new ConcurrentHashMap<>();
                 final IndexShardQueryFactory queryFactory = createIndexShardQueryFactory(
                         task, expression, indexFieldsMap, queryMap, errorConsumer);
 
@@ -196,7 +195,7 @@ public class IndexShardSearchFactory {
                     LOGGER.debug(e::getMessage, e);
                 } catch (final RuntimeException e) {
                     LOGGER.debug(e::getMessage, e);
-                    errorConsumer.add(new Error(MessageUtil.getMessage(e.getMessage(), e), e));
+                    errorConsumer.add(e);
                 }
 
                 return Optional.empty();

@@ -239,7 +239,7 @@ public class SolrSearchTaskHandler {
                     valuesConsumer.add(values);
                 }
             } catch (final RuntimeException e) {
-                error(e.getMessage(), e);
+                error(e);
             }
         }
 
@@ -249,11 +249,11 @@ public class SolrSearchTaskHandler {
             LOGGER.debug(() -> "streamDocListInfo() - " + docListInfo);
         }
 
-        private void error(final String message, final Throwable t) {
+        private void error(final Throwable t) {
             if (errorConsumer == null) {
-                LOGGER.error(() -> message, t);
+                LOGGER.error(t::getMessage, t);
             } else {
-                errorConsumer.add(new Error(message, t));
+                errorConsumer.add(t);
             }
         }
 
@@ -413,15 +413,15 @@ public class SolrSearchTaskHandler {
                     valuesConsumer.add(values);
                 }
             } catch (final RuntimeException e) {
-                error(e.getMessage(), e);
+                error(e);
             }
         }
 
-        private void error(final String message, final Throwable t) {
+        private void error(final Throwable t) {
             if (errorConsumer == null) {
-                LOGGER.error(() -> message, t);
+                LOGGER.error(t::getMessage, t);
             } else {
-                errorConsumer.add(new Error(message, t));
+                errorConsumer.add(t);
             }
         }
     }

@@ -132,7 +132,7 @@ class ExtractionTaskHandler {
                     throw new ExtractionException("Unable to create parser for pipeline: " + pipelineRef);
                 }
 
-                // Setup the id enrichment filter to try and recreate the conditions
+                // Set up the id enrichment filter to try and recreate the conditions
                 // present when the index was built. We need to do this because the
                 // input stream is now filtered to only include events matched by
                 // the search. This means that the event ids cannot be calculated by
@@ -141,7 +141,7 @@ class ExtractionTaskHandler {
                 final IdEnrichmentFilter idEnrichmentFilter = getFilter(pipeline, IdEnrichmentFilter.class);
                 idEnrichmentFilter.setup(streamId, task.getEventIds());
 
-                // Setup the search result output filter to expect the same order of
+                // Set up the search result output filter to expect the same order of
                 // event ids and give it the result cache and stored data to write
                 // values to.
                 final AbstractSearchResultOutputFilter searchResultOutputFilter = getFilter(pipeline,
@@ -183,7 +183,7 @@ class ExtractionTaskHandler {
         final ErrorReceiver errorReceiver = (severity, location, elementId, message, e) -> {
             if (!(e instanceof TaskTerminatedException)) {
                 final StoredError storedError = new StoredError(severity, location, elementId, message);
-                task.getErrorConsumer().add(new Error(storedError.toString(), e));
+                task.getErrorConsumer().add(new RuntimeException(storedError.toString(), e));
             }
             throw ProcessException.wrap(message, e);
         };
@@ -241,7 +241,7 @@ class ExtractionTaskHandler {
                 // objects Translation etc
                 feedHolder.setFeedName(source.getMeta().getFeedName());
 
-                // Setup the meta data holder.
+                // Set up the meta data holder.
                 metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, pipelineStore));
 
                 metaHolder.setMeta(source.getMeta());
