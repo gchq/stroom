@@ -6,6 +6,7 @@ import stroom.legacy.db.migration.V07_00_00_1202__property_rename.Mappings;
 import stroom.legacy.model_6_1.GlobalProperty;
 import stroom.util.NullSafe;
 import stroom.util.config.PropertyUtil.Prop;
+import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.PropertyPath;
 
 import org.apache.commons.lang3.ClassUtils;
@@ -19,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
@@ -75,13 +77,16 @@ class TestV07_00_00_1202__property_rename {
 
                         final Prop prop = optionalProp.get();
                         if (value != null) {
-                            final Class<?> propClass = value.getClass();
-
-                            // no easy way to test creating a config obj with the returned value
+                            final Class<?> propClass = prop.getValueClass();
 
                             // Prop class will always be boxed
-                            assertThat(propClass)
+                            assertThat(ClassUtils.primitiveToWrapper(propClass))
                                     .isAssignableFrom(ClassUtils.primitiveToWrapper(value.getClass()));
+
+                            final AbstractConfig config = configMapper.createObject(Map.of(propertyPath, value));
+
+                            assertThat(prop.getValueFromConfigObject(config))
+                                    .isEqualTo(value);
                         }
 
                         final String oldValue2 = legacyDefaultProperty.getDefaultValue();
@@ -96,7 +101,7 @@ class TestV07_00_00_1202__property_rename {
                             if (value2 != null) {
                                 final Class<?> propClass2 = value2.getClass();
 
-                                assertThat(propClass2)
+                                assertThat(ClassUtils.primitiveToWrapper(propClass2))
                                         .isAssignableFrom(ClassUtils.primitiveToWrapper(value2.getClass()));
                             }
                         }

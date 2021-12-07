@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Class for representing a path to a property in an object tree, i.e
@@ -165,6 +166,15 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
             return this;
         } else {
             return new PropertyPath(this.parts, part);
+        }
+    }
+
+    @JsonIgnore
+    public Optional<PropertyPath> getParent() {
+        if (parts.size() <= 1) {
+            return Optional.empty();
+        } else {
+            return Optional.of(new PropertyPath(parts.subList(0, parts.size() - 1)));
         }
     }
 

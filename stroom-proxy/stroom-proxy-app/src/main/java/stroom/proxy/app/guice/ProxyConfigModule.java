@@ -1,6 +1,5 @@
 package stroom.proxy.app.guice;
 
-import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.ProxyConfigHolder;
 import stroom.proxy.app.ProxyConfigMonitor;
 import stroom.util.config.ConfigLocation;
@@ -26,8 +25,7 @@ public class ProxyConfigModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        // Bind the application config.
-        bind(ProxyConfig.class).toInstance(proxyConfigHolder.getProxyConfig());
+        bind(ProxyConfigHolder.class).toInstance(proxyConfigHolder);
 
         bind(ProxyConfigMonitor.class).asEagerSingleton();
 

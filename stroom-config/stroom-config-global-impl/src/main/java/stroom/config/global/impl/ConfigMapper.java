@@ -304,6 +304,40 @@ public class ConfigMapper {
 //    }
 
     /**
+     * Creates a config object from a map of property paths to values. If a value is not supplied for
+     * a property then the compile time default will be used.
+     */
+    public AbstractConfig createObject(final Map<PropertyPath, Object> valueMap) {
+        final List<Optional<PropertyPath>> parents = valueMap.keySet()
+                .stream()
+                .map(PropertyPath::getParent)
+                .distinct()
+                .collect(Collectors.toList());
+        if (parents.size() > 1) {
+            throw new RuntimeException(LogUtil.message(
+                    "valueMap contains properties with different parents {}", parents));
+        }
+        final PropertyPath parent = parents.get(0)
+                .orElseThrow();
+
+        final ObjectInfo<? extends AbstractConfig> objectInfo = objectInfoMap.get(parent);
+        final Map<String, Prop> propertyMap = objectInfo.getPropertyMap();
+
+        return objectInfo.createInstance(propName -> {
+            final PropertyPath propertyPath = parent.merge(propName);
+            final Object value;
+            if (valueMap.containsKey(propertyPath)) {
+                value = valueMap.get(propertyPath);
+            } else {
+                final Prop prop = propertyMap.get(propName);
+                // Get the default value
+                value = prop.getValueFromConfigObject();
+            }
+            return value;
+        });
+    }
+
+    /**
      * Intended for tests to use
      */
     public void markConfigAsReady() {

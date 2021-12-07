@@ -87,7 +87,7 @@ class TestProxyHandlerFactory extends StroomUnitTest {
                 .withForwardUrl("https://url2");
 
         final ForwardStreamConfig forwardRequestConfig = new ForwardStreamConfig()
-                .withForwardingEnabled(isStoringEnabled)
+                .withForwardingEnabled(isForwardingenabled)
                 .withForwardDestinations(List.of(destinationConfig1, destinationConfig2));
 
         final PathCreator pathCreator = new PathCreator(

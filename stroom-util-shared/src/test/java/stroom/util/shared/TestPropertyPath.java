@@ -119,6 +119,25 @@ class TestPropertyPath {
     }
 
     @Test
+    void testGetParent1() {
+        final PropertyPath propertyPath = PropertyPath.fromPathString("stroom.node.name");
+        assertThat(propertyPath.getParent())
+                .hasValue(PropertyPath.fromPathString("stroom.node"));
+    }
+
+    @Test
+    void testGetParent2() {
+        final PropertyPath propertyPath = PropertyPath.fromPathString("stroom");
+        assertThat(propertyPath.getParent())
+                .isEmpty();
+    }
+
+    @Test
+    void testGetParent3() {
+        final PropertyPath propertyPath = PropertyPath.fromPathString("");
+    }
+
+    @Test
     void testSerde() throws IOException {
         doSerdeTest(PropertyPath.fromPathString("stroom.node.name"), PropertyPath.class);
     }
