@@ -32,11 +32,8 @@ import stroom.search.solr.SolrIndexClientCache;
 import stroom.search.solr.shared.SolrConnectionConfig;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexField;
-import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
-import stroom.task.api.ThreadPoolImpl;
-import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -51,65 +48,55 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
 import javax.inject.Inject;
 
 public class SolrSearchTaskHandler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SolrSearchTaskHandler.class);
 
-    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl(
-            "Search Solr Index Shard");
-
     private final SolrIndexClientCache solrIndexClientCache;
-    private final Executor executor;
     private final TaskContextFactory taskContextFactory;
     private final CountDownLatch completionLatch = new CountDownLatch(1);
 
     @Inject
     SolrSearchTaskHandler(final SolrIndexClientCache solrIndexClientCache,
-                          final ExecutorProvider executorProvider,
                           final TaskContextFactory taskContextFactory) {
         this.solrIndexClientCache = solrIndexClientCache;
-        this.executor = executorProvider.get(THREAD_POOL);
         this.taskContextFactory = taskContextFactory;
     }
 
-    public void exec(final TaskContext parentContext, final SolrSearchTask task) {
-        taskContextFactory.childContext(parentContext, "Index Searcher", taskContext ->
-                        LOGGER.logDurationIfDebugEnabled(
-                                () -> {
-                                    try {
-                                        if (Thread.currentThread().isInterrupted()) {
-                                            throw new RuntimeException("Interrupted");
-                                        }
+    public Runnable exec(final TaskContext parentContext, final SolrSearchTask task) {
+        return taskContextFactory.childContext(parentContext, "Index Searcher", taskContext ->
+                LOGGER.logDurationIfDebugEnabled(
+                        () -> {
+                            try {
+                                if (Thread.currentThread().isInterrupted()) {
+                                    throw new RuntimeException("Interrupted");
+                                }
 
-                                        taskContext.info(() -> "Searching Solr index");
+                                taskContext.info(() -> "Searching Solr index");
 
-                                        // Start searching.
-                                        searchShard(task, taskContext);
+                                // Start searching.
+                                searchIndex(task);
 
-                                    } catch (final RuntimeException e) {
-                                        LOGGER.debug(e::getMessage, e);
-                                        error(task, e.getMessage(), e);
-                                    }
-                                },
-                                "exec()"))
-                .run();
+                            } catch (final RuntimeException e) {
+                                LOGGER.debug(e::getMessage, e);
+                                error(task.getErrorConsumer(), e);
+                            }
+                        },
+                        "exec()"));
     }
 
-    private void searchShard(final SolrSearchTask task, final TaskContext taskContext) {
+    private void searchIndex(final SolrSearchTask task) {
         final CachedSolrIndex cachedSolrIndex = task.getSolrIndex();
         final SolrIndexDoc solrIndexDoc = cachedSolrIndex.getIndex();
         final SolrConnectionConfig connectionConfig = solrIndexDoc.getSolrConnectionConfig();
 
         // If there is an error building the query then it will be null here.
         try {
-            final Runnable runnable = () ->
-                    LOGGER.logDurationIfDebugEnabled(
-                            () -> {
+            LOGGER.logDurationIfDebugEnabled(
+                    () -> {
 //                            try {
 //                                fastStreamingDocsSearch(task, solrIndex, connectionConfig);
 //                            } catch (final RuntimeException e) {
@@ -117,19 +104,18 @@ public class SolrSearchTaskHandler {
 //                                error(task, e.getMessage(), e);
 //                            }
 
-                                try {
-                                    streamingSearch(task, solrIndexDoc, connectionConfig);
-                                } catch (final RuntimeException e) {
-                                    error(task, e.getMessage(), e);
-                                } finally {
-                                    task.getTracker().complete();
-                                    completionLatch.countDown();
-                                }
-                            },
-                            () -> "searcher.search()");
-            CompletableFuture.runAsync(runnable, executor);
+                        try {
+                            streamingSearch(task, solrIndexDoc, connectionConfig);
+                        } catch (final RuntimeException e) {
+                            error(task.getErrorConsumer(), e);
+                        } finally {
+                            task.getTracker().complete();
+                            completionLatch.countDown();
+                        }
+                    },
+                    () -> "searcher.search()");
         } catch (final RuntimeException e) {
-            error(task, e.getMessage(), e);
+            error(task.getErrorConsumer(), e);
         }
     }
 
@@ -165,7 +151,7 @@ public class SolrSearchTaskHandler {
                         callback);
                 LOGGER.debug(() -> "fastStreamingDocsSearch() - response=" + response);
             } catch (final SolrServerException | IOException | RuntimeException e) {
-                error(task, e.getMessage(), e);
+                error(task.getErrorConsumer(), e);
             }
         });
     }
@@ -202,16 +188,16 @@ public class SolrSearchTaskHandler {
 //                }
 
             } catch (final SolrServerException | IOException | RuntimeException e) {
-                error(task, e.getMessage(), e);
+                error(task.getErrorConsumer(), e);
             }
         });
     }
 
-    private void error(final SolrSearchTask task, final String message, final Throwable t) {
-        if (task == null) {
-            LOGGER.error(() -> message, t);
+    private void error(final ErrorConsumer errorConsumer, final Throwable t) {
+        if (errorConsumer == null) {
+            LOGGER.error(t::getMessage, t);
         } else {
-            task.getErrorConsumer().add(t);
+            errorConsumer.add(t);
         }
     }
 
@@ -275,7 +261,7 @@ public class SolrSearchTaskHandler {
                     valuesConsumer.add(values);
                 }
             } catch (final RuntimeException e) {
-                error(e.getMessage(), e);
+                error(e);
             }
         }
 
@@ -285,11 +271,11 @@ public class SolrSearchTaskHandler {
             LOGGER.debug(() -> "streamDocListInfo() - " + docListInfo);
         }
 
-        private void error(final String message, final Throwable t) {
+        private void error(final Throwable t) {
             if (errorConsumer == null) {
-                LOGGER.error(() -> message, t);
+                LOGGER.error(t::getMessage, t);
             } else {
-                errorConsumer.add(new Error(message, t));
+                errorConsumer.add(t);
             }
         }
 
@@ -445,15 +431,15 @@ public class SolrSearchTaskHandler {
                     valuesConsumer.add(values);
                 }
             } catch (final RuntimeException e) {
-                error(e.getMessage(), e);
+                error(e);
             }
         }
 
-        private void error(final String message, final Throwable t) {
+        private void error(final Throwable t) {
             if (errorConsumer == null) {
-                LOGGER.error(() -> message, t);
+                LOGGER.error(t::getMessage, t);
             } else {
-                errorConsumer.add(new Error(message, t));
+                errorConsumer.add(t);
             }
         }
     }

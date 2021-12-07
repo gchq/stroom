@@ -31,6 +31,8 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.index.impl.IndexStructure;
 import stroom.index.impl.IndexStructureCache;
+import stroom.pipeline.PipelineStore;
+import stroom.pipeline.factory.PipelineDataCache;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.search.extraction.ExtractionTaskHandler;
@@ -60,6 +62,8 @@ public class AlertManagerImpl implements AlertManager {
     private final int maxBooleanClauseCount;
     private final WordListProvider wordListProvider;
     private final IndexStructureCache indexStructureCache;
+    private final PipelineStore pipelineStore;
+    private final PipelineDataCache pipelineDataCache;
     private final Provider<ExtractionTaskHandler> handlerProvider;
     private final AlertConfig alertConfig;
     private Map<DocRef, List<RuleConfig>> indexToRules = new HashMap<>();
@@ -74,6 +78,8 @@ public class AlertManagerImpl implements AlertManager {
                      final WordListProvider wordListProvider,
                      final SearchConfig searchConfig,
                      final IndexStructureCache indexStructureCache,
+                     final PipelineStore pipelineStore,
+                     final PipelineDataCache pipelineDataCache,
                      final Provider<ExtractionTaskHandler> handlerProvider) {
         this.taskContext = taskContext;
         this.alertConfig = config;
@@ -82,6 +88,8 @@ public class AlertManagerImpl implements AlertManager {
         this.wordListProvider = wordListProvider;
         this.maxBooleanClauseCount = searchConfig.getMaxBooleanClauseCount();
         this.indexStructureCache = indexStructureCache;
+        this.pipelineStore = pipelineStore;
+        this.pipelineDataCache = pipelineDataCache;
         this.handlerProvider = handlerProvider;
     }
 
@@ -107,6 +115,8 @@ public class AlertManagerImpl implements AlertManager {
                         handlerProvider,
                         rules,
                         indexStructure,
+                        pipelineStore,
+                        pipelineDataCache,
                         wordListProvider,
                         maxBooleanClauseCount,
                         DateTimeSettings.builder().localZoneId(getTimeZoneId()).build());

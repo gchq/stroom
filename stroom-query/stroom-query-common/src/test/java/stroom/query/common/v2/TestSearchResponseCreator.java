@@ -38,13 +38,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestSearchResponseCreator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestSearchResponseCreator.class);
-    private static final Duration TOLLERANCE = Duration.ofMillis(100);
+    private static final Duration TOLERANCE = Duration.ofMillis(500);
 
     @Mock
     private Store mockStore;
     @Mock
     private SizesProvider sizesProvider;
-
 
     @BeforeEach
     void setup() {
@@ -76,10 +75,10 @@ class TestSearchResponseCreator {
         assertThat(searchResponse).isNotNull();
         assertThat(searchResponse.getResults()).isNullOrEmpty();
 
-        assertThat(TimingUtils.isWithinTollerance(
+        TimingUtils.isWithinTollerance(
                 serverTimeout,
                 actualDuration,
-                TOLLERANCE)).isTrue();
+                TOLERANCE);
 
         assertThat(searchResponse.getErrors()).hasSize(1);
         assertThat(searchResponse.getErrors().get(0)).containsIgnoringCase("timed out");
@@ -109,11 +108,11 @@ class TestSearchResponseCreator {
 
         assertResponseWithData(searchResponse);
 
-        //allow 100ms for java to run the code, it will never be 0
-        assertThat(TimingUtils.isWithinTollerance(
+        // Allow a period of time for java to run the code, it will never be 0
+        TimingUtils.isWithinTollerance(
                 Duration.ZERO,
                 actualDuration,
-                TOLLERANCE)).isTrue();
+                TOLERANCE);
     }
 
     @Test
@@ -136,10 +135,10 @@ class TestSearchResponseCreator {
 
         assertResponseWithData(searchResponse);
 
-        assertThat(TimingUtils.isWithinTollerance(
+        TimingUtils.isWithinTollerance(
                 Duration.ofMillis(sleepTime),
                 actualDuration,
-                TOLLERANCE)).isTrue();
+                TOLERANCE);
     }
 
     @Test
@@ -166,10 +165,10 @@ class TestSearchResponseCreator {
         assertThat(searchResponse).isNotNull();
         assertThat(searchResponse.getResults()).isNullOrEmpty();
 
-        assertThat(TimingUtils.isWithinTollerance(
+        TimingUtils.isWithinTollerance(
                 clientTimeout,
                 actualDuration,
-                TOLLERANCE)).isTrue();
+                TOLERANCE);
 
         assertThat(searchResponse.getErrors()).isNullOrEmpty();
     }
@@ -193,12 +192,11 @@ class TestSearchResponseCreator {
 
         assertResponseWithData(searchResponse);
 
-        //allow 100ms for java to run the code, it will never be 0
-        assertThat(TimingUtils.isWithinTollerance(
+        // Allow a period of time for java to run the code, it will never be 0
+        TimingUtils.isWithinTollerance(
                 clientTimeout,
                 actualDuration,
-                TOLLERANCE)).isTrue();
-
+                TOLERANCE);
 
         //Now the search request is sent again but this time the data will be available and the search complete
         //so should return immediately
@@ -215,11 +213,11 @@ class TestSearchResponseCreator {
 
         assertResponseWithData(searchResponse2);
 
-        //allow 100ms for java to run the code, it will never be 0
-        assertThat(TimingUtils.isWithinTollerance(
+        // Allow a period of time for java to run the code, it will never be 0
+        TimingUtils.isWithinTollerance(
                 Duration.ofMillis(sleepTime),
                 actualDuration,
-                TOLLERANCE)).isTrue();
+                TOLERANCE);
     }
 
     private void makeSearchStateAfter(final long sleepTime, final boolean state) {

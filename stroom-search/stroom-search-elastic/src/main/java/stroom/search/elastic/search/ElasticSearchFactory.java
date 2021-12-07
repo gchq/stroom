@@ -9,14 +9,18 @@ import stroom.query.common.v2.ErrorConsumer;
 import stroom.search.elastic.ElasticIndexService;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
+import stroom.task.api.ThreadPoolImpl;
+import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import org.elasticsearch.index.query.QueryBuilder;
 
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.inject.Inject;
 
@@ -24,29 +28,35 @@ public class ElasticSearchFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticSearchFactory.class);
 
+    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl(
+            "Search Elastic Index");
+
     private final WordListProvider wordListProvider;
     private final ElasticSearchTaskHandler elasticSearchTaskHandler;
     private final ElasticIndexService elasticIndexService;
+    private final Executor executor;
 
     @Inject
     public ElasticSearchFactory(final WordListProvider wordListProvider,
                                 final ElasticSearchTaskHandler elasticSearchTaskHandler,
-                                final ElasticIndexService elasticIndexService) {
+                                final ElasticIndexService elasticIndexService,
+                                final ExecutorProvider executorProvider) {
         this.wordListProvider = wordListProvider;
         this.elasticSearchTaskHandler = elasticSearchTaskHandler;
         this.elasticIndexService = elasticIndexService;
+        this.executor = executorProvider.get(THREAD_POOL);
     }
 
-    public void search(final ElasticAsyncSearchTask asyncSearchTask,
-                       final ElasticIndexDoc index,
-                       final FieldIndex fieldIndex,
-                       final long now,
-                       final ExpressionOperator expression,
-                       final ValuesConsumer valuesConsumer,
-                       final ErrorConsumer errorConsumer,
-                       final TaskContext taskContext,
-                       final AtomicLong hitCount,
-                       final DateTimeSettings dateTimeSettings) {
+    public CompletableFuture<Void> search(final ElasticAsyncSearchTask asyncSearchTask,
+                                          final ElasticIndexDoc index,
+                                          final FieldIndex fieldIndex,
+                                          final long now,
+                                          final ExpressionOperator expression,
+                                          final ValuesConsumer valuesConsumer,
+                                          final ErrorConsumer errorConsumer,
+                                          final TaskContext parentContext,
+                                          final AtomicLong hitCount,
+                                          final DateTimeSettings dateTimeSettings) {
         // Make sure we have a search index.
         if (index == null) {
             throw new SearchException("Search index has not been set");
@@ -60,22 +70,7 @@ public class ElasticSearchFactory {
                 asyncSearchTask, index, queryBuilder, fieldIndex, valuesConsumer, errorConsumer, tracker,
                 asyncSearchTask.getResultCollector());
 
-        elasticSearchTaskHandler.exec(taskContext, elasticSearchTask);
-
-        // Wait until we finish.
-        try {
-            while (!tracker.awaitCompletion(1, TimeUnit.SECONDS)) {
-                taskContext.info(() -> "" +
-                        "Searching... " +
-                        "found " +
-                        hitCount.get() +
-                        " hits");
-            }
-        } catch (final InterruptedException e) {
-            LOGGER.debug(this::toString);
-            // Keep interrupting.
-            Thread.currentThread().interrupt();
-        }
+        return CompletableFuture.runAsync(elasticSearchTaskHandler.exec(parentContext, elasticSearchTask), executor);
     }
 
     private QueryBuilder getQuery(final ExpressionOperator expression,

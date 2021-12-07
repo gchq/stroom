@@ -12,6 +12,24 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#2625** : Disable test temporarily to fix build.
+
+* Issue **#2630** : Fix NPE and improve logging.
+
+* Issue **#2625** : Disable test temporarily to fix build.
+
+* Issue **#2615** : Fix meta status change triggered by check superseded.
+
+* Issue **#2614** : Fix NPE.
+
+* Issue **#2621** : Improve search performance.
+
+* Issue **#2617** : Fix pipeline data equality for pipeline structure cache to be useful.
+
+* Issue **#2619** : Improve meta DAO performance.
+
+* Issue **#2611** : Fix java lang error.
+
 * Issue **#2608** : Fix segments for rolled streams created using the `StreamAppender`.
 
 * Issue **#2604** : Add code to diagnose unexpected event counts in search extraction.

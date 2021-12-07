@@ -439,7 +439,7 @@ class MetaDaoImpl implements MetaDao, Clearable {
                             .where(conditions)
                             .execute());
         } else {
-            Select ids = metaExpressionMapper.addJoins(
+            final Select ids = metaExpressionMapper.addJoins(
                             DSL
                                     .select(meta.ID)
                                     .from(meta)
@@ -1078,7 +1078,6 @@ class MetaDaoImpl implements MetaDao, Clearable {
         }
         return identified;
     }
-
 
     private List<Meta> find(final Collection<Condition> conditions,
                             final Collection<OrderField<?>> orderFields,

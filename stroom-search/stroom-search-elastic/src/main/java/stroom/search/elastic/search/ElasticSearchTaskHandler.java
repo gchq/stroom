@@ -30,11 +30,8 @@ import stroom.search.elastic.ElasticClusterStore;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticConnectionConfig;
 import stroom.search.elastic.shared.ElasticIndexDoc;
-import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
-import stroom.task.api.ThreadPoolImpl;
-import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -52,9 +49,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
@@ -72,47 +67,40 @@ public class ElasticSearchTaskHandler {
      */
     private static final int SCROLL_SIZE = 1000;
 
-    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Search Elasticsearch Index");
-
     private final ElasticClientCache elasticClientCache;
     private final ElasticClusterStore elasticClusterStore;
-    private final Executor executor;
     private final TaskContextFactory taskContextFactory;
     private final CountDownLatch completionLatch = new CountDownLatch(1);
 
     @Inject
     ElasticSearchTaskHandler(final ElasticClientCache elasticClientCache,
                              final ElasticClusterStore elasticClusterStore,
-                             final ExecutorProvider executorProvider,
                              final TaskContextFactory taskContextFactory) {
         this.elasticClientCache = elasticClientCache;
         this.elasticClusterStore = elasticClusterStore;
-        this.executor = executorProvider.get(THREAD_POOL);
         this.taskContextFactory = taskContextFactory;
     }
 
-    public void exec(final TaskContext parentContext, final ElasticSearchTask task) {
-        taskContextFactory.childContext(parentContext, "Index Searcher", taskContext ->
-                        LOGGER.logDurationIfDebugEnabled(
-                                () -> {
-                                    try {
-                                        if (Thread.interrupted()) {
-                                            Thread.currentThread().interrupt();
-                                            throw new RuntimeException("Interrupted");
-                                        }
+    public Runnable exec(final TaskContext parentContext, final ElasticSearchTask task) {
+        return taskContextFactory.childContext(parentContext, "Index Searcher", taskContext ->
+                LOGGER.logDurationIfDebugEnabled(
+                        () -> {
+                            try {
+                                if (Thread.currentThread().isInterrupted()) {
+                                    throw new RuntimeException("Interrupted");
+                                }
 
-                                        taskContext.info(() -> "Searching Elasticsearch index");
+                                taskContext.info(() -> "Searching Elasticsearch index");
 
-                                        // Start searching.
-                                        searchIndex(task);
+                                // Start searching.
+                                searchIndex(task);
 
-                                    } catch (final RuntimeException e) {
-                                        LOGGER.debug(e::getMessage, e);
-                                        error(task.getErrorConsumer(), e.getMessage(), e);
-                                    }
-                                },
-                                "exec()"))
-                .run();
+                            } catch (final RuntimeException e) {
+                                LOGGER.debug(e::getMessage, e);
+                                error(task.getErrorConsumer(), e);
+                            }
+                        },
+                        "exec()"));
     }
 
     private void searchIndex(final ElasticSearchTask task) {
@@ -122,29 +110,26 @@ public class ElasticSearchTaskHandler {
 
         // If there is an error building the query then it will be null here.
         try {
-            final Runnable runnable = () ->
-                    LOGGER.logDurationIfDebugEnabled(
-                            () -> {
-                                try {
-                                    streamingSearch(task, elasticIndex, connectionConfig);
-                                } catch (final RuntimeException e) {
-                                    error(task.getErrorConsumer(), e.getMessage(), e);
-                                } finally {
-                                    task.getTracker().complete();
-                                    completionLatch.countDown();
-                                }
-                            },
-                            () -> "searcher.search()");
-            CompletableFuture.runAsync(runnable, executor);
+            LOGGER.logDurationIfDebugEnabled(
+                    () -> {
+                        try {
+                            streamingSearch(task, elasticIndex, connectionConfig);
+                        } catch (final RuntimeException e) {
+                            error(task.getErrorConsumer(), e);
+                        } finally {
+                            task.getTracker().complete();
+                            completionLatch.countDown();
+                        }
+                    },
+                    () -> "searcher.search()");
         } catch (final RuntimeException e) {
-            error(task.getErrorConsumer(), e.getMessage(), e);
+            error(task.getErrorConsumer(), e);
         }
     }
 
     private void streamingSearch(final ElasticSearchTask task,
                                  final ElasticIndexDoc elasticIndex,
-                                 final ElasticConnectionConfig connectionConfig
-    ) {
+                                 final ElasticConnectionConfig connectionConfig) {
         elasticClientCache.context(connectionConfig, elasticClient -> {
             try {
                 final Scroll scroll = new Scroll(TimeValue.timeValueMinutes(SCROLL_DURATION));
@@ -183,7 +168,7 @@ public class ElasticSearchTaskHandler {
 
                 LOGGER.debug(() -> "Total hits: " + task.getTracker().getHitCount());
             } catch (final IOException | RuntimeException e) {
-                error(task.getErrorConsumer(), e.getMessage(), e);
+                error(task.getErrorConsumer(), e);
             }
         });
     }
@@ -269,19 +254,15 @@ public class ElasticSearchTaskHandler {
                 }
             }
         } catch (final RuntimeException e) {
-            if (errorConsumer == null) {
-                LOGGER.error(e::getMessage, e);
-            } else {
-                errorConsumer.add(new Error(e.getMessage(), e));
-            }
+            error(errorConsumer, e);
         }
     }
 
-    private void error(final ErrorConsumer errorConsumer, final String message, final Throwable t) {
+    private void error(final ErrorConsumer errorConsumer, final Throwable t) {
         if (errorConsumer == null) {
-            LOGGER.error(() -> message, t);
+            LOGGER.error(t::getMessage, t);
         } else {
-            errorConsumer.add(new Error(message, t));
+            errorConsumer.add(t);
         }
     }
 }

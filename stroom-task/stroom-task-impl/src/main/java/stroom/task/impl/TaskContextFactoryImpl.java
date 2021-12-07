@@ -218,9 +218,9 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
             // Get the parent task thread if there is one.
             final Optional<TaskContextImpl> parentTask = getTaskById(parentTaskId);
             final Thread currentThread = Thread.currentThread();
-            final String oldThreadName = currentThread.getName();
-
-            currentThread.setName(oldThreadName + " - " + taskName);
+//            final String oldThreadName = currentThread.getName();
+//
+//            currentThread.setName(oldThreadName + " - " + taskName);
 
             // Set the thread.
             subTaskContext.setThread(currentThread);
@@ -276,7 +276,7 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
                     subTaskContext.setTerminateHandler(null);
                     terminateHandler.onDestroy();
                 } finally {
-                    currentThread.setName(oldThreadName);
+//                    currentThread.setName(oldThreadName);
                 }
             }
 

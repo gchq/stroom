@@ -28,11 +28,16 @@ import stroom.index.impl.LuceneVersionUtil;
 import stroom.index.impl.analyzer.AnalyzerFactory;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFieldsMap;
+import stroom.pipeline.PipelineStore;
+import stroom.pipeline.factory.PipelineDataCache;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.data.PipelineData;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Field;
 import stroom.query.common.v2.CompiledFields;
 import stroom.query.common.v2.ErrorConsumer;
+import stroom.search.extraction.ExtractionException;
 import stroom.search.extraction.ExtractionReceiver;
 import stroom.search.extraction.ExtractionTask;
 import stroom.search.extraction.ExtractionTaskHandler;
@@ -56,6 +61,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import javax.inject.Provider;
 
@@ -63,11 +69,15 @@ public class AlertProcessorImpl implements AlertProcessor {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AlertProcessorImpl.class);
 
+    private static final DocRef NULL_SELECTION = DocRef.builder().uuid("").name("None").type("").build();
+
     private final AlertQueryHits alertQueryHits;
 
     private final WordListProvider wordListProvider;
     private final int maxBooleanClauseCount;
     private final IndexStructure indexStructure;
+    private final PipelineStore pipelineStore;
+    private final PipelineDataCache pipelineDataCache;
 
     private final List<RuleConfig> rules;
 
@@ -80,10 +90,14 @@ public class AlertProcessorImpl implements AlertProcessor {
 
     private final DateTimeSettings dateTimeSettings;
 
+    private final Map<DocRef, PipelineData> pipelineDataMap = new ConcurrentHashMap<>();
+
     public AlertProcessorImpl(final TaskContext taskContext,
                               final Provider<ExtractionTaskHandler> handlerProvider,
                               final List<RuleConfig> rules,
                               final IndexStructure indexStructure,
+                              final PipelineStore pipelineStore,
+                              final PipelineDataCache pipelineDataCache,
                               final WordListProvider wordListProvider,
                               final int maxBooleanClauseCount,
                               final DateTimeSettings dateTimeSettings) {
@@ -91,6 +105,8 @@ public class AlertProcessorImpl implements AlertProcessor {
         this.wordListProvider = wordListProvider;
         this.maxBooleanClauseCount = maxBooleanClauseCount;
         this.indexStructure = indexStructure;
+        this.pipelineStore = pipelineStore;
+        this.pipelineDataCache = pipelineDataCache;
         this.analyzerMap = new HashMap<>();
         if (indexStructure.getIndexFields() != null) {
             for (final IndexField indexField : indexStructure.getIndexFields()) {
@@ -221,6 +237,7 @@ public class AlertProcessorImpl implements AlertProcessor {
                         }
                     };
 
+                    final PipelineData pipelineData = getPipelineData(pipeline);
                     final ExtractionTask task = new ExtractionTask(
                             currentStreamId,
                             eventIds,
@@ -229,7 +246,7 @@ public class AlertProcessorImpl implements AlertProcessor {
                             errorConsumer,
                             ruleConfig.getAlertDefinitions(),
                             ruleConfig.getParams());
-                    handlerProvider.get().exec(taskContext, task);
+                    handlerProvider.get().extract(taskContext, task, pipelineData);
                     numTasks++;
                 }
             }
@@ -238,6 +255,24 @@ public class AlertProcessorImpl implements AlertProcessor {
         LOGGER.debug("Created {} search extraction tasks for stream id {}", numTasks, currentStreamId);
         alertQueryHits.clearHits();
 
+    }
+
+    private PipelineData getPipelineData(final DocRef pipelineRef) {
+        return pipelineDataMap.computeIfAbsent(pipelineRef, k -> {
+            // Check the pipelineRef is not our 'NULL SELECTION'
+            if (pipelineRef == null || NULL_SELECTION.compareTo(pipelineRef) == 0) {
+                throw new ExtractionException("Extraction is enabled, but no extraction pipeline is configured.");
+            }
+
+            // Get the translation that will be used to display results.
+            final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+            if (pipelineDoc == null) {
+                throw new ExtractionException("Unable to find result pipeline: " + pipelineRef);
+            }
+
+            // Create the parser.
+            return pipelineDataCache.get(pipelineDoc);
+        });
     }
 
     private boolean matchQuery(final IndexSearcher indexSearcher, final IndexFieldsMap indexFieldsMap,

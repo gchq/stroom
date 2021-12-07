@@ -21,17 +21,19 @@ import stroom.annotation.api.AnnotationFields;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
-import stroom.query.common.v2.Coprocessor;
 import stroom.query.common.v2.Coprocessors;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.extraction.ExpressionFilter;
 import stroom.search.extraction.ExtractionDecoratorFactory;
 import stroom.search.extraction.StoredDataQueue;
+import stroom.search.extraction.StreamMapCreator;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.inject.Inject;
@@ -65,8 +67,7 @@ class ElasticClusterSearchTaskHandler {
                      final String[] storedFields,
                      final long now,
                      final DateTimeSettings dateTimeSettings,
-                     final Coprocessors coprocessors
-    ) {
+                     final Coprocessors coprocessors) {
         securityContext.useAsRead(() -> {
             if (!Thread.currentThread().isInterrupted()) {
                 taskContext.info(() -> "Initialising...");
@@ -86,6 +87,7 @@ class ElasticClusterSearchTaskHandler {
                         // Start searching.
                         search(taskContext, task, elasticIndex, query, now, dateTimeSettings, coprocessors);
                     }
+
                 } catch (final RuntimeException e) {
                     try {
                         coprocessors.getErrorConsumer().add(e);
@@ -116,10 +118,8 @@ class ElasticClusterSearchTaskHandler {
         LOGGER.debug(() -> "Incoming search request:\n" + query.getExpression().toString());
 
         try {
-            final StoredDataQueue storedDataQueue = extractionDecoratorFactory.create(
-                    taskContext,
+            final StoredDataQueue storedDataQueue = extractionDecoratorFactory.createStoredDataQueue(
                     coprocessors,
-                    extractionCount,
                     query);
 
             // Search all index shards.
@@ -127,9 +127,7 @@ class ElasticClusterSearchTaskHandler {
                     .addPrefixExcludeFilter(AnnotationFields.ANNOTATION_FIELD_PREFIX)
                     .build();
             final ExpressionOperator expression = expressionFilter.copy(query.getExpression());
-            final AtomicLong hitCount = new AtomicLong();
-
-            elasticSearchFactory.search(
+            final CompletableFuture<Void> indexShardSearchFuture = elasticSearchFactory.search(
                     task,
                     elasticIndex,
                     coprocessors.getFieldIndex(),
@@ -141,8 +139,34 @@ class ElasticClusterSearchTaskHandler {
                     hitCount,
                     dateTimeSettings);
 
-            // Wait for extraction to complete.
-            while (!extractionDecoratorFactory.awaitCompletion(1, TimeUnit.SECONDS)) {
+            // When we complete the index shard search tell teh stored data queue we are complete.
+            indexShardSearchFuture.whenCompleteAsync((r, t) -> {
+                LOGGER.debug("Complete stored data queue");
+                storedDataQueue.onComplete();
+            });
+
+            // Create an object to make event lists from raw index data.
+            final StreamMapCreator streamMapCreator = new StreamMapCreator(
+                    coprocessors.getFieldIndex());
+
+            // Start mapping streams.
+            final CompletableFuture<Void> streamMappingFuture = extractionDecoratorFactory
+                    .startMapping(taskContext, streamMapCreator, coprocessors.getErrorConsumer());
+
+            // Start extracting data.
+            final CompletableFuture<Void> extractionFuture = extractionDecoratorFactory
+                    .startExtraction(taskContext, extractionCount, coprocessors.getErrorConsumer());
+
+            // Create a countdown latch to keep updating status until we complete.
+            final CountDownLatch complete = new CountDownLatch(1);
+
+            // Wait for all to complete.
+            final CompletableFuture<Void> all = CompletableFuture
+                    .allOf(indexShardSearchFuture, streamMappingFuture, extractionFuture);
+            all.whenCompleteAsync((r, t) -> complete.countDown());
+
+            // Update status until we complete.
+            while (!complete.await(1, TimeUnit.SECONDS)) {
                 updateInfo();
             }
 

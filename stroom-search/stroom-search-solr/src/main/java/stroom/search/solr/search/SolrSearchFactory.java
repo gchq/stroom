@@ -9,14 +9,18 @@ import stroom.query.common.v2.ErrorConsumer;
 import stroom.search.solr.CachedSolrIndex;
 import stroom.search.solr.search.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.search.solr.shared.SolrIndexField;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
+import stroom.task.api.ThreadPoolImpl;
+import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import org.apache.solr.client.solrj.SolrQuery;
 
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.inject.Inject;
 
@@ -24,28 +28,34 @@ public class SolrSearchFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SolrSearchFactory.class);
 
+    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl(
+            "Search Solr Index");
+
     private final WordListProvider wordListProvider;
     private final SolrSearchConfig config;
     private final SolrSearchTaskHandler solrSearchTaskHandler;
+    private final Executor executor;
 
     @Inject
     public SolrSearchFactory(final WordListProvider wordListProvider,
                              final SolrSearchConfig config,
-                             final SolrSearchTaskHandler solrSearchTaskHandler) {
+                             final SolrSearchTaskHandler solrSearchTaskHandler,
+                             final ExecutorProvider executorProvider) {
         this.wordListProvider = wordListProvider;
         this.config = config;
         this.solrSearchTaskHandler = solrSearchTaskHandler;
+        this.executor = executorProvider.get(THREAD_POOL);
     }
 
-    public void search(final CachedSolrIndex index,
-                       final FieldIndex fieldIndex,
-                       final long now,
-                       final ExpressionOperator expression,
-                       final ValuesConsumer valuesConsumer,
-                       final ErrorConsumer errorConsumer,
-                       final TaskContext taskContext,
-                       final AtomicLong hitCount,
-                       final DateTimeSettings dateTimeSettings) {
+    public CompletableFuture<Void> search(final CachedSolrIndex index,
+                                          final FieldIndex fieldIndex,
+                                          final long now,
+                                          final ExpressionOperator expression,
+                                          final ValuesConsumer valuesConsumer,
+                                          final ErrorConsumer errorConsumer,
+                                          final TaskContext parentContext,
+                                          final AtomicLong hitCount,
+                                          final DateTimeSettings dateTimeSettings) {
         // Make sure we have a search index.
         if (index == null) {
             throw new SearchException("Search index has not been set");
@@ -66,22 +76,7 @@ public class SolrSearchFactory {
                 valuesConsumer,
                 errorConsumer,
                 tracker);
-        solrSearchTaskHandler.exec(taskContext, solrSearchTask);
-
-        // Wait until we finish.
-        try {
-            while (!tracker.awaitCompletion(1, TimeUnit.SECONDS)) {
-                taskContext.info(() -> "" +
-                        "Searching... " +
-                        "found " +
-                        hitCount.get() +
-                        " hits");
-            }
-        } catch (final InterruptedException e) {
-            LOGGER.debug(this::toString);
-            // Keep interrupting.
-            Thread.currentThread().interrupt();
-        }
+        return CompletableFuture.runAsync(solrSearchTaskHandler.exec(parentContext, solrSearchTask), executor);
     }
 
     private SearchExpressionQuery getQuery(final ExpressionOperator expression,

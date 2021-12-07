@@ -17,21 +17,21 @@
 
 package stroom.search.extraction;
 
+import stroom.data.store.api.DataException;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
+import stroom.meta.shared.Meta;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.Pipeline;
-import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.filter.IdEnrichmentFilter;
 import stroom.pipeline.filter.XMLFilter;
-import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.CurrentUserHolder;
 import stroom.pipeline.state.FeedHolder;
@@ -56,6 +56,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.util.List;
 import javax.inject.Inject;
 
@@ -63,7 +64,6 @@ public class ExtractionTaskHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExtractionTaskHandler.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ExtractionTaskHandler.class);
-    private static final DocRef NULL_SELECTION = DocRef.builder().uuid("").name("None").type("").build();
 
     private final Store streamStore;
     private final FeedHolder feedHolder;
@@ -74,7 +74,6 @@ public class ExtractionTaskHandler {
     private final ErrorReceiverProxy errorReceiverProxy;
     private final PipelineFactory pipelineFactory;
     private final PipelineStore pipelineStore;
-    private final PipelineDataCache pipelineDataCache;
     private final SecurityContext securityContext;
 
     private ExtractionTask task;
@@ -89,7 +88,6 @@ public class ExtractionTaskHandler {
                           final ErrorReceiverProxy errorReceiverProxy,
                           final PipelineFactory pipelineFactory,
                           final PipelineStore pipelineStore,
-                          final PipelineDataCache pipelineDataCache,
                           final SecurityContext securityContext) {
         this.streamStore = streamStore;
         this.feedHolder = feedHolder;
@@ -100,87 +98,74 @@ public class ExtractionTaskHandler {
         this.errorReceiverProxy = errorReceiverProxy;
         this.pipelineFactory = pipelineFactory;
         this.pipelineStore = pipelineStore;
-        this.pipelineDataCache = pipelineDataCache;
         this.securityContext = securityContext;
     }
 
-    public void exec(final TaskContext taskContext, final ExtractionTask task) {
-        SearchProgressLog.increment(SearchPhase.EXTRACTION_TASK_HANDLER_EXEC);
-        // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission on can be read.
-        securityContext.useAsRead(() ->
-                LAMBDA_LOGGER.logDurationIfDebugEnabled(
-                        () -> {
-                            if (!Thread.currentThread().isInterrupted()) {
-                                final String streamId = String.valueOf(task.getStreamId());
-                                taskContext.info(() ->
-                                        "Extracting " + task.getEventIds().length + " records from stream " + streamId);
+    public Meta extract(final TaskContext taskContext,
+                        final ExtractionTask task,
+                        final PipelineData pipelineData) throws DataException {
+        Meta meta = null;
 
-                                extract(taskContext, task);
-                            }
-                        },
-                        () -> "ExtractionTaskHandler.exec()"));
-    }
+        // Open the stream source.
+        try (final Source source = streamStore.openSource(task.getStreamId())) {
+            if (source != null) {
+                SearchProgressLog.increment(SearchPhase.EXTRACTION_TASK_HANDLER_EXTRACT);
+                SearchProgressLog.add(SearchPhase.EXTRACTION_TASK_HANDLER_EXTRACT_EVENTS, task.getEventIds().length);
 
-    private void extract(final TaskContext taskContext, final ExtractionTask task) {
-        SearchProgressLog.increment(SearchPhase.EXTRACTION_TASK_HANDLER_EXTRACT);
-        SearchProgressLog.add(SearchPhase.EXTRACTION_TASK_HANDLER_EXTRACT_EVENTS, task.getEventIds().length);
-        try {
-            this.task = task;
+                taskContext.info(() -> "" +
+                        "Extracting " +
+                        task.getEventIds().length +
+                        " records from stream " +
+                        task.getStreamId());
 
-            // Set the current user.
-            currentUserHolder.setCurrentUser(securityContext.getUserId());
+                meta = source.getMeta();
+                this.task = task;
 
-            final DocRef pipelineRef = task.getPipelineRef();
+                // Set the current user.
+                currentUserHolder.setCurrentUser(securityContext.getUserId());
 
-            // Check the pipelineRef is not our 'NULL SELECTION'
-            if (pipelineRef == null || NULL_SELECTION.compareTo(pipelineRef) == 0) {
-                throw new ExtractionException("Extraction is enabled, but no extraction pipeline is configured.");
+                final DocRef pipelineRef = task.getPipelineRef();
+
+                // Create the parser.
+                final Pipeline pipeline = pipelineFactory.create(pipelineData, taskContext);
+                if (pipeline == null) {
+                    throw new ExtractionException("Unable to create parser for pipeline: " + pipelineRef);
+                }
+
+                // Set up the id enrichment filter to try and recreate the conditions
+                // present when the index was built. We need to do this because the
+                // input stream is now filtered to only include events matched by
+                // the search. This means that the event ids cannot be calculated by
+                // just counting events.
+                final String streamId = String.valueOf(task.getStreamId());
+                final IdEnrichmentFilter idEnrichmentFilter = getFilter(pipeline, IdEnrichmentFilter.class);
+                idEnrichmentFilter.setup(streamId, task.getEventIds());
+
+                // Set up the search result output filter to expect the same order of
+                // event ids and give it the result cache and stored data to write
+                // values to.
+                final AbstractSearchResultOutputFilter searchResultOutputFilter = getFilter(pipeline,
+                        AbstractSearchResultOutputFilter.class);
+
+                searchResultOutputFilter.setup(task.getReceiver());
+                if (task.isAlerting()) {
+                    searchResultOutputFilter.setupForAlerting(task.getAlertTableSettings(),
+                            task.getParamMapForAlerting());
+                }
+
+                // Process the stream segments.
+                processData(source, task.getEventIds(), pipelineRef, pipeline);
+
+                // Ensure count is the same.
+                if (task.getEventIds().length != searchResultOutputFilter.getCount()) {
+                    LOGGER.debug("Extraction count mismatch");
+                }
             }
-
-            // Get the translation that will be used to display results.
-            final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
-            if (pipelineDoc == null) {
-                throw new ExtractionException("Unable to find result pipeline: " + pipelineRef);
-            }
-
-            // Create the parser.
-            final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
-            final Pipeline pipeline = pipelineFactory.create(pipelineData, taskContext);
-            if (pipeline == null) {
-                throw new ExtractionException("Unable to create parser for pipeline: " + pipelineRef);
-            }
-
-            // Setup the id enrichment filter to try and recreate the conditions
-            // present when the index was built. We need to do this because the
-            // input stream is now filtered to only include events matched by
-            // the search. This means that the event ids cannot be calculated by
-            // just counting events.
-            final String streamId = String.valueOf(task.getStreamId());
-            final IdEnrichmentFilter idEnrichmentFilter = getFilter(pipeline, IdEnrichmentFilter.class);
-            idEnrichmentFilter.setup(streamId, task.getEventIds());
-
-            // Setup the search result output filter to expect the same order of
-            // event ids and give it the result cache and stored data to write
-            // values to.
-            final AbstractSearchResultOutputFilter searchResultOutputFilter = getFilter(pipeline,
-                    AbstractSearchResultOutputFilter.class);
-
-            searchResultOutputFilter.setup(task.getReceiver());
-            if (task.isAlerting()) {
-                searchResultOutputFilter.setupForAlerting(task.getAlertTableSettings(), task.getParamMapForAlerting());
-            }
-
-            // Process the stream segments.
-            processData(task.getStreamId(), task.getEventIds(), pipelineRef, pipeline);
-
-            // Ensure count is the same.
-            if (task.getEventIds().length != searchResultOutputFilter.getCount()) {
-                LOGGER.debug("Extraction count mismatch");
-            }
-
-        } catch (final RuntimeException e) {
-            task.getErrorConsumer().add(new Error(e.getMessage(), e));
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
         }
+
+        return meta;
     }
 
     private <T extends XMLFilter> T getFilter(final Pipeline pipeline, final Class<T> clazz) {
@@ -195,57 +180,50 @@ public class ExtractionTaskHandler {
      * Extract data from the segment list. Returns the total number of segments
      * that were successfully extracted.
      */
-    private void processData(final long streamId, final long[] eventIds, final DocRef pipelineRef,
+    private void processData(final Source source,
+                             final long[] eventIds,
+                             final DocRef pipelineRef,
                              final Pipeline pipeline) {
         final ErrorReceiver errorReceiver = (severity, location, elementId, message, e) -> {
-            final StoredError storedError = new StoredError(severity, location, elementId, message);
-            task.getErrorConsumer().add(new Error(storedError.toString(), e));
+            if (!(e instanceof TaskTerminatedException)) {
+                final StoredError storedError = new StoredError(severity, location, elementId, message);
+                task.getErrorConsumer().add(new RuntimeException(storedError.toString(), e));
+            }
             throw ProcessException.wrap(message, e);
         };
 
         errorReceiverProxy.setErrorReceiver(errorReceiver);
         long count = 0;
 
-        // Open the stream source.
-        try (final Source source = streamStore.openSource(streamId)) {
-            if (source != null) {
-                try (final InputStreamProvider inputStreamProvider = source.get(0)) {
-                    // This is a valid stream so try and extract as many
-                    // segments as we are allowed.
-                    try (final SegmentInputStream segmentInputStream = inputStreamProvider.get()) {
-                        // Include the XML Header and footer.
-                        segmentInputStream.include(0);
-                        segmentInputStream.include(segmentInputStream.count() - 1);
+        try (final InputStreamProvider inputStreamProvider = source.get(0)) {
+            // This is a valid stream so try and extract as many
+            // segments as we are allowed.
+            try (final SegmentInputStream segmentInputStream = inputStreamProvider.get()) {
+                // Include the XML Header and footer.
+                segmentInputStream.include(0);
+                segmentInputStream.include(segmentInputStream.count() - 1);
 
-                        // Include as many segments as we can.
-                        for (final long eventId : eventIds) {
-                            segmentInputStream.include(eventId);
-                            count++;
-                        }
-
-                        // Now try and extract the data.
-                        extract(pipelineRef, pipeline, source, segmentInputStream, count);
-
-                    } catch (final RuntimeException e) {
-                        // Something went wrong extracting data from this
-                        // stream.
-                        throw new ExtractionException("Unable to extract data from stream source with id: " +
-                                streamId + " - " + e.getMessage(), e);
-                    }
-                } catch (final ExtractionException e) {
-                    throw e;
-                } catch (final IOException | RuntimeException e) {
-                    // Something went wrong extracting data from this stream.
-                    throw new ExtractionException("Unable to extract data from stream source with id: " +
-                            streamId + " - " + e.getMessage(), e);
+                // Include as many segments as we can.
+                for (final long eventId : eventIds) {
+                    segmentInputStream.include(eventId);
+                    count++;
                 }
+
+                // Now try and extract the data.
+                extract(pipelineRef, pipeline, source, segmentInputStream, count);
+
+            } catch (final RuntimeException e) {
+                // Something went wrong extracting data from this
+                // stream.
+                throw new ExtractionException("Unable to extract data from stream source with id: " +
+                        source.getMeta().getId() + " - " + e.getMessage(), e);
             }
         } catch (final ExtractionException e) {
             throw e;
         } catch (final IOException | RuntimeException e) {
             // Something went wrong extracting data from this stream.
             throw new ExtractionException("Unable to extract data from stream source with id: " +
-                    streamId + " - " + e.getMessage(), e);
+                    source.getMeta().getId() + " - " + e.getMessage(), e);
         }
     }
 
@@ -267,7 +245,7 @@ public class ExtractionTaskHandler {
                 // objects Translation etc
                 feedHolder.setFeedName(source.getMeta().getFeedName());
 
-                // Setup the meta data holder.
+                // Set up the meta data holder.
                 metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, pipelineStore));
 
                 metaHolder.setMeta(source.getMeta());

@@ -106,7 +106,7 @@ public class IndexShardSearchTaskHandler {
                         }
                     } catch (final RuntimeException e) {
                         LOGGER.debug(e::getMessage, e);
-                        error(errorConsumer, e.getMessage(), e);
+                        error(errorConsumer, e);
 
                     } finally {
                         taskContext.info(() -> "Closing searcher for index shard " + indexShardId);
@@ -166,7 +166,7 @@ public class IndexShardSearchTaskHandler {
                                         try {
                                             searcher.search(query, collector);
                                         } catch (final IOException e) {
-                                            error(errorConsumer, e.getMessage(), e);
+                                            error(errorConsumer, e);
                                         }
                                     }, () -> "searcher.search()"));
                     CompletableFuture.runAsync(runnable, executor).whenCompleteAsync((v, t) -> {
@@ -198,12 +198,12 @@ public class IndexShardSearchTaskHandler {
                     LOGGER.debug(() -> "Complete");
                     LOGGER.trace(e::getMessage, e);
                 } catch (final RuntimeException e) {
-                    error(errorConsumer, e.getMessage(), e);
+                    error(errorConsumer, e);
                 } finally {
                     searcherManager.release(searcher);
                 }
             } catch (final RuntimeException | IOException e) {
-                error(errorConsumer, e.getMessage(), e);
+                error(errorConsumer, e);
             }
         }
     }
@@ -246,17 +246,16 @@ public class IndexShardSearchTaskHandler {
 
             valuesConsumer.add(values);
         } catch (final IOException | RuntimeException e) {
-            error(errorConsumer, e.getMessage(), e);
+            error(errorConsumer, e);
         }
     }
 
     private void error(final ErrorConsumer errorConsumer,
-                       final String message,
                        final Throwable t) {
         if (errorConsumer == null) {
-            LOGGER.error(() -> message, t);
+            LOGGER.error(t::getMessage, t);
         } else {
-            errorConsumer.add(new Error(message, t));
+            errorConsumer.add(t);
         }
     }
 }
