@@ -129,11 +129,11 @@ public class IndexDoc extends Doc {
         this.description = description;
     }
 
-    public int getMaxDocsPerShard() {
+    public Integer getMaxDocsPerShard() {
         return maxDocsPerShard;
     }
 
-    public void setMaxDocsPerShard(final int maxDocsPerShard) {
+    public void setMaxDocsPerShard(final Integer maxDocsPerShard) {
         this.maxDocsPerShard = maxDocsPerShard;
     }
 
@@ -145,19 +145,19 @@ public class IndexDoc extends Doc {
         this.partitionBy = partitionBy;
     }
 
-    public int getPartitionSize() {
+    public Integer getPartitionSize() {
         return partitionSize;
     }
 
-    public void setPartitionSize(final int partitionSize) {
+    public void setPartitionSize(final Integer partitionSize) {
         this.partitionSize = partitionSize;
     }
 
-    public int getShardsPerPartition() {
+    public Integer getShardsPerPartition() {
         return shardsPerPartition;
     }
 
-    public void setShardsPerPartition(final int shardsPerPartition) {
+    public void setShardsPerPartition(final Integer shardsPerPartition) {
         this.shardsPerPartition = shardsPerPartition;
     }
 
