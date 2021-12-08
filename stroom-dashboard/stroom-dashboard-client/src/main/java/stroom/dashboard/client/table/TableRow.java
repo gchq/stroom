@@ -187,5 +187,10 @@ public class TableRow {
         private String getStyles() {
             return styles;
         }
+
+        @Override
+        public String toString() {
+            return rawValue;
+        }
     }
 }

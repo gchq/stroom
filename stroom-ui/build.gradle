@@ -45,7 +45,7 @@ task generateApi {
         exec {
             //executable "./generateApi.sh"
             executable "./container_build/runInNodeDocker.sh"
-            args = [ "./stroom-ui/generateApi.sh" ]
+            args = ["./stroom-ui/generateApi.sh"]
             workingDir ".."
         }
     }
@@ -66,13 +66,14 @@ task yarnBuild {
         exec {
             //executable "./yarnBuild.sh"
             executable "./container_build/runInNodeDocker.sh"
-            args = [ "./stroom-ui/yarnBuild.sh" ]
+            args = ["./stroom-ui/yarnBuild.sh"]
             workingDir ".."
         }
     }
 }
 
 task copyYarnBuild(dependsOn: yarnBuild, type: Copy) {
+    outputs.upToDateWhen { false }
     from "${project.buildDir}"
     into "${outputDir}"
 }
