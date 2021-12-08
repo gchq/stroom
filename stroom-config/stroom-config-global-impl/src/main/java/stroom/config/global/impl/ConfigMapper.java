@@ -1404,7 +1404,7 @@ public class ConfigMapper {
     }
 
     public <T extends AbstractConfig> T getConfigObject(final Class<T> clazz) {
-        return getConfigObject(clazz, true);
+        return getConfigObject(clazz, false);
     }
 
     public <T extends AbstractConfig> T getConfigObject(final Class<T> clazz,

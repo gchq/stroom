@@ -61,7 +61,8 @@ public class PropertyPath implements Comparable<PropertyPath>, HasName {
             this.parts = Collections.emptyList();
         } else {
             validateParts(parts);
-            this.parts = List.copyOf(parts);
+            // Can't use List.copyOf() as GWT doesn't know about it.
+            this.parts = Collections.unmodifiableList(new ArrayList<>(parts));
         }
         hashCode = buildHashCode(this.parts);
     }
