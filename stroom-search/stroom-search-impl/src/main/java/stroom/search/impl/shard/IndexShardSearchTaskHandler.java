@@ -161,23 +161,30 @@ public class IndexShardSearchTaskHandler {
                 try {
                     final Runnable runnable = taskContextFactory.childContext(parentContext,
                             "Index Searcher",
-                            taskContext ->
+                            taskContext -> {
+                                try {
                                     LOGGER.logDurationIfDebugEnabled(() -> {
                                         try {
                                             searcher.search(query, collector);
                                         } catch (final IOException e) {
                                             error(errorConsumer, e);
                                         }
-                                    }, () -> "searcher.search()"));
-                    CompletableFuture.runAsync(runnable, executor).whenCompleteAsync((v, t) -> {
-                        try {
-                            docIdQueue.complete();
-                        } catch (final InterruptedException e) {
-                            LOGGER.trace(e::getMessage, e);
-                            // Keep interrupting this thread.
-                            Thread.currentThread().interrupt();
-                        }
-                    });
+                                    }, () -> "searcher.search()");
+                                } finally {
+                                    try {
+                                        final boolean interrupted = Thread.interrupted();
+                                        docIdQueue.complete();
+                                        if (interrupted) {
+                                            Thread.currentThread().interrupt();
+                                        }
+                                    } catch (final InterruptedException e) {
+                                        LOGGER.error(e::getMessage, e);
+                                        // Keep interrupting this thread.
+                                        Thread.currentThread().interrupt();
+                                    }
+                                }
+                            });
+                    CompletableFuture.runAsync(runnable, executor);
 
                     // Get an array of field names.
                     final String[] storedFieldNames = task.getStoredFieldNames();
