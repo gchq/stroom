@@ -30,7 +30,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import javax.inject.Singleton;
 
@@ -38,7 +37,6 @@ import javax.inject.Singleton;
 public class ExecutorProviderImpl implements ExecutorProvider {
 
     public static final ThreadPool DEFAULT_THREAD_POOL = new ThreadPoolImpl("Stroom P2", 2);
-    private final AtomicInteger currentAsyncTaskCount = new AtomicInteger();
 
     // The thread pools that will be used to execute tasks.
     private final ConcurrentHashMap<ThreadPool, ExecutorService> threadPoolMap = new ConcurrentHashMap<>();
@@ -52,22 +50,7 @@ public class ExecutorProviderImpl implements ExecutorProvider {
 
     @Override
     public Executor get(final ThreadPool threadPool) {
-        return command -> {
-            currentAsyncTaskCount.incrementAndGet();
-            try {
-                final Runnable outer = () -> {
-                    try {
-                        command.run();
-                    } finally {
-                        currentAsyncTaskCount.decrementAndGet();
-                    }
-                };
-                getRealExecutor(threadPool).execute(outer);
-            } catch (final Throwable t) {
-                currentAsyncTaskCount.decrementAndGet();
-                throw t;
-            }
-        };
+        return command -> getRealExecutor(threadPool).execute(command);
     }
 
     private Executor getRealExecutor(final ThreadPool threadPool) {
@@ -115,9 +98,5 @@ public class ExecutorProviderImpl implements ExecutorProvider {
         } finally {
             poolCreationLock.unlock();
         }
-    }
-
-    public int getCurrentTaskCount() {
-        return currentAsyncTaskCount.get();
     }
 }
