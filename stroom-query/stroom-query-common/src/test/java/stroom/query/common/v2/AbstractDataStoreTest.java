@@ -308,7 +308,7 @@ abstract class AbstractDataStoreTest {
                         .addMappings(tableSettings)
                         .requestedRange(new OffsetRange(0, 3000))
                         .build();
-        checkResults(dataStore, tableResultRequest, 0, false);
+        checkResults(dataStore, tableResultRequest, 0, true);
     }
 
     @Test
