@@ -40,7 +40,6 @@ import stroom.search.impl.EventSearchTaskHandler;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.impl.ExecutorProviderImpl;
 
-import org.apache.hadoop.util.ThreadUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -448,11 +447,6 @@ class TestInteractiveSearch extends AbstractSearchTest {
                 extractValues,
                 resultMapConsumer,
                 indexStore);
-
-        while (executorProvider.getCurrentTaskCount() > 0) {
-            ThreadUtil.sleepAtLeastIgnoreInterrupts(1000);
-        }
-        assertThat(executorProvider.getCurrentTaskCount()).isEqualTo(0);
     }
 
     private void testEvents(final ExpressionOperator.Builder expressionIn, final int expectResultCount) {
@@ -509,11 +503,6 @@ class TestInteractiveSearch extends AbstractSearchTest {
         }
 
         assertThat(count).isEqualTo(expectResultCount);
-
-        while (executorProvider.getCurrentTaskCount() > 0) {
-            ThreadUtil.sleepAtLeastIgnoreInterrupts(1000);
-        }
-        assertThat(executorProvider.getCurrentTaskCount()).isEqualTo(0);
     }
 
     private TableSettings createTableSettings(final boolean extractValues) {
