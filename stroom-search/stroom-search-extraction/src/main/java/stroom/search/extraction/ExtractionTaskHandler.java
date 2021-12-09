@@ -51,19 +51,16 @@ import stroom.util.logging.SearchProgressLog;
 import stroom.util.logging.SearchProgressLog.SearchPhase;
 import stroom.util.shared.StoredError;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.nio.channels.ClosedByInterruptException;
 import java.util.List;
 import javax.inject.Inject;
 
 public class ExtractionTaskHandler {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ExtractionTaskHandler.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ExtractionTaskHandler.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExtractionTaskHandler.class);
 
     private final Store streamStore;
     private final FeedHolder feedHolder;
@@ -158,7 +155,7 @@ public class ExtractionTaskHandler {
 
                 // Ensure count is the same.
                 if (task.getEventIds().length != searchResultOutputFilter.getCount()) {
-                    LOGGER.debug("Extraction count mismatch");
+                    LOGGER.debug(() -> "Extraction count mismatch");
                 }
             }
         } catch (final IOException e) {
@@ -185,10 +182,14 @@ public class ExtractionTaskHandler {
                              final DocRef pipelineRef,
                              final Pipeline pipeline) {
         final ErrorReceiver errorReceiver = (severity, location, elementId, message, e) -> {
-            if (!(e instanceof TaskTerminatedException)) {
-                final StoredError storedError = new StoredError(severity, location, elementId, message);
-                task.getErrorConsumer().add(new RuntimeException(storedError.toString(), e));
+            if (e instanceof TaskTerminatedException) {
+                throw (TaskTerminatedException) e;
+            } else if (e instanceof InterruptedException || e instanceof ClosedByInterruptException) {
+                throw new TaskTerminatedException();
             }
+
+            final StoredError storedError = new StoredError(severity, location, elementId, message);
+            task.getErrorConsumer().add(new RuntimeException(storedError.toString(), e));
             throw ProcessException.wrap(message, e);
         };
 
@@ -211,13 +212,9 @@ public class ExtractionTaskHandler {
 
                 // Now try and extract the data.
                 extract(pipelineRef, pipeline, source, segmentInputStream, count);
-
-            } catch (final RuntimeException e) {
-                // Something went wrong extracting data from this
-                // stream.
-                throw new ExtractionException("Unable to extract data from stream source with id: " +
-                        source.getMeta().getId() + " - " + e.getMessage(), e);
             }
+        } catch (final TaskTerminatedException | ClosedByInterruptException e) {
+            LOGGER.debug(e::getMessage, e);
         } catch (final ExtractionException e) {
             throw e;
         } catch (final IOException | RuntimeException e) {
@@ -233,9 +230,7 @@ public class ExtractionTaskHandler {
     private void extract(final DocRef pipelineRef, final Pipeline pipeline, final Source source,
                          final SegmentInputStream segmentInputStream, final long count) {
         if (source != null && segmentInputStream != null) {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Reading " + count + " segments from stream " + source.getMeta().getId());
-            }
+            LOGGER.debug(() -> "Reading " + count + " segments from stream " + source.getMeta().getId());
 
             SearchProgressLog.increment(SearchPhase.EXTRACTION_TASK_HANDLER_EXTRACT2);
             SearchProgressLog.add(SearchPhase.EXTRACTION_TASK_HANDLER_EXTRACT2_EVENTS, count);
@@ -257,7 +252,7 @@ public class ExtractionTaskHandler {
                 final String encoding = StreamUtil.DEFAULT_CHARSET_NAME;
 
                 // Process the boundary.
-                LAMBDA_LOGGER.logDurationIfDebugEnabled(
+                LOGGER.logDurationIfDebugEnabled(
                         () -> pipeline.process(inputStream, encoding),
                         () -> LogUtil.message("Processing pipeline {}, stream {}",
                                 pipelineRef.getUuid(), source.getMeta().getId()));

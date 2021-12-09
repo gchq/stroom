@@ -12,6 +12,16 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#2631** : Add debug to diagnose UI issue.
+
+* Issue **#2633** : Fix shutdown.
+
+* Issue **#2632** : Suppress warnings.
+
+* Issue **#2603** : Improve error handling.
+
+* Issue **#2635** : Improve search completion code.
+
 * Issue **#2625** : Disable test temporarily to fix build.
 
 * Issue **#2630** : Fix NPE and improve logging.

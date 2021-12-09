@@ -133,7 +133,7 @@ class SolrClusterSearchTaskHandler {
             // When we complete the index shard search tell teh stored data queue we are complete.
             indexShardSearchFuture.whenCompleteAsync((r, t) -> {
                 LOGGER.debug("Complete stored data queue");
-                storedDataQueue.onComplete();
+                storedDataQueue.complete();
             });
 
             // Create an object to make event lists from raw index data.
