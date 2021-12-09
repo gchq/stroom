@@ -1,10 +1,14 @@
 package stroom.util.concurrent;
 
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class CompletableQueue<T> {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CompletableQueue.class);
     private static final CompleteException COMPLETE = new CompleteException();
 
     private final ArrayBlockingQueue<Object> queue;
@@ -57,8 +61,19 @@ public class CompletableQueue<T> {
         return (T) object;
     }
 
-    public void complete() throws InterruptedException {
-        queue.put(COMPLETE);
+    public void complete() {
+        try {
+            final boolean interrupted = Thread.interrupted();
+            queue.put(COMPLETE);
+            if (interrupted) {
+                Thread.currentThread().interrupt();
+            }
+        } catch (final InterruptedException e) {
+            LOGGER.error(e::getMessage, e);
+            // Keep interrupting this thread.
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        }
     }
 
     public void clear() {

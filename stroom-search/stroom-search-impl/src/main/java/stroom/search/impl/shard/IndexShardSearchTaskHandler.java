@@ -171,17 +171,7 @@ public class IndexShardSearchTaskHandler {
                                         }
                                     }, () -> "searcher.search()");
                                 } finally {
-                                    try {
-                                        final boolean interrupted = Thread.interrupted();
-                                        docIdQueue.complete();
-                                        if (interrupted) {
-                                            Thread.currentThread().interrupt();
-                                        }
-                                    } catch (final InterruptedException e) {
-                                        LOGGER.error(e::getMessage, e);
-                                        // Keep interrupting this thread.
-                                        Thread.currentThread().interrupt();
-                                    }
+                                    docIdQueue.complete();
                                 }
                             });
                     CompletableFuture.runAsync(runnable, executor);
