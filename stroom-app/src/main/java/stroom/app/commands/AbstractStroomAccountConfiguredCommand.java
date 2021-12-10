@@ -1,14 +1,8 @@
 package stroom.app.commands;
 
+import stroom.app.guice.AppModule;
 import stroom.app.guice.BootstrapModule;
 import stroom.config.app.Config;
-import stroom.config.global.impl.ConfigProvidersModule;
-import stroom.event.logging.impl.EventLoggingModule;
-import stroom.security.identity.account.AccountModule;
-import stroom.security.identity.db.IdentityDaoModule;
-import stroom.security.impl.SecurityContextModule;
-import stroom.security.impl.SecurityModule;
-import stroom.security.impl.db.SecurityDaoModule;
 import stroom.util.guice.GuiceUtil;
 
 import com.google.inject.AbstractModule;
@@ -59,14 +53,10 @@ public abstract class AbstractStroomAccountConfiguredCommand extends ConfiguredC
         final AbstractModule module = new AbstractModule() {
             @Override
             protected void configure() {
+                // It would be nice to only load the bits we need but the web of dependencies
+                // spreads far and wide
                 install(new BootstrapModule(config, configFile));
-                install(new AccountModule());
-                install(new ConfigProvidersModule());
-                install(new EventLoggingModule());
-                install(new IdentityDaoModule());
-                install(new SecurityContextModule());
-                install(new SecurityDaoModule());
-                install(new SecurityModule());
+                install(new AppModule());
             }
         };
 
