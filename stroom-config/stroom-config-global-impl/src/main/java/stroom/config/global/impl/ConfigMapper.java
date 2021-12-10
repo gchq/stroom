@@ -141,7 +141,6 @@ public class ConfigMapper {
     // As it contains sensible defaults for most properties, each prop will either
     // be the hard coded default or a value set in the yaml.
     private final AppConfig bootStrapConfig;
-    private final Path configFile;
 
     // A map of config properties keyed on the fully qualified prop path (i.e. stroom.path.temp)
     // This is the source of truth for all properties. It is used to update the guice injected object model
@@ -163,6 +162,7 @@ public class ConfigMapper {
     private final Map<PropertyPath, ObjectInfo<? extends AbstractConfig>> objectInfoMap = new HashMap<>();
 
     private volatile boolean haveYamlOverridesBeenInitialised = false;
+    private volatile boolean haveDbOverridesBeenInitialised = false;
 
     private final Supplier<AppConfig> defaultAppConfigSupplier;
 
@@ -182,43 +182,31 @@ public class ConfigMapper {
 
     @Inject
     public ConfigMapper(final ConfigHolder configHolder) {
-        this(NullSafe.get(configHolder, ConfigHolder::getConfigFile),
-                NullSafe.getAsOptional(configHolder, ConfigHolder::getBootStrapConfig)
+        this(NullSafe.getAsOptional(configHolder, ConfigHolder::getBootStrapConfig)
                         .orElseGet(AppConfig::new),
                 AppConfig::new);
     }
 
     public ConfigMapper() {
-        this(null, new AppConfig(), AppConfig::new);
+        this(new AppConfig(), AppConfig::new);
     }
 
-    // For testing
-    ConfigMapper(final AppConfig bootStrapConfig) {
-        this(null, bootStrapConfig, AppConfig::new);
+    public ConfigMapper(final AppConfig bootstrapConfig) {
+        this(bootstrapConfig, AppConfig::new);
     }
 
-    ConfigMapper(final AppConfig bootStrapConfig, final Supplier<AppConfig> defaultAppConfigSupplier) {
-        this(null, bootStrapConfig, defaultAppConfigSupplier);
-    }
-
-
-    public ConfigMapper(final Path configFile, final AppConfig bootstrapConfig) {
-        this(configFile, bootstrapConfig, AppConfig::new);
-    }
-
-    private ConfigMapper(final Path configFile,
-                         final AppConfig bootStrapConfig,
-                         final Supplier<AppConfig> defaultAppConfigSupplier) {
+    // pkg private for testing
+    ConfigMapper(final AppConfig bootStrapConfig,
+                 final Supplier<AppConfig> defaultAppConfigSupplier) {
 
         // This is the de-serialised form of the config.yaml so should contain all compile time defaults except
         // where set to other values in the yaml file. AppConfigModule should have ensured that all null
         // branches have been replaced with a default instance to ensure we have a full tree.
-        this.configFile = configFile;
         this.bootStrapConfig = bootStrapConfig;
         this.defaultAppConfigSupplier = defaultAppConfigSupplier;
         SuperDevUtil.showSuperDevBannerIfRequired();
 
-        LOGGER.debug(() -> LogUtil.message("Initialising ConfigMapper with file {}", configFile));
+        LOGGER.info("Initialising application configuration");
 
 //        LOGGER.debug(() -> LogUtil.message("Initialising ConfigMapper with class {}, id {}, propertyMap id {}",
 //                appConfig.getClass().getName(),
@@ -603,6 +591,10 @@ public class ConfigMapper {
         if (changeCount > 0) {
             rebuildObjectInstanceMap();
         }
+
+        if (!haveDbOverridesBeenInitialised) {
+            haveDbOverridesBeenInitialised = true;
+        }
     }
 
     ConfigProperty decorateDbConfigProperty(final ConfigProperty dbConfigProperty) {
@@ -787,13 +779,18 @@ public class ConfigMapper {
                 sourceAfter));
 
         if (!Objects.equals(effectiveValueBefore, effectiveValueAfter)) {
-            LOGGER.info(
-                    "Effective value of {} has changed on this node from [{}] ({}) to [{}] ({})",
-                    fullPath,
-                    effectiveValueBefore.orElse(""),
-                    sourceBefore,
-                    effectiveValueAfter.orElse(""),
-                    sourceAfter);
+
+            // Stop it logging 'changes' when we boot up and there are differences from the default
+            // which there likely always will be
+            if (haveYamlOverridesBeenInitialised && haveDbOverridesBeenInitialised) {
+                LOGGER.info(
+                        "Effective value of {} has changed on this node from [{}] ({}) to [{}] ({})",
+                        fullPath,
+                        effectiveValueBefore.orElse(""),
+                        sourceBefore,
+                        effectiveValueAfter.orElse(""),
+                        sourceAfter);
+            }
 //            }
             return true;
         } else {
