@@ -5,15 +5,18 @@ import stroom.config.app.ConfigHolder;
 import stroom.config.app.StroomYamlUtil;
 import stroom.config.global.impl.AppConfigMonitor;
 import stroom.config.global.impl.ConfigMapper;
-import stroom.test.AbstractCoreIntegrationTest;
+import stroom.config.global.impl.ConfigProvidersModule;
+import stroom.test.BootstrapTestModule;
+import stroom.ui.config.shared.UiConfig;
 import stroom.util.config.AbstractFileChangeMonitor;
 import stroom.util.config.AppConfigValidator;
 import stroom.util.config.ConfigLocation;
-import stroom.util.io.FileUtil;
-import stroom.util.io.PathConfig;
 import stroom.util.logging.LogUtil;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +28,7 @@ import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -32,9 +36,12 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.validation.Validator;
 
-class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
+class TestAppConfigMonitor {
+//class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestAppConfigMonitor.class);
+
+    private static final String YAML_KEY = "htmlTitle";
 
     @Inject
     private Validator validator;
@@ -43,7 +50,16 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
     @Inject
     private ConfigHolder configHolder;
     @Inject
-    Provider<PathConfig> pathConfigProvider;
+    private Provider<UiConfig> uiConfigProvider;
+
+    @BeforeEach
+    void before() {
+        final Injector injector = Guice.createInjector(
+                new BootstrapTestModule(),
+                new ConfigProvidersModule()
+        );
+        injector.injectMembers(this);
+    }
 
     @Test
     void test() throws Exception {
@@ -63,32 +79,41 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
         final List<String> outputLines = Files.lines(yamlFile)
                 .takeWhile(line -> !line.startsWith("server:"))
                 .collect(Collectors.toList());
-        Files.write(yamlFile, outputLines, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
+
+        Files.write(
+                yamlFile,
+                outputLines,
+                StandardOpenOption.WRITE,
+                StandardOpenOption.TRUNCATE_EXISTING);
 
         Assertions.assertThat(yamlFile)
                 .isRegularFile();
 
-        final Path devYamlCopyPath = getCurrentTestDir().resolve(yamlFile.getFileName());
+        Assertions.assertThat(yamlFile)
+                .isNotEmptyFile();
 
-        LOGGER.info("devYamlCopyPath {}", devYamlCopyPath.toAbsolutePath().normalize());
+//        final Path yamlCopyFile = getCurrentTestDir().resolve(yamlFile.getFileName());
+//        final Path yamlCopyFile = yamlFile;
+
+//        LOGGER.info("devYamlCopyPath {}", yamlCopyFile.toAbsolutePath().normalize());
 
         // Make a copy of dev.yml so we can hack about with it
-        Files.copy(yamlFile, devYamlCopyPath);
+//        Files.copy(yamlFile, yamlCopyFile);
 
         // We need to craft our own instances of these classes rather than use guice
         // so that we can use our own config file
 //        final AppConfig appConfig = YamlUtil.readAppConfig(devYamlCopyPath);
 
         // Create the dirs so validation doesn't fail
-        final Path tempDir = Path.of(FileUtil.replaceHome(pathConfigProvider.get().getTemp()));
-        LOGGER.info("Ensuring temp directory {}", tempDir.toAbsolutePath().normalize());
-        Files.createDirectories(tempDir);
+//        final Path tempDir = Path.of(FileUtil.replaceHome(uiConfigProvider.get().getTemp()));
+//        LOGGER.info("Ensuring temp directory {}", tempDir.toAbsolutePath().normalize());
+//        Files.createDirectories(tempDir);
+//
+//        final Path homeDir = Path.of(FileUtil.replaceHome(uiConfigProvider.get().getHome()));
+//        LOGGER.info("Ensuring home directory {}", homeDir.toAbsolutePath().normalize());
+//        Files.createDirectories(homeDir);
 
-        final Path homeDir = Path.of(FileUtil.replaceHome(pathConfigProvider.get().getHome()));
-        LOGGER.info("Ensuring home directory {}", homeDir.toAbsolutePath().normalize());
-        Files.createDirectories(homeDir);
-
-        final ConfigLocation configLocation = new ConfigLocation(devYamlCopyPath);
+        final ConfigLocation configLocation = new ConfigLocation(yamlFile);
         final AppConfigValidator appConfigValidator = new AppConfigValidator(validator);
 
         final AbstractFileChangeMonitor appConfigMonitor = new AppConfigMonitor(
@@ -105,13 +130,13 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
         // to be on the safe side.
         Thread.sleep(100);
 
-        doFileUpdateTest(devYamlCopyPath, appConfig);
+        doFileUpdateTest(yamlFile, appConfig);
 
         // Have a quick snooze then test another file change to be sure it can cope with more than
         // one change.
         Thread.sleep(200);
 
-        doFileUpdateTest(devYamlCopyPath, appConfig);
+        doFileUpdateTest(yamlFile, appConfig);
 
         appConfigMonitor.stop();
     }
@@ -119,21 +144,15 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
     private void doFileUpdateTest(final Path devYamlCopyPath,
                                   final AppConfig appConfig) throws IOException, InterruptedException {
 
-        final Path newPath = Files.createTempDirectory("test")
-                .toAbsolutePath()
-                .normalize();
-        final String newPathStr = newPath.toString();
-
-        Assertions.assertThat(newPath)
-                .isDirectory();
+        final String newValue = Integer.toString(new Random().nextInt(10000000));
 
         LOGGER.info("---------------------------------------------------------------");
-        LOGGER.info("Updating value in file to {}", newPathStr);
+        LOGGER.info("Updating value of {} in file to {}", YAML_KEY, newValue);
 
-        Assertions.assertThat(pathConfigProvider.get().getTemp())
-                .isNotEqualTo(newPathStr);
+        Assertions.assertThat(uiConfigProvider.get().getHtmlTitle())
+                .isNotEqualTo(newValue);
 
-        final Pattern pattern = Pattern.compile("temp:\\s*\"[^\"]+\"");
+        final Pattern pattern = Pattern.compile(YAML_KEY + ":\\s*\"[^\"]+\"");
         final String devYamlStr = Files.readString(devYamlCopyPath);
         final Optional<MatchResult> optMatchResult = pattern.matcher(devYamlStr)
                 .results()
@@ -163,9 +182,9 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
         // We need to sleep here to give the config monitor time to start as it monitors asynchronously.
         Thread.sleep(3000);
 
-        // Update the config file with our new value
+        // Update the config file with our new value for a key (key must be uniquely named)
         final String updatedDevYamlStr = pattern.matcher(devYamlStr)
-                .replaceAll("temp: \"" + newPathStr + "\"");
+                .replaceAll(YAML_KEY + ": \"" + newValue + "\"");
 
         // Ensure the replace worked by compare old file content to new
         Assertions.assertThat(updatedDevYamlStr).isNotEqualTo(devYamlStr);
@@ -180,16 +199,14 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
         // Now keep checking if the appConfig has been updated, or we timeout
         Instant startTime = Instant.now();
         Instant timeOutTime = startTime.plusSeconds(10);
-        while (!pathConfigProvider.get().getTemp().equals(newPathStr)
+        while (!uiConfigProvider.get().getHtmlTitle().equals(newValue)
                 && Instant.now().isBefore(timeOutTime)) {
 
-            LOGGER.debug("value {}", pathConfigProvider.get().getTemp());
+            LOGGER.debug("value {}", uiConfigProvider.get().getHtmlTitle());
             Thread.sleep(200);
         }
 
-        Assertions.assertThat(pathConfigProvider.get().getTemp())
-                .isEqualTo(newPathStr);
-
-        Files.deleteIfExists(Path.of(newPathStr));
+        Assertions.assertThat(uiConfigProvider.get().getHtmlTitle())
+                .isEqualTo(newValue);
     }
 }

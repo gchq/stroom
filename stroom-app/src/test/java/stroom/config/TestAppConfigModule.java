@@ -8,7 +8,6 @@ import stroom.config.app.StroomYamlUtil;
 import stroom.config.common.AbstractDbConfig;
 import stroom.config.common.CommonDbConfig;
 import stroom.config.common.HasDbConfig;
-import stroom.config.global.impl.ConfigMapper;
 import stroom.config.global.impl.ConfigProvidersModule;
 import stroom.legacy.db.LegacyConfig;
 import stroom.util.config.PropertyUtil;
@@ -136,9 +135,6 @@ class TestAppConfigModule {
             }
         });
 
-        final ConfigMapper configMapper = injector.getInstance(ConfigMapper.class);
-        configMapper.markConfigAsReady();
-//        configMapper.updateConfigInstances(modifiedAppConfig);
         final AppConfig appConfig = injector.getInstance(AppConfig.class);
         final CommonDbConfig commonDbConfig = injector.getInstance(CommonDbConfig.class);
 

@@ -3,7 +3,7 @@ package stroom.storedquery.impl.db;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 import stroom.storedquery.impl.StoredQueryConfig.StoredQueryDbConfig;
-import stroom.storedquery.impl.StoredQueryDao;
+import stroom.util.guice.GuiceUtil;
 
 import javax.sql.DataSource;
 
@@ -16,7 +16,10 @@ public class StoredQueryDbModule extends AbstractFlyWayDbModule<StoredQueryDbCon
     @Override
     protected void configure() {
         super.configure();
-        bind(StoredQueryDao.class).to(StoredQueryDaoImpl.class);
+
+        // MultiBind the connection provider so we can see status for all databases.
+        GuiceUtil.buildMultiBinder(binder(), DataSource.class)
+                .addBinding(StoredQueryDbConnProvider.class);
     }
 
     @Override

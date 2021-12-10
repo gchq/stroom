@@ -23,6 +23,7 @@ import stroom.security.api.UserIdentity;
 import stroom.security.shared.User;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
+import stroom.util.io.SimplePathCreator;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -269,7 +270,7 @@ class TestContentPackImport {
     }
 
     private ContentPackImport getContentPackImport() {
-        final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
+        final PathCreator pathCreator = new SimplePathCreator(() -> tempDir, () -> tempDir);
         return new ContentPackImport(
                 importExportService, contentPackImportConfig, securityContext, pathCreator);
     }

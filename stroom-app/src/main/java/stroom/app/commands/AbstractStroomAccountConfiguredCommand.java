@@ -1,9 +1,17 @@
 package stroom.app.commands;
 
-import stroom.app.guice.AppModule;
+import stroom.app.guice.BootstrapModule;
 import stroom.config.app.Config;
+import stroom.config.global.impl.ConfigProvidersModule;
+import stroom.event.logging.impl.EventLoggingModule;
+import stroom.security.identity.account.AccountModule;
+import stroom.security.identity.db.IdentityDaoModule;
+import stroom.security.impl.SecurityContextModule;
+import stroom.security.impl.SecurityModule;
+import stroom.security.impl.db.SecurityDaoModule;
 import stroom.util.guice.GuiceUtil;
 
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -48,12 +56,23 @@ public abstract class AbstractStroomAccountConfiguredCommand extends ConfiguredC
 
         LOGGER.debug("Creating dbMigrationModule");
 
-        // We could use a heavily cut down module
-        final AppModule appModule = new AppModule(config, configFile);
+        final AbstractModule module = new AbstractModule() {
+            @Override
+            protected void configure() {
+                install(new BootstrapModule(config, configFile));
+                install(new AccountModule());
+                install(new ConfigProvidersModule());
+                install(new EventLoggingModule());
+                install(new IdentityDaoModule());
+                install(new SecurityContextModule());
+                install(new SecurityDaoModule());
+                install(new SecurityModule());
+            }
+        };
 
         LOGGER.debug("Creating injector");
         try {
-            final Injector injector = Guice.createInjector(appModule);
+            final Injector injector = Guice.createInjector(module);
 
             // Force guice to get all datasource instances from the multibinder
             // so the migration will be run for each stroom module

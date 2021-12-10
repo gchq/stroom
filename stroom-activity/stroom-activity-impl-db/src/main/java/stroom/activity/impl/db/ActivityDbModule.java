@@ -1,10 +1,9 @@
 package stroom.activity.impl.db;
 
-import stroom.activity.impl.ActivityDao;
-import stroom.activity.impl.ActivityModule;
 import stroom.activity.impl.db.ActivityConfig.ActivityDbConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
+import stroom.util.guice.GuiceUtil;
 
 import javax.sql.DataSource;
 
@@ -17,9 +16,10 @@ public class ActivityDbModule extends AbstractFlyWayDbModule<ActivityDbConfig, A
     @Override
     protected void configure() {
         super.configure();
-        install(new ActivityModule());
 
-        bind(ActivityDao.class).to(ActivityDaoImpl.class);
+        // MultiBind the connection provider so we can see status for all databases.
+        GuiceUtil.buildMultiBinder(binder(), DataSource.class)
+                .addBinding(ActivityDbConnProvider.class);
     }
 
     @Override

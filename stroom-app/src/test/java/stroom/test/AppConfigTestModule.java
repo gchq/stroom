@@ -7,8 +7,6 @@ import stroom.config.app.ConfigHolder;
 import stroom.config.global.impl.ConfigMapper;
 import stroom.util.io.FileUtil;
 
-import com.google.inject.Provides;
-
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -16,11 +14,16 @@ import java.nio.file.Path;
 
 public class AppConfigTestModule extends AppConfigModule {
 
-    private final ConfigHolder configHolder = new ConfigHolderImpl();
-    private final ConfigMapperSpy configMapperSpy = new ConfigMapperSpy(configHolder);
+    private final ConfigMapperSpy configMapperSpy;
 
     public AppConfigTestModule() {
         super(new ConfigHolderImpl());
+        configMapperSpy = new ConfigMapperSpy(super.getConfigHolder());
+    }
+
+    public AppConfigTestModule(final ConfigHolder configHolder) {
+        super(configHolder);
+        configMapperSpy = new ConfigMapperSpy(configHolder);
     }
 
     @Override
@@ -32,10 +35,10 @@ public class AppConfigTestModule extends AppConfigModule {
         bind(ConfigMapperSpy.class).toInstance(configMapperSpy);
     }
 
-    @Provides
-    public Config getConfig() {
-        return ((ConfigHolderImpl) getConfigHolder()).getConfig();
-    }
+//    @Provides
+//    public Config getConfig() {
+//        return ((ConfigHolderImpl) getConfigHolder()).getConfig();
+//    }
 
     private static class ConfigHolderImpl implements ConfigHolder {
 

@@ -1,6 +1,7 @@
 package stroom.config.global.impl;
 
 import stroom.config.common.AbstractDbConfig;
+import stroom.util.io.PathConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.AbstractConfig;
@@ -43,16 +44,6 @@ public class GenerateConfigProvidersModule {
             @Generated("%s")
             public class ConfigProvidersModule extends AbstractModule {
 
-                // Special case to allow StroomPathConfig to be injected as itself or as
-                // PathConfig
-                @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
-                @Provides
-                @SuppressWarnings("unused")
-                stroom.util.io.PathConfig getPathConfig(
-                        final ConfigMapper configMapper) {
-                    return configMapper.getConfigObject(
-                            stroom.util.io.StroomPathConfig.class);
-                }
             """;
 
     private static final String CLASS_FOOTER = """
@@ -69,6 +60,7 @@ public class GenerateConfigProvidersModule {
                 .stream()
                 .sorted(Comparator.comparing(Class::getName))
                 .filter(clazz -> !AbstractDbConfig.class.isAssignableFrom(clazz))
+                .filter(clazz -> !PathConfig.class.isAssignableFrom(clazz))
                 .map(clazz ->
                         buildMethod(simpleNames, simpleNameToFullNamesMap, clazz))
                 .collect(Collectors.joining("\n"));

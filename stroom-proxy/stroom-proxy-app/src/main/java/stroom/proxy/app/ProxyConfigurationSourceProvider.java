@@ -5,6 +5,7 @@ import stroom.util.io.HomeDirProvider;
 import stroom.util.io.HomeDirProviderImpl;
 import stroom.util.io.PathConfig;
 import stroom.util.io.PathCreator;
+import stroom.util.io.SimplePathCreator;
 import stroom.util.io.StreamUtil;
 import stroom.util.io.TempDirProvider;
 import stroom.util.io.TempDirProviderImpl;
@@ -204,7 +205,7 @@ public class ProxyConfigurationSourceProvider implements ConfigurationSourceProv
 
         final HomeDirProvider homeDirProvider = new HomeDirProviderImpl(pathConfig);
         final TempDirProvider tempDirProvider = new TempDirProviderImpl(pathConfig, homeDirProvider);
-        final PathCreator pathCreator = new PathCreator(homeDirProvider, tempDirProvider);
+        final PathCreator pathCreator = new SimplePathCreator(homeDirProvider, tempDirProvider);
 
         log("Using stroom home [{}] from {} for Drop Wizard config path substitutions",
                 homeDirProvider.get().toAbsolutePath(),

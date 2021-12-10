@@ -22,7 +22,6 @@ import stroom.db.util.DbUtil;
 import stroom.legacy.db.LegacyConfig.LegacyDbConfig;
 import stroom.util.db.ForceLegacyMigration;
 import stroom.util.guice.GuiceUtil;
-import stroom.util.guice.HasHealthCheckBinder;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Version;
@@ -76,19 +75,16 @@ public class LegacyDbModule extends AbstractModule {
         super.configure();
 
         // Force creation of connection provider so that legacy migration code executes.
-        bind(ForceMigrationImpl.class).asEagerSingleton();
-
         // Allows other db modules to inject ForceLegacyMigration to ensure the legacy db migration
         // has run before they do
         // The legacy migration renames all the old tables, creates the new ones and copies old into new
-        bind(ForceLegacyMigration.class).to(ForceMigrationImpl.class);
+        bind(ForceLegacyMigration.class)
+                .to(ForceMigrationImpl.class)
+                .asEagerSingleton();
 
         // MultiBind the connection provider so we can see status for all databases.
         GuiceUtil.buildMultiBinder(binder(), DataSource.class)
                 .addBinding(LegacyDbConnProvider.class);
-
-        HasHealthCheckBinder.create(binder())
-                .bind(DbHealthCheck.class);
     }
 
     @Provides

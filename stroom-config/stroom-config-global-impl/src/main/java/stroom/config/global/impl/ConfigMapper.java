@@ -35,6 +35,7 @@ import stroom.util.config.annotations.Password;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.io.ByteSize;
+import stroom.util.io.PathConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -74,8 +75,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -163,13 +162,9 @@ public class ConfigMapper {
     // Holds the details about how to construct an instance of each branch of the prop tree
     private final Map<PropertyPath, ObjectInfo<? extends AbstractConfig>> objectInfoMap = new HashMap<>();
 
-    private final CountDownLatch configReadyForUseLatch = new CountDownLatch(1);
-
     private volatile boolean haveYamlOverridesBeenInitialised = false;
 
     private final Supplier<AppConfig> defaultAppConfigSupplier;
-
-    private final boolean inSuperDevMode;
 
     // TODO Created this with a view to improving the ser/deser of the values but it needs
     //   more thought.  Leaving it here for now.
@@ -221,10 +216,7 @@ public class ConfigMapper {
         this.configFile = configFile;
         this.bootStrapConfig = bootStrapConfig;
         this.defaultAppConfigSupplier = defaultAppConfigSupplier;
-        this.inSuperDevMode = SuperDevUtil.isInSuperDevMode();
-        if (inSuperDevMode) {
-            SuperDevUtil.showSuperDevBanner();
-        }
+        SuperDevUtil.showSuperDevBannerIfRequired();
 
         LOGGER.debug(() -> LogUtil.message("Initialising ConfigMapper with file {}", configFile));
 
@@ -337,13 +329,6 @@ public class ConfigMapper {
         });
     }
 
-    /**
-     * Intended for tests to use
-     */
-    public void markConfigAsReady() {
-        configReadyForUseLatch.countDown();
-    }
-
     public synchronized void updateConfigFromYaml(final AppConfig newAppConfig) {
 
         final int changeCount = refreshGlobalPropYamlOverrides(newAppConfig);
@@ -374,7 +359,7 @@ public class ConfigMapper {
      * is held statically
      */
     private void updateXmlSecureProcessing() {
-        final ParserConfig parserConfig = getConfigObject(ParserConfig.class, false);
+        final ParserConfig parserConfig = getConfigObject(ParserConfig.class);
         SAXParserSettings.setSecureProcessingEnabled(parserConfig.isSecureProcessing());
     }
 
@@ -384,7 +369,7 @@ public class ConfigMapper {
 
         final ObjectInfo<? extends AbstractConfig> objectInfo = objectInfoMap.get(propertyPath);
 
-        final AbstractConfig instance = objectInfo.createInstance(argPropName -> {
+        AbstractConfig instance = objectInfo.createInstance(argPropName -> {
             final PropertyPath childPropertyPath = propertyPath.merge(argPropName);
             final Prop childProp = objectInfo.getPropertyMap().get(argPropName);
             if (AbstractConfig.class.isAssignableFrom(childProp.getValueClass())) {
@@ -408,12 +393,9 @@ public class ConfigMapper {
             newInstanceMap.put(configClass, instance);
         }
 
-        if (inSuperDevMode) {
-            // Nasty hack to tweak the config to relax the security when we are in superdev mode
-            return SuperDevUtil.relaxSecurityInSuperDevMode(instance);
-        } else {
-            return instance;
-        }
+        // Nasty hack to tweak the config to relax the security when we are in superdev mode
+        instance = SuperDevUtil.relaxSecurityInSuperDevMode(instance);
+        return instance;
     }
 
 //    AppConfig buildMergedAppConfig() {
@@ -484,9 +466,10 @@ public class ConfigMapper {
      * in the effective values
      */
     public void updateConfigInstances(final AppConfig appConfig) {
-        refreshGlobalPropYamlOverrides(appConfig);
-        rebuildObjectInstanceMap();
-        configReadyForUseLatch.countDown();
+        final int changeCount = refreshGlobalPropYamlOverrides(appConfig);
+        if (changeCount > 0) {
+            rebuildObjectInstanceMap();
+        }
     }
 
     synchronized int refreshGlobalPropYamlOverrides(final AppConfig yamlAppConfig) {
@@ -620,9 +603,6 @@ public class ConfigMapper {
         if (changeCount > 0) {
             rebuildObjectInstanceMap();
         }
-
-        // Allow classes injecting config providers to use them
-        configReadyForUseLatch.countDown();
     }
 
     ConfigProperty decorateDbConfigProperty(final ConfigProperty dbConfigProperty) {
@@ -1404,29 +1384,10 @@ public class ConfigMapper {
     }
 
     public <T extends AbstractConfig> T getConfigObject(final Class<T> clazz) {
-        return getConfigObject(clazz, false);
-    }
-
-    public <T extends AbstractConfig> T getConfigObject(final Class<T> clazz,
-                                                        final boolean isBlocking) {
-        if (isBlocking) {
-            try {
-                boolean isReady = false;
-                while (!isReady) {
-                    // wait for the config to be fully initialised before letting other classes inject it
-                    isReady = configReadyForUseLatch.await(10, TimeUnit.SECONDS);
-                    if (!isReady) {
-                        LOGGER.warn("Waiting for config to be initialised. Requested {}", clazz.getSimpleName());
-                    }
-                }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new RuntimeException("Thread interrupted getting config instance for class " + clazz.getName());
-            }
-        }
-
         final AbstractConfig config = configInstanceMap.get(clazz);
-        Objects.requireNonNull(config, "No config instance found for class " + clazz.getName());
+        Objects.requireNonNull(
+                config,
+                "No config instance found for class " + clazz.getName());
         try {
             return clazz.cast(config);
         } catch (Exception e) {
@@ -1437,6 +1398,9 @@ public class ConfigMapper {
         }
     }
 
+    /**
+     * @return All the classes that can be obtained from ConfigMapper
+     */
     public List<Class<? extends AbstractConfig>> getInjectableConfigClasses() {
 
         final Map<PropertyPath, ObjectInfo<? extends AbstractConfig>> objectInfoMap;
@@ -1458,7 +1422,9 @@ public class ConfigMapper {
                 .filter(clazz ->
                         !clazz.isAnnotationPresent(NotInjectableConfig.class))
                 .filter(clazz ->
-                        !AbstractDbConfig.class.isAssignableFrom(clazz))
+                        !AbstractDbConfig.class.isAssignableFrom(clazz)) // bound separately
+                .filter(clazz ->
+                        !PathConfig.class.isAssignableFrom(clazz)) // bound separately
                 .collect(Collectors.toList());
     }
 

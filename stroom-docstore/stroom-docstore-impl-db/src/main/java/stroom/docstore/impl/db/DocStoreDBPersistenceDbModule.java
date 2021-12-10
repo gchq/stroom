@@ -18,12 +18,11 @@ package stroom.docstore.impl.db;
 
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
-import stroom.docstore.impl.Persistence;
 import stroom.docstore.impl.db.DocStoreConfig.DocStoreDbConfig;
 
 import javax.sql.DataSource;
 
-public class DBPersistenceModule extends AbstractFlyWayDbModule<DocStoreDbConfig, DocStoreDbConnProvider> {
+public class DocStoreDBPersistenceDbModule extends AbstractFlyWayDbModule<DocStoreDbConfig, DocStoreDbConnProvider> {
 
     private static final String MODULE = "stroom-docstore";
     private static final String FLYWAY_LOCATIONS = "stroom/docstore/impl/db/migration";
@@ -32,8 +31,6 @@ public class DBPersistenceModule extends AbstractFlyWayDbModule<DocStoreDbConfig
     @Override
     protected void configure() {
         super.configure();
-
-        bind(Persistence.class).to(DBPersistence.class);
     }
 
     @Override

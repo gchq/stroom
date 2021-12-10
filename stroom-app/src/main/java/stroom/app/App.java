@@ -21,9 +21,11 @@ import stroom.app.commands.DbMigrationCommand;
 import stroom.app.commands.ManageUsersCommand;
 import stroom.app.commands.ResetPasswordCommand;
 import stroom.app.guice.AppModule;
+import stroom.app.guice.BootstrapModule;
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
 import stroom.config.app.StroomYamlUtil;
+import stroom.config.global.impl.ConfigMapper;
 import stroom.dropwizard.common.Filters;
 import stroom.dropwizard.common.HealthChecks;
 import stroom.dropwizard.common.ManagedServices;
@@ -34,6 +36,7 @@ import stroom.event.logging.rs.api.RestResourceAutoLogger;
 import stroom.util.config.AppConfigValidator;
 import stroom.util.config.ConfigValidator;
 import stroom.util.config.PropertyPathDecorator;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.io.DirProvidersModule;
 import stroom.util.io.FileUtil;
 import stroom.util.io.HomeDirProvider;
@@ -52,6 +55,7 @@ import stroom.util.yaml.YamlUtil;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.jersey.sessions.SessionFactoryProvider;
@@ -61,6 +65,7 @@ import io.dropwizard.setup.Environment;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.jersey.logging.LoggingFeature;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -69,6 +74,7 @@ import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.servlet.DispatcherType;
@@ -100,13 +106,13 @@ public class App extends Application<Config> {
     @Inject
     private BuildInfo buildInfo;
     @Inject
-    private HomeDirProvider homeDirProvider;
-    @Inject
-    private TempDirProvider tempDirProvider;
-    @Inject
     private RestResourceAutoLogger resourceAutoLogger;
     @Inject
     private Provider<Set<DataSource>> dataSourcesProvider;
+
+    // Injected manually
+    private HomeDirProvider homeDirProvider;
+    private TempDirProvider tempDirProvider;
 
     private final Path configFile;
 
@@ -187,6 +193,8 @@ public class App extends Application<Config> {
 
         validateAppConfig(configuration, configFile);
 
+        final Injector bootStrapInjector = bootstrapApplication(configuration, environment);
+
         // Merge the sparse de-serialised config with our default AppConfig tree
         // so we have a full config tree but with any yaml overrides
 //        final AppConfig mergedAppConfig = ConfigMapper.buildMergedAppConfig(configFile);
@@ -213,29 +221,26 @@ public class App extends Application<Config> {
         configureSessionHandling(environment);
 
         // Ensure the session cookie that provides JSESSIONID is secure.
-        configureSessionCookie(environment, configuration.getAppConfig().getSessionCookieConfig());
+        // Need to get it from ConfigMapper not AppConfig as ConfigMapper is now the source of
+        // truth for config.
+        final ConfigMapper configMapper = bootStrapInjector.getInstance(ConfigMapper.class);
+        final stroom.config.app.SessionCookieConfig sessionCookieConfig = configMapper.getConfigObject(
+                stroom.config.app.SessionCookieConfig.class);
+        configureSessionCookie(environment, sessionCookieConfig);
 
         // Configure Cross-Origin Resource Sharing.
         configureCors(environment);
 
         LOGGER.info("Starting Stroom Application");
 
-        final AppModule appModule = new AppModule(configuration, environment, configFile);
-
-        Guice.createInjector(appModule)
-                .injectMembers(this);
-
-        // Ensure we have our home/temp dirs set up
-        FileUtil.ensureDirExists(homeDirProvider.get());
-        FileUtil.ensureDirExists(tempDirProvider.get());
+        // Inherit all the bindings from the bootStrapInjector
+        final Injector appInjector = bootStrapInjector.createChildInjector(new AppModule());
+        appInjector.injectMembers(this);
 
         //Register REST Resource Auto Logger to automatically log calls to suitably annotated resources/methods
         //Note that if autologger is not required, and the next line removed, then it will be necessary to
         //register a DelegatingExceptionMapper directly instead.
         environment.jersey().register(resourceAutoLogger);
-
-        // Force all datasources to be created so we can force migrations to run.
-        dataSourcesProvider.get();
 
         // Add health checks
         healthChecks.register();
@@ -258,6 +263,37 @@ public class App extends Application<Config> {
         warnAboutDefaultOpenIdCreds(configuration);
 
         showInfo(configuration);
+    }
+
+    @NotNull
+    private Injector bootstrapApplication(final Config configuration,
+                                          final Environment environment) {
+        LOGGER.info("Initialising database connections and configuration properties");
+
+        final BootstrapModule bootstrapModule = new BootstrapModule(
+                configuration, environment, configFile);
+
+        final Injector bootStrapInjector = Guice.createInjector(bootstrapModule);
+
+        // Force all datasources to be created so we can force migrations to run.
+        final Set<DataSource> dataSources = bootStrapInjector.getInstance(
+                Key.get(GuiceUtil.setOf(DataSource.class)));
+
+        LOGGER.debug(() -> LogUtil.message("Used {} data sources:\n{}",
+                dataSources.size(),
+                dataSources.stream()
+                        .map(dataSource -> dataSource.getClass().getName())
+                        .map(name -> "  " + name)
+                        .sorted()
+                        .collect(Collectors.joining("\n"))));
+
+        this.homeDirProvider = bootStrapInjector.getInstance(HomeDirProvider.class);
+        this.tempDirProvider = bootStrapInjector.getInstance(TempDirProvider.class);
+
+        // Ensure we have our home/temp dirs set up
+        FileUtil.ensureDirExists(homeDirProvider.get());
+        FileUtil.ensureDirExists(tempDirProvider.get());
+        return bootStrapInjector;
     }
 
     private void showInfo(final Config configuration) {

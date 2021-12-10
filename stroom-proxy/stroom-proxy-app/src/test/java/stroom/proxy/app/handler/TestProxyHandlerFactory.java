@@ -8,6 +8,7 @@ import stroom.proxy.repo.StreamHandler;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
+import stroom.util.io.SimplePathCreator;
 import stroom.util.shared.BuildInfo;
 
 import org.junit.jupiter.api.Test;
@@ -90,7 +91,7 @@ class TestProxyHandlerFactory extends StroomUnitTest {
                 .withForwardingEnabled(isForwardingenabled)
                 .withForwardDestinations(List.of(destinationConfig1, destinationConfig2));
 
-        final PathCreator pathCreator = new PathCreator(
+        final PathCreator pathCreator = new SimplePathCreator(
                 () -> tempDir.resolve("home"),
                 () -> tempDir);
 

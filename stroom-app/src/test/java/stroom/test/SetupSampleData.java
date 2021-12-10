@@ -23,6 +23,7 @@ import stroom.importexport.impl.ContentPackImportConfig;
 import stroom.task.api.TaskManager;
 import stroom.test.common.util.test.ContentPackDownloader;
 import stroom.util.io.PathCreator;
+import stroom.util.io.SimplePathCreator;
 import stroom.util.yaml.YamlUtil;
 
 import com.google.inject.Guice;
@@ -69,7 +70,7 @@ public final class SetupSampleData {
         // We are running stroom so want to use a proper db
         final Injector injector = Guice.createInjector(new SetupSampleDataModule(config, configFile));
 
-        final PathCreator pathCreator = injector.getInstance(PathCreator.class);
+        final PathCreator pathCreator = injector.getInstance(SimplePathCreator.class);
         downloadContent(contentPackDefinition, pathCreator, config.getAppConfig().getContentPackImportConfig());
 
         // Start task manager

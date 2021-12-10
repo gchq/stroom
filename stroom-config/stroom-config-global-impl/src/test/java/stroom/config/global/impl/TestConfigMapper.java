@@ -495,7 +495,7 @@ class TestConfigMapper {
 
         assertThat(newObj).isNotEqualTo(originalObj);
 
-        final TestConfig newTestConfig = configMapper.getConfigObject(TestConfig.class, false);
+        final TestConfig newTestConfig = configMapper.getConfigObject(TestConfig.class);
 
         // make sure the db override value has made it into the config obj
         assertThat(getter.apply(newTestConfig))
@@ -528,7 +528,7 @@ class TestConfigMapper {
         configPropertyCopy.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
         configMapper.decorateDbConfigProperty(configPropertyCopy);
 
-        final TestConfig newTestConfig = configMapper.getConfigObject(TestConfig.class, false);
+        final TestConfig newTestConfig = configMapper.getConfigObject(TestConfig.class);
 
         assertThat(newTestConfig.getDocRefListProp()).isEqualTo(newValue);
     }
@@ -550,7 +550,7 @@ class TestConfigMapper {
         configPropertyCopy.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
         configMapper.decorateDbConfigProperty(configPropertyCopy);
 
-        final TestConfig newTestConfig = configMapper.getConfigObject(TestConfig.class, false);
+        final TestConfig newTestConfig = configMapper.getConfigObject(TestConfig.class);
 
         assertThat(newTestConfig.getStateListProp()).isEqualTo(newValue);
     }
@@ -574,7 +574,7 @@ class TestConfigMapper {
         configPropertyCopy.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
         configMapper.decorateDbConfigProperty(configPropertyCopy);
 
-        final TestConfig newtTestConfig = configMapper.getConfigObject(TestConfig.class, false);
+        final TestConfig newtTestConfig = configMapper.getConfigObject(TestConfig.class);
 
         assertThat(newtTestConfig.getStringListProp())
                 .isEqualTo(newValue);
@@ -600,7 +600,7 @@ class TestConfigMapper {
         configPropertyCopy.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
         configMapper.decorateDbConfigProperty(configPropertyCopy);
 
-        final TestConfig newTestConfig = configMapper.getConfigObject(TestConfig.class, false);
+        final TestConfig newTestConfig = configMapper.getConfigObject(TestConfig.class);
         assertThat(newTestConfig.getStringLongMapProp()).isEqualTo(newValue);
     }
 

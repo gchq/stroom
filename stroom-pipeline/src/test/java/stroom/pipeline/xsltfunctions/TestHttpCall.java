@@ -5,6 +5,7 @@ import stroom.cache.impl.CacheManagerImpl;
 import stroom.pipeline.PipelineConfig;
 import stroom.util.cert.SSLConfig;
 import stroom.util.io.PathCreator;
+import stroom.util.io.SimplePathCreator;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -38,7 +39,7 @@ class TestHttpCall {
 
         final String clientConfig = mapper.writeValueAsString(sslConfig);
 
-        final PathCreator pathCreator = new PathCreator(
+        final PathCreator pathCreator = new SimplePathCreator(
                 () -> tempDir.resolve("home"),
                 () -> tempDir);
 

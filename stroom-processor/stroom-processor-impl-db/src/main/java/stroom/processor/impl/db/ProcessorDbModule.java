@@ -3,13 +3,7 @@ package stroom.processor.impl.db;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 import stroom.processor.impl.ProcessorConfig.ProcessorDbConfig;
-import stroom.processor.impl.ProcessorDao;
-import stroom.processor.impl.ProcessorFilterDao;
-import stroom.processor.impl.ProcessorFilterTrackerDao;
-import stroom.processor.impl.ProcessorTaskDao;
-import stroom.processor.impl.ProcessorTaskDeleteExecutor;
 import stroom.util.guice.GuiceUtil;
-import stroom.util.shared.Clearable;
 
 import javax.sql.DataSource;
 
@@ -22,15 +16,10 @@ public class ProcessorDbModule extends AbstractFlyWayDbModule<ProcessorDbConfig,
     @Override
     protected void configure() {
         super.configure();
-        bind(ProcessorDao.class).to(ProcessorDaoImpl.class);
-        bind(ProcessorFilterDao.class).to(ProcessorFilterDaoImpl.class);
-        bind(ProcessorTaskDao.class).to(ProcessorTaskDaoImpl.class);
-        bind(ProcessorTaskDeleteExecutor.class).to(ProcessorTaskDeleteExecutorImpl.class);
-        bind(ProcessorFilterTrackerDao.class).to(ProcessorFilterTrackerDaoImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), Clearable.class)
-                .addBinding(ProcessorNodeCache.class)
-                .addBinding(ProcessorFeedCache.class);
+        // MultiBind the connection provider so we can see status for all databases.
+        GuiceUtil.buildMultiBinder(binder(), DataSource.class)
+                .addBinding(ProcessorDbConnProvider.class);
     }
 
     @Override

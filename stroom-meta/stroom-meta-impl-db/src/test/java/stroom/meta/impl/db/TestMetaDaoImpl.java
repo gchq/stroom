@@ -83,16 +83,17 @@ class TestMetaDaoImpl {
     @BeforeEach
     void setup() {
         Guice.createInjector(
-                        new MetaTestModule(),
-                        new MetaDbModule(),
-                        new MockClusterLockModule(),
-                        new MockSecurityContextModule(),
-                        new MockTaskModule(),
-                        new MockCollectionModule(),
-                        new MockDocRefInfoModule(),
-                        new MockWordListProviderModule(),
-                        new CacheModule(),
-                        new DbTestModule())
+                new MetaTestModule(),
+                new MetaDbModule(),
+                new MetaDaoModule(),
+                new MockClusterLockModule(),
+                new MockSecurityContextModule(),
+                new MockTaskModule(),
+                new MockCollectionModule(),
+                new MockDocRefInfoModule(),
+                new MockWordListProviderModule(),
+                new CacheModule(),
+                new DbTestModule())
                 .injectMembers(this);
         // Delete everything`
         cleanup.cleanup();

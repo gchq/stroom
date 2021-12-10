@@ -36,6 +36,8 @@ import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.storedquery.impl.StoredQueryConfig.StoredQueryDbConfig;
 import stroom.util.NullSafe;
 import stroom.util.config.ConfigLocation;
+import stroom.util.io.PathConfig;
+import stroom.util.io.StroomPathConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -71,11 +73,25 @@ public class AppConfigModule extends AbstractModule {
         // Bind the AbstractDbConfig instances in bootStrapConfig so we can inject the config
         // to connect to the DBs. Once the DB is up we can read the db config props and work
         // out all the effective config.
-        bindDbConfigInstances();
+        bindBootstrapConfigInstances();
     }
 
-    private void bindDbConfigInstances() {
+    private void bindBootstrapConfigInstances() {
         final AppConfig bootStrapConfig = configHolder.getBootStrapConfig();
+
+        // PathConfig is not settable via the DB so bind here
+        bind(PathConfig.class)
+                .toInstance(NullSafe.getAsOptional(
+                        bootStrapConfig,
+                        AppConfig::getPathConfig)
+                        .orElseGet(StroomPathConfig::new));
+
+        // StroomPathConfig is not settable via the DB so bind here
+        bind(StroomPathConfig.class)
+                .toInstance(NullSafe.getAsOptional(
+                        bootStrapConfig,
+                        AppConfig::getPathConfig)
+                        .orElseGet(StroomPathConfig::new));
 
         bind(CommonDbConfig.class)
                 .toInstance(NullSafe.getAsOptional(

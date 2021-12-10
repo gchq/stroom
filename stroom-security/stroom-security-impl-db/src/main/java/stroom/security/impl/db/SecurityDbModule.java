@@ -2,10 +2,8 @@ package stroom.security.impl.db;
 
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
-import stroom.security.impl.AppPermissionDao;
 import stroom.security.impl.AuthorisationConfig.AuthorisationDbConfig;
-import stroom.security.impl.DocumentPermissionDao;
-import stroom.security.impl.UserDao;
+import stroom.util.guice.GuiceUtil;
 
 import javax.sql.DataSource;
 
@@ -18,9 +16,10 @@ public class SecurityDbModule extends AbstractFlyWayDbModule<AuthorisationDbConf
     @Override
     protected void configure() {
         super.configure();
-        bind(UserDao.class).to(UserDaoImpl.class);
-        bind(DocumentPermissionDao.class).to(DocumentPermissionDaoImpl.class);
-        bind(AppPermissionDao.class).to(AppPermissionDaoImpl.class);
+
+        // MultiBind the connection provider so we can see status for all databases.
+        GuiceUtil.buildMultiBinder(binder(), DataSource.class)
+                .addBinding(SecurityDbConnProvider.class);
     }
 
     @Override

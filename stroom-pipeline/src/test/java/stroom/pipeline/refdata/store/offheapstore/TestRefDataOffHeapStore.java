@@ -43,6 +43,8 @@ import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
 import stroom.task.mock.MockTaskModule;
 import stroom.util.io.ByteSize;
 import stroom.util.io.HomeDirProvider;
+import stroom.util.io.PathCreator;
+import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -145,6 +147,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                         bind(ReferenceDataConfig.class).toProvider(() -> getReferenceDataConfig());
                         bind(HomeDirProvider.class).toInstance(() -> getCurrentTestDir());
                         bind(TempDirProvider.class).toInstance(() -> getCurrentTestDir());
+                        bind(PathCreator.class).to(SimplePathCreator.class);
                         install(new RefDataStoreModule());
                         install(new MockTaskModule());
                         install(new PipelineScopeModule());

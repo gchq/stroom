@@ -1,6 +1,7 @@
 package stroom.util.validation;
 
 import stroom.util.io.PathCreator;
+import stroom.util.io.SimplePathCreator;
 import stroom.util.shared.validation.ValidDirectoryPath;
 import stroom.util.shared.validation.ValidDirectoryPathValidator;
 
@@ -19,7 +20,7 @@ public class ValidDirectoryPathValidatorImpl implements ValidDirectoryPathValida
     private final PathCreator pathCreator;
 
     @Inject
-    public ValidDirectoryPathValidatorImpl(final PathCreator pathCreator) {
+    public ValidDirectoryPathValidatorImpl(final SimplePathCreator pathCreator) {
         this.pathCreator = pathCreator;
     }
 

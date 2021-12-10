@@ -2,9 +2,8 @@ package stroom.job.impl.db;
 
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
-import stroom.job.impl.JobDao;
-import stroom.job.impl.JobNodeDao;
 import stroom.job.impl.JobSystemConfig.JobSystemDbConfig;
+import stroom.util.guice.GuiceUtil;
 
 import javax.sql.DataSource;
 
@@ -17,9 +16,10 @@ public class JobDbModule extends AbstractFlyWayDbModule<JobSystemDbConfig, JobDb
     @Override
     protected void configure() {
         super.configure();
-        bind(JobDao.class).to(JobDaoImpl.class);
-        bind(JobNodeDao.class).to(JobNodeDaoImpl.class);
 
+        // MultiBind the connection provider so we can see status for all databases.
+        GuiceUtil.buildMultiBinder(binder(), DataSource.class)
+                .addBinding(JobDbConnProvider.class);
     }
 
     @Override

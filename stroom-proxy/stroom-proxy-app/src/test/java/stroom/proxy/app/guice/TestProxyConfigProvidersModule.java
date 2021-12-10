@@ -18,9 +18,9 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class TestConfigProvidersModule {
+public class TestProxyConfigProvidersModule {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestConfigProvidersModule.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestProxyConfigProvidersModule.class);
 
     @Test
     void testProviderMethodPresence() {

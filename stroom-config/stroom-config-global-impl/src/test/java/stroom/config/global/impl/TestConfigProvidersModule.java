@@ -101,7 +101,6 @@ public class TestConfigProvidersModule {
                 new AppConfigModule(configHolder));
 
         final ConfigMapper configMapper = injector.getInstance(ConfigMapper.class);
-        configMapper.markConfigAsReady();
 //        configMapper.updateConfigInstances(new AppConfig());
 
         SoftAssertions.assertSoftly(softAssertions -> {

@@ -17,13 +17,9 @@
 package stroom.data.store.impl.fs.db;
 
 import stroom.data.store.impl.fs.DataStoreServiceConfig.DataStoreServiceDbConfig;
-import stroom.data.store.impl.fs.DataVolumeDao;
-import stroom.data.store.impl.fs.FsFeedPathDao;
-import stroom.data.store.impl.fs.FsTypePathDao;
-import stroom.data.store.impl.fs.FsVolumeDao;
-import stroom.data.store.impl.fs.FsVolumeStateDao;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
+import stroom.util.guice.GuiceUtil;
 
 import javax.sql.DataSource;
 
@@ -36,11 +32,10 @@ public class FsDataStoreDbModule extends AbstractFlyWayDbModule<DataStoreService
     @Override
     protected void configure() {
         super.configure();
-        bind(DataVolumeDao.class).to(DataVolumeDaoImpl.class);
-        bind(FsFeedPathDao.class).to(FsFeedPathDaoImpl.class);
-        bind(FsTypePathDao.class).to(FsTypePathDaoImpl.class);
-        bind(FsVolumeDao.class).to(FsVolumeDaoImpl.class);
-        bind(FsVolumeStateDao.class).to(FsVolumeStateDaoImpl.class);
+
+        // MultiBind the connection provider so we can see status for all databases.
+        GuiceUtil.buildMultiBinder(binder(), DataSource.class)
+                .addBinding(FsDataStoreDbConnProvider.class);
     }
 
     @Override

@@ -27,19 +27,11 @@ public class ConfigMapperSpy extends ConfigMapper {
         super(configHolder);
         this.valueMappers = new HashMap<>();
         Objects.requireNonNull(valueMappers);
-        super.markConfigAsReady();
     }
 
     @Override
     public <T extends AbstractConfig> T getConfigObject(final Class<T> clazz) {
         final T config = super.getConfigObject(clazz);
-        return mapConfigValue(clazz, config);
-    }
-
-    @Override
-    public <T extends AbstractConfig> T getConfigObject(final Class<T> clazz,
-                                                        final boolean isBlocking) {
-        final T config = super.getConfigObject(clazz, isBlocking);
         return mapConfigValue(clazz, config);
     }
 

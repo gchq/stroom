@@ -3,7 +3,7 @@ package stroom.explorer.impl.db;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 import stroom.explorer.impl.ExplorerConfig.ExplorerDbConfig;
-import stroom.explorer.impl.ExplorerTreeDao;
+import stroom.util.guice.GuiceUtil;
 
 import javax.sql.DataSource;
 
@@ -17,7 +17,9 @@ public class ExplorerDbModule extends AbstractFlyWayDbModule<ExplorerDbConfig, E
     protected void configure() {
         super.configure();
 
-        bind(ExplorerTreeDao.class).to(ExplorerTreeDaoImpl.class);
+        // MultiBind the connection provider so we can see status for all databases.
+        GuiceUtil.buildMultiBinder(binder(), DataSource.class)
+                .addBinding(ExplorerDbConnProvider.class);
     }
 
     @Override

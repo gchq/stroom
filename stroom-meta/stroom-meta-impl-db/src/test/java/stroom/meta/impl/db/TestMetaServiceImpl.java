@@ -78,6 +78,7 @@ class TestMetaServiceImpl {
         Guice.createInjector(
                 new MetaModule(),
                 new MetaDbModule(),
+                new MetaDaoModule(),
                 new MockClusterLockModule(),
                 new MockSecurityContextModule(),
                 new MockCollectionModule(),

@@ -1,6 +1,7 @@
 package stroom.util.validation;
 
 import stroom.util.io.PathCreator;
+import stroom.util.io.SimplePathCreator;
 import stroom.util.shared.validation.ValidFilePath;
 import stroom.util.shared.validation.ValidFilePathValidator;
 
@@ -19,7 +20,7 @@ public class ValidFilePathValidatorImpl implements ValidFilePathValidator {
     private final PathCreator pathCreator;
 
     @Inject
-    public ValidFilePathValidatorImpl(final PathCreator pathCreator) {
+    public ValidFilePathValidatorImpl(final SimplePathCreator pathCreator) {
         this.pathCreator = pathCreator;
     }
 
