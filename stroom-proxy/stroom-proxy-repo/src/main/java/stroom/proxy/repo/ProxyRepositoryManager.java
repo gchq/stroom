@@ -27,11 +27,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 /**
  * Manager class that handles rolling the repository if required. Also tracks
  * old rolled repositories.
  */
+@Singleton
 public class ProxyRepositoryManager implements HasHealthCheck {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRepositoryManager.class);

@@ -14,26 +14,23 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
+@Singleton
 public class ProxyConfigMonitor extends AbstractFileChangeMonitor implements Managed, HasHealthCheck {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyConfigMonitor.class);
 
-    private final ProxyConfig proxyConfig;
-    private final ConfigLocation configLocation;
     private final Path configFile;
     private final ProxyConfigValidator proxyConfigValidator;
     private final ProxyConfigProvider proxyConfigProvider;
 
     @Inject
-    public ProxyConfigMonitor(final ProxyConfig proxyConfig,
-                              final ConfigLocation configLocation,
+    public ProxyConfigMonitor(final ConfigLocation configLocation,
                               final ProxyConfigValidator proxyConfigValidator,
                               final ProxyConfigProvider proxyConfigProvider) {
         super(configLocation.getConfigFilePath());
-        this.proxyConfig = proxyConfig;
         this.configFile = configLocation.getConfigFilePath();
-        this.configLocation = configLocation;
         this.proxyConfigValidator = proxyConfigValidator;
         this.proxyConfigProvider = proxyConfigProvider;
     }
