@@ -4,6 +4,7 @@ import stroom.query.api.v2.Query;
 import stroom.query.common.v2.Coprocessors;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -17,12 +18,15 @@ public class LocalNodeSearch implements NodeSearch {
 
     private final Provider<ClusterSearchTaskHandler> clusterSearchTaskHandlerProvider;
     private final SecurityContext securityContext;
+    private final TaskContextFactory taskContextFactory;
 
     @Inject
     public LocalNodeSearch(final Provider<ClusterSearchTaskHandler> clusterSearchTaskHandlerProvider,
-                           final SecurityContext securityContext) {
+                           final SecurityContext securityContext,
+                           final TaskContextFactory taskContextFactory) {
         this.clusterSearchTaskHandlerProvider = clusterSearchTaskHandlerProvider;
         this.securityContext = securityContext;
+        this.taskContextFactory = taskContextFactory;
     }
 
     public void searchNode(final String sourceNode,
@@ -30,14 +34,14 @@ public class LocalNodeSearch implements NodeSearch {
                            final List<Long> shards,
                            final AsyncSearchTask task,
                            final Query query,
-                           final TaskContext taskContext) {
+                           final TaskContext parentContext) {
         LOGGER.debug(() -> task.getSearchName() + " - start searching node: " + targetNode);
-        taskContext.info(() -> task.getSearchName() + " - start searching node: " + targetNode);
+        parentContext.info(() -> task.getSearchName() + " - start searching node: " + targetNode);
         final ClusterSearchResultCollector resultCollector = task.getResultCollector();
 
         // Start local cluster search execution.
         final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(
-                taskContext.getTaskId(),
+                parentContext.getTaskId(),
                 "Cluster Search",
                 task.getKey(),
                 query,
@@ -59,9 +63,12 @@ public class LocalNodeSearch implements NodeSearch {
                 if (coprocessors != null && coprocessors.size() > 0) {
                     final ClusterSearchTaskHandler clusterSearchTaskHandler =
                             clusterSearchTaskHandlerProvider.get();
-                    clusterSearchTaskHandler.search(taskContext,
-                            clusterSearchTask,
-                            coprocessors);
+
+                    // Add a child context just to get the same indentation level for local and remote search tasks.
+                    taskContextFactory.context(clusterSearchTask.getTaskName(), taskContext ->
+                            clusterSearchTaskHandler.search(taskContext,
+                                    clusterSearchTask,
+                                    coprocessors)).run();
 
                 } else {
                     throw new SearchException("No coprocessors were created");
