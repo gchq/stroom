@@ -80,7 +80,7 @@ public class AppConfigMonitor extends AbstractFileChangeMonitor implements Manag
         // can log their locations with full paths.
         PropertyPathDecorator.decoratePaths(newAppConfig, AppConfig.ROOT_PROPERTY_PATH);
 
-        LOGGER.info("Validating modified config file (home: {})", newAppConfig.getPathConfig().getHome());
+        LOGGER.info("Validating modified config (home: {})", newAppConfig.getPathConfig().getHome());
         final ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validateRecursively(newAppConfig);
         result.handleViolations(AppConfigValidator::logConstraintViolation);
 

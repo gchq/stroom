@@ -1,13 +1,12 @@
 package stroom.test;
 
+import stroom.app.guice.BootstrapModule;
 import stroom.app.guice.CoreModule;
 import stroom.app.guice.JerseyModule;
 import stroom.app.uri.UriFactoryModule;
 import stroom.config.app.AppConfig;
-import stroom.config.app.AppConfigModule;
 import stroom.config.app.Config;
 import stroom.config.app.ConfigHolder;
-import stroom.db.util.DbModule;
 import stroom.index.VolumeTestConfigModule;
 import stroom.index.mock.MockIndexShardWriterExecutorModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
@@ -43,8 +42,7 @@ public class SetupSampleDataModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(Config.class).toInstance(configuration);
-        install(new AppConfigModule(configHolder));
-        install(new DbModule());
+        install(new BootstrapModule(configuration, configHolder.getConfigFile()));
         install(new UriFactoryModule());
         install(new CoreModule());
         install(new ResourceModule());

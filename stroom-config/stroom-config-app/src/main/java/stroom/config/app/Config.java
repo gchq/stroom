@@ -3,6 +3,7 @@ package stroom.config.app;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.Configuration;
 
+// Can't use a JsonCreator for this as the superclass doesn't use 'JsonCreator
 public class Config extends Configuration {
 
     private AppConfig appConfig;

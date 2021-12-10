@@ -195,6 +195,8 @@ public class App extends Application<Config> {
 
         final Injector bootStrapInjector = bootstrapApplication(configuration, environment);
 
+        LOGGER.info("Completed initialisation of database connections and application configuration");
+
         // Merge the sparse de-serialised config with our default AppConfig tree
         // so we have a full config tree but with any yaml overrides
 //        final AppConfig mergedAppConfig = ConfigMapper.buildMergedAppConfig(configFile);
