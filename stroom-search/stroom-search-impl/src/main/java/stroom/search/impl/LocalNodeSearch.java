@@ -65,7 +65,7 @@ public class LocalNodeSearch implements NodeSearch {
                             clusterSearchTaskHandlerProvider.get();
 
                     // Add a child context just to get the same indentation level for local and remote search tasks.
-                    taskContextFactory.context(clusterSearchTask.getTaskName(), taskContext ->
+                    taskContextFactory.childContext(parentContext, clusterSearchTask.getTaskName(), taskContext ->
                             clusterSearchTaskHandler.search(taskContext,
                                     clusterSearchTask,
                                     coprocessors)).run();
