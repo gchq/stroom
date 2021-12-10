@@ -7,9 +7,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import javax.inject.Singleton;
-
-@Singleton
 public class CommonDbConfig extends AbstractDbConfig {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CommonDbConfig.class);

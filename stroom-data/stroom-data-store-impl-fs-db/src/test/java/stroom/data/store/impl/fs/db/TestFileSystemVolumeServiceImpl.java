@@ -102,7 +102,7 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
         volumeService = new FsVolumeService(fsVolumeDao,
                 fsVolumeStateDao,
                 securityContext,
-                new FsVolumeConfig(),
+                FsVolumeConfig::new,
                 null,
                 null,
                 null,

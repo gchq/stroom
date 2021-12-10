@@ -5,6 +5,8 @@ import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.cache.CacheConfig;
+import stroom.util.config.annotations.RequiresRestart;
+import stroom.util.config.annotations.RequiresRestart.RestartScope;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
 
@@ -81,6 +83,7 @@ public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
         return metaTypeCache;
     }
 
+    @RequiresRestart(RestartScope.SYSTEM)
     @JsonPropertyDescription("List of accepted meta type names.")
     public String getMetaTypes() {
         return metaTypes;

@@ -101,7 +101,7 @@ class TestSQLStatisticEventStore extends StroomUnitTest {
                 null,
                 mockStatisticsDataSourceCache,
                 null,
-                sqlStatisticsConfig,
+                this::getSqlStatisticsConfig,
                 securityContext,
                 new SimpleTaskContext()) {
             @Override
@@ -141,7 +141,7 @@ class TestSQLStatisticEventStore extends StroomUnitTest {
                 null,
                 mockStatisticsDataSourceCache,
                 null,
-                sqlStatisticsConfig,
+                this::getSqlStatisticsConfig,
                 securityContext,
                 new SimpleTaskContext()) {
             @Override
@@ -172,6 +172,10 @@ class TestSQLStatisticEventStore extends StroomUnitTest {
         assertThat(store.getNumIdle()).isEqualTo(0);
         assertThat(store.getNumActive()).isEqualTo(0);
 
+    }
+
+    public SQLStatisticsConfig getSqlStatisticsConfig() {
+        return sqlStatisticsConfig;
     }
 
     @Test
@@ -225,7 +229,7 @@ class TestSQLStatisticEventStore extends StroomUnitTest {
                 null,
                 mockStatisticsDataSourceCache,
                 mockSqlStatisticCache,
-                sqlStatisticsConfig,
+                this::getSqlStatisticsConfig,
                 securityContext,
                 new SimpleTaskContext());
 

@@ -21,7 +21,7 @@ class TestBootstrapModule {
     void test() {
 
         final Config config = new Config();
-        config.setAppConfig(new AppConfig());
+        config.setYamlAppConfig(new AppConfig());
         final BootstrapModule bootstrapModule = new BootstrapModule(
                 config,
                 Path.of("dummy"));

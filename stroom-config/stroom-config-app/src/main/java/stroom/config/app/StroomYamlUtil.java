@@ -52,7 +52,7 @@ public class StroomYamlUtil {
 
 
     public static AppConfig readAppConfig(final Path configFile) throws IOException {
-        return readConfig(configFile).getAppConfig();
+        return readConfig(configFile).getYamlAppConfig();
     }
 
     /**
@@ -129,7 +129,7 @@ public class StroomYamlUtil {
 
     public static void writeConfig(final AppConfig appConfig, final OutputStream outputStream) throws IOException {
         Config config = new Config();
-        config.setAppConfig(appConfig);
+        config.setYamlAppConfig(appConfig);
         writeConfig(config, outputStream);
     }
 
@@ -142,7 +142,7 @@ public class StroomYamlUtil {
 
     public static void writeConfig(final AppConfig appConfig, final Path path) throws IOException {
         Config config = new Config();
-        config.setAppConfig(appConfig);
+        config.setYamlAppConfig(appConfig);
         writeConfig(config, path);
     }
 

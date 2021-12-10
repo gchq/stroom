@@ -71,7 +71,7 @@ public final class SetupSampleData {
         final Injector injector = Guice.createInjector(new SetupSampleDataModule(config, configFile));
 
         final PathCreator pathCreator = injector.getInstance(SimplePathCreator.class);
-        downloadContent(contentPackDefinition, pathCreator, config.getAppConfig().getContentPackImportConfig());
+        downloadContent(contentPackDefinition, pathCreator, config.getYamlAppConfig().getContentPackImportConfig());
 
         // Start task manager
         injector.getInstance(TaskManager.class).startup();

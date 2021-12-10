@@ -84,7 +84,7 @@ public class DbTestUtil {
         // We are only running one module so just pass in any empty ForceCoreMigration
         return dbModule.getConnectionProvider(
                 () -> config,
-                new TestDataSourceFactory(new CommonDbConfig()),
+                new TestDataSourceFactory(CommonDbConfig::new),
                 new ForceLegacyMigration() {
                 });
     }

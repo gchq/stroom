@@ -37,25 +37,26 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
     private static final String USER_AGENT_FORMAT = "stroom-proxy/{} java/{}";
 
     private final LogStream logStream;
-    private final ForwardStreamConfig forwardStreamConfig;
-    private final ProxyRepositoryConfig proxyRepositoryConfig;
+    private final Provider<ForwardStreamConfig> forwardStreamConfigProvider;
+    private final Provider<ProxyRepositoryConfig> proxyRepositoryConfigProvider;
     private final Provider<BuildInfo> buildInfoProvider;
     private final List<ForwardDestination> destinations;
     private final String userAgentString;
 
     @Inject
     ForwardStreamHandlerFactory(final LogStream logStream,
-                                final ForwardStreamConfig forwardStreamConfig,
-                                final ProxyRepositoryConfig proxyRepositoryConfig,
+                                final Provider<ForwardStreamConfig> forwardStreamConfigProvider,
+                                final Provider<ProxyRepositoryConfig> proxyRepositoryConfigProvider,
                                 final Provider<BuildInfo> buildInfoProvider,
                                 final PathCreator pathCreator) {
         this.logStream = logStream;
-        this.forwardStreamConfig = forwardStreamConfig;
-        this.proxyRepositoryConfig = proxyRepositoryConfig;
+        this.forwardStreamConfigProvider = forwardStreamConfigProvider;
+        this.proxyRepositoryConfigProvider = proxyRepositoryConfigProvider;
         this.buildInfoProvider = buildInfoProvider;
 
         // Set the user agent string to something like
         // stroom-proxy/v6.0-beta.46 java/1.8.0_181
+        final ForwardStreamConfig forwardStreamConfig = forwardStreamConfigProvider.get();
         userAgentString = getUserAgentString(forwardStreamConfig.getUserAgent());
 
         if (forwardStreamConfig.isForwardingEnabled()) {
@@ -82,6 +83,7 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
             this.destinations = Collections.emptyList();
         }
 
+        final ProxyRepositoryConfig proxyRepositoryConfig = proxyRepositoryConfigProvider.get();
         if (proxyRepositoryConfig.isStoringEnabled() && Strings.isNullOrEmpty(proxyRepositoryConfig.getRepoDir())) {
             throw new RuntimeException("Storing is enabled but no repo directory have been provided in 'repoDir'");
         }
@@ -89,7 +91,7 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
 
     @Override
     public List<StreamHandler> addReceiveHandlers(final List<StreamHandler> handlers) {
-        if (!proxyRepositoryConfig.isStoringEnabled()) {
+        if (!proxyRepositoryConfigProvider.get().isStoringEnabled()) {
             add(handlers);
         }
         return handlers;
@@ -104,6 +106,7 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
     }
 
     private boolean isConfiguredToStore() {
+        final ProxyRepositoryConfig proxyRepositoryConfig = proxyRepositoryConfigProvider.get();
         return proxyRepositoryConfig.isStoringEnabled()
                 && !Strings.isNullOrEmpty(proxyRepositoryConfig.getRepoDir());
     }
@@ -122,6 +125,7 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
 
         final AtomicBoolean allHealthy = new AtomicBoolean(true);
 
+        final ForwardStreamConfig forwardStreamConfig = forwardStreamConfigProvider.get();
         resultBuilder
                 .withDetail("forwardingEnabled", forwardStreamConfig.isForwardingEnabled());
 
@@ -131,7 +135,10 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
             destinations.forEach(destination -> {
                 final String url = destination.config.getForwardUrl();
                 final Optional<String> errorMsg = SSLUtil.checkUrlHealth(
-                        url, destination.sslSocketFactory, destination.config.getSslConfig(), "POST");
+                        url,
+                        destination.sslSocketFactory,
+                        destination.config.getSslConfig(),
+                        "POST");
 
                 if (errorMsg.isPresent()) {
                     allHealthy.set(false);

@@ -77,15 +77,17 @@ class TestSearchResultCreation {
 
     @BeforeEach
     void setup(@TempDir final Path tempDir) {
-        final ResultStoreConfig resultStoreConfig = new ResultStoreConfig();
         final LmdbLibraryConfig lmdbLibraryConfig = new LmdbLibraryConfig();
         final TempDirProvider tempDirProvider = () -> tempDir;
         final PathCreator pathCreator = new SimplePathCreator(() -> tempDir, () -> tempDir);
-        final LmdbEnvFactory lmdbEnvFactory = new LmdbEnvFactory(pathCreator, tempDirProvider, lmdbLibraryConfig);
+        final LmdbEnvFactory lmdbEnvFactory = new LmdbEnvFactory(
+                pathCreator,
+                tempDirProvider,
+                () -> lmdbLibraryConfig);
         final Executor executor = Executors.newCachedThreadPool();
         dataStoreFactory = new LmdbDataStoreFactory(
                 lmdbEnvFactory,
-                resultStoreConfig,
+                ResultStoreConfig::new,
                 pathCreator,
                 () -> executor);
     }

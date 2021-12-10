@@ -31,7 +31,7 @@ public class GuiceBindGraph {
     public void produceGraph() throws IOException {
 
         Config config = new Config();
-        config.setAppConfig(new AppConfig());
+        config.setYamlAppConfig(new AppConfig());
         final Injector injector = Guice.createInjector(
                 new BootstrapModule(config, Path.of("dummy/path/to/config.yml")),
                 new AppModule());

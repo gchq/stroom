@@ -304,12 +304,12 @@ public class App extends Application<Config> {
                 + "\n  Build date:    " + buildInfo.getBuildDate()
                 + "\n  Stroom home:   " + homeDirProvider.get().toAbsolutePath().normalize()
                 + "\n  Stroom temp:   " + tempDirProvider.get().toAbsolutePath().normalize()
-                + "\n  Node name:     " + getNodeName(configuration.getAppConfig()));
+                + "\n  Node name:     " + getNodeName(configuration.getYamlAppConfig()));
     }
 
     private void warnAboutDefaultOpenIdCreds(Config configuration) {
-        if (configuration.getAppConfig().getSecurityConfig().getIdentityConfig().isUseDefaultOpenIdCredentials()) {
-            String propPath = configuration.getAppConfig().getSecurityConfig().getIdentityConfig().getFullPathStr(
+        if (configuration.getYamlAppConfig().getSecurityConfig().getIdentityConfig().isUseDefaultOpenIdCredentials()) {
+            String propPath = configuration.getYamlAppConfig().getSecurityConfig().getIdentityConfig().getFullPathStr(
                     "useDefaultOpenIdCredentials");
             LOGGER.warn("\n" +
                     "\n  -----------------------------------------------------------------------------" +
@@ -335,7 +335,7 @@ public class App extends Application<Config> {
 
     private void validateAppConfig(final Config config, final Path configFile) {
 
-        final AppConfig appConfig = config.getAppConfig();
+        final AppConfig appConfig = config.getYamlAppConfig();
 
         // Walk the config tree to decorate it with all the path names
         // so we can qualify each prop

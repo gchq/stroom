@@ -23,7 +23,7 @@ public class BootstrapTestModule extends AbstractModule {
     private final ConfigHolder configHolder = new ConfigHolderImpl();
 
     public BootstrapTestModule() {
-        config.setAppConfig(configHolder.getBootStrapConfig());
+        config.setYamlAppConfig(configHolder.getBootStrapConfig());
     }
 
     @Override
@@ -59,7 +59,7 @@ public class BootstrapTestModule extends AbstractModule {
                 appConfig.getPathConfig().setHome(FileUtil.getCanonicalPath(dir));
 
                 this.config = new Config();
-                this.config.setAppConfig(appConfig);
+                this.config.setYamlAppConfig(appConfig);
             } catch (final IOException e) {
                 throw new UncheckedIOException(e.getMessage(), e);
             }

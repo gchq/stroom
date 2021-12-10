@@ -94,7 +94,7 @@ class TestAppConfigModule {
         final Config modifiedConfig = StroomYamlUtil.readConfig(devYamlPath);
         // Merge all the default values in
 //        final AppConfig modifiedAppConfig = ConfigMapper.buildMergedAppConfig(devYamlPath);
-        final AppConfig modifiedAppConfig = modifiedConfig.getAppConfig();
+        final AppConfig modifiedAppConfig = modifiedConfig.getYamlAppConfig();
 
         final int currentValue = modifiedAppConfig
                 .getCommonDbConfig()

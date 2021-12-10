@@ -64,7 +64,10 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         final PathCreator pathCreator = new SimplePathCreator(() -> tempDir, () -> tempDir);
         final ResultStoreConfig resultStoreConfig = new ResultStoreConfig();
         final LmdbLibraryConfig lmdbLibraryConfig = new LmdbLibraryConfig();
-        final LmdbEnvFactory lmdbEnvFactory = new LmdbEnvFactory(pathCreator, tempDirProvider, lmdbLibraryConfig);
+        final LmdbEnvFactory lmdbEnvFactory = new LmdbEnvFactory(
+                pathCreator,
+                tempDirProvider,
+                () -> lmdbLibraryConfig);
         final Executor executor = Executors.newCachedThreadPool();
 
         return new LmdbDataStore(

@@ -1,6 +1,6 @@
 package stroom.security.identity.openid;
 
-import stroom.security.identity.config.IdentityConfig;
+import stroom.security.identity.config.TokenConfig;
 import stroom.security.identity.token.JsonWebKeyFactoryImpl;
 import stroom.security.identity.token.TokenBuilder;
 import stroom.security.identity.token.TokenBuilderFactory;
@@ -91,7 +91,7 @@ public class GenerateTestOpenIdDetails {
         final OpenIdClient oAuth2Client = OpenIdClientDetailsFactoryImpl.createRandomisedOAuth2Client(CLIENT_NAME);
 
         final TokenBuilderFactory tokenBuilderFactory = new TokenBuilderFactory(
-                new IdentityConfig(),
+                TokenConfig::new,
                 publicJsonWebKeyProvider);
 
         final TokenBuilder tokenBuilder = tokenBuilderFactory

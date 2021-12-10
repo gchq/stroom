@@ -30,7 +30,7 @@ public class SetupSampleDataModule extends AbstractModule {
         configHolder = new ConfigHolder() {
             @Override
             public AppConfig getBootStrapConfig() {
-                return configuration.getAppConfig();
+                return configuration.getYamlAppConfig();
             }
 
             @Override

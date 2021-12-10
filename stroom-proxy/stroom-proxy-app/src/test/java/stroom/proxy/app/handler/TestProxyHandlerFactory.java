@@ -109,7 +109,11 @@ class TestProxyHandlerFactory extends StroomUnitTest {
 
         final BuildInfo buildInfo = new BuildInfo("now", "test version", "now");
         final ForwardStreamHandlerFactory forwardStreamHandlerFactory = new ForwardStreamHandlerFactory(
-                logStream, forwardRequestConfig, proxyRepositoryConfig, () -> buildInfo, pathCreator);
+                logStream,
+                () -> forwardRequestConfig,
+                () -> proxyRepositoryConfig,
+                () -> buildInfo,
+                pathCreator);
 
         return new MasterStreamHandlerFactory(proxyRepositoryStreamHandlerFactory, forwardStreamHandlerFactory);
     }

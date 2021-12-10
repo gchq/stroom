@@ -31,7 +31,7 @@ public class BootstrapModule extends AbstractModule {
         this.configHolder = new ConfigHolder() {
             @Override
             public AppConfig getBootStrapConfig() {
-                return configuration.getAppConfig();
+                return configuration.getYamlAppConfig();
             }
 
             @Override

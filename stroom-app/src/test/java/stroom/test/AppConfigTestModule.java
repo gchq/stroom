@@ -56,7 +56,7 @@ public class AppConfigTestModule extends AppConfigModule {
                 appConfig.getPathConfig().setHome(FileUtil.getCanonicalPath(dir));
 
                 this.config = new Config();
-                this.config.setAppConfig(appConfig);
+                this.config.setYamlAppConfig(appConfig);
             } catch (final IOException e) {
                 throw new UncheckedIOException(e.getMessage(), e);
             }
