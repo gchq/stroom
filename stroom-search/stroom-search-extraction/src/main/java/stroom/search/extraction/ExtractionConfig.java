@@ -18,10 +18,12 @@ public class ExtractionConfig extends AbstractConfig {
 
     private static final int DEFAULT_MAX_THREADS_PER_TASK = 5;
     private static final int DEFAULT_MAX_STREAM_EVENT_MAP_SIZE = 1000000;
+    private static final long DEFAULT_EXTRACTION_DELAY_MS = 100;
 
     private int maxStoredDataQueueSize = DEFAULT_MAX_STORED_DATA_QUEUE_SIZE;
     private int maxThreadsPerTask = DEFAULT_MAX_THREADS_PER_TASK;
     private int maxStreamEventMapSize = DEFAULT_MAX_STREAM_EVENT_MAP_SIZE;
+    private long extractionDelayMs = DEFAULT_EXTRACTION_DELAY_MS;
 
     @JsonPropertyDescription("The maximum number documents that will have stored data retrieved from the index " +
             "shard and queued prior to further processing")
@@ -52,12 +54,23 @@ public class ExtractionConfig extends AbstractConfig {
         this.maxStreamEventMapSize = maxStreamEventMapSize;
     }
 
+    @JsonPropertyDescription("Extraction delay in milliseconds. " +
+            "A delay reduces the chance of a stream being extracted more than once.")
+    public long getExtractionDelayMs() {
+        return extractionDelayMs;
+    }
+
+    public void setExtractionDelayMs(final long extractionDelayMs) {
+        this.extractionDelayMs = extractionDelayMs;
+    }
+
     @Override
     public String toString() {
         return "ExtractionConfig{" +
                 "maxStoredDataQueueSize=" + maxStoredDataQueueSize +
                 ", maxThreadsPerTask=" + maxThreadsPerTask +
                 ", maxStreamEventMapSize=" + maxStreamEventMapSize +
+                ", extractionDelayMs=" + extractionDelayMs +
                 '}';
     }
 }

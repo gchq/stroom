@@ -20,31 +20,29 @@ package stroom.search.solr.search;
 import stroom.cluster.task.api.ClusterTaskTerminator;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.Coprocessors;
-import stroom.search.solr.CachedSolrIndex;
-import stroom.search.solr.SolrIndexCache;
-import stroom.search.solr.shared.SolrIndexField;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.TaskId;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
 
 public class SolrAsyncSearchTaskHandler {
 
-    private final SolrIndexCache solrIndexCache;
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SolrAsyncSearchTaskHandler.class);
+
     private final SecurityContext securityContext;
     private final SolrClusterSearchTaskHandler clusterSearchTaskHandler;
     private final TaskManager taskManager;
     private final ClusterTaskTerminator clusterTaskTerminator;
 
     @Inject
-    SolrAsyncSearchTaskHandler(final SolrIndexCache solrIndexCache,
-                               final SecurityContext securityContext,
+    SolrAsyncSearchTaskHandler(final SecurityContext securityContext,
                                final SolrClusterSearchTaskHandler clusterSearchTaskHandler,
                                final TaskManager taskManager,
                                final ClusterTaskTerminator clusterTaskTerminator) {
-        this.solrIndexCache = solrIndexCache;
         this.securityContext = securityContext;
         this.clusterSearchTaskHandler = clusterSearchTaskHandler;
         this.taskManager = taskManager;
@@ -61,35 +59,28 @@ public class SolrAsyncSearchTaskHandler {
                     taskContext.info(() -> task.getSearchName() + " - initialising");
                     final Query query = task.getQuery();
 
-                    // Reload the index.
-                    final CachedSolrIndex index = solrIndexCache.get(query.getDataSource());
+                    if (coprocessors != null && coprocessors.size() > 0) {
+                        // Start searching.
+                        clusterSearchTaskHandler.search(
+                                taskContext,
+                                query,
+                                task.getNow(),
+                                task.getDateTimeLocale(),
+                                coprocessors);
 
-                    // Get an array of stored index fields that will be used for
-                    // getting stored data.
-                    // TODO : Specify stored fields based on the fields that all
-                    // coprocessors will require. Also
-                    // batch search only needs stream and event id stored fields.
-                    final String[] storedFields = getStoredFields(index);
-
-                    clusterSearchTaskHandler.exec(taskContext,
-                            index,
-                            query,
-                            storedFields,
-                            task.getNow(),
-                            task.getDateTimeLocale(),
-                            coprocessors);
-
-                    // Await completion.
-                    taskContext.info(() -> task.getSearchName() + " - searching");
-                    coprocessors.getCompletionState().signalComplete();
-                    resultCollector.awaitCompletion();
-
+                        // Await completion.
+                        taskContext.info(() -> task.getSearchName() + " - searching");
+                        LOGGER.trace(() -> "Search is complete, setting searchComplete to true and " +
+                                "counting down searchCompleteLatch");
+                        coprocessors.getCompletionState().signalComplete();
+                        resultCollector.awaitCompletion();
+                    }
                 } catch (final RuntimeException e) {
+                    LOGGER.debug(e::getMessage, e);
                     coprocessors.getErrorConsumer().add(e);
                 } catch (final InterruptedException e) {
-                    coprocessors.getErrorConsumer().add(e);
-
-                    // Continue to interrupt this thread.
+                    LOGGER.trace(e::getMessage, e);
+                    // Keep interrupting this thread.
                     Thread.currentThread().interrupt();
                 } finally {
                     taskContext.info(() -> task.getSearchName() + " - complete");
@@ -117,13 +108,5 @@ public class SolrAsyncSearchTaskHandler {
         // ClusterDispatchAsyncImpl
         // will not execute it if the parent task is terminated.
         clusterTaskTerminator.terminate(task.getSearchName(), taskId, "SolrAsyncSearchTask");
-    }
-
-    private String[] getStoredFields(final CachedSolrIndex index) {
-        return index.getFields()
-                .stream()
-                .filter(SolrIndexField::isStored)
-                .map(SolrIndexField::getFieldName)
-                .toArray(String[]::new);
     }
 }

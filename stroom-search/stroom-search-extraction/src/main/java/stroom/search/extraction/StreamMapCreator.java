@@ -24,7 +24,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.SearchProgressLog;
 import stroom.util.logging.SearchProgressLog.SearchPhase;
 
-public class StreamMapCreator {
+class StreamMapCreator {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StreamMapCreator.class);
 
@@ -33,7 +33,7 @@ public class StreamMapCreator {
 
     private ExtractionException error;
 
-    public StreamMapCreator(final FieldIndex fieldIndex) {
+    StreamMapCreator(final FieldIndex fieldIndex) {
         // First get the index in the stored data of the stream and event id fields.
         streamIdIndex = getFieldIndex(fieldIndex, IndexConstants.STREAM_ID);
         eventIdIndex = getFieldIndex(fieldIndex, IndexConstants.EVENT_ID);
