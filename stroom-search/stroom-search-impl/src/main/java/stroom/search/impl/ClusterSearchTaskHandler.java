@@ -26,6 +26,7 @@ import stroom.search.extraction.ExtractionDecoratorFactory;
 import stroom.search.extraction.StoredDataQueue;
 import stroom.search.impl.shard.IndexShardSearchFactory;
 import stroom.security.api.SecurityContext;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -45,6 +46,7 @@ class ClusterSearchTaskHandler {
     private final IndexShardSearchFactory indexShardSearchFactory;
     private final ExtractionDecoratorFactory extractionDecoratorFactory;
     private final SecurityContext securityContext;
+    private final ExecutorProvider executorProvider;
 
     private final AtomicLong hitCount = new AtomicLong();
     private final AtomicLong extractionCount = new AtomicLong();
@@ -54,10 +56,12 @@ class ClusterSearchTaskHandler {
     @Inject
     ClusterSearchTaskHandler(final IndexShardSearchFactory indexShardSearchFactory,
                              final ExtractionDecoratorFactory extractionDecoratorFactory,
-                             final SecurityContext securityContext) {
+                             final SecurityContext securityContext,
+                             final ExecutorProvider executorProvider) {
         this.indexShardSearchFactory = indexShardSearchFactory;
         this.extractionDecoratorFactory = extractionDecoratorFactory;
         this.securityContext = securityContext;
+        this.executorProvider = executorProvider;
     }
 
     public void search(final TaskContext taskContext,
@@ -118,7 +122,7 @@ class ClusterSearchTaskHandler {
             // Wait for all to complete.
             final CompletableFuture<Void> all = CompletableFuture
                     .allOf(indexShardSearchFuture, streamMappingFuture, extractionFuture);
-            all.whenCompleteAsync((r, t) -> complete.countDown());
+            all.whenCompleteAsync((r, t) -> complete.countDown(), executorProvider.get());
 
             // Update status until we complete.
             while (!complete.await(1, TimeUnit.SECONDS)) {

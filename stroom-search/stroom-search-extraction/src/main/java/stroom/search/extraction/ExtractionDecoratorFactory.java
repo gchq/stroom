@@ -161,7 +161,7 @@ public class ExtractionDecoratorFactory {
         return taskContextFactory.childContext(parentContext, "Extraction Task Mapper", taskContext -> {
             info(taskContext, () -> "Starting extraction task producer");
             try {
-                while (!taskContext.isTerminated()) {
+                while (true) {
                     info(taskContext, () -> "" +
                             "Creating extraction tasks - stored data queue size: " +
                             storedDataQueue.size() +
@@ -239,103 +239,106 @@ public class ExtractionDecoratorFactory {
     private void extractData(final TaskContext parentContext,
                              final AtomicLong extractionCount,
                              final ErrorConsumer errorConsumer) {
-        while (!parentContext.isTerminated()) {
-            taskContextFactory.childContext(parentContext, "Extraction Task", taskContext -> {
-                try {
+        taskContextFactory.childContext(parentContext, "Extraction", taskContext -> {
+            try {
+                while (true) {
                     final Entry<Long, Set<Event>> entry = streamEventMap.take();
-                    securityContext.useAsRead(() -> {
-                        SearchProgressLog.add(SearchPhase.EXTRACTION_DECORATOR_FACTORY_STREAM_EVENT_MAP_TAKE,
-                                entry.getValue().size());
-                        extractEvents(taskContext,
-                                entry.getKey(),
-                                entry.getValue(),
-                                extractionCount,
-                                errorConsumer);
-                    });
-                } catch (final InterruptedException e) {
-                    LOGGER.trace(e::getMessage, e);
-                    // Keep interrupting this thread.
-                    Thread.currentThread().interrupt();
-                } catch (final CompleteException e) {
-                    LOGGER.debug(() -> "Complete");
-                    LOGGER.trace(e::getMessage, e);
-                } finally {
-                    LOGGER.debug("Completed extraction thread");
+                    SearchProgressLog.add(SearchPhase.EXTRACTION_DECORATOR_FACTORY_STREAM_EVENT_MAP_TAKE,
+                            entry.getValue().size());
+                    extractEvents(taskContext, entry.getKey(), entry.getValue(), extractionCount, errorConsumer);
                 }
-            }).run();
-        }
+            } catch (final InterruptedException e) {
+                LOGGER.trace(e::getMessage, e);
+                // Keep interrupting this thread.
+                Thread.currentThread().interrupt();
+            } catch (final CompleteException e) {
+                LOGGER.debug(() -> "Complete");
+                LOGGER.trace(e::getMessage, e);
+            }
+        }).run();
+        LOGGER.debug("Completed extraction thread");
     }
 
-    private void extractEvents(final TaskContext taskContext,
+    private void extractEvents(final TaskContext parentContext,
                                final long streamId,
                                final Set<Event> events,
                                final AtomicLong extractionCount,
                                final ErrorConsumer errorConsumer) {
-        SearchProgressLog.increment(SearchPhase.EXTRACTION_DECORATOR_FACTORY_CREATE_TASKS);
-        SearchProgressLog.add(SearchPhase.EXTRACTION_DECORATOR_FACTORY_CREATE_TASKS_EVENTS, events.size());
+        taskContextFactory.childContext(parentContext, "Extraction Task", taskContext -> {
+            securityContext.useAsRead(() -> {
+                SearchProgressLog.increment(SearchPhase.EXTRACTION_DECORATOR_FACTORY_CREATE_TASKS);
+                SearchProgressLog.add(SearchPhase.EXTRACTION_DECORATOR_FACTORY_CREATE_TASKS_EVENTS, events.size());
 
-        // Sort events if we are performing extraction.
-        final long[] eventIds;
-        if (receivers.size() > 1 ||
-                (receivers.size() == 1 && receivers.keySet().iterator().next() != null)) {
-            eventIds = events.stream().mapToLong(Event::getEventId).sorted().toArray();
-        } else {
-            eventIds = null;
-        }
+                // Sort events if we are performing extraction.
+                final long[] eventIds;
+                if (receivers.size() > 1 ||
+                        (receivers.size() == 1 && receivers.keySet().iterator().next() != null)) {
+                    eventIds = events.stream().mapToLong(Event::getEventId).sorted().toArray();
+                } else {
+                    eventIds = null;
+                }
 
-        if (receivers.size() > 0 && !Thread.currentThread().isInterrupted()) {
-            try {
-                Meta meta = null;
+                if (receivers.size() > 0 && !Thread.currentThread().isInterrupted()) {
+                    try {
+                        Meta meta = null;
 
-                for (final Entry<DocRef, ExtractionReceiver> entry : receivers.entrySet()) {
-                    final DocRef docRef = entry.getKey();
-                    final ExtractionReceiver receiver = entry.getValue();
+                        for (final Entry<DocRef, ExtractionReceiver> entry : receivers.entrySet()) {
+                            final DocRef docRef = entry.getKey();
+                            final ExtractionReceiver receiver = entry.getValue();
 
-                    if (docRef != null) {
-                        SearchProgressLog.add(SearchPhase.EXTRACTION_DECORATOR_FACTORY_CREATE_TASKS_DOCREF,
-                                events.size());
-                        final PipelineData pipelineData = getPipelineData(docRef);
-                        final ExtractionTask extractionTask =
-                                new ExtractionTask(streamId, eventIds, docRef, receiver, errorConsumer);
-                        final ExtractionTaskHandler handler = handlerProvider.get();
-                        meta = handler.extract(taskContext, extractionTask, pipelineData);
+                            if (docRef != null) {
+                                SearchProgressLog.add(SearchPhase.EXTRACTION_DECORATOR_FACTORY_CREATE_TASKS_DOCREF,
+                                        events.size());
+                                final PipelineData pipelineData = getPipelineData(docRef);
+                                final ExtractionTaskHandler handler = handlerProvider.get();
+                                meta = handler.extract(
+                                        taskContext,
+                                        streamId,
+                                        eventIds,
+                                        docRef,
+                                        receiver,
+                                        errorConsumer,
+                                        pipelineData);
 
-                        extractionCount.addAndGet(events.size());
+                                extractionCount.addAndGet(events.size());
 
-                    } else {
-                        // See if we can load the stream. We might get a StreamPermissionException if we aren't
-                        // allowed to read from this stream.
-                        if (meta == null) {
-                            meta = metaService.getMeta(streamId);
-                            if (meta == null) {
-                                throw new DataException("Unable to find data, could be due to lack of permissions");
+                            } else {
+                                // See if we can load the stream. We might get a StreamPermissionException if we aren't
+                                // allowed to read from this stream.
+                                if (meta == null) {
+                                    meta = metaService.getMeta(streamId);
+                                    if (meta == null) {
+                                        throw new DataException(
+                                                "Unable to find data, could be due to lack of permissions");
+                                    }
+                                }
+
+                                SearchProgressLog.add(SearchPhase.EXTRACTION_DECORATOR_FACTORY_CREATE_TASKS_NO_DOCREF,
+                                        events.size());
+                                info(taskContext,
+                                        () -> "Transferring " + events.size() + " records from stream " + streamId);
+                                // Pass raw values to coprocessors that are not requesting values to be extracted.
+                                for (final Event event : events) {
+                                    receiver.add(event.getValues());
+                                    extractionCount.incrementAndGet();
+                                }
                             }
                         }
-
-                        SearchProgressLog.add(SearchPhase.EXTRACTION_DECORATOR_FACTORY_CREATE_TASKS_NO_DOCREF,
-                                events.size());
-                        info(taskContext,
-                                () -> "Transferring " + events.size() + " records from stream " + streamId);
-                        // Pass raw values to coprocessors that are not requesting values to be extracted.
-                        for (final Event event : events) {
-                            receiver.add(event.getValues());
-                            extractionCount.incrementAndGet();
-                        }
+                    } catch (final DataException e) {
+                        LOGGER.debug(e::getMessage, e);
+                    } catch (final ExtractionException e) {
+                        // Something went wrong extracting data from this stream.
+                        errorConsumer.add(e);
+                    } catch (final RuntimeException e) {
+                        // Something went wrong extracting data from this stream.
+                        final ExtractionException extractionException =
+                                new ExtractionException("Unable to extract data from stream source with id: " +
+                                        streamId + " - " + e.getMessage(), e);
+                        errorConsumer.add(extractionException);
                     }
                 }
-            } catch (final DataException e) {
-                LOGGER.debug(e::getMessage, e);
-            } catch (final ExtractionException e) {
-                // Something went wrong extracting data from this stream.
-                errorConsumer.add(e);
-            } catch (final RuntimeException e) {
-                // Something went wrong extracting data from this stream.
-                final ExtractionException extractionException =
-                        new ExtractionException("Unable to extract data from stream source with id: " +
-                                streamId + " - " + e.getMessage(), e);
-                errorConsumer.add(extractionException);
-            }
-        }
+            });
+        }).run();
     }
 
     private PipelineData getPipelineData(final DocRef pipelineRef) {

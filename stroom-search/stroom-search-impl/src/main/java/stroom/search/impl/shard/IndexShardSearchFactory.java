@@ -14,7 +14,6 @@ import stroom.search.impl.SearchConfig;
 import stroom.search.impl.SearchException;
 import stroom.search.impl.SearchExpressionQueryBuilder;
 import stroom.search.impl.SearchExpressionQueryBuilder.SearchExpressionQuery;
-import stroom.search.impl.shard.IndexShardSearchTask.IndexShardQueryFactory;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -117,31 +116,32 @@ public class IndexShardSearchFactory {
                 final ShardIdQueue queue = new ShardIdQueue(task.getShards());
                 final AtomicInteger shardNo = new AtomicInteger();
                 for (int i = 0; i < indexShardSearchConfig.getMaxThreadsPerTask(); i++) {
-                    futures[i] = CompletableFuture.runAsync(() -> {
-                        while (!parentContext.isTerminated()) {
-                            taskContextFactory
-                                    .childContext(parentContext, "Search Index Shard", taskContext -> {
-                                        try {
-                                            final long shard = queue.take();
-                                            final IndexShardSearchTask t = new IndexShardSearchTask(queryFactory,
-                                                    shard,
-                                                    storedFieldNames,
-                                                    hitCount);
-                                            t.setShardTotal(task.getShards().size());
-                                            t.setShardNumber(shardNo.incrementAndGet());
-                                            final IndexShardSearchTaskHandler handler =
-                                                    indexShardSearchTaskHandlerProvider.get();
-                                            handler.exec(taskContext, t, storedDataQueue, errorConsumer);
-                                        } catch (final CompleteException e) {
-                                            LOGGER.trace(() -> "Complete");
-                                        } catch (final InterruptedException e) {
-                                            LOGGER.trace(e::getMessage, e);
-                                            // Keep interrupting this thread.
-                                            Thread.currentThread().interrupt();
-                                        }
-                                    }).run();
-                        }
-                    }, executor);
+                    futures[i] = CompletableFuture.runAsync(() -> taskContextFactory
+                            .childContext(parentContext, "Search Index", taskContext -> {
+                                try {
+                                    while (true) {
+                                        final long shardId = queue.take();
+                                        final IndexShardSearchTaskHandler handler =
+                                                indexShardSearchTaskHandlerProvider.get();
+                                        handler.searchShard(
+                                                taskContext,
+                                                queryFactory,
+                                                storedFieldNames,
+                                                hitCount,
+                                                shardNo.incrementAndGet(),
+                                                task.getShards().size(),
+                                                shardId,
+                                                storedDataQueue,
+                                                errorConsumer);
+                                    }
+                                } catch (final CompleteException e) {
+                                    LOGGER.trace(() -> "Complete");
+                                } catch (final InterruptedException e) {
+                                    LOGGER.trace(e::getMessage, e);
+                                    // Keep interrupting this thread.
+                                    Thread.currentThread().interrupt();
+                                }
+                            }).run(), executor);
                 }
             } catch (final InterruptedException e) {
                 LOGGER.trace(e::getMessage, e);
