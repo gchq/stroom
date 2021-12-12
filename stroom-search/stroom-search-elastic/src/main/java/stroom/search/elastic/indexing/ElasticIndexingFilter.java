@@ -306,7 +306,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             currentDocuments.add(document);
             document = new HashMap<>();
 
-            if (currentDocuments.size() > batchSize) {
+            if (currentDocuments.size() >= batchSize) {
                 addDocuments(currentDocuments);
                 currentDocuments = new ArrayList<>();
             }
