@@ -225,6 +225,8 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                     .builder()
                     .pipeline(row.getProcessorFilter().getPipeline())
                     .queryData(processorFilter.getQueryData())
+                    .minMetaCreateTimeMs(processorFilter.getMinMetaCreateTimeMs())
+                    .maxMetaCreateTimeMs(processorFilter.getMaxMetaCreateTimeMs())
                     .priority(processorFilter.getPriority())
                     .autoPriority(true)
                     .enabled(false)
