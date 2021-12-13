@@ -112,6 +112,7 @@ class ExtractionTaskHandler {
                 SearchProgressLog.increment(SearchPhase.EXTRACTION_TASK_HANDLER_EXTRACT);
                 SearchProgressLog.add(SearchPhase.EXTRACTION_TASK_HANDLER_EXTRACT_EVENTS, eventIds.length);
 
+                taskContext.reset();
                 taskContext.info(() -> "" +
                         "Extracting " +
                         eventIds.length +

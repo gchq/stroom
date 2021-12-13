@@ -76,7 +76,7 @@ public class IndexShardSearchTaskHandler {
         this.taskContextFactory = taskContextFactory;
     }
 
-    public void searchShard(final TaskContext parentContext,
+    public void searchShard(final TaskContext taskContext,
                             final IndexShardQueryFactory queryFactory,
                             final String[] storedFieldNames,
                             final AtomicLong hitCount,
@@ -85,45 +85,44 @@ public class IndexShardSearchTaskHandler {
                             final long shardId,
                             final ValuesConsumer valuesConsumer,
                             final ErrorConsumer errorConsumer) {
-        taskContextFactory.childContext(parentContext, "Search Index Shard", taskContext -> {
-            IndexShardSearcher indexShardSearcher = null;
-            try {
-                if (!Thread.currentThread().isInterrupted()) {
-                    taskContext.info(() ->
-                            "Searching shard " + shardNumber + " of " + shardTotal +
-                                    " (id=" + shardId + ")");
+        IndexShardSearcher indexShardSearcher = null;
+        try {
+            if (!Thread.currentThread().isInterrupted()) {
+                taskContext.reset();
+                taskContext.info(() ->
+                        "Searching shard " + shardNumber + " of " + shardTotal +
+                                " (id=" + shardId + ")");
 
 
-                    final IndexWriter indexWriter = getWriter(shardId);
+                final IndexWriter indexWriter = getWriter(shardId);
 
-                    final IndexShard indexShard = indexShardService.loadById(shardId);
-                    if (indexShard == null) {
-                        throw new SearchException("Unable to find index shard with id = " + shardId);
-                    }
-
-                    indexShardSearcher = new IndexShardSearcher(indexShard, indexWriter);
-
-                    // Start searching.
-                    searchShard(
-                            taskContext,
-                            queryFactory,
-                            storedFieldNames,
-                            hitCount,
-                            indexShardSearcher,
-                            valuesConsumer,
-                            errorConsumer);
+                final IndexShard indexShard = indexShardService.loadById(shardId);
+                if (indexShard == null) {
+                    throw new SearchException("Unable to find index shard with id = " + shardId);
                 }
-            } catch (final RuntimeException e) {
-                LOGGER.debug(e::getMessage, e);
-                error(errorConsumer, e);
 
-            } finally {
-                taskContext.info(() -> "Closing searcher for index shard " + shardId);
-                if (indexShardSearcher != null) {
-                    indexShardSearcher.destroy();
-                }
+                indexShardSearcher = new IndexShardSearcher(indexShard, indexWriter);
+
+                // Start searching.
+                searchShard(
+                        taskContext,
+                        queryFactory,
+                        storedFieldNames,
+                        hitCount,
+                        indexShardSearcher,
+                        valuesConsumer,
+                        errorConsumer);
             }
-        }).run();
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
+            error(errorConsumer, e);
+
+        } finally {
+            if (indexShardSearcher != null) {
+                taskContext.info(() -> "Closing searcher for index shard " + shardId);
+                indexShardSearcher.destroy();
+            }
+        }
     }
 
     private IndexWriter getWriter(final Long indexShardId) {

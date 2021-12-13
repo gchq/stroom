@@ -117,9 +117,11 @@ public class IndexShardSearchFactory {
                 final AtomicInteger shardNo = new AtomicInteger();
                 for (int i = 0; i < indexShardSearchConfig.getMaxThreadsPerTask(); i++) {
                     futures[i] = CompletableFuture.runAsync(() -> taskContextFactory
-                            .childContext(parentContext, "Search Index", taskContext -> {
+                            .childContext(parentContext, "Search Index Shard", taskContext -> {
                                 try {
                                     while (true) {
+                                        taskContext.reset();
+                                        taskContext.info(() -> "Waiting for index shard...");
                                         final long shardId = queue.take();
                                         final IndexShardSearchTaskHandler handler =
                                                 indexShardSearchTaskHandlerProvider.get();

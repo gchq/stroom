@@ -26,6 +26,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.SearchProgressLog;
 import stroom.util.logging.SearchProgressLog.SearchPhase;
+import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -53,6 +54,7 @@ public class ExtractionDecoratorFactory {
     private final ExtractionConfig extractionConfig;
     private final ExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
+    private final PipelineScopeRunnable pipelineScopeRunnable;
     private final SecurityContext securityContext;
     private final AnnotationsDecoratorFactory receiverDecoratorFactory;
     private final MetaService metaService;
@@ -70,6 +72,7 @@ public class ExtractionDecoratorFactory {
     ExtractionDecoratorFactory(final ExtractionConfig extractionConfig,
                                final ExecutorProvider executorProvider,
                                final TaskContextFactory taskContextFactory,
+                               final PipelineScopeRunnable pipelineScopeRunnable,
                                final SecurityContext securityContext,
                                final AnnotationsDecoratorFactory receiverDecoratorFactory,
                                final MetaService metaService,
@@ -79,6 +82,7 @@ public class ExtractionDecoratorFactory {
         this.extractionConfig = extractionConfig;
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
+        this.pipelineScopeRunnable = pipelineScopeRunnable;
         this.securityContext = securityContext;
         this.receiverDecoratorFactory = receiverDecoratorFactory;
         this.metaService = metaService;
@@ -239,106 +243,114 @@ public class ExtractionDecoratorFactory {
     private void extractData(final TaskContext parentContext,
                              final AtomicLong extractionCount,
                              final ErrorConsumer errorConsumer) {
-        taskContextFactory.childContext(parentContext, "Extraction", taskContext -> {
-            try {
-                while (true) {
-                    final Entry<Long, Set<Event>> entry = streamEventMap.take();
-                    SearchProgressLog.add(SearchPhase.EXTRACTION_DECORATOR_FACTORY_STREAM_EVENT_MAP_TAKE,
-                            entry.getValue().size());
-                    extractEvents(taskContext, entry.getKey(), entry.getValue(), extractionCount, errorConsumer);
+        taskContextFactory.childContext(parentContext, "Extraction Task", taskContext -> {
+            securityContext.useAsRead(() -> {
+                try {
+                    while (true) {
+                        taskContext.reset();
+                        taskContext.info(() -> "Waiting for extraction task...");
+
+                        final Entry<Long, Set<Event>> entry = streamEventMap.take();
+                        SearchProgressLog.add(SearchPhase.EXTRACTION_DECORATOR_FACTORY_STREAM_EVENT_MAP_TAKE,
+                                entry.getValue().size());
+                        extractEvents(taskContext, entry.getKey(), entry.getValue(), extractionCount, errorConsumer);
+                    }
+                } catch (final InterruptedException e) {
+                    LOGGER.trace(e::getMessage, e);
+                    // Keep interrupting this thread.
+                    Thread.currentThread().interrupt();
+                } catch (final CompleteException e) {
+                    LOGGER.debug(() -> "Complete");
+                    LOGGER.trace(e::getMessage, e);
                 }
-            } catch (final InterruptedException e) {
-                LOGGER.trace(e::getMessage, e);
-                // Keep interrupting this thread.
-                Thread.currentThread().interrupt();
-            } catch (final CompleteException e) {
-                LOGGER.debug(() -> "Complete");
-                LOGGER.trace(e::getMessage, e);
-            }
+            });
         }).run();
         LOGGER.debug("Completed extraction thread");
     }
 
-    private void extractEvents(final TaskContext parentContext,
+    private void extractEvents(final TaskContext taskContext,
                                final long streamId,
                                final Set<Event> events,
                                final AtomicLong extractionCount,
                                final ErrorConsumer errorConsumer) {
-        taskContextFactory.childContext(parentContext, "Extraction Task", taskContext -> {
-            securityContext.useAsRead(() -> {
-                SearchProgressLog.increment(SearchPhase.EXTRACTION_DECORATOR_FACTORY_CREATE_TASKS);
-                SearchProgressLog.add(SearchPhase.EXTRACTION_DECORATOR_FACTORY_CREATE_TASKS_EVENTS, events.size());
+        SearchProgressLog.increment(SearchPhase.EXTRACTION_DECORATOR_FACTORY_CREATE_TASKS);
+        SearchProgressLog.add(SearchPhase.EXTRACTION_DECORATOR_FACTORY_CREATE_TASKS_EVENTS, events.size());
 
-                // Sort events if we are performing extraction.
-                final long[] eventIds;
-                if (receivers.size() > 1 ||
-                        (receivers.size() == 1 && receivers.keySet().iterator().next() != null)) {
-                    eventIds = events.stream().mapToLong(Event::getEventId).sorted().toArray();
-                } else {
-                    eventIds = null;
-                }
+        // Sort events if we are performing extraction.
+        final long[] eventIds;
+        if (receivers.size() > 1 ||
+                (receivers.size() == 1 && receivers.keySet().iterator().next() != null)) {
+            eventIds = events.stream().mapToLong(Event::getEventId).sorted().toArray();
+        } else {
+            eventIds = null;
+        }
 
-                if (receivers.size() > 0 && !Thread.currentThread().isInterrupted()) {
-                    try {
-                        Meta meta = null;
+        if (receivers.size() > 0 && !Thread.currentThread().isInterrupted()) {
+            try {
+                Meta meta = null;
 
-                        for (final Entry<DocRef, ExtractionReceiver> entry : receivers.entrySet()) {
-                            final DocRef docRef = entry.getKey();
-                            final ExtractionReceiver receiver = entry.getValue();
+                for (final Entry<DocRef, ExtractionReceiver> entry : receivers.entrySet()) {
+                    final DocRef docRef = entry.getKey();
+                    final ExtractionReceiver receiver = entry.getValue();
 
-                            if (docRef != null) {
-                                SearchProgressLog.add(SearchPhase.EXTRACTION_DECORATOR_FACTORY_CREATE_TASKS_DOCREF,
-                                        events.size());
-                                final PipelineData pipelineData = getPipelineData(docRef);
-                                final ExtractionTaskHandler handler = handlerProvider.get();
-                                meta = handler.extract(
-                                        taskContext,
-                                        streamId,
-                                        eventIds,
-                                        docRef,
-                                        receiver,
-                                        errorConsumer,
-                                        pipelineData);
+                    if (docRef != null) {
+                        SearchProgressLog.add(SearchPhase.EXTRACTION_DECORATOR_FACTORY_CREATE_TASKS_DOCREF,
+                                events.size());
 
-                                extractionCount.addAndGet(events.size());
+                        // Get cached pipeline data.
+                        final PipelineData pipelineData = getPipelineData(docRef);
 
-                            } else {
-                                // See if we can load the stream. We might get a StreamPermissionException if we aren't
-                                // allowed to read from this stream.
-                                if (meta == null) {
-                                    meta = metaService.getMeta(streamId);
-                                    if (meta == null) {
-                                        throw new DataException(
-                                                "Unable to find data, could be due to lack of permissions");
-                                    }
-                                }
+                        // Execute the extraction within a fresh pipeline scope.
+                        meta = pipelineScopeRunnable.scopeResult(() -> {
+                            final ExtractionTaskHandler handler = handlerProvider.get();
+                            return handler.extract(
+                                    taskContext,
+                                    streamId,
+                                    eventIds,
+                                    docRef,
+                                    receiver,
+                                    errorConsumer,
+                                    pipelineData);
+                        });
 
-                                SearchProgressLog.add(SearchPhase.EXTRACTION_DECORATOR_FACTORY_CREATE_TASKS_NO_DOCREF,
-                                        events.size());
-                                info(taskContext,
-                                        () -> "Transferring " + events.size() + " records from stream " + streamId);
-                                // Pass raw values to coprocessors that are not requesting values to be extracted.
-                                for (final Event event : events) {
-                                    receiver.add(event.getValues());
-                                    extractionCount.incrementAndGet();
-                                }
+                        extractionCount.addAndGet(events.size());
+
+                    } else {
+                        // See if we can load the stream. We might get a StreamPermissionException if we aren't
+                        // allowed to read from this stream.
+                        if (meta == null) {
+                            meta = metaService.getMeta(streamId);
+                            if (meta == null) {
+                                throw new DataException(
+                                        "Unable to find data, could be due to lack of permissions");
                             }
                         }
-                    } catch (final DataException e) {
-                        LOGGER.debug(e::getMessage, e);
-                    } catch (final ExtractionException e) {
-                        // Something went wrong extracting data from this stream.
-                        errorConsumer.add(e);
-                    } catch (final RuntimeException e) {
-                        // Something went wrong extracting data from this stream.
-                        final ExtractionException extractionException =
-                                new ExtractionException("Unable to extract data from stream source with id: " +
-                                        streamId + " - " + e.getMessage(), e);
-                        errorConsumer.add(extractionException);
+
+                        SearchProgressLog.add(SearchPhase.EXTRACTION_DECORATOR_FACTORY_CREATE_TASKS_NO_DOCREF,
+                                events.size());
+                        taskContext.reset();
+                        info(taskContext,
+                                () -> "Transferring " + events.size() + " records from stream " + streamId);
+                        // Pass raw values to coprocessors that are not requesting values to be extracted.
+                        for (final Event event : events) {
+                            receiver.add(event.getValues());
+                            extractionCount.incrementAndGet();
+                        }
                     }
                 }
-            });
-        }).run();
+            } catch (final DataException e) {
+                LOGGER.debug(e::getMessage, e);
+            } catch (final ExtractionException e) {
+                // Something went wrong extracting data from this stream.
+                errorConsumer.add(e);
+            } catch (final RuntimeException e) {
+                // Something went wrong extracting data from this stream.
+                final ExtractionException extractionException =
+                        new ExtractionException("Unable to extract data from stream source with id: " +
+                                streamId + " - " + e.getMessage(), e);
+                errorConsumer.add(extractionException);
+            }
+        }
     }
 
     private PipelineData getPipelineData(final DocRef pipelineRef) {

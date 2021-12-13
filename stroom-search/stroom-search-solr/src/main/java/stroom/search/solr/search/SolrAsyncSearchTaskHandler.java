@@ -21,12 +21,14 @@ import stroom.cluster.task.api.ClusterTaskTerminator;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.Coprocessors;
 import stroom.security.api.SecurityContext;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.TaskId;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import java.util.concurrent.CompletableFuture;
 import javax.inject.Inject;
 
 public class SolrAsyncSearchTaskHandler {
@@ -34,79 +36,101 @@ public class SolrAsyncSearchTaskHandler {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SolrAsyncSearchTaskHandler.class);
 
     private final SecurityContext securityContext;
+    private final ExecutorProvider executorProvider;
     private final SolrClusterSearchTaskHandler clusterSearchTaskHandler;
     private final TaskManager taskManager;
     private final ClusterTaskTerminator clusterTaskTerminator;
 
     @Inject
     SolrAsyncSearchTaskHandler(final SecurityContext securityContext,
+                               final ExecutorProvider executorProvider,
                                final SolrClusterSearchTaskHandler clusterSearchTaskHandler,
                                final TaskManager taskManager,
                                final ClusterTaskTerminator clusterTaskTerminator) {
         this.securityContext = securityContext;
+        this.executorProvider = executorProvider;
         this.clusterSearchTaskHandler = clusterSearchTaskHandler;
         this.taskManager = taskManager;
         this.clusterTaskTerminator = clusterTaskTerminator;
     }
 
-    public void exec(final TaskContext taskContext,
+    public void exec(final TaskContext parentContext,
                      final SolrAsyncSearchTask task,
                      final Coprocessors coprocessors,
                      final SolrSearchResultCollector resultCollector) {
         securityContext.secure(() -> securityContext.useAsRead(() -> {
             if (!Thread.currentThread().isInterrupted()) {
+
+                // Create an async call that will terminate the whole task if the coprocessors decide they have enough
+                // data.
+                CompletableFuture.runAsync(() -> awaitCompletionAndTerminate(resultCollector, parentContext, task),
+                        executorProvider.get());
+
                 try {
-                    taskContext.info(() -> task.getSearchName() + " - initialising");
+                    parentContext.info(() -> task.getSearchName() + " - initialising");
                     final Query query = task.getQuery();
 
                     if (coprocessors != null && coprocessors.size() > 0) {
                         // Start searching.
                         clusterSearchTaskHandler.search(
-                                taskContext,
+                                parentContext,
                                 query,
                                 task.getNow(),
                                 task.getDateTimeLocale(),
                                 coprocessors);
 
                         // Await completion.
-                        taskContext.info(() -> task.getSearchName() + " - searching");
-                        LOGGER.trace(() -> "Search is complete, setting searchComplete to true and " +
-                                "counting down searchCompleteLatch");
-                        coprocessors.getCompletionState().signalComplete();
-                        resultCollector.awaitCompletion();
+                        parentContext.info(() -> task.getSearchName() + " - searching");
                     }
+
                 } catch (final RuntimeException e) {
                     LOGGER.debug(e::getMessage, e);
                     coprocessors.getErrorConsumer().add(e);
-                } catch (final InterruptedException e) {
-                    LOGGER.trace(e::getMessage, e);
-                    // Keep interrupting this thread.
-                    Thread.currentThread().interrupt();
-                } finally {
-                    taskContext.info(() -> task.getSearchName() + " - complete");
 
-                    // Make sure we try and terminate any child tasks on worker
-                    // nodes if we need to.
-                    terminateTasks(task, taskContext.getTaskId());
+                } finally {
+                    parentContext.info(() -> task.getSearchName() + " - complete");
+                    LOGGER.debug(() -> task.getSearchName() + " - complete");
 
                     // Ensure search is complete even if we had errors.
                     resultCollector.complete();
 
+                    // Await final completion and terminate all tasks.
+                    awaitCompletionAndTerminate(resultCollector, parentContext, task);
+
                     // We need to wait here for the client to keep getting results if
                     // this is an interactive search.
-                    taskContext.info(() -> task.getSearchName() + " - staying alive for UI requests");
+                    parentContext.info(() -> task.getSearchName() + " - staying alive for UI requests");
                 }
             }
         }));
     }
 
-    private void terminateTasks(final SolrAsyncSearchTask task, final TaskId taskId) {
-        // Terminate this task.
-        taskManager.terminate(taskId);
+    private void awaitCompletionAndTerminate(final SolrSearchResultCollector resultCollector,
+                                             final TaskContext parentContext,
+                                             final SolrAsyncSearchTask task) {
+        // Wait for the result collector to complete.
+        try {
+            resultCollector.awaitCompletion();
+        } catch (final InterruptedException e) {
+            LOGGER.trace(e.getMessage(), e);
+            // Keep interrupting this thread.
+            Thread.currentThread().interrupt();
+        } finally {
+            // Make sure we try and terminate any child tasks on worker
+            // nodes if we need to.
+            terminateTasks(task, parentContext.getTaskId());
+        }
+    }
 
-        // We have to wrap the cluster termination task in another task or
-        // ClusterDispatchAsyncImpl
-        // will not execute it if the parent task is terminated.
-        clusterTaskTerminator.terminate(task.getSearchName(), taskId, "SolrAsyncSearchTask");
+    public void terminateTasks(final SolrAsyncSearchTask task, final TaskId taskId) {
+        securityContext.asProcessingUser(() -> {
+            // Terminate this task.
+            taskManager.terminate(taskId);
+
+            // We have to wrap the cluster termination task in another task or
+            // ClusterDispatchAsyncImpl
+            // will not execute it if the parent task is terminated.
+            clusterTaskTerminator.terminate(task.getSearchName(), taskId, "AsyncSearchTask");
+        });
     }
 }
