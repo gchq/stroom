@@ -1,9 +1,9 @@
 package stroom.app.guice;
 
-import stroom.config.app.AppConfig;
 import stroom.config.app.AppConfigModule;
 import stroom.config.app.Config;
 import stroom.config.app.ConfigHolder;
+import stroom.config.app.ConfigHolderImpl;
 import stroom.config.global.impl.GlobalConfigBootstrapModule;
 import stroom.config.global.impl.db.GlobalConfigDaoModule;
 import stroom.db.util.DbModule;
@@ -15,39 +15,55 @@ import com.google.inject.AbstractModule;
 import io.dropwizard.setup.Environment;
 
 import java.nio.file.Path;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class BootStrapModule extends AbstractModule {
 
     private final Config configuration;
     private final Environment environment;
     private final ConfigHolder configHolder;
+    private final Supplier<AbstractModule> dbModuleSupplier;
+    private final Function<ConfigHolder, AppConfigModule> appConfigModuleFunc;
+
+    public BootStrapModule(final Config configuration,
+                           final Environment environment,
+                           final ConfigHolder configHolder,
+                           final Supplier<AbstractModule> dbModuleSupplier,
+                           final Function<ConfigHolder, AppConfigModule> appConfigModuleFunc) {
+        this.configuration = configuration;
+        this.environment = environment;
+        this.configHolder = configHolder;
+        this.dbModuleSupplier = dbModuleSupplier;
+        this.appConfigModuleFunc = appConfigModuleFunc;
+    }
+
+    public BootStrapModule(final Config configuration,
+                           final Environment environment,
+                           final Path configFile,
+                           final Supplier<AbstractModule> dbModuleSupplier,
+                           final Function<ConfigHolder, AppConfigModule> appConfigModuleFunc) {
+        this(
+                configuration,
+                environment,
+                new ConfigHolderImpl(configuration.getYamlAppConfig(), configFile),
+                dbModuleSupplier,
+                appConfigModuleFunc);
+    }
 
     public BootStrapModule(final Config configuration,
                            final Environment environment,
                            final Path configFile) {
-        this.configuration = configuration;
-        this.environment = environment;
-
-        this.configHolder = new ConfigHolder() {
-            @Override
-            public AppConfig getBootStrapConfig() {
-                return configuration.getYamlAppConfig();
-            }
-
-            @Override
-            public Path getConfigFile() {
-                return configFile;
-            }
-        };
+        this(configuration, environment, configFile, DbModule::new, AppConfigModule::new);
     }
 
     public BootStrapModule(final Config configuration,
                            final Path configFile) {
-        this(configuration, null, configFile);
+        this(configuration, null, configFile, DbModule::new, AppConfigModule::new);
     }
 
     @Override
-    protected void configure() {
+    public void configure() {
         super.configure();
 
         // The binds in here need to be the absolute bare minimum to get the DB
@@ -55,12 +71,13 @@ public class BootStrapModule extends AbstractModule {
 
         bind(Config.class).toInstance(configuration);
 
-        install(new AppConfigModule(configHolder));
+        final AppConfigModule appConfigModule = appConfigModuleFunc.apply(configHolder);
+        install(appConfigModule);
 
         // These are needed so the Hikari pools can register metrics/health checks
         bindMetricsAndHealthChecksRegistries();
 
-        install(new DbModule());
+        install(dbModuleSupplier.get());
 
         install(new DbConnectionsModule());
 
@@ -68,6 +85,18 @@ public class BootStrapModule extends AbstractModule {
         install(new GlobalConfigBootstrapModule());
         install(new GlobalConfigDaoModule());
         install(new DirProvidersModule());
+    }
+
+    protected Config getConfiguration() {
+        return configuration;
+    }
+
+    protected ConfigHolder getConfigHolder() {
+        return configHolder;
+    }
+
+    protected Environment getEnvironment() {
+        return environment;
     }
 
     private void bindMetricsAndHealthChecksRegistries() {

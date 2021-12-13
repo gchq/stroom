@@ -1,9 +1,10 @@
 package stroom.app.guice;
 
 import stroom.config.app.AppConfig;
+import stroom.config.app.AppConfigModule;
 import stroom.config.app.Config;
-import stroom.config.app.StroomYamlUtil;
 import stroom.config.global.impl.ConfigMapper;
+import stroom.test.common.util.db.DbTestModule;
 import stroom.util.guice.GuiceUtil;
 
 import com.google.inject.Guice;
@@ -22,10 +23,16 @@ class TestBootStrapModule {
     @Test
     void test() throws IOException {
 
-        final Path configFile = Path.of("../local.yml");
-        final Config config = StroomYamlUtil.readConfig(configFile);
+        final Path configFile = Path.of("Dummy");
+//        final Config config = StroomYamlUtil.readConfig(configFile);
+        final Config config = new Config(new AppConfig());
 
-        final BootStrapModule bootstrapModule = new BootStrapModule(config, configFile);
+        final BootStrapModule bootstrapModule = new BootStrapModule(
+                config,
+                null,
+                configFile,
+                DbTestModule::new,
+                AppConfigModule::new);
 
         final Injector injector = Guice.createInjector(bootstrapModule);
 

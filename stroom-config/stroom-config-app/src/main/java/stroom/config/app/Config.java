@@ -8,6 +8,13 @@ public class Config extends Configuration {
 
     private AppConfig appConfig;
 
+    public Config() {
+    }
+
+    public Config(final AppConfig appConfig) {
+        this.appConfig = appConfig;
+    }
+
     /**
      * The de-serialised yaml config merged with the compile time defaults to provide
      * a full config tree. Should ONLY be used by classes involved with setting up the

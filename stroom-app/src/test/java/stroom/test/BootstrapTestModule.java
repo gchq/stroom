@@ -1,13 +1,10 @@
 package stroom.test;
 
-import stroom.app.guice.DbConnectionsModule;
+import stroom.app.guice.BootStrapModule;
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
 import stroom.config.app.ConfigHolder;
-import stroom.config.global.impl.GlobalConfigBootstrapModule;
-import stroom.config.global.impl.db.GlobalConfigDaoModule;
 import stroom.test.common.util.db.DbTestModule;
-import stroom.util.io.DirProvidersModule;
 import stroom.util.io.FileUtil;
 
 import com.google.inject.AbstractModule;
@@ -19,28 +16,43 @@ import java.nio.file.Path;
 
 public class BootstrapTestModule extends AbstractModule {
 
-    private final Config config = new Config();
-    private final ConfigHolder configHolder = new ConfigHolderImpl();
+    private final BootStrapModule bootStrapModule;
 
     public BootstrapTestModule() {
-        config.setYamlAppConfig(configHolder.getBootStrapConfig());
+
+        final ConfigHolder configHolder = new ConfigHolderImpl();
+        final Config config = new Config(configHolder.getBootStrapConfig());
+
+        // Delegate to the normal BootStrapModule but use different Db and AppConfig modules
+        bootStrapModule = new BootStrapModule(
+                config,
+                null,
+                configHolder,
+                DbTestModule::new,
+                AppConfigTestModule::new);
+
+//        super(new Config(new ConfigHolderImpl()), null, Path.of("Dummy"),
+//        DbTestModule::new, AppConfigTestModule::new);
+//        config.setYamlAppConfig(configHolder.getBootStrapConfig());
     }
 
     @Override
     protected void configure() {
         super.configure();
 
-        bind(Config.class).toInstance(config);
+        bootStrapModule.configure();
 
-        install(new AppConfigTestModule(configHolder));
-
-        install(new DbTestModule());
-        install(new DbConnectionsModule());
-
-        // Any DAO/Service modules that we must have
-        install(new GlobalConfigBootstrapModule());
-        install(new GlobalConfigDaoModule());
-        install(new DirProvidersModule());
+//        bind(Config.class).toInstance(config);
+//
+//        install(new AppConfigTestModule(configHolder));
+//
+//        install(new DbTestModule());
+//        install(new DbConnectionsModule());
+//
+//        // Any DAO/Service modules that we must have
+//        install(new GlobalConfigBootstrapModule());
+//        install(new GlobalConfigDaoModule());
+//        install(new DirProvidersModule());
     }
 
     private static class ConfigHolderImpl implements ConfigHolder {
