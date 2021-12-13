@@ -1,10 +1,9 @@
 package stroom.config.global.impl;
 
-import stroom.config.common.AbstractDbConfig;
-import stroom.util.io.PathConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.BootStrapConfig;
 
 import java.io.File;
 import java.io.IOException;
@@ -59,8 +58,8 @@ public class GenerateConfigProvidersModule {
         final String methodsStr = configMapper.getInjectableConfigClasses()
                 .stream()
                 .sorted(Comparator.comparing(Class::getName))
-                .filter(clazz -> !AbstractDbConfig.class.isAssignableFrom(clazz))
-                .filter(clazz -> !PathConfig.class.isAssignableFrom(clazz))
+                .filter(clazz ->
+                        !clazz.isAnnotationPresent(BootStrapConfig.class))
                 .map(clazz ->
                         buildMethod(simpleNames, simpleNameToFullNamesMap, clazz))
                 .collect(Collectors.joining("\n"));

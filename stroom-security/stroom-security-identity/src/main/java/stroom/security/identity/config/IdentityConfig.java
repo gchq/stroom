@@ -25,6 +25,7 @@ import stroom.config.common.HasDbConfig;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.validation.ValidRegex;
 import stroom.util.shared.validation.ValidationSeverity;
 
@@ -182,6 +183,7 @@ public class IdentityConfig extends AbstractConfig implements HasDbConfig {
     }
 
 
+    @BootStrapConfig
     public static class IdentityDbConfig extends AbstractDbConfig {
 
         public IdentityDbConfig() {

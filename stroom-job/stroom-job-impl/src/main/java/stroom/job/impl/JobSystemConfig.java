@@ -6,6 +6,7 @@ import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.ModelStringUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -108,6 +109,7 @@ public class JobSystemConfig extends AbstractConfig implements HasDbConfig {
                 '}';
     }
 
+    @BootStrapConfig
     public static class JobSystemDbConfig extends AbstractDbConfig {
 
         public JobSystemDbConfig() {

@@ -6,6 +6,7 @@ import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.BootStrapConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -47,6 +48,7 @@ public class ExplorerConfig extends AbstractConfig implements HasDbConfig {
         return docRefInfoCache;
     }
 
+    @BootStrapConfig
     public static class ExplorerDbConfig extends AbstractDbConfig {
 
         public ExplorerDbConfig() {

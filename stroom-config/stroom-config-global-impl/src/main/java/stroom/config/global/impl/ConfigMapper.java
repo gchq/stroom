@@ -35,11 +35,11 @@ import stroom.util.config.annotations.Password;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.io.ByteSize;
-import stroom.util.io.PathConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.NotInjectableConfig;
 import stroom.util.shared.PropertyPath;
 import stroom.util.time.StroomDuration;
@@ -269,20 +269,6 @@ public class ConfigMapper {
         return allPropertyPaths;
     }
 
-//    /**
-//     * Will copy the contents of the passed {@link AppConfig} into the guice bound {@link AppConfig}
-//     * and update the globalPropertiesMap.
-//     * It will also apply common database config to all other database config objects.
-//     */
-//    public synchronized void updateConfigFromYaml() {
-//
-//        final int changeCount = refreshGlobalPropYamlOverrides();
-//
-//        if (changeCount > 0) {
-//            rebuildObjectInstanceMap();
-//        }
-//    }
-
     /**
      * Creates a config object from a map of property paths to values. If a value is not supplied for
      * a property then the compile time default will be used.
@@ -385,69 +371,6 @@ public class ConfigMapper {
         instance = SuperDevUtil.relaxSecurityInSuperDevMode(instance);
         return instance;
     }
-
-//    AppConfig buildMergedAppConfig() {
-//        return buildMergedAppConfig(configFile);
-//    }
-
-//    /**
-//     * Merge the config.yml content with the default AppConfig tree to get a complete
-//     * tree that includes any yaml overrides.
-//     */
-//    public static AppConfig buildMergedAppConfig(final Path configFile) {
-//
-//        final AppConfig defaultAppConfig = new AppConfig();
-//        if (configFile == null) {
-//            return defaultAppConfig;
-//        } else {
-//            try {
-//                return YamlUtil.mergeYamlNodeTrees(
-//                        AppConfig.class,
-//                        objectMapper -> {
-//                            try {
-//                                return objectMapper.readTree(configFile.toFile());
-//                            } catch (IOException e) {
-//                                throw new UncheckedIOException(e);
-//                            }
-//                        },
-//                        objectMapper ->
-//                                objectMapper.valueToTree(defaultAppConfig));
-//            } catch (Exception e) {
-//                throw new RuntimeException(LogUtil.message("Error merging yaml trees with file {}. Message: {}",
-//                        configFile.toAbsolutePath(),
-//                        e.getMessage()), e);
-//            }
-//        }
-//    }
-
-//    /**
-//     * FOR TESTING ONLY. If our custom config is in a file then we must use
-//     * {@link ConfigMapper#buildMergedAppConfig(Path)} so there is no defaulting of
-//     * null primitives. It is ok for use when you
-//     */
-//    @Deprecated // For testing only
-//    public static AppConfig buildMergedAppConfig(final AppConfig yamlAppConfig) {
-//
-//        final AppConfig defaultAppConfig = new AppConfig();
-//
-//        if (yamlAppConfig == null) {
-//            return defaultAppConfig;
-//        } else {
-//            final AppConfig mergedAppConfig = YamlUtil.mergeYamlNodeTrees(
-//                    AppConfig.class,
-//                    objectMapper ->
-//                            objectMapper.valueToTree(yamlAppConfig),
-//                    objectMapper ->
-//                            objectMapper.valueToTree(defaultAppConfig));
-//            return mergedAppConfig;
-//        }
-//
-//    }
-
-//    private synchronized int refreshGlobalPropYamlOverrides() {
-//        final AppConfig yamlAppConfig = buildMergedAppConfig();
-//        return refreshGlobalPropYamlOverrides(yamlAppConfig);
-//    }
 
     /**
      * Only for use in testing as this does not wait for DB props to be included
@@ -650,20 +573,6 @@ public class ConfigMapper {
             }
         }
     }
-
-//    private void applyEffectiveValueToProp(final ConfigProperty globalConfigProperty, final Prop prop) {
-//        final Type genericType = prop.getValueType();
-//        final Object typedValue = convertToObject(
-//                prop,
-//                globalConfigProperty.getEffectiveValue().orElse(null),
-//                genericType);
-//
-//        LOGGER.trace(() -> LogUtil.message("Setting {} to [{}] on the AppConfig tree",
-//                globalConfigProperty.getName(),
-//                typedValue));
-//
-//        prop.setValueOnConfigObject(typedValue);
-//    }
 
     private void addConfigObjectMethods(final AbstractConfig config,
                                         final PropertyPath path,
@@ -949,16 +858,7 @@ public class ConfigMapper {
         return prop.getAnnotation(JsonProperty.class)
                 .map(JsonProperty::value)
                 .orElse(null);
-
-//        for (final Annotation declaredAnnotation : method.getDeclaredAnnotations()) {
-//            if (declaredAnnotation.annotationType().equals(JsonProperty.class)) {
-//                final JsonProperty jsonProperty = (JsonProperty) declaredAnnotation;
-//                return jsonProperty.value();
-//            }
-//        }
-//        return null;
     }
-
 
     // pkg private for testing
     static String convertToString(final Object value) {
@@ -1419,9 +1319,7 @@ public class ConfigMapper {
                 .filter(clazz ->
                         !clazz.isAnnotationPresent(NotInjectableConfig.class))
                 .filter(clazz ->
-                        !AbstractDbConfig.class.isAssignableFrom(clazz)) // bound separately
-                .filter(clazz ->
-                        !PathConfig.class.isAssignableFrom(clazz)) // bound separately
+                        !clazz.isAnnotationPresent(BootStrapConfig.class))
                 .collect(Collectors.toList());
     }
 

@@ -6,6 +6,7 @@ import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.BootStrapConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -167,6 +168,7 @@ public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
                 '}';
     }
 
+    @BootStrapConfig
     public static class ProcessorDbConfig extends AbstractDbConfig {
 
         public ProcessorDbConfig() {

@@ -5,6 +5,7 @@ import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.BootStrapConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -65,6 +66,7 @@ public class AnnotationConfig extends AbstractConfig implements HasDbConfig {
         return createText;
     }
 
+    @BootStrapConfig
     public static class AnnotationDBConfig extends AbstractDbConfig {
 
         public AnnotationDBConfig() {

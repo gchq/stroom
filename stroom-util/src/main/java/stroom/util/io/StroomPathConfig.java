@@ -3,6 +3,7 @@ package stroom.util.io;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.config.annotations.RequiresRestart.RestartScope;
+import stroom.util.shared.BootStrapConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -12,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import javax.annotation.Nonnull;
 import javax.inject.Singleton;
 
+@BootStrapConfig
 @Singleton
 @JsonPropertyOrder(alphabetic = true)
 public class StroomPathConfig extends PathConfig {

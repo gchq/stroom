@@ -5,6 +5,7 @@ import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.BootStrapConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -90,6 +91,7 @@ public class DataStoreServiceConfig extends AbstractConfig implements HasDbConfi
         this.fileSystemCleanOldAge = fileSystemCleanOldAge;
     }
 
+    @BootStrapConfig
     public static class DataStoreServiceDbConfig extends AbstractDbConfig {
 
         public DataStoreServiceDbConfig() {

@@ -8,6 +8,8 @@ import java.lang.annotation.Target;
 /**
  * Annotation to indicate objects of the associated class
  * contain configuration that is require to bootstrap the application.
+ * These config objects are derived from YAML and default values only and are
+ * bound differently to other config classes.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

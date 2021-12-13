@@ -8,6 +8,7 @@ import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.config.annotations.RequiresRestart.RestartScope;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.BootStrapConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -99,6 +100,7 @@ public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
                 metaTypes);
     }
 
+    @BootStrapConfig
     public static class MetaServiceDbConfig extends AbstractDbConfig {
 
         public MetaServiceDbConfig() {

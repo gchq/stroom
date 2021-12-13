@@ -7,6 +7,7 @@ import stroom.config.common.HasDbConfig;
 import stroom.statistics.impl.sql.search.SearchConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.BootStrapConfig;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -115,6 +116,7 @@ public class SQLStatisticsConfig extends AbstractConfig implements HasDbConfig {
                 '}';
     }
 
+    @BootStrapConfig
     public static class SQLStatisticsDbConfig extends AbstractDbConfig {
 
         public SQLStatisticsDbConfig() {
