@@ -359,6 +359,9 @@ public class ConfigMapper {
             }
         });
 
+        // Nasty hack to tweak the config to relax the security when we are in superdev mode
+        instance = SuperDevUtil.relaxSecurityInSuperDevMode(instance);
+
         // We only want to hold the injectable instances
         // DB config objects are bound separately in AppConfigModule
         final Class<?> configClass = instance.getClass();
@@ -367,8 +370,6 @@ public class ConfigMapper {
             newInstanceMap.put(configClass, instance);
         }
 
-        // Nasty hack to tweak the config to relax the security when we are in superdev mode
-        instance = SuperDevUtil.relaxSecurityInSuperDevMode(instance);
         return instance;
     }
 
