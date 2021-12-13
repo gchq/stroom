@@ -63,7 +63,7 @@ public class BootStrapModule extends AbstractModule {
     }
 
     @Override
-    public void configure() {
+    protected void configure() {
         super.configure();
 
         // The binds in here need to be the absolute bare minimum to get the DB

@@ -18,8 +18,27 @@ public class BootstrapTestModule extends AbstractModule {
 
     private final BootStrapModule bootStrapModule;
 
-    public BootstrapTestModule() {
+//    private BootstrapTestModule(final Config config, final ConfigHolder configHolder) {
+//        super(config, null, configHolder, DbTestModule::new, AppConfigTestModule::new);
+//
+//
+//        final ConfigHolder configHolder = new ConfigHolderImpl();
+//        final Config config = new Config(configHolder.getBootStrapConfig());
+//
+//        // Delegate to the normal BootStrapModule but use different Db and AppConfig modules
+//        bootStrapModule = new BootStrapModule(
+//                config,
+//                null,
+//                configHolder,
+//                DbTestModule::new,
+//                AppConfigTestModule::new);
 
+//        super(new Config(new ConfigHolderImpl()), null, Path.of("Dummy"),
+//        DbTestModule::new, AppConfigTestModule::new);
+//        config.setYamlAppConfig(configHolder.getBootStrapConfig());
+//    }
+
+    public BootstrapTestModule() {
         final ConfigHolder configHolder = new ConfigHolderImpl();
         final Config config = new Config(configHolder.getBootStrapConfig());
 
@@ -30,18 +49,22 @@ public class BootstrapTestModule extends AbstractModule {
                 configHolder,
                 DbTestModule::new,
                 AppConfigTestModule::new);
-
-//        super(new Config(new ConfigHolderImpl()), null, Path.of("Dummy"),
-//        DbTestModule::new, AppConfigTestModule::new);
-//        config.setYamlAppConfig(configHolder.getBootStrapConfig());
     }
+
+//    public static BootstrapTestModule create() {
+//        final ConfigHolder configHolder = new ConfigHolderImpl();
+//        final Config config = new Config(configHolder.getBootStrapConfig());
+//
+//        return new BootstrapTestModule(config, configHolder);
+//    }
 
     @Override
     protected void configure() {
         super.configure();
 
-        bootStrapModule.configure();
-
+        install(bootStrapModule);
+//        bootStrapModule.configure();
+//
 //        bind(Config.class).toInstance(config);
 //
 //        install(new AppConfigTestModule(configHolder));
