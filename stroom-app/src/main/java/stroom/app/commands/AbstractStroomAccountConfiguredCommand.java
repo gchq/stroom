@@ -1,7 +1,7 @@
 package stroom.app.commands;
 
 import stroom.app.guice.AppModule;
-import stroom.app.guice.BootstrapModule;
+import stroom.app.guice.BootStrapModule;
 import stroom.config.app.Config;
 import stroom.util.guice.GuiceUtil;
 
@@ -55,7 +55,7 @@ public abstract class AbstractStroomAccountConfiguredCommand extends ConfiguredC
             protected void configure() {
                 // It would be nice to only load the bits we need but the web of dependencies
                 // spreads far and wide
-                install(new BootstrapModule(config, configFile));
+                install(new BootStrapModule(config, configFile));
                 install(new AppModule());
             }
         };

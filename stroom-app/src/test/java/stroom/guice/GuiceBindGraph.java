@@ -1,7 +1,7 @@
 package stroom.guice;
 
 import stroom.app.guice.AppModule;
-import stroom.app.guice.BootstrapModule;
+import stroom.app.guice.BootStrapModule;
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
 
@@ -33,7 +33,7 @@ public class GuiceBindGraph {
         Config config = new Config();
         config.setYamlAppConfig(new AppConfig());
         final Injector injector = Guice.createInjector(
-                new BootstrapModule(config, Path.of("dummy/path/to/config.yml")),
+                new BootStrapModule(config, Path.of("dummy/path/to/config.yml")),
                 new AppModule());
 
         graph(("build/AppModule.dot"), injector);

@@ -21,7 +21,7 @@ import stroom.app.commands.DbMigrationCommand;
 import stroom.app.commands.ManageUsersCommand;
 import stroom.app.commands.ResetPasswordCommand;
 import stroom.app.guice.AppModule;
-import stroom.app.guice.BootstrapModule;
+import stroom.app.guice.BootStrapModule;
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
 import stroom.config.app.StroomYamlUtil;
@@ -272,7 +272,7 @@ public class App extends Application<Config> {
                                           final Environment environment) {
         LOGGER.info("Initialising database connections and configuration properties");
 
-        final BootstrapModule bootstrapModule = new BootstrapModule(
+        final BootStrapModule bootstrapModule = new BootStrapModule(
                 configuration, environment, configFile);
 
         final Injector bootStrapInjector = Guice.createInjector(bootstrapModule);

@@ -16,13 +16,13 @@ import io.dropwizard.setup.Environment;
 
 import java.nio.file.Path;
 
-public class BootstrapModule extends AbstractModule {
+public class BootStrapModule extends AbstractModule {
 
     private final Config configuration;
     private final Environment environment;
     private final ConfigHolder configHolder;
 
-    public BootstrapModule(final Config configuration,
+    public BootStrapModule(final Config configuration,
                            final Environment environment,
                            final Path configFile) {
         this.configuration = configuration;
@@ -41,7 +41,7 @@ public class BootstrapModule extends AbstractModule {
         };
     }
 
-    public BootstrapModule(final Config configuration,
+    public BootStrapModule(final Config configuration,
                            final Path configFile) {
         this(configuration, null, configFile);
     }

@@ -2,6 +2,7 @@ package stroom.app.guice;
 
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
+import stroom.config.app.StroomYamlUtil;
 import stroom.config.global.impl.ConfigMapper;
 import stroom.util.guice.GuiceUtil;
 
@@ -11,20 +12,20 @@ import com.google.inject.Key;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Set;
 import javax.sql.DataSource;
 
-class TestBootstrapModule {
+class TestBootStrapModule {
 
     @Test
-    void test() {
+    void test() throws IOException {
 
-        final Config config = new Config();
-        config.setYamlAppConfig(new AppConfig());
-        final BootstrapModule bootstrapModule = new BootstrapModule(
-                config,
-                Path.of("dummy"));
+        final Path configFile = Path.of("../local.yml");
+        final Config config = StroomYamlUtil.readConfig(configFile);
+
+        final BootStrapModule bootstrapModule = new BootStrapModule(config, configFile);
 
         final Injector injector = Guice.createInjector(bootstrapModule);
 

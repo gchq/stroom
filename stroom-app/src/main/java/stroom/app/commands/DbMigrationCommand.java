@@ -1,6 +1,6 @@
 package stroom.app.commands;
 
-import stroom.app.guice.BootstrapModule;
+import stroom.app.guice.BootStrapModule;
 import stroom.config.app.Config;
 import stroom.util.guice.GuiceUtil;
 
@@ -49,7 +49,7 @@ public class DbMigrationCommand extends ConfiguredCommand<Config> {
         LOGGER.info("Running all DB migrations");
 
         LOGGER.debug("Creating bootstrapModule");
-        final BootstrapModule bootstrapModule = new BootstrapModule(config, configFile);
+        final BootStrapModule bootstrapModule = new BootStrapModule(config, configFile);
 
         LOGGER.debug("Creating injector");
         try {

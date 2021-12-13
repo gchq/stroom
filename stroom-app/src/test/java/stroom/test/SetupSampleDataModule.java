@@ -1,6 +1,6 @@
 package stroom.test;
 
-import stroom.app.guice.BootstrapModule;
+import stroom.app.guice.BootStrapModule;
 import stroom.app.guice.CoreModule;
 import stroom.app.guice.JerseyModule;
 import stroom.app.uri.UriFactoryModule;
@@ -42,7 +42,7 @@ public class SetupSampleDataModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(Config.class).toInstance(configuration);
-        install(new BootstrapModule(configuration, configHolder.getConfigFile()));
+        install(new BootStrapModule(configuration, configHolder.getConfigFile()));
         install(new UriFactoryModule());
         install(new CoreModule());
         install(new ResourceModule());
