@@ -111,7 +111,7 @@ class TaskManagerImpl implements TaskManager {
                 // Stop all of the current tasks.
                 taskRegistry.list().forEach(TaskContextImpl::terminate);
 
-                final int currentCount = executorProvider.getCurrentTaskCount();
+                final int currentCount = taskRegistry.list().size();
                 waiting = currentCount > 0;
                 if (waiting) {
                     // Output some debug to list the tasks that are executing

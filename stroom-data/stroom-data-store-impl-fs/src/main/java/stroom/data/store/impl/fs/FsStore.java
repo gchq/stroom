@@ -31,9 +31,8 @@ import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.Status;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -46,12 +45,12 @@ import javax.inject.Singleton;
 
 /**
  * A file system stream store.
- * Stores streams in the stream store indexed by some meta data.
+ * Stores streams in the stream store indexed by some metadata.
  */
 @Singleton
 class FsStore implements Store, AttributeMapFactory {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(FsStore.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsStore.class);
 
     private final FsPathHelper fileSystemStreamPathHelper;
     private final MetaService metaService;
@@ -71,7 +70,7 @@ class FsStore implements Store, AttributeMapFactory {
 
     @Override
     public Target openTarget(final MetaProperties metaProperties) {
-        LOGGER.debug("openTarget() " + metaProperties);
+        LOGGER.debug(() -> "openTarget() " + metaProperties);
 
         final FsVolume volume = volumeService.getVolume();
         if (volume == null) {
@@ -105,7 +104,7 @@ class FsStore implements Store, AttributeMapFactory {
     @Override
     public Target openExistingTarget(final Meta meta) throws DataException {
         Objects.requireNonNull(meta, "Null meta");
-        LOGGER.debug("openExistingTarget() " + meta);
+        LOGGER.debug(() -> "openExistingTarget() " + meta);
 
         // Lock the object
         final DataVolume dataVolume = dataVolumeService.findDataVolume(meta.getId());
@@ -130,7 +129,7 @@ class FsStore implements Store, AttributeMapFactory {
         try {
             ((FsTarget) target).delete();
         } catch (final RuntimeException e) {
-            LOGGER.error("Unable to delete stream target! {}", e.getMessage(), e);
+            LOGGER.error(() -> "Unable to delete stream target! " + e.getMessage(), e);
         }
         return target;
     }
@@ -142,8 +141,7 @@ class FsStore implements Store, AttributeMapFactory {
      *
      * @param streamId the id of the stream to open.
      * @return The stream source if the stream can be found.
-     * @throws DataException in case of a IO error or stream volume not visible or non
-     *                       existent.
+     * @throws DataException in case of a IO error or stream volume not visible or nonexistent.
      */
     @Override
     public Source openSource(final long streamId) throws DataException {
@@ -168,7 +166,7 @@ class FsStore implements Store, AttributeMapFactory {
     @Override
     public Source openSource(final long streamId, final boolean anyStatus) throws DataException {
         try {
-            LOGGER.debug("openSource() {}", streamId);
+            LOGGER.debug(() -> "openSource() " + streamId);
 
             final Meta meta = metaService.getMeta(streamId, anyStatus);
             if (meta == null) {
@@ -187,7 +185,7 @@ class FsStore implements Store, AttributeMapFactory {
             final Path volumePath = Paths.get(dataVolume.getVolumePath());
             return FsSource.create(fileSystemStreamPathHelper, meta, volumePath, meta.getTypeName());
         } catch (final DataException e) {
-            LOGGER.warn(e.getMessage());
+            LOGGER.debug(e::getMessage, e);
             throw e;
         }
     }

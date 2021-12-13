@@ -297,13 +297,7 @@ public class LmdbDataStore implements DataStore {
 
                     // If we have enough data then we can stop transferring data and complete.
                     if (hasEnoughData.compareAndSet(false, true)) {
-                        try {
-                            queue.complete();
-                        } catch (final InterruptedException e) {
-                            LOGGER.trace(e::getMessage, e);
-                            // Keep interrupting this thread.
-                            Thread.currentThread().interrupt();
-                        }
+                        queue.complete();
                     }
                 }
             }
@@ -937,14 +931,8 @@ public class LmdbDataStore implements DataStore {
         @Override
         public void signalComplete() {
             if (!isComplete()) {
-                try {
-                    // Add an empty item to the transfer queue.
-                    lmdbDataStore.queue.complete();
-                } catch (final InterruptedException e) {
-                    LOGGER.trace(e.getMessage(), e);
-                    // Keep interrupting this thread.
-                    Thread.currentThread().interrupt();
-                }
+                // Add an empty item to the transfer queue.
+                lmdbDataStore.queue.complete();
             }
         }
 

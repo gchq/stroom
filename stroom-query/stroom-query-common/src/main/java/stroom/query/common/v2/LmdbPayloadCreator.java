@@ -136,13 +136,7 @@ public class LmdbPayloadCreator {
     }
 
     void finalPayload() {
-        try {
-            currentPayload.complete();
-        } catch (final InterruptedException e) {
-            LOGGER.trace(e.getMessage(), e);
-            // Keep interrupting this thread.
-            Thread.currentThread().interrupt();
-        }
+        currentPayload.complete();
     }
 
     private void doPut(final LmdbPayload payload) {

@@ -345,6 +345,21 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                     final Long currentLineTo = getLong(lineToField, selected);
                     final Long currentColTo = getLong(colToField, selected);
 
+                    GWT.log("TextPresenter - selected table row = " + selected);
+                    GWT.log("TextPresenter - " +
+                            "streamIdField=" +
+                            streamIdField +
+                            "partNoField=" +
+                            partNoField +
+                            "recordNoField=" +
+                            recordNoField +
+                            "currentStreamId=" +
+                            currentStreamId +
+                            ", currentPartIndex=" +
+                            currentPartIndex +
+                            ", currentRecordIndex=" +
+                            currentRecordIndex);
+
                     // Validate settings.
                     if (getTextSettings().getStreamIdField() == null) {
                         message = "No stream id field is configured";

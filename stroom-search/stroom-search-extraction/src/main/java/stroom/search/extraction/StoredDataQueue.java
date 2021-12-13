@@ -16,16 +16,6 @@ public class StoredDataQueue extends CompletableQueue<Val[]> implements ValuesCo
         super(capacity);
     }
 
-    public void onComplete() {
-        try {
-            complete();
-        } catch (final InterruptedException e) {
-            LOGGER.trace(e::getMessage, e);
-            // Keep interrupting this thread.
-            Thread.currentThread().interrupt();
-        }
-    }
-
     @Override
     public void add(final Val[] values) {
         try {
