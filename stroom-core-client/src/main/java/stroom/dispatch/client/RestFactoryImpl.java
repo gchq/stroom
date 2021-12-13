@@ -23,6 +23,7 @@ import org.fusesource.restygwt.client.REST;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import javax.ws.rs.core.MediaType;
 
 class RestFactoryImpl implements RestFactory, HasHandlers {
 
@@ -78,15 +79,21 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
                                 method.getResponse().getText() != null &&
                                 !method.getResponse().getText().trim().isEmpty()) {
                             final String responseText = method.getResponse().getText().trim();
+                            final String contentType = method.getResponse().getHeader("Content-Type");
 
-                            try {
-                                throwable = getThrowableFromJsonResponse(method, exception, responseText);
-                            } catch (Exception e) {
-                                GWT.log("Error parsing response as json: " + e.getMessage());
+                            if (MediaType.TEXT_PLAIN.equals(contentType)) {
+                                throwable = getThrowableFromStringResponse(method, exception, responseText);
+                            } else {
                                 try {
-                                    throwable = getThrowableFromStringResponse(method, exception, responseText);
-                                } catch (Exception e2) {
-                                    GWT.log("Error parsing response as text: " + e.getMessage());
+                                    throwable = getThrowableFromJsonResponse(method, exception, responseText);
+                                } catch (Exception e) {
+                                    GWT.log("Error parsing response as json: " + e.getMessage());
+                                    try {
+                                        // Try parsing it as text
+                                        throwable = getThrowableFromStringResponse(method, exception, responseText);
+                                    } catch (Exception e2) {
+                                        GWT.log("Error parsing response as text: " + e.getMessage());
+                                    }
                                 }
                             }
                         }
