@@ -16,6 +16,7 @@ public class ResultStoreConfig extends AbstractConfig {
     private final int maxPutsBeforeCommit;
     private final boolean offHeapResults;
 
+    private final int valueQueueSize;
     private final ByteSize minValueSize;
     private final ByteSize maxValueSize;
     private final ByteSize minPayloadSize;
@@ -27,6 +28,7 @@ public class ResultStoreConfig extends AbstractConfig {
         maxPutsBeforeCommit = 100_000;
         offHeapResults = true;
 
+        valueQueueSize = 1_000_000;
         minValueSize = ByteSize.ofKibibytes(1);
         maxValueSize = ByteSize.ofMebibytes(1);
         minPayloadSize = ByteSize.ofMebibytes(1);
@@ -43,6 +45,7 @@ public class ResultStoreConfig extends AbstractConfig {
                              @JsonProperty("maxValueSize") final ByteSize maxValueSize,
                              @JsonProperty("minPayloadSize") final ByteSize minPayloadSize,
                              @JsonProperty("maxPayloadSize") final ByteSize maxPayloadSize,
+                             @JsonProperty("valueQueueSize") final int valueQueueSize,
                              @JsonProperty("lmdb") final ResultStoreLmdbConfig lmdbConfig) {
         this.maxPutsBeforeCommit = maxPutsBeforeCommit;
         this.offHeapResults = offHeapResults;
@@ -50,6 +53,7 @@ public class ResultStoreConfig extends AbstractConfig {
         this.maxValueSize = maxValueSize;
         this.minPayloadSize = minPayloadSize;
         this.maxPayloadSize = maxPayloadSize;
+        this.valueQueueSize = valueQueueSize;
         this.lmdbConfig = lmdbConfig;
     }
 
@@ -87,6 +91,12 @@ public class ResultStoreConfig extends AbstractConfig {
     @JsonPropertyDescription("The maximum byte size of a payload buffer.")
     public ByteSize getMaxPayloadSize() {
         return maxPayloadSize;
+    }
+
+    @JsonPropertyDescription("The size of the value queue.")
+    @JsonProperty("valueQueueSize")
+    public int getValueQueueSize() {
+        return valueQueueSize;
     }
 
     @JsonProperty("lmdb")

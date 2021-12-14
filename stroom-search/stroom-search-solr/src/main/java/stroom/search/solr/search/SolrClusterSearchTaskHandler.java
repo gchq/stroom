@@ -24,12 +24,13 @@ import stroom.query.common.v2.Coprocessors;
 import stroom.search.extraction.ExpressionFilter;
 import stroom.search.extraction.ExtractionDecoratorFactory;
 import stroom.search.extraction.StoredDataQueue;
-import stroom.search.extraction.StreamMapCreator;
-import stroom.search.solr.CachedSolrIndex;
 import stroom.security.api.SecurityContext;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.SearchProgressLog;
+import stroom.util.logging.SearchProgressLog.SearchPhase;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -44,6 +45,7 @@ class SolrClusterSearchTaskHandler {
     private final SolrSearchFactory solrSearchFactory;
     private final ExtractionDecoratorFactory extractionDecoratorFactory;
     private final SecurityContext securityContext;
+    private final ExecutorProvider executorProvider;
 
     private final AtomicLong hitCount = new AtomicLong();
     private final AtomicLong extractionCount = new AtomicLong();
@@ -53,67 +55,41 @@ class SolrClusterSearchTaskHandler {
     @Inject
     SolrClusterSearchTaskHandler(final SolrSearchFactory solrSearchFactory,
                                  final ExtractionDecoratorFactory extractionDecoratorFactory,
-                                 final SecurityContext securityContext) {
+                                 final SecurityContext securityContext,
+                                 final ExecutorProvider executorProvider) {
         this.solrSearchFactory = solrSearchFactory;
         this.extractionDecoratorFactory = extractionDecoratorFactory;
         this.securityContext = securityContext;
+        this.executorProvider = executorProvider;
     }
 
-    public void exec(final TaskContext taskContext,
-                     final CachedSolrIndex cachedSolrIndex,
-                     final Query query,
-                     final String[] storedFields,
-                     final long now,
-                     final String dateTimeLocale,
-                     final Coprocessors coprocessors) {
+    public void search(final TaskContext taskContext,
+                       final Query query,
+                       final long now,
+                       final String dateTimeLocale,
+                       final Coprocessors coprocessors) {
+        SearchProgressLog.increment(SearchPhase.CLUSTER_SEARCH_TASK_HANDLER_EXEC);
         this.taskContext = taskContext;
         securityContext.useAsRead(() -> {
             if (!Thread.currentThread().isInterrupted()) {
                 taskContext.info(() -> "Initialising...");
 
-                try {
-                    // Make sure we have been given a query.
-                    if (query.getExpression() == null) {
-                        throw new SearchException("Search expression has not been set");
-                    }
-
-                    // Get the stored fields that search is hoping to use.
-                    if (storedFields == null || storedFields.length == 0) {
-                        throw new SearchException("No stored fields have been requested");
-                    }
-
-                    if (coprocessors.size() > 0) {
-                        // Start searching.
-                        search(taskContext, cachedSolrIndex, query, storedFields, now, dateTimeLocale, coprocessors);
-                    }
-                } catch (final RuntimeException e) {
-                    try {
-                        coprocessors.getErrorConsumer().add(e);
-                    } catch (final RuntimeException e2) {
-                        // If we failed to send the result or the source node rejected the result because the
-                        // source task has been terminated then terminate the task.
-                        LOGGER.info(() -> "Terminating search because we were unable to send result");
-                        Thread.currentThread().interrupt();
-                    }
-                } finally {
-                    LOGGER.trace(() -> "Search is complete, setting searchComplete to true and " +
-                            "counting down searchCompleteLatch");
-                    // Tell the client that the search has completed.
-                    coprocessors.getCompletionState().signalComplete();
-                }
+                // Start searching.
+                doSearch(taskContext, query, now, dateTimeLocale, coprocessors);
             }
         });
     }
 
-    private void search(final TaskContext taskContext,
-                        final CachedSolrIndex cachedSolrIndex,
-                        final Query query,
-                        final String[] storedFields,
-                        final long now,
-                        final String dateTimeLocale,
-                        final Coprocessors coprocessors) {
+    private void doSearch(final TaskContext taskContext,
+                          final Query query,
+                          final long now,
+                          final String dateTimeLocale,
+                          final Coprocessors coprocessors) {
         taskContext.info(() -> "Searching...");
         LOGGER.debug(() -> "Incoming search request:\n" + query.getExpression().toString());
+
+        // Start searching.
+        SearchProgressLog.increment(SearchPhase.CLUSTER_SEARCH_TASK_HANDLER_SEARCH);
 
         try {
             final StoredDataQueue storedDataQueue = extractionDecoratorFactory.createStoredDataQueue(
@@ -125,8 +101,8 @@ class SolrClusterSearchTaskHandler {
                     .addPrefixExcludeFilter(AnnotationFields.ANNOTATION_FIELD_PREFIX)
                     .build();
             final ExpressionOperator expression = expressionFilter.copy(query.getExpression());
-            final CompletableFuture<Void> indexShardSearchFuture = solrSearchFactory.search(cachedSolrIndex,
-                    storedFields,
+            final CompletableFuture<Void> indexShardSearchFuture = solrSearchFactory.search(
+                    query,
                     now,
                     expression,
                     storedDataQueue,
@@ -135,19 +111,9 @@ class SolrClusterSearchTaskHandler {
                     hitCount,
                     dateTimeLocale);
 
-            // When we complete the index shard search tell teh stored data queue we are complete.
-            indexShardSearchFuture.whenCompleteAsync((r, t) -> {
-                LOGGER.debug("Complete stored data queue");
-                storedDataQueue.complete();
-            });
-
-            // Create an object to make event lists from raw index data.
-            final StreamMapCreator streamMapCreator = new StreamMapCreator(
-                    coprocessors.getFieldIndex());
-
             // Start mapping streams.
             final CompletableFuture<Void> streamMappingFuture = extractionDecoratorFactory
-                    .startMapping(taskContext, streamMapCreator, coprocessors.getErrorConsumer());
+                    .startMapping(taskContext, coprocessors);
 
             // Start extracting data.
             final CompletableFuture<Void> extractionFuture = extractionDecoratorFactory
@@ -159,7 +125,7 @@ class SolrClusterSearchTaskHandler {
             // Wait for all to complete.
             final CompletableFuture<Void> all = CompletableFuture
                     .allOf(indexShardSearchFuture, streamMappingFuture, extractionFuture);
-            all.whenCompleteAsync((r, t) -> complete.countDown());
+            all.whenCompleteAsync((r, t) -> complete.countDown(), executorProvider.get());
 
             // Update status until we complete.
             while (!complete.await(1, TimeUnit.SECONDS)) {

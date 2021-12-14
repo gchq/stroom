@@ -24,9 +24,9 @@ import stroom.query.common.v2.Coprocessors;
 import stroom.search.extraction.ExpressionFilter;
 import stroom.search.extraction.ExtractionDecoratorFactory;
 import stroom.search.extraction.StoredDataQueue;
-import stroom.search.extraction.StreamMapCreator;
 import stroom.search.impl.shard.IndexShardSearchFactory;
 import stroom.security.api.SecurityContext;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -46,6 +46,7 @@ class ClusterSearchTaskHandler {
     private final IndexShardSearchFactory indexShardSearchFactory;
     private final ExtractionDecoratorFactory extractionDecoratorFactory;
     private final SecurityContext securityContext;
+    private final ExecutorProvider executorProvider;
 
     private final AtomicLong hitCount = new AtomicLong();
     private final AtomicLong extractionCount = new AtomicLong();
@@ -55,10 +56,12 @@ class ClusterSearchTaskHandler {
     @Inject
     ClusterSearchTaskHandler(final IndexShardSearchFactory indexShardSearchFactory,
                              final ExtractionDecoratorFactory extractionDecoratorFactory,
-                             final SecurityContext securityContext) {
+                             final SecurityContext securityContext,
+                             final ExecutorProvider executorProvider) {
         this.indexShardSearchFactory = indexShardSearchFactory;
         this.extractionDecoratorFactory = extractionDecoratorFactory;
         this.securityContext = securityContext;
+        this.executorProvider = executorProvider;
     }
 
     public void search(final TaskContext taskContext,
@@ -69,77 +72,71 @@ class ClusterSearchTaskHandler {
         securityContext.useAsRead(() -> {
             if (!Thread.currentThread().isInterrupted()) {
                 taskContext.info(() -> "Initialising...");
+
                 // Start searching.
-                SearchProgressLog.increment(SearchPhase.CLUSTER_SEARCH_TASK_HANDLER_SEARCH);
-                taskContext.info(() -> "Searching...");
-                final Query query = task.getQuery();
-                LOGGER.debug(() -> "Incoming search request:\n" + query.getExpression().toString());
-
-                try {
-                    if (task.getShards().size() > 0) {
-
-                        final StoredDataQueue storedDataQueue = extractionDecoratorFactory.createStoredDataQueue(
-                                coprocessors,
-                                query);
-
-                        // Search all index shards.
-                        final ExpressionFilter expressionFilter = ExpressionFilter.builder()
-                                .addPrefixExcludeFilter(AnnotationFields.ANNOTATION_FIELD_PREFIX)
-                                .build();
-                        final ExpressionOperator expression = expressionFilter.copy(query.getExpression());
-                        final CompletableFuture<Void> indexShardSearchFuture = indexShardSearchFactory.search(
-                                task,
-                                expression,
-                                coprocessors.getFieldIndex(),
-                                taskContext,
-                                hitCount,
-                                storedDataQueue,
-                                coprocessors.getErrorConsumer());
-
-                        // When we complete the index shard search tell teh stored data queue we are complete.
-                        indexShardSearchFuture.whenCompleteAsync((r, t) -> {
-                            LOGGER.debug("Complete stored data queue");
-                            storedDataQueue.complete();
-                        });
-
-                        // Create an object to make event lists from raw index data.
-                        final StreamMapCreator streamMapCreator = new StreamMapCreator(
-                                coprocessors.getFieldIndex());
-
-                        // Start mapping streams.
-                        final CompletableFuture<Void> streamMappingFuture = extractionDecoratorFactory
-                                .startMapping(taskContext, streamMapCreator, coprocessors.getErrorConsumer());
-
-                        // Start extracting data.
-                        final CompletableFuture<Void> extractionFuture = extractionDecoratorFactory
-                                .startExtraction(taskContext, extractionCount, coprocessors.getErrorConsumer());
-
-                        // Create a countdown latch to keep updating status until we complete.
-                        final CountDownLatch complete = new CountDownLatch(1);
-
-                        // Wait for all to complete.
-                        final CompletableFuture<Void> all = CompletableFuture
-                                .allOf(indexShardSearchFuture, streamMappingFuture, extractionFuture);
-                        all.whenCompleteAsync((r, t) -> complete.countDown());
-
-                        // Update status until we complete.
-                        while (!complete.await(1, TimeUnit.SECONDS)) {
-                            updateInfo();
-                        }
-
-                        LOGGER.debug("Finished extraction");
-                    }
-
-                    LOGGER.debug(() -> "Complete");
-                } catch (final InterruptedException e) {
-                    LOGGER.trace(e::getMessage, e);
-                    // Keep interrupting this thread.
-                    Thread.currentThread().interrupt();
-                } catch (final RuntimeException e) {
-                    throw SearchException.wrap(e);
-                }
+                doSearch(taskContext, task, task.getQuery(), coprocessors);
             }
         });
+    }
+
+    private void doSearch(final TaskContext taskContext,
+                          final ClusterSearchTask task,
+                          final Query query,
+                          final Coprocessors coprocessors) {
+        taskContext.info(() -> "Searching...");
+        LOGGER.debug(() -> "Incoming search request:\n" + query.getExpression().toString());
+
+        // Start searching.
+        SearchProgressLog.increment(SearchPhase.CLUSTER_SEARCH_TASK_HANDLER_SEARCH);
+
+        try {
+            final StoredDataQueue storedDataQueue = extractionDecoratorFactory.createStoredDataQueue(
+                    coprocessors,
+                    query);
+
+            // Search all index shards.
+            final ExpressionFilter expressionFilter = ExpressionFilter.builder()
+                    .addPrefixExcludeFilter(AnnotationFields.ANNOTATION_FIELD_PREFIX)
+                    .build();
+            final ExpressionOperator expression = expressionFilter.copy(query.getExpression());
+            final CompletableFuture<Void> indexShardSearchFuture = indexShardSearchFactory.search(
+                    task,
+                    expression,
+                    coprocessors.getFieldIndex(),
+                    taskContext,
+                    hitCount,
+                    storedDataQueue,
+                    coprocessors.getErrorConsumer());
+
+            // Start mapping streams.
+            final CompletableFuture<Void> streamMappingFuture = extractionDecoratorFactory
+                    .startMapping(taskContext, coprocessors);
+
+            // Start extracting data.
+            final CompletableFuture<Void> extractionFuture = extractionDecoratorFactory
+                    .startExtraction(taskContext, extractionCount, coprocessors.getErrorConsumer());
+
+            // Create a countdown latch to keep updating status until we complete.
+            final CountDownLatch complete = new CountDownLatch(1);
+
+            // Wait for all to complete.
+            final CompletableFuture<Void> all = CompletableFuture
+                    .allOf(indexShardSearchFuture, streamMappingFuture, extractionFuture);
+            all.whenCompleteAsync((r, t) -> complete.countDown(), executorProvider.get());
+
+            // Update status until we complete.
+            while (!complete.await(1, TimeUnit.SECONDS)) {
+                updateInfo();
+            }
+
+            LOGGER.debug(() -> "Complete");
+        } catch (final InterruptedException e) {
+            LOGGER.trace(e::getMessage, e);
+            // Keep interrupting this thread.
+            Thread.currentThread().interrupt();
+        } catch (final RuntimeException e) {
+            throw SearchException.wrap(e);
+        }
     }
 
     public void updateInfo() {

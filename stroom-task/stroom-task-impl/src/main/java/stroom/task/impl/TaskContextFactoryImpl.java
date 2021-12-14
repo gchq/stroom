@@ -232,7 +232,15 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
 
             try {
                 // Let the parent task know about the child task.
-                parentTask.ifPresent(parent -> parent.addChild(subTaskContext));
+                if (parentTaskId != null) {
+                    if (parentTask.isPresent()) {
+                        parentTask.get().addChild(subTaskContext);
+                    } else {
+                        // If we don't have the parent task at this point then terminate the sub-task as the parent must
+                        // have already terminated.
+                        subTaskContext.terminate();
+                    }
+                }
 
                 taskRegistry.put(taskId, subTaskContext);
                 LOGGER.debug(() -> "execAsync()->exec() - " + taskName + " took " + logExecutionTime);
@@ -253,8 +261,7 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
             } catch (final Throwable t) {
                 try {
                     if (t instanceof ThreadDeath || t instanceof TaskTerminatedException) {
-                        LOGGER.warn(() -> "exec() - Task killed! (" + taskName + ")");
-                        LOGGER.debug(() -> "exec() (" + taskName + ")", t);
+                        LOGGER.debug(() -> "exec() - Task killed! (" + taskName + ")", t);
                     } else {
                         LOGGER.debug(() -> t.getMessage() + " (" + taskName + ")", t);
                     }
@@ -310,5 +317,13 @@ class TaskContextFactoryImpl implements TaskContextFactory, TaskContext {
             return taskContext.getTaskId();
         }
         return null;
+    }
+
+    @Override
+    public void reset() {
+        final TaskContextImpl taskContext = CurrentTaskContext.currentContext();
+        if (taskContext != null) {
+            taskContext.reset();
+        }
     }
 }

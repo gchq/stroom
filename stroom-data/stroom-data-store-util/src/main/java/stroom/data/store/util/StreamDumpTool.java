@@ -191,6 +191,10 @@ public class StreamDumpTool extends AbstractCommandLineTool {
             public TaskId getTaskId() {
                 return null;
             }
+
+            @Override
+            public void reset() {
+            }
         };
         dataDownloadTaskHandler.downloadData(taskContext, criteria, dir, format, dataDownloadSettings);
 

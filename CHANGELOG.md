@@ -12,6 +12,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.0-beta.166] - 2021-12-13
+
+* Issue **#2637** : Fix hanging searches.
+
+
 ## [v7.0-beta.165] - 2021-12-09
 
 * Issue **#2631** : Add debug to diagnose UI issue.
@@ -4039,7 +4044,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.165...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.166...HEAD
+[v7.0-beta.166]: https://github.com/gchq/stroom/compare/v7.0-beta.165...v7.0-beta.166
 [v7.0-beta.165]: https://github.com/gchq/stroom/compare/v7.0-beta.164...v7.0-beta.165
 [v7.0-beta.164]: https://github.com/gchq/stroom/compare/v7.0-beta.163...v7.0-beta.164
 [v7.0-beta.163]: https://github.com/gchq/stroom/compare/v7.0-beta.162...v7.0-beta.163

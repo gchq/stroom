@@ -510,6 +510,7 @@ appConfig:
     unknownClassification: "UNKNOWN CLASSIFICATION"
   search:
     extraction:
+      extractionDelayMs: 100
       maxStoredDataQueueSize: 1000
       maxStreamEventMapSize: 1000000
       maxThreadsPerTask: 5
@@ -531,6 +532,7 @@ appConfig:
       minPayloadSize: "1M"
       minValueSize: "1K"
       offHeapResults: true
+      valueQueueSize: 1000000
     resultStoreCache:
       expireAfterAccess: "PT1M"
       expireAfterWrite: null
@@ -691,6 +693,7 @@ appConfig:
       maximumSize: 100
     search:
       extraction:
+        extractionDelayMs: 100
         maxStoredDataQueueSize: 1000
         maxStreamEventMapSize: 1000000
         maxThreadsPerTask: 5

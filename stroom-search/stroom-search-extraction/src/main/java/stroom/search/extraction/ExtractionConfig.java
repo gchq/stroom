@@ -21,24 +21,29 @@ public class ExtractionConfig extends AbstractConfig {
     private static final int DEFAULT_MAX_STORED_DATA_QUEUE_SIZE = 1000;
     private static final int DEFAULT_MAX_THREADS_PER_TASK = 5;
     private static final int DEFAULT_MAX_STREAM_EVENT_MAP_SIZE = 1000000;
+    private static final long DEFAULT_EXTRACTION_DELAY_MS = 100;
 
     private final int maxStoredDataQueueSize;
     private final int maxThreadsPerTask;
     private final int maxStreamEventMapSize;
+    private final long extractionDelayMs;
 
     public ExtractionConfig() {
         maxStoredDataQueueSize = DEFAULT_MAX_STORED_DATA_QUEUE_SIZE;
         maxThreadsPerTask = DEFAULT_MAX_THREADS_PER_TASK;
         maxStreamEventMapSize = DEFAULT_MAX_STREAM_EVENT_MAP_SIZE;
+        extractionDelayMs = DEFAULT_EXTRACTION_DELAY_MS;
     }
 
     @JsonCreator
     public ExtractionConfig(@JsonProperty("maxStoredDataQueueSize") final int maxStoredDataQueueSize,
                             @JsonProperty("maxThreadsPerTask") final int maxThreadsPerTask,
-                            @JsonProperty("maxStreamEventMapSize") final int maxStreamEventMapSize) {
+                            @JsonProperty("maxStreamEventMapSize") final int maxStreamEventMapSize,
+                            @JsonProperty("extractionDelayMs") final long extractionDelayMs) {
         this.maxStoredDataQueueSize = maxStoredDataQueueSize;
         this.maxThreadsPerTask = maxThreadsPerTask;
         this.maxStreamEventMapSize = maxStreamEventMapSize;
+        this.extractionDelayMs = extractionDelayMs;
     }
 
     @JsonPropertyDescription("The maximum number documents that will have stored data retrieved from the index " +
@@ -58,12 +63,19 @@ public class ExtractionConfig extends AbstractConfig {
         return maxStreamEventMapSize;
     }
 
+    @JsonPropertyDescription("Extraction delay in milliseconds. " +
+            "A delay reduces the chance of a stream being extracted more than once.")
+    public long getExtractionDelayMs() {
+        return extractionDelayMs;
+    }
+
     @Override
     public String toString() {
         return "ExtractionConfig{" +
                 "maxStoredDataQueueSize=" + maxStoredDataQueueSize +
                 ", maxThreadsPerTask=" + maxThreadsPerTask +
                 ", maxStreamEventMapSize=" + maxStreamEventMapSize +
+                ", extractionDelayMs=" + extractionDelayMs +
                 '}';
     }
 }

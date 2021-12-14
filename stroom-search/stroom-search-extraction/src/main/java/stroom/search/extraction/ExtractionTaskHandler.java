@@ -39,6 +39,7 @@ import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
+import stroom.query.common.v2.ErrorConsumer;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskTerminatedException;
@@ -73,8 +74,6 @@ class ExtractionTaskHandler {
     private final PipelineStore pipelineStore;
     private final SecurityContext securityContext;
 
-    private ExtractionTask task;
-
     @Inject
     ExtractionTaskHandler(final Store streamStore,
                           final FeedHolder feedHolder,
@@ -99,29 +98,31 @@ class ExtractionTaskHandler {
     }
 
     public Meta extract(final TaskContext taskContext,
-                        final ExtractionTask task,
+                        final long streamId,
+                        final long[] eventIds,
+                        final DocRef pipelineRef,
+                        final ExtractionReceiver receiver,
+                        final ErrorConsumer errorConsumer,
                         final PipelineData pipelineData) throws DataException {
         Meta meta = null;
 
         // Open the stream source.
-        try (final Source source = streamStore.openSource(task.getStreamId())) {
+        try (final Source source = streamStore.openSource(streamId)) {
             if (source != null) {
                 SearchProgressLog.increment(SearchPhase.EXTRACTION_TASK_HANDLER_EXTRACT);
-                SearchProgressLog.add(SearchPhase.EXTRACTION_TASK_HANDLER_EXTRACT_EVENTS, task.getEventIds().length);
+                SearchProgressLog.add(SearchPhase.EXTRACTION_TASK_HANDLER_EXTRACT_EVENTS, eventIds.length);
 
+                taskContext.reset();
                 taskContext.info(() -> "" +
                         "Extracting " +
-                        task.getEventIds().length +
+                        eventIds.length +
                         " records from stream " +
-                        task.getStreamId());
+                        streamId);
 
                 meta = source.getMeta();
-                this.task = task;
 
                 // Set the current user.
                 currentUserHolder.setCurrentUser(securityContext.getUserId());
-
-                final DocRef pipelineRef = task.getPipelineRef();
 
                 // Create the parser.
                 final Pipeline pipeline = pipelineFactory.create(pipelineData, taskContext);
@@ -134,9 +135,8 @@ class ExtractionTaskHandler {
                 // input stream is now filtered to only include events matched by
                 // the search. This means that the event ids cannot be calculated by
                 // just counting events.
-                final String streamId = String.valueOf(task.getStreamId());
                 final IdEnrichmentFilter idEnrichmentFilter = getFilter(pipeline, IdEnrichmentFilter.class);
-                idEnrichmentFilter.setup(streamId, task.getEventIds());
+                idEnrichmentFilter.setup(String.valueOf(streamId), eventIds);
 
                 // Set up the search result output filter to expect the same order of
                 // event ids and give it the result cache and stored data to write
@@ -144,13 +144,13 @@ class ExtractionTaskHandler {
                 final AbstractSearchResultOutputFilter searchResultOutputFilter = getFilter(pipeline,
                         AbstractSearchResultOutputFilter.class);
 
-                searchResultOutputFilter.setup(task.getReceiver());
+                searchResultOutputFilter.setup(receiver);
 
                 // Process the stream segments.
-                processData(source, task.getEventIds(), pipelineRef, pipeline);
+                processData(source, eventIds, pipelineRef, pipeline, errorConsumer);
 
                 // Ensure count is the same.
-                if (task.getEventIds().length != searchResultOutputFilter.getCount()) {
+                if (eventIds.length != searchResultOutputFilter.getCount()) {
                     LOGGER.debug(() -> "Extraction count mismatch");
                 }
             }
@@ -176,7 +176,8 @@ class ExtractionTaskHandler {
     private void processData(final Source source,
                              final long[] eventIds,
                              final DocRef pipelineRef,
-                             final Pipeline pipeline) {
+                             final Pipeline pipeline,
+                             final ErrorConsumer errorConsumer) {
         final ErrorReceiver errorReceiver = (severity, location, elementId, message, e) -> {
             if (e instanceof TaskTerminatedException) {
                 throw (TaskTerminatedException) e;
@@ -185,7 +186,7 @@ class ExtractionTaskHandler {
             }
 
             final StoredError storedError = new StoredError(severity, location, elementId, message);
-            task.getErrorConsumer().add(new RuntimeException(storedError.toString(), e));
+            errorConsumer.add(new RuntimeException(storedError.toString(), e));
             throw ProcessException.wrap(message, e);
         };
 
