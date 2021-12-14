@@ -13,9 +13,9 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 
-@Singleton
+// If we make it a singleton due to systemInfoSuppliers then we would
+// probably need the injected set to be a map of providers instead.
 public class SystemInfoServiceImpl implements SystemInfoService {
 
     private final Map<String, HasSystemInfo> systemInfoSuppliers;
@@ -33,7 +33,8 @@ public class SystemInfoServiceImpl implements SystemInfoService {
     public List<SystemInfoResult> getAll() {
         checkPermission();
         // We should have a user in context as this is coming from an authenticated rest api
-        return systemInfoSuppliers.values().stream()
+        return systemInfoSuppliers.values()
+                .stream()
                 .map(HasSystemInfo::getSystemInfo)
                 .collect(Collectors.toList());
     }

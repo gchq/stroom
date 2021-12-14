@@ -19,6 +19,8 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
@@ -27,38 +29,48 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+@Singleton
 public class RemoteFeedStatusService implements FeedStatusService, HasHealthCheck {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RemoteFeedStatusService.class);
 
-    private static final long ONE_MINUTE = 60000;
+    private static final long ONE_MINUTE = 60_000;
 
     private static final String GET_FEED_STATUS_PATH = "/getFeedStatus";
 
-    private final String url;
-    private final String apiKey;
     private final Map<GetFeedStatusRequest, CachedResponse> lastKnownResponse = new ConcurrentHashMap<>();
     private final WebTarget feedStatusWebTarget;
+    private final DefaultOpenIdCredentials defaultOpenIdCredentials;
+    private final Provider<ProxyConfig> proxyConfigProvider;
+    private final Provider<FeedStatusConfig> feedStatusConfigProvider;
 
     @Inject
-    RemoteFeedStatusService(final ProxyConfig proxyConfig,
-                            final FeedStatusConfig feedStatusConfig,
+    RemoteFeedStatusService(final Provider<ProxyConfig> proxyConfigProvider,
+                            final Provider<FeedStatusConfig> feedStatusConfigProvider,
                             final Client jerseyClient,
                             final DefaultOpenIdCredentials defaultOpenIdCredentials) {
-        this.url = feedStatusConfig.getFeedStatusUrl();
+        this.proxyConfigProvider = proxyConfigProvider;
+        this.feedStatusConfigProvider = feedStatusConfigProvider;
+        this.defaultOpenIdCredentials = defaultOpenIdCredentials;
 
-        // Allows us to use hard-coded open id creds / token to authenticate with stroom
-        // out of the box. ONLY for use in test/demo environments.
-        if (proxyConfig.isUseDefaultOpenIdCredentials() && Strings.isNullOrEmpty(feedStatusConfig.getApiKey())) {
-            LOGGER.info("Using default authentication token, should only be used in test/demo environments.");
-            this.apiKey = Objects.requireNonNull(defaultOpenIdCredentials.getApiKey());
-        } else {
-            this.apiKey = feedStatusConfig.getApiKey();
-        }
+        final String url = feedStatusConfigProvider.get().getFeedStatusUrl();
 
         this.feedStatusWebTarget = jerseyClient
                 .target(url)
                 .path(GET_FEED_STATUS_PATH);
+    }
+
+    private String getApiKey() {
+        // Allows us to use hard-coded open id creds / token to authenticate with stroom
+        // out of the box. ONLY for use in test/demo environments.
+        final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
+        if (proxyConfigProvider.get().isUseDefaultOpenIdCredentials()
+                && Strings.isNullOrEmpty(feedStatusConfig.getApiKey())) {
+            LOGGER.info("Using default authentication token, should only be used in test/demo environments.");
+            return Objects.requireNonNull(defaultOpenIdCredentials.getApiKey());
+        } else {
+            return feedStatusConfig.getApiKey();
+        }
     }
 
     @Override
@@ -67,6 +79,10 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
         GetFeedStatusResponse effectiveFeedStatusResponse = GetFeedStatusResponse.createOKRecieveResponse();
 
         final CachedResponse cachedResponse = lastKnownResponse.get(request);
+
+        final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
+        final String url = feedStatusConfig.getFeedStatusUrl();
+        final String apiKey = getApiKey();
 
         if (cachedResponse != null && cachedResponse.getCreationTime() >= System.currentTimeMillis() - ONE_MINUTE) {
             effectiveFeedStatusResponse = cachedResponse.getResponse();
@@ -118,6 +134,9 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
     private GetFeedStatusResponse sendRequest(final GetFeedStatusRequest request,
                                               final Function<Response, GetFeedStatusResponse> responseConsumer) {
         LOGGER.debug("Sending request {}", request);
+        final String apiKey = getApiKey();
+        final String url = feedStatusConfigProvider.get().getFeedStatusUrl();
+
         try {
             final Response response = feedStatusWebTarget
                     .request(MediaType.APPLICATION_JSON)
@@ -141,6 +160,8 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
     public HealthCheck.Result getHealth() {
         LOGGER.debug("getHealth called");
         final HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result.builder();
+        final String apiKey = getApiKey();
+        final String url = feedStatusConfigProvider.get().getFeedStatusUrl();
         resultBuilder.withDetail("url", feedStatusWebTarget.getUri().toString());
 
         if (url == null || url.trim().length() == 0) {
