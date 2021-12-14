@@ -5,13 +5,12 @@ import stroom.util.config.annotations.RequiresRestart.RestartScope;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.validation.ValidFilePath;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.inject.Singleton;
 
-@Singleton
 @JsonPropertyOrder(alphabetic = true)
 public class LmdbLibraryConfig extends AbstractConfig {
 
@@ -23,8 +22,21 @@ public class LmdbLibraryConfig extends AbstractConfig {
     public static final String LMDB_EXTRACT_DIR_PROP = "lmdbjava.extract.dir";
     public static final String LMDB_NATIVE_LIB_PROP = "lmdbjava.native.lib";
 
-    private String providedSystemLibraryPath = null;
-    private String systemLibraryExtractDir = DEFAULT_LIBRARY_EXTRACT_SUB_DIR_NAME;
+    private final String providedSystemLibraryPath;
+    private final String systemLibraryExtractDir;
+
+    public LmdbLibraryConfig() {
+        providedSystemLibraryPath = null;
+        systemLibraryExtractDir = DEFAULT_LIBRARY_EXTRACT_SUB_DIR_NAME;
+    }
+
+    @SuppressWarnings("unused")
+    @JsonCreator
+    public LmdbLibraryConfig(@JsonProperty(SYSTEM_LIBRARY_PATH_PROP_NAME) final String providedSystemLibraryPath,
+                             @JsonProperty(EXTRACT_DIR_PROP_NAME) final String systemLibraryExtractDir) {
+        this.providedSystemLibraryPath = providedSystemLibraryPath;
+        this.systemLibraryExtractDir = systemLibraryExtractDir;
+    }
 
     @ValidFilePath
     @RequiresRestart(RestartScope.SYSTEM)
@@ -38,11 +50,6 @@ public class LmdbLibraryConfig extends AbstractConfig {
         return providedSystemLibraryPath;
     }
 
-    @SuppressWarnings("unused")
-    public void setProvidedSystemLibraryPath(final String providedSystemLibraryPath) {
-        this.providedSystemLibraryPath = providedSystemLibraryPath;
-    }
-
     @RequiresRestart(RestartScope.SYSTEM)
     @JsonProperty(EXTRACT_DIR_PROP_NAME)
     @JsonPropertyDescription("The directory to extract the bundled LMDB system library to. Only used if " +
@@ -50,11 +57,6 @@ public class LmdbLibraryConfig extends AbstractConfig {
             "location. It will also delete old copies of the LMDB system library if found.")
     public String getSystemLibraryExtractDir() {
         return systemLibraryExtractDir;
-    }
-
-    @SuppressWarnings("unused")
-    public void setSystemLibraryExtractDir(final String systemLibraryExtractDir) {
-        this.systemLibraryExtractDir = systemLibraryExtractDir;
     }
 
     @Override

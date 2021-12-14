@@ -9,10 +9,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
-import javax.inject.Singleton;
 
-@Singleton
-@JsonPropertyOrder({"allowPasswordResets", "dateFormat", "defaultApiKeyExpiryInMinutes"})
+@JsonPropertyOrder(alphabetic = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class UiPreferences extends AbstractConfig {
 

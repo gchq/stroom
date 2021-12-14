@@ -11,14 +11,13 @@ import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.PropertyPath;
 import stroom.util.shared.validation.ValidationSeverity;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.inject.Singleton;
 import javax.validation.constraints.AssertTrue;
 
-@Singleton
 @JsonPropertyOrder(alphabetic = true)
 public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
@@ -26,19 +25,64 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
     public static final String PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE = "haltBootOnConfigValidationFailure";
 
-    private String proxyContentDir = "content";
-    private boolean useDefaultOpenIdCredentials = true;
-    private boolean haltBootOnConfigValidationFailure = true;
+    private final String proxyContentDir;
+    private final boolean useDefaultOpenIdCredentials;
+    private final boolean haltBootOnConfigValidationFailure;
 
-    private ContentSyncConfig contentSyncConfig = new ContentSyncConfig();
-    private FeedStatusConfig feedStatusConfig = new FeedStatusConfig();
-    private ForwardStreamConfig forwardStreamConfig = new ForwardStreamConfig();
-    private RestClientConfig restClientConfig = new RestClientConfig();
-    private LogStreamConfig logStreamConfig = new LogStreamConfig();
-    private ProxyPathConfig pathConfig = new ProxyPathConfig();
-    private ProxyRepositoryConfig proxyRepositoryConfig = new ProxyRepositoryConfig();
-    private ProxyRepositoryReaderConfig proxyRepositoryReaderConfig = new ProxyRepositoryReaderConfig();
-    private ProxyRequestConfig proxyRequestConfig = new ProxyRequestConfig();
+    private final ContentSyncConfig contentSyncConfig;
+    private final FeedStatusConfig feedStatusConfig;
+    private final ForwardStreamConfig forwardStreamConfig;
+    private final RestClientConfig restClientConfig;
+    private final LogStreamConfig logStreamConfig;
+    private final ProxyPathConfig pathConfig;
+    private final ProxyRepositoryConfig proxyRepositoryConfig;
+    private final ProxyRepositoryReaderConfig proxyRepositoryReaderConfig;
+    private final ProxyRequestConfig proxyRequestConfig;
+
+    public ProxyConfig() {
+        proxyContentDir = "content";
+        useDefaultOpenIdCredentials = true;
+        haltBootOnConfigValidationFailure = true;
+
+        contentSyncConfig = new ContentSyncConfig();
+        feedStatusConfig = new FeedStatusConfig();
+        forwardStreamConfig = new ForwardStreamConfig();
+        restClientConfig = new RestClientConfig();
+        logStreamConfig = new LogStreamConfig();
+        pathConfig = new ProxyPathConfig();
+        proxyRepositoryConfig = new ProxyRepositoryConfig();
+        proxyRepositoryReaderConfig = new ProxyRepositoryReaderConfig();
+        proxyRequestConfig = new ProxyRequestConfig();
+    }
+
+    @JsonCreator
+    public ProxyConfig(
+            @JsonProperty("proxyContentDir") final String proxyContentDir,
+            @JsonProperty("useDefaultOpenIdCredentials") final boolean useDefaultOpenIdCredentials,
+            @JsonProperty("haltBootOnConfigValidationFailure") final boolean haltBootOnConfigValidationFailure,
+            @JsonProperty("contentSyncConfig") final ContentSyncConfig contentSyncConfig,
+            @JsonProperty("feedStatus") final FeedStatusConfig feedStatusConfig,
+            @JsonProperty("forwardStreamConfig") final ForwardStreamConfig forwardStreamConfig,
+            @JsonProperty("restClient") final RestClientConfig restClientConfig,
+            @JsonProperty("logStreamConfig") final LogStreamConfig logStreamConfig,
+            @JsonProperty("path") final ProxyPathConfig pathConfig,
+            @JsonProperty("proxyRepositoryConfig") final ProxyRepositoryConfig proxyRepositoryConfig,
+            @JsonProperty("proxyRepositoryReaderConfig") final ProxyRepositoryReaderConfig proxyRepositoryReaderConfig,
+            @JsonProperty("proxyRequestConfig") final ProxyRequestConfig proxyRequestConfig) {
+
+        this.proxyContentDir = proxyContentDir;
+        this.useDefaultOpenIdCredentials = useDefaultOpenIdCredentials;
+        this.haltBootOnConfigValidationFailure = haltBootOnConfigValidationFailure;
+        this.contentSyncConfig = contentSyncConfig;
+        this.feedStatusConfig = feedStatusConfig;
+        this.forwardStreamConfig = forwardStreamConfig;
+        this.restClientConfig = restClientConfig;
+        this.logStreamConfig = logStreamConfig;
+        this.pathConfig = pathConfig;
+        this.proxyRepositoryConfig = proxyRepositoryConfig;
+        this.proxyRepositoryReaderConfig = proxyRepositoryReaderConfig;
+        this.proxyRequestConfig = proxyRequestConfig;
+    }
 
     @AssertTrue(
             message = "proxyConfig." + PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE + " is set to false. " +
@@ -52,12 +96,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return haltBootOnConfigValidationFailure;
     }
 
-    @SuppressWarnings("unused")
-    public void setHaltBootOnConfigValidationFailure(final boolean haltBootOnConfigValidationFailure) {
-        this.haltBootOnConfigValidationFailure = haltBootOnConfigValidationFailure;
-    }
-
-    @JsonProperty()
+    @JsonProperty("useDefaultOpenIdCredentials")
     @JsonPropertyDescription("If true, stroom will use a set of default authentication credentials to allow" +
             "API calls from stroom-proxy. For test or demonstration purposes only, set to false for production. " +
             "If API keys are set elsewhere in config then they will override this setting.")
@@ -65,58 +104,29 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return useDefaultOpenIdCredentials;
     }
 
-    public void setUseDefaultOpenIdCredentials(final boolean useDefaultOpenIdCredentials) {
-        this.useDefaultOpenIdCredentials = useDefaultOpenIdCredentials;
-    }
-
-    @JsonProperty
+    @JsonProperty("proxyRequestConfig")
     public ProxyRequestConfig getProxyRequestConfig() {
         return proxyRequestConfig;
     }
 
-    @JsonProperty
-    public void setProxyRequestConfig(final ProxyRequestConfig proxyRequestConfig) {
-        this.proxyRequestConfig = proxyRequestConfig;
-    }
-
-    @JsonProperty
+    @JsonProperty("forwardStreamConfig")
     public ForwardStreamConfig getForwardStreamConfig() {
         return forwardStreamConfig;
     }
 
-    @JsonProperty
-    public void setForwardStreamConfig(final ForwardStreamConfig forwardStreamConfig) {
-        this.forwardStreamConfig = forwardStreamConfig;
-    }
-
-    @JsonProperty
+    @JsonProperty("proxyRepositoryConfig")
     public ProxyRepositoryConfig getProxyRepositoryConfig() {
         return proxyRepositoryConfig;
     }
 
-    @JsonProperty
-    public void setProxyRepositoryConfig(final ProxyRepositoryConfig proxyRepositoryConfig) {
-        this.proxyRepositoryConfig = proxyRepositoryConfig;
-    }
-
-    @JsonProperty
+    @JsonProperty("proxyRepositoryReaderConfig")
     public ProxyRepositoryReaderConfig getProxyRepositoryReaderConfig() {
         return proxyRepositoryReaderConfig;
     }
 
-    @JsonProperty
-    public void setProxyRepositoryReaderConfig(final ProxyRepositoryReaderConfig proxyRepositoryReaderConfig) {
-        this.proxyRepositoryReaderConfig = proxyRepositoryReaderConfig;
-    }
-
-    @JsonProperty
+    @JsonProperty("logStreamConfig")
     public LogStreamConfig getLogStreamConfig() {
         return logStreamConfig;
-    }
-
-    @JsonProperty
-    public void setLogStreamConfig(final LogStreamConfig logStreamConfig) {
-        this.logStreamConfig = logStreamConfig;
     }
 
     @JsonProperty("path")
@@ -124,19 +134,9 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return pathConfig;
     }
 
-    @SuppressWarnings("unused")
-    public void setProxyPathConfig(final ProxyPathConfig pathConfig) {
-        this.pathConfig = pathConfig;
-    }
-
-    @JsonProperty
+    @JsonProperty("contentSyncConfig")
     public ContentSyncConfig getContentSyncConfig() {
         return contentSyncConfig;
-    }
-
-    @JsonProperty
-    public void setContentSyncConfig(final ContentSyncConfig contentSyncConfig) {
-        this.contentSyncConfig = contentSyncConfig;
     }
 
     @JsonProperty("feedStatus")
@@ -144,28 +144,14 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return feedStatusConfig;
     }
 
-    @JsonProperty("feedStatus")
-    public void setFeedStatusConfig(final FeedStatusConfig feedStatusConfig) {
-        this.feedStatusConfig = feedStatusConfig;
-    }
-
-    @JsonProperty
+    @JsonProperty("proxyContentDir")
     public String getProxyContentDir() {
         return proxyContentDir;
-    }
-
-    @JsonProperty
-    public void setProxyContentDir(final String proxyContentDir) {
-        this.proxyContentDir = proxyContentDir;
     }
 
     @JsonProperty("restClient")
     public RestClientConfig getRestClientConfig() {
         return restClientConfig;
     }
-
-    @JsonProperty("restClient")
-    public void setRestClientConfig(final RestClientConfig restClientConfig) {
-        this.restClientConfig = restClientConfig;
-    }
 }
+

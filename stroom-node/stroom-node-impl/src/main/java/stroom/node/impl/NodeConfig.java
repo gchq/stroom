@@ -1,35 +1,50 @@
 package stroom.node.impl;
 
-import stroom.config.common.DbConfig;
+import stroom.config.common.AbstractDbConfig;
+import stroom.config.common.ConnectionConfig;
+import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.BootStrapConfig;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.inject.Singleton;
 import javax.validation.constraints.NotNull;
 
-@Singleton
+@JsonPropertyOrder(alphabetic = true)
 public class NodeConfig extends AbstractConfig implements HasDbConfig {
 
     public static final String PROP_NAME_NAME = "name";
     public static final String PROP_NAME_STATUS = "status";
 
-    private DbConfig dbConfig = new DbConfig();
-    private StatusConfig statusConfig = new StatusConfig();
+    private final NodeDbConfig dbConfig;
+    private final StatusConfig statusConfig;
+    // TODO 29/11/2021 AT: Make immutable
+    private String nodeName;
 
-    private String nodeName = "tba";
+    public NodeConfig() {
+        dbConfig = new NodeDbConfig();
+        statusConfig = new StatusConfig();
+        nodeName = "tba";
+    }
+
+    @JsonCreator
+    public NodeConfig(@JsonProperty("db") final NodeDbConfig dbConfig,
+                      @JsonProperty(PROP_NAME_STATUS) final StatusConfig statusConfig,
+                      @JsonProperty(PROP_NAME_NAME) final String nodeName) {
+        this.dbConfig = dbConfig;
+        this.statusConfig = statusConfig;
+        this.nodeName = nodeName;
+    }
 
     @Override
     @JsonProperty("db")
-    public DbConfig getDbConfig() {
+    public NodeDbConfig getDbConfig() {
         return dbConfig;
-    }
-
-    public void setDbConfig(final DbConfig dbConfig) {
-        this.dbConfig = dbConfig;
     }
 
     @NotNull
@@ -42,6 +57,7 @@ public class NodeConfig extends AbstractConfig implements HasDbConfig {
         return nodeName;
     }
 
+    @Deprecated(forRemoval = true)
     public void setNodeName(final String nodeName) {
         this.nodeName = nodeName;
     }
@@ -51,14 +67,26 @@ public class NodeConfig extends AbstractConfig implements HasDbConfig {
         return statusConfig;
     }
 
-    public void setStatusConfig(final StatusConfig statusConfig) {
-        this.statusConfig = statusConfig;
-    }
-
     @Override
     public String toString() {
         return "NodeConfig{" +
                 "nodeName='" + nodeName + '\'' +
                 '}';
+    }
+
+    @BootStrapConfig
+    public static class NodeDbConfig extends AbstractDbConfig {
+
+        public NodeDbConfig() {
+            super();
+        }
+
+        @SuppressWarnings("unused")
+        @JsonCreator
+        public NodeDbConfig(
+                @JsonProperty(PROP_NAME_CONNECTION) final ConnectionConfig connectionConfig,
+                @JsonProperty(PROP_NAME_CONNECTION_POOL) final ConnectionPoolConfig connectionPoolConfig) {
+            super(connectionConfig, connectionPoolConfig);
+        }
     }
 }

@@ -18,44 +18,84 @@
 
 package stroom.security.identity.config;
 
-import stroom.config.common.DbConfig;
+import stroom.config.common.AbstractDbConfig;
+import stroom.config.common.ConnectionConfig;
+import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.validation.ValidRegex;
 import stroom.util.shared.validation.ValidationSeverity;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.annotation.Nullable;
-import javax.inject.Singleton;
 import javax.validation.constraints.AssertFalse;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
-@Singleton
 @JsonPropertyOrder(alphabetic = true)
-public final class IdentityConfig extends AbstractConfig implements HasDbConfig {
+public class IdentityConfig extends AbstractConfig implements HasDbConfig {
 
     public static final String PROP_NAME_EMAIL = "email";
     public static final String PROP_NAME_TOKEN = "token";
     public static final String PROP_NAME_OPENID = "openid";
     public static final String PROP_NAME_PASSWORD_POLICY = "passwordPolicy";
 
-    private boolean useDefaultOpenIdCredentials;
-    private boolean allowCertificateAuthentication;
-    private String certificateCnPattern = ".*\\((.*)\\)";
-    private int certificateCnCaptureGroupIndex = 1;
-    private Integer failedLoginLockThreshold = 3;
+    private final boolean useDefaultOpenIdCredentials;
+    private final boolean allowCertificateAuthentication;
+    private final String certificateCnPattern;
+    private final int certificateCnCaptureGroupIndex;
+    private final Integer failedLoginLockThreshold;
 
-    private EmailConfig emailConfig = new EmailConfig();
-    private TokenConfig tokenConfig = new TokenConfig();
-    private OpenIdConfig openIdConfig = new OpenIdConfig();
-    private PasswordPolicyConfig passwordPolicyConfig = new PasswordPolicyConfig();
-    private DbConfig dbConfig = new DbConfig();
+    private final EmailConfig emailConfig;
+    private final TokenConfig tokenConfig;
+    private final OpenIdConfig openIdConfig;
+    private final PasswordPolicyConfig passwordPolicyConfig;
+    private final IdentityDbConfig dbConfig;
+
+    public IdentityConfig() {
+        useDefaultOpenIdCredentials = false;
+        allowCertificateAuthentication = false;
+        certificateCnPattern = ".*\\((.*)\\)";
+        certificateCnCaptureGroupIndex = 1;
+        failedLoginLockThreshold = 3;
+
+        emailConfig = new EmailConfig();
+        tokenConfig = new TokenConfig();
+        openIdConfig = new OpenIdConfig();
+        passwordPolicyConfig = new PasswordPolicyConfig();
+        dbConfig = new IdentityDbConfig();
+    }
+
+    @SuppressWarnings("unused")
+    @JsonCreator
+    public IdentityConfig(@JsonProperty("useDefaultOpenIdCredentials") final boolean useDefaultOpenIdCredentials,
+                          @JsonProperty("allowCertificateAuthentication") final boolean allowCertificateAuthentication,
+                          @JsonProperty("certificateCnPattern") final String certificateCnPattern,
+                          @JsonProperty("certificateCnCaptureGroupIndex") final int certificateCnCaptureGroupIndex,
+                          @JsonProperty("failedLoginLockThreshold") final Integer failedLoginLockThreshold,
+                          @JsonProperty(PROP_NAME_EMAIL) final EmailConfig emailConfig,
+                          @JsonProperty(PROP_NAME_TOKEN) final TokenConfig tokenConfig,
+                          @JsonProperty(PROP_NAME_OPENID) final OpenIdConfig openIdConfig,
+                          @JsonProperty(PROP_NAME_PASSWORD_POLICY) final PasswordPolicyConfig passwordPolicyConfig,
+                          @JsonProperty("db") final IdentityDbConfig dbConfig) {
+        this.useDefaultOpenIdCredentials = useDefaultOpenIdCredentials;
+        this.allowCertificateAuthentication = allowCertificateAuthentication;
+        this.certificateCnPattern = certificateCnPattern;
+        this.certificateCnCaptureGroupIndex = certificateCnCaptureGroupIndex;
+        this.failedLoginLockThreshold = failedLoginLockThreshold;
+        this.emailConfig = emailConfig;
+        this.tokenConfig = tokenConfig;
+        this.openIdConfig = openIdConfig;
+        this.passwordPolicyConfig = passwordPolicyConfig;
+        this.dbConfig = dbConfig;
+    }
 
     @AssertFalse(
             message = "Using default OpenId authentication credentials. These should only be used " +
@@ -71,11 +111,6 @@ public final class IdentityConfig extends AbstractConfig implements HasDbConfig 
         return useDefaultOpenIdCredentials;
     }
 
-    @SuppressWarnings("unused")
-    public void setUseDefaultOpenIdCredentials(final boolean useDefaultOpenIdCredentials) {
-        this.useDefaultOpenIdCredentials = useDefaultOpenIdCredentials;
-    }
-
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonProperty
     @JsonPropertyDescription("In order for clients to be able to login with certificates this property must be set " +
@@ -84,10 +119,6 @@ public final class IdentityConfig extends AbstractConfig implements HasDbConfig 
             "proxy such as NGINX.")
     public boolean isAllowCertificateAuthentication() {
         return allowCertificateAuthentication;
-    }
-
-    public void setAllowCertificateAuthentication(final boolean allowCertificateAuthentication) {
-        this.allowCertificateAuthentication = allowCertificateAuthentication;
     }
 
     @NotNull
@@ -101,11 +132,6 @@ public final class IdentityConfig extends AbstractConfig implements HasDbConfig 
         return this.certificateCnPattern;
     }
 
-    @SuppressWarnings("unused")
-    public void setCertificateCnPattern(final String certificateCnPattern) {
-        this.certificateCnPattern = certificateCnPattern;
-    }
-
     @NotNull
     @Min(0)
     @JsonProperty
@@ -117,20 +143,10 @@ public final class IdentityConfig extends AbstractConfig implements HasDbConfig 
         return certificateCnCaptureGroupIndex;
     }
 
-    @SuppressWarnings("unused")
-    public void setCertificateCnCaptureGroupIndex(final int certificateCnCaptureGroupIndex) {
-        this.certificateCnCaptureGroupIndex = certificateCnCaptureGroupIndex;
-    }
-
     @Nullable
     @JsonProperty(PROP_NAME_EMAIL)
     public EmailConfig getEmailConfig() {
         return emailConfig;
-    }
-
-    @SuppressWarnings("unused")
-    public void setEmailConfig(EmailConfig emailConfig) {
-        this.emailConfig = emailConfig;
     }
 
     @Nullable
@@ -142,20 +158,10 @@ public final class IdentityConfig extends AbstractConfig implements HasDbConfig 
         return this.failedLoginLockThreshold;
     }
 
-    @SuppressWarnings("unused")
-    public void setFailedLoginLockThreshold(final Integer failedLoginLockThreshold) {
-        this.failedLoginLockThreshold = failedLoginLockThreshold;
-    }
-
     @Nullable
     @JsonProperty(PROP_NAME_TOKEN)
     public TokenConfig getTokenConfig() {
         return tokenConfig;
-    }
-
-    @SuppressWarnings("unused")
-    public void setTokenConfig(TokenConfig tokenConfig) {
-        this.tokenConfig = tokenConfig;
     }
 
     @NotNull
@@ -164,28 +170,32 @@ public final class IdentityConfig extends AbstractConfig implements HasDbConfig 
         return openIdConfig;
     }
 
-    @SuppressWarnings("unused")
-    public void setOpenIdConfig(final OpenIdConfig openIdConfig) {
-        this.openIdConfig = openIdConfig;
-    }
-
     @NotNull
     @JsonProperty(PROP_NAME_PASSWORD_POLICY)
     public PasswordPolicyConfig getPasswordPolicyConfig() {
         return passwordPolicyConfig;
     }
 
-    @SuppressWarnings("unused")
-    public void setPasswordPolicyConfig(PasswordPolicyConfig passwordPolicyConfig) {
-        this.passwordPolicyConfig = passwordPolicyConfig;
-    }
-
+    @Override
     @JsonProperty("db")
-    public DbConfig getDbConfig() {
+    public IdentityDbConfig getDbConfig() {
         return dbConfig;
     }
 
-    public void setDbConfig(final DbConfig dbConfig) {
-        this.dbConfig = dbConfig;
+
+    @BootStrapConfig
+    public static class IdentityDbConfig extends AbstractDbConfig {
+
+        public IdentityDbConfig() {
+            super();
+        }
+
+        @SuppressWarnings("unused")
+        @JsonCreator
+        public IdentityDbConfig(
+                @JsonProperty(PROP_NAME_CONNECTION) final ConnectionConfig connectionConfig,
+                @JsonProperty(PROP_NAME_CONNECTION_POOL) final ConnectionPoolConfig connectionPoolConfig) {
+            super(connectionConfig, connectionPoolConfig);
+        }
     }
 }

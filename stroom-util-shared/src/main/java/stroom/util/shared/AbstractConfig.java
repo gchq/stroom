@@ -1,6 +1,7 @@
 package stroom.util.shared;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
@@ -8,6 +9,8 @@ import java.util.Objects;
  * Super class for all stroom config pojos. Can be decorated with property path
  * information, e.g. stroom.path.home
  */
+@NotInjectableConfig
+@JsonPropertyOrder(alphabetic = true)
 public abstract class AbstractConfig implements HasPropertyPath {
 
     // Held in part form to reduce memory overhead as some parts will be used

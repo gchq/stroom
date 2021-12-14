@@ -41,12 +41,12 @@ public class UserAppPermissionsCache implements Clearable, EntityEvent.Handler {
 
     @Inject
     UserAppPermissionsCache(final CacheManager cacheManager,
-                            final AuthorisationConfig authorisationConfig,
+                            final Provider<AuthorisationConfig> authorisationConfigProvider,
                             final UserAppPermissionService userAppPermissionService,
                             final Provider<EntityEventBus> eventBusProvider) {
         this.eventBusProvider = eventBusProvider;
         cache = cacheManager.create(CACHE_NAME,
-                authorisationConfig::getUserAppPermissionsCache,
+                () -> authorisationConfigProvider.get().getUserAppPermissionsCache(),
                 userAppPermissionService::getPermissionNamesForUser);
     }
 

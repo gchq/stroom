@@ -72,7 +72,8 @@ public class HTTPAppender extends AbstractAppender {
     private long count;
 
     private boolean useJvmSslConfig = true;
-    private final SSLConfig sslConfig = new SSLConfig();
+    //    private final SSLConfig sslConfig = new SSLConfig();
+    private final SSLConfig.Builder sslConfigBuilder = SSLConfig.builder();
 
     private String requestMethod = "POST";
     private String contentType = "application/json";
@@ -146,6 +147,7 @@ public class HTTPAppender extends AbstractAppender {
 
             if (connection instanceof HttpsURLConnection) {
                 final HttpsURLConnection httpsURLConnection = (HttpsURLConnection) connection;
+                final SSLConfig sslConfig = sslConfigBuilder.build();
                 if (!useJvmSslConfig) {
                     LOGGER.info(() -> "Configuring SSLSocketFactory for destination " + forwardUrl);
                     final SSLSocketFactory sslSocketFactory = SSLUtil.createSslSocketFactory(
@@ -378,53 +380,53 @@ public class HTTPAppender extends AbstractAppender {
     @PipelineProperty(description = "The key store file path on the server",
             displayPriority = 12)
     public void setKeyStorePath(final String keyStorePath) {
-        sslConfig.setKeyStorePath(keyStorePath);
+        sslConfigBuilder.withKeyStorePath(keyStorePath);
     }
 
     @PipelineProperty(description = "The key store type",
             defaultValue = "JKS",
             displayPriority = 13)
     public void setKeyStoreType(final String keyStoreType) {
-        sslConfig.setKeyStoreType(keyStoreType);
+        sslConfigBuilder.withKeyStoreType(keyStoreType);
     }
 
     @PipelineProperty(description = "The key store password",
             displayPriority = 14)
     public void setKeyStorePassword(final String keyStorePassword) {
-        sslConfig.setKeyStorePassword(keyStorePassword);
+        sslConfigBuilder.withKeyStorePassword(keyStorePassword);
     }
 
     @PipelineProperty(description = "The trust store file path on the server",
             displayPriority = 15)
     public void setTrustStorePath(final String trustStorePath) {
-        sslConfig.setTrustStorePath(trustStorePath);
+        sslConfigBuilder.withTrustStorePath(trustStorePath);
     }
 
     @PipelineProperty(description = "The trust store type",
             defaultValue = "JKS",
             displayPriority = 16)
     public void setTrustStoreType(final String trustStoreType) {
-        sslConfig.setTrustStoreType(trustStoreType);
+        sslConfigBuilder.withTrustStoreType(trustStoreType);
     }
 
     @PipelineProperty(description = "The trust store password",
             displayPriority = 17)
     public void setTrustStorePassword(final String trustStorePassword) {
-        sslConfig.setTrustStorePassword(trustStorePassword);
+        sslConfigBuilder.withTrustStorePassword(trustStorePassword);
     }
 
     @PipelineProperty(description = "Verify host names",
             defaultValue = "true",
             displayPriority = 18)
     public void setHostnameVerificationEnabled(final boolean hostnameVerificationEnabled) {
-        sslConfig.setHostnameVerificationEnabled(hostnameVerificationEnabled);
+        sslConfigBuilder.withHostnameVerificationEnabled(hostnameVerificationEnabled);
     }
 
     @PipelineProperty(description = "The SSL protocol to use",
             defaultValue = "TLSv1.2",
             displayPriority = 19)
     public void setSslProtocol(final String sslProtocol) {
-        sslConfig.setSslProtocol(sslProtocol);
+        sslConfigBuilder.withSslProtocol(sslProtocol);
     }
 
     @PipelineProperty(description = "The request method, e.g. POST",

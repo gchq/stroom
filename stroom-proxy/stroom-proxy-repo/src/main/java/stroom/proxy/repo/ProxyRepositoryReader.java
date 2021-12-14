@@ -32,10 +32,12 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.inject.Singleton;
 
 /**
  * Class that reads repositories.
  */
+@Singleton
 public final class ProxyRepositoryReader {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyRepositoryReader.class);
@@ -48,7 +50,7 @@ public final class ProxyRepositoryReader {
     private final ReentrantLock lock = new ReentrantLock();
     private final Condition condition = lock.newCondition();
 
-    private final ProxyRepositoryReaderConfig proxyRepositoryReaderConfig;
+    private final Provider<ProxyRepositoryReaderConfig> proxyRepositoryReaderConfigProvider;
     private final StreamHandlerFactory handlerFactory;
 
     /**
@@ -71,15 +73,15 @@ public final class ProxyRepositoryReader {
                           final TaskContext taskContext,
                           final BufferFactory bufferFactory,
                           final ProxyRepositoryManager proxyRepositoryManager,
-                          final ProxyRepositoryReaderConfig proxyRepositoryReaderConfig,
+                          final Provider<ProxyRepositoryReaderConfig> proxyRepositoryReaderConfigProvider,
                           final StreamHandlerFactory handlerFactory) {
         this.taskContextFactory = taskContextFactory;
         this.taskContext = taskContext;
         this.bufferFactory = bufferFactory;
-        this.proxyRepositoryReaderConfig = proxyRepositoryReaderConfig;
+        this.proxyRepositoryReaderConfigProvider = proxyRepositoryReaderConfigProvider;
         this.handlerFactory = handlerFactory;
         this.proxyRepositoryManager = proxyRepositoryManager;
-        this.scheduler = createScheduler(proxyRepositoryReaderConfig.getReadCron());
+        this.scheduler = createScheduler(proxyRepositoryReaderConfigProvider.get().getReadCron());
 
         threadPool = new ThreadPoolImpl("Proxy Repository Reader");
 
@@ -211,6 +213,10 @@ public final class ProxyRepositoryReader {
                 final Provider<FileSetProcessor> fileSetProcessorProvider = () -> new ProxyForwardingFileSetProcessor(
                         handlerFactory,
                         bufferFactory);
+
+                final ProxyRepositoryReaderConfig proxyRepositoryReaderConfig =
+                        proxyRepositoryReaderConfigProvider.get();
+
                 final RepositoryProcessor repositoryProcessor = new RepositoryProcessor(
                         executorProvider,
                         taskContextFactory,

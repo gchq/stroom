@@ -40,6 +40,7 @@ public abstract class AbstractRefDataOffHeapStoreTest extends AbstractLmdbDbTest
     protected Injector injector;
     @Inject
     private RefDataStoreFactory refDataStoreFactory;
+
     private ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig();
 
     @Override
@@ -51,7 +52,9 @@ public abstract class AbstractRefDataOffHeapStoreTest extends AbstractLmdbDbTest
     void setup() {
         LOGGER.debug("Creating LMDB environment in dbDir {}", getDbDir().toAbsolutePath().toString());
 
-        referenceDataConfig.getLmdbConfig().setLocalDir(getDbDir().toAbsolutePath().toString());
+        referenceDataConfig = new ReferenceDataConfig()
+                .withLmdbConfig(referenceDataConfig.getLmdbConfig()
+                        .withLocalDir(getDbDir().toAbsolutePath().toString()));
 
         setDbMaxSizeProperty();
 
@@ -73,11 +76,13 @@ public abstract class AbstractRefDataOffHeapStoreTest extends AbstractLmdbDbTest
     }
 
     protected void setDbMaxSizeProperty(final ByteSize sizeInBytes) {
-        referenceDataConfig.getLmdbConfig().setMaxStoreSize(sizeInBytes);
+        referenceDataConfig = new ReferenceDataConfig()
+                .withLmdbConfig(referenceDataConfig.getLmdbConfig()
+                        .withMaxStoreSize(sizeInBytes));
     }
 
     protected void setPurgeAgeProperty(final StroomDuration purgeAge) {
-        referenceDataConfig.setPurgeAge(purgeAge);
+        referenceDataConfig = referenceDataConfig.withPurgeAge(purgeAge);
     }
 
     protected void setDbMaxSizeProperty() {

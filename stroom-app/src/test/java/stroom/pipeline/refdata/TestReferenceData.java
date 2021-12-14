@@ -108,7 +108,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
     @Inject
     private PipelineSerialiser pipelineSerialiser;
 
-    private final ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig();
+    private ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig();
     private RefDataStore refDataStore;
 
     @SuppressWarnings("unused")
@@ -580,7 +580,8 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
     }
 
     private void setDbMaxSizeProperty(final ByteSize size) {
-        referenceDataConfig.getLmdbConfig().setMaxStoreSize(size);
+        referenceDataConfig = referenceDataConfig.withLmdbConfig(referenceDataConfig.getLmdbConfig()
+                .withMaxStoreSize(size));
     }
 
     private Path getDbDir() {

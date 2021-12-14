@@ -22,13 +22,14 @@ import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.state.SearchIdHolder;
 import stroom.util.io.HomeDirProvider;
-import stroom.util.io.PathCreator;
+import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 
-public class ExtendedPathCreator extends PathCreator {
+public class ExtendedPathCreator extends SimplePathCreator {
+
     private final Provider<FeedHolder> feedHolder;
     private final Provider<PipelineHolder> pipelineHolder;
     private final Provider<MetaHolder> metaHolder;
@@ -51,6 +52,7 @@ public class ExtendedPathCreator extends PathCreator {
         this.nodeInfo = nodeInfo;
     }
 
+    @Override
     public String replaceContextVars(String path) {
         if (feedHolder != null && feedHolder.get().getFeedName() != null) {
             path = replace(path, "feed", () -> feedHolder.get().getFeedName());

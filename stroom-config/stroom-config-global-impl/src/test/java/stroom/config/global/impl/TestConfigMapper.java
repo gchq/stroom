@@ -1,20 +1,67 @@
 package stroom.config.global.impl;
 
+import stroom.activity.impl.db.ActivityConfig;
+import stroom.annotation.impl.AnnotationConfig;
+import stroom.bytebuffer.ByteBufferPoolConfig;
+import stroom.cluster.api.ClusterConfig;
+import stroom.cluster.lock.impl.db.ClusterLockConfig;
 import stroom.config.app.AppConfig;
+import stroom.config.app.DataConfig;
+import stroom.config.app.PropertyServiceConfig;
+import stroom.config.app.SecurityConfig;
+import stroom.config.app.SessionCookieConfig;
+import stroom.config.app.StatisticsConfig;
+import stroom.config.common.CommonDbConfig;
+import stroom.config.common.NodeUriConfig;
+import stroom.config.common.PublicUriConfig;
+import stroom.config.common.UiUriConfig;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.OverrideValue;
+import stroom.core.receive.ProxyAggregationConfig;
+import stroom.core.receive.ReceiveDataConfig;
+import stroom.dashboard.impl.DashboardConfig;
+import stroom.dashboard.impl.datasource.DataSourceUrlConfig;
 import stroom.docref.DocRef;
+import stroom.docstore.impl.db.DocStoreConfig;
+import stroom.event.logging.impl.LoggingConfig;
+import stroom.explorer.impl.ExplorerConfig;
+import stroom.feed.impl.FeedConfig;
+import stroom.importexport.impl.ContentPackImportConfig;
+import stroom.importexport.impl.ExportConfig;
+import stroom.index.impl.IndexConfig;
+import stroom.index.impl.selection.VolumeConfig;
+import stroom.job.impl.JobSystemConfig;
+import stroom.kafka.impl.KafkaConfig;
+import stroom.legacy.db.LegacyConfig;
+import stroom.lifecycle.impl.LifecycleConfig;
 import stroom.lmdb.LmdbConfig;
+import stroom.lmdb.LmdbLibraryConfig;
+import stroom.node.impl.NodeConfig;
+import stroom.pipeline.PipelineConfig;
 import stroom.pipeline.refdata.ReferenceDataLmdbConfig;
+import stroom.processor.impl.ProcessorConfig;
+import stroom.search.impl.SearchConfig;
+import stroom.search.solr.SolrConfig;
+import stroom.searchable.impl.SearchableConfig;
+import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
+import stroom.storedquery.impl.StoredQueryConfig;
+import stroom.ui.config.shared.UiConfig;
 import stroom.util.config.PropertyUtil.Prop;
 import stroom.util.io.ByteSize;
+import stroom.util.io.StroomPathConfig;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.PropertyPath;
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.reflect.TypeToken;
 import io.dropwizard.Configuration;
 import io.dropwizard.configuration.ConfigurationException;
@@ -22,7 +69,7 @@ import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.Tuple7;
 import org.apache.commons.lang3.StringUtils;
-import org.junit.jupiter.api.Assertions;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,8 +100,7 @@ class TestConfigMapper {
     @Test
     void getGlobalProperties() throws IOException, ConfigurationException {
 
-        AppConfig appConfig = getAppConfig();
-        ConfigMapper configMapper = new ConfigMapper(appConfig);
+        ConfigMapper configMapper = new ConfigMapper();
 
         Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
 
@@ -89,8 +135,7 @@ class TestConfigMapper {
 
     @Test
     void getDataTypeNames() {
-        final AppConfig appConfig = new AppConfig();
-        final ConfigMapper configMapper = new ConfigMapper(appConfig);
+        final ConfigMapper configMapper = new ConfigMapper();
 
         final Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
 
@@ -110,8 +155,7 @@ class TestConfigMapper {
 
     @Test
     void getUniqueDataTypes() {
-        final AppConfig appConfig = new AppConfig();
-        final ConfigMapper configMapper = new ConfigMapper(appConfig);
+        final ConfigMapper configMapper = new ConfigMapper();
 
         final Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
 
@@ -144,8 +188,7 @@ class TestConfigMapper {
 
     @Test
     void testSerdeAllProperties() {
-        AppConfig appConfig = getAppConfig();
-        ConfigMapper configMapper = new ConfigMapper(appConfig);
+        ConfigMapper configMapper = new ConfigMapper();
 
         Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
 
@@ -165,8 +208,7 @@ class TestConfigMapper {
 
     @Test
     void testValidatePropertyPath_valid() {
-        AppConfig appConfig = new AppConfig();
-        ConfigMapper configMapper = new ConfigMapper(appConfig);
+        ConfigMapper configMapper = new ConfigMapper();
 
         boolean isValid = configMapper.validatePropertyPath(PropertyPath.fromPathString("stroom.ui.aboutHtml"));
 
@@ -176,7 +218,7 @@ class TestConfigMapper {
     @Test
     void testValidatePropertyPath_invalid() {
         AppConfig appConfig = new AppConfig();
-        ConfigMapper configMapper = new ConfigMapper(appConfig);
+        ConfigMapper configMapper = new ConfigMapper();
 
         boolean isValid = configMapper.validatePropertyPath(PropertyPath.fromPathString("stroom.unknown.prop"));
 
@@ -215,6 +257,7 @@ class TestConfigMapper {
         referenceDataLmdbConfig.setLocalDir(newValue);
 
         ConfigMapper configMapper = new ConfigMapper(appConfig);
+//        configMapper.updateConfigFromYaml();
 
         final Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
 
@@ -244,7 +287,8 @@ class TestConfigMapper {
         final String newYamlValue = null;
         lmdbConfig.setLocalDir(newYamlValue);
 
-        ConfigMapper configMapper = new ConfigMapper(appConfig);
+        ConfigMapper configMapper = new ConfigMapper();
+        configMapper.refreshGlobalPropYamlOverrides(appConfig);
 
         final Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
 
@@ -273,17 +317,18 @@ class TestConfigMapper {
     void testGetGlobalProperties2() {
         TestConfig testConfig = new TestConfig();
 
-        ConfigMapper configMapper = new ConfigMapper(testConfig);
+        ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
 
         Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
 
         configProperties.forEach(configProperty ->
-                LOGGER.debug("{} - {}", configProperty.getName(), configProperty.getEffectiveValue().orElse(null)));
+                LOGGER.debug("{} - {}", configProperty.getName(), configProperty.getEffectiveValue()
+                        .orElse(null)));
     }
 
     @Test
     void testFindPropsWithNoDefault() {
-        final ConfigMapper configMapper = new ConfigMapper(new AppConfig());
+        final ConfigMapper configMapper = new ConfigMapper();
 
         final Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
 
@@ -302,7 +347,7 @@ class TestConfigMapper {
 
     @Test
     void testFindPropsWithNoDescription() {
-        final ConfigMapper configMapper = new ConfigMapper(new AppConfig());
+        final ConfigMapper configMapper = new ConfigMapper();
 
         final Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
 
@@ -317,7 +362,7 @@ class TestConfigMapper {
                         LOGGER.info("{}", name))
                 .collect(Collectors.toList());
 
-        org.assertj.core.api.Assertions.assertThat(propsWithNoDesc)
+        Assertions.assertThat(propsWithNoDesc)
                 .isEmpty();
     }
 
@@ -424,7 +469,7 @@ class TestConfigMapper {
 
         final PropertyPath fullPath = PropertyPath.fromPathString(path);
 
-        final ConfigMapper configMapper = new ConfigMapper(testConfig);
+        ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
 
         final Prop prop = configMapper.getProp(fullPath)
                 .orElseThrow();
@@ -450,17 +495,19 @@ class TestConfigMapper {
 
         assertThat(newObj).isNotEqualTo(originalObj);
 
+        final TestConfig newTestConfig = configMapper.getConfigObject(TestConfig.class);
+
         // make sure the db override value has made it into the config obj
-        assertThat(getter.apply(testConfig)).isEqualTo(newObj);
+        assertThat(getter.apply(newTestConfig))
+                .isEqualTo(newObj);
     }
 
     @Test
     void update_docRefList() {
         TestConfig testConfig = new TestConfig();
-        ConfigMapper configMapper = new ConfigMapper(testConfig);
+        ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
 
-        Supplier<List<DocRef>> getter = testConfig::getDocRefListProp;
-        List<DocRef> initialValue = getter.get();
+        List<DocRef> initialValue = testConfig.getDocRefListProp();
         List<DocRef> newValue = new ArrayList<>();
         initialValue.forEach(docRef ->
                 newValue.add(DocRef.builder()
@@ -481,16 +528,17 @@ class TestConfigMapper {
         configPropertyCopy.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
         configMapper.decorateDbConfigProperty(configPropertyCopy);
 
-        assertThat(getter.get()).isEqualTo(newValue);
+        final TestConfig newTestConfig = configMapper.getConfigObject(TestConfig.class);
+
+        assertThat(newTestConfig.getDocRefListProp()).isEqualTo(newValue);
     }
 
     @Test
     void update_enumList() {
         TestConfig testConfig = new TestConfig();
-        ConfigMapper configMapper = new ConfigMapper(testConfig);
+        ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
 
-        Supplier<List<TestConfig.State>> getter = testConfig::getStateListProp;
-        List<TestConfig.State> initialValue = getter.get();
+        List<TestConfig.State> initialValue = testConfig.getStateListProp();
         List<TestConfig.State> newValue = new ArrayList<>(initialValue);
         newValue.add(TestConfig.State.ON);
         PropertyPath fullPath = PropertyPath.fromPathString("stroom.stateListProp");
@@ -502,16 +550,17 @@ class TestConfigMapper {
         configPropertyCopy.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
         configMapper.decorateDbConfigProperty(configPropertyCopy);
 
-        assertThat(getter.get()).isEqualTo(newValue);
+        final TestConfig newTestConfig = configMapper.getConfigObject(TestConfig.class);
+
+        assertThat(newTestConfig.getStateListProp()).isEqualTo(newValue);
     }
 
     @Test
     void update_stringList() {
         TestConfig testConfig = new TestConfig();
-        ConfigMapper configMapper = new ConfigMapper(testConfig);
+        ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
 
-        Supplier<List<String>> getter = testConfig::getStringListProp;
-        List<String> initialValue = getter.get();
+        List<String> initialValue = testConfig.getStringListProp();
         List<String> newValue = Stream.of(initialValue, initialValue)
                 .flatMap(List::stream)
                 .map(str -> str + "x")
@@ -525,32 +574,34 @@ class TestConfigMapper {
         configPropertyCopy.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
         configMapper.decorateDbConfigProperty(configPropertyCopy);
 
-        assertThat(getter.get()).isEqualTo(newValue);
+        final TestConfig newtTestConfig = configMapper.getConfigObject(TestConfig.class);
+
+        assertThat(newtTestConfig.getStringListProp())
+                .isEqualTo(newValue);
     }
 
     @Test
     void update_stringLongMap() {
-        TestConfig testConfig = new TestConfig();
-        ConfigMapper configMapper = new ConfigMapper(testConfig);
+        final TestConfig testConfig = new TestConfig();
+        final ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
 
-        Supplier<Map<String, Long>> getter = testConfig::getStringLongMapProp;
-        Map<String, Long> initialValue = getter.get();
-        Map<String, Long> newValue = new HashMap<>();
+        final Supplier<Map<String, Long>> getter = testConfig::getStringLongMapProp;
+        final Map<String, Long> initialValue = getter.get();
+        final Map<String, Long> newValue = new HashMap<>();
         initialValue.forEach((k, v) ->
                 newValue.put(k, v + 10));
         newValue.put("k4", 14L);
-        PropertyPath fullPath = PropertyPath.fromPathString("stroom.stringLongMapProp");
+        final PropertyPath fullPath = PropertyPath.fromPathString("stroom.stringLongMapProp");
 
-        String newValueStr = ConfigMapper.convertToString(newValue);
-
-        ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
+        final ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
         // Make a copy as decorateDbConfigProperty will be comparing the one from the map
         // against this one.
-        ConfigProperty configPropertyCopy = copyConfigProperty(configProperty);
+        final ConfigProperty configPropertyCopy = copyConfigProperty(configProperty);
         configPropertyCopy.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
         configMapper.decorateDbConfigProperty(configPropertyCopy);
 
-        assertThat(getter.get()).isEqualTo(newValue);
+        final TestConfig newTestConfig = configMapper.getConfigObject(TestConfig.class);
+        assertThat(newTestConfig.getStringLongMapProp()).isEqualTo(newValue);
     }
 
     @Test
@@ -558,7 +609,7 @@ class TestConfigMapper {
         TestConfig testConfig = new TestConfig();
         String defaultValue = testConfig.getStringProp();
 
-        ConfigMapper configMapper = new ConfigMapper(testConfig);
+        ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
 
         ConfigProperty configProperty = configMapper
                 .getGlobalProperty(PropertyPath.fromPathString("stroom.stringProp"))
@@ -577,9 +628,10 @@ class TestConfigMapper {
 
     @Test
     void testValidateDelimiter_bad() {
-        Assertions.assertThrows(RuntimeException.class, () -> {
+        Assertions.assertThatThrownBy(() -> {
             ConfigMapper.validateDelimiter("xxxx", 0, "first", "dummy example");
-        });
+        })
+                .isInstanceOf(RuntimeException.class);
     }
 
     @Test
@@ -677,19 +729,50 @@ class TestConfigMapper {
         doValidateStringValueTest("stroom.byteSizeProp", "xxxxx", false);
     }
 
+//    @Test
+//    void testBuildAppConfigFromFile() {
+//        final Path configFile = Path.of("../../stroom-app/dev.yml");
+//        assertThat(configFile)
+//                .isRegularFile();
+//        final AppConfig appConfig = ConfigMapper.buildMergedAppConfig(configFile);
+//        assertThat(appConfig)
+//                .isNotNull();
+//    }
+
+    //    @Test
+//    void testRefreshConfig() {
+//
+//        final AppConfig appConfig = new AppConfig();
+//        ConfigMapper configMapper = new ConfigMapper(appConfig);
+//
+//        configMapper.refreshConfig(appConfig);
+//    }
+
+    private static ObjectMapper createYamlObjectMapper() {
+        final YAMLFactory yamlFactory = new YAMLFactory();
+        final ObjectMapper mapper = new ObjectMapper(yamlFactory);
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+//        mapper.configure(DeserializationFeature.UNWRAP_ROOT_VALUE, true);
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, false);
+//        mapper.configure(SerializationFeature.WRAP_ROOT_VALUE, true);
+        mapper.setSerializationInclusion(Include.NON_NULL);
+
+        return mapper;
+    }
 
     private void doValidateStringValueTest(final String path, final String value, boolean shouldValidate) {
         TestConfig testConfig = new TestConfig();
-        ConfigMapper configMapper = new ConfigMapper(testConfig);
+        ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
         PropertyPath propertyPath = PropertyPath.fromPathString(path);
 
         if (shouldValidate) {
             configMapper.validateValueSerialisation(propertyPath, value);
         } else {
-            Assertions.assertThrows(RuntimeException.class, () -> {
+            Assertions.assertThatThrownBy(() -> {
                 // no leading delimiter
                 configMapper.validateValueSerialisation(propertyPath, value);
-            });
+            })
+                    .isInstanceOf(RuntimeException.class);
         }
     }
 
@@ -770,44 +853,166 @@ class TestConfigMapper {
 
     public static class TestConfig extends AppConfig {
 
-        private String stringProp = "initial value";
-        private List<String> stringListProp = new ArrayList<>();
-        private List<Integer> intListProp = new ArrayList<>();
-        private Map<String, Long> stringLongMapProp = new HashMap<>();
-        private DocRef docRefProp = new DocRef("MyType", "9d9ff899-c6db-46c1-97bf-a8015a853b38", "MyName");
-        private List<DocRef> docRefListProp = List.of(
-                new DocRef("MyType1", "9457f9ff-eb2a-4ef1-b60d-769e9a987cd2", "MyDocRef1"),
-                new DocRef("MyType2", "56068221-1a7d-486c-9fa7-af8b98733e53", "MyDocRef2"));
-        private State stateProp = State.OFF;
-        private List<State> stateListProp = List.of(State.ON, State.IN_BETWEEN);
-        private Path pathProp = Path.of("/a/b/c/d");
-        private StroomDuration stroomDurationProp = StroomDuration.ofMinutes(5);
-        private ByteSize byteSizeProp = ByteSize.ofKibibytes(2);
+        private final String stringProp;
+        private final List<String> stringListProp;
+        private final List<Integer> intListProp;
+        private final Map<String, Long> stringLongMapProp;
+        private final DocRef docRefProp;
+        private final List<DocRef> docRefListProp;
+        private final State stateProp;
+        private final List<State> stateListProp;
+        private final Path pathProp;
+        private final StroomDuration stroomDurationProp;
+        private final ByteSize byteSizeProp;
 
         // sub-configs
-        private TestPrimitiveConfig testPrimitiveConfig = new TestPrimitiveConfig();
-        private TestBoxedConfig testBoxedConfig = new TestBoxedConfig();
+        private final TestPrimitiveConfig testPrimitiveConfig;
+        private final TestBoxedConfig testBoxedConfig;
 
         public TestConfig() {
-            stringListProp.add("item 1");
-            stringListProp.add("item 2");
-            stringListProp.add("item 3");
+            super();
 
-            intListProp.add(1);
-            intListProp.add(2);
-            intListProp.add(3);
+            stringProp = "initial value";
+            stringListProp = List.of("item 1", "item 2", "item 3");
+            intListProp = List.of(1, 2, 3);
+            stringLongMapProp = Map.of(
+                    "k1", 1L,
+                    "k2", 2L,
+                    "k3", 3L);
+            docRefProp = new DocRef("MyType", "9d9ff899-c6db-46c1-97bf-a8015a853b38", "MyName");
+            docRefListProp = List.of(
+                    new DocRef("MyType1", "9457f9ff-eb2a-4ef1-b60d-769e9a987cd2", "MyDocRef1"),
+                    new DocRef("MyType2", "56068221-1a7d-486c-9fa7-af8b98733e53", "MyDocRef2"));
+            stateProp = State.OFF;
+            stateListProp = List.of(State.ON, State.IN_BETWEEN);
+            pathProp = Path.of("/a/b/c/d");
+            stroomDurationProp = StroomDuration.ofMinutes(5);
+            byteSizeProp = ByteSize.ofKibibytes(2);
 
-            stringLongMapProp.put("k1", 1L);
-            stringLongMapProp.put("k2", 2L);
-            stringLongMapProp.put("k3", 3L);
+            // sub-configs
+            testPrimitiveConfig = new TestPrimitiveConfig();
+            testBoxedConfig = new TestBoxedConfig();
+        }
+
+
+        @JsonCreator
+        @SuppressWarnings("checkstyle:LineLength")
+        public TestConfig(
+                @JsonProperty(PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE) final boolean haltBootOnConfigValidationFailure,
+                @JsonProperty(PROP_NAME_ACTIVITY) final ActivityConfig activityConfig,
+                @JsonProperty(PROP_NAME_ANNOTATION) final AnnotationConfig annotationConfig,
+                @JsonProperty(PROP_NAME_BYTE_BUFFER_POOL) final ByteBufferPoolConfig byteBufferPoolConfig,
+                @JsonProperty(PROP_NAME_CLUSTER) final ClusterConfig clusterConfig,
+                @JsonProperty(PROP_NAME_CLUSTER_LOCK) final ClusterLockConfig clusterLockConfig,
+                @JsonProperty(PROP_NAME_COMMON_DB_DETAILS) final CommonDbConfig commonDbConfig,
+                @JsonProperty(PROP_NAME_CONTENT_PACK_IMPORT) final ContentPackImportConfig contentPackImportConfig,
+                @JsonProperty(PROP_NAME_CORE) final LegacyConfig legacyConfig,
+                @JsonProperty(PROP_NAME_DASHBOARD) final DashboardConfig dashboardConfig,
+                @JsonProperty(PROP_NAME_DATA) final DataConfig dataConfig,
+                @JsonProperty(PROP_NAME_DATA_SOURCE_URL) final DataSourceUrlConfig dataSourceUrlConfig,
+                @JsonProperty(PROP_NAME_DOCSTORE) final DocStoreConfig docStoreConfig,
+                @JsonProperty(PROP_NAME_EXPLORER) final ExplorerConfig explorerConfig,
+                @JsonProperty(PROP_NAME_EXPORT) final ExportConfig exportConfig,
+                @JsonProperty(PROP_NAME_FEED) final FeedConfig feedConfig,
+                @JsonProperty(PROP_NAME_INDEX) final IndexConfig indexConfig,
+                @JsonProperty(PROP_NAME_JOB) final JobSystemConfig jobSystemConfig,
+                @JsonProperty(PROP_NAME_KAFKA) final KafkaConfig kafkaConfig,
+                @JsonProperty(PROP_NAME_LIFECYCLE) final LifecycleConfig lifecycleConfig,
+                @JsonProperty(PROP_NAME_LMDB_LIBRARY) final LmdbLibraryConfig lmdbLibraryConfig,
+                @JsonProperty(PROP_NAME_LOGGING) final LoggingConfig loggingConfig,
+                @JsonProperty(PROP_NAME_NODE) final NodeConfig nodeConfig,
+                @JsonProperty(PROP_NAME_NODE_URI) final NodeUriConfig nodeUri,
+                @JsonProperty(PROP_NAME_PIPELINE) final PipelineConfig pipelineConfig,
+                @JsonProperty(PROP_NAME_PROCESSOR) final ProcessorConfig processorConfig,
+                @JsonProperty(PROP_NAME_PROPERTIES) final PropertyServiceConfig propertyServiceConfig,
+                @JsonProperty(PROP_NAME_PROXY_AGGREGATION) final ProxyAggregationConfig proxyAggregationConfig,
+                @JsonProperty(PROP_NAME_PUBLIC_URI) final PublicUriConfig publicUri,
+                @JsonProperty(PROP_NAME_RECEIVE) final ReceiveDataConfig receiveDataConfig,
+                @JsonProperty(PROP_NAME_SEARCH) final SearchConfig searchConfig,
+                @JsonProperty(PROP_NAME_SEARCHABLE) final SearchableConfig searchableConfig,
+                @JsonProperty(PROP_NAME_SECURITY) final SecurityConfig securityConfig,
+                @JsonProperty(PROP_NAME_SERVICE_DISCOVERY) final ServiceDiscoveryConfig serviceDiscoveryConfig,
+                @JsonProperty(PROP_NAME_SESSION_COOKIE) final SessionCookieConfig sessionCookieConfig,
+                @JsonProperty(PROP_NAME_SOLR) final SolrConfig solrConfig,
+                @JsonProperty(PROP_NAME_STATISTICS) final StatisticsConfig statisticsConfig,
+                @JsonProperty(PROP_NAME_QUERY_HISTORY) final StoredQueryConfig storedQueryConfig,
+                @JsonProperty(PROP_NAME_PATH) final StroomPathConfig pathConfig,
+                @JsonProperty(PROP_NAME_UI) final UiConfig uiConfig,
+                @JsonProperty(PROP_NAME_UI_URI) final UiUriConfig uiUri,
+                @JsonProperty(PROP_NAME_VOLUMES) final VolumeConfig volumeConfig,
+                @JsonProperty("stringProp") final String stringProp,
+                @JsonProperty("stringListProp") final List<String> stringListProp,
+                @JsonProperty("intListProp") final List<Integer> intListProp,
+                @JsonProperty("stringLongMapProp") final Map<String, Long> stringLongMapProp,
+                @JsonProperty("docRefProp") final DocRef docRefProp,
+                @JsonProperty("docRefListProp") final List<DocRef> docRefListProp,
+                @JsonProperty("stateProp") final State stateProp,
+                @JsonProperty("stateListProp") final List<State> stateListProp,
+                @JsonProperty("pathProp") final Path pathProp,
+                @JsonProperty("stroomDurationProp") final StroomDuration stroomDurationProp,
+                @JsonProperty("byteSizeProp") final ByteSize byteSizeProp,
+                @JsonProperty("primitive") final TestPrimitiveConfig testPrimitiveConfig,
+                @JsonProperty("boxed") final TestBoxedConfig testBoxedConfig) {
+
+            super(haltBootOnConfigValidationFailure,
+                    activityConfig,
+                    annotationConfig,
+                    byteBufferPoolConfig,
+                    clusterConfig,
+                    clusterLockConfig,
+                    commonDbConfig,
+                    contentPackImportConfig,
+                    legacyConfig,
+                    dashboardConfig,
+                    dataConfig,
+                    dataSourceUrlConfig,
+                    docStoreConfig,
+                    explorerConfig,
+                    exportConfig,
+                    feedConfig,
+                    indexConfig,
+                    jobSystemConfig,
+                    kafkaConfig,
+                    lifecycleConfig,
+                    lmdbLibraryConfig,
+                    loggingConfig,
+                    nodeConfig,
+                    nodeUri,
+                    pipelineConfig,
+                    processorConfig,
+                    propertyServiceConfig,
+                    proxyAggregationConfig,
+                    publicUri,
+                    receiveDataConfig,
+                    searchConfig,
+                    searchableConfig,
+                    securityConfig,
+                    serviceDiscoveryConfig,
+                    sessionCookieConfig,
+                    solrConfig,
+                    statisticsConfig,
+                    storedQueryConfig,
+                    pathConfig,
+                    uiConfig,
+                    uiUri,
+                    volumeConfig);
+            this.stringProp = stringProp;
+            this.stringListProp = stringListProp;
+            this.intListProp = intListProp;
+            this.stringLongMapProp = stringLongMapProp;
+            this.docRefProp = docRefProp;
+            this.docRefListProp = docRefListProp;
+            this.stateProp = stateProp;
+            this.stateListProp = stateListProp;
+            this.pathProp = pathProp;
+            this.stroomDurationProp = stroomDurationProp;
+            this.byteSizeProp = byteSizeProp;
+            this.testPrimitiveConfig = testPrimitiveConfig;
+            this.testBoxedConfig = testBoxedConfig;
         }
 
         public String getStringProp() {
             return stringProp;
-        }
-
-        public void setStringProp(final String stringValue) {
-            this.stringProp = stringValue;
         }
 
         @JsonProperty("primitive")
@@ -815,97 +1020,49 @@ class TestConfigMapper {
             return testPrimitiveConfig;
         }
 
-        public void setTestPrimitiveConfig(final TestPrimitiveConfig testPrimitiveConfig) {
-            this.testPrimitiveConfig = testPrimitiveConfig;
-        }
-
         @JsonProperty("boxed")
         public TestBoxedConfig getTestBoxedConfig() {
             return testBoxedConfig;
-        }
-
-        public void setTestBoxedConfig(final TestBoxedConfig testBoxedConfig) {
-            this.testBoxedConfig = testBoxedConfig;
         }
 
         public List<String> getStringListProp() {
             return stringListProp;
         }
 
-        public void setStringListProp(final List<String> stringListProp) {
-            this.stringListProp = stringListProp;
-        }
-
         public List<Integer> getIntListProp() {
             return intListProp;
-        }
-
-        public void setIntListProp(final List<Integer> intListProp) {
-            this.intListProp = intListProp;
         }
 
         public Map<String, Long> getStringLongMapProp() {
             return stringLongMapProp;
         }
 
-        public void setStringLongMapProp(final Map<String, Long> stringLongMapProp) {
-            this.stringLongMapProp = stringLongMapProp;
-        }
-
         public DocRef getDocRefProp() {
             return docRefProp;
-        }
-
-        public void setDocRefProp(final DocRef docRefProp) {
-            this.docRefProp = docRefProp;
         }
 
         public List<DocRef> getDocRefListProp() {
             return docRefListProp;
         }
 
-        public void setDocRefListProp(final List<DocRef> docRefListProp) {
-            this.docRefListProp = docRefListProp;
-        }
-
         public State getStateProp() {
             return stateProp;
-        }
-
-        public void setStateProp(final State stateProp) {
-            this.stateProp = stateProp;
         }
 
         public List<State> getStateListProp() {
             return stateListProp;
         }
 
-        public void setStateListProp(final List<State> stateListProp) {
-            this.stateListProp = stateListProp;
-        }
-
         public Path getPathProp() {
             return pathProp;
-        }
-
-        public void setPathProp(final Path pathProp) {
-            this.pathProp = pathProp;
         }
 
         public StroomDuration getStroomDurationProp() {
             return stroomDurationProp;
         }
 
-        public void setStroomDurationProp(final StroomDuration stroomDurationProp) {
-            this.stroomDurationProp = stroomDurationProp;
-        }
-
         public ByteSize getByteSizeProp() {
             return byteSizeProp;
-        }
-
-        public void setByteSizeProp(final ByteSize byteSizeProp) {
-            this.byteSizeProp = byteSizeProp;
         }
 
         public enum State {
@@ -918,104 +1075,101 @@ class TestConfigMapper {
 
     public static class TestPrimitiveConfig extends AbstractConfig {
 
-        private boolean booleanProp = false;
-        private int intProp = 123;
-        private long longProp = 123L;
-        private double doubleProp = 1.23;
-        private short shortProp = 123;
+        private final boolean booleanProp;
+        private final int intProp;
+        private final long longProp;
+        private final double doubleProp;
+        private final short shortProp;
+
+        public TestPrimitiveConfig() {
+            booleanProp = false;
+            intProp = 123;
+            longProp = 123L;
+            doubleProp = 1.23;
+            shortProp = 123;
+        }
+
+        @JsonCreator
+        public TestPrimitiveConfig(@JsonProperty("booleanProp") final boolean booleanProp,
+                                   @JsonProperty("intProp") final int intProp,
+                                   @JsonProperty("longProp") final long longProp,
+                                   @JsonProperty("doubleProp") final double doubleProp,
+                                   @JsonProperty("shortProp") final short shortProp) {
+            this.booleanProp = booleanProp;
+            this.intProp = intProp;
+            this.longProp = longProp;
+            this.doubleProp = doubleProp;
+            this.shortProp = shortProp;
+        }
 
         public boolean isBooleanProp() {
             return booleanProp;
-        }
-
-        public void setBooleanProp(final boolean booleanProp) {
-            this.booleanProp = booleanProp;
         }
 
         public int getIntProp() {
             return intProp;
         }
 
-        public void setIntProp(final int intProp) {
-            this.intProp = intProp;
-        }
-
         public long getLongProp() {
             return longProp;
-        }
-
-        public void setLongProp(final long longProp) {
-            this.longProp = longProp;
         }
 
         public double getDoubleProp() {
             return doubleProp;
         }
 
-        public void setDoubleProp(final double doubleProp) {
-            this.doubleProp = doubleProp;
-        }
-
         public short getShortProp() {
             return shortProp;
-        }
-
-        public void setShortProp(final short shortProp) {
-            this.shortProp = shortProp;
         }
     }
 
     public static class TestBoxedConfig extends AbstractConfig {
 
-        private Boolean booleanProp = false;
-        private Integer intProp = 123;
-        private Long longProp = 123L;
-        private Double doubleProp = 1.23;
-        private Short shortProp = 123;
+        private final Boolean booleanProp;
+        private final Integer intProp;
+        private final Long longProp;
+        private final Double doubleProp;
+        private final Short shortProp;
+
+        public TestBoxedConfig() {
+            booleanProp = false;
+            intProp = 123;
+            longProp = 123L;
+            doubleProp = 1.23;
+            shortProp = 123;
+        }
+
+        @JsonCreator
+        public TestBoxedConfig(@JsonProperty("booleanProp") final Boolean booleanProp,
+                               @JsonProperty("intProp") final Integer intProp,
+                               @JsonProperty("longProp") final Long longProp,
+                               @JsonProperty("doubleProp") final Double doubleProp,
+                               @JsonProperty("shortProp") final Short shortProp) {
+            this.booleanProp = booleanProp;
+            this.intProp = intProp;
+            this.longProp = longProp;
+            this.doubleProp = doubleProp;
+            this.shortProp = shortProp;
+        }
 
         public Boolean getBooleanProp() {
             return booleanProp;
-        }
-
-        public void setBooleanProp(final Boolean booleanProp) {
-            this.booleanProp = booleanProp;
         }
 
         public Integer getIntProp() {
             return intProp;
         }
 
-        public void setIntProp(final Integer intProp) {
-            this.intProp = intProp;
-        }
-
         public Long getLongProp() {
             return longProp;
-        }
-
-        public void setLongProp(final Long longProp) {
-            this.longProp = longProp;
         }
 
         public Double getDoubleProp() {
             return doubleProp;
         }
 
-        public void setDoubleProp(final Double doubleProp) {
-            this.doubleProp = doubleProp;
-        }
-
         public Short getShortProp() {
             return shortProp;
         }
-
-        public void setShortProp(final Short shortProp) {
-            this.shortProp = shortProp;
-        }
-    }
-
-    public static class TestOtherTypesConfig extends AbstractConfig {
-
-
     }
 }

@@ -4,27 +4,40 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.validation.ValidSimpleCron;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.inject.Singleton;
 
-@Singleton
 @JsonPropertyOrder(alphabetic = true)
 public class ProxyRepositoryConfig extends AbstractConfig implements IsProxyConfig {
 
-    private boolean isStoringEnabled = false;
-    private String repoDir;
-    private String format = "${pathId}/${id}";
-    private String rollCron;
+    private final boolean isStoringEnabled;
+    private final String repoDir;
+    private final String format;
+    private final String rollCron;
+
+    public ProxyRepositoryConfig() {
+        isStoringEnabled = false;
+        repoDir = null;
+        format = "${pathId}/${id}";
+        rollCron = null;
+    }
+
+    @JsonCreator
+    public ProxyRepositoryConfig(@JsonProperty("storingEnabled") final boolean isStoringEnabled,
+                                 @JsonProperty("repoDir") final String repoDir,
+                                 @JsonProperty("format") final String format,
+                                 @JsonProperty("rollCron") final String rollCron) {
+        this.isStoringEnabled = isStoringEnabled;
+        this.repoDir = repoDir;
+        this.format = format;
+        this.rollCron = rollCron;
+    }
 
     @JsonProperty
     public boolean isStoringEnabled() {
         return isStoringEnabled;
-    }
-
-    public void setStoringEnabled(final boolean storingEnabled) {
-        isStoringEnabled = storingEnabled;
     }
 
     /**
@@ -33,11 +46,6 @@ public class ProxyRepositoryConfig extends AbstractConfig implements IsProxyConf
     @JsonProperty
     public String getRepoDir() {
         return repoDir;
-    }
-
-    @JsonProperty
-    public void setRepoDir(final String repoDir) {
-        this.repoDir = repoDir;
     }
 
     /**
@@ -61,11 +69,6 @@ public class ProxyRepositoryConfig extends AbstractConfig implements IsProxyConf
         return format;
     }
 
-    @JsonProperty
-    public void setFormat(final String format) {
-        this.format = format;
-    }
-
     /**
      * Interval to roll any writing repositories.
      */
@@ -75,8 +78,11 @@ public class ProxyRepositoryConfig extends AbstractConfig implements IsProxyConf
         return rollCron;
     }
 
-    @JsonProperty
-    public void setRollCron(final String rollCron) {
-        this.rollCron = rollCron;
+    public ProxyRepositoryConfig withRepoDir(final String repoDir) {
+        return new ProxyRepositoryConfig(isStoringEnabled, repoDir, format, rollCron);
+    }
+
+    public ProxyRepositoryConfig withStoringEnabled(final boolean isStoringEnabled) {
+        return new ProxyRepositoryConfig(isStoringEnabled, repoDir, format, rollCron);
     }
 }

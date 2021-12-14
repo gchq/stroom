@@ -5,49 +5,54 @@ import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.inject.Singleton;
 
-@Singleton
+@JsonPropertyOrder(alphabetic = true)
 public class SolrConfig extends AbstractConfig {
 
-    private SolrSearchConfig solrSearchConfig = new SolrSearchConfig();
-    private CacheConfig indexClientCache = CacheConfig.builder()
-            .maximumSize(100L)
-            .expireAfterAccess(StroomDuration.ofMinutes(10))
-            .build();
-    private CacheConfig indexCache = CacheConfig.builder()
-            .maximumSize(100L)
-            .expireAfterWrite(StroomDuration.ofMinutes(10))
-            .build();
+    private final SolrSearchConfig solrSearchConfig;
+    private final CacheConfig indexClientCache;
+    private final CacheConfig indexCache;
+
+    public SolrConfig() {
+        solrSearchConfig = new SolrSearchConfig();
+        indexClientCache = CacheConfig.builder()
+                .maximumSize(100L)
+                .expireAfterAccess(StroomDuration.ofMinutes(10))
+                .build();
+        indexCache = CacheConfig.builder()
+                .maximumSize(100L)
+                .expireAfterWrite(StroomDuration.ofMinutes(10))
+                .build();
+    }
+
+    @JsonCreator
+    public SolrConfig(@JsonProperty("search") final SolrSearchConfig solrSearchConfig,
+                      @JsonProperty("indexClientCache") final CacheConfig indexClientCache,
+                      @JsonProperty("indexCache") final CacheConfig indexCache) {
+        this.solrSearchConfig = solrSearchConfig;
+        this.indexClientCache = indexClientCache;
+        this.indexCache = indexCache;
+    }
 
     @JsonProperty("search")
     public SolrSearchConfig getSolrSearchConfig() {
         return solrSearchConfig;
     }
 
-    public void setSolrSearchConfig(final SolrSearchConfig solrSearchConfig) {
-        this.solrSearchConfig = solrSearchConfig;
-    }
-
     public CacheConfig getIndexClientCache() {
         return indexClientCache;
-    }
-
-    public void setIndexClientCache(final CacheConfig indexClientCache) {
-        this.indexClientCache = indexClientCache;
     }
 
     public CacheConfig getIndexCache() {
         return indexCache;
     }
 
-    public void setIndexCache(final CacheConfig indexCache) {
-        this.indexCache = indexCache;
-    }
-
     @Override
+
     public String toString() {
         return "SolrConfig{" +
                 "solrSearchConfig=" + solrSearchConfig +

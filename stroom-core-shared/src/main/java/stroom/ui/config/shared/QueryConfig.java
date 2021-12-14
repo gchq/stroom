@@ -9,37 +9,31 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
-@Singleton
-@JsonPropertyOrder({"infoPopup"})
+@JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class QueryConfig extends AbstractConfig {
 
     @JsonProperty
-    private InfoPopupConfig infoPopup;
+    private final InfoPopupConfig infoPopup;
 
     public QueryConfig() {
         infoPopup = new InfoPopupConfig();
     }
 
-    @Inject
+    //    @Inject
     @JsonCreator
     public QueryConfig(@JsonProperty("infoPopup") final InfoPopupConfig infoPopup) {
-        if (infoPopup != null) {
-            this.infoPopup = infoPopup;
-        } else {
-            this.infoPopup = new InfoPopupConfig();
-        }
+        this.infoPopup = infoPopup;
+//        if (infoPopup != null) {
+//            this.infoPopup = infoPopup;
+//        } else {
+//            this.infoPopup = new InfoPopupConfig();
+//        }
     }
 
     public InfoPopupConfig getInfoPopup() {
         return infoPopup;
-    }
-
-    public void setInfoPopup(final InfoPopupConfig infoPopup) {
-        this.infoPopup = infoPopup;
     }
 
     @Override

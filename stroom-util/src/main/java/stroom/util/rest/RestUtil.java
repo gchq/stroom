@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.function.Supplier;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
@@ -73,6 +74,7 @@ public class RestUtil {
         return Response
                 .status(Response.Status.BAD_REQUEST)
                 .entity(LogUtil.message(msg, args))
+                .type(MediaType.TEXT_PLAIN)
                 .build();
     }
 
@@ -86,6 +88,7 @@ public class RestUtil {
     public static Response ok(final String msg, final Object... args) {
         return Response
                 .ok(LogUtil.message(msg, args))
+                .type(MediaType.TEXT_PLAIN)
                 .build();
     }
 
@@ -118,20 +121,29 @@ public class RestUtil {
     public static BadRequestException badRequest(final String message, final Throwable e) {
         return new BadRequestException(
                 message,
-                Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build(),
+                Response.status(Status.BAD_REQUEST)
+                        .entity(e.getMessage())
+                        .type(MediaType.TEXT_PLAIN)
+                        .build(),
                 e);
     }
 
     public static BadRequestException badRequest(final Throwable e) {
         return new BadRequestException(
                 e.getMessage(),
-                Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build(),
+                Response.status(Status.BAD_REQUEST)
+                        .entity(e.getMessage())
+                        .type(MediaType.TEXT_PLAIN)
+                        .build(),
                 e);
     }
 
     public static BadRequestException badRequest(final String message) {
         return new BadRequestException(
                 message,
-                Response.status(Status.BAD_REQUEST).entity(message).build());
+                Response.status(Status.BAD_REQUEST)
+                        .entity(message)
+                        .type(MediaType.TEXT_PLAIN)
+                        .build());
     }
 }

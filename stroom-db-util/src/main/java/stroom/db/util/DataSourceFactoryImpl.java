@@ -1,9 +1,8 @@
 package stroom.db.util;
 
+import stroom.config.common.AbstractDbConfig;
 import stroom.config.common.CommonDbConfig;
 import stroom.config.common.ConnectionConfig;
-import stroom.config.common.DbConfig;
-import stroom.config.common.HasDbConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -17,6 +16,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
 
@@ -25,16 +25,16 @@ public class DataSourceFactoryImpl implements DataSourceFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataSourceFactoryImpl.class);
 
-    private final CommonDbConfig commonDbConfig;
+    private final Provider<CommonDbConfig> commonDbConfigProvider;
     private final MetricRegistry metricRegistry;
     private final HealthCheckRegistry healthCheckRegistry;
     private static final ConcurrentMap<DataSourceKey, DataSource> DATA_SOURCE_MAP = new ConcurrentHashMap<>();
 
     @Inject
-    public DataSourceFactoryImpl(final CommonDbConfig commonDbConfig,
+    public DataSourceFactoryImpl(final Provider<CommonDbConfig> commonDbConfigProvider,
                                  final MetricRegistry metricRegistry,
                                  final HealthCheckRegistry healthCheckRegistry) {
-        this.commonDbConfig = commonDbConfig;
+        this.commonDbConfigProvider = commonDbConfigProvider;
         this.metricRegistry = metricRegistry;
         this.healthCheckRegistry = healthCheckRegistry;
         LOGGER.debug("Initialising {}", this.getClass().getSimpleName());
@@ -43,16 +43,19 @@ public class DataSourceFactoryImpl implements DataSourceFactory {
     }
 
     @Override
-    public DataSource create(final HasDbConfig config, final String name, final boolean unique) {
-        final DbConfig dbConfig = config.getDbConfig();
+    public DataSource create(final AbstractDbConfig dbConfig, final String name, final boolean unique) {
 
         // Create a merged config using the common db config as a base.
-        final DbConfig mergedConfig = commonDbConfig.mergeConfig(dbConfig);
+        final String className = dbConfig.getClass()
+                .getSimpleName();
+
+        final CommonDbConfig commonDbConfig = commonDbConfigProvider.get();
+        final AbstractDbConfig mergedConfig = commonDbConfig.mergeConfig(dbConfig);
         final DataSourceKey key = new DataSourceKey(mergedConfig, name, unique);
 
         LOGGER.debug(() ->
                 LogUtil.message("Class: {}\n  {}\n  {}\n  {}",
-                        config.getClass().getSimpleName(),
+                        className,
                         dbConfig.getConnectionConfig(),
                         commonDbConfig.getConnectionConfig(),
                         key));

@@ -3,24 +3,28 @@ package stroom.proxy.app.handler;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.inject.Singleton;
 
-@Singleton
-@JsonPropertyOrder({"storingEnabled", "repoDir", "format", "rollCron"})
+@JsonPropertyOrder(alphabetic = true)
 public class ProxyRequestConfig extends AbstractConfig implements IsProxyConfig {
 
-    private String receiptPolicyUuid;
+    private final String receiptPolicyUuid;
+
+    public ProxyRequestConfig() {
+        receiptPolicyUuid = null;
+    }
+
+    @SuppressWarnings("unused")
+    @JsonCreator
+    public ProxyRequestConfig(@JsonProperty("receiptPolicyUuid") final String receiptPolicyUuid) {
+        this.receiptPolicyUuid = receiptPolicyUuid;
+    }
 
     @JsonProperty
     public String getReceiptPolicyUuid() {
         return receiptPolicyUuid;
-    }
-
-    @JsonProperty
-    public void setReceiptPolicyUuid(final String receiptPolicyUuid) {
-        this.receiptPolicyUuid = receiptPolicyUuid;
     }
 }

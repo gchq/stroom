@@ -5,10 +5,12 @@ import stroom.util.io.HomeDirProvider;
 import stroom.util.io.HomeDirProviderImpl;
 import stroom.util.io.PathConfig;
 import stroom.util.io.PathCreator;
+import stroom.util.io.SimplePathCreator;
 import stroom.util.io.StreamUtil;
 import stroom.util.io.TempDirProvider;
 import stroom.util.io.TempDirProviderImpl;
 import stroom.util.logging.LogUtil;
+import stroom.util.yaml.YamlUtil;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -39,6 +41,7 @@ public class ProxyConfigurationSourceProvider implements ConfigurationSourceProv
     private static final List<String> JSON_POINTERS_TO_INSPECT = List.of(
             "/server",
             "/logging");
+    private static final String PROXY_CONFIG_JSON_POINTER = "/" + ProxyConfig.ROOT_PROPERTY_PATH;
 
     private static final List<String> KEYS_TO_MUTATE = List.of(
             "currentLogFilename",
@@ -82,6 +85,8 @@ public class ProxyConfigurationSourceProvider implements ConfigurationSourceProv
             JSON_POINTERS_TO_INSPECT.forEach(jsonPointerExp ->
                     mutateNodes(rootNode, jsonPointerExp, KEYS_TO_MUTATE, logDirMutator));
 
+            mergeInDefaultConfig(mapper, rootNode);
+
             final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             mapper.writeValue(byteArrayOutputStream, rootNode);
 
@@ -89,6 +94,30 @@ public class ProxyConfigurationSourceProvider implements ConfigurationSourceProv
 
             return new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
         }
+    }
+
+    /**
+     * Merge our compile time defaults with the de-serialised config so we have a full tree
+     */
+    private void mergeInDefaultConfig(final ObjectMapper objectMapper,
+                                      final JsonNode rootNode) {
+        final JsonNode proxyConfigNode = rootNode.at(PROXY_CONFIG_JSON_POINTER);
+        final ProxyConfig defaultConfig = new ProxyConfig();
+        final JsonNode defaultConfigNode = objectMapper.valueToTree(defaultConfig);
+
+        if (proxyConfigNode == null || proxyConfigNode.isMissingNode()) {
+            ((ObjectNode) rootNode).set(
+                    ProxyConfig.ROOT_PROPERTY_PATH.toString(),
+                    defaultConfigNode);
+            throw new RuntimeException("No config node found at " + PROXY_CONFIG_JSON_POINTER);
+        }
+
+        YamlUtil.mergeYamlNodeTrees(
+                objectMapper,
+                objectMapper2 ->
+                        proxyConfigNode,
+                objectMapper2 ->
+                        objectMapper.valueToTree(defaultConfig));
     }
 
     private void dumpYamlDiff(final String path,
@@ -176,7 +205,7 @@ public class ProxyConfigurationSourceProvider implements ConfigurationSourceProv
 
         final HomeDirProvider homeDirProvider = new HomeDirProviderImpl(pathConfig);
         final TempDirProvider tempDirProvider = new TempDirProviderImpl(pathConfig, homeDirProvider);
-        final PathCreator pathCreator = new PathCreator(homeDirProvider, tempDirProvider);
+        final PathCreator pathCreator = new SimplePathCreator(homeDirProvider, tempDirProvider);
 
         log("Using stroom home [{}] from {} for Drop Wizard config path substitutions",
                 homeDirProvider.get().toAbsolutePath(),

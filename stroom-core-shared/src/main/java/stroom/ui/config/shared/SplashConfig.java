@@ -10,28 +10,32 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
-import javax.inject.Singleton;
 
-@Singleton
-@JsonPropertyOrder({"enabled", "title", "body", "version"})
+@JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class SplashConfig extends AbstractConfig {
 
     @JsonProperty
     @JsonPropertyDescription("If you would like users to see a splash screen on login.")
-    private boolean enabled;
+    private final boolean enabled;
+
     @JsonProperty
     @JsonPropertyDescription("The title of the splash screen popup.")
-    private String title;
+    private final String title;
+
     @JsonProperty
     @JsonPropertyDescription("The HTML to display in the splash screen.")
-    private String body;
+    private final String body;
+
     @JsonProperty
     @JsonPropertyDescription("The version of the splash screen message.")
-    private String version;
+    private final String version;
 
     public SplashConfig() {
-        setDefaults();
+        enabled = false;
+        title = "Splash Screen";
+        body = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
+        version = "v0.1";
     }
 
     @JsonCreator
@@ -43,52 +47,22 @@ public class SplashConfig extends AbstractConfig {
         this.title = title;
         this.body = body;
         this.version = version;
-
-        setDefaults();
-    }
-
-    private void setDefaults() {
-        if (title == null) {
-            title = "Splash Screen";
-        }
-        if (body == null) {
-            body = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
-        }
-        if (version == null) {
-            version = "v0.1";
-        }
     }
 
     public boolean isEnabled() {
         return enabled;
     }
 
-    public void setEnabled(final boolean enabled) {
-        this.enabled = enabled;
-    }
-
     public String getTitle() {
         return title;
-    }
-
-    public void setTitle(final String title) {
-        this.title = title;
     }
 
     public String getBody() {
         return body;
     }
 
-    public void setBody(final String body) {
-        this.body = body;
-    }
-
     public String getVersion() {
         return version;
-    }
-
-    public void setVersion(final String version) {
-        this.version = version;
     }
 
     @Override

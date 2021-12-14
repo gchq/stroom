@@ -1,48 +1,46 @@
 ---
 appConfig:
-  haltBootOnConfigValidationFailure: true
   activity:
     db:
       connection:
         jdbcDriverClassName: null
+        jdbcDriverPassword: null
         jdbcDriverUrl: null
         jdbcDriverUsername: null
-        jdbcDriverPassword: null
       connectionPool:
         cachePrepStmts: false
-        prepStmtCacheSize: 25
-        prepStmtCacheSqlLimit: 256
         connectionTimeout: "PT30S"
         idleTimeout: "PT10M"
-        maxLifetime: "PT30M"
         leakDetectionThreshold: "PT0S"
-        minimumIdle: 10
+        maxLifetime: "PT30M"
         maxPoolSize: 30
+        minimumIdle: 10
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
   annotation:
+    createText: "Create Annotation"
     db:
       connection:
         jdbcDriverClassName: null
+        jdbcDriverPassword: null
         jdbcDriverUrl: null
         jdbcDriverUsername: null
-        jdbcDriverPassword: null
       connectionPool:
         cachePrepStmts: false
-        prepStmtCacheSize: 25
-        prepStmtCacheSqlLimit: 256
         connectionTimeout: "PT30S"
         idleTimeout: "PT10M"
-        maxLifetime: "PT30M"
         leakDetectionThreshold: "PT0S"
-        minimumIdle: 10
+        maxLifetime: "PT30M"
         maxPoolSize: 30
+        minimumIdle: 10
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
+    standardComments: []
     statusValues:
     - "New"
     - "Assigned"
     - "Closed"
-    standardComments: []
-    createText: "Create Annotation"
   byteBufferPool:
-    warningThresholdPercentage: 90
     pooledByteBufferCounts:
       1: 50
       10: 50
@@ -51,44 +49,45 @@ appConfig:
       10000: 50
       100000: 10
       1000000: 3
+    warningThresholdPercentage: 90
   cluster:
-    clusterCallUseLocal: true
-    clusterCallReadTimeout: "PT30S"
     clusterCallIgnoreSSLHostnameVerifier: true
+    clusterCallReadTimeout: "PT30S"
+    clusterCallUseLocal: true
     clusterResponseTimeout: "PT30S"
   clusterLock:
     db:
       connection:
         jdbcDriverClassName: null
+        jdbcDriverPassword: null
         jdbcDriverUrl: null
         jdbcDriverUsername: null
-        jdbcDriverPassword: null
       connectionPool:
         cachePrepStmts: false
-        prepStmtCacheSize: 25
-        prepStmtCacheSqlLimit: 256
         connectionTimeout: "PT30S"
         idleTimeout: "PT10M"
-        maxLifetime: "PT30M"
         leakDetectionThreshold: "PT0S"
-        minimumIdle: 10
+        maxLifetime: "PT30M"
         maxPoolSize: 30
+        minimumIdle: 10
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
   commonDbDetails:
     connection:
       jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
+      jdbcDriverPassword: "stroompassword1"
       jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
       jdbcDriverUsername: "stroomuser"
-      jdbcDriverPassword: "stroompassword1"
     connectionPool:
       cachePrepStmts: false
-      prepStmtCacheSize: 25
-      prepStmtCacheSqlLimit: 256
       connectionTimeout: "PT30S"
       idleTimeout: "PT10M"
-      maxLifetime: "PT30M"
       leakDetectionThreshold: "PT0S"
-      minimumIdle: 10
+      maxLifetime: "PT30M"
       maxPoolSize: 30
+      minimumIdle: 10
+      prepStmtCacheSize: 25
+      prepStmtCacheSqlLimit: 256
   contentPackImport:
     enabled: false
     importDirectory: "content_pack_import"
@@ -96,55 +95,69 @@ appConfig:
     db:
       connection:
         jdbcDriverClassName: null
+        jdbcDriverPassword: null
         jdbcDriverUrl: null
         jdbcDriverUsername: null
-        jdbcDriverPassword: null
       connectionPool:
         cachePrepStmts: false
-        prepStmtCacheSize: 25
-        prepStmtCacheSqlLimit: 256
         connectionTimeout: "PT30S"
         idleTimeout: "PT10M"
-        maxLifetime: "PT30M"
         leakDetectionThreshold: "PT0S"
-        minimumIdle: 10
+        maxLifetime: "PT30M"
         maxPoolSize: 30
+        minimumIdle: 10
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
   dashboard:
     activeQueriesCache:
-      maximumSize: 100
       expireAfterAccess: "PT1M"
       expireAfterWrite: null
+      maximumSize: 100
   data:
+    filesystemVolume:
+      createDefaultStreamVolumesOnStart: true
+      defaultStreamVolumeFilesystemUtilisation: 0.9
+      defaultStreamVolumePaths:
+      - "volumes/default_stream_volume"
+      feedPathCache:
+        expireAfterAccess: "PT10M"
+        expireAfterWrite: null
+        maximumSize: 1000
+      typePathCache:
+        expireAfterAccess: "PT10M"
+        expireAfterWrite: null
+        maximumSize: 1000
+      volumeSelector: "RoundRobin"
     meta:
-      metaFeedCache:
-        maximumSize: 1000
-        expireAfterAccess: "PT10M"
-        expireAfterWrite: null
-      metaProcessorCache:
-        maximumSize: 1000
-        expireAfterAccess: "PT10M"
-        expireAfterWrite: null
-      metaTypeCache:
-        maximumSize: 1000
-        expireAfterAccess: "PT10M"
-        expireAfterWrite: null
-      metaTypes: "Raw Events\nRaw Reference\nEvents\nReference\nRecords\nError"
       db:
         connection:
           jdbcDriverClassName: null
+          jdbcDriverPassword: null
           jdbcDriverUrl: null
           jdbcDriverUsername: null
-          jdbcDriverPassword: null
         connectionPool:
           cachePrepStmts: false
-          prepStmtCacheSize: 25
-          prepStmtCacheSqlLimit: 256
           connectionTimeout: "PT30S"
           idleTimeout: "PT10M"
-          maxLifetime: "PT30M"
           leakDetectionThreshold: "PT0S"
-          minimumIdle: 10
+          maxLifetime: "PT30M"
           maxPoolSize: 30
+          minimumIdle: 10
+          prepStmtCacheSize: 25
+          prepStmtCacheSqlLimit: 256
+      metaFeedCache:
+        expireAfterAccess: "PT10M"
+        expireAfterWrite: null
+        maximumSize: 1000
+      metaProcessorCache:
+        expireAfterAccess: "PT10M"
+        expireAfterWrite: null
+        maximumSize: 1000
+      metaTypeCache:
+        expireAfterAccess: "PT10M"
+        expireAfterWrite: null
+        maximumSize: 1000
+      metaTypes: "Raw Events\nRaw Reference\nEvents\nReference\nRecords\nError"
       metaValue:
         addAsync: true
         deleteAge: "P30D"
@@ -154,143 +167,134 @@ appConfig:
       deleteBatchSize: 1000
       useQueryOptimisation: true
     store:
-      deletePurgeAge: "P7D"
-      deleteBatchSize: 1000
-      fileSystemCleanBatchSize: 20
-      fileSystemCleanDeleteOut: false
-      fileSystemCleanOldAge: "P1D"
       db:
         connection:
           jdbcDriverClassName: null
+          jdbcDriverPassword: null
           jdbcDriverUrl: null
           jdbcDriverUsername: null
-          jdbcDriverPassword: null
         connectionPool:
           cachePrepStmts: false
-          prepStmtCacheSize: 25
-          prepStmtCacheSqlLimit: 256
           connectionTimeout: "PT30S"
           idleTimeout: "PT10M"
-          maxLifetime: "PT30M"
           leakDetectionThreshold: "PT0S"
-          minimumIdle: 10
+          maxLifetime: "PT30M"
           maxPoolSize: 30
-    filesystemVolume:
-      volumeSelector: "RoundRobin"
-      defaultStreamVolumePaths:
-      - "volumes/default_stream_volume"
-      defaultStreamVolumeFilesystemUtilisation: 0.9
-      createDefaultStreamVolumesOnStart: true
-      feedPathCache:
-        maximumSize: 1000
-        expireAfterAccess: "PT10M"
-        expireAfterWrite: null
-      typePathCache:
-        maximumSize: 1000
-        expireAfterAccess: "PT10M"
-        expireAfterWrite: null
+          minimumIdle: 10
+          prepStmtCacheSize: 25
+          prepStmtCacheSqlLimit: 256
+      deleteBatchSize: 1000
+      deletePurgeAge: "P7D"
+      fileSystemCleanBatchSize: 20
+      fileSystemCleanDeleteOut: false
+      fileSystemCleanOldAge: "P1D"
   dataSourceUrl:
     index: "/api/stroom-index/v2"
+    searchable: "/api/searchable/v2"
     solrIndex: "/api/stroom-solr-index/v2"
     statisticStore: "/api/sqlstatistics/v2"
-    searchable: "/api/searchable/v2"
   docstore:
     db:
       connection:
         jdbcDriverClassName: null
+        jdbcDriverPassword: null
         jdbcDriverUrl: null
         jdbcDriverUsername: null
-        jdbcDriverPassword: null
       connectionPool:
         cachePrepStmts: false
-        prepStmtCacheSize: 25
-        prepStmtCacheSqlLimit: 256
         connectionTimeout: "PT30S"
         idleTimeout: "PT10M"
-        maxLifetime: "PT30M"
         leakDetectionThreshold: "PT0S"
-        minimumIdle: 10
+        maxLifetime: "PT30M"
         maxPoolSize: 30
+        minimumIdle: 10
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
   explorer:
     db:
       connection:
         jdbcDriverClassName: null
+        jdbcDriverPassword: null
         jdbcDriverUrl: null
         jdbcDriverUsername: null
-        jdbcDriverPassword: null
       connectionPool:
         cachePrepStmts: false
-        prepStmtCacheSize: 25
-        prepStmtCacheSqlLimit: 256
         connectionTimeout: "PT30S"
         idleTimeout: "PT10M"
-        maxLifetime: "PT30M"
         leakDetectionThreshold: "PT0S"
-        minimumIdle: 10
+        maxLifetime: "PT30M"
         maxPoolSize: 30
+        minimumIdle: 10
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
     docRefInfoCache:
-      maximumSize: 1000
       expireAfterAccess: "PT10M"
       expireAfterWrite: null
+      maximumSize: 1000
   export:
     enabled: false
   feed:
-    unknownClassification: "UNKNOWN CLASSIFICATION"
-    feedNamePattern: "^[A-Z0-9_-]{3,}$"
     feedDocCache:
-      maximumSize: 1000
       expireAfterAccess: "PT10S"
       expireAfterWrite: null
+      maximumSize: 1000
+    feedNamePattern: "^[A-Z0-9_-]{3,}$"
+    unknownClassification: "UNKNOWN CLASSIFICATION"
+  haltBootOnConfigValidationFailure: true
   index:
-    ramBufferSizeMB: 1024
+    db:
+      connection:
+        jdbcDriverClassName: null
+        jdbcDriverPassword: null
+        jdbcDriverUrl: null
+        jdbcDriverUsername: null
+      connectionPool:
+        cachePrepStmts: false
+        connectionTimeout: "PT30S"
+        idleTimeout: "PT10M"
+        leakDetectionThreshold: "PT0S"
+        maxLifetime: "PT30M"
+        maxPoolSize: 30
+        minimumIdle: 10
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
     indexStructureCache:
-      maximumSize: 100
       expireAfterAccess: null
       expireAfterWrite: "PT10S"
-    db:
-      connection:
-        jdbcDriverClassName: null
-        jdbcDriverUrl: null
-        jdbcDriverUsername: null
-        jdbcDriverPassword: null
-      connectionPool:
-        cachePrepStmts: false
-        prepStmtCacheSize: 25
-        prepStmtCacheSqlLimit: 256
-        connectionTimeout: "PT30S"
-        idleTimeout: "PT10M"
-        maxLifetime: "PT30M"
-        leakDetectionThreshold: "PT0S"
-        minimumIdle: 10
-        maxPoolSize: 30
+      maximumSize: 100
+    ramBufferSizeMB: 1024
     writer:
       cache:
-        timeToLive: "PT0S"
-        timeToIdle: "PT0S"
-        minItems: 0
         coreItems: 50
         maxItems: 100
+        minItems: 0
+        timeToIdle: "PT0S"
+        timeToLive: "PT0S"
   job:
-    enabled: true
-    executionInterval: "10s"
     db:
       connection:
         jdbcDriverClassName: null
+        jdbcDriverPassword: null
         jdbcDriverUrl: null
         jdbcDriverUsername: null
-        jdbcDriverPassword: null
       connectionPool:
         cachePrepStmts: false
-        prepStmtCacheSize: 25
-        prepStmtCacheSqlLimit: 256
         connectionTimeout: "PT30S"
         idleTimeout: "PT10M"
-        maxLifetime: "PT30M"
         leakDetectionThreshold: "PT0S"
-        minimumIdle: 10
+        maxLifetime: "PT30M"
         maxPoolSize: 30
+        minimumIdle: 10
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
     enableJobsOnBootstrap: false
+    enabled: true
+    executionInterval: "10s"
   kafka:
+    kafkaConfigDocCache:
+      expireAfterAccess: "PT10S"
+      expireAfterWrite: null
+      maximumSize: 1000
     skeletonConfigContent: "# The following properties are taken from the v2.2 documentation\n\
       # for the Kafka Producer and can be uncommented and set as required.\n# NOTE\
       \ key.serializer and value.serializer should not be set as\n# these are set\
@@ -319,69 +323,77 @@ appConfig:
       #sasl.login.refresh.window.factor=\n#sasl.login.refresh.window.jitter=\n#ssl.cipher.suites=\n\
       #ssl.endpoint.identification.algorithm=\n#ssl.keymanager.algorithm=\n#ssl.secure.random.implementation=\n\
       #ssl.trustmanager.algorithm=\n#transaction.timeout.ms=\n#transactional.id=\n"
-    kafkaConfigDocCache:
-      maximumSize: 1000
-      expireAfterAccess: "PT10S"
-      expireAfterWrite: null
   lifecycle:
     enabled: true
   lmdbLibrary:
     providedSystemLibraryPath: null
     systemLibraryExtractDir: "lmdb_library"
+  logging:
+    deviceCache:
+      expireAfterAccess: null
+      expireAfterWrite: "PT1H"
+      maximumSize: 1000
+    logEveryRestCallEnabled: false
+    maxDataElementStringLength: 500
+    maxListElements: 5
+    omitRecordDetailsLoggingEnabled: true
   node:
     db:
       connection:
         jdbcDriverClassName: null
+        jdbcDriverPassword: null
         jdbcDriverUrl: null
         jdbcDriverUsername: null
-        jdbcDriverPassword: null
       connectionPool:
         cachePrepStmts: false
-        prepStmtCacheSize: 25
-        prepStmtCacheSqlLimit: 256
         connectionTimeout: "PT30S"
         idleTimeout: "PT10M"
-        maxLifetime: "PT30M"
         leakDetectionThreshold: "PT0S"
-        minimumIdle: 10
+        maxLifetime: "PT30M"
         maxPoolSize: 30
+        minimumIdle: 10
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
+    name: "tba"
     status:
       heapHistogram:
         classNameMatchRegex: "^stroom\\..*$"
         classNameReplacementRegex: "((?<=\\$Proxy)[0-9]+|(?<=\\$\\$)[0-9a-f]+|(?<=\\\
           $\\$Lambda\\$)[0-9]+\\/[0-9]+)"
-    name: "tba"
   nodeUri:
-    scheme: null
     hostname: null
-    port: null
     pathPrefix: null
+    port: null
+    scheme: null
+  path:
+    home: null
+    temp: null
   pipeline:
-    httpClientCache:
-      maximumSize: 1000
-      expireAfterAccess: "PT10M"
-      expireAfterWrite: null
-    pipelineDataCache:
-      maximumSize: 1000
-      expireAfterAccess: "PT10M"
-      expireAfterWrite: null
-    documentPermissionCache:
-      maximumSize: 1000
-      expireAfterAccess: "PT10M"
-      expireAfterWrite: null
     appender:
       maxActiveDestinations: 100
+    documentPermissionCache:
+      expireAfterAccess: "PT10M"
+      expireAfterWrite: null
+      maximumSize: 1000
+    httpClientCache:
+      expireAfterAccess: "PT10M"
+      expireAfterWrite: null
+      maximumSize: 1000
     parser:
-      secureProcessing: true
       cache:
-        maximumSize: 1000
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
+        maximumSize: 1000
+      secureProcessing: true
+    pipelineDataCache:
+      expireAfterAccess: "PT10M"
+      expireAfterWrite: null
+      maximumSize: 1000
     referenceData:
       effectiveStreamCache:
-        maximumSize: 1000
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
+        maximumSize: 1000
       lmdb:
         localDir: "reference_data"
         maxReaders: 150
@@ -394,192 +406,204 @@ appConfig:
       purgeAge: "P30D"
     xmlSchema:
       cache:
-        maximumSize: 1000
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
+        maximumSize: 1000
     xslt:
-      maxElements: 1000000
       cache:
-        maximumSize: 1000
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
+        maximumSize: 1000
+      maxElements: 1000000
   processor:
     assignTasks: true
     createTasks: true
-    deleteAge: "P1D"
-    fillTaskQueue: true
-    queueSize: 1000
     databaseMultiInsertMaxBatchSize: 500
-    processorCache:
-      maximumSize: 1000
-      expireAfterAccess: "PT10S"
-      expireAfterWrite: null
-    processorFilterCache:
-      maximumSize: 1000
-      expireAfterAccess: "PT10S"
-      expireAfterWrite: null
-    processorNodeCache:
-      maximumSize: 1000
-      expireAfterAccess: "PT10M"
-      expireAfterWrite: null
-    processorFeedCache:
-      maximumSize: 1000
-      expireAfterAccess: "PT10M"
-      expireAfterWrite: null
     db:
       connection:
         jdbcDriverClassName: null
+        jdbcDriverPassword: null
         jdbcDriverUrl: null
         jdbcDriverUsername: null
-        jdbcDriverPassword: null
       connectionPool:
         cachePrepStmts: false
-        prepStmtCacheSize: 25
-        prepStmtCacheSqlLimit: 256
         connectionTimeout: "PT30S"
         idleTimeout: "PT10M"
-        maxLifetime: "PT30M"
         leakDetectionThreshold: "PT0S"
-        minimumIdle: 10
+        maxLifetime: "PT30M"
         maxPoolSize: 30
+        minimumIdle: 10
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
+    deleteAge: "P1D"
+    fillTaskQueue: true
+    processorCache:
+      expireAfterAccess: "PT10S"
+      expireAfterWrite: null
+      maximumSize: 1000
+    processorFeedCache:
+      expireAfterAccess: "PT10M"
+      expireAfterWrite: null
+      maximumSize: 1000
+    processorFilterCache:
+      expireAfterAccess: "PT10S"
+      expireAfterWrite: null
+      maximumSize: 1000
+    processorNodeCache:
+      expireAfterAccess: "PT10M"
+      expireAfterWrite: null
+      maximumSize: 1000
+    queueSize: 1000
   properties:
     db:
       connection:
         jdbcDriverClassName: null
+        jdbcDriverPassword: null
         jdbcDriverUrl: null
         jdbcDriverUsername: null
-        jdbcDriverPassword: null
       connectionPool:
         cachePrepStmts: false
-        prepStmtCacheSize: 25
-        prepStmtCacheSqlLimit: 256
         connectionTimeout: "PT30S"
         idleTimeout: "PT10M"
-        maxLifetime: "PT30M"
         leakDetectionThreshold: "PT0S"
-        minimumIdle: 10
+        maxLifetime: "PT30M"
         maxPoolSize: 30
+        minimumIdle: 10
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
   proxyAggregation:
-    proxyDir: "proxy_repo"
-    proxyThreads: 10
-    maxFileScan: 100000
+    bufferSize: 8192
     maxConcurrentMappedFiles: 100000
+    maxFileScan: 100000
     maxFilesPerAggregate: 10000
     maxUncompressedFileSize: "1G"
-    buffferSize: 8192
+    proxyDir: "proxy_repo"
+    proxyThreads: 10
   publicUri:
-    scheme: "https"
     hostname: null
-    port: 443
     pathPrefix: null
+    port: 443
+    scheme: "https"
+  queryHistory:
+    daysRetention: 365
+    db:
+      connection:
+        jdbcDriverClassName: null
+        jdbcDriverPassword: null
+        jdbcDriverUrl: null
+        jdbcDriverUsername: null
+      connectionPool:
+        cachePrepStmts: false
+        connectionTimeout: "PT30S"
+        idleTimeout: "PT10M"
+        leakDetectionThreshold: "PT0S"
+        maxLifetime: "PT30M"
+        maxPoolSize: 30
+        minimumIdle: 10
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
+    itemsRetention: 100
   receive:
-    receiptPolicyUuid: null
     bufferSize: 8192
-    unknownClassification: "UNKNOWN CLASSIFICATION"
     feedNamePattern: "^[A-Z0-9_-]{3,}$"
+    receiptPolicyUuid: null
+    unknownClassification: "UNKNOWN CLASSIFICATION"
   search:
-    maxStoredDataQueueSize: 1000
-    maxBooleanClauseCount: 1024
-    storeSize: "1000000,100,10,1"
-    resultStoreCache:
-      maximumSize: 100
-      expireAfterAccess: "PT1M"
-      expireAfterWrite: null
     extraction:
-      maxStoredDataQueueSize: 1000
-      maxThreadsPerTask: 5
-      maxStreamEventMapSize: 1000000
       extractionDelayMs: 100
-    shard:
-      maxDocIdQueueSize: 1000000
+      maxStoredDataQueueSize: 1000
+      maxStreamEventMapSize: 1000000
       maxThreadsPerTask: 5
-      searchResultCache:
-        maximumSize: 10000
-        expireAfterAccess: "PT10M"
-        expireAfterWrite: null
-      indexShardSearcherCache:
-        maximumSize: 2
-        expireAfterAccess: "PT1M"
-        expireAfterWrite: null
+    maxBooleanClauseCount: 1024
+    maxStoredDataQueueSize: 1000
     remoteSearchResultCache:
-      maximumSize: 100
       expireAfterAccess: "PT1M"
       expireAfterWrite: null
+      maximumSize: 100
     resultStore:
-      maxPutsBeforeCommit: 100000
-      minValueSize: "1K"
-      maxValueSize: "1M"
-      minPayloadSize: "1M"
-      maxPayloadSize: "1G"
-      offHeapResults: true
-      valueQueueSize: 1000000
       lmdb:
         localDir: "search_results"
         maxReaders: 10
         maxStoreSize: "10G"
         readAheadEnabled: true
-  searchable:
+      maxPayloadSize: "1G"
+      maxPutsBeforeCommit: 100000
+      maxValueSize: "1M"
+      minPayloadSize: "1M"
+      minValueSize: "1K"
+      offHeapResults: true
+      valueQueueSize: 1000000
+    resultStoreCache:
+      expireAfterAccess: "PT1M"
+      expireAfterWrite: null
+      maximumSize: 100
+    shard:
+      indexShardSearcherCache:
+        expireAfterAccess: "PT1M"
+        expireAfterWrite: null
+        maximumSize: 2
+      maxDocIdQueueSize: 1000000
+      maxThreadsPerTask: 5
+      searchResultCache:
+        expireAfterAccess: "PT10M"
+        expireAfterWrite: null
+        maximumSize: 10000
     storeSize: "1000000,100,10,1"
+  searchable:
     searchResultCache:
-      maximumSize: 10000
       expireAfterAccess: "PT10M"
       expireAfterWrite: null
+      maximumSize: 10000
+    storeSize: "1000000,100,10,1"
   security:
     authentication:
       authenticationRequired: true
       openId:
-        useInternal: true
-        openIdConfigurationEndpoint: null
-        issuer: null
         authEndpoint: null
-        tokenEndpoint: null
-        jwksUri: null
-        logoutEndpoint: null
-        formTokenRequest: false
-        jwtClaimsResolver: null
         clientId: null
         clientSecret: null
+        formTokenRequest: false
+        issuer: null
+        jwksUri: null
+        jwtClaimsResolver: null
+        logoutEndpoint: null
+        openIdConfigurationEndpoint: null
+        tokenEndpoint: null
+        useInternal: true
       preventLogin: false
     authorisation:
-      userGroupsCache:
-        maximumSize: 1000
-        expireAfterAccess: "PT30M"
-        expireAfterWrite: null
-      userAppPermissionsCache:
-        maximumSize: 1000
-        expireAfterAccess: "PT30M"
-        expireAfterWrite: null
-      userCache:
-        maximumSize: 1000
-        expireAfterAccess: "PT30M"
-        expireAfterWrite: null
-      userDocumentPermissionsCache:
-        maximumSize: 1000
-        expireAfterAccess: "PT10M"
-        expireAfterWrite: null
       db:
         connection:
           jdbcDriverClassName: null
+          jdbcDriverPassword: null
           jdbcDriverUrl: null
           jdbcDriverUsername: null
-          jdbcDriverPassword: null
         connectionPool:
           cachePrepStmts: false
-          prepStmtCacheSize: 25
-          prepStmtCacheSqlLimit: 256
           connectionTimeout: "PT30S"
           idleTimeout: "PT10M"
-          maxLifetime: "PT30M"
           leakDetectionThreshold: "PT0S"
-          minimumIdle: 10
+          maxLifetime: "PT30M"
           maxPoolSize: 30
-    webContent:
-      contentTypeOptions: "nosniff"
-      frameOptions: "sameorigin"
-      xssProtection: "1; mode=block"
-      contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-eval'\
-        \ 'unsafe-inline'; img-src 'self' data:; style-src 'self' 'unsafe-inline';\
-        \ frame-ancestors 'self';"
+          minimumIdle: 10
+          prepStmtCacheSize: 25
+          prepStmtCacheSqlLimit: 256
+      userAppPermissionsCache:
+        expireAfterAccess: "PT30M"
+        expireAfterWrite: null
+        maximumSize: 1000
+      userCache:
+        expireAfterAccess: "PT30M"
+        expireAfterWrite: null
+        maximumSize: 1000
+      userDocumentPermissionsCache:
+        expireAfterAccess: "PT10M"
+        expireAfterWrite: null
+        maximumSize: 1000
+      userGroupsCache:
+        expireAfterAccess: "PT30M"
+        expireAfterWrite: null
+        maximumSize: 1000
     identity:
       allowCertificateAuthentication: false
       certificateCnCaptureGroupIndex: 1
@@ -587,39 +611,39 @@ appConfig:
       db:
         connection:
           jdbcDriverClassName: null
+          jdbcDriverPassword: null
           jdbcDriverUrl: null
           jdbcDriverUsername: null
-          jdbcDriverPassword: null
         connectionPool:
           cachePrepStmts: false
-          prepStmtCacheSize: 25
-          prepStmtCacheSqlLimit: 256
           connectionTimeout: "PT30S"
           idleTimeout: "PT10M"
-          maxLifetime: "PT30M"
           leakDetectionThreshold: "PT0S"
-          minimumIdle: 10
+          maxLifetime: "PT30M"
           maxPoolSize: 30
+          minimumIdle: 10
+          prepStmtCacheSize: 25
+          prepStmtCacheSqlLimit: 256
       email:
+        allowPasswordResets: false
         fromAddress: "noreply@stroom"
         fromName: "Stroom User Accounts"
         passwordResetSubject: "Password reset for Stroom"
         passwordResetText: "A password reset has been requested for this email address.\
           \ Please visit the following URL to reset your password: %s."
         passwordResetUrl: "/s/resetPassword/?user=%s&token=%s"
-        allowPasswordResets: false
         smtp:
           host: "localhost"
+          password: null
           port: 2525
           transport: "plain"
           username: null
-          password: null
       failedLoginLockThreshold: 3
       openid:
         accessCodeCache:
-          maximumSize: 1000
           expireAfterAccess: "PT10M"
           expireAfterWrite: null
+          maximumSize: 1000
       passwordPolicy:
         allowPasswordResets: true
         forcePasswordChangeOnFirstLogin: true
@@ -639,83 +663,56 @@ appConfig:
         timeUntilExpirationForEmailResetToken: "PT5M"
         timeUntilExpirationForUserToken: "P30D"
       useDefaultOpenIdCredentials: false
+    webContent:
+      contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-eval'\
+        \ 'unsafe-inline'; img-src 'self' data:; style-src 'self' 'unsafe-inline';\
+        \ frame-ancestors 'self';"
+      contentTypeOptions: "nosniff"
+      frameOptions: "sameorigin"
+      xssProtection: "1; mode=block"
   serviceDiscovery:
+    curatorBaseSleepTimeMs: 5000
+    curatorMaxRetries: 100
+    curatorMaxSleepTimeMs: 300000
     enabled: false
-    zookeeperUrl: "localhost:2181"
     servicesHostNameOrIpAddress: "localhost"
     servicesPort: 8080
-    curatorBaseSleepTimeMs: 5000
-    curatorMaxSleepTimeMs: 300000
-    curatorMaxRetries: 100
     zookeeperBasePath: "/stroom-services"
+    zookeeperUrl: "localhost:2181"
   sessionCookie:
     httpOnly: true
     secure: true
   solr:
-    indexClientCache:
-      maximumSize: 100
-      expireAfterAccess: "PT10M"
-      expireAfterWrite: null
     indexCache:
-      maximumSize: 100
       expireAfterAccess: null
       expireAfterWrite: "PT10M"
+      maximumSize: 100
+    indexClientCache:
+      expireAfterAccess: "PT10M"
+      expireAfterWrite: null
+      maximumSize: 100
     search:
-      maxStoredDataQueueSize: 1000
-      maxBooleanClauseCount: 1024
-      storeSize: "1000000,100,10,1"
-      searchResultCache:
-        maximumSize: 10000
-        expireAfterAccess: "PT10M"
-        expireAfterWrite: null
       extraction:
-        maxStoredDataQueueSize: 1000
-        maxThreadsPerTask: 5
-        maxStreamEventMapSize: 1000000
         extractionDelayMs: 100
-  statistics:
-    sql:
-      docRefType: "StatisticStore"
-      statisticAggregationBatchSize: 1000000
-      maxProcessingAge: null
-      dataSourceCache:
-        maximumSize: 100
+        maxStoredDataQueueSize: 1000
+        maxStreamEventMapSize: 1000000
+        maxThreadsPerTask: 5
+      maxBooleanClauseCount: 1024
+      maxStoredDataQueueSize: 1000
+      searchResultCache:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
-      db:
-        connection:
-          jdbcDriverClassName: null
-          jdbcDriverUrl: null
-          jdbcDriverUsername: null
-          jdbcDriverPassword: null
-        connectionPool:
-          cachePrepStmts: false
-          prepStmtCacheSize: 25
-          prepStmtCacheSqlLimit: 256
-          connectionTimeout: "PT30S"
-          idleTimeout: "PT10M"
-          maxLifetime: "PT30M"
-          leakDetectionThreshold: "PT0S"
-          minimumIdle: 10
-          maxPoolSize: 30
-      search:
-        storeSize: "1000000,100,10,1"
-        maxResults: 100000
-        fetchSize: 5000
-        searchResultCache:
-          maximumSize: 10000
-          expireAfterAccess: "PT10M"
-          expireAfterWrite: null
+        maximumSize: 10000
+      storeSize: "1000000,100,10,1"
+  statistics:
     hbase:
       docRefType: "StroomStatsStore"
-      kafkaConfigUuid: null
       eventsPerMessage: 100
+      kafkaConfigUuid: null
       kafkaTopics:
         count: "statisticEvents-Count"
         value: "statisticEvents-Value"
     internal:
-      enabledStoreTypes:
-      - "StatisticStore"
       benchmarkCluster:
       - type: "StatisticStore"
         uuid: "946a88c6-a59a-11e6-bdc4-0242ac110002"
@@ -730,6 +727,8 @@ appConfig:
       - type: "StroomStatsStore"
         uuid: "1edfd582-5e60-413a-b91c-151bd544da47"
         name: "CPU"
+      enabledStoreTypes:
+      - "StatisticStore"
       eventsPerSecond:
       - type: "StatisticStore"
         uuid: "a9936548-2572-448b-9d5b-8543052c4d92"
@@ -793,41 +792,51 @@ appConfig:
       - type: "StroomStatsStore"
         uuid: "60f4f5f0-4cc3-42d6-8fe7-21a7cec30f8e"
         name: "Volumes"
-  queryHistory:
-    itemsRetention: 100
-    daysRetention: 365
-    db:
-      connection:
-        jdbcDriverClassName: null
-        jdbcDriverUrl: null
-        jdbcDriverUsername: null
-        jdbcDriverPassword: null
-      connectionPool:
-        cachePrepStmts: false
-        prepStmtCacheSize: 25
-        prepStmtCacheSqlLimit: 256
-        connectionTimeout: "PT30S"
-        idleTimeout: "PT10M"
-        maxLifetime: "PT30M"
-        leakDetectionThreshold: "PT0S"
-        minimumIdle: 10
-        maxPoolSize: 30
-  path:
-    home: null
-    temp: null
+    sql:
+      dataSourceCache:
+        expireAfterAccess: "PT10M"
+        expireAfterWrite: null
+        maximumSize: 100
+      db:
+        connection:
+          jdbcDriverClassName: null
+          jdbcDriverPassword: null
+          jdbcDriverUrl: null
+          jdbcDriverUsername: null
+        connectionPool:
+          cachePrepStmts: false
+          connectionTimeout: "PT30S"
+          idleTimeout: "PT10M"
+          leakDetectionThreshold: "PT0S"
+          maxLifetime: "PT30M"
+          maxPoolSize: 30
+          minimumIdle: 10
+          prepStmtCacheSize: 25
+          prepStmtCacheSqlLimit: 256
+      docRefType: "StatisticStore"
+      maxProcessingAge: null
+      search:
+        fetchSize: 5000
+        maxResults: 100000
+        searchResultCache:
+          expireAfterAccess: "PT10M"
+          expireAfterWrite: null
+          maximumSize: 10000
+        storeSize: "1000000,100,10,1"
+      statisticAggregationBatchSize: 1000000
   ui:
     aboutHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple\
       \ systems.</p>"
     activity:
-      enabled: false
       chooseOnStartup: false
-      managerTitle: "Choose Activity"
-      editorTitle: "Edit Activity"
       editorBody: "Activity Code:</br><input type=\"text\" name=\"code\"></input></br></br>Activity\
         \ Description:</br><textarea rows=\"4\" style=\"width:100%;height:80px\" name=\"\
         description\" validation=\".{80,}\" validationMessage=\"The activity description\
         \ must be at least 80 characters long.\" ></textarea>Explain what the activity\
         \ is"
+      editorTitle: "Edit Activity"
+      enabled: false
+      managerTitle: "Choose Activity"
     defaultMaxResults: "1000000,100,10,1"
     helpUrl: "https://gchq.github.io/stroom-docs"
     htmlTitle: "Stroom"
@@ -848,44 +857,35 @@ appConfig:
       maxCharactersToCompleteLine: 10000
       maxHexDumpLines: 1000
     splash:
-      enabled: false
-      title: "Splash Screen"
       body: "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple\
         \ systems.</p>"
+      enabled: false
+      title: "Splash Screen"
       version: "v0.1"
     theme:
       backgroundAttachment: "scroll"
       backgroundColour: "#1E88E5"
       backgroundImage: "none"
+      backgroundOpacity: "0"
       backgroundPosition: "0 0"
       backgroundRepeat: "repeat"
-      backgroundOpacity: "0"
-      tubeVisible: "hidden"
-      tubeOpacity: "0.6"
-      topMenuTextColour: "#FFFFFF"
       labelColours: "TEST1=#FF0000,TEST2=#FF9900"
+      topMenuTextColour: "#FFFFFF"
+      tubeOpacity: "0.6"
+      tubeVisible: "hidden"
     uiPreferences:
       dateFormat: "YYYY-MM-DDTHH:mm:ss.SSS"
     welcomeHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from\
       \ multiple systems.</p>"
   uiUri:
-    scheme: "https"
     hostname: null
-    port: 443
     pathPrefix: null
+    port: 443
+    scheme: "https"
   volumes:
-    volumeSelector: "RoundRobin"
     createDefaultIndexVolumesOnStart: true
+    defaultIndexVolumeFilesystemUtilisation: 0.9
     defaultIndexVolumeGroupName: "Default Volume Group"
     defaultIndexVolumeGroupPaths:
     - "volumes/default_index_volume"
-    defaultIndexVolumeFilesystemUtilisation: 0.9
-  logging:
-    deviceCache:
-      maximumSize: 1000
-      expireAfterAccess: null
-      expireAfterWrite: "PT1H"
-    logEveryRestCallEnabled: false
-    omitRecordDetailsLoggingEnabled: true
-    maxListElements: 5
-    maxDataElementStringLength: 500
+    volumeSelector: "RoundRobin"

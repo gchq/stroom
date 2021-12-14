@@ -18,6 +18,7 @@ package stroom.pipeline.writer;
 
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.PathCreator;
+import stroom.util.io.SimplePathCreator;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.ContentSummary;
@@ -39,6 +40,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestHDFSFileAppender extends StroomUnitTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TestHDFSFileAppender.class);
     //    private static final String ROOT_TEST_PATH = FileUtil.getTempDir() + "/junitTests/TestHDFSFileAppender";
     private static final String FS_DEFAULT_FS = "file:///";
@@ -143,7 +145,7 @@ class TestHDFSFileAppender extends StroomUnitTest {
 
     private HDFSFileAppender buildTestObject(final java.nio.file.Path tempDir) {
         final String name = "/${year}-${month}-${day}T${hour}:${minute}:${second}.${millis}Z-${uuid}.xml";
-        final PathCreator pathCreator = new PathCreator(() -> tempDir, () -> tempDir);
+        final PathCreator pathCreator = new SimplePathCreator(() -> tempDir, () -> tempDir);
         final HDFSFileAppender provider = new HDFSFileAppender(null, pathCreator);
 
         String dir = tempDir.toAbsolutePath().toString();
@@ -158,5 +160,6 @@ class TestHDFSFileAppender extends StroomUnitTest {
     }
 
     public static class MockFileSystem extends DistributedFileSystem {
+
     }
 }
