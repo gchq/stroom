@@ -42,6 +42,8 @@ import stroom.pipeline.task.ProcessStatisticsFactory;
 import stroom.pipeline.task.ProcessStatisticsFactory.ProcessStatistics;
 import stroom.pipeline.task.SupersededOutputHelper;
 import stroom.processor.shared.Processor;
+import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorTask;
 import stroom.util.shared.Severity;
 
 import com.google.common.base.Strings;
@@ -115,13 +117,26 @@ public class StreamAppender extends AbstractAppender {
             fatal("Stream type not specified");
         }
 
-        String processorUuid = null;
-        String pipelineUuid = null;
-
         final Processor processor = streamProcessorHolder.getStreamProcessor();
+        final ProcessorTask processorTask = streamProcessorHolder.getStreamTask();
+
+        String processorUuid = null;
+        String processorFilterUuid = null;
+        Integer processorFilterId = null;
+        String pipelineUuid = null;
+        Long processorTaskId = null;
+
         if (processor != null) {
             processorUuid = processor.getUuid();
             pipelineUuid = processor.getPipelineUuid();
+        }
+        if (processorTask != null) {
+            processorTaskId = processorTask.getId();
+            final ProcessorFilter processorFilter = processorTask.getProcessorFilter();
+            if (processorFilter != null) {
+                processorFilterUuid = processorFilter.getUuid();
+                processorFilterId = processorFilter.getId();
+            }
         }
 
         final MetaProperties metaProperties = MetaProperties.builder()
@@ -130,6 +145,8 @@ public class StreamAppender extends AbstractAppender {
                 .parent(parentMeta)
                 .processorUuid(processorUuid)
                 .pipelineUuid(pipelineUuid)
+                .processorFilterId(processorFilterId)
+                .processorTaskId(processorTaskId)
                 .build();
 
         streamTarget = supersededOutputHelper.addTarget(() -> streamStore.openTarget(metaProperties));

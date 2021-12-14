@@ -580,6 +580,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
             if (processInfoOutputStream == null) {
                 String processorUuid = null;
                 String processorFilterUuid = null;
+                Integer processorFilterId = null;
                 String pipelineUuid = null;
                 Long processorTaskId = null;
 
@@ -589,6 +590,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                 }
                 if (processorFilter != null) {
                     processorFilterUuid = processorFilter.getUuid();
+                    processorFilterId = processorFilter.getId();
                 }
                 if (processorTask != null) {
                     processorTaskId = processorTask.getId();
@@ -602,6 +604,8 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                         .parent(meta)
                         .processorUuid(processorUuid)
                         .pipelineUuid(pipelineUuid)
+                        .processorFilterId(processorFilterId)
+                        .processorTaskId(processorTaskId)
                         .build();
 
                 processInfoStreamTarget = supersededOutputHelper.addTarget(() ->
