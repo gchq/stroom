@@ -31,7 +31,6 @@ import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticConnectionConfig;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.task.api.TaskContext;
-import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -41,6 +40,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchScrollRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.search.Scroll;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -50,6 +50,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
@@ -69,42 +70,43 @@ public class ElasticSearchTaskHandler {
 
     private final ElasticClientCache elasticClientCache;
     private final ElasticClusterStore elasticClusterStore;
-    private final TaskContextFactory taskContextFactory;
     private final CountDownLatch completionLatch = new CountDownLatch(1);
 
     @Inject
     ElasticSearchTaskHandler(final ElasticClientCache elasticClientCache,
-                             final ElasticClusterStore elasticClusterStore,
-                             final TaskContextFactory taskContextFactory) {
+                             final ElasticClusterStore elasticClusterStore) {
         this.elasticClientCache = elasticClientCache;
         this.elasticClusterStore = elasticClusterStore;
-        this.taskContextFactory = taskContextFactory;
     }
 
-    public Runnable exec(final TaskContext parentContext, final ElasticSearchTask task) {
-        return taskContextFactory.childContext(parentContext, "Index Searcher", taskContext ->
-                LOGGER.logDurationIfDebugEnabled(
-                        () -> {
-                            try {
-                                if (Thread.currentThread().isInterrupted()) {
-                                    throw new RuntimeException("Interrupted");
-                                }
+    public void search(final TaskContext taskContext,
+                       final ElasticIndexDoc elasticIndex,
+                       final QueryBuilder query,
+                       final FieldIndex fieldIndex,
+                       final ValuesConsumer valuesConsumer,
+                       final ErrorConsumer errorConsumer,
+                       final AtomicLong hitCount) {
+        if (!Thread.currentThread().isInterrupted()) {
+            taskContext.reset();
+            taskContext.info(() -> "Searching Elasticsearch index");
 
-                                taskContext.info(() -> "Searching Elasticsearch index");
-
-                                // Start searching.
-                                searchIndex(task);
-
-                            } catch (final RuntimeException e) {
-                                LOGGER.debug(e::getMessage, e);
-                                error(task.getErrorConsumer(), e);
-                            }
-                        },
-                        "exec()"));
+            // Start searching.
+            searchIndex(
+                    elasticIndex,
+                    query,
+                    fieldIndex,
+                    valuesConsumer,
+                    errorConsumer,
+                    hitCount);
+        }
     }
 
-    private void searchIndex(final ElasticSearchTask task) {
-        final ElasticIndexDoc elasticIndex = task.getElasticIndex();
+    private void searchIndex(final ElasticIndexDoc elasticIndex,
+                             final QueryBuilder query,
+                             final FieldIndex fieldIndex,
+                             final ValuesConsumer valuesConsumer,
+                             final ErrorConsumer errorConsumer,
+                             final AtomicLong hitCount) {
         final ElasticClusterDoc elasticCluster = elasticClusterStore.readDocument(elasticIndex.getClusterRef());
         final ElasticConnectionConfig connectionConfig = elasticCluster.getConnection();
 
@@ -113,22 +115,32 @@ public class ElasticSearchTaskHandler {
             LOGGER.logDurationIfDebugEnabled(
                     () -> {
                         try {
-                            streamingSearch(task, elasticIndex, connectionConfig);
+                            streamingSearch(
+                                    elasticIndex,
+                                    query,
+                                    fieldIndex,
+                                    valuesConsumer,
+                                    errorConsumer,
+                                    hitCount,
+                                    connectionConfig);
                         } catch (final RuntimeException e) {
-                            error(task.getErrorConsumer(), e);
+                            error(errorConsumer, e);
                         } finally {
-                            task.getTracker().complete();
                             completionLatch.countDown();
                         }
                     },
                     () -> "searcher.search()");
         } catch (final RuntimeException e) {
-            error(task.getErrorConsumer(), e);
+            error(errorConsumer, e);
         }
     }
 
-    private void streamingSearch(final ElasticSearchTask task,
-                                 final ElasticIndexDoc elasticIndex,
+    private void streamingSearch(final ElasticIndexDoc elasticIndex,
+                                 final QueryBuilder query,
+                                 final FieldIndex fieldIndex,
+                                 final ValuesConsumer valuesConsumer,
+                                 final ErrorConsumer errorConsumer,
+                                 final AtomicLong hitCount,
                                  final ElasticConnectionConfig connectionConfig) {
         elasticClientCache.context(connectionConfig, elasticClient -> {
             try {
@@ -137,7 +149,7 @@ public class ElasticSearchTaskHandler {
                 searchRequest.scroll(scroll);
 
                 SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder()
-                        .query(task.getQuery())
+                        .query(query)
                         .size(SCROLL_SIZE);
                 searchRequest.source(searchSourceBuilder);
 
@@ -145,43 +157,47 @@ public class ElasticSearchTaskHandler {
                 String scrollId = searchResponse.getScrollId();
 
                 SearchHit[] searchHits = searchResponse.getHits().getHits();
-                processBatch(task, searchHits);
+                processBatch(
+                        fieldIndex,
+                        valuesConsumer,
+                        errorConsumer,
+                        hitCount,
+                        searchHits);
 
                 // Continue requesting results until we have all results
-                final int maxResultSize = task.getResultCollector().getMaxResultSizes().size(0);
-                while (searchHits != null && searchHits.length > 0 && task.getTracker().getHitCount() < maxResultSize) {
-                    if (task.getAsyncSearchTask().getResultCollector().isComplete()) {
-                        break;
-                    }
-
+                while (searchHits != null && searchHits.length > 0) {
                     SearchScrollRequest scrollRequest = new SearchScrollRequest(scrollId);
                     scrollRequest.scroll(scroll);
                     searchResponse = elasticClient.scroll(scrollRequest, RequestOptions.DEFAULT);
                     searchHits = searchResponse.getHits().getHits();
 
-                    processBatch(task, searchHits);
+                    processBatch(
+                            fieldIndex,
+                            valuesConsumer,
+                            errorConsumer,
+                            hitCount,
+                            searchHits);
                 }
 
                 ClearScrollRequest clearScrollRequest = new ClearScrollRequest();
                 clearScrollRequest.addScrollId(scrollId);
                 elasticClient.clearScroll(clearScrollRequest, RequestOptions.DEFAULT);
 
-                LOGGER.debug(() -> "Total hits: " + task.getTracker().getHitCount());
+                LOGGER.debug(() -> "Total hits: " + hitCount.get());
             } catch (final IOException | RuntimeException e) {
-                error(task.getErrorConsumer(), e);
+                error(errorConsumer, e);
             }
         });
     }
 
-    private void processBatch(final ElasticSearchTask task, final SearchHit[] searchHits) {
-        final Tracker tracker = task.getTracker();
-        final FieldIndex fieldIndex = task.getFieldIndex();
-        final ValuesConsumer valuesConsumer = task.getValuesConsumer();
-        final ErrorConsumer errorConsumer = task.getErrorConsumer();
-
+    private void processBatch(final FieldIndex fieldIndex,
+                              final ValuesConsumer valuesConsumer,
+                              final ErrorConsumer errorConsumer,
+                              final AtomicLong hitCount,
+                              final SearchHit[] searchHits) {
         try {
             for (final SearchHit searchHit : searchHits) {
-                tracker.incrementHitCount();
+                hitCount.incrementAndGet();
 
                 final Map<String, Object> mapSearchHit = searchHit.getSourceAsMap();
                 Val[] values = null;

@@ -14,4 +14,8 @@ public class SimpleTaskContext implements TaskContext {
     public TaskId getTaskId() {
         return null;
     }
+
+    @Override
+    public void reset() {
+    }
 }

@@ -519,6 +519,7 @@ appConfig:
       maxStoredDataQueueSize: 1000
       maxThreadsPerTask: 5
       maxStreamEventMapSize: 1000000
+      extractionDelayMs: 100
     shard:
       maxDocIdQueueSize: 1000000
       maxThreadsPerTask: 5
@@ -541,6 +542,7 @@ appConfig:
       minPayloadSize: "1M"
       maxPayloadSize: "1G"
       offHeapResults: true
+      valueQueueSize: 1000000
       lmdb:
         localDir: "search_results"
         maxReaders: 10

@@ -39,7 +39,6 @@ import stroom.query.common.v2.CompiledFields;
 import stroom.query.common.v2.ErrorConsumer;
 import stroom.search.extraction.ExtractionException;
 import stroom.search.extraction.ExtractionReceiver;
-import stroom.search.extraction.ExtractionTask;
 import stroom.search.extraction.ExtractionTaskHandler;
 import stroom.search.impl.SearchException;
 import stroom.search.impl.SearchExpressionQueryBuilder;
@@ -238,15 +237,16 @@ public class AlertProcessorImpl implements AlertProcessor {
                     };
 
                     final PipelineData pipelineData = getPipelineData(pipeline);
-                    final ExtractionTask task = new ExtractionTask(
+                    handlerProvider.get().extract(
+                            taskContext,
                             currentStreamId,
                             eventIds,
                             pipeline,
                             receiver,
                             errorConsumer,
+                            pipelineData,
                             ruleConfig.getAlertDefinitions(),
                             ruleConfig.getParams());
-                    handlerProvider.get().extract(taskContext, task, pipelineData);
                     numTasks++;
                 }
             }

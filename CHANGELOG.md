@@ -12,6 +12,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#2637** : Fix hanging searches.
+
 * Issue **#2631** : Add debug to diagnose UI issue.
 
 * Issue **#2633** : Fix shutdown.

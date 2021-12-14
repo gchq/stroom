@@ -30,4 +30,9 @@ public interface TaskContext extends Terminator {
      * @return The task id of this context.
      */
     TaskId getTaskId();
+
+    /**
+     * Reset submission time etc.
+     */
+    void reset();
 }

@@ -1,20 +1,25 @@
 package stroom.search.elastic.search;
 
 import stroom.dashboard.expression.v1.FieldIndex;
-import stroom.dashboard.expression.v1.ValuesConsumer;
 import stroom.dictionary.api.WordListProvider;
 import stroom.query.api.v2.DateTimeSettings;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.Query;
 import stroom.query.common.v2.ErrorConsumer;
+import stroom.search.elastic.ElasticIndexCache;
 import stroom.search.elastic.ElasticIndexService;
 import stroom.search.elastic.shared.ElasticIndexDoc;
 import stroom.search.elastic.shared.ElasticIndexField;
+import stroom.search.extraction.StoredDataQueue;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
 import stroom.task.api.ThreadPoolImpl;
 import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.SearchProgressLog;
+import stroom.util.logging.SearchProgressLog.SearchPhase;
 
 import org.elasticsearch.index.query.QueryBuilder;
 
@@ -34,29 +39,39 @@ public class ElasticSearchFactory {
     private final WordListProvider wordListProvider;
     private final ElasticSearchTaskHandler elasticSearchTaskHandler;
     private final ElasticIndexService elasticIndexService;
+    private final ElasticIndexCache elasticIndexCache;
+    private final TaskContextFactory taskContextFactory;
     private final Executor executor;
 
     @Inject
     public ElasticSearchFactory(final WordListProvider wordListProvider,
                                 final ElasticSearchTaskHandler elasticSearchTaskHandler,
                                 final ElasticIndexService elasticIndexService,
+                                final ElasticIndexCache elasticIndexCache,
+                                final TaskContextFactory taskContextFactory,
                                 final ExecutorProvider executorProvider) {
         this.wordListProvider = wordListProvider;
         this.elasticSearchTaskHandler = elasticSearchTaskHandler;
         this.elasticIndexService = elasticIndexService;
+        this.elasticIndexCache = elasticIndexCache;
+        this.taskContextFactory = taskContextFactory;
         this.executor = executorProvider.get(THREAD_POOL);
     }
 
-    public CompletableFuture<Void> search(final ElasticAsyncSearchTask asyncSearchTask,
-                                          final ElasticIndexDoc index,
-                                          final FieldIndex fieldIndex,
+    public CompletableFuture<Void> search(final Query query,
                                           final long now,
+                                          final DateTimeSettings dateTimeSettings,
                                           final ExpressionOperator expression,
-                                          final ValuesConsumer valuesConsumer,
-                                          final ErrorConsumer errorConsumer,
+                                          final FieldIndex fieldIndex,
                                           final TaskContext parentContext,
                                           final AtomicLong hitCount,
-                                          final DateTimeSettings dateTimeSettings) {
+                                          final StoredDataQueue storedDataQueue,
+                                          final ErrorConsumer errorConsumer) {
+        SearchProgressLog.increment(SearchPhase.INDEX_SHARD_SEARCH_FACTORY_SEARCH);
+
+        // Reload the index.
+        final ElasticIndexDoc index = elasticIndexCache.get(query.getDataSource());
+
         // Make sure we have a search index.
         if (index == null) {
             throw new SearchException("Search index has not been set");
@@ -65,25 +80,34 @@ public class ElasticSearchFactory {
         // Create a map of index fields keyed by name.
         final Map<String, ElasticIndexField> indexFieldsMap = elasticIndexService.getFieldsMap(index);
         final QueryBuilder queryBuilder = getQuery(expression, indexFieldsMap, dateTimeSettings, now);
-        final Tracker tracker = new Tracker(hitCount);
-        final ElasticSearchTask elasticSearchTask = new ElasticSearchTask(
-                asyncSearchTask, index, queryBuilder, fieldIndex, valuesConsumer, errorConsumer, tracker,
-                asyncSearchTask.getResultCollector());
-
-        return CompletableFuture.runAsync(elasticSearchTaskHandler.exec(parentContext, elasticSearchTask), executor);
+        return CompletableFuture
+                .runAsync(() -> taskContextFactory
+                        .childContext(parentContext, "Search Index", taskContext ->
+                                elasticSearchTaskHandler.search(
+                                        parentContext,
+                                        index,
+                                        queryBuilder,
+                                        fieldIndex,
+                                        storedDataQueue,
+                                        errorConsumer,
+                                        hitCount)), executor)
+                .whenCompleteAsync((r, t) ->
+                        taskContextFactory.childContext(parentContext, "Search Index", taskContext -> {
+                            taskContext.info(() -> "Complete stored data queue");
+                            LOGGER.debug("Complete stored data queue");
+                            storedDataQueue.complete();
+                        }).run(), executor);
     }
 
     private QueryBuilder getQuery(final ExpressionOperator expression,
                                   final Map<String, ElasticIndexField> indexFieldsMap,
                                   final DateTimeSettings dateTimeSettings,
-                                  final long nowEpochMilli
-    ) {
+                                  final long nowEpochMilli) {
         final SearchExpressionQueryBuilder builder = new SearchExpressionQueryBuilder(
                 wordListProvider,
                 indexFieldsMap,
                 dateTimeSettings,
                 nowEpochMilli);
-
         final QueryBuilder query = builder.buildQuery(expression);
 
         // Make sure the query was created successfully.

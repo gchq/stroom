@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
@@ -80,12 +81,14 @@ public class RemoteSearchService {
                 if (coprocessors != null && coprocessors.size() > 0) {
                     final ClusterSearchTaskHandler clusterSearchTaskHandler =
                             clusterSearchTaskHandlerProvider.get();
+                    final CountDownLatch countDownLatch = new CountDownLatch(1);
                     final Runnable runnable = taskContextFactory.context(clusterSearchTask.getTaskName(),
                             taskContext -> {
                                 try {
                                     taskContext.getTaskId().setParentId(clusterSearchTask.getSourceTaskId());
                                     remoteSearchResultFactory.setTaskId(taskContext.getTaskId());
                                     remoteSearchResultFactory.setStarted(true);
+                                    countDownLatch.countDown();
 
                                     clusterSearchTaskHandler.search(
                                             taskContext,
@@ -119,6 +122,15 @@ public class RemoteSearchService {
 
                     final Executor executor = executorProvider.get();
                     CompletableFuture.runAsync(runnable, executor);
+
+                    // Ensure the process starts before we return.
+                    try {
+                        countDownLatch.await();
+                    } catch (final InterruptedException e) {
+                        LOGGER.trace(e.getMessage(), e);
+                        // Keep interrupting this thread.
+                        Thread.currentThread().interrupt();
+                    }
 
                 } else {
                     remoteSearchResultFactory.setInitialisationError("No coprocessors were created");

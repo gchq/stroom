@@ -19,21 +19,17 @@ package stroom.search.extraction;
 import stroom.dashboard.expression.v1.FieldIndex;
 import stroom.dashboard.expression.v1.Val;
 import stroom.index.shared.IndexConstants;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.SearchProgressLog;
 import stroom.util.logging.SearchProgressLog.SearchPhase;
 
-public class StreamMapCreator {
-
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StreamMapCreator.class);
+class StreamMapCreator {
 
     private final int streamIdIndex;
     private final int eventIdIndex;
 
     private ExtractionException error;
 
-    public StreamMapCreator(final FieldIndex fieldIndex) {
+    StreamMapCreator(final FieldIndex fieldIndex) {
         // First get the index in the stored data of the stream and event id fields.
         streamIdIndex = getFieldIndex(fieldIndex, IndexConstants.STREAM_ID);
         eventIdIndex = getFieldIndex(fieldIndex, IndexConstants.EVENT_ID);
@@ -54,7 +50,7 @@ public class StreamMapCreator {
         return index;
     }
 
-    void addEvent(final StreamEventMap streamEventMap, final Val[] storedData) {
+    void addEvent(final StreamEventMap streamEventMap, final Val[] storedData) throws InterruptedException {
         if (error != null) {
             throw error;
         } else {
@@ -67,15 +63,9 @@ public class StreamMapCreator {
                 throw new ExtractionException("No event id supplied");
             }
 
-            try {
-                final Event event = new Event(longStreamId, longEventId, storedData);
-                SearchProgressLog.increment(SearchPhase.EXTRACTION_DECORATOR_FACTORY_STREAM_EVENT_MAP_PUT);
-                streamEventMap.put(event);
-            } catch (final InterruptedException e) {
-                LOGGER.trace(e::getMessage, e);
-                // Keep interrupting this thread.
-                Thread.currentThread().interrupt();
-            }
+            final Event event = new Event(longStreamId, longEventId, storedData);
+            SearchProgressLog.increment(SearchPhase.EXTRACTION_DECORATOR_FACTORY_STREAM_EVENT_MAP_PUT);
+            streamEventMap.put(event);
         }
     }
 

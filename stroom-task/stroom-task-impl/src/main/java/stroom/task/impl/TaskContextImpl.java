@@ -36,13 +36,13 @@ public class TaskContextImpl implements TaskContext {
     private final String name;
     private final UserIdentity userIdentity;
     private final AtomicBoolean stop;
-    private final long submitTimeMs = System.currentTimeMillis();
     private final Set<TaskContextImpl> children = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     private volatile boolean terminate;
     private volatile Supplier<String> messageSupplier;
     private volatile Thread thread;
     private volatile TerminateHandler terminateHandler;
+    private volatile long submitTimeMs;
 
     public TaskContextImpl(final TaskId taskId,
                            final String name,
@@ -56,6 +56,8 @@ public class TaskContextImpl implements TaskContext {
         this.userIdentity = userIdentity;
         this.name = name;
         this.stop = stop;
+
+        reset();
     }
 
     @Override
@@ -66,6 +68,11 @@ public class TaskContextImpl implements TaskContext {
     @Override
     public TaskId getTaskId() {
         return taskId;
+    }
+
+    @Override
+    public void reset() {
+        submitTimeMs = System.currentTimeMillis();
     }
 
     @Override

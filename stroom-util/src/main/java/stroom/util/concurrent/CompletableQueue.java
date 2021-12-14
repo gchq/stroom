@@ -63,16 +63,11 @@ public class CompletableQueue<T> {
 
     public void complete() {
         try {
-            final boolean interrupted = Thread.interrupted();
             queue.put(COMPLETE);
-            if (interrupted) {
-                Thread.currentThread().interrupt();
-            }
         } catch (final InterruptedException e) {
-            LOGGER.error(e::getMessage, e);
+            LOGGER.trace(e::getMessage, e);
             // Keep interrupting this thread.
             Thread.currentThread().interrupt();
-            throw new RuntimeException(e);
         }
     }
 

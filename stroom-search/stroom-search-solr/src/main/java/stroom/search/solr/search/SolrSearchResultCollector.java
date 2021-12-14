@@ -81,7 +81,7 @@ public class SolrSearchResultCollector implements Store {
             // Don't begin execution if we have been asked to complete already.
             if (!coprocessors.getCompletionState().isComplete()) {
                 final SolrAsyncSearchTaskHandler asyncSearchTaskHandler = solrAsyncSearchTaskHandlerProvider.get();
-                asyncSearchTaskHandler.exec(taskContext, task, coprocessors, this);
+                asyncSearchTaskHandler.search(taskContext, task, coprocessors, this);
             }
         });
         CompletableFuture
@@ -108,11 +108,10 @@ public class SolrSearchResultCollector implements Store {
 
     @Override
     public void destroy() {
-        complete();
         coprocessors.clear();
     }
 
-    public void complete() {
+    public void signalComplete() {
         coprocessors.getCompletionState().signalComplete();
     }
 

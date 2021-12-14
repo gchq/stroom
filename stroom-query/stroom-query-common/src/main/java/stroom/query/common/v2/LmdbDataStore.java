@@ -89,7 +89,7 @@ public class LmdbDataStore implements DataStore {
     private final AtomicBoolean hasEnoughData = new AtomicBoolean();
     private final AtomicBoolean shutdown = new AtomicBoolean();
 
-    private final LmdbKVQueue queue = new LmdbKVQueue(1000000);
+    private final LmdbKVQueue queue;
     private final CountDownLatch complete = new CountDownLatch(1);
     private final CompletionState completionState = new CompletionStateImpl(this, complete);
     private final AtomicLong uniqueKey = new AtomicLong();
@@ -120,6 +120,7 @@ public class LmdbDataStore implements DataStore {
         this.producePayloads = producePayloads;
         this.errorConsumer = errorConsumer;
 
+        queue = new LmdbKVQueue(resultStoreConfig.getValueQueueSize());
         minValueSize = (int) resultStoreConfig.getMinValueSize().getBytes();
         maxValueSize = (int) resultStoreConfig.getMaxValueSize().getBytes();
         compiledFields = CompiledFields.create(tableSettings.getFields(), fieldIndex, paramMap);

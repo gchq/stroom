@@ -16,6 +16,7 @@ public class ResultStoreConfig extends AbstractConfig implements IsStroomConfig 
     private int maxPutsBeforeCommit = 100_000;
     private boolean offHeapResults = true;
 
+    private int valueQueueSize = 1_000_000;
     private ByteSize minValueSize = ByteSize.ofKibibytes(1);
     private ByteSize maxValueSize = ByteSize.ofMebibytes(1);
     private ByteSize minPayloadSize = ByteSize.ofMebibytes(1);
@@ -47,6 +48,16 @@ public class ResultStoreConfig extends AbstractConfig implements IsStroomConfig 
     @SuppressWarnings("unused")
     public void setOffHeapResults(final boolean offHeapResults) {
         this.offHeapResults = offHeapResults;
+    }
+
+    @JsonPropertyDescription("The size of the value queue.")
+    @JsonProperty("valueQueueSize")
+    public int getValueQueueSize() {
+        return valueQueueSize;
+    }
+
+    public void setValueQueueSize(final int valueQueueSize) {
+        this.valueQueueSize = valueQueueSize;
     }
 
     @JsonPropertyDescription("The minimum byte size of a value byte buffer.")

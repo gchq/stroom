@@ -26,10 +26,12 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.SearchProgressLog;
 import stroom.util.logging.SearchProgressLog.SearchPhase;
+import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -52,6 +54,7 @@ public class ExtractionDecoratorFactory {
     private final ExtractionConfig extractionConfig;
     private final ExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
+    private final PipelineScopeRunnable pipelineScopeRunnable;
     private final SecurityContext securityContext;
     private final AnnotationsDecoratorFactory receiverDecoratorFactory;
     private final MetaService metaService;
@@ -69,6 +72,7 @@ public class ExtractionDecoratorFactory {
     ExtractionDecoratorFactory(final ExtractionConfig extractionConfig,
                                final ExecutorProvider executorProvider,
                                final TaskContextFactory taskContextFactory,
+                               final PipelineScopeRunnable pipelineScopeRunnable,
                                final SecurityContext securityContext,
                                final AnnotationsDecoratorFactory receiverDecoratorFactory,
                                final MetaService metaService,
@@ -78,6 +82,7 @@ public class ExtractionDecoratorFactory {
         this.extractionConfig = extractionConfig;
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
+        this.pipelineScopeRunnable = pipelineScopeRunnable;
         this.securityContext = securityContext;
         this.receiverDecoratorFactory = receiverDecoratorFactory;
         this.metaService = metaService;
@@ -139,37 +144,28 @@ public class ExtractionDecoratorFactory {
     }
 
     public CompletableFuture<Void> startMapping(final TaskContext parentContext,
-                                                final StreamMapCreator streamMapCreator,
-                                                final ErrorConsumer errorConsumer) {
+                                                final Coprocessors coprocessors) {
         final Executor executor = executorProvider.get(STREAM_MAP_CREATOR_THREAD_POOL);
         final Runnable runnable = mapStreams(
                 parentContext,
                 storedDataQueue,
-                streamMapCreator,
                 receivers,
-                errorConsumer);
-        return CompletableFuture.runAsync(runnable, executor).whenCompleteAsync((v, t) -> {
-            try {
-                // We have finished mapping streams so mark the stream event map as complete.
-                LOGGER.debug(() -> "Completed stream mapping");
-                streamEventMap.complete();
-            } catch (final InterruptedException e) {
-                LOGGER.trace(e::getMessage, e);
-                // Keep interrupting this thread.
-                Thread.currentThread().interrupt();
-            }
-        });
+                coprocessors);
+        return CompletableFuture.runAsync(runnable, executor);
     }
 
     private Runnable mapStreams(final TaskContext parentContext,
                                 final StoredDataQueue storedDataQueue,
-                                final StreamMapCreator streamMapCreator,
                                 final Map<DocRef, ExtractionReceiver> receivers,
-                                final ErrorConsumer errorConsumer) {
+                                final Coprocessors coprocessors) {
+        // Create an object to make event lists from raw index data.
+        final StreamMapCreator streamMapCreator = new StreamMapCreator(coprocessors.getFieldIndex());
+        final ErrorConsumer errorConsumer = coprocessors.getErrorConsumer();
+
         return taskContextFactory.childContext(parentContext, "Extraction Task Mapper", taskContext -> {
             info(taskContext, () -> "Starting extraction task producer");
             try {
-                while (!taskContext.isTerminated()) {
+                while (true) {
                     info(taskContext, () -> "" +
                             "Creating extraction tasks - stored data queue size: " +
                             storedDataQueue.size() +
@@ -201,6 +197,15 @@ public class ExtractionDecoratorFactory {
                 LOGGER.error(e::getMessage, e);
             } finally {
                 info(taskContext, () -> "Finished creating extraction tasks");
+                try {
+                    // We have finished mapping streams so mark the stream event map as complete.
+                    LOGGER.debug(() -> "Completed stream mapping");
+                    streamEventMap.complete();
+                } catch (final InterruptedException e) {
+                    LOGGER.trace(e::getMessage, e);
+                    // Keep interrupting this thread.
+                    Thread.currentThread().interrupt();
+                }
             }
         });
     }
@@ -214,6 +219,17 @@ public class ExtractionDecoratorFactory {
     public CompletableFuture<Void> startExtraction(final TaskContext parentContext,
                                                    final AtomicLong extractionCount,
                                                    final ErrorConsumer errorConsumer) {
+        // Delay extraction if we are going to use one or more extraction pipelines.
+        receivers.keySet().stream().filter(Objects::nonNull).findFirst().ifPresent(docRef -> {
+            try {
+                Thread.sleep(extractionConfig.getExtractionDelayMs());
+            } catch (final InterruptedException e) {
+                LOGGER.trace(e::getMessage, e);
+                // Keep interrupting this thread.
+                Thread.currentThread().interrupt();
+            }
+        });
+
         final Executor executor = executorProvider.get(EXTRACTION_THREAD_POOL);
         final int threadCount = extractionConfig.getMaxThreadsPerTask();
         final CompletableFuture<Void>[] futures = new CompletableFuture[threadCount];
@@ -227,31 +243,29 @@ public class ExtractionDecoratorFactory {
     private void extractData(final TaskContext parentContext,
                              final AtomicLong extractionCount,
                              final ErrorConsumer errorConsumer) {
-        try {
-            while (!parentContext.isTerminated()) {
-                final Entry<Long, Set<Event>> entry = streamEventMap.take();
+        taskContextFactory.childContext(parentContext, "Extraction Task", taskContext -> {
+            securityContext.useAsRead(() -> {
+                try {
+                    while (true) {
+                        taskContext.reset();
+                        taskContext.info(() -> "Waiting for extraction task...");
 
-                taskContextFactory.childContext(parentContext, "Extraction Task", taskContext ->
-                        securityContext.useAsRead(() -> {
-                            SearchProgressLog.add(SearchPhase.EXTRACTION_DECORATOR_FACTORY_STREAM_EVENT_MAP_TAKE,
-                                    entry.getValue().size());
-                            extractEvents(taskContext,
-                                    entry.getKey(),
-                                    entry.getValue(),
-                                    extractionCount,
-                                    errorConsumer);
-                        })).run();
-            }
-        } catch (final InterruptedException e) {
-            LOGGER.trace(e::getMessage, e);
-            // Keep interrupting this thread.
-            Thread.currentThread().interrupt();
-        } catch (final CompleteException e) {
-            LOGGER.debug(() -> "Complete");
-            LOGGER.trace(e::getMessage, e);
-        } finally {
-            LOGGER.debug("Completed extraction thread");
-        }
+                        final Entry<Long, Set<Event>> entry = streamEventMap.take();
+                        SearchProgressLog.add(SearchPhase.EXTRACTION_DECORATOR_FACTORY_STREAM_EVENT_MAP_TAKE,
+                                entry.getValue().size());
+                        extractEvents(taskContext, entry.getKey(), entry.getValue(), extractionCount, errorConsumer);
+                    }
+                } catch (final InterruptedException e) {
+                    LOGGER.trace(e::getMessage, e);
+                    // Keep interrupting this thread.
+                    Thread.currentThread().interrupt();
+                } catch (final CompleteException e) {
+                    LOGGER.debug(() -> "Complete");
+                    LOGGER.trace(e::getMessage, e);
+                }
+            });
+        }).run();
+        LOGGER.debug("Completed extraction thread");
     }
 
     private void extractEvents(final TaskContext taskContext,
@@ -282,11 +296,24 @@ public class ExtractionDecoratorFactory {
                     if (docRef != null) {
                         SearchProgressLog.add(SearchPhase.EXTRACTION_DECORATOR_FACTORY_CREATE_TASKS_DOCREF,
                                 events.size());
+
+                        // Get cached pipeline data.
                         final PipelineData pipelineData = getPipelineData(docRef);
-                        final ExtractionTask extractionTask =
-                                new ExtractionTask(streamId, eventIds, docRef, receiver, errorConsumer);
-                        final ExtractionTaskHandler handler = handlerProvider.get();
-                        meta = handler.extract(taskContext, extractionTask, pipelineData);
+
+                        // Execute the extraction within a fresh pipeline scope.
+                        meta = pipelineScopeRunnable.scopeResult(() -> {
+                            final ExtractionTaskHandler handler = handlerProvider.get();
+                            return handler.extract(
+                                    taskContext,
+                                    streamId,
+                                    eventIds,
+                                    docRef,
+                                    receiver,
+                                    errorConsumer,
+                                    pipelineData,
+                                    null,
+                                    null);
+                        });
 
                         extractionCount.addAndGet(events.size());
 
@@ -296,12 +323,14 @@ public class ExtractionDecoratorFactory {
                         if (meta == null) {
                             meta = metaService.getMeta(streamId);
                             if (meta == null) {
-                                throw new DataException("Unable to find data, could be due to lack of permissions");
+                                throw new DataException(
+                                        "Unable to find data, could be due to lack of permissions");
                             }
                         }
 
                         SearchProgressLog.add(SearchPhase.EXTRACTION_DECORATOR_FACTORY_CREATE_TASKS_NO_DOCREF,
                                 events.size());
+                        taskContext.reset();
                         info(taskContext,
                                 () -> "Transferring " + events.size() + " records from stream " + streamId);
                         // Pass raw values to coprocessors that are not requesting values to be extracted.
